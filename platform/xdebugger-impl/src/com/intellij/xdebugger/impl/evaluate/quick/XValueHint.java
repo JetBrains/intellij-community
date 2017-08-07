@@ -33,7 +33,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.LinkMouseListenerBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleColoredComponent;
@@ -252,12 +251,14 @@ public class XValueHint extends AbstractValueHint {
       @Override
       public void errorOccurred(@NotNull final String errorMessage) {
         showEvaluating.set(false);
-        if (myCurrentHint != null) {
-          myCurrentHint.hide();
-        }
-        if (getType() == ValueHintType.MOUSE_CLICK_HINT) {
-          ApplicationManager.getApplication().invokeLater(() -> showHint(HintUtil.createErrorLabel(errorMessage)));
-        }
+        ApplicationManager.getApplication().invokeLater(() -> {
+          if (getType() == ValueHintType.MOUSE_CLICK_HINT) {
+            showHint(HintUtil.createErrorLabel(errorMessage));
+          }
+          else if (myCurrentHint != null) {
+            myCurrentHint.hide();
+          }
+        });
         LOG.debug("Cannot evaluate '" + myExpression + "':" + errorMessage);
       }
     }, myExpressionPosition);
