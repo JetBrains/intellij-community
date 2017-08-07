@@ -128,4 +128,24 @@ public class HardcodedContractsTest extends DataFlowInspectionTestCase {
     checkHighlighting();
   }
 
+  public void testAssertTestNg() {
+    myFixture.addClass("package org.testng;\n" +
+                       "\n" +
+                       "public class AssertJUnit {\n" +
+                       "  static public void assertTrue(String message, boolean condition) {}\n" +
+                       "  static public void assertTrue(boolean condition) {}\n" +
+                       "  static public void assertNotNull(String message, Object object) {}\n" +
+                       "  static public void assertNotNull(Object object) {}\n" +
+                       "}");
+    myFixture.addClass("package org.testng;\n" +
+                       "\n" +
+                       "public class Assert {\n" +
+                       "  static public void assertTrue(boolean condition, String message) {}\n" +
+                       "  static public void assertTrue(boolean condition) {}\n" +
+                       "  static public void assertNotNull(Object object, String message) {}\n" +
+                       "  static public void assertNotNull(Object object) {}\n" +
+                       "}");
+    checkHighlighting();
+  }
+
 }
