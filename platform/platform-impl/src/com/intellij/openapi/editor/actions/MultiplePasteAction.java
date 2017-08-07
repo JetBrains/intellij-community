@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,9 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.OptionAction;
 import com.intellij.ui.UIBundle;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.text.DefaultEditorKit;
@@ -41,6 +43,8 @@ import java.util.List;
  * @author max
  */
 public class MultiplePasteAction extends AnAction implements DumbAware {
+  private static final int PASTE_SIMPLE_EXIT_CODE = DialogWrapper.NEXT_USER_EXIT_CODE;
+
   public MultiplePasteAction() {
     setEnabledInModalContext(true);
   }
@@ -54,29 +58,7 @@ public class MultiplePasteAction extends AnAction implements DumbAware {
 
     if (!(focusedComponent instanceof JComponent)) return;
 
-    final CopyPasteManagerEx copyPasteManager = CopyPasteManagerEx.getInstanceEx();
-    final ContentChooser<Transferable> chooser = new ContentChooser<Transferable>(project, UIBundle.message(
-      "choose.content.to.paste.dialog.title"), true, true){
-      @Override
-      protected String getStringRepresentationFor(final Transferable content) {
-        try {
-          return (String)content.getTransferData(DataFlavor.stringFlavor);
-        }
-        catch (UnsupportedFlavorException | IOException e1) {
-          return "";
-        }
-      }
-
-      @Override
-      protected List<Transferable> getContents() {
-        return Arrays.asList(CopyPasteManager.getInstance().getAllContents());
-      }
-
-      @Override
-      protected void removeContentAt(final Transferable content) {
-        copyPasteManager.removeContent(content);
-      }
-    };
+    final ContentChooser<Transferable> chooser = new ClipboardContentChooser(project);
 
     if (!chooser.getAllContents().isEmpty()) {
       chooser.show();
@@ -85,8 +67,9 @@ public class MultiplePasteAction extends AnAction implements DumbAware {
       chooser.close(DialogWrapper.CANCEL_EXIT_CODE);
     }
 
-    if (chooser.isOK()) {
+    if (chooser.getExitCode() == DialogWrapper.OK_EXIT_CODE || chooser.getExitCode() == PASTE_SIMPLE_EXIT_CODE) {
       List<Transferable> selectedContents = chooser.getSelectedContents();
+      CopyPasteManagerEx copyPasteManager = CopyPasteManagerEx.getInstanceEx();
       if (selectedContents.size() == 1) {
         copyPasteManager.moveContentToStackTop(selectedContents.get(0));
       }
@@ -97,7 +80,9 @@ public class MultiplePasteAction extends AnAction implements DumbAware {
       if (editor != null) {
         if (editor.isViewer()) return;
 
-        final AnAction pasteAction = ActionManager.getInstance().getAction(IdeActions.ACTION_PASTE);
+        final AnAction pasteAction = ActionManager.getInstance().getAction(chooser.getExitCode() == PASTE_SIMPLE_EXIT_CODE 
+                                                                           ? IdeActions.ACTION_EDITOR_PASTE_SIMPLE 
+                                                                           : IdeActions.ACTION_PASTE);
         AnActionEvent newEvent = new AnActionEvent(e.getInputEvent(),
                                                    DataManager.getInstance().getDataContext(focusedComponent),
                                                    e.getPlace(), e.getPresentation(),
@@ -134,4 +119,59 @@ public class MultiplePasteAction extends AnAction implements DumbAware {
     return pasteAction != null;
   }
 
+  private static class ClipboardContentChooser extends ContentChooser<Transferable> {
+
+    public ClipboardContentChooser(Project project) {
+      super(project, UIBundle.message("choose.content.to.paste.dialog.title"), true, true);
+      setOKButtonText(UIBundle.message("choose.content.to.paste.dialog.ok.button"));
+    }
+
+    @Override
+    protected String getStringRepresentationFor(final Transferable content) {
+      try {
+        return (String)content.getTransferData(DataFlavor.stringFlavor);
+      }
+      catch (UnsupportedFlavorException | IOException e1) {
+        return "";
+      }
+    }
+
+    @NotNull
+    @Override
+    protected List<Transferable> getContents() {
+      return Arrays.asList(CopyPasteManager.getInstance().getAllContents());
+    }
+
+    @Override
+    protected void removeContentAt(final Transferable content) {
+      CopyPasteManagerEx.getInstanceEx().removeContent(content);
+    }
+
+    @Override
+    protected void createDefaultActions() {
+      super.createDefaultActions();
+      myOKAction = new PasteAction();
+    }
+
+    class PasteAction extends OkAction implements OptionAction {
+      private final Action[] myActions = new Action[] {new PasteSimpleAction()};
+        
+      @NotNull
+      @Override
+      public Action[] getOptions() {
+        return myActions;
+      }
+    }
+
+    class PasteSimpleAction extends DialogWrapperAction {
+      private PasteSimpleAction() {
+        super(UIBundle.message("choose.content.to.paste.dialog.simple.button"));
+      }
+
+      @Override
+      protected void doAction(ActionEvent e) {
+        close(PASTE_SIMPLE_EXIT_CODE);
+      }
+    }
+  }
 }
