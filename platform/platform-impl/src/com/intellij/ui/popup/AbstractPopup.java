@@ -1039,7 +1039,7 @@ public class AbstractPopup implements JBPopup {
 
           return result;
         }
-      }, true).doWhenRejected(() -> afterShow.run());
+      }, true).doWhenRejected(afterShow);
 
       delayKeyEventsUntilFocusSettlesDown();
     } else {

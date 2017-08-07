@@ -1069,7 +1069,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     final Ref<Runnable> wrapper = new Ref<>();
     wrapper.set(() -> {
       if (!StartupManagerEx.getInstanceEx(myProject).postStartupActivityPassed()) {
-        myInitializationAlarm.addRequest(() -> wrapper.get().run(), 1000);
+        myInitializationAlarm.addRequest(wrapper.get(), 1000);
         return;
       }
       runnable.run();
