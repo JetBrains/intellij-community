@@ -866,11 +866,12 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
       startIndex = groupAndValidate(events, startIndex, applyEvents, validated, files, middleDirs);
 
       if (!validated.isEmpty()) {
-        myPublisher.before(validated);
+        List<VFileEvent> toSend = Collections.unmodifiableList(validated);
+        myPublisher.before(toSend);
 
         applyEvents.forEach(Runnable::run);
 
-        myPublisher.after(validated);
+        myPublisher.after(toSend);
       }
     }
   }
