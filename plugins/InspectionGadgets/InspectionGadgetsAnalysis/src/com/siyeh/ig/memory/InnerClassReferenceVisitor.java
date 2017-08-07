@@ -108,6 +108,9 @@ public class InnerClassReferenceVisitor extends JavaRecursiveElementWalkingVisit
       }
       referencesStaticallyAccessible = false;
     }
+    else if (target instanceof PsiClass && !isClassStaticallyAccessible((PsiClass)target)) {
+      referencesStaticallyAccessible = false;
+    }
   }
 
   @Override
