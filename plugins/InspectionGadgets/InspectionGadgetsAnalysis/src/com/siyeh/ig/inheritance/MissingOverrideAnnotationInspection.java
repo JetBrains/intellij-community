@@ -38,6 +38,8 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.Objects;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 public class MissingOverrideAnnotationInspection extends BaseJavaBatchLocalInspectionTool implements CleanupLocalInspectionTool{
   private static final int MAX_OVERRIDDEN_METHOD_SEARCH = 20;
@@ -165,7 +167,9 @@ public class MissingOverrideAnnotationInspection extends BaseJavaBatchLocalInspe
           }
         }
 
-        result.hierarchyAnnotated = ThreeState.YES;
+        Predicate<PsiMethod> isOverrider = candidate -> (isOverrideApplicableToJava5Methods || PsiUtil.isLanguageLevel6OrHigher(candidate))
+                                                        && PsiSuperMethodUtil.isSuperMethod(candidate, method);
+        result.hierarchyAnnotated = ThreeState.fromBoolean(Stream.of(methods).noneMatch(isOverrider));
       }
 
       private void checkMissingOverride(@NotNull PsiMethod method,
