@@ -90,6 +90,14 @@ python_exists:
 skip_python_download:  
 FunctionEnd
 
+Function customPostInstallActions
+  DetailPrint "There are no custom post-install actions."
+FunctionEnd
+
+Function un.customUninstallActions
+  DetailPrint "There are no custom uninstall actions."
+FunctionEnd
+
 Function updatePythonControls
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" $R4 "Text" "Python $R2 (installed)"
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" $R4 "Flags" "DISABLED"
