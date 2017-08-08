@@ -265,6 +265,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     if (qualifier == null || expression == null) return fixes;
 
     try {
+      ContainerUtil.addIfNotNull(fixes, createAddStreamFilterNotNullFix(qualifier));
       if (isVolatileFieldReference(qualifier)) {
         ContainerUtil.addIfNotNull(fixes, createIntroduceVariableFix(qualifier));
       }
@@ -318,6 +319,10 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     return null;
   }
 
+  protected LocalQuickFix createAddStreamFilterNotNullFix(PsiElement reference) {
+    return null;
+  }
+
   protected void addSurroundWithIfFix(PsiExpression qualifier, List<LocalQuickFix> fixes, boolean onTheFly) {
   }
 
@@ -336,7 +341,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     for (PsiElement element : visitor.getProblems(NullabilityProblem.callNPE)) {
       if (reportedAnchors.add(element)) {
         if (element instanceof PsiMethodReferenceExpression) {
-          holder.registerProblem(element, InspectionsBundle.message("dataflow.message.npe.methodref.invocation"));
+          holder.registerProblem(element, InspectionsBundle.message("dataflow.message.npe.methodref.invocation"), createAddStreamFilterNotNullFix(element));
         }
         else {
           reportCallMayProduceNpe(holder, (PsiMethodCallExpression)element, holder.isOnTheFly());
@@ -712,7 +717,9 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
       if (!reportedAnchors.add(expr)) continue;
 
       if (expr.getParent() instanceof PsiMethodReferenceExpression) {
-        holder.registerProblem(expr.getParent(), InspectionsBundle.message("dataflow.message.passing.nullable.argument.methodref"));
+        PsiMethodReferenceExpression methodRef = (PsiMethodReferenceExpression)expr.getParent();
+        holder.registerProblem(methodRef, InspectionsBundle.message("dataflow.message.passing.nullable.argument.methodref"),
+                               createAddStreamFilterNotNullFix(methodRef));
       }
       else {
         final String text = isNullLiteralExpression(expr)
