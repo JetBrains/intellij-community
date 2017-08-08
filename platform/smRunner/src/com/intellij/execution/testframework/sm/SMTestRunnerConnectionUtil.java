@@ -232,7 +232,7 @@ public class SMTestRunnerConnectionUtil {
     });
   }
 
-  private static class CombinedTestLocator implements SMTestLocator, SMTestLocatorWithMetainfo, DumbAware {
+  private static class CombinedTestLocator implements SMTestLocator, DumbAware {
     private final SMTestLocator myLocator;
 
     public CombinedTestLocator(SMTestLocator locator) {
@@ -256,9 +256,7 @@ public class SMTestRunnerConnectionUtil {
         return FileUrlProvider.INSTANCE.getLocation(protocol, path, project, scope);
       }
       else if (!DumbService.isDumb(project) || DumbService.isDumbAware(myLocator) || Registry.is("dumb.aware.run.configurations")) {
-        return myLocator instanceof SMTestLocatorWithMetainfo
-               ? ((SMTestLocatorWithMetainfo)myLocator).getLocation(protocol, path, metainfo, project, scope)
-               : myLocator.getLocation(protocol, path, project, scope);
+        return myLocator.getLocation(protocol, path, metainfo, project, scope);
       }
       else {
         return Collections.emptyList();

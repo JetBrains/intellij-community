@@ -259,9 +259,7 @@ public class SMTestProxy extends AbstractTestProxy {
         if (!DumbService.isDumb(project) || DumbService.isDumbAware(myLocator) || Registry.is("dumb.aware.run.configurations")) {
           try {
             DumbService.getInstance(project).setAlternativeResolveEnabled(true);
-            List<Location> locations = myLocator instanceof SMTestLocatorWithMetainfo
-              ? ((SMTestLocatorWithMetainfo)myLocator).getLocation(protocolId, path, myMetainfo, project, searchScope)
-              : myLocator.getLocation(protocolId, path, project, searchScope);
+            List<Location> locations = myLocator.getLocation(protocolId, path, myMetainfo, project, searchScope);
             if (!locations.isEmpty()) {
               return locations.get(0);
             }

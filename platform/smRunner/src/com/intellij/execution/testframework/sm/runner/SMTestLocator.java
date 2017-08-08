@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
@@ -31,12 +32,26 @@ import java.util.Map;
 /**
  * A parser for location URLs reported by test runners.
  * See {@link SMTestProxy#getLocation(Project, GlobalSearchScope)} for details.
- *
- * Please, implement {@link SMTestLocatorWithMetainfo} instead
  */
 public interface SMTestLocator {
-  @NotNull
+  /**
+   * Creates the <code>Location</code> list from <code>protocol</code> and <code>path</code> in <code>scope</code>.
+   */
+   @NotNull
   List<Location> getLocation(@NotNull String protocol, @NotNull String path, @NotNull Project project, @NotNull GlobalSearchScope scope);
+
+  /**
+   * Creates the <code>Location</code> list from <code>protocol</code>, <code>path</code>, and <code>metainfo</code> in <code>scope</code>.
+   * Implementation of test framework can provide additional information in <code>metainfo</code> parameter,
+   * The <code>metainfo</code> parameter simplifies the search for locations, but can not be used to identify the test.
+   * A good example for code>metainfo</code> is the line number of the beginning of the test. It can speed up the search procedure,
+   * but it changes when editing.
+   */
+  @NotNull
+  default List<Location> getLocation(@NotNull String protocol, @NotNull String path, @Nullable String metainfo, @NotNull Project project,
+                                     @NotNull GlobalSearchScope scope) {
+    return getLocation(protocol, path, project, scope);
+  }
 
   /** @deprecated consoles should provide specific locators; the implementation is trivial (to be removed in IDEA 18) */
   class Composite implements SMTestLocator, DumbAware {
