@@ -1,5 +1,5 @@
 <!--
- Deprecated.
-  See Keymap_*.xml files.  The only reason this file is not deleted is to ease browsing history of
-  changes in default keymaps
+  This file is preserved to keep the default keymap changes history easily accessible.
+
+  Look for keymaps/*.xml files instead.
 -->
