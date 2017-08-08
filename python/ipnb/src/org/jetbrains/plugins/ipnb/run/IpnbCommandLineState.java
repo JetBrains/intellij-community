@@ -133,7 +133,7 @@ public class IpnbCommandLineState extends PythonCommandLineState {
           serverStarted.set(true);
         }
         final String token = "?token=";
-        if (text.toLowerCase().contains(token)) {
+        if (text.toLowerCase().contains(token) && StringUtil.isEmpty(myConfiguration.getToken())) {
           myConfiguration.setToken(text.substring(text.indexOf(token) + token.length()).trim());
         }
       }
