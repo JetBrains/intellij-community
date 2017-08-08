@@ -32,6 +32,6 @@ class PluginRelatedLocatorsUtils {
   static GlobalSearchScope getCandidatesScope(@NotNull Project project) {
     Collection<VirtualFile> candidates = DomService.getInstance()
       .getDomFileCandidates(IdeaPlugin.class, project, GlobalSearchScope.allScope(project));
-    return GlobalSearchScope.filesScope(project, candidates);
+    return GlobalSearchScope.filesWithLibrariesScope(project, candidates, true);
   }
 }
