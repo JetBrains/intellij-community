@@ -236,7 +236,7 @@ public abstract class AbstractLayoutCodeProcessor {
           if (!previousTask.get() || previousTask.isCancelled()) return false;
         }
 
-        ApplicationManager.getApplication().runWriteAction(() -> currentTask.run());
+        ApplicationManager.getApplication().runWriteAction(currentTask);
 
         return currentTask.get() && !currentTask.isCancelled();
       }
