@@ -589,6 +589,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
       return (InspectionElementsMergerBase)merger;
     }
     return merger != null ? new InspectionElementsMergerBase() {
+      @NotNull
       @Override
       public String getMergedToolName() {
         return merger.getMergedToolName();

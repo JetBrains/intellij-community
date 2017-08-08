@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Bas Leijdekkers
  */
 public class SerializableClassInSecureContextMerger extends InspectionElementsMerger {
+  @NotNull
   @Override
   public String getMergedToolName() {
     return "SerializableDeserializableClassInSecureContext";
