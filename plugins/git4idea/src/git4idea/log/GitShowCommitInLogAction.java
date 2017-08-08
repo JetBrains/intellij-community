@@ -65,8 +65,9 @@ public class GitShowCommitInLogAction extends DumbAwareAction {
       return;
     }
 
-    boolean logReady = findLogUi(project) != null;
-
+    VcsProjectLog projectLog = VcsProjectLog.getInstance(project);
+    boolean logReady = projectLog.getMainLogUi() != null;
+    
     ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
     ContentManager cm = window.getContentManager();
     Content[] contents = cm.getContents();
@@ -77,7 +78,7 @@ public class GitShowCommitInLogAction extends DumbAwareAction {
       }
     }
 
-    VcsLogUiImpl logUi = findLogUi(project);
+    VcsLogUiImpl logUi = projectLog.getMainLogUi();
     if (logUi == null) {
       showLogNotReadyMessage(project);
       return;
@@ -131,15 +132,6 @@ public class GitShowCommitInLogAction extends DumbAwareAction {
                                    VcsProjectLog.getInstance(project) != null &&
                                    getRevisionNumber(e) != null &&
                                    Comparing.equal(getVcsKey(e), GitVcs.getKey()));
-  }
-
-  @Nullable
-  private static VcsLogUiImpl findLogUi(@NotNull Project project) {
-    VcsProjectLog projectLog = VcsProjectLog.getInstance(project);
-    if (projectLog != null) {
-      return projectLog.getMainLogUi();
-    }
-    return null;
   }
 
   private static void jumpToRevisionUnderProgress(@NotNull Project project,
