@@ -137,7 +137,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
   }
 
   @Nullable
-  public FilePath getAfterPath(@NotNull VcsFullCommitDetails details) {
+  public FilePath getPath(@NotNull VcsFullCommitDetails details) {
     if (myPath.isDirectory()) return myPath;
 
     List<Change> changes = collectRelevantChanges(details);
@@ -152,7 +152,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
   }
 
   @Nullable
-  public FilePath getBeforePath(@NotNull VcsFullCommitDetails details) {
+  public FilePath getPreviousPath(@NotNull VcsFullCommitDetails details) {
     if (myPath.isDirectory()) return myPath;
 
     List<Change> changes = collectRelevantChanges(details);

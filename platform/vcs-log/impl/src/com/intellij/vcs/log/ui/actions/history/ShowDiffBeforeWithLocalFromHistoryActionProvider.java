@@ -61,6 +61,6 @@ public class ShowDiffBeforeWithLocalFromHistoryActionProvider extends FileHistor
     FilePath path = e.getRequiredData(VcsDataKeys.FILE_PATH);
     VcsLogDiffHandler handler = e.getRequiredData(VcsLogInternalDataKeys.LOG_DIFF_HANDLER);
 
-    handler.showDiffWithLocal(detail.getRoot(), ui.getBeforePath(detail), detail.getParents().get(0), path);
+    handler.showDiffWithLocal(detail.getRoot(), ui.getPreviousPath(detail), detail.getParents().get(0), path);
   }
 }
