@@ -25,19 +25,12 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.VcsKey;
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentManager;
 import com.intellij.vcs.log.impl.VcsLogContentProvider;
 import com.intellij.vcs.log.impl.VcsProjectLog;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
@@ -65,46 +58,7 @@ public class GitShowCommitInLogAction extends DumbAwareAction {
       return;
     }
 
-    VcsProjectLog projectLog = VcsProjectLog.getInstance(project);
-    boolean logReady = projectLog.getMainLogUi() != null;
-    
-    ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
-    ContentManager cm = window.getContentManager();
-    Content[] contents = cm.getContents();
-    for (Content content : contents) {
-      if (VcsLogContentProvider.TAB_NAME.equals(content.getDisplayName())) {
-        cm.setSelectedContent(content);
-        break;
-      }
-    }
-
-    VcsLogUiImpl logUi = projectLog.getMainLogUi();
-    if (logUi == null) {
-      showLogNotReadyMessage(project);
-      return;
-    }
-
-    Runnable selectAndOpenLog = () -> {
-      Runnable selectCommit = () -> jumpToRevisionUnderProgress(project, logUi, revision);
-
-      if (!window.isVisible()) {
-        window.activate(selectCommit, true);
-      }
-      else {
-        selectCommit.run();
-      }
-    };
-
-    if (logReady) {
-      selectAndOpenLog.run();
-      return;
-    }
-
-    logUi.invokeOnChange(selectAndOpenLog);
-  }
-
-  private static void showLogNotReadyMessage(@NotNull Project project) {
-    VcsBalloonProblemNotifier.showOverChangesView(project, GitBundle.getString("vcs.history.action.gitlog.error"), MessageType.WARNING);
+    VcsLogContentProvider.openMainLogAndExecute(project, logUi -> jumpToRevisionUnderProgress(project, logUi, revision));
   }
 
   @Nullable

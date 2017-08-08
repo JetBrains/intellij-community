@@ -18,10 +18,13 @@ package com.intellij.vcs.log.impl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider;
+import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -29,6 +32,7 @@ import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.TabbedContent;
+import com.intellij.util.Consumer;
 import com.intellij.util.ContentUtilEx;
 import com.intellij.util.ContentsUtil;
 import com.intellij.util.NotNullFunction;
@@ -191,6 +195,43 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
         }
       }
     }
+  }
+
+  public static void openMainLogAndExecute(@NotNull Project project, @NotNull Consumer<VcsLogUiImpl> consumer) {
+    VcsProjectLog projectLog = VcsProjectLog.getInstance(project);
+    boolean logReady = projectLog.getMainLogUi() != null;
+
+    ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
+    ContentManager cm = window.getContentManager();
+    Content[] contents = cm.getContents();
+    for (Content content : contents) {
+      if (TAB_NAME.equals(content.getDisplayName())) {
+        cm.setSelectedContent(content);
+        break;
+      }
+    }
+
+    VcsLogUiImpl logUi = projectLog.getMainLogUi();
+    if (logUi == null) {
+      VcsBalloonProblemNotifier.showOverChangesView(project, "Vcs Log Not Ready", MessageType.WARNING);
+      return;
+    }
+
+    Runnable openLogAndRun = () -> {
+      if (!window.isVisible()) {
+        window.activate(() -> consumer.consume(logUi), true);
+      }
+      else {
+        consumer.consume(logUi);
+      }
+    };
+
+    if (logReady) {
+      openLogAndRun.run();
+      return;
+    }
+
+    logUi.invokeOnChange(openLogAndRun);
   }
 
   public static class VcsLogVisibilityPredicate implements NotNullFunction<Project, Boolean> {
