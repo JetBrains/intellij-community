@@ -35,6 +35,7 @@ import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapPainter;
 import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapApplianceManager;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -456,7 +457,7 @@ public class EditorTestUtil {
       public int calcWidthInPixels(@NotNull Editor editor) { return 1; }
 
       @Override
-      public void paint(@NotNull Editor editor, @NotNull Graphics g, @NotNull Rectangle r) {}
+      public void paint(@NotNull Editor editor, @NotNull Graphics g, @NotNull Rectangle r, @NotNull TextAttributes textAttributes) {}
     });
   }
 

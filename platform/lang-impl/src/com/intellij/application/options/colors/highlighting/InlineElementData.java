@@ -85,8 +85,8 @@ public class InlineElementData extends HighlightData {
     }
 
     @Override
-    public void paint(@NotNull Editor editor, @NotNull Graphics g, @NotNull Rectangle r) {
-      myDelegate.paint(editor, g, r);
+    public void paint(@NotNull Editor editor, @NotNull Graphics g, @NotNull Rectangle r, @NotNull TextAttributes textAttributes) {
+      myDelegate.paint(editor, g, r, textAttributes);
       if (drawBorder) {
         TextAttributes attributes = editor.getColorsScheme().getAttributes(BLINKING_HIGHLIGHTS_ATTRIBUTES);
         if (attributes != null && attributes.getEffectColor() != null) {

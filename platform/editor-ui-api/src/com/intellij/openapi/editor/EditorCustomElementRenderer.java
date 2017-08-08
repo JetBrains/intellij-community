@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor;
 
+import com.intellij.openapi.editor.markup.TextAttributes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,8 +35,9 @@ public interface EditorCustomElementRenderer {
 
   /**
    * Implements painting for the custom region. Rectangle passed as a parameter defines target region where painting should be performed.
+   * Passed text attributes are attributes of surrounding text.
    */
-  void paint(@NotNull Editor editor, @NotNull Graphics g, @NotNull Rectangle r);
+  void paint(@NotNull Editor editor, @NotNull Graphics g, @NotNull Rectangle r, @NotNull TextAttributes textAttributes);
 
   /**
    * Returns a registered id of action group, which is to be used for displaying context menu for the given custom element.

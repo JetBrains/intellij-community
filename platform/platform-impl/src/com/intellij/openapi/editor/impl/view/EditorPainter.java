@@ -384,7 +384,8 @@ class EditorPainter implements TextDrawingCallback {
           Inlay inlay = fragment.getCurrentInlay();
           if (inlay != null) {
             inlay.getRenderer().paint(myEditor, g, 
-                                      new Rectangle((int) xStart, y - myView.getAscent(), inlay.getWidthInPixels(), lineHeight));
+                                      new Rectangle((int) xStart, y - myView.getAscent(), inlay.getWidthInPixels(), lineHeight),
+                                      attributes);
             return;
           }
           boolean allowBorder = fragment.getCurrentFoldRegion() != null;

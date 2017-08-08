@@ -1864,6 +1864,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return myView.getDescent();
   }
 
+  public int getCharHeight() {
+    return myView.getCharHeight();
+  }
+
   @NotNull
   public FontMetrics getFontMetrics(@JdkConstants.FontStyle int fontType) {
     EditorFontType ft;
