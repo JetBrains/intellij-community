@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,12 +33,22 @@ import java.util.List;
 @ApiStatus.Experimental
 public interface InlayModel {
   /**
+   * Same as {@link #addInlineElement(int, boolean, EditorCustomElementRenderer)}, making created element associated with following text.
+   */
+  default Inlay addInlineElement(int offset, @NotNull EditorCustomElementRenderer renderer) {
+    return addInlineElement(offset, false, renderer);
+  }
+
+  /**
    * Introduces an inline visual element at a given offset, its width and appearance is defined by the provided renderer. With respect to
    * document changes, created element behaves in a similar way to a zero-range {@link RangeMarker}. This method returns {@code null}
    * if requested element cannot be created, e.g. if corresponding functionality is not supported by current editor instance.
+   * 
+   * @param relatesToPrecedingText whether element is associated with preceding or following text 
+   *                               (see {@link Inlay#isRelatedToPrecedingText()})
    */
   @Nullable
-  Inlay addInlineElement(int offset, @NotNull EditorCustomElementRenderer renderer);
+  Inlay addInlineElement(int offset, boolean relatesToPrecedingText,@NotNull EditorCustomElementRenderer renderer);
 
   /**
    * Returns a list of inline elements for a given offset range (both limits are inclusive). Returned list is sorted by offset.

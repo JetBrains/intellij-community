@@ -781,11 +781,15 @@ class EditorPainter implements TextDrawingCallback {
       result.add(minX);
     }
     else {
+      float lastX = -1;
       for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView, startOffset, false)) {
         int minOffset = fragment.getMinOffset();
         int maxOffset = fragment.getMaxOffset();
         if (startOffset == endOffset) {
-          if (startOffset >= minOffset && startOffset <= maxOffset) {
+          lastX = fragment.getEndX();
+          Inlay inlay = fragment.getCurrentInlay();
+          if (inlay != null && !inlay.isRelatedToPrecedingText()) continue;
+          if (startOffset >= minOffset && startOffset < maxOffset) {
             float x = fragment.offsetToX(startOffset);
             result.add(x);
             result.add(x);
@@ -808,6 +812,10 @@ class EditorPainter implements TextDrawingCallback {
             result.set(result.size() - 1, x2);
           }
         }
+      }
+      if (startOffset == endOffset && result.isEmpty() && lastX >= 0) {
+        result.add(lastX);
+        result.add(lastX);
       }
     }
     return result;

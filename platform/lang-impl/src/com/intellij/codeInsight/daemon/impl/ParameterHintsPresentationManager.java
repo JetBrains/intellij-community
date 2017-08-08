@@ -71,9 +71,9 @@ public class ParameterHintsPresentationManager implements Disposable {
     return renderer instanceof MyRenderer ? ((MyRenderer)renderer).getText() : null;
   }
 
-  public Inlay addHint(@NotNull Editor editor, int offset, @NotNull String hintText, boolean useAnimation) {
+  public Inlay addHint(@NotNull Editor editor, int offset, boolean relatesToPrecedingText, @NotNull String hintText, boolean useAnimation) {
     MyRenderer renderer = new MyRenderer(editor, hintText, useAnimation);
-    Inlay inlay = editor.getInlayModel().addInlineElement(offset, renderer);
+    Inlay inlay = editor.getInlayModel().addInlineElement(offset, relatesToPrecedingText, renderer);
     if (inlay != null) {
       if (useAnimation) scheduleRendererUpdate(editor, inlay);
     }

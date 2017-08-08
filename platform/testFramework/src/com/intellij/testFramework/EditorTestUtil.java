@@ -452,7 +452,11 @@ public class EditorTestUtil {
 
 
   public static Inlay addInlay(@NotNull Editor editor, int offset) {
-    return editor.getInlayModel().addInlineElement(offset, new EditorCustomElementRenderer() {
+    return addInlay(editor, offset, false);
+  }
+
+  public static Inlay addInlay(@NotNull Editor editor, int offset, boolean relatesToPrecedingText) {
+    return editor.getInlayModel().addInlineElement(offset, relatesToPrecedingText, new EditorCustomElementRenderer() {
       @Override
       public int calcWidthInPixels(@NotNull Editor editor) { return 1; }
 

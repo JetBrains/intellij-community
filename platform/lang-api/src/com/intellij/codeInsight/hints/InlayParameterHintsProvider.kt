@@ -31,13 +31,13 @@ object InlayParameterHintsExtension : LanguageExtension<InlayParameterHintsProvi
  * @property isShowOnlyIfExistedBefore defines if hint should be shown only if it was present in editor before update
  *
  * @property isFilterByBlacklist allows to prevent hints from filtering by blacklist matcher (possible use in completion hints)
- * @property showAfterCaret determines hint's visual position if hint happens to be added at caret offset
+ * @property relatesToPrecedingText whether hint is associated with previous or following text
  */
 class InlayInfo(val text: String,
                 val offset: Int,
                 val isShowOnlyIfExistedBefore: Boolean,
                 val isFilterByBlacklist: Boolean,
-                val showAfterCaret: Boolean) {
+                val relatesToPrecedingText: Boolean) {
 
   constructor(text: String, offset: Int, isShowOnlyIfExistedBefore: Boolean) : this(text, offset, isShowOnlyIfExistedBefore, true, false)
   constructor(text: String, offset: Int) : this(text, offset, false, true, false)

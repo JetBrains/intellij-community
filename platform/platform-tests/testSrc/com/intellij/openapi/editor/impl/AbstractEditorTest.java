@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -176,7 +176,11 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
   }
 
   public static Inlay addInlay(int offset) {
-    return EditorTestUtil.addInlay(myEditor, offset);
+    return addInlay(offset, false);
+  }
+
+  public static Inlay addInlay(int offset, boolean relatesToPrecedingText) {
+    return EditorTestUtil.addInlay(myEditor, offset, relatesToPrecedingText);
   }
 
   protected static void runWriteCommand(ThrowableRunnable r) {
