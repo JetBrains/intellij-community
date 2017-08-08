@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.FileAccessorCache;
+import com.intellij.util.io.ResourceHandle;
 import com.intellij.util.text.ByteArrayCharSequence;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -84,12 +85,8 @@ public class ZipHandler extends ArchiveHandler {
   @NotNull
   @Override
   protected Map<String, EntryInfo> createEntriesMap() throws IOException {
-    FileAccessorCache.Handle<ZipFile> existingZipRef = getCachedZipFileHandle(true);
-    try {
+    try (ResourceHandle<ZipFile> existingZipRef = acquireZipHandle()) {
       return buildEntryMapForZipFile(existingZipRef.get());
-    }
-    finally {
-      existingZipRef.release();
     }
   }
 
@@ -214,8 +211,7 @@ public class ZipHandler extends ArchiveHandler {
   @NotNull
   @Override
   public byte[] contentsToByteArray(@NotNull String relativePath) throws IOException {
-    FileAccessorCache.Handle<ZipFile> zipRef = getCachedZipFileHandle(true);
-    try {
+    try (ResourceHandle<ZipFile> zipRef = acquireZipHandle()) {
       ZipFile zip = zipRef.get();
       ZipEntry entry = zip.getEntry(relativePath);
       if (entry != null) {
@@ -235,10 +231,7 @@ public class ZipHandler extends ArchiveHandler {
         }
       }
     }
-    finally {
-      zipRef.release();
-    }
-
+    
     throw new FileNotFoundException(getFile() + "!/" + relativePath);
   }
 
@@ -246,7 +239,7 @@ public class ZipHandler extends ArchiveHandler {
   @Override
   public InputStream getInputStream(@NotNull String relativePath) throws IOException {
     boolean release = true;
-    final FileAccessorCache.Handle<ZipFile> zipRef = getCachedZipFileHandle(true);
+    final ResourceHandle<ZipFile> zipRef = acquireZipHandle();
     try {
       ZipFile zip = zipRef.get();
       ZipEntry entry = zip.getEntry(relativePath);
@@ -276,12 +269,17 @@ public class ZipHandler extends ArchiveHandler {
     throw new FileNotFoundException(getFile() + "!/" + relativePath);
   }
 
-  private static class InputStreamWrapper extends InputStream {
+  @NotNull
+  protected ResourceHandle<ZipFile> acquireZipHandle() throws IOException {
+    return getCachedZipFileHandle(true);
+  }
+
+  private class InputStreamWrapper extends InputStream {
     private final InputStream myStream;
-    private final FileAccessorCache.Handle<ZipFile> myZipRef;
+    private final ResourceHandle<ZipFile> myZipRef;
     private final AtomicBoolean closed = new AtomicBoolean(false);
 
-    public InputStreamWrapper(InputStream stream, FileAccessorCache.Handle<ZipFile> zipRef) {
+    public InputStreamWrapper(InputStream stream, ResourceHandle<ZipFile> zipRef) {
       myStream = stream;
       myZipRef = zipRef;
     }
