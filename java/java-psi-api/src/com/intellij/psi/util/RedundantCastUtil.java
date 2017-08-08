@@ -18,6 +18,7 @@ package com.intellij.psi.util;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
@@ -361,6 +362,7 @@ public class RedundantCastUtil {
 
       try {
         for (int i = 0; i < args.length; i++) {
+          ProgressManager.checkCanceled();
           final PsiExpression arg = deparenthesizeExpression(args[i]);
           if (arg instanceof PsiTypeCastExpression) {
             PsiTypeCastExpression cast = (PsiTypeCastExpression)arg;
@@ -436,6 +438,7 @@ public class RedundantCastUtil {
             if (interfaceType != null) {
               List<PsiExpression> expressions = LambdaUtil.getReturnExpressions((PsiLambdaExpression)arg);
               for (int returnExprIdx = 0; returnExprIdx < expressions.size(); returnExprIdx++) {
+                ProgressManager.checkCanceled();
                 PsiExpression returnExpression = deparenthesizeExpression(expressions.get(returnExprIdx));
                 if (returnExpression instanceof PsiTypeCastExpression) {
                   processLambdaReturnExpression(expression, i, interfaceType, (PsiTypeCastExpression)returnExpression, returnExprIdx,

@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.psiutils;
 
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
@@ -159,6 +160,7 @@ public class MethodUtils {
       }
       final PsiParameter[] parameters = parameterList.getParameters();
       for (int i = 0; i < parameters.length; i++) {
+        ProgressManager.checkCanceled();
         final PsiParameter parameter = parameters[i];
         final PsiType type = parameter.getType();
         final PsiType parameterType = parameterTypes[i];
@@ -196,6 +198,7 @@ public class MethodUtils {
       if (parameterTypeStrings != null) {
         final PsiType[] parameterTypes = PsiType.createArray(parameterTypeStrings.length);
         for (int i = 0; i < parameterTypeStrings.length; i++) {
+          ProgressManager.checkCanceled();
           final String parameterTypeString = parameterTypeStrings[i];
           parameterTypes[i] = factory.createTypeFromText(parameterTypeString, method);
         }
@@ -298,6 +301,7 @@ public class MethodUtils {
       return true;
     }
     for (PsiStatement statement : statements) {
+      ProgressManager.checkCanceled();
       if (statement instanceof PsiEmptyStatement) {
         continue;
       }
@@ -346,6 +350,7 @@ public class MethodUtils {
     final PsiReferenceList throwsList = method.getThrowsList();
     final PsiJavaCodeReferenceElement[] references = throwsList.getReferenceElements();
     for (PsiJavaCodeReferenceElement reference : references) {
+      ProgressManager.checkCanceled();
       final PsiElement target = reference.resolve();
       if (!(target instanceof PsiClass)) {
         continue;

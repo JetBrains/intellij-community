@@ -33,6 +33,7 @@ import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtilCore;
 import com.intellij.openapi.util.Computable;
@@ -461,6 +462,7 @@ public class RefManagerImpl extends RefManager {
   private class ProjectIterator extends PsiElementVisitor {
     @Override
     public void visitElement(PsiElement element) {
+      ProgressManager.checkCanceled();
       final RefManagerExtension extension = getExtension(element.getLanguage());
       if (extension != null) {
         extension.visitElement(element);

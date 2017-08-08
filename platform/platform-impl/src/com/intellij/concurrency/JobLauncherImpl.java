@@ -320,7 +320,7 @@ public class JobLauncherImpl extends JobLauncher {
         return super.toString() + " seq="+mySeq;
       }
     }
-
+    progress.checkCanceled(); // do not start up expensive threads if there's no need to
     boolean isSmallEnough = things.contains(tombStone);
     if (isSmallEnough) {
       try {
