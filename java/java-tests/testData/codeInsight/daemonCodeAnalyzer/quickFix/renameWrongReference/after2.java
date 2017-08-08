@@ -5,7 +5,7 @@ class c {
      int i = 0;
      i++;
    } else {
-     i<caret>++;
+     k++;
    }
  }
  int k;

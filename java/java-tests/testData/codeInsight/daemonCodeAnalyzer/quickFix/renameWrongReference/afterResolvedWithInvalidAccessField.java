@@ -7,6 +7,6 @@ class Foo {
     float myFloat;
 
     void buzz() {
-        myI<caret>nt + myInt;
+        myFloat + myFloat;
     }
 }
