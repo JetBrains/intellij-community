@@ -15,6 +15,7 @@
  */
 package com.intellij.execution;
 
+import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.CompilerModuleExtension;
@@ -50,7 +51,7 @@ public class TestClassCollector {
     Module module = configuration.getConfigurationModule().getModule();
     List<URL> urls = new ArrayList<>();
 
-    PathsList pathsList = (module == null ? OrderEnumerator.orderEntries(configuration.getProject()) : OrderEnumerator.orderEntries(module))
+    PathsList pathsList = (module == null || configuration.getTestSearchScope() == TestSearchScope.WHOLE_PROJECT ? OrderEnumerator.orderEntries(configuration.getProject()) : OrderEnumerator.orderEntries(module))
       .runtimeOnly().recursively().getPathsList(); //include jdk to avoid NoClassDefFoundError for classes inside tools.jar
     for (VirtualFile file : pathsList.getVirtualFiles()) {
       try {
