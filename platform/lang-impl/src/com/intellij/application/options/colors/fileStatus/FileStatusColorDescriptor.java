@@ -17,6 +17,7 @@ package com.intellij.application.options.colors.fileStatus;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FileStatus;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
@@ -25,12 +26,13 @@ public class FileStatusColorDescriptor {
   private Color myColor;
   private Color myDefaultColor;
 
-  public FileStatusColorDescriptor(FileStatus fileStatus, Color color, Color defaultColor) {
+  public FileStatusColorDescriptor(@NotNull FileStatus fileStatus, Color color, Color defaultColor) {
     myStatus = fileStatus;
     myColor = color;
     myDefaultColor = defaultColor;
   }
 
+  @NotNull
   public FileStatus getStatus() {
     return myStatus;
   }
