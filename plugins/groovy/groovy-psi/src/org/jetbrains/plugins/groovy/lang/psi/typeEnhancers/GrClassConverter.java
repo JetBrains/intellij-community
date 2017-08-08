@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,10 @@ public class GrClassConverter extends GrTypeConverter {
                                           @NotNull ApplicableTo currentPosition) {
     if (!(targetType instanceof PsiClassType) ||
         !((PsiClassType)targetType).rawType().equalsToText(CommonClassNames.JAVA_LANG_CLASS)) {
+      return null;
+    }
+    if (actualType instanceof PsiClassType &&
+        ((PsiClassType)actualType).rawType().equalsToText(CommonClassNames.JAVA_LANG_CLASS)) {
       return null;
     }
     if (actualType == PsiType.NULL) return ConversionResult.OK;

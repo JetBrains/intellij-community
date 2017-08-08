@@ -15,9 +15,11 @@
  */
 package org.jetbrains.plugins.groovy.lang.highlighting
 
+import com.intellij.codeInspection.InspectionProfileEntry
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
+import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 
 class GrGenericsInferringTest extends GrHighlightingTestBase {
 
@@ -26,6 +28,10 @@ class GrGenericsInferringTest extends GrHighlightingTestBase {
   protected LightProjectDescriptor getProjectDescriptor() {
     return GroovyLightProjectDescriptor.GROOVY_2_3
   }
+
+  @Override
+  InspectionProfileEntry[] getCustomInspections() { [new GroovyAssignabilityCheckInspection()] }
+
 
   void testMapExplicit() {
     testHighlighting '''
@@ -395,4 +401,32 @@ class SomeClass2 {
   }
   '''
   }
+
+  void testListToArrayCoercion() {
+    testHighlighting '''\
+  import groovy.transform.CompileStatic
+  
+  @CompileStatic
+  class SomeClass2 {
+      static SomeClass2[] join() {
+          <error>return</error> []
+      }
+  }
+  '''
+  }
+
+  void testComponentCoercion() {
+    testHighlighting '''\
+import groovy.transform.CompileStatic
+
+@CompileStatic
+class SomeClass {
+    static List<Object> join() {
+        <error>return</error> new ArrayList<SomeClass>()
+
+    }
+}
+  '''
+  }
+
 }

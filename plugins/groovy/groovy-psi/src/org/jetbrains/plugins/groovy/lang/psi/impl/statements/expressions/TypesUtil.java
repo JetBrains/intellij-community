@@ -294,14 +294,6 @@ public class TypesUtil implements TypeConstants {
     PsiManager manager = context.getManager();
     GlobalSearchScope scope = context.getResolveScope();
 
-    if (rType instanceof GrTupleType && ((GrTupleType)rType).getComponentTypes().length == 0) {
-      if (lType instanceof PsiArrayType ||
-          InheritanceUtil.isInheritor(lType, CommonClassNames.JAVA_UTIL_LIST) ||
-          InheritanceUtil.isInheritor(lType, CommonClassNames.JAVA_UTIL_SET)) {
-        return true;
-      }
-    }
-
     if (rType instanceof GrTraitType) {
       for (PsiType type : ((GrTraitType)rType).getConjuncts()) {
         if (isAssignableWithoutConversions(lType, type, context)) return true;
