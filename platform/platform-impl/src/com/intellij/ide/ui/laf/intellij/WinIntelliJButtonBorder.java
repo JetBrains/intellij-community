@@ -36,10 +36,6 @@ import static com.intellij.ide.ui.laf.intellij.WinIntelliJButtonUI.DISABLED_ALPH
 public class WinIntelliJButtonBorder implements Border, UIResource {
   @Override
   public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-    paint(c, g, x, y, width, height);
-  }
-
-  static void paint(Component c, Graphics g, int x, int y, int width, int height) {
     if (!(c instanceof AbstractButton) || DarculaButtonUI.isHelpButton((JComponent)c)) return;
 
     Graphics2D g2 = (Graphics2D)g.create();
@@ -86,7 +82,9 @@ public class WinIntelliJButtonBorder implements Border, UIResource {
 
   @Override
   public Insets getBorderInsets(Component c) {
-    if (UIUtil.getParentOfType(ActionToolbar.class, c) != null) {
+    if (DarculaButtonUI.isComboButton((JComponent)c)) {
+      return JBUI.insets(2).asUIResource();
+    } else if (UIUtil.getParentOfType(ActionToolbar.class, c) != null) {
       return JBUI.insets(4, 16, 4, 19).asUIResource();
     } else if (isSquare(c)) {
       return JBUI.insets(2).asUIResource();

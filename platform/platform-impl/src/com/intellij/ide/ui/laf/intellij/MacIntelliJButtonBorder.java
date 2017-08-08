@@ -46,7 +46,7 @@ public class MacIntelliJButtonBorder implements Border, UIResource {
 
   @Override
   public Insets getBorderInsets(Component c) {
-    return JBUI.insets(3, 3).asUIResource();
+    return JBUI.insets(3).asUIResource();
   }
 
   @Override

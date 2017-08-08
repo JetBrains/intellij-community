@@ -1320,7 +1320,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       setOpaque(false);
     } else {
       if (UIUtil.isUnderWin10LookAndFeel()) {
-        setBorder(JBUI.Borders.empty(1));
+        setBorder(JBUI.Borders.empty(0));
         setMinimumButtonSize(myDecorateButtons ? JBUI.size(30, 20) : JBUI.size(25, 22));
       } else {
         setBorder(JBUI.Borders.empty(2));
