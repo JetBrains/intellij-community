@@ -17,6 +17,7 @@ package com.intellij.openapi.util.io;
 
 import com.intellij.CommonBundle;
 import com.intellij.Patches;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
@@ -44,6 +45,7 @@ import java.util.*;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.RunnableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor", "MethodOverridesStaticMethodOfSuperclass"})
@@ -485,7 +487,7 @@ public class FileUtil extends FileUtilRt {
     }
     catch (IOException e) {
       if (SystemInfo.isWindows && e.getMessage() != null && e.getMessage().contains("denied") &&
-          WinUACTemporaryFix.nativeCopy(fromFile, toFile, syncTimestamp)) {
+          nativeWindowsCopy(fromFile, toFile)) {
         return;
       }
       throw e;
@@ -516,6 +518,29 @@ public class FileUtil extends FileUtilRt {
 
     if (SystemInfo.isUnix && fromFile.canExecute()) {
       FileSystemUtil.clonePermissionsToExecute(fromFile.getPath(), toFile.getPath());
+    }
+  }
+
+  private static boolean nativeWindowsCopy(@NotNull final File src, @NotNull final File dst) {
+    final File launcher = PathManager.findBinFile(PathManager.WIN_LAUNCHER);
+    if (launcher == null || !launcher.exists()) {
+      return false;
+    }
+
+    try {
+      final ProcessBuilder builder =
+        new ProcessBuilder(launcher.getAbsolutePath(), "cmd.exe", "/C", "copy", src.getAbsolutePath(), dst.getAbsolutePath());
+      final Process process = builder.start();
+
+      final String error = StreamUtil.readText(process.getErrorStream(), Charset.defaultCharset());
+      final String out = StreamUtil.readText(process.getInputStream(), Charset.defaultCharset());
+      LOG.info("out" + out);
+      LOG.info("error" + error);
+      return process.waitFor(15, TimeUnit.SECONDS);
+    }
+    catch (final IOException | InterruptedException ex) {
+      LOG.warn(ex);
+      return false;
     }
   }
 
@@ -1193,7 +1218,7 @@ public class FileUtil extends FileUtilRt {
   public static String sanitizeFileName(@NotNull String name) {
     return sanitizeFileName(name, true);
   }
-  
+
   @NotNull
   public static String sanitizeFileName(@NotNull String name, boolean strict) {
     StringBuilder result = null;

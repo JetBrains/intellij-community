@@ -55,6 +55,10 @@ public class PathManager {
   public static final String PROPERTY_LOG_PATH = "idea.log.path";
   public static final String PROPERTY_PATHS_SELECTOR = "idea.paths.selector";
   public static final String DEFAULT_OPTIONS_FILE_NAME = "other";
+  /**
+   * Tool to launch any command under UAC
+   */
+  public static final String WIN_LAUNCHER = "launcher.exe";
 
   private static final String PROPERTY_HOME = "idea.home";  // reduced variant of PROPERTY_HOME_PATH, now deprecated
 
