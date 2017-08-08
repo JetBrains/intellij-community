@@ -19,6 +19,7 @@ import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.ConfigurationContainer;
+import org.gradle.api.specs.Specs;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.api.tasks.SourceSetOutput;
@@ -27,6 +28,7 @@ import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.api.tasks.testing.Test;
 import org.gradle.plugins.ide.idea.IdeaPlugin;
 import org.gradle.plugins.ide.idea.model.IdeaModel;
+import org.gradle.util.CollectionUtils;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,10 +46,16 @@ import java.io.IOException;
 import java.util.*;
 
 /**
+ * @deprecated to be removed in 2018.1
+ *
  * @author Vladislav.Soroka
  * @since 11/5/13
  */
 public class ModuleExtendedModelBuilderImpl implements ModelBuilderService {
+
+  private static boolean is41orBetter = GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("4.1")) >= 0;
+  private static boolean is4OorBetter = is41orBetter ||
+                                        GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("4.0")) >= 0;
 
   private static final String SOURCE_SETS_PROPERTY = "sourceSets";
   private static final String TEST_SRC_DIRS_PROPERTY = "testSrcDirs";
@@ -97,7 +105,12 @@ public class ModuleExtendedModelBuilderImpl implements ModelBuilderService {
     for (Task task : project.getTasks()) {
       if (task instanceof Test) {
         Test test = (Test)task;
-        testClassesDirs.add(test.getTestClassesDir());
+        if (is41orBetter) {
+          testClassesDirs.addAll(test.getTestClassesDirs().getFiles());
+        }
+        else {
+          testClassesDirs.add(test.getTestClassesDir());
+        }
 
         if (test.hasProperty(TEST_SRC_DIRS_PROPERTY)) {
           Object testSrcDirs = test.property(TEST_SRC_DIRS_PROPERTY);
@@ -124,7 +137,13 @@ public class ModuleExtendedModelBuilderImpl implements ModelBuilderService {
             compilerOutput.setTestResourcesDir(output.getResourcesDir());
           }
           if (SourceSet.MAIN_SOURCE_SET_NAME.equals(sourceSet.getName())) {
-            compilerOutput.setMainClassesDir(output.getClassesDir());
+            if (is4OorBetter) {
+              File firstClassesDir = CollectionUtils.findFirst(output.getClassesDirs().getFiles(), Specs.SATISFIES_ALL);
+              compilerOutput.setMainClassesDir(firstClassesDir);
+            }
+            else {
+              compilerOutput.setMainClassesDir(output.getClassesDir());
+            }
             compilerOutput.setMainResourcesDir(output.getResourcesDir());
           }
 
