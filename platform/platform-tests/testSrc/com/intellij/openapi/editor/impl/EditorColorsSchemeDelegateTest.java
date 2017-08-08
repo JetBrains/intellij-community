@@ -17,6 +17,7 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions;
+import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl;
 import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -66,7 +67,14 @@ public class EditorColorsSchemeDelegateTest extends AbstractEditorTest {
       assertEquals(2, globalPrefs.getRealFontFamilies().size());
       ((EditorEx)myEditor).reinitSettings();
 
-      FontPreferences editorPrefs = myEditor.getColorsScheme().getFontPreferences();
+      EditorColorsScheme editorScheme = myEditor.getColorsScheme();
+      assertInstanceOf(editorScheme, DelegateColorScheme.class);
+      EditorColorsScheme delegate = ((DelegateColorScheme)editorScheme).getDelegate();
+      assertTrue(delegate.isUseAppFontPreferencesInEditor());
+      FontPreferences delegatePrefs = delegate.getFontPreferences();
+      assertEquals(globalPrefs.getRealFontFamilies(), delegatePrefs.getRealFontFamilies());
+
+      FontPreferences editorPrefs = editorScheme.getFontPreferences();
       LOG.debug(dumpFontPreferences("editorPrefs", editorPrefs));
       assertEquals(2, editorPrefs.getRealFontFamilies().size());
       assertEquals(secondaryFont, editorPrefs.getRealFontFamilies().get(1));
