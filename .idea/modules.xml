@@ -119,6 +119,7 @@
       <module fileurl="file://$PROJECT_DIR$/java/idea-ui/idea-ui.iml" filepath="$PROJECT_DIR$/java/idea-ui/idea-ui.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/java/idea-ui/idea-ui-tests.iml" filepath="$PROJECT_DIR$/java/idea-ui/idea-ui-tests.iml"/>
       <module fileurl="file://$PROJECT_DIR$/images/images.iml" filepath="$PROJECT_DIR$/images/images.iml" group="platform" />
+      <module fileurl="file://$PROJECT_DIR$/platform/build-scripts/icons/images-build-scripts.iml" filepath="$PROJECT_DIR$/platform/build-scripts/icons/images-build-scripts.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/indexing-api/indexing-api.iml" filepath="$PROJECT_DIR$/platform/indexing-api/indexing-api.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/indexing-impl/indexing-impl.iml" filepath="$PROJECT_DIR$/platform/indexing-impl/indexing-impl.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/instant-run/instant-run-annotations/instant-run-annotations.iml" filepath="$PROJECT_DIR$/android/tools-base/instant-run/instant-run-annotations/instant-run-annotations.iml" group="android/sdktools/instant-run" />
