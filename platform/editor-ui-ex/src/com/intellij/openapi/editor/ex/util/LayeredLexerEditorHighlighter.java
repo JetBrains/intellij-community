@@ -497,6 +497,11 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
     }
   }
 
+  @Override
+  protected boolean hasAdditionalData(int segmentIndex) {
+    return getSegments().myRanges[segmentIndex] != null;
+  }
+
   private class LayeredHighlighterIteratorImpl implements LayeredHighlighterIterator {
     private final HighlighterIterator myBaseIterator;
     private HighlighterIterator myLayerIterator;
