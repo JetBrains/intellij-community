@@ -174,8 +174,8 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       withResourceFromModule("android","lib/asm-analysis-5.0.3.jar", "lib")
       withResourceFromModule("android","lib/asm-tree-5.0.3.jar", "lib")
       withResourceFromModule("android","lib/commons-io-2.4.jar", "lib")
-      withResourceFromModule("android","lib/commons-compress-1.8.1.jar", "lib")
-      withResourceFromModule("android","lib/javawriter-2.2.1.jar", "lib")
+      withResourceFromModule("android","lib/commons-compress-1.8.1.jar", "lib") // Do we need this? Nothing references it.
+      withResourceFromModule("android","lib/javawriter-2.2.1.jar", "lib")  // Do we need this? Nothing references it.
       withResourceFromModule("android","lib/juniversalchardet-1.0.3.jar", "lib")
 
       withResourceFromModule("android","lib/androidWidgets", "lib/androidWidgets")
@@ -264,7 +264,9 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       fileset(dir: "$root/bazel-bin/tools/base/profiler/native/perfa/android")
     }
     buildContext.ant.copy(todir: "$androidPluginLib/../resources/simpleperf") {
-      fileset(dir: "$root/prebuilts/tools/common/simpleperf")
+      fileset(dir: "$root/prebuilts/tools/common/simpleperf") {
+        exclude(name: "BUILD")
+      }
     }
 
     buildContext.ant.copy(todir: "$targetDirectory/bin/lldb/shared") {

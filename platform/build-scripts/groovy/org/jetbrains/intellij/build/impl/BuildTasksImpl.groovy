@@ -386,7 +386,7 @@ idea.fatal.error.notification=disabled
 
   private void checkPluginModules(List<String> pluginModules, String fieldName, Set<String> optionalModules) {
     checkModules(pluginModules, fieldName)
-    def unknownBundledPluginModules = pluginModules.findAll { !optionalModules.contains(it) && buildContext.findFileInModuleSources(it, "META-INF/plugin.xml") == null }
+    def unknownBundledPluginModules = pluginModules.findAll { !optionalModules.contains(it) && !buildContext.hasResource(it, "META-INF/plugin.xml") }
     if (!unknownBundledPluginModules.empty) {
       buildContext.messages.error(
         "The following modules from $fieldName don't contain META-INF/plugin.xml file and aren't specified as optional plugin modules " +

@@ -16,6 +16,9 @@
 package org.jetbrains.intellij.build
 
 import org.codehaus.gant.GantBinding
+import org.jetbrains.jps.gant.JpsGantProjectBuilder
+import org.jetbrains.jps.model.JpsGlobal
+import org.jetbrains.jps.model.JpsProject
 
 /**
  * Based on IdeaCommunityBuilder, but simplified a bit since we build fewer things
@@ -26,8 +29,13 @@ class AndroidStudioBuilder {
   private final BuildContext buildContext
 
   AndroidStudioBuilder(String home, GantBinding binding, BuildOptions options = new BuildOptions(), String projectHome = home) {
+    this(home, binding, binding.ant, binding.projectBuilder, binding.project, binding.global, options, projectHome)
+  }
+
+  AndroidStudioBuilder(String home, GantBinding binding, AntBuilder ant, JpsGantProjectBuilder projectBuilder, JpsProject project,
+                       JpsGlobal global, BuildOptions options = new BuildOptions(), String projectHome = home) {
     this.binding = binding
-    buildContext = BuildContext.createContext(binding.ant, binding.projectBuilder, binding.project, binding.global, home, projectHome,
+    buildContext = BuildContext.createContext(ant, projectBuilder, project, global, home, projectHome,
                                               new AndroidStudioProperties(home), ProprietaryBuildTools.DUMMY,
                                               options)
   }
@@ -41,10 +49,12 @@ class AndroidStudioBuilder {
     layoutAdditionalArtifacts()
   }
 
-  void buildDistributions() {
+  void buildDistributions(boolean additional = true) {
     def tasks = BuildTasks.create(buildContext)
     tasks.buildDistributions()
-    layoutAdditionalArtifacts(true)
+    if (additional) {
+      layoutAdditionalArtifacts(true)
+    }
     tasks.buildUpdaterJar()
   }
 

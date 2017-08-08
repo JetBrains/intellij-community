@@ -89,6 +89,8 @@ abstract class BuildContext {
 
   abstract File findFileInModuleSources(String moduleName, String relativePath)
 
+  abstract boolean hasResource(String moduleName, String relativePath)
+
   abstract void signExeFile(String path)
 
   /**

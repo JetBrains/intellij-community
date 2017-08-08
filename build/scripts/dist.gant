@@ -17,6 +17,7 @@
 
 import org.jetbrains.intellij.build.AndroidStudioBuilder
 import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.ExternalProjectBuilder
 import org.jetbrains.intellij.build.IdeaCommunityBuilder
 
 import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
@@ -40,6 +41,15 @@ target('default': 'The default target') {
   options.outputRootPath = out
   options.buildNumber = System.getProperty("buildNumber")
   new AndroidStudioBuilder(home, binding, options).buildDistributions()
+}
+
+target('assemble': 'Only run the assemble step, do not build') {
+  def options = new BuildOptions()
+  options.outputRootPath = out
+  options.buildNumber = System.getProperty("buildNumber")
+  def projectBuilder = new ExternalProjectBuilder(binding.ant.project)
+  def builder = new AndroidStudioBuilder(home, binding, binding.ant, projectBuilder, binding.project, binding.global, options)
+  builder.buildDistributions(false)
 }
 
 //todo[nik] do we really need this target? update.xml calls layout.gant directly
