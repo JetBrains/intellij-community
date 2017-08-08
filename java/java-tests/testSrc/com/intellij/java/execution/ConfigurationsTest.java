@@ -459,8 +459,10 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     Disposer.register(getTestRootDisposable(), new Disposable() {
       @Override
       public void dispose() {
-        FileUtil.delete(new File(outputs[0]));
-        FileUtil.delete(new File(outputs[1]));
+        for (File file : new File(outputs[1]).listFiles()) {
+          if (file.getName().equals("keep.dir")) continue;
+          FileUtil.delete(file);
+        }
       }
     });
     return outputs;
@@ -480,7 +482,7 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
       try {
         CompilerTester tester = new CompilerTester(project, Arrays.asList(ModuleManager.getInstance(project).getModules()));
         try {
-          tester.rebuild();
+          tester.make();
           task.startSearch();
         }
         finally {
