@@ -46,6 +46,7 @@ import java.util.*;
 /**
  * @author Vladislav.Soroka
  * @since 11/5/13
+ * @deprecated to be removed in 2018.1
  */
 public class ModuleExtendedModelBuilderImpl implements ModelBuilderService {
 
@@ -71,7 +72,7 @@ public class ModuleExtendedModelBuilderImpl implements ModelBuilderService {
       if (task instanceof JavaCompile) {
         JavaCompile javaCompile = (JavaCompile)task;
         javaSourceCompatibility = javaCompile.getSourceCompatibility();
-        if(task.getName().equals("compileJava")) break;
+        if (task.getName().equals("compileJava")) break;
       }
     }
 
@@ -97,7 +98,10 @@ public class ModuleExtendedModelBuilderImpl implements ModelBuilderService {
     for (Task task : project.getTasks()) {
       if (task instanceof Test) {
         Test test = (Test)task;
-        testClassesDirs.add(test.getTestClassesDir());
+        File classesDir = test.getTestClassesDir();
+        if(classesDir != null) {
+          testClassesDirs.add(classesDir);
+        }
 
         if (test.hasProperty(TEST_SRC_DIRS_PROPERTY)) {
           Object testSrcDirs = test.property(TEST_SRC_DIRS_PROPERTY);
@@ -257,7 +261,7 @@ public class ModuleExtendedModelBuilderImpl implements ModelBuilderService {
       testDirectories.add(file.getPath());
     }
 
-    if(GradleVersion.current().compareTo(GradleVersion.version("2.2")) >=0) {
+    if (GradleVersion.current().compareTo(GradleVersion.version("2.2")) >= 0) {
       for (File file : ideaModel.getModule().getGeneratedSourceDirs()) {
         ideaGeneratedDirectories.add(file.getPath());
       }
