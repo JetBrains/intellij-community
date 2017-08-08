@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Clone of GeneralCommandLine.
@@ -28,7 +29,7 @@ public class ProcessBuilder {
 
   private static boolean isWindows() {
     try {
-      return System.getProperty("os.name").toLowerCase().startsWith("windows");
+      return System.getProperty("os.name").toLowerCase(Locale.US).startsWith("windows");
     }
     catch (SecurityException e) {
       return false;
