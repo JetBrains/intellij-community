@@ -36,16 +36,16 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.psi.stubs.Stub;
+import com.intellij.psi.stubs.PsiFileStub;
 import com.intellij.psi.stubs.StubTree;
 import com.intellij.psi.stubs.StubTreeBuilder;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileContentImpl;
 import com.intellij.util.indexing.IndexingDataKeys;
@@ -218,18 +218,29 @@ public class PsiTestUtil {
     });
   }
 
-  public static void checkFileStructure(PsiFile file) throws IncorrectOperationException {
-    String originalTree = DebugUtil.psiTreeToString(file, false);
-    PsiFile dummyFile = PsiFileFactory.getInstance(file.getProject()).createFileFromText(file.getName(), file.getFileType(), file.getText());
-    String reparsedTree = DebugUtil.psiTreeToString(dummyFile, false);
-    Assert.assertEquals(reparsedTree, originalTree);
+  public static void checkFileStructure(PsiFile file) {
+    compareFromAllRoots(file, f -> DebugUtil.psiTreeToString(f, false));
   }
 
-  public static void checkPsiMatchesTextIgnoringWhitespace(PsiFile file) throws IncorrectOperationException {
-    String originalTree = DebugUtil.psiTreeToString(file, true);
-    PsiFile dummyFile = PsiFileFactory.getInstance(file.getProject()).createFileFromText(file.getName(), file.getFileType(), file.getText());
-    String reparsedTree = DebugUtil.psiTreeToString(dummyFile, true);
-    Assert.assertEquals(reparsedTree, originalTree);
+  private static void compareFromAllRoots(PsiFile file, Function<PsiFile, String> fun) {
+    PsiFile dummyFile = createDummyCopy(file);
+
+    String psiTree = StringUtil.join(file.getViewProvider().getAllFiles(), fun, "\n");
+    String reparsedTree = StringUtil.join(dummyFile.getViewProvider().getAllFiles(), fun, "\n");
+    if (!psiTree.equals(reparsedTree)) {
+      Assert.assertEquals("Re-created from text:\n" + reparsedTree, "PSI structure:\n" + psiTree);
+    }
+  }
+
+  @NotNull
+  private static PsiFile createDummyCopy(PsiFile file) {
+    LightVirtualFile copy = new LightVirtualFile(file.getName(), file.getText());
+    copy.setOriginalFile(file.getViewProvider().getVirtualFile());
+    return Objects.requireNonNull(file.getManager().findFile(copy));
+  }
+
+  public static void checkPsiMatchesTextIgnoringWhitespace(PsiFile file) {
+    compareFromAllRoots(file, f -> DebugUtil.psiTreeToString(f, true));
   }
 
   public static void addLibrary(Module module, String libPath) {
@@ -415,16 +426,16 @@ public class PsiTestUtil {
   }
 
   public static void checkStubsMatchText(@NotNull PsiFile file) {
-    StubTree tree = getStubTree(file);
+    StubTree tree = getStubTree(file.getViewProvider().getStubBindingRoot());
     if (tree == null) return;
     
     FileContentImpl fc = new FileContentImpl(file.getViewProvider().getVirtualFile(), file.getText(), 0);
     fc.putUserData(IndexingDataKeys.PROJECT, file.getProject());
-    Stub copyTree = StubTreeBuilder.buildStubTree(fc);
+    PsiFileStub copyTree = (PsiFileStub) StubTreeBuilder.buildStubTree(fc);
     if (copyTree == null) return;
 
-    String fromText = DebugUtil.stubTreeToString(copyTree);
-    String fromPsi = DebugUtil.stubTreeToString(tree.getRoot());
+    String fromText = StringUtil.join(copyTree.getStubRoots(), DebugUtil::stubTreeToString, "\n");
+    String fromPsi = StringUtil.join(tree.getRoot().getStubRoots(), DebugUtil::stubTreeToString, "\n");
     if (!fromText.equals(fromPsi)) {
       Assert.assertEquals("Re-created from text:\n" + fromText, "Stubs from PSI structure:\n" + fromPsi);
     }
