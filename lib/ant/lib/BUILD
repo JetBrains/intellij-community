@@ -132,7 +132,7 @@ java_import(
 )
 
 filegroup(
-    name = "ant-all",
+    name = "all-libs",
     srcs = glob(["**"]),
     visibility = ["//visibility:public"],
 )

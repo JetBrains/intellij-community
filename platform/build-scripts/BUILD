@@ -44,7 +44,7 @@ iml_module(
 )
 
 filegroup(
-    name = "ant-build",
+    name = "scripts",
     srcs = glob(["groovy/**/*"]),
     visibility = ["//visibility:public"],
 )

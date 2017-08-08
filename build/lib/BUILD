@@ -6,7 +6,7 @@ java_import(
 )
 
 filegroup(
-    name = "ant-build",
+    name = "utilities",
     srcs = [
         "jarjar-1.5.jar",
         "launcher-generator.jar",

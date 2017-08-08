@@ -6,7 +6,7 @@ java_import(
 )
 
 filegroup(
-    name = "ant-build",
-    srcs = glob(["**"]),
+    name = "jars",
+    srcs = glob(["*.jar"]),
     visibility = ["//visibility:public"],
 )

@@ -679,31 +679,11 @@ java_import(
 
 exports_files(["src/trove4j_src.jar"])
 
+# TODO: When using ant to package all the libraries are included, and if they are not present
+# there is no error. We will need to revisit both, and acually make sure we only bundle what
+# we need.
 filegroup(
-    name = "gant-libs",
-    srcs = [
-        "//tools/idea/lib:log4j",
-        "//tools/idea/lib:nanoxml-2.2.3",
-        "//tools/idea/lib:netty-all-4.1.9.Final",
-        "//tools/idea/lib:oromatcher",
-        "//tools/idea/lib:picocontainer",
-        "//tools/idea/lib:protobuf-2.5.0",
-        "//tools/idea/lib:snappy-in-java-0.5.1",
-        "//tools/idea/lib:src/trove4j_src.jar",
-        "//tools/idea/lib:trove4j",
-        "//tools/idea/lib:xercesImpl",
-        "//tools/idea/lib:xml-apis",
-        "//tools/idea/lib:xml-apis-ext",
-        "//tools/idea/lib/ant/lib:ant-all",
-        "//tools/idea/lib:asm-all",
-        "//tools/idea/lib:cli-parser-1.1",
-        "//tools/idea/lib:commons-compress-1.10",
-        "//tools/idea/lib:groovy-all-2.4.6",
-        "//tools/idea/lib:guava-19.0",
-        "//tools/idea/lib:jdom",
-        "//tools/idea/lib:jgoodies-forms",
-        "//tools/idea/lib:jna",
-        "//tools/idea/lib:jna-platform",
-    ] + glob(["libpty/**"]),
+    name = "all-libs",
+    srcs = ["//tools/idea/lib/ant:ant-all"] + glob(["**"]),
     visibility = ["//visibility:public"],
 )
