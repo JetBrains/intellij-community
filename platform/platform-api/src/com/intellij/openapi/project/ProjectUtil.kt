@@ -33,6 +33,7 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFilePathWrapper
+import com.intellij.openapi.wm.WindowManager
 import com.intellij.util.PathUtilRt
 import com.intellij.util.io.exists
 import com.intellij.util.text.trimMiddle
@@ -79,7 +80,13 @@ fun guessProjectForContentFile(file: VirtualFile, fileType: FileType = FileTypeM
     return null
   }
 
-  return ProjectManager.getInstance().openProjects.firstOrNull { !it.isDefault && it.isInitialized && !it.isDisposed && ProjectRootManager.getInstance(it).fileIndex.isInContent(file) }
+  val list = ProjectManager.getInstance().openProjects.filter {
+    !it.isDefault && it.isInitialized && !it.isDisposed && ProjectRootManager.getInstance(it).fileIndex.isInContent(file)
+  }
+
+  if (list.isEmpty()) return null
+
+  return list.firstOrNull { WindowManager.getInstance().getFrame(it)?.isActive ?: false } ?: list[0]
 }
 
 fun isProjectOrWorkspaceFile(file: VirtualFile): Boolean = ProjectCoreUtil.isProjectOrWorkspaceFile(file)
