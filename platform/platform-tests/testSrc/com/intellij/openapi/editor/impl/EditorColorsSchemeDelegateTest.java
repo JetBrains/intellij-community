@@ -35,6 +35,7 @@ public class EditorColorsSchemeDelegateTest extends AbstractEditorTest {
     super.setUp();
     mySavedScheme = EditorColorsManager.getInstance().getGlobalScheme();
     myTestScheme = (EditorColorsScheme)mySavedScheme.clone();
+    myTestScheme.setUseAppFontPreferencesInEditor();
     myTestScheme.setName("EditingTest.testScheme");
     EditorColorsManager.getInstance().addColorsScheme(myTestScheme);
     EditorColorsManager.getInstance().setGlobalScheme(myTestScheme);
