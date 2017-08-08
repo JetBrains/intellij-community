@@ -25,7 +25,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * @deprecated to be removed in 2018.1
+ * @deprecated Use {@link ExternalProject} model instead.
  *
  * @author Vladislav.Soroka
  * @since 11/5/13

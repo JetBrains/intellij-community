@@ -20,9 +20,6 @@ import org.gradle.api.Nullable;
 import java.io.File;
 import java.io.Serializable;
 
-/**
- * @deprecated to be removed in 2018.1
- */
 public interface ExtIdeaCompilerOutput extends Serializable {
   /**
    * @return the directory to generate the classes of the "main" source set into.
