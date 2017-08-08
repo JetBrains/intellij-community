@@ -34,7 +34,7 @@ import java.util.function.Function;
 
 public class FileStatusColorsTableModel extends AbstractTableModel {
   private final EditorColorsScheme myScheme;
-  private List<FileStatusColorDescriptor> myDescriptors = new ArrayList<>();
+  private List<FileStatusColorDescriptor> myDescriptors;
 
   private final static ColumnInfo[] COLUMNS_INFO = {
     new ColumnInfo(
