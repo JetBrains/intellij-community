@@ -32,7 +32,9 @@ public class Lesson implements StudyItem {
     ChoiceTask.class,
     TheoryTask.class,
     CodeTask.class,
-    TaskWithSubtasks.class})
+    TaskWithSubtasks.class,
+    OutputTask.class
+  })
   public List<Task> taskList = new ArrayList<>();
 
   @Transient

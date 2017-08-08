@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FileStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.table.AbstractTableModel;
 import java.awt.*;
@@ -33,7 +34,7 @@ import java.util.function.Function;
 
 public class FileStatusColorsTableModel extends AbstractTableModel {
   private final EditorColorsScheme myScheme;
-  private List<FileStatusColorDescriptor> myDescriptors = new ArrayList<>();
+  private List<FileStatusColorDescriptor> myDescriptors;
 
   private final static ColumnInfo[] COLUMNS_INFO = {
     new ColumnInfo(
@@ -110,6 +111,16 @@ public class FileStatusColorsTableModel extends AbstractTableModel {
 
   boolean isResetAvailable(int rowIndex) {
     return !myDescriptors.get(rowIndex).isDefault();
+  }
+
+  @Nullable
+  FileStatusColorDescriptor getDescriptorByName(String statusName) {
+    for (FileStatusColorDescriptor descriptor : myDescriptors) {
+      if (statusName.equals(descriptor.getStatus().getText())) {
+        return descriptor;
+      }
+    }
+    return null;
   }
 
   public boolean isModified() {

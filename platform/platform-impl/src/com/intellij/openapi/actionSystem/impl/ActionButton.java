@@ -26,10 +26,7 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.JBDimension;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -215,17 +212,26 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     super.setToolTipText(tooltipText.length() > 0 ? tooltipText : null);
   }
 
-  public Dimension getPreferredSize() {
+  @Override public Insets getInsets() {
+    return myLook.getInsets();
+  }
+
+  @Override public Dimension getPreferredSize() {
     Icon icon = getIcon();
     if (icon.getIconWidth() < myMinimumButtonSize.width &&
         icon.getIconHeight() < myMinimumButtonSize.height) {
-      return myMinimumButtonSize;
+
+      Dimension size = new Dimension(myMinimumButtonSize);
+      JBInsets.addTo(size, getInsets());
+      return size;
     }
     else {
-      return new Dimension(
+      Dimension size = new Dimension(
         Math.max(myMinimumButtonSize.width, icon.getIconWidth() + myInsets.left + myInsets.right),
-        Math.max(myMinimumButtonSize.height, icon.getIconHeight() + myInsets.top + myInsets.bottom)
-      );
+        Math.max(myMinimumButtonSize.height, icon.getIconHeight() + myInsets.top + myInsets.bottom));
+
+      JBInsets.addTo(size, getInsets());
+      return size;
     }
   }
 

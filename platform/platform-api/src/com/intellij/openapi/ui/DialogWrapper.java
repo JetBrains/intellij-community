@@ -776,6 +776,7 @@ public abstract class DialogWrapper {
     for (int i = 0; i < text.length(); i++) {
       char ch = text.charAt(i);
       if (ch == '_' || ch == '&') {
+        //noinspection AssignmentToForLoopParameter
         i++;
         if (i >= text.length()) {
           break;
@@ -1941,7 +1942,11 @@ public abstract class DialogWrapper {
     if (myInfo.equals(info)) return;
 
     myErrorTextAlarm.cancelAllRequests();
-    SwingUtilities.invokeLater(() -> myErrorText.clearError());
+    SwingUtilities.invokeLater(() -> {
+      if (myErrorText != null) {
+        myErrorText.clearError();
+      }
+    });
 
     List<ValidationInfo> corrected = myInfo.stream().filter((vi) -> !info.contains(vi)).collect(Collectors.toList());
     if (Registry.is("ide.inplace.errors.outline")) {
@@ -2119,7 +2124,7 @@ public abstract class DialogWrapper {
 
     private ErrorText(int horizontalAlignment) {
       setLayout(new BorderLayout());
-      myLabel.setBorder(JBUI.Borders.empty(16, 13, 16, 13));
+      myLabel.setBorder(JBUI.Borders.empty(16, 13));
       myLabel.setHorizontalAlignment(horizontalAlignment);
       JBScrollPane pane =
         new JBScrollPane(myLabel, ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);

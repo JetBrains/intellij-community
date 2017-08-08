@@ -133,7 +133,7 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
     CoreProgressManager.runCheckCanceledHooks(this);
     if (isCanceled() && isCancelable()) {
       Throwable trace = getCancellationTrace();
-      throw new ProcessCanceledException(trace instanceof ProcessCanceledException ? trace.getCause() : trace);
+      throw trace instanceof ProcessCanceledException ? (ProcessCanceledException)trace : new ProcessCanceledException(trace);
     }
   }
 

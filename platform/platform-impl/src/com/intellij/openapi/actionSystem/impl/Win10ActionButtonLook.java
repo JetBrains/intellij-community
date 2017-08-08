@@ -26,11 +26,13 @@ import java.awt.geom.Path2D;
 import static com.intellij.openapi.actionSystem.ActionButtonComponent.*;
 
 public class Win10ActionButtonLook extends ActionButtonLook {
-  @Override
-  public void paintBackground(Graphics g, JComponent component, int state) {
+  @Override public void paintBackground(Graphics g, JComponent component, int state) {
     if (state != NORMAL) {
+      Rectangle rect = new Rectangle(component.getSize());
+      JBInsets.removeFrom(rect, component.getInsets());
+
       g.setColor(getBackgroundColorForState(state));
-      g.fillRect(0, 0, component.getWidth(), component.getHeight());
+      g.fillRect(rect.x, rect.y, rect.width, rect.height);
     }
   }
 
@@ -46,14 +48,15 @@ public class Win10ActionButtonLook extends ActionButtonLook {
     }
   }
 
-  @Override
-  public void paintBorder(Graphics g, JComponent component, int state) {
+  @Override public void paintBorder(Graphics g, JComponent component, int state) {
     if (state != NORMAL) {
       Graphics2D g2 = (Graphics2D)g.create();
       try {
         g2.setColor(getBorderColorForState(state));
 
         Rectangle outerRect = new Rectangle(component.getSize());
+        JBInsets.removeFrom(outerRect, component.getInsets());
+
         Path2D border = new Path2D.Double(Path2D.WIND_EVEN_ODD);
         border.append(outerRect, false);
 
@@ -66,6 +69,10 @@ public class Win10ActionButtonLook extends ActionButtonLook {
         g2.dispose();
       }
     }
+  }
+
+  @Override public Insets getInsets() {
+    return JBUI.insets(1);
   }
 
   private static Color getBorderColorForState(int state) {

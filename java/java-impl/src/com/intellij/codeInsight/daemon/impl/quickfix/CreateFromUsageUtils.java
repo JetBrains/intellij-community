@@ -497,7 +497,7 @@ public class CreateFromUsageUtils {
     JavaRecursiveElementWalkingVisitor visitor = new JavaRecursiveElementWalkingVisitor() {
       @Override public void visitReferenceExpression(PsiReferenceExpression expr) {
         if (expression instanceof PsiReferenceExpression) {
-          if (expr.textMatches(expression) && !isValidReference(expr, false)) {
+          if (Comparing.equal(expr.getReferenceName(), ((PsiReferenceExpression)expression).getReferenceName()) && !isValidReference(expr, false)) {
             result.add(expr);
           }
         }
@@ -507,7 +507,7 @@ public class CreateFromUsageUtils {
       @Override public void visitMethodCallExpression(PsiMethodCallExpression expr) {
         if (expression instanceof PsiMethodCallExpression) {
           PsiReferenceExpression methodExpression = expr.getMethodExpression();
-          if (methodExpression.textMatches(((PsiMethodCallExpression) expression).getMethodExpression())) {
+          if (Comparing.equal(methodExpression.getReferenceName(), ((PsiMethodCallExpression) expression).getMethodExpression().getReferenceName())) {
             result.add(expr.getMethodExpression());
           }
         }

@@ -240,12 +240,14 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     myTabs.getPresentation().setPaintBorder(0, 0, 0, 0).setPaintFocus(false)
       .setRequestFocusOnLastFocusedComponent(true);
     myTabs.getComponent().setBackground(myToolbar.getBackground());
-    myTabs.getComponent().setBorder(new EmptyBorder(0, 1, 0, 0));
+    myTabs.getComponent().setBorder(JBUI.Borders.emptyLeft(1));
 
-    final NonOpaquePanel wrapper = new MyComponent(new BorderLayout(0, 0));
+    myToolbar.setBorder(JBUI.Borders.emptyTop(1)); // Compensate negative insets below
+
+    NonOpaquePanel wrapper = new MyComponent(new BorderLayout(0, 0));
     wrapper.add(myToolbar, BorderLayout.WEST);
     wrapper.add(myTabs.getComponent(), BorderLayout.CENTER);
-    wrapper.setBorder(new EmptyBorder(-1, 0, 0, 0));
+    wrapper.setBorder(JBUI.Borders.emptyTop(-1));
 
     myComponent = wrapper;
 

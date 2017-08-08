@@ -113,8 +113,8 @@ public class CompareRevisionsFromHistoryActionProvider implements AnActionExtens
         // so that it could return a single file path for each revision
         VcsFullCommitDetails newestDetail = details.get(0);
         VcsFullCommitDetails olderDetail = details.get(1);
-        notNull(handler).showDiff(olderDetail.getRoot(), ui.getAfterPath(olderDetail), olderDetail.getId(),
-                                  ui.getAfterPath(newestDetail), newestDetail.getId());
+        notNull(handler).showDiff(olderDetail.getRoot(), ui.getPath(olderDetail), olderDetail.getId(),
+                                  ui.getPath(newestDetail), newestDetail.getId());
       }
       else if (details.size() == 1) {
         VcsFullCommitDetails detail = notNull(ContainerUtil.getFirstItem(details));

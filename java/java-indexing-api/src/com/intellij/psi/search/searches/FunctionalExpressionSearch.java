@@ -21,7 +21,6 @@ import com.intellij.psi.PsiFunctionalExpression;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.EmptyQuery;
@@ -46,8 +45,7 @@ public class FunctionalExpressionSearch extends ExtensibleQueryFactory<PsiFuncti
 
     @NotNull
     public SearchScope getEffectiveSearchScope () {
-      SearchScope accessScope = PsiSearchHelper.SERVICE.getInstance(myElementToSearch.getProject()).getUseScope(myElementToSearch);
-      return myScope.intersectWith(accessScope);
+      return myScope.intersectWith(myElementToSearch.getUseScope());
     }
   }
 

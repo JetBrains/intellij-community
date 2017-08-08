@@ -23,6 +23,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
@@ -125,7 +126,7 @@ public class RenameWrongRefFix implements IntentionAction {
         }
       }
 
-      items.add(LookupElementBuilder.create(myRefExpr.getReferenceName()));
+      if (!ApplicationManager.getApplication().isUnitTestMode()) items.add(LookupElementBuilder.create(myRefExpr.getReferenceName()));
       MyScopeProcessor processor = new MyScopeProcessor(myRefExpr);
       myRefExpr.processVariants(processor);
       PsiElement[] variants = processor.getVariants();

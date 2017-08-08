@@ -25,16 +25,16 @@ import java.util.*;
  * @author Irina.Chernushina on 4/22/2017.
  */
 public class MatchResult {
-  public final Set<JsonSchemaObject> mySchemas;
+  public final List<JsonSchemaObject> mySchemas;
   public final List<Set<JsonSchemaObject>> myExcludingSchemas;
 
-  private MatchResult(@NotNull final Set<JsonSchemaObject> schemas, @NotNull final List<Set<JsonSchemaObject>> excludingSchemas) {
-    mySchemas = Collections.unmodifiableSet(schemas);
+  private MatchResult(@NotNull final List<JsonSchemaObject> schemas, @NotNull final List<Set<JsonSchemaObject>> excludingSchemas) {
+    mySchemas = Collections.unmodifiableList(schemas);
     myExcludingSchemas = Collections.unmodifiableList(excludingSchemas);
   }
 
   public static MatchResult create(@NotNull JsonSchemaTreeNode root) {
-    final Set<JsonSchemaObject> schemas = new HashSet<>();
+    final List<JsonSchemaObject> schemas = new ArrayList<>();
     final Map<Integer, Set<JsonSchemaObject>> oneOfGroups = new HashMap<>();
     ContainerUtil.process(new JBTreeTraverser<JsonSchemaTreeNode>(node -> node.getChildren()).withRoot(root).preOrderDfsTraversal(),
                           node -> {

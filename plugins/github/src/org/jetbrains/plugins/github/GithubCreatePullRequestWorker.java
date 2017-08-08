@@ -293,7 +293,7 @@ public class GithubCreatePullRequestWorker {
       });
       fork.setFetchTask(task);
 
-      ApplicationManager.getApplication().executeOnPooledThread(() -> task.run());
+      ApplicationManager.getApplication().executeOnPooledThread(task);
     }
   }
 
@@ -311,7 +311,7 @@ public class GithubCreatePullRequestWorker {
       final SlaveFutureTask<DiffInfo> task = new SlaveFutureTask<>(masterTask, () -> doLoadDiffInfo(branch));
       branch.setDiffInfoTask(task);
 
-      ApplicationManager.getApplication().executeOnPooledThread(() -> task.run());
+      ApplicationManager.getApplication().executeOnPooledThread(task);
     }
   }
 
@@ -834,7 +834,7 @@ public class GithubCreatePullRequestWorker {
     }
 
     protected void runSlave(@NotNull final SlaveFutureTask slave) {
-      ApplicationManager.getApplication().executeOnPooledThread(() -> slave.run());
+      ApplicationManager.getApplication().executeOnPooledThread(slave);
     }
   }
 }

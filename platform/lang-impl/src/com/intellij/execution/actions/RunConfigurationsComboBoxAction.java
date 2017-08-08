@@ -124,9 +124,8 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
   @Override
   public JComponent createCustomComponent(final Presentation presentation) {
     ComboBoxButton button = createComboBoxButton(presentation);
-    button.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 2));
     NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
-    panel.setBorder(JBUI.Borders.empty(0, 0, 0, 2));
+    panel.setBorder(JBUI.Borders.emptyRight(2));
     panel.add(button);
     return panel;
   }

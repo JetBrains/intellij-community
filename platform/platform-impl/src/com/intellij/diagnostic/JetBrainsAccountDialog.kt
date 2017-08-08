@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,5 +62,6 @@ fun showJetBrainsAccountDialog(parent: Component, project: Project? = null): Dia
     if (!userName.isNullOrBlank()) {
       PasswordSafe.getInstance().set(CredentialAttributes(ErrorReportConfigurable.SERVICE_NAME, userName), Credentials(userName, if (rememberCheckBox.isSelected) passwordField.password else null))
     }
+    return@dialog true
   }
 }

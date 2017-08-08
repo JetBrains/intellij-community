@@ -34,10 +34,12 @@ public interface EditorCustomElementRenderer {
   int calcWidthInPixels(@NotNull Editor editor);
 
   /**
-   * Implements painting for the custom region. Rectangle passed as a parameter defines target region where painting should be performed.
-   * Passed text attributes are attributes of surrounding text.
+   * Implements painting for the custom region.
+   * 
+   * @param targetRegion region where painting should be performed
+   * @param textAttributes attributes of surrounding text
    */
-  void paint(@NotNull Editor editor, @NotNull Graphics g, @NotNull Rectangle r, @NotNull TextAttributes textAttributes);
+  void paint(@NotNull Editor editor, @NotNull Graphics g, @NotNull Rectangle targetRegion, @NotNull TextAttributes textAttributes);
 
   /**
    * Returns a registered id of action group, which is to be used for displaying context menu for the given custom element.

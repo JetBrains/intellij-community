@@ -231,14 +231,16 @@ public class TrivialFunctionalExpressionUsageInspection extends BaseJavaBatchLoc
     body = element.getBody();
     final PsiElement parent = callExpression.getParent();
     final PsiStatement[] statements = ((PsiCodeBlock)body).getStatements();
-    if (statements.length == 0) return;
-    final PsiStatement anchor = PsiTreeUtil.getParentOfType(parent, PsiStatement.class, false);
-    PsiReturnStatement statement = ObjectUtils.tryCast(statements[statements.length - 1], PsiReturnStatement.class);
-    if (anchor != null) {
-      final PsiElement gParent = anchor.getParent();
-      for (PsiElement child : body.getChildren()) {
-        if (child != statement && !(child instanceof PsiJavaToken)) {
-          gParent.addBefore(ct.markUnchanged(child), anchor);
+    PsiReturnStatement statement = null;
+    if (statements.length > 0) {
+      final PsiStatement anchor = PsiTreeUtil.getParentOfType(parent, PsiStatement.class, false);
+      statement = ObjectUtils.tryCast(statements[statements.length - 1], PsiReturnStatement.class);
+      if (anchor != null) {
+        final PsiElement gParent = anchor.getParent();
+        for (PsiElement child : body.getChildren()) {
+          if (child != statement && !(child instanceof PsiJavaToken)) {
+            gParent.addBefore(ct.markUnchanged(child), anchor);
+          }
         }
       }
     }

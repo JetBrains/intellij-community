@@ -1,5 +1,15 @@
 <html>
 <body>
-This inspection reports method references or lambda expressions which point to a method of their own functional interface type and hence can be replaced with their qualifiers.
+This inspection reports method references or lambda expressions which point to a method of their own functional interface type and hence can be replaced with their qualifiers, like
+<br/>
+<ul>
+  <li><code>SwingUtilities.invokeLater(r::run);</code></li>
+  <li><code>SwingUtilities.invokeAndWait(() -> r.run());</code>  </li>
+</ul>
+can be replaced with
+<ul>
+  <li><code>SwingUtilities.invokeLater(r);</code></li>
+  <li><code>SwingUtilities.invokeAndWait(r);</code></li>
+</ul>
 </body>
 </html>
