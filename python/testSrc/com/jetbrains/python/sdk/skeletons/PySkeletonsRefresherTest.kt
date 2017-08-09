@@ -15,8 +15,8 @@
  */
 package com.jetbrains.python.sdk.skeletons
 
-import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher.getPrebuiltSkeletonsName
-import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher.isApplicableZippedSkeletonsFileName
+import com.jetbrains.python.sdk.skeletons.DefaultPregeneratedSkeletonsProvider.getPrebuiltSkeletonsName
+import com.jetbrains.python.sdk.skeletons.DefaultPregeneratedSkeletonsProvider.isApplicableZippedSkeletonsFileName
 import junit.framework.TestCase
 
 /**
