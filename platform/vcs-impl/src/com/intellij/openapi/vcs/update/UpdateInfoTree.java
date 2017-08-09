@@ -177,7 +177,6 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
         VirtualFilePointer pointer = null;
         if (treeNode instanceof FileTreeNode) {
           pointer = ((FileTreeNode)treeNode).getFilePointer();
-          if (!pointer.isValid()) pointer = null;
         }
         if (pointer != null) {
           mySelectedUrl = getFilePath(pointer);
@@ -292,7 +291,6 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
         if (o instanceof FileTreeNode) {
           final FileTreeNode treeNode = (FileTreeNode)o;
           VirtualFilePointer filePointer = treeNode.getFilePointer();
-          if (!filePointer.isValid()) continue;
 
           myNext = getFilePath(filePointer);
           myStatus = FileStatus.MODIFIED;
