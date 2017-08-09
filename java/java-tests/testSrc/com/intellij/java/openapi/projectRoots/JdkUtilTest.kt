@@ -110,7 +110,11 @@ class JdkUtilTest : BareTestFixtureTestCase() {
     setModuleMode()
     parameters.setUseDynamicVMOptions(true)
     parameters.setUseDynamicParameters(true)
+    parameters.programParametersList.clearAll()
+    parameters.programParametersList.addAll(" #1", "\"2\"", "line\n-", "C:\\", "D:\\work", "E:\\work space")
     doTest("#arg_file#")
+    val args = filesToDelete?.find { it.name.contains("idea_arg_file") }?.readLines()?.dropWhile { !it.contains("hello.Main") }
+    assertThat(args).containsExactly("hello/hello.Main", "\" #1\"", "\"\\\"2\\\"\"", "\"line\\n-\"", "\"C:\\\\\"", "D:\\work", "\"E:\\\\work space\"")
   }
 
   private fun doTest(vararg expected: String) {
