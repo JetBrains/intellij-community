@@ -220,7 +220,7 @@ public abstract class NewServiceActionBase extends CreateInDirectoryActionBase i
 
 
   static class ServiceCreator { // not private for testing purpose only
-    private final Logger LOG = Logger.getInstance("#" + ServiceCreator.class.getCanonicalName());
+    private final Logger LOG = Logger.getInstance(ServiceCreator.class);
 
     private final PsiDirectory myDirectory;
     private final String myServiceInterfaceTemplateName;

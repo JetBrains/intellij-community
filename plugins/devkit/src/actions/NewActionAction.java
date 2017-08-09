@@ -15,17 +15,14 @@
  */
 package org.jetbrains.idea.devkit.actions;
 
-import com.intellij.ide.IdeView;
 import com.intellij.ide.actions.CreateElementActionBase;
-import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.ide.actions.CreateTemplateInPackageAction;
+import com.intellij.ide.actions.JavaCreateTemplateInPackageAction;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -79,31 +76,18 @@ public class NewActionAction extends CreateElementActionBase implements Descript
   }
 
   @Override
-  public void update(AnActionEvent e) {
-    super.update(e);
-
-    Presentation presentation = e.getPresentation();
-    if (presentation.isEnabled()) {
-      Project project = e.getProject();
-      Module module = e.getData(LangDataKeys.MODULE);
-      if (project != null && module != null &&
-          PsiUtil.isPluginModule(module)) {
-        IdeView view = e.getData(LangDataKeys.IDE_VIEW);
-        if (view != null) {
-          // from com.intellij.ide.actions.CreateClassAction.update()
-          ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-          PsiDirectory[] dirs = view.getDirectories();
-          for (PsiDirectory dir : dirs) {
-            if (projectFileIndex.isUnderSourceRootOfType(dir.getVirtualFile(), JavaModuleSourceRootTypes.SOURCES) &&
-                JavaDirectoryService.getInstance().getPackage(dir) != null) {
-              return;
-            }
-          }
-        }
-      }
-
-      presentation.setEnabledAndVisible(false);
+  protected boolean isAvailable(DataContext dataContext) {
+    if (!super.isAvailable(dataContext)) {
+      return false;
     }
+
+    Module module = dataContext.getData(LangDataKeys.MODULE);
+    if (module == null || !PsiUtil.isPluginModule(module)) {
+      return false;
+    }
+
+    return CreateTemplateInPackageAction.isAvailable(dataContext, JavaModuleSourceRootTypes.SOURCES,
+                                                     JavaCreateTemplateInPackageAction::doCheckPackageExists);
   }
 
   @Override
