@@ -26,3 +26,23 @@ class Something(Meta):
 
 class DerivedException(Exception):
     pass
+
+
+# PY-25560
+from six import add_metaclass, with_metaclass
+
+class Concrete(with_metaclass(type)):
+    pass
+@add_metaclass(type)
+class C:
+    pass
+
+def metaclass():
+    class _metaclass(type):
+        pass
+    return _metaclass
+class Concrete(with_metaclass(metaclass())):
+    pass
+@add_metaclass(metaclass())
+class C:
+    pass

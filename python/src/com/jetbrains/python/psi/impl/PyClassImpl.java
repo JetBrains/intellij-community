@@ -56,6 +56,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.function.Supplier;
 
 import static com.intellij.openapi.util.text.StringUtil.join;
 import static com.intellij.openapi.util.text.StringUtil.notNullize;
@@ -1279,8 +1280,8 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     }
     final PyClass objClass = PyBuiltinCache.getInstance(this).getClass(PyNames.OBJECT);
     if (this == objClass) return true; // a rare but possible case
-    if (hasNewStyleMetaClass(this)) return true;
-    TypeEvalContext contextToUse = (context != null ? context : TypeEvalContext.codeInsightFallback(getProject()));
+    final TypeEvalContext contextToUse = (context != null ? context : TypeEvalContext.codeInsightFallback(getProject()));
+    if (hasMetaClass(this, contextToUse)) return true;
     for (PyClassLikeType type : getOldStyleAncestorTypes(contextToUse)) {
       if (type == null) {
         // unknown, assume new-style class
@@ -1288,7 +1289,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
       }
       if (type instanceof PyClassType) {
         final PyClass pyClass = ((PyClassType)type).getPyClass();
-        if (pyClass == objClass || hasNewStyleMetaClass(pyClass)) {
+        if (pyClass == objClass || hasMetaClass(pyClass, contextToUse)) {
           return true;
         }
       }
@@ -1296,21 +1297,10 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     return false;
   }
 
-  private static boolean hasNewStyleMetaClass(PyClass pyClass) {
-    final PsiFile containingFile = pyClass.getContainingFile();
-    if (containingFile instanceof PyFile) {
-      final PsiElement element = ((PyFile)containingFile).getElementNamed(PyNames.DUNDER_METACLASS);
-      if (element instanceof PyTargetExpression) {
-        final QualifiedName qName = ((PyTargetExpression)element).getAssignedQName();
-        if (qName != null && qName.matches("type")) {
-          return true;
-        }
-      }
-    }
-    if (pyClass.findClassAttribute(PyNames.DUNDER_METACLASS, false, null) != null) {
-      return true;
-    }
-    return false;
+  private static boolean hasMetaClass(@NotNull PyClass cls, @NotNull TypeEvalContext context) {
+    return cls instanceof PyClassImpl
+           ? ((PyClassImpl)cls).getMetaClassTypeSupplier(context) != null
+           : cls.getMetaClassType(context) != null;
   }
 
   @Override
@@ -1483,7 +1473,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
       return null;
     }
 
-    if (LanguageLevel.forElement(this).isOlderThan(LanguageLevel.PYTHON30) && getMetaClassQName() == null) {
+    if (LanguageLevel.forElement(this).isOlderThan(LanguageLevel.PYTHON30) && !hasMetaClass(this, context)) {
       final QualifiedName typesInstanceTypeQName = QualifiedName.fromDottedString(PyNames.TYPES_INSTANCE_TYPE);
       final PsiElement typesInstanceType = resolveTopLevelMember(typesInstanceTypeQName, fromFoothold(this));
 
@@ -1507,43 +1497,40 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   @Override
   public PyType getMetaClassType(@NotNull TypeEvalContext context) {
     PyPsiUtils.assertValid(this);
-    if (context.maySwitchToAST(this)) {
-      final PyExpression expression = getMetaClassExpression();
-      if (expression != null) {
-        final PyType type = context.getType(expression);
-        if (type != null) {
-          return type;
-        }
-      }
-    }
-    else {
-      final QualifiedName name = getMetaClassQName();
-      final PsiFile file = getContainingFile();
-      if (file instanceof PyFile) {
-        final PyFile pyFile = (PyFile)file;
-        if (name != null) {
-          return classTypeFromQName(name, pyFile, context);
-        }
-      }
-    }
-    final LanguageLevel level = LanguageLevel.forElement(this);
-    if (level.isOlderThan(LanguageLevel.PYTHON30)) {
-      final PsiFile file = getContainingFile();
-      if (file instanceof PyFile) {
-        final PyFile pyFile = (PyFile)file;
-        final PsiElement element = pyFile.getElementNamed(PyNames.DUNDER_METACLASS);
-        if (element instanceof PyTypedElement) {
-          return context.getType((PyTypedElement)element);
-        }
-      }
-    }
-    return null;
+    final Supplier<PyType> supplier = getMetaClassTypeSupplier(context);
+    return supplier != null ? supplier.get() : null;
   }
 
   @Nullable
-  private QualifiedName getMetaClassQName() {
+  private Supplier<PyType> getMetaClassTypeSupplier(@NotNull TypeEvalContext context) {
     final PyClassStub stub = getStub();
-    return stub != null ? stub.getMetaClass() : PyPsiUtils.asQualifiedName(getMetaClassExpression());
+
+    if (context.maySwitchToAST(this) || stub == null) {
+      final PyExpression expression = getMetaClassExpression();
+
+      if (expression != null) {
+        return () -> context.getType(expression);
+      }
+    }
+    else {
+      final QualifiedName name = stub.getMetaClass();
+      final PsiFile file = getContainingFile();
+      if (name != null && file instanceof PyFile) {
+        return () -> classTypeFromQName(name, (PyFile)file, context);
+      }
+    }
+
+    if (LanguageLevel.forElement(this).isOlderThan(LanguageLevel.PYTHON30)) {
+      final PsiFile file = getContainingFile();
+      if (file instanceof PyFile) {
+        final PsiElement element = ((PyFile)file).getElementNamed(PyNames.DUNDER_METACLASS);
+        if (element != null) {
+          return () -> element instanceof PyTypedElement ? context.getType((PyTypedElement)element) : null;
+        }
+      }
+    }
+
+    return null;
   }
 
   @Nullable
