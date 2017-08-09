@@ -213,7 +213,7 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
 
       buildContext.ant.copy(file: customizer.iconPngPath, tofile: "${snapDir}/${customizer.snapName}.png")
 
-      def snapcraftTemplate = "${buildContext.paths.communityHome}/build/snap/snapcraft-template.yaml"
+      def snapcraftTemplate = "${buildContext.paths.communityHome}/platform/build-scripts/resources/linux/snap/snapcraft-template.yaml"
       def version = "${buildContext.applicationInfo.majorVersion}.${buildContext.applicationInfo.minorVersion}"
       buildContext.ant.copy(file: snapcraftTemplate, tofile: "${snapDir}/snapcraft.yaml") {
         filterset(begintoken: '$', endtoken: '$') {
@@ -226,7 +226,7 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
       }
 
       buildContext.ant.concat(destfile: "${unixDistPath}/bin/idea.properties", append: true) {
-        filelist(dir: "${buildContext.paths.communityHome}/build/snap", files: "idea-snap.properties")
+        filelist(dir: "${buildContext.paths.communityHome}/platform/build-scripts/resources/linux/snap", files: "idea-snap.properties")
       }
 
       buildContext.ant.delete(quiet: true) {
