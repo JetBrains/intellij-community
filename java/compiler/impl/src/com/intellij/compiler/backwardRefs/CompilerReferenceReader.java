@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.compiler.backwardRefs;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -236,6 +237,10 @@ class CompilerReferenceReader {
           break;
         }
         if (result.add(curClass)) {
+          if (result.size() % 100 == 0) {
+            ProgressManager.checkCanceled();
+          }
+
           if (!(curClass instanceof LightRef.LightAnonymousClassDef) && (checkBaseClassAmbiguity || curClass != hierarchyElement)) {
             if (hasMultipleDefinitions(curClass)) {
               return null;
