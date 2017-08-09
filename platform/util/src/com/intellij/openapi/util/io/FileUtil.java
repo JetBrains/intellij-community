@@ -480,17 +480,7 @@ public class FileUtil extends FileUtilRt {
   @SuppressWarnings("Duplicates")
   private static void performCopy(@NotNull File fromFile, @NotNull File toFile, final boolean syncTimestamp) throws IOException {
     if (filesEqual(fromFile, toFile)) return;
-    final FileOutputStream fos;
-    try {
-      fos = openOutputStream(toFile);
-    }
-    catch (IOException e) {
-      if (SystemInfo.isWindows && e.getMessage() != null && e.getMessage().contains("denied") &&
-          nativeWindowsCopy(fromFile, toFile)) {
-        return;
-      }
-      throw e;
-    }
+    final FileOutputStream fos = openOutputStream(toFile);
 
     try {
       final FileInputStream fis = new FileInputStream(fromFile);
@@ -517,33 +507,6 @@ public class FileUtil extends FileUtilRt {
 
     if (SystemInfo.isUnix && fromFile.canExecute()) {
       FileSystemUtil.clonePermissionsToExecute(fromFile.getPath(), toFile.getPath());
-    }
-  }
-
-  private static boolean nativeWindowsCopy(@NotNull final File src, @NotNull final File dst) {
-    final File launcher = PathManager.findBinFile(PathManager.WIN_LAUNCHER);
-    if (launcher == null || !launcher.exists()) {
-      return false;
-    }
-
-    try {
-      final ProcessBuilder builder =
-        new ProcessBuilder(launcher.getAbsolutePath(), "cmd.exe", "/C", "copy", src.getAbsolutePath(), dst.getAbsolutePath());
-      final Process process = builder.start();
-
-      final String error = StreamUtil.readText(process.getErrorStream(), Charset.defaultCharset());
-      final String out = StreamUtil.readText(process.getInputStream(), Charset.defaultCharset());
-      LOG.info("out" + out);
-      LOG.info("error" + error);
-      return process.waitFor() == 0;
-    }
-    catch (final IOException ex) {
-      LOG.warn(ex);
-      return false;
-    }
-    catch (final InterruptedException ex) {
-      LOG.warn(ex);
-      return false;
     }
   }
 
