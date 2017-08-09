@@ -2296,6 +2296,17 @@ public class PyTypeTest extends PyTestCase {
     );
   }
 
+  // PY-25545
+  public void testDunderInitSubclassFirstParameter() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTest("Type[Foo]",
+                   "class Foo:\n" +
+                   "    def __init_subclass__(cls):\n" +
+                   "        expr = cls")
+    );
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());

@@ -46,7 +46,9 @@ import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
-import com.jetbrains.python.psi.stubs.*;
+import com.jetbrains.python.psi.stubs.PyClassStub;
+import com.jetbrains.python.psi.stubs.PyFunctionStub;
+import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.sdk.PythonSdkType;
 import icons.PythonIcons;
@@ -655,10 +657,17 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       return STATICMETHOD;
     }
 
+    final String funcName = getName();
+
     // implicit staticmethod __new__
     final PyClass cls = getContainingClass();
-    if (cls != null && PyNames.NEW.equals(getName()) && cls.isNewStyleClass(null)) {
+    if (cls != null && PyNames.NEW.equals(funcName) && cls.isNewStyleClass(null)) {
       return STATICMETHOD;
+    }
+
+    // implicit classmethod __init_subclass__
+    if (cls != null && PyNames.INIT_SUBCLASS.equals(funcName) && LanguageLevel.forElement(this).isAtLeast(LanguageLevel.PYTHON36)) {
+      return CLASSMETHOD;
     }
 
     final PyFunctionStub stub = getStub();
@@ -666,7 +675,6 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       return getModifierFromStub(stub);
     }
 
-    final String funcName = getName();
     if (funcName != null) {
       PyAssignmentStatement currentAssignment = PsiTreeUtil.getNextSiblingOfType(this, PyAssignmentStatement.class);
       while (currentAssignment != null) {
