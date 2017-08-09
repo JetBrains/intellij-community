@@ -133,7 +133,7 @@ public class GeneratorTest extends PropertyCheckerTestCase {
     Generator<List<Integer>> gen = nonEmptyLists(integers(0, 100));
     Predicate<List<Integer>> property = l -> !l.contains(42);
 
-    PropertyFailure<?> failure = checkFails(PropertyChecker.forAll(gen), property).getFailure();
+    PropertyFailure<?> failure = checkFails(PropertyChecker.forAll(gen).withSeed(1), property).getFailure();
     assertTrue(failure.getIterationNumber() > 1);
 
     PropertyFalsified e;
