@@ -27,28 +27,21 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.GlobalSearchScopeUtil;
-import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ThreeState;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.JavaOverridingMethodUtil;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Arrays;
 import java.util.Objects;
-import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 public class MissingOverrideAnnotationInspection extends BaseJavaBatchLocalInspectionTool implements CleanupLocalInspectionTool{
-  private static final int MAX_OVERRIDDEN_METHOD_SEARCH = 20;
   private static final String OVERRIDE_SHORT_NAME = StringUtil.getShortName(CommonClassNames.JAVA_LANG_OVERRIDE);
 
   @SuppressWarnings({"PublicField"})
@@ -138,7 +131,8 @@ public class MissingOverrideAnnotationInspection extends BaseJavaBatchLocalInspe
         Project project = method.getProject();
         LanguageLevel minimal = Objects.requireNonNull(method.getContainingClass()).isInterface() ? LanguageLevel.JDK_1_6 : LanguageLevel.JDK_1_5;
 
-        Stream<PsiMethod> overridingMethods = getOverridingMethodsIfCheapEnough(method, getLanguageLevelScope(minimal, project), m -> {
+        Stream<PsiMethod> overridingMethods = JavaOverridingMethodUtil
+          .getOverridingMethodsIfCheapEnough(method, getLanguageLevelScope(minimal, project), m -> {
           for (PsiAnnotation annotation : m.getModifierList().getAnnotations()) {
             PsiJavaCodeReferenceElement ref = annotation.getNameReferenceElement();
             if (ref != null && OVERRIDE_SHORT_NAME.equals(ref.getReferenceName())) {
@@ -230,30 +224,5 @@ public class MissingOverrideAnnotationInspection extends BaseJavaBatchLocalInspe
                                      .filter(m -> EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(m).isAtLeast(minimal))
                                      .map(Module::getModuleScope)
                                      .toArray(GlobalSearchScope[]::new));
-  }
-
-
-  @Nullable
-  private static Stream<PsiMethod> getOverridingMethodsIfCheapEnough(@NotNull PsiMethod method,
-                                                              @NotNull GlobalSearchScope searchScope,
-                                                              @NotNull Predicate<PsiMethod> preFilter) {
-    Project project = method.getProject();
-    String name = method.getName();
-    SearchScope useScope = method.getUseScope();
-    GlobalSearchScope effectiveSearchScope = GlobalSearchScopeUtil.toGlobalSearchScope(useScope, project).intersectWith(searchScope);
-    PsiMethod[] methods =
-      StubIndex.getElements(JavaStubIndexKeys.METHODS, name, project, effectiveSearchScope, PsiMethod.class)
-        .stream()
-        .filter(m -> m != method)
-        .filter(preFilter)
-        .limit(MAX_OVERRIDDEN_METHOD_SEARCH + 1)
-        .toArray(PsiMethod[]::new);
-
-    // search should be deterministic
-    if (methods.length > MAX_OVERRIDDEN_METHOD_SEARCH) {
-      return null;
-    }
-
-    return Stream.of(methods).filter(candidate -> PsiSuperMethodUtil.isSuperMethod(candidate, method));
   }
 }

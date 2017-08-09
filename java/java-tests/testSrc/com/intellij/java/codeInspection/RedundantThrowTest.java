@@ -16,7 +16,7 @@
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInspection.unneededThrows.RedundantThrows;
+import com.intellij.codeInspection.unneededThrows.RedundantThrowsDeclarationInspection;
 import com.intellij.testFramework.InspectionTestCase;
 
 public class RedundantThrowTest extends InspectionTestCase {
@@ -30,7 +30,7 @@ public class RedundantThrowTest extends InspectionTestCase {
   }
 
   private void doTest(boolean checkRange) throws Exception {
-    final RedundantThrows tool = new RedundantThrows();
+    final RedundantThrowsDeclarationInspection tool = new RedundantThrowsDeclarationInspection();
     doTest("redundantThrow/" + getTestName(false), tool, checkRange);
   }
 
@@ -45,7 +45,7 @@ public class RedundantThrowTest extends InspectionTestCase {
   public void testRemote() throws Exception { doTest(); }
 
   public void testEntryPoint() throws Exception {
-    final RedundantThrows tool = new RedundantThrows();
+    final RedundantThrowsDeclarationInspection tool = new RedundantThrowsDeclarationInspection();
     doTest("redundantThrow/" + getTestName(true), tool, false, true);
   }
 

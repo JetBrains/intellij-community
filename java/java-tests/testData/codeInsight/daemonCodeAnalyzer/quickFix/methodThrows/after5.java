@@ -2,12 +2,12 @@
 import java.io.*;
 
 class a {
- void f() {
+ void f() throws IOException {
  }
 }
 
 class b extends a {
- void f() throws <caret>IOException {
+ void f() {
  }
 }
 
