@@ -276,7 +276,7 @@ public class JdkUtil {
 
   /* https://docs.oracle.com/javase/9/tools/java.htm, "java Command-Line Argument Files" */
   private static String quoteArg(String arg) {
-    if (StringUtil.containsAnyChar(arg, " \"\n\r\t\f") || arg.endsWith("\\") || arg.trim().startsWith("#")) {
+    if (StringUtil.containsAnyChar(arg, " \"\n\r\t\f") || arg.endsWith("\\") || arg.startsWith("#")) {
       StringBuilder sb = new StringBuilder(arg.length() * 2);
       sb.append('"');
 
