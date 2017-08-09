@@ -111,15 +111,24 @@ public class BraceHighlightingHandler {
       return;
     }
     final int offset = editor.getCaretModel().getOffset();
-    final Project project = editor.getProject();
+
+    // any request to the UI component need to be done from EDT
+    final ModalityState modalityState = ModalityState.stateForComponent(editor.getComponent());
+    final DumbAwareRunnable removeEditorFormProcessed = () -> PROCESSED_EDITORS.remove(editor);
+
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       if (!ApplicationManagerEx.getApplicationEx().tryRunReadAction(() -> {
-        final PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, project);
-        if (!isValidFile(psiFile)) return;
+        if (!isValidEditor(editor)) {
+          ApplicationManager.getApplication().invokeLater(removeEditorFormProcessed);
+          return;
+        }
+        @SuppressWarnings("ConstantConditions") // the `project` is valid after the `isValidEditor` call
+        @NotNull final Project project = editor.getProject();
 
+        final PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, project);
         final PsiFile injected;
         try {
-          if (psiFile instanceof PsiBinaryFile || !isValidEditor(editor) || !isValidFile(psiFile)) {
+          if (psiFile instanceof PsiBinaryFile || !isValidFile(psiFile)) {
             injected = null;
           }
           else {
@@ -128,7 +137,7 @@ public class BraceHighlightingHandler {
         }
         catch (RuntimeException e) {
           // Reset processing flag in case of unexpected exception.
-          ApplicationManager.getApplication().invokeLater((DumbAwareRunnable)() -> PROCESSED_EDITORS.remove(editor));
+          ApplicationManager.getApplication().invokeLater(removeEditorFormProcessed);
           throw e;
         }
         ApplicationManager.getApplication().invokeLater((DumbAwareRunnable)() -> {
@@ -140,15 +149,15 @@ public class BraceHighlightingHandler {
             }
           }
           finally {
-            PROCESSED_EDITORS.remove(editor);
+            removeEditorFormProcessed.run();
           }
-        }, ModalityState.stateForComponent(editor.getComponent()));
+        }, modalityState);
       })) {
         // write action is queued in AWT. restart after it's finished
         ApplicationManager.getApplication().invokeLater(() -> {
-          PROCESSED_EDITORS.remove(editor);
+          removeEditorFormProcessed.run();
           lookForInjectedAndMatchBracesInOtherThread(editor, alarm, processor);
-        }, ModalityState.stateForComponent(editor.getComponent()));
+        }, modalityState);
       }
     });
   }
