@@ -55,8 +55,11 @@ import java.util.List;
 import static com.intellij.openapi.editor.colors.CodeInsightColors.BLINKING_HIGHLIGHTS_ATTRIBUTES;
 
 public class SimpleEditorPreview implements PreviewPanel {
-  private static final Map<String, TextAttributesKey> INLINE_ELEMENTS =
-    Collections.singletonMap("parameter_hint", DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT);
+  private static final Map<String, TextAttributesKey> INLINE_ELEMENTS = new HashMap<>();
+  static {
+    INLINE_ELEMENTS.put("parameter_hint", DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT);
+    INLINE_ELEMENTS.put("parameter_hint_highlighted", DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT_HIGHLIGHTED);
+  }
 
   private final ColorSettingsPage myPage;
 

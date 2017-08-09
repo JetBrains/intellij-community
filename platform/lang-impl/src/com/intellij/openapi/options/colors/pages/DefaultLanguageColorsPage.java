@@ -225,7 +225,7 @@ public class DefaultLanguageColorsPage implements RainbowColorSettingsPage, Disp
       "Function <func_decl>declaration</func_decl> (<param>parameter1</param> <param>parameter2</param> <param>parameter3</param> <param>parameter4</param>)\n" +
       "    Local <local_var>variable1</local_var> <local_var>variable2</local_var> <local_var>variable3</local_var> <local_var>variable4</local_var>\n" +
       "Function <func_call>call</func_call>(" +
-      "<parameter_hint p>0, <parameter_hint param> 1, <parameter_hint parameterName> 2" +
+      "<parameter_hint p>0, <parameter_hint_highlighted param>1, <parameter_hint parameterName>2" +
       ")\n" +
       "Interface <interface>Name</interface>\n" +
       "<metadata>@Metadata</metadata>\n" +
