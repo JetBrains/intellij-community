@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -102,8 +102,8 @@ public class AddMissingRequiredAnnotationParametersFix implements IntentionActio
     }
 
     final PsiExpression nullValue = JavaPsiFacade.getElementFactory(project).createExpressionFromText(PsiKeyword.NULL, null);
-    for (final String misssedParameter : myMissedElements) {
-      newParameters.add(Pair.create(misssedParameter, nullValue));
+    for (final String missedParameter : myMissedElements) {
+      newParameters.add(Pair.create(missedParameter, nullValue));
     }
 
     TemplateBuilderImpl builder = null;
