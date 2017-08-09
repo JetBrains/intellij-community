@@ -359,13 +359,13 @@ public class FileSystemUtil {
     private IdeaWin32 myInstance = IdeaWin32.getInstance();
 
     @Override
-    protected FileAttributes getAttributes(@NotNull final String path) throws Exception {
+    protected FileAttributes getAttributes(@NotNull final String path) {
       final FileInfo fileInfo = myInstance.getInfo(path);
       return fileInfo != null ? fileInfo.toFileAttributes() : null;
     }
 
     @Override
-    protected String resolveSymLink(@NotNull final String path) throws Exception {
+    protected String resolveSymLink(@NotNull final String path) {
       return myInstance.resolveSymLink(path);
     }
   }
@@ -425,7 +425,7 @@ public class FileSystemUtil {
     private final int myGid;
     private final boolean myCoarseTs = SystemProperties.getBooleanProperty(COARSE_TIMESTAMP_KEY, false);
 
-    private JnaUnixMediatorImpl() throws Exception {
+    private JnaUnixMediatorImpl() {
            if ("linux-x86".equals(Platform.RESOURCE_PREFIX)) myOffsets = LINUX_32;
       else if ("linux-x86-64".equals(Platform.RESOURCE_PREFIX)) myOffsets = LINUX_64;
       else if ("linux-arm".equals(Platform.RESOURCE_PREFIX)) myOffsets = LNX_ARM32;
@@ -446,7 +446,7 @@ public class FileSystemUtil {
     }
 
     @Override
-    protected FileAttributes getAttributes(@NotNull String path) throws Exception {
+    protected FileAttributes getAttributes(@NotNull String path) {
       Memory buffer = new Memory(256);
       int res = SystemInfo.isLinux ? LinuxLibC.__lxstat64(STAT_VER, path, buffer) : UnixLibC.lstat(path, buffer);
       if (res != 0) return null;
@@ -492,7 +492,7 @@ public class FileSystemUtil {
     }
 
     @Override
-    protected boolean clonePermissions(@NotNull String source, @NotNull String target, boolean onlyPermissionsToExecute) throws Exception {
+    protected boolean clonePermissions(@NotNull String source, @NotNull String target, boolean onlyPermissionsToExecute) {
       Memory buffer = new Memory(256);
       if (!loadFileStatus(source, buffer)) return false;
 
@@ -580,7 +580,7 @@ public class FileSystemUtil {
     }
 
     @Override
-    protected boolean clonePermissions(@NotNull String source, @NotNull String target, boolean onlyPermissionsToExecute) throws Exception {
+    protected boolean clonePermissions(@NotNull String source, @NotNull String target, boolean onlyPermissionsToExecute) {
       if (SystemInfo.isUnix) {
         File srcFile = new File(source);
         File dstFile = new File(target);
