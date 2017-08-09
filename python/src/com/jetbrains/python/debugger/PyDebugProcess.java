@@ -41,7 +41,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -84,8 +83,6 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-
-import static javax.swing.SwingUtilities.invokeLater;
 
 /**
  * @author yole
@@ -833,11 +830,14 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
       final Project project = getSession().getProject();
       if (document != null) {
         if (file.getFileType() == PythonFileType.INSTANCE) {
-          PsiElement psiElement = XDebuggerUtil.getInstance().
-            findContextElement(file, document.getLineStartOffset(breakpoint.getSourcePosition().getLine()), project, false);
-          PyFunction function = PsiTreeUtil.getParentOfType(psiElement, PyFunction.class);
-          if (function != null) {
-            return function.getName();
+          int breakpointLine = breakpoint.getSourcePosition().getLine();
+          if (breakpointLine < document.getLineCount()) {
+            PsiElement psiElement = XDebuggerUtil.getInstance().
+              findContextElement(file, document.getLineStartOffset(breakpointLine), project, false);
+            PyFunction function = PsiTreeUtil.getParentOfType(psiElement, PyFunction.class);
+            if (function != null) {
+              return function.getName();
+            }
           }
         }
       }
