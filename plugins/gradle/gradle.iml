@@ -35,7 +35,6 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="library" name="jsr305" level="project" />
     <orderEntry type="module-library" exported="">
       <library name="commons-io">
         <CLASSES>

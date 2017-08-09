@@ -612,11 +612,11 @@ public class HtmlUtil {
     return tagName != null && "br".equalsIgnoreCase(tagName);
   }
 
-  public static boolean hasHtml(PsiFile file) {
+  public static boolean hasHtml(@NotNull PsiFile file) {
     return isHtmlFile(file) || file.getViewProvider() instanceof TemplateLanguageFileViewProvider;
   }
 
-  public static boolean supportsXmlTypedHandlers(PsiFile file) {
+  public static boolean supportsXmlTypedHandlers(@NotNull PsiFile file) {
     Language language = file.getLanguage();
     while (language != null) {
       if ("JavaScript".equals(language.getID())) return true;

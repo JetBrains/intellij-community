@@ -80,12 +80,12 @@ public class ParameterHintsUpdater {
         return;
       }
       if (isPreserveHint(editorHint, newText)) return;
-      updates.add(new InlayUpdateInfo(offset, editorHint, newText, newHint != null && newHint.showAfterCaret));
+      updates.add(new InlayUpdateInfo(offset, editorHint, newText, newHint != null && newHint.relatesToPrecedingText));
     });
 
     Arrays.stream(myNewHints.keys()).forEach((offset) -> {
       for (ParameterHintsPass.HintData hint : myNewHints.get(offset)) {
-        updates.add(new InlayUpdateInfo(offset, null, hint.presentationText, hint.showAfterCaret));
+        updates.add(new InlayUpdateInfo(offset, null, hint.presentationText, hint.relatesToPrecedingText));
       }
     });
 
@@ -147,12 +147,14 @@ public class ParameterHintsUpdater {
       InlayUpdateInfo.Action action = info.action();
       if (action == InlayUpdateInfo.Action.ADD) {
         boolean useAnimation = !myForceImmediateUpdate && !firstTime && !isSameHintRemovedNear(newText, infoIndex) && !isInBulkMode;
-        Inlay inlay = myHintsManager.addHint(myEditor, info.offset, newText, useAnimation);
+        Inlay inlay = myHintsManager.addHint(myEditor, info.offset, info.relatesToPrecedingText, newText, useAnimation);
         if (inlay != null && !((DocumentEx)myEditor.getDocument()).isInBulkUpdate()) {
           VisualPosition inlayPosition = inlay.getVisualPosition();
-          VisualPosition visualPosition = new VisualPosition(inlayPosition.line, inlayPosition.column + (info.showAfterCaret ? 1 : 0));
+          VisualPosition visualPosition = new VisualPosition(inlayPosition.line, 
+                                                             inlayPosition.column + (info.relatesToPrecedingText ? 1 : 0));
           Caret caret = myEditor.getCaretModel().getCaretAt(visualPosition);
-          if (caret != null) caret.moveToVisualPosition(new VisualPosition(inlayPosition.line, inlayPosition.column + (info.showAfterCaret ? 0 : 1)));
+          if (caret != null) caret.moveToVisualPosition(new VisualPosition(inlayPosition.line, 
+                                                                           inlayPosition.column + (info.relatesToPrecedingText ? 0 : 1)));
         }
       }
       else if (action == InlayUpdateInfo.Action.DELETE) {
@@ -211,14 +213,14 @@ public class ParameterHintsUpdater {
     public final Inlay inlay;
     public final String newText;
     public final String oldText;
-    public final boolean showAfterCaret;
+    public final boolean relatesToPrecedingText;
 
-    public InlayUpdateInfo(int offset, @Nullable Inlay current, @Nullable String newText, boolean showAfterCaret) {
+    public InlayUpdateInfo(int offset, @Nullable Inlay current, @Nullable String newText, boolean relatesToPrecedingText) {
       this.offset = offset;
       this.inlay = current;
       this.newText = newText;
       this.oldText = getHintText();
-      this.showAfterCaret = showAfterCaret;
+      this.relatesToPrecedingText = relatesToPrecedingText;
     }
 
     public Action action() {

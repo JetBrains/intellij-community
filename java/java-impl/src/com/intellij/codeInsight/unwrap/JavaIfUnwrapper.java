@@ -21,6 +21,7 @@ import com.intellij.psi.PsiIfStatement;
 import com.intellij.psi.PsiStatement;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 public class JavaIfUnwrapper extends JavaUnwrapper {
   public JavaIfUnwrapper() {
@@ -28,7 +29,7 @@ public class JavaIfUnwrapper extends JavaUnwrapper {
   }
 
   @Override
-  public boolean isApplicableTo(PsiElement e) {
+  public boolean isApplicableTo(@NotNull PsiElement e) {
     return e instanceof PsiIfStatement && !PsiUtil.isElseBlock(e);
   }
 

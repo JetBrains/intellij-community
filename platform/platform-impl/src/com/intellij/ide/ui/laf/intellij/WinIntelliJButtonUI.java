@@ -106,11 +106,6 @@ public class WinIntelliJButtonUI extends DarculaButtonUI {
         g2.dispose();
       }
     }
-
-    // Draw border for emptyBorder buttons
-    if (!(c.getBorder() instanceof WinIntelliJButtonBorder)) {
-      WinIntelliJButtonBorder.paint(c, g, 0, 0, c.getWidth(), c.getHeight());
-    }
   }
 
   @Override protected void modifyViewRect(AbstractButton b, Rectangle rect) {

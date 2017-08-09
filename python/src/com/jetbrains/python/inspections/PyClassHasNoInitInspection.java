@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,10 +73,10 @@ public class PyClassHasNoInitInspection extends PyInspection {
         if (!(type instanceof PyClassType)) return;
       }
 
-      final PyFunction init = node.findInitOrNew(true, null);
+      final PyFunction init = node.findInitOrNew(true, myTypeEvalContext);
       if (init == null) {
         registerProblem(node.getNameIdentifier(), PyBundle.message("INSP.class.has.no.init"),
-                        new AddMethodQuickFix("__init__", node.getName(), false));
+                        new AddMethodQuickFix(PyNames.INIT, node.getName(), false));
       }
     }
   }

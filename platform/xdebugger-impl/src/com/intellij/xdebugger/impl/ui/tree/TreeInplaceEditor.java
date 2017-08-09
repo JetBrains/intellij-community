@@ -30,6 +30,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -250,7 +251,7 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
     // do not cancel editing if we click in editor popup
     final List<JBPopup> popups = JBPopupFactory.getInstance().getChildPopups(myInplaceEditorComponent);
     for (JBPopup popup : popups) {
-      if (SwingUtilities.isDescendingFrom(sourceComponent, popup.getContent())) {
+      if (SwingUtilities.isDescendingFrom(sourceComponent, UIUtil.getWindow(popup.getContent()))) {
         return;
       }
     }

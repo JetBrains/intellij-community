@@ -959,7 +959,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
   private static class MySearchTextField extends SearchTextField implements DataProvider, Disposable {
     public MySearchTextField() {
-      super(false);
+      super(false, "SearchEveryWhereHistory");
       JTextField editor = getTextEditor();
       editor.setOpaque(false);
       if (SystemInfo.isMac && UIUtil.isUnderIntelliJLaF()) {

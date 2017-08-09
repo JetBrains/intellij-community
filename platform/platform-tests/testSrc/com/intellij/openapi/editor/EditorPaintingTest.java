@@ -423,7 +423,7 @@ public class EditorPaintingTest extends AbstractEditorTest {
     public int calcWidthInPixels(@NotNull Editor editor) { return 10; }
 
     @Override
-    public void paint(@NotNull Editor editor, @NotNull Graphics g, @NotNull Rectangle r) {
+    public void paint(@NotNull Editor editor, @NotNull Graphics g, @NotNull Rectangle r, @NotNull TextAttributes textAttributes) {
       g.setColor(JBColor.CYAN);
       g.drawRect(r.x, r.y, r.width - 1, r.height - 1);
     }

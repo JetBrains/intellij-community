@@ -206,14 +206,16 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
   private final Set<MultiHostInjector> myManualInjectors = Collections.synchronizedSet(new LinkedHashSet<MultiHostInjector>());
   private volatile ClassMapCachingNulls<MultiHostInjector> cachedInjectors;
 
-  public void processInjectableElements(Collection<PsiElement> in, Processor<PsiElement> processor) {
+  public void processInjectableElements(@NotNull Collection<PsiElement> in, @NotNull Processor<PsiElement> processor) {
     ClassMapCachingNulls<MultiHostInjector> map = getInjectorMap();
     for (PsiElement element : in) {
-      if (map.get(element.getClass()) != null)
+      if (map.get(element.getClass()) != null) {
         processor.process(element);
+      }
     }
   }
 
+  @NotNull
   private ClassMapCachingNulls<MultiHostInjector> getInjectorMap() {
     ClassMapCachingNulls<MultiHostInjector> cached = cachedInjectors;
     if (cached != null) {
@@ -399,13 +401,14 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
     return InjectedLanguageUtil.mightHaveInjectedFragmentAtCaret(myProject, hostDocument, hostOffset);
   }
 
-  private static int appendRange(List<TextRange> result, int start, int length) {
+  private static int appendRange(@NotNull List<TextRange> result, int start, int length) {
     if (length > 0) {
       int lastIndex = result.size() - 1;
       TextRange lastRange = lastIndex >= 0 ? result.get(lastIndex) : null;
       if (lastRange != null && lastRange.getEndOffset() == start) {
         result.set(lastIndex, lastRange.grown(length));
-      } else {
+      }
+      else {
         result.add(TextRange.from(start, length));
       }
     }
@@ -452,7 +455,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
 
   @FunctionalInterface
   interface InjProcessor {
-    boolean process(PsiElement element, MultiHostInjector injector);
+    boolean process(@NotNull PsiElement element, @NotNull MultiHostInjector injector);
   }
   void processInPlaceInjectorsFor(@NotNull PsiElement element, @NotNull InjProcessor processor) {
     MultiHostInjector[] infos = getInjectorMap().get(element.getClass());

@@ -105,8 +105,8 @@ public class OptionalChainInliner implements CallInliner {
 
   private static final CallMapper<BiConsumer<CFGBuilder, PsiExpression>> INTERMEDIATE_MAPPER =
     new CallMapper<BiConsumer<CFGBuilder, PsiExpression>>()
-      .register(OPTIONAL_MAP, (builder, function) -> inlineMap(builder, function, false))
-      .register(GUAVA_TRANSFORM, (builder, function) -> inlineMap(builder, function, true))
+      .register(OPTIONAL_MAP, (builder, function) -> inlineMap(builder, function, Nullness.NULLABLE))
+      .register(GUAVA_TRANSFORM, (builder, function) -> inlineMap(builder, function, Nullness.NOT_NULL))
       .register(OPTIONAL_FILTER, (builder, function) -> builder
         .evaluateFunction(function)
         .dup()
@@ -232,17 +232,17 @@ public class OptionalChainInliner implements CallInliner {
     }
     builder
       .evaluateFunction(function)
-      .invokeFunction(argCount, function, true)
+      .invokeFunction(argCount, function, Nullness.NOT_NULL)
       .pop()
       .pushUnknown();
   }
 
-  private static void inlineMap(CFGBuilder builder, PsiExpression function, boolean forceNotNullResult) {
+  private static void inlineMap(CFGBuilder builder, PsiExpression function, Nullness resultNullness) {
     builder
       .evaluateFunction(function)
       .dup()
       .ifNotNull()
-      .invokeFunction(1, function, forceNotNullResult)
+      .invokeFunction(1, function, resultNullness)
       .endIf();
   }
 

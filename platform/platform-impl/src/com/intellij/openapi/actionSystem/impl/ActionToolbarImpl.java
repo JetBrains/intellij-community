@@ -115,7 +115,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   private boolean myAdjustTheSameSize;
 
   private final ActionButtonLook myButtonLook = null;
-  private final ActionButtonLook myMinimalButtonLook = new InplaceActionButtonLook();
+  private final ActionButtonLook myMinimalButtonLook = ActionButtonLook.INPLACE_LOOK;
   private final DataManager myDataManager;
   protected final ActionManagerEx myActionManager;
 
@@ -365,7 +365,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       presentation.putClientProperty(CustomComponentAction.CUSTOM_COMPONENT_PROPERTY, customComponent);
     }
     if (customComponent instanceof JCheckBox) {
-      customComponent.setBorder(JBUI.Borders.empty(0, 9, 0, 0));
+      customComponent.setBorder(JBUI.Borders.emptyLeft(9));
     }
     tweakActionComponentUI(customComponent);
     return customComponent;
@@ -417,7 +417,21 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   private ActionButton createToolbarButton(final AnAction action) {
     return createToolbarButton(
       action,
-      myMinimalMode ? myMinimalButtonLook : myDecorateButtons ? new MacToolbarDecoratorButtonLook() : myButtonLook,
+      myMinimalMode ? myMinimalButtonLook : myDecorateButtons ? new ActionButtonLook() {
+        @Override
+        public void paintBorder(Graphics g, JComponent c, int state) {
+          g.setColor(JBColor.border());
+          g.drawLine(c.getWidth()-1, 0, c.getWidth()-1, c.getHeight());
+        }
+
+        @Override
+        public void paintBackground(Graphics g, JComponent component, int state) {
+          if (state == ActionButtonComponent.PUSHED) {
+            g.setColor(component.getBackground().darker());
+            ((Graphics2D)g).fill(g.getClip());
+          }
+        }
+      } : myButtonLook,
       myPlace, myPresentationFactory.getPresentation(action),
       myMinimumButtonSize);
   }
@@ -1306,7 +1320,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       setOpaque(false);
     } else {
       if (UIUtil.isUnderWin10LookAndFeel()) {
-        setBorder(JBUI.Borders.empty(1));
+        setBorder(JBUI.Borders.empty(0));
         setMinimumButtonSize(myDecorateButtons ? JBUI.size(30, 20) : JBUI.size(25, 22));
       } else {
         setBorder(JBUI.Borders.empty(2));

@@ -100,7 +100,6 @@ private object Typer {
 
   fun flushBuffer() {
     if (strBuffer.isEmpty()) return
-    Writer.writeWithIndent("//typed:[${strBuffer.length},\"$strBuffer\"]")
     Writer.writeWithIndent(Templates.typeText(strBuffer.toString()))
     strBuffer.setLength(0)
   }

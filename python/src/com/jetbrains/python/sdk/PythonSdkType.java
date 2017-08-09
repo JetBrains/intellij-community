@@ -31,6 +31,7 @@ import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.Module;
@@ -603,7 +604,7 @@ public final class PythonSdkType extends SdkType {
   public static List<String> getSysPath(String bin_path) throws InvalidSdkException {
     String working_dir = new File(bin_path).getParent();
     Application application = ApplicationManager.getApplication();
-    if (application != null && !application.isUnitTestMode()) {
+    if (application != null && (!application.isUnitTestMode() || ApplicationInfoImpl.isInStressTest())) {
       return getSysPathsFromScript(bin_path);
     }
     else { // mock sdk

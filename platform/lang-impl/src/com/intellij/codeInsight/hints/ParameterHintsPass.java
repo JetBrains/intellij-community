@@ -103,7 +103,7 @@ public class ParameterHintsPass extends EditorBoundHighlightingPass {
       else {
         List<HintData> hintList = myHints.get(offset);
         if (hintList == null) myHints.put(offset, hintList = new ArrayList<>());
-        hintList.add(new HintData(presentation, hint.getShowAfterCaret()));
+        hintList.add(new HintData(presentation, hint.getRelatesToPrecedingText()));
       }
     });
   }
@@ -141,11 +141,11 @@ public class ParameterHintsPass extends EditorBoundHighlightingPass {
   
   public static class HintData {
     public final String presentationText;
-    public final boolean showAfterCaret;
+    public final boolean relatesToPrecedingText;
 
-    public HintData(String text, boolean afterCaret) {
+    public HintData(String text, boolean relatesToPrecedingText) {
       presentationText = text;
-      showAfterCaret = afterCaret;
+      this.relatesToPrecedingText = relatesToPrecedingText;
     }
   }
 }

@@ -315,6 +315,18 @@ public class EditorInlayTest extends AbstractEditorTest {
     checkCaretPosition(2, 2, 5);
   }
 
+  public void testBehaviourOnTextInsertion() throws Exception {
+    initText("abc");
+    Inlay i1 = addInlay(1, false);
+    Inlay i2 = addInlay(2, true);
+    WriteCommandAction.runWriteCommandAction(ourProject, () -> {
+      myEditor.getDocument().insertString(2, " ");
+      myEditor.getDocument().insertString(1, " ");
+    });
+    assertTrue(i1.isValid() && i1.getOffset() == 1);
+    assertTrue(i2.isValid() && i2.getOffset() == 4);
+  }
+
   private static void checkCaretPositionAndSelection(int offset, int logicalColumn, int visualColumn,
                                                      int selectionStartOffset, int selectionEndOffset) {
     checkCaretPosition(offset, logicalColumn, visualColumn);

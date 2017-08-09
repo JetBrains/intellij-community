@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,16 +20,18 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextBrowseFolderListener;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.DocumentAdapter;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function0;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
 
+/**
+ * We do not use DialogWrapper validation because UI is awful (located below the field with the same font).
+ * To fix https://youtrack.jetbrains.com/issue/IDEA-173109 "Typing settings repository URL triggers path alert",
+ * we simply do validation on button action (and never disable button).
+ */
 public class IcsSettingsPanel extends DialogWrapper {
   private JPanel panel;
   private TextFieldWithBrowseButton urlTextField;
@@ -48,15 +50,6 @@ public class IcsSettingsPanel extends DialogWrapper {
         return null;
       }
     });
-
-    urlTextField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
-      @Override
-      protected void textChanged(DocumentEvent e) {
-        UpstreamEditorKt.updateSyncButtonState(StringUtil.nullize(urlTextField.getText()), syncActions);
-      }
-    });
-
-    UpstreamEditorKt.updateSyncButtonState(StringUtil.nullize(urlTextField.getText()), syncActions);
 
     setTitle(IcsBundleKt.icsMessage("settings.panel.title"));
     setResizable(false);

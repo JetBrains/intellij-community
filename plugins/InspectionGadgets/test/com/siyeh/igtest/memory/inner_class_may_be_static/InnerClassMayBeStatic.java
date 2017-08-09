@@ -154,3 +154,15 @@ class Test2 {
     }
   }
 }
+
+class ImplicitConstructorReference {
+  class A {
+    C x = B::new;
+  }
+
+  interface C {
+    B m();
+  }
+
+  class <warning descr="Inner class 'B' may be 'static'">B</warning> {}
+}

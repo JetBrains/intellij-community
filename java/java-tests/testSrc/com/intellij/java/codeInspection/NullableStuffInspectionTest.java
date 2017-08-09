@@ -222,4 +222,10 @@ public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase
     doTest();
   }
 
+  public void testAnnotateQuickFixOnMethodReference() {
+    doTest();
+    myFixture.launchAction(myFixture.findSingleIntention("Annotate"));
+    myFixture.checkResultByFile(getTestName(false) + "_after.java");
+  }
+
 }

@@ -175,7 +175,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     ClassInfo result = new ClassInfo();
     result.typeParameters = ContainerUtil.emptyList();
     result.superName = superClass != null ? myMapping.fun(superClass) : null;
-    result.interfaceNames = superInterfaces == null ? null : ContainerUtil.map(superInterfaces, name -> myMapping.fun(name));
+    result.interfaceNames = superInterfaces == null ? null : ContainerUtil.map(superInterfaces, myMapping);
     return result;
   }
 
@@ -408,7 +408,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     }
     if (exceptions != null && (result.throwTypes == null || exceptions.length > result.throwTypes.size())) {
       // a signature may be inconsistent with exception list - in this case, the more complete list takes precedence
-      result.throwTypes = ContainerUtil.map(exceptions, name -> myMapping.fun(name));
+      result.throwTypes = ContainerUtil.map(exceptions, myMapping);
     }
 
     return result;
@@ -419,7 +419,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     result.typeParameters = ContainerUtil.emptyList();
     result.returnType = toJavaType(Type.getReturnType(desc), myMapping);
     result.argTypes = ContainerUtil.map(Type.getArgumentTypes(desc), type -> toJavaType(type, myMapping));
-    result.throwTypes = exceptions == null ? null : ContainerUtil.map(exceptions, name -> myMapping.fun(name));
+    result.throwTypes = exceptions == null ? null : ContainerUtil.map(exceptions, myMapping);
     return result;
   }
 

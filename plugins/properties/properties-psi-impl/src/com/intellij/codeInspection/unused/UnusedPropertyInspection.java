@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,6 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
@@ -80,12 +79,7 @@ public class UnusedPropertyInspection extends PropertiesInspectionBase implement
     }
     if (modules.isEmpty()) return null;
 
-    List<Module> list = ContainerUtil.newArrayList(modules);
-    GlobalSearchScope result = GlobalSearchScope.moduleWithDependentsScope(list.get(0));
-    for (int i = 1; i < list.size(); i++) {
-      result = result.uniteWith(GlobalSearchScope.moduleWithDependentsScope(list.get(i)));
-    }
-    return result;
+    return GlobalSearchScope.union(modules.stream().map(Module::getModuleWithDependentsScope).toArray(GlobalSearchScope[]::new));
   }
 
   @NotNull

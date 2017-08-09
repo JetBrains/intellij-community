@@ -22,6 +22,8 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.propertyBased.CompletionPolicy;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
+
 /**
  * @author peter
  */
@@ -70,6 +72,10 @@ class JavaCompletionPolicy extends CompletionPolicy {
     if (leaf instanceof PsiKeyword) {
       if (leaf.getParent() instanceof PsiClassObjectAccessExpression &&
           PsiUtil.resolveClassInType(((PsiClassObjectAccessExpression)leaf.getParent()).getOperand().getType()) == null) {
+        return false;
+      }
+      if (leaf.getParent() instanceof PsiModifierList &&
+          Arrays.stream(leaf.getParent().getNode().getChildren(null)).filter(e -> leaf.textMatches(e.getText())).count() > 1) {
         return false;
       }
     }

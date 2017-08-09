@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,21 +87,17 @@ public class EditSettingsAction extends InspectionViewActionBase {
       if (toolWrapper != null) {
         final HighlightDisplayKey key = HighlightDisplayKey.find(toolWrapper.getShortName()); //do not search for dead code entry point tool
         if (key != null) {
-          if (new EditInspectionToolsSettingsAction(key).editToolSettings(view.getProject(), inspectionProfile)) {
-            view.updateCurrentProfile();
-          }
+          new EditInspectionToolsSettingsAction(key).editToolSettings(view.getProject(), inspectionProfile);
           return;
         }
       }
 
       final String[] path = view.getTree().getSelectedGroupPath();
-      if (EditInspectionToolsSettingsAction.editSettings(view.getProject(), inspectionProfile, (c) -> {
+      EditInspectionToolsSettingsAction.editSettings(view.getProject(), inspectionProfile, (c) -> {
         if (path != null) {
           c.selectInspectionGroup(path);
         }
-      })) {
-        view.updateCurrentProfile();
-      }
+      });
     }
   }
 

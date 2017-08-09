@@ -86,7 +86,6 @@ public abstract class KeyAwareInspectionViewAction extends InspectionViewActionB
     protected void actionPerformed(@NotNull InspectionResultsView view, @NotNull HighlightDisplayKey key) {
       if (view.isSingleInspectionRun()) {
         view.getCurrentProfile().modifyProfile(it -> it.setToolEnabled(key.toString(), false));
-        view.updateCurrentProfile();
       }
       else {
         final RefEntity[] selectedElements = view.getTree().getSelectedElements();

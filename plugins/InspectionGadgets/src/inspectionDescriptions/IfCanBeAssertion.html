@@ -1,8 +1,11 @@
 <html>
 <body>
-Reports <b>if</b> statements (with no <b>else</b> branch) throwing <code>java.lang.Throwable</code>.<br>
-For example:<br>
+Reports <b>if</b> statements (with no <b>else</b> branch) throwing <code>java.lang.Throwable</code>.
+<!-- tooltip end -->
+<br>For example:<br>
 <code><b>if</b> (param == 2) <b>throw new</b> Exception();</code>
+<br>or guava's:<br>
+<code>Preconditions.checkNotNull(param, message)</code>
 
 <p>Quick fix replaces it with an <b>assert</b> statement.<br>
 Example:<br>

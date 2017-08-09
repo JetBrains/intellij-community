@@ -127,7 +127,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
 
   public void addConsoleFolding(boolean isDebugConsole) {
     try {
-      if (isDebugConsole && myExecuteActionHandler != null) {
+      if (isDebugConsole && myExecuteActionHandler != null && getEditor() != null) {
         PyConsoleStartFolding folding = createConsoleFolding();
         // in debug console we should add folding from the place where the folding was turned on
         folding.setStartLineOffset(getEditor().getDocument().getTextLength());
@@ -295,6 +295,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     VirtualFile file = getVirtualFile();
     if (PyConsoleUtil.detectIPythonImported(text, outputType)) {
       PyConsoleUtil.markIPython(file);
+      getExecuteActionHandler().updateConsoleState();
     }
     if (PyConsoleUtil.detectIPythonAutomagicOn(text)) {
       PyConsoleUtil.setIPythonAutomagic(file, true);

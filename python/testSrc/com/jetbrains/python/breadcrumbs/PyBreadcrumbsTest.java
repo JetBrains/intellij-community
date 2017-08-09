@@ -17,7 +17,7 @@ package com.jetbrains.python.breadcrumbs;
 
 import com.google.common.collect.Lists;
 import com.intellij.psi.PsiElement;
-import com.intellij.xml.breadcrumbs.BreadcrumbsInfoProvider;
+import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import one.util.streamex.StreamEx;
@@ -203,7 +203,7 @@ public class PyBreadcrumbsTest extends PyTestCase {
   }
 
   @NotNull
-  private List<PsiElement> elementsFromTopToCaret(@NotNull BreadcrumbsInfoProvider provider) {
+  private List<PsiElement> elementsFromTopToCaret(@NotNull BreadcrumbsProvider provider) {
     final List<PsiElement> fromElementToNullExcluded = StreamEx
       .iterate(myFixture.getFile().findElementAt(myFixture.getCaretOffset()), provider::getParent)
       .takeWhile(Objects::nonNull)
@@ -214,7 +214,7 @@ public class PyBreadcrumbsTest extends PyTestCase {
   }
 
   @NotNull
-  private static String getBreadcrumbsAndTooltips(@NotNull BreadcrumbsInfoProvider provider, @NotNull List<PsiElement> elements) {
+  private static String getBreadcrumbsAndTooltips(@NotNull BreadcrumbsProvider provider, @NotNull List<PsiElement> elements) {
     return elements
       .stream()
       .flatMap(element -> Stream.of("Crumb:", provider.getElementInfo(element), "Tooltip:", provider.getElementTooltip(element)))

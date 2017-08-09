@@ -137,6 +137,8 @@ public class SSHMain implements GitExternalApp {
       app.start();
       System.exit(app.myExitCode);
     }
+    catch (CancelException ignore) {
+    }
     catch (Throwable t) {
       t.printStackTrace();
       System.exit(1);
@@ -279,7 +281,7 @@ public class SSHMain implements GitExternalApp {
         for (int i = 0; i < myHost.getNumberOfPasswordPrompts(); i++) {
           String password = myXmlRpcClient.askPassword(myHandlerNo, getUserHostString(), i != 0, myLastError);
           if (password == null) {
-            break;
+            throw new CancelException();
           }
           else {
             if (c.authenticateWithPassword(myHost.getUser(), password)) {
@@ -325,9 +327,8 @@ public class SSHMain implements GitExternalApp {
           int i;
           for (i = 0; i < myHost.getNumberOfPasswordPrompts(); i++) {
             passphrase = myXmlRpcClient.askPassphrase(myHandlerNo, getUserHostString(), keyPath, i != 0, myLastError);
-            if (passphrase == null) {
-              // if no passphrase was entered, just return false and try something other
-              return false;
+            if (passphrase == null) { // user pressed cancel in the dialog
+              throw new CancelException();
             }
             else {
               try {
@@ -365,6 +366,9 @@ public class SSHMain implements GitExternalApp {
         }
       }
       return false;
+    }
+    catch (CancelException rethrow) {
+      throw rethrow;
     }
     catch (Exception e) {
       myErrorCause = e;
@@ -496,6 +500,7 @@ public class SSHMain implements GitExternalApp {
     return new SSHMain(host, user, port, command);
   }
 
+  private static class CancelException extends RuntimeException {}
 
   /**
    * Interactive callback support. The callback invokes Idea XML RPC server.

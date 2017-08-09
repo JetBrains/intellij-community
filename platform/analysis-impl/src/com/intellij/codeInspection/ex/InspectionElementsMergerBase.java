@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -150,25 +149,6 @@ public abstract class InspectionElementsMergerBase extends InspectionElementsMer
         }
         options.add(element.clone());
       }
-    }
-  }
-
-  public static class InspectionElementsMergerDelegate extends InspectionElementsMergerBase {
-    private final InspectionElementsMerger myMerger;
-
-    public InspectionElementsMergerDelegate(InspectionElementsMerger merger) {
-      myMerger = merger;
-    }
-
-    @Override
-    public String getMergedToolName() {
-      return myMerger.getMergedToolName();
-    }
-
-    @NotNull
-    @Override
-    public String[] getSourceToolNames() {
-      return myMerger.getSourceToolNames();
     }
   }
 }

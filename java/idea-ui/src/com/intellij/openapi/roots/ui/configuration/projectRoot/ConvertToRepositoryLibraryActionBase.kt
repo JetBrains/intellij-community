@@ -24,6 +24,7 @@ import com.intellij.openapi.application.Result
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.fileTypes.StdFileTypes
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbAwareAction
@@ -35,15 +36,11 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryUtil
 import com.intellij.openapi.roots.libraries.NewLibraryConfiguration
 import com.intellij.openapi.roots.libraries.ui.OrderRoot
-import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditorBase
-import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.LibraryProjectStructureElement
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VfsUtilCore
-import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.*
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import gnu.trove.THashSet
 import gnu.trove.TObjectHashingStrategy
@@ -207,6 +204,25 @@ private class ComparingJarFilesTask(project: Project, private val downloadedFile
         }
       }.execute()
       RefreshQueue.getInstance().refresh(false, true, null, libraryFileToCompare, downloadedFileToCompare)
+
+      val jarFilesToRefresh = ArrayList<VirtualFile>()
+      object : WriteAction<Unit>() {
+        override fun run(result: Result<Unit>) {
+          collectNestedJars(libraryFileToCompare!!, jarFilesToRefresh)
+          collectNestedJars(downloadedFileToCompare!!, jarFilesToRefresh)
+        }
+      }.execute()
+      RefreshQueue.getInstance().refresh(false, true, null, jarFilesToRefresh)
+    }
+  }
+
+  private fun collectNestedJars(file: VirtualFile, result: MutableList<VirtualFile>) {
+    if (file.isDirectory) {
+      file.children.forEach { collectNestedJars(it, result) }
+    }
+    else if (file.fileType == StdFileTypes.ARCHIVE) {
+      val jarRootUrl = VfsUtil.getUrlForLibraryRoot(VfsUtil.virtualToIoFile(file))
+      result.add(VirtualFileManager.getInstance().refreshAndFindFileByUrl(jarRootUrl)!!)
     }
   }
 

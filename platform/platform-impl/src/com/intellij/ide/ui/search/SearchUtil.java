@@ -187,6 +187,7 @@ public class SearchUtil {
   }
 
   private static void processUILabel(String title, Set<OptionDescription> configurableOptions, String path) {
+    if (title.startsWith("<html>")) title = StringUtil.stripHtml(title, false);
     final Set<String> words = SearchableOptionsRegistrar.getInstance().getProcessedWordsWithoutStemming(title);
     final String regex = "[\\W&&[^\\p{Punct}\\p{Blank}]]";
     for (String option : words) {

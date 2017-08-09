@@ -130,15 +130,13 @@ fun <T : UElement> PsiFile.findUElementAt(offset: Int, cls: Class<out T>): T? {
  * Finds an UAST element of the given type among the parents of the given PSI element.
  */
 @JvmOverloads
-fun <T : UElement> PsiElement?.getUastParentOfType(cls: Class<out T>, strict: Boolean = false): T? {
-    val uElement = this.toUElement() ?: return null
-    val sequence = if (strict)
-        (uElement.uastParent?.withContainingElements ?: emptySequence())
-    else
-        uElement.withContainingElements
+fun <T : UElement> PsiElement?.getUastParentOfType(cls: Class<out T>, strict: Boolean = false): T? = this?.run {
+    val startingElement = if (strict) this.parent else this
+    val parentSequence = generateSequence(startingElement, PsiElement::getParent)
+    val firstUElement = parentSequence.mapNotNull { it.toUElement() }.firstOrNull() ?: return null
 
     @Suppress("UNCHECKED_CAST")
-    return sequence.firstOrNull { cls.isInstance(it) } as T?
+    return firstUElement.withContainingElements.firstOrNull { cls.isInstance(it) } as T?
 }
 
 inline fun <reified T : UElement> PsiElement?.getUastParentOfType(strict: Boolean = false): T? = getUastParentOfType(T::class.java, strict)

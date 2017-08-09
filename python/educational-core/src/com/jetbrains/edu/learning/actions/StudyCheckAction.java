@@ -55,6 +55,7 @@ public class StudyCheckAction extends StudyActionWithShortcut {
         .showTestResultPopUp("Checking is not available while indexing is in progress", MessageType.WARNING.getPopupBackground(), project);
       return;
     }
+    StudyCheckUtils.hideTestResultsToolWindow(project);
     FileDocumentManager.getInstance().saveAllDocuments();
     Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
     if (editor == null) {

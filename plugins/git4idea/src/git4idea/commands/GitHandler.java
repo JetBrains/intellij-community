@@ -809,7 +809,8 @@ public abstract class GitHandler {
       myInputProcessor = inputProcessor;
     }
 
-  public static @NotNull Map<String, String> getCommonEnvironment() {
+  @NotNull
+  public static Map<String, String> getCommonEnvironment() {
     Map<String,String> commonEnv = new HashMap<>();
     commonEnv.put("GIT_TRACE","0");
     return commonEnv;

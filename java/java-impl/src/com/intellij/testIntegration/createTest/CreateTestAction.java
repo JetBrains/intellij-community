@@ -34,8 +34,8 @@ import com.intellij.openapi.roots.TestModuleProperties;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testIntegration.TestFramework;
+import com.intellij.testIntegration.TestIntegrationUtils;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -203,17 +203,7 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
 
     @Nullable
   protected static PsiClass getContainingClass(PsiElement element) {
-    final PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class, false);
-    if (psiClass == null) {
-      final PsiFile containingFile = element.getContainingFile();
-      if (containingFile instanceof PsiClassOwner){
-        final PsiClass[] classes = ((PsiClassOwner)containingFile).getClasses();
-        if (classes.length == 1) {
-          return classes[0];
-        }
-      }
-    }
-    return psiClass;
+    return TestIntegrationUtils.findOuterClass(element);
   }
 
   @Override

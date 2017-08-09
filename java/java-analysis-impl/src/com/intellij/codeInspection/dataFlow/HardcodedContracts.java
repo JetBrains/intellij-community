@@ -196,7 +196,8 @@ public class HardcodedContracts {
   }
 
   private static boolean isJunit(String className) {
-    return className.startsWith("junit.framework.") || className.startsWith("org.junit.");
+    return className.startsWith("junit.framework.") || className.startsWith("org.junit.")
+           || className.equals("org.testng.AssertJUnit");
   }
 
   private static boolean isJunit5(String className) {
@@ -204,7 +205,7 @@ public class HardcodedContracts {
   }
 
   private static boolean isTestng(String className) {
-    return className.startsWith("org.testng.");
+    return className.startsWith("org.testng.") && !className.equals("org.testng.AssertJUnit");
   }
 
   private static boolean isNotNullMatcher(PsiExpression expr) {

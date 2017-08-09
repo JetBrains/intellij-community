@@ -323,11 +323,8 @@ public class InjectedLanguageUtil {
       ProgressManager.checkCanceled();
       if ("EL".equals(current.getLanguage().getID())) break;
       ParameterizedCachedValue<MultiHostRegistrarImpl, PsiElement> data = current.getUserData(INJECTED_PSI);
-      if (data == null) {
+      if (data == null || (registrar = data.getValue(current)) == null || !registrar.isValid()) {
         registrar = InjectedPsiCachedValueProvider.doCompute(current, injectedManager, project, hostPsiFile);
-      }
-      else {
-        registrar = data.getValue(current);
       }
 
       current = current.getParent(); // cache no injection for current
@@ -338,9 +335,12 @@ public class InjectedLanguageUtil {
         TextRange elementRange = element.getTextRange();
         for (Pair<Place, PsiFile> pair : places) {
           Place place = pair.first;
-          for (PsiLanguageInjectionHost.Shred shred : place) {
-            if (shred.getHost().getTextRange().intersects(elementRange)) {
-              if (place.isValid()) break nextParent;
+          if (place.isValid()) {
+            for (PsiLanguageInjectionHost.Shred shred : place) {
+              PsiLanguageInjectionHost hostElement = shred.getHost();
+              if (hostElement != null && hostElement.getTextRange().intersects(elementRange)) {
+                break nextParent;
+              }
             }
           }
         }

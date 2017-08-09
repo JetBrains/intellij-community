@@ -1097,11 +1097,10 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     );
   }
 
-  public void testClassReplacement3() {
-    if (true) return;
+  public void _testClassReplacement3() {
     String s37 = "class A { int a = 1; void B() {} int C(char ch) { int z = 1; } int b = 2; }";
 
-    String s38 = "class 'A { 'T* 'M*('PT* 'PN*) { 'S*; } 'O* }";
+    String s38 = "class 'A { '_T* '_M*('_PT* '_PN*) { '_S*; } '_O* }";
     String s39 = "class $A$ { $T$ $M$($PT$ $PN$) { System.out.println(\"$M$\"); $S$; } $O$ }";
 
     String expectedResult14 = "class A { int a = 1; void B( ) { System.out.println(\"B\");  } int C(char ch) { System.out.println(\"C\"); int z = 1; } int b = 2;}";
@@ -1110,7 +1109,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     assertEquals(
       "Multiple methods replacement",
       expectedResult14,
-      replacer.testReplace(s37,s38,s39,options, true)
+      replacer.testReplace(s37, s38, s39, options, true)
     );
   }
 
@@ -2171,6 +2170,13 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                  "  abstract void a(int i);\n" +
                  "}",
                  replacer.testReplace(in, what, by, options));
+
+    final String what2 = "abstract void '_a('_T '_p*);";
+    final String by2 = "void $a$($T$ $p$) {}";
+    assertEquals("abstract class A {\n" +
+                 "  void a() {}\n" +
+                 "}",
+                 replacer.testReplace(in, what2, by2, options));
   }
 
   public void testReplaceParameterWithComment() {

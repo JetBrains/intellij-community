@@ -168,6 +168,9 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
       }
 
       myCommonSettingsManager = from.myCommonSettingsManager.clone(this);
+      
+      myRepeatAnnotations.clear();
+      myRepeatAnnotations.addAll(from.myRepeatAnnotations);
     }
   }
 

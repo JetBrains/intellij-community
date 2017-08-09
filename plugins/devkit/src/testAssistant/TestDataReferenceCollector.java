@@ -81,7 +81,7 @@ public class TestDataReferenceCollector {
     }
     uMethod.accept(new AbstractUastVisitor() {
       @Override
-      public boolean visitCallExpression(UCallExpression expression) {
+      public boolean visitCallExpression(@NotNull UCallExpression expression) {
         String callText = expression.getMethodName();
         if (callText == null) return true;
         UMethod callee = UastContextKt.toUElement(expression.resolve(), UMethod.class);
@@ -154,7 +154,7 @@ public class TestDataReferenceCollector {
     }
 
     @Override
-    public Object evaluateMethodCall(PsiMethod target, List<? extends UValue> argumentValues) {
+    public Object evaluateMethodCall(@NotNull PsiMethod target, @NotNull List<? extends UValue> argumentValues) {
       if (target.getName().equals("getTestName") && argumentValues.size() == 1) {
         UValue lowercaseArg = argumentValues.get(0);
         boolean lowercaseArgValue = lowercaseArg instanceof UBooleanConstant && ((UBooleanConstant) lowercaseArg).getValue();
@@ -168,7 +168,7 @@ public class TestDataReferenceCollector {
     }
 
     @Override
-    public Object evaluateVariable(UVariable variable) {
+    public Object evaluateVariable(@NotNull UVariable variable) {
       if (variable instanceof UParameter) {
         Computable<UValue> value = myArguments.get(variable.getName());
         if (value != null) {

@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 public class PyConsoleStartFolding implements ConsoleCommunicationListener, FoldingListener, DocumentListener {
   private PythonConsoleView myConsoleView;
   private int myNumberOfCommandExecuted = 0;
-  private int myNumberOfCommandToStop = 1;
+  private int myNumberOfCommandToStop = 2;
   private boolean doNotAddFoldingAgain = false;
   private FoldRegion myStartFoldRegion;
   private static final String DEFAULT_FOLDING_MESSAGE = "Python Console";
@@ -88,6 +88,7 @@ public class PyConsoleStartFolding implements ConsoleCommunicationListener, Fold
       if (myStartFoldRegion != null) {
         foldingModel.removeFoldRegion(myStartFoldRegion);
       }
+      if (start > finish) return;
       FoldRegion foldRegion = foldingModel.addFoldRegion(start, finish, placeholderText);
       if (foldRegion != null) {
         foldRegion.setExpanded(false);

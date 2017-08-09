@@ -113,7 +113,7 @@ class BuiltInWebServer : HttpRequestHandler() {
 
 internal fun isActivatable() = Registry.`is`("ide.built.in.web.server.activatable", false)
 
-internal const val TOKEN_PARAM_NAME = "_ijt"
+const val TOKEN_PARAM_NAME = "_ijt"
 const val TOKEN_HEADER_NAME = "x-ijt"
 
 private val STANDARD_COOKIE by lazy {

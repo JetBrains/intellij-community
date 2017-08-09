@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,8 @@ import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.psi.codeStyle.PropertiesCodeStyleSettings;
 import com.intellij.lang.properties.psi.impl.PropertyImpl;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -45,7 +47,20 @@ public class PropertiesFileTest extends LightPlatformCodeInsightFixtureTestCase 
     WriteCommandAction.runWriteCommandAction(getProject(), () -> {
       propertiesFile.addProperty(myPropertyToAdd);
     });
+    PsiTestUtil.checkFileStructure((PsiFile)propertiesFile);
 
+    List<IProperty> properties = propertiesFile.getProperties();
+    IProperty added = properties.get(0);
+    assertPropertyEquals(added, myPropertyToAdd.getName(), myPropertyToAdd.getValue());
+  }
+
+  public void testAddPropertyAfterComment2() throws Exception {
+    final PropertiesFile propertiesFile =
+      PropertiesImplUtil.getPropertiesFile(myFixture.configureByText(PropertiesFileType.INSTANCE, "#xxxxx\n"));
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      propertiesFile.addProperty(myPropertyToAdd);
+    });
+    PsiTestUtil.checkFileStructure((PsiFile)propertiesFile);
 
     List<IProperty> properties = propertiesFile.getProperties();
     IProperty added = properties.get(0);
@@ -63,7 +78,7 @@ public class PropertiesFileTest extends LightPlatformCodeInsightFixtureTestCase 
     WriteCommandAction.runWriteCommandAction(null, () -> {
       propertiesFile.addProperty(myPropertyToAdd);
     });
-
+    PsiTestUtil.checkFileStructure((PsiFile)propertiesFile);
 
     List<IProperty> properties = propertiesFile.getProperties();
     assertEquals(2, properties.size());
@@ -92,7 +107,7 @@ public class PropertiesFileTest extends LightPlatformCodeInsightFixtureTestCase 
 
     final Property property = (Property)propertiesFile.findPropertyByKey("xxx2");
     WriteCommandAction.runWriteCommandAction(null, property::delete);
-
+    PsiTestUtil.checkFileStructure((PsiFile)propertiesFile);
 
     assertEquals("xxx=yyy\nxxx3=ttt\n\n", propertiesFile.getContainingFile().getText());
   }
@@ -102,7 +117,7 @@ public class PropertiesFileTest extends LightPlatformCodeInsightFixtureTestCase 
 
     final Property property = (Property)propertiesFile.findPropertyByKey("xxx");
     WriteCommandAction.runWriteCommandAction(null, property::delete);
-
+    PsiTestUtil.checkFileStructure((PsiFile)propertiesFile);
 
     assertEquals("xxx2=tyrt\nxxx3=ttt\n\n", propertiesFile.getText());
   }
@@ -114,6 +129,7 @@ public class PropertiesFileTest extends LightPlatformCodeInsightFixtureTestCase 
     WriteCommandAction.runWriteCommandAction(null, () -> {
         propertiesFile.addProperty(myPropertyToAdd);
       });
+    PsiTestUtil.checkFileStructure((PsiFile)propertiesFile);
 
     assertEquals("a=b\\nccc\nkkk=vvv", propertiesFile.getText());
   }
@@ -137,6 +153,7 @@ public class PropertiesFileTest extends LightPlatformCodeInsightFixtureTestCase 
     WriteCommandAction.runWriteCommandAction(null, () -> {
         propertiesFile.addPropertyAfter(myPropertyToAdd, c);
       });
+    PsiTestUtil.checkFileStructure((PsiFile)propertiesFile);
 
     assertEquals("a=b\nc=d\nkkk=vvv\ne=f", propertiesFile.getText());
   }
@@ -147,6 +164,7 @@ public class PropertiesFileTest extends LightPlatformCodeInsightFixtureTestCase 
     WriteCommandAction.runWriteCommandAction(null, () -> {
         propertiesFile.addPropertyAfter(myPropertyToAdd, p);
       });
+    PsiTestUtil.checkFileStructure((PsiFile)propertiesFile);
 
     assertEquals("a=b\nc=d\ne=f\nkkk=vvv", propertiesFile.getText());
   }
@@ -156,6 +174,7 @@ public class PropertiesFileTest extends LightPlatformCodeInsightFixtureTestCase 
     WriteCommandAction.runWriteCommandAction(getProject(), () -> {
       propertiesFile.addPropertyAfter(myPropertyToAdd, null);
     });
+    PsiTestUtil.checkFileStructure((PsiFile)propertiesFile);
 
     assertEquals("kkk=vvv\na=b\nc=d\ne=f", propertiesFile.getText());
   }

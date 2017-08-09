@@ -136,7 +136,6 @@ public class BookmarkManager implements PersistentStateComponent<Element> {
 
   private static void unmap(Document document, Bookmark bookmark) {
     if (document == null || bookmark == null) return;
-    ApplicationManager.getApplication().assertIsDispatchThread();
     List<Bookmark> list = document.getUserData(BOOKMARKS_KEY);
     if (list != null && list.remove(bookmark) && list.isEmpty()) {
       document.putUserData(BOOKMARKS_KEY, null);
@@ -280,10 +279,8 @@ public class BookmarkManager implements PersistentStateComponent<Element> {
   @Override
   public void loadState(final Element state) {
     StartupManager.getInstance(myProject).runWhenProjectIsInitialized((DumbAwareRunnable)() -> {
-      BookmarksListener publisher = myBus.syncPublisher(BookmarksListener.TOPIC);
       for (Bookmark bookmark : myBookmarks) {
         bookmark.release();
-        publisher.bookmarkRemoved(bookmark);
         unmap(bookmark.getDocument(), bookmark);
       }
       myBookmarks.clear();

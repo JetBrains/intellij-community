@@ -17,7 +17,7 @@ package com.intellij.execution.dashboard.actions;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.dashboard.RunDashboardContent;
-import com.intellij.execution.dashboard.RunDashboardContributor;
+import com.intellij.execution.dashboard.RunDashboardManager;
 import com.intellij.execution.dashboard.tree.FolderDashboardGroupingRule;
 import com.intellij.execution.dashboard.tree.GroupingNode;
 import com.intellij.execution.impl.RunManagerImpl;
@@ -68,8 +68,7 @@ public class UngroupConfigurationsActions extends RunDashboardTreeAction<Groupin
     runManager.fireBeginUpdate();
     try {
       runManager.getAllSettings().forEach(settings -> {
-        RunDashboardContributor contributor = RunDashboardContributor.getContributor(settings.getType());
-        if (contributor == null || !contributor.isShowInDashboard(settings.getConfiguration())) return;
+        if (!RunDashboardManager.getInstance(project).isShowInDashboard(settings.getConfiguration())) return;
 
         if (node.getGroup().getName().equals(settings.getFolderName())) {
           settings.setFolderName(null);

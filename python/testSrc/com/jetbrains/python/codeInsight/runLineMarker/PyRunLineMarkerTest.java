@@ -29,7 +29,7 @@ public class PyRunLineMarkerTest extends PyTestCase {
     LineMarkerInfo lineMarkerInfo = infos.get(0);
     PsiElement elementWithInfo = lineMarkerInfo.getElement();
     assertNotNull(elementWithInfo);
-    assertTrue(elementWithInfo.getText().startsWith("if __name__ == \"__main__\""));
+    assertTrue(elementWithInfo.getParent().getText().startsWith("if __name__ == \"__main__\""));
   }
 
   public void testNotRunnable() {

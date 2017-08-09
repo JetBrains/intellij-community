@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.changes.local;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.ChangeListListener;
 import com.intellij.openapi.vcs.changes.ChangeListWorker;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
@@ -38,22 +39,25 @@ public class AddList implements ChangeListCommand {
 
   public void apply(final ChangeListWorker worker) {
     LocalChangeList list = worker.getChangeListByName(myName);
-    if (list != null) {
+    if (list == null) {
+      myOldComment = null;
+      myNewListCopy = worker.addChangeList(myName, myComment, myData).copy();
+    }
+    else if (StringUtil.isNotEmpty(myComment)) {
       myOldComment = worker.editComment(myName, myComment);
+      myNewListCopy = list.copy();
     }
     else {
-      list = worker.addChangeList(myName, myComment, myData);
       myOldComment = null;
+      myNewListCopy = null;
     }
-
-    myNewListCopy = list.copy();
   }
 
   public void doNotify(final EventDispatcher<ChangeListListener> dispatcher) {
     if (myOldComment != null) {
       dispatcher.getMulticaster().changeListCommentChanged(myNewListCopy, myOldComment);
     }
-    else {
+    else if (myNewListCopy != null) {
       dispatcher.getMulticaster().changeListAdded(myNewListCopy);
     }
   }

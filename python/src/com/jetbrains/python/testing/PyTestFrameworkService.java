@@ -63,17 +63,6 @@ public class PyTestFrameworkService implements PersistentStateComponent<PyTestFr
     return FRAMEWORK_NAMES.clone();
   }
 
-  /**
-   * @return pypi package that contains this framework
-   */
-  @NotNull
-  public static String getPackageByFramework(@NotNull final String frameworkName) {
-    if (frameworkName.equals(PyNames.TRIAL_TEST)) {
-      return "Twisted";
-    }
-    return frameworkName;
-  }
-
   @NotNull
   public static String getSdkReadableNameByFramework(@NotNull final String frameworkName) {
     switch (frameworkName) {

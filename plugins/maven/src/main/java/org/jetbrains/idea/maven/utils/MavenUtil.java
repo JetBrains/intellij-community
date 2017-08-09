@@ -47,6 +47,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -60,6 +61,7 @@ import com.intellij.util.DisposeAwareRunnable;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.xml.NanoXmlUtil;
 import gnu.trove.THashSet;
 import icons.MavenIcons;
 import org.jetbrains.annotations.NotNull;
@@ -80,9 +82,7 @@ import org.xml.sax.helpers.DefaultHandler;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
@@ -969,13 +969,39 @@ public class MavenUtil {
     return ArrayUtil.contains(FileUtilRt.getExtension(path), MavenConstants.POM_EXTENSIONS);
   }
 
+  public static boolean isPomFile(@Nullable VirtualFile file) {
+    return isPomFile(null, file);
+  }
+
   public static boolean isPomFile(@Nullable Project project, @Nullable VirtualFile file) {
     if (file == null) return false;
 
     if (isPomFileName(file.getName())) return true;
     if (!isPotentialPomFile(file.getPath())) return false;
 
-    if (project == null || !project.isInitialized()) return false;
+    if (project == null || !project.isInitialized()) {
+      if (!FileUtil.extensionEquals(file.getName(), "xml")) return false;
+      try {
+        try (InputStream in = file.getInputStream()) {
+          Ref<Boolean> isPomFile = Ref.create(false);
+          Reader reader = new BufferedReader(new InputStreamReader(in, CharsetToolkit.UTF8_CHARSET));
+          NanoXmlUtil.parse(reader, new NanoXmlUtil.IXMLBuilderAdapter() {
+
+            @Override
+            public void startElement(String name, String nsPrefix, String nsURI, String systemID, int lineNr) throws Exception {
+              if ("project".equals(name)) {
+                isPomFile.set(nsURI.startsWith("http://maven.apache.org/POM/"));
+              }
+              stop();
+            }
+          });
+          return isPomFile.get();
+        }
+      }
+      catch (IOException ignore) {
+        return false;
+      }
+    }
 
     MavenProjectsManager mavenProjectsManager = MavenProjectsManager.getInstance(project);
     if (mavenProjectsManager.findProject(file) != null) return true;

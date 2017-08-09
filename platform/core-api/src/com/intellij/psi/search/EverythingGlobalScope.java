@@ -29,6 +29,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.Collections;
 
+/**
+ * The biggest possible scope: every file on the planet belongs to this.
+ */
 public class EverythingGlobalScope extends GlobalSearchScope {
   public EverythingGlobalScope(Project project) {
     super(project);

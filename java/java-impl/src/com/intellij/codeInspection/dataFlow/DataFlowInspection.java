@@ -67,6 +67,11 @@ public class DataFlowInspection extends DataFlowInspectionBase {
   }
 
   @Override
+  protected LocalQuickFix createAddStreamFilterNotNullFix(PsiElement reference) {
+    return StreamFilterNotNullFix.makeFix(reference);
+  }
+
+  @Override
   protected LocalQuickFix createIntroduceVariableFix(final PsiExpression expression) {
     return new IntroduceVariableFix(true);
   }

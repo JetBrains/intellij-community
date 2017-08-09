@@ -360,7 +360,8 @@ public class PyPackageManagerImpl extends PyPackageManager {
       if (binaryFile != null) {
         final ProjectJdkImpl tmpSdk = new ProjectJdkImpl("", PythonSdkType.getInstance());
         tmpSdk.setHomePath(path);
-        final PyPackageManager manager = PyPackageManager.getInstance(tmpSdk);
+        // Don't save such one-shot SDK with empty name in the cache of PyPackageManagers
+        final PyPackageManager manager = new PyPackageManagerImpl(tmpSdk);
         manager.installManagement();
       }
     }

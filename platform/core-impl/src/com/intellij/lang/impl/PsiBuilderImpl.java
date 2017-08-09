@@ -27,6 +27,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.TokenType;
+import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.source.CharTableImpl;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.text.BlockSupportImpl;
@@ -1337,11 +1338,12 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
         }
 
         if (type instanceof ILightLazyParseableElementType) {
-          return ((TreeElement)oldNode).textMatches(token.getText())
-                 ? ThreeState.YES
-                 : TreeUtil.isCollapsedChameleon(oldNode)
-                   ? ThreeState.NO  // do not dive into collapsed nodes
-                   : ThreeState.UNSURE;
+          if (((TreeElement)oldNode).textMatches(token.getText())) {
+            return PsiDocumentManagerBase.isFullReparseInProgress() ? ThreeState.UNSURE : ThreeState.YES;
+          }
+          return TreeUtil.isCollapsedChameleon(oldNode)
+                 ? ThreeState.NO  // do not dive into collapsed nodes
+                 : ThreeState.UNSURE;
         }
 
         if (oldNode.getElementType() instanceof ILazyParseableElementType && type instanceof ILazyParseableElementType ||

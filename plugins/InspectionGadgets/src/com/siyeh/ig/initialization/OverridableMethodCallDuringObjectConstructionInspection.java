@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,17 +34,12 @@ public class OverridableMethodCallDuringObjectConstructionInspection extends Ove
     final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)infos[0];
     final PsiClass callClass = ClassUtils.getContainingClass(methodCallExpression);
     final PsiMethod method = methodCallExpression.resolveMethod();
-    if (method == null) {
+    if (method == null || MethodUtils.isOverriddenInHierarchy(method, callClass)) {
       return InspectionGadgetsFix.EMPTY_ARRAY;
     }
-    final PsiClass containingClass = method.getContainingClass();
-    if (containingClass == null || !containingClass.equals(callClass) || MethodUtils.isOverridden(method)) {
-      return InspectionGadgetsFix.EMPTY_ARRAY;
-    }
-    final String methodName = method.getName();
     return new InspectionGadgetsFix[]{
-      new MakeClassFinalFix(containingClass),
-      new MakeMethodFinalFix(methodName)
+      new MakeClassFinalFix(callClass),
+      new MakeMethodFinalFix(method.getName())
     };
   }
 

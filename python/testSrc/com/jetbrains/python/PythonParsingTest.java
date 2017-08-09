@@ -335,6 +335,11 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest();
   }
 
+  // PY-24389
+  public void testCommaAfterStarArgAllowedInPython36() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
   public void testRangeAsLHS() {  // PY-6468
     doTest();
   }

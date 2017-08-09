@@ -865,6 +865,11 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     }
 
     @Override
+    public boolean isInnermostContext() {
+      return false;
+    }
+
+    @Override
     public PsiElement getHighlightedElement() {
       return null;  // we don't use it
     }

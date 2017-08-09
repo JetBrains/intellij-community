@@ -36,6 +36,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.util.containers.ContainerUtil.newArrayList;
+
 /**
  * <p>
  *   Stores files which are untracked by the Git repository.
@@ -232,12 +234,8 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
   }
 
   @Override
-  public void before(@NotNull List<? extends VFileEvent> events) {
-  }
-
-  @Override
   public void after(@NotNull List<? extends VFileEvent> events) {
-    myEventsProcessor.add(events);
+    myEventsProcessor.add(newArrayList(events));
   }
 
   private void processEvents(@NotNull List<? extends VFileEvent> events) {

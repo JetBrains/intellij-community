@@ -35,7 +35,6 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.xml.XmlNamespaceHelper;
-import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,7 +67,7 @@ public class XmlAttributeInsertHandler implements InsertHandler<LookupElement> {
     final PsiFile file = context.getFile();
 
     final CharSequence chars = document.getCharsSequence();
-    final String quote = XmlEditUtil.getAttributeQuote(HtmlUtil.hasHtml(file) || HtmlUtil.supportsXmlTypedHandlers(file));
+    final String quote = XmlEditUtil.getAttributeQuote(file);
     final boolean insertQuotes = WebEditorOptions.getInstance().isInsertQuotesForAttributeValue() && StringUtil.isNotEmpty(quote);
     final boolean hasQuotes = CharArrayUtil.regionMatches(chars, caretOffset, "=\"") ||
                               CharArrayUtil.regionMatches(chars, caretOffset, "='");

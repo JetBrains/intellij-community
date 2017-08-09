@@ -165,7 +165,10 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       Insets margins = getMargin();
       setMargin(JBUI.insets(margins.top, 2, margins.bottom, 2));
       if (isSmallVariant()) {
-        setBorder(JBUI.Borders.empty(0, 2));
+        if (!UIUtil.isUnderWin10LookAndFeel()) {
+          setBorder(JBUI.Borders.empty(0, 2));
+        }
+
         if (!UIUtil.isUnderGTKLookAndFeel()) {
           setFont(JBUI.Fonts.label(11));
         }

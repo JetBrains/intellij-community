@@ -87,12 +87,7 @@ public class ReturnNullInspectionBase extends BaseInspection {
     final NullableNotNullManager manager = NullableNotNullManager.getInstance(elt.getProject());
     return new DelegatingFix(new AnnotateMethodFix(
       manager.getDefaultNullable(),
-      ArrayUtil.toStringArray(manager.getNotNulls())){
-      @Override
-      public int shouldAnnotateBaseMethod(PsiMethod method, PsiMethod superMethod, Project project) {
-        return ReturnNullInspectionBase.this.shouldAnnotateBaseMethod(method, superMethod);
-      }
-    });
+      ArrayUtil.toStringArray(manager.getNotNulls())));
   }
 
   private static class ReplaceWithEmptyOptionalFix extends InspectionGadgetsFix {

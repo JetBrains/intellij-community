@@ -22,7 +22,7 @@ public class LocalChangeListImpl extends LocalChangeList {
   @NotNull private final Set<Change> myChanges;
   private Set<Change> myReadChangesCache = null;
   @NotNull private final String myId;
-  @NotNull private String myName;
+  @NotNull private final String myName;
   @NotNull private String myComment = "";
   @Nullable private Object myData;
 
@@ -42,10 +42,10 @@ public class LocalChangeListImpl extends LocalChangeList {
     myChanges = ContainerUtil.newHashSet();
   }
 
-  private LocalChangeListImpl(@NotNull LocalChangeListImpl origin) {
+  private LocalChangeListImpl(@NotNull LocalChangeListImpl origin, @NotNull String name) {
     myId = origin.getId();
     myProject = origin.myProject;
-    myName = origin.myName;
+    myName = validateName(name);
 
     myComment = origin.myComment;
     myIsDefault = origin.myIsDefault;
@@ -75,10 +75,6 @@ public class LocalChangeListImpl extends LocalChangeList {
   @Override
   public String getName() {
     return myName;
-  }
-
-  public void setNameImpl(@NotNull String name) {
-    myName = validateName(name);
   }
 
   @NotNull
@@ -161,7 +157,11 @@ public class LocalChangeListImpl extends LocalChangeList {
 
   @Override
   public LocalChangeListImpl copy() {
-    return new LocalChangeListImpl(this);
+    return new LocalChangeListImpl(this, myName);
+  }
+
+  public LocalChangeListImpl copy(@NotNull String newName) {
+    return new LocalChangeListImpl(this, newName);
   }
 
 

@@ -43,7 +43,7 @@ public enum LanguageLevel {
   public static List<LanguageLevel> ALL_LEVELS = ImmutableList.copyOf(values());
 
   private static final LanguageLevel DEFAULT2 = PYTHON27;
-  private static final LanguageLevel DEFAULT3 = PYTHON35;
+  private static final LanguageLevel DEFAULT3 = PYTHON36;
 
   public static LanguageLevel FORCE_LANGUAGE_LEVEL = null;
 

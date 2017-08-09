@@ -25,8 +25,8 @@ import com.intellij.ide.ui.laf.intellij.MacIntelliJIconCache;
 import com.intellij.ide.ui.laf.intellij.MacIntelliJTextFieldUI;
 import com.intellij.ide.ui.laf.intellij.WinIntelliJTextFieldUI;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
-import com.intellij.openapi.actionSystem.impl.InplaceActionButtonLook;
 import com.intellij.openapi.editor.EditorCopyPasteHelper;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -37,6 +37,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.SearchTextField;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
@@ -265,8 +266,12 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
     myMultilineEnabled = enabled;
     myTextArea.getDocument().putProperty("filterNewlines", myMultilineEnabled ? null : Boolean.TRUE);
     if (!myMultilineEnabled) {
+      myTextArea.getInputMap().put(KeyStroke.getKeyStroke("shift UP"), "selection-begin-line");
+      myTextArea.getInputMap().put(KeyStroke.getKeyStroke("shift DOWN"), "selection-end-line");
       myTextArea.addKeyListener(myEnterRedispatcher);
     } else {
+      myTextArea.getInputMap().put(KeyStroke.getKeyStroke("shift UP"), "selection-up");
+      myTextArea.getInputMap().put(KeyStroke.getKeyStroke("shift DOWN"), "selection-down");
       myTextArea.removeKeyListener(myEnterRedispatcher);
     }
     updateIconsLayout();
@@ -343,8 +348,7 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
             (mySearchMode ? "Search" : "Replace") + " history",
             myHelper.getShowHistoryIcon());
 
-      KeyStroke stroke = KeyStroke.getKeyStroke(KeyEvent.VK_H, InputEvent.CTRL_DOWN_MASK);
-      registerCustomShortcutSet(new CustomShortcutSet(new KeyboardShortcut(stroke, null)), myTextArea);
+      registerCustomShortcutSet(SearchTextField.SHOW_HISTORY_SHORTCUT, myTextArea);
     }
 
     @Override
@@ -353,9 +357,8 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
       FindInProjectSettings findInProjectSettings = FindInProjectSettings.getInstance(e.getProject());
       String[] recent = mySearchMode ? findInProjectSettings.getRecentFindStrings()
                                      : findInProjectSettings.getRecentReplaceStrings();
-      String title = "Recent " + (mySearchMode ? "Searches" : "Replaces");
       JBList historyList = new JBList((Object[])ArrayUtil.reverseArray(recent));
-      Utils.showCompletionPopup(SearchTextArea.this, historyList, title, myTextArea, null);
+      Utils.showCompletionPopup(SearchTextArea.this, historyList, null, myTextArea, null);
     }
   }
 
@@ -368,7 +371,7 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
         return DataManager.getInstance().getDataContext(this);
       }
     };
-    button.setLook(new InplaceActionButtonLook());
+    button.setLook(ActionButtonLook.INPLACE_LOOK);
     button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
     button.updateIcon();
     return button;

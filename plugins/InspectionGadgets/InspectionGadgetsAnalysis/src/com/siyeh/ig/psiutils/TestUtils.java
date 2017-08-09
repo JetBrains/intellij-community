@@ -142,4 +142,18 @@ public class TestUtils {
     }
     return isInTestSourceContent(element);
   }
+
+  /**
+   * @return true if class is annotated with {@code @TestInstance(TestInstance.Lifecycle.PER_CLASS)}
+   */
+  public static boolean testInstancePerClass(@NotNull PsiClass containingClass) {
+    PsiAnnotation annotation = AnnotationUtil.findAnnotation(containingClass, JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_TEST_INSTANCE); 
+    if (annotation != null) {
+      PsiAnnotationMemberValue value = annotation.findDeclaredAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
+      if (value != null && value.getText().contains("PER_CLASS")) {
+        return true;
+      }
+    }
+    return false;
+  }
 }

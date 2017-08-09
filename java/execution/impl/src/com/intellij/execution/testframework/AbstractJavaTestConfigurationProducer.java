@@ -105,9 +105,7 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
       ? ((CommonJavaRunConfigurationParameters)predefinedConfiguration).getVMParameters()
       : null;
     if (vmParameters != null && !Comparing.strEqual(vmParameters, configuration.getVMParameters())) return false;
-    String paramSetName = contextLocation instanceof PsiMemberParameterizedLocation
-                          ? configuration.prepareParameterizedParameter(((PsiMemberParameterizedLocation)contextLocation).getParamSetName()) : null;
-    if (paramSetName != null && !Comparing.strEqual(paramSetName, configuration.getProgramParameters())) return false;
+    if (differentParamSet(configuration, contextLocation)) return false;
 
     if (configuration.isConfiguredByElement(element)) {
       final Module configurationModule = configuration.getConfigurationModule().getModule();
@@ -115,6 +113,13 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
       if (Comparing.equal(predefinedModule, configurationModule)) return true;
     }
 
+    return false;
+  }
+
+  protected boolean differentParamSet(T configuration, Location contextLocation) {
+    String paramSetName = contextLocation instanceof PsiMemberParameterizedLocation
+                          ? configuration.prepareParameterizedParameter(((PsiMemberParameterizedLocation)contextLocation).getParamSetName()) : null;
+    if (paramSetName != null && !Comparing.strEqual(paramSetName, configuration.getProgramParameters())) return true;
     return false;
   }
 

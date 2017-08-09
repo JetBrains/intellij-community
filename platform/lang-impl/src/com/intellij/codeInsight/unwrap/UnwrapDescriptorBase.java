@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -34,6 +35,7 @@ import java.util.Set;
 public abstract class UnwrapDescriptorBase implements UnwrapDescriptor {
   private Unwrapper[] myUnwrappers;
 
+  @NotNull 
   public final Unwrapper[] getUnwrappers() {
     if (myUnwrappers == null) {
       myUnwrappers = createUnwrappers();
@@ -42,8 +44,9 @@ public abstract class UnwrapDescriptorBase implements UnwrapDescriptor {
     return myUnwrappers;
   }
 
+  @NotNull
   @Override
-  public List<Pair<PsiElement, Unwrapper>> collectUnwrappers(Project project, Editor editor, PsiFile file) {
+  public List<Pair<PsiElement, Unwrapper>> collectUnwrappers(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     PsiElement e = findTargetElement(editor, file);
 
      List<Pair<PsiElement, Unwrapper>> result = new ArrayList<>();

@@ -31,15 +31,17 @@ class InlayImpl extends RangeMarkerImpl implements Inlay, Getter<InlayImpl> {
 
   @NotNull
   private final EditorImpl myEditor;
+  private final boolean myRelatedToPrecedingText;
   final int myOriginalOffset; // used for sorting of inlays, if they ever get merged into same offset after document modification
   int myOffsetBeforeDisposal = -1;
   private int myWidthInPixels;
   @NotNull
   private final EditorCustomElementRenderer myRenderer;
 
-  InlayImpl(@NotNull EditorImpl editor, int offset, @NotNull EditorCustomElementRenderer renderer) {
+  InlayImpl(@NotNull EditorImpl editor, int offset, boolean relatesToPreceedingText, @NotNull EditorCustomElementRenderer renderer) {
     super(editor.getDocument(), offset, offset, false);
     myEditor = editor;
+    myRelatedToPrecedingText = relatesToPreceedingText;
     myOriginalOffset = offset;
     myRenderer = renderer;
     doUpdateSize();
@@ -70,8 +72,15 @@ class InlayImpl extends RangeMarkerImpl implements Inlay, Getter<InlayImpl> {
   @Override
   protected void changedUpdateImpl(@NotNull DocumentEvent e) {
     super.changedUpdateImpl(e);
-    if (isValid() && DocumentUtil.isInsideSurrogatePair(getDocument(), intervalStart())) {
-      invalidate(e);
+    if (isValid()) {
+      if (DocumentUtil.isInsideSurrogatePair(getDocument(), intervalStart())) {
+        invalidate(e);
+      }
+      else if (myRelatedToPrecedingText && e.getOldLength() == 0) {
+        int newOffset = e.getOffset() + e.getNewLength();
+        setIntervalStart(newOffset);
+        setIntervalEnd(newOffset);
+      }
     }
   }
 
@@ -103,6 +112,11 @@ class InlayImpl extends RangeMarkerImpl implements Inlay, Getter<InlayImpl> {
   @Override
   public int getOffset() {
     return myOffsetBeforeDisposal == -1 ? getStartOffset() : myOffsetBeforeDisposal;
+  }
+
+  @Override
+  public boolean isRelatedToPrecedingText() {
+    return myRelatedToPrecedingText;
   }
 
   @NotNull

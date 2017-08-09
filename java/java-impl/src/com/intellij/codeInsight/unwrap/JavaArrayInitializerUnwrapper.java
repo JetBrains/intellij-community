@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNewExpression;
 import com.intellij.psi.PsiVariable;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 public class JavaArrayInitializerUnwrapper extends JavaUnwrapper {
 
@@ -29,7 +30,7 @@ public class JavaArrayInitializerUnwrapper extends JavaUnwrapper {
   }
 
   @Override
-  public boolean isApplicableTo(PsiElement e) {
+  public boolean isApplicableTo(@NotNull PsiElement e) {
     if (e instanceof PsiArrayInitializerExpression) {
       final PsiElement gParent = e.getParent();
       if (gParent instanceof PsiNewExpression && gParent.getParent() instanceof PsiVariable) {

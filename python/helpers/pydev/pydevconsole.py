@@ -143,9 +143,6 @@ class InterpreterInterface(BaseInterpreterInterface):
     def close(self):
         sys.exit(0)
 
-    def get_greeting_msg(self):
-        return 'PyDev console: starting.\n'
-
 
 class _ProcessExecQueueHelper:
     _debug_hook = None
@@ -328,10 +325,6 @@ def start_console_server(host, port, interpreter):
         print(port)
         print(interpreter.client_port)
 
-
-    sys.stderr.write(interpreter.get_greeting_msg())
-    sys.stderr.flush()
-
     while True:
         try:
             server.serve_forever()
@@ -378,8 +371,7 @@ def get_interpreter():
     except AttributeError:
         interpreterInterface = InterpreterInterface(None, None, threading.currentThread())
         setattr(__builtin__, 'interpreter', interpreterInterface)
-        sys.stderr.write(interpreterInterface.get_greeting_msg())
-        sys.stderr.flush()
+        print(interpreterInterface.get_greeting_msg())
 
     return interpreterInterface
 

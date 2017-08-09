@@ -571,7 +571,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
       }
     }
     if (previewEditor != null) {
-      new ProblemPreviewEditorPresentation(previewEditor, this);
+      ProblemPreviewEditorPresentation.setupFoldingsForNonProblemRanges(previewEditor, this);
     }
     mySplitter.setSecondComponent(editorPanel);
   }
@@ -1079,11 +1079,6 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
 
   public boolean isDisposed() {
     return myDisposed;
-  }
-
-  public void updateCurrentProfile() {
-    final String name = myInspectionProfile.getName();
-    myInspectionProfile = myInspectionProfile.getProfileManager().getProfile(name);
   }
 
   public boolean isRerunAvailable() {

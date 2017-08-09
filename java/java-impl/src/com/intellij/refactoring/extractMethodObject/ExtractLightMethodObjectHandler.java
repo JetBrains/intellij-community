@@ -114,6 +114,18 @@ public class ExtractLightMethodObjectHandler {
       return null;
     }
 
+    // expand lambda to code block if needed
+    PsiElement containingMethod = PsiTreeUtil.getParentOfType(originalAnchor, PsiMember.class, PsiLambdaExpression.class);
+    if (containingMethod instanceof PsiLambdaExpression) {
+      PsiElement body = ((PsiLambdaExpression)containingMethod).getBody();
+      if (body instanceof PsiExpression) {
+        PsiElement newBody = ((PsiLambdaExpression)RefactoringUtil.expandExpressionLambdaToCodeBlock(body)).getBody();
+        if (newBody instanceof PsiCodeBlock) {
+          originalAnchor = ((PsiCodeBlock)newBody).getStatements()[0];
+        }
+      }
+    }
+
     PsiElement anchor = RefactoringUtil.getParentStatement(originalAnchor, false);
     if (anchor == null) {
       if (PsiTreeUtil.getParentOfType(originalAnchor, PsiCodeBlock.class) != null) {
@@ -121,13 +133,24 @@ public class ExtractLightMethodObjectHandler {
       }
     }
 
-    final PsiElement container;
+    PsiElement container;
     if (anchor == null) {
       container = ((PsiClassInitializer)containingClass.add(elementFactory.createClassInitializer())).getBody();
       anchor = container.getLastChild();
     }
     else {
       container = anchor.getParent();
+    }
+
+    // add code blocks for ifs and loops if needed
+    if (anchor instanceof PsiStatement && RefactoringUtil.isLoopOrIf(container)) {
+      PsiBlockStatement codeBlockStatement =
+        (PsiBlockStatement)JavaPsiFacade.getElementFactory(project).createStatementFromText("{}", container);
+      codeBlockStatement.getCodeBlock().add(anchor);
+      PsiCodeBlock codeBlock = ((PsiBlockStatement)anchor.replace(codeBlockStatement)).getCodeBlock();
+      anchor = codeBlock.getStatements()[0];
+      originalAnchor = anchor;
+      container = codeBlock;
     }
 
     final PsiElement firstElementCopy = container.addRangeBefore(elements[0], elements[elements.length - 1], anchor);

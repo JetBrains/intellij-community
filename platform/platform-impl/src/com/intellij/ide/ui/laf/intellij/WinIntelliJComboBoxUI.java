@@ -119,7 +119,8 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
       g2.setColor(getComboBackground(isOpaque));
       JBInsets.removeFrom(r, JBUI.insets(2));
 
-      if (!comboBox.isEnabled() && !isOpaque) {
+      boolean applyAlpha = !(comboBox.isEnabled() || isOpaque && comboBox.isEditable());
+      if (applyAlpha) {
         float alpha = comboBox.isEditable() ? 0.35f : 0.47f;
         g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
       }
@@ -146,15 +147,13 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
                     arrowButton.getWidth() - i.right: arrowButton.getWidth() - i.left;
     }
 
-    int vOffset = JBUI.scale(comboBox.isEditable() ? 0 : 1);
-    Rectangle rect = (comboBox.getComponentOrientation().isLeftToRight()) ?
-      new Rectangle(i.left, i.top - vOffset,
+    return (comboBox.getComponentOrientation().isLeftToRight()) ?
+      new Rectangle(i.left, i.top,
                            w - (i.left + i.right + buttonWidth),
                            h - (i.top + i.bottom)) :
-      new Rectangle(i.left + buttonWidth, i.top - vOffset,
+      new Rectangle(i.left + buttonWidth, i.top,
                            w - (i.left + i.right + buttonWidth),
                            h - (i.top + i.bottom));
-    return rect;
   }
 
 

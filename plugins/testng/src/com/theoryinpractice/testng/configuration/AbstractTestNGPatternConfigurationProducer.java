@@ -63,6 +63,7 @@ public abstract class AbstractTestNGPatternConfigurationProducer extends Abstrac
   public boolean isConfigurationFromContext(TestNGConfiguration testNGConfiguration, ConfigurationContext context) {
     final String type = testNGConfiguration.getPersistantData().TEST_OBJECT;
     if (Comparing.equal(type, TestType.PATTERN.getType())) {
+      if (differentParamSet(testNGConfiguration, context.getLocation())) return false;
       return isConfiguredFromContext(context, testNGConfiguration.getPersistantData().getPatterns());
     }
     return false;

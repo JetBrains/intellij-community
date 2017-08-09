@@ -82,12 +82,20 @@ get_python:
   inetc::get "$R3" "$INSTDIR\python\python_$R8" /END
   Pop $0
   ${If} $0 == "OK"
-    ExecDos::exec '$R7"$INSTDIR\python\python_$R8" $R9'
+    ExecDos::exec /NOUNLOAD /ASYNC '$R7"$INSTDIR\python\python_$R8" $R9'
   ${Else}
     MessageBox MB_OK|MB_ICONEXCLAMATION "The download is failed: $0" /SD IDOK
   ${EndIf}
 python_exists:
 skip_python_download:  
+FunctionEnd
+
+Function customPostInstallActions
+  DetailPrint "There are no custom post-install actions."
+FunctionEnd
+
+Function un.customUninstallActions
+  DetailPrint "There are no custom uninstall actions."
 FunctionEnd
 
 Function updatePythonControls

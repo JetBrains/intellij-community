@@ -26,10 +26,7 @@ import com.jetbrains.edu.learning.actions.StudyCheckAction;
 import com.jetbrains.edu.learning.checker.StudyCheckResult;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.*;
-import com.jetbrains.edu.learning.courseFormat.tasks.ChoiceTask;
-import com.jetbrains.edu.learning.courseFormat.tasks.CodeTask;
-import com.jetbrains.edu.learning.courseFormat.tasks.Task;
-import com.jetbrains.edu.learning.courseFormat.tasks.TheoryTask;
+import com.jetbrains.edu.learning.courseFormat.tasks.*;
 import com.jetbrains.edu.learning.navigation.StudyNavigator;
 import com.jetbrains.edu.learning.ui.StudyToolWindow;
 import org.apache.http.HttpEntity;
@@ -152,7 +149,9 @@ public class EduAdaptiveStepicConnector {
   }
 
   private static boolean typeSupported(String stepType) {
-    return CODE_TASK_TYPE.equals(stepType) || CHOICE_TYPE_TEXT.equals(stepType) || TEXT_STEP_TYPE.equals(stepType)
+    return CODE_TASK_TYPE.equals(stepType)
+           || CHOICE_TYPE_TEXT.equals(stepType)
+           || TEXT_STEP_TYPE.equals(stepType)
            || stepType.startsWith(EduStepicNames.PYCHARM_PREFIX);
   }
 

@@ -130,13 +130,10 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
 
   @Override
   public void checkCanceled() {
+    CoreProgressManager.runCheckCanceledHooks(this);
     if (isCanceled() && isCancelable()) {
-      throw new ProcessCanceledException(getCancellationTrace());
-    }
-    if (CoreProgressManager.runCheckCanceledHooks(this)) {
-      if (isCanceled() && isCancelable()) {
-        throw new ProcessCanceledException(getCancellationTrace());
-      }
+      Throwable trace = getCancellationTrace();
+      throw trace instanceof ProcessCanceledException ? (ProcessCanceledException)trace : new ProcessCanceledException(trace);
     }
   }
 
