@@ -145,10 +145,7 @@ public class RedundantThrowsDeclarationLocalInspection extends BaseJavaBatchLoca
       .of(method.getThrowsList().getReferenceElements())
       .map(ref -> {
         PsiElement resolved = ref.resolve();
-        if (resolved instanceof PsiClass) {
-          return new ReferenceAndType(ref, (PsiClass)resolved);
-        }
-        return null;
+        return resolved instanceof PsiClass ? new ReferenceAndType(ref) : null;
       })
       .filter(Objects::nonNull)
       .toArray(ReferenceAndType[]::new);
@@ -158,9 +155,9 @@ public class RedundantThrowsDeclarationLocalInspection extends BaseJavaBatchLoca
     private final PsiJavaCodeReferenceElement ref;
     private final PsiClassType type;
 
-    private ReferenceAndType(@NotNull PsiJavaCodeReferenceElement ref, @NotNull PsiClass aClass) {
+    private ReferenceAndType(@NotNull PsiJavaCodeReferenceElement ref) {
       this.ref = ref;
-      type = new PsiImmediateClassType(aClass, PsiSubstitutor.EMPTY);
+      type = JavaPsiFacade.getElementFactory(ref.getProject()).createType(ref);
     }
   }
 }
