@@ -207,7 +207,7 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
           filter(token: "NAME", value: productName)
           filter(token: "ICON", value: "/bin/${buildContext.productProperties.baseFileName}.png")
           filter(token: "SCRIPT", value: "/bin/${buildContext.productProperties.baseFileName}.sh")
-          filter(token: "WM_CLASS", value: "jetbrains-${buildContext.applicationInfo.shortProductName.toLowerCase()}${ce ? "-ce" : ""}")
+          filter(token: "WM_CLASS", value: "jetbrains-${buildContext.applicationInfo.shortProductName.toLowerCase()}${ce ? "-ce" : ""}")  // AppUIUtil#getFrameClass
         }
       }
 
