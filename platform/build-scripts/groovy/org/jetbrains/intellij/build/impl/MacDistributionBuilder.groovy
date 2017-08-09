@@ -124,7 +124,7 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     }
 
     buildContext.ant.copy(todir: target) {
-      fileset(dir: "$buildContext.paths.communityHome/build/conf/mac/Contents")
+      fileset(dir: "$buildContext.paths.communityHome/platform/build-scripts/resources/mac/Contents")
     }
 
     String executable = buildContext.productProperties.baseFileName
