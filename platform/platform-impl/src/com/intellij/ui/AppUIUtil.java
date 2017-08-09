@@ -144,10 +144,13 @@ public class AppUIUtil {
     catch (Exception ignore) { }
   }
 
+  // keep in sync with LinuxDistributionBuilder#getFrameClass
   public static String getFrameClass() {
-    String name = ApplicationNamesInfo.getInstance().getProductName().toLowerCase(Locale.US);
-    String wmClass = VENDOR_PREFIX + name.replace(' ', '-');
-    if (PlatformUtils.isCommunityEdition()) wmClass += "-ce";
+    String name = ApplicationNamesInfo.getInstance().getFullProductName()
+      .toLowerCase(Locale.US)
+      .replace(' ', '-')
+      .replace("intellij-idea", "idea").replace("android-studio", "studio").replace("community-edition", "ce");  // backward compatibility
+    String wmClass = VENDOR_PREFIX + name;
     if (DEBUG_MODE) wmClass += "-debug";
     return wmClass;
   }

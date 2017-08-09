@@ -199,15 +199,13 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
       buildContext.messages.progress("Preparing files")
 
       def desktopTemplate = "${buildContext.paths.communityHome}/platform/platform-resources/src/entry.desktop"
-      def ce = buildContext.productProperties.productCode in ["IC", "PC"]
       def productName = buildContext.applicationInfo.productName
-      if (ce && !productName.contains("Community Edition")) productName += " Community Edition"  // IdeaApplicationInfo.xml//names@product
       buildContext.ant.copy(file: desktopTemplate, tofile: "${snapDir}/snap/gui/${customizer.snapName}.desktop") {
         filterset(begintoken: '$', endtoken: '$') {
           filter(token: "NAME", value: productName)
           filter(token: "ICON", value: "/bin/${buildContext.productProperties.baseFileName}.png")
           filter(token: "SCRIPT", value: "/bin/${buildContext.productProperties.baseFileName}.sh")
-          filter(token: "WM_CLASS", value: "jetbrains-${buildContext.applicationInfo.shortProductName.toLowerCase()}${ce ? "-ce" : ""}")  // AppUIUtil#getFrameClass
+          filter(token: "WM_CLASS", value: getFrameClass())
         }
       }
 
@@ -267,5 +265,14 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
       buildContext.ant.move(file: "${snapDir}/${snapArtifact}", todir: buildContext.paths.artifacts)
       buildContext.notifyArtifactBuilt("${buildContext.paths.artifacts}/" + snapArtifact)
     }
+  }
+
+  // keep in sync with AppUIUtil#getFrameClass
+  private String getFrameClass() {
+    def name = buildContext.applicationInfo.productName
+      .toLowerCase(Locale.US)
+      .replace(' ', '-')
+      .replace("intellij-idea", "idea").replace("android-studio", "studio").replace("community-edition", "ce")
+    "jetbrains-" + name
   }
 }
