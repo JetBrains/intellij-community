@@ -62,6 +62,7 @@ public class AddList implements ChangeListCommand {
     }
   }
 
+  @NotNull
   public LocalChangeList getNewListCopy() {
     return myNewListCopy;
   }
