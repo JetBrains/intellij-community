@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,15 @@ package com.intellij.codeInspection.ex;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.RefGraphAnnotator;
 import com.intellij.codeInspection.reference.RefManagerImpl;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class GlobalInspectionToolWrapper extends InspectionToolWrapper<GlobalInspectionTool, InspectionEP> {
+  private static final Logger LOG = Logger.getInstance(GlobalInspectionToolWrapper.class);
+
   public GlobalInspectionToolWrapper(@NotNull GlobalInspectionTool globalInspectionTool) {
     super(globalInspectionTool);
   }
@@ -84,6 +87,7 @@ public class GlobalInspectionToolWrapper extends InspectionToolWrapper<GlobalIns
   public LocalInspectionToolWrapper getSharedLocalInspectionToolWrapper() {
     final LocalInspectionTool sharedTool = getTool().getSharedLocalInspectionTool();
     if (sharedTool == null) {
+      LOG.assertTrue(!isCleanupTool(), "Global cleanup tool MUST have shared local tool");
       return null;
     }
     //noinspection TestOnlyProblems
