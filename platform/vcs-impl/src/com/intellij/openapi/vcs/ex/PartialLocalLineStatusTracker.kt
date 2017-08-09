@@ -22,6 +22,8 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.BackgroundVfsOperationListener
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.actions.AnnotationsSettings
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
@@ -47,6 +49,7 @@ class PartialLocalLineStatusTracker(project: Project,
                                     mode: Mode
 ) : LineStatusTracker<LocalRange>(project, document, virtualFile, mode), ChangeListWorker.PartialChangeTracker {
   private val changeListManager = ChangeListManagerImpl.getInstanceImpl(project)
+  private val projectLevelVcsManager: ProjectLevelVcsManager = ProjectLevelVcsManager.getInstance(project)
 
   override val renderer = MyLineStatusMarkerRenderer(this)
 
@@ -55,6 +58,8 @@ class PartialLocalLineStatusTracker(project: Project,
 
   private val affectedChangeLists = HashSet<String>()
 
+  private var isFreezedByBackgroundTask: Boolean = false
+
   init {
     defaultMarker = ChangeListMarker(changeListManager.defaultChangeList)
 
@@ -62,6 +67,9 @@ class PartialLocalLineStatusTracker(project: Project,
 
     documentTracker.addListener(MyLineTrackerListener())
     assert(blocks.isEmpty())
+
+    val connection = project.messageBus.connect(disposable)
+    connection.subscribe(BackgroundVfsOperationListener.TOPIC, MyBackgroundVfsOperationListener())
   }
 
   override fun Block.toRange(): LocalRange = LocalRange(this.start, this.end, this.vcsStart, this.vcsEnd, this.innerRanges,
@@ -174,6 +182,30 @@ class PartialLocalLineStatusTracker(project: Project,
     }
   }
 
+
+  private inner class MyBackgroundVfsOperationListener : BackgroundVfsOperationListener {
+    override fun backgroundVcsOperationStarted() {
+      application.invokeLater {
+        if (!isFreezedByBackgroundTask &&
+            projectLevelVcsManager.isBackgroundVcsOperationRunning) {
+          isFreezedByBackgroundTask = true
+          documentTracker.freeze(Side.LEFT)
+          documentTracker.freeze(Side.RIGHT)
+        }
+      }
+    }
+
+    override fun backgroundVcsOperationStopped() {
+      application.invokeLater {
+        if (isFreezedByBackgroundTask &&
+            !projectLevelVcsManager.isBackgroundVcsOperationRunning) {
+          isFreezedByBackgroundTask = false
+          documentTracker.unfreeze(Side.LEFT)
+          documentTracker.unfreeze(Side.RIGHT)
+        }
+      }
+    }
+  }
 
   private inner class MyLineTrackerListener : DocumentTracker.Listener {
     override fun onRangeAdded(block: Block) {
