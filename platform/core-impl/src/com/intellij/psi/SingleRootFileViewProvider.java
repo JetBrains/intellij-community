@@ -151,7 +151,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     if (!isPhysical()) {
       FileManager fileManager = ((PsiManagerEx)myManager).getFileManager();
       VirtualFile virtualFile = getVirtualFile();
-      if (fileManager.findCachedViewProvider(virtualFile) == null) {
+      if (myPsiFile.get() == null && fileManager.findCachedViewProvider(virtualFile) == null) {
         fileManager.setViewProvider(virtualFile, this);
       }
     }
