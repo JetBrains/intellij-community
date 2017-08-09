@@ -1,15 +1,16 @@
 package org.jetbrains.io.fastCgi
 
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.io.writeUtf8
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.ByteBufAllocator
 import io.netty.buffer.ByteBufUtil
 import io.netty.channel.Channel
 import io.netty.handler.codec.http.FullHttpRequest
+import io.netty.handler.codec.http.HttpHeaderNames
 import org.jetbrains.builtInWebServer.PathInfo
 import org.jetbrains.io.serverHeaderValue
 import java.net.InetSocketAddress
+import java.nio.CharBuffer
 import java.util.*
 
 private val PARAMS = 4
@@ -19,16 +20,10 @@ private val FCGI_KEEP_CONNECTION = 1
 private val STDIN = 5
 private val VERSION = 1
 
-class FastCgiRequest(val requestId: Int, allocator: ByteBufAllocator) {
-  private var buffer: ByteBuf? = allocator.ioBuffer(4096)
+private val MAX_CONTENT_LENGTH = 0xFFFF
 
-  init {
-    writeHeader(buffer!!, BEGIN_REQUEST, FastCgiConstants.HEADER_LENGTH)
-    buffer!!.writeShort(RESPONDER)
-    buffer!!.writeByte(FCGI_KEEP_CONNECTION)
-    // reserved[5]
-    buffer!!.writeZero(5)
-  }
+class FastCgiRequest(val requestId: Int, allocator: ByteBufAllocator) {
+  private val params = allocator.ioBuffer(4096)
 
   fun writeFileHeaders(pathInfo: PathInfo, canonicalRequestPath: CharSequence) {
     val root = pathInfo.root
@@ -37,37 +32,36 @@ class FastCgiRequest(val requestId: Int, allocator: ByteBufAllocator) {
     addHeader("SCRIPT_NAME", canonicalRequestPath)
   }
 
-  fun addHeader(key: String, value: CharSequence?) {
+  private fun addHeader(key: String, value: CharSequence?) {
     if (value == null) {
       return
     }
 
+    val valBytes = (value as? String)?.toByteArray()
+    val valBuffer = if (value is String) null else Charsets.UTF_8.encode(CharBuffer.wrap(value))
+
     val keyLength = key.length
-    val valLength = value.length
-    writeHeader(buffer!!, PARAMS, keyLength + valLength + (if (keyLength < 128) 1 else 4) + (if (valLength < 128) 1 else 4))
+    val valLength = valBytes?.size ?: valBuffer!!.limit()
 
-    if (keyLength < 128) {
-      buffer!!.writeByte(keyLength)
+    writeParamLength(keyLength)
+    writeParamLength(valLength)
+
+    ByteBufUtil.writeAscii(params, key)
+    if (valBuffer == null) {
+      params.writeBytes(valBytes)
     }
     else {
-      buffer!!.writeByte(128 or (keyLength shr 24))
-      buffer!!.writeByte(keyLength shr 16)
-      buffer!!.writeByte(keyLength shr 8)
-      buffer!!.writeByte(keyLength)
+      params.writeBytes(valBuffer)
     }
+  }
 
-    if (valLength < 128) {
-      buffer!!.writeByte(valLength)
+  private fun writeParamLength(length: Int) {
+    if (length > 127) {
+      params.writeInt(length or 0x80000000.toInt())
     }
     else {
-      buffer!!.writeByte(128 or (valLength shr 24))
-      buffer!!.writeByte(valLength shr 16)
-      buffer!!.writeByte(valLength shr 8)
-      buffer!!.writeByte(valLength)
+      params.writeByte(length)
     }
-
-    ByteBufUtil.writeAscii(buffer, key)
-    buffer!!.writeUtf8(value)
   }
 
   fun writeHeaders(request: FullHttpRequest, clientChannel: Channel) {
@@ -95,18 +89,24 @@ class FastCgiRequest(val requestId: Int, allocator: ByteBufAllocator) {
     val queryIndex = request.uri().indexOf('?')
     if (queryIndex != -1) {
       queryString = request.uri().substring(queryIndex + 1)
+      addHeader("DOCUMENT_URI", request.uri().substring(0, queryIndex))
+    }
+    else {
+      addHeader("DOCUMENT_URI", request.uri())
     }
     addHeader("QUERY_STRING", queryString)
 
     addHeader("CONTENT_LENGTH", request.content().readableBytes().toString())
+    addHeader("CONTENT_TYPE", request.headers().get(HttpHeaderNames.CONTENT_TYPE) ?: "")
 
     for ((key, value) in request.headers().iteratorAsString()) {
-      if (!key.equals("keep-alive", ignoreCase = true)) {
+      if (!key.equals("keep-alive", ignoreCase = true) && !key.equals("connection", ignoreCase = true)) {
         addHeader("HTTP_${key.replace('-', '_').toUpperCase(Locale.ENGLISH)}", value)
       }
     }
   }
 
+  // https://stackoverflow.com/questions/27457543/php-cgi-post-empty
   fun writeToServerChannel(content: ByteBuf?, fastCgiChannel: Channel) {
     if (fastCgiChannel.pipeline().first() == null) {
       throw IllegalStateException("No handler in the pipeline")
@@ -114,28 +114,45 @@ class FastCgiRequest(val requestId: Int, allocator: ByteBufAllocator) {
 
     var releaseContent = content != null
     try {
-      writeHeader(buffer!!, PARAMS, 0)
+      val buffer = fastCgiChannel.alloc().ioBuffer(4096)
+      writeHeader(buffer, BEGIN_REQUEST, HEADER_LENGTH)
+      buffer.writeShort(RESPONDER)
+      buffer.writeByte(FCGI_KEEP_CONNECTION)
+      // reserved[5]
+      buffer.writeZero(5)
 
-      if (content != null) {
-        writeHeader(buffer!!, STDIN, content.readableBytes())
-      }
+      writeHeader(buffer, PARAMS, params.readableBytes())
+      buffer.writeBytes(params)
+
+      writeHeader(buffer, PARAMS, 0)
 
       fastCgiChannel.write(buffer)
-      buffer = null
 
       if (content != null) {
-        fastCgiChannel.write(content)
-        // channel.write releases
-        releaseContent = false
+        var position = content.readerIndex()
+        var toWrite = content.readableBytes()
+        while (toWrite > 0) {
+          val length = Math.min(MAX_CONTENT_LENGTH, toWrite)
 
-        val headerBuffer = fastCgiChannel.alloc().ioBuffer(FastCgiConstants.HEADER_LENGTH, FastCgiConstants.HEADER_LENGTH)
+          val headerBuffer = fastCgiChannel.alloc().ioBuffer(HEADER_LENGTH, HEADER_LENGTH)
+          writeHeader(headerBuffer, STDIN, length)
+          fastCgiChannel.write(headerBuffer)
+
+          val chunk = content.slice(position, length)
+          // channel.write releases
+          chunk.retain()
+          fastCgiChannel.write(chunk)
+          toWrite -= length
+          position += length
+        }
+
+        val headerBuffer = fastCgiChannel.alloc().ioBuffer(HEADER_LENGTH, HEADER_LENGTH)
         writeHeader(headerBuffer, STDIN, 0)
         fastCgiChannel.write(headerBuffer)
       }
     }
     finally {
       if (releaseContent) {
-        assert(content != null)
         content!!.release()
       }
     }

@@ -60,7 +60,7 @@ public class DeleteAction extends AnAction implements DumbAware {
   public void update(AnActionEvent e) {
     Presentation presentation = e.getPresentation();
 
-    if (ActionPlaces.PROJECT_VIEW_POPUP.equals(e.getPlace()) || ActionPlaces.COMMANDER_POPUP.equals(e.getPlace())) {
+    if (ActionPlaces.isPopupPlace(e.getPlace())) {
       presentation.setText(IdeBundle.message("action.delete.ellipsis"));
     }
     else {

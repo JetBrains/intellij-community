@@ -97,7 +97,6 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "control alt Z",            "Vcs.RollbackChangedLines", "ChangesView.Revert"},
     { "control TAB",              "Switcher", "Diff.FocusOppositePane"},
     { "shift control TAB",        "Switcher", "Diff.FocusOppositePaneAndScroll"},
-    { "control alt I",            "DatabaseView.GenerateScriptIntoConsole", "AutoIndentLines"},
     { "ctrl alt ENTER",           "EditorStartNewLineBefore", "QuickActionPopup"},
     { "button2",                  "EditorPasteFromX11", "GotoDeclaration"}, // False positive: see DefaultKeymapImpl, PasteFromX11Action.update()
     });
@@ -305,7 +304,6 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift meta X",             "EditorToggleCase", "com.jetbrains.php.framework.FrameworkRunConsoleAction"},
     { "shift meta U",             "FindUsagesInFile", "ShelveChanges.UnshelveWithDialog"},
     { "control shift alt Z",      "Vcs.RollbackChangedLines", "ChangesView.Revert"},
-    { "meta alt I",               "Inline", "DatabaseView.GenerateScriptIntoConsole"}
     });
   }};
   // @formatter:on
