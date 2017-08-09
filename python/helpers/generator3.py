@@ -357,6 +357,7 @@ def get_help_text():
         ' -L -- print version and then a list of binary module files found ' '\n'
         '    on sys.path and in directories in directory_list;' '\n'
         '    lines are "qualified.module.name /full/path/to/module_file.{pyd,dll,so}"' '\n'
+        ' -i -- read module_name, file_name and list of imported CLR assemblies from stdin line-by-line' '\n'
         ' -S -- lists all python sources found in sys.path and in directories in directory_list\n'
         ' -z archive_name -- zip files to archive_name. Accepts files to be archived from stdin in format <filepath> <name in archive>'
     )
@@ -366,7 +367,7 @@ if __name__ == "__main__":
     from getopt import getopt
 
     helptext = get_help_text()
-    opts, args = getopt(sys.argv[1:], "d:hbqxvc:ps:C:LSz")
+    opts, args = getopt(sys.argv[1:], "d:hbqxvc:ps:C:LiSz")
     opts = dict(opts)
 
     quiet = '-q' in opts
@@ -377,7 +378,7 @@ if __name__ == "__main__":
         say(helptext)
         sys.exit(0)
 
-    if '-L' not in opts and '-b' not in opts and '-S' not in opts and not args:
+    if '-L' not in opts and '-b' not in opts and '-S' not in opts and '-i' not in opts and not args:
         report("Neither -L nor -b nor -S nor any module name given")
         sys.exit(1)
 
@@ -440,20 +441,34 @@ if __name__ == "__main__":
             sys.exit(1)
 
     else:
-        if len(args) > 2:
-            report("Only module_name or module_name and file_name should be specified; got %d args", len(args))
-            sys.exit(1)
-        name = args[0]
-        if len(args) == 2:
-            mod_file_name = args[1]
+        if '-i' in opts:
+            if args:
+                report("No names should be specified with -i")
+                sys.exit(1)
+            name = sys.stdin.readline().strip()
+
+            mod_file_name = sys.stdin.readline().strip()
+            if not mod_file_name:
+                mod_file_name = None
+
+            refs = sys.stdin.readline().strip()
         else:
-            mod_file_name = None
+            if len(args) > 2:
+                report("Only module_name or module_name and file_name should be specified; got %d args", len(args))
+                sys.exit(1)
+            name = args[0]
+
+            if len(args) == 2:
+                mod_file_name = args[1]
+            else:
+                mod_file_name = None
+
+            refs = opts.get('-c', '')
 
         if sys.platform == 'cli':
             #noinspection PyUnresolvedReferences
             import clr
 
-            refs = opts.get('-c', '')
             if refs:
                 for ref in refs.split(';'): clr.AddReferenceByPartialName(ref)
 
