@@ -41,7 +41,7 @@ public class NewActionAction extends CreateElementActionBase implements Descript
   private static final PsiClass[] CANCELED = new PsiClass[1];
 
   private NewActionDialog myDialog;
-  private XmlFile[] pluginDescriptorsToPatch;
+  private XmlFile pluginDescriptorToPatch;
 
   public NewActionAction() {
     super(DevKitBundle.message("new.menu.action.text"), DevKitBundle.message("new.menu.action.description"), null);
@@ -59,9 +59,8 @@ public class NewActionAction extends CreateElementActionBase implements Descript
     try {
       myDialog.show();
       if (myDialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
-        pluginDescriptorsToPatch = DevkitActionsUtil.showChooseModulesDialog(directory, getTemplatePresentation());
-        if (pluginDescriptorsToPatch != null) {
-          assert pluginDescriptorsToPatch.length > 0;
+        pluginDescriptorToPatch = DevkitActionsUtil.choosePluginModuleDescriptor(directory);
+        if (pluginDescriptorToPatch != null) {
           MyInputValidator validator = new MyInputValidator(project, directory);
           // this actually runs the action to create the class from template
           validator.canClose(myDialog.getActionName());
@@ -71,7 +70,7 @@ public class NewActionAction extends CreateElementActionBase implements Descript
       return PsiElement.EMPTY_ARRAY;
     } finally {
       myDialog = null;
-      pluginDescriptorsToPatch = null;
+      pluginDescriptorToPatch = null;
     }
   }
 
@@ -99,7 +98,7 @@ public class NewActionAction extends CreateElementActionBase implements Descript
   @Override
   protected PsiElement[] create(String newName, PsiDirectory directory) throws Exception {
     PsiClass createdClass = DevkitActionsUtil.createSingleClass(newName, "Action.java", directory);
-    DescriptorUtil.patchPluginXml(this, createdClass, pluginDescriptorsToPatch);
+    DescriptorUtil.patchPluginXml(this, createdClass, pluginDescriptorToPatch);
     return new PsiElement[]{createdClass};
   }
 

@@ -34,9 +34,6 @@ import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 
-import java.util.Arrays;
-import java.util.stream.Stream;
-
 public final class DescriptorUtil {
   private DescriptorUtil() {
   }
@@ -60,23 +57,18 @@ public final class DescriptorUtil {
     }
   }
 
-  public static void patchPluginXml(Patcher patcher, PsiClass klass, XmlFile... pluginXmls) throws IncorrectOperationException {
-    checkPluginXmlsWritable(klass.getProject(), pluginXmls);
-
-    WriteAction.run((ThrowableRunnable<IncorrectOperationException>)() -> {
-      for (XmlFile pluginXml : pluginXmls) {
-        patcher.patchPluginXml(pluginXml, klass);
-      }
-    });
+  public static void patchPluginXml(Patcher patcher, PsiClass klass, XmlFile pluginXml) throws IncorrectOperationException {
+    checkPluginXmlsWritable(klass.getProject(), pluginXml);
+    WriteAction.run((ThrowableRunnable<IncorrectOperationException>)() -> patcher.patchPluginXml(pluginXml, klass));
   }
 
-  public static void checkPluginXmlsWritable(Project project, XmlFile... pluginXmls) {
-    VirtualFile[] files = Stream.of(pluginXmls).map(PsiFile::getVirtualFile).toArray(VirtualFile[]::new);
+  public static void checkPluginXmlsWritable(Project project, XmlFile pluginXml) {
+    VirtualFile file = pluginXml.getVirtualFile();
 
     final ReadonlyStatusHandler readonlyStatusHandler = ReadonlyStatusHandler.getInstance(project);
-    final ReadonlyStatusHandler.OperationStatus status = readonlyStatusHandler.ensureFilesWritable(files);
+    final ReadonlyStatusHandler.OperationStatus status = readonlyStatusHandler.ensureFilesWritable(file);
     if (status.hasReadonlyFiles()) {
-      throw new IncorrectOperationException(DevKitBundle.message("error.plugin.xml.readonly", Arrays.toString(status.getReadonlyFiles())));
+      throw new IncorrectOperationException(DevKitBundle.message("error.plugin.xml.readonly", status.getReadonlyFiles()[0]));
     }
   }
 

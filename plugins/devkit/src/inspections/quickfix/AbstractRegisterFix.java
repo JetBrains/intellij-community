@@ -33,11 +33,9 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
+import org.jetbrains.idea.devkit.actions.DevkitActionsUtil;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
-import org.jetbrains.idea.devkit.util.module.choose.ChooseMultipleModulesDialog;
-
-import java.util.List;
 
 abstract class AbstractRegisterFix implements LocalQuickFix, DescriptorUtil.Patcher {
   protected final SmartPsiElementPointer<PsiClass> myPointer;
@@ -87,33 +85,21 @@ abstract class AbstractRegisterFix implements LocalQuickFix, DescriptorUtil.Patc
     Runnable command = () -> {
       try {
         XmlFile pluginXml = PluginModuleType.getPluginXml(module);
+        if (pluginXml == null) {
+          pluginXml = DevkitActionsUtil.choosePluginModuleDescriptor(psiFile.getContainingDirectory());
+        }
+
         if (pluginXml != null) {
           DescriptorUtil.patchPluginXml(this, element, pluginXml);
         }
-        else {
-          List<Module> modules = PluginModuleType.getCandidateModules(module);
-          if (modules.size() > 1) {
-            ChooseMultipleModulesDialog dialog = new ChooseMultipleModulesDialog(project, modules, getName());
-            if (!dialog.showAndGet()) {
-              return;
-            }
-            modules = dialog.getSelectedModules();
-          }
-          XmlFile[] pluginXmls = new XmlFile[modules.size()];
-          for (int i = 0; i < pluginXmls.length; i++) {
-            pluginXmls[i] = PluginModuleType.getPluginXml(modules.get(i));
-          }
-
-          DescriptorUtil.patchPluginXml(this, element, pluginXmls);
-        }
         CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
-      }
-      catch (IncorrectOperationException e) {
+      } catch (IncorrectOperationException e) {
         Messages.showMessageDialog(project, filterMessage(e.getMessage()),
                                    DevKitBundle.message("inspections.component.not.registered.quickfix.error", getType()),
                                    Messages.getErrorIcon());
       }
     };
+
     CommandProcessor.getInstance().executeCommand(project, command, getName(), null);
   }
 }

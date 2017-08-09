@@ -16,13 +16,13 @@
 package org.jetbrains.idea.devkit.actions;
 
 import com.intellij.ide.actions.CreateFileAction;
-import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.ui.configuration.ChooseModulesDialog;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiClass;
@@ -32,8 +32,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
-import org.jetbrains.idea.devkit.util.module.choose.ChooseMultipleModulesDialog;
-import org.jetbrains.idea.devkit.util.module.choose.ChooseSingleModuleDialog;
 
 import java.util.*;
 
@@ -43,68 +41,50 @@ public final class DevkitActionsUtil {
 
 
   /**
-   * @return selected plugin descriptor or null if canceled.
+   * @return plugin descriptor for current module (if it's a plugin module) or plugin descriptor selected in dialog or null if cancelled.
    * @throws IncorrectOperationException if no plugin descriptors found.
    */
   @Nullable
-  public static XmlFile showChooseModuleDialog(PsiDirectory directory, Presentation templatePresentation) {
-    XmlFile[] result = doShowChooseModulesDialog(false, directory, templatePresentation);
-    return result == null ? null : result[0];
-  }
-
-  /**
-   * @return selected plugin descriptors (never an empty array) or null if canceled.
-   * @throws IncorrectOperationException if no plugin descriptors found.
-   */
-  @Nullable
-  public static XmlFile[] showChooseModulesDialog(PsiDirectory directory, Presentation templatePresentation) {
-    return doShowChooseModulesDialog(true, directory, templatePresentation);
-  }
-
-  private static XmlFile[] doShowChooseModulesDialog(boolean multiple, PsiDirectory directory, Presentation templatePresentation) {
+  public static XmlFile choosePluginModuleDescriptor(PsiDirectory directory) {
     Project project = directory.getProject();
     Module module = getModule(directory);
 
-    Set<XmlFile> pluginXmlsToPatch = new HashSet<>();
+    XmlFile currentModulePluginXml = PluginModuleType.getPluginXml(module);
+    if (currentModulePluginXml != null) {
+      return currentModulePluginXml;
+    }
+
     if (module != null) {
-      addPluginModule(module, pluginXmlsToPatch);
+      List<Module> candidateModules = PluginModuleType.getCandidateModules(module);
+      Iterator<Module> it = candidateModules.iterator();
+      while (it.hasNext()) {
+        Module m = it.next();
+        if (PluginModuleType.getPluginXml(m) == null) it.remove();
+      }
 
-      if (pluginXmlsToPatch.isEmpty()) {
-        List<Module> candidateModules = PluginModuleType.getCandidateModules(module);
-        Iterator<Module> it = candidateModules.iterator();
-        while (it.hasNext()) {
-          Module m = it.next();
-          if (PluginModuleType.getPluginXml(m) == null) it.remove();
-        }
+      if (candidateModules.size() == 1) {
+        return PluginModuleType.getPluginXml(candidateModules.get(0));
+      }
 
-        if (candidateModules.size() == 1) {
-          addPluginModule(candidateModules.get(0), pluginXmlsToPatch);
-        } else {
-          if (multiple) {
-            ChooseMultipleModulesDialog dialog =
-              new ChooseMultipleModulesDialog(project, candidateModules, templatePresentation.getDescription());
-            if (!dialog.showAndGet()) {
-              return null; // canceled
-            }
-            List<Module> modules = dialog.getSelectedModules();
-            modules.forEach(m -> addPluginModule(m, pluginXmlsToPatch));
-          } else {
-            ChooseSingleModuleDialog dialog =
-              new ChooseSingleModuleDialog(project, candidateModules, templatePresentation.getDescription());
-            if (!dialog.showAndGet()) {
-              return null; // canceled
-            }
-            addPluginModule(dialog.getSelectedModule(), pluginXmlsToPatch);
-          }
-        }
+      //TODO plugin.xml paths in dialog
+      ChooseModulesDialog chooseModulesDialog = new ChooseModulesDialog(project, candidateModules,
+                                                                        DevKitBundle.message("select.plugin.module.to.patch"), null);
+      chooseModulesDialog.setSingleSelectionMode();
+      chooseModulesDialog.show();
+
+      List<Module> selectedModules = chooseModulesDialog.getChosenElements();
+      if (selectedModules.isEmpty()) {
+        return null; // cancelled
+      }
+
+      assert selectedModules.size() == 1;
+      XmlFile pluginXml = PluginModuleType.getPluginXml(selectedModules.get(0));
+      if (pluginXml != null) {
+        return pluginXml;
       }
     }
 
-    if (pluginXmlsToPatch.isEmpty()) {
-      throw new IncorrectOperationException(DevKitBundle.message("error.no.plugin.xml"));
-    }
-
-    return pluginXmlsToPatch.toArray(new XmlFile[pluginXmlsToPatch.size()]);
+    throw new IncorrectOperationException(DevKitBundle.message("error.no.plugin.xml"));
   }
 
   public static PsiClass createSingleClass(String name, String classTemplateName, PsiDirectory directory) {
@@ -139,10 +119,5 @@ public final class DevkitActionsUtil {
       return candidates[0];
     }
     return fileIndex.getModuleForFile(vFile);
-  }
-
-  private static void addPluginModule(Module module, Set<XmlFile> pluginXmlsToPatch) {
-    XmlFile pluginXml = PluginModuleType.getPluginXml(module);
-    if (pluginXml != null) pluginXmlsToPatch.add(pluginXml);
   }
 }

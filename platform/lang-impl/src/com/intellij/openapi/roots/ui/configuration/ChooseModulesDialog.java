@@ -36,7 +36,7 @@ public class ChooseModulesDialog extends ChooseElementsDialog<Module> {
     super(parent, items, title, description, true);
   }
 
-  public ChooseModulesDialog(final Project project, final List<? extends Module> items, final String title, final String description) {
+  public ChooseModulesDialog(Project project, List<? extends Module> items, String title, @Nullable String description) {
     super(project, items, title, description, true);
   }
 

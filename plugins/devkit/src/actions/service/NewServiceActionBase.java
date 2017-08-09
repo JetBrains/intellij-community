@@ -177,7 +177,7 @@ public abstract class NewServiceActionBase extends CreateInDirectoryActionBase i
 
     @Override
     protected void doOKAction() {
-      XmlFile pluginDescriptorToPatch = DevkitActionsUtil.showChooseModuleDialog(myDirectory, getTemplatePresentation());
+      XmlFile pluginDescriptorToPatch = DevkitActionsUtil.choosePluginModuleDescriptor(myDirectory);
       if (pluginDescriptorToPatch == null) {
         return; // canceled
       }
