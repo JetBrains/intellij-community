@@ -17,6 +17,7 @@
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.SeparatorPlacement;
@@ -24,6 +25,7 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.Function;
@@ -50,6 +52,9 @@ public class LineMarkerInfo<T extends PsiElement> {
 
   /**
    * Creates a line marker info for the element.
+   * See {@link LineMarkerProvider#getLineMarkerInfo(PsiElement)} javadoc
+   * for specific quirks on which elements to use for line markers.
+   *
    * @param element         the element for which the line marker is created.
    * @param range     the range (relative to beginning of file) with which the marker is associated
    * @param icon            the icon to show in the gutter for the line marker
@@ -72,6 +77,12 @@ public class LineMarkerInfo<T extends PsiElement> {
     startOffset = range.getStartOffset();
     endOffset = range.getEndOffset();
     this.updatePass = 11; //Pass.LINE_MARKERS;
+    PsiElement firstChild;
+    if (ApplicationManager.getApplication().isUnitTestMode() && !(element instanceof PsiFile) && (firstChild = element.getFirstChild()) != null) {
+      throw new IllegalArgumentException("LineMarker is supposed to be registered for leaf elements only, but got: "+
+                element+ " (" +element.getClass()+") instead. First child: "+ firstChild+ " (" +firstChild.getClass()+")"+
+                "\nPlease see LineMarkerProvider#getLineMarkerInfo(PsiElement) javadoc for detailed explanations");
+    }
   }
 
   /**

@@ -40,8 +40,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
-import com.intellij.util.ConstantFunction;
-import com.intellij.util.NullableFunction;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -192,8 +191,14 @@ public class ExpectedHighlightingData {
       assert element != null : value;
       TextRange range = new TextRange(startOffset, endOffset);
       final String tooltip = value.getLineMarkerTooltip();
-      LineMarkerInfo markerInfo =
-        new LineMarkerInfo<>(element, range, null, value.updatePass, e -> tooltip, null, GutterIconRenderer.Alignment.RIGHT);
+      LineMarkerInfo<PsiElement> markerInfo =
+        new LineMarkerInfo<PsiElement>(element, range, null, value.updatePass, e -> tooltip, null, GutterIconRenderer.Alignment.RIGHT){
+          @Nullable
+          @Override
+          public String getLineMarkerTooltip() {
+            return tooltip;
+          }
+        };
       entry.setValue(markerInfo);
     }
   }
@@ -223,9 +228,16 @@ public class ExpectedHighlightingData {
       document.replaceString(startOffset, endOffset, content);
       endOffset -= endTag.length();
 
-      LineMarkerInfo markerInfo = new LineMarkerInfo<PsiElement>(myFile, new TextRange(startOffset, endOffset), null, Pass.LINE_MARKERS,
-                                                                 new ConstantFunction<>(StringUtil.unescapeStringCharacters(descr)), null,
-                                                                 GutterIconRenderer.Alignment.RIGHT);
+      PsiElement leaf = ObjectUtils.notNull(myFile.findElementAt(startOffset));
+      LineMarkerInfo<PsiElement> markerInfo = new LineMarkerInfo<PsiElement>(leaf, new TextRange(startOffset, endOffset), null, Pass.LINE_MARKERS,
+                                                     __->StringUtil.unescapeStringCharacters(descr), null,
+                                                     GutterIconRenderer.Alignment.RIGHT){
+        @Override
+        public String getLineMarkerTooltip() {
+          // hard code it here because otherwise the leaf element may invalidate and null will be returned instead of descr
+          return StringUtil.unescapeStringCharacters(descr);
+        }
+      };
 
       myLineMarkerInfos.put(document.createRangeMarker(startOffset, endOffset), markerInfo);
       text = document.getText();
@@ -482,15 +494,15 @@ public class ExpectedHighlightingData {
   public static String composeText(final Map<String, ExpectedHighlightingSet> types, Collection<HighlightInfo> infos, String text) {
     // filter highlighting data and map each highlighting to a tag name
     List<Pair<String, HighlightInfo>> list = ContainerUtil.mapNotNull(infos,
-                                                                      (NullableFunction<HighlightInfo, Pair<String, HighlightInfo>>)info -> {
-                                                                        for (Map.Entry<String, ExpectedHighlightingSet> entry : types.entrySet()) {
-                                                                          final ExpectedHighlightingSet set = entry.getValue();
-                                                                          if (set.enabled && set.severity == info.getSeverity() && set.endOfLine == info.isAfterEndOfLine()) {
-                                                                            return Pair.create(entry.getKey(), info);
-                                                                          }
-                                                                        }
-                                                                        return null;
-                                                                      });
+         info -> {
+           for (Map.Entry<String, ExpectedHighlightingSet> entry : types.entrySet()) {
+             final ExpectedHighlightingSet set = entry.getValue();
+             if (set.enabled && set.severity == info.getSeverity() && set.endOfLine == info.isAfterEndOfLine()) {
+               return Pair.create(entry.getKey(), info);
+             }
+           }
+           return null;
+         });
 
     boolean showAttributesKeys = false;
     for (ExpectedHighlightingSet eachSet : types.values()) {

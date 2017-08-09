@@ -70,8 +70,8 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
   @Override
   @Nullable
   public LineMarkerInfo getLineMarkerInfo(@NotNull final PsiElement element) {
-    PsiElement parent;
-    if (element instanceof PsiIdentifier && (parent = element.getParent()) instanceof PsiMethod) {
+    PsiElement parent = element.getParent();
+    if (element instanceof PsiIdentifier && parent instanceof PsiMethod) {
       if (!myOverridingOption.isEnabled() && !myImplementingOption.isEnabled()) return null;
       PsiMethod method = (PsiMethod)parent;
       MethodSignatureBackedByPsiMethod superSignature = SuperMethodsSearch.search(method, null, true, false).findFirst();
@@ -91,14 +91,21 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
         return createSuperMethodLineMarkerInfo(element, icon, Pass.LINE_MARKERS);
       }
     }
-
-    final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(element);
-    final PsiElement firstChild = element.getFirstChild();
-    if (interfaceMethod != null && firstChild != null && myLambdaOption.isEnabled()) {
-      return createSuperMethodLineMarkerInfo(firstChild, AllIcons.Gutter.ImplementingFunctionalInterface, Pass.LINE_MARKERS);
+    // in case of ()->{}, anchor to "->"
+    // in case of (xxx)->{}, anchor to "->"
+    // in case of Type::method, anchor to "method"
+    if (myLambdaOption.isEnabled() &&
+        parent instanceof PsiFunctionalExpression &&
+        (element instanceof PsiJavaToken && ((PsiJavaToken)element).getTokenType() == JavaTokenType.ARROW && parent instanceof PsiLambdaExpression ||
+         element instanceof PsiIdentifier && parent instanceof PsiMethodReferenceExpression && ((PsiMethodReferenceExpression)parent).getReferenceNameElement() == element)
+      ) {
+      final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(parent);
+      if (interfaceMethod != null) {
+        return createSuperMethodLineMarkerInfo(element, AllIcons.Gutter.ImplementingFunctionalInterface, Pass.LINE_MARKERS);
+      }
     }
 
-    if (myDaemonSettings.SHOW_METHOD_SEPARATORS && firstChild == null) {
+    if (myDaemonSettings.SHOW_METHOD_SEPARATORS && element.getFirstChild() == null) {
       PsiElement element1 = element;
       boolean isMember = false;
       while (element1 != null && !(element1 instanceof PsiFile) && element1.getPrevSibling() == null) {

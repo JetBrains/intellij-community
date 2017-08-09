@@ -24,10 +24,7 @@ import com.intellij.navigation.GotoRelatedItem;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
@@ -52,11 +49,17 @@ public class PyiRelatedItemLineMarkerProvider extends RelatedItemLineMarkerProvi
     if (element instanceof PyFunction || element instanceof PyTargetExpression || element instanceof PyClass) {
       final PsiElement pythonStub = PyiUtil.getPythonStub((PyElement)element);
       if (pythonStub != null) {
-        result.add(createLineMarkerInfo(element, pythonStub, "Has stub item"));
+        PsiElement identifier = ((PsiNameIdentifierOwner)element).getNameIdentifier();
+        if (identifier != null) {
+          result.add(createLineMarkerInfo(identifier, pythonStub, "Has stub item"));
+        }
       }
       final PsiElement originalElement = PyiUtil.getOriginalElement((PyElement)element);
       if (originalElement != null) {
-        result.add(createLineMarkerInfo(element, originalElement, "Stub for item"));
+        PsiElement identifier = ((PsiNameIdentifierOwner)element).getNameIdentifier();
+        if (identifier != null) {
+          result.add(createLineMarkerInfo(identifier, originalElement, "Stub for item"));
+        }
       }
     }
   }

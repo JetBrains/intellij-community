@@ -931,7 +931,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public GutterMark findGutter(@NotNull final String filePath) {
     configureByFilesInner(filePath);
     CommonProcessors.FindFirstProcessor<GutterMark> processor = new CommonProcessors.FindFirstProcessor<>();
-    findGutters(processor);
+    doHighlighting();
+    processGuttersAtCaret(myEditor, getProject(), processor);
     return processor.getFoundValue();
   }
 
@@ -939,31 +940,24 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   public List<GutterMark> findGuttersAtCaret() {
     CommonProcessors.CollectProcessor<GutterMark> processor = new CommonProcessors.CollectProcessor<>();
-    findGutters(processor);
+    doHighlighting();
+    processGuttersAtCaret(myEditor, getProject(), processor);
     return new ArrayList<>(processor.getResults());
   }
 
-  private void findGutters(Processor<GutterMark> processor) {
-    int offset = myEditor.getCaretModel().getOffset();
+  public static boolean processGuttersAtCaret(Editor editor, Project project, @NotNull Processor<GutterMark> processor) {
+    int offset = editor.getCaretModel().getOffset();
 
-    final Collection<HighlightInfo> infos = doHighlighting();
-    for (HighlightInfo info : infos) {
-      if (info.endOffset >= offset && info.startOffset <= offset) {
-        final GutterMark renderer = info.getGutterIconRenderer();
-        if (renderer != null && !processor.process(renderer)) {
-          return;
-        }
-      }
-    }
-    RangeHighlighter[] highlighters = DocumentMarkupModel.forDocument(myEditor.getDocument(), getProject(), true).getAllHighlighters();
+    RangeHighlighter[] highlighters = DocumentMarkupModel.forDocument(editor.getDocument(), project, true).getAllHighlighters();
     for (RangeHighlighter highlighter : highlighters) {
-      if (highlighter.getEndOffset() >= offset && highlighter.getStartOffset() <= offset) {
-        GutterMark renderer = highlighter.getGutterIconRenderer();
-        if (renderer != null && !processor.process(renderer)) {
-          return;
-        }
+      GutterMark renderer = highlighter.getGutterIconRenderer();
+      if (renderer != null &&
+          editor.getDocument().getLineNumber(offset) == editor.getDocument().getLineNumber(highlighter.getStartOffset()) &&
+          !processor.process(renderer)) {
+        return false;
       }
     }
+    return true;
   }
 
   @Override
