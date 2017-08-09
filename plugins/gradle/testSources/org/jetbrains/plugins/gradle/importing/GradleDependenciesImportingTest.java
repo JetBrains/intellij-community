@@ -25,6 +25,7 @@ import com.intellij.openapi.externalSystem.service.notification.ExternalSystemPr
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -38,7 +39,9 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.*;
 import static com.intellij.openapi.util.text.StringUtil.*;
@@ -357,6 +360,34 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     } else {
       assertModuleLibDepScope("project", "Gradle: dep:dep:1.0:someExt", DependencyScope.RUNTIME, DependencyScope.TEST);
     }
+  }
+
+
+  @Test
+  public void testFileDepsImportedAsProjectLibraries() throws  Exception {
+    final VirtualFile depJar = createProjectJarSubFile("lib/dep.jar");
+    createSettingsFile("include 'p1'\n" +
+                       "include 'p2'");
+
+    importProjectUsingSingeModulePerGradleProject("allprojects {\n" +
+                  "apply plugin: 'java'\n" +
+                  "  dependencies {\n" +
+                  "     compile rootProject.files('lib/dep.jar')\n" +
+                  "  }\n" +
+                  "}");
+
+    assertModules("project", "p1", "p2");
+    Set<Library> libs = new HashSet<>();
+    final List<LibraryOrderEntry> moduleLibDeps = getModuleLibDeps("p1", "Gradle: dep");
+    moduleLibDeps.addAll(getModuleLibDeps("p2", "Gradle: dep"));
+    for (LibraryOrderEntry libDep : moduleLibDeps) {
+      libs.add(libDep.getLibrary());
+      assertFalse("Dependency be project level: " + libDep.toString(), libDep.isModuleLevel());
+    }
+
+    assertProjectLibraries("Gradle: dep");
+    assertEquals("All deps should be on same library", 1, libs.size());
+    assertEquals("The library should point to deps file", depJar.getUrl(), libs.iterator().next().getUrls(OrderRootType.CLASSES)[0]);
   }
 
   @Test

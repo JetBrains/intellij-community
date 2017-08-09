@@ -942,7 +942,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
 
     if (moduleVersion == null) {
       // use module library level if the dependency does not originate from a remote repository.
-      level = LibraryLevel.MODULE;
+      level = LibraryLevel.PROJECT;
 
       if (binaryPath.isFile()) {
         libraryName = FileUtil.getNameWithoutExtension(binaryPath);
@@ -1025,9 +1025,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
       library.addPath(LibraryPathType.DOC, javadocPath.getAbsolutePath());
     }
 
-    if (level == LibraryLevel.PROJECT) {
-      linkProjectLibrary(ideProject, library);
-    }
+    linkProjectLibrary(ideProject, library);
 
     return new LibraryDependencyData(ownerModule.getData(), library, level);
   }
