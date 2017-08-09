@@ -235,10 +235,14 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
       replacefilter(token: "@@bundled_help_attributes@@", value: bundledHelpAttributes)
     }
 
-    buildContext.ant.replace(dir: "$target/bin", includes: "inspect.sh,format.sh") {
-      replacefilter(token: "@@product_full@@", value: fullName)
-      replacefilter(token: "@@script_name@@", value: executable)
+    buildContext.ant.copy(todir: "$target/bin") {
+      fileset(dir: "$buildContext.paths.communityHome/platform/build-scripts/resources/mac/scripts")
+      filterset(begintoken: "@@", endtoken: "@@") {
+        filter(token: "product_full", value: fullName)
+        filter(token: "script_name", value: executable)
+      }
     }
+
     String inspectScript = buildContext.productProperties.inspectCommandName
     if (inspectScript != "inspect") {
       String targetPath = "$target/bin/${inspectScript}.sh"
