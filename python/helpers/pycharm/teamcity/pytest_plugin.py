@@ -20,6 +20,30 @@ from datetime import timedelta
 from teamcity.messages import TeamcityServiceMessages
 from teamcity.common import convert_error_to_string, dump_test_stderr, dump_test_stdout
 from teamcity import is_running_under_teamcity
+from teamcity import diff_tools
+
+diff_tools.patch_unittest_diff()
+
+
+def fetch_diff_error_from_message(err_message):
+    line_with_diff = None
+    diff_error_message = None
+    lines = err_message.split("\n")
+    if err_message.startswith("AssertionError: assert"):
+        # Everything in one line
+        line_with_diff = lines[0][len("AssertionError: assert "):]
+    elif len(err_message.split("\n")) > 1:
+        err_line = lines[1]
+        line_with_diff = err_line[len("assert "):]
+        diff_error_message = lines[0]
+
+    if line_with_diff and line_with_diff.count("==") == 1:
+        parts = [x.strip() for x in line_with_diff.split("==")]
+        parts = [s[1:-1] if s.startswith("'") or s.startswith('"') else s for s in parts]
+        # Pytest cuts too long lines, no need to check is_too_big
+        return diff_tools.EqualsAssertionError(parts[0], parts[1], diff_error_message)
+    else:
+        return None
 
 
 def pytest_addoption(parser):
@@ -191,7 +215,38 @@ class EchoTeamCityMessages(object):
         self.ensure_test_start_reported(test_id)
         if report_output:
             self.report_test_output(report, test_id)
-        self.teamcity.testFailed(test_id, message, str(report.longrepr), flowId=test_id)
+
+        diff_error = None
+        try:
+            err_message = str(report.longrepr.reprcrash.message)
+            diff_name = diff_tools.EqualsAssertionError.__name__
+            # There is a string like "foo.bar.DiffError: [serialized_data]"
+            if diff_name in err_message:
+                serialized_data = err_message[err_message.index(diff_name) + len(diff_name) + 1:]
+                diff_error = diff_tools.deserialize_error(serialized_data)
+
+            # AssertionError is patched in py.test, we can try to fetch diff from it
+            # In general case message starts with "AssertionError: ", but can also starts with "assert" for top-level
+            # function. To support both cases we unify them
+            if err_message.startswith("assert"):
+                err_message = "AssertionError: " + err_message
+            if err_message.startswith("AssertionError:"):
+                diff_error = fetch_diff_error_from_message(err_message)
+        except:
+            pass
+
+        if diff_error:
+            # Cut everything after postfix: it is internal view of DiffError
+            strace = str(report.longrepr)
+            data_postfix = "_ _ _ _ _"
+            if data_postfix in strace:
+                strace = strace[0:strace.index(data_postfix)]
+            self.teamcity.testFailed(test_id, diff_error.msg if diff_error.msg else message, strace,
+                                     flowId=test_id,
+                                     comparison_failure=diff_error
+                                     )
+        else:
+            self.teamcity.testFailed(test_id, message, str(report.longrepr), flowId=test_id)
         self.report_test_finished(test_id, duration)
 
     def report_test_skip(self, test_id, report):
