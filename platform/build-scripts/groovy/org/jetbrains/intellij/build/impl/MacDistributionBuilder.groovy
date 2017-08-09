@@ -128,6 +128,8 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     }
 
     String executable = buildContext.productProperties.baseFileName
+    buildContext.ant.move(file: "$target/MacOS/executable", tofile: "$target/MacOS/$executable")
+
     buildContext.ant.copy(file: icnsPath, todir: "$target/Resources")
     String helpId = macCustomizer.helpId
     if (helpId != null) {
@@ -231,10 +233,6 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
       replacefilter(token: "@@archs@@", value: archsString)
       replacefilter(token: "@@min_osx@@", value: macCustomizer.minOSXVersion)
       replacefilter(token: "@@bundled_help_attributes@@", value: bundledHelpAttributes)
-    }
-
-    if (executable != "idea") {
-      buildContext.ant.move(file: "$target/MacOS/idea", tofile: "$target/MacOS/$executable")
     }
 
     buildContext.ant.replace(dir: "$target/bin", includes: "inspect.sh,format.sh") {
