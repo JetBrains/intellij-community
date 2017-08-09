@@ -15,15 +15,12 @@
  */
 package com.intellij.codeInspection.unneededThrows;
 
-import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.MethodThrowsFix;
 import com.intellij.codeInspection.*;
-import com.intellij.openapi.util.Ref;
+import com.intellij.codeInspection.reference.RefMethodImpl;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.PsiClassReferenceType;
-import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.util.ArrayUtil;
 import com.siyeh.ig.JavaOverridingMethodUtil;
 import org.jetbrains.annotations.NotNull;
@@ -90,20 +87,7 @@ public class RedundantThrowsDeclarationLocalInspection extends BaseJavaBatchLoca
                                             method.isConstructor() ||
                                             containingClass instanceof PsiAnonymousClass ||
                                             containingClass.hasModifierProperty(PsiModifier.FINAL));
-    Collection<PsiClassType> types = ExceptionUtil.collectUnhandledExceptions(body, method, false);
-    Collection<PsiClassType> unhandled = new HashSet<>(types);
-    if (method.isConstructor()) {
-      // there may be field initializer throwing exception
-      // that exception must be caught in the constructor
-      PsiField[] fields = containingClass.getFields();
-      for (final PsiField field : fields) {
-        if (field.hasModifierProperty(PsiModifier.STATIC)) continue;
-        PsiExpression initializer = field.getInitializer();
-        if (initializer == null) continue;
-        unhandled.addAll(ExceptionUtil.collectUnhandledExceptions(initializer, field));
-      }
-    }
-
+    Collection<PsiClassType> unhandled = RefMethodImpl.getUnhandledExceptions(body, method, containingClass);
     List<ReferenceAndType> candidates = Arrays.stream(thrownExceptions)
       .filter(refAndType -> unhandled.stream().noneMatch(unhandledException -> unhandledException.isAssignableFrom(refAndType.type) || refAndType.type.isAssignableFrom(unhandledException)))
       .collect(Collectors.toList());
