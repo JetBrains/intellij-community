@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,13 +50,13 @@ public class GenerateAntTest extends IdeaTestCase {
     dataOutput.flush();
     final String lowercased = StringUtil.toLowerCase(myModule.getName());
     final String expected = "<target name=\"plugin.build.jar."+
-                            lowercased + "\" depends=\"compile.module." + lowercased + 
+                            lowercased + "\" depends=\"compile.module." + lowercased +
                             "\" description=\"Build plugin archive for module &apos;" + myModule.getName() + "&apos;\">\n" +
                             "  <jar destfile=\"${"+ lowercased + ".plugin.path.jar}\" duplicate=\"preserve\">\n" +
                             "    <zipfileset dir=\"${module." + lowercased + ".basedir}/classes\"/>\n" +
                             "    <zipfileset file=\"${module." + lowercased + ".basedir}/META-INF/plugin.xml\" prefix=\"META-INF\"/>\n" +
                             "    <manifest>\n" +
-                            "      <attribute name=\"Created-By\" value=\"IntelliJ IDEA\"/>\n" +
+                            "      <attribute name=\"Created-By\" value=\"IntelliJ IDEA Community Edition\"/>\n" +
                             "      <attribute name=\"Manifest-Version\" value=\"1.0\"/>\n" +
                             "    </manifest>\n" +
                             "  </jar>\n" +
