@@ -4013,9 +4013,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (delegatePreferences != null) {
         boolean first = true; //skip delegate's primary font
         for (String font : delegatePreferences.getRealFontFamilies()) {
-          LOG.debug("Delegate font " + font + ", " + fontSize);
           if (!first) {
-            LOG.debug(font + " font added");
             preferences.register(font, fontSize);
           }
           first = false;
