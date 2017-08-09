@@ -149,7 +149,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   private boolean myEnableAfterConnection = true;
 
 
-  private static final long APPROPRIATE_TO_WAIT = 60000;
+  private static final long HANDSHAKE_TIMEOUT = 60000;
 
   private PyRemoteProcessHandlerBase myRemoteProcessHandlerBase;
 
@@ -738,7 +738,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       }
       else {
         long now = System.currentTimeMillis();
-        if (now - started > APPROPRIATE_TO_WAIT) {
+        if (now - started > HANDSHAKE_TIMEOUT) {
           break;
         }
         else {
