@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,7 +77,6 @@ private class DebugLogConfigureDialog(project: Project, categories: List<Pair<St
           .split(ALL_POSSIBLE_SEPARATORS)
           .filter { !StringUtil.isEmptyOrSpaces(it) }
           .map { it.trim() }
-          .map { if (it.startsWith("#")) it else "#" + it }
           .map {
             if (it.endsWith(TRACE_SUFFIX, ignoreCase = true)) Pair(it.dropLast(TRACE_SUFFIX.length), DebugLogManager.DebugLogLevel.TRACE)
             else Pair(it, DebugLogManager.DebugLogLevel.DEBUG)
