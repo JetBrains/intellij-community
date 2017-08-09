@@ -464,8 +464,8 @@ public class CommandLineUtil {
   @NotNull
   @Contract(pure = true)
   public static String escapeParameterOnWindows(@NotNull String parameter, boolean isWinShell) {
-    if (parameter.isEmpty()) return QQ;
     String s = convertLineSeparators(parameter, "");
+    if (s.isEmpty()) return QQ;
     boolean hadLineBreaks = !s.equals(parameter);
     String result = isWinShell ? escapeParameter(s, new QuoteFlag(hadLineBreaks), 1, true) : backslashEscapeQuotes(s);
     if (hadLineBreaks) result = quote(result, Q);
