@@ -44,6 +44,8 @@ import javax.annotation.Nonnull
 import javax.swing.JPopupMenu
 import javax.swing.JTree
 import javax.swing.plaf.basic.BasicTreeUI
+import javax.swing.tree.DefaultTreeModel
+import javax.swing.tree.TreeNode
 import javax.swing.tree.TreePath
 
 /**
@@ -308,8 +310,9 @@ class ExtendedJTreeDriver(robot: Robot) : JTreeDriver(robot) {
 
       for (childIndex in 0..childCount - 1) {
         val child = model.getChild(node, childIndex)
-        if (child is LoadingNode) throw LoadingNodeException(child, null)
+        if (child is LoadingNode) throw LoadingNodeException(child, getPathToNode(tree, node))
         if (pathStrings.size == 1 && value(tree, child) == pathStrings[0]) {
+
           return TreePath(arrayOf<Any>(child))
         }
         else {
@@ -320,6 +323,13 @@ class ExtendedJTreeDriver(robot: Robot) : JTreeDriver(robot) {
         }
       }
       return null
+    }
+
+    fun getPathToNode(tree: JTree, node: Any): TreePath {
+      val treeModel = tree.model as DefaultTreeModel
+      var path = treeModel.getPathToRoot(node as TreeNode)
+      if (!tree.isRootVisible) path = path.sliceArray(1..path.size - 1)
+      return TreePath(path)
     }
 
     fun findMatchingXPath(tree: JTree, xPathStrings: List<String>): TreePath {
@@ -353,11 +363,13 @@ class ExtendedJTreeDriver(robot: Robot) : JTreeDriver(robot) {
           if (currentOrder == order) {
             if (xPathStrings.size == 1) {
               return TreePath(arrayOf<Any>(child))
-            } else {
+            }
+            else {
               val childResult = findMatchingXPath(tree, child, xPathStrings.subList(1, xPathStrings.size))
               if (childResult != null) return TreePath(arrayOf<Any>(child, *childResult.path))
             }
-          } else {
+          }
+          else {
             currentOrder++
           }
         }
