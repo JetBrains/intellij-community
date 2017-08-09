@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
+import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -553,7 +554,8 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   @Override
   @NotNull
   public PyFunction[] getMethods() {
-    return getClassChildren(PythonDialectsTokenSetProvider.INSTANCE.getFunctionDeclarationTokens(), PyFunction.ARRAY_FACTORY);
+    final TokenSet functionDeclarationTokens = PythonDialectsTokenSetProvider.INSTANCE.getFunctionDeclarationTokens();
+    return getClassChildren(functionDeclarationTokens, PyFunction.class, PyFunction.ARRAY_FACTORY);
   }
 
   @Override
@@ -565,24 +567,24 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
 
   @Override
   public PyClass[] getNestedClasses() {
-    return getClassChildren(TokenSet.create(PyElementTypes.CLASS_DECLARATION), PyClass.ARRAY_FACTORY);
+    return getClassChildren(TokenSet.create(PyElementTypes.CLASS_DECLARATION), PyClass.class, PyClass.ARRAY_FACTORY);
   }
 
-  protected <T extends PsiElement> T[] getClassChildren(TokenSet elementTypes, ArrayFactory<T> factory) {
-    // TODO: gather all top-level functions, maybe within control statements
-    final PyClassStub classStub = getStub();
-    if (classStub != null) {
-      return classStub.getChildrenByType(elementTypes, factory);
-    }
-    List<T> result = new ArrayList<>();
-    final PyStatementList statementList = getStatementList();
-    for (PsiElement element : statementList.getChildren()) {
-      if (elementTypes.contains(element.getNode().getElementType())) {
-        //noinspection unchecked
-        result.add((T)element);
+  @NotNull
+  private <T extends StubBasedPsiElement<? extends StubElement<T>>> T[] getClassChildren(@NotNull TokenSet elementTypes,
+                                                                                         @NotNull Class<T> childrenClass,
+                                                                                         @NotNull ArrayFactory<T> factory) {
+    final List<T> result = new ArrayList<>();
+    processClassLevelDeclarations(new BaseScopeProcessor() {
+      @Override
+      public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
+        if (childrenClass.isInstance(element) && elementTypes.contains(((StubBasedPsiElement)element).getElementType())) {
+          result.add(childrenClass.cast(element));
+        }
+        return true;
       }
-    }
-    return result.toArray(factory.create(result.size()));
+    });
+    return ContainerUtil.toArray(result, factory);
   }
 
   private static class NameFinder<T extends PyElement> implements Processor<T> {
