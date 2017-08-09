@@ -529,13 +529,15 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     }
   }
 
-  private class MyChangeViewContent extends DnDTargetContentAdapter {
+  private class MyChangeViewContent extends DnDActivateOnHoldTargetContent {
+  
     private MyChangeViewContent(JComponent component, String displayName, boolean isLockable) {
-      super(component, displayName, isLockable);
+      super(myProject, component, displayName, isLockable);
     }
 
     @Override
     public void drop(DnDEvent event) {
+      super.drop(event);
       Object attachedObject = event.getAttachedObject();
       if (attachedObject instanceof ShelvedChangeListDragBean) {
         FileDocumentManager.getInstance().saveAllDocuments();
@@ -547,14 +549,12 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     }
 
     @Override
-    public boolean update(DnDEvent event) {
+    public boolean isDropPossible(@NotNull DnDEvent event) {
       Object attachedObject = event.getAttachedObject();
       if (attachedObject instanceof ShelvedChangeListDragBean) {
-        ShelvedChangeListDragBean shelveBean = (ShelvedChangeListDragBean)attachedObject;
-        event.setDropPossible(!shelveBean.getShelvedChangelists().isEmpty());
-        return false;
+        return !((ShelvedChangeListDragBean)attachedObject).getShelvedChangelists().isEmpty();
       }
-      return true;
+      return attachedObject instanceof ChangeListDragBean;
     }
   }
 }

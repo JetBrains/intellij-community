@@ -412,7 +412,11 @@ class TabContentLayout extends ContentLayout {
     myContent2Tabs.put(content, tab);
     if (content instanceof DnDTarget) {
       DnDTarget target = (DnDTarget)content;
-      DnDSupport.createBuilder(tab).setDropHandler(target).setTargetChecker(target).install();
+      DnDSupport.createBuilder(tab)
+        .setDropHandler(target)
+        .setTargetChecker(target)
+        .setCleanUpOnLeaveCallback(() -> target.cleanUpOnLeave())
+        .install();
     }
     
     myCached.clear();

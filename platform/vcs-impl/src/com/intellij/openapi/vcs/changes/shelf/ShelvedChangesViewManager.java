@@ -691,13 +691,15 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     }
   }
 
-  public class MyShelfContent extends DnDTargetContentAdapter {
+  public class MyShelfContent extends DnDActivateOnHoldTargetContent {
+
     private MyShelfContent(JPanel panel, String displayName, boolean isLockable) {
-      super(panel, displayName, isLockable);
+      super(myProject, panel, displayName, isLockable);
     }
 
     @Override
     public void drop(DnDEvent event) {
+      super.drop(event);
       Object attachedObject = event.getAttachedObject();
       if (attachedObject instanceof ChangeListDragBean) {
         FileDocumentManager.getInstance().saveAllDocuments();
@@ -707,13 +709,9 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     }
 
     @Override
-    public boolean update(DnDEvent event) {
+    public boolean isDropPossible(@NotNull DnDEvent event) {
       Object attachedObject = event.getAttachedObject();
-      if (attachedObject instanceof ChangeListDragBean) {
-        event.setDropPossible(((ChangeListDragBean)attachedObject).getChanges().length > 0);
-        return false;
-      }
-      return true;
+      return attachedObject instanceof ChangeListDragBean && ((ChangeListDragBean)attachedObject).getChanges().length > 0;
     }
   }
 
