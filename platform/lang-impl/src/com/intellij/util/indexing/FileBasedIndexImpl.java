@@ -1114,6 +1114,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
       // avoid rebuilding index in tests since we do it synchronously in requestRebuild and we can have readAction at hand
       return null;
     }
+    if (e instanceof ProcessCanceledException) return null;
     if (e instanceof IndexOutOfBoundsException) return e; // something wrong with direct byte buffer
     Throwable cause = e.getCause();
     if (cause instanceof StorageException || cause instanceof IOException ||
