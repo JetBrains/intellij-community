@@ -273,6 +273,11 @@ public class LinkLabel<T> extends JLabel {
     return textR.contains(pt);
   }
 
+  //for GUI tests
+  public Point getTextRectangleCenter() {
+    return new Point(textR.x + textR.width / 2, textR.y + textR.height / 2);
+  }
+
   private void enableUnderline() {
     UIUtil.setCursor(this, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
     myUnderline = true;

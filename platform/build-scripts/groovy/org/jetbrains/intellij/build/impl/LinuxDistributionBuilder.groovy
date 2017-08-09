@@ -93,7 +93,7 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
     }
 
     buildContext.ant.copy(todir: "${unixDistPath}/bin") {
-      fileset(dir: "$buildContext.paths.communityHome/bin/scripts/unix")
+      fileset(dir: "$buildContext.paths.communityHome/platform/build-scripts/resources/linux/scripts")
 
       filterset(begintoken: "@@", endtoken: "@@") {
         filter(token: "product_full", value: fullName)
@@ -133,7 +133,7 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
 
   private void generateReadme(String unixDistPath) {
     String fullName = buildContext.applicationInfo.productName
-    BuildUtils.copyAndPatchFile("$buildContext.paths.communityHome/build/Install-Linux-tar.txt", "$unixDistPath/Install-Linux-tar.txt",
+    BuildUtils.copyAndPatchFile("$buildContext.paths.communityHome/platform/build-scripts/resources/linux/Install-Linux-tar.txt", "$unixDistPath/Install-Linux-tar.txt",
                      ["product_full"   : fullName,
                       "product"        : buildContext.productProperties.baseFileName,
                       "system_selector": buildContext.systemSelector], "@@")
@@ -207,7 +207,7 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
           filter(token: "NAME", value: productName)
           filter(token: "ICON", value: "/bin/${buildContext.productProperties.baseFileName}.png")
           filter(token: "SCRIPT", value: "/bin/${buildContext.productProperties.baseFileName}.sh")
-          filter(token: "WM_CLASS", value: "jetbrains-${buildContext.applicationInfo.shortProductName.toLowerCase()}${ce ? "-ce" : ""}")
+          filter(token: "WM_CLASS", value: "jetbrains-${buildContext.applicationInfo.shortProductName.toLowerCase()}${ce ? "-ce" : ""}")  // AppUIUtil#getFrameClass
         }
       }
 

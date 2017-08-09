@@ -245,7 +245,7 @@ public class SimpleEditorPreview implements PreviewPanel {
   private boolean isOffsetVisible(final int startOffset) {
     return myEditor
       .getScrollingModel()
-      .getVisibleArea()
+      .getVisibleAreaOnScrollingFinished()
       .contains(myEditor.logicalPositionToXY(myEditor.offsetToLogicalPosition(startOffset)));
   }
 

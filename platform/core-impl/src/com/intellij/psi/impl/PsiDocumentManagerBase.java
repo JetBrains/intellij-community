@@ -81,7 +81,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   private boolean myPerformBackgroundCommit = true;
 
   private volatile boolean myIsCommitInProgress;
-  private static final ThreadLocal<Boolean> ourIsFullReparseInProgress = new ThreadLocal<>();
+  private static volatile boolean ourIsFullReparseInProgress;
   private final PsiToDocumentSynchronizer mySynchronizer;
 
   private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -486,7 +486,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   public static boolean isFullReparseInProgress() {
-    return Boolean.TRUE.equals(ourIsFullReparseInProgress.get());
+    return ourIsFullReparseInProgress;
   }
 
   @Override
@@ -1030,12 +1030,14 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     return mySynchronizer;
   }
 
+  @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
   public void reparseFileFromText(PsiFileImpl file) {
-    if (myIsCommitInProgress) throw new IllegalStateException("Re-entrant commit is not allowed");
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    if (isCommitInProgress()) throw new IllegalStateException("Re-entrant commit is not allowed");
     
     FileElement node = file.calcTreeElement();
     CharSequence text = node.getChars();
-    ourIsFullReparseInProgress.set(true);
+    ourIsFullReparseInProgress = true;
     try {
       WriteAction.run(() -> {
         ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
@@ -1046,7 +1048,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       });
     }
     finally {
-      ourIsFullReparseInProgress.remove();
+      ourIsFullReparseInProgress = false;
     }
   }
 

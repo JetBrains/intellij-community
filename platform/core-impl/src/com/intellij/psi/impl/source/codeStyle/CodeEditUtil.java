@@ -39,8 +39,6 @@ public class CodeEditUtil {
   private static final ThreadLocal<Boolean> ALLOW_NODES_REFORMATTING = ThreadLocal.withInitial(() -> Boolean.TRUE);
   private static final ThreadLocal<NotNullFunction<ASTNode, Boolean>> NODE_REFORMAT_STRATEGY = new ThreadLocal<>();
 
-  public static final Key<Boolean> OUTER_OK = new Key<>("OUTER_OK");
-
   private CodeEditUtil() { }
 
   public static void addChild(ASTNode parent, ASTNode child, ASTNode anchorBefore) {

@@ -83,10 +83,8 @@ fun guessProjectForContentFile(file: VirtualFile, fileType: FileType = FileTypeM
   val list = ProjectManager.getInstance().openProjects.filter {
     !it.isDefault && it.isInitialized && !it.isDisposed && ProjectRootManager.getInstance(it).fileIndex.isInContent(file)
   }
-
-  if (list.isEmpty()) return null
-
-  return list.firstOrNull { WindowManager.getInstance().getFrame(it)?.isActive ?: false } ?: list[0]
+  
+  return list.firstOrNull { WindowManager.getInstance().getFrame(it)?.isActive ?: false } ?: list.firstOrNull()
 }
 
 fun isProjectOrWorkspaceFile(file: VirtualFile): Boolean = ProjectCoreUtil.isProjectOrWorkspaceFile(file)

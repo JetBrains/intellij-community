@@ -30,7 +30,7 @@ class DeleteForeachInitializers extends FilePsiMutation {
 
   @Override
   protected void performMutation() {
-    PsiTreeUtil.findChildrenOfType(myFile, PsiForStatement.class).stream()
+    PsiTreeUtil.findChildrenOfType(getFile(), PsiForStatement.class).stream()
       .limit(20)
       .map(stmt -> stmt.getInitialization())
       .filter(Objects::nonNull)

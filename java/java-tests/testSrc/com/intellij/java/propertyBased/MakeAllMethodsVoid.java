@@ -30,8 +30,9 @@ class MakeAllMethodsVoid extends FilePsiMutation {
 
   @Override
   protected void performMutation() {
-    PsiTreeUtil.findChildrenOfType(myFile, PsiMethod.class).stream()
+    PsiTreeUtil.findChildrenOfType(getFile(), PsiMethod.class).stream()
       .filter(method -> method.getReturnTypeElement() != null)
-      .forEach(method -> method.getReturnTypeElement().replace(JavaPsiFacade.getElementFactory(myFile.getProject()).createTypeElement(PsiType.VOID)));
+      .forEach(method -> method.getReturnTypeElement().replace(JavaPsiFacade.getElementFactory(
+        getFile().getProject()).createTypeElement(PsiType.VOID)));
   }
 }
