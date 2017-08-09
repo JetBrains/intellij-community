@@ -57,7 +57,7 @@ import java.util.concurrent.TimeUnit;
 import static org.junit.Assert.*;
 
 public class XDebuggerTestUtil {
-  private static final int TIMEOUT = 25000;
+  private static final int TIMEOUT_MS = 25_000;
 
   private XDebuggerTestUtil() {
   }
@@ -129,7 +129,7 @@ public class XDebuggerTestUtil {
   public static Pair<List<XExecutionStack>, String> collectThreadsWithErrors(@NotNull XDebugSession session) throws InterruptedException {
     XTestExecutionStackContainer container = new XTestExecutionStackContainer();
     session.getSuspendContext().computeExecutionStacks(container);
-    return container.waitFor(TIMEOUT);
+    return container.waitFor(TIMEOUT_MS);
   }
 
   public static List<XStackFrame> collectFrames(@NotNull XDebugSession session) throws InterruptedException {
@@ -148,7 +148,7 @@ public class XDebuggerTestUtil {
   }
 
   public static List<XStackFrame> collectFrames(@NotNull XExecutionStack thread) throws InterruptedException {
-    return collectFrames(thread, TIMEOUT * 2);
+    return collectFrames(thread, TIMEOUT_MS * 2);
   }
 
   public static List<XStackFrame> collectFrames(XExecutionStack thread, long timeout) throws InterruptedException {
@@ -183,15 +183,15 @@ public class XDebuggerTestUtil {
   public static List<XValue> collectChildren(XValueContainer value) throws InterruptedException {
     XTestCompositeNode container = new XTestCompositeNode();
     value.computeChildren(container);
-    return container.waitFor(TIMEOUT).first;
+    return container.waitFor(TIMEOUT_MS).first;
   }
 
   public static Pair<XValue, String> evaluate(XDebugSession session, XExpression expression) {
-    return evaluate(session, expression, TIMEOUT);
+    return evaluate(session, expression, TIMEOUT_MS);
   }
 
   public static Pair<XValue, String> evaluate(XDebugSession session, String expression) {
-    return evaluate(session, XExpressionImpl.fromText(expression), TIMEOUT);
+    return evaluate(session, XExpressionImpl.fromText(expression), TIMEOUT_MS);
   }
 
   public static Pair<XValue, String> evaluate(XDebugSession session, String expression, long timeout) {
@@ -232,7 +232,7 @@ public class XDebuggerTestUtil {
   }
 
   public static XTestValueNode computePresentation(@NotNull XValue value) throws InterruptedException {
-    return computePresentation(value, TIMEOUT);
+    return computePresentation(value, TIMEOUT_MS);
   }
 
   public static XTestValueNode computePresentation(XValue value, long timeout) throws InterruptedException {
@@ -364,7 +364,7 @@ public class XDebuggerTestUtil {
         }
       });
 
-      assertEquals(value, result.get(TIMEOUT, TimeUnit.MILLISECONDS));
+      assertEquals(value, result.get(TIMEOUT_MS, TimeUnit.MILLISECONDS));
     }
   }
 
