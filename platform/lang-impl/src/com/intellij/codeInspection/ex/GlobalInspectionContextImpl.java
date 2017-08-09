@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -939,7 +939,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     }
     final Iterable<Tools> inspectionTools = ContainerUtil.filter(profile.getAllEnabledInspectionTools(getProject()), tools -> {
       assert tools != null;
-      return tools.getTool().getTool() instanceof CleanupLocalInspectionTool;
+      return tools.getTool().isCleanupTool();
     });
     boolean includeDoNotShow = includeDoNotShow(profile);
     final RefManagerImpl refManager = (RefManagerImpl)getRefManager();
@@ -957,8 +957,11 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
           if (isBinary(file)) return;
           final List<LocalInspectionToolWrapper> lTools = new ArrayList<>();
           for (final Tools tools : inspectionTools) {
-            final InspectionToolWrapper tool = tools.getEnabledTool(file, includeDoNotShow);
-            if (tool instanceof LocalInspectionToolWrapper) {
+            InspectionToolWrapper tool = tools.getEnabledTool(file, includeDoNotShow);
+            if (tool instanceof GlobalInspectionToolWrapper) {
+              tool = ((GlobalInspectionToolWrapper)tool).getSharedLocalInspectionToolWrapper();
+            }
+            if (tool != null) {
               lTools.add((LocalInspectionToolWrapper)tool);
               tool.initialize(GlobalInspectionContextImpl.this);
             }
