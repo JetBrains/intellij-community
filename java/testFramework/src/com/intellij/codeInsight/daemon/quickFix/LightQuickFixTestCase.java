@@ -116,9 +116,12 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
           fail("Action '" + text + "' is still available after its invocation in test " + testFullPath);
         }
       }
-      
-      PsiTestUtil.checkStubsMatchText(quickFix.getFile());
-      
+
+      PsiFile file = quickFix.getFile();
+      if (file.isValid()) {
+        PsiTestUtil.checkStubsMatchText(file);
+      }
+
       String expectedFilePath = ObjectUtils.notNull(quickFix.getBasePath(), "") + "/" + AFTER_PREFIX + testName;
       quickFix.checkResultByFile("In file :" + expectedFilePath, expectedFilePath, false);
 
