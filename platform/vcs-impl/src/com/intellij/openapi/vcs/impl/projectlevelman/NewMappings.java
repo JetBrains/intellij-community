@@ -187,8 +187,12 @@ public class NewMappings {
     myFileStatusManager.fileStatusesChanged();
     myFileWatchRequestsManager.ping();
 
+    dumpMappingsToLog();
+  }
+
+  private void dumpMappingsToLog() {
     for (VcsDirectoryMapping mapping : mySortedMappings) {
-      String path = mapping.isDefaultMapping() ? "<Project>" : mapping.getDirectory();
+      String path = mapping.isDefaultMapping() ? VcsDirectoryMapping.PROJECT_CONSTANT : mapping.getDirectory();
       String vcs = mapping.getVcs();
       LOG.info(String.format("VCS Root: [%s] - [%s]", vcs, path));
     }
