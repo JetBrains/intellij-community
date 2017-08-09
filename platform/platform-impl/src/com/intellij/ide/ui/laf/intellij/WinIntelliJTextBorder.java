@@ -27,7 +27,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Path2D;
 
-import static com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI.isSearchFieldWithHistoryPopup;
 import static com.intellij.ide.ui.laf.intellij.WinIntelliJTextFieldUI.HOVER_PROPERTY;
 import static com.intellij.ide.ui.laf.intellij.WinIntelliJTextFieldUI.adjustInWrapperRect;
 
@@ -47,6 +46,8 @@ public class WinIntelliJTextBorder extends DarculaTextBorder {
 
   @Override
   public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+    if (((JComponent)c).getClientProperty("JTextField.Search.noBorderRing") == Boolean.TRUE) return;
+
     Graphics2D g2 = (Graphics2D)g.create();
     try {
       Rectangle r = new Rectangle(x, y, width, height);
