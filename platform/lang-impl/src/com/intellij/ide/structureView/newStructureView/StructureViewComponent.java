@@ -398,10 +398,10 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       for (Object element : expandedPsiElements) {
         if (element instanceof PsiElement && !((PsiElement)element).isValid()) {
           continue;
-      }
+        }
         expandPathToElement(element);
+      }
     }
-  }
   }
 
   private StructureViewFactoryImpl.State getSettings() {
