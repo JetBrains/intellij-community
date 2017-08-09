@@ -18,13 +18,15 @@ package com.intellij.openapi.vcs.ui;
 import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
 public class FontUtil {
-  @NotNull
+  @Nullable
   public static Font getFontAbleToDisplay(char c, int size, int style, @NotNull String family) {
-    return ComplementaryFontsRegistry.getFontAbleToDisplay(c, size, style, family, null).getFont();
+    Font font = ComplementaryFontsRegistry.getFontAbleToDisplay(c, size, style, family, null).getFont();
+    return font.canDisplay(c) ? font : null;
   }
 
   @NotNull
@@ -53,7 +55,7 @@ public class FontUtil {
       else {
         if (font != null) result.append("</font>");
         font = getFontAbleToDisplay(c, baseFont.getSize(), style, baseFont.getFamily());
-        if (font != baseFont) result.append("<font face=\"").append(font.getFamily()).append("\">");
+        if (font != null) result.append("<font face=\"").append(font.getFamily()).append("\">");
         result.append(c);
       }
     }

@@ -129,7 +129,7 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
 
     def batName = "${buildContext.productProperties.baseFileName}.bat"
     buildContext.ant.copy(todir: "$winDistPath/bin") {
-      fileset(dir: "$buildContext.paths.communityHome/bin/scripts/win")
+      fileset(dir: "$buildContext.paths.communityHome/platform/build-scripts/resources/win/scripts")
 
       filterset(begintoken: "@@", endtoken: "@@") {
         filter(token: "product_full", value: fullName)

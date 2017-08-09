@@ -26,15 +26,14 @@ import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
-import com.intellij.openapi.vfs.newvfs.BulkFileListener;
-import com.intellij.openapi.vfs.newvfs.FileAttribute;
-import com.intellij.openapi.vfs.newvfs.ManagingFS;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.openapi.vfs.impl.ArchiveHandler;
+import com.intellij.openapi.vfs.newvfs.*;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.testFramework.LoggedErrorProcessor;
 import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.io.DataInputOutputUtil;
@@ -178,10 +177,11 @@ public class PersistentFsTest extends PlatformTestCase {
       }
     });
 
+    VirtualFile jarRoot = null;
     try {
       String rootUrl = "jar://" + FileUtil.toSystemIndependentName(jarFile.getPath()) + "!/";
       assertNotNull(getVirtualFile(jarFile));
-      VirtualFile jarRoot = VirtualFileManager.getInstance().findFileByUrl(rootUrl);
+      jarRoot = VirtualFileManager.getInstance().findFileByUrl(rootUrl);
       assertNotNull(jarRoot);
       assertTrue(jarRoot.isValid());
       assertEquals(0, jarRoot.getChildren().length);
@@ -198,6 +198,9 @@ public class PersistentFsTest extends PlatformTestCase {
     }
     finally {
       LoggedErrorProcessor.restoreDefaultProcessor();
+      ArchiveHandler handler = jarRoot != null ? 
+                               VfsImplUtil.getHandler(JarFileSystem.getInstance(), jarRoot, Function.NULL) : null;
+      if (handler != null) handler.dispose();
     }
 
     assertEquals(1, logCount[0]);

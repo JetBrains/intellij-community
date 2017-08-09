@@ -18,6 +18,7 @@ package com.intellij.openapi.vfs.impl.jar;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -116,7 +117,8 @@ public class JarFileSystemImpl extends JarFileSystem {
   @NotNull
   @Override
   protected ArchiveHandler getHandler(@NotNull VirtualFile entryFile) {
-    return VfsImplUtil.getHandler(this, entryFile, JarHandler::new);
+    boolean useNewJarHandler = Registry.is("vfs.use.new.jar.handler");
+    return VfsImplUtil.getHandler(this, entryFile, useNewJarHandler ? BasicJarHandler::new : JarHandler::new);
   }
 
   @Override

@@ -38,13 +38,16 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
+import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.impl.source.tree.injected.InjectedFileViewProvider;
 import com.intellij.psi.stubs.PsiFileStub;
 import com.intellij.psi.stubs.StubTree;
 import com.intellij.psi.stubs.StubTreeBuilder;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileContentImpl;
@@ -426,10 +429,14 @@ public class PsiTestUtil {
   }
 
   public static void checkStubsMatchText(@NotNull PsiFile file) {
-    StubTree tree = getStubTree(file.getViewProvider().getStubBindingRoot());
+    PsiUtilCore.ensureValid(file);
+    FileViewProvider viewProvider = file.getViewProvider();
+    if (viewProvider instanceof InjectedFileViewProvider) return;
+
+    StubTree tree = getStubTree(viewProvider.getStubBindingRoot());
     if (tree == null) return;
     
-    FileContentImpl fc = new FileContentImpl(file.getViewProvider().getVirtualFile(), file.getText(), 0);
+    FileContentImpl fc = new FileContentImpl(viewProvider.getVirtualFile(), file.getText(), 0);
     fc.putUserData(IndexingDataKeys.PROJECT, file.getProject());
     PsiFileStub copyTree = (PsiFileStub) StubTreeBuilder.buildStubTree(fc);
     if (copyTree == null) return;

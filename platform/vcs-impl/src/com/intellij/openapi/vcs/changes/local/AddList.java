@@ -28,6 +28,7 @@ public class AddList implements ChangeListCommand {
   @Nullable private final String myComment;
   @Nullable private final Object myData;
 
+  private boolean myWasListCreated;
   private LocalChangeList myNewListCopy;
   private String myOldComment;
 
@@ -40,28 +41,32 @@ public class AddList implements ChangeListCommand {
   public void apply(final ChangeListWorker worker) {
     LocalChangeList list = worker.getChangeListByName(myName);
     if (list == null) {
+      myWasListCreated = true;
       myOldComment = null;
       myNewListCopy = worker.addChangeList(myName, myComment, myData).copy();
     }
     else if (StringUtil.isNotEmpty(myComment)) {
+      myWasListCreated = false;
       myOldComment = worker.editComment(myName, myComment);
       myNewListCopy = list.copy();
     }
     else {
+      myWasListCreated = false;
       myOldComment = null;
-      myNewListCopy = null;
+      myNewListCopy = list.copy();
     }
   }
 
   public void doNotify(final EventDispatcher<ChangeListListener> dispatcher) {
-    if (myOldComment != null) {
-      dispatcher.getMulticaster().changeListCommentChanged(myNewListCopy, myOldComment);
-    }
-    else if (myNewListCopy != null) {
+    if (myWasListCreated) {
       dispatcher.getMulticaster().changeListAdded(myNewListCopy);
+    }
+    else if (myOldComment != null) {
+      dispatcher.getMulticaster().changeListCommentChanged(myNewListCopy, myOldComment);
     }
   }
 
+  @NotNull
   public LocalChangeList getNewListCopy() {
     return myNewListCopy;
   }

@@ -52,6 +52,7 @@ public class SetDefault implements ChangeListCommand {
     }
   }
 
+  @Nullable
   public String getPrevious() {
     return myPrevious;
   }

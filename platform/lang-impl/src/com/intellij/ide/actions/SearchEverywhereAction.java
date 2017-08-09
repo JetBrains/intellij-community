@@ -275,7 +275,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         } else {
           lastKnownHeight = size.height;
         }
-        return new Dimension(Math.max(myBalloon.getSize().width, Math.min(size.width - 2, getPopupMaxWidth())), myList.isEmpty() ? JBUI.scale(30) : size.height);
+        return new Dimension(Math.max(myBalloon != null ? myBalloon.getSize().width : 0, Math.min(size.width - 2, getPopupMaxWidth())), myList.isEmpty() ? JBUI.scale(30) : size.height);
       }
 
       @Override

@@ -20,6 +20,7 @@ import com.intellij.compiler.CompilerReferenceService;
 import com.intellij.compiler.backwardRefs.CompilerReferenceServiceEx;
 import com.intellij.compiler.backwardRefs.ReferenceIndexUnavailableException;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -165,6 +166,7 @@ public class FrequentlyUsedInheritorInspection extends BaseJavaLocalInspectionTo
       .of(directInheritors)
       .filter(inheritor -> !(inheritor instanceof LightRef.LightAnonymousClassDef))
       .map(inheritor -> {
+        ProgressManager.checkCanceled();
         int count = compilerRefService.getInheritorCount(inheritor);
         if (count != 1 && count * 100 > finalHierarchyCardinality * PERCENT_THRESHOLD) {
           return new Object() {
