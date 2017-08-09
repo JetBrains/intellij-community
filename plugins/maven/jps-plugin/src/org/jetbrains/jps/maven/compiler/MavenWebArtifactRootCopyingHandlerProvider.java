@@ -45,10 +45,12 @@ import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
  */
 public class MavenWebArtifactRootCopyingHandlerProvider extends ArtifactRootCopyingHandlerProvider {
   private static final Logger LOG = Logger.getInstance(MavenWebArtifactRootCopyingHandlerProvider.class);
+
   @Nullable
   @Override
   public FileCopyingHandler createCustomHandler(@NotNull JpsArtifact artifact,
                                                 @NotNull File root,
+                                                @NotNull File targetDirectory,
                                                 @NotNull JpsPackagingElement contextElement,
                                                 @NotNull JpsModel model,
                                                 @NotNull BuildDataPaths buildDataPaths) {

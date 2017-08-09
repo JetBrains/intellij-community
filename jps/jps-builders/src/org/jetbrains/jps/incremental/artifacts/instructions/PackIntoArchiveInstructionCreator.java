@@ -19,6 +19,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
+
 /**
  * @author nik
  */
@@ -67,5 +69,11 @@ public class PackIntoArchiveInstructionCreator extends ArtifactCompilerInstructi
     }
     myJarInfo.addJar(destination.getPathInJar(), jarInfo);
     return new PackIntoArchiveInstructionCreator(myInstructionsBuilder, jarInfo, "", destination);
+  }
+
+  @Nullable
+  @Override
+  public File getTargetDirectory() {
+    return null;
   }
 }

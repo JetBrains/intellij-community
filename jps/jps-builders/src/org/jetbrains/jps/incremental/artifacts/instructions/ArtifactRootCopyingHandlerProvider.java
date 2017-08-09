@@ -39,9 +39,23 @@ public abstract class ArtifactRootCopyingHandlerProvider {
   /**
    * Override this method to customize how files from {@code root} are copied to the {@code artifact output}.
    * @param root file or directory which is configured in {@code artifact} to be copied to its output
+   * @param targetDirectory target directory under the artifact output to which {@code root} will be copied.
    * @param contextElement element in the artifact layout to which {@code root} corresponds; it may be for example
    * {@link JpsDirectoryCopyPackagingElement} (in that case {@code root} will be its {@link JpsDirectoryCopyPackagingElement#getDirectoryPath() directory})
    * or {@link JpsModuleOutputPackagingElement} (in that case {@code root} will be the module output directory)
+   */
+  @Nullable
+  public FileCopyingHandler createCustomHandler(@NotNull JpsArtifact artifact,
+                                                @NotNull File root,
+                                                @NotNull File targetDirectory,
+                                                @NotNull JpsPackagingElement contextElement,
+                                                @NotNull JpsModel model,
+                                                @NotNull BuildDataPaths buildDataPaths) {
+    return createCustomHandler(artifact, root, model, buildDataPaths);
+  }
+
+  /**
+   * @deprecated override {@link #createCustomHandler(JpsArtifact, File, File, JpsPackagingElement, JpsModel, BuildDataPaths)} instead
    */
   @Nullable
   public FileCopyingHandler createCustomHandler(@NotNull JpsArtifact artifact,
@@ -53,7 +67,7 @@ public abstract class ArtifactRootCopyingHandlerProvider {
   }
 
   /**
-   * @deprecated override {@link #createCustomHandler(JpsArtifact, File, JpsPackagingElement, JpsModel, BuildDataPaths)} instead
+   * @deprecated override {@link #createCustomHandler(JpsArtifact, File, File, JpsPackagingElement, JpsModel, BuildDataPaths)} instead
    */
   @Nullable
   public FileCopyingHandler createCustomHandler(@NotNull JpsArtifact artifact, @NotNull File root, @NotNull JpsModel model,
