@@ -88,13 +88,13 @@ public abstract class SearchForTestsTask extends Task.Backgroundable {
   public void attachTaskToProcess(final OSProcessHandler handler) {
     handler.addProcessListener(new ProcessAdapter() {
       @Override
-      public void processTerminated(final ProcessEvent event) {
+      public void processTerminated(@NotNull final ProcessEvent event) {
         handler.removeProcessListener(this);
         ensureFinished();
       }
 
       @Override
-      public void startNotified(final ProcessEvent event) {
+      public void startNotified(@NotNull final ProcessEvent event) {
         startSearch();
       }
     });

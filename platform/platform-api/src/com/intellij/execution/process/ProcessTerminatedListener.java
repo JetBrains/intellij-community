@@ -64,7 +64,7 @@ public class ProcessTerminatedListener extends ProcessAdapter {
   }
 
   @Override
-  public void processTerminated(ProcessEvent event) {
+  public void processTerminated(@NotNull ProcessEvent event) {
     ProcessHandler processHandler = event.getProcessHandler();
     processHandler.removeProcessListener(this);
     String message = myProcessFinishedMessage.replaceAll(EXIT_CODE_REGEX, stringifyExitCode(event.getExitCode()));

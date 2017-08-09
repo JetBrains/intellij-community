@@ -111,14 +111,14 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
 
     final ProcessAdapter processListener = new ProcessAdapter() {
       @Override
-      public void startNotified(final ProcessEvent event) {
+      public void startNotified(@NotNull final ProcessEvent event) {
         super.startNotified(event);
         processHandlerRef.set(event.getProcessHandler());
         processStartedSemaphore.release();
       }
 
       @Override
-      public void onTextAvailable(final ProcessEvent event, final Key outputType) {
+      public void onTextAvailable(@NotNull final ProcessEvent event, @NotNull final Key outputType) {
         super.onTextAvailable(event, outputType); //Store text for user
         final String text = event.getText();
         stdAll.append(text);

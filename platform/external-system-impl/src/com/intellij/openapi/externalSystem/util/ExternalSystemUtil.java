@@ -562,7 +562,7 @@ public class ExternalSystemUtil {
                                      @NotNull final ProcessHandler handler) {
             if (executorId.equals(executorIdLocal) && environment.equals(environmentLocal)) {
               handler.addProcessListener(new ProcessAdapter() {
-                public void processTerminated(ProcessEvent event) {
+                public void processTerminated(@NotNull ProcessEvent event) {
                   result.set(event.getExitCode() == 0);
                   targetDone.up();
                 }

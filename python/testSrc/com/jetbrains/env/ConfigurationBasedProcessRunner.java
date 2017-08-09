@@ -107,7 +107,7 @@ public abstract class ConfigurationBasedProcessRunner<CONF_T extends AbstractPyt
     // Engine to be run after process end to post process console
     final ProcessListener consolePostprocessor = new ProcessAdapter() {
       @Override
-      public void processTerminated(final ProcessEvent event) {
+      public void processTerminated(@NotNull final ProcessEvent event) {
         super.processTerminated(event);
         ApplicationManager.getApplication().invokeAndWait(() -> prepareConsoleAfterProcessEnd(), ModalityState.NON_MODAL);
       }

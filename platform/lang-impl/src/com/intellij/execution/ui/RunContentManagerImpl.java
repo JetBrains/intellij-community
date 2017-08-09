@@ -298,7 +298,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     if (processHandler != null) {
       final ProcessAdapter processAdapter = new ProcessAdapter() {
         @Override
-        public void startNotified(final ProcessEvent event) {
+        public void startNotified(@NotNull final ProcessEvent event) {
           UIUtil.invokeLaterIfNeeded(() -> {
             content.setIcon(ExecutionUtil.getLiveIndicator(descriptor.getIcon()));
             toolWindow.setIcon(ExecutionUtil.getLiveIndicator(myToolwindowIdToBaseIconMap.get(toolWindowId)));
@@ -306,7 +306,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
         }
 
         @Override
-        public void processTerminated(final ProcessEvent event) {
+        public void processTerminated(@NotNull final ProcessEvent event) {
           ApplicationManager.getApplication().invokeLater(() -> {
             boolean alive = false;
             ContentManager manager = myToolwindowIdToContentManagerMap.get(toolWindowId);

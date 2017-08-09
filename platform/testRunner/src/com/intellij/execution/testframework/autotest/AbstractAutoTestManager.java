@@ -196,7 +196,7 @@ public abstract class AbstractAutoTestManager implements PersistentStateComponen
     }
     restarterListener = new ProcessAdapter() {
       @Override
-      public void processTerminated(ProcessEvent event) {
+      public void processTerminated(@NotNull ProcessEvent event) {
         clearRestarterListener(processHandler);
         ApplicationManager.getApplication().invokeLater(() -> {
           if (isAutoTestEnabledForDescriptor(descriptor) && watcher.isUpToDate(modificationStamp)) {

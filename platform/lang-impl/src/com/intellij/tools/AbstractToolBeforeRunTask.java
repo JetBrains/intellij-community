@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.util.concurrency.Semaphore;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -82,12 +83,13 @@ public abstract class AbstractToolBeforeRunTask<ToolBeforeRunTask extends Abstra
 
     try {
       ApplicationManager.getApplication().invokeAndWait(() -> ToolAction.runTool(myToolActionId, context, null, executionId, new ProcessAdapter() {
-        public void startNotified(final ProcessEvent event) {
+        @Override
+        public void startNotified(@NotNull final ProcessEvent event) {
           targetDone.down();
         }
 
         @Override
-        public void processTerminated(ProcessEvent event) {
+        public void processTerminated(@NotNull ProcessEvent event) {
           result.set(event.getExitCode() == 0);
           targetDone.up();
         }

@@ -289,7 +289,7 @@ public class XDebugSessionImpl implements XDebugSession {
 
     myDebugProcess.getProcessHandler().addProcessListener(new ProcessAdapter() {
       @Override
-      public void processTerminated(final ProcessEvent event) {
+      public void processTerminated(@NotNull final ProcessEvent event) {
         stopImpl();
         myDebugProcess.getProcessHandler().removeProcessListener(this);
       }

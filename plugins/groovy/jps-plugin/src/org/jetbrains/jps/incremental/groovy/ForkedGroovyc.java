@@ -104,7 +104,7 @@ class ForkedGroovyc implements GroovycFlavor {
       }
 
       @Override
-      public void notifyTextAvailable(String text, Key outputType) {
+      public void notifyTextAvailable(@NotNull String text, @NotNull Key outputType) {
         parser.notifyTextAvailable(text, outputType);
       }
     };

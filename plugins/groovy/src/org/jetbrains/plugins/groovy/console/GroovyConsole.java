@@ -184,7 +184,7 @@ public class GroovyConsole {
     });
     processHandler.addProcessListener(new ProcessAdapter() {
       @Override
-      public void processTerminated(ProcessEvent event) {
+      public void processTerminated(@NotNull ProcessEvent event) {
         if (contentFile.getUserData(GROOVY_CONSOLE) == console) {
           // process terminated either by closing file or by close action
           contentFile.putUserData(GROOVY_CONSOLE, null);

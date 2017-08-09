@@ -113,7 +113,7 @@ public class MavenExecutionTest extends MavenImportingTestCase {
         public void processStarted(final RunContentDescriptor descriptor) {
           descriptor.getProcessHandler().addProcessListener(new ProcessAdapter() {
             @Override
-            public void processTerminated(ProcessEvent event) {
+            public void processTerminated(@NotNull ProcessEvent event) {
               sema.up();
               UIUtil.invokeLaterIfNeeded(() -> Disposer.dispose(descriptor));
             }

@@ -2052,7 +2052,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       }
 
       @Override
-      public void startNotified(ProcessEvent event) {
+      public void startNotified(@NotNull ProcessEvent event) {
         run();
       }
     }

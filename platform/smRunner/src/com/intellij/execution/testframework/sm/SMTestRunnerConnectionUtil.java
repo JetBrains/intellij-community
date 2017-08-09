@@ -211,7 +211,7 @@ public class SMTestRunnerConnectionUtil {
 
     processHandler.addProcessListener(new ProcessAdapter() {
       @Override
-      public void processTerminated(final ProcessEvent event) {
+      public void processTerminated(@NotNull final ProcessEvent event) {
         outputConsumer.flushBufferBeforeTerminating();
         eventsProcessor.onFinishTesting();
 
@@ -220,13 +220,13 @@ public class SMTestRunnerConnectionUtil {
       }
 
       @Override
-      public void startNotified(final ProcessEvent event) {
+      public void startNotified(@NotNull final ProcessEvent event) {
         eventsProcessor.onStartTesting();
         outputConsumer.onStartTesting();
       }
 
       @Override
-      public void onTextAvailable(final ProcessEvent event, final Key outputType) {
+      public void onTextAvailable(@NotNull final ProcessEvent event, @NotNull final Key outputType) {
         outputConsumer.process(event.getText(), outputType);
       }
     });

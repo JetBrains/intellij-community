@@ -144,7 +144,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     }
     handler.addProcessListener(new ProcessAdapter() {
       @Override
-      public void startNotified(ProcessEvent event) {
+      public void startNotified(@NotNull ProcessEvent event) {
         if (getConfiguration().isSaveOutputToFile()) {
           final File file = OutputFileUtil.getOutputFile(getConfiguration());
           root.setOutputFilePath(file != null ? file.getAbsolutePath() : null);
@@ -152,7 +152,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
       }
 
       @Override
-      public void processTerminated(ProcessEvent event) {
+      public void processTerminated(@NotNull ProcessEvent event) {
         Runnable runnable = () -> {
           root.flushOutputFile();
           deleteTempFiles();

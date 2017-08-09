@@ -230,7 +230,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
       // so we shouldn't add the listener to avoid calling stop() twice
       processHandler.addProcessListener(new ProcessAdapter() {
         @Override
-        public void processWillTerminate(ProcessEvent event, boolean willBeDestroyed) {
+        public void processWillTerminate(@NotNull ProcessEvent event, boolean willBeDestroyed) {
           ProcessHandler processHandler = event.getProcessHandler();
           final DebugProcessImpl debugProcess = getDebugProcess(processHandler);
           if (debugProcess != null) {
@@ -295,7 +295,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
     else {
       processHandler.addProcessListener(new ProcessAdapter() {
         @Override
-        public void startNotified(ProcessEvent event) {
+        public void startNotified(@NotNull ProcessEvent event) {
           DebugProcessImpl debugProcess = getDebugProcess(processHandler);
           if (debugProcess != null) {
             debugProcess.addDebugProcessListener(listener);
@@ -315,7 +315,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
     else {
       processHandler.addProcessListener(new ProcessAdapter() {
         @Override
-        public void startNotified(ProcessEvent event) {
+        public void startNotified(@NotNull ProcessEvent event) {
           DebugProcessImpl debugProcess = getDebugProcess(processHandler);
           if (debugProcess != null) {
             debugProcess.removeDebugProcessListener(listener);

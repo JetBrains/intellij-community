@@ -1273,7 +1273,7 @@ public class BuildManager implements Disposable {
     };
     processHandler.addProcessListener(new ProcessAdapter() {
       @Override
-      public void onTextAvailable(ProcessEvent event, Key outputType) {
+      public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
         // re-translate builder's output to idea.log
         final String text = event.getText();
         if (!StringUtil.isEmptyOrSpaces(text)) {
@@ -1541,7 +1541,7 @@ public class BuildManager implements Disposable {
     }
 
     @Override
-    public void onTextAvailable(ProcessEvent event, Key outputType) {
+    public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
       String text;
 
       synchronized (this) {

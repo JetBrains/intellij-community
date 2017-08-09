@@ -193,7 +193,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
 
     myProcessHandler.addProcessListener(new ProcessAdapter() {
       @Override
-      public void processTerminated(ProcessEvent event) {
+      public void processTerminated(@NotNull ProcessEvent event) {
         if (event.getExitCode() != 0 && !myProcessCanTerminate) {
           Assert.fail("Process terminated unexpectedly\n" + output());
         }

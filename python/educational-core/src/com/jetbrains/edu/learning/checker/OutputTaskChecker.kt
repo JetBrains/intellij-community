@@ -66,7 +66,7 @@ class OutputTaskChecker(task: OutputTask, project: Project) : StudyTaskChecker<O
           }
         }
 
-        override fun processTerminated(event: ProcessEvent?) {
+        override fun processTerminated(event: ProcessEvent) {
           latch.countDown()
         }
       })

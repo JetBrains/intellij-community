@@ -184,14 +184,14 @@ class EDTGuard implements InvocationHandler {
     };
     process.addProcessListener(new ProcessAdapter() {
       @Override
-      public void processTerminated(ProcessEvent event) {
+      public void processTerminated(@NotNull ProcessEvent event) {
         synchronized (d) {
           Disposer.dispose(d);
         }
       }
 
       @Override
-      public void processWillTerminate(ProcessEvent event, boolean willBeDestroyed) {
+      public void processWillTerminate(@NotNull ProcessEvent event, boolean willBeDestroyed) {
         if (!willBeDestroyed) {
           synchronized (d) {
             Disposer.dispose(d);
