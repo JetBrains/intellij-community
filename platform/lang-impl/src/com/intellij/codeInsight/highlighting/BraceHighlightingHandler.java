@@ -114,12 +114,12 @@ public class BraceHighlightingHandler {
 
     // any request to the UI component need to be done from EDT
     final ModalityState modalityState = ModalityState.stateForComponent(editor.getComponent());
-    final DumbAwareRunnable removeEditorFormProcessed = () -> PROCESSED_EDITORS.remove(editor);
+    final DumbAwareRunnable removeEditorFromProcessed = () -> PROCESSED_EDITORS.remove(editor);
 
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       if (!ApplicationManagerEx.getApplicationEx().tryRunReadAction(() -> {
         if (!isValidEditor(editor)) {
-          ApplicationManager.getApplication().invokeLater(removeEditorFormProcessed);
+          ApplicationManager.getApplication().invokeLater(removeEditorFromProcessed);
           return;
         }
         @SuppressWarnings("ConstantConditions") // the `project` is valid after the `isValidEditor` call
@@ -137,7 +137,7 @@ public class BraceHighlightingHandler {
         }
         catch (RuntimeException e) {
           // Reset processing flag in case of unexpected exception.
-          ApplicationManager.getApplication().invokeLater(removeEditorFormProcessed);
+          ApplicationManager.getApplication().invokeLater(removeEditorFromProcessed);
           throw e;
         }
         ApplicationManager.getApplication().invokeLater((DumbAwareRunnable)() -> {
@@ -149,13 +149,13 @@ public class BraceHighlightingHandler {
             }
           }
           finally {
-            removeEditorFormProcessed.run();
+            removeEditorFromProcessed.run();
           }
         }, modalityState);
       })) {
         // write action is queued in AWT. restart after it's finished
         ApplicationManager.getApplication().invokeLater(() -> {
-          removeEditorFormProcessed.run();
+          removeEditorFromProcessed.run();
           lookForInjectedAndMatchBracesInOtherThread(editor, alarm, processor);
         }, modalityState);
       }
