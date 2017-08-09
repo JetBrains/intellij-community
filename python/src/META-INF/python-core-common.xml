@@ -671,6 +671,9 @@
     <extensionPoint qualifiedName="Pythonid.debugSessionFactory" interface="com.jetbrains.python.debugger.PyDebugSessionFactory"/>
     <extensionPoint qualifiedName="Pythonid.customPackageIdentifier" interface="com.jetbrains.python.psi.PyCustomPackageIdentifier"/>
     <extensionPoint qualifiedName="Pythonid.pythonSdkComparator" interface="com.jetbrains.python.sdk.PySdkComparator" />
+    <extensionPoint qualifiedName="Pythonid.pyPregeneratedSkeletonsProvider"
+                    interface="com.jetbrains.python.sdk.skeletons.PyPregeneratedSkeletonsProvider"/>
+
   </extensionPoints>
 
   <extensions defaultExtensionNs="Pythonid">
@@ -742,6 +745,7 @@
                    implementationClass="com.jetbrains.python.codeInsight.functionTypeComments.PyFunctionTypeAnnotationVisitorFilter"/>
 
     <pythonFlavorProvider implementation="com.jetbrains.python.sdk.flavors.MayaFlavorProvider"/>
+    <pyPregeneratedSkeletonsProvider id="default" implementation="com.jetbrains.python.sdk.skeletons.DefaultPregeneratedSkeletonsProvider"/>
   </extensions>
 
   <actions>
