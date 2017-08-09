@@ -235,10 +235,12 @@ public class ParameterHintsPresentationManager implements Disposable {
       int ascent = ((EditorImpl)editor).getAscent();
       int descent = ((EditorImpl)editor).getDescent();
       if (myText != null && (step > steps || startWidth != 0)) {
-        TextAttributes attributes = editor.getColorsScheme().getAttributes(DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT);
+        TextAttributes attributes = 
+          editor.getColorsScheme().getAttributes(highlighted ? DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT_HIGHLIGHTED 
+                                                             : DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT);
         if (attributes != null) {
           MyFontMetrics fontMetrics = getFontMetrics(editor);
-          Color backgroundColor = getBackgroundColor(attributes);
+          Color backgroundColor = attributes.getBackgroundColor();
           if (backgroundColor != null) {
             GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
             GraphicsUtil.paintWithAlpha(g, BACKGROUND_ALPHA);
@@ -247,7 +249,7 @@ public class ParameterHintsPresentationManager implements Disposable {
             g.fillRoundRect(r.x + 2, r.y + gap, r.width - 4, r.height - gap * 2, 8, 8);
             config.restore();
           }
-          Color foregroundColor = getForegroundColor(attributes);
+          Color foregroundColor = attributes.getForegroundColor();
           if (foregroundColor != null) {
             g.setColor(foregroundColor);
             g.setFont(getFont(editor));
@@ -284,14 +286,6 @@ public class ParameterHintsPresentationManager implements Disposable {
           EffectPainter.BOLD_DOTTED_UNDERSCORE.paint(g2d, xStart, y, xEnd - xStart, descent, font);
         }
       }
-    }
-
-    private Color getForegroundColor(TextAttributes attributes) {
-      return highlighted ? attributes.getBackgroundColor() : attributes.getForegroundColor();
-    }
-
-    private Color getBackgroundColor(TextAttributes attributes) {
-      return highlighted ? attributes.getForegroundColor() : attributes.getBackgroundColor();
     }
   }
 

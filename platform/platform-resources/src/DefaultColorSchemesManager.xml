@@ -426,6 +426,12 @@
           <option name="BACKGROUND" value="ededed"/>
         </value>
       </option>
+      <option name="INLINE_PARAMETER_HINT_HIGHLIGHTED">
+        <value>
+          <option name="FOREGROUND" value="ffffff"/>
+          <option name="BACKGROUND" value="787878"/>
+        </value>
+      </option>
       <option name="IMPLICIT_ANONYMOUS_CLASS_PARAMETER_ATTRIBUTES">
         <value>
           <option name="FOREGROUND" value="660e7a" deuteranopia="1948a6" protanopia="1948a6"/>
@@ -1683,6 +1689,12 @@
         <value>
           <option name="FOREGROUND" value="787878"/>
           <option name="BACKGROUND" value="3b3b3b"/>
+        </value>
+      </option>
+      <option name="INLINE_PARAMETER_HINT_HIGHLIGHTED">
+        <value>
+          <option name="FOREGROUND" value="1d1d1d"/>
+          <option name="BACKGROUND" value="7a7a7a"/>
         </value>
       </option>
       <option name="IMPLICIT_ANONYMOUS_CLASS_PARAMETER_ATTRIBUTES">
