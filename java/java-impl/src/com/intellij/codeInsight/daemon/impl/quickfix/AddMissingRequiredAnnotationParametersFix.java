@@ -90,9 +90,12 @@ public class AddMissingRequiredAnnotationParametersFix implements IntentionActio
         final PsiAnnotationParameterList parameterList = myAnnotation.getParameterList();
         parameterList.deleteChildRange(addedParameters[0], addedParameters[addedParameters.length - 1]);
         for (final PsiNameValuePair addedParameter : addedParameters) {
-          final String name = addedParameter.getName();
+          String name = addedParameter.getName();
           final PsiAnnotationMemberValue value = addedParameter.getValue();
-          if (name == null || value == null) {
+          if (name == null) {
+            name = "value";
+          }
+          if (value == null) {
             LOG.error(String.format("Invalid annotation parameter name = %s, value = %s", name, value));
             continue;
           }
