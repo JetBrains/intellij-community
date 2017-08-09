@@ -616,6 +616,7 @@
     <externalProjectDataService implementation="com.intellij.externalSystem.JavaProjectDataService"/>
     <inspectionElementsMerger implementation="com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionMerger"/>
     <inspectionElementsMerger implementation="com.intellij.codeInspection.java18api.Java8MapApiInspectionMerger"/>
+    <inspectionElementsMerger implementation="com.intellij.codeInspection.unneededThrows.RedundantThrowsInspectionMerger"/>
 
     <globalInspection groupPath="Java" language="JAVA" shortName="unused" displayName="Unused declaration" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
@@ -645,9 +646,9 @@
                       implementationClass="com.intellij.codeInspection.sameReturnValue.SameReturnValueInspection"/>
     <globalInspection groupPath="Java" language="JAVA" shortName="EmptyMethod" displayName="Empty method" groupKey="group.names.declaration.redundancy" enabledByDefault="true" groupBundle="messages.InspectionsBundle"
                       level="WARNING" implementationClass="com.intellij.codeInspection.emptyMethod.EmptyMethodInspection"/>
-    <globalInspection groupPath="Java" language="JAVA" shortName="RedundantThrows" displayName="Redundant throws clause" groupKey="group.names.declaration.redundancy" groupBundle="messages.InspectionsBundle"
+    <globalInspection groupPath="Java" language="JAVA" shortName="RedundantThrows" cleanupTool="true" displayName="Redundant throws clause" groupKey="group.names.declaration.redundancy" groupBundle="messages.InspectionsBundle"
                       enabledByDefault="true" level="WARNING"
-                      implementationClass="com.intellij.codeInspection.unneededThrows.RedundantThrows"/>
+                      implementationClass="com.intellij.codeInspection.unneededThrows.RedundantThrowsDeclarationInspection"/>
     <globalInspection groupPath="Java" language="JAVA" shortName="Java9RedundantRequiresStatement"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.declaration.redundancy"
                      enabledByDefault="true" level="WARNING" displayName="Redundant 'requires' statement in module-info"
@@ -740,9 +741,6 @@
     <localInspection groupPath="Java" language="JAVA" shortName="DefaultAnnotationParam" bundle="messages.InspectionsBundle" key="inspection.default.annotation.param" groupKey="group.names.declaration.redundancy"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.DefaultAnnotationParamInspection" />
-    <localInspection groupPath="Java" language="JAVA" shortName="RedundantThrowsDeclaration" bundle="messages.InspectionsBundle" key="redundant.throws.declaration"
-                     groupKey="group.names.declaration.redundancy" enabledByDefault="false" level="WARNING" cleanupTool="true"
-                     implementationClass="com.intellij.codeInspection.unneededThrows.RedundantThrowsDeclaration" />
     <localInspection groupPath="Java" language="JAVA" shortName="AccessStaticViaInstance" bundle="messages.InspectionsBundle" key="access.static.via.instance" groupKey="group.names.declaration.redundancy"
                      enabledByDefault="true" level="WARNING" cleanupTool="true" alternativeId="static-access"
                      implementationClass="com.intellij.codeInspection.accessStaticViaInstance.AccessStaticViaInstance" />

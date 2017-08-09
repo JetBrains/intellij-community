@@ -30,7 +30,7 @@ import com.intellij.codeInspection.reference.EntryPoint;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.sillyAssignment.SillyAssignmentInspection;
 import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
-import com.intellij.codeInspection.unneededThrows.RedundantThrowsDeclaration;
+import com.intellij.codeInspection.unneededThrows.RedundantThrowsDeclarationLocalInspection;
 import com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
 import com.intellij.lang.Language;
@@ -100,7 +100,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
       new SillyAssignmentInspection(),
       new AccessStaticViaInstance(),
       new DeprecationInspection(),
-      new RedundantThrowsDeclaration(),
+      new RedundantThrowsDeclarationLocalInspection(),
       new UnusedImportLocalInspection(),
       new UncheckedWarningLocalInspection()
     };

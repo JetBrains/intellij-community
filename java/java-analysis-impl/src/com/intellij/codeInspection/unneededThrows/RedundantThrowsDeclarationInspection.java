@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.codeInspection.unneededThrows;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.FileModificationService;
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -31,7 +30,7 @@ import com.intellij.psi.search.searches.AllOverridingMethodsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,10 +40,17 @@ import java.util.List;
 /**
  * @author max
  */
-public class RedundantThrows extends GlobalJavaBatchInspectionTool {
+public class RedundantThrowsDeclarationInspection extends GlobalJavaBatchInspectionTool {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.unneededThrows.RedundantThrows");
-  private static final String DISPLAY_NAME = InspectionsBundle.message("inspection.redundant.throws.display.name");
-  @NonNls private static final String SHORT_NAME = "RedundantThrows";
+
+  private final RedundantThrowsDeclarationLocalInspection myLocalInspection = new RedundantThrowsDeclarationLocalInspection(this);
+
+  @Nls
+  @NotNull
+  @Override
+  public String getDisplayName() {
+    return InspectionsBundle.message("inspection.redundant.throws.display.name");
+  }
 
   @Override
   @Nullable
@@ -141,24 +147,6 @@ public class RedundantThrows extends GlobalJavaBatchInspectionTool {
     });
 
     return false;
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return DISPLAY_NAME;
-  }
-
-  @Override
-  @NotNull
-  public String getGroupDisplayName() {
-    return GroupNames.DECLARATION_REDUNDANCY;
-  }
-
-  @Override
-  @NotNull
-  public String getShortName() {
-    return SHORT_NAME;
   }
 
   @Override
@@ -286,5 +274,11 @@ public class RedundantThrows extends GlobalJavaBatchInspectionTool {
         });
       }
     }
+  }
+
+  @Nullable
+  @Override
+  public LocalInspectionTool getSharedLocalInspectionTool() {
+    return myLocalInspection;
   }
 }
