@@ -45,7 +45,6 @@ import java.util.*;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.RunnableFuture;
-import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor", "MethodOverridesStaticMethodOfSuperclass"})
@@ -536,9 +535,13 @@ public class FileUtil extends FileUtilRt {
       final String out = StreamUtil.readText(process.getInputStream(), Charset.defaultCharset());
       LOG.info("out" + out);
       LOG.info("error" + error);
-      return process.waitFor(15, TimeUnit.SECONDS);
+      return process.waitFor() == 0;
     }
-    catch (final IOException | InterruptedException ex) {
+    catch (final IOException ex) {
+      LOG.warn(ex);
+      return false;
+    }
+    catch (final InterruptedException ex) {
       LOG.warn(ex);
       return false;
     }
