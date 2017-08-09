@@ -77,7 +77,9 @@ abstract class FirstStart(val ideType: IdeType) {
 
   private val checkIsFrameFunction: (Frame) -> Boolean
     get() {
-      val checkIsFrame: (Frame) -> Boolean = { frame -> frame.javaClass.simpleName == "FlatWelcomeFrame" && frame.isShowing }
+      val checkIsFrame: (Frame) -> Boolean = { frame -> frame.javaClass.simpleName == "FlatWelcomeFrame"
+                                                        && frame.isShowing
+                                                        && frame.isEnabled }
       return checkIsFrame
     }
 
