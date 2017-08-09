@@ -601,7 +601,7 @@ public class ParameterInfoController implements Disposable {
     @Override
     public void removeHint() {
       myHint.hide();
-      Disposer.dispose(ParameterInfoController.this);
+      if (!myKeepOnHintHidden) Disposer.dispose(ParameterInfoController.this);
     }
 
     @Override

@@ -500,6 +500,25 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
                           "}");
   }
   
+  public void testNestedContextIsNotDisposedOnTabbingOutToOuterContext() throws Exception {
+    configureJava("class C { void m() { System.setPro<caret> } }");
+    complete("setProperty");
+    waitForAllAsyncStuff();
+    myFixture.type("System.getPro");
+    complete("getProperty(String key, String def)");
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C { void m() { System.setProperty(<hint text=\"key:\"/>System.getProperty(<HINT text=\"key:\"/><caret>, <hint text=\"def:\"/>), <hint text=\"value:\"/>) } }");
+    next();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C { void m() { System.setProperty(<hint text=\"key:\"/>System.getProperty(<hint text=\"key:\"/>, <HINT text=\"def:\"/><caret>), <hint text=\"value:\"/>) } }");
+    next();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C { void m() { System.setProperty(<HINT text=\"key:\"/>System.getProperty(<hint text=\"key:\"/>, <hint text=\"def:\"/>)<caret>, <hint text=\"value:\"/>) } }");
+    left();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C { void m() { System.setProperty(<hint text=\"key:\"/>System.getProperty(<hint text=\"key:\"/>, <HINT text=\"def:\"/><caret>), <hint text=\"value:\"/>) } }");
+  }
+
   private void checkResult(String text) {
     myFixture.checkResult(text);
   }
@@ -514,6 +533,10 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
 
   private void next() {
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_NEXT_PARAMETER);
+  }
+
+  private void left() {
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT);
   }
 
   private void right() {
