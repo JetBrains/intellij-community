@@ -16,7 +16,6 @@
 package com.intellij.compiler.backwardRefs;
 
 import com.intellij.compiler.CompilerDirectHierarchyInfo;
-import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.backwardRefs.view.CompilerReferenceFindUsagesTestInfo;
 import com.intellij.compiler.backwardRefs.view.CompilerReferenceHierarchyTestInfo;
 import com.intellij.compiler.backwardRefs.view.DirtyScopeTestInfo;
@@ -586,9 +585,6 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
         throw e;
       }
       if ((--myActiveBuilds == 0) && myProject.isOpen()) {
-        LOG.assertTrue(myReader == null, "isAutoMakeEnabled = " +
-                                         ReadAction
-                                           .compute(() -> CompilerWorkspaceConfiguration.getInstance(myProject).MAKE_PROJECT_ON_SAVE));
         myReader = CompilerReferenceReader.create(myProject);
         LOG.info("backward reference index reader " + (myReader == null ? "doesn't exist" : "is opened"));
       }
