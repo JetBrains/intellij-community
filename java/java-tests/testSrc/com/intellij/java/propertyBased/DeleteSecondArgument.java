@@ -28,7 +28,7 @@ class DeleteSecondArgument extends FilePsiMutation {
 
   @Override
   protected void performMutation() {
-    PsiTreeUtil.findChildrenOfType(myFile, PsiCallExpression.class)
+    PsiTreeUtil.findChildrenOfType(getFile(), PsiCallExpression.class)
       .stream()
       .filter(PsiElement::isValid)
       .map(PsiCall::getArgumentList)

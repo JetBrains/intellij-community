@@ -30,10 +30,10 @@ class AddNullArgument extends FilePsiMutation {
 
   @Override
   protected void performMutation() {
-    PsiTreeUtil.findChildrenOfType(myFile, PsiMethodCallExpression.class).stream()
+    PsiTreeUtil.findChildrenOfType(getFile(), PsiMethodCallExpression.class).stream()
       .filter(PsiElement::isValid)
       .filter(call -> call.getArgumentList().getExpressions().length > 1)
       .forEach(call -> call.getArgumentList().add(
-        JavaPsiFacade.getElementFactory(myFile.getProject()).createExpressionFromText("null", call)));
+        JavaPsiFacade.getElementFactory(getFile().getProject()).createExpressionFromText("null", call)));
   }
 }

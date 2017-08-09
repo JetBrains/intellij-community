@@ -18,16 +18,18 @@ package com.intellij.testFramework.propertyBased;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.testFramework.PsiTestUtil;
 
 /**
  * @author peter
  */
 public abstract class FilePsiMutation implements MadTestingAction {
-  protected final PsiFile myFile;
+  private final SmartPsiElementPointer<PsiFile> myFile;
 
   public FilePsiMutation(PsiFile file) {
-    myFile = file;
+    myFile = SmartPointerManager.getInstance(file.getProject()).createSmartPsiElementPointer(file);
   }
 
   @Override
@@ -37,10 +39,14 @@ public abstract class FilePsiMutation implements MadTestingAction {
 
   @Override
   public void performAction() {
-    PsiDocumentManager.getInstance(myFile.getProject()).commitDocument(myFile.getViewProvider().getDocument());
+    PsiDocumentManager.getInstance(myFile.getProject()).commitDocument(getFile().getViewProvider().getDocument());
     WriteCommandAction.runWriteCommandAction(myFile.getProject(), this::performMutation);
-    PsiTestUtil.checkPsiStructureWithCommit(myFile, PsiTestUtil::checkStubsMatchText);
+    PsiTestUtil.checkPsiStructureWithCommit(getFile(), PsiTestUtil::checkStubsMatchText);
   }
 
   protected abstract void performMutation();
+
+  public PsiFile getFile() {
+    return myFile.getElement();
+  }
 }
