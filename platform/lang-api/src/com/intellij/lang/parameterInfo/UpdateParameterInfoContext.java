@@ -33,4 +33,6 @@ public interface UpdateParameterInfoContext extends ParameterInfoContext {
   int getParameterListStart();
 
   Object[] getObjectsToView();
+  
+  boolean isInnermostContext();
 }

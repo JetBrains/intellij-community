@@ -209,7 +209,7 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     myFixture.type("System.getPro");
     complete("getProperty(String key, String def)");
     waitForAllAsyncStuff();
-    checkResultWithInlays("class C { void m() { System.setProperty(<HINT text=\"key:\"/>System.getProperty(<HINT text=\"key:\"/><caret>, <hint text=\"def:\"/>), <hint text=\"value:\"/>) } }");
+    checkResultWithInlays("class C { void m() { System.setProperty(<hint text=\"key:\"/>System.getProperty(<HINT text=\"key:\"/><caret>, <hint text=\"def:\"/>), <hint text=\"value:\"/>) } }");
   }
 
   public void testTabWithNestedCompletion() throws Exception {
@@ -219,10 +219,10 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     myFixture.type("System.getPro");
     complete("getProperty(String key, String def)");
     waitForAllAsyncStuff();
-    checkResultWithInlays("class C { void m() { System.setProperty(<HINT text=\"key:\"/>System.getProperty(<HINT text=\"key:\"/><caret>, <hint text=\"def:\"/>), <hint text=\"value:\"/>) } }");
+    checkResultWithInlays("class C { void m() { System.setProperty(<hint text=\"key:\"/>System.getProperty(<HINT text=\"key:\"/><caret>, <hint text=\"def:\"/>), <hint text=\"value:\"/>) } }");
     next();
     waitForAllAsyncStuff();
-    checkResultWithInlays("class C { void m() { System.setProperty(<HINT text=\"key:\"/>System.getProperty(<hint text=\"key:\"/>, <HINT text=\"def:\"/><caret>), <hint text=\"value:\"/>) } }");
+    checkResultWithInlays("class C { void m() { System.setProperty(<hint text=\"key:\"/>System.getProperty(<hint text=\"key:\"/>, <HINT text=\"def:\"/><caret>), <hint text=\"value:\"/>) } }");
     next();
     waitForAllAsyncStuff();
     checkResultWithInlays("class C { void m() { System.setProperty(<HINT text=\"key:\"/>System.getProperty(<hint text=\"key:\"/>, <hint text=\"def:\"/>)<caret>, <hint text=\"value:\"/>) } }");

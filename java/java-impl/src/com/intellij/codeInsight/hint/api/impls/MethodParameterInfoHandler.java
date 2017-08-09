@@ -172,7 +172,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
                                                                           context.getOffset(), JavaTokenType.COMMA);
                   TextRange textRange = expressionList.getTextRange();
                   if (context.getOffset() <= textRange.getStartOffset() || context.getOffset() >= textRange.getEndOffset()) index = -1;
-                  highlightHints(context.getEditor(), expressionList, index);
+                  highlightHints(context.getEditor(), expressionList, context.isInnermostContext() ? index : -1);
                 }
               }
 

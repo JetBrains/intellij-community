@@ -644,6 +644,24 @@ public class ParameterInfoController implements Disposable {
       return myComponent.getObjects();
     }
 
+    @Override
+    public boolean isInnermostContext() {
+      PsiElement ourOwner = myComponent.getParameterOwner();
+      if (ourOwner == null || !ourOwner.isValid()) return false;
+      TextRange ourRange = ourOwner.getTextRange();
+      if (ourRange == null) return false;
+      List<ParameterInfoController> allControllers = getAllControllers(myEditor);
+      for (ParameterInfoController controller : allControllers) {
+        if (controller != ParameterInfoController.this) {
+          PsiElement parameterOwner = controller.myComponent.getParameterOwner();
+          if (parameterOwner != null && parameterOwner.isValid()) {
+            TextRange range = parameterOwner.getTextRange();
+            if (range != null && range.contains(myOffset) && ourRange.contains(range)) return false;
+          }
+        }
+      }
+      return true;
+    }
   }
 
   private static class MyBestLocationPointProvider  {
