@@ -133,7 +133,7 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
 
   private void generateReadme(String unixDistPath) {
     String fullName = buildContext.applicationInfo.productName
-    BuildUtils.copyAndPatchFile("$buildContext.paths.communityHome/build/Install-Linux-tar.txt", "$unixDistPath/Install-Linux-tar.txt",
+    BuildUtils.copyAndPatchFile("$buildContext.paths.communityHome/platform/build-scripts/resources/linux/Install-Linux-tar.txt", "$unixDistPath/Install-Linux-tar.txt",
                      ["product_full"   : fullName,
                       "product"        : buildContext.productProperties.baseFileName,
                       "system_selector": buildContext.systemSelector], "@@")
