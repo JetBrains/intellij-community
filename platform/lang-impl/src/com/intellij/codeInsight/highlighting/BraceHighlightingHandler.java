@@ -112,10 +112,11 @@ public class BraceHighlightingHandler {
     }
     final int offset = editor.getCaretModel().getOffset();
     final Project project = editor.getProject();
-    final PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, project);
-    if (!isValidFile(psiFile)) return;
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       if (!ApplicationManagerEx.getApplicationEx().tryRunReadAction(() -> {
+        final PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, project);
+        if (!isValidFile(psiFile)) return;
+
         final PsiFile injected;
         try {
           if (psiFile instanceof PsiBinaryFile || !isValidEditor(editor) || !isValidFile(psiFile)) {
