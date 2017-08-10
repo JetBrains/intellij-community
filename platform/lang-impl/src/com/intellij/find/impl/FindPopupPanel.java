@@ -608,7 +608,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     int cbGapRight = myCbCaseSensitive.getInsets().right;
     myTitlePanel = new JPanel(new MigLayout("flowx, ins 0, gap 0, fillx, filly"));
     myTitlePanel.add(myTitleLabel);
-    myTitlePanel.add(myLoadingDecorator.getComponent(), "w 20, wmin 20");
+    myTitlePanel.add(myLoadingDecorator.getComponent(), "w 24, wmin 24");
     myTitlePanel.add(Box.createHorizontalGlue(), "growx, pushx");
     add(myTitlePanel, "sx 2, growx, pushx, growy");
     String cbGap = cbGapLeft + cbGapRight < 16 ? "gapright " + (16 - cbGapLeft - cbGapRight) : "";
