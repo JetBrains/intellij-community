@@ -42,6 +42,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.testGuiFramework.fixtures.IdeFrameFixture;
+import com.intellij.testGuiFramework.fixtures.RadioButtonFixture;
 import com.intellij.testGuiFramework.matcher.ClassNameMatcher;
 import com.intellij.ui.KeyStrokeAdapter;
 import com.intellij.ui.components.JBList;
@@ -815,24 +816,24 @@ public final class GuiTestUtil {
     return new JTreeFixture(robot, actionTree);
   }
 
-  public static JRadioButtonFixture findRadioButton(@NotNull Robot robot, @Nullable Container container, @NotNull String text, @NotNull Timeout timeout){
+  public static RadioButtonFixture findRadioButton(@NotNull Robot robot, @Nullable Container container, @NotNull String text, @NotNull Timeout timeout){
     JRadioButton radioButton = waitUntilFound(robot, container, new GenericTypeMatcher<JRadioButton>(JRadioButton.class) {
       @Override
       protected boolean isMatching(@Nonnull JRadioButton button) {
         return (button.getText() != null && button.getText().equals(text));
       }
     }, timeout);
-    return new JRadioButtonFixture(robot, radioButton);
+    return new RadioButtonFixture(robot, radioButton);
   }
 
-  public static JRadioButtonFixture findRadioButton(@NotNull Robot robot, @NotNull Container container, @NotNull String text){
+  public static RadioButtonFixture findRadioButton(@NotNull Robot robot, @NotNull Container container, @NotNull String text){
     JRadioButton radioButton = waitUntilFound(robot, container, new GenericTypeMatcher<JRadioButton>(JRadioButton.class) {
       @Override
       protected boolean isMatching(@Nonnull JRadioButton button) {
         return (button.getText() != null && button.getText().equals(text));
       }
     }, SHORT_TIMEOUT);
-    return new JRadioButtonFixture(robot, radioButton);
+    return new RadioButtonFixture(robot, radioButton);
   }
 
   public static JComboBoxFixture findComboBox(@NotNull Robot robot, @NotNull Container container, @NotNull String labelText) {

@@ -312,7 +312,7 @@ open class GuiTestCase : GuiTestBase() {
    * @throws ComponentLookupException if component has not been found or timeout exceeded
    */
   fun <S, C : Component> ComponentFixture<S, C>.radioButton(textLabel: String,
-                                                            timeout: Long = defaultTimeout): JRadioButtonFixture = if (target() is Container) radioButton(
+                                                            timeout: Long = defaultTimeout): RadioButtonFixture = if (target() is Container) radioButton(
     target() as Container, textLabel, timeout)
   else throw UnsupportedOperationException(
     "Sorry, unable to find RadioButton component by label \"${textLabel}\" with ${target().toString()} as a Container")
