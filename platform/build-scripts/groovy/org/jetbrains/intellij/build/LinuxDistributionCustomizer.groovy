@@ -38,7 +38,9 @@ abstract class LinuxDistributionCustomizer {
   boolean buildTarGzWithoutBundledJre = true
 
   /**
-   * If a .snap package should be produced
+   * Set both properties if a .snap package should be produced.
+   * "snapName" is the name of the package (e.g. "intellij-idea-ultimate", "pycharm-community").
+   * "snapDescription" is the plain text description of the package.
    */
   String snapName = null
   String snapDescription = null
