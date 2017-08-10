@@ -459,7 +459,12 @@ LicenseLangString myLicenseData ${LANG_JAPANESE} "${LICENSE_FILE}.txt"
 
 Function .onInit
   StrCpy $baseRegKey "HKCU"
-  IfSilent UAC_Done
+  IfSilent silent_install
+silent_install:
+  ;the user has admin rights?
+  UserInfo::GetAccountType
+  Pop $R2
+  StrCmp $R2 "Admin" UAC_Admin UAC_Done
 UAC_Elevate:
     !insertmacro UAC_RunElevated
     StrCmp 1223 $0 UAC_ElevationAborted ; UAC dialog aborted by user? - continue install under user
