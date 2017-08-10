@@ -321,6 +321,14 @@ public class FindPopupPanel extends JBPanel implements FindUI {
           editor.putUserData(AutoPopupController.ALWAYS_AUTO_POPUP, Boolean.TRUE);
           editor.putUserData(AutoPopupController.NO_ADS, Boolean.TRUE);
           editor.putUserData(AutoPopupController.AUTO_POPUP_ON_FOCUS_GAINED, Boolean.TRUE);
+          editor.getContentComponent().addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+              if (e.getKeyCode() == KeyEvent.VK_DOWN) {
+                AutoPopupController.getInstance(getProject()).scheduleAutoPopup(editor);
+              }
+            }
+          });
           return editor;
         }
       };
