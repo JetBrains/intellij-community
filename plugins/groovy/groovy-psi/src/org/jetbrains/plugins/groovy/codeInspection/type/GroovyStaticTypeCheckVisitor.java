@@ -26,17 +26,20 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiType;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.codeInspection.assignment.GrReplaceMultiAssignmentFix;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTuple;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTupleAssignmentExpression;
 
+import java.util.Arrays;
 import java.util.List;
 
 public class GroovyStaticTypeCheckVisitor extends GroovyTypeCheckVisitor {
@@ -45,35 +48,53 @@ public class GroovyStaticTypeCheckVisitor extends GroovyTypeCheckVisitor {
   @Override
   public void visitTupleAssignmentExpression(@NotNull GrTupleAssignmentExpression expression) {
     super.visitTupleAssignmentExpression(expression);
-
     final GrExpression initializer = expression.getRValue();
+    if (initializer!= null) {
+      PsiType[] types = Arrays.stream(expression.getLValue().getExpressions()).map(it -> it.getType()).toArray(PsiType[]::new);
+      checkTupleAssignment(initializer, types, expression);
+    }
+  }
+
+  @Override
+  public void visitVariableDeclaration(@NotNull GrVariableDeclaration variableDeclaration) {
+    if (variableDeclaration.isTuple()) {
+      GrExpression initializer = variableDeclaration.getTupleInitializer();
+      if (initializer != null ) {
+        PsiType[] types = Arrays.stream(variableDeclaration.getVariables()).map(it -> it.getType()).toArray(PsiType[]::new);
+        checkTupleAssignment(initializer, types, variableDeclaration);
+      }
+    }
+    super.visitVariableDeclaration(variableDeclaration);
+  }
+
+  void checkTupleAssignment(@NotNull GrExpression initializer, @NotNull final PsiType[] types, @NotNull PsiElement context) {
     if (initializer instanceof GrListOrMap && !((GrListOrMap)initializer).isMap()) {
-      GrTuple tupleExpression = expression.getLValue();
+
       final GrListOrMap initializerList = (GrListOrMap)initializer;
-      final GrExpression[] vars = tupleExpression.getExpressions();
+
       final GrExpression[] expressions = initializerList.getInitializers();
-      if (vars.length > expressions.length) {
+      if (types.length > expressions.length) {
         registerError(
           initializer,
-          GroovyBundle.message("incorrect.number.of.values", vars.length, expressions.length),
+          GroovyBundle.message("incorrect.number.of.values", types.length, expressions.length),
           LocalQuickFix.EMPTY_ARRAY,
           ProblemHighlightType.GENERIC_ERROR
         );
       }
       else {
-        for (int i = 0; i < vars.length; i++) {
-          processAssignmentWithinMultipleAssignment(vars[i], expressions[i], tupleExpression);
+        for (int i = 0; i < types.length; i++) {
+          processAssignmentWithinMultipleAssignment(types[i], expressions[i].getType(), context, expressions[i]);
         }
       }
+      return;
     }
-    else if (initializer != null) {
-      registerError(
-        initializer,
-        GroovyBundle.message("multiple.assignments.without.list.expr"),
-        LocalQuickFix.EMPTY_ARRAY,
-        ProblemHighlightType.GENERIC_ERROR
-      );
-    }
+
+    registerError(
+      initializer,
+      GroovyBundle.message("multiple.assignments.without.list.expr"),
+      new LocalQuickFix[]{new GrReplaceMultiAssignmentFix(types.length)},
+      ProblemHighlightType.GENERIC_ERROR
+    );
   }
 
   @Override

@@ -623,17 +623,15 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
     processResult(result, elementToHighlight, "cannot.assign", lType, rType);
   }
 
-  protected void processAssignmentWithinMultipleAssignment(@NotNull GrExpression lhs,
-                                                           @NotNull GrExpression rhs,
-                                                           @NotNull PsiElement context) {
-    final PsiType targetType = lhs.getType();
-    final PsiType actualType = rhs.getType();
+  protected void processAssignmentWithinMultipleAssignment(@Nullable PsiType targetType,
+                                                           @Nullable PsiType actualType,
+                                                           @NotNull PsiElement context,
+                                                           @NotNull PsiElement elementToHighlight) {
     if (targetType == null || actualType == null) return;
-
     final ConversionResult result = TypesUtil.canAssignWithinMultipleAssignment(targetType, actualType, context);
     if (result == ConversionResult.OK) return;
     registerError(
-      rhs,
+      elementToHighlight,
       GroovyBundle.message("cannot.assign", actualType.getPresentableText(), targetType.getPresentableText()),
       LocalQuickFix.EMPTY_ARRAY,
       result == ConversionResult.ERROR ? ProblemHighlightType.GENERIC_ERROR : ProblemHighlightType.GENERIC_ERROR_OR_WARNING
@@ -655,7 +653,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
         GrExpression lValue = lValues[i];
         if (initializers.length <= i) break;
         GrExpression rValue = initializers[i];
-        processAssignmentWithinMultipleAssignment(lValue, rValue, expression);
+        processAssignmentWithinMultipleAssignment(lValue.getType(), rValue.getType(), expression, rValue);
       }
     }
     else {

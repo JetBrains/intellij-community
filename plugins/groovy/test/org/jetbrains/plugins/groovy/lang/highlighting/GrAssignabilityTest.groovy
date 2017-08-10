@@ -820,4 +820,27 @@ print 1 + 2
 print 4 <warning descr="'plus' in 'org.codehaus.groovy.runtime.DefaultGroovyMethods' cannot be applied to '(java.util.ArrayList)'">+</warning> new ArrayList()
 ''')
   }
+
+  void testMultiAssignmentCS() {
+    testHighlighting'''
+import groovy.transform.CompileStatic
+
+@CompileStatic
+def foo() {
+    def list = [1, 2]
+    def (a, b) = <error>list</error>
+}
+'''
+  }
+
+  void testMultiAssignment() {
+    testHighlighting'''
+import groovy.transform.CompileStatic
+
+@CompileStatic
+def foo() {
+    def (a, b) = [1, 2]
+}
+'''
+  }
 }
