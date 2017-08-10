@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,12 @@ package org.jetbrains.plugins.groovy.lang.psi.stubs;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 
 public class GrImportStatementStub extends StubBase<GrImportStatement> implements StubElement<GrImportStatement> {
   private static final byte STATIC_MASK = 0x1;
@@ -29,6 +32,8 @@ public class GrImportStatementStub extends StubBase<GrImportStatement> implement
   private final byte myFlags;
   private final String myReferenceText;
   private final String myAliasName;
+
+  private SoftReference<GrCodeReferenceElement> myReference;
 
   public GrImportStatementStub(StubElement parent,
                                @NotNull IStubElementType elementType,
@@ -59,6 +64,17 @@ public class GrImportStatementStub extends StubBase<GrImportStatement> implement
   @Nullable
   public String getReferenceText() {
     return myReferenceText;
+  }
+
+  @Nullable
+  public GrCodeReferenceElement getReference() {
+    if (myReferenceText == null) return null;
+    GrCodeReferenceElement ref = SoftReference.dereference(myReference);
+    if (ref == null) {
+      ref = GroovyPsiElementFactory.getInstance(getProject()).createCodeReferenceElementFromText(myReferenceText);
+      myReference = new SoftReference<>(ref);
+    }
+    return ref;
   }
 
   @Nullable

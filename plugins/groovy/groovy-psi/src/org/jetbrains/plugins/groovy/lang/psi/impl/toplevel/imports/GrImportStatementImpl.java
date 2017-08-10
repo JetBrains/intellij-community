@@ -250,12 +250,7 @@ public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementSt
   public GrCodeReferenceElement getImportReference() {
     GrImportStatementStub stub = getStub();
     if (stub != null) {
-      String referenceText = stub.getReferenceText();
-      if (referenceText == null) {
-        return null;
-      }
-
-      return GroovyPsiElementFactory.getInstance(getProject()).createCodeReferenceElementFromText(referenceText);
+      return stub.getReference();
     }
 
     return (GrCodeReferenceElement)findChildByType(GroovyElementTypes.REFERENCE_ELEMENT);
