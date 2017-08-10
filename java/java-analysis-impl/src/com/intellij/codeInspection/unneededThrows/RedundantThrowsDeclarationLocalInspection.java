@@ -19,7 +19,9 @@ import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.MethodThrowsFix;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.reference.RefMethodImpl;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
 import com.siyeh.ig.JavaOverridingMethodUtil;
@@ -69,13 +71,19 @@ public class RedundantThrowsDeclarationLocalInspection extends BaseJavaBatchLoca
   }
 
   @Nullable
-  private static ProblemDescriptor[] checkExceptionsNeverThrown(PsiMethod method,
-                                                                InspectionManager inspectionManager) {
+  private ProblemDescriptor[] checkExceptionsNeverThrown(PsiMethod method,
+                                                         InspectionManager inspectionManager) {
     PsiClass containingClass = method.getContainingClass();
     if (containingClass == null || JavaHighlightUtil.isSerializationRelatedMethod(method, containingClass)) return null;
 
     PsiCodeBlock body = method.getBody();
     if (body == null) return null;
+
+    if (myGlobalTool.IGNORE_ENTRY_POINTS) {
+      InspectionProfile profile = InspectionProjectProfileManager.getInstance(inspectionManager.getProject()).getCurrentProfile();
+      UnusedDeclarationInspectionBase tool = (UnusedDeclarationInspectionBase)profile.getUnwrappedTool(UnusedDeclarationInspectionBase.SHORT_NAME, method);
+      if ((tool == null ? new UnusedDeclarationInspectionBase() : tool).isEntryPoint(method)) return null;
+    }
 
     ReferenceAndType[] thrownExceptions = getThrownCheckedExceptions(method);
     if (thrownExceptions.length == 0) return null;
