@@ -30,4 +30,6 @@ public interface PyFunctionType extends PyCallableType {
    */
   @NotNull
   PyCallable getCallable();
+
+  PyFunctionType dropSelf(@NotNull TypeEvalContext context);
 }

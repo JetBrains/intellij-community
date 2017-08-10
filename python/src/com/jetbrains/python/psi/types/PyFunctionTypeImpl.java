@@ -171,4 +171,13 @@ public class PyFunctionTypeImpl implements PyFunctionType {
   public PyCallable getCallable() {
     return myCallable;
   }
+
+  public PyFunctionType dropSelf(@NotNull TypeEvalContext context) {
+    final List<PyCallableParameter> parameters = getParameters(context);
+
+    if (!ContainerUtil.isEmpty(parameters) && parameters.get(0).isSelf()) {
+      return new PyFunctionTypeImpl(myCallable, ContainerUtil.subList(parameters, 1));
+    }
+    return this;
+  }
 }
