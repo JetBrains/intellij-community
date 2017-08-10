@@ -117,19 +117,19 @@ public class ChangesUtil {
 
   @NotNull
   public static List<FilePath> getPaths(@NotNull Collection<Change> changes) {
-    return getAllPaths(changes.stream()).collect(toList());
+    return getPaths(changes.stream()).collect(toList());
   }
 
   @NotNull
   public static List<File> getIoFilesFromChanges(@NotNull Collection<Change> changes) {
-    return getAllPaths(changes.stream())
+    return getPaths(changes.stream())
       .map(FilePath::getIOFile)
       .distinct()
       .collect(toList());
   }
 
   @NotNull
-  public static Stream<FilePath> getAllPaths(@NotNull Stream<Change> changes) {
+  public static Stream<FilePath> getPaths(@NotNull Stream<Change> changes) {
     return changes.flatMap(ChangesUtil::getPathsCaseSensitive);
   }
 
@@ -143,20 +143,20 @@ public class ChangesUtil {
   }
 
   @NotNull
-  public static Stream<VirtualFile> getAllFiles(@NotNull Stream<Change> changes) {
-    return getAllPaths(changes)
+  public static Stream<VirtualFile> getFiles(@NotNull Stream<Change> changes) {
+    return getPaths(changes)
       .map(FilePath::getVirtualFile)
       .filter(Objects::nonNull);
   }
 
   /**
-   * @deprecated Use {@link ChangesUtil#getAllFiles(Stream)}.
+   * @deprecated Use {@link ChangesUtil#getFiles(Stream)}.
    */
   @SuppressWarnings("unused") // Required for compatibility with external plugins.
   @Deprecated
   @NotNull
   public static VirtualFile[] getFilesFromChanges(@NotNull Collection<Change> changes) {
-    return getAllFiles(changes.stream()).toArray(VirtualFile[]::new);
+    return getFiles(changes.stream()).toArray(VirtualFile[]::new);
   }
 
   @NotNull
