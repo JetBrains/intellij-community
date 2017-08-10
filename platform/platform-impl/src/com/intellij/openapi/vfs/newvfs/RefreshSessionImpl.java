@@ -103,7 +103,7 @@ public class RefreshSessionImpl extends RefreshSession {
       myWorkQueue.add(file);
     }
     else {
-      LOG.warn("skipped: " + file + " / " + file.getClass());
+      LOG.debug("skipped: " + file + " / " + file.getClass());
     }
   }
 
