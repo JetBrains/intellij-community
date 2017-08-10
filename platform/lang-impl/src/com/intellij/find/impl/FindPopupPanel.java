@@ -138,6 +138,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
   private JBPopup myBalloon;
   private LoadingDecorator myLoadingDecorator;
   private int myLoadingHash;
+  private JPanel myTitlePanel;
 
   FindPopupPanel(@NotNull FindUIHelper helper) {
     myHelper = helper;
@@ -214,10 +215,8 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       }
       mySearchComponent.selectAll();
       WindowMoveListener windowListener = new WindowMoveListener(this);
-      myTitleLabel.addMouseListener(windowListener);
-      myTitleLabel.addMouseMotionListener(windowListener);
-      myLoadingDecorator.getComponent().addMouseListener(windowListener);
-      myLoadingDecorator.getComponent().addMouseMotionListener(windowListener);
+      myTitlePanel.addMouseListener(windowListener);
+      myTitlePanel.addMouseMotionListener(windowListener);
       Dimension panelSize = getPreferredSize();
       Dimension prev = DimensionService.getInstance().getSize(SERVICE_KEY);
       if (!myCbPreserveCase.isVisible()) {
@@ -269,8 +268,8 @@ public class FindPopupPanel extends JBPanel implements FindUI {
   private void initComponents() {
     myTitleLabel = new JBLabel(FindBundle.message("find.in.path.dialog.title"), UIUtil.ComponentStyle.REGULAR);
     myTitleLabel.setFont(myTitleLabel.getFont().deriveFont(Font.BOLD));
-    myTitleLabel.setBorder(JBUI.Borders.empty(0, 0, 0, 16));
-    myLoadingDecorator = new LoadingDecorator(new JLabel("  ", EmptyIcon.ICON_16, SwingConstants.LEADING), getDisposable(), 250, true, new AsyncProcessIcon("FindInPathLoading"));
+    //myTitleLabel.setBorder(JBUI.Borders.emptyRight(16));
+    myLoadingDecorator = new LoadingDecorator(new JLabel(EmptyIcon.ICON_16), getDisposable(), 250, true, new AsyncProcessIcon("FindInPathLoading"));
     myLoadingDecorator.setLoadingText("");
     myCbCaseSensitive = createCheckBox("find.popup.case.sensitive");
     ItemListener liveResultsPreviewUpdateListener = new ItemListener() {
@@ -534,7 +533,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
               myResultsPreviewTable);
     ScrollingUtil.installActions(myResultsPreviewTable, false, mySearchComponent);
     ScrollingUtil.installActions(myResultsPreviewTable, false, myReplaceComponent);
-    ScrollingUtil.installActions(myResultsPreviewTable, false, myFileMaskField);
+
     ActionListener helpAction = new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
         HelpManager.getInstance().invokeHelp("reference.dialogs.findinpath");
@@ -607,18 +606,19 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     setLayout(new MigLayout("flowx, ins 4, gap 0, fillx, hidemode 3"));
     int cbGapLeft = myCbCaseSensitive.getInsets().left;
     int cbGapRight = myCbCaseSensitive.getInsets().right;
+    myTitlePanel = new JPanel(new MigLayout("flowx, ins 0, gap 0, fillx, filly"));
+    myTitlePanel.add(myTitleLabel);
+    myTitlePanel.add(myLoadingDecorator.getComponent(), "w 20, wmin 20");
+    myTitlePanel.add(Box.createHorizontalGlue(), "growx, pushx");
+    add(myTitlePanel, "sx 2, growx, pushx, growy");
     String cbGap = cbGapLeft + cbGapRight < 16 ? "gapright " + (16 - cbGapLeft - cbGapRight) : "";
-    JPanel titlePanel = new JPanel(new BorderLayout());
-    titlePanel.add(myLoadingDecorator.getComponent(), BorderLayout.WEST);
-    titlePanel.add(myTitleLabel, BorderLayout.CENTER);
-    add(titlePanel, "sx 2, growx, pushx, growy");
     add(myCbCaseSensitive, cbGap);
     add(myCbPreserveCase, cbGap);
     add(myCbWholeWordsOnly, cbGap);
     add(myCbRegularExpressions, "gapright 0");
     add(RegExHelpPopup.createRegExLink("<html><body><b>?</b></body></html>", myCbRegularExpressions, LOG), "gapright " + (16-cbGapLeft));
     add(myCbFileFilter);
-    add(myFileMaskField, "gapright 16");
+    add(myFileMaskField, "gapright 16, w 80, wmax 80, wmin 80");
     add(myFilterContextButton, "wrap");
     add(mySearchTextArea, "pushx, growx, sx 10, gaptop 4, wrap");
     add(myReplaceTextArea, "pushx, growx, sx 10, gaptop 4, wrap");
