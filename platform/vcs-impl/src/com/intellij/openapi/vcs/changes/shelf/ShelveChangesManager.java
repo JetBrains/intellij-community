@@ -28,6 +28,7 @@ import com.intellij.openapi.diff.impl.patch.*;
 import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatchBase;
 import com.intellij.openapi.diff.impl.patch.formove.CustomBinaryPatchApplier;
 import com.intellij.openapi.diff.impl.patch.formove.PatchApplier;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.options.NonLazySchemeProcessor;
 import com.intellij.openapi.options.SchemeManager;
 import com.intellij.openapi.options.SchemeManagerFactory;
@@ -45,12 +46,15 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchDefaultExecutor;
 import com.intellij.openapi.vcs.changes.patch.PatchFileType;
 import com.intellij.openapi.vcs.changes.patch.PatchNameChecker;
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
 import com.intellij.openapi.vcs.changes.ui.RollbackChangesDialog;
 import com.intellij.openapi.vcs.changes.ui.RollbackWorker;
+import com.intellij.openapi.vcs.changes.ui.ShelvedChangeListDragBean;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.project.ProjectKt;
 import com.intellij.util.Consumer;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -765,6 +769,17 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
     }
   }
 
+  @CalledInAwt
+  public static void unshelveSilentlyWithDnd(@NotNull Project project,
+                                             @NotNull ShelvedChangeListDragBean shelvedChangeListDragBean,
+                                             @Nullable ChangesBrowserNode dropRootNode) {
+    FileDocumentManager.getInstance().saveAllDocuments();
+    LocalChangeList predefinedChangeList =
+      dropRootNode != null ? ObjectUtils.tryCast(dropRootNode.getUserObject(), LocalChangeList.class) : null;
+    getInstance(project).unshelveSilentlyAsynchronously(project, shelvedChangeListDragBean.getShelvedChangelists(),
+                                                        shelvedChangeListDragBean.getChanges(),
+                                                        shelvedChangeListDragBean.getBinaryFiles(), predefinedChangeList);
+  }
 
   public void unshelveSilentlyAsynchronously(@NotNull final Project project,
                                              @NotNull final List<ShelvedChangeList> selectedChangeLists,
