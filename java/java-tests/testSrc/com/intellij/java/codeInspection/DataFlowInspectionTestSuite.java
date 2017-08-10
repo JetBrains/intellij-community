@@ -57,6 +57,7 @@ public class DataFlowInspectionTestSuite {
     suite.addTestSuite(ReplaceFromOfNullableFixTest.class);
     suite.addTestSuite(ReplaceWithTrivialLambdaFixTest.class);
     suite.addTestSuite(UnwrapIfStatementFixTest.class);
+    suite.addTestSuite(StreamFilterNotNullFixTest.class);
     return suite;
   }
 }
