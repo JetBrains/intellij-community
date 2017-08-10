@@ -23,7 +23,6 @@ import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemeImpl;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemeXmlImporter;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -57,10 +56,11 @@ public class CodeStyleXmlImporterTest extends CodeStyleTestCase {
     CodeStyleSchemeXmlImporter importer = new CodeStyleSchemeXmlImporter();
     return importer.importScheme(getProject(), vFile, targetScheme, schemeFactory).getCodeStyleSettings();
   }
-  
-  @NotNull
-  protected String getTestDataPath() {
-    return BASE_PATH + "importSettings/";
+
+  @Nullable
+  @Override
+  protected String getTestDir() {
+    return "importSettings";
   }
 }
 

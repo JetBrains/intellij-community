@@ -20,6 +20,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -96,7 +97,7 @@ public class MakeCallChainIntoCallSequenceIntention extends Intention {
           showRenameTemplate = true;
           final Project project = element.getProject();
           final CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(project);
-          if (codeStyleSettings.GENERATE_FINAL_LOCALS) {
+          if (codeStyleSettings.getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_LOCALS) {
             firstStatement = "final " + rootType.getCanonicalText() + ' ' + targetText + '=' + root.getText() + ';';
           } else {
             firstStatement = rootType.getCanonicalText() + ' ' + targetText + '=' + root.getText() + ';';
@@ -129,7 +130,7 @@ public class MakeCallChainIntoCallSequenceIntention extends Intention {
           showRenameTemplate = true;
           final Project project = element.getProject();
           final CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(project);
-          if (codeStyleSettings.GENERATE_FINAL_LOCALS) {
+          if (codeStyleSettings.getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_LOCALS) {
             firstStatement = "final " + rootType.getCanonicalText() + " x=" + root.getText() + ';';
           } else {
             firstStatement = rootType.getCanonicalText() + " x=" + root.getText() + ';';

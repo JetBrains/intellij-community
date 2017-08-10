@@ -29,6 +29,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -209,7 +210,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
     PsiDeclarationStatement copyDecl = factory.createVariableDeclarationStatement(newName, type, initializer);
     PsiVariable newVariable = (PsiVariable)copyDecl.getDeclaredElements()[0];
     final boolean mustBeFinal =
-      !PsiUtil.isLanguageLevel8OrHigher(context) || CodeStyleSettingsManager.getSettings(project).GENERATE_FINAL_LOCALS;
+      !PsiUtil.isLanguageLevel8OrHigher(context) || CodeStyleSettingsManager.getSettings(project).getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_LOCALS;
     PsiUtil.setModifierProperty(newVariable, PsiModifier.FINAL, mustBeFinal);
     PsiElement statement = getStatementToInsertBefore(variable, context);
     if (statement == null) return;

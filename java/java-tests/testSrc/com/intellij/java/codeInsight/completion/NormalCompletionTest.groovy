@@ -33,6 +33,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings
 import com.intellij.psi.impl.PsiDocumentManagerBase
 import com.intellij.util.ui.UIUtil
 import com.siyeh.ig.style.UnqualifiedFieldAccessInspection
@@ -171,7 +172,7 @@ class NormalCompletionTest extends LightFixtureCompletionTestCase {
 
     LookupManager.getInstance(getProject()).hideActiveLookup()
 
-    CodeStyleSettingsManager.getSettings(getProject()).PREFER_LONGER_NAMES = false
+    CodeStyleSettingsManager.getSettings(getProject()).getCustomSettings(JavaCodeStyleSettings.class).PREFER_LONGER_NAMES = false
     try{
       configureByFile("PreferLongerNamesOption.java")
 
@@ -181,7 +182,7 @@ class NormalCompletionTest extends LightFixtureCompletionTestCase {
       assertEquals("abcdEfghIjk", myItems[2].getLookupString())
     }
     finally{
-      CodeStyleSettingsManager.getSettings(getProject()).PREFER_LONGER_NAMES = true
+      CodeStyleSettingsManager.getSettings(getProject()).getCustomSettings(JavaCodeStyleSettings.class).PREFER_LONGER_NAMES = true
     }
   }
 

@@ -59,7 +59,7 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).clone();
-    settings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 100;
+    settings.getCustomSettings(JavaCodeStyleSettings.class).CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 100;
     CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(settings);
     DaemonCodeAnalyzer.getInstance(getProject()).setUpdateByTimerEnabled(false);
   }
@@ -130,7 +130,8 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
         try {
 
           CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).clone();
-          settings.LAYOUT_STATIC_IMPORTS_SEPARATELY = true;
+          JavaCodeStyleSettings javaSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
+          javaSettings.LAYOUT_STATIC_IMPORTS_SEPARATELY = true;
           PackageEntryTable table = new PackageEntryTable();
           table.addEntry(PackageEntry.ALL_OTHER_IMPORTS_ENTRY);
           table.addEntry(PackageEntry.BLANK_LINE_ENTRY);
@@ -141,7 +142,7 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
           table.addEntry(PackageEntry.BLANK_LINE_ENTRY);
           table.addEntry(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY);
 
-          settings.IMPORT_LAYOUT_TABLE.copyFrom(table);
+          settings.getCustomSettings(JavaCodeStyleSettings.class).IMPORT_LAYOUT_TABLE.copyFrom(table);
           CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(settings);
           JavaCodeStyleManager.getInstance(getProject()).optimizeImports(file);
 
@@ -184,7 +185,7 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
     assertEmpty(highlightErrors());
 
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).clone();
-    settings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 2;
+    settings.getCustomSettings(JavaCodeStyleSettings.class).CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 2;
     CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(settings);
     WriteCommandAction.runWriteCommandAction(getProject(),
                                              () -> JavaCodeStyleManager.getInstance(getProject()).optimizeImports(getFile()));
@@ -477,9 +478,10 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
      assertEmpty(highlightErrors());
 
      CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).clone();
-     settings.LAYOUT_STATIC_IMPORTS_SEPARATELY = true;
-     settings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 3;
-     settings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND = 3;
+     JavaCodeStyleSettings javaSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
+     javaSettings.LAYOUT_STATIC_IMPORTS_SEPARATELY = true;
+     javaSettings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 3;
+     javaSettings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND = 3;
 
      CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(settings);
      WriteCommandAction.runWriteCommandAction(getProject(), () -> JavaCodeStyleManager.getInstance(getProject()).optimizeImports(getFile()));

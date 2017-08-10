@@ -17,9 +17,9 @@ import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import com.intellij.util.containers.ContainerUtil;
 
@@ -833,7 +833,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testInsertOverride() throws Exception {
-    CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(getProject());
+    JavaCodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(getProject()).getCustomSettings(JavaCodeStyleSettings.class);
     styleSettings.INSERT_OVERRIDE_ANNOTATION = true;
     doItemTest();
   }
@@ -1119,13 +1119,14 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testInnerClassImports() throws Throwable {
-    CodeStyleSettingsManager.getSettings(getProject()).INSERT_INNER_CLASS_IMPORTS = true;
+    JavaCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCustomSettings(JavaCodeStyleSettings.class);
+    settings.INSERT_INNER_CLASS_IMPORTS = true;
     try {
       myFixture.addClass("package java.awt.geom; public class Point2D { public static class Double {} }");
       doActionTest();
     }
     finally {
-      CodeStyleSettingsManager.getSettings(getProject()).INSERT_INNER_CLASS_IMPORTS = false;
+      settings.INSERT_INNER_CLASS_IMPORTS = false;
     }
   }
 

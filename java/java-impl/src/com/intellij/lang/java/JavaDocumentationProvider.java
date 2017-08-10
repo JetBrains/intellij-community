@@ -428,13 +428,13 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
         createTypeParamsListComment(builder, project, commenter, typeParameterList);
       }
       if (psiMethod.getReturnType() != null && !PsiType.VOID.equals(psiMethod.getReturnType())) {
-        builder.append(CodeDocumentationUtil.createDocCommentLine(RETURN_TAG, project, commenter));
+        builder.append(CodeDocumentationUtil.createDocCommentLine(RETURN_TAG, _comment.getContainingFile(), commenter));
         builder.append(LINE_SEPARATOR);
       }
 
       final PsiJavaCodeReferenceElement[] references = psiMethod.getThrowsList().getReferenceElements();
       for (PsiJavaCodeReferenceElement reference : references) {
-        builder.append(CodeDocumentationUtil.createDocCommentLine(THROWS_TAG, project, commenter));
+        builder.append(CodeDocumentationUtil.createDocCommentLine(THROWS_TAG, _comment.getContainingFile(), commenter));
         builder.append(reference.getText());
         builder.append(LINE_SEPARATOR);
       }
@@ -481,12 +481,12 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
     for (PsiParameter parameter : parameters) {
       String description = param2Description.get(parameter.getName());
       if (description != null) {
-        builder.append(CodeDocumentationUtil.createDocCommentLine("", project, commenter));
+        builder.append(CodeDocumentationUtil.createDocCommentLine("", psiMethod.getContainingFile(), commenter));
         if (description.indexOf('\n') > -1) description = description.substring(0, description.lastIndexOf('\n'));
         builder.append(description);
       }
       else {
-        builder.append(CodeDocumentationUtil.createDocCommentLine(PARAM_TAG, project, commenter));
+        builder.append(CodeDocumentationUtil.createDocCommentLine(PARAM_TAG, psiMethod.getContainingFile(), commenter));
         builder.append(parameter.getName());
       }
       builder.append(LINE_SEPARATOR);
@@ -499,7 +499,7 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
                                                   final PsiTypeParameterList typeParameterList) {
     final PsiTypeParameter[] typeParameters = typeParameterList.getTypeParameters();
     for (PsiTypeParameter typeParameter : typeParameters) {
-      buffer.append(CodeDocumentationUtil.createDocCommentLine(PARAM_TAG, project, commenter));
+      buffer.append(CodeDocumentationUtil.createDocCommentLine(PARAM_TAG, typeParameterList.getContainingFile(), commenter));
       buffer.append("<").append(typeParameter.getName()).append(">");
       buffer.append(LINE_SEPARATOR);
     }

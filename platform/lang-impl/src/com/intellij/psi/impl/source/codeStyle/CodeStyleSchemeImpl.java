@@ -130,8 +130,8 @@ public class CodeStyleSchemeImpl extends ExternalizableSchemeAdapter implements 
     }
 
     if (dataHolder == null) {
-      Element newElement = new Element("code_scheme");
-      newElement.setAttribute("name", getName());
+      Element newElement = new Element(CODE_STYLE_TAG_NAME);
+      newElement.setAttribute(CODE_STYLE_NAME_ATTR, getName());
       myCodeStyleSettings.writeExternal(newElement);
       return newElement;
     }

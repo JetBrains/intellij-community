@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -69,12 +70,17 @@ public class GenerateConstructorTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testFieldPrefixCoincidence() {
-    CodeStyleSettingsManager.getInstance(getProject()).getCurrentSettings().FIELD_NAME_PREFIX = "m";
+    getJavaSettings().FIELD_NAME_PREFIX = "m";
     doTest();
   }
 
+  @NotNull
+  private JavaCodeStyleSettings getJavaSettings() {
+    return CodeStyleSettingsManager.getInstance(getProject()).getCurrentSettings().getCustomSettings(JavaCodeStyleSettings.class);
+  }
+
   public void testFieldPrefixCoincidence1() {
-    CodeStyleSettingsManager.getInstance(getProject()).getCurrentSettings().FIELD_NAME_PREFIX = "_";
+    getJavaSettings().FIELD_NAME_PREFIX = "_";
     doTest();
   }
 

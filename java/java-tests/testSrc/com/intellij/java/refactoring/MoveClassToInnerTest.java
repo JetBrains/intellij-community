@@ -23,6 +23,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.refactoring.RefactoringTestCase;
@@ -56,13 +57,14 @@ public class MoveClassToInnerTest extends RefactoringTestCase {
   }
 
   public void testInsertInnerClassImport() throws Exception {
-    final boolean imports = CodeStyleSettingsManager.getSettings(myProject).INSERT_INNER_CLASS_IMPORTS;
+    JavaCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(myProject).getCustomSettings(JavaCodeStyleSettings.class);
+    final boolean imports = settings.INSERT_INNER_CLASS_IMPORTS;
     try {
-      CodeStyleSettingsManager.getSettings(myProject).INSERT_INNER_CLASS_IMPORTS = true;
+      settings.INSERT_INNER_CLASS_IMPORTS = true;
       doTest(new String[] { "pack1.Class1" }, "pack2.A");
     }
     finally {
-      CodeStyleSettingsManager.getSettings(myProject).INSERT_INNER_CLASS_IMPORTS = imports;
+      settings.INSERT_INNER_CLASS_IMPORTS = imports;
     }
   }
 

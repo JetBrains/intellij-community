@@ -17,8 +17,8 @@ package com.intellij.java.codeInsight.intention;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 
 public class AddSingleStaticImportActionTest extends JavaCodeInsightFixtureTestCase {
@@ -127,7 +127,7 @@ public class AddSingleStaticImportActionTest extends JavaCodeInsightFixtureTestC
     myFixture.addClass("package foo; class Bar {public static void foo(String s){}}");
     myFixture.configureByFile(getTestName(false) + ".java");
 
-    CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(getProject()).getCurrentSettings();
+    JavaCodeStyleSettings settings = CodeStyleSettingsManager.getInstance(getProject()).getCurrentSettings().getCustomSettings(JavaCodeStyleSettings.class);
     int old = settings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND;
     settings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND = 1;
     try {

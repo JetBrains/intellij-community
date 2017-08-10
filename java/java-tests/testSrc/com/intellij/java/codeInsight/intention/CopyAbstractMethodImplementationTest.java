@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.LightIntentionActionTestCase;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 
 /**
  * @author yole
@@ -33,7 +34,7 @@ public class CopyAbstractMethodImplementationTest extends LightIntentionActionTe
   protected void setUp() throws Exception {
     super.setUp();
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).clone();
-    settings.INSERT_OVERRIDE_ANNOTATION = false;
+    settings.getCustomSettings(JavaCodeStyleSettings.class).INSERT_OVERRIDE_ANNOTATION = false;
     CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(settings);
   }
 

@@ -22,6 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.util.Function;
@@ -61,8 +62,8 @@ public abstract class GenerateEqualsTestCase extends LightCodeInsightTestCase {
                                   boolean insertOverride, 
                                   boolean useAccessors) {
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).clone();
-    settings.GENERATE_FINAL_LOCALS = true;
-    settings.INSERT_OVERRIDE_ANNOTATION = insertOverride;
+    settings.getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_LOCALS = true;
+    settings.getCustomSettings(JavaCodeStyleSettings.class).INSERT_OVERRIDE_ANNOTATION = insertOverride;
     CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(settings);
     try {
       PsiElement element = getFile().findElementAt(getEditor().getCaretModel().getOffset());

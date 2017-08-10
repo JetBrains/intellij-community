@@ -220,7 +220,8 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
   public DocCommentSettings getDocCommentSettings(@NotNull PsiFile file) {
     if (file.isValid()) {
       return new DocCommentSettings() {
-        private final CodeStyleSettings mySettings = CodeStyleSettingsManager.getSettings(file.getProject());
+        private final JavaCodeStyleSettings mySettings =
+          CodeStyleSettingsManager.getSettings(file.getProject()).getCustomSettings(JavaCodeStyleSettings.class);
 
         @Override
         public boolean isDocFormattingEnabled() {

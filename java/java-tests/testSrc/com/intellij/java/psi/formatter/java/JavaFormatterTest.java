@@ -1155,7 +1155,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
   }
 
   public void testJavaDocLeadingAsterisksAreDisabled() throws Exception {
-    getSettings().getRootSettings().JD_LEADING_ASTERISKS_ARE_ENABLED = false;
+    getJavaSettings().JD_LEADING_ASTERISKS_ARE_ENABLED = false;
     doTextTest("class Foo {\n" +
                "    /**\n" +
                "     @param i\n" +
@@ -1298,7 +1298,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
     getSettings().getRootSettings().getIndentOptions(StdFileTypes.JAVA).CONTINUATION_INDENT_SIZE = 2;
     getSettings().getRootSettings().getIndentOptions(StdFileTypes.JAVA).TAB_SIZE = 4;
 
-    getSettings().getRootSettings().ENABLE_JAVADOC_FORMATTING = false;
+    getJavaSettings().ENABLE_JAVADOC_FORMATTING = false;
 
     doTextTest("public interface PsiParser {\n" +
                "  /**\n" +
@@ -1750,7 +1750,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
   }
 
   public void testFormatComments() throws Exception {
-    getSettings().getRootSettings().ENABLE_JAVADOC_FORMATTING = true;
+    getJavaSettings().ENABLE_JAVADOC_FORMATTING = true;
     doTextTest("public class Test {\n" + "\n" + "    /**\n" + "     * The s property.\n" + "     */\n" + "    private String s;\n" + "}",
                "public class Test {\n" + "\n" + "    /**\n" + "     * The s property.\n" + "     */\n" + "    private String s;\n" + "}");
 
@@ -2789,7 +2789,7 @@ public void testSCR260() throws Exception {
   }
 
   public void testIDEADEV_6239() throws Exception {
-    getSettings().getRootSettings().ENABLE_JAVADOC_FORMATTING = true;
+    getJavaSettings().ENABLE_JAVADOC_FORMATTING = true;
     doTextTest("public class Test {\n" +
                "\n" +
                "    /**\n" +

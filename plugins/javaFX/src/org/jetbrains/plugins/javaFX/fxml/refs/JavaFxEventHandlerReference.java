@@ -22,10 +22,7 @@ import com.intellij.lang.jvm.actions.MemberRequest;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.codeStyle.SuggestedNameInfo;
-import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.xml.XmlAttribute;
@@ -153,7 +150,7 @@ public class JavaFxEventHandlerReference extends PsiReferenceBase<XmlAttributeVa
 
     @NotNull
     private static String getModifiers(@NotNull Project project) {
-      String visibility = CodeStyleSettingsManager.getSettings(project).VISIBILITY;
+      String visibility = CodeStyleSettingsManager.getSettings(project).getCustomSettings(JavaCodeStyleSettings.class).VISIBILITY;
       if (VisibilityUtil.ESCALATE_VISIBILITY.equals(visibility)) visibility = PsiModifier.PRIVATE;
       final boolean needAnnotation = !PsiModifier.PUBLIC.equals(visibility);
       final String modifier = !PsiModifier.PACKAGE_LOCAL.equals(visibility) ? visibility : "";

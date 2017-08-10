@@ -110,6 +110,7 @@ public class CodeStyleConfigurationTest extends CodeStyleTestCase {
     settings.OTHER_INDENT_OPTIONS.INDENT_SIZE = 2;
     Element root = createOption("config", "root");
     settings.writeExternal(root);
+    root.removeAttribute("version");
     assertXmlOutputEquals(
       "<option name=\"config\" value=\"root\">\n" +
       "  <option name=\"OTHER_INDENT_OPTIONS\">\n" +

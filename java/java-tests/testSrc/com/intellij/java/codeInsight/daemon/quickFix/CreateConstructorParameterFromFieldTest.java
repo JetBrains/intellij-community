@@ -17,8 +17,8 @@ package com.intellij.java.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.siyeh.ig.style.MissortedModifiersInspection;
 import com.siyeh.ig.style.UnqualifiedFieldAccessInspection;
 
@@ -33,7 +33,7 @@ public class CreateConstructorParameterFromFieldTest extends LightQuickFixParame
   protected void setUp() throws Exception {
     super.setUp();
     enableInspectionTools(new UnusedDeclarationInspection(), new MissortedModifiersInspection(), new UnqualifiedFieldAccessInspection());
-    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    final JavaCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCustomSettings(JavaCodeStyleSettings.class);
     myPreferLongNames = settings.PREFER_LONGER_NAMES;
     if (getTestName(false).contains("SameParameter")) {
       settings.PREFER_LONGER_NAMES = false;
@@ -42,7 +42,7 @@ public class CreateConstructorParameterFromFieldTest extends LightQuickFixParame
 
   @Override
   protected void tearDown() throws Exception {
-    CodeStyleSettingsManager.getSettings(getProject()).PREFER_LONGER_NAMES = myPreferLongNames;
+    CodeStyleSettingsManager.getSettings(getProject()).getCustomSettings(JavaCodeStyleSettings.class).PREFER_LONGER_NAMES = myPreferLongNames;
     super.tearDown();
   }
 

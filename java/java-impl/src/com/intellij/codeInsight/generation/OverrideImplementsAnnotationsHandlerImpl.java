@@ -21,6 +21,7 @@ import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.util.ArrayUtil;
 
 import java.util.ArrayList;
@@ -38,7 +39,7 @@ public class OverrideImplementsAnnotationsHandlerImpl implements OverrideImpleme
     annotations.add(AnnotationUtil.NLS);
 
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
-    annotations.addAll(settings.getRepeatAnnotations());
+    annotations.addAll(settings.getCustomSettings(JavaCodeStyleSettings.class).getRepeatAnnotations());
 
     return ArrayUtil.toStringArray(annotations);
   }

@@ -16,11 +16,16 @@
 package com.intellij.ide.codeStyleSettings;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.project.Project;
 import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.LightProjectDescriptor;
 import org.jdom.Element;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
 
@@ -44,4 +49,29 @@ public abstract class CodeStyleTestCase extends LightPlatformTestCase {
     optionElement.setAttribute("value", value);
     return optionElement;
   }
+
+  @Nullable
+  protected String getTestDir() {
+    return null;
+  }
+
+  @NotNull
+  protected final String getTestDataPath() {
+    String testDir = getTestDir();
+    return BASE_PATH + (testDir != null ? testDir : "") + File.separator;
+  }
+
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return new LightProjectDescriptor() {
+      @Override
+      public void setUpProject(@NotNull Project project, @NotNull SetupHandler handler) throws Exception {
+        setupProject();
+        super.setUpProject(project, handler);
+      }
+    };
+  }
+
+  protected void setupProject() throws Exception {}
 }

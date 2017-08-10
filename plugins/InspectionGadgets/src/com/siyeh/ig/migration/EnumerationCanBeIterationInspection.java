@@ -162,7 +162,7 @@ public class EnumerationCanBeIterationInspection extends EnumerationCanBeIterati
       final Project project = methodCallExpression.getProject();
       final CodeStyleSettings codeStyleSettings =
         CodeStyleSettingsManager.getSettings(project);
-      if (codeStyleSettings.GENERATE_FINAL_LOCALS) {
+      if (codeStyleSettings.getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_LOCALS) {
         newStatementText.append("final ");
       }
       newStatementText.append(CommonClassNames.JAVA_UTIL_ITERATOR);

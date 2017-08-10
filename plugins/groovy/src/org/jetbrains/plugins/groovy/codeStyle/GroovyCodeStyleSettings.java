@@ -16,11 +16,20 @@
 package org.jetbrains.plugins.groovy.codeStyle;
 
 import com.intellij.psi.codeStyle.*;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Max Medvedev
  */
 public class GroovyCodeStyleSettings extends CustomCodeStyleSettings implements ImportsLayoutSettings {
+  public int STATIC_FIELDS_ORDER_WEIGHT = 1;
+  public int FIELDS_ORDER_WEIGHT = 2;
+  public int CONSTRUCTORS_ORDER_WEIGHT = 3;
+  public int STATIC_METHODS_ORDER_WEIGHT = 4;
+  public int METHODS_ORDER_WEIGHT = 5;
+  public int STATIC_INNER_CLASSES_ORDER_WEIGHT = 6;
+  public int INNER_CLASSES_ORDER_WEIGHT = 7;
+
   /**
    * Defines if 'flying geese' style should be used for curly braces formatting, e.g. if we want to format code like
    * <p/>
@@ -149,5 +158,16 @@ public class GroovyCodeStyleSettings extends CustomCodeStyleSettings implements 
   public void setLayoutStaticImportsSeparately(boolean value) {
     LAYOUT_STATIC_IMPORTS_SEPARATELY = value;
   }
-  
+
+  @SuppressWarnings("deprecation")
+  @Override
+  protected void importLegacySettings(@NotNull CodeStyleSettings rootSettings) {
+    STATIC_FIELDS_ORDER_WEIGHT = rootSettings.STATIC_FIELDS_ORDER_WEIGHT;
+    FIELDS_ORDER_WEIGHT = rootSettings.FIELDS_ORDER_WEIGHT;
+    CONSTRUCTORS_ORDER_WEIGHT = rootSettings.CONSTRUCTORS_ORDER_WEIGHT;
+    STATIC_METHODS_ORDER_WEIGHT = rootSettings.STATIC_METHODS_ORDER_WEIGHT;
+    METHODS_ORDER_WEIGHT = rootSettings.METHODS_ORDER_WEIGHT;
+    STATIC_INNER_CLASSES_ORDER_WEIGHT = rootSettings.STATIC_INNER_CLASSES_ORDER_WEIGHT;
+    INNER_CLASSES_ORDER_WEIGHT = rootSettings.INNER_CLASSES_ORDER_WEIGHT;
+  }
 }
