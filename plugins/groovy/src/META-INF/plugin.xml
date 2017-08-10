@@ -1713,6 +1713,14 @@
       <add-to-group group-id="RefactoringMenu"/>
     </action>
 
+    <action id="ConvertToCompileStatic"
+            class="org.jetbrains.plugins.groovy.actions.ConvertToStaticAction"
+            text="Convert to @CompileStatic"
+            description="Convert Groovy files to @CompileStatic"
+            internal="true">
+      <add-to-group group-id="RefactoringMenu"/>
+    </action>
+
     <action id="DumpGroovyControlFlowAction"
             class="org.jetbrains.plugins.groovy.actions.DumpGroovyControlFlowAction"
             text="dump groovy control flow"
