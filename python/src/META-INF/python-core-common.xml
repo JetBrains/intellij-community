@@ -416,6 +416,7 @@
     <liveTemplateMacro implementation="com.jetbrains.python.codeInsight.liveTemplates.PyIterableVariableMacro"/>
 
     <codeInsight.overrideMethod language="Python" implementationClass="com.jetbrains.python.codeInsight.override.PyOverrideMethodsHandler"/>
+    <codeInsight.implementMethod language="Python" implementationClass="com.jetbrains.python.codeInsight.implement.PyImplementMethodsHandler"/>
     <lang.refactoringSupport language="Python" implementationClass="com.jetbrains.python.refactoring.PyRefactoringProvider"/>
     <lang.refactoringSupport.classMembersRefactoringSupport language="Python"
                                                             implementationClass="com.jetbrains.python.refactoring.classes.PyMembersRefactoringSupport"/>
