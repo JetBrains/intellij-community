@@ -231,7 +231,7 @@ public class MadTestingUtil {
   @NotNull
   private static VirtualFile copyFileToProject(File ioFile, CodeInsightTestFixture fixture, String rootPath) {
     try {
-      String path = FileUtil.getRelativePath(FileUtil.toCanonicalPath(rootPath), ioFile.getPath(), '/');
+      String path = FileUtil.getRelativePath(FileUtil.toCanonicalPath(rootPath),  FileUtil.toSystemIndependentName(ioFile.getPath()), '/');
       assert path != null;
       VirtualFile existing = fixture.findFileInTempDir(path);
       if (existing != null) {
