@@ -16,10 +16,8 @@
 package com.intellij.execution.dashboard.tree;
 
 import com.intellij.execution.dashboard.hyperlink.RunDashboardHyperlinkComponent;
-import com.intellij.openapi.vcs.changes.issueLinks.LinkMouseListenerBase;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,62 +26,26 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 /**
  * @author Konstantin Aleev
  */
-public class RunDashboardTreeMouseListener extends LinkMouseListenerBase<RunDashboardHyperlinkComponent> {
+public class RunDashboardTreeMouseListener extends RunDashboardLinkMouseListenerBase {
   @NotNull private final Tree myTree;
-  private RunDashboardHyperlinkComponent myAimed;
 
   public RunDashboardTreeMouseListener(@NotNull Tree tree) {
     myTree = tree;
   }
 
-  @Override
-  public void mouseMoved(MouseEvent e) {
-    Component component = (Component)e.getSource();
-    RunDashboardHyperlinkComponent hyperlink = getTagAt(e);
-    boolean shouldRepaint = false;
-
-    if (hyperlink != null) {
-      UIUtil.setCursor(component, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-
-      hyperlink.setAimed(true);
-      shouldRepaint = myAimed != hyperlink;
-      if (myAimed != null && myAimed != hyperlink) {
-        myAimed.setAimed(false);
-      }
-      myAimed = hyperlink;
+  protected void repaintComponent(MouseEvent e) {
+    final TreePath path = myTree.getPathForLocation(e.getX(), e.getY());
+    if (path == null) {
+      myTree.repaint();
+      return;
     }
-    else {
-      UIUtil.setCursor(component, Cursor.getDefaultCursor());
-
-      if (myAimed != null) {
-        myAimed.setAimed(false);
-        myAimed = null;
-        shouldRepaint = true;
-      }
-    }
-
-    if (shouldRepaint) {
-      final TreePath path = myTree.getPathForLocation(e.getX(), e.getY());
-      if (path == null) {
-        myTree.repaint();
-        return;
-      }
-      final TreeNode treeNode = (TreeNode)path.getLastPathComponent();
-      ((DefaultTreeModel)myTree.getModel()).nodeChanged(treeNode);
-    }
-  }
-
-  @Override
-  protected void handleTagClick(@Nullable RunDashboardHyperlinkComponent tag, @NotNull MouseEvent e) {
-    if (tag != null) {
-      tag.onClick(e);
-    }
+    final TreeNode treeNode = (TreeNode)path.getLastPathComponent();
+    ((DefaultTreeModel)myTree.getModel()).nodeChanged(treeNode);
   }
 
   @Nullable
@@ -124,22 +86,6 @@ public class RunDashboardTreeMouseListener extends LinkMouseListenerBase<RunDash
       return (RunDashboardHyperlinkComponent)tag;
     }
     return null;
-  }
-
-  @Override
-  public void installOn(@NotNull Component component) {
-    super.installOn(component);
-
-    component.addMouseListener(new MouseAdapter() {
-      @Override
-      public void mouseExited(MouseEvent e) {
-        if (myAimed != null) {
-          myAimed.setAimed(false);
-          myAimed = null;
-          myTree.repaint();
-        }
-      }
-    });
   }
 }
 
