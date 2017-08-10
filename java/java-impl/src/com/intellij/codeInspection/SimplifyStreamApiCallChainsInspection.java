@@ -290,6 +290,7 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
     private static final CallMatcher SINGLETON =
       staticCall(CommonClassNames.JAVA_UTIL_COLLECTIONS, "singleton").parameterCount(1);
     private static final CallMatcher AS_LIST = staticCall(CommonClassNames.JAVA_UTIL_ARRAYS, "asList").parameterCount(1);
+    private static final CallMatcher ENUMSET_OF = staticCall("java.util.EnumSet", "of");
 
     private static final CallMapper<ReplaceCollectionStreamFix> COLLECTION_TO_STREAM_MAPPER = new CallMapper<ReplaceCollectionStreamFix>()
       .register(EMPTY_LIST,
@@ -302,7 +303,10 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
                                         ? null : new ReplaceSingletonWithStreamOfFix("Collections.singletonList()"))
       .register(AS_LIST, call -> hasSingleArrayArgument(call)
                                  ? new ReplaceCollectionStreamFix("Arrays.asList()", CommonClassNames.JAVA_UTIL_ARRAYS, STREAM_METHOD)
-                                 : new ReplaceCollectionStreamFix("Arrays.asList()", CommonClassNames.JAVA_UTIL_STREAM_STREAM, OF_METHOD));
+                                 : new ReplaceCollectionStreamFix("Arrays.asList()", CommonClassNames.JAVA_UTIL_STREAM_STREAM, OF_METHOD))
+      .register(ENUMSET_OF, call ->
+        isEnumSetReplaceableWithStream(call) ? new ReplaceCollectionStreamFix("EnumSet.of()", CommonClassNames.JAVA_UTIL_STREAM_STREAM,
+                                                                              OF_METHOD) : null);
 
     private final String myClassName;
     private final String myMethodName;
@@ -353,6 +357,27 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
 
     public static CallHandler<CallChainSimplification> handler() {
       return CallHandler.of(COLLECTION_STREAM, methodCall -> COLLECTION_TO_STREAM_MAPPER.mapFirst(getQualifierMethodCall(methodCall)));
+    }
+
+    private static boolean isEnumSetReplaceableWithStream(PsiMethodCallExpression call) {
+      // Check that all arguments are enum different enum constants from the same enum
+      PsiExpression[] expressions = call.getArgumentList().getExpressions();
+      if (expressions.length == 0) return false;
+      Set<String> names = new HashSet<>();
+      PsiClass enumClass = null;
+      for (PsiExpression arg : expressions) {
+        PsiReferenceExpression ref = tryCast(PsiUtil.skipParenthesizedExprDown(arg), PsiReferenceExpression.class);
+        if (ref == null) return false;
+        PsiEnumConstant enumConstant = tryCast(ref.resolve(), PsiEnumConstant.class);
+        if (enumConstant == null || !names.add(enumConstant.getName())) return false;
+        if (enumClass == null) {
+          enumClass = enumConstant.getContainingClass();
+        }
+        else if (enumConstant.getContainingClass() != enumClass) {
+          return false;
+        }
+      }
+      return true;
     }
 
     private static boolean hasSingleArrayArgument(PsiMethodCallExpression qualifierCall) {
