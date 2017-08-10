@@ -21,6 +21,7 @@ import com.intellij.openapi.application.TransactionGuardImpl;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiTreeChangeEvent;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -37,9 +38,16 @@ import static com.intellij.psi.impl.PsiTreeChangeEventImpl.PsiEventType.PROPERTY
  * Date: Jul 18, 2002
  */
 public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTreeChangePreprocessor {
+  private final boolean myEnableCodeBlockTracker = Registry.is("psi.modification.tracker.code-block");
+  private final boolean myEnableJavaStructureTracker = Registry.is("psi.modification.tracker.java-structure");
+
   private final AtomicLong myModificationCount = new AtomicLong(0);
-  private final AtomicLong myOutOfCodeBlockModificationCount = new AtomicLong(0);
-  private final AtomicLong myJavaStructureModificationCount = new AtomicLong(0);
+  private final AtomicLong myOutOfCodeBlockModificationCount = myEnableCodeBlockTracker ? new AtomicLong(0) : myModificationCount;
+  private final AtomicLong myJavaStructureModificationCount = myEnableJavaStructureTracker ? new AtomicLong(0) : myModificationCount;
+
+  private final ModificationTracker myOutOfCodeBlockModificationTracker = myEnableCodeBlockTracker ? () -> getOutOfCodeBlockModificationCount() : this;
+  private final ModificationTracker myJavaStructureModificationTracker = myEnableJavaStructureTracker ? () -> getJavaStructureModificationCount() : this;
+
   private final Listener myPublisher;
 
   public PsiModificationTrackerImpl(Project project) {
@@ -114,13 +122,6 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTr
     return myOutOfCodeBlockModificationCount.get();
   }
 
-  private final ModificationTracker myOutOfCodeBlockModificationTracker = new ModificationTracker() {
-    @Override
-    public long getModificationCount() {
-      return getOutOfCodeBlockModificationCount();
-    }
-  };
-
   @NotNull
   @Override
   public ModificationTracker getOutOfCodeBlockModificationTracker() {
@@ -132,12 +133,6 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTr
     return myJavaStructureModificationCount.get();
   }
 
-  private final ModificationTracker myJavaStructureModificationTracker = new ModificationTracker() {
-    @Override
-    public long getModificationCount() {
-      return getJavaStructureModificationCount();
-    }
-  };
   @NotNull
   @Override
   public ModificationTracker getJavaStructureModificationTracker() {
