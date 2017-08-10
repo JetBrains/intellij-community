@@ -28,8 +28,7 @@ import com.intellij.execution.ui.RunContentManagerImpl;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.*;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.content.Content;
 import org.jetbrains.annotations.NotNull;
@@ -44,6 +43,8 @@ import java.util.Collections;
  */
 class RunConfigurationNode extends AbstractTreeNode<Pair<RunnerAndConfigurationSettings, Content>>
   implements DashboardRunConfigurationNode {
+
+  private UserDataHolder myUserDataHolder = new UserDataHolderBase();
 
   RunConfigurationNode(Project project, @NotNull Pair<RunnerAndConfigurationSettings, RunContentDescriptor> value) {
     super(project, Pair.create(value.first, value.second == null ? null : value.second.getAttachedContent()));
@@ -107,6 +108,17 @@ class RunConfigurationNode extends AbstractTreeNode<Pair<RunnerAndConfigurationS
   }
 
   @Nullable
+  @Override
+  public <T> T getUserData(@NotNull Key<T> key) {
+    return myUserDataHolder.getUserData(key);
+  }
+
+  @Override
+  public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
+    myUserDataHolder.putUserData(key, value);
+  }
+
+  @Nullable
   private Icon getExecutorIcon() {
     Content content = getContent();
     if (content != null) {
@@ -118,5 +130,10 @@ class RunConfigurationNode extends AbstractTreeNode<Pair<RunnerAndConfigurationS
       }
     }
     return null;
+  }
+
+  @Override
+  public String toString() {
+    return getConfigurationSettings().getName();
   }
 }
