@@ -47,7 +47,6 @@ import org.fest.swing.timing.Condition
 import org.fest.swing.timing.Pause
 import org.fest.swing.timing.Timeout
 import org.fest.swing.timing.Timeout.timeout
-import org.junit.After
 import java.awt.Component
 import java.awt.Container
 import java.io.File
@@ -244,13 +243,13 @@ open class GuiTestCase : GuiTestBase() {
 
 
   /**
-   * Finds a JComboBox component in hierarchy of context component by text of label and returns JComboBoxFixture.
+   * Finds a JComboBox component in hierarchy of context component by text of label and returns ComboBoxFixture.
    *
    * @timeout in seconds to find JComboBox component
    * @throws ComponentLookupException if component has not been found or timeout exceeded
    */
   fun <S, C : Component> ComponentFixture<S, C>.combobox(labelText: String,
-                                                         timeout: Long = defaultTimeout): JComboBoxFixture = if (target() is Container) combobox(
+                                                         timeout: Long = defaultTimeout): ComboBoxFixture = if (target() is Container) combobox(
     target() as Container, labelText, timeout)
   else throw UnsupportedOperationException(
     "Sorry, unable to find JComboBox component near label by \"${labelText}\" with ${target().toString()} as a Container")
@@ -519,7 +518,7 @@ open class GuiTestCase : GuiTestBase() {
     return ComponentWithBrowseButtonFixture(component, myRobot)
   }
 
-  private fun combobox(container: Container, text: String, timeout: Long): JComboBoxFixture {
+  private fun combobox(container: Container, text: String, timeout: Long): ComboBoxFixture {
     //wait until label has appeared
     waitUntilFound(container, Component::class.java,
                    timeout) { component ->
@@ -529,7 +528,7 @@ open class GuiTestCase : GuiTestBase() {
       && component.getComponentText() == text
     }
     val comboBox = findBoundedComponentByText(myRobot, container, text, JComboBox::class.java)
-    val comboboxFixture = JComboBoxFixture(myRobot, comboBox)
+    val comboboxFixture = ComboBoxFixture(myRobot, comboBox)
     comboboxFixture.replaceCellReader(ExtendedJComboboxCellReader())
     return comboboxFixture
   }
