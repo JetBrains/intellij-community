@@ -175,4 +175,10 @@ public class BasicJarHandler extends ZipHandler {
     //System.out.println(msg);
     LOG.trace(msg);
   }
+  
+  public static void closeOpenedZipReferences() {
+    synchronized (ourInvalidationCache) {
+      ourInvalidationCache.keySet().forEach(BasicJarHandler::dispose);
+    }
+  }
 }

@@ -28,6 +28,7 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.util.Set;
@@ -139,5 +140,10 @@ public class JarFileSystemImpl extends JarFileSystem {
   @Override
   public void refresh(boolean asynchronous) {
     VfsImplUtil.refresh(this, asynchronous);
+  }
+
+  @TestOnly
+  public void cleanupForNextTest() {
+    BasicJarHandler.closeOpenedZipReferences();
   }
 }
