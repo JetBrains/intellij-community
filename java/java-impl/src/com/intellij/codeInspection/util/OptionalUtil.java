@@ -111,10 +111,10 @@ public class OptionalUtil {
                                               PsiExpression trueExpression, PsiExpression falseExpression,
                                               @Nullable PsiType targetType, boolean useOrElseGet) {
     PsiExpression stripped = PsiUtil.skipParenthesizedExprDown(trueExpression);
+    PsiType trueType = trueExpression.getType();
     boolean trivialMap = ExpressionUtils.isReferenceTo(trueExpression, var) &&
-                         targetType != null &&
-                         trueExpression.getType() != null &&
-                         trueExpression.getType().isAssignableFrom(targetType);
+                         targetType != null && trueType != null &&
+                         (trueType instanceof PsiLambdaParameterType || trueType.isAssignableFrom(targetType));
     if (!trivialMap) {
       if (stripped instanceof PsiTypeCastExpression && ExpressionUtils.isNullLiteral(falseExpression)) {
         PsiTypeCastExpression castExpression = (PsiTypeCastExpression)stripped;
@@ -124,7 +124,7 @@ public class OptionalUtil {
           return "(" + castType.getText() + ")" + qualifier + ".orElse(null)";
         }
       }
-      if (ExpressionUtils.isLiteral(falseExpression, Boolean.FALSE) && PsiType.BOOLEAN.equals(trueExpression.getType())) {
+      if (ExpressionUtils.isLiteral(falseExpression, Boolean.FALSE) && PsiType.BOOLEAN.equals(trueType)) {
         if (ExpressionUtils.isLiteral(trueExpression, Boolean.TRUE)) {
           return qualifier + ".isPresent()";
         }
