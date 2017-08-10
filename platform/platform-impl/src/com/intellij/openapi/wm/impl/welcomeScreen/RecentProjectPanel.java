@@ -240,7 +240,7 @@ public class RecentProjectPanel extends JPanel {
   protected Dimension getPreferredScrollableViewportSize() {
     return JBUI.size(250, 400);
   }
-  
+
   protected void addMouseMotionListener() {
 
     MouseAdapter mouseAdapter = new MouseAdapter() {
@@ -470,7 +470,7 @@ public class RecentProjectPanel extends JPanel {
       String fullText = action.getProjectPath();
       if (fullText == null || fullText.length() == 0) return " ";
 
-      fullText = FileUtil.getLocationRelativeToUserHome(fullText, false);
+      fullText = FileUtil.getLocationRelativeToUserHome(PathUtil.toSystemDependentName(fullText), false);
 
       try {
         FontMetrics fm = pathLabel.getFontMetrics(pathLabel.getFont());
