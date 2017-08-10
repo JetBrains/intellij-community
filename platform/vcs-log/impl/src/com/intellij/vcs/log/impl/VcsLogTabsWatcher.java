@@ -86,6 +86,10 @@ public class VcsLogTabsWatcher implements Disposable {
 
   @Override
   public void dispose() {
+    removeListeners();
+  }
+
+  private void removeListeners() {
     myToolWindowManager.removeToolWindowManagerListener(myPostponedEventsListener);
 
     if (myToolWindow != null) {
@@ -170,7 +174,12 @@ public class VcsLogTabsWatcher implements Disposable {
 
     @Override
     public void stateChanged() {
-      selectionChanged();
+      if (myToolWindow == null) return;
+      if (myToolWindowManager.getToolWindow(TOOLWINDOW_ID) == null) {
+        removeListeners();
+      } else {
+        selectionChanged();
+      }
     }
 
     @Override
