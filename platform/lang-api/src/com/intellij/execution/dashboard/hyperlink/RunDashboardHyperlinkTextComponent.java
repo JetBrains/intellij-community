@@ -15,7 +15,7 @@
  */
 package com.intellij.execution.dashboard.hyperlink;
 
-import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 public class RunDashboardHyperlinkTextComponent extends RunDashboardHyperlinkComponentBase {
   private String myText;
   private boolean mySelected;
+  private boolean myBold;
 
   public RunDashboardHyperlinkTextComponent(@Nullable RunDashboardHyperlinkComponentBase.LinkListener listener, @NotNull String text) {
     super(listener);
@@ -45,11 +46,18 @@ public class RunDashboardHyperlinkTextComponent extends RunDashboardHyperlinkCom
     mySelected = selected;
   }
 
-  public void render(@NotNull ColoredTreeCellRenderer renderer) {
+  public void setBold(boolean bold) {
+    myBold = bold;
+  }
+
+  public void render(@NotNull SimpleColoredComponent renderer) {
     if (myText.isEmpty()) return;
 
     boolean isActive = mySelected || isAimed();
     SimpleTextAttributes linkTextAttributes = isActive ? SimpleTextAttributes.LINK_ATTRIBUTES : SimpleTextAttributes.SYNTHETIC_ATTRIBUTES;
+    if (myBold) {
+      linkTextAttributes = SimpleTextAttributes.merge(linkTextAttributes, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+    }
     renderer.append(myText, linkTextAttributes, this);
   }
 }

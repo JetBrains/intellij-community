@@ -24,7 +24,7 @@ import java.awt.event.MouseEvent;
  * @author Konstantin Aleev
  */
 public abstract class RunDashboardHyperlinkComponentBase implements RunDashboardHyperlinkComponent {
-  @Nullable private final LinkListener myLinkListener;
+  @Nullable private LinkListener myLinkListener;
   private boolean myAimed;
 
   public RunDashboardHyperlinkComponentBase(@Nullable LinkListener linkListener) {
@@ -36,6 +36,10 @@ public abstract class RunDashboardHyperlinkComponentBase implements RunDashboard
     if (myLinkListener != null) {
       myLinkListener.onClick(event);
     }
+  }
+
+  public void setLinkListener(@Nullable LinkListener linkListener) {
+    myLinkListener = linkListener;
   }
 
   @Override
