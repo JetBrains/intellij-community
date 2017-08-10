@@ -78,10 +78,10 @@ class PyCharmCommunityProperties extends PyCharmPropertiesBase {
     return new LinuxDistributionCustomizer() {
       {
         iconPngPath = "$projectHome/python/resources/PyCharmCore128.png"
-        //snapName = "pycharm-community"
-        //snapDescription =
-        //  "Python IDE for professional developers. Save time while PyCharm takes care of the routine. "
-        //  "Focus on bigger things and embrace the keyboard-centric approach to get the most of PyCharm’s many productivity features."
+        snapName = "pycharm-community"
+        snapDescription =
+          "Python IDE for professional developers. Save time while PyCharm takes care of the routine. "
+          "Focus on bigger things and embrace the keyboard-centric approach to get the most of PyCharm’s many productivity features."
       }
 
       @Override
