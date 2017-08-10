@@ -46,12 +46,10 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchDefaultExecutor;
 import com.intellij.openapi.vcs.changes.patch.PatchFileType;
 import com.intellij.openapi.vcs.changes.patch.PatchNameChecker;
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
-import com.intellij.openapi.vcs.changes.ui.RollbackChangesDialog;
-import com.intellij.openapi.vcs.changes.ui.RollbackWorker;
-import com.intellij.openapi.vcs.changes.ui.ShelvedChangeListDragBean;
+import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.project.ProjectKt;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
@@ -739,23 +737,34 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
 
   @CalledInAwt
   public void shelveSilentlyUnderProgress(@NotNull List<Change> changes) {
+    final List<ShelvedChangeList> result = ContainerUtil.newArrayList();
     final boolean completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(
-      () -> shelveChangesInSeparatedLists(changes),
+      () -> result.addAll(shelveChangesInSeparatedLists(changes)),
       VcsBundle.getString("shelve.changes.progress.title"), true, myProject);
 
     if (completed) {
       VcsNotifier.getInstance(myProject).notifySuccess("Changes shelved successfully");
+      if (isShelfContentActive() && result.size() == 1) {
+        RenameShelvedChangeListAction.suggestToRenameShelvedList(myProject, result.get(0));
+      }
     }
   }
 
-  public void shelveChangesInSeparatedLists(@NotNull Collection<Change> changes) {
+  private boolean isShelfContentActive() {
+    return ToolWindowManager.getInstance(myProject).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID).isVisible() &&
+           ((ChangesViewContentManager)ChangesViewContentManager.getInstance(myProject)).isContentSelected(ChangesViewContentManager.SHELF);
+  }
+
+  @NotNull
+  public List<ShelvedChangeList> shelveChangesInSeparatedLists(@NotNull Collection<Change> changes) {
     List<String> failedChangeLists = ContainerUtil.newArrayList();
+    List<ShelvedChangeList> result = ContainerUtil.newArrayList();
     List<LocalChangeList> changeListsCopy = ChangeListManager.getInstance(myProject).getChangeListsCopy();
     for (LocalChangeList list : changeListsCopy) {
       Collection<Change> changesForChangelist = ContainerUtil.intersection(list.getChanges(), changes);
       if (changesForChangelist.isEmpty()) continue;
       try {
-        shelveChanges(changesForChangelist, list.getName(), true);
+        result.add(shelveChanges(changesForChangelist, list.getName(), true));
       }
       catch (Exception e) {
         LOG.warn(e);
@@ -767,6 +776,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
         .format("Shelving changes for %s [%s] failed", StringUtil.pluralize("changelist", failedChangeLists.size()),
                 StringUtil.join(failedChangeLists, ",")));
     }
+    return result;
   }
 
   @CalledInAwt
