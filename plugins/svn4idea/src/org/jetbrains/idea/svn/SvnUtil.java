@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -879,7 +880,13 @@ public class SvnUtil {
 
   private static class SqLiteJdbcWorkingCopyFormatOperation
     implements FileUtilRt.RepeatableIOOperation<WorkingCopyFormat, RuntimeException> {
+    private static final String SQLITE_JDBC_TEMP_DIR_PROPERTY = "org.sqlite.tmpdir";
+
     @NotNull private final File myDbFile;
+
+    static {
+      ensureTempFolder();
+    }
 
     public SqLiteJdbcWorkingCopyFormatOperation(@NotNull File dbFile) {
       myDbFile = dbFile;
@@ -913,6 +920,12 @@ public class SvnUtil {
       WorkingCopyFormat format = WorkingCopyFormat.getInstance(userVersion);
 
       return !WorkingCopyFormat.UNKNOWN.equals(format) ? format : null;
+    }
+
+    private static void ensureTempFolder() {
+      if (System.getProperty(SQLITE_JDBC_TEMP_DIR_PROPERTY) == null) {
+        System.setProperty(SQLITE_JDBC_TEMP_DIR_PROPERTY, PathManager.getTempPath());
+      }
     }
 
     private static void close(@Nullable Connection connection) {
