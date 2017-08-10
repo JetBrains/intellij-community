@@ -15,12 +15,10 @@
  */
 package com.jetbrains.python.refactoring.move.moduleMembers;
 
+import com.google.common.collect.Sets;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.ui.UsageViewDescriptorAdapter;
@@ -33,11 +31,13 @@ import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
+import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import com.jetbrains.python.refactoring.move.PyMoveRefactoringUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 /**
@@ -52,12 +52,14 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
   public static final String REFACTORING_NAME = PyBundle.message("refactoring.move.module.members");
 
   private final List<SmartPsiElementPointer<PsiNamedElement>> myElements;
+  private final LinkedHashSet<PsiFile> mySourceFiles;
   private final String myDestination;
 
   public PyMoveModuleMembersProcessor(@NotNull PsiNamedElement[] elements, @NotNull String destination) {
     super(elements[0].getProject());
     final SmartPointerManager manager = SmartPointerManager.getInstance(myProject);
     myElements = ContainerUtil.map(elements, manager::createSmartPsiElementPointer);
+    mySourceFiles = new LinkedHashSet<>(ContainerUtil.map(elements, PsiElement::getContainingFile));
     myDestination = destination;
   }
 
@@ -98,6 +100,7 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
     CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(() -> {
       final PyFile destination = PyUtil.getOrCreateFile(myDestination, myProject);
       CommonRefactoringUtil.checkReadOnlyStatus(myProject, destination);
+      final LinkedHashSet<PsiFile> optimizeImportsTargets = Sets.newLinkedHashSet(mySourceFiles);
       for (final SmartPsiElementPointer<PsiNamedElement> pointer : myElements) {
         // TODO: Check for resulting circular imports
         final PsiNamedElement e = pointer.getElement();
@@ -130,7 +133,12 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
         if (usedFromOutside) {
           PyMoveRefactoringUtil.checkValidImportableFile(e, destination.getVirtualFile());
         }
-        new PyMoveSymbolProcessor(e, destination, usageInfos, myElements).moveElement();
+        final PyMoveSymbolResult results = new PyMoveSymbolProcessor(e, destination, usageInfos, myElements).moveElement();
+        optimizeImportsTargets.addAll(results.getOptimizeImportsTargets());
+      }
+
+      for (PsiFile file : optimizeImportsTargets) {
+        PyClassRefactoringUtil.optimizeImports(file);
       }
     }), REFACTORING_NAME, null);
   }
