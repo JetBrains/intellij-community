@@ -81,6 +81,13 @@ def handle_breakpoint_expression(breakpoint, info, new_frame):
         if val is not None:
             info.pydev_message = str(val)
 
+external_settings = -1
+# 1 if we must stop on next frame, 0 otherwise
+
+def set_external(value):
+    global external_settings
+    external_settings = value
+    print('external_settings set to ' + str(external_settings))
 
 #=======================================================================================================================
 # PyDBFrame
@@ -392,9 +399,19 @@ class PyDBFrame:
     #     cdef bint has_breakpoint_in_frame;
     # ELSE
     def trace_dispatch(self, frame, event, arg):
+        print('in trace_dispatch ' + str(frame) + ' ' + str(event) + ' ' + str(arg))
     # ENDIF
 
         main_debugger, filename, info, thread, frame_skips_cache, frame_cache_key = self._args
+
+        global external_settings
+        in_forced_mode = False
+        if external_settings == 1:
+            print('external_settings is 1, setting pydev_step_cmd to 107 (STEP_INTO)')
+            info.pydev_step_cmd = 107
+            in_forced_mode = True
+            external_settings = 0
+
         # print('frame trace_dispatch', frame.f_lineno, frame.f_code.co_name, event, info.pydev_step_cmd)
         try:
             info.is_tracing = True
@@ -480,6 +497,8 @@ class PyDBFrame:
                 # also, after we hit a breakpoint and go to some other debugging state, we have to force the set trace anyway,
                 # so, that's why the additional checks are there.
                 if not breakpoints_for_file:
+                    breakpoints_for_file = {} # otherwise it will be None and everything will blow up
+                if not breakpoints_for_file and len(breakpoints_for_file) != 0:
                     if can_skip:
                         if has_exception_breakpoints:
                             return self.trace_exception
@@ -516,6 +535,7 @@ class PyDBFrame:
                                 has_breakpoint_in_frame = True
                                 break
 
+                        has_breakpoint_in_frame = True
                         # Cache the value (1 or 0 or -1 for default because of cython).
                         if has_breakpoint_in_frame:
                             frame_skips_cache[frame_cache_key] = 1
