@@ -21,8 +21,11 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.ui.ColoredTreeCellRenderer;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
 
 /**
  * In order to show run configurations of the specific configuration type in Run Dashboard tool window,
@@ -50,6 +53,12 @@ public abstract class RunDashboardContributor {
   }
 
   public void updatePresentation(@NotNull PresentationData presentation, @NotNull DashboardNode node) {
+  }
+
+  public boolean customizeCellRenderer(@NotNull ColoredTreeCellRenderer cellRenderer, @NotNull JLabel nodeLabel,
+                                       @NotNull DashboardNode node,
+                                       boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+    return false;
   }
 
   /**

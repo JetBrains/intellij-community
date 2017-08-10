@@ -44,7 +44,6 @@ import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.content.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.ui.EditableModel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,7 +52,6 @@ import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.*;
@@ -82,7 +80,7 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
   private final JBPanelWithEmptyText myMessagePanel;
   private final JComponent myToolbar;
 
-  private final DefaultTreeModel myTreeModel;
+  private final RunDashboardTreeModel myTreeModel;
   private AbstractTreeBuilder myBuilder;
   private RunDashboardAnimator myAnimator;
   private AbstractTreeNode<?> myLastSelection;
@@ -109,10 +107,12 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
     myTree.setRootVisible(false);
 
     myTree.setShowsRootHandles(true);
-    myTree.setCellRenderer(new NodeRenderer());
     myTree.setLineStyleAngled();
 
-    RowsDnDSupport.install(myTree, (EditableModel)myTreeModel);
+    myTree.setCellRenderer(new RunDashboardTreeCellRenderer());
+    RunDashboardTreeMouseListener mouseListener = new RunDashboardTreeMouseListener(myTree);
+    mouseListener.installOn(myTree);
+    RowsDnDSupport.install(myTree, myTreeModel);
 
     myToolbar = createToolbar();
     add(myToolbar, BorderLayout.WEST);
