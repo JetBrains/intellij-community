@@ -152,7 +152,7 @@ public class DirectoryIndexForExcludePatternsTest extends DirectoryIndexTestCase
     assertIndexableContent(Collections.singletonList(java), Collections.singletonList(txt2));
   }
 
-  public void testExcludeDirectoryFromLibraryThatIsUnderContentRoot() throws IOException {
+  public void testExcludeDirectoryFromLibraryThatIsUnderContentRoot() {
     VirtualFile myLibraryRoot = createChildDirectory(myContentRoot, "library");
     VirtualFile dir = createChildDirectory(myLibraryRoot, "dir");
     VirtualFile txt1 = createChildData(myLibraryRoot, "a.txt");
@@ -181,7 +181,7 @@ public class DirectoryIndexForExcludePatternsTest extends DirectoryIndexTestCase
     assertFalse(myIndex.getInfoForFile(java).isInProject(java));
   }
 
-  public void testExcludeLibraryRootThatIsUnderContentRoot() throws IOException {
+  public void testExcludeLibraryRootThatIsUnderContentRoot() {
     VirtualFile myLibraryRoot = createChildDirectory(myContentRoot, "library");
     VirtualFile txt = createChildData(myLibraryRoot, "a.txt");
     VirtualFile java = createChildData(myLibraryRoot, "A.java");

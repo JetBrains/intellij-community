@@ -30,47 +30,47 @@ public class Java8RegressionTest extends LightDaemonAnalyzerTestCase {
     enableInspectionTool(new UnusedDeclarationInspection());
   }
 
-  public void testIDEA136856() throws Exception {
+  public void testIDEA136856() {
     doTest();
   }
 
-  public void testIDEA136887() throws Exception {
+  public void testIDEA136887() {
     doTest();
   }
 
-  public void testIDEA136840() throws Exception {
+  public void testIDEA136840() {
     doTest();
   }
 
-  public void testIDEA137277() throws Exception {
+  public void testIDEA137277() {
     doTest();
   }
 
-  public void testIDEA137694() throws Exception {
+  public void testIDEA137694() {
     doTest();
   }
 
-  public void testIDEA137668() throws Exception {
+  public void testIDEA137668() {
     doTest();
   }
 
-  public void testIDEA137795() throws Exception {
+  public void testIDEA137795() {
     doTest();
   }
 
-  public void testIDEA137893() throws Exception {
+  public void testIDEA137893() {
     doTest();
   }
 
-  public void testIDEA138696() throws Exception {
+  public void testIDEA138696() {
     doTest();
   }
 
-  public void testIDEA131282() throws Exception {
+  public void testIDEA131282() {
     doTest(false);
   }
 
-  public void testIDEA134945() throws Exception {
+  public void testIDEA134945() {
     doTest(false);
   }
 

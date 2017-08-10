@@ -28,7 +28,7 @@ public class ReplaceWithObjectsEqualsTest extends LightQuickFixParameterizedTest
     return new LocalInspectionTool[]{new DataFlowInspection()};
   }
 
-  public void test() throws Exception {
+  public void test() {
      doAllTests();
    }
 

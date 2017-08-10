@@ -23,27 +23,27 @@ import org.jetbrains.annotations.NonNls;
 public class NewInferenceCollectingAdditionalConstraintsTest extends LightDaemonAnalyzerTestCase {
   @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/additionalConstraints";
 
-  public void testInferenceFromNestedIn2LambdasCall() throws Exception {
+  public void testInferenceFromNestedIn2LambdasCall() {
     doTest();
   }
 
-  public void testStopCollectingAdditionalConstraintsWhenLambdaReturnTypeIsProper() throws Exception {
+  public void testStopCollectingAdditionalConstraintsWhenLambdaReturnTypeIsProper() {
     doTest();
   }
 
-  public void testDeepLambdaReturnExpressionsWithProperTargetType() throws Exception {
+  public void testDeepLambdaReturnExpressionsWithProperTargetType() {
     doTest();
   }
 
-  public void testIncompleteResolveDuringNestedChecks() throws Exception {
+  public void testIncompleteResolveDuringNestedChecks() {
     doTest();
   }
 
-  public void testNestedLambdaExpressionsWithTopStandaloneMethod() throws Exception {
+  public void testNestedLambdaExpressionsWithTopStandaloneMethod() {
     doTest();
   }
 
-  public void testNestedLambdaExpressionsChain() throws Exception {
+  public void testNestedLambdaExpressionsChain() {
     doTest();
   }
 

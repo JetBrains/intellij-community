@@ -43,7 +43,7 @@ public class Java9CollectionFactoryInspectionTest extends LightQuickFixParameter
     return IdeaTestUtil.getMockJdk9();
   }
 
-  public void test() throws Exception {
+  public void test() {
     doAllTests();
   }
 

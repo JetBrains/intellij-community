@@ -21,15 +21,15 @@ import org.jetbrains.annotations.NonNls;
 public class LambdaInferenceTest extends LightDaemonAnalyzerTestCase {
   @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/inference";
 
-  public void testFunctionalInterfaceShouldHaveExactlyOneMethod() throws Exception {
+  public void testFunctionalInterfaceShouldHaveExactlyOneMethod() {
     doTest();
   }
   
-  public void testSimpleCyclicInference() throws Exception {
+  public void testSimpleCyclicInference() {
     doTest();
   }
 
-  private void doTest() throws Exception {
+  private void doTest() {
     doTest(BASE_PATH + "/" + getTestName(false) + ".java", false, false);
   }
 }

@@ -40,7 +40,7 @@ public class FindUsages15Test extends PsiTestCase{
     PsiTestUtil.createTestProjectStructure(myProject, myModule, root, myFilesToDelete);
   }
 
-  public void testEnumConstructor() throws Exception {
+  public void testEnumConstructor() {
     PsiClass enumClass = myJavaFacade.findClass("pack.OurEnum", GlobalSearchScope.moduleScope(myModule));
     assertNotNull(enumClass);
     assertTrue(enumClass.isEnum());
@@ -57,7 +57,7 @@ public class FindUsages15Test extends PsiTestCase{
     assertTrue(references1[0].getElement() instanceof PsiEnumConstant);
   }
 
-  public void testGenericMethodOverriderUsages () throws Exception {
+  public void testGenericMethodOverriderUsages () {
     final PsiClass baseClass = myJavaFacade.findClass("pack.GenericClass", GlobalSearchScope.moduleScope(myModule));
     assertNotNull(baseClass);
     final PsiMethod method = baseClass.getMethods()[0];
@@ -69,7 +69,7 @@ public class FindUsages15Test extends PsiTestCase{
     assertEquals(refClass.getName(), "GenericClassDerived");
   }
 
-  public void testFindRawOverriddenUsages () throws Exception {
+  public void testFindRawOverriddenUsages () {
     final PsiClass baseClass = myJavaFacade.findClass("pack.Base", GlobalSearchScope.moduleScope(myModule));
     assertNotNull(baseClass);
     final PsiMethod method = baseClass.getMethods()[0];
@@ -77,7 +77,7 @@ public class FindUsages15Test extends PsiTestCase{
       OverridingMethodsSearch.search(method, GlobalSearchScope.moduleScope(myModule), true).toArray(PsiMethod.EMPTY_ARRAY);
     assertEquals(1, overriders.length);
   }
-  public void testGenericOverride() throws Exception {
+  public void testGenericOverride() {
     final PsiClass baseClass = myJavaFacade.findClass("pack.Gen", GlobalSearchScope.moduleScope(myModule));
     assertNotNull(baseClass);
     final PsiMethod method = baseClass.getMethods()[0];

@@ -28,7 +28,7 @@ public class InplaceIntroduceFieldTest extends AbstractJavaInplaceIntroduceTest 
 
   private static final String BASE_PATH = "/refactoring/inplaceIntroduceField/";
 
-  public void testAnchor() throws Exception {
+  public void testAnchor() {
 
     doTest(new Pass<AbstractInplaceIntroducer>() {
       @Override
@@ -37,7 +37,7 @@ public class InplaceIntroduceFieldTest extends AbstractJavaInplaceIntroduceTest 
     });
   }
 
-  public void testAnchor1() throws Exception {
+  public void testAnchor1() {
 
     doTest(new Pass<AbstractInplaceIntroducer>() {
       @Override
@@ -46,7 +46,7 @@ public class InplaceIntroduceFieldTest extends AbstractJavaInplaceIntroduceTest 
     });
   }
 
-  public void testBeforeAssignment() throws Exception {
+  public void testBeforeAssignment() {
 
     doTest(new Pass<AbstractInplaceIntroducer>() {
       @Override
@@ -55,7 +55,7 @@ public class InplaceIntroduceFieldTest extends AbstractJavaInplaceIntroduceTest 
     });
   } 
 
-  public void testTemplateAdjustment() throws Exception {
+  public void testTemplateAdjustment() {
 
     doTest(new Pass<AbstractInplaceIntroducer>() {
       @Override
@@ -64,17 +64,7 @@ public class InplaceIntroduceFieldTest extends AbstractJavaInplaceIntroduceTest 
     });
   }
 
-  public void testBeforeAssignmentReplaceAll() throws Exception {
-
-    doTest(new Pass<AbstractInplaceIntroducer>() {
-      @Override
-      public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
-        inplaceIntroduceFieldPopup.setReplaceAllOccurrences(true);
-      }
-    });
-  }
-
-  public void testBeforeAssignmentReplaceAllCall() throws Exception {
+  public void testBeforeAssignmentReplaceAll() {
 
     doTest(new Pass<AbstractInplaceIntroducer>() {
       @Override
@@ -84,7 +74,7 @@ public class InplaceIntroduceFieldTest extends AbstractJavaInplaceIntroduceTest 
     });
   }
 
-  public void testReplaceAll() throws Exception {
+  public void testBeforeAssignmentReplaceAllCall() {
 
     doTest(new Pass<AbstractInplaceIntroducer>() {
       @Override
@@ -94,7 +84,8 @@ public class InplaceIntroduceFieldTest extends AbstractJavaInplaceIntroduceTest 
     });
   }
 
-  public void testRestoreNewExpression() throws Exception {
+  public void testReplaceAll() {
+
     doTest(new Pass<AbstractInplaceIntroducer>() {
       @Override
       public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
@@ -103,7 +94,16 @@ public class InplaceIntroduceFieldTest extends AbstractJavaInplaceIntroduceTest 
     });
   }
 
-  public void testLocalResource() throws Exception {
+  public void testRestoreNewExpression() {
+    doTest(new Pass<AbstractInplaceIntroducer>() {
+      @Override
+      public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
+        inplaceIntroduceFieldPopup.setReplaceAllOccurrences(true);
+      }
+    });
+  }
+
+  public void testLocalResource() {
     doTest(new Pass<AbstractInplaceIntroducer>() {
       @Override
       public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
@@ -112,7 +112,7 @@ public class InplaceIntroduceFieldTest extends AbstractJavaInplaceIntroduceTest 
     });
   }
   
-  public void testNormalizeDeclarationWithDisabledFormatting() throws Exception {
+  public void testNormalizeDeclarationWithDisabledFormatting() {
     doTest(new Pass<AbstractInplaceIntroducer>() {
       @Override
       public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
@@ -120,15 +120,15 @@ public class InplaceIntroduceFieldTest extends AbstractJavaInplaceIntroduceTest 
     });
   }
 
-  public void testEscapePosition() throws Exception {
+  public void testEscapePosition() {
     doTestEscape();
   }
 
-  public void testEscapePositionOnLocal() throws Exception {
+  public void testEscapePositionOnLocal() {
     doTestEscape();
   }
 
-  public void testExtractNearAnotherDeclaration() throws Exception {
+  public void testExtractNearAnotherDeclaration() {
     doTest(new Pass<AbstractInplaceIntroducer>() {
       @Override
       public void pass(AbstractInplaceIntroducer introducer) {}

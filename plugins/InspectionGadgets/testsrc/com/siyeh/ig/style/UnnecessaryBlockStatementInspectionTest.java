@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class UnnecessaryBlockStatementInspectionTest extends LightInspectionTestCase {
 
-  public void testUnnecessaryBlockStatement() throws Exception {
+  public void testUnnecessaryBlockStatement() {
     doTest();
   }
 

@@ -21,87 +21,87 @@ import org.jetbrains.annotations.NonNls;
 public class Diamond8HighlightingTest extends LightDaemonAnalyzerTestCase {
   @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/diamond";
 
-  public void testAvoidClassRefCachingDuringInference() throws Exception {
+  public void testAvoidClassRefCachingDuringInference() {
     doTest();
   }
 
-  public void testIDEA97294() throws Exception {
+  public void testIDEA97294() {
     doTest();
   }
 
-  public void testOuterClass() throws Exception {
+  public void testOuterClass() {
     doTest();
   }
 
-  public void testVarargs() throws Exception {
+  public void testVarargs() {
     doTest();
   }
 
-  public void testOverloadOuterCall() throws Exception {
+  public void testOverloadOuterCall() {
     doTest();
   }
 
-  public void testWithConstructorRefInside() throws Exception {
+  public void testWithConstructorRefInside() {
     doTest();
   }
   
-  public void testIDEA140686() throws Exception {
+  public void testIDEA140686() {
     doTest();
   }
 
-  public void testDiagnosticMessageWhenConstructorIsUnresolved() throws Exception {
+  public void testDiagnosticMessageWhenConstructorIsUnresolved() {
     doTest();
   }
 
-  public void testNullTypesInDiamondsInference() throws Exception {
+  public void testNullTypesInDiamondsInference() {
     doTest();
   }
 
-  public void testNoRawTypeInferenceWhenNewExpressionHasSpecifiedType() throws Exception {
+  public void testNoRawTypeInferenceWhenNewExpressionHasSpecifiedType() {
     doTest();
   }
 
-  public void testEraseTypeForNewExpressionWithDiamondsIfUncheckedConversionWasPerformedDuringApplicabilityCheck() throws Exception {
+  public void testEraseTypeForNewExpressionWithDiamondsIfUncheckedConversionWasPerformedDuringApplicabilityCheck() {
     doTest();
   }
 
-  public void testEnsureApplicabilityForDiamondCallIsCheckedBasedOnStaticFactoryApplicability() throws Exception {
+  public void testEnsureApplicabilityForDiamondCallIsCheckedBasedOnStaticFactoryApplicability() {
     doTest();
   }
 
-  public void testConflictingNamesInConstructorAndClassTypeParameters() throws Exception {
+  public void testConflictingNamesInConstructorAndClassTypeParameters() {
     doTest();
   }
 
-  public void testParameterizedConstructorWithDiamonds() throws Exception {
+  public void testParameterizedConstructorWithDiamonds() {
     doTest();
   }
 
-  public void testRawArgumentInsideNewExpression() throws Exception {
+  public void testRawArgumentInsideNewExpression() {
     doTest();
   }
 
-  public void testDiamondConstructorWithTypeParameters() throws Exception {
+  public void testDiamondConstructorWithTypeParameters() {
     doTest();
   }
 
-  public void testRawTypePassedToDiamond() throws Exception {
+  public void testRawTypePassedToDiamond() {
     doTest();
   }
 
-  public void testExceptionsThrownFromConstructorShouldBePreserved() throws Exception {
+  public void testExceptionsThrownFromConstructorShouldBePreserved() {
     doTest();
   }
 
-  public void testDiamondInsideOverloadedThisReference() throws Exception {
+  public void testDiamondInsideOverloadedThisReference() {
     doTest();
   }
 
-  public void testDetectStaticFactoryForTopLevelCall() throws Exception {
+  public void testDetectStaticFactoryForTopLevelCall() {
     doTest();
   }
 
-  private void doTest() throws Exception {
+  private void doTest() {
     doTest(BASE_PATH + "/" + getTestName(false) + ".java", false, false);
   }
 }

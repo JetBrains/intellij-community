@@ -30,14 +30,14 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/smartType/";
   }
 
-  public void testParenAfterCast1() throws Exception {
+  public void testParenAfterCast1() {
     String path = "/parenAfterCast";
 
     configureByFile(path + "/before1.java");
     checkResultByFile(path + "/after1.java");
   }
 
-  public void testParenAfterCast2() throws Exception {
+  public void testParenAfterCast2() {
     String path = "/parenAfterCast";
 
     configureByFile(path + "/before2.java");
@@ -45,56 +45,56 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   }
 
 
-  public void testParenAfterCast3() throws Exception {
+  public void testParenAfterCast3() {
     String path = "/parenAfterCast";
 
     configureByFile(path + "/before3.java");
     checkResultByFile(path + "/after3.java");
   }
 
-  public void testParenAfterCall1() throws Exception {
+  public void testParenAfterCall1() {
     String path = "/parenAfterCall";
 
     configureByFile(path + "/before1.java");
     checkResultByFile(path + "/after1.java");
   }
 
-  public void testParenAfterCall2() throws Exception {
+  public void testParenAfterCall2() {
     String path = "/parenAfterCall";
 
     configureByFile(path + "/before2.java");
     checkResultByFile(path + "/after2.java");
   }
 
-  public void testParenAfterCall3() throws Exception {
+  public void testParenAfterCall3() {
     String path = "/parenAfterCall";
 
     configureByFile(path + "/before3.java");
     checkResultByFile(path + "/after3.java");
   }
 
-  public void testParenAfterCall4() throws Exception {
+  public void testParenAfterCall4() {
     String path = "/parenAfterCall";
 
     configureByFile(path + "/before4.java");
     checkResultByFile(path + "/after4.java");
   }
 
-  public void testParenAfterCall5() throws Exception {
+  public void testParenAfterCall5() {
     String path = "/parenAfterCall";
 
     configureByFile(path + "/before5.java");
     checkResultByFile(path + "/after5.java");
   }
 
-  public void testParenAfterCall6() throws Exception {
+  public void testParenAfterCall6() {
     String path = "/parenAfterCall";
 
     configureByFile(path + "/before6.java");
     checkResultByFile(path + "/after6.java");
   }
   
-  public void testParenAfterCall1_SpaceWithinMethodCallParens() throws Exception {
+  public void testParenAfterCall1_SpaceWithinMethodCallParens() {
     String path = "/parenAfterCall";
 
     myFixture.configureByFile(path + "/before1.java");
@@ -103,28 +103,28 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     checkResultByFile(path + "/after1_space.java");
   }
 
-  public void testParenAfterIf1() throws Exception {
+  public void testParenAfterIf1() {
     String path = "/parenAfterIf";
 
     configureByFile(path + "/before1.java");
     checkResultByFile(path + "/after1.java");
   }
 
-  public void testParenAfterIf2() throws Exception {
+  public void testParenAfterIf2() {
     String path = "/parenAfterIf";
 
     configureByFile(path + "/before2.java");
     checkResultByFile(path + "/after2.java");
   }
 
-  public void testForceLookupForAbstractClasses() throws Exception {
+  public void testForceLookupForAbstractClasses() {
     String path = "/afterNew";
 
     configureByFile(path + "/before9.java");
     checkResultByFile(path + "/after9.java");
   }
 
-  public void testAfterNew1() throws Exception {
+  public void testAfterNew1() {
     String path = "/afterNew";
 
     configureByFile(path + "/before1.java");
@@ -132,7 +132,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     checkResultByFile(path + "/after1.java");
   }
 
-  public void testAfterNew2() throws Exception {
+  public void testAfterNew2() {
     String path = "/afterNew";
 
     configureByFile(path + "/before2.java");
@@ -140,7 +140,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     checkResultByFile(path + "/after2.java");
   }
 
-  public void testAfterNew3() throws Exception {
+  public void testAfterNew3() {
     String path = "/afterNew";
 
     configureByFile(path + "/before3.java");
@@ -148,7 +148,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     checkResultByFile(path + "/after3.java");
   }
 
-  public void testAfterNew4() throws Exception {
+  public void testAfterNew4() {
     String path = "/afterNew";
 
     configureByFile(path + "/before4.java");
@@ -156,7 +156,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     checkResultByFile(path + "/after4.java");
   }
 
-  public void testAfterNew5() throws Exception {
+  public void testAfterNew5() {
     String path = "/afterNew";
 
     configureByFile(path + "/before5.java");
@@ -164,7 +164,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     checkResultByFile(path + "/after5.java");
   }
 
-  public void testAfterNew6() throws Exception {
+  public void testAfterNew6() {
     String path = "/afterNew";
 
     configureByFile(path + "/before6.java");
@@ -172,7 +172,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     checkResultByFile(path + "/after6.java");
   }
 
-  public void testAfterNew7() throws Exception {
+  public void testAfterNew7() {
     String path = "/afterNew";
 
     configureByFile(path + "/before7.java");
@@ -180,7 +180,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     checkResultByFile(path + "/after7.java");
   }
 
-  public void testAfterNew8() throws Exception {
+  public void testAfterNew8() {
     String path = "/afterNew";
 
     configureByFile(path + "/before8.java");
@@ -188,7 +188,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     checkResultByFile(path + "/after8.java");
   }
 
-  public void testAfterNew9() throws Exception {
+  public void testAfterNew9() {
     String path = "/afterNew";
 
     configureByFile(path + "/before10.java");
@@ -196,7 +196,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     checkResultByFile(path + "/after10.java");
   }
 
-  public void testAfterNew10() throws Exception {
+  public void testAfterNew10() {
     String path = "/afterNew";
 
     configureByFile(path + "/before12.java");
@@ -204,7 +204,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     checkResultByFile(path + "/after12.java");
   }
 
-  public void testAfterNew11() throws Exception {
+  public void testAfterNew11() {
     String path = "/afterNew";
 
     configureByFile(path + "/before13.java");
@@ -212,7 +212,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     checkResultByFile(path + "/after13.java");
   }
 
-  public void testAfterThrowNew1() throws Exception {
+  public void testAfterThrowNew1() {
     String path = "/afterNew";
 
     configureByFile(path + "/before14.java");
@@ -220,7 +220,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     checkResultByFile(path + "/after14.java");
   }
 
-  public void testAfterThrowNew2() throws Exception {
+  public void testAfterThrowNew2() {
     String path = "/afterNew";
 
     configureByFile(path + "/before15.java");
@@ -228,7 +228,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     checkResultByFile(path + "/after15.java");
   }
 
-  public void testAfterThrowNew3() throws Exception {
+  public void testAfterThrowNew3() {
     String path = "/afterNew";
 
     configureByFile(path + "/before16.java");
@@ -236,10 +236,10 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     checkResultByFile(path + "/after16.java");
   }
 
-  public void testCastInThrow() throws Exception { doTest(); }
-  public void testNonExistentGenericAfterNew() throws Exception { doTest('\n'); }
+  public void testCastInThrow() { doTest(); }
+  public void testNonExistentGenericAfterNew() { doTest('\n'); }
 
-  public void testParenAfterNewWithinInnerExpr() throws Exception {
+  public void testParenAfterNewWithinInnerExpr() {
     String path = "/afterNew";
 
     configureByFile(path + "/LastArgInInnerNewBefore.java");
@@ -256,69 +256,69 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     checkResultByFile(path + "/LastArgInInnerNewAfter4.java");
   }
 
-  public void testReturn1() throws Exception{
+  public void testReturn1() {
     String path = "/return";
     configureByFile(path + "/before1.java");
     checkResultByFile(path + "/after1.java");
   }
 
-  public void testReturn2() throws Exception{
+  public void testReturn2() {
     String path = "/return";
 
     configureByFile(path + "/before2.java");
     checkResultByFile(path + "/after2.java");
   }
 
-  public void testReturn3() throws Exception{
+  public void testReturn3() {
     String path = "/return";
 
     configureByFile(path + "/before3.java");
     checkResultByFile(path + "/after3.java");
   }
 
-  public void testGenerics1() throws Exception {
+  public void testGenerics1() {
     String path = "/generics";
 
     configureByFile(path + "/before1.java");
     checkResultByFile(path + "/after1.java");
   }
 
-  public void testGenerics2() throws Exception {
+  public void testGenerics2() {
     String path = "/generics";
 
     configureByFile(path + "/before2.java");
     checkResultByFile(path + "/after2.java");
   }
 
-  public void testGenerics3() throws Exception {
+  public void testGenerics3() {
     String path = "/generics";
 
     configureByFile(path + "/before3.java");
     checkResultByFile(path + "/after3.java");
   }
 
-  public void testGenerics4() throws Exception {
+  public void testGenerics4() {
     String path = "/generics";
 
     configureByFile(path + "/before4.java");
     checkResultByFile(path + "/after4.java");
   }
 
-  public void testGenerics5() throws Exception {
+  public void testGenerics5() {
     String path = "/generics";
 
     configureByFile(path + "/before5.java");
     checkResultByFile(path + "/after5.java");
   }
 
-  public void testAfterInstanceOf1() throws Exception {
+  public void testAfterInstanceOf1() {
     String path = "/afterInstanceOf";
 
     configureByFile(path + "/before1.java");
     checkResultByFile(path + "/after1.java");
   }
 
-  public void testAfterInstanceOf2() throws Exception {
+  public void testAfterInstanceOf2() {
     String path = "/afterInstanceOf";
 
     configureByFile(path + "/before2.java");
@@ -329,28 +329,28 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   public void testInsideCatchFinal() { doTest(); }
   public void testInsideCatchWithoutThrow() { doTest(); }
 
-  public void testGenerics6() throws Exception {
+  public void testGenerics6() {
     String path = "/generics";
 
     configureByFile(path + "/before6.java");
     checkResultByFile(path + "/after6.java");
   }
 
-  public void testWildcardNew1() throws Exception {
+  public void testWildcardNew1() {
     String path = "/generics";
 
     configureByFile(path + "/before7.java");
     checkResultByFile(path + "/after7.java");
   }
 
-  public void testWildcardNew2() throws Exception {
+  public void testWildcardNew2() {
     String path = "/generics";
 
     configureByFile(path + "/before8.java");
     checkResultByFile(path + "/after8.java");
   }
 
-  public void testWildcardEliminated() throws Exception {
+  public void testWildcardEliminated() {
     String path = "/generics";
 
     configureByFile(path + "/before9.java");
@@ -358,128 +358,128 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     checkResultByFile(path + "/after9.java");
   }
 
-  public void testBug1() throws Exception { doTest(); }
+  public void testBug1() { doTest(); }
 
-  public void testQualifiedThis() throws Exception { doTest(); }
+  public void testQualifiedThis() { doTest(); }
 
-  public void testBug2() throws Exception {
+  public void testBug2() {
     configureByFile("/Bug2.java");
   }
 
 
-  public void testSillyAssignment1() throws Exception {
+  public void testSillyAssignment1() {
     configureByFile("/Silly1.java");
     checkResultByFile("/Silly1.java");
   }
 
-  public void testVarargs1() throws Exception { doTest('\n'); }
+  public void testVarargs1() { doTest('\n'); }
 
-  public void testEnumConstInSwitch() throws Exception { doTest(); }
+  public void testEnumConstInSwitch() { doTest(); }
 
-  public void testEnumConstInSwitchOutside() throws Exception { doTest(); }
+  public void testEnumConstInSwitchOutside() { doTest(); }
 
-  public void testIntConstInSwitch() throws Exception { doTest(); }
+  public void testIntConstInSwitch() { doTest(); }
 
-  public void testDoubleEmptyArray() throws Exception {
+  public void testDoubleEmptyArray() {
     configureByTestName();
     checkResultByFile("/"+getTestName(false) + ".java");
     assertEquals(2, myItems.length);
   }
 
-  public void testCollectionsEmptySetInMethodCall() throws Throwable { doTest(); }
+  public void testCollectionsEmptySetInMethodCall() { doTest(); }
 
-  public void testCollectionsEmptySetInTernary() throws Throwable { doTest(); }
+  public void testCollectionsEmptySetInTernary() { doTest(); }
 
-  public void testStringConstantInAnno() throws Throwable { doTest(); }
+  public void testStringConstantInAnno() { doTest(); }
 
-  public void testCollectionsEmptySetInTernary2() throws Throwable { doTest(); }
+  public void testCollectionsEmptySetInTernary2() { doTest(); }
 
-  public void testConstructorOnSeparateLineInMethodCall() throws Throwable { doTest(); }
+  public void testConstructorOnSeparateLineInMethodCall() { doTest(); }
 
-  public void testConstructorWithExistingParens() throws Throwable { doTest(); }
+  public void testConstructorWithExistingParens() { doTest(); }
 
-  public void testMethodAnnotationNamedParameter() throws Throwable { doTest(); }
+  public void testMethodAnnotationNamedParameter() { doTest(); }
   
-  public void testInheritedClass() throws Throwable { doTest(); }
+  public void testInheritedClass() { doTest(); }
 
-  public void testClassLiteralInAnno1() throws Throwable { doTest(); }
+  public void testClassLiteralInAnno1() { doTest(); }
 
-  public void testMeaninglessExplicitWildcardParam() throws Throwable { doTest(); }
+  public void testMeaninglessExplicitWildcardParam() { doTest(); }
 
-  public void testExplicitWildcardArrayParam() throws Throwable { doTest(); }
+  public void testExplicitWildcardArrayParam() { doTest(); }
 
-  public void testCatchInAnonymous() throws Throwable { doTest(); }
+  public void testCatchInAnonymous() { doTest(); }
 
-  public void testThrowRuntimeException() throws Throwable { doTest(); }
+  public void testThrowRuntimeException() { doTest(); }
 
-  public void testParameterizedConstructor() throws Throwable { doTest(); }
+  public void testParameterizedConstructor() { doTest(); }
 
-  public void testNewInnerClassNameShortPrefix() throws Throwable { doTest('\n'); }
+  public void testNewInnerClassNameShortPrefix() { doTest('\n'); }
 
-  public void testNewInnerOfParameterizedClass() throws Throwable { doTest(); }
+  public void testNewInnerOfParameterizedClass() { doTest(); }
 
-  public void testQualifiedThisInAnonymousConstructor() throws Throwable { doTest(); }
+  public void testQualifiedThisInAnonymousConstructor() { doTest(); }
 
-  public void testExceptionTwice() throws Throwable { doTest(); }
+  public void testExceptionTwice() { doTest(); }
 
-  public void testExceptionTwice2() throws Throwable { doTest(); }
+  public void testExceptionTwice2() { doTest(); }
 
-  public void testNewInnerRunnable() throws Throwable { doTest(); }
+  public void testNewInnerRunnable() { doTest(); }
 
-  public void testArrayAccessIndex() throws Throwable { doTest(); }
+  public void testArrayAccessIndex() { doTest(); }
 
-  public void testThrowExceptionConstructor() throws Throwable { doTest('\n'); }
+  public void testThrowExceptionConstructor() { doTest('\n'); }
 
-  public void testJavadocThrows() throws Throwable { doTest(); }
+  public void testJavadocThrows() { doTest(); }
 
-  public void testMethodThrows() throws Throwable { doTest(); }
+  public void testMethodThrows() { doTest(); }
 
-  public void testDoNotExcludeAssignedVariable() throws Throwable { doTest(); }
+  public void testDoNotExcludeAssignedVariable() { doTest(); }
 
-  public void testArrayIndexTailType() throws Throwable { doTest(); }
+  public void testArrayIndexTailType() { doTest(); }
 
-  public void testPrivateOverloads() throws Throwable { doTest(); }
+  public void testPrivateOverloads() { doTest(); }
 
-  public void testPolyadicExpression() throws Throwable { doTest(); }
+  public void testPolyadicExpression() { doTest(); }
 
-  public void testCastAutoboxing() throws Throwable {
+  public void testCastAutoboxing() {
     doItemTest();
   }
-  public void testCastAutoboxing2() throws Throwable {
+  public void testCastAutoboxing2() {
     doItemTest();
   }
-  public void testCastAutoboxing3() throws Throwable {
+  public void testCastAutoboxing3() {
     doItemTest();
   }
-  public void testCastWildcards() throws Throwable { doTest(); }
+  public void testCastWildcards() { doTest(); }
 
-  public void testNoSecondMethodTypeArguments() throws Throwable { doTest(Lookup.REPLACE_SELECT_CHAR); }
+  public void testNoSecondMethodTypeArguments() { doTest(Lookup.REPLACE_SELECT_CHAR); }
 
-  public void testNoFieldsInSuperConstructorCall() throws Throwable { doTest(); }
+  public void testNoFieldsInSuperConstructorCall() { doTest(); }
 
-  public void testChainMethodsInSuperConstructorCall() throws Throwable { doTest(); }
+  public void testChainMethodsInSuperConstructorCall() { doTest(); }
 
-  public void testNoUninitializedFieldsInConstructor() throws Throwable {
+  public void testNoUninitializedFieldsInConstructor() {
     configureByTestName();
     assertStringItems("aac", "aab", "hashCode");
   }
-  public void testFieldsSetInAnotherConstructor() throws Throwable { doTest(); }
-  public void testFieldsSetAbove() throws Throwable { doTest(); }
+  public void testFieldsSetInAnotherConstructor() { doTest(); }
+  public void testFieldsSetAbove() { doTest(); }
 
-  public void testHonorSelection() throws Throwable {
+  public void testHonorSelection() {
     configureByTestName();
     select();
     checkResultByTestName();
   }
 
-  public void testTypeParametersInheritors() throws Throwable {
+  public void testTypeParametersInheritors() {
     configureByTestName();
     assertStringItems("Foo", "Bar", "Goo");
     select();
     checkResultByTestName();
   }
 
-  public void testVoidExpectedType() throws Throwable {
+  public void testVoidExpectedType() {
     configureByTestName();
     assertStringItems("notify", "notifyAll", "wait", "wait", "wait", "equals", "hashCode", "toString", "getClass");
     type("eq");
@@ -488,39 +488,39 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     checkResultByTestName();
   }
 
-  public void testDoubleSemicolonPenetration() throws Throwable { doTest(); }
+  public void testDoubleSemicolonPenetration() { doTest(); }
 
-  public void testTypeParametersInheritorsComma() throws Throwable { doTest(); }
+  public void testTypeParametersInheritorsComma() { doTest(); }
 
-  public void testTypeParametersInheritorsInExpression() throws Throwable { doTest(); }
+  public void testTypeParametersInheritorsInExpression() { doTest(); }
 
   //do we need to see all Object inheritors at all?
-  public void _testTypeParametersObjectInheritors() throws Throwable { doTest(); }
+  public void _testTypeParametersObjectInheritors() { doTest(); }
 
-  public void testDoubleThis() throws Throwable {
+  public void testDoubleThis() {
     doTest();
     assertNull(myItems);
   }
 
-  public void testSmartFinish() throws Throwable { doTest(Lookup.COMPLETE_STATEMENT_SELECT_CHAR); }
+  public void testSmartFinish() { doTest(Lookup.COMPLETE_STATEMENT_SELECT_CHAR); }
 
-  public void testSillyAssignmentInTernary() throws Throwable { doTest(); }
+  public void testSillyAssignmentInTernary() { doTest(); }
 
-  public void testSameFieldInAnotherObject() throws Throwable { doTest(); }
+  public void testSameFieldInAnotherObject() { doTest(); }
 
-  public void testUnqualifiedConstantInSwitch() throws Throwable { doTest(); }
+  public void testUnqualifiedConstantInSwitch() { doTest(); }
 
-  public void testAmbiguousConstant() throws Throwable { doTest(); }
+  public void testAmbiguousConstant() { doTest(); }
 
-  public void testSameNamedFieldAndLocal() throws Throwable { doTest(); }
+  public void testSameNamedFieldAndLocal() { doTest(); }
 
-  public void testNoTailWhenNoPairBracket() throws Throwable { doTestNoPairBracket(Lookup.NORMAL_SELECT_CHAR); }
+  public void testNoTailWhenNoPairBracket() { doTestNoPairBracket(Lookup.NORMAL_SELECT_CHAR); }
 
-  public void testNoTailWhenNoPairBracket2() throws Throwable { doTestNoPairBracket(Lookup.NORMAL_SELECT_CHAR); }
+  public void testNoTailWhenNoPairBracket2() { doTestNoPairBracket(Lookup.NORMAL_SELECT_CHAR); }
 
-  public void testAnonymousNoPairBracket() throws Throwable { doTestNoPairBracket(Lookup.NORMAL_SELECT_CHAR); }
+  public void testAnonymousNoPairBracket() { doTestNoPairBracket(Lookup.NORMAL_SELECT_CHAR); }
 
-  private void doTestNoPairBracket(final char c) throws Exception {
+  private void doTestNoPairBracket(final char c) {
     boolean old = CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET;
     CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET = false;
     try {
@@ -531,79 +531,79 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     }
   }
 
-  public void testNoConstructorTailWhenNoPairBracket() throws Throwable { doTestNoPairBracket(Lookup.NORMAL_SELECT_CHAR); }
+  public void testNoConstructorTailWhenNoPairBracket() { doTestNoPairBracket(Lookup.NORMAL_SELECT_CHAR); }
 
-  public void testConstructorNoPairBracketSemicolon() throws Throwable { doTestNoPairBracket(';'); }
+  public void testConstructorNoPairBracketSemicolon() { doTestNoPairBracket(';'); }
 
-  public void testMethodNoPairBracketComma() throws Throwable { doTestNoPairBracket(','); }
+  public void testMethodNoPairBracketComma() { doTestNoPairBracket(','); }
 
-  public void testAbstractClassTwice() throws Throwable {
+  public void testAbstractClassTwice() {
     configureByTestName();
     assertOneElement(myItems);
   }
 
-  public void testConstantTwice() throws Throwable { doTest(); }
+  public void testConstantTwice() { doTest(); }
 
-  public void testConstantTwice2() throws Throwable {
+  public void testConstantTwice2() {
     configureByTestName();
     assertEquals(2, myItems.length);
   }
 
-  public void testNoKeyConstant() throws Throwable {
+  public void testNoKeyConstant() {
     configureByTestName();
     assertStringItems("A_KEY", "create");
   }
 
-  public void testUserDataListAddAll() throws Throwable {
+  public void testUserDataListAddAll() {
     doTest();
   }
 
-  public void testStaticSubclass() throws Throwable {
+  public void testStaticSubclass() {
     doTest();
   }
 
-  public void testMethodCallDot() throws Throwable { doTest('\n'); }
-  public void testNegateVariable() throws Throwable { doTest(); }
+  public void testMethodCallDot() { doTest('\n'); }
+  public void testNegateVariable() { doTest(); }
 
-  public void testExclamationMethodFinish() throws Throwable { doTest('!'); }
-  public void testExclamationVariableFinish() throws Throwable { doTest('!'); }
-  public void testExclamationStaticFieldFinish() throws Throwable { doTest('!'); }
-  public void testExclamationFinishNonBoolean() throws Throwable { doTest('!'); }
+  public void testExclamationMethodFinish() { doTest('!'); }
+  public void testExclamationVariableFinish() { doTest('!'); }
+  public void testExclamationStaticFieldFinish() { doTest('!'); }
+  public void testExclamationFinishNonBoolean() { doTest('!'); }
 
-  public void testExcludeDeclaredConstant() throws Throwable { doTest(); }
+  public void testExcludeDeclaredConstant() { doTest(); }
 
-  public void testTabMethodInBinaryExpression() throws Throwable { doTest('\t'); }
+  public void testTabMethodInBinaryExpression() { doTest('\t'); }
 
-  public void testIfConditionBinaryExpression() throws Throwable { doTest(); }
+  public void testIfConditionBinaryExpression() { doTest(); }
 
-  public void testDelegationToParent() throws Throwable { doTest('\t'); }
+  public void testDelegationToParent() { doTest('\t'); }
 
-  public void testBeforeBinaryExpressionInMethodCall() throws Throwable { doTest(); }
+  public void testBeforeBinaryExpressionInMethodCall() { doTest(); }
 
-  public void testAssignableToAfterCast() throws Throwable { doTest(); }
+  public void testAssignableToAfterCast() { doTest(); }
 
-  public void testInstanceMethodParametersFromStaticContext() throws Throwable { doTest(); }
+  public void testInstanceMethodParametersFromStaticContext() { doTest(); }
 
-  public void testInstanceMethodParametersFromStaticContext2() throws Throwable { doTest(); }
+  public void testInstanceMethodParametersFromStaticContext2() { doTest(); }
 
-  public void testBeforeCastToArray() throws Throwable { doTest(); }
+  public void testBeforeCastToArray() { doTest(); }
 
-  public void testHidingFields() throws Throwable { doTest(); }
+  public void testHidingFields() { doTest(); }
 
-  public void testVoidCast() throws Throwable { doAntiTest(); }
+  public void testVoidCast() { doAntiTest(); }
 
-  public void testIntPlusLongNotDouble() throws Throwable { doTest(); }
+  public void testIntPlusLongNotDouble() { doTest(); }
 
-  public void testNestedAssignments() throws Throwable { doTest(); }
+  public void testNestedAssignments() { doTest(); }
 
-  public void testAfterNewInTernary() throws Throwable { doTest(); }
+  public void testAfterNewInTernary() { doTest(); }
 
-  public void testSuggestAnythingWhenWildcardExpected() throws Throwable {
+  public void testSuggestAnythingWhenWildcardExpected() {
     configureByTestName();
     assertStringItems("X", "Y", "Z");
   }
 
-  public void testNewVararg() throws Throwable {
+  public void testNewVararg() {
     configureByTestName();
     assertStringItems("Foo", "Foo", "Foo");
     assertEquals("{...} (default package)", LookupElementPresentation.renderElement(myItems[0]).getTailText());
@@ -611,7 +611,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     assertEquals("[]{...} (default package)", LookupElementPresentation.renderElement(myItems[2]).getTailText());
   }
 
-  public void testNewVararg2() throws Throwable {
+  public void testNewVararg2() {
     configureByTestName();
     assertStringItems("String", "String", "String");
     assertEquals(" (java.lang)", LookupElementPresentation.renderElement(myItems[0]).getTailText());
@@ -632,29 +632,29 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     assertEquals("[]{...}", LookupElementPresentation.renderElement(myItems[1]).getTailText());
   }
 
-  public void testInsideStringLiteral() throws Throwable { doAntiTest(); }
+  public void testInsideStringLiteral() { doAntiTest(); }
 
-  public void testDefaultAnnoParam() throws Throwable { doTest(); }
+  public void testDefaultAnnoParam() { doTest(); }
 
-  public void testNewWithTypeParameterErasure() throws Throwable { doTest(); }
+  public void testNewWithTypeParameterErasure() { doTest(); }
 
-  public void testEverythingDoubles() throws Throwable {
+  public void testEverythingDoubles() {
     configureByTestName();
     assertStringItems("hashCode", "indexOf", "lastIndexOf", "size");
   }
 
-  public void testNonStaticInnerClass() throws Throwable {
+  public void testNonStaticInnerClass() {
     configureByTestName();
     assertEmpty(myItems);
     checkResultByFile("/" + getTestName(false) + ".java");
   }
 
   //todo 2nd completion
-  public void _testDefaultAnnoParam2() throws Throwable { doTest(); }
+  public void _testDefaultAnnoParam2() { doTest(); }
   
-  public void testAnnotationValue() throws Throwable {doTest(); }
+  public void testAnnotationValue() {doTest(); }
 
-  public void testLiveTemplate() throws Throwable {
+  public void testLiveTemplate() {
     final Template template = TemplateManager.getInstance(getProject()).createTemplate("foo", "zzz");
     template.addTextSegment("FooFactory.createFoo()");
     final SmartCompletionContextType completionContextType =
@@ -664,21 +664,21 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     doTest();
   }
 
-  public void testInThisExpression() throws Throwable { doTest(); }
+  public void testInThisExpression() { doTest(); }
 
-  public void testSuggestNull() throws Throwable { doTest(); }
+  public void testSuggestNull() { doTest(); }
 
-  public void testNoNullAfterDot() throws Throwable {
+  public void testNoNullAfterDot() {
     configureByTestName();
     assertEmpty(myItems);
     checkResultByFile("/" + getTestName(false) + ".java");
   }
 
-  public void testDefaultAnnoMethodValue() throws Throwable { doTest(); }
+  public void testDefaultAnnoMethodValue() { doTest(); }
 
-  public void testNewAnonymousFunction() throws Throwable { doTest(); }
+  public void testNewAnonymousFunction() { doTest(); }
 
-  public void testNewRunnableInsideMethod() throws Throwable {
+  public void testNewRunnableInsideMethod() {
     CommonCodeStyleSettings settings = getCodeStyleSettings();
     boolean lParenOnNextLine = settings.CALL_PARAMETERS_LPAREN_ON_NEXT_LINE;
     try {
@@ -689,7 +689,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     }
   }
 
-  public void testNewRunnableInsideMethodMultiParams() throws Throwable {
+  public void testNewRunnableInsideMethodMultiParams() {
     CommonCodeStyleSettings settings = getCodeStyleSettings();
     boolean lParenOnNextLine = settings.CALL_PARAMETERS_LPAREN_ON_NEXT_LINE;
     boolean rParenOnNextLine = settings.CALL_PARAMETERS_RPAREN_ON_NEXT_LINE;
@@ -703,34 +703,34 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     }
   }
 
-  public void testUseIntConstantsFromTargetClass() throws Throwable { doTest(); }
+  public void testUseIntConstantsFromTargetClass() { doTest(); }
   public void testUseObjectConstantsFromTargetClass() { doTest(); }
-  public void testUseIntConstantsFromTargetClassReturnValue() throws Throwable { doTest(); }
-  public void testUseIntConstantsFromConstructedClass() throws Throwable { doTest(); }
-  public void testUseIntConstantsInPlus() throws Throwable { doTest(); }
-  public void testUseIntConstantsInOr() throws Throwable { doTest(); }
+  public void testUseIntConstantsFromTargetClassReturnValue() { doTest(); }
+  public void testUseIntConstantsFromConstructedClass() { doTest(); }
+  public void testUseIntConstantsInPlus() { doTest(); }
+  public void testUseIntConstantsInOr() { doTest(); }
 
-  public void testExtraSemicolonAfterMethodParam() throws Throwable {
+  public void testExtraSemicolonAfterMethodParam() {
     getCodeStyleSettings().SPACE_WITHIN_METHOD_CALL_PARENTHESES = true;
     doTest();
   }
 
   public void testNoSemicolonInsideParentheses() { doTest(); }
 
-  public void testAssignFromTheSameFieldOfAnotherObject() throws Throwable {
+  public void testAssignFromTheSameFieldOfAnotherObject() {
     doTest();
   }
 
-  public void testTailAfterInstanceOf() throws Throwable {
+  public void testTailAfterInstanceOf() {
     doTest();
   }
 
-  public void testReplaceWholeReferenceChain() throws Throwable { doTest(Lookup.REPLACE_SELECT_CHAR); }
+  public void testReplaceWholeReferenceChain() { doTest(Lookup.REPLACE_SELECT_CHAR); }
 
-  public void testDoubleTrueInOverloadedMethodCall() throws Throwable { doTest(Lookup.REPLACE_SELECT_CHAR); }
+  public void testDoubleTrueInOverloadedMethodCall() { doTest(Lookup.REPLACE_SELECT_CHAR); }
 
-  public void testMethodColon() throws Exception { doFirstItemTest(':'); }
-  public void testVariableColon() throws Exception { doFirstItemTest(':'); }
+  public void testMethodColon() { doFirstItemTest(':'); }
+  public void testVariableColon() { doFirstItemTest(':'); }
   public void testConditionalColonOnNextLine() { doFirstItemTest(':'); }
 
   private void doFirstItemTest(char c) {
@@ -739,50 +739,50 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     checkResultByTestName();
   }
 
-  public void testOneElementArray() throws Throwable { doTest(); }
+  public void testOneElementArray() { doTest(); }
 
-  public void testCastToArray() throws Throwable { doTest(); }
+  public void testCastToArray() { doTest(); }
 
-  public void testCommaDoublePenetration() throws Throwable {
+  public void testCommaDoublePenetration() {
     doFirstItemTest(',');
   }
 
-  public void testSuperMethodArguments() throws Throwable {
+  public void testSuperMethodArguments() {
     configureByTestName();
     getLookup().setCurrentItem(getLookup().getItems().get(1));
     select();
     checkResultByTestName();
   }
 
-  public void testDelegateMethodArguments() throws Throwable {
+  public void testDelegateMethodArguments() {
     configureByTestName();
     getLookup().setCurrentItem(getLookup().getItems().get(1));
     select();
     checkResultByTestName();
   }
 
-  public void testSameMethodArgumentsInIf() throws Throwable {
+  public void testSameMethodArgumentsInIf() {
     configureByTestName();
     getLookup().setCurrentItem(getLookup().getItems().get(1));
     select();
     checkResultByTestName();
   }
 
-  public void testSuperConstructorArguments() throws Throwable {
+  public void testSuperConstructorArguments() {
     configureByTestName();
     getLookup().setCurrentItem(getLookup().getItems().get(2));
     select();
     checkResultByTestName();
   }
 
-  public void testSameNamedArguments() throws Throwable {
+  public void testSameNamedArguments() {
     configureByTestName();
     getLookup().setCurrentItem(getLookup().getItems().get(4));
     select();
     checkResultByTestName();
   }
 
-  public void testSameNamedArgumentsDelegation() throws Throwable {
+  public void testSameNamedArgumentsDelegation() {
     configureByTestName();
     getLookup().setCurrentItem(getLookup().getItems().get(1));
     select();
@@ -799,17 +799,17 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     myFixture.assertPreferredCompletionItems(0, "T", "String");
   }
 
-  public void testWrongAnonymous() throws Throwable {
+  public void testWrongAnonymous() {
     configureByTestName();
     select();
     checkResultByTestName();
   }
 
-  public void testAfterNewWithGenerics() throws Exception {
+  public void testAfterNewWithGenerics() {
     doActionTest();
   }
 
-  public void testClassLiteral() throws Exception {
+  public void testClassLiteral() {
     doActionTest();
     assertStringItems("String.class");
 
@@ -819,16 +819,16 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     assertEquals(" (java.lang)", p.getTailText());
     assertNull(p.getTypeText());
   }
-  public void testNoClassLiteral() throws Exception {
+  public void testNoClassLiteral() {
     doActionTest();
     assertStringItems("Object.class", "getClass", "forName", "forName");
   }
 
-  public void testClassLiteralInAnno2() throws Throwable {
+  public void testClassLiteralInAnno2() {
     doItemTest();
   }
 
-  public void testClassLiteralInheritors() throws Throwable {
+  public void testClassLiteralInheritors() {
     doItemTest();
   }
 
@@ -838,21 +838,21 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     doItemTest();
   }
 
-  public void testForeach() throws Exception {
+  public void testForeach() {
     doActionTest();
   }
 
-  public void testIDEADEV2626() throws Exception {
+  public void testIDEADEV2626() {
     doItemTest();
   }
 
   public void testDontSuggestWildcardGenerics() { doItemTest(); }
 
-  public void testCastWith2TypeParameters() throws Throwable { doTest(); }
-  public void testClassLiteralInArrayAnnoInitializer() throws Throwable { doTest(); }
-  public void testClassLiteralInArrayAnnoInitializer2() throws Throwable { doTest(); }
+  public void testCastWith2TypeParameters() { doTest(); }
+  public void testClassLiteralInArrayAnnoInitializer() { doTest(); }
+  public void testClassLiteralInArrayAnnoInitializer2() { doTest(); }
 
-  public void testAnnotation() throws Exception {
+  public void testAnnotation() {
     configureByTestName();
     assertStringItems("ElementType.ANNOTATION_TYPE", "ElementType.CONSTRUCTOR",
                       "ElementType.FIELD", "ElementType.LOCAL_VARIABLE",
@@ -860,38 +860,38 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
                       "ElementType.TYPE" /*, "ElementType.TYPE_PARAMETER", "ElementType.TYPE_USE"*/);
   }
 
-  public void testAnnotation2() throws Exception {
+  public void testAnnotation2() {
     configureByTestName();
     assertStringItems("RetentionPolicy.CLASS", "RetentionPolicy.RUNTIME", "RetentionPolicy.SOURCE");
   }
-  public void testAnnotation2_2() throws Exception {
+  public void testAnnotation2_2() {
     configureByTestName();
     assertSameElements(myFixture.getLookupElementStrings(), "RetentionPolicy.CLASS", "RetentionPolicy.SOURCE", "RetentionPolicy.RUNTIME");
   }
 
-  public void testAnnotation3() throws Exception {
+  public void testAnnotation3() {
     doTest();
   }
 
-  public void testAnnotation3_2() throws Exception {
+  public void testAnnotation3_2() {
     doTest();
   }
 
-  public void testAnnotation4() throws Exception {
+  public void testAnnotation4() {
     configureByTestName();
     checkResultByTestName();
 
     assertStringItems("false", "true");
   }
 
-  public void testAnnotation5() throws Exception {
+  public void testAnnotation5() {
     configureByTestName();
     checkResultByTestName();
 
     assertStringItems("CONNECTION", "NO_CONNECTION");
   }
 
-  public void testAnnotation6() throws Exception {
+  public void testAnnotation6() {
     configureByTestName();
   
     assertStringItems("ElementType.ANNOTATION_TYPE", "ElementType.CONSTRUCTOR",
@@ -900,161 +900,161 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
                       "ElementType.TYPE"/*, "ElementType.TYPE_PARAMETER", "ElementType.TYPE_USE"*/);
   }
 
-  public void testArrayClone() throws Exception {
+  public void testArrayClone() {
     doTest();
   }
 
-  public void testIDEADEV5150() throws Exception {
+  public void testIDEADEV5150() {
     doTest('\n');
   }
 
-  public void testIDEADEV7835() throws Exception {
+  public void testIDEADEV7835() {
     doTest();
   }
 
-  public void testTypeArgs1() throws Exception {
+  public void testTypeArgs1() {
     doTest();
   }
 
-  public void testTypeArgs2() throws Exception {
+  public void testTypeArgs2() {
     doTest();
   }
   public void testTypeArgsOverwrite() { doTest(); }
 
-  public void testIfConditionExpectedType() throws Exception { doTest(); }
+  public void testIfConditionExpectedType() { doTest(); }
 
-  public void testUnboundTypeArgs() throws Exception { doTest(); }
-  public void testUnboundTypeArgs2() throws Exception { doTest(); }
-  public void testSameTypeArg() throws Exception { doTest(); }
+  public void testUnboundTypeArgs() { doTest(); }
+  public void testUnboundTypeArgs2() { doTest(); }
+  public void testSameTypeArg() { doTest(); }
 
-  public void testIDEADEV2668() throws Exception {
+  public void testIDEADEV2668() {
     doTest();
   }
 
-  public void testExcessiveTail() throws Exception { doTest(); }
-  public void testSeveralTypeArguments() throws Exception { doTest(); }
-  public void testSeveralTypeArgumentsSomeUnknown() throws Exception { doTest(); }
+  public void testExcessiveTail() { doTest(); }
+  public void testSeveralTypeArguments() { doTest(); }
+  public void testSeveralTypeArgumentsSomeUnknown() { doTest(); }
 
-  public void testExtendsInTypeCast() throws Exception {
+  public void testExtendsInTypeCast() {
     doTest();
   }
 
-  public void testTabMethodCall() throws Exception {
+  public void testTabMethodCall() {
     doFirstItemTest(Lookup.REPLACE_SELECT_CHAR);
   }
 
-  public void testConstructorArgsSmartEnter() throws Exception { doTest(Lookup.COMPLETE_STATEMENT_SELECT_CHAR); }
+  public void testConstructorArgsSmartEnter() { doTest(Lookup.COMPLETE_STATEMENT_SELECT_CHAR); }
 
-  public void testIDEADEV13148() throws Exception {
+  public void testIDEADEV13148() {
     configureByFile("/IDEADEV13148.java");
     assertStringItems("false", "true"); //todo don't suggest boolean literals in synchronized
   }
 
-  public void testSuggestNames() throws Exception {
+  public void testSuggestNames() {
     configureByTestName();
     assertStringItems("arrayList", "list");
   }
 
-  public void testOverloadedMethods() throws Throwable {
+  public void testOverloadedMethods() {
     doTest();
   }
 
-  public void testNoCommaBeforeVarargs() throws Throwable { doTest(); }
+  public void testNoCommaBeforeVarargs() { doTest(); }
 
-  public void testEnumField() throws Throwable {
+  public void testEnumField() {
     doItemTest();
   }
 
-  public void testEnumField1() throws Exception {
+  public void testEnumField1() {
     configureByTestName();
     checkResultByTestName();
     assertEquals(4, myItems.length);
   }
 
-  public void testInsertTypeParametersOnImporting() throws Throwable { doTest('\n'); }
+  public void testInsertTypeParametersOnImporting() { doTest('\n'); }
 
-  public void testEmptyListInReturn() throws Throwable { doItemTest(); }
+  public void testEmptyListInReturn() { doItemTest(); }
 
-  public void testEmptyListInReturn2() throws Throwable { doTest(); }
+  public void testEmptyListInReturn2() { doTest(); }
 
-  public void testEmptyListInReturnTernary() throws Throwable { doItemTest(); }
+  public void testEmptyListInReturnTernary() { doItemTest(); }
 
-  public void testEmptyListBeforeSemicolon() throws Throwable { doItemTest(); }
+  public void testEmptyListBeforeSemicolon() { doItemTest(); }
 
-  public void testEmptyListWithCollectionsPrefix() throws Throwable { doItemTest(); }
+  public void testEmptyListWithCollectionsPrefix() { doItemTest(); }
 
-  public void testForeachLoopVariableInIterableExpression() throws Throwable { doAntiTest(); }
+  public void testForeachLoopVariableInIterableExpression() { doAntiTest(); }
 
-  public void testStaticallyImportedMagicMethod() throws Throwable {
+  public void testStaticallyImportedMagicMethod() {
     configureByTestName();
     assertStringItems("foo");
     selectItem(myItems[0], '\t');
     checkResultByTestName();
   }
 
-  public void _testCallVarargArgument() throws Throwable { doTest(); }
+  public void _testCallVarargArgument() { doTest(); }
 
-  public void testTabToReplaceClassKeyword() throws Throwable {
+  public void testTabToReplaceClassKeyword() {
     configureByTestName();
     selectItem(myItems[0], Lookup.REPLACE_SELECT_CHAR);
     checkResultByTestName();
   }
 
-  public void testNoTypeParametersForToArray() throws Throwable {
+  public void testNoTypeParametersForToArray() {
     doTest();
   }
 
-  public void testStaticallyImportedField() throws Throwable { doTest('\n'); }
-  public void testSiblingOfAStaticallyImportedField() throws Throwable { doTest(); }
-  public void testPrimitiveArrayClassInMethod() throws Throwable { doTest(); }
-  public void testPrimitiveClassInAnno() throws Throwable { doTest(); }
-  public void testNewInnerClassOfSuper() throws Throwable { doTest(); }
-  public void testAssertThatMatcher() throws Throwable { doTest(); }
+  public void testStaticallyImportedField() { doTest('\n'); }
+  public void testSiblingOfAStaticallyImportedField() { doTest(); }
+  public void testPrimitiveArrayClassInMethod() { doTest(); }
+  public void testPrimitiveClassInAnno() { doTest(); }
+  public void testNewInnerClassOfSuper() { doTest(); }
+  public void testAssertThatMatcher() { doTest(); }
 
-  public void testInferFromCall() throws Throwable {
+  public void testInferFromCall() {
     doTest();
   }
 
-  public void testInferFromCall1() throws Throwable {
+  public void testInferFromCall1() {
     doTest();
   }
 
-  public void testCastToParameterizedType() throws Throwable { doActionTest(); }
+  public void testCastToParameterizedType() { doActionTest(); }
 
-  public void testInnerEnumInMethod() throws Throwable {
+  public void testInnerEnumInMethod() {
     doItemTest();
   }
 
-  public void testEnumAsDefaultAnnotationParam() throws Throwable { doTest(); }
-  public void testBreakLabel() throws Throwable { doTest(); }
+  public void testEnumAsDefaultAnnotationParam() { doTest(); }
+  public void testBreakLabel() { doTest(); }
 
-  public void testNewAbstractInsideAnonymous() throws Throwable { doTest(); }
+  public void testNewAbstractInsideAnonymous() { doTest(); }
 
-  public void testFilterPrivateConstructors() throws Throwable { doTest(); }
+  public void testFilterPrivateConstructors() { doTest(); }
 
-  public void testExplicitMethodTypeParametersQualify() throws Throwable { doTest(); }
-  public void testExplicitMethodTypeParametersOverZealous() throws Throwable { doTest(); }
-  public void testExplicitMethodTypeParametersFromSuperClass() throws Throwable { doTest(); }
+  public void testExplicitMethodTypeParametersQualify() { doTest(); }
+  public void testExplicitMethodTypeParametersOverZealous() { doTest(); }
+  public void testExplicitMethodTypeParametersFromSuperClass() { doTest(); }
 
-  public void testWildcardedInstanceof() throws Throwable { doTest(); }
-  public void testWildcardedInstanceof2() throws Throwable { doTest(); }
-  public void testWildcardedInstanceof3() throws Throwable { doTest(); }
+  public void testWildcardedInstanceof() { doTest(); }
+  public void testWildcardedInstanceof2() { doTest(); }
+  public void testWildcardedInstanceof3() { doTest(); }
 
-  public void testCheckStaticImportsType() throws Throwable { doAntiTest(); }
-  public void testThisFieldAssignedToItself() throws Throwable { doAntiTest(); }
+  public void testCheckStaticImportsType() { doAntiTest(); }
+  public void testThisFieldAssignedToItself() { doAntiTest(); }
 
-  public void testCaseMissingEnumValue() throws Throwable { doTest(); }
-  public void testCaseMissingEnumValue2() throws Throwable { doTest(); }
+  public void testCaseMissingEnumValue() { doTest(); }
+  public void testCaseMissingEnumValue2() { doTest(); }
   
   public void testNoHiddenParameter() { doTest(); }
 
-  public void testTypeVariableInstanceOf() throws Throwable {
+  public void testTypeVariableInstanceOf() {
     configureByTestName();
     performAction();
     assertStringItems("Bar", "Goo");
   }
 
-  public void testAutoImportExpectedType() throws Throwable {
+  public void testAutoImportExpectedType() {
     boolean old = CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY;
     CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = true;
     try {
@@ -1067,25 +1067,25 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     }
   }
 
-  public void testNoWrongSubstitutorFromStats() throws Throwable {
+  public void testNoWrongSubstitutorFromStats() {
     doTest();
     FileDocumentManager.getInstance().saveDocument(myFixture.getEditor().getDocument());
     doTest(); // stats are changed now
   }
 
-  public void testCommonPrefixWithSelection() throws Throwable {
+  public void testCommonPrefixWithSelection() {
     doItemTest();
   }
 
-  public void testNewAbstractClassWithConstructorArgs() throws Throwable {
+  public void testNewAbstractClassWithConstructorArgs() {
     doItemTest();
   }
 
-  public void testArrayInitializerBeforeVarargs() throws Throwable { doTest(); }
-  public void testDuplicateMembersFromSuperClass() throws Throwable { doTest(); }
-  public void testInnerAfterNew() throws Throwable { doTest(); }
+  public void testArrayInitializerBeforeVarargs() { doTest(); }
+  public void testDuplicateMembersFromSuperClass() { doTest(); }
+  public void testInnerAfterNew() { doTest(); }
   public void testOuterAfterNew() { doTest(); }
-  public void testEverythingInStringConcatenation() throws Throwable { doTest(); }
+  public void testEverythingInStringConcatenation() { doTest(); }
   public void testGetClassWhenClassExpected() { doTest(); }
 
   public void testMemberImportStatically() {
@@ -1099,26 +1099,26 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     checkResultByTestName();
   }
 
-  public void testNoNewEnum() throws Throwable {
+  public void testNoNewEnum() {
     configureByTestName();
     assertStringItems("Foo");
   }
 
-  public void testDuplicateMembersFromSuperClassInAnotherFile() throws Throwable {
+  public void testDuplicateMembersFromSuperClassInAnotherFile() {
     myFixture.addClass("class Super { public static final Super FOO = null; }");
     doTest();
   }
 
-  public void testInsideGenericClassLiteral() throws Throwable {
+  public void testInsideGenericClassLiteral() {
     configureByTestName();
     assertStringItems("String.class", "StringBuffer.class", "StringBuilder.class");
   }
 
-  public void testArrayAnnoParameter() throws Throwable {
+  public void testArrayAnnoParameter() {
     doActionTest();
   }
 
-  public void testInnerClassImports() throws Throwable {
+  public void testInnerClassImports() {
     JavaCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCustomSettings(JavaCodeStyleSettings.class);
     settings.INSERT_INNER_CLASS_IMPORTS = true;
     try {
@@ -1130,11 +1130,11 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     }
   }
 
-  public void testCastWithGenerics() throws Throwable {
+  public void testCastWithGenerics() {
     doActionTest();
   }
 
-  public void testInnerEnum() throws Exception {
+  public void testInnerEnum() {
     configureByTestName();
 
     getLookup().setCurrentItem(ContainerUtil.find(myItems, lookupItem -> "Bar.Fubar.Bar".equals(lookupItem.getLookupString())));
@@ -1142,17 +1142,17 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     checkResultByTestName();
   }
 
-  public void testQualifiedAfterNew() throws Exception {
+  public void testQualifiedAfterNew() {
     myFixture.addClass("package foo; public interface Foo<T> {}");
     myFixture.addClass("package bar; public class Bar implements foo.Foo {}");
     doTest();
   }
-  public void testAfterQualifiedNew() throws Exception {
+  public void testAfterQualifiedNew() {
     myFixture.addClass("class Aa { public class B { } }");
     doTest();
   }
 
-  public void testTabAfterNew() throws Exception {
+  public void testTabAfterNew() {
     doFirstItemTest('\t');
   }
 
@@ -1165,7 +1165,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testOnlyInterfacesInImplements() { doTest(); }
 
-  public void testNonStaticField() throws Exception { doAntiTest(); }
+  public void testNonStaticField() { doAntiTest(); }
 
   public void testLocalClassInExpectedTypeArguments() { doTest(); }
 

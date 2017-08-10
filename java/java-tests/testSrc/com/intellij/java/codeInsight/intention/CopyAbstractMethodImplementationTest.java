@@ -44,7 +44,7 @@ public class CopyAbstractMethodImplementationTest extends LightIntentionActionTe
     super.tearDown();
   }
 
-  public void test() throws Exception {
+  public void test() {
     doAllTests();
   }
 

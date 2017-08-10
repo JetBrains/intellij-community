@@ -166,7 +166,7 @@ public class IntroduceFieldInSameClassTest extends LightCodeInsightTestCase {
     checkResultByFile("/refactoring/introduceField/afterFromLambdaExpr.java");
   }
 
-  public void testSimplifyDiamond() throws Exception {
+  public void testSimplifyDiamond() {
     configureByFile("/refactoring/introduceField/beforeSimplifiedDiamond.java");
     performRefactoring(BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION, false);
     checkResultByFile("/refactoring/introduceField/afterSimplifiedDiamond.java");

@@ -21,7 +21,7 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
 public class JUnitDatapointInspectionTest extends LightCodeInsightFixtureTestCase {
-  public void testWrongdatapoint() throws Exception {
+  public void testWrongdatapoint() {
     myFixture.addClass("package org.junit.experimental.theories;\n" +
                        "public @interface DataPoint {}");
     myFixture.testHighlighting(true, false, false, getTestName(true) + ".java");

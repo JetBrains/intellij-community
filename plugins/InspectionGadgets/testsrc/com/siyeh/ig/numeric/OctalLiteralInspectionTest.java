@@ -18,7 +18,7 @@ package com.siyeh.ig.numeric;
 import com.siyeh.ig.IGInspectionTestCase;
 
 public class OctalLiteralInspectionTest extends IGInspectionTestCase {
-  public void test() throws Exception {
+  public void test() {
     doTest("com/siyeh/igtest/numeric/octal_inspection",
            new OctalLiteralInspection());
   }

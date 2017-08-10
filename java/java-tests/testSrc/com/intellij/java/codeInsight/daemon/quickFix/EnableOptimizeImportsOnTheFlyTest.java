@@ -31,11 +31,10 @@ public class EnableOptimizeImportsOnTheFlyTest extends LightQuickFixParameterize
     return new LocalInspectionTool[]{new UnusedImportLocalInspection()};
   }
 
-  public void test() throws Exception { doAllTests(); }
+  public void test() { doAllTests(); }
 
   @Override
-  protected void doAction(@NotNull final ActionHint actionHint, final String testFullPath, final String testName)
-    throws Exception {
+  protected void doAction(@NotNull final ActionHint actionHint, final String testFullPath, final String testName) {
     CodeInsightWorkspaceSettings.getInstance(ourProject).setOptimizeImportsOnTheFly(false, getTestRootDisposable());
     IntentionAction action = findActionAndCheck(actionHint, testFullPath);
     if (action != null) {

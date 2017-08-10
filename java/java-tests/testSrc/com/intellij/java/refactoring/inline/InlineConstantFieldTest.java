@@ -38,47 +38,47 @@ public class InlineConstantFieldTest extends LightRefactoringTestCase {
     return IdeaTestUtil.getMockJdk17(); // has to have src.zip
   }
 
-  public void testQualifiedExpression() throws Exception {
+  public void testQualifiedExpression() {
     doTest();
   }
 
-  public void testQualifiedExpressionInLib() throws Exception {
+  public void testQualifiedExpressionInLib() {
     doTest(true);
   }
 
-  public void testLocalClassDecoding() throws Exception {
+  public void testLocalClassDecoding() {
     doTest();
   }
 
-  public void testQualifiedConstantExpression() throws Exception {
+  public void testQualifiedConstantExpression() {
     doTest();
   }
 
-   public void testQualifiedConstantExpressionReplacedWithAnotherOne() throws Exception {
+   public void testQualifiedConstantExpressionReplacedWithAnotherOne() {
     doTest();
   }
   
-  public void testStaticallyImportedQualifiedExpression() throws Exception {
+  public void testStaticallyImportedQualifiedExpression() {
     doTest();
   }
 
-  public void testCastWhenLambdaAsQualifier() throws Exception {
+  public void testCastWhenLambdaAsQualifier() {
     doTest();
   }
 
-  public void testConstantFromLibrary() throws Exception {
+  public void testConstantFromLibrary() {
     doTest();
   }
 
-  public void testFinalInitializedInConstructor() throws Exception {
+  public void testFinalInitializedInConstructor() {
     doTest();
   }
 
-  public void testDiamondInitializer() throws Exception {
+  public void testDiamondInitializer() {
     doTest();
   }
 
-  public void testMultipleInitializers() throws Exception {
+  public void testMultipleInitializers() {
     configureByFile("/refactoring/inlineConstantField/" + getTestName(false) + ".java");
     PsiElement element = TargetElementUtil
       .findTargetElement(myEditor, TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
@@ -86,11 +86,11 @@ public class InlineConstantFieldTest extends LightRefactoringTestCase {
     assertNull(InlineConstantFieldHandler.getInitializer((PsiField)element));
   }
 
-  private void doTest() throws Exception {
+  private void doTest() {
     doTest(false);
   }
 
-  private void doTest(boolean inlineThisOnly) throws Exception {
+  private void doTest(boolean inlineThisOnly) {
     String name = getTestName(false);
     @NonNls String fileName = "/refactoring/inlineConstantField/" + name + ".java";
     configureByFile(fileName);

@@ -41,7 +41,7 @@ public class StreamFilterNotNullFixTest extends LightQuickFixParameterizedTestCa
     return new LocalInspectionTool[]{new DataFlowInspection()};
   }
 
-  public void test() throws Exception {
+  public void test() {
      doAllTests();
    }
 

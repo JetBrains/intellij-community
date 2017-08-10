@@ -183,7 +183,7 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     myUnexpectedEventWasProduced = false;
   }
 
-  public void testAnnotateLibrary() throws Throwable {
+  public void testAnnotateLibrary() {
 
     addDefaultLibrary();
     myFixture.configureByFiles("lib/p/TestPrimitive.java", "content/anno/p/annotations.xml");
@@ -212,7 +212,7 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     myFixture.checkResultByFile("content/anno/p/annotations.xml", "content/anno/p/annotationsAnnotateLibrary_after.xml", false);
   }
 
-  public void testPrimitive() throws Throwable {
+  public void testPrimitive() {
     PsiFile psiFile = myFixture.configureByFile("lib/p/TestPrimitive.java");
     PsiTestUtil.addSourceRoot(myModule, psiFile.getVirtualFile().getParent());
 
@@ -238,7 +238,7 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     assertEmpty(actions);
   }
 
-  public void testAnnotated() throws Throwable {
+  public void testAnnotated() {
     PsiFile psiFile = myFixture.configureByFile("lib/p/TestAnnotated.java");
     PsiTestUtil.addSourceRoot(myModule, psiFile.getVirtualFile().getParent());
     final PsiFile file = myFixture.getFile();
@@ -250,21 +250,21 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     assertFalse(deannotateFix.isAvailable(myProject, editor, file));
   }
 
-  public void testDeannotation() throws Throwable {
+  public void testDeannotation() {
     addDefaultLibrary();
     myFixture.configureByFiles("lib/p/TestPrimitive.java", "content/anno/p/annotations.xml");
     doDeannotate("lib/p/TestDeannotation.java", "Annotate method 'get' as @NotNull", "Annotate method 'get' as @Nullable");
     myFixture.checkResultByFile("content/anno/p/annotations.xml", "content/anno/p/annotationsDeannotation_after.xml", false);
   }
 
-  public void testDeannotation1() throws Throwable {
+  public void testDeannotation1() {
     addDefaultLibrary();
     myFixture.configureByFiles("lib/p/TestPrimitive.java", "content/anno/p/annotations.xml");
     doDeannotate("lib/p/TestDeannotation1.java", "Annotate parameter 'ss' as @NotNull", "Annotate parameter 'ss' as @Nullable");
     myFixture.checkResultByFile("content/anno/p/annotations.xml", "content/anno/p/annotationsDeannotation1_after.xml", false);
   }
 
-  private void doDeannotate(@NonNls final String testPath, String hint1, String hint2) throws Throwable {
+  private void doDeannotate(@NonNls final String testPath, String hint1, String hint2) {
     myFixture.configureByFile(testPath);
     final PsiFile file = myFixture.getFile();
     final Editor editor = myFixture.getEditor();
@@ -352,7 +352,7 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     startListening(method, AnnotationUtil.NOT_NULL, false);
     new WriteCommandAction(myProject){
       @Override
-      protected void run(@NotNull final Result result) throws Throwable {
+      protected void run(@NotNull final Result result) {
         ExternalAnnotationsManager.getInstance(myProject).editExternalAnnotation(method, AnnotationUtil.NOT_NULL, null);
       }
     }.execute();
@@ -361,7 +361,7 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     startListening(method, AnnotationUtil.NOT_NULL, false);
     new WriteCommandAction(myProject){
       @Override
-      protected void run(@NotNull final Result result) throws Throwable {
+      protected void run(@NotNull final Result result) {
         ExternalAnnotationsManager.getInstance(myProject).deannotate(method, AnnotationUtil.NOT_NULL);
       }
     }.execute();

@@ -29,15 +29,15 @@ import java.util.Collections;
 
 public class GenerateToStringTest extends LightCodeInsightTestCase {
 
-  public void testAnnotationOnMethod() throws Exception {
+  public void testAnnotationOnMethod() {
     doTest(new TemplateResource("a.java", "@NotNull() public String toString() {return null;}", false));
   }
 
-  public void testJavadocOnMethod() throws Exception {
+  public void testJavadocOnMethod() {
     doTest(new TemplateResource("a.java", "/** my comment*/ public String toString() {return null;}", false));
   }
 
-  private void doTest(final TemplateResource templateResource) throws Exception {
+  private void doTest(final TemplateResource templateResource) {
     configureByFile("/codeInsight/generateToString/before" + getTestName(false) + ".java");
 
     final Editor editor = getEditor();

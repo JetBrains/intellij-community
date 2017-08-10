@@ -73,14 +73,14 @@ public class BytecodeAnalysisTest extends JavaCodeInsightFixtureTestCase {
     super.tearDown();
   }
 
-  public void testInference() throws IOException {
+  public void testInference() {
     checkAnnotations(Test01.class);
     checkAnnotations(Test02.class);
     checkAnnotations(TestNonStable.class);
     checkAnnotations(TestConflict.class);
   }
 
-  public void testConverter() throws IOException {
+  public void testConverter() {
     checkCompoundIds(Test01.class);
     checkCompoundIds(TestConverterData.class);
     checkCompoundIds(TestConverterData.StaticNestedClass.class);
@@ -194,7 +194,7 @@ public class BytecodeAnalysisTest extends JavaCodeInsightFixtureTestCase {
     return pureValue != null && pureValue.booleanValue();
   }
 
-  private void checkCompoundIds(Class<?> javaClass) throws IOException {
+  private void checkCompoundIds(Class<?> javaClass) {
     String javaClassName = javaClass.getCanonicalName();
     PsiClass psiClass = myJavaPsiFacade.findClass(javaClassName, GlobalSearchScope.moduleWithLibrariesScope(myModule));
     assertNotNull(psiClass);
@@ -218,7 +218,7 @@ public class BytecodeAnalysisTest extends JavaCodeInsightFixtureTestCase {
     }
   }
 
-  private void checkCompoundId(Method method, PsiMethod psiMethod, boolean noKey) throws IOException {
+  private void checkCompoundId(Method method, PsiMethod psiMethod, boolean noKey) {
     /*
     System.out.println();
     System.out.println(method.internalClassName);

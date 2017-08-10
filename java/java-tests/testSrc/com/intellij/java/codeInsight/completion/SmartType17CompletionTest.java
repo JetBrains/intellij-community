@@ -40,27 +40,27 @@ public class SmartType17CompletionTest extends LightFixtureCompletionTestCase {
     return JAVA_1_7;
   }
 
-  public void testDiamondCollapsed() throws Exception {
+  public void testDiamondCollapsed() {
     doTest();
   }
 
-  public void testDiamondCollapsedWithMethodTypeParameter() throws Exception {
+  public void testDiamondCollapsedWithMethodTypeParameter() {
     doTest();
   }
 
-  public void testDiamondNotCollapsed() throws Exception {
+  public void testDiamondNotCollapsed() {
     doTest();
   }
 
-  public void testDiamondNotCollapsedNotApplicable() throws Exception {
+  public void testDiamondNotCollapsedNotApplicable() {
     doTest();
   }
 
-  public void testDiamondNotCollapsedInCaseOfAnonymousClasses() throws Exception {
+  public void testDiamondNotCollapsedInCaseOfAnonymousClasses() {
     doTest();
   }
 
-  public void testDiamondNotCollapsedInCaseOfInapplicableInference() throws Exception {
+  public void testDiamondNotCollapsedInCaseOfInapplicableInference() {
     doTest();
   }
 

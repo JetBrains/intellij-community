@@ -30,74 +30,74 @@ public class DotCompletionTest extends LightCompletionTestCase {
     return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/completion/dot/";
   }
 
-  public void testInstance() throws Exception {
+  public void testInstance() {
     configureByFile("Dot1.java");
     assertEquals("", myPrefix);
     assertContainsItems("a", "foo");
   }
 
-  public void testClass() throws Exception {
+  public void testClass() {
     configureByFile("Dot2.java");
     assertEquals("", myPrefix);
     assertContainsItems("a", "foo");
   }
 
-  public void testAnonymous() throws Exception {
+  public void testAnonymous() {
     configureByFile("Dot3.java");
     assertEquals("", myPrefix);
     assertContainsItems("a", "foo");
   }
 
-  public void testShowStatic() throws Exception {
+  public void testShowStatic() {
     configureByFile("Dot4.java");
     assertEquals("", myPrefix);
     assertContainsItems("foo");
     assertNotContainItems("a");
   }
 
-  public void testImports() throws Exception {
+  public void testImports() {
     configureByFile("Dot5.java");
     assertContainsItems("util", "lang");
   }
 
-  public void testArrayElement() throws Exception {
+  public void testArrayElement() {
     configureByFile("Dot6.java");
     assertContainsItems("toString", "substring");
   }
 
-  public void testArray() throws Exception {
+  public void testArray() {
     configureByFile("Dot7.java");
     assertContainsItems("clone", "length");
   }
 
-  public void testDuplicatesFromInheritance() throws Exception {
+  public void testDuplicatesFromInheritance() {
     configureByFile("Dot8.java");
     assertContainsItems("toString");
   }
 
-  public void testConstructorExclusion() throws Exception {
+  public void testConstructorExclusion() {
     configureByFile("Dot9.java");
     assertContainsItems("foo");
     assertNotContainItems("A");
   }
 
-  public void testPrimitiveArray() throws Exception {
+  public void testPrimitiveArray() {
     configureByFile("Dot10.java");
     assertContainsItems("clone", "length");
   }
 
-  public void testThisExpression() throws Exception {
+  public void testThisExpression() {
     configureByFile("Dot11.java");
     assertContainsItems("foo", "foo1");
   }
 
-  public void testSuperExpression() throws Exception {
+  public void testSuperExpression() {
     configureByFile("Dot12.java");
     assertContainsItems("foo");
     assertNotContainItems("foo1");
   }
 
-  public void testMultiCatch() throws Exception {
+  public void testMultiCatch() {
     configureByFile("MultiCatch.java");
     assertContainsItems("i", "addSuppressed", "getMessage", "printStackTrace");
   }

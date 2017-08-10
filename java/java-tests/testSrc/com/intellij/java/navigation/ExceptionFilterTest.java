@@ -24,7 +24,7 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 
 public class ExceptionFilterTest extends JavaCodeInsightFixtureTestCase {
 
-  public void testJava9ModulePrefixed() throws Throwable {
+  public void testJava9ModulePrefixed() {
     PsiClass psiClass = myFixture.addClass("package p; public class A {\n" +
                                           "  public void foo() {}\n" +
                                           "}");
@@ -36,7 +36,7 @@ public class ExceptionFilterTest extends JavaCodeInsightFixtureTestCase {
     assertEquals(psiClass, aClass);
   }
 
-  public void testNonClassInTheLine() throws Exception {
+  public void testNonClassInTheLine() {
     ExceptionWorker worker = new ExceptionWorker(new ExceptionInfoCache(GlobalSearchScope.allScope(getProject())));
     String line = "2016-12-20 10:58:36,617 [   5740]   INFO - llij.ide.plugins.PluginManager - Loaded bundled plugins: Android Support (10.2.2), Ant Support (1.0), Application Servers View (0.2.0), AspectJ Support (1.2), CFML Support (3.53), CSS Support (163.7743.44), CVS Integration (11), Cloud Foundry integration (1.0), CloudBees integration (1.0), Copyright (8.1), Coverage (163.7743.44), DSM Analysis (1.0.0), Database Tools and SQL (1.0), Eclipse Integration (3.0), EditorConfig (163.7743.44), Emma (163.7743.44), Flash/Flex Support (163.7743.44)";
     worker.execute(line, line.length());

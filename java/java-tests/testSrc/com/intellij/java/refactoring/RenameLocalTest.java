@@ -44,35 +44,35 @@ public class RenameLocalTest extends LightRefactoringTestCase {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
-  public void testIDEADEV3320() throws Exception {
+  public void testIDEADEV3320() {
     doTest("f");
   }
 
-  public void testIDEADEV13849() throws Exception {
+  public void testIDEADEV13849() {
     doTest("aaaaa");
   }
 
-  public void testConflictWithOuterClassField() throws Exception {  // IDEADEV-24564
+  public void testConflictWithOuterClassField() {  // IDEADEV-24564
     doTest("f");
   }
 
-  public void testConflictWithJavadocTag() throws Exception {
+  public void testConflictWithJavadocTag() {
     doTest("i");
   }
 
-  public void testRenameLocalIncomplete() throws Exception {
+  public void testRenameLocalIncomplete() {
     doTest("_i");
   }
 
-  public void testRenameParamIncomplete() throws Exception {
+  public void testRenameParamIncomplete() {
     doTest("_i");
   }
 
-  public void testClassNameUsedInMethodRefs() throws Exception {
+  public void testClassNameUsedInMethodRefs() {
     doTest("Bar1");
   }
 
-  public void testRenameParamUniqueName() throws Exception {
+  public void testRenameParamUniqueName() {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
     PsiElement element = TargetElementUtil
       .findTargetElement(myEditor, TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
@@ -82,7 +82,7 @@ public class RenameLocalTest extends LightRefactoringTestCase {
     assertTrue(result.toString(), result.contains("window"));
   }
 
-  private void doTest(final String newName) throws Exception {
+  private void doTest(final String newName) {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
     PsiElement element = TargetElementUtil
       .findTargetElement(myEditor, TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
@@ -91,51 +91,51 @@ public class RenameLocalTest extends LightRefactoringTestCase {
     checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
   }
 
-  public void testRenameInPlaceQualifyFieldReference() throws Exception {
+  public void testRenameInPlaceQualifyFieldReference() {
     doTestInplaceRename("myI");
   }
   
-  public void testRenameInPlaceQualifyFieldReferenceInChild() throws Exception {
+  public void testRenameInPlaceQualifyFieldReferenceInChild() {
     doTestInplaceRename("myI");
   }
   
-  public void testRenameInPlaceThisNeeded() throws Exception {
+  public void testRenameInPlaceThisNeeded() {
     doTestInplaceRename("a");
   }
 
-  public void testRenameInPlaceOnRef() throws Exception {
+  public void testRenameInPlaceOnRef() {
     doTestInplaceRename("a");
   }
 
-  public void testRenameInPlaceParamInOverriderAutomaticRenamer() throws Exception {
+  public void testRenameInPlaceParamInOverriderAutomaticRenamer() {
     doTestInplaceRename("pp");
   }
   
-  public void testRenameFieldWithConstructorParamAutomatic() throws Exception {
+  public void testRenameFieldWithConstructorParamAutomatic() {
     doTest("pp");
   }
 
-  public void testRenameInPlaceParamInOverriderAutomaticRenamerConflict() throws Exception {
+  public void testRenameInPlaceParamInOverriderAutomaticRenamerConflict() {
     doTestInplaceRename("pp");
   }
 
-  public void testRenameResource() throws Exception {
+  public void testRenameResource() {
     doTest("r1");
   }
 
-  public void testRenameResourceInPlace() throws Exception {
+  public void testRenameResourceInPlace() {
     doTestInplaceRename("r1");
   }
 
-  public void testRenameToFieldNameInStaticContext() throws Exception {
+  public void testRenameToFieldNameInStaticContext() {
     doTestInplaceRename("myFoo");
   }
 
-  public void testRenameInPlaceInStaticContextWithConflictingField() throws Exception {
+  public void testRenameInPlaceInStaticContextWithConflictingField() {
     doTestInplaceRename("s");
   }
 
-  private void doTestInplaceRename(final String newName) throws Exception {
+  private void doTestInplaceRename(final String newName) {
     configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
 
     final PsiElement element = TargetElementUtil
@@ -149,11 +149,11 @@ public class RenameLocalTest extends LightRefactoringTestCase {
     checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
   }
 
-  public void testRenameWrongRef() throws Exception {
+  public void testRenameWrongRef() {
     doRenameWrongRef("i");
   }
 
-  private void doRenameWrongRef(final String newName) throws Exception {
+  private void doRenameWrongRef(final String newName) {
     final String name = getTestName(false);
     configureByFile(BASE_PATH + name + ".java");
 
@@ -168,7 +168,7 @@ public class RenameLocalTest extends LightRefactoringTestCase {
 
     new WriteCommandAction.Simple(getProject()) {
       @Override
-      protected void run() throws Throwable {
+      protected void run() {
         getEditor().getDocument().replaceString(range.getStartOffset(), range.getEndOffset(), newName);
       }
     }.execute().throwException();

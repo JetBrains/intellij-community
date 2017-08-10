@@ -34,19 +34,19 @@ import org.jetbrains.annotations.NotNull;
  */
 public class CreateFieldFromUsageTest extends LightQuickFixTestCase {
 
-  public void testAnonymousClass() throws Exception { doSingleTest(); }
-  public void testExpectedTypes() throws Exception { doSingleTest(); }
-  public void testInterface() throws Exception { doSingleTest(); }
-  public void testMultipleTypes() throws Exception { doSingleTest(); }
-  public void testMultipleTypes2() throws Exception { doSingleTest(); }
-  public void testParametericMethod() throws Exception { doSingleTest(); }
-  public void testQualifyInner() throws Exception { doSingleTest(); }
-  public void testTypeArgsFormatted() throws Exception { doSingleTest(); }
-  public void testInsideStaticInnerClass() throws Exception { doSingleTest(); }
-  public void testCreateFromEquals() throws Exception { doSingleTest(); }
-  public void testCreateFromEqualsToPrimitiveType() throws Exception { doSingleTest(); }
-  public void testInsideInterface() throws Exception { doSingleTest(); }
-  public void testWithAlignment() throws Exception {
+  public void testAnonymousClass() { doSingleTest(); }
+  public void testExpectedTypes() { doSingleTest(); }
+  public void testInterface() { doSingleTest(); }
+  public void testMultipleTypes() { doSingleTest(); }
+  public void testMultipleTypes2() { doSingleTest(); }
+  public void testParametericMethod() { doSingleTest(); }
+  public void testQualifyInner() { doSingleTest(); }
+  public void testTypeArgsFormatted() { doSingleTest(); }
+  public void testInsideStaticInnerClass() { doSingleTest(); }
+  public void testCreateFromEquals() { doSingleTest(); }
+  public void testCreateFromEqualsToPrimitiveType() { doSingleTest(); }
+  public void testInsideInterface() { doSingleTest(); }
+  public void testWithAlignment() {
     final CommonCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
     boolean old = settings.ALIGN_GROUP_FIELD_DECLARATIONS;
     try {
@@ -58,7 +58,7 @@ public class CreateFieldFromUsageTest extends LightQuickFixTestCase {
     }
   }
 
-  public void testSortByRelevance() throws Exception {
+  public void testSortByRelevance() {
     new WriteCommandAction(getProject()) {
       @Override
       protected void run(@NotNull Result result) throws Exception {
@@ -72,11 +72,11 @@ public class CreateFieldFromUsageTest extends LightQuickFixTestCase {
     doSingleTest();
   }
 
-  public void testDependantConstant() throws Exception {
+  public void testDependantConstant() {
     doSingleTest();
   }
 
-  public void testArrayBraces() throws Exception {
+  public void testArrayBraces() {
     doSingleTest();
   }
 

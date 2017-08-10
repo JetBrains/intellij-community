@@ -33,7 +33,7 @@ public class Java8MapApiInspectionTest extends LightQuickFixParameterizedTestCas
     return new LocalInspectionTool[]{inspection};
   }
 
-  public void test() throws Exception {
+  public void test() {
     doAllTests();
   }
 

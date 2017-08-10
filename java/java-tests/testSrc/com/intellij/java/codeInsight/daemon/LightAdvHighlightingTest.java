@@ -375,7 +375,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     assertFalse(list.toString(), list.contains(annotator));
   }
 
-  public void testSOEForTypeOfHugeBinaryExpression() throws IOException {
+  public void testSOEForTypeOfHugeBinaryExpression() {
     configureFromFileText("a.java", "class A { String s = \"\"; }");
     assertEmpty(highlightErrors());
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
@@ -398,7 +398,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     assertEquals("PsiType:String", type.toString());
   }
 
-  public void testSOEForCyclicInheritance() throws IOException {
+  public void testSOEForCyclicInheritance() {
     configureFromFileText("a.java", "class A extends B { String s = \"\"; void f() {}} class B extends A { void f() {} } ");
     doHighlighting();
   }
@@ -424,15 +424,15 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTestFile(BASE_PATH + "/" + getTestName(false) + ".java").checkSymbolNames().test();
   }
 
-  public void testNestedLocalClasses() throws Exception {
+  public void testNestedLocalClasses() {
     doTest(false);
   }
 
-  public void testAmbiguousConstants() throws Exception {
+  public void testAmbiguousConstants() {
     doTest(false);
   }
 
-  public void testInsane() throws IOException {
+  public void testInsane() {
     configureFromFileText("x.java", "class X { \nx_x_x_x\n }");
     List<HighlightInfo> infos = highlightErrors();
     assertTrue(!infos.isEmpty());

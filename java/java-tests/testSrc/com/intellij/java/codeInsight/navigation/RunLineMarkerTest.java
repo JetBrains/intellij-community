@@ -39,7 +39,7 @@ import java.util.Set;
  * @author Dmitry Avdeev
  */
 public class RunLineMarkerTest extends LightCodeInsightFixtureTestCase {
-  public void testRunLineMarker() throws Exception {
+  public void testRunLineMarker() {
     myFixture.configureByText("MainTest.java", "public class MainTest {\n" +
                                                "    public static void <caret>foo(String[] args) {\n" +
                                                "    }\n " +
@@ -51,7 +51,7 @@ public class RunLineMarkerTest extends LightCodeInsightFixtureTestCase {
     assertEquals(2, gutters.size());
   }
 
-  public void testTestClassWithMain() throws Exception {
+  public void testTestClassWithMain() {
     myFixture.addClass("package junit.framework; public class TestCase {}");
     myFixture.configureByText("MainTest.java", "public class <caret>MainTest extends junit.framework.TestCase {\n" +
                                                "    public static void main(String[] args) {\n" +
@@ -78,7 +78,7 @@ public class RunLineMarkerTest extends LightCodeInsightFixtureTestCase {
     assertEquals("Run 'MainTest'", event.getPresentation().getText());
   }
 
-  public void testNestedTestClass() throws Exception {
+  public void testNestedTestClass() {
     TestStateStorage stateStorage = TestStateStorage.getInstance(getProject());
     String testUrl = "java:suite://Main$MainTest";
     try {
@@ -100,7 +100,7 @@ public class RunLineMarkerTest extends LightCodeInsightFixtureTestCase {
     }
   }
 
-  public void testConfigurable() throws Exception {
+  public void testConfigurable() {
     GutterIconsConfigurable configurable = new GutterIconsConfigurable();
     configurable.createComponent();
     List<GutterIconDescriptor> descriptors = configurable.getDescriptors();

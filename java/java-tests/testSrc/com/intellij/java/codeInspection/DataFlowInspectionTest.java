@@ -41,108 +41,108 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
     return JavaTestUtil.getJavaTestDataPath() + "/inspection/dataFlow/fixture/";
   }
 
-  public void testTryInAnonymous() throws Throwable { doTest(); }
-  public void testNullableAnonymousMethod() throws Throwable { doTest(); }
-  public void testNullableAnonymousParameter() throws Throwable { doTest(); }
-  public void testNullableAnonymousVolatile() throws Throwable { doTest(); }
-  public void testNullableAnonymousVolatileNotNull() throws Throwable { doTest(); }
-  public void testLocalClass() throws Throwable { doTest(); }
+  public void testTryInAnonymous() { doTest(); }
+  public void testNullableAnonymousMethod() { doTest(); }
+  public void testNullableAnonymousParameter() { doTest(); }
+  public void testNullableAnonymousVolatile() { doTest(); }
+  public void testNullableAnonymousVolatileNotNull() { doTest(); }
+  public void testLocalClass() { doTest(); }
 
   public void testNotNullOnSuperParameter() { doTest(); }
 
-  public void testFieldInAnonymous() throws Throwable { doTest(); }
-  public void testFieldInitializerInAnonymous() throws Throwable { doTest(); }
-  public void testNullableField() throws Throwable { doTest(); }
-  public void testCanBeNullDoesntImplyIsNull() throws Throwable { doTest(); }
-  public void testAnnReport() throws Throwable { doTest(); }
+  public void testFieldInAnonymous() { doTest(); }
+  public void testFieldInitializerInAnonymous() { doTest(); }
+  public void testNullableField() { doTest(); }
+  public void testCanBeNullDoesntImplyIsNull() { doTest(); }
+  public void testAnnReport() { doTest(); }
 
-  public void testSuppressStaticFlags() throws Throwable { doTest(); }
+  public void testSuppressStaticFlags() { doTest(); }
 
-  public void testBigMethodNotComplex() throws Throwable { doTest(); }
-  public void testBuildRegexpNotComplex() throws Throwable { doTest(); }
-  public void testTernaryInWhileNotComplex() throws Throwable { doTest(); }
-  public void testTryCatchInForNotComplex() throws Throwable { doTest(); }
-  public void testTryReturnCatchInWhileNotComplex() throws Throwable { doTest(); }
-  public void testNestedTryInWhileNotComplex() throws Throwable { doTest(); }
-  public void testExceptionFromFinally() throws Throwable { doTest(); }
-  public void testExceptionFromFinallyNesting() throws Throwable { doTest(); }
+  public void testBigMethodNotComplex() { doTest(); }
+  public void testBuildRegexpNotComplex() { doTest(); }
+  public void testTernaryInWhileNotComplex() { doTest(); }
+  public void testTryCatchInForNotComplex() { doTest(); }
+  public void testTryReturnCatchInWhileNotComplex() { doTest(); }
+  public void testNestedTryInWhileNotComplex() { doTest(); }
+  public void testExceptionFromFinally() { doTest(); }
+  public void testExceptionFromFinallyNesting() { doTest(); }
   public void testNestedFinally() { doTest(); }
   public void testTryFinallyInsideFinally() { doTest(); }
   public void testBreakContinueViaFinally() { doTest(); }
-  public void testFieldChangedBetweenSynchronizedBlocks() throws Throwable { doTest(); }
+  public void testFieldChangedBetweenSynchronizedBlocks() { doTest(); }
 
-  public void testGeneratedEquals() throws Throwable { doTest(); }
+  public void testGeneratedEquals() { doTest(); }
 
-  public void testIDEA84489() throws Throwable { doTest(); }
+  public void testIDEA84489() { doTest(); }
   public void testComparingNullToNotNull() { doTest(); }
   public void testComparingNullableToNullable() { doTest(); }
   public void testComparingNullableToUnknown() { doTest(); }
-  public void testComparingToNotNullShouldNotAffectNullity() throws Throwable { doTest(); }
-  public void testComparingToNullableShouldNotAffectNullity() throws Throwable { doTest(); }
-  public void testStringTernaryAlwaysTrue() throws Throwable { doTest(); }
-  public void testStringConcatAlwaysNotNull() throws Throwable { doTest(); }
+  public void testComparingToNotNullShouldNotAffectNullity() { doTest(); }
+  public void testComparingToNullableShouldNotAffectNullity() { doTest(); }
+  public void testStringTernaryAlwaysTrue() { doTest(); }
+  public void testStringConcatAlwaysNotNull() { doTest(); }
 
-  public void testNotNullPrimitive() throws Throwable { doTest(); }
-  public void testBoxing128() throws Throwable { doTest(); }
-  public void testFinalFieldsInitializedByAnnotatedParameters() throws Throwable { doTest(); }
-  public void testFinalFieldsInitializedNotNull() throws Throwable { doTest(); }
-  public void testMultiCatch() throws Throwable { doTest(); }
-  public void testContinueFlushesLoopVariable() throws Throwable { doTest(); }
+  public void testNotNullPrimitive() { doTest(); }
+  public void testBoxing128() { doTest(); }
+  public void testFinalFieldsInitializedByAnnotatedParameters() { doTest(); }
+  public void testFinalFieldsInitializedNotNull() { doTest(); }
+  public void testMultiCatch() { doTest(); }
+  public void testContinueFlushesLoopVariable() { doTest(); }
 
-  public void testEqualsNotNull() throws Throwable { doTest(); }
-  public void testVisitFinallyOnce() throws Throwable { doTest(); }
-  public void testNotEqualsDoesntImplyNotNullity() throws Throwable { doTest(); }
-  public void testEqualsEnumConstant() throws Throwable { doTest(); }
+  public void testEqualsNotNull() { doTest(); }
+  public void testVisitFinallyOnce() { doTest(); }
+  public void testNotEqualsDoesntImplyNotNullity() { doTest(); }
+  public void testEqualsEnumConstant() { doTest(); }
   public void testSwitchEnumConstant() { doTest(); }
-  public void testEnumConstantNotNull() throws Throwable { doTest(); }
+  public void testEnumConstantNotNull() { doTest(); }
   public void testCheckEnumConstantConstructor() { doTest(); }
-  public void testCompareToEnumConstant() throws Throwable { doTest(); }
-  public void testEqualsConstant() throws Throwable { doTest(); }
+  public void testCompareToEnumConstant() { doTest(); }
+  public void testEqualsConstant() { doTest(); }
   public void testInternedStringConstants() { doTest(); }
   public void testDontSaveTypeValue() { doTest(); }
-  public void testFinalLoopVariableInstanceof() throws Throwable { doTest(); }
-  public void testGreaterIsNotEquals() throws Throwable { doTest(); }
-  public void testNotGreaterIsNotEquals() throws Throwable { doTest(); }
+  public void testFinalLoopVariableInstanceof() { doTest(); }
+  public void testGreaterIsNotEquals() { doTest(); }
+  public void testNotGreaterIsNotEquals() { doTest(); }
 
   public void testAnnotationMethodNotNull() { doTest(); }
 
-  public void testChainedFinalFieldsDfa() throws Throwable { doTest(); }
-  public void testFinalFieldsDifferentInstances() throws Throwable { doTest(); }
-  public void testThisFieldGetters() throws Throwable { doTest(); }
-  public void testChainedFinalFieldAccessorsDfa() throws Throwable { doTest(); }
-  public void testAccessorPlusMutator() throws Throwable { doTest(); }
-  public void testClosureVariableField() throws Throwable { doTest(); }
+  public void testChainedFinalFieldsDfa() { doTest(); }
+  public void testFinalFieldsDifferentInstances() { doTest(); }
+  public void testThisFieldGetters() { doTest(); }
+  public void testChainedFinalFieldAccessorsDfa() { doTest(); }
+  public void testAccessorPlusMutator() { doTest(); }
+  public void testClosureVariableField() { doTest(); }
   public void testOptionalThis() { doTest(); }
   public void testQualifiedThis() { doTest(); }
 
-  public void testAssigningNullableToNotNull() throws Throwable { doTest(); }
-  public void testAssigningUnknownToNullable() throws Throwable { doTest(); }
-  public void testAssigningClassLiteralToNullable() throws Throwable { doTest(); }
+  public void testAssigningNullableToNotNull() { doTest(); }
+  public void testAssigningUnknownToNullable() { doTest(); }
+  public void testAssigningClassLiteralToNullable() { doTest(); }
 
-  public void testSynchronizingOnNullable() throws Throwable { doTest(); }
+  public void testSynchronizingOnNullable() { doTest(); }
   public void testSwitchOnNullable() { doTest(); }
-  public void testReturningNullFromVoidMethod() throws Throwable { doTest(); }
+  public void testReturningNullFromVoidMethod() { doTest(); }
   public void testReturningNullConstant() { doTest(); }
   public void testReturningConstantExpression() { doTest(); }
 
-  public void testCatchRuntimeException() throws Throwable { doTest(); }
+  public void testCatchRuntimeException() { doTest(); }
   // IDEA-129331
   //public void testCatchThrowable() throws Throwable { doTest(); }
   public void testNotNullCatchParameter() { doTest(); }
 
-  public void testAssertFailInCatch() throws Throwable {
+  public void testAssertFailInCatch() {
     myFixture.addClass("package org.junit; public class Assert { public static void fail() {}}");
     doTest();
   }
 
-  public void testPreserveNullableOnUncheckedCast() throws Throwable { doTest(); }
-  public void testPrimitiveCastMayChangeValue() throws Throwable { doTest(); }
+  public void testPreserveNullableOnUncheckedCast() { doTest(); }
+  public void testPrimitiveCastMayChangeValue() { doTest(); }
 
-  public void testPassingNullableIntoVararg() throws Throwable { doTest(); }
-  public void testEqualsImpliesNotNull() throws Throwable { doTestReportConstantReferences(); }
-  public void testEffectivelyUnqualified() throws Throwable { doTest(); }
+  public void testPassingNullableIntoVararg() { doTest(); }
+  public void testEqualsImpliesNotNull() { doTestReportConstantReferences(); }
+  public void testEffectivelyUnqualified() { doTest(); }
 
-  public void testQualifierEquality() throws Throwable { doTest(); }
+  public void testQualifierEquality() { doTest(); }
 
   public void testSkipAssertions() {
     final DataFlowInspection inspection = new DataFlowInspection();

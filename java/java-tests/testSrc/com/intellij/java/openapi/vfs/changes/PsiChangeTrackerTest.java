@@ -27,7 +27,6 @@ import com.intellij.psi.util.PsiFilter;
 import com.intellij.testFramework.IdeaTestCase;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -63,15 +62,15 @@ public class PsiChangeTrackerTest extends IdeaTestCase {
     super.tearDown();
   }
 
-  public void testMethods() throws Exception {
+  public void testMethods() {
     doTest(new PsiFilter<>(PsiMethod.class));
   }
 
-  public void testFields() throws Exception {
+  public void testFields() {
     doTest(new PsiFilter<>(PsiField.class));
   }
 
-  private <T extends PsiElement> void doTest(PsiFilter<T> filter) throws IOException {
+  private <T extends PsiElement> void doTest(PsiFilter<T> filter) {
     final Map<T,FileStatus> map = PsiChangeTracker.getElementsChanged(myChangedFile, myOriginalFile, filter);
     final Map<String, String> changes = convert(map);
     final Map<String, String> expected = getExpectedResults();
@@ -92,7 +91,7 @@ public class PsiChangeTrackerTest extends IdeaTestCase {
     return result;
   }
 
-  private Map<String, String> getExpectedResults() throws IOException {
+  private Map<String, String> getExpectedResults() {
     final String resultFileName = getTestName(true) + ".txt";
     final VirtualFile resultsDir = getTestRoot().findChild("results");
     assert resultsDir != null : "Can't find results dir";

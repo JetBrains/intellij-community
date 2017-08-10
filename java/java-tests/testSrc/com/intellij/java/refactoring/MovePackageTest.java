@@ -36,7 +36,7 @@ public class MovePackageTest extends MultiFileTestCase {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
-  public void testMoveSingle() throws Exception {
+  public void testMoveSingle() {
     doTest(new String[]{"pack1"}, "target");
   }
 
@@ -45,15 +45,15 @@ public class MovePackageTest extends MultiFileTestCase {
     doTest(new String[]{"pack1"}, "target");
   }
 */
-  public void testQualifiedRef() throws Exception {
+  public void testQualifiedRef() {
     doTest(new String[]{"package1.test"}, "package2");
   }
 
-  public void testInsidePackage() throws Exception {
+  public void testInsidePackage() {
     doTest(new String[]{"a"}, "a.b");
   }
 
-  public void testPackageAndReferencedClass() throws Exception {
+  public void testPackageAndReferencedClass() {
     Project project = myPsiManager.getProject();
     JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
     doTest((rootDir, rootAfter) -> performAction(new PsiElement[]{facade.findPackage("a"), facade.findClass("B", GlobalSearchScope.allScope(project))}, "b"));
@@ -65,11 +65,11 @@ public class MovePackageTest extends MultiFileTestCase {
     return "/refactoring/movePackage/";
   }
 
-  private void doTest(final String[] packageNames, final String newPackageName) throws Exception {
+  private void doTest(final String[] packageNames, final String newPackageName) {
     doTest((rootDir, rootAfter) -> this.performAction(packageNames, newPackageName));
   }
 
-  private void performAction(String[] packageNames, String newPackageName) throws Exception {
+  private void performAction(String[] packageNames, String newPackageName) {
     final PsiPackage[] packages = new PsiPackage[packageNames.length];
     for (int i = 0; i < packages.length; i++) {
       String packageName = packageNames[i];

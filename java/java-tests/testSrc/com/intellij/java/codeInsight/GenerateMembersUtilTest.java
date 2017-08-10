@@ -39,26 +39,26 @@ public class GenerateMembersUtilTest extends LightCodeInsightTestCase {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
-  public void testBeforeInner() throws Exception {
+  public void testBeforeInner() {
     doTest();
   }
 
-  public void testNoExtraEmptyLine() throws Exception {
+  public void testNoExtraEmptyLine() {
     doTest();
   }
 
-  public void testNoRemoveComment() throws Exception { doTest(); }
+  public void testNoRemoveComment() { doTest(); }
 
-  public void testSCR5798() throws Exception { doTest(); }
+  public void testSCR5798() { doTest(); }
 
-  public void testSCR6491() throws Exception { doTest(); }
-  public void testSCR6491_1() throws Exception { doTest(); }
-  public void testSCR6491_2() throws Exception { doTest(); }
+  public void testSCR6491() { doTest(); }
+  public void testSCR6491_1() { doTest(); }
+  public void testSCR6491_2() { doTest(); }
 
-  public void testCaretAtDeclaration() throws Exception { doTest(); }
-  public void testCaretAfterComment() throws Exception { doTest(); }
+  public void testCaretAtDeclaration() { doTest(); }
+  public void testCaretAfterComment() { doTest(); }
 
-  private void doTest() throws Exception {
+  private void doTest() {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
     PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
     PsiMethod method = factory.createMethod("foo", PsiType.VOID);
@@ -70,7 +70,7 @@ public class GenerateMembersUtilTest extends LightCodeInsightTestCase {
     checkResultByFile(null, BASE_PATH + getTestName(false) + "_after.java", true);
   }
 
-  public void testSetupGeneratedMethodNotOverridingInitialBody() throws Exception {
+  public void testSetupGeneratedMethodNotOverridingInitialBody() {
     String methodText = "public void tearDown() {\n //comment\n }";
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(getProject());
     PsiMethod method = factory.createMethodFromText(methodText, null);

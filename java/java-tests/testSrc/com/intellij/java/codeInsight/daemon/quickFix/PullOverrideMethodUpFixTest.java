@@ -19,27 +19,27 @@ import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
 import com.intellij.codeInsight.intention.IntentionAction;
 
 public class PullOverrideMethodUpFixTest extends LightQuickFixTestCase {
-  public void test1() throws Exception {
+  public void test1() {
     doSingleTest("1.java");
   }
 
-  public void test2() throws Exception {
+  public void test2() {
     doSingleTest("2.java");
   }
 
-  public void test3() throws Exception {
+  public void test3() {
     doSingleTest("3.java");
   }
 
-  public void test4() throws Exception {
+  public void test4() {
     doSingleTest("4.java");
   }
 
-  public void test6() throws Exception {
+  public void test6() {
     doSingleTest("6.java");
   }
 
-  public void testRefactoringIntentionsAvailable() throws Exception {
+  public void testRefactoringIntentionsAvailable() {
     doTestActionAvailable(5, "Pull members up");
     doTestActionAvailable(5, "Extract interface");
     doTestActionAvailable(5, "Extract superclass");

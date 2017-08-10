@@ -98,7 +98,7 @@ public class PullUpTest extends LightRefactoringTestCase {
     doTest(true, "Functional expression demands functional interface to have exact one method", new RefactoringTestUtil.MemberDescriptor("get", PsiMethod.class, true));
   }
 
-  public void testPullToInterfaceAsDefault() throws Exception {
+  public void testPullToInterfaceAsDefault() {
     setLanguageLevel(LanguageLevel.JDK_1_8);
     doTest(true, "Method <b><code>mass()</code></b> uses field <b><code>SimplePlanet.mass</code></b>, which is not moved to the superclass", new RefactoringTestUtil.MemberDescriptor("mass", PsiMethod.class, false));
   }
@@ -177,19 +177,19 @@ public class PullUpTest extends LightRefactoringTestCase {
     doTest(false, new RefactoringTestUtil.MemberDescriptor("foo", PsiMethod.class));
   }
 
-  public void testOuterClassRefsNoConflictIfAsAbstract() throws Exception {
+  public void testOuterClassRefsNoConflictIfAsAbstract() {
     doTest(false, new RefactoringTestUtil.MemberDescriptor("bar", PsiMethod.class, true));
   }
 
-  public void testOuterClassRefs() throws Exception {
+  public void testOuterClassRefs() {
     doTest(false, "Method <b><code>bar()</code></b> uses field <b><code>Outer.x</code></b>, which is not moved to the superclass", new RefactoringTestUtil.MemberDescriptor("bar", PsiMethod.class));
   }
 
-  public void testDefaultMethodAsAbstract() throws Exception {
+  public void testDefaultMethodAsAbstract() {
     doTest(false, new RefactoringTestUtil.MemberDescriptor("foo", PsiMethod.class, true));
   }
 
-  public void testDefaultMethodAsDefault() throws Exception {
+  public void testDefaultMethodAsDefault() {
     doTest(false, new RefactoringTestUtil.MemberDescriptor("foo", PsiMethod.class, false));
   }
 
@@ -197,15 +197,15 @@ public class PullUpTest extends LightRefactoringTestCase {
     doTest(false, new RefactoringTestUtil.MemberDescriptor("HM", PsiClass.class), new RefactoringTestUtil.MemberDescriptor("foo", PsiMethod.class));
   }
 
-  public void testSOEOnSelfInheritance() throws Exception {
+  public void testSOEOnSelfInheritance() {
     doTest(false, IGNORE_CONFLICTS, new RefactoringTestUtil.MemberDescriptor("test", PsiMethod.class));
   }
 
-  public void testPullUpAsAbstractInClass() throws Exception {
+  public void testPullUpAsAbstractInClass() {
     doTest(false, new RefactoringTestUtil.MemberDescriptor("test", PsiMethod.class, true));
   }
 
-  public void testPullUpFromAnonymousToInterface() throws Exception {
+  public void testPullUpFromAnonymousToInterface() {
     doTest(false, new RefactoringTestUtil.MemberDescriptor("foo", PsiMethod.class, true));
   }
 

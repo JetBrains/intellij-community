@@ -159,7 +159,7 @@ public class MoveClassToInnerTest extends RefactoringTestCase {
     assertSameElements(conflicts.values() , expectedConflicts);
   }
 
-  private void performAction(String[] classNames, String targetClassName) throws Exception{
+  private void performAction(String[] classNames, String targetClassName) {
     final PsiClass[] classes = new PsiClass[classNames.length];
     for(int i = 0; i < classes.length; i++){
       String className = classNames[i];

@@ -25,11 +25,11 @@ public class DuplicateThrowsInspectionTest extends InspectionTestCase {
     return JavaTestUtil.getJavaTestDataPath() + "/inspection";
   }
 
-  private void doTest() throws Exception {
+  private void doTest() {
     doTest("duplicateThrows/" + getTestName(true), new DuplicateThrowsInspection());
   }
 
-  public void testSimple() throws Exception{
+  public void testSimple() {
     doTest();
   }
 }

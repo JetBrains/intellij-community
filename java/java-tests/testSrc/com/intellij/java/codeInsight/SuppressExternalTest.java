@@ -36,7 +36,6 @@ import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.*;
 
 import java.io.File;
-import java.io.IOException;
 
 public class SuppressExternalTest extends UsefulTestCase {
   protected CodeInsightTestFixture myFixture;
@@ -78,7 +77,7 @@ public class SuppressExternalTest extends UsefulTestCase {
   }
 
 
-  private void addAnnotationsModuleRoot() throws IOException {
+  private void addAnnotationsModuleRoot() {
     myFixture.copyDirectoryToProject("content/anno/suppressed", "content/anno/suppressed");
     ApplicationManager.getApplication().runWriteAction(() -> {
       final Module module = myFixture.getModule();
@@ -90,7 +89,7 @@ public class SuppressExternalTest extends UsefulTestCase {
   }
 
 
-  private void doTest(String testName) throws Exception {
+  private void doTest(String testName) {
     final IntentionAction action = myFixture.getAvailableIntention("Suppress for method", "src/suppressed/" + testName + ".java");
     assertNotNull(action);
     Project project = myFixture.getProject();
@@ -107,15 +106,15 @@ public class SuppressExternalTest extends UsefulTestCase {
   }
 
 
-  public void testNewSuppress() throws Throwable {
+  public void testNewSuppress() {
     doTest("NewSuppress");
   }
 
-  public void testExistingExternalName() throws Exception {
+  public void testExistingExternalName() {
     doTest("ExistingExternalName");
   }
 
-  public void testSecondSuppression() throws Exception {
+  public void testSecondSuppression() {
     doTest("SecondSuppression");
   }
 

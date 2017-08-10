@@ -59,7 +59,7 @@ public class LibraryOrderTest extends PsiTestCase {
     checkClassFromLib("test.A", "2");
   }
 
-  public void testNavigation() throws Exception {
+  public void testNavigation() {
     setupPaths();
     final PsiClass classA = getJavaFacade().findClass("test.A");
     final PsiElement navigationElement = classA.getNavigationElement();

@@ -30,7 +30,7 @@ public class ReplaceWithTernaryOperatorTest extends LightQuickFixParameterizedTe
     return new LocalInspectionTool[]{dataFlowInspection};
   }
 
-  public void test() throws Exception {
+  public void test() {
      doAllTests();
    }
 

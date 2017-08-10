@@ -41,27 +41,27 @@ public class InlineLocalTest extends LightCodeInsightTestCase {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
-  public void testInference () throws Exception {
+  public void testInference () {
     doTest(false);
   }
 
-  public void testQualifier () throws Exception {
+  public void testQualifier () {
     doTest(false);
   }
 
-  public void testInnerInnerClass() throws Exception {
+  public void testInnerInnerClass() {
     doTest(true);
   }
 
-  public void testIDEADEV950 () throws Exception {
+  public void testIDEADEV950 () {
     doTest(false);
   }
 
-  public void testNoRedundantCasts () throws Exception {
+  public void testNoRedundantCasts () {
     doTest(false);
   }
 
-  public void testIdeaDEV9404 () throws Exception {
+  public void testIdeaDEV9404 () {
     doTest(false);
   }
 
@@ -70,39 +70,39 @@ public class InlineLocalTest extends LightCodeInsightTestCase {
     return IdeaTestUtil.getMockJdk17(); // there is JPanel inside
   }
 
-  public void testIDEADEV12244 () throws Exception {
+  public void testIDEADEV12244 () {
     doTest(false);
   }
 
-  public void testIDEADEV10376 () throws Exception {
+  public void testIDEADEV10376 () {
     doTest(true);
   }
 
-  public void testIDEADEV13151 () throws Exception {
+  public void testIDEADEV13151 () {
     doTest(true);
   }
 
-  public void testArrayInitializer() throws Exception {
+  public void testArrayInitializer() {
     doTest(false);
   }
 
-  public void testNonWriteUnaryExpression() throws Exception {
+  public void testNonWriteUnaryExpression() {
     doTest(true);
   }
 
-  public void testNewExpression() throws Exception {
+  public void testNewExpression() {
     doTest(false);
   }
 
-  public void testNewExpressionWithDiamond() throws Exception {
+  public void testNewExpressionWithDiamond() {
     doTest(false);
   }
 
-  public void testNewExpressionWithPreservedDiamond() throws Exception {
+  public void testNewExpressionWithPreservedDiamond() {
     doTest(false);
   }
 
-  public void testAugmentedAssignment() throws Exception {
+  public void testAugmentedAssignment() {
     String exception = null;
     try {
       doTest(false);
@@ -114,198 +114,198 @@ public class InlineLocalTest extends LightCodeInsightTestCase {
     assertEquals(error, exception);
   }
 
-  public void testUsedInInnerClass() throws Exception {       // IDEADEV-28786
+  public void testUsedInInnerClass() {       // IDEADEV-28786
     doTest(true);
   }
 
-  public void testUsedInInnerClass2() throws Exception {       // IDEADEV-28786
+  public void testUsedInInnerClass2() {       // IDEADEV-28786
     doTest(true);
   }
 
-  public void testUsedInInnerClass3() throws Exception {       // IDEADEV-28786
+  public void testUsedInInnerClass3() {       // IDEADEV-28786
     doTest(true);
   }
 
-  public void testUsedInInnerClass4() throws Exception {       // IDEADEV-28786
+  public void testUsedInInnerClass4() {       // IDEADEV-28786
     doTest(true);
   }
 
-  public void testAnotherDefinitionUsed() throws Exception {
+  public void testAnotherDefinitionUsed() {
     doTest(true, "Cannot perform refactoring.\nAnother variable 'bar' definition is used together with inlined one");
   }
 
-  public void testAnotherDefinitionUsed1() throws Exception {
+  public void testAnotherDefinitionUsed1() {
     doTest(false, "Cannot perform refactoring.\nAnother variable 'bar' definition is used together with inlined one");
   }
 
-  public void testTypeArgumentsStatic() throws Exception {
+  public void testTypeArgumentsStatic() {
     doTest(true);
   }
 
-  public void testTypeArguments() throws Exception {
+  public void testTypeArguments() {
     doTest(true);
   }
 
-  public void testWildcard() throws Exception {
+  public void testWildcard() {
     doTest(true);
   }
 
-  public void testStaticImported() throws Exception {
+  public void testStaticImported() {
     doTest(true);
   }
 
-  public void testQualified() throws Exception {
+  public void testQualified() {
     doTest(true);
   }
 
-  public void testAssignmentToArrayElement() throws Exception {
+  public void testAssignmentToArrayElement() {
     doTest(true, "Cannot perform refactoring.\n" +
                  "Variable 'arr' is accessed for writing");
   }
 
-  public void testArrayMethodCallInitialized() throws Exception {
+  public void testArrayMethodCallInitialized() {
     doTest(false);
   }
 
-  public void testArrayIndex() throws Exception {
+  public void testArrayIndex() {
     doTest(true);
   }
 
-  public void testNonEqAssignment() throws Exception {
+  public void testNonEqAssignment() {
     doTest(false, "Cannot perform refactoring.\n" +
                   "Variable 'x' is accessed for writing");
   }
 
-  public void testInlineFromTryCatch() throws Exception {
+  public void testInlineFromTryCatch() {
     doTest(true, "Unable to inline outside try/catch statement");
   }
   
-  public void testInlineFromTryCatchAvailable() throws Exception {
+  public void testInlineFromTryCatchAvailable() {
     doTest(true);
   }
   
-  public void testConditionExpr() throws Exception {
+  public void testConditionExpr() {
     doTest(true);
   }
   
-  public void testLambdaExpr() throws Exception {
+  public void testLambdaExpr() {
     doTest(true);
   }
   
-  public void testLambdaExprAsRefQualifier() throws Exception {
+  public void testLambdaExprAsRefQualifier() {
     doTest(true);
   }
 
-  public void testMethodRefAsRefQualifier() throws Exception {
+  public void testMethodRefAsRefQualifier() {
     doTest(true);
   }
 
-  public void testLocalVarInsideLambdaBody() throws Exception {
+  public void testLocalVarInsideLambdaBody() {
     doTest(true);
   }
 
-  public void testLocalVarInsideLambdaBody1() throws Exception {
+  public void testLocalVarInsideLambdaBody1() {
     doTest(true);
   }
   
-  public void testLocalVarInsideLambdaBody2() throws Exception {
+  public void testLocalVarInsideLambdaBody2() {
     doTest(true);
   }
 
-  public void testLocalVarUsedInLambdaBody() throws Exception {
+  public void testLocalVarUsedInLambdaBody() {
     doTest(true);
   }
 
-  public void testCastAroundLambda() throws Exception {
+  public void testCastAroundLambda() {
     doTest(true);
   }
 
-  public void testNoCastAroundLambda() throws Exception {
+  public void testNoCastAroundLambda() {
     doTest(true);
   }
 
-  public void testUncheckedCast() throws Exception {
+  public void testUncheckedCast() {
     doTest(true);
   }
 
-  public void testUncheckedCastNotNeeded() throws Exception {
+  public void testUncheckedCastNotNeeded() {
     doTest(true);
   }
 
-  public void testCastNotNeeded() throws Exception {
+  public void testCastNotNeeded() {
     doTest(true);
   }
 
-  public void testResourceVariable() throws Exception {
+  public void testResourceVariable() {
     doTest(false);
   }
 
-  public void testEnclosingThisExpression() throws Exception {
+  public void testEnclosingThisExpression() {
     doTest(true);
   }
 
-  public void testParentStaticQualifier() throws Exception {
+  public void testParentStaticQualifier() {
     doTest(true);
   }
 
-  public void testCollapseArrayCreation() throws Exception {
+  public void testCollapseArrayCreation() {
     doTest(true);
   }
 
-  public void testRenameLambdaParamsToAvoidConflicts() throws Exception {
+  public void testRenameLambdaParamsToAvoidConflicts() {
     doTest(true);
   }
 
-  public void testParenthesisAroundInlinedLambda() throws Exception {
+  public void testParenthesisAroundInlinedLambda() {
     doTest(true);
   }
 
-  public void testArrayAccessPriority() throws Exception {
+  public void testArrayAccessPriority() {
     doTest(true);
   }
 
-  public void testDecodeRefsBeforeCheckingOverRedundantCasts() throws Exception {
+  public void testDecodeRefsBeforeCheckingOverRedundantCasts() {
     doTest(true);
   }
 
-  public void testDontOpenMultidimensionalArrays() throws Exception {
+  public void testDontOpenMultidimensionalArrays() {
     doTest(false);
   }
 
-  public void testInsertNarrowingCastToAvoidSemanticsChange() throws Exception {
+  public void testInsertNarrowingCastToAvoidSemanticsChange() {
     doTest(false);
   }
 
-  public void testInsertCastToGenericTypeToProvideValidReturnType() throws Exception {
+  public void testInsertCastToGenericTypeToProvideValidReturnType() {
     doTest(false);
   }
 
-  public void testOperationPrecedenceWhenInlineToStringConcatenation() throws Exception {
+  public void testOperationPrecedenceWhenInlineToStringConcatenation() {
     doTest(false);
   }
 
-  public void testParenthesisAroundCast() throws Exception {
+  public void testParenthesisAroundCast() {
     doTest(false);
   }
 
-  public void testLocalVarInsideLambdaBodyWriteUsage() throws Exception {
+  public void testLocalVarInsideLambdaBodyWriteUsage() {
     doTest(true, "Cannot perform refactoring.\n" +
                  "Variable 'hello' is accessed for writing");
   }
 
-  public void testInlineVariableIntoNestedLambda() throws Exception {
+  public void testInlineVariableIntoNestedLambda() {
     doTest(false);
   }
 
-  public void testAvoidTypeSpecificationWhenPossibleToAvoid() throws Exception {
+  public void testAvoidTypeSpecificationWhenPossibleToAvoid() {
     doTest(false);
   }
 
-  public void testLocalInsideLambdaWithNestedLambda() throws Exception {
+  public void testLocalInsideLambdaWithNestedLambda() {
     doTest(true);
   }
 
-  private void doTest(final boolean inlineDef, String conflictMessage) throws Exception {
+  private void doTest(final boolean inlineDef, String conflictMessage) {
     try {
       doTest(inlineDef);
       fail("Conflict was not detected");
@@ -316,7 +316,7 @@ public class InlineLocalTest extends LightCodeInsightTestCase {
   }
 
 
-  private void doTest(final boolean inlineDef) throws Exception {
+  private void doTest(final boolean inlineDef) {
     setLanguageLevel(LanguageLevel.JDK_1_7);
     String name = getTestName(false);
     String fileName = "/refactoring/inlineLocal/" + name + ".java";

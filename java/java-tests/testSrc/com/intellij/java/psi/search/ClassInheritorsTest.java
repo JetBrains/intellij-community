@@ -60,7 +60,7 @@ public class ClassInheritorsTest extends JavaCodeInsightFixtureTestCase {
     assertEquals(allFqn.toString(), allFqn.size(), new HashSet<>(allFqn).size());
   }
 
-  public void testStressInPresenceOfPCEs() throws IOException {
+  public void testStressInPresenceOfPCEs() {
     ApplicationManager.getApplication().assertIsDispatchThread(); // no write action can go through while we test
     int N = 1000;
     PsiJavaFile file0 = (PsiJavaFile)myFixture.addFileToProject("C0.java", "class C0 { }");
@@ -96,7 +96,7 @@ public class ClassInheritorsTest extends JavaCodeInsightFixtureTestCase {
     }
   }
 
-  public void testPrivateClassCanHaveInheritorsInAnotherFile() throws IOException {
+  public void testPrivateClassCanHaveInheritorsInAnotherFile() {
     myFixture.addClass("public class Test {\n" +
                 "  public static class A { }\n" +
                 "  private static class B extends A { }\n" +
@@ -111,7 +111,7 @@ public class ClassInheritorsTest extends JavaCodeInsightFixtureTestCase {
     assertSize(4, ClassInheritorsSearch.search(myFixture.findClass("Test.B")).findAll());
   }
 
-  public void testPackageLocalClassCanHaveInheritorsInAnotherPackage() throws IOException {
+  public void testPackageLocalClassCanHaveInheritorsInAnotherPackage() {
     myFixture.addClass("package one; public class Test {\n" +
                 "  public static class A { }\n" +
                 "  static class B extends A { }\n" +

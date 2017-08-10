@@ -37,10 +37,10 @@ import java.io.IOException;
 @SkipSlowTestLocally
 public class MiscPsiTest extends LightCodeInsightFixtureTestCase {
   @Override
-  protected void invokeTestRunnable(@NotNull final Runnable runnable) throws Exception {
+  protected void invokeTestRunnable(@NotNull final Runnable runnable) {
     new WriteCommandAction.Simple(getProject()) {
       @Override
-      protected void run() throws Throwable {
+      protected void run() {
         runnable.run();
       }
     }.execute();
@@ -110,7 +110,7 @@ public class MiscPsiTest extends LightCodeInsightFixtureTestCase {
     assertFalse(FileDocumentManager.getInstance().isFileModified(newFile.getVirtualFile()));
   }
 
-  public void testSCR4212() throws Exception{
+  public void testSCR4212() {
     String text = "class A{{ return(Object)new String(); }}";
     VirtualFile vFile = myFixture.addFileToProject("Test.java", text).getVirtualFile();
 
@@ -127,7 +127,7 @@ public class MiscPsiTest extends LightCodeInsightFixtureTestCase {
     assertEquals(expectedText, textAfter);
   }
 
-  public void testDeleteFieldInMultipleDeclarations() throws Exception {
+  public void testDeleteFieldInMultipleDeclarations() {
     final PsiClass aClass = getJavaFacade().getElementFactory().createClassFromText("public int i, j;", null);
 
     final PsiField aField = aClass.getFields()[0];
@@ -153,7 +153,7 @@ public class MiscPsiTest extends LightCodeInsightFixtureTestCase {
     fileA.getContainingDirectory().add(fileACopy);
   }
 
-  public void testCopyClass() throws Exception {
+  public void testCopyClass() {
     String text = "package aaa; class A{}";
     VirtualFile vFile = myFixture.addFileToProject("A.java", text).getVirtualFile();
 
@@ -169,7 +169,7 @@ public class MiscPsiTest extends LightCodeInsightFixtureTestCase {
     assertFalse(FileDocumentManager.getInstance().isFileModified(newFile.getVirtualFile()));
   }
 
-  public void testSCR15954() throws Exception {
+  public void testSCR15954() {
     PsiJavaFile file = (PsiJavaFile)myFixture.addFileToProject("A.java", "class A{\nA(){}\n}");
 
     PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(getProject());
@@ -181,7 +181,7 @@ public class MiscPsiTest extends LightCodeInsightFixtureTestCase {
     aClass.setName("B");
   }
 
-  public void testDeleteAnnotationAttribute() throws Exception {
+  public void testDeleteAnnotationAttribute() {
     final PsiAnnotation annotation = getJavaFacade().getElementFactory().createAnnotationFromText("@A(b,c)", null);
     final PsiNameValuePair secondAttribute = annotation.getParameterList().getAttributes()[1];
     ApplicationManager.getApplication().runWriteAction(() -> secondAttribute.delete());
@@ -189,7 +189,7 @@ public class MiscPsiTest extends LightCodeInsightFixtureTestCase {
     assertEquals("@A(b )", annotation.getText());
   }
 
-  public void testDeleteAnnotationArrayInitializerElement() throws Exception {
+  public void testDeleteAnnotationArrayInitializerElement() {
     final PsiAnnotation annotation = getJavaFacade().getElementFactory().createAnnotationFromText("@A({b,c})", null);
     final PsiNameValuePair firstAttribute = annotation.getParameterList().getAttributes()[0];
     assertTrue(firstAttribute.getValue() instanceof PsiArrayInitializerMemberValue);
@@ -203,7 +203,7 @@ public class MiscPsiTest extends LightCodeInsightFixtureTestCase {
     return JavaPsiFacade.getInstance(getProject());
   }
 
-  public void testJavaLangObjectSuperMethod() throws Exception {
+  public void testJavaLangObjectSuperMethod() {
     final PsiClass aClass =
       getJavaFacade().getElementFactory().createClassFromText("public String toString() {return null;}", null);
     final PsiMethod method = aClass.getMethods()[0];
@@ -212,14 +212,14 @@ public class MiscPsiTest extends LightCodeInsightFixtureTestCase {
     assertEquals(CommonClassNames.JAVA_LANG_OBJECT, superMethods[0].getContainingClass().getQualifiedName());
   }
 
-  public void testImportOnDemand() throws Exception {
+  public void testImportOnDemand() {
     final PsiJavaFile file = (PsiJavaFile)PsiFileFactory.getInstance(getProject()).createFileFromText("D.java",
                                                                                                                       "import java.util.Map.Entry");
     PsiImportStatement importStatement = file.getImportList().getImportStatements()[0];
     assertTrue(!importStatement.isOnDemand());
   }
 
-  public void testDocCommentPrecededByLineComment() throws Exception {
+  public void testDocCommentPrecededByLineComment() {
     final PsiJavaFile file = (PsiJavaFile)PsiFileFactory.getInstance(getProject()).createFileFromText("D.java",
                                                                                                                       "////////////////////////////////////////\n" +
                                                                                                                       "/** */\n" +
@@ -230,7 +230,7 @@ public class MiscPsiTest extends LightCodeInsightFixtureTestCase {
     assertNotNull(psiClass.getDocComment());
   }
 
-  public void testTopLevelEnumIsNotStatic() throws Exception {
+  public void testTopLevelEnumIsNotStatic() {
     final JavaPsiFacade facade = getJavaFacade();
     final LanguageLevel prevLanguageLevel = LanguageLevelProjectExtension.getInstance(facade.getProject()).getLanguageLevel();
     LanguageLevelProjectExtension.getInstance(facade.getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
@@ -245,7 +245,7 @@ public class MiscPsiTest extends LightCodeInsightFixtureTestCase {
     assertFalse(aClass.hasModifierProperty(PsiModifier.STATIC));
   }
 
-  public void testDoNotExpandNestedChameleons() throws Exception {
+  public void testDoNotExpandNestedChameleons() {
     PsiJavaFile file = (PsiJavaFile)myFixture.addFileToProject("a.java", "class A {{{}}}");
     file.getNode();
 

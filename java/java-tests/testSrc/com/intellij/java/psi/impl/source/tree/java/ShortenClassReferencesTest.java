@@ -73,7 +73,7 @@ public class ShortenClassReferencesTest extends LightCodeInsightFixtureTestCase 
     }
   }
 
-  public void testOuterClassReferenceInInstanceof() throws Exception {
+  public void testOuterClassReferenceInInstanceof() {
     myFixture.configureByText("a.java", "class Outer<T> {class Inner {} {boolean b = new Inner() instanceof Outer.Inner;}}\n" +
                                         "class Outer1 {class Inner {} {boolean b = new Inner() instanceof Outer1.Inner;}}");
     doShortenRefs();
@@ -81,7 +81,7 @@ public class ShortenClassReferencesTest extends LightCodeInsightFixtureTestCase 
                           "class Outer1 {class Inner {} {boolean b = new Inner() instanceof Inner;}}");
   }
 
-  public void testConflictingClassInSamePackage() throws Exception {
+  public void testConflictingClassInSamePackage() {
     myFixture.addClass("package p1; public class Outer{}");
     myFixture.addClass("package p2; public class Outer{}");
     myFixture.configureByText("a.java", "package p2; class Outer1 extends p1.Outer {}");
@@ -93,7 +93,7 @@ public class ShortenClassReferencesTest extends LightCodeInsightFixtureTestCase 
                           "class Outer1 extends Outer {}");
   }
 
-  public void testWhiteSpaceForMovedTypeAnnotations() throws Exception {
+  public void testWhiteSpaceForMovedTypeAnnotations() {
     myFixture.configureByFile(getTestName(false) + ".java");
     PsiElement elementAtCaret = myFixture.getElementAtCaret();
     assertTrue(elementAtCaret instanceof PsiParameter);

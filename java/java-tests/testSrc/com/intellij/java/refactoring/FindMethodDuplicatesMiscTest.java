@@ -21,103 +21,103 @@ public class FindMethodDuplicatesMiscTest extends FindMethodDuplicatesBaseTest {
     return "/refactoring/methodDuplicatesMisc/" + getTestName(false) + ".java";
   }
 
-  public void testChangeReturnTypeByParameter() throws Exception {
+  public void testChangeReturnTypeByParameter() {
     doTest();
   }
 
-  public void testChangeReturnTypeByField() throws Exception {
+  public void testChangeReturnTypeByField() {
     doTest();
   }
 
-  public void testMethodTypeParameters() throws Exception {
+  public void testMethodTypeParameters() {
     doTest();
   }
 
-  public void testChangeReturnTypeByReturnExpression() throws Exception {
+  public void testChangeReturnTypeByReturnExpression() {
     doTest();
   }
 
-  public void testChangeReturnTypeByReturnValue() throws Exception {
+  public void testChangeReturnTypeByReturnValue() {
     doTest();
   }
 
-  public void testParametersModification() throws Exception {
+  public void testParametersModification() {
     doTest();
   }
 
-  public void testPassArray2VarargMethodCall() throws Exception {
+  public void testPassArray2VarargMethodCall() {
     doTest();
   }
 
-  public void testDetectNameConflicts() throws Exception {
+  public void testDetectNameConflicts() {
     doTest();
   }
 
-  public void testNoDetectNameConflicts() throws Exception {
+  public void testNoDetectNameConflicts() {
     doTest();
   }
 
-  public void testDetectNameConflictsWithStatic() throws Exception {
+  public void testDetectNameConflictsWithStatic() {
     doTest();
   }
 
-  public void testCorrectThis() throws Exception {
+  public void testCorrectThis() {
     doTest();
   }
 
-  public void testSuperInTheSameContext() throws Exception {
+  public void testSuperInTheSameContext() {
     doTest(false);
   }
 
-  public void testSuperInTheSameContextQualified() throws Exception {
+  public void testSuperInTheSameContextQualified() {
     doTest();
   }
 
-  public void testInsertSuperQualifierWhenNameConflicts() throws Exception {
+  public void testInsertSuperQualifierWhenNameConflicts() {
     doTest();
   }
 
-  public void testUnqualifiedStaticAccess() throws Exception {
+  public void testUnqualifiedStaticAccess() {
     doTest();
   }
 
-  public void testCandidateUnqualifiedStaticAccess() throws Exception {
+  public void testCandidateUnqualifiedStaticAccess() {
     doTest();
   }
 
-  public void testVarargsAccess() throws Exception {
+  public void testVarargsAccess() {
     doTest();
   }
 
-  public void testIncorrectVarargsAccess() throws Exception {
+  public void testIncorrectVarargsAccess() {
     doTest();
   }
 
-  public void testVarVarargsAccess() throws Exception {
+  public void testVarVarargsAccess() {
     doTest();
   }
 
-  public void testSkipNotAccessible() throws Exception {
+  public void testSkipNotAccessible() {
     doTest(false);
   }
   
-  public void testQualifiers() throws Exception {
+  public void testQualifiers() {
     doTest();
   }
 
-  public void testSimpleConstant() throws Exception {
+  public void testSimpleConstant() {
     doTest();
   }
 
-  public void testAnonymousInitializer() throws Exception {
+  public void testAnonymousInitializer() {
     doTest();
   }
 
-  public void testReplaceDuplicateInsideAnonymous() throws Exception {
+  public void testReplaceDuplicateInsideAnonymous() {
     doTest();
   }
 
-  public void testMakeStaticWhenUsedInInheritor() throws Exception {
+  public void testMakeStaticWhenUsedInInheritor() {
     doTest();
   }
 }

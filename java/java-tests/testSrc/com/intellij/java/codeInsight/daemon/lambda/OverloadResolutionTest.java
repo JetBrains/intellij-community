@@ -31,232 +31,232 @@ public class OverloadResolutionTest extends LightDaemonAnalyzerTestCase {
     enableInspectionTool(new UnusedDeclarationInspection());
   }
 
-  public void testPertinentToApplicabilityOfExplicitlyTypedLambda() throws Exception {
+  public void testPertinentToApplicabilityOfExplicitlyTypedLambda() {
     doTest();
   }
 
-  public void testVoidValueCompatibilityOfImplicitlyTypedLambda() throws Exception {
+  public void testVoidValueCompatibilityOfImplicitlyTypedLambda() {
     doTest();
   }
   
-  public void testVoidValueCompatibilityCachedControlFlow() throws Exception {
+  public void testVoidValueCompatibilityCachedControlFlow() {
     doTest();
   }
 
-  public void testVoidValueCompatibilityCanCompleteNormallyWithCallWithExceptionAsLastStatement() throws Exception {
+  public void testVoidValueCompatibilityCanCompleteNormallyWithCallWithExceptionAsLastStatement() {
     doTest();
   }
 
-  public void testVoidValueCompatibilityCantCompleteNormallyWithCallWithExceptionAsLastReturnStatement() throws Exception {
+  public void testVoidValueCompatibilityCantCompleteNormallyWithCallWithExceptionAsLastReturnStatement() {
     doTest();
   }
 
-  public void testTryCatchWithoutFinallyBlockProcessing() throws Exception {
+  public void testTryCatchWithoutFinallyBlockProcessing() {
     doTest(false);
   }
 
-  public void testValueCompatibleWithThrowsStatement() throws Exception {
+  public void testValueCompatibleWithThrowsStatement() {
     doTest(false);
   }
 
-  public void testIDEA102800() throws Exception {
+  public void testIDEA102800() {
     doTest();
   }
 
-  public void testReturnStatementsInsideNestedLambdasDuringVoidValueCompatibilityChecks() throws Exception {
+  public void testReturnStatementsInsideNestedLambdasDuringVoidValueCompatibilityChecks() {
     doTest();
   }
 
-  public void testIgnoreNonFunctionalArgumentsWhenCheckIfFunctionalMoreSpecific() throws Exception {
+  public void testIgnoreNonFunctionalArgumentsWhenCheckIfFunctionalMoreSpecific() {
     doTest();
   }
 
-  public void testLambdaIsNotCongruentWithFunctionalTypeWithTypeParams() throws Exception {
+  public void testLambdaIsNotCongruentWithFunctionalTypeWithTypeParams() {
     doTest();
   }
 
-  public void testDetectPolyExpressionInReturnsOfExplicitlyTypedLambdaWhenPrimitiveCouldWin() throws Exception {
+  public void testDetectPolyExpressionInReturnsOfExplicitlyTypedLambdaWhenPrimitiveCouldWin() {
     doTest();
   }
 
-  public void testDetectNotEqualParametersInFunctionalTypesForExactMethodReferences() throws Exception {
+  public void testDetectNotEqualParametersInFunctionalTypesForExactMethodReferences() {
     doTest();
   }
 
-  public void testPreferDefaultMethodsOverStatic() throws Exception {
+  public void testPreferDefaultMethodsOverStatic() {
     doTest();
   }
 
-  public void testDefaultAbstractConflictResolution() throws Exception {
+  public void testDefaultAbstractConflictResolution() {
     doTest();
   }
 
-  public void testLambdaValueCompatibleWithNestedTryWithResources() throws Exception {
+  public void testLambdaValueCompatibleWithNestedTryWithResources() {
     doTest(false);
   }
 
-  public void testManyOverloadsWithVarargs() throws Exception {
+  public void testManyOverloadsWithVarargs() {
     PlatformTestUtil.startPerformanceTest("Overload resolution with 14 overloads", 10000, () -> doTest(false)).useLegacyScaling().assertTiming();
   }
 
-  public void testConstructorOverloadsWithDiamonds() throws Exception {
+  public void testConstructorOverloadsWithDiamonds() {
     PlatformTestUtil.startPerformanceTest("Overload resolution with chain constructor calls with diamonds", 5000, () -> doTest(false)).useLegacyScaling().assertTiming();
   }
 
-  public void testMultipleOverloadsWithNestedGeneric() throws Exception {
+  public void testMultipleOverloadsWithNestedGeneric() {
     doTest(false);
   }
 
-  public void testSecondSearchPossibleForFunctionalInterfacesWithPrimitiveFisrtParameter() throws Exception {
+  public void testSecondSearchPossibleForFunctionalInterfacesWithPrimitiveFisrtParameter() {
     doTest(false);
   }
 
-  public void testIDEA139875() throws Exception {
+  public void testIDEA139875() {
     doTest();
   }
 
-  public void testMethodReferenceWithTypeArgs() throws Exception {
+  public void testMethodReferenceWithTypeArgs() {
     doTest();
   }
 
-  public void testPrimitiveVarargsAreNoMoreSpecificThanNonPrimitiveWhenNoArgIsActuallyProvided() throws Exception {
+  public void testPrimitiveVarargsAreNoMoreSpecificThanNonPrimitiveWhenNoArgIsActuallyProvided() {
     doTest();
   }
 
-  public void testProperUnrelatedFunctionalInterfacesTypesComparison() throws Exception {
+  public void testProperUnrelatedFunctionalInterfacesTypesComparison() {
     doTest();
   }
 
-  public void testDoNotCheckConstantIfsDuringValueCompatibleChecks() throws Exception {
+  public void testDoNotCheckConstantIfsDuringValueCompatibleChecks() {
     doTest();
   }
 
-  public void testFunctionalExpressionTypeErasure() throws Exception {
+  public void testFunctionalExpressionTypeErasure() {
     doTest();
   }
 
-  public void testOverrideObjectMethods() throws Exception {
+  public void testOverrideObjectMethods() {
     doTest();
   }
 
-  public void testStaticImportOfObjectsToString() throws Exception {
+  public void testStaticImportOfObjectsToString() {
     doTest();
   }
 
-  public void testConflictsWithRawQualifier() throws Exception {
+  public void testConflictsWithRawQualifier() {
     doTest();
   }
 
-  public void testIgnoreCandidatesWithLowerApplicabilityLevel() throws Exception {
+  public void testIgnoreCandidatesWithLowerApplicabilityLevel() {
     doTest();
   }
 
-  public void testSiteSubstituteTypeParameterBoundsWhenCheckForMostSpecific() throws Exception {
+  public void testSiteSubstituteTypeParameterBoundsWhenCheckForMostSpecific() {
     doTest();
   }
 
-  public void testChooseAbstractMethodArbitrarily() throws Exception {
+  public void testChooseAbstractMethodArbitrarily() {
     doTest();
   }
 
-  public void testFunctionalInterfaceIncompatibilityBasedOnAbsenceOfVoidToTypeConvertion() throws Exception {
+  public void testFunctionalInterfaceIncompatibilityBasedOnAbsenceOfVoidToTypeConvertion() {
     doTest();
   }
 
-  public void testNoBoxingWithNullType() throws Exception {
+  public void testNoBoxingWithNullType() {
     doTest();
   }
 
-  public void testFunctionalInterfacesAtVarargsPositionMostSpecificCheck() throws Exception {
+  public void testFunctionalInterfacesAtVarargsPositionMostSpecificCheck() {
     doTest();
   }
 
-  public void testIgnoreNumberOfParametersInPotentiallyCompatibleCheckNotToExcludeAllConflicts() throws Exception {
+  public void testIgnoreNumberOfParametersInPotentiallyCompatibleCheckNotToExcludeAllConflicts() {
     doTest(false);
   }
 
-  public void testPotentialCompatibilityInCaseWhenNoMethodHasValidNumberOfParameters() throws Exception {
+  public void testPotentialCompatibilityInCaseWhenNoMethodHasValidNumberOfParameters() {
     doTest(false);
   }
 
-  public void testNoNeedToPreferGenericToRawSubstitution() throws Exception {
+  public void testNoNeedToPreferGenericToRawSubstitution() {
     doTest();
   }
 
-  public void testLongerParamsWhenVarargs() throws Exception {
+  public void testLongerParamsWhenVarargs() {
     doTest();
   }
 
-  public void testPotentiallyCompatibleShouldCheckAgainstSubstitutedWithSiteSubstitutor() throws Exception {
+  public void testPotentiallyCompatibleShouldCheckAgainstSubstitutedWithSiteSubstitutor() {
     doTest(false);
   }
 
-  public void testCompareFormalParametersWithNotionOfSiteSubstitutorInIsMoreSpecificCheck() throws Exception {
+  public void testCompareFormalParametersWithNotionOfSiteSubstitutorInIsMoreSpecificCheck() {
     doTest(true);
   }
 
-  public void testDonotIncludeAdditionalConstraintsDuringApplicabilityChecksInsideOverloadResolution() throws Exception {
+  public void testDonotIncludeAdditionalConstraintsDuringApplicabilityChecksInsideOverloadResolution() {
     doTest(true);
   }
 
-  public void testPreserveErrorsFromOuterVariables() throws Exception {
+  public void testPreserveErrorsFromOuterVariables() {
     doTest(true);
   }
 
-  public void testIDEA151823() throws Exception {
+  public void testIDEA151823() {
     doTest();
   }
 
-  public void testTypeCalculationOfQualifierShouldNotDependOnOverloadResolutionOfContainingMethodCall() throws Exception {
+  public void testTypeCalculationOfQualifierShouldNotDependOnOverloadResolutionOfContainingMethodCall() {
     doTest();
   }
 
-  public void testIDEA153076() throws Exception {
+  public void testIDEA153076() {
     doTest();
   }
 
   //java 8 error
-  public void testNotPotentiallyCompatibleMethodReference() throws Exception {
+  public void testNotPotentiallyCompatibleMethodReference() {
     doTest();
   }
 
-  public void testSpecificFunctionalInterfaces() throws Exception {
+  public void testSpecificFunctionalInterfaces() {
     doTest();
   }
 
-  public void testIgnoreStaticCorrectnessDuringOverloadResolution() throws Exception {
+  public void testIgnoreStaticCorrectnessDuringOverloadResolution() {
     doTest(false);
   }
 
-  public void testIgnoreLambdaVoidValueIncompatibilitiesPreferringMethodWithFunctionalTypeToNonFunctionalType() throws Exception {
+  public void testIgnoreLambdaVoidValueIncompatibilitiesPreferringMethodWithFunctionalTypeToNonFunctionalType() {
     doTest(false);
   }
 
-  public void testVarargComponentTypesShouldBeExcludedFromBoxingComparison() throws Exception {
+  public void testVarargComponentTypesShouldBeExcludedFromBoxingComparison() {
     doTest(false);
   }
 
-  public void testOverriddenVarargWithaArray() throws Exception {
+  public void testOverriddenVarargWithaArray() {
     doTest();
   }
 
-  public void testForceCleanupErrorsInConditionalWhenBothBranchesProduceError() throws Exception {
+  public void testForceCleanupErrorsInConditionalWhenBothBranchesProduceError() {
     doTest();
   }
 
-  public void testStaticMethodInOuterClassConflictWithToString() throws Exception {
+  public void testStaticMethodInOuterClassConflictWithToString() {
     doTest();
   }
 
-  public void testPreserveStaticMethodConflictsWhenMethodsAreNotHidden() throws Exception {
+  public void testPreserveStaticMethodConflictsWhenMethodsAreNotHidden() {
     doTest(false);
   }
 
-  public void testDontSkipInapplicableMethodsDuringSameSignatureCheck() throws Exception {
+  public void testDontSkipInapplicableMethodsDuringSameSignatureCheck() {
     doTest(false);
   }
 
-  public void testInferenceErrorInArgumentWhenWrongOverloadWasChosen() throws Exception {
+  public void testInferenceErrorInArgumentWhenWrongOverloadWasChosen() {
     doTest(false);
   }
 

@@ -85,7 +85,7 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     assignJdk(getModule1());
   }
 
-  public void testCreateConfiguration() throws IOException, ExecutionException {
+  public void testCreateConfiguration() throws ExecutionException {
     Module module1 = getModule1();
     PsiClass psiClass = findTestA(module1);
     JUnitConfiguration configuration = createConfiguration(psiClass);
@@ -273,7 +273,7 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     checkClassName(oldRc.getPersistentData().getMainClassName(), newRc);
   }
 
-  public void testTestClassPathWhenRunningConfigurations() throws IOException, ExecutionException {
+  public void testTestClassPathWhenRunningConfigurations() throws ExecutionException {
     addModule("module4", false);
     Module module4 = getModule4();
     assignJdk(module4);
@@ -301,7 +301,7 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     checkContains(classPath, output);
   }
 
-  public void testSameTestAndCommonOutput() throws IOException, ExecutionException {
+  public void testSameTestAndCommonOutput() throws ExecutionException {
     addModule("module4", false);
     Module module = getModule4();
     assignJdk(module);
@@ -388,7 +388,7 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     checkCanRun(configuration);
   }
 
-  public void testAllInPackageForProject() throws IOException, ExecutionException {
+  public void testAllInPackageForProject() throws ExecutionException {
     // module1 -> module2 -> module3
     // module5
     addModule("module5");
@@ -414,7 +414,7 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     }
   }
 
-  public void testOriginalModule() throws Exception {
+  public void testOriginalModule() {
     ModuleRootModificationUtil.addDependency(getModule1(), getModule2(), DependencyScope.TEST, true);
     ModuleRootModificationUtil.addDependency(getModule2(), getModule3(), DependencyScope.TEST, false);
     assertTrue(ModuleBasedConfiguration.canRestoreOriginalModule(getModule1(), new Module[] {getModule2()}));

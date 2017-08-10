@@ -53,7 +53,7 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
     return expr instanceof PsiLiteralExpression ? expr : null;
   }
 
-  public void testFromExpression() throws Exception {
+  public void testFromExpression() {
      doTest(new Pass<AbstractInplaceIntroducer>() {
        @Override
        public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
@@ -79,7 +79,7 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
     }
   }
 
-  public void testInsideInjectedString() throws Exception {
+  public void testInsideInjectedString() {
     doTestInsideInjection(new Pass<AbstractInplaceIntroducer>() {
       @Override
       public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
@@ -88,7 +88,7 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
     });
   }
 
-  public void testInjectedString() throws Exception {
+  public void testInjectedString() {
     doTestInsideInjection(new Pass<AbstractInplaceIntroducer>() {
       @Override
       public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
@@ -98,7 +98,7 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
     });
   }
 
-  public void testPlaceInsideLoopAndRename() throws Exception {
+  public void testPlaceInsideLoopAndRename() {
     doTest(new Pass<AbstractInplaceIntroducer>() {
       @Override
       public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
@@ -107,7 +107,7 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
     });
   }
   
-  public void testPlaceInsideLambdaBody() throws Exception {
+  public void testPlaceInsideLambdaBody() {
     doTest(new Pass<AbstractInplaceIntroducer>() {
       @Override
       public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
@@ -116,7 +116,7 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
     });
   }
 
-  public void testPlaceInsideLambdaBodyMultipleOccurrences1() throws Exception {
+  public void testPlaceInsideLambdaBodyMultipleOccurrences1() {
     doTestReplaceChoice(IntroduceVariableBase.JavaReplaceChoice.ALL, new Pass<AbstractInplaceIntroducer>() {
       @Override
       public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
@@ -125,7 +125,7 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
     });
   }
 
-  public void testReplaceAllOnDummyCodeWithSameNameAsGenerated() throws Exception {
+  public void testReplaceAllOnDummyCodeWithSameNameAsGenerated() {
     doTestReplaceChoice(IntroduceVariableBase.JavaReplaceChoice.ALL, new Pass<AbstractInplaceIntroducer>() {
       @Override
       public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
@@ -134,7 +134,7 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
     });
   }
 
-  public void testReplaceAllIntroduceFieldInLocalClass() throws Exception {
+  public void testReplaceAllIntroduceFieldInLocalClass() {
     doTestReplaceChoice(IntroduceVariableBase.JavaReplaceChoice.ALL, new Pass<AbstractInplaceIntroducer>() {
       @Override
       public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
@@ -143,7 +143,7 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
     });
   }
 
-  public void testRanges() throws Exception {
+  public void testRanges() {
      doTest(new Pass<AbstractInplaceIntroducer>() {
        @Override
        public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
@@ -152,7 +152,7 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
      });
   }
 
-  public void testFromParenthesis() throws Exception {
+  public void testFromParenthesis() {
      doTest(new Pass<AbstractInplaceIntroducer>() {
        @Override
        public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
@@ -161,7 +161,7 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
      });
   }
 
-  public void testConflictWithField() throws Exception {
+  public void testConflictWithField() {
     doTest(new Pass<AbstractInplaceIntroducer>() {
       @Override
       public void pass(AbstractInplaceIntroducer introducer) {
@@ -170,7 +170,7 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
     });
   }
 
-  public void testConflictWithFieldNoCast() throws Exception {
+  public void testConflictWithFieldNoCast() {
     doTest(new Pass<AbstractInplaceIntroducer>() {
       @Override
       public void pass(AbstractInplaceIntroducer introducer) {
@@ -179,11 +179,11 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
     });
   }
 
-  public void testCast() throws Exception {
+  public void testCast() {
     doTestTypeChange("Integer");
   }
 
-  public void testCastToObject() throws Exception {
+  public void testCastToObject() {
     doTestTypeChange("Object");
   }
 
@@ -207,35 +207,35 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
     });
   }
 
-  public void testWritable() throws Exception {
+  public void testWritable() {
     doTestReplaceChoice(IntroduceVariableBase.JavaReplaceChoice.ALL);
   }
   
-  public void testNoWritable() throws Exception {
+  public void testNoWritable() {
     doTestReplaceChoice(IntroduceVariableBase.JavaReplaceChoice.NO_WRITE);
   }
   
-  public void testAllInsertFinal() throws Exception {
+  public void testAllInsertFinal() {
     doTestReplaceChoice(IntroduceVariableBase.JavaReplaceChoice.ALL);
   }
   
-  public void testAllIncomplete() throws Exception {
+  public void testAllIncomplete() {
     doTestReplaceChoice(IntroduceVariableBase.JavaReplaceChoice.ALL);
   }
 
-  public void testStreamSimple() throws Exception {
+  public void testStreamSimple() {
     doTestReplaceChoice(IntroduceVariableBase.JavaReplaceChoice.CHAIN);
   }
 
-  public void testStreamMultiple() throws Exception {
+  public void testStreamMultiple() {
     doTestReplaceChoice(IntroduceVariableBase.JavaReplaceChoice.CHAIN_ALL);
   }
 
-  public void testStreamMultiline() throws Exception {
+  public void testStreamMultiline() {
     doTestReplaceChoice(IntroduceVariableBase.JavaReplaceChoice.CHAIN);
   }
 
-  public void testBrokenFormattingWithInValidation() throws Exception {
+  public void testBrokenFormattingWithInValidation() {
     doTest(new Pass<AbstractInplaceIntroducer>() {
       @Override
       public void pass(AbstractInplaceIntroducer introducer) {

@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
 public class FunctionalInterfaceTest extends LightDaemonAnalyzerTestCase {
   @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/functionalInterface";
 
-  private void doTestFunctionalInterface(@Nullable String expectedErrorMessage) throws Exception {
+  private void doTestFunctionalInterface(@Nullable String expectedErrorMessage) {
     String filePath = BASE_PATH + "/" + getTestName(false) + ".java";
     configureByFile(filePath);
     final PsiClass psiClass = getJavaFacade().findClass("Foo", GlobalSearchScope.projectScope(getProject()));
@@ -39,67 +39,67 @@ public class FunctionalInterfaceTest extends LightDaemonAnalyzerTestCase {
     assertEquals(expectedErrorMessage, errorMessage);
   }
 
-  public void testSimple() throws Exception {
+  public void testSimple() {
     doTestFunctionalInterface(null);
   }
 
-  public void testNoMethods() throws Exception {
+  public void testNoMethods() {
     doTestFunctionalInterface("No target method found");
   }
 
-  public void testMultipleMethods() throws Exception {
+  public void testMultipleMethods() {
     doTestFunctionalInterface(null);
   }
   
-  public void testMultipleMethodsInOne() throws Exception {
+  public void testMultipleMethodsInOne() {
     doTestFunctionalInterface(null);
   }
 
-  public void testIntersectionOf2FunctionalTypesWithEqualSignatures() throws Exception {
+  public void testIntersectionOf2FunctionalTypesWithEqualSignatures() {
     doTestIntersection(null);
   }
 
-  public void testIntersectionOf2FunctionalTypesWithEqualAfterSubstitutionSignatures() throws Exception {
+  public void testIntersectionOf2FunctionalTypesWithEqualAfterSubstitutionSignatures() {
     doTestIntersection("Multiple non-overriding abstract methods found in X & Y<Integer>");
   }
 
-  public void testClone() throws Exception {
+  public void testClone() {
     doTestFunctionalInterface("Multiple non-overriding abstract methods found in interface Foo");
   }
 
-  public void testTwoMethodsSameSignature() throws Exception {
+  public void testTwoMethodsSameSignature() {
     doTestFunctionalInterface(null);
   } 
   
-  public void testTwoMethodsSubSignature() throws Exception {
+  public void testTwoMethodsSubSignature() {
     doTestFunctionalInterface(null);
   }
   
-  public void testTwoMethodsNoSubSignature() throws Exception {
+  public void testTwoMethodsNoSubSignature() {
     doTestFunctionalInterface("Multiple non-overriding abstract methods found in interface Foo");
   }
   
-  public void testTwoMethodsNoSubSignature1() throws Exception {
+  public void testTwoMethodsNoSubSignature1() {
     doTestFunctionalInterface("Multiple non-overriding abstract methods found in interface Foo");
   } 
   
-  public void testTwoMethodsSameSubstSignature() throws Exception {
+  public void testTwoMethodsSameSubstSignature() {
     doTestFunctionalInterface(null);
   }
   
-  public void testMethodWithTypeParam() throws Exception {
+  public void testMethodWithTypeParam() {
     doTestFunctionalInterface("Target method is generic");
   }
   
-  public void testTwoMethodsSameSignatureTypeParams() throws Exception {
+  public void testTwoMethodsSameSignatureTypeParams() {
     doTestFunctionalInterface("Target method is generic");
   }
 
-  public void testAbstractClass() throws Exception {
+  public void testAbstractClass() {
     doTestFunctionalInterface("Target type of a lambda conversion must be an interface");
   }
 
-  public void testIntersectionTypeWithSameBaseInterfaceInConjuncts() throws Exception {
+  public void testIntersectionTypeWithSameBaseInterfaceInConjuncts() {
     doTestIntersection(null);
   }
 

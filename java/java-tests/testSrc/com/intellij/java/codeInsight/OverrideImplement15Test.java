@@ -90,7 +90,7 @@ public class OverrideImplement15Test extends LightCodeInsightTestCase {
     }
   }
 
-  public void testOverridingLibraryFunctionWithConfiguredParameterPrefix() throws Exception {
+  public void testOverridingLibraryFunctionWithConfiguredParameterPrefix() {
     CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(getProject()).clone();
     try {
       codeStyleSettings.getCustomSettings(JavaCodeStyleSettings.class).PARAMETER_NAME_PREFIX = "in";

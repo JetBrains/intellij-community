@@ -38,7 +38,7 @@ public class AmbiguousMethodCallTest extends LightDaemonAnalyzerTestCase {
     enableInspectionTool(new UnusedDeclarationInspection());
   }
 
-  private void doTest(boolean checkWarnings, boolean checkInfos) throws Exception {
+  private void doTest(boolean checkWarnings, boolean checkInfos) {
     doTest(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, checkInfos);
   }
 
@@ -52,11 +52,11 @@ public class AmbiguousMethodCallTest extends LightDaemonAnalyzerTestCase {
     };
   }
 
-  public void testBoxingAndStaticMethods() throws Exception {
+  public void testBoxingAndStaticMethods() {
     doTest(false, false);
   }
 
-  public void testMultipleInheritance() throws Exception {
+  public void testMultipleInheritance() {
     doTest(false, false);
   }
 

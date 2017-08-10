@@ -41,7 +41,7 @@ public class AnnotationFormatterTest extends JavaFormatterTestCase {
     return null;
   }
 
-  public void testAnnotationWrapping() throws Exception {
+  public void testAnnotationWrapping() {
 
     getSettings(JavaLanguage.INSTANCE).PARAMETER_ANNOTATION_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
     getSettings(JavaLanguage.INSTANCE).VARIABLE_ANNOTATION_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
@@ -113,7 +113,7 @@ public class AnnotationFormatterTest extends JavaFormatterTestCase {
 
   }
 
-  public void testAnnotationParametersWrapping() throws Exception {
+  public void testAnnotationParametersWrapping() {
     getSettings(JavaLanguage.INSTANCE).RIGHT_MARGIN = 50;
     getCustomJavaSettings().ANNOTATION_PARAMETER_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
     getCustomJavaSettings().ALIGN_MULTILINE_ANNOTATION_PARAMETERS = false;
@@ -204,7 +204,7 @@ public class AnnotationFormatterTest extends JavaFormatterTestCase {
                "}");
   }
 
-  public void testSpaces1() throws Exception {
+  public void testSpaces1() {
     defaultSettings();
     doTextTest("public interface PsiClass{\n" +
                "    @Nullable(documentation = \"parameter1 value\", doc2=\"parameter2 value\")\n" +
@@ -216,7 +216,7 @@ public class AnnotationFormatterTest extends JavaFormatterTestCase {
                "}");
   }
 
-  public void testSpaces2() throws Exception {
+  public void testSpaces2() {
     defaultSettings();
     getSettings(JavaLanguage.INSTANCE).SPACE_BEFORE_ANOTATION_PARAMETER_LIST = true;
 
@@ -230,7 +230,7 @@ public class AnnotationFormatterTest extends JavaFormatterTestCase {
                "}");
   }
 
-  public void testSpaces3() throws Exception {
+  public void testSpaces3() {
     defaultSettings();
     getSettings(JavaLanguage.INSTANCE).SPACE_AROUND_ASSIGNMENT_OPERATORS = false;
     doTextTest("public interface PsiClass{\n" +
@@ -243,7 +243,7 @@ public class AnnotationFormatterTest extends JavaFormatterTestCase {
                "}");
   }
 
-  public void testSpaces4() throws Exception {
+  public void testSpaces4() {
     defaultSettings();
     getSettings(JavaLanguage.INSTANCE).SPACE_AROUND_ASSIGNMENT_OPERATORS = true;
 
@@ -257,7 +257,7 @@ public class AnnotationFormatterTest extends JavaFormatterTestCase {
                "}");
   }
 
-  public void testSpaces6() throws Exception {
+  public void testSpaces6() {
     defaultSettings();
     getSettings(JavaLanguage.INSTANCE).SPACE_WITHIN_ANNOTATION_PARENTHESES = true;
 
@@ -271,7 +271,7 @@ public class AnnotationFormatterTest extends JavaFormatterTestCase {
                "}");
   }
 
-  public void testSpaces7() throws Exception {
+  public void testSpaces7() {
     defaultSettings();
     doTextTest("public interface PsiClass{\n" +
                "    @ Nullable  ( documentation    =  \"parameter1 value\"   ,doc2=\"parameter2 value\"   )  \n" +
@@ -283,7 +283,7 @@ public class AnnotationFormatterTest extends JavaFormatterTestCase {
                "}");
   }
 
-  public void testAnnotationInterface() throws Exception {
+  public void testAnnotationInterface() {
     doTextTest(" @ Documented\n" +
                " @ Retention(RetentionPolicy.CLASS)\n" +
                " @  Target  (   { ElementType.METHOD  ,ElementType.FIELD ,   ElementType.PARAMETER,ElementType.LOCAL_VARIABLE})\n" +
@@ -301,7 +301,7 @@ public class AnnotationFormatterTest extends JavaFormatterTestCase {
                "}");
   }
 
-  public void testEnumFormatting() throws Exception{
+  public void testEnumFormatting() {
     defaultSettings();
     getSettings(JavaLanguage.INSTANCE).ENUM_CONSTANTS_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
     final LanguageLevel effectiveLanguageLevel = LanguageLevelProjectExtension.getInstance(ourProject).getLanguageLevel();
@@ -344,7 +344,7 @@ public class AnnotationFormatterTest extends JavaFormatterTestCase {
   }
 
 
-  public void testSCR2072() throws Exception{
+  public void testSCR2072() {
   }
 
 

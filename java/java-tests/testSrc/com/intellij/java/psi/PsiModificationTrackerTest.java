@@ -60,37 +60,37 @@ public class PsiModificationTrackerTest extends CodeInsightTestCase {
     PsiTestUtil.addSourceContentToRoots(getModule(), getProject().getBaseDir());
   }
 
-  public void testAnnotationNotChanged() throws Exception {
+  public void testAnnotationNotChanged() {
     doReplaceTest("@SuppressWarnings(\"zz\")\n" +
                   "public class Foo { <selection></selection>}",
                   "hi");
   }
 
-  public void testAnnotationNameChanged() throws Exception {
+  public void testAnnotationNameChanged() {
     doReplaceTest("@Suppr<selection>ess</selection>Warnings(\"zz\")\n" +
                   "public class Foo { }",
                   "hi");
   }
 
-  public void testAnnotationParameterChanged() throws Exception {
+  public void testAnnotationParameterChanged() {
     doReplaceTest("@SuppressWarnings(\"<selection>zz</selection>\")\n" +
                   "public class Foo { }",
                   "hi");
   }
 
-  public void testAnnotationRemoved() throws Exception {
+  public void testAnnotationRemoved() {
     doReplaceTest("<selection>@SuppressWarnings(\"zz\")</selection>\n" +
                   "public class Foo { }",
                   "");
   }
 
-  public void testAnnotationWithClassRemoved() throws Exception {
+  public void testAnnotationWithClassRemoved() {
     doReplaceTest("<selection>@SuppressWarnings(\"zz\")\n" +
                   "public </selection> class Foo { }",
                   "");
   }
 
-  public void testRemoveAnnotatedMethod() throws Exception {
+  public void testRemoveAnnotatedMethod() {
     doReplaceTest("public class Foo {\n" +
                   "  <selection>  " +
                   "   @SuppressWarnings(\"\")\n" +
@@ -100,7 +100,7 @@ public class PsiModificationTrackerTest extends CodeInsightTestCase {
                   "");
   }
 
-  public void testRenameAnnotatedMethod() throws Exception {
+  public void testRenameAnnotatedMethod() {
     doReplaceTest("public class Foo {\n" +
                   "   @SuppressWarnings(\"\")\n" +
                   "    public void me<selection>th</selection>od() {}\n" +
@@ -108,7 +108,7 @@ public class PsiModificationTrackerTest extends CodeInsightTestCase {
                   "zzz");
   }
 
-  public void testRenameAnnotatedClass() throws Exception {
+  public void testRenameAnnotatedClass() {
     doReplaceTest("   @SuppressWarnings(\"\")\n" +
                   "public class F<selection>o</selection>o {\n" +
                   "    public void method() {}\n" +
@@ -116,13 +116,13 @@ public class PsiModificationTrackerTest extends CodeInsightTestCase {
                   "zzz");
   }
 
-  public void testRemoveAll() throws Exception {
+  public void testRemoveAll() {
     doReplaceTest("<selection>@SuppressWarnings(\"zz\")\n" +
                   "public  class Foo { }</selection>",
                   "");
   }
 
-  public void testRemoveFile() throws Exception {
+  public void testRemoveFile() {
     doTest("<selection>@SuppressWarnings(\"zz\")\n" +
            "public  class Foo { }</selection>",
            psiFile -> {
@@ -438,7 +438,7 @@ public class PsiModificationTrackerTest extends CodeInsightTestCase {
     assertTrue(ocb != tracker.getOutOfCodeBlockModificationCount());
   }
 
-  public void testNoIncrementOnWorkspaceFileChange() throws Exception {
+  public void testNoIncrementOnWorkspaceFileChange() {
     FixtureRuleKt.runInLoadComponentStateMode(myProject, () -> {
       ProjectKt.getStateStore(myProject).save(new SmartList<>());
 

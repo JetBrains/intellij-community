@@ -28,44 +28,44 @@ public class EmptyMethodTest extends InspectionTestCase {
     return JavaTestUtil.getJavaTestDataPath() + "/inspection";
   }
 
-  private void doTest() throws Exception {
+  private void doTest() {
     doTest(false);
   }
 
-  private void doTest(final boolean checkRange) throws Exception {
+  private void doTest(final boolean checkRange) {
     final EmptyMethodInspection tool = new EmptyMethodInspection();
     doTest("emptyMethod/" + getTestName(true), tool, checkRange);
   }
 
-  public void testSuperCall() throws Exception {
+  public void testSuperCall() {
     doTest();
   }
 
-  public void testSuperCallByRange() throws Exception {
+  public void testSuperCallByRange() {
     doTest(true);
   }
 
-  public void testExternalOverride() throws Exception {
+  public void testExternalOverride() {
     doTest();
   }
 
-  public void testSCR8321() throws Exception {
+  public void testSCR8321() {
     doTest();
   }
 
-  public void testInAnonymous() throws Exception {
+  public void testInAnonymous() {
     doTest(true);
   }
 
-  public void testSuperFromAnotherPackageCall() throws Exception {
+  public void testSuperFromAnotherPackageCall() {
     doTest();
   }
 
-  public void testSuperWithoutSync() throws Exception {
+  public void testSuperWithoutSync() {
     doTest();
   }
 
-  public void testEmptyMethodsHierarchy() throws Exception {
+  public void testEmptyMethodsHierarchy() {
     doTest();
   }
 }

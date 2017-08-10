@@ -20,24 +20,24 @@ import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 public class TypeMatchingTest extends LightDaemonAnalyzerTestCase {
   private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/typeMatching";
 
-  public void testIf() throws Exception {
+  public void testIf() {
     doTest("If.java");
   }
 
-  public void testWhile() throws Exception {
+  public void testWhile() {
     doTest("While.java");
   }
 
-  public void testFor() throws Exception {
+  public void testFor() {
     doTest("For1.java");
     doTest("For2.java");
   }
 
-  public void testShortConstWithCast() throws Exception {
+  public void testShortConstWithCast() {
     doTest("ShortConstWithCast.java");
   }
 
-  protected void doTest(String filePath) throws Exception {
+  protected void doTest(String filePath) {
     super.doTest(BASE_PATH + "/" + filePath, false, false);
   }
 }

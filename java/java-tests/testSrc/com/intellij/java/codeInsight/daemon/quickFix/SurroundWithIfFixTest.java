@@ -30,7 +30,7 @@ public class SurroundWithIfFixTest extends LightQuickFixParameterizedTestCase {
     return new LocalInspectionTool[]{inspection};
   }
 
-  public void test() throws Exception {
+  public void test() {
      doAllTests();
    }
 

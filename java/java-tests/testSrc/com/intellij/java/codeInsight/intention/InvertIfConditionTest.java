@@ -50,7 +50,7 @@ public class InvertIfConditionTest extends LightIntentionActionTestCase {
     settings.ELSE_ON_NEW_LINE = myElseOnNewLine;
   }
 
-  public void test() throws Exception {
+  public void test() {
     doAllTests();
   }
 }

@@ -42,11 +42,11 @@ public class RenameCollisionsTest extends LightRefactoringTestCase {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
-  public void testRenameClassInnerToLocal() throws Exception {
+  public void testRenameClassInnerToLocal() {
     doTest("LocalClass");
   }
 
-  public void testRenameClassLocalToAlien() throws Exception {
+  public void testRenameClassLocalToAlien() {
     doTest("String");
   }
 
@@ -55,115 +55,115 @@ public class RenameCollisionsTest extends LightRefactoringTestCase {
   //  doTest("String");
   //}
 
-  public void testRenameClassLocalToInner() throws Exception {
+  public void testRenameClassLocalToInner() {
     doTest("StaticInnerClass");
   }
 
-  public void testRenameClassThisFqnToAlien() throws Exception {
+  public void testRenameClassThisFqnToAlien() {
     doTest("String");
   }
 
-  public void testRenameClassThisToAlien() throws Exception {
+  public void testRenameClassThisToAlien() {
     doTest("String");
   }
 
-  public void testRenameMethodIndiInstancesInnerToOuter() throws Exception {
+  public void testRenameMethodIndiInstancesInnerToOuter() {
     doTest("method");
   }
 
-  public void testRenameMethodIndiInstancesOuterToInner() throws Exception {
+  public void testRenameMethodIndiInstancesOuterToInner() {
     doTest("siMethod");
   }
 
-  public void testRenameMethodInnerInstanceToOuterInstance() throws Exception {
+  public void testRenameMethodInnerInstanceToOuterInstance() {
     doTest("method");
   }
 
-  public void testRenameMethodInnerStaticToOuterStatic() throws Exception {
+  public void testRenameMethodInnerStaticToOuterStatic() {
     doTest("staticMethod");
   }
 
-  public void testRenameMethodOuterInstanceToInnerInstance() throws Exception {
+  public void testRenameMethodOuterInstanceToInnerInstance() {
     doTest("innerMethod");
   }
 
-  public void testRenameMethodOuterStaticToInnerStatic() throws Exception {
+  public void testRenameMethodOuterStaticToInnerStatic() {
     doTest("siStaticMethod");
   }
 
-  public void testRenameMethodStaticToAlien() throws Exception {
+  public void testRenameMethodStaticToAlien() {
     doTest("valueOf");
   }
 
-  public void testRenameVarConstToAlien() throws Exception {
+  public void testRenameVarConstToAlien() {
     doTest("CASE_INSENSITIVE_ORDER");
   }
 
-  public void testRenameVarConstToAlien1() throws Exception {
+  public void testRenameVarConstToAlien1() {
     doTest("CASE_INSENSITIVE_ORDER");
   }
 
-  public void testRenameVarConstToParam() throws Exception {
+  public void testRenameVarConstToParam() {
     doTest("param3");
   }
 
-  public void testRenameVarFieldToLocal() throws Exception {
+  public void testRenameVarFieldToLocal() {
     doTest("localVar3");
   }
 
-  public void testRenameVarInnerConstToOuterConst() throws Exception {
+  public void testRenameVarInnerConstToOuterConst() {
     doTest("STATIC_FIELD");
   }
 
-  public void testRenameVarInnerFieldToOuterField() throws Exception {
+  public void testRenameVarInnerFieldToOuterField() {
     doTest("myField");
   }
 
-  public void testRenameVarLocalToAlien() throws Exception {
+  public void testRenameVarLocalToAlien() {
     doTest("separatorChar");
   }
 
-  public void testRenameVarLocalToConst() throws Exception {
+  public void testRenameVarLocalToConst() {
     doTest("INNER_STATIC_FIELD");
   }
 
-  public void testRenameVarLocalToOuterField() throws Exception {
+  public void testRenameVarLocalToOuterField() {
     doTest("myField");
   }
 
-  public void testRenameVarOuterConstToInnerConst() throws Exception {
+  public void testRenameVarOuterConstToInnerConst() {
     doTest("SI_STATIC_FIELD");
   }
 
-  public void testRenameVarOuterConstToLocal() throws Exception {
+  public void testRenameVarOuterConstToLocal() {
     doTest("localVar3");
   }
 
-  public void testRenameVarOuterConstToParam() throws Exception {
+  public void testRenameVarOuterConstToParam() {
     doTest("param2");
   }
 
-  public void testRenameVarOuterFieldToLocal() throws Exception {
+  public void testRenameVarOuterFieldToLocal() {
     doTest("localVar3");
   }
 
-  public void testRenameVarOuterFieldToParam() throws Exception {
+  public void testRenameVarOuterFieldToParam() {
     doTest("param3");
   }
 
-  public void testRenameVarParamToAlien() throws Exception {
+  public void testRenameVarParamToAlien() {
     doTest("separatorChar");
   }
 
-  public void testRenameVarParamToField() throws Exception {
+  public void testRenameVarParamToField() {
     doTest("myInnerField");
   }
 
-  public void testRenameVarParamToOuterConst() throws Exception {
+  public void testRenameVarParamToOuterConst() {
     doTest("STATIC_FIELD");
   }
 
-  public void testRenameLocalVariableHidesFieldInAnonymous() throws Exception {
+  public void testRenameLocalVariableHidesFieldInAnonymous() {
     try {
       doTest("y");
     }
@@ -174,7 +174,7 @@ public class RenameCollisionsTest extends LightRefactoringTestCase {
     fail("Conflicts were not found");
   }
 
-  public void testRenameMethodCollisionWithOtherSignature() throws Exception {
+  public void testRenameMethodCollisionWithOtherSignature() {
     try {
       doTest("foo2");
     }
@@ -185,7 +185,7 @@ public class RenameCollisionsTest extends LightRefactoringTestCase {
     fail("Conflicts were not found");
   }
 
-  public void testRenameMethodCollisionSameSignature() throws Exception {
+  public void testRenameMethodCollisionSameSignature() {
     try {
       doTest("foo1");
     }
@@ -196,7 +196,7 @@ public class RenameCollisionsTest extends LightRefactoringTestCase {
     fail("Conflicts were not found");
   }
 
-  public void testFieldHidesLocal() throws Exception {
+  public void testFieldHidesLocal() {
     try {
       doTest("b");
     }
@@ -207,47 +207,47 @@ public class RenameCollisionsTest extends LightRefactoringTestCase {
     fail("Conflicts were not found");
   }
 
-  public void testRenameMethodNoCollisionWithOtherSignature() throws Exception {
+  public void testRenameMethodNoCollisionWithOtherSignature() {
     doTest("foo2");
   }
 
-  public void testRenameMethodNoCollisionWithOtherSignatureMethodRef() throws Exception {
+  public void testRenameMethodNoCollisionWithOtherSignatureMethodRef() {
     doTest("foo2");
   }
 
-  public void testRenameNoStaticOverridingInInterfaces() throws Exception {
+  public void testRenameNoStaticOverridingInInterfaces() {
     doTest("foo");
   }
 
-  public void testRenameTypeParameterToExistingClassName() throws Exception {
+  public void testRenameTypeParameterToExistingClassName() {
     doTest("P");
   }
 
-  public void testRenameInnerInSuperClass() throws Exception {
+  public void testRenameInnerInSuperClass() {
     doTest("C");
   }
 
-  public void testRenameInnerInSuperClassStatic() throws Exception {
+  public void testRenameInnerInSuperClassStatic() {
     doTest("C");
   }
 
-  public void testRenameStaticMethodTypeParameter() throws Exception {
+  public void testRenameStaticMethodTypeParameter() {
     doTest("E");
   }
   
-  public void testRenameFieldInSuper() throws Exception {
+  public void testRenameFieldInSuper() {
     doTest("gg");
   }
 
-  public void testRenameTypeParamToSuper() throws Exception {
+  public void testRenameTypeParamToSuper() {
     doTest("T");
   }
 
-  public void testInnerClassNameCollisionWithSuperClassOfContainer() throws Exception {
+  public void testInnerClassNameCollisionWithSuperClassOfContainer() {
     doTest("handleAction");
   }
 
-  private void doTestImpossibleToRename() throws Exception {
+  private void doTestImpossibleToRename() {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
     PsiElement element = TargetElementUtil
       .findTargetElement(myEditor, TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
@@ -255,15 +255,15 @@ public class RenameCollisionsTest extends LightRefactoringTestCase {
     assertTrue(PsiElementRenameHandler.isVetoed(element));
   }
 
-  public void testNotAvailableForValueOf() throws Exception {
+  public void testNotAvailableForValueOf() {
     doTestImpossibleToRename();
   }
 
-  public void testNotAvailableForValues() throws Exception {
+  public void testNotAvailableForValues() {
     doTestImpossibleToRename();
   }
 
-  public void testNotAvailableForArrayLength() throws Exception {
+  public void testNotAvailableForArrayLength() {
     try {
       doTest("val");
       fail("Should be impossible to rename");
@@ -274,7 +274,7 @@ public class RenameCollisionsTest extends LightRefactoringTestCase {
     }
   }
 
-  private void doTest(final String newName) throws Exception {
+  private void doTest(final String newName) {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
     PsiElement element = TargetElementUtil
         .findTargetElement(myEditor, TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
@@ -283,7 +283,7 @@ public class RenameCollisionsTest extends LightRefactoringTestCase {
     checkResultByFile(BASE_PATH + getTestName(false) + ".java.after");
   }
 
-  public void testAllUsagesInCode() throws Exception {
+  public void testAllUsagesInCode() {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
     PsiElement element = TargetElementUtil
         .findTargetElement(myEditor, TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);

@@ -95,7 +95,7 @@ public class RedundantLambdaParameterTypeInspectionTest extends LightCodeInsight
     doTest();
   }
 
-  public void testNotApplicableDueToChainedCall() throws Exception {
+  public void testNotApplicableDueToChainedCall() {
     assertIntentionNotAvailable();
   }
 

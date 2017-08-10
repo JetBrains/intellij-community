@@ -52,7 +52,7 @@ public class IntroduceVariableMultifileTest extends MultiFileTestCase {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
-  public void testSamePackageRef() throws Exception {
+  public void testSamePackageRef() {
     doTest(
       createAction("pack1.A",
                    new MockIntroduceVariableHandler("b", false, false, false, "pack1.B")
@@ -60,7 +60,7 @@ public class IntroduceVariableMultifileTest extends MultiFileTestCase {
     );
   }
 
-  public void testGenericTypeWithInner() throws Exception {
+  public void testGenericTypeWithInner() {
     doTest(
       createAction("test.Client",
                    new MockIntroduceVariableHandler("l", false, true, true, "test.List<test.A.B>")
@@ -68,7 +68,7 @@ public class IntroduceVariableMultifileTest extends MultiFileTestCase {
     );
   }
 
-  public void testGenericTypeWithInner1() throws Exception {
+  public void testGenericTypeWithInner1() {
     doTest(
       createAction("test.Client",
                    new MockIntroduceVariableHandler("l", false, true, true, "test.List<test.A.B>")
@@ -76,7 +76,7 @@ public class IntroduceVariableMultifileTest extends MultiFileTestCase {
     );
   }
 
-  public void testGenericWithTwoParameters() throws Exception {
+  public void testGenericWithTwoParameters() {
     doTest(
       createAction("Client",
                    new MockIntroduceVariableHandler("p", false, false, true,
@@ -85,7 +85,7 @@ public class IntroduceVariableMultifileTest extends MultiFileTestCase {
     );
   }
 
-  public void testGenericWithTwoParameters2() throws Exception {
+  public void testGenericWithTwoParameters2() {
     doTest(
       createAction("Client",
                    new MockIntroduceVariableHandler("p", false, false, true,

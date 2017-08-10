@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class LightAdvHighlightingFixtureTest extends LightCodeInsightFixtureTestCase {
 
-  public void testHidingOnDemandImports() throws Exception {
+  public void testHidingOnDemandImports() {
     myFixture.addClass("package foo; public class Foo {" +
                        "  public static String foo;" +
                        "}");
@@ -38,7 +38,7 @@ public class LightAdvHighlightingFixtureTest extends LightCodeInsightFixtureTest
     myFixture.checkHighlighting(false, false, false);
   }
 
-  public void testPackageNamedAsClassInDefaultPackage() throws Exception {
+  public void testPackageNamedAsClassInDefaultPackage() {
     myFixture.addClass("package test; public class A {}");
     final PsiClass aClass = myFixture.addClass("public class test {}");
 
@@ -48,7 +48,7 @@ public class LightAdvHighlightingFixtureTest extends LightCodeInsightFixtureTest
     assertNull(ReferencesSearch.search(aClass).findFirst());
   }
 
-  public void testBoundsPromotionWithCapturedWildcards() throws Exception {
+  public void testBoundsPromotionWithCapturedWildcards() {
     myFixture.addClass("package a; public interface Provider<A> {}");
     myFixture.addClass("package b; public interface Provider<B> {}");
 
@@ -56,14 +56,14 @@ public class LightAdvHighlightingFixtureTest extends LightCodeInsightFixtureTest
     myFixture.checkHighlighting();
   }
 
-  public void testStaticImportCompoundWithInheritance() throws Exception {
+  public void testStaticImportCompoundWithInheritance() {
     myFixture.addClass("package a; public interface A { static void foo(Object o){} static void foo(String str) {}}");
 
     myFixture.configureByFile(getTestName(false) + ".java");
     myFixture.checkHighlighting();
   }
 
-  public void testSuppressedInGenerated() throws Exception {
+  public void testSuppressedInGenerated() {
     myFixture.addClass("package javax.annotation; public @interface Generated {}");
     final RedundantCastInspection inspection = new RedundantCastInspection();
     try {
@@ -77,7 +77,7 @@ public class LightAdvHighlightingFixtureTest extends LightCodeInsightFixtureTest
 
   }
 
-  public void testUsageOfProtectedAnnotationOutsideAPackage() throws Exception {
+  public void testUsageOfProtectedAnnotationOutsideAPackage() {
     myFixture.addClass("package a;\n" +
                        "import java.lang.annotation.ElementType;\n" +
                        "import java.lang.annotation.Target;\n" +
@@ -92,27 +92,27 @@ public class LightAdvHighlightingFixtureTest extends LightCodeInsightFixtureTest
     myFixture.checkHighlighting();
   }
 
-  public void testPackageLocalClassUsedinArrayTypeOutsidePackage() throws Exception {
+  public void testPackageLocalClassUsedinArrayTypeOutsidePackage() {
     myFixture.addClass("package a; class A {}");
     myFixture.addClass("package a; public class B {public static A[] getAs() {return null;}}");
     myFixture.configureByFile(getTestName(false) + ".java");
     myFixture.checkHighlighting();
   }
 
-  public void testProtectedFieldUsedInAnnotationParameterOfInheritor() throws Exception {
+  public void testProtectedFieldUsedInAnnotationParameterOfInheritor() {
     myFixture.addClass("package a; public class A {protected final static String A_FOO = \"A\";}");
     myFixture.configureByFile(getTestName(false) + ".java");
     myFixture.checkHighlighting();
   }
 
-  public void testStaticImportClassConflictingWithPackageName() throws Exception {
+  public void testStaticImportClassConflictingWithPackageName() {
     myFixture.addClass("package p.P1; class Unrelated {}");
     myFixture.addClass("package p; public class P1 {public static final int FOO = 1;}");
     myFixture.configureByFile(getTestName(false) + ".java");
     myFixture.checkHighlighting();
   }
 
-  public void testAmbiguousMethodCallWhenStaticImported() throws Exception {
+  public void testAmbiguousMethodCallWhenStaticImported() {
     myFixture.addClass("package p;" +
                        "class A<K> {\n" +
                        "  static <T> A<T> of(T t) {\n" +

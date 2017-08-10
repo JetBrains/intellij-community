@@ -251,7 +251,7 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
     assertEquals("A", aClass.getName());
   }
 
-  public void testMethodImplementationsOnTypeVariable() throws Exception {
+  public void testMethodImplementationsOnTypeVariable() {
     PsiFile file = myFixture.addFileToProject("Foo.java", "interface I {}\n" +
                                                           "interface Im {\n" +
                                                           "    void m();\n" +

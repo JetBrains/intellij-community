@@ -78,7 +78,7 @@ public class MultipleJdksMoveClassTest extends UsefulTestCase {
   }
 
 
-  public void testConflictStringUsage() throws Exception {
+  public void testConflictStringUsage() {
     final PsiFile[] files = myFixture.configureByFiles("java7/p/Main.java", "java8/p/Foo.java");
     final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
     RefactoringConflictsUtil.analyzeModuleConflicts(files[0].getProject(), Collections.singletonList(files[0]), 

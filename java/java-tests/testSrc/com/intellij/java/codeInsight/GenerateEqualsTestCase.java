@@ -36,21 +36,21 @@ public abstract class GenerateEqualsTestCase extends LightCodeInsightTestCase {
   protected void doTest(final int[] equals,
                         final int[] hashCode,
                         final int[] nonNull,
-                        boolean insertOverride) throws Exception {
+                        boolean insertOverride) {
     doTest(fields -> getIndexed(fields, equals), fields -> getIndexed(fields, hashCode), fields -> getIndexed(fields, nonNull), insertOverride);
   }
 
   protected void doTest(Function<PsiField[], PsiField[]> eqFunction,
                         Function<PsiField[], PsiField[]> hFunction,
                         Function<PsiField[], PsiField[]> nnFunction,
-                        boolean insertOverride) throws Exception {
+                        boolean insertOverride) {
     doTest(eqFunction, hFunction, nnFunction, insertOverride, false);
   }
 
   protected void doTest(Function<PsiField[], PsiField[]> eqFunction,
                         Function<PsiField[], PsiField[]> hFunction,
                         Function<PsiField[], PsiField[]> nnFunction,
-                        boolean insertOverride, boolean useAccessors) throws Exception {
+                        boolean insertOverride, boolean useAccessors) {
     configureByFile("/codeInsight/generateEquals/before" + getTestName(false) + ".java");
     performTest(eqFunction, hFunction, nnFunction, insertOverride, useAccessors);
     checkResultByFile("/codeInsight/generateEquals/after" + getTestName(false) + ".java");

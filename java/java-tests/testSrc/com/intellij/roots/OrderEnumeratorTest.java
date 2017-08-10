@@ -18,7 +18,7 @@ import static com.intellij.openapi.roots.OrderEnumerator.orderEntries;
  */
 public class OrderEnumeratorTest extends ModuleRootManagerTestCase {
 
-  public void testLibrary() throws Exception {
+  public void testLibrary() {
     ModuleRootModificationUtil.addDependency(myModule, createJDomLibrary());
 
     assertClassRoots(orderEntries(myModule), getRtJarJdk17(), getJDomJar());
@@ -43,7 +43,7 @@ public class OrderEnumeratorTest extends ModuleRootManagerTestCase {
     assertEnumeratorRoots(orderEntries(myModule).withoutSdk().productionOnly().classes().withoutSelfModuleOutput());
   }
 
-  public void testLibraryScope() throws Exception {
+  public void testLibraryScope() {
     ModuleRootModificationUtil.addDependency(myModule, createJDomLibrary(), DependencyScope.RUNTIME, false);
 
     assertClassRoots(orderEntries(myModule).withoutSdk(), getJDomJar());
@@ -90,7 +90,7 @@ public class OrderEnumeratorTest extends ModuleRootManagerTestCase {
     assertOrderedEquals(orderEntries(myModule).getAllLibrariesAndSdkClassesRoots(), getRtJarJdk17(), getJDomJar());
   }
 
-  public void testModuleDependencyScope() throws Exception {
+  public void testModuleDependencyScope() {
     final Module dep = createModule("dep");
     ModuleRootModificationUtil.addDependency(dep, createJDomLibrary(), DependencyScope.COMPILE, true);
     ModuleRootModificationUtil.addDependency(myModule, dep, DependencyScope.TEST, true);
@@ -104,7 +104,7 @@ public class OrderEnumeratorTest extends ModuleRootManagerTestCase {
     assertClassRoots(ProjectRootManager.getInstance(myProject).orderEntries().withoutSdk().productionOnly(), getJDomJar());
   }
 
-  public void testNotExportedLibrary() throws Exception {
+  public void testNotExportedLibrary() {
     final Module dep = createModule("dep");
     ModuleRootModificationUtil.addDependency(dep, createJDomLibrary(), DependencyScope.COMPILE, false);
     ModuleRootModificationUtil.addDependency(myModule, createAsmLibrary(), DependencyScope.COMPILE, false);
@@ -118,11 +118,11 @@ public class OrderEnumeratorTest extends ModuleRootManagerTestCase {
     assertClassRoots(orderEntriesForModulesList(myModule).withoutSdk().recursively(), getAsmJar(), getJDomJar());
   }
 
-  public void testJdkIsNotExported() throws Exception {
+  public void testJdkIsNotExported() {
     assertClassRoots(orderEntries(myModule).exportedOnly());
   }
 
-  public void testCaching() throws Exception {
+  public void testCaching() {
     final VirtualFile[] roots = orderEntries(myModule).classes().usingCache().getRoots();
     assertOrderedEquals(roots, getRtJarJdk17());
     assertEquals(roots, orderEntries(myModule).classes().usingCache().getRoots());
@@ -137,7 +137,7 @@ public class OrderEnumeratorTest extends ModuleRootManagerTestCase {
     assertRoots(orderEntries(myModule).withoutSdk().classes().usingCache().getPathsList(), getJDomJar());
   }
 
-  public void testCachingUrls() throws Exception {
+  public void testCachingUrls() {
     final String[] urls = orderEntries(myModule).classes().usingCache().getUrls();
     assertOrderedEquals(urls, getRtJarJdk17().getUrl());
     assertSame(urls, orderEntries(myModule).classes().usingCache().getUrls());

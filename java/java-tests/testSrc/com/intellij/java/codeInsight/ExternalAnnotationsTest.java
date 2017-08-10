@@ -73,7 +73,7 @@ public class ExternalAnnotationsTest extends UsefulTestCase {
     }
   }
 
-  public void testRenameClassWithExternalAnnotations() throws Exception {
+  public void testRenameClassWithExternalAnnotations() {
     myFixture.configureByFiles("src/rename/Foo.java", "content/anno/rename/annotations.xml");
 
     myFixture.renameElementAtCaret("Bar");
@@ -83,7 +83,7 @@ public class ExternalAnnotationsTest extends UsefulTestCase {
                                 true);
   }
 
-  public void testBringToSrc() throws Exception {
+  public void testBringToSrc() {
     myFixture.configureByFiles("src/toSrc/Foo.java", "content/anno/toSrc/annotations.xml");
 
     IntentionAction action = myFixture.findSingleIntention("Insert '@Deprecated'");
@@ -97,7 +97,7 @@ public class ExternalAnnotationsTest extends UsefulTestCase {
                                 true);
   }
 
-  public void testFromSrcToExternal() throws Exception {
+  public void testFromSrcToExternal() {
     myFixture.configureByFiles("src/fromSrc/Foo.java", "content/anno/fromSrc/annotations.xml");
 
     IntentionAction action = myFixture.findSingleIntention("Annotate externally");

@@ -44,24 +44,24 @@ public class RedundantTypeArgsInspectionTest extends LightDaemonAnalyzerTestCase
     return JavaTestUtil.getJavaTestDataPath();
   }
 
-  private void doTest() throws Throwable {
+  private void doTest() {
     IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_6, getModule(), getTestRootDisposable());
     doTest("/inspection/redundantTypeArgs/" + getTestName(false) + ".java", true, false);
   }
 
-  public void testReturnPrimitiveTypes() throws Throwable { // javac non-boxing: IDEA-53984
+  public void testReturnPrimitiveTypes() { // javac non-boxing: IDEA-53984
     doTest();
   }
 
-  public void testConditionalExpression() throws Throwable {
+  public void testConditionalExpression() {
     doTest();
   }
 
-  public void testBoundInference() throws Throwable {
+  public void testBoundInference() {
     doTest();
   }
 
-  public void testNestedCalls() throws Throwable {
+  public void testNestedCalls() {
     doTest();
   }
 }

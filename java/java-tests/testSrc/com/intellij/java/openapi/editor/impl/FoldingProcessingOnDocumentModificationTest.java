@@ -85,7 +85,7 @@ public class FoldingProcessingOnDocumentModificationTest extends AbstractEditorT
 
     new WriteCommandAction.Simple(getProject()) {
       @Override
-      protected void run() throws Throwable {
+      protected void run() {
         myEditor.getDocument().insertString(0, "/*");
       }
     }.execute().throwException();
@@ -109,7 +109,7 @@ public class FoldingProcessingOnDocumentModificationTest extends AbstractEditorT
 
     new WriteCommandAction.Simple(getProject()) {
       @Override
-      protected void run() throws Throwable {
+      protected void run() {
         myEditor.getDocument().insertString(0, "/*");
       }
     }.execute().throwException();

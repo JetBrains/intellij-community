@@ -30,7 +30,7 @@ public class SurroundWithRequireNonNullFixTest extends LightQuickFixParameterize
     return new LocalInspectionTool[]{inspection};
   }
 
-  public void test() throws Exception {
+  public void test() {
      doAllTests();
    }
 

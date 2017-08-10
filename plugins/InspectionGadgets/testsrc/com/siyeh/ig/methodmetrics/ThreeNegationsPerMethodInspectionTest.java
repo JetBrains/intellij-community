@@ -6,7 +6,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class ThreeNegationsPerMethodInspectionTest extends LightInspectionTestCase {
 
-  public void testThreeNegationsPerMethod() throws Exception {
+  public void testThreeNegationsPerMethod() {
     doTest();
   }
 

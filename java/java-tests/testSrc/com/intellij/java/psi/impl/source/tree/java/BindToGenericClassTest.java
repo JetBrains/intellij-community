@@ -45,7 +45,7 @@ public class BindToGenericClassTest extends GenericsTestCase {
     super.tearDown();
   }
 
-  public void testReferenceElement() throws Exception {
+  public void testReferenceElement() {
     final JavaPsiFacade manager = getJavaFacade();
     final PsiClass classA = manager.getElementFactory().createClassFromText("class A extends List<String>{}", null).getInnerClasses()[0];
     final PsiClass classTestList = manager.findClass("test.List", GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(myModule));
@@ -54,7 +54,7 @@ public class BindToGenericClassTest extends GenericsTestCase {
     assertEquals("class A extends test.List<String>{}", classA.getText());
   }
 
-  public void testReference() throws Exception {
+  public void testReference() {
     final JavaPsiFacade manager = getJavaFacade();
     final PsiExpression psiExpression = manager.getElementFactory().createExpressionFromText("List", null);
     final PsiClass classTestList = manager.findClass("test.List", GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(myModule));

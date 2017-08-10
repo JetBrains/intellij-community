@@ -52,7 +52,7 @@ public class UnusedDeclarationTest extends AbstractUnusedDeclarationTest {
     doTest();
   }
 
-  public void testDefaultConstructor() throws Exception {
+  public void testDefaultConstructor() {
     doTest();
   }
 

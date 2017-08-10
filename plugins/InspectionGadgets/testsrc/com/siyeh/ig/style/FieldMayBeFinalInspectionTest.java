@@ -5,7 +5,7 @@ import com.siyeh.ig.LightInspectionTestCase;
 
 public class FieldMayBeFinalInspectionTest extends LightInspectionTestCase {
 
-  public void testFieldMayBeFinal() throws Exception {
+  public void testFieldMayBeFinal() {
     doTest();
   }
 

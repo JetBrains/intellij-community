@@ -27,7 +27,7 @@ import com.intellij.testFramework.PsiTestCase;
  * @author Dmitry Avdeev
  */
 public abstract class OptimizeImportsTestCase extends PsiTestCase {
-  protected void doTest(final String extension) throws Exception {
+  protected void doTest(final String extension) {
     CommandProcessor.getInstance().executeCommand(
       getProject(), () -> WriteCommandAction.runWriteCommandAction(null, () -> {
         String fileName = getTestName(false) + extension;

@@ -31,28 +31,28 @@ public class ChangeSignatureTargetTest extends LightCodeInsightTestCase {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
-  public void testInMethodParameters() throws Exception {
+  public void testInMethodParameters() {
     doTest("foo");
   }
 
-  public void testInMethodArguments() throws Exception {
+  public void testInMethodArguments() {
     doTest("foo");
   }
 
-  public void testInClassTypeParameters() throws Exception {
+  public void testInClassTypeParameters() {
     doTest("A1");
   }
 
-  public void testInTypeArguments() throws Exception {
+  public void testInTypeArguments() {
     doTest("A1");
   }
 
-  public void testDisabledForEnum() throws Exception {
+  public void testDisabledForEnum() {
     configureByFile("/refactoring/changeSignatureTarget/" + getTestName(true) + ".java");
     assertNull(new JavaChangeSignatureHandler().findTargetMember(getFile(), getEditor()));
   }
 
-  private void doTest(String expectedMemberName) throws Exception {
+  private void doTest(String expectedMemberName) {
     String basePath = "/refactoring/changeSignatureTarget/" + getTestName(true);
     @NonNls final String filePath = basePath + ".java";
     configureByFile(filePath);

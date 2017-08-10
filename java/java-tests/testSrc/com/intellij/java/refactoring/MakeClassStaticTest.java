@@ -38,28 +38,28 @@ public class MakeClassStaticTest extends LightRefactoringTestCase {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
-  public void testSimple1() throws Exception { perform(); }
+  public void testSimple1() { perform(); }
 
-  public void testSimpleFields() throws Exception { performWithFields(); }
+  public void testSimpleFields() { performWithFields(); }
 
-  public void testFieldInitializerMovedToTheConstructor() throws Exception { performWithFields(); }
+  public void testFieldInitializerMovedToTheConstructor() { performWithFields(); }
 
-  public void testQualifiedThis() throws Exception { perform(); }
+  public void testQualifiedThis() { perform(); }
 
-  public void testIDEADEV3247() throws Exception { perform(); }
+  public void testIDEADEV3247() { perform(); }
 
-  public void testIDEADEV11595() throws Exception { perform(); }
+  public void testIDEADEV11595() { perform(); }
 
-  public void testIDEADEV12762() throws Exception { perform(); }
+  public void testIDEADEV12762() { perform(); }
 
-  public void testNewExpressionQualifier() throws Exception {perform();}
-  public void testThisSuperExpressions() throws Exception {perform();}
+  public void testNewExpressionQualifier() {perform();}
+  public void testThisSuperExpressions() {perform();}
 
-  public void testNonDefaultConstructorAnonymousClass() throws Exception {perform();}
-  public void testDefaultConstructorAnonymousClass() throws Exception {perform();}
-  public void testFieldInitializerSplit() throws Exception {perform();}
+  public void testNonDefaultConstructorAnonymousClass() {perform();}
+  public void testDefaultConstructorAnonymousClass() {perform();}
+  public void testFieldInitializerSplit() {perform();}
 
-  public void testRegReference() throws Exception {
+  public void testRegReference() {
     perform();
   }
 
@@ -75,7 +75,7 @@ public class MakeClassStaticTest extends LightRefactoringTestCase {
     }
   }
 
-  private void perform() throws Exception {
+  private void perform() {
     configureByFile(TEST_ROOT + getTestName(false) + ".java");
     PsiElement element = TargetElementUtil.findTargetElement(myEditor, TargetElementUtil.ELEMENT_NAME_ACCEPTED);
     assertTrue(element instanceof PsiClass);
@@ -90,7 +90,7 @@ public class MakeClassStaticTest extends LightRefactoringTestCase {
     checkResultByFile(TEST_ROOT + getTestName(false) + "_after.java");
   }
 
-  private void performWithFields() throws Exception {
+  private void performWithFields() {
     configureByFile(TEST_ROOT + getTestName(false) + ".java");
     PsiElement element = TargetElementUtil.findTargetElement(myEditor, TargetElementUtil.ELEMENT_NAME_ACCEPTED);
     assertTrue(element instanceof PsiClass);

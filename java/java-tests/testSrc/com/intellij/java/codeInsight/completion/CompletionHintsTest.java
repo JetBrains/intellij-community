@@ -488,7 +488,7 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     }
   }
   
-  public void testLargeNumberOfParameters() throws Exception {
+  public void testLargeNumberOfParameters() {
     configureJava("class C {\n" +
                   "    void mmm(int a, int b, int c, int d, int e, int f) {}\n" +
                   "    void m2() { mm<caret> }\n" +

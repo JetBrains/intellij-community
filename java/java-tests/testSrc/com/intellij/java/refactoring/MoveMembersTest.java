@@ -40,87 +40,87 @@ public class MoveMembersTest extends MultiFileTestCase {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
-  public void testJavadocRefs() throws Exception {
+  public void testJavadocRefs() {
     doTest("Class1", "Class2", 0);
   }
 
-  public void testWeirdDeclaration() throws Exception {
+  public void testWeirdDeclaration() {
     doTest("A", "B", 0);
   }
 
-  public void testInnerClass() throws Exception {
+  public void testInnerClass() {
     doTest("A", "B", 0);
   }
 
-  public void testScr11871() throws Exception {
+  public void testScr11871() {
     doTest("pack1.A", "pack1.B", 0);
   }
 
-  public void testOuterClassTypeParameters() throws Exception {
+  public void testOuterClassTypeParameters() {
     doTest("pack1.A", "pack2.B", 0);
   }
 
-  public void testscr40064() throws Exception {
+  public void testscr40064() {
     doTest("Test", "Test1", 0);
   }
 
-  public void testscr40947() throws Exception {
+  public void testscr40947() {
     doTest("A", "Test", 0, 1);
   }
 
-  public void testIDEADEV11416() throws Exception {
+  public void testIDEADEV11416() {
     doTest("Y", "X", false, 0);
   }
 
-  public void testDependantConstants() throws Exception {
+  public void testDependantConstants() {
     doTest("A", "B", 0, 1);
   }
 
-  public void testTwoMethods() throws Exception {
+  public void testTwoMethods() {
     doTest("pack1.A", "pack1.C", 0, 1, 2);
   }
 
-  public void testParameterizedRefOn() throws Exception {
+  public void testParameterizedRefOn() {
     doTest("pack1.POne", "pack1.C", 1, 2);
   }
 
-  public void testIDEADEV12448() throws Exception {
+  public void testIDEADEV12448() {
     doTest("B", "A", false, 0);
   }
 
-  public void testFieldForwardRef() throws Exception {
+  public void testFieldForwardRef() {
     doTest("A", "Constants", 0);
   }
 
-  public void testStaticImport() throws Exception {
+  public void testStaticImport() {
     doTest("C", "B", 0);
   }
 
-  public void testExplicitStaticImport() throws Exception {
+  public void testExplicitStaticImport() {
     doTest("C", "B", 0);
   }
 
-  public void testProtectedConstructor() throws Exception {
+  public void testProtectedConstructor() {
     doTest("pack1.A", "pack1.C", 0);
   }
 
-  public void testUntouchedVisibility() throws Exception {
+  public void testUntouchedVisibility() {
     doTest("pack1.A", "pack1.C", 0, 1);
   }
 
-  public void testEscalateVisibility() throws Exception {
+  public void testEscalateVisibility() {
     doTest("pack1.A", "pack1.C", true, VisibilityUtil.ESCALATE_VISIBILITY, 0);
   }
 
-  public void testOtherPackageImport() throws Exception {
+  public void testOtherPackageImport() {
     doTest("pack1.ClassWithStaticMethod", "pack2.OtherClass", 1);
   }
 
-  public void testEnumConstant() throws Exception {
+  public void testEnumConstant() {
     doTest("B", "A", 0);
   }
 
-  public void testEnumConstantFromCaseStatement() throws Exception {
+  public void testEnumConstantFromCaseStatement() {
     try {
       doTest("B", "A", 0);
       fail("Conflict expected");
@@ -130,19 +130,19 @@ public class MoveMembersTest extends MultiFileTestCase {
     }
   }
 
-  public void testStringConstantFromCaseStatement() throws Exception {
+  public void testStringConstantFromCaseStatement() {
     doTest("B", "A", 0);
   }
 
-  public void testDependantFields() throws Exception {
+  public void testDependantFields() {
     doTest("B", "A", 0);
   }
 
-  public void testStaticImportAndOverridenMethods() throws Exception {
+  public void testStaticImportAndOverridenMethods() {
     doTest("bar.B", "bar.A", 0);
   }
 
-  public void testWritableField() throws Exception {
+  public void testWritableField() {
     try {
       doTest("B", "A", 0);
       fail("conflict expected");
@@ -152,7 +152,7 @@ public class MoveMembersTest extends MultiFileTestCase {
     }
   }
   
-  public void testFinalFieldWithInitializer() throws Exception {
+  public void testFinalFieldWithInitializer() {
     try {
       doTest("B", "A", 0);
       fail("conflict expected");
@@ -162,7 +162,7 @@ public class MoveMembersTest extends MultiFileTestCase {
     }
   }
 
-  public void testExistingFieldInSuper() throws Exception {
+  public void testExistingFieldInSuper() {
     try {
       doTest("B", "A", 0, 1);
       fail("conflict expected");
@@ -173,11 +173,11 @@ public class MoveMembersTest extends MultiFileTestCase {
     }
   }
 
-  public void testInnerToInterface() throws Exception {
+  public void testInnerToInterface() {
     doTest("A", "B", 0);
   }
 
-  public void testStaticToInterface() throws Exception {
+  public void testStaticToInterface() {
     final LanguageLevelProjectExtension levelProjectExtension = LanguageLevelProjectExtension.getInstance(getProject());
     final LanguageLevel level = levelProjectExtension.getLanguageLevel();
     try {
@@ -189,35 +189,35 @@ public class MoveMembersTest extends MultiFileTestCase {
     }
   }
   
-  public void testEscalateVisibility1() throws Exception {
+  public void testEscalateVisibility1() {
     doTest("A", "B", true, VisibilityUtil.ESCALATE_VISIBILITY, 0);
   }
 
-  public void testStringConstantInSwitchLabelExpression() throws Exception {
+  public void testStringConstantInSwitchLabelExpression() {
     doTest("A", "B", true, VisibilityUtil.ESCALATE_VISIBILITY, 0);
   }
 
-  public void testMultipleWithDependencies() throws Exception {
+  public void testMultipleWithDependencies() {
     doTest("A", "B", true, VisibilityUtil.ESCALATE_VISIBILITY, 0, 1);
   }
 
-  public void testMultipleWithDependencies1() throws Exception {
+  public void testMultipleWithDependencies1() {
     doTest("A", "B", true, VisibilityUtil.ESCALATE_VISIBILITY, 0, 1);
   }
 
-  public void testFromNestedToOuter() throws Exception {
+  public void testFromNestedToOuter() {
     doTest("Outer.Inner", "Outer", true, VisibilityUtil.ESCALATE_VISIBILITY, 0);
   }
 
-  public void testMixedStaticImportAndQualified() throws Exception {
+  public void testMixedStaticImportAndQualified() {
     doTest("ImportingClass.Constants", "ImportingClass.ImportantConstants", 0);
   }
 
-  public void testStaticProblemsShouldNotRaiseAConflict() throws Exception {
+  public void testStaticProblemsShouldNotRaiseAConflict() {
     doTest("A", "B", 0);
   }
 
-  public void testFromNestedToOuterMethodRef() throws Exception {
+  public void testFromNestedToOuterMethodRef() {
     final LanguageLevelProjectExtension projectExtension = LanguageLevelProjectExtension.getInstance(getProject());
     final LanguageLevel oldLevel = projectExtension.getLanguageLevel();
     try {
@@ -235,14 +235,14 @@ public class MoveMembersTest extends MultiFileTestCase {
     return "/refactoring/moveMembers/";
   }
 
-  private void doTest(final String sourceClassName, final String targetClassName, final int... memberIndices) throws Exception {
+  private void doTest(final String sourceClassName, final String targetClassName, final int... memberIndices) {
     doTest(sourceClassName, targetClassName, true, memberIndices);
   }
 
   private void doTest(final String sourceClassName,
                       final String targetClassName,
                       final boolean lowercaseFirstLetter,
-                      final int... memberIndices) throws Exception {
+                      final int... memberIndices) {
     doTest(sourceClassName, targetClassName, lowercaseFirstLetter, null, memberIndices);
   }
 
@@ -250,12 +250,11 @@ public class MoveMembersTest extends MultiFileTestCase {
                       final String targetClassName,
                       final boolean lowercaseFirstLetter,
                       final String defaultVisibility,
-                      final int... memberIndices)
-    throws Exception {
+                      final int... memberIndices) {
     doTest((rootDir, rootAfter) -> this.performAction(sourceClassName, targetClassName, memberIndices, defaultVisibility), lowercaseFirstLetter);
   }
 
-  private void performAction(String sourceClassName, String targetClassName, int[] memberIndices, final String visibility) throws Exception {
+  private void performAction(String sourceClassName, String targetClassName, int[] memberIndices, final String visibility) {
     PsiClass sourceClass = myJavaFacade.findClass(sourceClassName, ProjectScope.getProjectScope(myProject));
     assertNotNull("Class " + sourceClassName + " not found", sourceClass);
     PsiClass targetClass = myJavaFacade.findClass(targetClassName, ProjectScope.getProjectScope(myProject));

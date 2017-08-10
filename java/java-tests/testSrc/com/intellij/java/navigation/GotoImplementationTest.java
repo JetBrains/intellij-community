@@ -61,7 +61,7 @@ public class GotoImplementationTest extends CodeInsightTestCase {
     UIUtil.dispatchAllInvocationEvents(); // startup activities
   }
 
-  public void test() throws Exception {
+  public void test() {
     ModuleManager moduleManager = ModuleManager.getInstance(getProject());
     Module[] modules = moduleManager.getModules();
     assertEquals(3, modules.length);

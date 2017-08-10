@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class LightRainbowHighlightingTest extends LightCodeInsightFixtureTestCase {
 
-  public void testRainbowOff() throws Exception {
+  public void testRainbowOff() {
     checkRainbow(
       "class TestClass {\n" +
       "    private static int field = 1;\n" +
@@ -34,7 +34,7 @@ public class LightRainbowHighlightingTest extends LightCodeInsightFixtureTestCas
       "}", false, false);
   }
 
-  public void testRainbowSameColorsForSameIds() throws Exception {
+  public void testRainbowSameColorsForSameIds() {
     checkRainbow(
       "class TestClass {\n" +
       "    public static void main(String[] <rainbow color='ff000003'>args</rainbow>) {\n" +
@@ -45,7 +45,7 @@ public class LightRainbowHighlightingTest extends LightCodeInsightFixtureTestCas
       "}", true, true);
   }
 
-  public void testRainbowHighlightingIds() throws Exception {
+  public void testRainbowHighlightingIds() {
     // check no coloring for [this] and etc.
     checkRainbow(
       "class TestClass {\n" +
@@ -62,7 +62,7 @@ public class LightRainbowHighlightingTest extends LightCodeInsightFixtureTestCas
       "}", true, false);
   }
 
-  public void testRainbowParamsInJavadocHaveTheSameColorsAsInCode() throws Exception {
+  public void testRainbowParamsInJavadocHaveTheSameColorsAsInCode() {
     checkRainbow(
       "class TestClass {\n" +
       "    /**\n" +
@@ -83,7 +83,7 @@ public class LightRainbowHighlightingTest extends LightCodeInsightFixtureTestCas
     assertEquals(3, color);
   }
 
-  void checkRainbow(@NotNull String code, boolean isRainbowOn, boolean withColor) throws Exception {
+  void checkRainbow(@NotNull String code, boolean isRainbowOn, boolean withColor) {
     myFixture.testRainbow(
       "rainbow.java",
       code,

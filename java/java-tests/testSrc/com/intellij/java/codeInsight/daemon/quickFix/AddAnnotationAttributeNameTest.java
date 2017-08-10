@@ -23,7 +23,7 @@ import com.intellij.testFramework.IdeaTestUtil;
  * @author Pavel.Dolgov
  */
 public class AddAnnotationAttributeNameTest extends LightQuickFixParameterizedTestCase {
-  public void test() throws Exception {
+  public void test() {
     doAllTests();
   }
 

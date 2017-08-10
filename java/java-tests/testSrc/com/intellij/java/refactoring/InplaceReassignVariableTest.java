@@ -28,19 +28,19 @@ public class InplaceReassignVariableTest extends AbstractJavaInplaceIntroduceTes
     doRunTest();
   }
 
-  public void testReassignSimple() throws Exception {
+  public void testReassignSimple() {
     doTest();
   }
 
-  public void testReassignWhenVariableWasPutInLoopBody() throws Exception {
+  public void testReassignWhenVariableWasPutInLoopBody() {
     doTest();
   }
 
-  public void testFilterVariablesWhichMustBeEffectivelyFinal() throws Exception {
+  public void testFilterVariablesWhichMustBeEffectivelyFinal() {
     doTest();
   }
 
-  public void testUndoPositionAfterSpace() throws Exception {
+  public void testUndoPositionAfterSpace() {
     doUndoTest();
   }
 

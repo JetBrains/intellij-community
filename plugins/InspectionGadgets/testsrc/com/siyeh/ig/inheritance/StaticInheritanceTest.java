@@ -27,7 +27,7 @@ public class StaticInheritanceTest extends LightQuickFixParameterizedTestCase {
     return new LocalInspectionTool[]{new StaticInheritanceInspection()};
   }
 
-  public void test() throws Exception {
+  public void test() {
     doAllTests();
   }
 

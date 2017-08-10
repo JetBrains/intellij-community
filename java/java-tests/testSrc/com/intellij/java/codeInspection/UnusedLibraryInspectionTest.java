@@ -36,7 +36,7 @@ public class UnusedLibraryInspectionTest extends InspectionTestCase {
     PsiTestUtil.addLibrary(getModule(), "JUnit", getTestDataPath(), "/junit.jar");
   }
 
-  private void doTest() throws Exception {
+  private void doTest() {
     doTest("/" + getTestName(true), new UnusedLibrariesInspection());
   }
 
@@ -46,8 +46,8 @@ public class UnusedLibraryInspectionTest extends InspectionTestCase {
     return new AnalysisScope(getProject());
   }
 
-  public void testSimple() throws Exception { doTest(); }
-  public void testUsedJunit() throws Exception { doTest(); }
-  public void testUsedJunitFromField() throws Exception { doTest(); }
-  public void testUsedInParameterAnnotation() throws Exception { doTest(); }
+  public void testSimple() { doTest(); }
+  public void testUsedJunit() { doTest(); }
+  public void testUsedJunitFromField() { doTest(); }
+  public void testUsedInParameterAnnotation() { doTest(); }
 }

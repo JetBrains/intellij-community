@@ -45,5 +45,5 @@ public class SuspiciousArrayMethodCallInspectionTest extends LightInspectionTest
     return new SuspiciousArrayMethodCallInspection();
   }
 
-  public void testSuspiciousArrayMethodCall() throws Exception { doTest();}
+  public void testSuspiciousArrayMethodCall() { doTest();}
 }

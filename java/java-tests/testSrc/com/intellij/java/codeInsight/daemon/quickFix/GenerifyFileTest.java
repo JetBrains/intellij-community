@@ -28,7 +28,7 @@ public class GenerifyFileTest extends LightQuickFixAvailabilityTestCase {
     return new LocalInspectionTool[] {new UncheckedWarningLocalInspection()};
   }
 
-  public void test() throws Exception { doAllTests(); }
+  public void test() { doAllTests(); }
 
   @Override
   protected String getBasePath() {

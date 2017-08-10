@@ -63,7 +63,7 @@ public class StreamApiMigrationInspectionTest {
       return LanguageLevel.JDK_1_8;
     }
 
-    public void test() throws Exception { doAllTests(); }
+    public void test() { doAllTests(); }
 
     abstract String getFolder();
 

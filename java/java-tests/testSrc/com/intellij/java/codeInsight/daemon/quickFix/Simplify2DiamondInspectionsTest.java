@@ -56,7 +56,7 @@ public class Simplify2DiamondInspectionsTest extends LightQuickFixParameterizedT
     return CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
   }
 
-  public void test() throws Exception { doAllTests(); }
+  public void test() { doAllTests(); }
 
   @Override
   protected String getBasePath() {

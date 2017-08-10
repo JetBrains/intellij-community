@@ -36,7 +36,7 @@ public class FindClassInDeepPackagesTest extends PsiTestCase {
   protected void setUpJdk() {
   }
 
-  private void setUpLibrary(final String s) throws Exception {
+  private void setUpLibrary(final String s) {
     final String testRoot = PathManagerEx.getTestDataPath() + "/psi/repositoryUse/deepPackages";
     VirtualFile classesRoot = WriteCommandAction.runWriteCommandAction(null, (Computable<VirtualFile>)() -> {
       String path = testRoot + "/" + s;
@@ -47,14 +47,14 @@ public class FindClassInDeepPackagesTest extends PsiTestCase {
     ModuleRootModificationUtil.addModuleLibrary(myModule, classesRoot.getUrl());
   }
 
-  public void testSRC() throws Exception {
+  public void testSRC() {
     setUpLibrary("classes");
     final JavaPsiFacade psiManager = getJavaFacade();
     final PsiClass classA = psiManager.findClass("a.a.a.a.e.f.i", GlobalSearchScope.moduleWithLibrariesScope(myModule));
     assertNotNull(classA);
   }
 
-  public void test3() throws Exception {
+  public void test3() {
     setUpLibrary("classes2");
     final JavaPsiFacade psiManager = getJavaFacade();
     final PsiClass classA = psiManager.findClass("com.intellij.internal.f.a.b.a.i", GlobalSearchScope.moduleWithLibrariesScope(myModule));

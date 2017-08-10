@@ -37,7 +37,7 @@ public class JavaSuperMethodTest extends LightDaemonAnalyzerTestCase {
     return "/codeInsight/gotosuper/";
   }
 
-  public void testDoNotGoToSiblingInheritanceIfInLibrary() throws Throwable {
+  public void testDoNotGoToSiblingInheritanceIfInLibrary() {
     configureByFile(getBasePath() + "OverridingLibrary.java");
 
     PsiClass aThread = getJavaFacade().findClass("java.lang.Thread");

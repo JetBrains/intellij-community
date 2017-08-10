@@ -25,7 +25,7 @@ import junit.framework.Assert;
  *  @author dsl
  */
 public class FindParameterTest extends PsiTestCase {
-  public void testMethod() throws Exception {
+  public void testMethod() {
     String text =
             "void method(final int i) {" +
             "  Runnable runnable = new Runnable() {" +

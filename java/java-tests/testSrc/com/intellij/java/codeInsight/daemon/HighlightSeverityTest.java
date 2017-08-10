@@ -31,7 +31,7 @@ public class HighlightSeverityTest extends LightDaemonAnalyzerTestCase {
   @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/highlightSeverity";
 
 
-  public void testErrorLikeUnusedSymbol() throws Exception {
+  public void testErrorLikeUnusedSymbol() {
     enableInspectionTool(new LocalInspectionTool() {
       @NotNull
       @Override

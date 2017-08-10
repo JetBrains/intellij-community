@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class ResultOfObjectAllocationIgnoredInspectionTest extends LightInspectionTestCase {
 
-  public void testResultOfObjectAllocationIgnored() throws Exception {
+  public void testResultOfObjectAllocationIgnored() {
     doTest();
   }
 

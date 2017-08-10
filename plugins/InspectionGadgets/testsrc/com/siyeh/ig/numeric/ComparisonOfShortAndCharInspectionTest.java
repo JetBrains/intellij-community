@@ -19,7 +19,7 @@ import com.siyeh.ig.IGInspectionTestCase;
 
 public class ComparisonOfShortAndCharInspectionTest extends IGInspectionTestCase {
 
-  public void test() throws Exception {
+  public void test() {
     doTest("com/siyeh/igtest/numeric/comparison_of_short_and_char", new ComparisonOfShortAndCharInspection());
   }
 }

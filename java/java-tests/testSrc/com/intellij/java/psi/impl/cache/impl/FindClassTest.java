@@ -76,7 +76,7 @@ public class FindClassTest extends PsiTestCase {
     });
   }
 
-  public void testSimple() throws Exception {
+  public void testSimple() {
     PsiClass psiClass = myJavaFacade.findClass("p.A");
     assertEquals("p.A", psiClass.getQualifiedName());
   }
@@ -137,7 +137,7 @@ public class FindClassTest extends PsiTestCase {
     });
   }
 
-  public void testMultipleModules() throws Exception {
+  public void testMultipleModules() {
     List<Module> otherModules = configureTwoMoreModules();
     assertSize(2, otherModules);
     PsiClass psiClass = myJavaFacade.findClass("p.A", getModule().getModuleWithDependenciesAndLibrariesScope(true));
@@ -162,7 +162,7 @@ public class FindClassTest extends PsiTestCase {
     assertNull(packClass3);
   }
 
-  public void testFindModulesWithClass() throws Exception {
+  public void testFindModulesWithClass() {
     List<Module> otherModules = configureTwoMoreModules();
     assertSize(2, otherModules);
 

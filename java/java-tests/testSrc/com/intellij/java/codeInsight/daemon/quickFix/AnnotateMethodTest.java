@@ -38,7 +38,7 @@ public class AnnotateMethodTest extends LightQuickFixTestCase {
     return false;
   }
 
-  public void test() throws Exception { doAllTests(); }
+  public void test() { doAllTests(); }
 
   @Override
   protected LanguageLevel getLanguageLevel() {

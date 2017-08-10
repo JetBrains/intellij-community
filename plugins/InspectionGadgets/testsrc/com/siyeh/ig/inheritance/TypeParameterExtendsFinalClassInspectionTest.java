@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class TypeParameterExtendsFinalClassInspectionTest extends LightInspectionTestCase {
 
-  public void testTypeParameterExtendsFinalClass() throws Exception {
+  public void testTypeParameterExtendsFinalClass() {
     doTest();
   }
 

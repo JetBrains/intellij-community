@@ -68,7 +68,7 @@ public class ObviousNullCheckInspectionTest extends LightInspectionTestCase {
       return new LocalInspectionTool[]{new ObviousNullCheckInspection()};
     }
 
-    public void test() throws Exception {
+    public void test() {
       doAllTests();
     }
 

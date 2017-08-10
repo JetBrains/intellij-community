@@ -44,7 +44,7 @@ public class MovePackageMultirootTest extends MultiFileTestCase {
     return "/refactoring/movePackageMultiroot/";
   }
 
-  public void testMovePackage() throws Exception {
+  public void testMovePackage() {
     doTest(createAction(new String[]{"pack1"}, "target"));
   }
 

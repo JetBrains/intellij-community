@@ -97,7 +97,7 @@ public class AddSingleStaticImportActionTest extends JavaCodeInsightFixtureTestC
     assertNull(intentionAction);
   }
 
-  public void testSkipSameNamedNonStaticReferences() throws Exception {
+  public void testSkipSameNamedNonStaticReferences() {
     myFixture.addClass("package foo;" +
                        "public class Clazz {" +
                        "   public void print(String s) {}" +
@@ -111,7 +111,7 @@ public class AddSingleStaticImportActionTest extends JavaCodeInsightFixtureTestC
     myFixture.checkResultByFile(getTestName(false) + "_after.java");
   }
 
-  public void testAllowSingleStaticImportWhenOnDemandImportOverloadedMethod() throws Exception {
+  public void testAllowSingleStaticImportWhenOnDemandImportOverloadedMethod() {
     myFixture.addClass("package foo; class Foo {public static void foo(int i){}}");
     myFixture.addClass("package foo; class Bar {public static void foo(String s){}}");
     myFixture.configureByFile(getTestName(false) + ".java");
@@ -122,7 +122,7 @@ public class AddSingleStaticImportActionTest extends JavaCodeInsightFixtureTestC
     myFixture.checkResultByFile(getTestName(false) + "_after.java");
   }
 
-  public void testSingleImportWhenConflictingWithOnDemand() throws Exception {
+  public void testSingleImportWhenConflictingWithOnDemand() {
     myFixture.addClass("package foo; class Foo {public static void foo(int i){}}");
     myFixture.addClass("package foo; class Bar {public static void foo(String s){}}");
     myFixture.configureByFile(getTestName(false) + ".java");
@@ -141,14 +141,14 @@ public class AddSingleStaticImportActionTest extends JavaCodeInsightFixtureTestC
     }
   }
 
-  public void testConflictingNamesInScope() throws Exception {
+  public void testConflictingNamesInScope() {
     myFixture.addClass("package foo; public class Assert {public static void assertTrue(boolean b) {}}");
     myFixture.configureByFile(getTestName(false) + ".java");
     IntentionAction intention = myFixture.getAvailableIntention("Add static import for 'foo.Assert.assertTrue'");
     assertNull(intention);
   }
 
-  public void testProhibitWhenMethodWithIdenticalSignatureAlreadyImportedFromAnotherClass() throws Exception {
+  public void testProhibitWhenMethodWithIdenticalSignatureAlreadyImportedFromAnotherClass() {
     myFixture.addClass("package foo; class Foo {public static void foo(int i){}}");
     myFixture.addClass("package foo; class Bar {public static void foo(int i){}}");
     myFixture.configureByFile(getTestName(false) + ".java");

@@ -878,7 +878,7 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTest();
   }
 
-  public void testCantPassFieldAsParameter() throws Exception {
+  public void testCantPassFieldAsParameter() {
     try {
       doTestPassFieldsAsParams();
       fail("Field was modified inside. Make static should be disabled");

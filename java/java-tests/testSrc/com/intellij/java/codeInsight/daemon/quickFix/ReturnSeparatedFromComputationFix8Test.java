@@ -32,7 +32,7 @@ public class ReturnSeparatedFromComputationFix8Test extends LightQuickFixParamet
     return new LocalInspectionTool[]{new ReturnSeparatedFromComputationInspection()};
   }
 
-  public void test() throws Exception {
+  public void test() {
     doAllTests();
   }
 

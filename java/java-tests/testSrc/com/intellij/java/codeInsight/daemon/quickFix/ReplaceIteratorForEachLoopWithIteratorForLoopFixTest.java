@@ -27,7 +27,7 @@ public class ReplaceIteratorForEachLoopWithIteratorForLoopFixTest extends LightQ
 
   private boolean myFinalLocals;
 
-  public void test() throws Exception { doAllTests(); }
+  public void test() { doAllTests(); }
 
   @Override
   protected void setUp() throws Exception {

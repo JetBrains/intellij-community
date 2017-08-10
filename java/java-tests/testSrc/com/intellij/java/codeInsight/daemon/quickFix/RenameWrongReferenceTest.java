@@ -26,7 +26,7 @@ public class RenameWrongReferenceTest extends LightQuickFixParameterizedTestCase
     TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
   }
 
-  public void test() throws Exception { doAllTests(); }
+  public void test() { doAllTests(); }
 
   @Override
   protected String getBasePath() {

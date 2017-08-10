@@ -4,7 +4,7 @@ import com.siyeh.ig.IGInspectionTestCase;
 
 public class AbstractClassNeverImplementedInspectionTest extends IGInspectionTestCase {
 
-  public void test() throws Exception {
+  public void test() {
     doTest("com/siyeh/igtest/inheritance/abstract_class_never_implemented", new AbstractClassNeverImplementedInspection());
   }
 }
