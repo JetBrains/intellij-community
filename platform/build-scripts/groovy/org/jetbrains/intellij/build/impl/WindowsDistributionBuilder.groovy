@@ -143,10 +143,8 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
       }
     }
 
-    if (batName != "idea.bat") {
-      //todo[nik] rename idea.bat in sources to something more generic
-      buildContext.ant.move(file: "$winDistPath/bin/idea.bat", tofile: "$winDistPath/bin/$batName")
-    }
+    buildContext.ant.move(file: "$winDistPath/bin/executable.bat", tofile: "$winDistPath/bin/$batName")
+
     String inspectScript = buildContext.productProperties.inspectCommandName
     if (inspectScript != "inspect") {
       String targetPath = "$winDistPath/bin/${inspectScript}.bat"
