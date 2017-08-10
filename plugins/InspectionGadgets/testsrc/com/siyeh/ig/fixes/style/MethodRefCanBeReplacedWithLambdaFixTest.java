@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,7 +76,7 @@ public class MethodRefCanBeReplacedWithLambdaFixTest extends IGQuickFixesTestCas
   }
 
   public void testNewRefsInference() throws Exception {
-    doTest();
+    doTest(myDefaultHint + " (side effects)");
   }
 
   public void testNewRefsInference1() throws Exception {
@@ -108,7 +108,7 @@ public class MethodRefCanBeReplacedWithLambdaFixTest extends IGQuickFixesTestCas
   }
 
   public void testArrayMethodRef() throws Exception {
-    doTest();
+    doTest(myDefaultHint + " (side effects)");
   }
 
   public void testArrayConstructorRefUniqueParamName() throws Exception {
@@ -120,7 +120,7 @@ public class MethodRefCanBeReplacedWithLambdaFixTest extends IGQuickFixesTestCas
   }
 
   public void testIntroduceVariableForSideEffectQualifier() throws Exception {
-    doTest();
+    doTest(myDefaultHint + " (side effects)");
   }
 
   public void testCollapseToExpressionLambdaWhenCast() throws Exception {
@@ -140,6 +140,10 @@ public class MethodRefCanBeReplacedWithLambdaFixTest extends IGQuickFixesTestCas
   }
 
   public void testSpecifyFormalParameterTypesWhenMethodReferenceWasExactAndTypeOfParameterIsUnknown() throws Exception {
+    doTest();
+  }
+
+  public void testNewArrayMethodReferenceHasNoSideEffects() {
     doTest();
   }
 
