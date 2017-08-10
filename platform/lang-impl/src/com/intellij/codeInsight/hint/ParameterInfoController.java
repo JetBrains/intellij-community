@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight.hint;
 
+import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager;
 import com.intellij.codeInsight.hints.ParameterHintsPassFactory;
 import com.intellij.codeInsight.lookup.Lookup;
@@ -87,6 +88,7 @@ public class ParameterInfoController implements Disposable {
   private final Alarm myAlarm = new Alarm();
   private static final int DELAY = 200;
 
+  private boolean mySingleParameterInfo;
   private boolean myDisposed;
 
   /**
@@ -122,9 +124,9 @@ public class ParameterInfoController implements Disposable {
     return !getAllControllers(editor).isEmpty();
   }
 
-  public static boolean isAlreadyShown(Editor editor, int lbraceOffset) {
+  public static boolean isAlreadyShown(Editor editor, int lbraceOffset, boolean singleParameterInfo) {
     ParameterInfoController controller = findControllerAtOffset(editor, lbraceOffset);
-    return controller != null && controller.myHint.isVisible();
+    return controller != null && controller.myHint.isVisible() && (!controller.mySingleParameterInfo || !singleParameterInfo);
   }
 
   public ParameterInfoController(@NotNull Project project,
@@ -144,6 +146,7 @@ public class ParameterInfoController implements Disposable {
     myComponent = new ParameterInfoComponent(descriptors, editor, handler, requestFocus);
     myHint = new LightweightHint(myComponent);
     myKeepOnHintHidden = !showHint;
+    mySingleParameterInfo = !showHint;
 
     myHint.setSelectingHint(true);
     myComponent.setParameterOwner(parameterOwner);
@@ -189,9 +192,9 @@ public class ParameterInfoController implements Disposable {
       Disposer.register(((EditorImpl)myEditor).getDisposable(), this);
     }
 
-    myComponent.update(); // to have correct preferred size
+    myComponent.update(mySingleParameterInfo); // to have correct preferred size
     if (showHint) {
-      showHint(requestFocus);
+      showHint(requestFocus, mySingleParameterInfo);
     }
     updateComponent();
   }
@@ -207,7 +210,9 @@ public class ParameterInfoController implements Disposable {
     myEditor.getCaretModel().removeCaretListener(myEditorCaretListener);
   }
 
-  public void showHint(boolean requestFocus) {
+  public void showHint(boolean requestFocus, boolean singleParameterInfo) {
+    mySingleParameterInfo = singleParameterInfo;
+    
     Pair<Point, Short> pos = myProvider.getBestPointPosition(myHint, myComponent.getParameterOwner(), myLbraceMarker.getStartOffset(), true, HintManager.UNDER);
     HintHint hintHint = HintManagerImpl.createHintHint(myEditor, pos.getFirst(), myHint, pos.getSecond());
     hintHint.setExplicitClose(true);
@@ -321,7 +326,7 @@ public class ParameterInfoController implements Disposable {
       myHandler.updateParameterInfo(elementForUpdating, context);
       if (!myDisposed && myHint.isVisible() && !myEditor.isDisposed() &&
           myEditor.getComponent().getRootPane() != null) {
-        myComponent.update();
+        myComponent.update(mySingleParameterInfo);
         IdeTooltip tooltip = myHint.getCurrentIdeTooltip();
         short position = tooltip != null
                          ? toShort(tooltip.getPreferredPosition())
@@ -372,6 +377,8 @@ public class ParameterInfoController implements Disposable {
     PsiElement argsList = findArgumentList(file, offset, -1);
     if (argsList == null && !areParametersHintsEnabledOnCompletion()) return;
 
+    if (!myHint.isVisible()) AutoPopupController.getInstance(myProject).autoPopupParameterInfo(myEditor, null);
+    
     offset = adjustOffsetToInlay(offset);
     VisualPosition visualPosition = myEditor.offsetToVisualPosition(offset);
     if (myEditor.getInlayModel().hasInlineElementAt(visualPosition)) {

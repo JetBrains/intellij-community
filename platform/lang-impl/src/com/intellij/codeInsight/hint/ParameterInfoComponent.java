@@ -79,7 +79,7 @@ public class ParameterInfoComponent extends JPanel {
     final ParameterInfoComponent infoComponent = new ParameterInfoComponent(objects, editor, handler);
     infoComponent.setCurrentParameterIndex(currentParameterIndex);
     infoComponent.setParameterOwner(parameterOwner);
-    return infoComponent.new MyParameterContext();
+    return infoComponent.new MyParameterContext(false);
   }
 
   ParameterInfoComponent(Object[] objects, Editor editor, @NotNull ParameterInfoHandler handler) {
@@ -145,8 +145,13 @@ public class ParameterInfoComponent extends JPanel {
   }
 
   class MyParameterContext implements ParameterInfoUIContextEx {
+    private final boolean mySingleParameterInfo;
     private int i;
     private Function<String, String> myEscapeFunction;
+    
+    public MyParameterContext(boolean singleParameterInfo) {
+      mySingleParameterInfo = singleParameterInfo;
+    }
 
     @Override
     public String setupUIComponentPresentation(String text,
@@ -199,22 +204,37 @@ public class ParameterInfoComponent extends JPanel {
     }
 
     @Override
+    public boolean isSingleParameterInfo() {
+      return mySingleParameterInfo;
+    }
+
+    private boolean isHighlighted() {
+      return myObjects[i].equals(myHighlighted);
+    }
+
+    @Override
     public Color getDefaultParameterColor() {
       Color color = HintUtil.getInformationColor();
-      return !myObjects[i].equals(myHighlighted) ? color :
+      return mySingleParameterInfo || !isHighlighted() ? color :
              ColorUtil.isDark(color) ? ColorUtil.brighter(color, 2) : ColorUtil.darker(color, 2);
     }
   }
 
-  public void update() {
-    MyParameterContext context = new MyParameterContext();
+  public void update(boolean singleParameterInfo) {
+    MyParameterContext context = new MyParameterContext(singleParameterInfo);
 
     for (int i = 0; i < myObjects.length; i++) {
       context.i = i;
       final Object o = myObjects[i];
 
-      //noinspection unchecked
-      myHandler.updateUI(o, context);
+      if (singleParameterInfo && !context.isHighlighted()) {
+        setVisible(i, false);
+      }
+      else {
+        setVisible(i, true);
+        //noinspection unchecked
+        myHandler.updateUI(o, context);
+      }
     }
 
     invalidate();
@@ -228,6 +248,10 @@ public class ParameterInfoComponent extends JPanel {
 
   void setEnabled(int index, boolean enabled) {
     myPanels[index].setEnabled(enabled);
+  }
+
+  void setVisible(int index, boolean visible) {
+    myPanels[index].setVisible(visible);
   }
 
   boolean isEnabled(int index) {
