@@ -15,19 +15,28 @@
  */
 package com.intellij.psi.impl;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.TransactionGuardImpl;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiTreeChangeEvent;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.messages.MessageBus;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static com.intellij.psi.impl.PsiTreeChangeEventImpl.PsiEventType.CHILD_MOVED;
@@ -40,6 +49,7 @@ import static com.intellij.psi.impl.PsiTreeChangeEventImpl.PsiEventType.PROPERTY
 public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTreeChangePreprocessor {
   private final boolean myEnableCodeBlockTracker = Registry.is("psi.modification.tracker.code-block");
   private final boolean myEnableJavaStructureTracker = Registry.is("psi.modification.tracker.java-structure");
+  private final boolean myEnableLanguageTracker = Registry.is("psi.modification.tracker.per-language");
 
   private final AtomicLong myModificationCount = new AtomicLong(0);
   private final AtomicLong myOutOfCodeBlockModificationCount = myEnableCodeBlockTracker ? new AtomicLong(0) : myModificationCount;
@@ -47,6 +57,9 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTr
 
   private final ModificationTracker myOutOfCodeBlockModificationTracker = myEnableCodeBlockTracker ? () -> getOutOfCodeBlockModificationCount() : this;
   private final ModificationTracker myJavaStructureModificationTracker = myEnableJavaStructureTracker ? () -> getJavaStructureModificationCount() : this;
+
+  private final Map<Language, ModificationTracker> myLanguageTrackers =
+    ConcurrentFactoryMap.createMap(language -> new SimpleModificationTracker());
 
   private final Listener myPublisher;
 
@@ -94,6 +107,8 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTr
       return;
     }
 
+    incLanguageTrackers(event);
+
     PsiTreeChangeEventImpl.PsiEventType code = event.getCode();
     boolean outOfCodeBlock =
       code == PROPERTY_CHANGED ? event.getPropertyName() == PsiTreeChangeEvent.PROP_UNLOADED_PSI :
@@ -110,6 +125,26 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTr
 
   public static boolean canAffectPsi(@NotNull PsiTreeChangeEventImpl event) {
     return !PsiTreeChangeEvent.PROP_WRITABLE.equals(event.getPropertyName());
+  }
+
+  protected void incLanguageTrackers(@NotNull PsiTreeChangeEventImpl event) {
+    if (!myEnableLanguageTracker) return;
+    incLanguageModificationCount(Language.ANY);
+    for (PsiElement o : new PsiElement[]{
+      event.getFile(), event.getParent(), event.getOldParent(), event.getNewParent(),
+      event.getElement(), event.getChild(), event.getOldChild(), event.getNewChild()
+    }) {
+      PsiFile file = o instanceof PsiFile ? (PsiFile)o : null;
+      if (file == null) {
+        Language language = o == null ? null : o.getLanguage();
+        incLanguageModificationCount(language);
+      }
+      else {
+        for (Language language : file.getViewProvider().getLanguages()) {
+          incLanguageModificationCount(language);
+        }
+      }
+    }
   }
 
   @Override
@@ -137,5 +172,32 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTr
   @Override
   public ModificationTracker getJavaStructureModificationTracker() {
     return myJavaStructureModificationTracker;
+  }
+
+  @ApiStatus.Experimental
+  public void incLanguageModificationCount(@Nullable Language language) {
+    if (language == null) return;
+    ((SimpleModificationTracker)myLanguageTrackers.get(language)).incModificationCount();
+  }
+
+  @ApiStatus.Experimental
+  @NotNull
+  public ModificationTracker forLanguage(@NotNull Language language) {
+    if (!myEnableLanguageTracker) return this;
+    return myLanguageTrackers.get(language);
+  }
+
+  @ApiStatus.Experimental
+  @NotNull
+  public ModificationTracker forLanguages(@NotNull Condition<Language> condition) {
+    if (!myEnableLanguageTracker) return this;
+    return () -> {
+      long result = 0;
+      for (Language l : myLanguageTrackers.keySet()) {
+        if (condition.value(l)) continue;
+        result += myLanguageTrackers.get(l).getModificationCount();
+      }
+      return result;
+    };
   }
 }
