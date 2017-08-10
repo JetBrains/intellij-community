@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
@@ -47,6 +46,7 @@ import java.util.stream.Stream;
 
 import static com.intellij.util.containers.ContainerUtil.newArrayList;
 import static com.intellij.util.containers.ContainerUtil.newTroveSet;
+import static java.util.Objects.hash;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toCollection;
 import static java.util.stream.Collectors.toList;
@@ -57,15 +57,18 @@ import static java.util.stream.Collectors.toList;
 public class ChangesUtil {
   private static final Key<Boolean> INTERNAL_OPERATION_KEY = Key.create("internal vcs operation");
 
-  public static final TObjectHashingStrategy<FilePath> FILE_PATH_BY_PATH_ONLY_HASHING_STRATEGY = new TObjectHashingStrategy<FilePath>() {
+  public static final TObjectHashingStrategy<FilePath> CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY = new TObjectHashingStrategy<FilePath>() {
     @Override
-    public int computeHashCode(@NotNull FilePath path) {
-      return path.getPath().hashCode();
+    public int computeHashCode(@Nullable FilePath path) {
+      return path != null ? hash(path.getPath(), path.isDirectory()) : 0;
     }
 
     @Override
-    public boolean equals(@NotNull FilePath path1, @NotNull FilePath path2) {
-      return StringUtil.equals(path1.getPath(), path2.getPath());
+    public boolean equals(@Nullable FilePath path1, @Nullable FilePath path2) {
+      if (path1 == path2) return true;
+      if (path1 == null || path2 == null) return false;
+
+      return path1.isDirectory() == path2.isDirectory() && path1.getPath().equals(path2.getPath());
     }
   };
 
@@ -119,7 +122,7 @@ public class ChangesUtil {
   @NotNull
   public static List<FilePath> getPaths(@NotNull Collection<Change> changes) {
     THashSet<FilePath> distinctPaths = getAllPaths(changes.stream())
-      .collect(toCollection(() -> newTroveSet(FILE_PATH_BY_PATH_ONLY_HASHING_STRATEGY)));
+      .collect(toCollection(() -> newTroveSet(CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY)));
     return newArrayList(distinctPaths);
   }
 
