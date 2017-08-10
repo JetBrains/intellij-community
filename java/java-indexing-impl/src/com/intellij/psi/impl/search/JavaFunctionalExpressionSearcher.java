@@ -144,7 +144,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
   private static MultiMap<VirtualFile, FunExprOccurrence> getAllOccurrences(List<SamDescriptor> descriptors) {
     MultiMap<VirtualFile, FunExprOccurrence> result = MultiMap.createLinkedSet();
     for (SamDescriptor descriptor : descriptors) {
-      ReadAction.run(() -> {
+      descriptor.dumbService.runReadActionInSmartMode(() -> {
         for (FunctionalExpressionKey key : descriptor.generateKeys()) {
           FileBasedIndex.getInstance().processValues(JavaFunctionalExpressionIndex.INDEX_ID, key, null, (file, infos) -> {
             ProgressManager.checkCanceled();
@@ -282,6 +282,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
     final int samParamCount;
     final boolean booleanCompatible;
     final boolean isVoid;
+    final DumbService dumbService;
     GlobalSearchScope effectiveUseScope;
 
     SamDescriptor(PsiClass samClass, PsiMethod samMethod, PsiType samType, GlobalSearchScope useScope) {
@@ -290,6 +291,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
       this.samParamCount = samMethod.getParameterList().getParametersCount();
       this.booleanCompatible = FunctionalExpressionKey.isBooleanCompatible(samType);
       this.isVoid = PsiType.VOID.equals(samType);
+      this.dumbService = DumbService.getInstance(samClass.getProject());
     }
 
     List<FunctionalExpressionKey> generateKeys() {
@@ -317,7 +319,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
     @NotNull
     private Set<VirtualFile> getMostLikelyFiles(GlobalSearchScope searchScope) {
       Set<VirtualFile> files = ContainerUtil.newLinkedHashSet();
-      ReadAction.run(() -> {
+      dumbService.runReadActionInSmartMode(() -> {
         if (!samClass.isValid()) return;
 
         String className = samClass.getName();
