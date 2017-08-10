@@ -259,4 +259,10 @@ class Foo {
     PsiTestUtil.checkStubsMatchText(psiFile)
   }
 
+  void "test annotation stub without reference"() {
+    PsiFile psiFile = myFixture.addFileToProject("a.java", "@() class Foo { } }")
+    assert ((PsiJavaFile) psiFile).classes[0].modifierList.annotations[0].nameReferenceElement == null
+    assert !((PsiFileImpl) psiFile).contentsLoaded
+  }
+
 }
