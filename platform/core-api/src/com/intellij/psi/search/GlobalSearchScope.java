@@ -353,6 +353,9 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     return filesWithLibrariesScope(project, files, false);
   }
 
+  /**
+   * @since 2017.3
+   */
   @NotNull
   public static GlobalSearchScope filesWithLibrariesScope(@NotNull Project project, @NotNull Collection<VirtualFile> files,
                                                           boolean searchOutsideRootModel) {

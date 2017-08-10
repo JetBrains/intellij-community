@@ -16,8 +16,10 @@
 package org.jetbrains.idea.devkit.util;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.impl.LibraryScopeCache;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.util.xml.DomService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
@@ -30,8 +32,11 @@ class PluginRelatedLocatorsUtils {
 
   @NotNull
   static GlobalSearchScope getCandidatesScope(@NotNull Project project) {
+    GlobalSearchScope scope = GlobalSearchScopesCore.projectProductionScope(project)
+      .uniteWith(LibraryScopeCache.getInstance(project).getLibrariesOnlyScope());
+
     Collection<VirtualFile> candidates = DomService.getInstance()
-      .getDomFileCandidates(IdeaPlugin.class, project, GlobalSearchScope.allScope(project));
+      .getDomFileCandidates(IdeaPlugin.class, project, scope);
     return GlobalSearchScope.filesWithLibrariesScope(project, candidates, true);
   }
 }
