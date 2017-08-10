@@ -34,7 +34,6 @@ import com.intellij.pom.Navigatable;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
-import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -44,11 +43,8 @@ import java.io.File;
 import java.util.*;
 import java.util.stream.Stream;
 
-import static com.intellij.util.containers.ContainerUtil.newArrayList;
-import static com.intellij.util.containers.ContainerUtil.newTroveSet;
 import static java.util.Objects.hash;
 import static java.util.function.Function.identity;
-import static java.util.stream.Collectors.toCollection;
 import static java.util.stream.Collectors.toList;
 
 /**
@@ -121,9 +117,7 @@ public class ChangesUtil {
 
   @NotNull
   public static List<FilePath> getPaths(@NotNull Collection<Change> changes) {
-    THashSet<FilePath> distinctPaths = getAllPaths(changes.stream())
-      .collect(toCollection(() -> newTroveSet(CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY)));
-    return newArrayList(distinctPaths);
+    return getAllPaths(changes.stream()).collect(toList());
   }
 
   @NotNull
@@ -136,10 +130,16 @@ public class ChangesUtil {
 
   @NotNull
   public static Stream<FilePath> getAllPaths(@NotNull Stream<Change> changes) {
-    return changes.flatMap(change ->
-                             Stream.of(getBeforePath(change), getAfterPath(change))
-                               .filter(Objects::nonNull)
-                               .distinct());
+    return changes.flatMap(ChangesUtil::getPathsCaseSensitive);
+  }
+
+  @NotNull
+  public static Stream<FilePath> getPathsCaseSensitive(@NotNull Change change) {
+    FilePath beforePath = getBeforePath(change);
+    FilePath afterPath = getAfterPath(change);
+
+    return Stream.of(beforePath, !CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY.equals(beforePath, afterPath) ? afterPath : null)
+      .filter(Objects::nonNull);
   }
 
   @NotNull
