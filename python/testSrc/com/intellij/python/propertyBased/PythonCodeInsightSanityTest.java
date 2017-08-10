@@ -26,6 +26,7 @@ import com.jetbrains.env.PyExecutionFixtureTestTask;
 import jetCheck.Generator;
 import jetCheck.PropertyChecker;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.Test;
 
 import java.io.File;
@@ -38,20 +39,27 @@ import java.util.function.Function;
 @SkipSlowTestLocally
 public class PythonCodeInsightSanityTest extends PyEnvTestCase {
 
+  /**
+   * When this test fail please record its rechecking seed and create stable test providing it to {@link #runActivity(Pair)}
+   */
   @Test
   public void testRandomActivity() {
-    runSanityTest(pathAndFixture -> {
-      final CodeInsightTestFixture fixture = pathAndFixture.second;
-      MadTestingUtil.enableAllInspections(fixture.getProject(), fixture.getProject());
-      Function<PsiFile, Generator<? extends MadTestingAction>> fileActions = file ->
-        Generator.anyOf(InvokeIntention.randomIntentions(file, new IntentionPolicy()),
-                        InvokeCompletion.completions(file, new CompletionPolicy()),
-                        Generator.constant(new StripTestDataMarkup(file)),
-                        DeleteRange.psiRangeDeletions(file));
+    runActivity(null);
+  }
 
-      PropertyChecker.forAll(actionsOnPyFiles(fileActions, fixture, pathAndFixture.first))
-        .shouldHold(FileWithActions::runActions);
-    });
+  /**
+   * To be fixed by {@link com.jetbrains.python.codeInsight.intentions.PyAnnotateTypesIntention} author @traff
+   * Caused by: java.lang.StringIndexOutOfBoundsException: String index out of range: 36
+   * at java.lang.String.substring(String.java:1963)
+   * at com.intellij.codeInsight.template.TemplateBuilderImpl.buildTemplate(TemplateBuilderImpl.java:221)
+   * at com.intellij.codeInsight.template.TemplateBuilderImpl.buildInlineTemplate(TemplateBuilderImpl.java:186)
+   * at com.jetbrains.python.codeInsight.intentions.PyAnnotateTypesIntention.startTemplate(PyAnnotateTypesIntention.java:159)
+   * at com.jetbrains.python.codeInsight.intentions.PyAnnotateTypesIntention.generateTypeCommentAnnotations(PyAnnotateTypesIntention.java:153)
+   * at com.jetbrains.python.codeInsight.intentions.PyAnnotateTypesIntention.annotateTypes(PyAnnotateTypesIntention.java:84)
+   */
+  @Test
+  public void testStringIndexOutOfRange() {
+    runActivity(Pair.create(3683007015279203452L, 36));
   }
 
   @Test
@@ -70,6 +78,24 @@ public class PythonCodeInsightSanityTest extends PyEnvTestCase {
                                                              @NotNull final String testDataPath) {
 
     return MadTestingUtil.actionsOnFileContents(fixture, testDataPath, f -> f.getName().endsWith(".py"), fileActions);
+  }
+
+  private void runActivity(@Nullable final Pair<Long, Integer> seedToRepeat) {
+    runSanityTest(pathAndFixture -> {
+      final CodeInsightTestFixture fixture = pathAndFixture.second;
+      MadTestingUtil.enableAllInspections(fixture.getProject(), fixture.getProject());
+      Function<PsiFile, Generator<? extends MadTestingAction>> fileActions = file ->
+        Generator.anyOf(InvokeIntention.randomIntentions(file, new IntentionPolicy()),
+                        InvokeCompletion.completions(file, new CompletionPolicy()),
+                        Generator.constant(new StripTestDataMarkup(file)),
+                        DeleteRange.psiRangeDeletions(file));
+
+      PropertyChecker<FileWithActions> checker = PropertyChecker.forAll(actionsOnPyFiles(fileActions, fixture, pathAndFixture.first));
+      if (seedToRepeat != null) {
+        checker = checker.rechecking(seedToRepeat.first, seedToRepeat.second);
+      }
+      checker.shouldHold(FileWithActions::runActions);
+    });
   }
 
   private void runSanityTest(@NotNull final Consumer<Pair<String, CodeInsightTestFixture>> test) {
