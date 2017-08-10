@@ -26,7 +26,6 @@ import com.intellij.diff.comparison.ComparisonPolicy;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.fragments.DiffFragment;
-import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.util.DiffDrawUtil;
 import com.intellij.diff.util.DiffUtil;
@@ -123,7 +122,8 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
 
   public void showAfterScroll(@NotNull Editor editor, @NotNull Range range) {
     editor.getScrollingModel().runActionOnScrollingFinished(() -> {
-      showHintAt(editor, range, null);
+      Range newRange = myTracker.findRange(range);
+      if (newRange != null) showHintAt(editor, newRange, null);
     });
   }
 
@@ -193,8 +193,8 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
     if (!isShowInnerDifferences()) return null;
     if (range.getType() != Range.MODIFIED) return null;
 
-    final CharSequence vcsContent = myTracker.getVcsContent(range);
-    final CharSequence currentContent = myTracker.getCurrentContent(range);
+    final CharSequence vcsContent = getVcsContent(range);
+    final CharSequence currentContent = getCurrentContent(range);
 
     return BackgroundTaskUtil.tryComputeFast(indicator -> {
       return ByWord.compare(vcsContent, currentContent, ComparisonPolicy.DEFAULT, indicator);
@@ -208,7 +208,7 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
     if (wordDiff == null) return;
     final List<RangeHighlighter> highlighters = new ArrayList<>();
 
-    int currentStartShift = myTracker.getCurrentTextRange(range).getStartOffset();
+    int currentStartShift = getCurrentTextRange(range).getStartOffset();
     for (DiffFragment fragment : wordDiff) {
       int currentStart = currentStartShift + fragment.getStartOffset2();
       int currentEnd = currentStartShift + fragment.getEndOffset2();
@@ -234,9 +234,8 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
                                            @Nullable List<DiffFragment> wordDiff) {
     if (range.getType() == Range.INSERTED) return null;
 
-    Document vcsDocument = myTracker.getVcsDocument();
-    TextRange vcsTextRange = myTracker.getVcsTextRange(range);
-    String content = vcsTextRange.subSequence(vcsDocument.getImmutableCharSequence()).toString();
+    TextRange vcsTextRange = getVcsTextRange(range);
+    String content = getVcsContent(range).toString();
 
     EditorHighlighterFactory highlighterFactory = EditorHighlighterFactory.getInstance();
     EditorHighlighter highlighter = highlighterFactory.createEditorHighlighter(myTracker.getProject(), getFileName(myTracker.getDocument()));
@@ -395,102 +394,136 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
   }
 
 
-  public class ShowNextChangeMarkerAction extends DumbAwareAction {
-    @NotNull private final Editor myEditor;
+  @NotNull
+  private CharSequence getCurrentContent(Range range) {
+    return DiffUtil.getLinesContent(myTracker.getDocument(), range.getLine1(), range.getLine2());
+  }
+
+  @NotNull
+  private CharSequence getVcsContent(Range range) {
+    return DiffUtil.getLinesContent(myTracker.getVcsDocument(), range.getVcsLine1(), range.getVcsLine2());
+  }
+
+  @NotNull
+  private TextRange getCurrentTextRange(@NotNull Range range) {
+    return DiffUtil.getLinesRange(myTracker.getDocument(), range.getLine1(), range.getLine2());
+  }
+
+  @NotNull
+  private TextRange getVcsTextRange(@NotNull Range range) {
+    return DiffUtil.getLinesRange(myTracker.getVcsDocument(), range.getVcsLine1(), range.getVcsLine2());
+  }
+
+
+  protected abstract class RangeMarkerAction extends DumbAwareAction {
     @NotNull private final Range myRange;
+
+    public RangeMarkerAction(@NotNull Range range, @NotNull String actionId) {
+      myRange = range;
+      ActionUtil.copyFrom(this, actionId);
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      Range newRange = myTracker.findRange(myRange);
+      e.getPresentation().setEnabled(newRange != null && isEnabled(newRange));
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      Range newRange = myTracker.findRange(myRange);
+      if (newRange != null) actionPerformed(newRange);
+    }
+
+    protected abstract boolean isEnabled(@NotNull Range range);
+
+    protected abstract void actionPerformed(@NotNull Range range);
+  }
+
+  public class ShowNextChangeMarkerAction extends RangeMarkerAction {
+    @NotNull private final Editor myEditor;
 
     public ShowNextChangeMarkerAction(@NotNull Editor editor, @NotNull Range range) {
+      super(range, "VcsShowNextChangeMarker");
       myEditor = editor;
-      myRange = range;
-      ActionUtil.copyFrom(this, "VcsShowNextChangeMarker");
     }
 
     @Override
-    public void update(AnActionEvent e) {
-      e.getPresentation().setEnabled(myTracker.getNextRange(myRange) != null);
+    protected boolean isEnabled(@NotNull Range range) {
+      return myTracker.getNextRange(range.getLine1()) != null;
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
-      Range range = myTracker.getNextRange(myRange);
-      if (range != null) LineStatusMarkerPopupRenderer.this.scrollAndShow(myEditor, range);
+    protected void actionPerformed(@NotNull Range range) {
+      Range targetRange = myTracker.getNextRange(range.getLine1());
+      if (targetRange != null) LineStatusMarkerPopupRenderer.this.scrollAndShow(myEditor, targetRange);
     }
   }
 
-  public class ShowPrevChangeMarkerAction extends DumbAwareAction {
+  public class ShowPrevChangeMarkerAction extends RangeMarkerAction {
     @NotNull private final Editor myEditor;
-    @NotNull private final Range myRange;
 
     public ShowPrevChangeMarkerAction(@NotNull Editor editor, @NotNull Range range) {
+      super(range, "VcsShowPrevChangeMarker");
       myEditor = editor;
-      myRange = range;
-      ActionUtil.copyFrom(this, "VcsShowPrevChangeMarker");
     }
 
     @Override
-    public void update(AnActionEvent e) {
-      e.getPresentation().setEnabled(myTracker.getPrevRange(myRange) != null);
+    protected boolean isEnabled(@NotNull Range range) {
+      return myTracker.getPrevRange(range.getLine1()) != null;
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
-      Range range = myTracker.getPrevRange(myRange);
-      if (range != null) LineStatusMarkerPopupRenderer.this.scrollAndShow(myEditor, range);
+    protected void actionPerformed(@NotNull Range range) {
+      Range targetRange = myTracker.getPrevRange(range.getLine1());
+      if (targetRange != null) LineStatusMarkerPopupRenderer.this.scrollAndShow(myEditor, targetRange);
     }
   }
 
-  public class CopyLineStatusRangeAction extends DumbAwareAction {
-    private final Range myRange;
-
+  public class CopyLineStatusRangeAction extends RangeMarkerAction {
     public CopyLineStatusRangeAction(@NotNull Range range) {
-      myRange = range;
-      ActionUtil.copyFrom(this, IdeActions.ACTION_COPY);
+      super(range, IdeActions.ACTION_COPY);
     }
 
-    public void update(final AnActionEvent e) {
-      boolean enabled = Range.DELETED == myRange.getType() || Range.MODIFIED == myRange.getType();
-      e.getPresentation().setEnabled(myTracker.isValid() && enabled);
+    @Override
+    protected boolean isEnabled(@NotNull Range range) {
+      return Range.DELETED == range.getType() || Range.MODIFIED == range.getType();
     }
 
-    public void actionPerformed(final AnActionEvent e) {
-      final String content = myTracker.getVcsContent(myRange) + "\n";
+    @Override
+    protected void actionPerformed(@NotNull Range range) {
+      final String content = getVcsContent(range) + "\n";
       CopyPasteManager.getInstance().setContents(new StringSelection(content));
     }
   }
 
-  public class ShowLineStatusRangeDiffAction extends DumbAwareAction {
-    private final Range myRange;
-
+  public class ShowLineStatusRangeDiffAction extends RangeMarkerAction {
     public ShowLineStatusRangeDiffAction(@NotNull Range range) {
-      myRange = range;
-      ActionUtil.copyFrom(this, IdeActions.ACTION_SHOW_DIFF_COMMON);
-    }
-
-    public void update(final AnActionEvent e) {
-      e.getPresentation().setEnabled(myTracker.isValid());
+      super(range, IdeActions.ACTION_SHOW_DIFF_COMMON);
     }
 
     @Override
-    public void actionPerformed(final AnActionEvent e) {
-      DiffManager.getInstance().showDiff(e.getProject(), createDiffData());
+    protected boolean isEnabled(@NotNull Range range) {
+      return true;
     }
 
-    @NotNull
-    private DiffRequest createDiffData() {
-      Range range = expand(myRange, myTracker.getDocument(), myTracker.getVcsDocument());
+    @Override
+    protected void actionPerformed(@NotNull Range range) {
+      Range ourRange = expand(range, myTracker.getDocument(), myTracker.getVcsDocument());
 
       DiffContent vcsContent = createDiffContent(myTracker.getVcsDocument(),
                                                  myTracker.getVirtualFile(),
-                                                 myTracker.getVcsTextRange(range));
+                                                 getVcsTextRange(ourRange));
       DiffContent currentContent = createDiffContent(myTracker.getDocument(),
                                                      myTracker.getVirtualFile(),
-                                                     myTracker.getCurrentTextRange(range));
+                                                     getCurrentTextRange(ourRange));
 
-      return new SimpleDiffRequest(VcsBundle.message("dialog.title.diff.for.range"),
-                                   vcsContent, currentContent,
-                                   VcsBundle.message("diff.content.title.up.to.date"),
-                                   VcsBundle.message("diff.content.title.current.range")
-      );
+      SimpleDiffRequest request = new SimpleDiffRequest(VcsBundle.message("dialog.title.diff.for.range"),
+                                                        vcsContent, currentContent,
+                                                        VcsBundle.message("diff.content.title.up.to.date"),
+                                                        VcsBundle.message("diff.content.title.current.range"));
+
+      DiffManager.getInstance().showDiff(myTracker.getProject(), request);
     }
 
     @NotNull
@@ -533,12 +566,11 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
 
     @Override
     public void setSelected(AnActionEvent e, boolean state) {
+      if (!myTracker.isValid()) return;
       VcsApplicationSettings.getInstance().SHOW_LST_WORD_DIFFERENCES = state;
-      reshowPopup();
-    }
 
-    public void reshowPopup() {
-      LineStatusMarkerPopupRenderer.this.showHintAt(myEditor, myRange, myMousePosition);
+      Range newRange = myTracker.findRange(myRange);
+      if (newRange != null) LineStatusMarkerPopupRenderer.this.showHintAt(myEditor, newRange, myMousePosition);
     }
   }
 }

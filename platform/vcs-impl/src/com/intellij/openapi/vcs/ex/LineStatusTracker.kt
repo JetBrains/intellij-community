@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.ex
 import com.intellij.diff.util.DiffUtil
 import com.intellij.ide.GeneralSettings
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -145,15 +146,22 @@ class LineStatusTracker private constructor(project: Project,
       val actions = ArrayList<AnAction>()
       actions.add(ShowPrevChangeMarkerAction(editor, range))
       actions.add(ShowNextChangeMarkerAction(editor, range))
-      actions.add(RollbackLineStatusRangeAction(tracker, range, editor))
+      actions.add(RollbackLineStatusRangeAction(editor, range))
       actions.add(ShowLineStatusRangeDiffAction(range))
       actions.add(CopyLineStatusRangeAction(range))
       actions.add(ToggleByWordDiffAction(editor, range, mousePosition))
       return actions
     }
 
-    override fun getFileType(): FileType {
-      return tracker.virtualFile.getFileType()
+    override fun getFileType(): FileType = tracker.virtualFile.fileType
+
+    private inner class RollbackLineStatusRangeAction(private val editor: Editor, range: Range)
+      : RangeMarkerAction(range, IdeActions.SELECTED_CHANGES_ROLLBACK) {
+      override fun isEnabled(range: Range): Boolean = true
+
+      override fun actionPerformed(range: Range) {
+        RollbackLineStatusAction.rollback(tracker, editor, range)
+      }
     }
   }
 

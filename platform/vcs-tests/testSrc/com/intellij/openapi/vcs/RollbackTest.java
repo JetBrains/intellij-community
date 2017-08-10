@@ -15,8 +15,10 @@
  */
 package com.intellij.openapi.vcs;
 
+import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.vcs.ex.Range;
 import com.intellij.util.diff.FilesTooBigForDiffException;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * author: lesya
@@ -26,13 +28,13 @@ public class RollbackTest extends BaseLineStatusTrackerTestCase{
   public void testUpToDateContent1() throws FilesTooBigForDiffException {
     createDocument("\n1\n2\n3\n4\n5\n6\n7");
     deleteString(0, 4);
-    assertEquals("1\n2", myTracker.getVcsContent(getFirstRange()).toString());
+    assertEquals("1\n2", getVcsContent(getFirstRange()).toString());
   }
 
   public void testUpToDateContent2() throws FilesTooBigForDiffException {
     createDocument("\n1\n2\n3\n4\n5\n6\n7");
     deleteString(3, 5);
-    assertEquals("2", myTracker.getVcsContent(getFirstRange()).toString());
+    assertEquals("2", getVcsContent(getFirstRange()).toString());
   }
 
   public void testRollbackInserted1() throws FilesTooBigForDiffException {
@@ -164,5 +166,10 @@ public class RollbackTest extends BaseLineStatusTrackerTestCase{
   private Range getFirstRange() {
     assertEquals(1, myTracker.getRanges().size());
     return myTracker.getRanges().get(0);
+  }
+
+  @NotNull
+  private CharSequence getVcsContent(Range range) {
+    return DiffUtil.getLinesContent(myTracker.getVcsDocument(), range.getVcsLine1(), range.getVcsLine2());
   }
 }

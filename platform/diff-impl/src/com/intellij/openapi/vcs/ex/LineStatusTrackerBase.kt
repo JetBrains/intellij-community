@@ -30,7 +30,6 @@ import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.localVcs.UpToDateLineNumberProvider.ABSENT_LINE_NUMBER
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.ContainerUtil
@@ -607,12 +606,12 @@ abstract class LineStatusTrackerBase {
     return StringUtil.isEmptyOrSpaces(interval)
   }
 
-  fun getNextRange(range: Range): Range? {
-    return getNextRange(range.line1)
-  }
 
-  fun getPrevRange(range: Range): Range? {
-    return getPrevRange(range.line1)
+  fun findRange(range: Range): Range? {
+    synchronized(LOCK) {
+      if (!tryValidate()) return null
+      return myRanges.find { it.sameAs(range) }?.toRange()
+    }
   }
 
   fun getNextRange(line: Int): Range? {
@@ -730,34 +729,6 @@ abstract class LineStatusTrackerBase {
       finally {
         isDuringRollback = false
       }
-    }
-  }
-
-  fun getCurrentContent(range: Range): CharSequence {
-    val textRange = getCurrentTextRange(range)
-    val startOffset = textRange.startOffset
-    val endOffset = textRange.endOffset
-    return document.immutableCharSequence.subSequence(startOffset, endOffset)
-  }
-
-  fun getVcsContent(range: Range): CharSequence {
-    val textRange = getVcsTextRange(range)
-    val startOffset = textRange.startOffset
-    val endOffset = textRange.endOffset
-    return vcsDocument.immutableCharSequence.subSequence(startOffset, endOffset)
-  }
-
-  fun getCurrentTextRange(range: Range): TextRange {
-    synchronized(LOCK) {
-      assert(isValid())
-      return DiffUtil.getLinesRange(document, range.line1, range.line2)
-    }
-  }
-
-  fun getVcsTextRange(range: Range): TextRange {
-    synchronized(LOCK) {
-      assert(isValid())
-      return DiffUtil.getLinesRange(vcsDocument, range.vcsLine1, range.vcsLine2)
     }
   }
 

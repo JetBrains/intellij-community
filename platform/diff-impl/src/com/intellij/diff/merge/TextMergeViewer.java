@@ -213,8 +213,8 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       DiffUtil.registerAction(new IgnoreSelectedChangesSideAction(Side.LEFT, true), myPanel);
       DiffUtil.registerAction(new IgnoreSelectedChangesSideAction(Side.RIGHT, true), myPanel);
       DiffUtil.registerAction(new ResolveSelectedConflictsAction(true), myPanel);
-      DiffUtil.registerAction(new MyShowPrevChangeMarkerAction(null), myPanel);
-      DiffUtil.registerAction(new MyShowNextChangeMarkerAction(null), myPanel);
+      DiffUtil.registerAction(new NavigateToChangeMarkerAction(false), myPanel);
+      DiffUtil.registerAction(new NavigateToChangeMarkerAction(true), myPanel);
 
       ProxyUndoRedoAction.register(getProject(), getEditor(), myContentPanel);
     }
@@ -1318,8 +1318,8 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       @Override
       protected List<AnAction> createToolbarActions(@NotNull Editor editor, @NotNull Range range, @Nullable Point mousePosition) {
         List<AnAction> actions = new ArrayList<>();
-        actions.add(new MyShowPrevChangeMarkerAction(range));
-        actions.add(new MyShowNextChangeMarkerAction(range));
+        actions.add(new ShowPrevChangeMarkerAction(editor, range));
+        actions.add(new ShowNextChangeMarkerAction(editor, range));
         actions.add(new ShowLineStatusRangeDiffAction(range));
         actions.add(new CopyLineStatusRangeAction(range));
         actions.add(new ToggleByWordDiffAction(editor, range, mousePosition));
@@ -1327,70 +1327,27 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       }
     }
 
-    private abstract class ShowChangeMarkerAction extends DumbAwareAction {
-      @Nullable private final Range myRange;
+    private class NavigateToChangeMarkerAction extends DumbAwareAction {
+      private final boolean myGoToNext;
 
-      protected ShowChangeMarkerAction(@Nullable Range range, @NotNull String actionId) {
-        myRange = range;
-        ActionUtil.copyFrom(this, actionId);
+      protected NavigateToChangeMarkerAction(boolean goToNext) {
+        myGoToNext = goToNext;
+        // TODO: reuse ShowChangeMarkerAction
+        ActionUtil.copyFrom(this, myGoToNext ? "VcsShowNextChangeMarker" : "VcsShowPrevChangeMarker");
       }
-
-      @Nullable
-      protected abstract Range getTargetRange(@NotNull Range range);
-
-      @Nullable
-      protected abstract Range getTargetRange(int line);
 
       @Override
       public void update(AnActionEvent e) {
-        boolean isKeyboardShortcut = myRange == null;
-        boolean enabled = getTextSettings().isEnableLstGutterMarkersInMerge();
-        enabled &= isKeyboardShortcut || myLineStatusTracker.isValid() && getTargetRange(myRange) != null;
-        e.getPresentation().setEnabled(enabled);
+        e.getPresentation().setEnabled(getTextSettings().isEnableLstGutterMarkersInMerge());
       }
 
       @Override
       public void actionPerformed(AnActionEvent e) {
         if (!myLineStatusTracker.isValid()) return;
+
         int line = getEditor().getCaretModel().getLogicalPosition().line;
-        Range targetRange = myRange != null ? getTargetRange(myRange) : getTargetRange(line);
+        Range targetRange = myGoToNext ? myLineStatusTracker.getNextRange(line) : myLineStatusTracker.getPrevRange(line);
         if (targetRange != null) new MyLineStatusMarkerRenderer(myLineStatusTracker).scrollAndShow(getEditor(), targetRange);
-      }
-    }
-
-    private class MyShowPrevChangeMarkerAction extends ShowChangeMarkerAction {
-      public MyShowPrevChangeMarkerAction(@Nullable Range range) {
-        super(range, "VcsShowPrevChangeMarker");
-      }
-
-      @Nullable
-      @Override
-      protected Range getTargetRange(@NotNull Range range) {
-        return myLineStatusTracker.getPrevRange(range);
-      }
-
-      @Nullable
-      @Override
-      protected Range getTargetRange(int line) {
-        return myLineStatusTracker.getPrevRange(line);
-      }
-    }
-
-    private class MyShowNextChangeMarkerAction extends ShowChangeMarkerAction {
-      public MyShowNextChangeMarkerAction(@Nullable Range range) {
-        super(range, "VcsShowNextChangeMarker");
-      }
-
-      @Nullable
-      @Override
-      protected Range getTargetRange(@NotNull Range range) {
-        return myLineStatusTracker.getNextRange(range);
-      }
-
-      @Nullable
-      @Override
-      protected Range getTargetRange(int line) {
-        return myLineStatusTracker.getNextRange(line);
       }
     }
   }
