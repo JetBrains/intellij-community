@@ -34,9 +34,9 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import com.jetbrains.python.refactoring.move.PyMoveRefactoringUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -81,14 +81,12 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
   @NotNull
   @Override
   protected UsageInfo[] findUsages() {
-    final List<UsageInfo> result = new ArrayList<>();
-    for (final SmartPsiElementPointer<PsiNamedElement> pointer : myElements) {
-      final PsiNamedElement element = pointer.getElement();
-      if (element != null) {
-        result.addAll(ContainerUtil.map(PyRefactoringUtil.findUsages(element, false), usageInfo -> new MyUsageInfo(usageInfo, element)));
-      }
-    }
-    return result.toArray(new UsageInfo[result.size()]);
+    return StreamEx.of(myElements)
+      .map(SmartPsiElementPointer::getElement)
+      .nonNull()
+      .flatMap(e -> StreamEx.of(PyRefactoringUtil.findUsages(e, false))
+        .map(info -> new MyUsageInfo(info, e)))
+      .toArray(UsageInfo[]::new);
   }
 
   @Override
