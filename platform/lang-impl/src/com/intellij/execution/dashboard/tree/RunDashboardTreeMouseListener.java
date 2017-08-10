@@ -108,9 +108,12 @@ public class RunDashboardTreeMouseListener extends LinkMouseListenerBase<RunDash
     else {
       component.setBounds(rectangle);
       component.doLayout();
-      Component child = component.getComponentAt(new Point(dx, 0));
+
+      Point componentPoint = new Point(dx, 0);
+      Component child = component.getComponentAt(componentPoint);
       if (child instanceof ColoredTreeCellRenderer) {
-        tag = ((ColoredTreeCellRenderer)child).getFragmentTagAt(dx);
+        Point childPoint = SwingUtilities.convertPoint(component, componentPoint, child);
+        tag = ((ColoredTreeCellRenderer)child).getFragmentTagAt(childPoint.x);
       }
       else if (child instanceof JLabel) {
         tag = ((JLabel)child).getIcon();
