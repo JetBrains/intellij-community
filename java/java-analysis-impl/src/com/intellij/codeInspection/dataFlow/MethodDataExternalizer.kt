@@ -19,6 +19,7 @@ import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.DataInputOutputUtil.*
 import java.io.DataInput
 import java.io.DataOutput
+import java.util.*
 
 /**
  * @author peter
@@ -35,6 +36,7 @@ internal object MethodDataExternalizer : DataExternalizer<Map<Int, MethodData>> 
     writeNullable(out, data.nullity) { writeNullity(out, it) }
     writeNullable(out, data.purity) { writePurity(out, it) }
     writeSeq(out, data.contracts) { writeContract(out, it) }
+    writeBitSet(out, data.notNullParameters)
     writeINT(out, data.bodyStart)
     writeINT(out, data.bodyEnd)
   }
@@ -43,7 +45,24 @@ internal object MethodDataExternalizer : DataExternalizer<Map<Int, MethodData>> 
     val nullity = readNullable(input) { readNullity(input) }
     val purity = readNullable(input) { readPurity(input) }
     val contracts = readSeq(input) { readContract(input) }
-    return MethodData(nullity, purity, contracts, readINT(input), readINT(input))
+    val notNullParameters = readBitSet(input)
+    return MethodData(nullity, purity, contracts, notNullParameters, readINT(input), readINT(input))
+  }
+
+  private fun writeBitSet(out: DataOutput, bitSet: BitSet) {
+    val bytes = bitSet.toByteArray()
+    val size = bytes.size
+    // Write up to 255 bytes, thus up to 2040 bits which is far more than number of allowed Java method parameters
+    assert(size in 0..255)
+    out.writeByte(size)
+    out.write(bytes)
+  }
+
+  private fun readBitSet(input: DataInput): BitSet {
+    val size = input.readUnsignedByte()
+    val bytes = ByteArray(size)
+    input.readFully(bytes)
+    return BitSet.valueOf(bytes)
   }
 
   private fun writeNullity(out: DataOutput, nullity: NullityInferenceResult) = when (nullity) {

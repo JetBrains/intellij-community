@@ -139,6 +139,7 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
     return null;
   }
 
+  @Nullable
   private PsiAnnotation getInferredNullityAnnotation(PsiParameter parameter) {
     PsiElement parent = parameter.getParent();
     if (!(parent instanceof PsiParameterList)) return null;
@@ -158,7 +159,8 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
         }
       }
     }
-    return null;
+    Nullness nullness = NullityInference.inferNullity(parameter);
+    return nullness == Nullness.NOT_NULL ? ProjectBytecodeAnalysis.getInstance(myProject).getNotNullAnnotation() : null;
   }
 
   @Nullable
@@ -209,6 +211,13 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
             result.add(annotation);
           }
         }
+      }
+    }
+
+    if (listOwner instanceof PsiParameter && !ignoreInference(listOwner, AnnotationUtil.NOT_NULL)) {
+      PsiAnnotation annotation = getInferredNullityAnnotation((PsiParameter)listOwner);
+      if (annotation != null) {
+        result.add(annotation);
       }
     }
 
