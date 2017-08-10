@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ import java.util.*;
 import java.util.List;
 import java.util.stream.Stream;
 
-import static com.intellij.openapi.vcs.changes.ChangesUtil.getAllFiles;
+import static com.intellij.openapi.vcs.changes.ChangesUtil.getFiles;
 import static com.intellij.openapi.vcs.changes.ChangesUtil.getNavigatableArray;
 import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.UNVERSIONED_FILES_TAG;
 import static com.intellij.openapi.vcs.changes.ui.ChangesListView.*;
@@ -445,7 +445,7 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
   @NotNull
   protected Stream<VirtualFile> getSelectedFiles() {
     return Stream.concat(
-      getAllFiles(getSelectedChanges().stream()),
+      getFiles(getSelectedChanges().stream()),
       getVirtualFiles(myViewer.getSelectionPaths(), null)
     ).distinct();
   }

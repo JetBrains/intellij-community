@@ -145,7 +145,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
   private Collection<FilePath> getCommitables(@NotNull List<Change> changes) {
     THashSet<FilePath> result = ContainerUtil.newTroveSet(ChangesUtil.CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY);
 
-    ChangesUtil.getAllPaths(changes.stream()).forEach(path -> {
+    ChangesUtil.getPaths(changes.stream()).forEach(path -> {
       if (result.add(path)) {
         addParents(result, path);
       }
