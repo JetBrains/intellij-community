@@ -30,6 +30,7 @@ import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import com.jetbrains.python.refactoring.move.PyMoveRefactoringUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -156,14 +157,11 @@ public class PyMoveSymbolProcessor {
   }
 
   private boolean belongsToSomeMovedElement(@NotNull final PsiElement element) {
-    return ContainerUtil.exists(myAllMovedElements, movedElementPointer -> {
-      final PsiNamedElement movedElement = movedElementPointer.getElement();
-      if (movedElement == null) {
-        return false;
-      }
-      final PsiElement movedElementBody = PyMoveModuleMembersHelper.expandNamedElementBody(movedElement);
-      return PsiTreeUtil.isAncestor(movedElementBody, element, false);
-    });
+    return StreamEx.of(myAllMovedElements).
+      map(SmartPsiElementPointer::getElement)
+      .nonNull()
+      .map(PyMoveModuleMembersHelper::expandNamedElementBody)
+      .anyMatch(moved -> PsiTreeUtil.isAncestor(moved, element, false));
   }
 
 
