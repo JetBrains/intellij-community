@@ -941,13 +941,18 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     boolean unresolved = binaryPath.getPath().startsWith(UNRESOLVED_DEPENDENCY_PREFIX);
 
     if (moduleVersion == null) {
-      // use module library level if the dependency does not originate from a remote repository.
-      level = LibraryLevel.PROJECT;
-
       if (binaryPath.isFile()) {
-        libraryName = FileUtil.getNameWithoutExtension(binaryPath);
+        boolean isModuleLocalLibrary = FileUtil.isAncestor(gradleModule.getGradleProject().getProjectDirectory(), binaryPath, false);
+        if (isModuleLocalLibrary) {
+          level = LibraryLevel.MODULE;
+        } else {
+          level = LibraryLevel.PROJECT;
+        }
+
+        libraryName = chooseName(binaryPath, level, ideProject);
       }
       else {
+        level = LibraryLevel.MODULE;
         libraryName = "";
       }
 
@@ -1025,9 +1030,40 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
       library.addPath(LibraryPathType.DOC, javadocPath.getAbsolutePath());
     }
 
-    linkProjectLibrary(ideProject, library);
+    if (level == LibraryLevel.PROJECT) {
+      linkProjectLibrary(ideProject, library);
+    }
 
     return new LibraryDependencyData(ownerModule.getData(), library, level);
+  }
+
+  private String chooseName(File path,
+                            LibraryLevel level,
+                            DataNode<ProjectData> ideProject) {
+    final String fileName = FileUtil.getNameWithoutExtension(path);
+    if (level == LibraryLevel.MODULE) {
+      return fileName;
+    }
+    else {
+      int count = 0;
+      while (true) {
+        String candidateName = fileName + (count == 0 ? "" : "_" + count);
+        DataNode<LibraryData> libraryData =
+          ExternalSystemApiUtil.find(ideProject, ProjectKeys.LIBRARY,
+                                     node -> node.getData().getExternalName().equals(candidateName));
+        if (libraryData != null) {
+          if (libraryData.getData().getPaths(LibraryPathType.BINARY).contains(FileUtil.toSystemIndependentName(path.getAbsolutePath()))) {
+            return candidateName;
+          }
+          else {
+            count++;
+          }
+        }
+        else {
+          return candidateName;
+        }
+      }
+    }
   }
 
   private interface SourceSetsProcessor {

@@ -42,6 +42,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.*;
 import static com.intellij.openapi.util.text.StringUtil.*;
@@ -364,30 +365,63 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
 
   @Test
-  public void testFileDepsImportedAsProjectLibraries() throws  Exception {
+  public void testGlobalFileDepsImportedAsProjectLibraries() throws  Exception {
     final VirtualFile depJar = createProjectJarSubFile("lib/dep.jar");
+    final VirtualFile dep2Jar = createProjectJarSubFile("lib_other/dep.jar");
     createSettingsFile("include 'p1'\n" +
                        "include 'p2'");
 
     importProjectUsingSingeModulePerGradleProject("allprojects {\n" +
                   "apply plugin: 'java'\n" +
                   "  dependencies {\n" +
-                  "     compile rootProject.files('lib/dep.jar')\n" +
+                  "     compile rootProject.files('lib/dep.jar', 'lib_other/dep.jar')\n" +
                   "  }\n" +
                   "}");
 
     assertModules("project", "p1", "p2");
     Set<Library> libs = new HashSet<>();
     final List<LibraryOrderEntry> moduleLibDeps = getModuleLibDeps("p1", "Gradle: dep");
+    moduleLibDeps.addAll(getModuleLibDeps("p1", "Gradle: dep_1"));
     moduleLibDeps.addAll(getModuleLibDeps("p2", "Gradle: dep"));
+    moduleLibDeps.addAll(getModuleLibDeps("p2", "Gradle: dep_1"));
     for (LibraryOrderEntry libDep : moduleLibDeps) {
       libs.add(libDep.getLibrary());
       assertFalse("Dependency be project level: " + libDep.toString(), libDep.isModuleLevel());
     }
 
-    assertProjectLibraries("Gradle: dep");
-    assertEquals("All deps should be on same library", 1, libs.size());
-    assertEquals("The library should point to deps file", depJar.getUrl(), libs.iterator().next().getUrls(OrderRootType.CLASSES)[0]);
+    assertProjectLibraries("Gradle: dep", "Gradle: dep_1");
+    assertEquals("No duplicates of libraries are expected", 2, libs.size());
+    assertContain(libs.stream().map(l -> l.getUrls(OrderRootType.CLASSES)[0]).collect(Collectors.toList()),
+                  depJar.getUrl(), dep2Jar.getUrl());
+  }
+
+  @Test
+  public void testLocalFileDepsImportedAsModuleLibraries() throws  Exception {
+    final VirtualFile depP1Jar = createProjectJarSubFile("p1/lib/dep.jar");
+    final VirtualFile depP2Jar = createProjectJarSubFile("p2/lib/dep.jar");
+    createSettingsFile("include 'p1'\n" +
+                       "include 'p2'");
+
+    importProjectUsingSingeModulePerGradleProject("allprojects { p ->\n" +
+                                                  "apply plugin: 'java'\n" +
+                                                  "  dependencies {\n" +
+                                                  "     compile p.files('lib/dep.jar')\n" +
+                                                  "  }\n" +
+                                                  "}");
+
+    assertModules("project", "p1", "p2");
+
+    final List<LibraryOrderEntry> moduleLibDepsP1 = getModuleLibDeps("p1", "Gradle: dep");
+    for (LibraryOrderEntry libDep : moduleLibDepsP1) {
+      assertTrue("Dependency be project level: " + libDep.toString(), libDep.isModuleLevel());
+      assertEquals("Wrong library dependency", depP1Jar.getUrl(), libDep.getLibrary().getUrls(OrderRootType.CLASSES)[0]);
+    }
+
+    final List<LibraryOrderEntry> moduleLibDepsP2 = getModuleLibDeps("p2", "Gradle: dep");
+    for (LibraryOrderEntry libDep : moduleLibDepsP2) {
+      assertTrue("Dependency be project level: " + libDep.toString(), libDep.isModuleLevel());
+      assertEquals("Wrong library dependency", depP2Jar.getUrl(), libDep.getLibrary().getUrls(OrderRootType.CLASSES)[0]);
+    }
   }
 
   @Test
