@@ -78,7 +78,6 @@ public class SystemHealthMonitor implements ApplicationComponent {
     checkReservedCodeCacheSize();
     checkIBus();
     checkSignalBlocking();
-    checkLauncherScript();
     startDiskSpaceMonitoring();
   }
 
@@ -164,12 +163,6 @@ public class SystemHealthMonitor implements ApplicationComponent {
       catch (Throwable t) {
         LOG.warn(t);
       }
-    }
-  }
-
-  private void checkLauncherScript() {
-    if (SystemInfo.isXWindow && System.getProperty("jb.restart.code") != null) {
-      showNotification(new KeyHyperlinkAdapter("ide.launcher.script.outdated"), ApplicationNamesInfo.getInstance().getScriptName());
     }
   }
 
