@@ -349,6 +349,19 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     return advancedResolve(false).getElement();
   }
 
+  @NotNull
+  public static TextRange calcRangeInElement(CompositePsiElement refElement) {
+    TreeElement nameChild = (TreeElement)refElement.findChildByRole(ChildRole.REFERENCE_NAME);
+    if (nameChild == null) {
+      TreeElement dot = (TreeElement)refElement.findChildByRole(ChildRole.DOT);
+      if (dot == null) {
+        throw new IllegalStateException(refElement.toString());
+      }
+      return TextRange.from(dot.getStartOffsetInParent() + dot.getTextLength(), 0);
+    }
+    return TextRange.from(nameChild.getStartOffsetInParent(), nameChild.getTextLength());
+  }
+
   private static final class OurGenericsResolver implements ResolveCache.PolyVariantContextResolver<PsiJavaReference> {
     private static final OurGenericsResolver INSTANCE = new OurGenericsResolver();
 
@@ -935,10 +948,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
 
   @Override
   public final TextRange getRangeInElement() {
-    final TreeElement nameChild = (TreeElement)getReferenceNameNode();
-    if (nameChild == null) return new TextRange(0, getTextLength());
-    final int startOffset = nameChild.getStartOffsetInParent();
-    return new TextRange(startOffset, startOffset + nameChild.getTextLength());
+    return calcRangeInElement(this);
   }
 
   @Override
