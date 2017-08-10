@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,10 +21,7 @@ import com.sun.source.util.*;
 import com.sun.tools.javac.util.ClientCodeException;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.javac.ast.api.JavacDef;
-import org.jetbrains.jps.javac.ast.api.JavacFileData;
-import org.jetbrains.jps.javac.ast.api.JavacNameTable;
-import org.jetbrains.jps.javac.ast.api.JavacRef;
+import org.jetbrains.jps.javac.ast.api.*;
 
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
@@ -230,6 +227,7 @@ final class JavacReferenceCollectorListener implements TaskListener {
       myFileData = new JavacFileData(filePath,
                                      createReferenceHolder(),
                                      myDivideImportRefs ? createReferenceHolder() : EMPTY_T_OBJ_INT_MAP,
+                                     new ArrayList<JavacTypeCast>(),
                                      createDefinitionHolder());
       myTreeHelper = new JavacTreeHelper(unitTree, myTreeUtility);
     }
@@ -240,6 +238,10 @@ final class JavacReferenceCollectorListener implements TaskListener {
 
     void sinkDeclaration(JavacDef def) {
      myFileData.getDefs().add(def);
+    }
+
+    public void sinkTypeCast(JavacTypeCast typeCast) {
+      myFileData.getCasts().add(typeCast);
     }
 
     @Nullable

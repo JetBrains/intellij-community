@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,15 +35,18 @@ public class JavacFileData {
   private final String myFilePath;
   private final TObjectIntHashMap<JavacRef> myRefs;
   private final TObjectIntHashMap<JavacRef> myImportRefs;
+  private final List<JavacTypeCast> myCasts;
   private final List<JavacDef> myDefs;
 
   public JavacFileData(@NotNull String path,
                        @NotNull TObjectIntHashMap<JavacRef> refs,
                        @NotNull TObjectIntHashMap<JavacRef> importRefs,
+                       @NotNull List<JavacTypeCast> casts,
                        @NotNull List<JavacDef> defs) {
     myFilePath = path;
     myRefs = refs;
     myImportRefs = importRefs;
+    myCasts = casts;
     myDefs = defs;
   }
 
@@ -63,6 +66,11 @@ public class JavacFileData {
   }
 
   @NotNull
+  public List<JavacTypeCast> getCasts() {
+    return myCasts;
+  }
+
+  @NotNull
   public List<JavacDef> getDefs() {
     return myDefs;
   }
@@ -75,6 +83,7 @@ public class JavacFileData {
       stream.writeUTF(getFilePath());
       saveRefs(stream, getRefs());
       saveRefs(stream, getImportRefs());
+      saveCasts(stream, getCasts());
       saveDefs(stream, getDefs());
     }
     catch (IOException e) {
@@ -91,6 +100,7 @@ public class JavacFileData {
       return new JavacFileData(in.readUTF(),
                                readRefs(in),
                                readRefs(in),
+                               readCasts(in),
                                readDefs(in));
     }
     catch (IOException e) {
@@ -245,5 +255,25 @@ public class JavacFileData {
       }
     });
     return modifierList.isEmpty() ? Collections.<Modifier>emptySet() : EnumSet.copyOf(modifierList);
+  }
+
+  private static void saveCasts(@NotNull final DataOutput output, @NotNull List<JavacTypeCast> casts) throws IOException {
+    DataInputOutputUtilRt.writeSeq(output, casts, new ThrowableConsumer<JavacTypeCast, IOException>() {
+      @Override
+      public void consume(JavacTypeCast cast) throws IOException {
+        writeJavacRef(output, cast.getOperandType());
+        writeJavacRef(output, cast.getCastType());
+      }
+    });
+  }
+
+  @NotNull
+  private static List<JavacTypeCast> readCasts(@NotNull final DataInput input) throws IOException {
+    return DataInputOutputUtilRt.readSeq(input, new ThrowableComputable<JavacTypeCast, IOException>() {
+      @Override
+      public JavacTypeCast compute() throws IOException {
+        return new JavacTypeCast((JavacRef.JavacClass)readJavacRef(input), (JavacRef.JavacClass)readJavacRef(input));
+      }
+    });
   }
 }

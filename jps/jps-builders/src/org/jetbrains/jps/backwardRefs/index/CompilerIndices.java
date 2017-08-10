@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,9 @@
 package org.jetbrains.jps.backwardRefs.index;
 
 import com.intellij.openapi.util.io.DataInputOutputUtilRt;
-import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.DataIndexer;
+import com.intellij.util.indexing.IndexExtension;
+import com.intellij.util.indexing.IndexId;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.KeyDescriptor;
@@ -41,12 +43,47 @@ public class CompilerIndices {
   public final static IndexId<LightRef, Collection<LightRef>> BACK_HIERARCHY = IndexId.create("back.hierarchy");
   public final static IndexId<LightRef, Void> BACK_CLASS_DEF = IndexId.create("back.class.def");
   public final static IndexId<SignatureData, Collection<LightRef>> BACK_MEMBER_SIGN = IndexId.create("back.member.sign");
+  public final static IndexId<LightRef, Collection<LightRef>> BACK_CAST = IndexId.create("back.cast");
 
   public static List<IndexExtension<?, ?, CompiledFileData>> getIndices() {
     return Arrays.asList(createBackwardClassDefinitionExtension(),
                          createBackwardUsagesExtension(),
                          createBackwardHierarchyExtension(),
-                         createBackwardSignatureExtension());
+                         createBackwardSignatureExtension(),
+                         createBackwardCastExtension());
+  }
+
+  private static IndexExtension<LightRef, Collection<LightRef>, CompiledFileData> createBackwardCastExtension() {
+    return new IndexExtension<LightRef, Collection<LightRef>, CompiledFileData>() {
+      @NotNull
+      @Override
+      public IndexId<LightRef, Collection<LightRef>> getName() {
+        return BACK_CAST;
+      }
+
+      @NotNull
+      @Override
+      public DataIndexer<LightRef, Collection<LightRef>, CompiledFileData> getIndexer() {
+        return CompiledFileData::getCasts;
+      }
+
+      @NotNull
+      @Override
+      public KeyDescriptor<LightRef> getKeyDescriptor() {
+        return LightRefDescriptor.INSTANCE;
+      }
+
+      @NotNull
+      @Override
+      public DataExternalizer<Collection<LightRef>> getValueExternalizer() {
+        return createLightRefSeqExternalizer();
+      }
+
+      @Override
+      public int getVersion() {
+        return VERSION;
+      }
+    };
   }
 
   private static IndexExtension<LightRef, Integer, CompiledFileData> createBackwardUsagesExtension() {

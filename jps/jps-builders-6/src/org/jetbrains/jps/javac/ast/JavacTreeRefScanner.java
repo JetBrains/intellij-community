@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.sun.source.util.TreeScanner;
 import org.jetbrains.jps.javac.ast.api.JavacDef;
 import org.jetbrains.jps.javac.ast.api.JavacNameTable;
 import org.jetbrains.jps.javac.ast.api.JavacRef;
+import org.jetbrains.jps.javac.ast.api.JavacTypeCast;
 
 import javax.lang.model.element.*;
 import javax.lang.model.type.ArrayType;
@@ -203,6 +204,24 @@ class JavacTreeRefScanner extends TreeScanner<Tree, JavacReferenceCollectorListe
       myCurrentEnclosingElement.pop();
       myCurrentEnclosingElementOffset.pop();
     }
+    return null;
+  }
+
+  @Override
+  public Tree visitTypeCast(TypeCastTree node, JavacReferenceCollectorListener.ReferenceCollector collector) {
+    super.visitTypeCast(node, collector);
+
+    Element castType = collector.getReferencedElement(node.getType());
+    if (castType == null) return null;
+    JavacRef.JavacElementRefBase castTypeElement = collector.asJavacRef(castType);
+    if (!(castTypeElement instanceof JavacRef.JavacClass)) return null;
+
+    TypeMirror operandType = collector.getType(node.getExpression());
+    if (operandType == null) return null;
+    JavacRef.JavacElementRefBase operandTypeElement = collector.asJavacRef(operandType);
+    if (!(operandTypeElement instanceof JavacRef.JavacClass)) return null;
+
+    collector.sinkTypeCast(new JavacTypeCast((JavacRef.JavacClass) operandTypeElement, (JavacRef.JavacClass) castTypeElement));
     return null;
   }
 

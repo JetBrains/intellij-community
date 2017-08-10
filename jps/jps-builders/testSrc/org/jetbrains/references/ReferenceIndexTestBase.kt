@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -159,6 +159,25 @@ abstract class ReferenceIndexTestBase : JpsBuildTestCase() {
       }
       signs.sort()
       result.append(signs.joinToString(separator = "\n"))
+
+      val typeCasts = mutableListOf<String>()
+      storage(index, CompilerIndices.BACK_CAST).processKeys {castType ->
+        val operands = mutableListOf<String>()
+        val valueIt = index[CompilerIndices.BACK_CAST].getData(castType).valueIterator
+        while (valueIt.hasNext()) {
+          val nextRefs = valueIt.next()
+          nextRefs.mapTo(operands) { it.asText(nameEnumerator) }
+        }
+        if (!operands.isEmpty()) {
+          typeCasts.add(castType.asText(nameEnumerator) + " <- " + operands.joinToString(separator = " "))
+        }
+        true
+      }
+      if (typeCasts.isNotEmpty()) {
+        result.append("\n\nType Casts:\n")
+        typeCasts.sort()
+        result.append(typeCasts.joinToString(separator = "\n"))
+      }
 
       return result.toString()
     }
