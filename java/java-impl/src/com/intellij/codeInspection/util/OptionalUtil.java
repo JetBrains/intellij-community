@@ -29,6 +29,7 @@ import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.StreamApiUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Tagir Valeev
@@ -107,10 +108,14 @@ public class OptionalUtil {
    * @return an expression text which will unwrap an {@code Optional}.
    */
   public static String generateOptionalUnwrap(String qualifier, PsiVariable var,
-                                               PsiExpression trueExpression, PsiExpression falseExpression,
-                                               PsiType targetType, boolean useOrElseGet) {
+                                              PsiExpression trueExpression, PsiExpression falseExpression,
+                                              @Nullable PsiType targetType, boolean useOrElseGet) {
     PsiExpression stripped = PsiUtil.skipParenthesizedExprDown(trueExpression);
-    if (!ExpressionUtils.isReferenceTo(trueExpression, var)) {
+    boolean trivialMap = ExpressionUtils.isReferenceTo(trueExpression, var) &&
+                         targetType != null &&
+                         trueExpression.getType() != null &&
+                         trueExpression.getType().isAssignableFrom(targetType);
+    if (!trivialMap) {
       if (stripped instanceof PsiTypeCastExpression && ExpressionUtils.isNullLiteral(falseExpression)) {
         PsiTypeCastExpression castExpression = (PsiTypeCastExpression)stripped;
         PsiTypeElement castType = castExpression.getCastType();
