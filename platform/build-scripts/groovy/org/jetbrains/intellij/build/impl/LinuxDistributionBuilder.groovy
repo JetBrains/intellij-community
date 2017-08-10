@@ -107,10 +107,8 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
       }
     }
 
-    if (name != "idea.sh") {
-      //todo[nik] rename idea.sh in sources to something more generic
-      buildContext.ant.move(file: "${unixDistPath}/bin/idea.sh", tofile: "${unixDistPath}/bin/$name")
-    }
+    buildContext.ant.move(file: "${unixDistPath}/bin/executable.sh", tofile: "${unixDistPath}/bin/$name")
+
     String inspectScript = buildContext.productProperties.inspectCommandName
     if (inspectScript != "inspect") {
       String targetPath = "${unixDistPath}/bin/${inspectScript}.sh"
