@@ -16,11 +16,13 @@
 package com.intellij.ui;
 
 import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Couple;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.ui.UIUtil;
@@ -566,14 +568,7 @@ public class ScrollingUtil {
 
     @Override
     public void update(AnActionEvent e) {
-      boolean enabled = SpeedSearchSupply.getSupply(myComponent) == null && !isEmpty(myComponent);
-      if (enabled) {
-        Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(e.getDataContext());
-        if (component != null && !JBPopupFactory.getInstance().getChildPopups(component).isEmpty()) {
-          enabled = false;//Change selection in popup if any
-        }
-      }
-      e.getPresentation().setEnabled(enabled);
+      e.getPresentation().setEnabled(SpeedSearchSupply.getSupply(myComponent) == null && !isEmpty(myComponent));
     }
   }
 
