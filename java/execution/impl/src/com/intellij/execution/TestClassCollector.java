@@ -50,21 +50,8 @@ public class TestClassCollector {
                                              JavaTestConfigurationBase configuration,
                                              Function<ClassLoader, Predicate<Class<?>>> predicateProducer) {
     Module module = configuration.getConfigurationModule().getModule();
-    List<URL> urls = new ArrayList<>();
-
-    PathsList pathsList = ReadAction.compute(() -> (module == null || configuration.getTestSearchScope() == TestSearchScope.WHOLE_PROJECT ? OrderEnumerator.orderEntries(configuration.getProject()) : OrderEnumerator.orderEntries(module))
-      .runtimeOnly().recursively().getPathsList()); //include jdk to avoid NoClassDefFoundError for classes inside tools.jar
-    for (VirtualFile file : pathsList.getVirtualFiles()) {
-      try {
-        urls.add(VfsUtilCore.virtualToIoFile(file).toURI().toURL());
-      }
-      catch (MalformedURLException ignored) {
-        LOG.info(ignored);
-      }
-    }
-
+    ClassLoader classLoader = createUsersClassLoader(configuration);
     Set<String> classes = new HashSet<>();
-    UrlClassLoader classLoader = UrlClassLoader.build().allowLock().useCache().urls(urls).get();
     try {
       String packagePath = packageName.replace('.', '/');
       Enumeration<URL> resources = classLoader.getResources(packagePath);
@@ -116,6 +103,26 @@ public class TestClassCollector {
     }
 
     return ArrayUtil.toStringArray(classes);
+  }
+
+  public static ClassLoader createUsersClassLoader(JavaTestConfigurationBase configuration) {
+    Module module = configuration.getConfigurationModule().getModule();
+    List<URL> urls = new ArrayList<>();
+
+    PathsList pathsList = ReadAction
+      .compute(() -> (module == null || configuration.getTestSearchScope() == TestSearchScope.WHOLE_PROJECT ? OrderEnumerator
+        .orderEntries(configuration.getProject()) : OrderEnumerator.orderEntries(module))
+      .runtimeOnly().recursively().getPathsList()); //include jdk to avoid NoClassDefFoundError for classes inside tools.jar
+    for (VirtualFile file : pathsList.getVirtualFiles()) {
+      try {
+        urls.add(VfsUtilCore.virtualToIoFile(file).toURI().toURL());
+      }
+      catch (MalformedURLException ignored) {
+        LOG.info(ignored);
+      }
+    }
+
+    return UrlClassLoader.build().allowLock().useCache().urls(urls).get();
   }
 
   @Nullable

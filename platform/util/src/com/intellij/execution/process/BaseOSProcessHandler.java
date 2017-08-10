@@ -131,7 +131,7 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
 
     addProcessListener(new ProcessAdapter() {
       @Override
-      public void startNotified(final ProcessEvent event) {
+      public void startNotified(@NotNull final ProcessEvent event) {
         try {
           Options options = readerOptions();
           @SuppressWarnings("deprecation") final BaseDataReader stdOutReader = createOutputDataReader(options.policy());

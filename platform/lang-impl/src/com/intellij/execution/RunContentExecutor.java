@@ -131,7 +131,7 @@ public class RunContentExecutor implements Disposable {
     if (myAfterCompletion != null) {
       myProcess.addProcessListener(new ProcessAdapter() {
         @Override
-        public void processTerminated(ProcessEvent event) {
+        public void processTerminated(@NotNull ProcessEvent event) {
           ApplicationManager.getApplication().invokeLater(myAfterCompletion);
         }
       });

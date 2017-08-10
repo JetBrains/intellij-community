@@ -42,11 +42,9 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
-import com.intellij.rt.execution.junit.JUnitStarter;
 import com.intellij.rt.execution.junit.RepeatCount;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -521,34 +519,6 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
   @Override
   public String getFrameworkPrefix() {
     return "j";
-  }
-
-  public String getPreferredRunner(final GlobalSearchScope globalSearchScope) {
-    Data data = getPersistentData();
-    Project project = getProject();
-    boolean isMethodConfiguration = TEST_METHOD.equals(data.TEST_OBJECT);
-    boolean isClassConfiguration = TEST_CLASS.equals(data.TEST_OBJECT);
-    final PsiClass psiClass = isMethodConfiguration || isClassConfiguration
-                              ? JavaExecutionUtil.findMainClass(project, data.getMainClassName(), globalSearchScope) : null;
-    if (psiClass != null) {
-      if (JUnitUtil.isJUnit5TestClass(psiClass, false)) {
-        return JUnitStarter.JUNIT5_PARAMETER;
-      }
-
-      if (isClassConfiguration || JUnitUtil.isJUnit4TestClass(psiClass)) {
-        return JUnitStarter.JUNIT4_PARAMETER;
-      }
-
-      final String methodName = data.getMethodName();
-      final PsiMethod[] methods = psiClass.findMethodsByName(methodName, true);
-      for (PsiMethod method : methods) {
-        if (JUnitUtil.isTestAnnotated(method)) {
-          return JUnitStarter.JUNIT4_PARAMETER;
-        }
-      }
-      return JUnitStarter.JUNIT3_PARAMETER;
-    }
-    return JUnitUtil.isJUnit5(globalSearchScope, project) ? JUnitStarter.JUNIT5_PARAMETER : null;
   }
 
   public static class Data implements Cloneable {

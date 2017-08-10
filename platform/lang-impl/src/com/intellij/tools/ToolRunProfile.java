@@ -112,7 +112,7 @@ public class ToolRunProfile implements ModuleRunProfile{
           processHandler.addProcessListener(new ToolProcessAdapter(project, myTool.synchronizeAfterExecution(), getName()));
           processHandler.addProcessListener(new ProcessAdapter() {
             @Override
-            public void onTextAvailable(ProcessEvent event, Key outputType) {
+            public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
               if ((outputType == ProcessOutputTypes.STDOUT && myTool.isShowConsoleOnStdOut())
                 || (outputType == ProcessOutputTypes.STDERR && myTool.isShowConsoleOnStdErr())) {
                 ExecutionManager.getInstance(project).getContentManager().toFrontRunContent(executor, processHandler);

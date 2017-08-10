@@ -214,7 +214,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
 
     myDebugProcess.addProcessListener(new ProcessAdapter() {
       @Override
-      public void onTextAvailable(ProcessEvent event, Key outputType) {
+      public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
         print(event.getText(), outputType);
       }
     });
@@ -267,7 +267,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     final ProcessHandler processHandler = debuggerSession[0].getProcess().getProcessHandler();
     debuggerSession[0].getProcess().addProcessListener(new ProcessAdapter() {
       @Override
-      public void onTextAvailable(ProcessEvent event, Key outputType) {
+      public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
         print(event.getText(), outputType);
       }
     });
@@ -341,7 +341,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     });
     debuggerSession[0].getProcess().getProcessHandler().addProcessListener(new ProcessAdapter() {
       @Override
-      public void onTextAvailable(ProcessEvent event, Key outputType) {
+      public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
         print(event.getText(), outputType);
       }
     });

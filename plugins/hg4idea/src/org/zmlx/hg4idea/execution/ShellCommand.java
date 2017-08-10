@@ -63,7 +63,7 @@ public final class ShellCommand {
       OSProcessHandler processHandler = isBinary ? new BinaryOSProcessHandler(myCommandLine) : new OSProcessHandler(myCommandLine);
       ProcessAdapter outputAdapter = new ProcessAdapter() {
         @Override
-        public void onTextAvailable(ProcessEvent event, Key outputType) {
+        public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
           for (String line : LineHandlerHelper.splitText(event.getText())) {
             if (ProcessOutputTypes.STDOUT == outputType && indicator != null && showTextOnIndicator) {
               indicator.setText2(line);
@@ -73,7 +73,7 @@ public final class ShellCommand {
         }
 
         @Override
-        public void processTerminated(ProcessEvent event) {
+        public void processTerminated(@NotNull ProcessEvent event) {
           listener.setExitCode(event.getExitCode());
         }
       };

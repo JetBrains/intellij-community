@@ -36,6 +36,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PackageScope;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
+import com.intellij.rt.execution.junit.JUnitStarter;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -73,7 +74,7 @@ public class TestPackage extends TestObject {
         myClasses.clear();
         final SourceScope sourceScope = getSourceScope();
         final Module module = getConfiguration().getConfigurationModule().getModule();
-        if (sourceScope != null && !ReadAction.compute(() -> isJUnit5(module, sourceScope, myProject))) {
+        if (sourceScope != null && !JUnitStarter.JUNIT5_PARAMETER.equals(getRunner())) {
           DumbService instance = DumbService.getInstance(myProject);
           try {
             instance.setAlternativeResolveEnabled(true);
@@ -139,7 +140,7 @@ public class TestPackage extends TestObject {
     final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
     final Project project = getConfiguration().getProject();
     final SourceScope sourceScope = data.getScope().getSourceScope(getConfiguration());
-    if (sourceScope == null || !isJUnit5(getConfiguration().getConfigurationModule().getModule(), sourceScope, project)) { //check for junit 5
+    if (sourceScope == null || !JUnitStarter.JUNIT5_PARAMETER.equals(getRunner())) { //check for junit 5
       JUnitUtil.checkTestCase(sourceScope, project);
     }
     createTempFiles(javaParameters);

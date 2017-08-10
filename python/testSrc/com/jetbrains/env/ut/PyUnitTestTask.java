@@ -243,7 +243,7 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
             myProcessHandler = myDescriptor.getProcessHandler();
             myProcessHandler.addProcessListener(new ProcessAdapter() {
               @Override
-              public void onTextAvailable(ProcessEvent event, Key outputType) {
+              public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
                 myOutput.append(event.getText());
               }
             });

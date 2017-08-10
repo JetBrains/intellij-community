@@ -820,6 +820,11 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     }
 
     @Override
+    public boolean isSingleParameterInfo() {
+      return false;
+    }
+
+    @Override
     public void setHighlightedParameter(Object parameter) {
       // nothing, we don't use it
     }

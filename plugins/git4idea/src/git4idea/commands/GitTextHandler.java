@@ -73,11 +73,12 @@ public abstract class GitTextHandler extends GitHandler {
       return;
     }
     myHandler.addProcessListener(new ProcessListener() {
-      public void startNotified(final ProcessEvent event) {
+      @Override
+      public void startNotified(@NotNull final ProcessEvent event) {
         // do nothing
       }
 
-      public void processTerminated(final ProcessEvent event) {
+      public void processTerminated(@NotNull final ProcessEvent event) {
         final int exitCode = event.getExitCode();
         try {
           setExitCode(exitCode);
@@ -89,11 +90,12 @@ public abstract class GitTextHandler extends GitHandler {
         }
       }
 
-      public void processWillTerminate(final ProcessEvent event, final boolean willBeDestroyed) {
+      @Override
+      public void processWillTerminate(@NotNull final ProcessEvent event, final boolean willBeDestroyed) {
         // do nothing
       }
 
-      public void onTextAvailable(final ProcessEvent event, final Key outputType) {
+      public void onTextAvailable(@NotNull final ProcessEvent event, @NotNull final Key outputType) {
         GitTextHandler.this.onTextAvailable(event.getText(), outputType);
       }
     });

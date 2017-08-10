@@ -89,12 +89,12 @@ public class TerminalExecutionConsole implements ConsoleView {
 
     processHandler.addProcessListener(new ProcessAdapter() {
       @Override
-      public void startNotified(ProcessEvent event) {
+      public void startNotified(@NotNull ProcessEvent event) {
         session.start();
       }
 
       @Override
-      public void onTextAvailable(ProcessEvent event, Key outputType) {
+      public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
         try {
           ConsoleViewContentType contentType = null;
           if (outputType != ProcessOutputTypes.STDOUT) {
@@ -113,7 +113,7 @@ public class TerminalExecutionConsole implements ConsoleView {
       }
 
       @Override
-      public void processTerminated(ProcessEvent event) {
+      public void processTerminated(@NotNull ProcessEvent event) {
         myTerminalWidget.getTerminalPanel().setCursorVisible(false);
       }
     });

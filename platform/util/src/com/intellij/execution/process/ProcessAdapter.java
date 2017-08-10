@@ -16,17 +16,18 @@
 package com.intellij.execution.process;
 
 import com.intellij.openapi.util.Key;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class ProcessAdapter implements ProcessListener {
   @Override
-  public void startNotified(ProcessEvent event) { }
+  public void startNotified(@NotNull ProcessEvent event) { }
 
   @Override
-  public void processTerminated(ProcessEvent event) { }
+  public void processTerminated(@NotNull ProcessEvent event) { }
 
   @Override
-  public void processWillTerminate(ProcessEvent event, boolean willBeDestroyed) { }
+  public void processWillTerminate(@NotNull ProcessEvent event, boolean willBeDestroyed) { }
 
   @Override
-  public void onTextAvailable(ProcessEvent event, Key outputType) { }
+  public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) { }
 }

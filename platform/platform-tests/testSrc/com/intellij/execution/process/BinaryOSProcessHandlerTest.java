@@ -76,7 +76,7 @@ public class BinaryOSProcessHandlerTest {
     }
 
     @Override
-    public void notifyTextAvailable(String text, Key outputType) {
+    public void notifyTextAvailable(@NotNull String text, @NotNull Key outputType) {
       if (outputType != ProcessOutputTypes.SYSTEM) {
         stdErr.append(text);
       }

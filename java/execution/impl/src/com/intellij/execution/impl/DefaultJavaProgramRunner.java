@@ -98,7 +98,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
           proxy.attach(handler);
           handler.addProcessListener(new ProcessAdapter() {
             @Override
-            public void processTerminated(ProcessEvent event) {
+            public void processTerminated(@NotNull ProcessEvent event) {
               proxy.destroy();
             }
           });
@@ -139,7 +139,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
       assert processHandler != null : executionResult;
       processHandler.addProcessListener(new ProcessAdapter() {
         @Override
-        public void processTerminated(final ProcessEvent event) {
+        public void processTerminated(@NotNull final ProcessEvent event) {
           processHandler.removeProcessListener(this);
           controlBreakAction.unregisterCustomShortcutSet(consoleComponent);
         }

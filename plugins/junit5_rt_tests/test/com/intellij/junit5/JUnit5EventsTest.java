@@ -109,11 +109,9 @@ class JUnit5EventsTest {
                             "##teamcity[treeEnded]\n" +
                             "##teamcity[testSuiteStarted id='|[engine:engine1|]' name='brokenStream()' nodeId='|[engine:engine1|]' parentNodeId='0'locationHint='java:test://com.intellij.junit5.JUnit5EventsTest$TestClass.brokenStream']\n" +
                             "\n" +
-                            "##teamcity[testStarted name='Class Configuration' nodeId='Class Configuration' parentNodeId='0' locationHint='java:test://com.intellij.junit5.JUnit5EventsTest$TestClass.brokenStream']\n" +
+                            "##teamcity[testFailed name='Class Configuration' id='|[engine:engine1|]' nodeId='|[engine:engine1|]' parentNodeId='0' details='TRACE' error='true' message='']\n" +
                             "\n" +
-                            "##teamcity[testFailed name='Class Configuration' id='Class Configuration' nodeId='Class Configuration' parentNodeId='0' details='TRACE' error='true' message='']\n" +
-                            "\n" +
-                            "##teamcity[testFinished name='Class Configuration' nodeId='Class Configuration' parentNodeId='0' ]\n" +
+                            "##teamcity[testFinished name='Class Configuration' nodeId='|[engine:engine1|]' parentNodeId='0' ]\n" +
                             "##teamcity[testSuiteFinished  id='|[engine:engine1|]' name='brokenStream()' nodeId='|[engine:engine1|]' parentNodeId='0']\n", StringUtil.convertLineSeparators(myBuf.toString()));
   }
 
