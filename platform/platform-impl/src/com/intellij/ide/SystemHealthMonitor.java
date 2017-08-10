@@ -169,7 +169,7 @@ public class SystemHealthMonitor implements ApplicationComponent {
 
   private void checkLauncherScript() {
     if (SystemInfo.isXWindow && System.getProperty("jb.restart.code") != null) {
-      showNotification(new KeyHyperlinkAdapter("ide.launcher.script.outdated"));
+      showNotification(new KeyHyperlinkAdapter("ide.launcher.script.outdated"), ApplicationNamesInfo.getInstance().getScriptName());
     }
   }
 
