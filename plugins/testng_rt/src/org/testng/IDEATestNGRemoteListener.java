@@ -8,6 +8,7 @@ import org.testng.xml.XmlTest;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.lang.reflect.Method;
 import java.util.*;
 
 public class IDEATestNGRemoteListener {
@@ -272,7 +273,7 @@ public class IDEATestNGRemoteListener {
         Object parameter = parameters[0];
         if (parameter != null) {
           Class<?> parameterClass = parameter.getClass();
-          if (ITestResult.class.isAssignableFrom(parameterClass) || ITestContext.class.isAssignableFrom(parameterClass)) {
+          if (ITestResult.class.isAssignableFrom(parameterClass) || ITestContext.class.isAssignableFrom(parameterClass) || Method.class.isAssignableFrom(parameterClass)) {
             try {
               paramString = "[" + parameterClass.getMethod("getName").invoke(parameter) + "]";
             }
@@ -281,7 +282,7 @@ public class IDEATestNGRemoteListener {
             }
           }
           else {
-            paramString = parameter.toString();
+            paramString = "[" + parameter.toString() + "]";
           }
         }
       }
