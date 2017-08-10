@@ -19,6 +19,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.ui.UsageViewDescriptorAdapter;
@@ -49,12 +51,13 @@ import java.util.List;
 public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
   public static final String REFACTORING_NAME = PyBundle.message("refactoring.move.module.members");
 
-  private final PsiNamedElement[] myElements;
+  private final List<SmartPsiElementPointer<PsiNamedElement>> myElements;
   private final String myDestination;
 
   public PyMoveModuleMembersProcessor(@NotNull PsiNamedElement[] elements, @NotNull String destination) {
     super(elements[0].getProject());
-    myElements = elements;
+    final SmartPointerManager manager = SmartPointerManager.getInstance(myProject);
+    myElements = ContainerUtil.map(elements, manager::createSmartPsiElementPointer);
     myDestination = destination;
   }
 
@@ -65,7 +68,7 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
       @NotNull
       @Override
       public PsiElement[] getElements() {
-        return myElements;
+        return ContainerUtil.mapNotNull(myElements, SmartPsiElementPointer::getElement).toArray(PsiElement.EMPTY_ARRAY);
       }
 
       @Override
@@ -79,8 +82,11 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
   @Override
   protected UsageInfo[] findUsages() {
     final List<UsageInfo> result = new ArrayList<>();
-    for (final PsiNamedElement element : myElements) {
-      result.addAll(ContainerUtil.map(PyRefactoringUtil.findUsages(element, false), usageInfo -> new MyUsageInfo(usageInfo, element)));
+    for (final SmartPsiElementPointer<PsiNamedElement> pointer : myElements) {
+      final PsiNamedElement element = pointer.getElement();
+      if (element != null) {
+        result.addAll(ContainerUtil.map(PyRefactoringUtil.findUsages(element, false), usageInfo -> new MyUsageInfo(usageInfo, element)));
+      }
     }
     return result.toArray(new UsageInfo[result.size()]);
   }
@@ -91,11 +97,15 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
     for (UsageInfo usage : usages) {
       usagesByElement.putValue(((MyUsageInfo)usage).myMovedElement, usage);
     }
-    CommandProcessor.getInstance().executeCommand(myElements[0].getProject(), () -> ApplicationManager.getApplication().runWriteAction(() -> {
+    CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(() -> {
       final PyFile destination = PyUtil.getOrCreateFile(myDestination, myProject);
       CommonRefactoringUtil.checkReadOnlyStatus(myProject, destination);
-      for (final PsiNamedElement e : myElements) {
+      for (final SmartPsiElementPointer<PsiNamedElement> pointer : myElements) {
         // TODO: Check for resulting circular imports
+        final PsiNamedElement e = pointer.getElement();
+        if (e == null) {
+          continue;
+        }
         CommonRefactoringUtil.checkReadOnlyStatus(myProject, e);
         assert e instanceof PyClass || e instanceof PyFunction || e instanceof PyTargetExpression;
         final String name = e.getName();
