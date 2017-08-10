@@ -233,7 +233,7 @@ public class MadTestingUtil {
     try {
       String path = FileUtil.getRelativePath(FileUtil.toCanonicalPath(rootPath),  FileUtil.toSystemIndependentName(ioFile.getPath()), '/');
       assert path != null;
-      VirtualFile existing = fixture.findFileInTempDir(path);
+      VirtualFile existing = fixture.getTempDirFixture().getFile(path);
       if (existing != null) {
         WriteAction.run(() -> existing.delete(fixture));
       }
