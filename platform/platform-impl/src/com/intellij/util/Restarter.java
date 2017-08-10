@@ -210,7 +210,7 @@ public class Restarter {
   }
 
   @NotNull
-  public static File createTempExecutable(@NotNull File executable, @NotNull final File ...filesToCopyToSameFolder) throws IOException {
+  public static File createTempExecutable(@NotNull File executable) throws IOException {
     File tempDir = new File(PathManager.getSystemPath(), "restart");
     if (!FileUtilRt.createDirectory(tempDir)) {
       throw new IOException("Cannot create directory: " + tempDir);
@@ -224,11 +224,6 @@ public class Restarter {
       copy = FileUtilRt.createTempFile(tempDir, prefix, suffix, true, false);
     }
     FileUtilRt.copy(executable, copy);
-    final File directory = copy.getParentFile();
-    for (final File fileToCopy : filesToCopyToSameFolder) {
-      FileUtilRt.copy(fileToCopy, new File(directory, fileToCopy.getName()));
-    }
-
 
     if (executable.canExecute() && !copy.setExecutable(true)) {
       throw new IOException("Cannot make file executable: " + copy);

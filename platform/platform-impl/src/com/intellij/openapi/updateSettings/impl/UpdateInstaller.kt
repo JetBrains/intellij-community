@@ -135,12 +135,11 @@ object UpdateInstaller {
     val args = arrayListOf<String>()
 
     if (SystemInfo.isWindows) {
-      // launcher depends on elevator
       val launcher = PathManager.findBinFile("launcher.exe")
-      val elevator = PathManager.findBinFile("elevator.exe")
-      if (launcher !=null && elevator != null && launcher.canExecute()) {
-        args += Restarter.createTempExecutable(launcher, elevator).path
-
+      val elevator = PathManager.findBinFile("elevator.exe")  // "launcher" depends on "elevator"
+      if (launcher != null && elevator != null && launcher.canExecute() && elevator.canExecute()) {
+        Restarter.createTempExecutable(elevator)
+        args += Restarter.createTempExecutable(launcher).path
       }
     }
 
