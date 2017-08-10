@@ -34,8 +34,10 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.EnumComboBoxModel;
+import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Consumer;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.Producer;
 import com.intellij.util.ui.tree.PerFileConfigurableBase;
 import org.jetbrains.annotations.NotNull;
@@ -56,6 +58,7 @@ class FileEncodingConfigurable extends PerFileConfigurableBase<Charset> {
   private JPanel myPropertiesFilesEncodingCombo;
   private JPanel myTablePanel;
   private ComboBox<EncodingProjectManagerImpl.BOMForNewUTF8Files> myBOMForUTF8Combo;
+  private HyperlinkLabel myExplanationLabel;
 
   private Charset myPropsCharset;
 
@@ -63,6 +66,25 @@ class FileEncodingConfigurable extends PerFileConfigurableBase<Charset> {
     super(project, createMappings(project));
     myBOMForUTF8Combo.setModel(new EnumComboBoxModel<>(EncodingProjectManagerImpl.BOMForNewUTF8Files.class));
     myBOMForUTF8Combo.setRenderer((list, value, index, isSelected, cellHasFocus) -> new JLabel(value.toString()));
+    myBOMForUTF8Combo.addItemListener(e -> updateExplanationLabelText());
+    myExplanationLabel.setHyperlinkTarget("https://en.wikipedia.org/wiki/Byte_order_mark#UTF-8");
+  }
+
+  private void updateExplanationLabelText() {
+    EncodingProjectManagerImpl.BOMForNewUTF8Files item = (EncodingProjectManagerImpl.BOMForNewUTF8Files)myBOMForUTF8Combo.getSelectedItem();
+    if (item != null) {
+      switch (item) {
+        case ALWAYS:
+          myExplanationLabel.setHtmlText("<html>IDEA will add <a href=''>UTF-8 BOM</a> to every created file in UTF-8 encoding</html>");
+          break;
+        case NEVER:
+          myExplanationLabel.setHtmlText("<html>IDEA will NOT add <a href=''>UTF-8 BOM</a> to every created file in UTF-8 encoding</html>");
+          break;
+        case WINDOWS_ONLY:
+          myExplanationLabel.setHtmlText("<html>IDEA will add <a href=''>UTF-8 BOM</a> to every created UTF-8 file only when it's running under Windows.</html>");
+          break;
+      }
+    }
   }
 
   @Override
@@ -213,7 +235,8 @@ class FileEncodingConfigurable extends PerFileConfigurableBase<Charset> {
     EncodingProjectManagerImpl encodingManager = (EncodingProjectManagerImpl)EncodingProjectManager.getInstance(myProject);
     encodingManager.setDefaultCharsetForPropertiesFiles(null, myPropsCharset);
     encodingManager.setNative2AsciiForPropertiesFiles(null, myTransparentNativeToAsciiCheckBox.isSelected());
-    encodingManager.setBOMForNewUtf8Files((EncodingProjectManagerImpl.BOMForNewUTF8Files)myBOMForUTF8Combo.getSelectedItem());
+    EncodingProjectManagerImpl.BOMForNewUTF8Files option = ObjectUtils.notNull((EncodingProjectManagerImpl.BOMForNewUTF8Files)myBOMForUTF8Combo.getSelectedItem(), EncodingProjectManagerImpl.BOMForNewUTF8Files.NEVER);
+    encodingManager.setBOMForNewUtf8Files(option);
   }
 
   @Override
@@ -228,7 +251,7 @@ class FileEncodingConfigurable extends PerFileConfigurableBase<Charset> {
   @Override
   protected boolean canEditTarget(@Nullable Object target, Charset value) {
     return target == null || target instanceof VirtualFile && (
-      ((VirtualFile)target).isDirectory() || EncodingUtil.checkSomeActionEnabled(((VirtualFile)target)) == null);
+      ((VirtualFile)target).isDirectory() || EncodingUtil.checkSomeActionEnabled((VirtualFile)target) == null);
   }
 
   @NotNull
