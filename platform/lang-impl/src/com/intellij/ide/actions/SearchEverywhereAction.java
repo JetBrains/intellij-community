@@ -297,8 +297,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         if (i != -1) {
           mySkipFocusGain = true;
           getGlobalInstance().doWhenFocusSettlesDown(() -> getGlobalInstance().requestFocus(getField(), true));
-          //noinspection SSBasedInspection
-          SwingUtilities.invokeLater(() -> {
+          ApplicationManager.getApplication().invokeLater(() -> {
             myList.setSelectedIndex(i);
             doNavigate(i);
           });
