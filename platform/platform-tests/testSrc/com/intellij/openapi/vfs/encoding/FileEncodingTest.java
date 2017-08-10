@@ -36,6 +36,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.IoTestUtil;
@@ -920,5 +921,34 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
     vFile.setBOM(null);
     CharSequence loaded = LoadTextUtil.loadText(vFile);
     assertEquals(text, loaded.toString());
+  }
+
+  public void testNewUTF8FileCanBeCreatedWithOrWithoutBOMDependingOnTheSettings() throws IOException {
+    EncodingProjectManagerImpl manager = (EncodingProjectManagerImpl)EncodingProjectManager.getInstance(getProject());
+    EncodingProjectManagerImpl.BOMForNewUTF8Files old = manager.getBOMForNewUTF8Files();
+    String oldProject = manager.getDefaultCharsetName();
+    manager.setDefaultCharsetName(CharsetToolkit.UTF8);
+    try {
+      manager.setBOMForNewUtf8Files(EncodingProjectManagerImpl.BOMForNewUTF8Files.NEVER);
+      VirtualFile file = createFile("x.txt", "xx").getVirtualFile();
+      assertNull(file.getBOM());
+
+      manager.setBOMForNewUtf8Files(EncodingProjectManagerImpl.BOMForNewUTF8Files.ALWAYS);
+      VirtualFile file2 = createFile("x2.txt", "xx").getVirtualFile();
+      assertArrayEquals(CharsetToolkit.UTF8_BOM, file2.getBOM());
+
+      manager.setBOMForNewUtf8Files(EncodingProjectManagerImpl.BOMForNewUTF8Files.WINDOWS_ONLY);
+      VirtualFile file3 = createFile("x3.txt", "xx").getVirtualFile();
+      byte[] expected = SystemInfo.isWindows ? CharsetToolkit.UTF8_BOM : null;
+      assertArrayEquals(expected, file3.getBOM());
+
+      manager.setBOMForNewUtf8Files(EncodingProjectManagerImpl.BOMForNewUTF8Files.NEVER);
+      VirtualFile file4 = createFile("x4.txt", "xx").getVirtualFile();
+      assertNull(file4.getBOM());
+    }
+    finally {
+      manager.setBOMForNewUtf8Files(old);
+      manager.setDefaultCharsetName(oldProject);
+    }
   }
 }

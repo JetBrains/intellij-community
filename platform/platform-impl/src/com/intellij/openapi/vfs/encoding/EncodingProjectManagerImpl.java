@@ -33,6 +33,7 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.SimpleModificationTracker;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.util.Processor;
@@ -61,6 +62,7 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
   // we should avoid changed file
   private String myOldUTFGuessing;
   private boolean myNative2AsciiForPropertiesFilesWasSpecified;
+  private BOMForNewUTF8Files myBOMForNewUTF8Files = BOMForNewUTF8Files.NEVER;
 
   public EncodingProjectManagerImpl(Project project, EncodingManager ideEncodingManager) {
     myProject = project;
@@ -451,5 +453,46 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
   @Nullable
   public Charset getCachedCharsetFromContent(@NotNull Document document) {
     return myIdeEncodingManager.getCachedCharsetFromContent(document);
+  }
+
+  public enum BOMForNewUTF8Files {
+    ALWAYS {
+      @Override
+      public String toString() {
+        return "with BOM";
+      }
+    }, NEVER{
+      @Override
+      public String toString() {
+        return "with NO BOM";
+      }
+    }, WINDOWS_ONLY{
+      @Override
+      public String toString() {
+        return "with BOM under Windows, with no BOM otherwise";
+      }
+    }
+  }
+  void setBOMForNewUtf8Files(@NotNull BOMForNewUTF8Files option) {
+    myBOMForNewUTF8Files = option;
+  }
+
+  @NotNull
+  BOMForNewUTF8Files getBOMForNewUTF8Files() {
+    return myBOMForNewUTF8Files;
+  }
+
+  @Override
+  public boolean shouldAddBOMForNewUtf8File() {
+    switch (myBOMForNewUTF8Files) {
+      case ALWAYS:
+        return true;
+      case NEVER:
+        return false;
+      case WINDOWS_ONLY:
+        return SystemInfo.isWindows;
+      default:
+        throw new IllegalStateException(myBOMForNewUTF8Files.toString());
+    }
   }
 }
