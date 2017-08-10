@@ -44,14 +44,14 @@ public class PyMoveSymbolProcessor {
   private final PsiNamedElement myMovedElement;
   private final PyFile myDestinationFile;
   private final List<UsageInfo> myUsages;
-  private final PsiElement[] myAllMovedElements;
+  private final List<SmartPsiElementPointer<PsiNamedElement>> myAllMovedElements;
   private final List<PsiFile> myOptimizeImportTargets = new ArrayList<>();
   private final Set<ScopeOwner> myScopeOwnersWithGlobal = new HashSet<>();
 
   public PyMoveSymbolProcessor(@NotNull final PsiNamedElement element,
                                @NotNull PyFile destination,
                                @NotNull Collection<UsageInfo> usages,
-                               @NotNull PsiElement[] otherElements) {
+                               @NotNull List<SmartPsiElementPointer<PsiNamedElement>> otherElements) {
     myMovedElement = element;
     myDestinationFile = destination;
     myAllMovedElements = otherElements;
@@ -72,7 +72,8 @@ public class PyMoveSymbolProcessor {
           updateSingleUsage(usageElement, newElement);
         }
       }
-      PyClassRefactoringUtil.restoreNamedReferences(newElementBody, myMovedElement, myAllMovedElements);
+      final PsiElement[] unwrappedElements = ContainerUtil.mapNotNull(myAllMovedElements, SmartPsiElementPointer::getElement).toArray(PsiElement.EMPTY_ARRAY);
+      PyClassRefactoringUtil.restoreNamedReferences(newElementBody, myMovedElement, unwrappedElements);
       deleteElement();
       optimizeImports(sourceFile);
     }
@@ -155,8 +156,12 @@ public class PyMoveSymbolProcessor {
   }
 
   private boolean belongsToSomeMovedElement(@NotNull final PsiElement element) {
-    return ContainerUtil.exists(myAllMovedElements, movedElement -> {
-      final PsiElement movedElementBody = PyMoveModuleMembersHelper.expandNamedElementBody((PsiNamedElement)movedElement);
+    return ContainerUtil.exists(myAllMovedElements, movedElementPointer -> {
+      final PsiNamedElement movedElement = movedElementPointer.getElement();
+      if (movedElement == null) {
+        return false;
+      }
+      final PsiElement movedElementBody = PyMoveModuleMembersHelper.expandNamedElementBody(movedElement);
       return PsiTreeUtil.isAncestor(movedElementBody, element, false);
     });
   }
