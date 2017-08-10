@@ -178,7 +178,7 @@ public class JUnitStarter {
   public static boolean isJUnit5Preferred() {
     final String useJUnit5 = System.getProperty(JUNIT5_KEY);
     if (useJUnit5 == null) {
-      return JUnit5EngineDetector.hasCustomEngine();
+      return false;
     }
     else {
       final Boolean boolValue = Boolean.valueOf(useJUnit5);

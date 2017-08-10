@@ -123,12 +123,17 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     return module != null;
   }
 
+  protected boolean isIdBasedTestTree() {
+    return false;
+  }
+
   @NotNull
   @Override
   public ExecutionResult execute(@NotNull Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
     final RunnerSettings runnerSettings = getRunnerSettings();
 
     final SMTRunnerConsoleProperties testConsoleProperties = getConfiguration().createTestConsoleProperties(executor);
+    testConsoleProperties.setIdBasedTestTree(isIdBasedTestTree());
     testConsoleProperties.setIfUndefined(TestConsoleProperties.HIDE_PASSED_TESTS, false);
 
     final BaseTestsOutputConsoleView consoleView = SMTestRunnerConnectionUtil.createConsole(getFrameworkName(), testConsoleProperties);
