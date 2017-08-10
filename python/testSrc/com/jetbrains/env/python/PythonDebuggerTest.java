@@ -8,6 +8,7 @@ import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.xdebugger.XDebuggerTestUtil;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
+import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.jetbrains.TestEnv;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.PyProcessWithConsoleTestTask;
@@ -419,8 +420,8 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     });
   }
 
-  private static void addExceptionBreakpoint(IdeaProjectTestFixture fixture, PyExceptionBreakpointProperties properties) {
-    XDebuggerTestUtil.addBreakpoint(fixture.getProject(), PyExceptionBreakpointType.class, properties);
+  private static XBreakpoint addExceptionBreakpoint(IdeaProjectTestFixture fixture, PyExceptionBreakpointProperties properties) {
+    return XDebuggerTestUtil.addBreakpoint(fixture.getProject(), PyExceptionBreakpointType.class, properties);
   }
 
   @Test
@@ -471,15 +472,14 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     runPythonTest(new PyDebuggerTask("/debug", "test_exceptbreak.py") {
       @Override
       public void before() throws Exception {
-        createExceptionBreakZeroDivisionError(myFixture, false, true, false);
+        createExceptionBreak(myFixture, false, true, true);
       }
 
       @Override
       public void testing() throws Exception {
         waitForPause();
-        eval("__exception__[0].__name__").hasValue("'ZeroDivisionError'");
+        eval("__exception__[0].__name__").hasValue("'IndexError'");
         resume();
-        waitForTerminate();
       }
 
       @NotNull
@@ -493,7 +493,9 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   public static void createExceptionBreak(IdeaProjectTestFixture fixture,
                                           boolean notifyOnTerminate,
                                           boolean notifyOnFirst,
-                                          boolean ignoreLibraries) {
+                                          boolean ignoreLibraries,
+                                          @Nullable String condition,
+                                          @Nullable String logExpression) {
     XDebuggerTestUtil.removeAllBreakpoints(fixture.getProject());
     XDebuggerTestUtil.setDefaultBreakpointEnabled(fixture.getProject(), PyExceptionBreakpointType.class, false);
 
@@ -501,7 +503,20 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     properties.setNotifyOnTerminate(notifyOnTerminate);
     properties.setNotifyOnlyOnFirst(notifyOnFirst);
     properties.setIgnoreLibraries(ignoreLibraries);
-    addExceptionBreakpoint(fixture, properties);
+    XBreakpoint exceptionBreakpoint = addExceptionBreakpoint(fixture, properties);
+    if (condition != null) {
+      exceptionBreakpoint.setCondition(condition);
+    }
+    if (logExpression != null) {
+      exceptionBreakpoint.setLogExpression(logExpression);
+    }
+  }
+
+  public static void createExceptionBreak(IdeaProjectTestFixture fixture,
+                                          boolean notifyOnTerminate,
+                                          boolean notifyOnFirst,
+                                          boolean ignoreLibraries) {
+    createExceptionBreak(fixture, notifyOnTerminate, notifyOnFirst, ignoreLibraries, null, null);
   }
 
   @Test
@@ -550,6 +565,57 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       @Override
       public Set<String> getTags() {
         return ImmutableSet.of("-iron");
+      }
+    });
+  }
+
+  @Test
+  public void testExceptionBreakpointConditionOnRaise() throws Exception {
+    runPythonTest(new PyDebuggerTask("/debug", "test_exceptbreak.py") {
+
+      @Override
+      public void before() throws Exception {
+        createExceptionBreak(myFixture, false, true, true, "__exception__[0] == ZeroDivisionError", null);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        eval("__exception__[0].__name__").hasValue("'ZeroDivisionError'");
+        resume();
+        waitForTerminate();
+      }
+
+      @NotNull
+      @Override
+      public Set<String> getTags() {
+        return ImmutableSet.of("-jython");
+      }
+    });
+  }
+
+
+  @Test
+  public void testExceptionBreakpointConditionOnTerminate() throws Exception {
+    runPythonTest(new PyDebuggerTask("/debug", "test_exceptbreak.py") {
+
+      @Override
+      public void before() throws Exception {
+        createExceptionBreak(myFixture, true, false, false, "__exception__[0] == ZeroDivisionError", null);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        eval("__exception__[0].__name__").hasValue("'ZeroDivisionError'");
+        resume();
+        waitForTerminate();
+      }
+
+      @NotNull
+      @Override
+      public Set<String> getTags() {
+        return ImmutableSet.of("-jython");
       }
     });
   }
