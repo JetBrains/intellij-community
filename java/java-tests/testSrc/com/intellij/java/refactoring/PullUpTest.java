@@ -170,11 +170,11 @@ public class PullUpTest extends LightRefactoringTestCase {
   }
 
   public void testSubstituteOverrideToMerge() {
-    doTest(false, IGNORE_CONFLICTS, new RefactoringTestUtil.MemberDescriptor("foo", PsiMethod.class));
+    doTest(false, new RefactoringTestUtil.MemberDescriptor("foo", PsiMethod.class));
   }
 
   public void testAsDefaultMethodOverAbstract() {
-    doTest(false, "Class <b><code>Test.Printer</code></b> already contains a method <b><code>foo()</code></b>", new RefactoringTestUtil.MemberDescriptor("foo", PsiMethod.class));
+    doTest(false, new RefactoringTestUtil.MemberDescriptor("foo", PsiMethod.class));
   }
 
   public void testOuterClassRefsNoConflictIfAsAbstract() throws Exception {
