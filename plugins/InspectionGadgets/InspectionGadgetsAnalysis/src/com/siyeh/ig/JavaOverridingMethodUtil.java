@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig;
 
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys;
@@ -23,9 +24,11 @@ import com.intellij.psi.search.GlobalSearchScopeUtil;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.util.PsiSuperMethodUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -43,19 +46,23 @@ public class JavaOverridingMethodUtil {
     if (searchScope != null) {
       effectiveSearchScope = effectiveSearchScope.intersectWith(searchScope);
     }
-    PsiMethod[] methods =
-      StubIndex.getElements(JavaStubIndexKeys.METHODS, name, project, effectiveSearchScope, PsiMethod.class)
-        .stream()
-        .filter(m -> m != method)
-        .filter(preFilter)
-        .limit(MAX_OVERRIDDEN_METHOD_SEARCH + 1)
-        .toArray(PsiMethod[]::new);
 
-    // search should be deterministic
-    if (methods.length > MAX_OVERRIDDEN_METHOD_SEARCH) {
+    List<PsiMethod> methods = ContainerUtil.newArrayList();
+    if (!StubIndex.getInstance().processElements(JavaStubIndexKeys.METHODS,
+                                                name,
+                                                project,
+                                                effectiveSearchScope,
+                                                PsiMethod.class,
+                                            m -> {
+                                              ProgressManager.checkCanceled();
+                                              if (m == method) return true;
+                                              if (!preFilter.test(m)) return true;
+                                              methods.add(m);
+                                              return methods.size() <= MAX_OVERRIDDEN_METHOD_SEARCH;
+                                            })) {
       return null;
     }
 
-    return Stream.of(methods).filter(candidate -> PsiSuperMethodUtil.isSuperMethod(candidate, method));
+    return methods.stream().filter(candidate -> PsiSuperMethodUtil.isSuperMethod(candidate, method));
   }
 }
