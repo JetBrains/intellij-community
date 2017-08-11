@@ -413,24 +413,24 @@ open class GuiTestCase : GuiTestBase() {
   /**
    * Context function for IdeFrame: get current editor and creates EditorFixture instance as receiver object. Code block after
    * it call methods on the receiver object (EditorFixture instance).
-   *
-   * @timeout in seconds to find get EditorFixture
    */
-  fun IdeFrameFixture.editor(timeout: Long = defaultTimeout, func: EditorFixture.() -> Unit) {
+  fun IdeFrameFixture.editor(func: EditorFixture.() -> Unit) {
     func(this.editor)
   }
 
   /**
    * Context function for IdeFrame: creates a MainToolbarFixture instance as receiver object. Code block after
    * it call methods on the receiver object (MainToolbarFixture instance).
-   *
-   * @timeout in seconds to find get EditorFixture
    */
-  fun IdeFrameFixture.toolbar(timeout: Long = defaultTimeout, func: MainToolbarFixture.() -> Unit) {
+  fun IdeFrameFixture.toolbar(func: MainToolbarFixture.() -> Unit) {
     func(this.toolbar)
   }
 
-  fun IdeFrameFixture.navigationBar(timeout: Long = defaultTimeout, func: NavigationBarFixture.() -> Unit) {
+  /**
+   * Context function for IdeFrame: creates a NavigationBarFixture instance as receiver object. Code block after
+   * it call methods on the receiver object (NavigationBarFixture instance).
+   */
+  fun IdeFrameFixture.navigationBar(func: NavigationBarFixture.() -> Unit) {
     func(this.navigationBar)
   }
 
