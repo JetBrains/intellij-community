@@ -23,7 +23,9 @@ import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
+import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.callMatcher.CallMatcher;
+import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import org.jetbrains.annotations.Nls;
@@ -42,6 +44,8 @@ public class SimplifyOptionalCallChainsInspection extends BaseJavaBatchLocalInsp
     CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_OPTIONAL, "orElseGet").parameterCount(1);
   private static final CallMatcher OPTIONAL_MAP =
     CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_OPTIONAL, "map").parameterCount(1);
+  private static final CallMatcher OPTIONAL_OF_NULLABLE =
+    CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_OPTIONAL, "ofNullable").parameterCount(1);
 
 
   @NotNull
@@ -65,6 +69,27 @@ public class SimplifyOptionalCallChainsInspection extends BaseJavaBatchLocalInsp
           falseArg = LambdaUtil.extractSingleExpressionFromBody(lambda.getBody());
         }
         if (falseArg == null) return;
+        handleMapOrElse(call, useOrElseGet, falseArg);
+        handleOfNullableOrElse(call, falseArg);
+      }
+
+      private void handleOfNullableOrElse(PsiMethodCallExpression call, PsiExpression falseArg) {
+        if (!ExpressionUtils.isNullLiteral(falseArg)) return;
+        PsiElement parent = PsiUtil.skipParenthesizedExprUp(call.getParent());
+        if (!(parent instanceof PsiExpressionList)) return;
+        PsiMethodCallExpression parentCall = ObjectUtils.tryCast(parent.getParent(), PsiMethodCallExpression.class);
+        if (!OPTIONAL_OF_NULLABLE.test(parentCall)) return;
+        PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
+        if (qualifier == null ||
+            !EquivalenceChecker.getCanonicalPsiEquivalence().typesAreEquivalent(qualifier.getType(), parentCall.getType())) {
+          return;
+        }
+        holder.registerProblem(Objects.requireNonNull(parentCall.getMethodExpression().getReferenceNameElement()),
+                               "Unnecessary Optional rewrapping",
+                               new SimplifyOptionalChainFix(qualifier.getText(), "Unwrap"));
+      }
+
+      private void handleMapOrElse(PsiMethodCallExpression call, boolean useOrElseGet, PsiExpression falseArg) {
         PsiMethodCallExpression qualifierCall = MethodCallUtils.getQualifierMethodCall(call);
         if (!OPTIONAL_MAP.test(qualifierCall)) return;
         PsiLambdaExpression lambda = getLambda(qualifierCall.getArgumentList().getExpressions()[0]);
@@ -101,9 +126,11 @@ public class SimplifyOptionalCallChainsInspection extends BaseJavaBatchLocalInsp
             displayCode =
               PsiExpressionTrimRenderer.render(JavaPsiFacade.getElementFactory(holder.getProject()).createExpressionFromText(proposed, call));
           }
+          String message = displayCode.isEmpty() ? "Remove redundant steps from optional chain" :
+                     "Simplify optional chain to '" + displayCode + "'";
           holder.registerProblem(Objects.requireNonNull(call.getMethodExpression().getReferenceNameElement()),
                                  "Optional chain can be simplified",
-                                 new SimplifyOptionalChainFix(proposed, displayCode));
+                                 new SimplifyOptionalChainFix(proposed, message));
         }
       }
     };
@@ -122,19 +149,18 @@ public class SimplifyOptionalCallChainsInspection extends BaseJavaBatchLocalInsp
 
   private static class SimplifyOptionalChainFix implements LocalQuickFix {
     private final String myReplacement;
-    private final String myDisplayCode;
+    private final String myMessage;
 
-    public SimplifyOptionalChainFix(String replacement, String displayCode) {
+    public SimplifyOptionalChainFix(String replacement, String message) {
       myReplacement = replacement;
-      myDisplayCode = displayCode;
+      myMessage = message;
     }
 
     @Nls
     @NotNull
     @Override
     public String getName() {
-      return myDisplayCode.isEmpty() ? "Remove redundant steps from optional chain" :
-             "Simplify optional chain to '"+myDisplayCode+"'";
+      return myMessage;
     }
 
     @Nls
