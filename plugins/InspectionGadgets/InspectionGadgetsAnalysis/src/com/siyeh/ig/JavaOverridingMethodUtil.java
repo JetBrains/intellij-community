@@ -35,6 +35,15 @@ import java.util.stream.Stream;
 public class JavaOverridingMethodUtil {
   private static final int MAX_OVERRIDDEN_METHOD_SEARCH = 20;
 
+  /**
+   * The method allows to search of overriding methods in "cheap enough" manner if it's possible.
+   *
+   * @param preFilter should filter out non-interesting methods (eg: methods non-annotated with some '@Override' annotation).
+   *                  It must not perform resolve, index queries or any other heavyweight operation since in the worst case all methods with name
+   *                  as the source method name will be processed.
+   *
+   * @return null if it's expensive to search for overriding methods in given case, otherwise returns stream of overriding methods for given preFilter
+   */
   @Nullable
   public static Stream<PsiMethod> getOverridingMethodsIfCheapEnough(@NotNull PsiMethod method,
                                                                     @Nullable GlobalSearchScope searchScope,
