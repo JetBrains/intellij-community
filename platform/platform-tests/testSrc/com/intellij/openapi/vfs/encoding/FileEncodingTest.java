@@ -50,7 +50,6 @@ import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.ByteArrayCharSequence;
 import com.intellij.util.text.XmlCharsetDetector;
@@ -69,8 +68,8 @@ import static org.junit.Assert.assertArrayEquals;
 
 @SuppressWarnings("HardCodedStringLiteral")
 public class FileEncodingTest extends PlatformTestCase implements TestDialog {
-  private static final Charset US_ASCII = Charset.forName("US-ASCII");
-  private static final Charset WINDOWS_1251 = Charset.forName("windows-1251");
+  private static final Charset US_ASCII = CharsetToolkit.US_ASCII_CHARSET;
+  private static final Charset WINDOWS_1251 = CharsetToolkit.WIN_1251_CHARSET;
   private static final Charset WINDOWS_1252 = Charset.forName("windows-1252");
   private static final String UTF8_XML_PROLOG = prolog(CharsetToolkit.UTF8_CHARSET);
   private static final byte[] NO_BOM = ArrayUtil.EMPTY_BYTE_ARRAY;
@@ -408,7 +407,7 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
     }.execute().throwException();
   }
 
-  public void testCopyNested() throws IOException, IncorrectOperationException {
+  public void testCopyNested() throws IOException {
     File root = createTempDirectory();
     File dir1 = new File(root, "dir1");
     assertTrue(dir1.mkdir());
@@ -590,25 +589,6 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
     Assert.assertNotSame(EncodingUtil.isSafeToConvertTo(file, text, bytes, WINDOWS_1251), EncodingUtil.Magic8.NO_WAY);
     failReason = EncodingUtil.checkCanReload(file).second;
     assertNull(failReason);
-  }
-
-  private static String toHexString(byte[] b, int start, int end) {
-    final String hexChar = "0123456789abcdef";
-
-    StringBuilder hex = new StringBuilder();
-    StringBuilder ch = new StringBuilder();
-
-    for (int i = start; i < end; i++) {
-      hex.append(hexChar.charAt((b[i] >> 4) & 0x0f));
-      hex.append(hexChar.charAt(b[i] & 0x0f));
-      hex.append(" ");
-      if ((i-start+1) % 5 == 0) hex.append("   ");
-
-      ch.append((char)b[i]);
-      ch.append("  ");
-      if ((i-start+1) % 5 == 0) ch.append("   ");
-    }
-    return hex + "\n" + ch;
   }
 
   public void testSetEncodingForDirectoryChangesEncodingsForEvenNotLoadedFiles() throws IOException {

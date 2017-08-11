@@ -788,8 +788,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     return processor.process(new ByteSequence(bytes, 0, n));
   }
 
-  private static final Key<Boolean> IO_EXCEPTION_HAPPENED = Key.create("IO_EXCEPTION_HAPPENED");
-
   @NotNull
   private FileType detectFromContentAndCache(@NotNull final VirtualFile file) throws IOException {
     long start = System.currentTimeMillis();
@@ -800,14 +798,14 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       if (toLog()) {
         log("F: detectFromContentAndCache(" + file.getName() + "):" + " inputStream=" + streamInfo(inputStream));
       }
-      file.putUserData(IO_EXCEPTION_HAPPENED, null);
+
       r = processFirstBytes(inputStream, DETECT_BUFFER_SIZE, byteSequence -> {
         // use PlainTextFileType because it doesn't supply its own charset detector
         // help set charset in the process to avoid double charset detection from content
         LoadTextUtil.processTextFromBinaryPresentationOrNull(byteSequence.getBytes(),
-                                                              byteSequence.getOffset(), byteSequence.getOffset()+byteSequence.getLength(),
-                                                              file, true, true,
-                                                              PlainTextFileType.INSTANCE, (@Nullable CharSequence text)->{
+                                                             byteSequence.getOffset(), byteSequence.getOffset()+byteSequence.getLength(),
+                                                             file, true, true,
+                                                             PlainTextFileType.INSTANCE, (@Nullable CharSequence text) -> {
             FileTypeDetector[] detectors = Extensions.getExtensions(FileTypeDetector.EP_NAME);
             if (toLog()) {
               log("F: detectFromContentAndCache.processFirstBytes(" + file.getName() + "): byteSequence.length=" + byteSequence.getLength() +

@@ -47,6 +47,7 @@ public class ResolveCache {
     return ServiceManager.getService(project, ResolveCache.class);
   }
 
+  @FunctionalInterface
   public interface AbstractResolver<TRef extends PsiReference, TResult> {
     TResult resolve(@NotNull TRef ref, boolean incompleteCode);
   }
@@ -54,6 +55,7 @@ public class ResolveCache {
   /**
    * Resolver which returns array of possible resolved variants instead of just one
    */
+  @FunctionalInterface
   public interface PolyVariantResolver<T extends PsiPolyVariantReference> extends AbstractResolver<T,ResolveResult[]> {
     @Override
     @NotNull
@@ -63,6 +65,7 @@ public class ResolveCache {
   /**
    * Poly variant resolver with additional containingFile parameter, which helps to avoid costly tree up traversal
    */
+  @FunctionalInterface
   public interface PolyVariantContextResolver<T extends PsiPolyVariantReference> {
     @NotNull
     ResolveResult[] resolve(@NotNull T ref, @NotNull PsiFile containingFile, boolean incompleteCode);
@@ -71,6 +74,7 @@ public class ResolveCache {
   /**
    * Resolver specialized to resolve PsiReference to PsiElement
    */
+  @FunctionalInterface
   public interface Resolver extends AbstractResolver<PsiReference, PsiElement> {
   }
 
@@ -266,12 +270,12 @@ public class ResolveCache {
       value);
   }
 
-  private static final StrongValueReference NULL_VALUE_REFERENCE = new StrongValueReference(NULL_RESULT);
-  private static final StrongValueReference EMPTY_RESOLVE_RESULT = new StrongValueReference(ResolveResult.EMPTY_ARRAY);
+  private static final StrongValueReference NULL_VALUE_REFERENCE = new StrongValueReference<>(NULL_RESULT);
+  private static final StrongValueReference EMPTY_RESOLVE_RESULT = new StrongValueReference<>(ResolveResult.EMPTY_ARRAY);
   private static class StrongValueReference<K, V> implements ConcurrentWeakKeySoftValueHashMap.ValueReference<K, V> {
     private final V myValue;
 
-    public StrongValueReference(@NotNull V value) {
+    StrongValueReference(@NotNull V value) {
       myValue = value;
     }
 
