@@ -60,8 +60,10 @@ class JetGradlePlugin implements Plugin<Gradle> {
 
 allprojects {
   apply plugin: 'idea'
-  if (parent == null) {
+  if (parent == null && !idea.project.extensions.findByName('settings')) {
     idea.project.extensions.create('settings', DynamicSettings)
   }
-  idea.module.extensions.create('settings', DynamicSettings)
+  if (!idea.module.extensions.findByName('settings')) {
+    idea.module.extensions.create('settings', DynamicSettings)
+  }
 }
