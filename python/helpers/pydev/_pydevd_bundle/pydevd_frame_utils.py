@@ -31,7 +31,7 @@ def add_exception_to_frame(frame, exception_info):
 
 
 def remove_exception_from_frame(frame):
-    frame.f_locals.pop('__exception__')
+    frame.f_locals.pop('__exception__', None)
 
 
 FILES_WITH_IMPORT_HOOKS = ['pydev_monkey_qt.py', 'pydev_import_hook.py']

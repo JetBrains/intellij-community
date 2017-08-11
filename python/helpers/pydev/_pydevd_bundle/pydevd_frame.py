@@ -205,7 +205,7 @@ class PyDBFrame:
                         flag = False
 
                 if flag:
-                    if exception_breakpoint.expression is not None:
+                    if exception_breakpoint is not None and exception_breakpoint.expression is not None:
                         handle_breakpoint_expression(exception_breakpoint, info, frame)
                 else:
                     remove_exception_from_frame(frame)
