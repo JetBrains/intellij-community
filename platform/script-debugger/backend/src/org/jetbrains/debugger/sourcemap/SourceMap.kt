@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ interface SourceMap {
 
 class OneLevelSourceMap(override val outFile: String?,
                         override val generatedMappings: Mappings,
-                        internal val sourceIndexToMappings: Array<MappingList?>,
+                        private val sourceIndexToMappings: Array<MappingList?>,
                         override val sourceResolver: SourceResolver,
                         override val hasNameMappings: Boolean) : SourceMap {
   override val sources: Array<Url>

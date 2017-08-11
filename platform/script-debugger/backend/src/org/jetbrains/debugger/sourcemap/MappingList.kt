@@ -86,14 +86,10 @@ abstract class MappingList(private val mappings: List<MappingEntry>) : Mappings 
           }
 
           val prevMapping = mappings[middle - 1]
-          if (line != getLine(prevMapping)) {
-            return -1
-          }
-          else if (column >= getColumn(prevMapping)) {
-            return middle - 1
-          }
-          else {
-            high = middle - 1
+          when {
+            line != getLine(prevMapping) -> return -1
+            column >= getColumn(prevMapping) -> return middle - 1
+            else -> high = middle - 1
           }
         }
         else {
@@ -122,7 +118,7 @@ abstract class MappingList(private val mappings: List<MappingEntry>) : Mappings 
   // todo honor Google Chrome bug related to paused location
   override fun get(line: Int, column: Int) = mappings.getOrNull(indexOf(line, column))
 
-  fun getNext(index: Int) = mappings.getOrNull(index + 1)
+  private fun getNext(index: Int) = mappings.getOrNull(index + 1)
 
   override fun getNext(mapping: MappingEntry): MappingEntry? {
     var index = mappings.binarySearch(mapping, comparator)
@@ -173,34 +169,32 @@ abstract class MappingList(private val mappings: List<MappingEntry>) : Mappings 
       val middle = (low + high).ushr(1)
       val mapping = mappings.get(middle)
       val mappingLine = getLine(mapping)
-      if (line == mappingLine) {
-        // find first
-        var firstIndex = middle
-        while (firstIndex > 0 && getLine(mappings.get(firstIndex - 1)) == line) {
-          firstIndex--
-        }
-
-        var entry: MappingEntry? = mappings.get(firstIndex)
-        do {
-          var nextEntry: MappingEntry? = if (++firstIndex < mappings.size) mappings.get(firstIndex) else null
-          if (nextEntry != null && getLine(nextEntry) != line) {
-            nextEntry = null
+      when {
+        line == mappingLine -> {
+          // find first
+          var firstIndex = middle
+          while (firstIndex > 0 && getLine(mappings.get(firstIndex - 1)) == line) {
+            firstIndex--
           }
 
-          if (!entryProcessor.process(entry!!, nextEntry)) {
-            return true
-          }
+          var entry: MappingEntry? = mappings.get(firstIndex)
+          do {
+            var nextEntry: MappingEntry? = if (++firstIndex < mappings.size) mappings.get(firstIndex) else null
+            if (nextEntry != null && getLine(nextEntry) != line) {
+              nextEntry = null
+            }
 
-          entry = nextEntry
+            if (!entryProcessor.process(entry!!, nextEntry)) {
+              return true
+            }
+
+            entry = nextEntry
+          }
+          while (entry != null)
+          return true
         }
-        while (entry != null)
-        return true
-      }
-      else if (line > mappingLine) {
-        low = middle + 1
-      }
-      else {
-        high = middle - 1
+        line > mappingLine -> low = middle + 1
+        else -> high = middle - 1
       }
     }
     return false
