@@ -58,9 +58,7 @@ import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Date;
+import java.util.*;
 import java.util.List;
 
 import static com.intellij.openapi.util.Pair.pair;
@@ -239,7 +237,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
   }
 
   private static void showPatchInstructions(String[] command) {
-    String product = ApplicationNamesInfo.getInstance().getLowercaseProductName();
+    String product = ApplicationNamesInfo.getInstance().getFullProductName().replace(' ', '-').toLowerCase(Locale.US);
     String version = ApplicationInfo.getInstance().getFullVersion();
     File file = new File(SystemProperties.getUserHome(), product + "-" + version + "-patch." + (SystemInfo.isWindows ? "cmd" : "sh"));
     try {
