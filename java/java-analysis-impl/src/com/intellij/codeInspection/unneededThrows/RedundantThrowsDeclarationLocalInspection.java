@@ -73,6 +73,7 @@ public class RedundantThrowsDeclarationLocalInspection extends BaseJavaBatchLoca
   @Nullable
   private ProblemDescriptor[] checkExceptionsNeverThrown(PsiMethod method,
                                                          InspectionManager inspectionManager) {
+    if (method instanceof SyntheticElement) return null;
     PsiClass containingClass = method.getContainingClass();
     if (containingClass == null || JavaHighlightUtil.isSerializationRelatedMethod(method, containingClass)) return null;
 
