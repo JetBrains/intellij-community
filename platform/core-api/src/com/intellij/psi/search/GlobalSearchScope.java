@@ -345,13 +345,22 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
   @NotNull
   public static GlobalSearchScope filesWithoutLibrariesScope(@NotNull Project project, @NotNull Collection<VirtualFile> files) {
     if (files.isEmpty()) return EMPTY_SCOPE;
-    return new FilesScope(project, files, false);
+    return new FilesScope(project, files, false, false);
   }
 
   @NotNull
   public static GlobalSearchScope filesWithLibrariesScope(@NotNull Project project, @NotNull Collection<VirtualFile> files) {
+    return filesWithLibrariesScope(project, files, false);
+  }
+
+  /**
+   * @since 2017.3
+   */
+  @NotNull
+  public static GlobalSearchScope filesWithLibrariesScope(@NotNull Project project, @NotNull Collection<VirtualFile> files,
+                                                          boolean searchOutsideRootModel) {
     if (files.isEmpty()) return EMPTY_SCOPE;
-    return new FilesScope(project, files, true);
+    return new FilesScope(project, files, true, searchOutsideRootModel);
   }
 
   /**
@@ -759,19 +768,22 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
   public static class FilesScope extends GlobalSearchScope implements Iterable<VirtualFile> {
     private final Collection<VirtualFile> myFiles;
+    private final boolean mySearchOutsideRootModel;
     private volatile Boolean myHasFilesOutOfProjectRoots;
 
     /**
      * @deprecated use {@link GlobalSearchScope#filesScope(Project, Collection)}
      */
     public FilesScope(@Nullable Project project, @NotNull Collection<VirtualFile> files) {
-      this(project, files, null);
+      this(project, files, null, false);
     }
 
     // Optimization
-    private FilesScope(@Nullable  Project project, @NotNull Collection<VirtualFile> files, @Nullable Boolean hasFilesOutOfProjectRoots) {
+    private FilesScope(@Nullable  Project project, @NotNull Collection<VirtualFile> files, @Nullable Boolean hasFilesOutOfProjectRoots,
+                       boolean searchOutsideRootModel) {
       super(project);
       myFiles = files;
+      mySearchOutsideRootModel = searchOutsideRootModel;
       myHasFilesOutOfProjectRoots = hasFilesOutOfProjectRoots;
     }
 
@@ -826,6 +838,11 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     @Override
     public Iterator<VirtualFile> iterator() {
       return myFiles.iterator();
+    }
+
+    @Override
+    public boolean isSearchOutsideRootModel() {
+      return mySearchOutsideRootModel;
     }
   }
 }
