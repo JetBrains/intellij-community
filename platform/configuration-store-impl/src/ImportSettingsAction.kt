@@ -95,14 +95,9 @@ private class ImportSettingsAction : AnAction(), DumbAware {
 
     UpdateSettings.getInstance().forceCheckForUpdateAfterRestart()
 
-    val key = if (ApplicationManager.getApplication().isRestartCapable)
-      "message.settings.imported.successfully.restart"
-    else
-      "message.settings.imported.successfully"
-    if (Messages.showOkCancelDialog(IdeBundle.message(key,
-                                                      ApplicationNamesInfo.getInstance().productName,
-                                                      ApplicationNamesInfo.getInstance().fullProductName),
-                                    IdeBundle.message("title.restart.needed"), Messages.getQuestionIcon()) == Messages.OK) {
+    val action = IdeBundle.message(if (ApplicationManager.getApplication().isRestartCapable) "ide.restart.action" else "ide.shutdown.action")
+    val message = IdeBundle.message("message.settings.imported.successfully", action, ApplicationNamesInfo.getInstance().fullProductName)
+    if (Messages.showOkCancelDialog(message, IdeBundle.message("title.restart.needed"), Messages.getQuestionIcon()) == Messages.OK) {
       (ApplicationManager.getApplication() as ApplicationEx).restart(true)
     }
   }
