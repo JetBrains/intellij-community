@@ -28,11 +28,11 @@ import java.util.*;
 
 public class ChainSearcher {
   @NotNull
-  public static List<MethodChain> search(int pathMaximalLength,
-                                         ChainSearchTarget searchTarget,
-                                         int maxResultSize,
-                                         ChainCompletionContext context,
-                                         CompilerReferenceServiceEx compilerReferenceServiceEx) {
+  public static List<CallChain> search(int pathMaximalLength,
+                                       ChainSearchTarget searchTarget,
+                                       int maxResultSize,
+                                       ChainCompletionContext context,
+                                       CompilerReferenceServiceEx compilerReferenceServiceEx) {
     SearchInitializer initializer = createInitializer(searchTarget, compilerReferenceServiceEx, context);
     return search(compilerReferenceServiceEx, initializer, pathMaximalLength, maxResultSize, context);
   }
@@ -55,18 +55,18 @@ public class ChainSearcher {
   }
 
   @NotNull
-  private static List<MethodChain> search(CompilerReferenceServiceEx referenceServiceEx,
-                                          SearchInitializer initializer,
-                                          int chainMaxLength,
-                                          int maxResultSize,
-                                          ChainCompletionContext context) {
-    LinkedList<MethodChain> q = initializer.getChainQueue();
+  private static List<CallChain> search(CompilerReferenceServiceEx referenceServiceEx,
+                                        SearchInitializer initializer,
+                                        int chainMaxLength,
+                                        int maxResultSize,
+                                        ChainCompletionContext context) {
+    LinkedList<CallChain> q = initializer.getChainQueue();
 
-    List<MethodChain> result = new ArrayList<>();
+    List<CallChain> result = new ArrayList<>();
     while (!q.isEmpty()) {
 
       ProgressManager.checkCanceled();
-      MethodChain currentChain = q.poll();
+      CallChain currentChain = q.poll();
       MethodIncompleteSignature headSignature = currentChain.getHeadSignature();
 
       if (addChainIfTerminal(currentChain, result, chainMaxLength, context)) continue;
@@ -81,7 +81,7 @@ public class ChainSearcher {
         MethodIncompleteSignature sign = candidate.getSignature();
         if ((sign.isStatic() || !sign.getOwner().equals(context.getTarget().getClassQName())) &&
             referenceServiceEx.mayHappen(candidate.getSignature().getRef(), headSignature.getRef(), ChainSearchMagicConstants.METHOD_PROBABILITY_THRESHOLD)) {
-          MethodChain continuation = currentChain.continuation(candidate.getSignature(), candidate.getOccurrenceCount(), context);
+          CallChain continuation = currentChain.continuation(candidate.getSignature(), candidate.getOccurrenceCount(), context);
           if (continuation != null) {
             boolean stopChain = candidate.getSignature().isStatic() || context.hasQualifier(context.resolveQualifierClass(candidate.getSignature()));
             if (stopChain) {
@@ -109,8 +109,8 @@ public class ChainSearcher {
   /**
    * To reduce false-positives we add a method to result only if its qualifier can be occurred together with context variables.
    */
-  private static void addChainIfQualifierCanBeOccurredInContext(MethodChain currentChain,
-                                                                List<MethodChain> result,
+  private static void addChainIfQualifierCanBeOccurredInContext(CallChain currentChain,
+                                                                List<CallChain> result,
                                                                 ChainCompletionContext context,
                                                                 CompilerReferenceServiceEx referenceServiceEx) {
     if (!context.getTarget().getClassQName().equals(currentChain.getHeadSignature().getOwner())) {
@@ -129,7 +129,7 @@ public class ChainSearcher {
     }
   }
 
-  private static boolean addChainIfTerminal(MethodChain currentChain, List<MethodChain> result, int pathMaximalLength,
+  private static boolean addChainIfTerminal(CallChain currentChain, List<CallChain> result, int pathMaximalLength,
                                             ChainCompletionContext context) {
     if (currentChain.getHeadSignature().isStatic() ||
         context.hasQualifier(context.resolveQualifierClass(currentChain.getHeadSignature())) ||
@@ -140,7 +140,7 @@ public class ChainSearcher {
     return false;
   }
 
-  private static void addChainIfNotPresent(MethodChain newChain, List<MethodChain> result) {
+  private static void addChainIfNotPresent(CallChain newChain, List<CallChain> result) {
     if (result.isEmpty()) {
       result.add(newChain);
       return;
@@ -148,8 +148,8 @@ public class ChainSearcher {
     boolean doAdd = true;
     IntStack indicesToRemove = new IntStack();
     for (int i = 0; i < result.size(); i++) {
-      MethodChain chain = result.get(i);
-      MethodChain.CompareResult r = MethodChain.compare(chain, newChain);
+      CallChain chain = result.get(i);
+      CallChain.CompareResult r = CallChain.compare(chain, newChain);
       switch (r) {
         case LEFT_CONTAINS_RIGHT:
           indicesToRemove.push(i);

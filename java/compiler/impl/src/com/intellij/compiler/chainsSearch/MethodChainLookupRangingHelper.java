@@ -16,6 +16,7 @@
 package com.intellij.compiler.chainsSearch;
 
 import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInsight.completion.CastingLookupElementDecorator;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.completion.JavaChainLookupElement;
 import com.intellij.codeInsight.completion.JavaMethodCallElement;
@@ -41,24 +42,32 @@ import java.util.stream.Collectors;
 
 public class MethodChainLookupRangingHelper {
   @NotNull
-  public static LookupElement toLookupElement(MethodChain chain,
+  public static LookupElement toLookupElement(CallChain chain,
                                               ChainCompletionContext context) {
     int unreachableParametersCount = 0;
     int matchedParametersInContext = 0;
     LookupElement chainLookupElement = null;
 
-    for (PsiMethod[] psiMethods : chain.getPath()) {
-      PsiMethod method = ObjectUtils.notNull(MethodChainsSearchUtil.getMethodWithMinNotPrimitiveParameters(psiMethods, context.getTarget().getTargetClass()));
-      Couple<Integer> info = calculateParameterInfo(method, context);
-      unreachableParametersCount += info.getFirst();
-      matchedParametersInContext += info.getSecond();
+    for (ChainOperation op : chain.getPath()) {
+      if (op instanceof ChainOperation.MethodCall) {
+        PsiMethod method = ObjectUtils.notNull(MethodChainsSearchUtil.getMethodWithMinNotPrimitiveParameters(((ChainOperation.MethodCall)op).getCandidates(),
+                                                                                                             context.getTarget().getTargetClass()));
+        Couple<Integer> info = calculateParameterInfo(method, context);
+        unreachableParametersCount += info.getFirst();
+        matchedParametersInContext += info.getSecond();
 
-      if (chainLookupElement == null) {
-        LookupElement qualifierLookupElement = createQualifierLookupElement(method, chain.getQualifierClass(), context);
-        LookupElement headLookupElement = createMethodLookupElement(method);
-        chainLookupElement = qualifierLookupElement == null ? headLookupElement : new JavaChainLookupElement(qualifierLookupElement, headLookupElement);
+        if (chainLookupElement == null) {
+          LookupElement qualifierLookupElement = createQualifierLookupElement(method, chain.getQualifierClass(), context);
+          LookupElement headLookupElement = createMethodLookupElement(method);
+          chainLookupElement = qualifierLookupElement == null ? headLookupElement : new JavaChainLookupElement(qualifierLookupElement, headLookupElement);
+        } else {
+          chainLookupElement = new JavaChainLookupElement(chainLookupElement, new JavaMethodCallElement(method));
+        }
       } else {
-        chainLookupElement = new JavaChainLookupElement(chainLookupElement, new JavaMethodCallElement(method));
+        if (chainLookupElement == null) throw new IllegalStateException();
+        PsiClass castClass = ((ChainOperation.TypeCast)op).getCastClass();
+        PsiClassType type = JavaPsiFacade.getElementFactory(castClass.getProject()).createType(castClass);
+        chainLookupElement = CastingLookupElementDecorator.createCastingElement(chainLookupElement, type);
       }
     }
 

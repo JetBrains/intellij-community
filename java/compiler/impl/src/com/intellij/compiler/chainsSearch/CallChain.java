@@ -16,29 +16,32 @@
 package com.intellij.compiler.chainsSearch;
 
 import com.intellij.compiler.chainsSearch.context.ChainCompletionContext;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Set;
 import java.util.stream.Collectors;
 
-import static com.intellij.util.containers.ContainerUtil.newArrayList;
-import static com.intellij.util.containers.ContainerUtil.reverse;
 
-public class MethodChain {
-  private final List<PsiMethod[]> myRevertedPath;
+public class CallChain {
+  @NotNull
+  private final ChainOperation[] myReverseOperations;
   private final MethodIncompleteSignature mySignature;
   private final int myWeight;
   private final PsiClass myQualifierClass;
 
   @Nullable
-  public static MethodChain create(@NotNull MethodIncompleteSignature signature,
-                                   int weight,
-                                   @NotNull ChainCompletionContext context) {
+  public static CallChain create(@NotNull MethodIncompleteSignature signature,
+                                 int weight,
+                                 @NotNull ChainCompletionContext context) {
     PsiClass qualifier = context.resolveQualifierClass(signature);
     if (qualifier == null || (!signature.isStatic() && InheritanceUtil.isInheritorOrSelf(context.getTarget().getTargetClass(), qualifier, true))) {
       return null;
@@ -54,15 +57,15 @@ public class MethodChain {
       return null;
     }
     classes.add(contextClass);
-    return new MethodChain(qualifier, Collections.singletonList(methods), signature, weight);
+    return new CallChain(qualifier, new ChainOperation[] {new ChainOperation.MethodCall(methods)}, signature, weight);
   }
 
-  public MethodChain(@NotNull PsiClass qualifierClass,
-                     @NotNull List<PsiMethod[]> revertedPath,
-                     MethodIncompleteSignature signature,
-                     int weight) {
+  public CallChain(@NotNull PsiClass qualifierClass,
+                   @NotNull ChainOperation[] reverseOperations,
+                   MethodIncompleteSignature signature,
+                   int weight) {
     myQualifierClass = qualifierClass;
-    myRevertedPath = revertedPath;
+    myReverseOperations = reverseOperations;
     mySignature = signature;
     myWeight = weight;
   }
@@ -73,7 +76,7 @@ public class MethodChain {
   }
 
   public int length() {
-    return myRevertedPath.size();
+    return myReverseOperations.length;
   }
 
   public PsiClass getQualifierClass() {
@@ -82,54 +85,57 @@ public class MethodChain {
 
   @NotNull
   public PsiMethod[] getFirst() {
-    return myRevertedPath.get(0);
+    return ((ChainOperation.MethodCall) myReverseOperations[0]).getCandidates();
   }
 
-  public List<PsiMethod[]> getPath() {
-    return reverse(myRevertedPath);
+  public ChainOperation[] getPath() {
+    return ArrayUtil.reverseArray(myReverseOperations);
   }
 
   public int getChainWeight() {
     return myWeight;
   }
 
-
-  public MethodChain continuation(@NotNull MethodIncompleteSignature signature,
-                                  int weight,
-                                  @NotNull ChainCompletionContext context) {
-    MethodChain head = create(signature, weight, context);
+  public CallChain continuation(@NotNull MethodIncompleteSignature signature,
+                                int weight,
+                                @NotNull ChainCompletionContext context) {
+    CallChain head = create(signature, weight, context);
     if (head == null) return null;
 
-    ArrayList<PsiMethod[]> newRevertedPath = newArrayList();
-    newRevertedPath.addAll(myRevertedPath);
-    newRevertedPath.add(head.getPath().get(0));
-    return new MethodChain(head.getQualifierClass(), newRevertedPath, head.getHeadSignature(), Math.min(weight, getChainWeight()));
+    ChainOperation[] newReverseOperations = new ChainOperation[length() + 1];
+    System.arraycopy(myReverseOperations, 0, newReverseOperations, 0, myReverseOperations.length);
+    newReverseOperations[length()] = head.getPath()[0];
+    return new CallChain(head.getQualifierClass(), newReverseOperations, head.getHeadSignature(), Math.min(weight, getChainWeight()));
   }
 
   @Override
   public String toString() {
-    return myQualifierClass.getName() + "." + reverse(myRevertedPath).stream().map(methods -> methods[0].getName() + "()").collect(Collectors.joining("."));
+    ChainOperation[] path = getPath();
+    return Arrays.toString(path) + " on " + myQualifierClass.getName();
   }
 
   @SuppressWarnings("ConstantConditions")
-  public static CompareResult compare(@NotNull MethodChain left, @NotNull MethodChain right) {
+  public static CompareResult compare(@NotNull CallChain left, @NotNull CallChain right) {
     if (left.length() == 0 || right.length() == 0) {
       throw new IllegalStateException("chains can't be empty");
     }
-    Iterator<PsiMethod[]> leftIterator = left.myRevertedPath.iterator();
-    Iterator<PsiMethod[]> rightIterator = right.myRevertedPath.iterator();
 
-    while (leftIterator.hasNext() && rightIterator.hasNext()) {
-      PsiMethod[] thisNext = leftIterator.next();
-      PsiMethod[] thatNext = rightIterator.next();
+    int leftCurrentIdx = 0;
+    int rightCurrentIdx = 0;
+
+    while (leftCurrentIdx < left.length() && rightCurrentIdx < right.length()) {
+      ChainOperation thisNext = left.myReverseOperations[leftCurrentIdx];
+      ChainOperation thatNext = right.myReverseOperations[leftCurrentIdx];
       if (!lookSimilar(thisNext, thatNext)) {
         return CompareResult.NOT_EQUAL;
       }
+      leftCurrentIdx++;
+      rightCurrentIdx++;
     }
-    if (leftIterator.hasNext() && !rightIterator.hasNext()) {
+    if (leftCurrentIdx < left.length() && rightCurrentIdx == right.length()) {
       return CompareResult.LEFT_CONTAINS_RIGHT;
     }
-    if (!leftIterator.hasNext() && rightIterator.hasNext()) {
+    if (leftCurrentIdx == left.length() && rightCurrentIdx < right.length()) {
       return CompareResult.RIGHT_CONTAINS_LEFT;
     }
 
@@ -143,7 +149,12 @@ public class MethodChain {
     NOT_EQUAL
   }
 
-  static boolean lookSimilar(PsiMethod[] methods1, PsiMethod[] methods2) {
+  static boolean lookSimilar(ChainOperation op1, ChainOperation op2) {
+    if (op1 instanceof ChainOperation.TypeCast || op2 instanceof ChainOperation.TypeCast) return false;
+
+    PsiMethod[] methods1 = ((ChainOperation.MethodCall)op1).getCandidates();
+    PsiMethod[] methods2 = ((ChainOperation.MethodCall)op2).getCandidates();
+
     PsiMethod repr1 = methods1[0];
     PsiMethod repr2 = methods2[0];
     if (repr1.hasModifierProperty(PsiModifier.STATIC) || repr2.hasModifierProperty(PsiModifier.STATIC)) return false;

@@ -22,7 +22,7 @@ import com.intellij.compiler.backwardRefs.CompilerReferenceServiceEx;
 import com.intellij.compiler.backwardRefs.ReferenceIndexUnavailableException;
 import com.intellij.compiler.chainsSearch.ChainSearchMagicConstants;
 import com.intellij.compiler.chainsSearch.ChainSearcher;
-import com.intellij.compiler.chainsSearch.MethodChain;
+import com.intellij.compiler.chainsSearch.CallChain;
 import com.intellij.compiler.chainsSearch.MethodChainLookupRangingHelper;
 import com.intellij.compiler.chainsSearch.context.ChainCompletionContext;
 import com.intellij.compiler.chainsSearch.context.ChainSearchTarget;
@@ -92,13 +92,13 @@ public class MethodChainCompletionContributor extends CompletionContributor {
   private static List<LookupElement> searchForLookups(ChainCompletionContext context) {
     CompilerReferenceServiceEx methodsUsageIndexReader = (CompilerReferenceServiceEx)CompilerReferenceService.getInstance(context.getProject());
     ChainSearchTarget target = context.getTarget();
-    List<MethodChain> searchResult =
+    List<CallChain> searchResult =
       ChainSearcher.search(ChainSearchMagicConstants.MAX_CHAIN_SIZE,
                            target,
                            ChainSearchMagicConstants.MAX_SEARCH_RESULT_SIZE,
                            context,
                            methodsUsageIndexReader);
-    int maxWeight = searchResult.stream().mapToInt(MethodChain::getChainWeight).max().orElse(0);
+    int maxWeight = searchResult.stream().mapToInt(CallChain::getChainWeight).max().orElse(0);
 
     return searchResult
       .stream()

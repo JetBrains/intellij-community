@@ -59,6 +59,8 @@ import com.intellij.util.io.PersistentEnumeratorBase;
 import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashSet;
 import gnu.trove.TIntHashSet;
+import gnu.trove.TObjectIntHashMap;
+import gnu.trove.TObjectIntProcedure;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -258,6 +260,52 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
     catch (Exception e) {
       onException(e, "find methods");
       return Collections.emptySortedSet();
+    }
+  }
+
+  /**
+   * finds one best candidate to do a cast type before given method call (eg.: <code>((B) a).someMethod()</code>). Follows given formula:
+   *
+   * #(files where method & type cast is occurred) / #(files where method is occurred) > 1 - 1 / probabilityThreshold
+   */
+  @Nullable
+  @Override
+  public LightRef.LightClassHierarchyElementDef mayCallOfTypeCast(@NotNull LightRef.JavaLightMethodRef method, int probabilityThreshold)
+    throws ReferenceIndexUnavailableException {
+    try {
+      myReadDataLock.lock();
+      try {
+        if (myReader == null) throw new ReferenceIndexUnavailableException();
+        final TIntHashSet ids = myReader.getAllContainingFileIds(method);
+
+        LightRef.LightClassHierarchyElementDef owner = method.getOwner();
+
+        TObjectIntHashMap<LightRef> typeCasts = myReader.getTypeCastsInside(owner, ids);
+
+        LightRef[] best = {null};
+        int[] bestFileCount = {0};
+
+        typeCasts.forEachEntry(new TObjectIntProcedure<LightRef>() {
+          @Override
+          public boolean execute(LightRef operandType, int matchedFileCount) {
+            if (ids.size() > probabilityThreshold * (matchedFileCount - ids.size())) {
+              if (best[0] == null || bestFileCount[0] < matchedFileCount) {
+                best[0] = operandType;
+                bestFileCount[0] = matchedFileCount;
+              }
+            }
+            return true;
+          }
+        });
+
+        return (LightRef.LightClassHierarchyElementDef)best[0];
+      }
+      finally {
+        myReadDataLock.unlock();
+      }
+    } catch (Exception e) {
+      onException(e, "conditional probability");
+      return null;
     }
   }
 

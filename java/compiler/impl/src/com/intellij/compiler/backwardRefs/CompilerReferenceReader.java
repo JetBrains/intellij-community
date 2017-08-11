@@ -30,6 +30,7 @@ import com.intellij.util.indexing.StorageException;
 import com.intellij.util.indexing.ValueContainer;
 import gnu.trove.THashSet;
 import gnu.trove.TIntHashSet;
+import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.backwardRefs.CompilerBackwardReferenceIndex;
@@ -176,6 +177,24 @@ class CompilerReferenceReader {
 
   public CompilerBackwardReferenceIndex getIndex() {
     return myIndex;
+  }
+
+  TObjectIntHashMap<LightRef> getTypeCastsInside(@NotNull LightRef.LightClassHierarchyElementDef toType, @NotNull TIntHashSet ids) throws StorageException {
+    TObjectIntHashMap<LightRef> typeCastStats = new TObjectIntHashMap<>();
+    myIndex.get(CompilerIndices.BACK_CAST).getData(toType).forEach(new ValueContainer.ContainerAction<Collection<LightRef>>() {
+      @Override
+      public boolean perform(int id, Collection<LightRef> value) {
+        if (!ids.contains(id)) return true;
+        for (LightRef ref : value) {
+          if (!typeCastStats.adjustValue(ref, 1)) {
+            typeCastStats.put(ref, 1);
+          }
+        }
+        return true;
+      }
+    });
+
+    return typeCastStats;
   }
 
   static boolean exists(Project project) {
