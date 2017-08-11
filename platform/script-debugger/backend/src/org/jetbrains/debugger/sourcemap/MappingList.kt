@@ -179,7 +179,7 @@ abstract class MappingList(private val mappings: List<MappingEntry>) : Mappings 
 
           var entry: MappingEntry? = mappings.get(firstIndex)
           do {
-            var nextEntry: MappingEntry? = if (++firstIndex < mappings.size) mappings.get(firstIndex) else null
+            var nextEntry = mappings.getOrNull(++firstIndex)
             if (nextEntry != null && getLine(nextEntry) != line) {
               nextEntry = null
             }
