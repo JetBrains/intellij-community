@@ -49,7 +49,6 @@ import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeParser;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.toolbox.ChainIterable;
-import one.util.streamex.StreamEx;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.HeadMethod;
 import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
@@ -107,7 +106,9 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
         final StructuredDocString docString = DocStringUtil.parse(docStringExpression.getStringValue(), docStringExpression);
         summary = docString.getSummary();
       }
-      return $(cat.toString()).add(describeDecorators(func, LSame2, ", ", LSame1)).add(describeFunction(func, LSame2, LSame1))
+      return $(cat.toString())
+               .add(describeDecorators(func, Function.identity(), TO_ONE_LINE_AND_ESCAPE, ", ", "\n"))
+               .add(describeFunction(func, LSame2, LSame1))
                .toString() + "\n" + summary;
     }
     else if (element instanceof PyClass) {
@@ -125,7 +126,9 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
         summary = docString.getSummary();
       }
 
-      return describeDecorators(cls, LSame2, ", ", LSame1).add(describeClass(cls, LSame2, false, false)).toString() + "\n" + summary;
+      return describeDecorators(cls, Function.identity(), TO_ONE_LINE_AND_ESCAPE, ", ", "\n")
+               .add(describeClass(cls, LSame2, false, false))
+               .toString() + "\n" + summary;
     }
     else if (element instanceof PyExpression) {
       return describeExpression((PyExpression)element, originalElement);
@@ -235,18 +238,31 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
   }
 
   @NotNull
-  static ChainIterable<String> describeDecorators(@NotNull PyDecoratable what,
-                                                  Function<Iterable<String>, Iterable<String>> decoNameWrapper,
-                                                  @NotNull String decoSeparator,
-                                                  Function<String, String> escaper) {
-    final ChainIterable<String> cat = new ChainIterable<>();
-    final PyDecoratorList decoList = what.getDecoratorList();
-    if (decoList != null) {
-      for (PyDecorator deco : decoList.getDecorators()) {
-        cat.add(describeDeco(deco, decoNameWrapper, escaper)).addItem(decoSeparator); // can't easily pass describeDeco to map() %)
+  static ChainIterable<String> describeDecorators(@NotNull PyDecoratable decoratable,
+                                                  @NotNull Function<String, String> escapedCalleeMapper,
+                                                  @NotNull Function<String, String> escaper,
+                                                  @NotNull String separator,
+                                                  @NotNull String suffix) {
+    final ChainIterable<String> result = new ChainIterable<>();
+
+    final PyDecoratorList decoratorList = decoratable.getDecoratorList();
+    if (decoratorList != null) {
+      boolean first = true;
+
+      for (PyDecorator decorator : decoratorList.getDecorators()) {
+        if (!first) {
+          result.addItem(separator);
+        }
+        result.add(describeDecorator(decorator, escapedCalleeMapper, escaper));
+        first = false;
       }
     }
-    return cat;
+
+    if (!result.isEmpty()) {
+      result.addItem(suffix);
+    }
+
+    return result;
   }
 
   /**
@@ -298,27 +314,22 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     return cat;
   }
 
-  //
   @NotNull
-  private static Iterable<String> describeDeco(@NotNull PyDecorator deco,
-                                               Function<Iterable<String>, Iterable<String>> nameWrapper,
-                                               //  addWith in tags, if need be
-                                               Function<String, String> argWrapper
-                                               // add escaping, if need be
-  ) {
-    final ChainIterable<String> cat = new ChainIterable<>();
-    cat.addItem("@").addWith(nameWrapper, $(PyUtil.getReadableRepr(deco.getCallee(), true)));
-    if (deco.hasArgumentList()) {
-      final PyArgumentList arglist = deco.getArgumentList();
-      if (arglist != null) {
-        cat
-          .addItem("(")
-          .add(interleave(StreamEx.of(arglist.getArguments()).map(LReadableRepr::apply).map(argWrapper::apply), ", "))
-          .addItem(")")
-        ;
-      }
+  private static Iterable<String> describeDecorator(@NotNull PyDecorator decorator,
+                                                    @NotNull Function<String, String> escapedCalleeMapper,
+                                                    @NotNull Function<String, String> escaper) {
+    final ChainIterable<String> result = new ChainIterable<>();
+
+    result
+      .addItem(escaper.apply("@"))
+      .addItem(escapedCalleeMapper.apply(escaper.apply(PyUtil.getReadableRepr(decorator.getCallee(), false))));
+
+    final PyArgumentList argumentList = decorator.getArgumentList();
+    if (argumentList != null) {
+      result.addItem(escaper.apply(PyUtil.getReadableRepr(argumentList, false)));
     }
-    return cat;
+
+    return result;
   }
 
   // provides ctrl+Q doc

@@ -311,4 +311,36 @@ public class PyQuickDocTest extends LightMarkedTestCase {
   public void testReferenceToMethodQualifiedWithInstance() {
     checkHTMLOnly();
   }
+
+  public void testOneDecoratorFunction() {
+    checkHTMLOnly();
+  }
+
+  public void testHoverOverOneDecoratorFunction() {
+    checkHover();
+  }
+
+  public void testManyDecoratorsFunction() {
+    checkHTMLOnly();
+  }
+
+  public void testHoverOverManyDecoratorsFunction() {
+    checkHover();
+  }
+
+  public void testOneDecoratorClass() {
+    checkHTMLOnly();
+  }
+
+  public void testHoverOverOneDecoratorClass() {
+    checkHover();
+  }
+
+  public void testManyDecoratorsClass() {
+    checkHTMLOnly();
+  }
+
+  public void testHoverOverManyDecoratorsClass() {
+    checkHover();
+  }
 }

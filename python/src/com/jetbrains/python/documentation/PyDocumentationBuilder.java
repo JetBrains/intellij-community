@@ -283,7 +283,7 @@ public class PyDocumentationBuilder {
 
     if (elementDefinition instanceof PyClass) {
       pyClass = (PyClass)elementDefinition;
-      myBody.add(PythonDocumentationProvider.describeDecorators(pyClass, TagItalic, BR, LCombUp));
+      myBody.add(PythonDocumentationProvider.describeDecorators(pyClass, WRAP_IN_ITALIC, ESCAPE_AND_SAVE_NEW_LINES_AND_SPACES, BR, BR));
       myBody.add(PythonDocumentationProvider.describeClass(pyClass, TagBold, true, false));
     }
     else if (elementDefinition instanceof PyFunction) {
@@ -294,8 +294,8 @@ public class PyDocumentationBuilder {
           myBody.addWith(TagSmall, PythonDocumentationProvider.describeClass(pyClass, TagCode, true, true)).addItem(BR).addItem(BR);
         }
       }
-      myBody.add(PythonDocumentationProvider.describeDecorators(pyFunction, TagItalic, BR, LCombUp))
-        .add(PythonDocumentationProvider.describeFunction(pyFunction, TagBold, LCombUp));
+      myBody.add(PythonDocumentationProvider.describeDecorators(pyFunction, WRAP_IN_ITALIC, ESCAPE_AND_SAVE_NEW_LINES_AND_SPACES, BR, BR));
+      myBody.add(PythonDocumentationProvider.describeFunction(pyFunction, TagBold, LCombUp));
       if (docStringExpression == null) {
         addInheritedDocString(pyFunction, pyClass);
       }

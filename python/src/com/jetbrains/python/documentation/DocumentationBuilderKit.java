@@ -18,14 +18,14 @@ package com.jetbrains.python.documentation;
 import com.google.common.collect.Lists;
 import com.intellij.codeInsight.documentation.DocumentationManagerProtocol;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.xml.CommonXmlStrings;
 import com.intellij.xml.util.XmlStringUtil;
-import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.toolbox.ChainIterable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Function;
 
@@ -40,7 +40,16 @@ class DocumentationBuilderKit {
   final static @NonNls String BR = "<br>";
   static final Function<String, String> LSame1 = name -> name;
   static final Function<Iterable<String>, Iterable<String>> LSame2 = what -> what;
-  public static Function<PyExpression, String> LReadableRepr = arg -> PyUtil.getReadableRepr(arg, true);
+
+  @NotNull
+  static final Function<String, String> TO_ONE_LINE_AND_ESCAPE = s -> StringUtil.escapeXml(s.replace('\n', ' '));
+
+  @NotNull
+  static final Function<String, String> ESCAPE_AND_SAVE_NEW_LINES_AND_SPACES =
+    s -> StringUtil.escapeXml(s).replace("\n", BR).replace(" ", CommonXmlStrings.NBSP);
+
+  @NotNull
+  static final Function<String, String> WRAP_IN_ITALIC = s -> "<i>" + s + "</i>";
 
   private DocumentationBuilderKit() {
   }
@@ -69,17 +78,6 @@ class DocumentationBuilderKit {
 
   static ChainIterable<String> $(String... content) {
     return new ChainIterable<>(Arrays.asList(content));
-  }
-
-  static <T> Iterable<T> interleave(Iterable<T> source, T filler) {
-    final List<T> ret = new LinkedList<>();
-    boolean isNext = false;
-    for (T what : source) {
-      if (isNext) ret.add(filler);
-      else isNext = true;
-      ret.add(what);
-    }
-    return ret;
   }
 
   // make a first-order curried objects out of wrapInTag()
