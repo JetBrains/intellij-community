@@ -1,22 +1,15 @@
 package com.intellij.remoteServer.impl.configuration;
 
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.remoteServer.RemoteServerConfigurable;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.ServerConfiguration;
-import com.intellij.remoteServer.runtime.ServerConnection;
-import com.intellij.remoteServer.runtime.ServerConnectionManager;
-import com.intellij.remoteServer.runtime.ServerConnector;
-import com.intellij.remoteServer.runtime.deployment.ServerRuntimeInstance;
 import com.intellij.remoteServer.util.CloudDataLoader;
 import com.intellij.remoteServer.util.DelayedRunner;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.Nls;
@@ -25,7 +18,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author nik
@@ -204,49 +196,23 @@ public class SingleRemoteServerConfigurable extends NamedConfigurable<RemoteServ
     return myServer.getType().getIcon();
   }
 
-  private class ConnectionTester {
+  private class ConnectionTester extends RemoteServerConnectionTester {
+
+    public ConnectionTester() {
+      super(myInnerServer);
+    }
 
     public void testConnection() {
-      final ServerConnection connection = ServerConnectionManager.getInstance().createTemporaryConnection(myInnerServer);
-      final AtomicReference<Boolean> connectedRef = new AtomicReference<>(null);
-      final Semaphore semaphore = new Semaphore();
-      semaphore.down();
-      connection.connectIfNeeded(new ServerConnector.ConnectionCallback() {
+      testConnection(this::testFinished);
+    }
 
-        @Override
-        public void connected(@NotNull ServerRuntimeInstance serverRuntimeInstance) {
-          connectedRef.set(true);
-          semaphore.up();
-          connection.disconnect();
-        }
-
-        @Override
-        public void errorOccurred(@NotNull String errorMessage) {
-          connectedRef.set(false);
-          semaphore.up();
+    public void testFinished(boolean connected, @NotNull String connectionStatus) {
+      UIUtil.invokeLaterIfNeeded(() -> {
+        if (myConnectionTester == this) {
+          setConnectionStatus(!connected, connected,
+                              connected ? "Connection successful" : "Cannot connect: " + connectionStatus);
         }
       });
-
-      new Task.Backgroundable(null, "Connecting...", true) {
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          indicator.setIndeterminate(true);
-          while (!indicator.isCanceled()) {
-            if (semaphore.waitFor(500)) {
-              break;
-            }
-          }
-          final Boolean connected = connectedRef.get();
-          if (connected == null) {
-            return;
-          }
-          UIUtil.invokeLaterIfNeeded(() -> {
-            if (myConnectionTester == ConnectionTester.this) {
-              setConnectionStatus(!connected, connected, connected ? "Connection successful" : "Cannot connect: " + connection.getStatusText());
-            }
-          });
-        }
-      }.queue();
     }
   }
 }
