@@ -32,6 +32,7 @@ import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.junit4.JUnit4IdeaTestRunner;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -417,7 +418,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     Project project = myConfiguration.getProject();
     JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
     if (DumbService.getInstance(project)
-          .computeWithAlternativeResolveEnabled(() -> psiFacade.findClass(JUnitCommonClassNames.ORG_JUNIT_PLATFORM_ENGINE_TEST_ENGINE, globalSearchScope)) == null) {
+          .computeWithAlternativeResolveEnabled(() -> ReadAction.compute(() -> psiFacade.findClass(JUnitCommonClassNames.ORG_JUNIT_PLATFORM_ENGINE_TEST_ENGINE, globalSearchScope))) == null) {
       return false;
     }
 
