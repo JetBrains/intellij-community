@@ -16,6 +16,8 @@
 package com.intellij.execution.dashboard;
 
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
 
 import javax.swing.*;
@@ -45,5 +47,25 @@ public class DashboardRunConfigurationStatus {
 
   public Icon getIcon() {
     return myIcon;
+  }
+
+  public static DashboardRunConfigurationStatus getStatus(DashboardRunConfigurationNode node) {
+    RunContentDescriptor descriptor = node.getDescriptor();
+    if (descriptor == null) {
+      return STOPPED;
+    }
+    ProcessHandler processHandler = descriptor.getProcessHandler();
+    if (processHandler == null) {
+      return STOPPED;
+    }
+    Integer exitCode = processHandler.getExitCode();
+    if (exitCode == null) {
+      return STARTED;
+    }
+    Boolean terminationRequested = processHandler.getUserData(ProcessHandler.TERMINATION_REQUESTED);
+    if (exitCode == 0 || (terminationRequested != null && terminationRequested)) {
+      return STOPPED;
+    }
+    return FAILED;
   }
 }

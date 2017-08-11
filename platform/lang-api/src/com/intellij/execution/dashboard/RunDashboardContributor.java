@@ -17,8 +17,6 @@ package com.intellij.execution.dashboard;
 
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.ui.ColoredTreeCellRenderer;
@@ -69,23 +67,7 @@ public abstract class RunDashboardContributor {
    */
   @NotNull
   public DashboardRunConfigurationStatus getStatus(@NotNull DashboardRunConfigurationNode node) {
-    RunContentDescriptor descriptor = node.getDescriptor();
-    if (descriptor == null) {
-      return DashboardRunConfigurationStatus.STOPPED;
-    }
-    ProcessHandler processHandler = descriptor.getProcessHandler();
-    if (processHandler == null) {
-      return DashboardRunConfigurationStatus.STOPPED;
-    }
-    Integer exitCode = processHandler.getExitCode();
-    if (exitCode == null) {
-      return DashboardRunConfigurationStatus.STARTED;
-    }
-    Boolean terminationRequested = processHandler.getUserData(ProcessHandler.TERMINATION_REQUESTED);
-    if (exitCode == 0 || (terminationRequested != null && terminationRequested)) {
-      return DashboardRunConfigurationStatus.STOPPED;
-    }
-    return DashboardRunConfigurationStatus.FAILED;
+    return DashboardRunConfigurationStatus.getStatus(node);
   }
 
   public boolean isShowInDashboard(@NotNull RunConfiguration runConfiguration) {

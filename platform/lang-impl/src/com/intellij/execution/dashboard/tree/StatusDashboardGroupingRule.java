@@ -66,10 +66,9 @@ public class StatusDashboardGroupingRule implements DashboardGroupingRule {
     if (node instanceof DashboardRunConfigurationNode) {
       DashboardRunConfigurationNode runConfigurationNode = (DashboardRunConfigurationNode)node;
       RunDashboardContributor contributor = runConfigurationNode.getContributor();
-      if (contributor != null) {
-        DashboardRunConfigurationStatus status = contributor.getStatus(runConfigurationNode);
-        return new DashboardGroupImpl<>(status, status.getName(), status.getIcon());
-      }
+      DashboardRunConfigurationStatus status = contributor != null ? contributor.getStatus(runConfigurationNode) :
+                                               DashboardRunConfigurationStatus.getStatus(runConfigurationNode);
+      return new DashboardGroupImpl<>(status, status.getName(), status.getIcon());
     }
     return null;
   }
