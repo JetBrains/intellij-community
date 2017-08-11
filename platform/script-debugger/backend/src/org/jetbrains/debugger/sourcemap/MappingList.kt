@@ -121,6 +121,10 @@ abstract class MappingList(private val mappings: List<MappingEntry>) : Mappings 
   private fun getNext(index: Int) = mappings.getOrNull(index + 1)
 
   override fun getNext(mapping: MappingEntry): MappingEntry? {
+    if (comparator == MAPPING_COMPARATOR_BY_GENERATED_POSITION) {
+      return mapping.nextGenerated
+    }
+
     var index = mappings.binarySearch(mapping, comparator)
     if (index < 0) {
       return null
