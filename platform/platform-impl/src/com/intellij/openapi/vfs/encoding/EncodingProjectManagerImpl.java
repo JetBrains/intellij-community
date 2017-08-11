@@ -186,7 +186,7 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
       }
     }
 
-    if (!Comparing.equal(oldCharset, charset)) {
+    if (!Comparing.equal(oldCharset, charset) || virtualFileOrDir != null && !Comparing.equal(virtualFileOrDir.getCharset(), charset)) {
       myModificationTracker.incModificationCount();
       if (virtualFileOrDir != null) {
         virtualFileOrDir.setCharset(virtualFileOrDir.getBOM() == null ? charset : null);
