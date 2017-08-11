@@ -33,6 +33,9 @@
     <externalProjectDataService implementation="com.intellij.openapi.externalSystem.service.project.manage.ContentRootDataService"/>
     <externalProjectDataService implementation="com.intellij.openapi.externalSystem.service.project.manage.LibraryDependencyDataService"/>
     <externalProjectDataService implementation="com.intellij.openapi.externalSystem.service.project.manage.ModuleDependencyDataService"/>
+    <externalProjectDataService implementation="com.intellij.openapi.externalSystem.service.project.manage.ConfigurationDataService"/>
+
+    <externalSystemConfigurationHandler implementation="com.intellij.openapi.externalSystem.service.project.manage.CompilerConfigurationHandler"/>
 
     <configuration.ModuleStructureExtension implementation="com.intellij.openapi.externalSystem.service.project.manage.ExternalModuleStructureExtension"/>
     

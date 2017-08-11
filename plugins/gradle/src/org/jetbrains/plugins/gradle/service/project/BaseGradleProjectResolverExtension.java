@@ -22,6 +22,7 @@ import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.externalSystem.JavaProjectData;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.externalSystem.model.ConfigurationDataImpl;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
@@ -162,6 +163,12 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
       ideProject.createChild(ExternalProjectDataService.KEY, externalProject);
       ideProject.getData().setDescription(externalProject.getDescription());
     }
+
+    final IntelliJSettings intellijSettings = resolverCtx.getExtraProject(IntelliJProjectSettings.class);
+    if (intellijSettings != null) {
+      ideProject.createChild(ProjectKeys.CONFIGURATION,
+                             new ConfigurationDataImpl(GradleConstants.SYSTEM_ID, intellijSettings.getSettings()));
+    }
   }
 
   @NotNull
@@ -298,6 +305,12 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
         extensions.getTasks().addAll(externalProject.getTasks().values());
       }
       ideModule.createChild(GradleExtensionsDataService.KEY, extensions);
+    }
+
+    final IntelliJSettings intellijSettings = resolverCtx.getExtraProject(gradleModule, IntelliJSettings.class);
+    if (intellijSettings != null) {
+      ideModule.createChild(ProjectKeys.CONFIGURATION,
+                            new ConfigurationDataImpl(GradleConstants.SYSTEM_ID, intellijSettings.getSettings()));
     }
   }
 
@@ -629,6 +642,8 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     result.add(BuildScriptClasspathModel.class);
     result.add(GradleExtensions.class);
     result.add(ExternalProject.class);
+    result.add(IntelliJProjectSettings.class);
+    result.add(IntelliJSettings.class);
     return result;
   }
 
