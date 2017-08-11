@@ -421,6 +421,20 @@ open class GuiTestCase : GuiTestBase() {
   }
 
   /**
+   * Context function for IdeFrame: creates a MainToolbarFixture instance as receiver object. Code block after
+   * it call methods on the receiver object (MainToolbarFixture instance).
+   *
+   * @timeout in seconds to find get EditorFixture
+   */
+  fun IdeFrameFixture.toolbar(timeout: Long = defaultTimeout, func: MainToolbarFixture.() -> Unit) {
+    func(this.toolbar)
+  }
+
+  fun IdeFrameFixture.navigationBar(timeout: Long = defaultTimeout, func: NavigationBarFixture.() -> Unit) {
+    func(this.navigationBar)
+  }
+
+  /**
    * Extension function for IDE to iterate through the menu.
    *
    * @path items like: popup("New", "File")

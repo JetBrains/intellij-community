@@ -22,6 +22,7 @@ import com.intellij.ide.projectView.impl.ProjectViewTree
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.ui.*
 import com.intellij.openapi.util.Ref
@@ -33,9 +34,7 @@ import com.intellij.openapi.wm.impl.WindowManagerImpl
 import com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame
 import com.intellij.testGuiFramework.cellReader.ExtendedJListCellReader
 import com.intellij.testGuiFramework.cellReader.ExtendedJTableCellReader
-import com.intellij.testGuiFramework.fixtures.MessageDialogFixture
-import com.intellij.testGuiFramework.fixtures.MessagesFixture
-import com.intellij.testGuiFramework.fixtures.SettingsTreeFixture
+import com.intellij.testGuiFramework.fixtures.*
 import com.intellij.testGuiFramework.fixtures.extended.ExtendedTreeFixture
 import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.generators.Utils.clicks
@@ -504,6 +503,21 @@ class EditorGenerator : LocalContextCodeGenerator<EditorComponentImpl>() {
   override fun generate(cmp: EditorComponentImpl) = "editor {"
 
 }
+
+class MainToolbarGenerator :  LocalContextCodeGenerator<ActionToolbarImpl>() {
+  override fun acceptor(): (Component) -> Boolean = {component -> component is ActionToolbarImpl
+                                                                  && MainToolbarFixture.isMainToolbar(component)}
+
+  override fun generate(cmp: ActionToolbarImpl): String = "toolbar {"
+}
+
+class NavigationBarGenerator :  LocalContextCodeGenerator<JPanel>() {
+  override fun acceptor(): (Component) -> Boolean = {component -> component is JPanel
+                                                                  && NavigationBarFixture.isNavBar(component)}
+
+  override fun generate(cmp: JPanel): String = "navigationBar {"
+}
+
 
 
 //class JBPopupMenuGenerator: LocalContextCodeGenerator<JBPopupMenu>() {
