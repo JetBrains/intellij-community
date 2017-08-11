@@ -418,7 +418,10 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     Project project = myConfiguration.getProject();
     JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
     if (DumbService.getInstance(project)
-          .computeWithAlternativeResolveEnabled(() -> ReadAction.compute(() -> psiFacade.findClass(JUnitCommonClassNames.ORG_JUNIT_PLATFORM_ENGINE_TEST_ENGINE, globalSearchScope))) == null) {
+          .computeWithAlternativeResolveEnabled(() -> {
+            @Nullable PsiClass testEngine = ReadAction.compute(() -> psiFacade.findClass(JUnitCommonClassNames.ORG_JUNIT_PLATFORM_ENGINE_TEST_ENGINE, globalSearchScope));
+            return testEngine;
+          }) == null) {
       return false;
     }
 
