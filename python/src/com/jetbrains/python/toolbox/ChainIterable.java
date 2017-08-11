@@ -15,12 +15,14 @@
  */
 package com.jetbrains.python.toolbox;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.function.Function;
 
 /**
  * Iterable that splices other iterables and iterates over them sequentially.
@@ -53,7 +55,7 @@ public class ChainIterable<T> extends ChainedListBase<Iterable<T>> implements It
    * @param another
    * @return
    */
-  public ChainIterable<T> addWith(FP.Lambda1<Iterable<T>, Iterable<T>> wrapper, Iterable<T> another) {
+  public ChainIterable<T> addWith(Function<Iterable<T>, Iterable<T>> wrapper, Iterable<T> another) {
     return (ChainIterable<T>)super.add(wrapper.apply(another));
   }
 
@@ -79,7 +81,7 @@ public class ChainIterable<T> extends ChainedListBase<Iterable<T>> implements It
 
   @Override
   public String toString() {
-    return FP.fold(new FP.StringCollector<>(), this, new StringBuilder()).toString();
+    return StringUtil.join(this, "");
   }
 
   private static class ChainIterator<T> implements Iterator<T> {

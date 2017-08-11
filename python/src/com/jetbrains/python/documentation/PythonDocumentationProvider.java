@@ -49,7 +49,7 @@ import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeParser;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.toolbox.ChainIterable;
-import com.jetbrains.python.toolbox.FP;
+import one.util.streamex.StreamEx;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.HeadMethod;
 import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
@@ -66,6 +66,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
 
 import static com.jetbrains.python.documentation.DocumentationBuilderKit.*;
 
@@ -142,8 +143,8 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
    */
   @NotNull
   static ChainIterable<String> describeFunction(@NotNull PyFunction fun,
-                                                FP.Lambda1<Iterable<String>, Iterable<String>> funcNameWrapper,
-                                                @NotNull FP.Lambda1<String, String> escaper
+                                                Function<Iterable<String>, Iterable<String>> funcNameWrapper,
+                                                @NotNull Function<String, String> escaper
   ) {
     final ChainIterable<String> cat = new ChainIterable<>();
     final String name = fun.getName();
@@ -235,9 +236,9 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
 
   @NotNull
   static ChainIterable<String> describeDecorators(@NotNull PyDecoratable what,
-                                                  FP.Lambda1<Iterable<String>, Iterable<String>> decoNameWrapper,
+                                                  Function<Iterable<String>, Iterable<String>> decoNameWrapper,
                                                   @NotNull String decoSeparator,
-                                                  FP.Lambda1<String, String> escaper) {
+                                                  Function<String, String> escaper) {
     final ChainIterable<String> cat = new ChainIterable<>();
     final PyDecoratorList decoList = what.getDecoratorList();
     if (decoList != null) {
@@ -258,7 +259,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
    */
   @NotNull
   static ChainIterable<String> describeClass(@NotNull PyClass cls,
-                                             FP.Lambda1<Iterable<String>, Iterable<String>> nameWrapper,
+                                             Function<Iterable<String>, Iterable<String>> nameWrapper,
                                              boolean allowHtml,
                                              boolean linkOwnName) {
     final ChainIterable<String> cat = new ChainIterable<>();
@@ -300,9 +301,9 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
   //
   @NotNull
   private static Iterable<String> describeDeco(@NotNull PyDecorator deco,
-                                               FP.Lambda1<Iterable<String>, Iterable<String>> nameWrapper,
+                                               Function<Iterable<String>, Iterable<String>> nameWrapper,
                                                //  addWith in tags, if need be
-                                               FP.Lambda1<String, String> argWrapper
+                                               Function<String, String> argWrapper
                                                // add escaping, if need be
   ) {
     final ChainIterable<String> cat = new ChainIterable<>();
@@ -312,7 +313,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
       if (arglist != null) {
         cat
           .addItem("(")
-          .add(interleave(FP.map(FP.combine(LReadableRepr, argWrapper), arglist.getArguments()), ", "))
+          .add(interleave(StreamEx.of(arglist.getArguments()).map(LReadableRepr::apply).map(argWrapper::apply), ", "))
           .addItem(")")
         ;
       }
