@@ -15,8 +15,8 @@
  */
 package com.intellij.ui.win;
 
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.util.lang.UrlClassLoader;
 
 import java.lang.ref.WeakReference;
@@ -36,7 +36,7 @@ public class RecentTasks {
 
   private synchronized static void init() {
     if (initialized.compareAndSet(false, true)) {
-      initialize(ApplicationInfoEx.getInstanceEx().getVersionName() + "." + PathManager.getConfigPath().hashCode());
+      initialize(ApplicationNamesInfo.getInstance().getFullProductName() + "." + PathManager.getConfigPath().hashCode());
     }
   }
 
