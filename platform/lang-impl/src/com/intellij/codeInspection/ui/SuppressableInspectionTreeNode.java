@@ -23,6 +23,7 @@ import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -145,7 +146,7 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
     if (actions.length == 0) return Collections.emptySet();
     return suppressActionHolder.internSuppressActions(Arrays.stream(actions)
       .filter(action -> action.isAvailable(project, null, element))
-      .collect(Collectors.toCollection(() -> ContainerUtil.newConcurrentSet(ContainerUtil.identityStrategy()))));
+      .collect(Collectors.toCollection(() -> ConcurrentCollectionFactory.createConcurrentSet(ContainerUtil.identityStrategy()))));
   }
 
   protected abstract String calculatePresentableName();
