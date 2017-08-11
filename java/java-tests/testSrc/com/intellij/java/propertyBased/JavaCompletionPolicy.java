@@ -16,11 +16,14 @@
 package com.intellij.java.propertyBased;
 
 import com.intellij.lang.jvm.JvmModifier;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.propertyBased.CompletionPolicy;
+import com.intellij.testFramework.propertyBased.MadTestingUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
@@ -28,6 +31,12 @@ import java.util.Arrays;
  * @author peter
  */
 class JavaCompletionPolicy extends CompletionPolicy {
+
+  @Override
+  public boolean shouldCheckDuplicates(@NotNull Editor editor, @NotNull PsiFile file, @Nullable PsiElement leaf) {
+    return !MadTestingUtil.isAfterError(file, editor.getCaretModel().getOffset());
+  }
+
   @Override
   protected boolean shouldSuggestReferenceText(@NotNull PsiReference ref, @NotNull PsiElement target) {
     PsiElement refElement = ref.getElement();
@@ -42,10 +51,10 @@ class JavaCompletionPolicy extends CompletionPolicy {
     if (PsiTreeUtil.getParentOfType(ref, PsiPackageStatement.class) != null) return false;
 
     if (!ref.isQualified() && target instanceof PsiPackage) return false;
-    if (target instanceof PsiClass && PsiTreeUtil.isAncestor(target, ref, true)) {
-      PsiElement lBrace = ((PsiClass)target).getLBrace();
-      if (lBrace == null || ref.getTextRange().getStartOffset() < lBrace.getTextRange().getStartOffset()) {
-        return false;
+    if (target instanceof PsiClass) {
+      if (isCyclicInheritance(ref, target)) return false;
+      if (ref.getParent() instanceof PsiAnnotation && !((PsiClass)target).isAnnotationType()) {
+        return false; // red code
       }
     }
     if (target instanceof PsiField &&
@@ -57,6 +66,14 @@ class JavaCompletionPolicy extends CompletionPolicy {
       return false;
     }
     return target != null;
+  }
+
+  private static boolean isCyclicInheritance(PsiJavaCodeReferenceElement ref, @NotNull PsiElement target) {
+    if (PsiTreeUtil.isAncestor(target, ref, true)) {
+      PsiElement lBrace = ((PsiClass)target).getLBrace();
+      return lBrace == null || ref.getTextRange().getStartOffset() < lBrace.getTextRange().getStartOffset();
+    }
+    return false;
   }
 
   private static boolean isStaticWithInstanceQualifier(PsiJavaCodeReferenceElement ref, @NotNull PsiElement target) {
