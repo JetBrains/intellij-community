@@ -15,7 +15,7 @@
  */
 package org.jetbrains.idea.svn;
 
-import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.Trinity;
@@ -161,11 +161,9 @@ public class SvnNativeCallsTranslator {
         if (trinity == null) return null;
         return MessageFormat.format(ourGenericAdvice, callInfo.getFunctionName(),
                                     String.valueOf(callInfo.getResultCode()) + " ( " + trinity.getFirst() +
-                                    " - " + trinity.getSecond() + ")" + "\nYou are likely to have modified " +
-                                    ApplicationInfo.getInstance().getVersionName() + " bundle.\n" +
-                                    "Please try to reinstall " + ApplicationInfo.getInstance().getVersionName());
+                                    " - " + trinity.getSecond() + ")" + "\nYou are likely have modified " +
+                                    ApplicationNamesInfo.getInstance().getFullProductName() + " bundle.\n" + "Please try to reinstall.");
       });
-
     }
 
     // from http://developer.apple.com/library/mac/#documentation/Security/Reference/keychainservices/Reference/reference.html
