@@ -74,7 +74,13 @@ public class DfaPsiUtil {
   }
 
   @NotNull
-  static Nullness getElementNullability(@Nullable PsiType resultType,
+  public static Nullness getElementNullabilityIgnoringParameterInference(@Nullable PsiType resultType,
+                                                                         @Nullable PsiModifierListOwner owner) {
+    return getElementNullability(resultType, owner, true);
+  }
+
+  @NotNull
+  private static Nullness getElementNullability(@Nullable PsiType resultType,
                                         @Nullable PsiModifierListOwner owner,
                                         boolean ignoreParameterNullabilityInference) {
     if (owner == null) return getTypeNullability(resultType);

@@ -38,7 +38,7 @@ public class NullnessUtil {
 
   static Boolean calcCanBeNull(DfaVariableValue value) {
     PsiModifierListOwner var = value.getPsiVariable();
-    Nullness nullability = DfaPsiUtil.getElementNullability(value.getVariableType(), var, true);
+    Nullness nullability = DfaPsiUtil.getElementNullabilityIgnoringParameterInference(value.getVariableType(), var);
     if (nullability != Nullness.UNKNOWN) {
       return toBoolean(nullability);
     }

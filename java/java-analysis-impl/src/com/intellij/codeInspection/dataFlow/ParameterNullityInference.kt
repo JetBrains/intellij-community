@@ -39,21 +39,21 @@ private fun inferNotNullParameters(tree: LighterAST, parameterNames: List<String
     val element = queue.removeFirst()
     val type = element.tokenType
     when (type) {
-      CONDITIONAL_EXPRESSION, EXPRESSION_STATEMENT -> JavaLightTreeUtil.findExpressionChild(tree, element)?.let { queue.addFirst(it) }
+      CONDITIONAL_EXPRESSION, EXPRESSION_STATEMENT -> JavaLightTreeUtil.findExpressionChild(tree, element)?.let(queue::addFirst)
       RETURN_STATEMENT -> {
         queue.clear()
-        JavaLightTreeUtil.findExpressionChild(tree, element)?.let { queue.addFirst(it) }
+        JavaLightTreeUtil.findExpressionChild(tree, element)?.let(queue::addFirst)
       }
       FOR_STATEMENT -> {
         val condition = JavaLightTreeUtil.findExpressionChild(tree, element)
         queue.clear()
         if (condition != null) {
           queue.addFirst(condition)
-          LightTreeUtil.firstChildOfType(tree, element, ElementType.JAVA_STATEMENT_BIT_SET)?.let { queue.addFirst(it) }
+          LightTreeUtil.firstChildOfType(tree, element, ElementType.JAVA_STATEMENT_BIT_SET)?.let(queue::addFirst)
         }
         else {
           // no condition == endless loop: we may analyze body (at least until break/return/if/etc.)
-          tree.getChildren(element).asReversed().forEach { queue.addFirst(it) }
+          tree.getChildren(element).asReversed().forEach(queue::addFirst)
         }
       }
       WHILE_STATEMENT -> {
@@ -62,7 +62,7 @@ private fun inferNotNullParameters(tree: LighterAST, parameterNames: List<String
         if (expression?.tokenType == LITERAL_EXPRESSION &&
             LightTreeUtil.firstChildOfType(tree, expression, JavaTokenType.TRUE_KEYWORD) != null) {
           // while(true) == endless loop: we may analyze body (at least until break/return/if/etc.)
-          tree.getChildren(element).asReversed().forEach { queue.addFirst(it) }
+          tree.getChildren(element).asReversed().forEach(queue::addFirst)
         } else {
           dereference(tree, expression, canBeNulls, notNulls, queue)
         }
@@ -74,35 +74,35 @@ private fun inferNotNullParameters(tree: LighterAST, parameterNames: List<String
       }
       BINARY_EXPRESSION, POLYADIC_EXPRESSION -> {
         if (LightTreeUtil.firstChildOfType(tree, element, TokenSet.create(JavaTokenType.ANDAND, JavaTokenType.OROR)) != null) {
-          JavaLightTreeUtil.findExpressionChild(tree, element)?.let { queue.addFirst(it) }
+          JavaLightTreeUtil.findExpressionChild(tree, element)?.let(queue::addFirst)
         }
         else {
-          tree.getChildren(element).asReversed().forEach { queue.addFirst(it) }
+          tree.getChildren(element).asReversed().forEach(queue::addFirst)
         }
       }
       EMPTY_STATEMENT, ASSERT_STATEMENT, DO_WHILE_STATEMENT, DECLARATION_STATEMENT, BLOCK_STATEMENT -> {
-        tree.getChildren(element).asReversed().forEach { queue.addFirst(it) }
+        tree.getChildren(element).asReversed().forEach(queue::addFirst)
       }
       SYNCHRONIZED_STATEMENT -> {
         val sync = JavaLightTreeUtil.findExpressionChild(tree, element)
         dereference(tree, sync, canBeNulls, notNulls, queue)
-        LightTreeUtil.firstChildOfType(tree, element, CODE_BLOCK)?.let { queue.addFirst(it) }
+        LightTreeUtil.firstChildOfType(tree, element, CODE_BLOCK)?.let(queue::addFirst)
       }
       FIELD, PARAMETER, LOCAL_VARIABLE -> {
         canBeNulls.remove(JavaLightTreeUtil.getNameIdentifierText(tree, element))
-        JavaLightTreeUtil.findExpressionChild(tree, element)?.let { queue.addFirst(it) }
+        JavaLightTreeUtil.findExpressionChild(tree, element)?.let(queue::addFirst)
       }
       EXPRESSION_LIST -> {
         val children = JavaLightTreeUtil.getExpressionChildren(tree, element)
         // When parameter is passed to another method, that method may have "null -> fail" contract,
         // so without knowing this we cannot continue inference for the parameter
         children.forEach { ignore(tree, it, canBeNulls) }
-        children.asReversed().forEach { queue.addFirst(it) }
+        children.asReversed().forEach(queue::addFirst)
       }
       ASSIGNMENT_EXPRESSION -> {
         val lvalue = JavaLightTreeUtil.findExpressionChild(tree, element)
         ignore(tree, lvalue, canBeNulls)
-        tree.getChildren(element).asReversed().forEach { queue.addFirst(it) }
+        tree.getChildren(element).asReversed().forEach(queue::addFirst)
       }
       ARRAY_ACCESS_EXPRESSION -> JavaLightTreeUtil.getExpressionChildren(tree, element).forEach {
         dereference(tree, it, canBeNulls, notNulls, queue)
@@ -112,8 +112,8 @@ private fun inferNotNullParameters(tree: LighterAST, parameterNames: List<String
         dereference(tree, qualifier, canBeNulls, notNulls, queue)
       }
       CLASS, METHOD, LAMBDA_EXPRESSION -> {
-        // ignore classes, methods and lambda expression bodies as it's not known whether they will be instantiated/executed
-        // for anonymous classes argument list, field initializers and instance initialization sections are checked
+        // Ignore classes, methods and lambda expression bodies as it's not known whether they will be instantiated/executed.
+        // For anonymous classes argument list, field initializers and instance initialization sections are checked.
       }
       else -> {
         if (ElementType.JAVA_STATEMENT_BIT_SET.contains(type)) {
@@ -121,7 +121,7 @@ private fun inferNotNullParameters(tree: LighterAST, parameterNames: List<String
           queue.clear()
         }
         else {
-          tree.getChildren(element).asReversed().forEach { queue.addFirst(it) }
+          tree.getChildren(element).asReversed().forEach(queue::addFirst)
         }
       }
     }
@@ -147,10 +147,7 @@ private fun dereference(tree: LighterAST,
                         queue: ArrayDeque<LighterASTNode>) {
   if (expression == null) return
   if (expression.tokenType == REFERENCE_EXPRESSION && JavaLightTreeUtil.findExpressionChild(tree, expression) == null) {
-    val name = JavaLightTreeUtil.getNameIdentifierText(tree, expression)
-    if (name != null && canBeNulls.remove(name)) {
-      notNulls.add(name)
-    }
+    JavaLightTreeUtil.getNameIdentifierText(tree, expression)?.takeIf(canBeNulls::remove)?.let(notNulls::add)
   }
   else {
     queue.addFirst(expression)
@@ -162,11 +159,10 @@ private fun dereference(tree: LighterAST,
  * is absent in the source or it's a primitive type (thus nullity inference does not apply).
  */
 private fun getParameterNames(tree: LighterAST, method: LighterASTNode): List<String?> {
-  val parameterList = LightTreeUtil.firstChildOfType(tree, method, PARAMETER_LIST) ?: return ArrayList()
+  val parameterList = LightTreeUtil.firstChildOfType(tree, method, PARAMETER_LIST) ?: return emptyList()
   val parameters = LightTreeUtil.getChildrenOfType(tree, parameterList, PARAMETER)
-  return parameters.mapTo(ArrayList()) {
+  return parameters.map {
     if (LightTreeUtil.firstChildOfType(tree, it, ElementType.PRIMITIVE_TYPE_BIT_SET) != null) null
     else JavaLightTreeUtil.getNameIdentifierText(tree, it)
   }
 }
-

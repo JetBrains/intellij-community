@@ -197,9 +197,7 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
 
     if (listOwner instanceof PsiMethod) {
       PsiAnnotation hardcoded = getHardcodedContractAnnotation((PsiMethod)listOwner);
-      if (hardcoded != null) {
-        result.add(hardcoded);
-      }
+      ContainerUtil.addIfNotNull(result, hardcoded);
       if (listOwner instanceof PsiMethodImpl) {
         if (hardcoded == null && !ignoreInference(listOwner, ORG_JETBRAINS_ANNOTATIONS_CONTRACT)) {
           ContainerUtil.addIfNotNull(result, getInferredContractAnnotation((PsiMethodImpl)listOwner));
@@ -215,10 +213,7 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
     }
 
     if (listOwner instanceof PsiParameter && !ignoreInference(listOwner, AnnotationUtil.NOT_NULL)) {
-      PsiAnnotation annotation = getInferredNullityAnnotation((PsiParameter)listOwner);
-      if (annotation != null) {
-        result.add(annotation);
-      }
+      ContainerUtil.addIfNotNull(result, getInferredNullityAnnotation((PsiParameter)listOwner));
     }
 
     return result.toArray(PsiAnnotation.EMPTY_ARRAY);
