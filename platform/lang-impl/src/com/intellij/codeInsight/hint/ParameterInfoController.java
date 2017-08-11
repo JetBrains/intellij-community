@@ -126,7 +126,7 @@ public class ParameterInfoController implements Disposable {
 
   public static boolean isAlreadyShown(Editor editor, int lbraceOffset, boolean singleParameterInfo) {
     ParameterInfoController controller = findControllerAtOffset(editor, lbraceOffset);
-    return controller != null && controller.myHint.isVisible() && (!controller.mySingleParameterInfo || !singleParameterInfo);
+    return controller != null && controller.myHint.isVisible() && (!controller.mySingleParameterInfo || singleParameterInfo);
   }
 
   public ParameterInfoController(@NotNull Project project,
