@@ -160,6 +160,7 @@ internal object JavaConverter {
         is PsiAnnotationParameterList -> unwrapElements(element.parent)
         is PsiModifierList -> unwrapElements(element.parent)
         is PsiExpressionList -> unwrapElements(element.parent)
+      is PsiImportList -> unwrapElements(element.parent)
         else -> element
     }
 
@@ -188,6 +189,7 @@ internal object JavaConverter {
             is PsiArrayInitializerMemberValue -> el<UCallExpression>(build(::JavaAnnotationArrayInitializerUCallExpression))
             is PsiTypeElement -> el<UTypeReferenceExpression>(build(::JavaUTypeReferenceExpression))
             is PsiJavaCodeReferenceElement -> convertReference(el, parentCallback, requiredType)
+          is PsiImportStatement -> el<UImportStatement>(build(::JavaUImportStatement))
             else -> null
         }}
     }
