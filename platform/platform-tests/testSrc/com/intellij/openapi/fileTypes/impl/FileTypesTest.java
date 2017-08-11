@@ -39,6 +39,8 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.PersistentFSConstants;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
+import com.intellij.openapi.vfs.encoding.EncodingProjectManagerImpl;
 import com.intellij.psi.PsiBinaryFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -248,9 +250,9 @@ public class FileTypesTest extends PlatformTestCase {
 
   public void test7BitBinaryIsNotText() throws IOException {
     File d = createTempDirectory();
-    File f = new File(d, "xx.asfdasdfas");
     byte[] bytes = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 'x', 'a', 'b'};
     assertEquals(CharsetToolkit.GuessedEncoding.BINARY, new CharsetToolkit(bytes).guessFromContent(bytes.length));
+    File f = new File(d, "xx.asfdasdfas");
     FileUtil.writeToFile(f, bytes);
 
     VirtualFile vFile = getVirtualFile(f);
@@ -699,6 +701,49 @@ public class FileTypesTest extends PlatformTestCase {
       while (thread.isAlive()) {
         UIUtil.dispatchAllInvocationEvents(); //refresh
       }
+    }
+  }
+
+  public void testChangeEncodingManuallyForAutoDetectedFileSticks() throws IOException {
+    EncodingProjectManagerImpl manager = (EncodingProjectManagerImpl)EncodingProjectManager.getInstance(getProject());
+    String oldProject = manager.getDefaultCharsetName();
+    manager.setDefaultCharsetName(CharsetToolkit.UTF8);
+    try {
+      VirtualFile file = createTempFile("sldkfjlskdfj", null, "123456789", CharsetToolkit.UTF8_CHARSET);
+      manager.setEncoding(file, CharsetToolkit.WIN_1251_CHARSET);
+      file.setCharset(CharsetToolkit.WIN_1251_CHARSET);
+      UIUtil.dispatchAllInvocationEvents();
+      ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
+      UIUtil.dispatchAllInvocationEvents();
+
+      assertEquals(PlainTextFileType.INSTANCE, file.getFileType());
+
+      manager.setEncoding(file, CharsetToolkit.US_ASCII_CHARSET);
+      UIUtil.dispatchAllInvocationEvents();
+      ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
+      UIUtil.dispatchAllInvocationEvents();
+      assertEquals(CharsetToolkit.US_ASCII_CHARSET, file.getCharset());
+
+      manager.setEncoding(file, CharsetToolkit.UTF8_CHARSET);
+      UIUtil.dispatchAllInvocationEvents();
+      ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
+      UIUtil.dispatchAllInvocationEvents();
+      assertEquals(CharsetToolkit.UTF8_CHARSET, file.getCharset());
+
+      manager.setEncoding(file, CharsetToolkit.US_ASCII_CHARSET);
+      UIUtil.dispatchAllInvocationEvents();
+      ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
+      UIUtil.dispatchAllInvocationEvents();
+      assertEquals(CharsetToolkit.US_ASCII_CHARSET, file.getCharset());
+
+      manager.setEncoding(file, CharsetToolkit.UTF8_CHARSET);
+      UIUtil.dispatchAllInvocationEvents();
+      ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
+      UIUtil.dispatchAllInvocationEvents();
+      assertEquals(CharsetToolkit.UTF8_CHARSET, file.getCharset());
+    }
+    finally {
+      manager.setDefaultCharsetName(oldProject);
     }
   }
 }
