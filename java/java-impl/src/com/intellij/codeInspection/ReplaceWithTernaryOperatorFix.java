@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.util.LambdaRefactoringUtil;
+import com.intellij.util.ArrayUtil;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Danila Ponomarenko
@@ -37,8 +40,8 @@ public class ReplaceWithTernaryOperatorFix implements LocalQuickFix {
     return InspectionsBundle.message("inspection.replace.ternary.quickfix", myText);
   }
 
-  public ReplaceWithTernaryOperatorFix(@NotNull PsiExpression expressionToAssert) {
-    myText = ParenthesesUtils.getText(expressionToAssert, ParenthesesUtils.BINARY_AND_PRECEDENCE);
+  public ReplaceWithTernaryOperatorFix(@Nullable PsiExpression expressionToAssert) {
+    myText = expressionToAssert == null ? "" : ParenthesesUtils.getText(expressionToAssert, ParenthesesUtils.BINARY_AND_PRECEDENCE);
   }
 
   @NotNull
@@ -50,21 +53,33 @@ public class ReplaceWithTernaryOperatorFix implements LocalQuickFix {
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     PsiElement element = descriptor.getPsiElement();
-    while (true) {
-      PsiElement parent = element.getParent();
-      if (parent instanceof PsiReferenceExpression || parent instanceof PsiMethodCallExpression) {
-        element = parent;
-      } else {
-        break;
+    final PsiExpression expression;
+    String text;
+    if(element instanceof PsiMethodReferenceExpression) {
+      PsiLambdaExpression lambda =
+        LambdaRefactoringUtil.convertMethodReferenceToLambda((PsiMethodReferenceExpression)element, false, true);
+      if (lambda == null) return;
+      expression = LambdaUtil.extractSingleExpressionFromBody(lambda.getBody());
+      if (expression == null) return;
+      PsiParameter parameter = ArrayUtil.getFirstElement(lambda.getParameterList().getParameters());
+      if (parameter == null) return;
+      text = parameter.getName();
+    } else {
+      while (true) {
+        PsiElement parent = element.getParent();
+        if (parent instanceof PsiReferenceExpression || parent instanceof PsiMethodCallExpression) {
+          element = parent;
+        }
+        else {
+          break;
+        }
       }
+      if (!(element instanceof PsiExpression)) return;
+      expression = (PsiExpression)element;
+      text = myText;
     }
-    if (!(element instanceof PsiExpression)) {
-      return;
-    }
-    final PsiExpression expression = (PsiExpression)element;
-
     final PsiFile file = expression.getContainingFile();
-    PsiConditionalExpression conditionalExpression = replaceWthConditionalExpression(project, myText + "!=null", expression, suggestDefaultValue(expression));
+    PsiConditionalExpression conditionalExpression = replaceWthConditionalExpression(project, text + "!=null", expression, suggestDefaultValue(expression));
 
     PsiExpression elseExpression = conditionalExpression.getElseExpression();
     if (elseExpression != null) {
