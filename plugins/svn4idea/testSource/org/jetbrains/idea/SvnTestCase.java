@@ -130,7 +130,8 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
         myTempDirFixture.setUp();
 
         myRepoRoot = new File(myTempDirFixture.getTempDirPath(), "svnroot");
-        assert myRepoRoot.mkdir() || myRepoRoot.isDirectory() : myRepoRoot;
+        boolean isRepoRootCreated = myRepoRoot.mkdir() || myRepoRoot.isDirectory();
+        assert isRepoRootCreated : myRepoRoot;
 
         myPluginRoot = new File(PluginPathManager.getPluginHomePath("svn4idea"));
         if (!myPluginRoot.isDirectory()) {
@@ -161,7 +162,8 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
         ZipUtil.extract(new File(myPluginRoot, getTestDataDir() + "/svn/newrepo.zip"), myRepoRoot, null);
 
         myWcRoot = new File(myTempDirFixture.getTempDirPath(), myWcRootName);
-        assert myWcRoot.mkdir() || myWcRoot.isDirectory() : myWcRoot;
+        boolean isWcRootCreated = myWcRoot.mkdir() || myWcRoot.isDirectory();
+        assert isWcRootCreated : myWcRoot;
 
         myRepoUrl = (SystemInfo.isWindows ? "file:///" : "file://") + FileUtil.toSystemIndependentName(myRepoRoot.getPath());
 
