@@ -21,7 +21,7 @@ import groovy.json.JsonOutput
  * @author Vladislav.Soroka
  */
 class DynamicSettings extends GroovyObjectSupport {
-  def objects = [:]
+  Map objects = [:]
 
   DynamicSettings() {
   }
