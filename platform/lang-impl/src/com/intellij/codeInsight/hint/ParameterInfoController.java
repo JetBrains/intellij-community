@@ -306,7 +306,7 @@ public class ParameterInfoController implements Disposable {
       }
     }
 
-    if (!myHint.isVisible() && !myKeepOnHintHidden && !ApplicationManager.getApplication().isUnitTestMode()) {
+    if (!myHint.isVisible() && !myKeepOnHintHidden) {
       Disposer.dispose(this);
       return;
     }
@@ -325,7 +325,7 @@ public class ParameterInfoController implements Disposable {
     if (elementForUpdating != null) {
       myHandler.updateParameterInfo(elementForUpdating, context);
       if (!myDisposed && myHint.isVisible() && !myEditor.isDisposed() &&
-          myEditor.getComponent().getRootPane() != null) {
+          (myEditor.getComponent().getRootPane() != null || ApplicationManager.getApplication().isUnitTestMode())) {
         myComponent.update(mySingleParameterInfo);
         IdeTooltip tooltip = myHint.getCurrentIdeTooltip();
         short position = tooltip != null

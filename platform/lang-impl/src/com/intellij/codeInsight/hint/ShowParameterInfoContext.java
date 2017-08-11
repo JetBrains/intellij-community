@@ -17,6 +17,7 @@ package com.intellij.codeInsight.hint;
 
 import com.intellij.lang.parameterInfo.CreateParameterInfoContext;
 import com.intellij.lang.parameterInfo.ParameterInfoHandler;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbService;
@@ -132,7 +133,8 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
     if (editor.isDisposed() || !editor.getComponent().isVisible()) return;
 
     PsiDocumentManager.getInstance(project).performLaterWhenAllCommitted(() -> {
-      if (editor.isDisposed() || DumbService.isDumb(project) || !editor.getComponent().isShowing()) return;
+      if (editor.isDisposed() || DumbService.isDumb(project) || 
+          (!ApplicationManager.getApplication().isUnitTestMode() && !editor.getComponent().isShowing())) return;
 
       final Document document = editor.getDocument();
       if (document.getTextLength() < elementStart) return;
