@@ -13,14 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.openapi.util.registry;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
@@ -154,7 +152,7 @@ public class RegistryUi implements Disposable {
               rv.setValue(!rv.asBoolean());
               keyChanged(rv.getKey());
               for (int i : new int[]{0, 1, 2}) myModel.fireTableCellUpdated(row, i);
-              revaliateActions();
+              invalidateActions();
               if (search.isPopupActive()) search.hidePopup();
             }
           }
@@ -188,7 +186,7 @@ public class RegistryUi implements Disposable {
       myModel.fireTableCellUpdated(myTable.getSelectedRow(), 0);
       myModel.fireTableCellUpdated(myTable.getSelectedRow(), 1);
       myModel.fireTableCellUpdated(myTable.getSelectedRow(), 2);
-      revaliateActions();
+      invalidateActions();
     }
   }
 
@@ -303,7 +301,7 @@ public class RegistryUi implements Disposable {
         setTitle("Registry");
         setModal(true);
         init();
-        revaliateActions();
+        invalidateActions();
       }
 
       private AbstractAction myCloseAction;
@@ -378,15 +376,10 @@ public class RegistryUi implements Disposable {
 
   private void processClose() {
     if (Registry.getInstance().isRestartNeeded()) {
-      final ApplicationEx app = (ApplicationEx) ApplicationManager.getApplication();
-      final ApplicationInfo info = ApplicationInfo.getInstance();
-
-      final int r = Messages.showOkCancelDialog(myContent, "You need to restart " + info.getVersionName() + " for the changes to take effect", "Restart Required",
-                                                app.isRestartCapable() ? "Restart Now" : "Shutdown Now",
-                                                app.isRestartCapable() ? "Restart Later": "Shutdown Later"
-          , Messages.getQuestionIcon());
-
-
+      ApplicationEx app = (ApplicationEx) ApplicationManager.getApplication();
+      String message = "You need to restart " + ApplicationNamesInfo.getInstance().getFullProductName() + " for the changes to take effect";
+      String action = app.isRestartCapable() ? "Restart" : "Shutdown";
+      int r = Messages.showOkCancelDialog(myContent, message, "Restart Required", action + " Now", action + " Later", Messages.getQuestionIcon());
       if (r == Messages.OK) {
         ApplicationManager.getApplication().invokeLater(() -> app.restart(true), ModalityState.NON_MODAL);
       }
@@ -394,24 +387,23 @@ public class RegistryUi implements Disposable {
   }
 
   private void restoreDefaults() {
-    final int r = Messages.showYesNoDialog(myContent, "Are you sure you want to revert registry settings to default values?", "Revert To Defaults", Messages.getQuestionIcon());
+    String message = "Are you sure you want to revert registry settings to default values?";
+    int r = Messages.showYesNoDialog(myContent, message, "Revert To Defaults", Messages.getQuestionIcon());
     if (r == Messages.YES) {
       Registry.getInstance().restoreDefaults();
       myModel.fireChanged();
-      revaliateActions();
+      invalidateActions();
     }
   }
 
-  private void revaliateActions() {
+  private void invalidateActions() {
     myRestoreDefaultsAction.setEnabled(!Registry.getInstance().isInDefaultState());
   }
 
   @Override
-  public void dispose() {
-  }
+  public void dispose() { }
 
   private static class MyRenderer implements TableCellRenderer {
-
     private final JLabel myLabel = new JLabel();
 
     @NotNull
@@ -423,7 +415,7 @@ public class RegistryUi implements Disposable {
       myLabel.setHorizontalAlignment(SwingConstants.LEFT);
       Color fg = isSelected ? table.getSelectionForeground() : v.isChangedFromDefault() ? JBColor.blue : table.getForeground();
       Color bg = isSelected ? table.getSelectionBackground() : table.getBackground();
-      
+
       if (v != null) {
         switch (column) {
           case 0:
@@ -512,7 +504,7 @@ public class RegistryUi implements Disposable {
         }
         keyChanged(myValue.getKey());
       }
-      revaliateActions();
+      invalidateActions();
       return super.stopCellEditing();
     }
 
