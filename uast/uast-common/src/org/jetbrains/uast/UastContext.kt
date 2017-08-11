@@ -103,7 +103,23 @@ class UastContext(val project: Project) : UastLanguagePlugin {
  * Converts the element along with its parents to UAST.
  */
 fun PsiElement?.toUElement() =
-        this?.let { ServiceManager.getService(project, UastContext::class.java).convertElementWithParent(this, null) }
+  this?.takeIf { it !is PsiErrorElement }?.let {
+    ServiceManager.getService(project, UastContext::class.java).let {
+      if (this.parent != null)
+        it.convertElementWithParent(this, null)
+      else
+        it.convertElement(this, null, null)
+    }
+  }
+
+/**
+ * Converts the element along with its parents to UAST. If element doesn't have a corresponding UAST representation then
+ * tries to find UAST elemets in it's children recursively
+ */
+fun PsiElement?.toUElements(): Sequence<UElement> =
+  this?.takeIf { it !is PsiErrorElement }?.let {
+    this.toUElement()?.let { sequenceOf(it) } ?: this.children.asSequence().flatMap { it.toUElements() }
+  } ?: emptySequence()
 
 /**
  * Converts the element to an UAST element of the given type. Returns null if the PSI element type does not correspond
