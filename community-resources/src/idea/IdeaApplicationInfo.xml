@@ -8,7 +8,7 @@
   <about url="/idea_community_about.png" foreground="939598" copyrightForeground="939598" linkColor="095fdc" logoX="540" logoY="300" logoW="100" logoH="100"/>
   <icon size32="/icon_CE.png" size16="/icon_CEsmall.png" size128="/icon_CE_128.png" ico="idea_CE.ico"/>
   <package code="__PACKAGE_CODE__"/>
-  <names product="IDEA" fullname="IntelliJ IDEA Community Edition" script="idea"/>
+  <names product="IDEA" fullname="IntelliJ IDEA" edition="Community Edition" script="idea"/>
 
   <welcome-screen logo-url="/Logo_welcomeScreen.png"/>
   <customize-ide-wizard provider="com.intellij.ide.customize.CustomizeIdeaWizardStepsProvider"/>

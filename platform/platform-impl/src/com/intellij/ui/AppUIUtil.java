@@ -146,10 +146,11 @@ public class AppUIUtil {
 
   // keep in sync with LinuxDistributionBuilder#getFrameClass
   public static String getFrameClass() {
-    String name = ApplicationNamesInfo.getInstance().getFullProductName()
+    String name = ApplicationNamesInfo.getInstance().getFullProductNameWithEdition()
       .toLowerCase(Locale.US)
       .replace(' ', '-')
-      .replace("intellij-idea", "idea").replace("android-studio", "studio").replace("community-edition", "ce");  // backward compatibility
+      .replace("intellij-idea", "idea").replace("android-studio", "studio")  // backward compatibility
+      .replace("-community-edition", "-ce").replace("-ultimate-edition", "").replace("-professional-edition", "");
     String wmClass = VENDOR_PREFIX + name;
     if (DEBUG_MODE) wmClass += "-debug";
     return wmClass;

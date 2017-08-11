@@ -197,7 +197,7 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
       buildContext.messages.progress("Preparing files")
 
       def desktopTemplate = "${buildContext.paths.communityHome}/platform/platform-resources/src/entry.desktop"
-      def productName = buildContext.applicationInfo.productName
+      def productName = buildContext.applicationInfo.productNameWithEdition
       buildContext.ant.copy(file: desktopTemplate, tofile: "${snapDir}/snap/gui/${customizer.snapName}.desktop") {
         filterset(begintoken: '$', endtoken: '$') {
           filter(token: "NAME", value: productName)
@@ -267,10 +267,11 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
 
   // keep in sync with AppUIUtil#getFrameClass
   private String getFrameClass() {
-    def name = buildContext.applicationInfo.productName
+    String name = buildContext.applicationInfo.productNameWithEdition
       .toLowerCase(Locale.US)
       .replace(' ', '-')
-      .replace("intellij-idea", "idea").replace("android-studio", "studio").replace("community-edition", "ce")
+      .replace("intellij-idea", "idea").replace("android-studio", "studio")
+      .replace("-community-edition", "-ce").replace("-ultimate-edition", "").replace("-professional-edition", "")
     "jetbrains-" + name
   }
 }

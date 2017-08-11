@@ -21,6 +21,7 @@ import com.intellij.util.PlatformUtils;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Locale;
 
@@ -37,6 +38,7 @@ public class ApplicationNamesInfo {
 
   private final String myProductName;
   private final String myFullProductName;
+  private final String myEditionName;
   private final String myScriptName;
   private final String myDefaultLauncherName;
 
@@ -58,6 +60,7 @@ public class ApplicationNamesInfo {
       Element names = rootElement.getChild("names", rootElement.getNamespace());
       myProductName = names.getAttributeValue("product");
       myFullProductName = names.getAttributeValue("fullname");
+      myEditionName = names.getAttributeValue("edition");
       myScriptName = names.getAttributeValue("script");
       myDefaultLauncherName = names.getAttributeValue("default-launcher-name", myScriptName);
     }
@@ -76,10 +79,26 @@ public class ApplicationNamesInfo {
   }
 
   /**
-   * Returns a product name without a vendor prefix ({@code "IntelliJ IDEA"} for IntelliJ IDEA, {@code "WebStorm"} for WebStorm, etc).
+   * Returns full product name ({@code "IntelliJ IDEA"} for IntelliJ IDEA, {@code "WebStorm"} for WebStorm, etc).
+   * Vendor prefix and edition are not included.
    */
   public String getFullProductName() {
     return myFullProductName;
+  }
+
+  /**
+   * Returns full product name with edition. Vendor prefix is not included. * See {@link #getFullProductName()}, {@link #getEditionName()}.
+   */
+  public String getFullProductNameWithEdition() {
+    return myEditionName != null ? myFullProductName + ' ' + myEditionName : myFullProductName;
+  }
+
+  /**
+   * Returns edition name of the product, if applicable
+   * (e.g. {@code "Ultimate Edition"} or {@code "Community Edition"} for IntelliJ IDEA, {@code null} for WebStorm).
+   */
+  public @Nullable String getEditionName() {
+    return myEditionName;
   }
 
   /**

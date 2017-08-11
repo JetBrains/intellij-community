@@ -9,7 +9,7 @@
          copyrightForeground="313131" linkColor="1f29b2"/>
   <icon size32="/PyCharmCore32.png" size16="/PyCharmCore16.png" ico="PyCharmCore.ico"/>
   <package code="__PACKAGE_CODE__"/>
-  <names product="PyCharm" fullname="PyCharm Community Edition" script="charm"/>
+  <names product="PyCharm" fullname="PyCharm" edition="Community Edition" script="charm"/>
 
   <welcome-screen logo-url="/PyCharmCoreWelcomeScreen.png"/>
 
@@ -19,7 +19,6 @@
 
   <help webhelp-url="https://www.jetbrains.com/pycharm/webhelp"/>
   <documentation url="https://www.jetbrains.com/pycharm/documentation"/>
-
   <support url="https://intellij-support.jetbrains.com/hc/en-us#"/>
   <feedback eap-url="https://youtrack.jetbrains.com/newissue?project=PY&amp;clearDraft=true&amp;c=Affected+versions+$BUILD&amp;description=$DESCR"
             release-url="https://www.jetbrains.com/feedback/feedback.jsp?product=PyCharm&amp;build=$BUILD&amp;timezone=$TIMEZONE&amp;eval=$EVAL"/>
