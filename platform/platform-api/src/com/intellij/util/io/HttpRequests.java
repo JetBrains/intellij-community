@@ -20,6 +20,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
@@ -231,8 +232,9 @@ public final class HttpRequests {
     public RequestBuilder productNameAsUserAgent() {
       Application app = ApplicationManager.getApplication();
       if (app != null && !app.isDisposed()) {
-        ApplicationInfo info = ApplicationInfo.getInstance();
-        return userAgent(info.getVersionName() + '/' + info.getBuild().asStringWithoutProductCode());
+        String productName = ApplicationNamesInfo.getInstance().getFullProductName();
+        String version = ApplicationInfo.getInstance().getBuild().asStringWithoutProductCode();
+        return userAgent(productName + '/' + version);
       }
       else {
         return userAgent("IntelliJ");
