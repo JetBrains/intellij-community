@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,9 +28,8 @@ import java.util.Map;
 
 public class SvnNativeCallsTranslator {
   private final static String ourGenericAdvice =
-    new StringBuilder().append("An error result is returned by native ").append(SystemInfo.OS_NAME).append(" ")
-      .append(SystemInfo.OS_VERSION).append(" call \"{0}\" done from Subversion plugin.\n").append("Error code is {1}").toString();
-
+    "An error result is returned by native " + SystemInfo.OS_NAME + " " + SystemInfo.OS_VERSION +
+    " call \"{0}\" done from Subversion plugin.\n" + "Error code is {1}";
 
   public static String getMessage(final NativeLogReader.CallInfo callInfo) {
     if (SystemInfo.isMac) {
@@ -67,18 +66,18 @@ public class SvnNativeCallsTranslator {
   }
 
   public static String defaultMessage(NativeLogReader.CallInfo callInfo) {
-    return MessageFormat.format(ourGenericAdvice, callInfo.getFunctionName(), "" + callInfo.getResultCode());
+    return MessageFormat.format(ourGenericAdvice, callInfo.getFunctionName(), String.valueOf(callInfo.getResultCode()));
   }
 
   public static String defaultMessageStr(NativeLogReader.CallInfo callInfo) {
-    return MessageFormat.format(ourGenericAdvice, callInfo.getFunctionName(), "" + callInfo.getStrResultCode());
+    return MessageFormat.format(ourGenericAdvice, callInfo.getFunctionName(), callInfo.getStrResultCode());
   }
 
   private static class WindowsParser {
     public static String translate(NativeLogReader.CallInfo callInfo) {
       if (callInfo.getFunctionName().contains("ISVNSecurityLibrary")) {
         // for numeric codes
-        if (! ("" + callInfo.getResultCode()).equals(callInfo.getStrResultCode())) return null;
+        if (!(String.valueOf(callInfo.getResultCode())).equals(callInfo.getStrResultCode())) return null;
         //com.sun.jna.platform.win32.W32Errors.SEC_E_OK = 0
         if (callInfo.getResultCode() == 0) return null;
         return defaultMessage(callInfo);
@@ -100,18 +99,16 @@ public class SvnNativeCallsTranslator {
       if (callInfo.getFunctionName().contains("gnome_keyring_is_available")) {
         if (callInfo.getStrResultCode().contains("false")) {
           return MessageFormat.format(ourGenericAdvice, callInfo.getFunctionName(),
-                                      new StringBuilder().append(callInfo.getStrResultCode()).
-                                        append(" (You can't communicate with the daemon (so you can't load and save passwords)).").toString());
+                                      callInfo.getStrResultCode() + " (You can't communicate with the daemon (so you can't load and save passwords)).");
         }
         return null;
       }
-      if (! ("" + callInfo.getResultCode()).equals(callInfo.getStrResultCode())) return null;
+      if (! (String.valueOf(callInfo.getResultCode())).equals(callInfo.getStrResultCode())) return null;
       if (callInfo.getResultCode() == 0) return null;
       final Couple<String> pair = gnomeMessages.get(callInfo.getResultCode());
       if (pair == null) return null;
       return MessageFormat.format(ourGenericAdvice, callInfo.getFunctionName(),
-                                  new StringBuilder().append(callInfo.getResultCode()).append(" ( ").append(pair.getFirst())
-                                    .append(" - ").append(pair.getSecond()).append(")").toString());
+                                  String.valueOf(callInfo.getResultCode()) + " ( " + pair.getFirst() + " - " + pair.getSecond() + ")");
     }
 
     static {
@@ -154,21 +151,19 @@ public class SvnNativeCallsTranslator {
       final Trinity<String, String, String> trinity = macMessages.get(callInfo.getResultCode());
       if (trinity == null) return null;
       return MessageFormat.format(ourGenericAdvice, callInfo.getFunctionName(),
-                                  new StringBuilder().append(callInfo.getResultCode()).append(" ( ").append(trinity.getFirst())
-                                    .append(" - ").append(trinity.getSecond()).append(")").toString());
+                                  String.valueOf(callInfo.getResultCode()) + " ( " + trinity.getFirst() + " - " + trinity.getSecond() + ")");
     }
 
     static {
       ourAdvices.put(-25293, callInfo -> {
         if (!SystemInfo.isMac) return null;
-        final Trinity<String, String, String> trinity = MacParser.macMessages.get(callInfo.getResultCode());
+        final Trinity<String, String, String> trinity = macMessages.get(callInfo.getResultCode());
         if (trinity == null) return null;
         return MessageFormat.format(ourGenericAdvice, callInfo.getFunctionName(),
-                                    new StringBuilder().append(callInfo.getResultCode()).append(" ( ").append(trinity.getFirst())
-                                      .append(" - ").append(trinity.getSecond()).append(")").append("\nYou are likely to have modified ")
-                                      .append(ApplicationInfo.getInstance().getVersionName()).append(" bundle.\n")
-                                      .append("Please try to reinstall ").append(ApplicationInfo.getInstance().getVersionName())
-                                      .toString());
+                                    String.valueOf(callInfo.getResultCode()) + " ( " + trinity.getFirst() +
+                                    " - " + trinity.getSecond() + ")" + "\nYou are likely to have modified " +
+                                    ApplicationInfo.getInstance().getVersionName() + " bundle.\n" +
+                                    "Please try to reinstall " + ApplicationInfo.getInstance().getVersionName());
       });
 
     }
