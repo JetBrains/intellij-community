@@ -25,6 +25,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.laf.darcula.DarculaInstaller;
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo;
+import com.intellij.ide.ui.laf.intellij.MacIntelliJIconCache;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -526,8 +527,10 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       uiDefaults.put("MenuItem.opaque", true);
     }
 
-    if ((SystemInfo.isLinux || SystemInfo.isWindows) && (UIUtil.isUnderIntelliJLaF() || UIUtil.isUnderDarcula())) {
-      uiDefaults.put("Menu.arrowIcon", new MenuArrowIcon(AllIcons.Actions.Right));
+    if (UIUtil.isUnderWin10LookAndFeel()) {
+      uiDefaults.put("Menu.arrowIcon", new Win10MenuArrowIcon());
+    } else if ((SystemInfo.isLinux || SystemInfo.isWindows) && (UIUtil.isUnderIntelliJLaF() || UIUtil.isUnderDarcula())) {
+      uiDefaults.put("Menu.arrowIcon", new DefaultMenuArrowIcon(AllIcons.Actions.Right));
     }
 
     uiDefaults.put("MenuItem.background", UIManager.getColor("Menu.background"));
@@ -803,7 +806,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     }
 
     @Override
-    public Popup getPopup(final Component owner, final Component contents, final int x, final int y) throws IllegalArgumentException {
+    public Popup getPopup(final Component owner, final Component contents, final int x, final int y) {
       final Point point = fixPopupLocation(contents, x, y);
 
       final int popupType = UIUtil.isUnderGTKLookAndFeel() ? WEIGHT_HEAVY : PopupUtil.getPopupType(this);
@@ -892,16 +895,15 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     }
   }
 
-  private static class MenuArrowIcon implements Icon, UIResource {
+  private abstract static class MenuArrowIcon implements Icon, UIResource {
     private final Icon icon;
     private final Icon selectedIcon;
-    private final Icon grayIcon;
+    private final Icon disabledIcon;
 
-    private MenuArrowIcon(Icon icon) {
-      boolean invert = UIUtil.isUnderDarcula();
-      this.icon = invert ? IconUtil.brighter(icon, 2) : IconUtil.darker(icon, 2);
-      this.grayIcon = invert ? IconUtil.darker(icon, 2) : IconUtil.brighter(icon, 2);
-      this.selectedIcon = IconUtil.brighter(icon, 8);
+    private MenuArrowIcon(Icon icon, Icon selectedIcon, Icon disabledIcon) {
+      this.icon = icon;
+      this.selectedIcon = selectedIcon;
+      this.disabledIcon = disabledIcon;
     }
 
     @Override public void paintIcon(Component c, Graphics g, int x, int y) {
@@ -909,11 +911,10 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       ButtonModel model = b.getModel();
 
       if (!model.isEnabled()) {
-        grayIcon.paintIcon(c, g, x, y);
+        disabledIcon.paintIcon(c, g, x, y);
       } else if (model.isArmed() || ( c instanceof JMenu && model.isSelected())) {
         selectedIcon.paintIcon(c, g, x, y);
-      }
-      else {
+      } else {
         icon.paintIcon(c, g, x, y);
       }
     }
@@ -924,6 +925,24 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
     @Override public int getIconHeight() {
       return icon.getIconHeight();
+    }
+  }
+
+  private static class DefaultMenuArrowIcon extends MenuArrowIcon {
+    private static boolean invert = UIUtil.isUnderDarcula();
+    private DefaultMenuArrowIcon(Icon icon) {
+      super(invert ? IconUtil.brighter(icon, 2) : IconUtil.darker(icon, 2),
+            IconUtil.brighter(icon, 8),
+            invert ? IconUtil.darker(icon, 2) : IconUtil.brighter(icon, 2));
+    }
+  }
+
+  private static class Win10MenuArrowIcon extends MenuArrowIcon {
+    private static final String NAME = "menuTriangle";
+    private Win10MenuArrowIcon() {
+      super(MacIntelliJIconCache.getIcon(NAME, false, false, true),
+            MacIntelliJIconCache.getIcon(NAME, true, false, true),
+            MacIntelliJIconCache.getIcon(NAME, false, false, false));
     }
   }
 }
