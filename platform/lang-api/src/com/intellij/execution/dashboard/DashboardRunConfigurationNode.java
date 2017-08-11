@@ -18,6 +18,7 @@ package com.intellij.execution.dashboard;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.openapi.util.UserDataHolder;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author konstantin.aleev
@@ -25,4 +26,7 @@ import org.jetbrains.annotations.NotNull;
 public interface DashboardRunConfigurationNode extends DashboardNode, UserDataHolder {
   @NotNull
   RunnerAndConfigurationSettings getConfigurationSettings();
+
+  @Nullable
+  RunDashboardContributor getContributor();
 }

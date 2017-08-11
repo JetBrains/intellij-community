@@ -72,8 +72,10 @@ public class RunDashboardTreeStructure extends AbstractTreeStructureBase {
     @NotNull
     @Override
     public Collection<? extends AbstractTreeNode> getChildren() {
-      List<RunConfigurationNode> nodes = RunDashboardManager.getInstance(myProject).getRunConfigurations().stream()
-        .map(value -> new RunConfigurationNode(myProject, value)).collect(Collectors.toList());
+      RunDashboardManager runDashboardManager = RunDashboardManager.getInstance(myProject);
+      List<RunConfigurationNode> nodes = runDashboardManager.getRunConfigurations().stream()
+        .map(value -> new RunConfigurationNode(myProject, value, runDashboardManager.getContributor(value.first.getType())))
+        .collect(Collectors.toList());
 
       return group(myProject,
                    this,
