@@ -174,5 +174,6 @@
     <tipAndTrick file="DeleteLine.html" feature-id="editor.delete.line"/>
     <tipAndTrick file="HippieCompletion.html"/>
     <tipAndTrick file="ChangeSignatureAfterMovingParameters.html"/>
+    <tipAndTrick file="InspectCode.html" feature-id="codeassist.inspect.batch"/>
   </extensions>
 </idea-plugin>
