@@ -31,6 +31,8 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+
 /**
  * @author Tagir Valeev
  */
@@ -113,8 +115,8 @@ public class OptionalUtil {
     PsiExpression stripped = PsiUtil.skipParenthesizedExprDown(trueExpression);
     PsiType trueType = trueExpression.getType();
     boolean trivialMap = ExpressionUtils.isReferenceTo(trueExpression, var) &&
-                         targetType != null && trueType != null &&
-                         (trueType instanceof PsiLambdaParameterType || trueType.isAssignableFrom(targetType));
+                         targetType != null &&
+                         (trueType instanceof PsiLambdaParameterType || Objects.requireNonNull(trueType).isAssignableFrom(targetType));
     if (!trivialMap) {
       if (stripped instanceof PsiTypeCastExpression && ExpressionUtils.isNullLiteral(falseExpression)) {
         PsiTypeCastExpression castExpression = (PsiTypeCastExpression)stripped;
