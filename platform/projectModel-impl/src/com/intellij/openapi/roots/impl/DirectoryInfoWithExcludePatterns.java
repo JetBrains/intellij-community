@@ -19,6 +19,7 @@ import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.impl.FileTypeAssocTable;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,32 +30,32 @@ import org.jetbrains.annotations.Nullable;
 public class DirectoryInfoWithExcludePatterns extends DirectoryInfoImpl {
   private static final Logger LOG = Logger.getInstance(DirectoryInfoWithExcludePatterns.class);
   @Nullable private final FileTypeAssocTable<Boolean> myContentExcludePatterns;
-  @Nullable private final FileTypeAssocTable<Boolean> myLibraryExcludePatterns;
+  @Nullable private final Condition<VirtualFile> myLibraryExcludeCondition;
 
   public DirectoryInfoWithExcludePatterns(@NotNull VirtualFile root, Module module, VirtualFile contentRoot, VirtualFile sourceRoot,
                                           VirtualFile libraryClassRoot, boolean inModuleSource, boolean inLibrarySource, boolean isExcluded,
                                           int sourceRootTypeId,
                                           @Nullable FileTypeAssocTable<Boolean> contentExcludePatterns,
-                                          @Nullable FileTypeAssocTable<Boolean> libraryExcludePatterns,
+                                          @Nullable Condition<VirtualFile> libraryExcludeCondition,
                                           @Nullable String unloadedModuleName) {
     super(root, module, contentRoot, sourceRoot, libraryClassRoot, inModuleSource, inLibrarySource, isExcluded, sourceRootTypeId, unloadedModuleName);
     myContentExcludePatterns = contentExcludePatterns;
-    myLibraryExcludePatterns = libraryExcludePatterns;
-    LOG.assertTrue(myContentExcludePatterns != null || myLibraryExcludePatterns != null,
+    myLibraryExcludeCondition = libraryExcludeCondition;
+    LOG.assertTrue(myContentExcludePatterns != null || myLibraryExcludeCondition != null,
                    "Directory info of '" + root + "' with exclude patterns have no any exclude patterns: " + toString());
   }
 
   @Override
   public boolean isInLibrarySource(@NotNull VirtualFile file) {
-    return myInLibrarySource && !isExcludedByPatterns(file, myLibraryExcludePatterns);
+    return myInLibrarySource && !isExcludedByCondition(file, myLibraryExcludeCondition);
   }
 
-  private boolean isExcludedByPatterns(@NotNull VirtualFile file, @Nullable FileTypeAssocTable<Boolean> patterns) {
-    if (patterns == null) return false;
+  private boolean isExcludedByCondition(@NotNull VirtualFile file, @Nullable Condition<VirtualFile> condition) {
+    if (condition == null) return false;
 
     VirtualFile current = getPhysicalFile(file);
     while (current != null && !myRoot.equals(current)) {
-      if (patterns.findAssociatedFileType(current.getNameSequence()) != null) {
+      if (condition.value(current)) {
         return true;
       }
       current = current.getParent();
@@ -65,6 +66,10 @@ public class DirectoryInfoWithExcludePatterns extends DirectoryInfoImpl {
     return false;
   }
 
+  private boolean isExcludedByPatterns(@NotNull VirtualFile file, @Nullable FileTypeAssocTable<Boolean> patterns) {
+    return patterns != null && isExcludedByCondition(file, f -> patterns.findAssociatedFileType(f.getNameSequence()) != null);
+  }
+
   private static VirtualFile getPhysicalFile(VirtualFile file) {
     return file instanceof VirtualFileWindow ? ((VirtualFileWindow)file).getDelegate() : file;
   }
@@ -72,7 +77,7 @@ public class DirectoryInfoWithExcludePatterns extends DirectoryInfoImpl {
   @Override
   public boolean isExcluded(@NotNull VirtualFile file) {
     if (myExcluded) return true;
-    if (myLibraryExcludePatterns == null && myContentExcludePatterns == null) {
+    if (myLibraryExcludeCondition == null && myContentExcludePatterns == null) {
       LOG.error("Directory info of '" + getRoot() + "' with exclude patterns have no any exclude patterns: " + toString());
       return false;
     }
@@ -84,7 +89,7 @@ public class DirectoryInfoWithExcludePatterns extends DirectoryInfoImpl {
     while (current != null && !myRoot.equals(current)) {
       CharSequence name = current.getNameSequence();
       boolean excludedFromModule = myContentExcludePatterns != null && myContentExcludePatterns.findAssociatedFileType(name) != null;
-      boolean excludedFromLibrary = myLibraryExcludePatterns != null && myLibraryExcludePatterns.findAssociatedFileType(name) != null;
+      boolean excludedFromLibrary = myLibraryExcludeCondition != null && myLibraryExcludeCondition.value(current);
       if ((!inContent || excludedFromModule) && (!myInLibrarySource || excludedFromLibrary)) {
         return true;
       }

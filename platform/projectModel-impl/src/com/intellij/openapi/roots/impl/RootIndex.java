@@ -17,7 +17,6 @@ package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.fileTypes.FileNameMatcherEx;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.impl.FileTypeAssocTable;
 import com.intellij.openapi.module.Module;
@@ -28,6 +27,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -766,8 +766,8 @@ public class RootIndex {
       for (Object library : sourceOfLibraries.get(root)) {
         if (librariesToIgnore.contains(library)) continue;
         if (library instanceof SyntheticLibrary) {
-          Condition<CharSequence> exclusion = ((SyntheticLibrary)library).getExcludeCondition();
-          if (exclusion != null && exclusion.value(root.getNameSequence())) {
+          Condition<VirtualFile> exclusion = ((SyntheticLibrary)library).getExcludeFileCondition();
+          if (exclusion != null && exclusion.value(root)) {
             continue;
           }
         }
@@ -884,12 +884,12 @@ public class RootIndex {
     Module module = info.contentRootOf.get(nearestContentRoot);
     String unloadedModuleName = info.contentRootOfUnloaded.get(nearestContentRoot);
     FileTypeAssocTable<Boolean> contentExcludePatterns = moduleContentRoot != null ? info.excludeFromContentRootTables.get(moduleContentRoot) : null;
-    FileTypeAssocTable<Boolean> libraryExcludePatterns = getLibraryExclusionPatterns(librarySourceRootInfo);
+    Condition<VirtualFile> libraryExclusionPredicate = getLibraryExclusionPredicate(librarySourceRootInfo);
 
-    DirectoryInfo directoryInfo = contentExcludePatterns != null || libraryExcludePatterns != null
+    DirectoryInfo directoryInfo = contentExcludePatterns != null || libraryExclusionPredicate != null
                                   ? new DirectoryInfoWithExcludePatterns(root, module, nearestContentRoot, sourceRoot, libraryClassRoot,
                                                                          inModuleSources, inLibrarySource, !inProject, typeId,
-                                                                         contentExcludePatterns, libraryExcludePatterns, unloadedModuleName)
+                                                                         contentExcludePatterns, libraryExclusionPredicate, unloadedModuleName)
                                   : new DirectoryInfoImpl(root, module, nearestContentRoot, sourceRoot, libraryClassRoot, inModuleSources,
                                                           inLibrarySource, !inProject, typeId, unloadedModuleName);
 
@@ -898,30 +898,17 @@ public class RootIndex {
     return Pair.create(directoryInfo, packagePrefix);
   }
 
-  private static FileTypeAssocTable<Boolean> getLibraryExclusionPatterns(@Nullable Pair<VirtualFile, Collection<Object>> libraryRootInfo) {
-    FileTypeAssocTable<Boolean> excludePatterns = null;
+  @Nullable
+  private static Condition<VirtualFile> getLibraryExclusionPredicate(@Nullable Pair<VirtualFile, Collection<Object>> libraryRootInfo) {
+    Condition<VirtualFile> result = Conditions.alwaysFalse();
     if (libraryRootInfo != null) {
       for (Object library : libraryRootInfo.second) {
-        Condition<CharSequence> exclusionPredicate = library instanceof SyntheticLibrary ? ((SyntheticLibrary)library).getExcludeCondition() : null;
+        Condition<VirtualFile> exclusionPredicate = library instanceof SyntheticLibrary ? ((SyntheticLibrary)library).getExcludeFileCondition() : null;
         if (exclusionPredicate == null) continue;
-        if (excludePatterns == null) {
-          excludePatterns = new FileTypeAssocTable<>();
-        }
-        excludePatterns.addAssociation(new FileNameMatcherEx() {
-          @Override
-          public boolean acceptsCharSequence(@NotNull CharSequence fileName) {
-            return exclusionPredicate.value(fileName);
-          }
-
-          @NotNull
-          @Override
-          public String getPresentableString() {
-            return "Synthetic library exclusion rule";
-          }
-        }, true);
+        result = Conditions.or(result, exclusionPredicate);
       }
     }
-    return excludePatterns;
+    return result != Condition.FALSE ? result : null;
   }
 
   @NotNull
