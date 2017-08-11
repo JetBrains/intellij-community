@@ -16,7 +16,6 @@
 package com.intellij.execution.dashboard;
 
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.StopAction;
 import com.intellij.execution.dashboard.tree.*;
 import com.intellij.execution.runners.FakeRerunAction;
@@ -231,10 +230,9 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
       protected boolean onDoubleClick(MouseEvent event) {
         if (myLastSelection instanceof DashboardRunConfigurationNode && myLastSelection.getChildren().isEmpty()) {
           DashboardRunConfigurationNode node = (DashboardRunConfigurationNode)myLastSelection;
-          RunnerAndConfigurationSettings settings = node.getConfigurationSettings();
-          RunDashboardContributor contributor = RunDashboardManager.getInstance(myProject).getContributor(settings.getType());
+          RunDashboardContributor contributor = node.getContributor();
           if (contributor != null) {
-            return contributor.handleDoubleClick(settings.getConfiguration());
+            return contributor.handleDoubleClick(node.getConfigurationSettings().getConfiguration());
           }
         }
         return false;

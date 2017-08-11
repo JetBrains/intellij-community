@@ -128,6 +128,15 @@ public class TreeUtil {
   }
 
   @Nullable
+  public static ASTNode findParent(@NotNull ASTNode element, @NotNull TokenSet types, @Nullable TokenSet stopAt) {
+    for (ASTNode parent = element.getTreeParent(); parent != null; parent = parent.getTreeParent()) {
+      if (types.contains(parent.getElementType())) return parent;
+      if (stopAt != null && stopAt.contains(parent.getElementType())) return null;
+    }
+    return null;
+  }
+
+  @Nullable
   public static LeafElement findFirstLeaf(ASTNode element) {
     return (LeafElement)findFirstLeaf(element, true);
   }

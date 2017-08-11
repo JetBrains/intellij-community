@@ -31,10 +31,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.UnaryOperator;
 
-import static com.intellij.psi.CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM;
-import static com.intellij.psi.CommonClassNames.JAVA_UTIL_STREAM_STREAM;
-import static com.siyeh.ig.callMatcher.CallMatcher.anyOf;
-import static com.siyeh.ig.callMatcher.CallMatcher.instanceCall;
+import static com.intellij.psi.CommonClassNames.*;
+import static com.siyeh.ig.callMatcher.CallMatcher.*;
 
 public class StreamChainInliner implements CallInliner {
   private static final String[] TERMINALS =
@@ -57,6 +55,12 @@ public class StreamChainInliner implements CallInliner {
   private static final CallMatcher FLAT_MAP =
     instanceCall(JAVA_UTIL_STREAM_BASE_STREAM, "flatMap", "flatMapToInt", "flatMapToLong", "flatMapToDouble").parameterCount(1);
   private static final CallMatcher PEEK = instanceCall(JAVA_UTIL_STREAM_BASE_STREAM, "peek").parameterCount(1);
+
+  private static final CallMatcher STREAM_GENERATE = anyOf(
+    staticCall(JAVA_UTIL_STREAM_STREAM, "generate").parameterCount(1),
+    staticCall(JAVA_UTIL_STREAM_INT_STREAM, "generate").parameterCount(1),
+    staticCall(JAVA_UTIL_STREAM_LONG_STREAM, "generate").parameterCount(1),
+    staticCall(JAVA_UTIL_STREAM_DOUBLE_STREAM, "generate").parameterCount(1));
 
   private static final CallMapper<UnaryOperator<Step>> INTERMEDIATE_STEP_MAPPER = new CallMapper<UnaryOperator<Step>>()
     .register(FILTER, (PsiMethodCallExpression call) -> (Step next) -> new FilterStep(call, next))
@@ -310,17 +314,31 @@ public class StreamChainInliner implements CallInliner {
 
   static void buildStreamCFG(CFGBuilder builder, Step firstStep, PsiExpression originalQualifier) {
     PsiType inType = StreamApiUtil.getStreamElementType(originalQualifier.getType());
-    builder
-      .pushExpression(originalQualifier)
-      .checkNotNull(firstStep.myCall, NullabilityProblem.callNPE)
-      .pop()
-      .chain(firstStep::before)
-      .doWhile()
-      .pushVariable(builder.createTempVariable(inType))
-      .push(builder.getFactory().createTypeValue(inType, DfaPsiUtil.getTypeNullability(inType)))
-      .assign()
-      .chain(firstStep::iteration)
-      .endWhileUnknown();
+    PsiMethodCallExpression sourceCall = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(originalQualifier), PsiMethodCallExpression.class);
+    if(STREAM_GENERATE.test(sourceCall)) {
+      PsiExpression fn = sourceCall.getArgumentList().getExpressions()[0];
+      builder
+        .evaluateFunction(fn)
+        .chain(firstStep::before)
+        .doWhile()
+        .pushVariable(builder.createTempVariable(inType))
+        .invokeFunction(0, fn)
+        .assign()
+        .chain(firstStep::iteration)
+        .endWhileUnknown();
+    } else {
+      builder
+        .pushExpression(originalQualifier)
+        .checkNotNull(firstStep.myCall, NullabilityProblem.callNPE)
+        .pop()
+        .chain(firstStep::before)
+        .doWhile()
+        .pushVariable(builder.createTempVariable(inType))
+        .push(builder.getFactory().createTypeValue(inType, DfaPsiUtil.getTypeNullability(inType)))
+        .assign()
+        .chain(firstStep::iteration)
+        .endWhileUnknown();
+    }
   }
 
   static Step buildChain(PsiMethodCallExpression qualifierCall, Step terminalStep) {

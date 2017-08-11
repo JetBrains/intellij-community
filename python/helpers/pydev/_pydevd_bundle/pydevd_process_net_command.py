@@ -493,8 +493,8 @@ def process_net_command(py_db, cmd_id, seq, text):
                     pass
 
             elif cmd_id == CMD_ADD_EXCEPTION_BREAK:
-                condition = None
-                expression = None
+                condition = ""
+                expression = ""
                 if text.find('\t') != -1:
                     try:
                         exception, condition, expression, notify_always, notify_on_terminate, ignore_libraries = text.split('\t', 5)

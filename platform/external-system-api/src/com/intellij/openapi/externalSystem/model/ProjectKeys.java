@@ -21,9 +21,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Holds common project entity {@link Key keys}.
- * 
- * @author Denis Zhdanov
- * @since 4/12/13 11:52 AM
  */
 public class ProjectKeys {
 
@@ -34,7 +31,9 @@ public class ProjectKeys {
   @NotNull public static final Key<ModuleDependencyData>  MODULE_DEPENDENCY  = Key.create(ModuleDependencyData.class, 130);
   @NotNull public static final Key<LibraryDependencyData> LIBRARY_DEPENDENCY = Key.create(LibraryDependencyData.class, 150);
 
-  @NotNull public static final Key<TaskData> TASK = Key.create(TaskData.class, 250);
+  @NotNull public static final Key<TaskData>              TASK = Key.create(TaskData.class, 250);
+
+  @NotNull public static final Key<ConfigurationData>     CONFIGURATION = Key.create(ConfigurationData.class, 350);
 
   private ProjectKeys() {
   }

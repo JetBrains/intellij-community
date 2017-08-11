@@ -36,6 +36,8 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class ParameterInfoComponent extends JPanel {
   private final Object[] myObjects;
@@ -134,6 +136,11 @@ public class ParameterInfoComponent extends JPanel {
     else {
       return new Dimension(preferredSize.width + 20, 200);
     }
+  }
+
+  @Override
+  public String toString() {
+    return Stream.of(myPanels).filter(Component::isVisible).map(Object::toString).collect(Collectors.joining("\n"));
   }
 
   public Object getHighlighted() {
@@ -286,6 +293,11 @@ public class ParameterInfoComponent extends JPanel {
       myOneLineComponents = new OneLineComponent[0]; //TODO ???
     }
 
+    @Override
+    public String toString() {
+      return Stream.of(myOneLineComponents).map(Object::toString).collect(Collectors.joining());
+    }
+
     private String setup(String text,
                          Function<String, String> escapeFunction,
                          int highlightStartOffset,
@@ -408,6 +420,11 @@ public class ParameterInfoComponent extends JPanel {
 
       add(myLabel, new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.NONE,
                                           new Insets(0, 0, 0, 0), 0, 0));
+    }
+
+    @Override
+    public String toString() {
+      return myLabel.getText();
     }
 
     private String setup(String text,

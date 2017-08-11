@@ -1,6 +1,6 @@
-
 import org.gradle.api.internal.project.ProjectInternal
 import org.gradle.tooling.provider.model.ToolingModelBuilderRegistry
+import org.jetbrains.plugins.gradle.tooling.internal.DynamicSettings
 import org.jetbrains.plugins.gradle.tooling.internal.ExtraModelBuilder
 
 System.setProperty("idea.active", "true")
@@ -55,5 +55,15 @@ class JetGradlePlugin implements Plugin<Gradle> {
         it.register(extraModelBuilderInstance)
       }
     }
+  }
+}
+
+allprojects {
+  apply plugin: 'idea'
+  if (parent == null && !idea.project.extensions.findByName('settings')) {
+    idea.project.extensions.create('settings', DynamicSettings)
+  }
+  if (!idea.module.extensions.findByName('settings')) {
+    idea.module.extensions.create('settings', DynamicSettings)
   }
 }

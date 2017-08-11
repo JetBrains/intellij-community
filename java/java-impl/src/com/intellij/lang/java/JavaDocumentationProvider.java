@@ -409,7 +409,12 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
       }
       return false;
     });
-    return docCommentOwner == null ? null : Pair.create(docCommentOwner, ((PsiDocCommentOwner)docCommentOwner).getDocComment());
+    if (docCommentOwner == null) return null;
+    PsiDocComment comment = ((PsiDocCommentOwner)docCommentOwner).getDocComment();
+    if (docCommentOwner instanceof PsiField) {
+      docCommentOwner = ((PsiField)docCommentOwner).getModifierList();
+    }
+    return Pair.create(docCommentOwner, comment);
   }
 
   @Override

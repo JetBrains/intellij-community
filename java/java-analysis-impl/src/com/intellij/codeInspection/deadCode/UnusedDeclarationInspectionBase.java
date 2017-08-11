@@ -37,6 +37,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.search.DelegatingGlobalSearchScope;
@@ -415,6 +416,13 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
 
   public boolean isGlobalEnabledInEditor() {
     return myEnabledInEditor;
+  }
+
+  @NotNull
+  public static UnusedDeclarationInspectionBase findUnusedDeclarationInspection(@NotNull PsiElement element) {
+    InspectionProfile profile = InspectionProjectProfileManager.getInstance(element.getProject()).getCurrentProfile();
+    UnusedDeclarationInspectionBase tool = (UnusedDeclarationInspectionBase)profile.getUnwrappedTool(SHORT_NAME, element);
+    return tool == null ? new UnusedDeclarationInspectionBase() : tool;
   }
 
   private static class StrictUnreferencedFilter extends UnreferencedFilter {

@@ -21,12 +21,15 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.tree.LazyParseableElement;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
@@ -373,5 +376,18 @@ public class MiscPsiTest extends LightCodeInsightFixtureTestCase {
     PsiClass c = myFixture.findClass("C");
     assertNotNull(c);
     assertEquals(vFile, c.getContainingFile().getVirtualFile());
+  }
+
+  public void testResolveCacheInvalidatedOnFilePropertyChange() {
+    VirtualFile foo = myFixture.addFileToProject("Foo.java", "class Foo {}").getVirtualFile();
+    PsiClass bar = myFixture.addClass("class Bar extends Foo {}");
+
+    assertEquals("Foo", bar.getSuperClass().getName());
+    PsiUtilCore.ensureValid(bar.getSuperClass());
+
+    PushedFilePropertiesUpdater.getInstance(getProject()).filePropertiesChanged(foo, Conditions.alwaysTrue());
+
+    assertEquals("Foo", bar.getSuperClass().getName());
+    PsiUtilCore.ensureValid(bar.getSuperClass());
   }
 }

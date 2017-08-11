@@ -53,7 +53,7 @@ public class IconUtil {
     if (was == null) {
       if (project.isInitialized()) {
         was = true;
-        project.putUserData(PROJECT_WAS_EVER_INITIALIZED, was);
+        project.putUserData(PROJECT_WAS_EVER_INITIALIZED, true);
       }
       else {
         was = false;
@@ -640,12 +640,12 @@ public class IconUtil {
     return new JBImageIcon(img) {
       @Override
       public int getIconWidth() {
-        return getImage() instanceof JBHiDPIScaledImage ? super.getIconWidth() / 2 : super.getIconWidth();
+        return ImageUtil.getUserWidth(getImage());
       }
 
       @Override
       public int getIconHeight() {
-        return getImage() instanceof JBHiDPIScaledImage ? super.getIconHeight() / 2: super.getIconHeight();
+        return ImageUtil.getUserHeight(getImage());
       }
     };
   }

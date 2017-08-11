@@ -1805,7 +1805,7 @@ static PyObject *__pyx_tp_new_14_pydevd_bundle_13pydevd_cython_SafeCallWrapper(P
 static PyObject *__pyx_tp_new_14_pydevd_bundle_13pydevd_cython_ThreadTracer(PyTypeObject *t, PyObject *a, PyObject *k); /*proto*/
 static PyObject *__pyx_int_0;
 static PyObject *__pyx_int_1;
-static PyObject *__pyx_int_6;
+static PyObject *__pyx_int_7;
 static PyObject *__pyx_int_32;
 static PyObject *__pyx_int_neg_1;
 static PyObject *__pyx_tuple__2;
@@ -7721,7 +7721,7 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_9PyDBFrame_10should_s
  *                         flag = False
  * 
  *                 if flag:             # <<<<<<<<<<<<<<
- *                     if exception_breakpoint.expression is not None:
+ *                     if exception_breakpoint is not None and exception_breakpoint.expression is not None:
  *                         handle_breakpoint_expression(exception_breakpoint, info, frame)
  */
       __pyx_t_13 = (__pyx_v_flag != 0);
@@ -7730,20 +7730,29 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_9PyDBFrame_10should_s
         /* "_pydevd_bundle/pydevd_cython.pyx":335
  * 
  *                 if flag:
- *                     if exception_breakpoint.expression is not None:             # <<<<<<<<<<<<<<
+ *                     if exception_breakpoint is not None and exception_breakpoint.expression is not None:             # <<<<<<<<<<<<<<
  *                         handle_breakpoint_expression(exception_breakpoint, info, frame)
  *                 else:
  */
+        __pyx_t_2 = (__pyx_v_exception_breakpoint != Py_None);
+        __pyx_t_7 = (__pyx_t_2 != 0);
+        if (__pyx_t_7) {
+        } else {
+          __pyx_t_13 = __pyx_t_7;
+          goto __pyx_L52_bool_binop_done;
+        }
         __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_v_exception_breakpoint, __pyx_n_s_expression); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 335, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_5);
-        __pyx_t_13 = (__pyx_t_5 != Py_None);
+        __pyx_t_7 = (__pyx_t_5 != Py_None);
         __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-        __pyx_t_2 = (__pyx_t_13 != 0);
-        if (__pyx_t_2) {
+        __pyx_t_2 = (__pyx_t_7 != 0);
+        __pyx_t_13 = __pyx_t_2;
+        __pyx_L52_bool_binop_done:;
+        if (__pyx_t_13) {
 
           /* "_pydevd_bundle/pydevd_cython.pyx":336
  *                 if flag:
- *                     if exception_breakpoint.expression is not None:
+ *                     if exception_breakpoint is not None and exception_breakpoint.expression is not None:
  *                         handle_breakpoint_expression(exception_breakpoint, info, frame)             # <<<<<<<<<<<<<<
  *                 else:
  *                     remove_exception_from_frame(frame)
@@ -7803,7 +7812,7 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_9PyDBFrame_10should_s
           /* "_pydevd_bundle/pydevd_cython.pyx":335
  * 
  *                 if flag:
- *                     if exception_breakpoint.expression is not None:             # <<<<<<<<<<<<<<
+ *                     if exception_breakpoint is not None and exception_breakpoint.expression is not None:             # <<<<<<<<<<<<<<
  *                         handle_breakpoint_expression(exception_breakpoint, info, frame)
  *                 else:
  */
@@ -7813,7 +7822,7 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_9PyDBFrame_10should_s
  *                         flag = False
  * 
  *                 if flag:             # <<<<<<<<<<<<<<
- *                     if exception_breakpoint.expression is not None:
+ *                     if exception_breakpoint is not None and exception_breakpoint.expression is not None:
  *                         handle_breakpoint_expression(exception_breakpoint, info, frame)
  */
         goto __pyx_L50;
@@ -23123,7 +23132,7 @@ static int __Pyx_InitGlobals(void) {
   if (__Pyx_InitStrings(__pyx_string_tab) < 0) __PYX_ERR(0, 1, __pyx_L1_error);
   __pyx_int_0 = PyInt_FromLong(0); if (unlikely(!__pyx_int_0)) __PYX_ERR(0, 1, __pyx_L1_error)
   __pyx_int_1 = PyInt_FromLong(1); if (unlikely(!__pyx_int_1)) __PYX_ERR(0, 1, __pyx_L1_error)
-  __pyx_int_6 = PyInt_FromLong(6); if (unlikely(!__pyx_int_6)) __PYX_ERR(0, 1, __pyx_L1_error)
+  __pyx_int_7 = PyInt_FromLong(7); if (unlikely(!__pyx_int_7)) __PYX_ERR(0, 1, __pyx_L1_error)
   __pyx_int_32 = PyInt_FromLong(32); if (unlikely(!__pyx_int_32)) __PYX_ERR(0, 1, __pyx_L1_error)
   __pyx_int_neg_1 = PyInt_FromLong(-1); if (unlikely(!__pyx_int_neg_1)) __PYX_ERR(0, 1, __pyx_L1_error)
   return 0;
@@ -23319,14 +23328,14 @@ PyMODINIT_FUNC PyInit_pydevd_cython(void)
   /* "_pydevd_bundle/pydevd_cython.pyx":12
  * # ENDIF
  * 
- * version = 6             # <<<<<<<<<<<<<<
+ * version = 7             # <<<<<<<<<<<<<<
  * 
  * if not hasattr(sys, '_current_frames'):
  */
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_version, __pyx_int_6) < 0) __PYX_ERR(0, 12, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_version, __pyx_int_7) < 0) __PYX_ERR(0, 12, __pyx_L1_error)
 
   /* "_pydevd_bundle/pydevd_cython.pyx":14
- * version = 6
+ * version = 7
  * 
  * if not hasattr(sys, '_current_frames'):             # <<<<<<<<<<<<<<
  * 
@@ -23624,7 +23633,7 @@ PyMODINIT_FUNC PyInit_pydevd_cython(void)
     __pyx_L3:;
 
     /* "_pydevd_bundle/pydevd_cython.pyx":14
- * version = 6
+ * version = 7
  * 
  * if not hasattr(sys, '_current_frames'):             # <<<<<<<<<<<<<<
  * 

@@ -17,7 +17,6 @@ package com.intellij.execution.dashboard.tree;
 
 import com.intellij.execution.dashboard.DashboardRunConfigurationNode;
 import com.intellij.execution.dashboard.RunDashboardContributor;
-import com.intellij.execution.dashboard.RunDashboardManager;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -53,8 +52,7 @@ public class RunDashboardTreeCellRenderer extends JPanel implements TreeCellRend
     Object userObject = TreeUtil.getUserObject(value);
     if (userObject instanceof DashboardRunConfigurationNode) {
       DashboardRunConfigurationNode node = (DashboardRunConfigurationNode)userObject;
-      RunDashboardContributor contributor =
-        RunDashboardManager.getInstance(node.getProject()).getContributor(node.getConfigurationSettings().getType());
+      RunDashboardContributor contributor = node.getContributor();
       if (contributor != null) {
         if (contributor.customizeCellRenderer(myNodeRender, myLabel, node, selected, expanded, leaf, row, hasFocus)) {
           this.add(myNodeRender, BorderLayout.CENTER);

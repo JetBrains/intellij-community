@@ -32,9 +32,11 @@ import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.junit4.JUnit4IdeaTestRunner;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -50,6 +52,7 @@ import com.intellij.rt.execution.testFrameworks.ForkedDebuggerHelper;
 import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
+import com.siyeh.ig.junit.JUnitCommonClassNames;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -408,15 +411,23 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
       }
       return JUnitStarter.JUNIT3_PARAMETER;
     }
-    return JUnitUtil.isJUnit5(globalSearchScope, project) || isCustomJUnit5() ? JUnitStarter.JUNIT5_PARAMETER : null;
+    return JUnitUtil.isJUnit5(globalSearchScope, project) || isCustomJUnit5(globalSearchScope) ? JUnitStarter.JUNIT5_PARAMETER : null;
   }
 
-  private boolean isCustomJUnit5() {
-    if (JavaPsiFacade.getInstance(myConfiguration.getProject()).findPackage("org.junit.platform") == null) return false;
+  private boolean isCustomJUnit5(GlobalSearchScope globalSearchScope) {
+    Project project = myConfiguration.getProject();
+    JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+    if (DumbService.getInstance(project)
+          .computeWithAlternativeResolveEnabled(() -> {
+            @Nullable PsiClass testEngine = ReadAction.compute(() -> psiFacade.findClass(JUnitCommonClassNames.ORG_JUNIT_PLATFORM_ENGINE_TEST_ENGINE, globalSearchScope));
+            return testEngine;
+          }) == null) {
+      return false;
+    }
 
     ClassLoader loader = TestClassCollector.createUsersClassLoader(myConfiguration);
     try {
-      ServiceLoader<?> serviceLoader = ServiceLoader.load(Class.forName("org.junit.platform.engine.TestEngine", false, loader), loader);
+      ServiceLoader<?> serviceLoader = ServiceLoader.load(Class.forName(JUnitCommonClassNames.ORG_JUNIT_PLATFORM_ENGINE_TEST_ENGINE, false, loader), loader);
       for (Object engine : serviceLoader) {
         String engineClassName = engine.getClass().getName();
         if (!"org.junit.jupiter.engine.JupiterTestEngine".equals(engineClassName) &&

@@ -248,7 +248,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
   }
 
   @Override
-  public boolean isShowInDashboard(@NotNull  RunConfiguration runConfiguration) {
+  public boolean isShowInDashboard(@NotNull RunConfiguration runConfiguration) {
     RunDashboardContributor contributor = getContributor(runConfiguration.getType());
     return contributor != null && contributor.isShowInDashboard(runConfiguration);
   }

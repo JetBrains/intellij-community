@@ -24,7 +24,11 @@ import org.jetbrains.idea.svn.dialogs.RepositoryTreeNode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
+import static java.util.Collections.sort;
 
 public class SyntheticWorker {
   private final SvnRepositoryCache myCache;
@@ -66,8 +70,7 @@ public class SyntheticWorker {
     }
     children.add(createSyntheticEntry(newUrl, repositoryUrl, name, isDir));
 
-    // TODO: Seems that just Set instead of List could be used in cache - so no sort() after add() will be required
-    Collections.sort(children);
+    sort(children, DirectoryEntry.CASE_INSENSITIVE_ORDER);
     myCache.put(currentUrlAsString, children);
   }
 

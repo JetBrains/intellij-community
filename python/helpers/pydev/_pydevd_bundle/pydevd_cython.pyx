@@ -9,7 +9,7 @@ from _pydevd_bundle.pydevd_constants import STATE_RUN, PYTHON_SUSPEND, IS_JYTHON
 # from _pydevd_bundle.pydevd_frame import PyDBFrame
 # ENDIF
 
-version = 6
+version = 7
 
 if not hasattr(sys, '_current_frames'):
 
@@ -332,7 +332,7 @@ cdef class PyDBFrame:
                         flag = False
 
                 if flag:
-                    if exception_breakpoint.expression is not None:
+                    if exception_breakpoint is not None and exception_breakpoint.expression is not None:
                         handle_breakpoint_expression(exception_breakpoint, info, frame)
                 else:
                     remove_exception_from_frame(frame)

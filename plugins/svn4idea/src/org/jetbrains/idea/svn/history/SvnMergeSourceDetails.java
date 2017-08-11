@@ -50,6 +50,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.intellij.openapi.util.text.StringUtil.notNullize;
+
 public class SvnMergeSourceDetails extends MasterDetailsComponent {
   private final Project myProject;
   private final SvnFileRevision myRevision;
@@ -150,11 +152,9 @@ public class SvnMergeSourceDetails extends MasterDetailsComponent {
 
       final String date = CommittedChangeListRenderer.getDateOfChangeList(revision.getRevisionDate());
 
-      final String author = revision.getAuthor();
-
       append(revisonNumber + " ", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
       append(description + " ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
-      append(author, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+      append(notNullize(revision.getAuthor()), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
       append(", " + date, SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
   }

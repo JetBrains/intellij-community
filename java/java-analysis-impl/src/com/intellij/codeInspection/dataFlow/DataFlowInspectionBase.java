@@ -1043,7 +1043,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     protected void processMethodReferenceResult(PsiMethodReferenceExpression methodRef,
                                                 List<? extends MethodContract> contracts,
                                                 DfaValue res) {
-      if(contracts.stream().anyMatch(c -> !c.isTrivial())) {
+      if(contracts.isEmpty() || !contracts.get(0).isTrivial()) {
         // Do not track if method reference may have different results
         myMethodReferenceResults.merge(methodRef, res, (a, b) -> a == b ? a : DfaUnknownValue.getInstance());
       }
@@ -1056,6 +1056,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     }
 
     private static boolean hasNonTrivialBooleanContracts(MethodCallInstruction instruction) {
+      if (CustomMethodHandlers.find(instruction) != null) return true;
       List<MethodContract> contracts = instruction.getContracts();
       return !contracts.isEmpty() && contracts.stream().anyMatch(
         contract -> (contract.getReturnValue() == MethodContract.ValueConstraint.FALSE_VALUE ||

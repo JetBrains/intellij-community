@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,54 +35,65 @@ private val NATURAL_NAME_COMPARATOR = Comparator<Variable> { o1, o2 -> naturalCo
 fun processVariables(context: VariableContext,
                      variables: Promise<List<Variable>>,
                      obsolescent: Obsolescent,
-                     consumer: (memberFilter: MemberFilter, variables: List<Variable>) -> Unit) = context.memberFilter
-  .thenAsync(obsolescent) { memberFilter ->
-    variables.then(obsolescent) { consumer(memberFilter, it) }
-  }
+                     consumer: (memberFilter: MemberFilter, variables: List<Variable>) -> Unit): Promise<Unit> {
+  return context.memberFilter
+    .thenAsync(obsolescent) { memberFilter ->
+      variables
+        .then(obsolescent) {
+          consumer(memberFilter, it)
+        }
+    }
+}
 
 fun processScopeVariables(scope: Scope,
                           node: XCompositeNode,
                           context: VariableContext,
-                          isLast: Boolean) = processVariables(context, scope.variablesHost.get(), node, { memberFilter, variables ->
-  val additionalVariables = memberFilter.additionalVariables
+                          isLast: Boolean): Promise<Unit> {
+  return processVariables(context, scope.variablesHost.get(), node) { memberFilter, variables ->
+    val additionalVariables = memberFilter.additionalVariables
 
-  val exceptionValue = context.vm?.suspendContextManager?.context?.exceptionData?.exceptionValue
-  val properties = ArrayList<Variable>(variables.size + additionalVariables.size + (if (exceptionValue == null) 0 else 1))
+    val exceptionValue = context.vm?.suspendContextManager?.context?.exceptionData?.exceptionValue
+    val properties = ArrayList<Variable>(variables.size + additionalVariables.size + (if (exceptionValue == null) 0 else 1))
 
-  exceptionValue?.let {
-    properties.add(VariableImpl("Exception", it))
-  }
+    exceptionValue?.let {
+      properties.add(VariableImpl("Exception", it))
+    }
 
-  val functions = SmartList<Variable>()
-  for (variable in variables) {
-    if (memberFilter.isMemberVisible(variable)) {
-      val value = variable.value
-      if (value != null && value.type == ValueType.FUNCTION && value.valueString != null && !UNNAMED_FUNCTION_PATTERN.matcher(value.valueString).lookingAt()) {
-        functions.add(variable)
-      }
-      else {
-        properties.add(variable)
+    val functions = SmartList<Variable>()
+    for (variable in variables) {
+      if (memberFilter.isMemberVisible(variable)) {
+        val value = variable.value
+        if (value != null && value.type == ValueType.FUNCTION && value.valueString != null && !UNNAMED_FUNCTION_PATTERN.matcher(
+          value.valueString).lookingAt()) {
+          functions.add(variable)
+        }
+        else {
+          properties.add(variable)
+        }
       }
     }
-  }
 
-  val comparator = if (memberFilter.hasNameMappings()) Comparator<Variable> { o1, o2 -> naturalCompare(memberFilter.rawNameToSource(o1), memberFilter.rawNameToSource(o2)) } else NATURAL_NAME_COMPARATOR
-  properties.sortWith(comparator)
-  functions.sortWith(comparator)
+    addAditionalVariables(additionalVariables, properties, memberFilter)
 
-  addAditionalVariables(additionalVariables, properties, memberFilter)
+    val comparator = if (memberFilter.hasNameMappings()) Comparator { o1, o2 ->
+      naturalCompare(memberFilter.rawNameToSource(o1), memberFilter.rawNameToSource(o2))
+    }
+    else NATURAL_NAME_COMPARATOR
+    properties.sortWith(comparator)
+    functions.sortWith(comparator)
 
-  if (!properties.isEmpty()) {
-    node.addChildren(createVariablesList(properties, context, memberFilter), functions.isEmpty() && isLast)
-  }
+    if (!properties.isEmpty()) {
+      node.addChildren(createVariablesList(properties, context, memberFilter), functions.isEmpty() && isLast)
+    }
 
-  if (!functions.isEmpty()) {
-    node.addChildren(XValueChildrenList.bottomGroup(VariablesGroup("Functions", functions, context)), isLast)
+    if (!functions.isEmpty()) {
+      node.addChildren(XValueChildrenList.bottomGroup(VariablesGroup("Functions", functions, context)), isLast)
+    }
+    else if (isLast && properties.isEmpty()) {
+      node.addChildren(XValueChildrenList.EMPTY, true)
+    }
   }
-  else if (isLast && properties.isEmpty()) {
-    node.addChildren(XValueChildrenList.EMPTY, true)
-  }
-})
+}
 
 fun processNamedObjectProperties(variables: List<Variable>,
                                  node: XCompositeNode,
@@ -227,14 +238,10 @@ private fun naturalCompare(string1: String?, string2: String?): Int {
       j--
     }
     else if (ch1 != ch2) {
-      if (ch1 == '_') {
-        return 1
-      }
-      else if (ch2 == '_') {
-        return -1
-      }
-      else {
-        return ch1 - ch2
+      when {
+        ch1 == '_' -> return 1
+        ch2 == '_' -> return -1
+        else -> return ch1 - ch2
       }
     }
     i++
@@ -259,9 +266,9 @@ private fun naturalCompare(string1: String?, string2: String?): Int {
 fun createVariablesList(variables: List<Variable>, from: Int, to: Int, variableContext: VariableContext, memberFilter: MemberFilter?): XValueChildrenList {
   val list = XValueChildrenList(to - from)
   var getterOrSetterContext: VariableContext? = null
-  for (i in from..to - 1) {
+  for (i in from until to) {
     val variable = variables[i]
-    val normalizedName = if (memberFilter == null) variable.name else memberFilter.rawNameToSource(variable)
+    val normalizedName = memberFilter?.rawNameToSource(variable) ?: variable.name
     list.add(VariableView(normalizedName, variable, variableContext))
     if (variable is ObjectProperty) {
       if (variable.getter != null) {

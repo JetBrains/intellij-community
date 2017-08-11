@@ -152,7 +152,7 @@ class CompilationContextImpl implements CompilationContext {
 
   void prepareForBuild() {
     checkCompilationOptions()
-    def dataDirName = options.incrementalCompilation ? ".jps-build-data-incremental" : ".jps-build-data"
+    def dataDirName = ".jps-build-data"
     def logDir = new File(paths.buildOutputRoot, "log")
     FileUtil.delete(logDir)
     compilationData = new JpsCompilationData(new File(paths.buildOutputRoot, dataDirName), new File("$logDir/compilation.log"),

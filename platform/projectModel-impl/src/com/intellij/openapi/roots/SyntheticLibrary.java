@@ -65,8 +65,16 @@ public abstract class SyntheticLibrary {
   }
 
   /**
-   * @return a condition for excluding file from a library by its name or {@code null}
-   * E.g. you can exclude all non-java file by returning {@code name -> !name.endsWith(".java")}
+   * @deprecated use getExcludeFileCondition instead
+   */
+  @Nullable
+  public Condition<CharSequence> getExcludeCondition() {
+    return null;
+  }
+
+  /**
+   * @return a condition for excluding file from a library or {@code null}
+   * E.g. you can exclude all non-java file by returning {@code file -> !file.getName().endsWith(".java")}
    * <p>
    * Excluding directory leads to excluding all its content recursively.
    * <p>
@@ -74,9 +82,11 @@ public abstract class SyntheticLibrary {
    * it must be bloody fast in order not to affect overall IDE performance.
    */
   @Nullable
-  public Condition<CharSequence> getExcludeCondition() {
-    return null;
+  public Condition<VirtualFile> getExcludeFileCondition() {
+    Condition<CharSequence> condition = getExcludeCondition();
+    return condition != null ? (f) -> condition.value(f.getNameSequence()) : null;
   }
+
 
   /**
    * This method is vital if this library is shown under "External Libraries" (the library should implement ItemPresentation for that).
@@ -108,7 +118,7 @@ public abstract class SyntheticLibrary {
   @NotNull
   public static SyntheticLibrary newImmutableLibrary(@NotNull Collection<VirtualFile> sourceRoots,
                                                      @NotNull Set<VirtualFile> excludedRoots,
-                                                     @Nullable Condition<CharSequence> excludeCondition) {
+                                                     @Nullable Condition<VirtualFile> excludeCondition) {
     return new SyntheticLibrary() {
       @NotNull
       @Override
@@ -124,7 +134,7 @@ public abstract class SyntheticLibrary {
 
       @Nullable
       @Override
-      public Condition<CharSequence> getExcludeCondition() {
+      public Condition<VirtualFile> getExcludeFileCondition() {
         return excludeCondition;
       }
 
@@ -135,8 +145,8 @@ public abstract class SyntheticLibrary {
         SyntheticLibrary library = (SyntheticLibrary)o;
         if (!sourceRoots.equals(library.getSourceRoots())) return false;
         if (!excludedRoots.equals(library.getExcludedRoots())) return false;
-        if (excludeCondition != null ? !excludeCondition.equals(library.getExcludeCondition())
-                                     : library.getExcludeCondition() != null) {
+        if (excludeCondition != null ? !excludeCondition.equals(library.getExcludeFileCondition())
+                                     : library.getExcludeFileCondition() != null) {
           return false;
         }
         return true;

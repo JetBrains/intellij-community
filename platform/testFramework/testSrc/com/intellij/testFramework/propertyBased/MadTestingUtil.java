@@ -256,7 +256,7 @@ public class MadTestingUtil {
                            InsertString.asciiInsertions(file));
   }
 
-  static boolean isAfterError(PsiFile file, int offset) {
+  public static boolean isAfterError(PsiFile file, int offset) {
     PsiElement leaf = file.findElementAt(offset);
     Set<Integer> errorOffsets = SyntaxTraverser.psiTraverser(file)
       .filter(PsiErrorElement.class)

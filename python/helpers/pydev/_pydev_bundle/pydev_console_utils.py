@@ -356,6 +356,9 @@ class BaseInterpreterInterface:
             return False
 
     def execLine(self, line):
+        if not self.banner_shown:
+            line = self.build_banner() + line
+            self.banner_shown = True
         return self.do_exec_code(line, True)
 
     def execMultipleLines(self, lines):

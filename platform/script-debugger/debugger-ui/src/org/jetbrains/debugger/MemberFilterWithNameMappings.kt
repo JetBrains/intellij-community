@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package org.jetbrains.debugger
 
-open class MemberFilterWithNameMappings(protected val rawNameToSource: Map<String, String> = emptyMap()) : MemberFilter {
+open class MemberFilterWithNameMappings(private val rawNameToSource: Map<String, String> = emptyMap()) : MemberFilter {
   override fun hasNameMappings() = !rawNameToSource.isEmpty()
 
   override fun rawNameToSource(variable: Variable): String {
@@ -31,9 +31,9 @@ open class MemberFilterWithNameMappings(protected val rawNameToSource: Map<Strin
       return null
     }
 
-    for (entry in rawNameToSource.entries) {
-      if (entry.value == name) {
-        return entry.key
+    for ((key, value) in rawNameToSource) {
+      if (value == name) {
+        return key
       }
     }
     return null
