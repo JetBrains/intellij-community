@@ -42,7 +42,7 @@ class IntelliJSettingsBuilder implements ModelBuilderService {
     ExtensionAware extensionAware = project.plugins.findPlugin(IdeaPlugin.class)?.model?.module as ExtensionAware
     if (extensionAware) {
       def object = extensionAware.extensions.findByName("settings")
-      if (object instanceof DynamicSettings && !object.objects.isEmpty()) {
+      if (object instanceof DynamicSettings && !(object as DynamicSettings).objects.isEmpty()) {
         return new DefaultIntelliJSettings(object.toString())
       }
     }
