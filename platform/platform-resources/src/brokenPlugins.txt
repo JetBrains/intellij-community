@@ -76,3 +76,4 @@ com.intellij.plugin.applescript 0.115
 org.argus.cit.intellij 1.0.2 1.0.3 1.0.4
 com.intellij.appcode-ui-designer 1.0 1.1
 io.t28.json2java 0.1.0 0.2.0 0.2.1
+"Code Search" 0.99
