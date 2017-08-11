@@ -449,12 +449,10 @@ public class CFGBuilder {
         PsiVariable qualifierBinding = createTempVariable(qualifier.getType());
         pushVariable(qualifierBinding)
           .pushExpression(qualifier)
-          .dup();
-        myAnalyzer.addInstruction(new FieldReferenceInstruction(qualifier, ControlFlowAnalyzer.METHOD_REFERENCE_QUALIFIER_SYNTHETIC_FIELD));
-        assign().pop();
+          .checkNotNull(qualifier, NullabilityProblem.fieldAccessNPE)
+          .assign()
+          .pop();
         myMethodRefQualifiers.put(methodRef, qualifierBinding);
-      } else {
-        pushExpression(methodRef).pop();
       }
       return this;
     }
@@ -598,5 +596,9 @@ public class CFGBuilder {
   public CFGBuilder chain(Consumer<CFGBuilder> operation) {
     operation.accept(this);
     return this;
+  }
+
+  public static boolean isTempVariable(PsiModifierListOwner variable) {
+     return variable instanceof LightVariableBuilder && ((LightVariableBuilder)variable).getName().startsWith("tmp$");
   }
 }

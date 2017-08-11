@@ -320,11 +320,16 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       }
     }
 
+    PsiMethodReferenceExpression methodRef = instruction.getMethodType() == MethodCallInstruction.MethodType.METHOD_REFERENCE_CALL ?
+                                             (PsiMethodReferenceExpression)instruction.getContext() : null;
     DfaInstructionState[] result = new DfaInstructionState[finalStates.size()];
     int i = 0;
     for (DfaMemoryState state : finalStates) {
       if (instruction.shouldFlushFields()) {
         state.flushFields();
+      }
+      if (methodRef != null) {
+        processMethodReferenceResult(methodRef, instruction.getContracts(), state.peek());
       }
       result[i++] = new DfaInstructionState(runner.getInstruction(instruction.getIndex() + 1), state);
     }
@@ -333,8 +338,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
   @NotNull
   private List<DfaMemoryState> handleKnownMethods(MethodCallInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
-    PsiMethodCallExpression call = ObjectUtils.tryCast(instruction.getCallExpression(), PsiMethodCallExpression.class);
-    CustomMethodHandlers.CustomMethodHandler handler = CustomMethodHandlers.find(call);
+    CustomMethodHandlers.CustomMethodHandler handler = CustomMethodHandlers.find(instruction);
     if (handler == null) return Collections.emptyList();
     DfaCallArguments callArguments = popCall(instruction, runner, memState, false);
     List<DfaMemoryState> states =

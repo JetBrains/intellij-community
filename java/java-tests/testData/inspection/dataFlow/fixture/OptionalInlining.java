@@ -12,7 +12,7 @@ public class OptionalInlining {
       System.out.println("Always");
     }
     String s3 = Optional.of(Math.random() > 0.5 ? "foo" : "baz").orElse("bar");
-    if (<warning descr="Condition 's3.equals(\"foo\") || s3.equals(\"baz\")' is always 'true'">s3.equals("foo") || s3.equals("baz")</warning>) {
+    if (<warning descr="Condition 's3.equals(\"foo\") || s3.equals(\"baz\")' is always 'true'">s3.equals("foo") || <warning descr="Condition 's3.equals(\"baz\")' is always 'true' when reached">s3.equals("baz")</warning></warning>) {
       System.out.println("Always");
     }
     if (<warning descr="Condition 's3.equals(\"bar\")' is always 'false'">s3.equals("bar")</warning>) {
@@ -111,7 +111,7 @@ public class OptionalInlining {
   void testMap(Optional<String> opt) {
     opt.map(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>);
     String res = opt.<String>map(s -> null).orElse("abc");
-    if (<warning descr="Condition '!res.equals(\"abc\")' is always 'false'">!res.equals("abc")</warning>) {
+    if (<warning descr="Condition '!res.equals(\"abc\")' is always 'false'">!<warning descr="Condition 'res.equals(\"abc\")' is always 'true'">res.equals("abc")</warning></warning>) {
       System.out.println("Never");
     }
     String trimmed = Optional.ofNullable(nullableMethod()).map(xx -> xx.trim()).orElse("");
