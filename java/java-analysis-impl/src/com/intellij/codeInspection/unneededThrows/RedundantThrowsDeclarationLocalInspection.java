@@ -21,7 +21,6 @@ import com.intellij.codeInsight.daemon.impl.quickfix.MethodThrowsFix;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.reference.RefMethodImpl;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
 import com.siyeh.ig.JavaOverridingMethodUtil;
@@ -80,10 +79,8 @@ public class RedundantThrowsDeclarationLocalInspection extends BaseJavaBatchLoca
     PsiCodeBlock body = method.getBody();
     if (body == null) return null;
 
-    if (myGlobalTool.IGNORE_ENTRY_POINTS) {
-      InspectionProfile profile = InspectionProjectProfileManager.getInstance(inspectionManager.getProject()).getCurrentProfile();
-      UnusedDeclarationInspectionBase tool = (UnusedDeclarationInspectionBase)profile.getUnwrappedTool(UnusedDeclarationInspectionBase.SHORT_NAME, method);
-      if ((tool == null ? new UnusedDeclarationInspectionBase() : tool).isEntryPoint(method)) return null;
+    if (myGlobalTool.IGNORE_ENTRY_POINTS && UnusedDeclarationInspectionBase.findUnusedDeclarationInspection(method).isEntryPoint(method)) {
+      return null;
     }
 
     ReferenceAndType[] thrownExceptions = getThrownCheckedExceptions(method);
