@@ -16,6 +16,8 @@
 package org.jetbrains.plugins.gradle.importing;
 
 import com.intellij.compiler.CompilerConfiguration;
+import com.intellij.compiler.CompilerConfigurationImpl;
+import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -161,6 +163,39 @@ public class GradleMiscImportingTest extends GradleImportingTestCase {
 
     importProject();
     assertModules("project", "project_test");
+  }
+
+  @Test
+  public void testCompilerConfigurationSettingsImport() throws Exception {
+    importProject(
+      "apply plugin: 'idea'\n" +
+      "idea {\n" +
+      "  project.settings {\n" +
+      "    compiler {\n" +
+      "      resourcePatterns '!*.java;!*.class'\n" +
+      "      clearOutputDirectory false\n" +
+      "      addNotNullAssertions false\n" +
+      "      autoShowFirstErrorInEditor false\n" +
+      "      displayNotificationPopup false\n" +
+      "      enableAutomake false\n" +
+      "      parallelCompilation true\n" +
+      "      rebuildModuleOnDependencyChange false\n" +
+      "    }\n" +
+      "  }\n" +
+      "}"
+    );
+
+    final CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
+    final CompilerWorkspaceConfiguration workspaceConfiguration = CompilerWorkspaceConfiguration.getInstance(myProject);
+
+    assertSameElements(compilerConfiguration.getResourceFilePatterns(), "!*.class", "!*.java");
+    assertFalse(workspaceConfiguration.CLEAR_OUTPUT_DIRECTORY);
+    assertFalse(compilerConfiguration.isAddNotNullAssertions());
+    assertFalse(workspaceConfiguration.AUTO_SHOW_ERRORS_IN_EDITOR);
+    assertFalse(workspaceConfiguration.DISPLAY_NOTIFICATION_POPUP);
+    assertFalse(workspaceConfiguration.MAKE_PROJECT_ON_SAVE);
+    assertTrue(workspaceConfiguration.PARALLEL_COMPILATION);
+    assertFalse(workspaceConfiguration.REBUILD_ON_DEPENDENCY_CHANGE);
   }
 
   private LanguageLevel getLanguageLevelForModule(final String moduleName) {
