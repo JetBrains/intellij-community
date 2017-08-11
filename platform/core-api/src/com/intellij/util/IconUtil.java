@@ -640,18 +640,12 @@ public class IconUtil {
     return new JBImageIcon(img) {
       @Override
       public int getIconWidth() {
-        Image img = getImage();
-        return (img instanceof JBHiDPIScaledImage) ?
-               ((JBHiDPIScaledImage)img).getUserWidth(null):
-               super.getIconWidth();
+        return ImageUtil.getUserWidth(getImage());
       }
 
       @Override
       public int getIconHeight() {
-        Image img = getImage();
-        return (img instanceof JBHiDPIScaledImage) ?
-               ((JBHiDPIScaledImage)img).getUserHeight(null):
-               super.getIconHeight();
+        return ImageUtil.getUserHeight(getImage());
       }
     };
   }
