@@ -688,7 +688,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       title.setFont(title.getFont().deriveFont(Font.BOLD));
     }
     topPanel.add(title, BorderLayout.WEST);
-    final JPanel controls = new JPanel(new BorderLayout());
+    JPanel controls = new JPanel(new BorderLayout());
     controls.setOpaque(false);
 
     JLabel settings = new JLabel(AllIcons.General.SearchEverywhereGear);
@@ -703,21 +703,24 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     settings.setBorder(UIUtil.isUnderWin10LookAndFeel() ? JBUI.Borders.emptyLeft(6) : JBUI.Borders.empty());
 
     controls.add(settings, BorderLayout.EAST);
-    myNonProjectCheckBox.setForeground(foregroundColor);
-
-    Color shortcutColor = UIUtil.isUnderWin10LookAndFeel() ?
-                               UIManager.getColor("SearchEverywhere.shortcutForeground") : foregroundColor;
-
-    StringBuilder cbText = new StringBuilder("<html>Include non-project items ");
-    if (!UIUtil.isUnderWin10LookAndFeel()) cbText.append("<b>");
-    cbText.append("<font color=#").append(ColorUtil.toHex(shortcutColor)).append(">").append(getShortcut()).append("</font>");
-    if (!UIUtil.isUnderWin10LookAndFeel()) cbText.append("</b>");
-    cbText.append("</html>");
-
-    myNonProjectCheckBox.setText(cbText.toString());
     if (!NonProjectScopeDisablerEP.isSearchInNonProjectDisabled()) {
+      myNonProjectCheckBox.setForeground(foregroundColor);
+
+      Color shortcutColor = UIUtil.isUnderWin10LookAndFeel() ?
+                            UIManager.getColor("SearchEverywhere.shortcutForeground") : foregroundColor;
+
+      StringBuilder cbText = new StringBuilder("<html>Include non-project items ");
+      if (!UIUtil.isUnderWin10LookAndFeel()) cbText.append("<b>");
+      cbText.append("<font color=#").append(ColorUtil.toHex(shortcutColor)).append(">").append(getShortcut()).append("</font>");
+      if (!UIUtil.isUnderWin10LookAndFeel()) cbText.append("</b>");
+      cbText.append("</html>");
+
+      myNonProjectCheckBox.setText(cbText.toString());
       controls.add(myNonProjectCheckBox, BorderLayout.WEST);
     }
+
+    controls.setBorder(UIUtil.isUnderWin10LookAndFeel() ? JBUI.Borders.emptyTop(1) : JBUI.Borders.empty());
+
     topPanel.add(controls, BorderLayout.EAST);
     panel.add(myPopupField, BorderLayout.CENTER);
     panel.add(topPanel, BorderLayout.NORTH);
