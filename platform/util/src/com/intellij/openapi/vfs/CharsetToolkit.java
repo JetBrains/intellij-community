@@ -328,10 +328,10 @@ public class CharsetToolkit {
   }
 
   public enum GuessedEncoding {
-    SEVEN_BIT,     // ASCII
+    SEVEN_BIT,     // ASCII characters only
     VALID_UTF8,    // UTF-8
-    INVALID_UTF8,  // invalid UTF
-    BINARY         // binary
+    INVALID_UTF8,  // invalid UTF: illegal utf-8 continuation sequences were found
+    BINARY         // binary: char with code < BINARY_THRESHOLD(9) was found
   }
 
   @NotNull
@@ -618,8 +618,8 @@ public class CharsetToolkit {
     if (hasUTF32BEBom(content)) {
       return UTF32BE_BOM.length;
     }
-    if (hasUTF32BEBom(content)) {
-      return UTF32BE_BOM.length;
+    if (hasUTF32LEBom(content)) {
+      return UTF32LE_BOM.length;
     }
     if (hasUTF16LEBom(content)) {
       return UTF16LE_BOM.length;

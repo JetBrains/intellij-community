@@ -481,12 +481,9 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
       throw new IOException(VfsBundle.message("file.move.error", newParent.getPresentableUrl()));
     }
 
-    EncodingRegistry.doActionAndRestoreEncoding(this, new ThrowableComputable<VirtualFile, IOException>() {
-      @Override
-      public VirtualFile compute() throws IOException {
-        getFileSystem().moveFile(requestor, VirtualFile.this, newParent);
-        return VirtualFile.this;
-      }
+    EncodingRegistry.doActionAndRestoreEncoding(this, () -> {
+      getFileSystem().moveFile(requestor, VirtualFile.this, newParent);
+      return VirtualFile.this;
     });
   }
 
@@ -499,12 +496,8 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
       throw new IOException(VfsBundle.message("file.copy.target.must.be.directory"));
     }
 
-    return EncodingRegistry.doActionAndRestoreEncoding(this, new ThrowableComputable<VirtualFile, IOException>() {
-      @Override
-      public VirtualFile compute() throws IOException {
-        return getFileSystem().copyFile(requestor, VirtualFile.this, newParent, copyName);
-      }
-    });
+    return EncodingRegistry.doActionAndRestoreEncoding(this,
+                                                       () -> getFileSystem().copyFile(requestor, VirtualFile.this, newParent, copyName));
   }
 
   /**
@@ -570,13 +563,9 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
 
   public void setBinaryContent(@NotNull byte[] content, long newModificationStamp, long newTimeStamp, Object requestor) throws IOException {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
-    final OutputStream outputStream = getOutputStream(requestor, newModificationStamp, newTimeStamp);
-    try {
+    try (OutputStream outputStream = getOutputStream(requestor, newModificationStamp, newTimeStamp)) {
       outputStream.write(content);
       outputStream.flush();
-    }
-    finally {
-      outputStream.close();
     }
   }
 
