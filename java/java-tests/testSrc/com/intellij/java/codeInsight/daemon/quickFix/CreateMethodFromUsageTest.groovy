@@ -26,9 +26,9 @@ import com.intellij.openapi.editor.actionSystem.EditorActionManager
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiModifier
-import com.intellij.psi.codeStyle.CodeStyleSettings
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings
 import com.intellij.psi.util.PsiTreeUtil
+
 /**
  * @author ven
  */
@@ -176,7 +176,7 @@ class A {
   }
 
   void "test use fully qualified names with conflicting imports"() {
-    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
+    final JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(project);
     def fqClassNames = settings.useFqClassNames
     try {
       settings.setUseFqClassNames(true)
