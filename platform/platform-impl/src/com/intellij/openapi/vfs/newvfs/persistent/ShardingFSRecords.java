@@ -27,6 +27,7 @@ public class ShardingFSRecords implements IFSRecords {
   private PagedFileStorage.StorageLockContext myContext;
   private PersistentStringEnumerator myNames;
   private FileNameCache myCache;
+  private VfsDependentEnum<String> myAttrsList;
   private final Object lock = new Object();
 
   private TIntObjectHashMap<IFSRecords> myShards = new TIntObjectHashMap<>();
@@ -47,7 +48,7 @@ public class ShardingFSRecords implements IFSRecords {
         return shard;
       }
       shard = new FSRecordsShard(shardId, myFactory.get());
-      shard.connect(myContext, myNames, myCache);
+      shard.connect(myContext, myNames, myCache, myAttrsList);
       myShards.put(shardId, shard);
       return shard;
     }
@@ -67,10 +68,11 @@ public class ShardingFSRecords implements IFSRecords {
   }
 
   @Override
-  public void connect(PagedFileStorage.StorageLockContext lockContext, PersistentStringEnumerator names, FileNameCache fileNameCache) {
+  public void connect(PagedFileStorage.StorageLockContext lockContext, PersistentStringEnumerator names, FileNameCache fileNameCache, VfsDependentEnum<String> attrsList) {
     myContext = lockContext;
     myNames = names;
     myCache = fileNameCache;
+    myAttrsList = attrsList;
   }
 
   @Override
@@ -140,6 +142,7 @@ public class ShardingFSRecords implements IFSRecords {
 
   @Override
   public int findRootRecord(@NotNull String rootUrl) {
+    // TODO!!!!!!!
     for (IFSRecords records : getShards()) {
       int record = records.findRootRecord(rootUrl);
       if (record > 0) {
@@ -205,6 +208,11 @@ public class ShardingFSRecords implements IFSRecords {
   @Override
   public void setParent(int id, int parentId) {
     getShard(id).setParent(id, parentId);
+  }
+
+  @Override
+  public int getParent(int id) {
+    return getShard(id).getParent(id);
   }
 
   @Override

@@ -139,7 +139,6 @@ public class FSRecords implements IFSRecords {
     ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
     r = lock.readLock();
     w = lock.writeLock();
-    myAttributesList = new VfsDependentEnum<>(baseFile, "attrib", EnumeratorStringDescriptor.INSTANCE, 1);
   }
 
   @Override
@@ -184,7 +183,7 @@ public class FSRecords implements IFSRecords {
   private ResizeableMappedFile myRecords;
   private PersistentBTreeEnumerator<byte[]> myContentHashesEnumerator;
   private File myRootsFile;
-  private final VfsDependentEnum<String> myAttributesList;
+  private VfsDependentEnum<String> myAttributesList;
   private final TIntArrayList myFreeRecords = new TIntArrayList();
 
   private boolean myDirty;
@@ -195,11 +194,11 @@ public class FSRecords implements IFSRecords {
 
 
   @Override
-  public void connect(PagedFileStorage.StorageLockContext lockContext, PersistentStringEnumerator names, FileNameCache fileNameCache) {
+  public void connect(PagedFileStorage.StorageLockContext lockContext, PersistentStringEnumerator names, FileNameCache fileNameCache, VfsDependentEnum<String> attrsList) {
     w.lock();
     try {
       if (!myInitialized) {
-        init(names, lockContext, fileNameCache);
+        init(names, lockContext, fileNameCache, attrsList);
         setupFlushing();
         myInitialized = true;
       }
@@ -253,7 +252,7 @@ public class FSRecords implements IFSRecords {
     return new File(basePath(), "corruption.marker");
   }
 
-  private void init(PersistentStringEnumerator names, PagedFileStorage.StorageLockContext lockContext, FileNameCache fileNameCache) {
+  private void init(PersistentStringEnumerator names, PagedFileStorage.StorageLockContext lockContext, FileNameCache fileNameCache, VfsDependentEnum<String> attrsList) {
     final File basePath = basePath().getAbsoluteFile();
     basePath.mkdirs();
 
@@ -273,6 +272,7 @@ public class FSRecords implements IFSRecords {
 
       myNames = names;
       myNameCache = fileNameCache;
+      myAttributesList = attrsList;
 
       myAttributes = new Storage(attributesFile.getPath(), REASONABLY_SMALL) {
         @Override
@@ -361,7 +361,7 @@ public class FSRecords implements IFSRecords {
         throw new RuntimeException("Can't rebuild filesystem storage ", e1);
       }
 
-      init(names, lockContext, fileNameCache);
+      init(names, lockContext, fileNameCache, attrsList);
     }
   }
 
@@ -1077,6 +1077,7 @@ public class FSRecords implements IFSRecords {
     }
   }
 
+  @Override
   public int getParent(int id) {
     try {
       r.lock();

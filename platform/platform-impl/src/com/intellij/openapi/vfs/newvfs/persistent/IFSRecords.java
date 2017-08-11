@@ -33,7 +33,7 @@ import java.util.function.IntPredicate;
 public interface IFSRecords {
   void writeAttributesToRecord(int id, int parentId, @NotNull FileAttributes attributes, @NotNull String name);
 
-  void connect(PagedFileStorage.StorageLockContext lockContext, PersistentStringEnumerator names, FileNameCache fileNameCache);
+  void connect(PagedFileStorage.StorageLockContext lockContext, PersistentStringEnumerator names, FileNameCache fileNameCache, VfsDependentEnum<String> attrsList);
 
   void force();
 
@@ -78,6 +78,8 @@ public interface IFSRecords {
   TIntArrayList getParents(int id, @NotNull IntPredicate cached);
 
   void setParent(int id, int parentId);
+
+  int getParent(int id);
 
   int getNameId(int id);
 

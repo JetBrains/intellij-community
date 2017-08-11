@@ -319,12 +319,12 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponentAdap
 
   @Override
   public <Key, Psi extends PsiElement> boolean processElements(@NotNull final StubIndexKey<Key, Psi> indexKey,
-                                                       @NotNull final Key key,
-                                                       @NotNull final Project project,
-                                                       @Nullable final GlobalSearchScope scope,
-                                                       @Nullable IdFilter idFilter,
-                                                       @NotNull final Class<Psi> requiredClass,
-                                                       @NotNull final Processor<? super Psi> processor) {
+                                                               @NotNull final Key key,
+                                                               @NotNull final Project project,
+                                                               @Nullable final GlobalSearchScope scope,
+                                                               @Nullable IdFilter idFilter,
+                                                               @NotNull final Class<Psi> requiredClass,
+                                                               @NotNull final Processor<? super Psi> processor) {
     return doProcessStubs(indexKey, key, project, scope, new StubIdListContainerAction(idFilter, project) {
       final PersistentFS fs = (PersistentFS)ManagingFS.getInstance();
       @Override

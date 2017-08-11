@@ -32,7 +32,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class FileNameCache {
 
   private final PersistentStringEnumerator myNames;
-  @SuppressWarnings("unchecked") private final IntSLRUCache<IntObjectLinkedMap.MapEntry<CharSequence>>[] myNameCache = new IntSLRUCache[16];
+  @SuppressWarnings("unchecked")
+  private final IntSLRUCache<IntObjectLinkedMap.MapEntry<CharSequence>>[] myNameCache = new IntSLRUCache[16];
   private final IntObjectLinkedMap.MapEntry<CharSequence>[] myArrayCache = new IntObjectLinkedMap.MapEntry[ourLOneSize];
 
   public FileNameCache(PersistentStringEnumerator names) {

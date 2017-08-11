@@ -56,8 +56,8 @@ public class FSRecordsShard implements IFSRecords {
   }
 
   @Override
-  public void connect(PagedFileStorage.StorageLockContext lockContext, PersistentStringEnumerator names, FileNameCache fileNameCache) {
-    myDelegate.connect(lockContext, names, fileNameCache);
+  public void connect(PagedFileStorage.StorageLockContext lockContext, PersistentStringEnumerator names, FileNameCache fileNameCache, VfsDependentEnum<String> attrsList) {
+    myDelegate.connect(lockContext, names, fileNameCache, attrsList);
   }
 
   @Override
@@ -162,6 +162,11 @@ public class FSRecordsShard implements IFSRecords {
   @Override
   public void setParent(int id, int parentId) {
     myDelegate.setParent(removeShardId(id), removeShardId(parentId));
+  }
+
+  @Override
+  public int getParent(int id) {
+    return addShardId(myDelegate.getParent(removeShardId(id)));
   }
 
   @Override

@@ -456,7 +456,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
   @NotNull
   private static <K, V> UpdatableIndex<K, V, FileContent> createIndex(@NotNull final FileBasedIndexExtension<K, V> extension,
-                                                               @NotNull final MemoryIndexStorage<K, V> storage)
+                                                                      @NotNull final MemoryIndexStorage<K, V> storage)
     throws StorageException, IOException {
     final VfsAwareMapReduceIndex<K, V, FileContent> index;
     if (extension instanceof CustomImplementationFileBasedIndexExtension) {
