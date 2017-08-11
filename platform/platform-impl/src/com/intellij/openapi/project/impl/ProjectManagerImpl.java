@@ -416,21 +416,31 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
         }
       }, ModalityState.NON_MODAL);
     };
-    ProgressIndicator indicator = myProgressManager.getProgressIndicator();
-    if (indicator != null) {
-      indicator.setText("Preparing workspace...");
-      process.run();
-      return true;
-    }
 
-    boolean ok = myProgressManager.runProcessWithProgressSynchronously(process, ProjectBundle.message("project.load.progress"), canCancelProjectLoading(), project);
-    if (!ok) {
+    if (!loadProjectUnderProgress(project, process)) {
       closeProject(project, false, false, false, true);
+      WriteAction.run(() -> Disposer.dispose(project));
       notifyProjectOpenFailed();
       return false;
     }
 
     return true;
+  }
+
+  private boolean loadProjectUnderProgress(@NotNull Project project, @NotNull Runnable performLoading) {
+    ProgressIndicator indicator = myProgressManager.getProgressIndicator();
+    if (indicator != null) {
+      indicator.setText("Preparing workspace...");
+      try {
+        performLoading.run();
+        return true;
+      }
+      catch (ProcessCanceledException e) {
+        return false;
+      }
+    }
+    
+    return myProgressManager.runProcessWithProgressSynchronously(performLoading, ProjectBundle.message("project.load.progress"), canCancelProjectLoading(), project);
   }
 
   private boolean addToOpened(@NotNull Project project) {
