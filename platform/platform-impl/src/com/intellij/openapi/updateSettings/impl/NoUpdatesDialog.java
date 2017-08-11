@@ -17,7 +17,7 @@ package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -54,7 +54,7 @@ class NoUpdatesDialog extends AbstractUpdateDialog {
 
     public NoUpdatesPanel() {
       if (UpdateSettings.getInstance().isPlatformUpdateEnabled()) {
-        String app = ApplicationInfo.getInstance().getVersionName();
+        String app = ApplicationNamesInfo.getInstance().getFullProductName();
         myNothingToUpdateLabel.setText(IdeBundle.message("updates.no.updates.message", app));
       }
       else {
