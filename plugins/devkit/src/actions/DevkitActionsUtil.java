@@ -23,6 +23,7 @@ import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.ChooseModulesDialog;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiClass;
@@ -33,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 
+import java.io.File;
 import java.util.*;
 
 public final class DevkitActionsUtil {
@@ -66,8 +68,7 @@ public final class DevkitActionsUtil {
         return PluginModuleType.getPluginXml(candidateModules.get(0));
       }
 
-      //TODO plugin.xml paths in dialog
-      ChooseModulesDialog chooseModulesDialog = new ChooseModulesDialog(project, candidateModules,
+      ChoosePluginModuleDialog chooseModulesDialog = new ChoosePluginModuleDialog(project, candidateModules,
                                                                         DevKitBundle.message("select.plugin.module.to.patch"), null);
       chooseModulesDialog.setSingleSelectionMode();
       chooseModulesDialog.show();
@@ -119,5 +120,29 @@ public final class DevkitActionsUtil {
       return candidates[0];
     }
     return fileIndex.getModuleForFile(vFile);
+  }
+
+
+  private static class ChoosePluginModuleDialog extends ChooseModulesDialog {
+    public ChoosePluginModuleDialog(Project project, List<? extends Module> items, String title, @Nullable String description) {
+      super(project, items, title, description);
+    }
+
+    @Override
+    protected String getItemLocation(Module item) {
+      XmlFile pluginXml = PluginModuleType.getPluginXml(item);
+      assert pluginXml != null;
+
+      VirtualFile virtualFile = pluginXml.getVirtualFile();
+      VirtualFile projectPath = item.getProject().getBaseDir();
+      assert virtualFile != null;
+      assert projectPath != null;
+
+      if (VfsUtilCore.isAncestor(projectPath, virtualFile, false)) {
+        return VfsUtilCore.getRelativePath(virtualFile, projectPath, File.separatorChar);
+      } else {
+        return virtualFile.getPresentableUrl();
+      }
+    }
   }
 }

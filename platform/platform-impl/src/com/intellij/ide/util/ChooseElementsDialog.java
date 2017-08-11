@@ -100,6 +100,10 @@ public abstract class ChooseElementsDialog<T> extends DialogWrapper {
   @Nullable
   protected abstract Icon getItemIcon(T item);
 
+  protected String getItemLocation(T item) {
+    return null; // default implementation
+  }
+
   @NotNull
   public List<T> getChosenElements() {
     return isOK() ? myChooser.getSelectedElements() : Collections.emptyList();
@@ -132,12 +136,16 @@ public abstract class ChooseElementsDialog<T> extends DialogWrapper {
 
   private ElementsChooser.ElementProperties createElementProperties(final T item) {
     return new ElementsChooser.ElementProperties() {
+      @Override
+      @Nullable
       public Icon getIcon() {
         return getItemIcon(item);
       }
 
-      public Color getColor() {
-        return null;
+      @Override
+      @Nullable
+      public String getLocation() {
+        return getItemLocation(item);
       }
     };
   }
