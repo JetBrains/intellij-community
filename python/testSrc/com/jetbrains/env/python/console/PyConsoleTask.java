@@ -149,7 +149,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
       new PydevConsoleRunnerImpl(project, sdk, PyConsoleType.PYTHON, myFixture.getTempDirPath(), Maps.newHashMap(),
                                  PyConsoleOptions.getInstance(project).getPythonConsoleSettings(),
                                  (s) -> {
-                                 }) {
+                                 }, PydevConsoleRunnerImpl.CONSOLE_START_COMMAND) {
         protected void showContentDescriptor(RunContentDescriptor contentDescriptor) {
           myContentDescriptorRef.set(contentDescriptor);
           super.showContentDescriptor(contentDescriptor);

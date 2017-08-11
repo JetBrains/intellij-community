@@ -325,8 +325,6 @@ def start_console_server(host, port, interpreter):
         print(port)
         print(interpreter.client_port)
 
-    interpreter.execMultipleLines("")
-
     while True:
         try:
             server.serve_forever()

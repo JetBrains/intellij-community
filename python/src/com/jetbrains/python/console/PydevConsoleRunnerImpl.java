@@ -699,6 +699,10 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
           enableConsoleExecuteAction();
         }
 
+        if (statements2execute.length == 1 && statements2execute[0].isEmpty()) {
+          statements2execute[0] = "\t";
+        }
+
         for (String statement : statements2execute) {
           consoleView.executeStatement(statement + "\n", ProcessOutputTypes.SYSTEM);
         }
