@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.ui.win;
 
-import com.intellij.idea.StartupUtil;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.util.lang.UrlClassLoader;
@@ -24,33 +23,29 @@ import java.lang.ref.WeakReference;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class RecentTasks {
-
-  private static AtomicBoolean initialized =
-    new AtomicBoolean(false);
-
-  private final static WeakReference<Thread> openerThread =
-    new WeakReference<>(Thread.currentThread());
-
-  private final static String openerThreadName =
-    Thread.currentThread().getName();
+  private static final AtomicBoolean initialized = new AtomicBoolean(false);
+  private static final WeakReference<Thread> openerThread;
+  private static final String openerThreadName;
 
   static {
+    Thread thread = Thread.currentThread();
+    openerThread = new WeakReference<>(thread);
+    openerThreadName = thread.getName();
     UrlClassLoader.loadPlatformLibrary("jumpListBridge");
   }
 
   private synchronized static void init() {
-    if (initialized.get()) return;
-    initialize(ApplicationInfoEx.getInstanceEx().getVersionName() + "." + PathManager.getConfigPath().hashCode());
-    initialized.set(true);
+    if (initialized.compareAndSet(false, true)) {
+      initialize(ApplicationInfoEx.getInstanceEx().getVersionName() + "." + PathManager.getConfigPath().hashCode());
+    }
   }
 
   /**
-   * Com initialization should be invoked once per process.
-   * All invocation should be made from the same thread.
-   * @param applicationId
+   * COM initialization should be invoked once per process.
+   * All invocations should be made from the same thread.
    */
-  native private static void initialize (String applicationId);
-  native private static void addTasksNativeForCategory (String category, Task [] tasks);
+  native private static void initialize(String applicationId);
+  native private static void addTasksNativeForCategory(@SuppressWarnings("SameParameterValue") String category, Task[] tasks);
   native static String getShortenPath(String paths);
   native private static void clearNative();
 
@@ -62,7 +57,6 @@ public class RecentTasks {
 
   /**
    * Use #clearNative method instead of passing empty array of tasks.
-   * @param tasks
    */
   public synchronized static void addTasks(final Task[] tasks) {
     if (tasks.length == 0) return;
@@ -72,8 +66,9 @@ public class RecentTasks {
   }
 
   private static void checkThread() {
-    Thread t = openerThread.get();
-    if (t == null || !t.equals(Thread.currentThread()))
-      throw new RuntimeException("Current thread is " + Thread.currentThread().getName() + "This class has to be used from " + openerThreadName + " thread");
+    Thread thread = Thread.currentThread();
+    if (!thread.equals(openerThread.get())) {
+      throw new RuntimeException("Current thread is '" + thread.getName() + "'; this class should be used from '" + openerThreadName + "'");
+    }
   }
 }
