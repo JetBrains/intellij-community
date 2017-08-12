@@ -19,6 +19,8 @@ import com.intellij.java.propertyBased.PsiIndexConsistencyTest.Action.*
 import com.intellij.lang.java.lexer.JavaLexer
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater
+import com.intellij.openapi.util.Conditions
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.java.LanguageLevel
@@ -47,7 +49,8 @@ class PsiIndexConsistencyTest: LightCodeInsightFixtureTestCase() {
       50 to Generator.sampledFrom(Commit,
                                   AddImport,
                                   AddEnum,
-                                  ForceReloadPsi,
+                                  ReparseFile,
+                                  FilePropertiesChanged,
                                   Reformat,
                                   InvisiblePsiChange,
                                   PostponedFormatting,
@@ -125,10 +128,16 @@ class PsiIndexConsistencyTest: LightCodeInsightFixtureTestCase() {
       override fun performAction(model: Model) =
         PostprocessReformattingAspect.getInstance(model.project).doPostponedFormatting()
     }
-    object ForceReloadPsi: SimpleAction() {
+    object ReparseFile : SimpleAction() {
       override fun performAction(model: Model) {
         PostponedFormatting.performAction(model)
         FileContentUtilCore.reparseFiles(model.vFile)
+      }
+    }
+    object FilePropertiesChanged : SimpleAction() {
+      override fun performAction(model: Model) {
+        PostponedFormatting.performAction(model)
+        PushedFilePropertiesUpdater.getInstance(model.project).filePropertiesChanged(model.vFile, Conditions.alwaysTrue())
       }
     }
     object AddImport: SimpleAction() {
