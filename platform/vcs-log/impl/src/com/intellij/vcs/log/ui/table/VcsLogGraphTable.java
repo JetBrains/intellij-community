@@ -65,7 +65,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.*;
+import javax.swing.event.CellEditorListener;
+import javax.swing.event.MouseInputListener;
+import javax.swing.event.TableModelEvent;
 import javax.swing.plaf.basic.BasicTableHeaderUI;
 import javax.swing.table.*;
 import java.awt.*;
@@ -135,7 +137,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
     myController = new GraphTableController(this, ui, logData, graphCellPainter, myGraphCommitCellRenderer);
 
-    getSelectionModel().addListSelectionListener(new MyListSelectionListener());
+    getSelectionModel().addListSelectionListener(e -> mySelection = null);
     getColumnModel().setColumnSelectionAllowed(false);
 
     ScrollingUtil.installActions(this, false);
@@ -874,13 +876,6 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
     public boolean isOnRootColumn(@NotNull MouseEvent e) {
       return header.getTable().getColumnModel().getColumnIndexAtX(e.getX()) == ROOT_COLUMN;
-    }
-  }
-
-  private class MyListSelectionListener implements ListSelectionListener {
-    @Override
-    public void valueChanged(ListSelectionEvent e) {
-      mySelection = null;
     }
   }
 
