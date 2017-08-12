@@ -61,13 +61,7 @@ public class RemoteSdkCredentialsBuilder {
     copyTo.setHost(data.getHost());
     copyTo.setLiteralPort(data.getLiteralPort());//then port is copied
     copyTo.setUserName(data.getUserName());
-    copyTo.setPassword(data.getPassword());
     copyTo.setPrivateKeyFile(data.getPrivateKeyFile());
-    copyTo.setPassphrase(data.getPassphrase());
-    copyTo.setAuthType(data.getAuthType());
-
-    copyTo.setStorePassword(data.isStorePassword());
-    copyTo.setStorePassphrase(data.isStorePassphrase());
   }
 
   public RemoteSdkCredentialsBuilder withCredentials(@Nullable RemoteCredentials remoteCredentials) {

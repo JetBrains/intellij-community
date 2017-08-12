@@ -16,9 +16,13 @@
 package com.intellij.remote;
 
 import com.intellij.util.xmlb.annotations.Transient;
-import org.jetbrains.annotations.NotNull;
 
 /**
+ * Describes {@code options} for connection to SSH server.
+ * <p>
+ * Separated from authentication data which is managed using
+ * {@code {@link com.intellij.credentialStore.CredentialStore}}.
+ *
  * @author traff
  */
 public interface RemoteCredentials {
@@ -31,23 +35,5 @@ public interface RemoteCredentials {
   @Transient
   String getUserName();
 
-  String getPassword();
-
-  @Transient
-  String getPassphrase();
-
-  @NotNull
-  AuthType getAuthType();
-
-  @Deprecated
-  boolean isUseKeyPair();
-
-  @Deprecated
-  boolean isUseAuthAgent();
-
   String getPrivateKeyFile();
-
-  boolean isStorePassword();
-
-  boolean isStorePassphrase();
 }
