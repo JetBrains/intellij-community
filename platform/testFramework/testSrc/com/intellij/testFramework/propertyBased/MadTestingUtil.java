@@ -19,7 +19,6 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.history.Label;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryException;
-import com.intellij.history.integration.LocalHistoryImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
