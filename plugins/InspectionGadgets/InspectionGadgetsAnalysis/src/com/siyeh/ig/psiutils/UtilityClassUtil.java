@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,18 @@ import org.jetbrains.annotations.NotNull;
 public class UtilityClassUtil {
 
   private UtilityClassUtil() {}
+
+  public static boolean hasPrivateEmptyOrNoConstructor(@NotNull PsiClass aClass) {
+    final PsiMethod[] constructors = aClass.getConstructors();
+    if (constructors.length == 0) {
+      return true;
+    }
+    if (constructors.length != 1) {
+      return false;
+    }
+    final PsiMethod constructor = constructors[0];
+    return constructor.hasModifierProperty(PsiModifier.PRIVATE) && ControlFlowUtils.isEmptyCodeBlock(constructor.getBody());
+  }
 
   public static boolean isUtilityClass(@NotNull PsiClass aClass) {
     return isUtilityClass(aClass, true);

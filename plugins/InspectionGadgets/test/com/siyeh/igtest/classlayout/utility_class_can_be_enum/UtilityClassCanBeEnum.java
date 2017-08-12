@@ -9,3 +9,13 @@ enum Other {
 
   public static void util() {}
 }
+class Similar {
+
+  public Similar() {
+    barbeque();
+  }
+
+  public static boolean barbeque() {
+    return true;
+  }
+}
