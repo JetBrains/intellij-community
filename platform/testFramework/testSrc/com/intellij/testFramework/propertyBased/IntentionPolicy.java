@@ -16,12 +16,25 @@
 package com.intellij.testFramework.propertyBased;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
  */
 public class IntentionPolicy {
+
+  /**
+   * Determines whether the given intention should be invoked in the property tests. Possible reasons for not invoking them:
+   * <li>
+   *   <ul>Intentions that don't change document by design (e.g. change settings, thus affecting following tests)</ul>
+   *   <ul>Intentions that start live template (that also doesn't change document)</ul>
+   *   <ul>Intentions that display dialogs/popups (but it'd be better to make them testable as well)</ul>
+   *   <ul>Intentions requiring special test environment not provided by the property test</ul>
+   *   <ul>Intentions ignored because of not-easy-to-fix bugs in them. Preferably should be filed as a tracker issue.</ul>
+   * </li> 
+   */
   public boolean mayInvokeIntention(@NotNull IntentionAction action) {
     return action.startInWriteAction() && !shouldSkipIntention(action.getText());
   }
@@ -30,5 +43,14 @@ public class IntentionPolicy {
     return actionText.startsWith("Typo: Change to...") || // doesn't change file text (starts live template);
            actionText.startsWith("Optimize imports") || // https://youtrack.jetbrains.com/issue/IDEA-173801
            actionText.startsWith("Convert to project line separators"); // changes VFS, not document
+  }
+
+  /**
+   * Controls whether the given intention (already approved by {@link #mayInvokeIntention}) is allowed to
+   * introduce new highlighting errors into the code. It's recommended to return false by default, 
+   * and include found intentions one by one (or make them not break the code).  
+   */
+  public boolean mayBreakCode(@NotNull IntentionAction action, @NotNull Editor editor, @NotNull PsiFile file) {
+    return false;
   }
 }

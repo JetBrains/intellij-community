@@ -19,6 +19,7 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.history.Label;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryException;
+import com.intellij.history.integration.LocalHistoryImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -43,11 +44,12 @@ import com.intellij.testFramework.RunAll;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.util.ThrowableRunnable;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.util.ui.UIUtil;
 import jetCheck.DataStructure;
 import jetCheck.Generator;
 import jetCheck.IntDistribution;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -64,6 +66,7 @@ public class MadTestingUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.testFramework.propertyBased.MadTestingUtil");
   
   public static void restrictChangesToDocument(Document document, Runnable r) {
+    letSaveAllDocumentsPassIfAny();
     watchDocumentChanges(r::run, event -> {
       Document changed = event.getDocument();
       if (changed != document) {
@@ -75,7 +78,13 @@ public class MadTestingUtil {
     });
   }
 
+  //for possible com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl.saveAllDocumentsLater
+  private static void letSaveAllDocumentsPassIfAny() {
+    UIUtil.dispatchAllInvocationEvents();
+  }
+
   public static void prohibitDocumentChanges(Runnable r) {
+    letSaveAllDocumentsPassIfAny();
     watchDocumentChanges(r::run, event -> {
       Document changed = event.getDocument();
       VirtualFile file = FileDocumentManager.getInstance().getFile(changed);

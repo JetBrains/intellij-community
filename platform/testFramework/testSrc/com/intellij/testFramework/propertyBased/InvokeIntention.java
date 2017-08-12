@@ -31,9 +31,9 @@ import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.containers.ContainerUtil;
+import jetCheck.Generator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import jetCheck.Generator;
 
 import java.util.List;
 
@@ -67,9 +67,8 @@ public class InvokeIntention extends ActionOnRange {
 
     Project project = getProject();
     Editor editor = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, getVirtualFile(), offset), true);
-    
-    List<HighlightInfo> infos = RehighlightAllEditors.highlightEditor(editor, project);
-    boolean hasErrors = infos.stream().anyMatch(i -> i.getSeverity() == HighlightSeverity.ERROR);
+
+    boolean hasErrors = !highlightErrors(project, editor).isEmpty();
 
     PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, getProject());
     IntentionAction intention = getRandomIntention(editor, file);
@@ -80,6 +79,7 @@ public class InvokeIntention extends ActionOnRange {
     myInvocationLog += ", invoked '" + intention.getText() + "'";
     String intentionString = intention.toString();
 
+    boolean mayBreakCode = myPolicy.mayBreakCode(intention, editor, file);
     Document changedDocument = getDocumentToBeChanged(intention);
     String textBefore = changedDocument == null ? null : changedDocument.getText();
 
@@ -105,11 +105,30 @@ public class InvokeIntention extends ActionOnRange {
       }
 
       PsiTestUtil.checkPsiStructureWithCommit(getFile(), PsiTestUtil::checkStubsMatchText);
+
+      if (!mayBreakCode && !hasErrors) {
+        checkNoNewErrors(project, editor, intentionString);
+      }
     }
     catch (Throwable error) {
       LOG.debug("Error occurred in " + this + ", text before:\n" + textBefore);
       throw error;
     }
+  }
+
+  private static void checkNoNewErrors(Project project, Editor editor, String intentionString) {
+    List<HighlightInfo> errors = highlightErrors(project, editor);
+    if (!errors.isEmpty()) {
+      throw new AssertionError("New highlighting errors introduced after invoking " + intentionString + 
+                               "\nIf this is correct, add it to IntentionPolicy#mayBreakCode." +
+                               "\nErrors found: " + errors);
+    }
+  }
+
+  @NotNull
+  private static List<HighlightInfo> highlightErrors(Project project, Editor editor) {
+    List<HighlightInfo> infos = RehighlightAllEditors.highlightEditor(editor, project);
+    return ContainerUtil.filter(infos, i -> i.getSeverity() == HighlightSeverity.ERROR);
   }
 
   @Nullable
