@@ -182,7 +182,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
   public State getState() {
     synchronized (myStateLock) {
       if (myState.pid == null) {
-        myState.pid = String.valueOf(ApplicationManager.getApplicationPid());
+        myState.pid = ApplicationManager.getApplicationPid();
       }
       updateLastProjectPath();
       myState.validateRecentProjects();

@@ -28,15 +28,15 @@ import java.lang.management.ManagementFactory;
  */
 public class ApplicationManager {
   protected static Application ourApplication;
-  private static final int ourPid = getCurrentProcessId();
+  private static final String ourPid = getCurrentProcessId();
 
-  private static int getCurrentProcessId() {
+  private static String getCurrentProcessId() {
     try {
       String name = ManagementFactory.getRuntimeMXBean().getName();
-      return Integer.parseInt(name.split("@")[0]);
+      return name.split("@")[0];
     }
     catch (Exception e) {
-      return -1;
+      return "-1";
     }
   }
 
@@ -86,7 +86,7 @@ public class ApplicationManager {
     FileTypeRegistry.ourInstanceGetter = fileTypeRegistryGetter;
   }
 
-  public static int getApplicationPid() {
-    return ourPid;
+  public static String getApplicationPid() {
+    return String.valueOf(ourPid);
   }
 }
