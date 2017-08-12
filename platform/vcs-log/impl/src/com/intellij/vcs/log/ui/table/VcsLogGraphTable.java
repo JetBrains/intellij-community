@@ -32,7 +32,6 @@ import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.containers.ContainerUtil;
@@ -510,7 +509,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
       .createStyle(dummyRendererComponent.getForeground(), dummyRendererComponent.getBackground(), VcsLogHighlighter.TextStyle.NORMAL);
   }
 
-  private VcsLogHighlighter.VcsCommitStyle getStyle(int row, int column, boolean hasFocus, boolean selected) {
+  VcsLogHighlighter.VcsCommitStyle getStyle(int row, int column, boolean hasFocus, boolean selected) {
     VcsLogHighlighter.VcsCommitStyle baseStyle = getBaseStyle(row, column, hasFocus, selected);
 
     VisibleGraph<Integer> visibleGraph = getVisibleGraph();
@@ -722,84 +721,6 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
   public boolean isResizingColumns() {
     return getCursor() == Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR);
-  }
-
-  private static class RootCellRenderer extends JBLabel implements TableCellRenderer {
-    @NotNull private final AbstractVcsLogUi myUi;
-    @NotNull private Color myColor = UIUtil.getTableBackground();
-    @NotNull private Color myBorderColor = UIUtil.getTableBackground();
-    private boolean isNarrow = true;
-
-    RootCellRenderer(@NotNull AbstractVcsLogUi ui) {
-      super("", CENTER);
-      myUi = ui;
-    }
-
-    @Override
-    protected void paintComponent(Graphics g) {
-      g.setColor(myColor);
-
-      int width = getWidth();
-
-      if (isNarrow) {
-        g.fillRect(0, 0, width - JBUI.scale(ROOT_INDICATOR_WHITE_WIDTH), myUi.getTable().getRowHeight());
-        g.setColor(myBorderColor);
-        g.fillRect(width - JBUI.scale(ROOT_INDICATOR_WHITE_WIDTH), 0, JBUI.scale(ROOT_INDICATOR_WHITE_WIDTH),
-                   myUi.getTable().getRowHeight());
-      }
-      else {
-        g.fillRect(0, 0, width, myUi.getTable().getRowHeight());
-      }
-
-      super.paintComponent(g);
-    }
-
-    @Override
-    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-      String text;
-      Color color;
-
-      if (value instanceof VirtualFile) {
-        VirtualFile root = (VirtualFile)value;
-        int readableRow = ScrollingUtil.getReadableRow(table, Math.round(myUi.getTable().getRowHeight() * 0.5f));
-        if (row < readableRow) {
-          text = "";
-        }
-        else if (row == 0 || !value.equals(table.getModel().getValueAt(row - 1, column)) || readableRow == row) {
-          text = root.getName();
-        }
-        else {
-          text = "";
-        }
-        color = getRootBackgroundColor(root, myUi.getColorManager());
-      }
-      else {
-        text = null;
-        color = UIUtil.getTableBackground(isSelected);
-      }
-
-      myColor = color;
-      Color background = ((VcsLogGraphTable)table).getStyle(row, column, hasFocus, isSelected).getBackground();
-      assert background != null;
-      myBorderColor = background;
-      setForeground(UIUtil.getTableForeground(false));
-
-      if (myUi.isShowRootNames()) {
-        setText(text);
-        isNarrow = false;
-      }
-      else {
-        setText("");
-        isNarrow = true;
-      }
-
-      return this;
-    }
-
-    @Override
-    public void setBackground(Color bg) {
-      myBorderColor = bg;
-    }
   }
 
   private static class MyDefaultTableCellRenderer extends DefaultTableCellRenderer {
