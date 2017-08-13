@@ -63,7 +63,7 @@ public class VFileCreateEvent extends VFileEvent {
 
   @NotNull
   @Override
-  public String getPath() {
+  protected String computePath() {
     return myParent.getPath() + "/" + myChildName;
   }
 
