@@ -614,6 +614,9 @@ public class AnnotationUtil {
     return false;
   }
 
+  /**
+   * Ignores Override and SuppressWarnings annotations.
+   */
   public static boolean equal(PsiAnnotation[] annotations1, PsiAnnotation[] annotations2) {
     final Map<String, PsiAnnotation> map1 = buildAnnotationMap(annotations1);
     final Map<String, PsiAnnotation> map2 = buildAnnotationMap(annotations2);
@@ -634,6 +637,7 @@ public class AnnotationUtil {
       map.put(annotation.getQualifiedName(), annotation);
     }
     map.remove(CommonClassNames.JAVA_LANG_OVERRIDE);
+    map.remove("java.lang.SuppressWarnings");
     return map;
   }
 

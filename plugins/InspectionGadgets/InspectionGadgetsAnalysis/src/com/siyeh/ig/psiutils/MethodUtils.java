@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.psiutils;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -407,5 +408,19 @@ public class MethodUtils {
     if (method == null || !method.getName().equals("length") || method.getParameterList().getParametersCount() != 0) return false;
     PsiClass aClass = method.getContainingClass();
     return aClass != null && CommonClassNames.JAVA_LANG_STRING.equals(aClass.getQualifiedName());
+  }
+
+  public static boolean haveEquivalentModifierLists(PsiMethod method, PsiMethod superMethod) {
+    final PsiModifierList list1 = method.getModifierList();
+    final PsiModifierList list2 = superMethod.getModifierList();
+    if (list1.hasModifierProperty(PsiModifier.STRICTFP) != list2.hasModifierProperty(PsiModifier.STRICTFP) ||
+        list1.hasModifierProperty(PsiModifier.SYNCHRONIZED) != list2.hasModifierProperty(PsiModifier.SYNCHRONIZED) ||
+        list1.hasModifierProperty(PsiModifier.PUBLIC) != list2.hasModifierProperty(PsiModifier.PUBLIC) ||
+        list1.hasModifierProperty(PsiModifier.PROTECTED) != list2.hasModifierProperty(PsiModifier.PROTECTED) ||
+        list1.hasModifierProperty(PsiModifier.FINAL) != list2.hasModifierProperty(PsiModifier.FINAL) ||
+        list1.hasModifierProperty(PsiModifier.ABSTRACT) != list2.hasModifierProperty(PsiModifier.ABSTRACT)) {
+      return false;
+    }
+    return AnnotationUtil.equal(list1.getAnnotations(), list2.getAnnotations());
   }
 }
