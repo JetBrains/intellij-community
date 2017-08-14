@@ -61,6 +61,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.ide.projectView.BaseProjectTreeBuilder.getBuilderFor;
@@ -196,10 +197,14 @@ public class ProjectViewFixture extends ToolWindowFixture {
           }
         }
       }, THIRTY_SEC_TIMEOUT);
-    } catch (WaitTimedOutError timedOutError) {
+    }
+    catch (WaitTimedOutError timedOutError) {
       AbstractTreeStructure treeStructure = selectProjectPane().getTreeStructure();
       StringBuilder projectViewStructure = PlatformTestUtil.print(treeStructure, treeStructure.getRootElement(), 10, null, 100, ' ', null);
-      LOG.error("Unable to find path: " + Arrays.toString(pathTo) + " for current project structure.\nActual project structure" + projectViewStructure, timedOutError);
+      LOG.error("Unable to find path: " +
+                Arrays.toString(pathTo) +
+                " for current project structure.\nActual project structure" +
+                projectViewStructure, timedOutError);
     }
     return nodeFixtureRef.get();
   }
@@ -321,7 +326,8 @@ public class ProjectViewFixture extends ToolWindowFixture {
               if (nodeText.equals(pathItem)) {
                 newRoot = child;
                 break;
-              } else {
+              }
+              else {
                 treePath.remove(treePath.size() - 1);
               }
             }
@@ -389,9 +395,10 @@ public class ProjectViewFixture extends ToolWindowFixture {
         @Override
         public boolean test() {
           final DefaultMutableTreeNode treeNode = TreeUtil.findNodeWithObject((DefaultMutableTreeNode)tree.getModel().getRoot(), myNode);
-          if (treeNode == null ) {
+          if (treeNode == null) {
             return false;
-          } else {
+          }
+          else {
             mutableTreeNodeRef.set(treeNode);
             return true;
           }
@@ -484,12 +491,19 @@ public class ProjectViewFixture extends ToolWindowFixture {
 
     @NotNull
     public NodeFixture expand() {
+      CountDownLatch cdl = new CountDownLatch(1);
       GuiActionRunner.execute(new GuiTask() {
         @Override
         protected void executeInEDT() throws Throwable {
-          myBuilder.select(myNode);
+          myBuilder.expand(myNode, () -> cdl.countDown());
         }
       });
+      try {
+        cdl.await();
+      }
+      catch (InterruptedException e) {
+        e.printStackTrace();
+      }
       return this;
     }
 
@@ -503,6 +517,5 @@ public class ProjectViewFixture extends ToolWindowFixture {
       });
       return this;
     }
-
   }
 }

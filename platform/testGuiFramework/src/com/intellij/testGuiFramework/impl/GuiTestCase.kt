@@ -408,6 +408,24 @@ open class GuiTestCase : GuiTestBase() {
   else throw UnsupportedOperationException(
     "Sorry, unable to find PluginTable component with ${target().toString()} as a Container")
 
+
+  /**
+   * Finds a Message component in hierarchy of context component by a title MessageFixture.
+   *
+   * @timeout in seconds to find component for Message
+   * @throws ComponentLookupException if component has not been found or timeout exceeded
+   */
+  fun <S, C : Component> ComponentFixture<S, C>.message(title: String, timeout: Long = defaultTimeout, func: MessagesFixture.() -> Unit) {
+    if (target() is Container) {
+      val messagesFixture = message(target() as Container, title, timeout)
+      func(messagesFixture)
+    }
+    else throw UnsupportedOperationException(
+      "Sorry, unable to find PluginTable component with ${target().toString()} as a Container")
+
+  }
+
+
   //*********FIXTURES METHODS FOR IDEFRAME WITHOUT ROBOT and TARGET
 
   /**

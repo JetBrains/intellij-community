@@ -158,14 +158,16 @@ public class ActionButtonFixture extends JComponentFixture<ActionButtonFixture, 
                                                @NotNull Container container,
                                                @NotNull Timeout timeout) {
 
-    ActionButton button = GuiTestUtil.waitUntilFound(robot, container, new GenericTypeMatcher<ActionButton>(ActionButton.class) {
+    String criteria = " by template presentation text: " + text;
+    GenericTypeMatcher<ActionButton> matcher = new GenericTypeMatcher<ActionButton>(ActionButton.class) {
       @Override
       protected boolean isMatching(@NotNull ActionButton button) {
+        if (!button.isShowing() || !button.isEnabled()) return false;
         AnAction action = button.getAction();
         return text.equals(action.getTemplatePresentation().getText());
       }
-    }, timeout);
-    return new ActionButtonFixture(robot, button);
+    };
+    return getActionButtonFixtureWithMatcher(robot, container, matcher, criteria, timeout);
   }
 
   private ActionButtonFixture(@NotNull Robot robot, @NotNull ActionButton target) {
