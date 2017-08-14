@@ -31,6 +31,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
@@ -500,5 +501,10 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   @Override
   public CheckoutProvider getCheckoutProvider() {
     return new GitCheckoutProvider(Git.getInstance());
+  }
+
+  @Override
+  public boolean arePartialChangelistsSupported() {
+    return Registry.is("vcs.enable.partial.changelists");
   }
 }
