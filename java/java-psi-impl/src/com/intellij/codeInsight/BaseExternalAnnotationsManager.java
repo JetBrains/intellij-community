@@ -33,7 +33,6 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentMostlySingularMultiMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MostlySingularMultiMap;
-import com.intellij.util.containers.WeakKeyWeakValueHashMap;
 import com.intellij.util.text.CharSequenceReader;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -58,7 +57,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
   protected final PsiManager myPsiManager;
 
   private final ConcurrentMap<VirtualFile, List<PsiFile>> myExternalAnnotationsCache = ContainerUtil.createConcurrentWeakKeySoftValueMap();
-  private final Map<AnnotationData, AnnotationData> myAnnotationDataCache = new WeakKeyWeakValueHashMap<>(); // guarded by myAnnotationDataCache
+  private final Map<AnnotationData, AnnotationData> myAnnotationDataCache = ContainerUtil.createWeakKeyWeakValueMap(); // guarded by myAnnotationDataCache
   private final ConcurrentMap<PsiFile, Pair<MostlySingularMultiMap<String, AnnotationData>, Long>> myAnnotationFileToDataAndModStampCache = ContainerUtil.createConcurrentSoftMap();
 
   public BaseExternalAnnotationsManager(@NotNull PsiManager psiManager) {

@@ -2724,5 +2724,15 @@ public class ContainerUtil extends ContainerUtilRt {
   public static <K,V> Map<K,V> createWeakKeySoftValueMap() {
     return new WeakKeySoftValueHashMap<K, V>();
   }
+  @NotNull
+  public static <K,V> Map<K,V> createWeakKeyWeakValueMap() {
+    //noinspection deprecation
+    return new WeakKeyWeakValueHashMap<K, V>();
+  }
+  @NotNull
+  public static <K,V> Map<K,V> createSoftKeySoftValueMap() {
+    //noinspection deprecation
+    return new SoftKeySoftValueHashMap<K, V>();
+  }
 }
 

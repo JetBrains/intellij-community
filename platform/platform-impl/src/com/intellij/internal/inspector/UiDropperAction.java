@@ -43,7 +43,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
-import com.intellij.util.containers.WeakKeyWeakValueHashMap;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -988,7 +987,7 @@ public class UiDropperAction extends ToggleAction implements DumbAware {
   }
 
   private static class UiDropper implements AWTEventListener, Disposable {
-    Map<Component, InspectorWindow> myComponentToInspector = new WeakKeyWeakValueHashMap<Component, InspectorWindow>();
+    Map<Component, InspectorWindow> myComponentToInspector = ContainerUtil.createWeakKeyWeakValueMap();
     HighlightComponent myHighlightComponent;
     Component lastComponent;
     MyLabel myLabel;

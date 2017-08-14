@@ -30,7 +30,7 @@ import com.intellij.openapi.wm.FocusCommand;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.ui.popup.AbstractPopup;
-import com.intellij.util.containers.WeakKeyWeakValueHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,7 +47,7 @@ public class FocusTrackback {
   private static final Logger LOG = Logger.getInstance("FocusTrackback");
 
   private static final Map<Window, List<FocusTrackback>> ourRootWindowToParentsStack = new WeakHashMap<>();
-  private static final Map<Window, Component> ourRootWindowToFocusedMap = new WeakKeyWeakValueHashMap<>();
+  private static final Map<Window, Component> ourRootWindowToFocusedMap = ContainerUtil.createWeakKeyWeakValueMap();
 
   private Window myParentWindow;
 
