@@ -154,12 +154,11 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
       override fun customizeCellRenderer(tree: JTree, value: Any, selected: Boolean, expanded: Boolean, leaf: Boolean, row: Int,
                                          hasFocus: Boolean) {
         if (value is DefaultMutableTreeNode) {
-          val parent = value.parent as DefaultMutableTreeNode
           val userObject = value.userObject
           var shared: Boolean? = null
           val name = getName(userObject)
           if (userObject is ConfigurationType) {
-            append(name, if (parent.isRoot) SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES else SimpleTextAttributes.REGULAR_ATTRIBUTES)
+            append(name, if ((value.parent as DefaultMutableTreeNode).isRoot) SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES else SimpleTextAttributes.REGULAR_ATTRIBUTES)
             icon = userObject.icon
           }
           else if (userObject === DEFAULTS) {
@@ -1615,11 +1614,11 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
 }
 
 private fun canRunConfiguration(configuration: SingleConfigurationConfigurable<RunConfiguration>?, executor: Executor): Boolean {
-  try {
-    return configuration != null && RunManagerImpl.canRunConfiguration(configuration.snapshot!!, executor)
+  return try {
+    configuration != null && RunManagerImpl.canRunConfiguration(configuration.snapshot!!, executor)
   }
   catch (e: ConfigurationException) {
-    return false
+    false
   }
 }
 
