@@ -940,7 +940,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         ProgressManager.checkCanceled();
         if (Comparing.equal(file, virtualFileToIgnoreOccurrencesIn)) return true;
         int currentFilesCount = filesCount.incrementAndGet();
-        long accumulatedFileSizeToProcess = filesSizeToProcess.addAndGet(file.getLength());
+        long accumulatedFileSizeToProcess = filesSizeToProcess.addAndGet(file.isDirectory() ? 0 : file.getLength());
         return currentFilesCount < maxFilesToProcess && accumulatedFileSizeToProcess < maxFilesSizeToProcess;
       }
     };
