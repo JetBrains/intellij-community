@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.unneededThrows;
 
+import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.MethodThrowsFix;
@@ -135,7 +136,7 @@ public class RedundantThrowsDeclarationLocalInspection extends BaseJavaBatchLoca
       .of(method.getThrowsList().getReferenceElements())
       .map(ref -> {
         PsiElement resolved = ref.resolve();
-        return resolved instanceof PsiClass ? new ReferenceAndType(ref) : null;
+        return resolved instanceof PsiClass && !ExceptionUtil.isUncheckedException((PsiClass)resolved) ? new ReferenceAndType(ref) : null;
       })
       .filter(Objects::nonNull)
       .toArray(ReferenceAndType[]::new);
