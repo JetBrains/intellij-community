@@ -189,12 +189,12 @@ fun getExportableComponentsMap(onlyExisting: Boolean,
   ServiceManagerImpl.processAllImplementationClasses(ApplicationManager.getApplication() as ApplicationImpl, { aClass, pluginDescriptor ->
     val stateAnnotation = StoreUtil.getStateSpec(aClass)
     @Suppress("DEPRECATION")
-    if (stateAnnotation == null || stateAnnotation.name.isNullOrEmpty() || ExportableComponent::class.java.isAssignableFrom(aClass)) {
+    if (stateAnnotation == null || stateAnnotation.name.isEmpty() || ExportableComponent::class.java.isAssignableFrom(aClass)) {
       return@processAllImplementationClasses true
     }
 
     val storage = stateAnnotation.storages.sortByDeprecated().firstOrNull() ?: return@processAllImplementationClasses true
-    if (!(storage.roamingType != RoamingType.DISABLED && storage.storageClass == StateStorage::class && !storage.path.isNullOrEmpty())) {
+    if (!(storage.roamingType != RoamingType.DISABLED && storage.storageClass == StateStorage::class && !storage.path.isEmpty())) {
       return@processAllImplementationClasses true
     }
 

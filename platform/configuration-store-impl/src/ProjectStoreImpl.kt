@@ -437,7 +437,7 @@ private fun removeWorkspaceComponentConfiguration(defaultProject: Project, eleme
     }
   }
 
-  ServiceManagerImpl.processAllImplementationClasses(defaultProject as ProjectImpl) { aClass, pluginDescriptor ->
+  ServiceManagerImpl.processAllImplementationClasses(defaultProject as ProjectImpl) { aClass, _ ->
     getNameIfWorkspaceStorage(aClass)?.let {
       workspaceComponentNames.add(it)
     }
@@ -529,7 +529,7 @@ private fun convertProfiles(profileIterator: MutableIterator<Element>, component
 
 private fun getNameIfWorkspaceStorage(aClass: Class<*>): String? {
   val stateAnnotation = StoreUtil.getStateSpec(aClass)
-  if (stateAnnotation == null || stateAnnotation.name.isNullOrEmpty()) {
+  if (stateAnnotation == null || stateAnnotation.name.isEmpty()) {
     return null
   }
 

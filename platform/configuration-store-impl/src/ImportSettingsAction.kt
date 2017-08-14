@@ -105,8 +105,8 @@ private class ImportSettingsAction : AnAction(), DumbAware {
   private fun getRelativeNamesToExtract(chosenComponents: Set<ExportableItem>): Set<String> {
     val result = THashSet<String>()
     val root = Paths.get(PathManager.getConfigPath())
-    for (item in chosenComponents) {
-      result.add(root.relativize(item.file).systemIndependentPath)
+    for ((file) in chosenComponents) {
+      result.add(root.relativize(file).systemIndependentPath)
     }
 
     result.add(PluginManager.INSTALLED_TXT)
@@ -121,7 +121,7 @@ private class ImportSettingsAction : AnAction(), DumbAware {
 fun getPaths(input: InputStream): Set<String> {
   val result = THashSet<String>()
   val zipIn = ZipInputStream(input)
-  try {
+  zipIn.use {
     while (true) {
       val entry = zipIn.nextEntry ?: break
       var path = entry.name
@@ -131,9 +131,6 @@ fun getPaths(input: InputStream): Set<String> {
         result.add("$path/")
       }
     }
-  }
-  finally {
-    zipIn.close()
   }
   return result
 }
