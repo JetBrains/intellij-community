@@ -28,6 +28,9 @@ class ConvertIntegerToOctalPredicate implements PsiElementPredicate {
       return false;
     }
     final PsiLiteralExpression expression = (PsiLiteralExpression)element;
+    if (expression.getValue() == null) {
+      return false;
+    }
     final PsiType type = expression.getType();
     if (!(PsiType.INT.equals(type) || PsiType.LONG.equals(type))) {
       return false;
