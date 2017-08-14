@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,39 +15,38 @@
  */
 package com.intellij.refactoring.changeSignature.inCallers;
 
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiMethod;
-import com.intellij.refactoring.changeSignature.CallerChooserBase;
+import com.intellij.refactoring.changeSignature.MemberNodeBase;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.HashSet;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
-public class JavaCallerChooser extends CallerChooserBase<PsiMethod> {
+public class JavaCallerChooser extends AbstractJavaMemberCallerChooser<PsiMethod> {
+  public JavaCallerChooser(PsiMethod method,
+                           Project project,
+                           String title,
+                           Tree previousTree,
+                           Consumer<Set<PsiMethod>> callback) {
+    super(method, project, title, previousTree, callback);
+  }
 
-  public JavaCallerChooser(PsiMethod method, Project project, String title, Tree previousTree, Consumer<Set<PsiMethod>> callback) {
-    super(method, project, title, previousTree, "dummy." + StdFileTypes.JAVA.getDefaultExtension(), callback);
+  @NotNull
+  @Override
+  protected String getMemberTypePresentableText() {
+    return "method";
   }
 
   @Override
-  protected JavaMethodNode createTreeNode(PsiMethod method, HashSet<PsiMethod> called, Runnable cancelCallback) {
+  protected MemberNodeBase<PsiMethod> createTreeNode(PsiMethod method, HashSet<PsiMethod> called, Runnable cancelCallback) {
     return new JavaMethodNode(method, called, myProject, cancelCallback);
   }
 
   @Override
   protected PsiMethod[] findDeepestSuperMethods(PsiMethod method) {
     return method.findDeepestSuperMethods();
-  }
-
-  @Override
-  protected String getEmptyCallerText() {
-    return "Caller method text \nwith highlighted callee call would be shown here";
-  }
-
-  @Override
-  protected String getEmptyCalleeText() {
-    return "Callee method text would be shown here";
   }
 }
