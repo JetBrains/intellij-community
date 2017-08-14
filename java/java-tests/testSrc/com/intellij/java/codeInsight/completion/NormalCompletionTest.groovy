@@ -1806,4 +1806,6 @@ class Bar {
     myFixture.assertPreferredCompletionItems 0, 'String'
   }
 
+  void testNoCallsInPackageStatement() { doAntiTest() }
+
 }
