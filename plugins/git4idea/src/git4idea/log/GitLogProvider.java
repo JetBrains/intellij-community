@@ -501,7 +501,7 @@ public class GitLogProvider implements VcsLogProvider {
         filterParameters.add("--simplify-merges");
         filterParameters.add("--");
         for (FilePath file : files) {
-          filterParameters.add(file.getPath());
+          filterParameters.add(VcsFileUtil.relativePath(root, file));
         }
       }
     }
