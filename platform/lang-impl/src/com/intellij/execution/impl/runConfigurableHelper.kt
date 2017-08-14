@@ -19,3 +19,22 @@ import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.configurations.ConfigurationType
 
 fun countSettingsOfType(allSettings: List<RunnerAndConfigurationSettings>, type: ConfigurationType) = allSettings.count { it.type == type }
+
+internal class RunConfigurationBean {
+  val settings: RunnerAndConfigurationSettings
+  val configurable: SingleConfigurationConfigurable<*>?
+
+  constructor(settings: RunnerAndConfigurationSettings) {
+    this.settings = settings
+    configurable = null
+  }
+
+  constructor(configurable: SingleConfigurationConfigurable<*>) {
+    this.configurable = configurable
+    settings = this.configurable.settings as RunnerAndConfigurationSettings
+  }
+
+  override fun toString(): String {
+    return settings.toString()
+  }
+}

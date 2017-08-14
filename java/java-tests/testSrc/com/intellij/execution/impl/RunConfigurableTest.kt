@@ -61,12 +61,12 @@ class RunConfigurableTest {
       return runManager
     }
 
-    private class MockRunConfigurable(private val testManager: RunManagerImpl) : RunConfigurable(projectRule.project) {
+    private class MockRunConfigurable(testManager: RunManagerImpl) : RunConfigurable(projectRule.project) {
       init {
         createComponent()
       }
 
-      internal override fun getRunManager() = testManager
+      override val runManager = testManager
     }
   }
 
@@ -150,7 +150,7 @@ class RunConfigurableTest {
       tree.expandPath(TreePath(node.path))
     }
 
-    assertThat(ORDER.mapIndexed { index, nodeKind -> RunConfigurable.getKind(tree.getPathForRow(index).lastPathComponent as DefaultMutableTreeNode) }).containsExactly(*ORDER)
+    assertThat(ORDER.mapIndexed { index, _ -> RunConfigurable.getKind(tree.getPathForRow(index).lastPathComponent as DefaultMutableTreeNode) }).containsExactly(*ORDER)
   }
 
   private fun assertCan(oldIndex: Int, newIndex: Int, position: RowsDnDSupport.RefinedDropSupport.Position) {
