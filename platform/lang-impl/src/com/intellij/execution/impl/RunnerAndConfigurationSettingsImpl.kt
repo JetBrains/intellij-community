@@ -277,6 +277,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
         PathMacroManager.getInstance(it).collapsePathsRecursively(element)
       }
     }
+    PathMacroManager.getInstance(configuration.project).collapsePathsRecursively(element)
   }
 
   private fun serializeConfigurationInto(configuration: RunConfiguration, element: Element) {
