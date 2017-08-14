@@ -457,6 +457,29 @@ public class JavaKeywordCompletion {
         addKeyword(createKeyword(PsiKeyword.FALSE));
       }
     }
+
+    if (isQualifiedNewContext()) {
+      addKeyword(createKeyword(PsiKeyword.NEW));
+    }
+  }
+
+  private boolean isQualifiedNewContext() {
+    if (myPosition.getParent() instanceof PsiReferenceExpression) {
+      PsiExpression qualifier = ((PsiReferenceExpression)myPosition.getParent()).getQualifierExpression();
+      PsiClass qualifierClass = PsiUtil.resolveClassInClassTypeOnly(qualifier == null ? null : qualifier.getType());
+      if (qualifierClass != null &&
+          ContainerUtil.exists(qualifierClass.getAllInnerClasses(), inner -> canBeCreatedInQualifiedNew(qualifierClass, inner))) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private boolean canBeCreatedInQualifiedNew(PsiClass outer, PsiClass inner) {
+    PsiMethod[] constructors = inner.getConstructors();
+    return !inner.hasModifierProperty(PsiModifier.STATIC) &&
+           PsiUtil.isAccessible(inner, myPosition, outer) &&
+           (constructors.length == 0 || ContainerUtil.exists(constructors, c -> PsiUtil.isAccessible(c, myPosition, outer)));
   }
 
   private void addFileHeaderKeywords() {

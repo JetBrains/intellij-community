@@ -153,6 +153,7 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testNoStatementInForLoopCondition() { doTest(0, "synchronized", "if"); }
   public void testNoStatementInForLoopUpdate() { doTest(0, "synchronized", "if"); }
   public void testPrivateInJava9Interface() { setLanguageLevel(LanguageLevel.JDK_1_9); doTest(); }
+  public void testQualifiedNew() { doTest(1, "new"); }
 
   public void testOverwriteCatch() {
     configureByTestName();
