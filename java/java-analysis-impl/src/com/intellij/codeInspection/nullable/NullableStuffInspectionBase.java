@@ -278,7 +278,8 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
         for (int i = 0; i <= 1; i++) {
           PsiType expectedArg = PsiUtil.substituteTypeParameter(expectedType, CommonClassNames.JAVA_UTIL_MAP, i, false);
           PsiType assignedArg = PsiUtil.substituteTypeParameter(assignedType, CommonClassNames.JAVA_UTIL_MAP, i, false);
-          if (isNullityConflict(expectedArg, assignedArg)) {
+          if (isNullityConflict(expectedArg, assignedArg) ||
+              expectedArg != null && assignedArg != null && isNullableNotNullCollectionConflict(place, expectedArg, assignedArg)) {
             return true;
           }
         }
