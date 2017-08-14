@@ -262,6 +262,9 @@ class AndroidStudioProperties extends BaseIdeaProperties {
     buildContext.ant.copy(todir: "$androidPluginLib/../resources") {
       fileset(file: "$root/bazel-genfiles/tools/base/profiler/app/perfa.jar")
     }
+    buildContext.ant.copy(todir: "$androidPluginLib/../resources") {
+      fileset(file: "$root/bazel-genfiles/tools/base/profiler/app/perfa_okhttp.dex")
+    }
     buildContext.ant.copy(todir: "$androidPluginLib/../resources/perfd") {
       fileset(dir: "$root/bazel-bin/tools/base/profiler/native/perfd/android")
     }
