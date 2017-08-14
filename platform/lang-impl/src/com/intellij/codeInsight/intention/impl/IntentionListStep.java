@@ -24,6 +24,7 @@ import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.SuppressIntentionActionFromFix;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -35,7 +36,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.ThreeState;
-import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
@@ -251,8 +251,13 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
   }
 
   @Override
-  public PopupStep onChosen(final IntentionActionWithTextCaching action, final boolean finalChoice) {
-    if (finalChoice && !(action.getAction() instanceof AbstractEmptyIntentionAction)) {
+  public PopupStep onChosen(IntentionActionWithTextCaching action, final boolean finalChoice) {
+    IntentionAction a = action.getAction();
+    while (a instanceof IntentionActionDelegate) {
+      a = ((IntentionActionDelegate)a).getDelegate();
+    }
+
+    if (finalChoice && !(a instanceof AbstractEmptyIntentionAction)) {
       applyAction(action);
       return FINAL_CHOICE;
     }
