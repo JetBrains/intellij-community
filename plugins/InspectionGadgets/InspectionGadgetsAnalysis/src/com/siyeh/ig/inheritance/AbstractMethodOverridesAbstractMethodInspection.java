@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,18 @@
  */
 package com.siyeh.ig.inheritance;
 
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SmartList;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -30,9 +34,8 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class AbstractMethodOverridesAbstractMethodInspection extends BaseInspection {
 
@@ -78,11 +81,29 @@ public class AbstractMethodOverridesAbstractMethodInspection extends BaseInspect
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement methodNameIdentifier = descriptor.getPsiElement();
-      final PsiElement method = methodNameIdentifier.getParent();
+      final PsiMethod method = (PsiMethod)methodNameIdentifier.getParent();
       assert method != null;
-      deleteElement(method);
+      final PsiMethod[] superMethods = method.findSuperMethods();
+      final Collection<PsiReference> references = ReferencesSearch.search(method).findAll();
+      final List<PsiElement> elements =
+        references.stream().map(ref -> ref.getElement())
+          .filter(a -> a instanceof PsiDocMethodOrFieldRef)
+          .collect(Collectors.toCollection(() -> new SmartList<>()));
+      elements.add(method);
+      if (!FileModificationService.getInstance().preparePsiElementsForWrite(elements)) {
+        return;
+      }
+      WriteAction.run(() -> {
+        deleteElement(method);
+        references.forEach(a -> a.bindToElement(superMethods[0]));
+      });
+    }
+
+    @Override
+    public boolean startInWriteAction() {
+      return false;
     }
   }
 
