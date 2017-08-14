@@ -294,7 +294,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
     AtomicLong changedFilesSize = new AtomicLong();
 
     Consumer<VirtualFile> consumer = file -> {
-      if (file.isValid() && changed.add(file)) {
+      if (file.isValid() && !file.isDirectory() && changed.add(file)) {
         changedFilesSize.addAndGet(file.getLength());
       }
     };
