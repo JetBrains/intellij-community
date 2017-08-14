@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.io.URLUtil;
+import com.intellij.util.text.DateFormatUtil;
 import org.apache.http.client.utils.URIBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -155,6 +156,7 @@ public class RepositoryHelper {
             pluginListFile.length() > 0 &&
             connection instanceof HttpURLConnection &&
             ((HttpURLConnection)connection).getResponseCode() == HttpURLConnection.HTTP_NOT_MODIFIED) {
+          LOG.info("using cached plugin list (updated at " + DateFormatUtil.formatDateTime(pluginListFile.lastModified()) + ")");
           return loadPluginList(pluginListFile);
         }
 
