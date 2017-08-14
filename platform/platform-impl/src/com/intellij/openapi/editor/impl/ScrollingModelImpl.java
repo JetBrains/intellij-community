@@ -137,8 +137,8 @@ public class ScrollingModelImpl implements ScrollingModelEx {
 
   @Override
   public void scrollToCaret(@NotNull ScrollType scrollType) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug(new Throwable());
+    if (LOG.isTraceEnabled()) {
+      LOG.trace(new Throwable());
     }
     assertIsDispatchThread();
     myEditor.validateSize();

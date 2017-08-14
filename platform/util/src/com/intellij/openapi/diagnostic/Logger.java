@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -108,6 +108,10 @@ public abstract class Logger {
    */
   public void trace(String message) {
     debug(message);
+  }
+
+  public void trace(@Nullable Throwable t) {
+    debug(t);
   }
 
   public void info(@NotNull Throwable t) {
