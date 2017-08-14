@@ -213,7 +213,7 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
 
       @Override
       public String getText() {
-        return UIUtil.removeMnemonic(ExecutionBundle.message("add.new.run.configuration.acrtion.name"));
+        return UIUtil.removeMnemonic(ExecutionBundle.message("add.new.run.configuration.action2.name"));
       }
 
       @Override

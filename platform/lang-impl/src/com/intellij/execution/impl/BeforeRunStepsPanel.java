@@ -318,7 +318,7 @@ class BeforeRunStepsPanel extends JPanel {
         actionGroup.add(providerAction);
       }
       final ListPopup popup =
-        popupFactory.createActionGroupPopup(ExecutionBundle.message("add.new.run.configuration.acrtion.name"), actionGroup,
+        popupFactory.createActionGroupPopup(ExecutionBundle.message("add.new.run.configuration.action2.name"), actionGroup,
                                             SimpleDataContext.getProjectContext(myRunConfiguration.getProject()), false, false, false, null,
                                             -1, Conditions.alwaysTrue());
       popup.show(button.getPreferredPopupPoint());
