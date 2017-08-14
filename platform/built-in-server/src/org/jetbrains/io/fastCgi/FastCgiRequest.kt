@@ -112,7 +112,6 @@ class FastCgiRequest(val requestId: Int, allocator: ByteBufAllocator) {
       throw IllegalStateException("No handler in the pipeline")
     }
 
-    var releaseContent = content != null
     try {
       val buffer = fastCgiChannel.alloc().ioBuffer(4096)
       writeHeader(buffer, BEGIN_REQUEST, HEADER_LENGTH)
@@ -152,9 +151,7 @@ class FastCgiRequest(val requestId: Int, allocator: ByteBufAllocator) {
       }
     }
     finally {
-      if (releaseContent) {
-        content!!.release()
-      }
+      content?.release()
     }
 
     fastCgiChannel.flush()
