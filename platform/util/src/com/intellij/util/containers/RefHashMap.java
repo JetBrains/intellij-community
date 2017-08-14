@@ -202,7 +202,7 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
 
   @Override
   public boolean isEmpty() {
-    return entrySet().isEmpty();
+    return myMap.isEmpty();
   }
 
   @Override

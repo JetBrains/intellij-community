@@ -126,7 +126,7 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
 
   @Override
   public boolean isEmpty() {
-    return entrySet().isEmpty();
+    return myMap.isEmpty();
   }
 
   @Override
@@ -355,8 +355,9 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
   @NotNull
   @Override
   public Set<Map.Entry<K, V>> entrySet() {
-    if (entrySet == null) entrySet = new EntrySet();
-    return entrySet;
+    Set<Entry<K, V>> es = entrySet;
+    if (es == null) entrySet = es = new EntrySet();
+    return es;
   }
 
   @Override
