@@ -202,7 +202,8 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
 
   @Override
   public boolean isEmpty() {
-    return myMap.isEmpty();
+    // make easier and alloc-free call to myMap first
+    return myMap.isEmpty() || entrySet().isEmpty();
   }
 
   @Override
@@ -383,7 +384,8 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
   @NotNull
   @Override
   public Set<Entry<K, V>> entrySet() {
-    if (entrySet == null) entrySet = new EntrySet();
-    return entrySet;
+    Set<Entry<K, V>> es = entrySet;
+    if (es == null) entrySet = es = new EntrySet();
+    return es;
   }
 }

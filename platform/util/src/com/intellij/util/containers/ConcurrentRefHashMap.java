@@ -126,7 +126,8 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
 
   @Override
   public boolean isEmpty() {
-    return myMap.isEmpty();
+    // make easier and alloc-free call to myMap first
+    return myMap.isEmpty() || entrySet().isEmpty();
   }
 
   @Override

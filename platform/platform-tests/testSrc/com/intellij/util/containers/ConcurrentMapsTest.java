@@ -97,17 +97,20 @@ public class ConcurrentMapsTest {
   }
 
   private void checkKeyIsTossedAfterGCPressure(Map<Object, Object> map) {
+    assertTrue(map.isEmpty());
     map.put(new Object(), new Object());
 
     //noinspection SizeReplaceableByIsEmpty
     do {
       map.put(this, this);  // to run processQueues();
+      assertFalse(map.isEmpty());
       map.remove(this);
 
       GCUtil.tryGcSoftlyReachableObjects();
       System.gc();
     }
     while (map.size() != 0);
+    assertTrue(map.isEmpty());
     assertEquals(0, map.size());
     map.put(this, this);
     assertEquals(1, map.size());
@@ -255,6 +258,7 @@ public class ConcurrentMapsTest {
   }
 
   private static void checkTossedKeyAndValue(@NotNull RefKeyRefValueHashMap<Object, Object> map) {
+    assertTrue(map.isEmpty());
     map.put(new Object(), new Object());
 
     do {
