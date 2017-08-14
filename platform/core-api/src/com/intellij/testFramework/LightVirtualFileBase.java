@@ -44,7 +44,7 @@ public abstract class LightVirtualFileBase extends VirtualFile {
     myModStamp = modificationStamp;
   }
 
-  public void setFileType(@NotNull FileType fileType) {
+  public void setFileType(FileType fileType) {
     myFileType = fileType;
   }
 
