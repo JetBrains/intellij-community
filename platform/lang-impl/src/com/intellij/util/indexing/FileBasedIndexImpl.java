@@ -399,7 +399,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
           ContentHashesSupport.initContentHashesEnumerator();
           contentHashesEnumeratorOk = true;
         }
-        long started = System.currentTimeMillis();
+        
         storage = new VfsAwareMapIndexStorage<>(
           IndexInfrastructure.getStorageFile(name),
           extension.getKeyDescriptor(),
@@ -408,7 +408,6 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
           extension.keyIsUniqueForIndexedFile(),
           extension.traceKeyHashToVirtualFileMapping()
         );
-        LOG.info("Initialized index " + (System.currentTimeMillis() - started) + " for " + name);
 
         final InputFilter inputFilter = extension.getInputFilter();
         final Set<FileType> addedTypes = new THashSet<>();
