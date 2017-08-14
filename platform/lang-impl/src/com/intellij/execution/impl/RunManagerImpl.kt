@@ -123,15 +123,15 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
   private val customOrder = ObjectIntHashMap<String>()
   private val recentlyUsedTemporaries = ArrayList<RunnerAndConfigurationSettings>()
 
-  private val schemeManagerProvider = SchemeManagerIprProvider("configuration")
+  private val workspaceSchemeManagerProvider = SchemeManagerIprProvider("configuration")
 
   @Suppress("LeakingThis")
-  private val workspaceSchemeManager = SchemeManagerFactory.getInstance(project).create("workspace", RunConfigurationSchemeManager(this, false), streamProvider = schemeManagerProvider, autoSave = false)
+  private val workspaceSchemeManager = SchemeManagerFactory.getInstance(project).create("workspace", RunConfigurationSchemeManager(this, false), streamProvider = workspaceSchemeManagerProvider, autoSave = false)
 
   @Suppress("LeakingThis")
   private var projectSchemeManager = if (isUseProjectSchemeManager()) SchemeManagerFactory.getInstance(project).create("runConfigurations", RunConfigurationSchemeManager(this, true), isUseOldFileNameSanitize = true) else null
 
-  private val isFirstLoadState = AtomicBoolean()
+  private val isFirstLoadState = AtomicBoolean(true)
 
   private val stringIdToBeforeRunProvider by lazy {
     val result = ContainerUtil.newConcurrentMap<String, BeforeRunTaskProvider<*>>()
@@ -501,7 +501,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
 
     lock.read {
       // backward compatibility - write templates in the end
-      schemeManagerProvider.writeState(element, Comparator { n1, n2 ->
+      workspaceSchemeManagerProvider.writeState(element, Comparator { n1, n2 ->
         val w1 = if (n1.startsWith("<template> of ")) 1 else 0
         val w2 = if (n2.startsWith("<template> of ")) 1 else 0
         if (w1 != w2) {
@@ -623,7 +623,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
       clear(false)
     }
 
-    schemeManagerProvider.load(parentNode) {
+    workspaceSchemeManagerProvider.load(parentNode) {
       var name = it.getAttributeValue("name")
       if (name == "<template>" || name == null) {
         // scheme name must be unique
