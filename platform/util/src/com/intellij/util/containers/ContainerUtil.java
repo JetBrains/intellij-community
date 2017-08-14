@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.lang.reflect.Array;
 import java.util.*;
 import java.util.HashMap;
@@ -2733,6 +2734,65 @@ public class ContainerUtil extends ContainerUtilRt {
   public static <K,V> Map<K,V> createSoftKeySoftValueMap() {
     //noinspection deprecation
     return new SoftKeySoftValueHashMap<K, V>();
+  }
+
+  /**
+   * Hard keys soft values hash map.
+   * Null keys are NOT allowed
+   * Null values are allowed
+   */
+  @NotNull
+  public static <K,V> Map<K,V> createSoftValueMap() {
+    //noinspection deprecation
+    return new SoftValueHashMap<K, V>();
+  }
+
+  /**
+   * Hard keys weak values hash map.
+   * Null keys are NOT allowed
+   * Null values are allowed
+   */
+  @NotNull
+  public static <K,V> Map<K,V> createWeakValueMap() {
+    //noinspection deprecation
+    return new WeakValueHashMap<K, V>();
+  }
+
+  /**
+   * Soft keys hard values hash map.
+   * Null keys are NOT allowed
+   * Null values are allowed
+   */
+  @NotNull
+  public static <K,V> Map<K,V> createSoftMap() {
+    //noinspection deprecation
+    return new SoftHashMap<K, V>();
+  }
+  @NotNull
+  public static <K,V> Map<K,V> createSoftMap(@NotNull TObjectHashingStrategy<K> strategy) {
+    //noinspection deprecation
+    return new SoftHashMap<K, V>(strategy);
+  }
+
+  /**
+   * Weak keys hard values hash map.
+   * Null keys are NOT allowed
+   * Null values are allowed
+   */
+  @NotNull
+  public static <K,V> Map<K,V> createWeakMap() {
+    //noinspection deprecation
+    return new WeakHashMap<K, V>();
+  }
+  @NotNull
+  public static <K,V> Map<K,V> createWeakMap(int initialCapacity) {
+    //noinspection deprecation
+    return new WeakHashMap<K, V>(initialCapacity);
+  }
+  @NotNull
+  public static <K,V> Map<K,V> createWeakMap(int initialCapacity, float loadFactor, @NotNull TObjectHashingStrategy<K> strategy) {
+    //noinspection deprecation
+    return new WeakHashMap<K, V>(initialCapacity, loadFactor, strategy);
   }
 }
 

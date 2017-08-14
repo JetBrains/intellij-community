@@ -50,7 +50,7 @@ public class ConcurrentMapsTest {
 
   @Test(timeout = TIMEOUT)
   public void testWeakHashMapWithIdentityStrategy() {
-    WeakHashMap<Object, Object> map = new WeakHashMap<>(10,0.5f,ContainerUtil.identityStrategy());
+    Map<Object, Object> map = ContainerUtil.createWeakMap(10,0.5f,ContainerUtil.identityStrategy());
     checkKeyIsTossedAfterGCPressure(map);
   }
 
@@ -121,7 +121,7 @@ public class ConcurrentMapsTest {
 
   @Test(timeout = TIMEOUT)
   public void testSoftMapCustomStrategy() {
-    SoftHashMap<String, String> map = new SoftHashMap<>(IGNORE_CASE_WITH_CRAZY_HASH_STRATEGY);
+    Map<String, String> map = ContainerUtil.createSoftMap(IGNORE_CASE_WITH_CRAZY_HASH_STRATEGY);
 
     map.put("ab", "ab");
     assertTrue(map.containsKey("AB"));
@@ -132,7 +132,7 @@ public class ConcurrentMapsTest {
 
   @Test(timeout = TIMEOUT)
   public void testWeakMapCustomStrategy() {
-    WeakHashMap<String, String> map = new WeakHashMap<>(10, 0.5f, IGNORE_CASE_WITH_CRAZY_HASH_STRATEGY);
+    Map<String, String> map = ContainerUtil.createWeakMap(10, 0.5f, IGNORE_CASE_WITH_CRAZY_HASH_STRATEGY);
 
     String keyL = "ab";
     String keyU = StringUtil.toUpperCase(keyL);
@@ -147,14 +147,14 @@ public class ConcurrentMapsTest {
 
   @Test(timeout = TIMEOUT)
   public void testWeakNativeHashCodeDoesNotGetCalledWhenCustomStrategyIsSpecified() {
-    Map<Object, Object> map = new WeakHashMap<>(ContainerUtil.identityStrategy());
+    Map<Object, Object> map = ContainerUtil.createWeakMap(10,0.5f,ContainerUtil.identityStrategy());
 
     checkHashCodeDoesntCalledFor(map);
   }
 
   @Test(timeout = TIMEOUT)
   public void testSoftNativeHashCodeDoesNotGetCalledWhenCustomStrategyIsSpecified() {
-    Map<Object, Object> map = new SoftHashMap<>(ContainerUtil.identityStrategy());
+    Map<Object, Object> map = ContainerUtil.createSoftMap(ContainerUtil.identityStrategy());
 
     checkHashCodeDoesntCalledFor(map);
   }

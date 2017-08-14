@@ -34,7 +34,6 @@ import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.util.*;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.SoftValueHashMap;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,7 +60,7 @@ public class AntTasksProvider {
       @Nullable
       @Override
       public CachedValueProvider.Result<Map<List<URL>, AntClassLoader>> compute(Project project) {
-        final Map<List<URL>, AntClassLoader> map = new SoftValueHashMap<>();
+        final Map<List<URL>, AntClassLoader> map = ContainerUtil.createSoftValueMap();
         return CachedValueProvider.Result.create(map, ProjectRootManager.getInstance(project));
       }
     };

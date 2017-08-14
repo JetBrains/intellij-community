@@ -25,10 +25,11 @@ import com.intellij.openapi.vcs.changes.ByteBackedContentRevision;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.WeakHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.util.Map;
 
 /**
  * @author yole
@@ -38,7 +39,7 @@ public class ContentRevisionVirtualFile extends AbstractVcsVirtualFile {
   private byte[] myContent;
   private boolean myContentLoadFailed;
 
-  private static final WeakHashMap<ContentRevision, ContentRevisionVirtualFile> ourMap = new WeakHashMap<>();
+  private static final Map<ContentRevision, ContentRevisionVirtualFile> ourMap = ContainerUtil.createWeakMap();
 
   public static ContentRevisionVirtualFile create(@NotNull ContentRevision contentRevision) {
     synchronized(ourMap) {

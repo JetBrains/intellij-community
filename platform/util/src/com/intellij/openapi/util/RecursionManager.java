@@ -18,7 +18,6 @@ package com.intellij.openapi.util;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.SoftHashMap;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -206,7 +205,7 @@ public class RecursionManager {
     private final LinkedHashMap<MyKey, Integer> progressMap = new LinkedHashMap<MyKey, Integer>();
     private final Set<MyKey> toMemoize = new THashSet<MyKey>();
     private final THashMap<MyKey, MyKey> key2ReentrancyDuringItsCalculation = new THashMap<MyKey, MyKey>();
-    private final SoftHashMap<MyKey, Map<MyKey, Object>> intermediateCache = new SoftHashMap<MyKey, Map<MyKey, Object>>();
+    private final Map<MyKey, Map<MyKey, Object>> intermediateCache = ContainerUtil.createSoftMap();
     private int enters;
     private int exits;
 

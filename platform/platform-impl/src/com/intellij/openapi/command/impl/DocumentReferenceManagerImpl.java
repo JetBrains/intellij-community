@@ -30,7 +30,6 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.NotNullList;
-import com.intellij.util.containers.WeakValueHashMap;
 import com.intellij.util.io.fs.FilePath;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -47,7 +46,7 @@ public class DocumentReferenceManagerImpl extends DocumentReferenceManager imple
 
   private static final Key<Reference<DocumentReference>> FILE_TO_REF_KEY = Key.create("FILE_TO_REF_KEY");
   private static final Key<DocumentReference> FILE_TO_STRONG_REF_KEY = Key.create("FILE_TO_STRONG_REF_KEY");
-  private final Map<FilePath, DocumentReference> myDeletedFilePathToRef = new WeakValueHashMap<>();
+  private final Map<FilePath, DocumentReference> myDeletedFilePathToRef = ContainerUtil.createWeakValueMap();
 
   @Override
   public void initComponent() {

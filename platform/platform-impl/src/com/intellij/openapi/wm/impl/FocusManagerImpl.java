@@ -36,7 +36,7 @@ import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.FocusTrackback;
 import com.intellij.util.concurrency.EdtExecutorService;
-import com.intellij.util.containers.WeakValueHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntIntHashMap;
 import gnu.trove.TIntIntProcedure;
@@ -126,8 +126,8 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
            && !(focusOwner == null && (!myValidFurtherRequestors.isEmpty() || myFocusRevalidator != null && !myFocusRevalidator.isExpired()));
   }
 
-  private final Map<IdeFrame, Component> myLastFocused = new WeakValueHashMap<>();
-  private final Map<IdeFrame, Component> myLastFocusedAtDeactivation = new WeakValueHashMap<>();
+  private final Map<IdeFrame, Component> myLastFocused = ContainerUtil.createWeakValueMap();
+  private final Map<IdeFrame, Component> myLastFocusedAtDeactivation = ContainerUtil.createWeakValueMap();
 
   private DataContext myRunContext;
 

@@ -23,8 +23,8 @@ import com.intellij.openapi.roots.TestSourcesFilter;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
-import com.intellij.util.containers.WeakHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,8 +43,8 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator {
   private final Map<VirtualFile, PackageAnnotator.PackageCoverageInfo> myTestDirCoverageInfos =
     new HashMap<>();
   private final Map<String, PackageAnnotator.ClassCoverageInfo> myClassCoverageInfos = new HashMap<>();
-  private final WeakHashMap<PsiElement, PackageAnnotator.SummaryCoverageInfo> myExtensionCoverageInfos =
-    new WeakHashMap<>();
+  private final Map<PsiElement, PackageAnnotator.SummaryCoverageInfo> myExtensionCoverageInfos =
+    ContainerUtil.createWeakMap();
 
   public JavaCoverageAnnotator(final Project project) {
     super(project);
