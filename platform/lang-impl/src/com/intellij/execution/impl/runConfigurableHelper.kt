@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.impl
 
+import com.intellij.execution.Executor
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.configurations.ConfigurationType
 
@@ -37,4 +38,23 @@ internal class RunConfigurationBean {
   override fun toString(): String {
     return settings.toString()
   }
+}
+
+enum class RunConfigurableNodeKind {
+  CONFIGURATION_TYPE, FOLDER, CONFIGURATION, TEMPORARY_CONFIGURATION, UNKNOWN;
+
+  fun supportsDnD() = this == FOLDER || this == CONFIGURATION || this == TEMPORARY_CONFIGURATION
+
+  val isConfiguration: Boolean
+    get() = (this == CONFIGURATION) or (this == TEMPORARY_CONFIGURATION)
+}
+
+interface RunDialogBase {
+  fun setOKActionEnabled(isEnabled: Boolean)
+
+  val executor: Executor?
+
+  fun setTitle(title: String)
+
+  fun clickDefaultButton()
 }

@@ -16,7 +16,7 @@
 package com.intellij.execution.impl
 
 import com.intellij.execution.application.ApplicationConfigurationType
-import com.intellij.execution.impl.RunConfigurable.NodeKind.*
+import com.intellij.execution.impl.RunConfigurableNodeKind.*
 import com.intellij.execution.junit.JUnitConfigurationType
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Trinity
@@ -83,13 +83,13 @@ class RunConfigurableTest {
   }
 
   private val root: DefaultMutableTreeNode
-    get() = configurable.myRoot
+    get() = configurable.root
 
   private val tree: Tree
-    get() = configurable.myTree
+    get() = configurable.tree
 
   private val model: RunConfigurable.MyTreeModel
-    get() = configurable.myTreeModel
+    get() = configurable.treeModel
 
   @After
   fun tearDown() {
