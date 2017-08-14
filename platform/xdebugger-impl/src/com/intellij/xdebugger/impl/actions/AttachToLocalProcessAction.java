@@ -168,7 +168,7 @@
 //      HistoryItem eachHistoryItem = history.get(i);
 //      for (AttachItem eachCurrentItem : currentItems) {
 //        boolean isSuitableItem = eachHistoryItem.getGroup().equals(eachCurrentItem.getGroup()) &&
-//            eachHistoryItem.getProcessInfo().getCommandLine().equals(eachCurrentItem.getProcessInfo().getCommandLine());
+//            eachHistoryItem.getInfo().getCommandLine().equals(eachCurrentItem.getInfo().getCommandLine());
 //        if (!isSuitableItem) continue;
 //
 //        List<XLocalAttachDebugger> debuggers = eachCurrentItem.getDebuggers();
@@ -185,7 +185,7 @@
 //        currentHistoryItems.add(new AttachItem(eachCurrentItem.getGroup(),
 //            currentHistoryItems.isEmpty(),
 //            XDebuggerBundle.message("xdebugger.attach.toLocal.popup.recent"),
-//            eachCurrentItem.getProcessInfo(),
+//            eachCurrentItem.getInfo(),
 //            debuggers,
 //            selectedDebugger,
 //            dataHolder));
@@ -201,7 +201,7 @@
 //    if (history == null) {
 //      project.putUserData(HISTORY_KEY, history = new LinkedHashMap<>());
 //    }
-//    ProcessInfo processInfo = item.getProcessInfo();
+//    ProcessInfo processInfo = item.getInfo();
 //    history.remove(processInfo.getCommandLine());
 //    history.put(processInfo.getCommandLine(), new HistoryItem(processInfo, item.getGroup(),
 //                                                              item.getSelectedDebugger().getDebuggerDisplayName()));
@@ -231,7 +231,7 @@
 //    }
 //
 //    @NotNull
-//    public ProcessInfo getProcessInfo() {
+//    public ProcessInfo getInfo() {
 //      return myProcessInfo;
 //    }
 //
@@ -313,7 +313,7 @@
 //    }
 //
 //    @NotNull
-//    public ProcessInfo getProcessInfo() {
+//    public ProcessInfo getInfo() {
 //      return myProcessInfo;
 //    }
 //
@@ -358,7 +358,7 @@
 //        debugger.attachDebugSession(project, myProcessInfo);
 //      }
 //      catch (ExecutionException e) {
-//        ExecutionUtil.handleExecutionError(project, ToolWindowId.DEBUG, myProcessInfo.getExecutableName(), e);
+//        ExecutionUtil.handleExecutionError(project, ToolWindowId.DEBUG, myProcessInfo.getText(), e);
 //      }
 //    }
 //  }

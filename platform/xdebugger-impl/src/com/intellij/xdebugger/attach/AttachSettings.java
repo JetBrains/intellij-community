@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,13 @@
  */
 package com.intellij.xdebugger.attach;
 
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.process.ProcessInfo;
-import com.intellij.openapi.project.Project;
-import com.intellij.remote.RemoteSdkCredentials;
 import org.jetbrains.annotations.NotNull;
 
-public interface XRemoteAttachDebugger extends XAttachDebugger {
-  void attachDebugSession(@NotNull Project project, @NotNull RemoteSdkCredentials credentials, @NotNull ProcessInfo processInfo) throws ExecutionException;
+public interface AttachSettings<T> {
+  @NotNull
+  T getInfo();
+
+  @NotNull
+  String getText();
 }
+

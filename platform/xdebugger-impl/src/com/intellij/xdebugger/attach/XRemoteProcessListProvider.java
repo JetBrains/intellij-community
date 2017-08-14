@@ -19,19 +19,19 @@ package com.intellij.xdebugger.attach;
 
 import com.intellij.execution.process.ProcessInfo;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.remote.RemoteSdkCredentials;
 
 import java.util.List;
 
 public interface XRemoteProcessListProvider {
   ExtensionPointName<XRemoteProcessListProvider> EP = ExtensionPointName.create("com.intellij.xdebugger.remoteProcessListProvider");
 
-  XAttachGroup getAttachGroup();
-  ProcessInfo[] getProcessList();
+  XAttachGroup<RemoteSettings> getAttachGroup();
+
+  List<ProcessInfo> getProcessList();
 
   String getName();
 
-  List<RemoteSdkCredentials> getCredentialsList();
+  List<RemoteSettings> getSettingsList();
 
   int getId();
 }

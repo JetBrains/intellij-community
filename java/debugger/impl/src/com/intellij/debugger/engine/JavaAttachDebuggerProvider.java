@@ -30,10 +30,7 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.xdebugger.attach.XAttachGroup;
-import com.intellij.xdebugger.attach.XDefaultAttachGroup;
-import com.intellij.xdebugger.attach.XLocalAttachDebugger;
-import com.intellij.xdebugger.attach.XLocalAttachDebuggerProvider;
+import com.intellij.xdebugger.attach.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -43,7 +40,7 @@ import java.util.List;
  * @author egor
  */
 public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider {
-  private static final XLocalAttachDebugger ourAttachDebugger = new XLocalAttachDebugger() {
+  private static final XAttachDebugger<LocalAttachSettings> ourAttachDebugger = new XAttachDebugger<LocalAttachSettings>() {
     @NotNull
     @Override
     public String getDebuggerDisplayName() {
@@ -51,8 +48,8 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
     }
 
     @Override
-    public void attachDebugSession(@NotNull Project project, @NotNull ProcessInfo processInfo) throws ExecutionException {
-      Pair<String, Integer> address = getAttachAddress(processInfo);
+    public void attachDebugSession(@NotNull Project project, @NotNull LocalAttachSettings settings) throws ExecutionException {
+      Pair<String, Integer> address = getAttachAddress(settings.getInfo());
       assert address != null;
 
       // TODO: first need to remove circular dependency with execution-impl
@@ -84,7 +81,7 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
     return StringUtil.notNullize(address.first) + ":" + address.second;
   }
 
-  private static final XAttachGroup ourAttachGroup = new XDefaultAttachGroup() {
+  private static final XAttachGroup<LocalAttachSettings> ourAttachGroup = new XDefaultAttachGroup<LocalAttachSettings>() {
     @Override
     public int getOrder() {
       return 1;
@@ -98,25 +95,28 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
 
     @NotNull
     @Override
-    public String getProcessDisplayText(@NotNull Project project, @NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder) {
-      Pair<String, Integer> address = getAttachAddress(info);
+    public String getItemDisplayText(@NotNull Project project, @NotNull LocalAttachSettings settings, @NotNull UserDataHolder dataHolder) {
+      Pair<String, Integer> address = getAttachAddress(settings.getInfo());
       assert address != null;
-      return StringUtil.notNullize(ArrayUtil.getLastElement(info.getCommandLine().split(" "))) + " (" + getAttachString(address) + ')';
+      return StringUtil.notNullize(ArrayUtil.getLastElement(settings.getInfo().getCommandLine().split(" "))) +
+             " (" +
+             getAttachString(address) +
+             ')';
     }
   };
 
   @NotNull
   @Override
-  public XAttachGroup getAttachGroup() {
+  public XAttachGroup<LocalAttachSettings> getAttachGroup() {
     return ourAttachGroup;
   }
 
   @NotNull
   @Override
-  public List<XLocalAttachDebugger> getAvailableDebuggers(@NotNull Project project,
-                                                          @NotNull ProcessInfo processInfo,
-                                                          @NotNull UserDataHolder contextHolder) {
-    Pair<String, Integer> address = getAttachAddress(processInfo);
+  public List<XAttachDebugger<LocalAttachSettings>> getAvailableDebuggers(@NotNull Project project,
+                                                                          @NotNull LocalAttachSettings settings,
+                                                                          @NotNull UserDataHolder contextHolder) {
+    Pair<String, Integer> address = getAttachAddress(settings.getInfo());
     if (address != null) {
       return Collections.singletonList(ourAttachDebugger);
     }

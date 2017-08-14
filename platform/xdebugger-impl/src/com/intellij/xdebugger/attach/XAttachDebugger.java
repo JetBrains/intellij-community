@@ -15,9 +15,13 @@
  */
 package com.intellij.xdebugger.attach;
 
+import com.intellij.execution.ExecutionException;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-public interface XAttachDebugger {
+public interface XAttachDebugger<T> {
   @NotNull
   String getDebuggerDisplayName();
+
+  void attachDebugSession(@NotNull Project project, @NotNull T info) throws ExecutionException;
 }

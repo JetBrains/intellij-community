@@ -15,7 +15,6 @@
  */
 package com.intellij.xdebugger.attach;
 
-import com.intellij.execution.process.ProcessInfo;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolder;
@@ -23,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class XDefaultAttachGroup implements XAttachGroup<ProcessInfo> {
+public class XDefaultAttachGroup<T extends AttachToProcessSettings> implements XAttachGroup<T> {
   @Override
   public int getOrder() {
     return 0;
@@ -37,18 +36,18 @@ public class XDefaultAttachGroup implements XAttachGroup<ProcessInfo> {
 
   @NotNull
   @Override
-  public Icon getProcessIcon(@NotNull Project project, @NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder) {
+  public Icon getIcon(@NotNull Project project, @NotNull T info, @NotNull UserDataHolder dataHolder) {
     return AllIcons.RunConfigurations.Application;
   }
 
   @NotNull
   @Override
-  public String getProcessDisplayText(@NotNull Project project, @NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder) {
-    return info.getExecutableDisplayName();
+  public String getItemDisplayText(@NotNull Project project, @NotNull T info, @NotNull UserDataHolder dataHolder) {
+    return info.getInfo().getExecutableDisplayName();
   }
 
   @Override
-  public int compare(@NotNull Project project, @NotNull ProcessInfo a, @NotNull ProcessInfo b, @NotNull UserDataHolder dataHolder) {
-    return a.getPid() - b.getPid();
+  public int compare(@NotNull Project project, @NotNull T a, @NotNull T b, @NotNull UserDataHolder dataHolder) {
+    return a.getInfo().getPid() - b.getInfo().getPid();
   }
 }
