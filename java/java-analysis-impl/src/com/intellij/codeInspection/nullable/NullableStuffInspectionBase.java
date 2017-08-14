@@ -800,6 +800,7 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
     Project project = owner.getProject();
     NullableNotNullManager manager = NullableNotNullManager.getInstance(project);
     if (!manager.isNotNull(owner, checkBases)) return false;
+    if (DfaPsiUtil.getTypeNullability(getMemberType(owner)) == Nullness.NOT_NULL) return true;
 
     PsiAnnotation anno = manager.getNotNullAnnotation(owner, checkBases);
     if (anno == null || AnnotationUtil.isInferredAnnotation(anno)) return false;
@@ -811,9 +812,14 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
     Project project = owner.getProject();
     NullableNotNullManager manager = NullableNotNullManager.getInstance(project);
     if (!manager.isNullable(owner, checkBases)) return false;
+    if (DfaPsiUtil.getTypeNullability(getMemberType(owner)) == Nullness.NULLABLE) return true;
 
     PsiAnnotation anno = manager.getNullableAnnotation(owner, checkBases);
     return !(anno != null && AnnotationUtil.isInferredAnnotation(anno));
+  }
+
+  private static PsiType getMemberType(@NotNull PsiModifierListOwner owner) {
+    return owner instanceof PsiMethod ? ((PsiMethod)owner).getReturnType() : owner instanceof PsiVariable ? ((PsiVariable)owner).getType() : null;
   }
 
   private static LocalQuickFix createChangeDefaultNotNullFix(NullableNotNullManager nullableManager, PsiModifierListOwner modifierListOwner) {
