@@ -427,20 +427,18 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
 
     private fun findRunner(runnerId: String): ProgramRunner<*>? {
       val runnersById = ProgramRunner.PROGRAM_RUNNER_EP.extensions.filter { runnerId == it.runnerId }
-      return if (runnersById.isEmpty()) {
-        null
-      }
-      else if (runnersById.size == 1) {
-        runnersById.firstOrNull()
-      }
-      else {
-        LOG.error("More than one runner found for ID: $runnerId")
-        for (executor in ExecutorRegistry.getInstance().registeredExecutors) {
-          runnersById.firstOrNull { it.canRun(executor.id, configuration)  }?.let {
-            return it
+      return when {
+        runnersById.isEmpty() -> null
+        runnersById.size == 1 -> runnersById.firstOrNull()
+        else -> {
+          LOG.error("More than one runner found for ID: $runnerId")
+          for (executor in ExecutorRegistry.getInstance().registeredExecutors) {
+            runnersById.firstOrNull { it.canRun(executor.id, configuration)  }?.let {
+              return it
+            }
           }
+          null
         }
-        null
       }
     }
 
