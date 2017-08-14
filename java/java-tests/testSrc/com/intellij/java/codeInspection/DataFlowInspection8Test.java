@@ -138,6 +138,10 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
     doTest();
   }
 
+  public void testReturningNullFromTypeAnnotatedNullableMethod() {
+    doTestWithCustomAnnotations();
+  }
+
   private void doTestWithCustomAnnotations() {
     setupCustomAnnotations();
     doTest();
