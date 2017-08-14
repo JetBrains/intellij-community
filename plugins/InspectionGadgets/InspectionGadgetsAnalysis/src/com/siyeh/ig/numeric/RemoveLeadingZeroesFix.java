@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2017 Bas Leijdekkers
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,43 +17,46 @@ package com.siyeh.ig.numeric;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiArrayInitializerExpression;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiLiteralExpression;
-import com.intellij.psi.PsiType;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-class RemoveLeadingZeroFix extends InspectionGadgetsFix {
+/**
+ * @author Bas Leijdekkers
+ */
+class RemoveLeadingZeroesFix extends InspectionGadgetsFix {
 
-  @Override
+  @Nls
   @NotNull
+  @Override
   public String getFamilyName() {
-    return InspectionGadgetsBundle.message("remove.leading.zero.to.make.decimal.quickfix");
+    return InspectionGadgetsBundle.message("remove.leading.zeroes.to.make.decimals.quickfix");
   }
 
   @Override
   protected void doFix(Project project, ProblemDescriptor descriptor) {
     final PsiElement element = descriptor.getPsiElement();
-    if (!(element instanceof PsiLiteralExpression)) {
+    if (!(element instanceof PsiArrayInitializerExpression)) {
       return;
     }
-    final PsiLiteralExpression literal = (PsiLiteralExpression)element;
-    removeLeadingZeroes(literal);
-  }
-
-  static void removeLeadingZeroes(PsiLiteralExpression literal) {
-    final String text = literal.getText();
-    final int max = text.length() - (PsiType.LONG.equals(literal.getType()) ? 2 : 1);
-    if (max < 1) {
-      return;
+    final PsiArrayInitializerExpression arrayInitializerExpression = (PsiArrayInitializerExpression)element;
+    for (PsiExpression initializer : arrayInitializerExpression.getInitializers()) {
+      initializer = ParenthesesUtils.stripParentheses(initializer);
+      if (!(initializer instanceof PsiLiteralExpression)) {
+        continue;
+      }
+      final PsiLiteralExpression literal = (PsiLiteralExpression)initializer;
+      if (!ExpressionUtils.isOctalLiteral(literal)) {
+        continue;
+      }
+      RemoveLeadingZeroFix.removeLeadingZeroes(literal);
     }
-    int index = 0;
-    while (index < max && (text.charAt(index) == '0' || text.charAt(index) == '_')) {
-      index++;
-    }
-    final String textWithoutLeadingZeros = text.substring(index);
-    PsiReplacementUtil.replaceExpression(literal, textWithoutLeadingZeros);
   }
 }

@@ -51,8 +51,8 @@ public class OctalAndDecimalIntegersMixedInspection extends BaseInspection {
   @Override
   protected InspectionGadgetsFix[] buildFixes(Object... infos) {
     return new InspectionGadgetsFix[]{
-      new ConvertOctalLiteralToDecimalFix(),
-      new RemoveLeadingZeroFix()
+      new ConvertOctalLiteralsToDecimalsFix(),
+      new RemoveLeadingZeroesFix()
     };
   }
 
