@@ -22,7 +22,11 @@ import com.intellij.codeInspection.unusedLibraries.UnusedLibrariesInspection;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.InspectionTestCase;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Test;
+
+import java.io.File;
 
 public class UnusedLibraryInspectionTest extends InspectionTestCase {
   @Override
@@ -33,7 +37,9 @@ public class UnusedLibraryInspectionTest extends InspectionTestCase {
   @Override
   protected void setupRootModel(@NotNull String testDir, @NotNull VirtualFile[] sourceDir, String sdkName) {
     super.setupRootModel(testDir, sourceDir, sdkName);
-    PsiTestUtil.addLibrary(getModule(), "JUnit", getTestDataPath(), "/junit.jar");
+    String pathForClass = PathUtil.getJarPathForClass(Test.class);
+    File file = new File(pathForClass);
+    PsiTestUtil.addLibrary(getModule(), "JUnit", file.getParent(), "/" + file.getName(), "/hamcrest-core-1.3.jar");
   }
 
   private void doTest() {
