@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 package com.intellij.java.codeInsight.completion
+
 import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.JavaProjectCodeInsightSettings
@@ -31,6 +32,7 @@ import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiTypeParameter
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings
@@ -1807,5 +1809,14 @@ class Bar {
   }
 
   void testNoCallsInPackageStatement() { doAntiTest() }
+
+  void testTypeParameterShadowingClass() {
+    configure()
+    myFixture.assertPreferredCompletionItems 0, 'Tttt', 'Tttt'
+    assert myFixture.lookupElements[0].object instanceof PsiTypeParameter
+    assert !(myFixture.lookupElements[1].object instanceof PsiTypeParameter)
+    selectItem(myFixture.lookupElements[1])
+    checkResult()
+  }
 
 }
