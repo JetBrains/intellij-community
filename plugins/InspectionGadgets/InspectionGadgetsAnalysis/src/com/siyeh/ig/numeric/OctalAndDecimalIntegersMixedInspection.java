@@ -23,8 +23,8 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class OctalAndDecimalIntegersMixedInspection extends BaseInspection {
@@ -76,7 +76,7 @@ public class OctalAndDecimalIntegersMixedInspection extends BaseInspection {
           if (isDecimalLiteral(literal)) {
             hasDecimalLiteral = true;
           }
-          if (isOctalLiteral(literal)) {
+          if (ExpressionUtils.isOctalLiteral(literal)) {
             hasOctalLiteral = true;
           }
         }
@@ -93,19 +93,6 @@ public class OctalAndDecimalIntegersMixedInspection extends BaseInspection {
       }
       final String text = literal.getText();
       return text.charAt(0) != '0';
-    }
-
-    private static boolean isOctalLiteral(PsiLiteralExpression literal) {
-      final PsiType type = literal.getType();
-      if (!PsiType.INT.equals(type) && !PsiType.LONG.equals(type)) {
-        return false;
-      }
-      @NonNls final String text = literal.getText();
-      if (text.charAt(0) != '0' || text.length() < 2) {
-        return false;
-      }
-      final char c1 = text.charAt(1);
-      return c1 == '_' || (c1 >= '0' && c1 <= '7');
     }
   }
 }

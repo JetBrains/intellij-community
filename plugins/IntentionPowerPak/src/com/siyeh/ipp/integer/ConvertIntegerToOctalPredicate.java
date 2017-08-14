@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,8 @@ package com.siyeh.ipp.integer;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiType;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import org.jetbrains.annotations.NonNls;
 
 class ConvertIntegerToOctalPredicate implements PsiElementPredicate {
 
@@ -32,17 +32,6 @@ class ConvertIntegerToOctalPredicate implements PsiElementPredicate {
     if (!(PsiType.INT.equals(type) || PsiType.LONG.equals(type))) {
       return false;
     }
-    @NonNls final String text = expression.getText();
-    if (text.charAt(0) != '0') {
-      return true;
-    }
-    if (text.length() < 2) {
-      return true;
-    }
-    final char c1 = text.charAt(1);
-    if (c1 != '_' && (c1 < '0' || c1 > '7')) {
-      return true;
-    }
-    return false;
+    return !ExpressionUtils.isOctalLiteral(expression);
   }
 }

@@ -1003,4 +1003,21 @@ public class ExpressionUtils {
     }
     return expression;
   }
+
+  public static boolean isOctalLiteral(PsiLiteralExpression literal) {
+    final PsiType type = literal.getType();
+    if (!PsiType.INT.equals(type) && !PsiType.LONG.equals(type)) {
+      return false;
+    }
+    if (literal.getValue() == null) {
+      // red code
+      return false;
+    }
+    @NonNls final String text = literal.getText();
+    if (text.charAt(0) != '0' || text.length() < 2) {
+      return false;
+    }
+    final char c1 = text.charAt(1);
+    return c1 == '_' || (c1 >= '0' && c1 <= '7');
+  }
 }

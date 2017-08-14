@@ -7,5 +7,6 @@ public class OctalRecognition {
     int i4 = 7;
     int i5 = 0x0123;
     int i6 = 0b0101;
+    int i7 = <error descr="Integer number too large">0128</error>; // red code
   }
 }
