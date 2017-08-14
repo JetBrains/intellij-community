@@ -584,7 +584,7 @@ public class CFGBuilder {
     if(type == null) {
       type = PsiType.VOID;
     }
-    return new LightVariableBuilder<>("tmp$" + myAnalyzer.getInstructionCount(), type, myAnalyzer.getContext());
+    return new TempVariable(myAnalyzer.getInstructionCount(), type, myAnalyzer.getContext());
   }
 
   /**
@@ -598,7 +598,19 @@ public class CFGBuilder {
     return this;
   }
 
+  /**
+   * Checks whether supplied variable is a temporary variable created previously via {@link #createTempVariable(PsiType)}
+   *
+   * @param variable to check
+   * @return true if supplied variable is a temp variable.
+   */
   public static boolean isTempVariable(PsiModifierListOwner variable) {
-     return variable instanceof LightVariableBuilder && ((LightVariableBuilder)variable).getName().startsWith("tmp$");
+     return variable instanceof TempVariable;
+  }
+
+  private static class TempVariable extends LightVariableBuilder<TempVariable> {
+    TempVariable(int index, @NotNull PsiType type, @NotNull PsiElement navigationElement) {
+      super("tmp$" + index, type, navigationElement);
+    }
   }
 }
