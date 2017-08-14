@@ -383,7 +383,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
       reportConstantReferenceValues(holder, visitor, reportedAnchors);
     }
 
-    if (REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL && visitor.isAlwaysReturnsNotNull()) {
+    if (REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL && visitor.isAlwaysReturnsNotNull(runner.getInstructions())) {
       reportAlwaysReturnsNotNull(holder, scope);
     }
   }
@@ -445,7 +445,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     PsiJavaCodeReferenceElement annoName = nullableAnno.getNameReferenceElement();
     assert annoName != null;
     String msg = "@" + NullableStuffInspectionBase.getPresentableAnnoName(nullableAnno) +
-                 " method '" + method.getName() + "' always return a non-null value";
+                 " method '" + method.getName() + "' always returns a non-null value";
     holder.registerProblem(annoName, msg, new AddNotNullAnnotationFix(method));
   }
 
@@ -997,8 +997,9 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
       return StreamEx.ofKeys(myFailingCalls, v -> v).map(MethodCallInstruction::getCallExpression).toList();
     }
 
-    boolean isAlwaysReturnsNotNull() {
-      return myAlwaysReturnsNotNull;
+    boolean isAlwaysReturnsNotNull(Instruction[] instructions) {
+      return myAlwaysReturnsNotNull &&
+             ContainerUtil.exists(instructions, i -> i instanceof ReturnInstruction && ((ReturnInstruction)i).getAnchor() instanceof PsiReturnStatement);
     }
 
     @Override
