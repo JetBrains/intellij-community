@@ -18,8 +18,9 @@ package com.intellij.xdebugger.attach;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.ProcessInfo;
 import com.intellij.openapi.project.Project;
+import com.intellij.remote.RemoteSdkCredentials;
 import org.jetbrains.annotations.NotNull;
 
-public interface XLocalAttachDebugger extends XAttachDebugger {
-  void attachDebugSession(@NotNull Project project, @NotNull ProcessInfo processInfo) throws ExecutionException;
+public interface XRemoteAttachDebugger extends XAttachDebugger {
+  void attachDebugSession(@NotNull Project project, @NotNull RemoteSdkCredentials credentials, @NotNull ProcessInfo processInfo) throws ExecutionException;
 }

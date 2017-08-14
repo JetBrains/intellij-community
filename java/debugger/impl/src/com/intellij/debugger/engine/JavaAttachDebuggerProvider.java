@@ -30,10 +30,10 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.xdebugger.attach.XDefaultLocalAttachGroup;
+import com.intellij.xdebugger.attach.XAttachGroup;
+import com.intellij.xdebugger.attach.XDefaultAttachGroup;
 import com.intellij.xdebugger.attach.XLocalAttachDebugger;
 import com.intellij.xdebugger.attach.XLocalAttachDebuggerProvider;
-import com.intellij.xdebugger.attach.XLocalAttachGroup;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -84,7 +84,7 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
     return StringUtil.notNullize(address.first) + ":" + address.second;
   }
 
-  private static final XLocalAttachGroup ourAttachGroup = new XDefaultLocalAttachGroup() {
+  private static final XAttachGroup ourAttachGroup = new XDefaultAttachGroup() {
     @Override
     public int getOrder() {
       return 1;
@@ -107,7 +107,7 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
 
   @NotNull
   @Override
-  public XLocalAttachGroup getAttachGroup() {
+  public XAttachGroup getAttachGroup() {
     return ourAttachGroup;
   }
 

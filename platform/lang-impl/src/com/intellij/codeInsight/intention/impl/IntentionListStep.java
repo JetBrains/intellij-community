@@ -312,7 +312,7 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
       intentions.inspectionFixesToShow.add(new HighlightInfo.IntentionActionDescriptor(optionFix, getIcon(optionFix)));
     }
 
-    return new IntentionListStep(myIntentionHintComponent, intentions,myEditor, myFile, myProject){
+    return new IntentionListStep(myIntentionHintComponent, intentions, myEditor, myFile, myProject){
       @Override
       public String getTitle() {
         return title;

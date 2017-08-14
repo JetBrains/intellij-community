@@ -348,10 +348,6 @@
 //      return myDebuggers.get(mySelectedDebugger);
 //    }
 //
-//    @NotNull
-//    public List<AttachItem> getSubItems() {
-//      return mySubItems;
-//    }
 //
 //    public void startDebugSession(@NotNull Project project) {
 //      XLocalAttachDebugger debugger = getSelectedDebugger();

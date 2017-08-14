@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public interface XLocalAttachDebuggerProvider {
+public interface XLocalAttachDebuggerProvider extends  XAttachDebuggerProvider<XLocalAttachDebugger> {
   ExtensionPointName<XLocalAttachDebuggerProvider> EP = ExtensionPointName.create("com.intellij.xdebugger.localAttachDebuggerProvider");
 
   /**
@@ -32,8 +32,8 @@ public interface XLocalAttachDebuggerProvider {
    *
    */
   @NotNull
-  default XLocalAttachGroup getAttachGroup() {
-    return XLocalAttachGroup.DEFAULT;
+  default XAttachGroup getAttachGroup() {
+    return XAttachGroup.DEFAULT;
   }
 
   /**

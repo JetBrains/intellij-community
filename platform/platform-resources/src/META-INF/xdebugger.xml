@@ -11,7 +11,9 @@
     <extensionPoint name="xdebugger.breakpointType" interface="com.intellij.xdebugger.breakpoints.XBreakpointType"/>
     <extensionPoint name="xdebugger.debuggerSupport" interface="com.intellij.xdebugger.impl.DebuggerSupport"/>
     <extensionPoint name="xdebugger.configurableProvider" interface="com.intellij.xdebugger.settings.DebuggerConfigurableProvider"/>
-    <extensionPoint name="xdebugger.attachDebuggerProvider" interface="com.intellij.xdebugger.attach.XAttachDebuggerProvider"/>
+    <extensionPoint name="xdebugger.localAttachDebuggerProvider" interface="com.intellij.xdebugger.attach.XLocalAttachDebuggerProvider"/>
+    <extensionPoint name="xdebugger.remoteAttachDebuggerProvider" interface="com.intellij.xdebugger.attach.XRemoteAttachDebuggerProvider"/>
+    <extensionPoint name="xdebugger.remoteProcessListProvider" interface="com.intellij.xdebugger.attach.XRemoteProcessListProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
