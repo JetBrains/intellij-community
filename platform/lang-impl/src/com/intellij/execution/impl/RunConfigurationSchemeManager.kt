@@ -20,12 +20,18 @@ package com.intellij.execution.impl
 import com.intellij.configurationStore.LazySchemeProcessor
 import com.intellij.configurationStore.SchemeDataHolder
 import com.intellij.openapi.util.InvalidDataException
+import com.intellij.util.attribute
+import org.jdom.Element
 import java.util.function.Function
 
 internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl, private val isShared: Boolean) : LazySchemeProcessor<RunnerAndConfigurationSettingsImpl, RunnerAndConfigurationSettingsImpl>() {
   override fun createScheme(dataHolder: SchemeDataHolder<RunnerAndConfigurationSettingsImpl>, name: String, attributeProvider: Function<String, String?>, isBundled: Boolean): RunnerAndConfigurationSettingsImpl {
     val settings = RunnerAndConfigurationSettingsImpl(manager)
-    val element = dataHolder.read()
+    var element = dataHolder.read()
+    if (isShared && element.name == "component") {
+      element = element.getChild("configuration")
+    }
+
     try {
       settings.readExternal(element, isShared)
     }
@@ -54,5 +60,15 @@ internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl
 
   override fun onSchemeDeleted(scheme: RunnerAndConfigurationSettingsImpl) {
     manager.removeConfiguration(scheme)
+  }
+
+  override fun writeScheme(scheme: RunnerAndConfigurationSettingsImpl): Element {
+    val result = super.writeScheme(scheme)
+    if (isShared) {
+      return Element("component")
+        .attribute("name", "ProjectRunConfigurationManager")
+        .addContent(result)
+    }
+    return result
   }
 }
