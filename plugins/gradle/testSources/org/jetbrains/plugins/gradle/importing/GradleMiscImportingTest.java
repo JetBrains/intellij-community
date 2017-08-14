@@ -167,8 +167,15 @@ public class GradleMiscImportingTest extends GradleImportingTestCase {
 
   @Test
   public void testCompilerConfigurationSettingsImport() throws Exception {
+    final String pathToPlugin = getClass().getResource("/testCompilerConfigurationSettingsImport/gradle-idea-ext.jar").toString();
+
     importProject(
-      "apply plugin: 'idea'\n" +
+      "buildscript {\n" +
+      "  dependencies {\n" +
+      "     classpath files('" + pathToPlugin + "')\n" +
+      "  }\n" +
+      "}\n" +
+      "apply plugin: 'org.jetbrains.gradle.plugin.idea-ext'\n" +
       "idea {\n" +
       "  project.settings {\n" +
       "    compiler {\n" +

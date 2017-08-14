@@ -24,7 +24,6 @@ import org.jetbrains.plugins.gradle.model.DefaultIntelliJSettings
 import org.jetbrains.plugins.gradle.model.IntelliJSettings
 import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService
-import org.jetbrains.plugins.gradle.tooling.internal.DynamicSettings
 
 /**
  * @author Vladislav.Soroka
@@ -42,7 +41,7 @@ class IntelliJSettingsBuilder implements ModelBuilderService {
     ExtensionAware extensionAware = project.plugins.findPlugin(IdeaPlugin.class)?.model?.module as ExtensionAware
     if (extensionAware) {
       def object = extensionAware.extensions.findByName("settings")
-      if (object instanceof DynamicSettings && !(object as DynamicSettings).objects.isEmpty()) {
+      if (object) {
         return new DefaultIntelliJSettings(object.toString())
       }
     }
