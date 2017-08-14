@@ -108,7 +108,7 @@ public class Windows {
                 //System.err.println("Tool window is loosing focus: " + ToolWindowManager.getActiveToolWindow().getStripeTitle());
 
                 // A toolwindow lost focus
-                if (ToolWindowManager.getActiveToolWindow() != null && ToolWindowManager.getActiveToolWindow().isAutoHide()) {
+                if (!focusEvent.isTemporary() && ToolWindowManager.getActiveToolWindow() != null && ToolWindowManager.getActiveToolWindow().isAutoHide()) {
                   pinnedWindowFocusLostHandler.accept(ToolWindowManager.getActiveId());
                 }
               }
