@@ -66,7 +66,7 @@ public class ConfigurationDataService extends AbstractProjectDataService<Configu
 
     DataNode<ConfigurationData> projectConfigurationNode = ExternalSystemApiUtil.find(projectDataNode, ProjectKeys.CONFIGURATION);
     if (projectConfigurationNode != null) {
-      if (ExternalSystemApiUtil.isOneToOneMapping(project, projectDataNode.getData())) {
+      if (!ExternalSystemApiUtil.isOneToOneMapping(project, projectDataNode.getData())) {
         LOG.warn("This external project are not the only project in the current IDE workspace, " +
                  "found project level configuration can override the configuration came from other external projects.");
       }
