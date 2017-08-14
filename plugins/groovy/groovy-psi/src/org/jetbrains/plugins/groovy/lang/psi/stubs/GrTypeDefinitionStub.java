@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ public class GrTypeDefinitionStub extends StubBase<GrTypeDefinition> implements 
   private final String[] myAnnotations;
   private final byte myFlags;
 
-  private SoftReference<GrCodeReferenceElement> myStubBaseReference;
+  private volatile SoftReference<GrCodeReferenceElement> myStubBaseReference;
 
   public GrTypeDefinitionStub(StubElement parent,
                                   final String name,

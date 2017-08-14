@@ -33,7 +33,7 @@ public class GrImportStatementStub extends StubBase<GrImportStatement> implement
   private final String myReferenceText;
   private final String myAliasName;
 
-  private SoftReference<GrCodeReferenceElement> myReference;
+  private volatile SoftReference<GrCodeReferenceElement> myReference;
 
   public GrImportStatementStub(StubElement parent,
                                @NotNull IStubElementType elementType,
