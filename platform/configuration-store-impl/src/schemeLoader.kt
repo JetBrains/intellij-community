@@ -48,6 +48,10 @@ private fun preload(isUseOldFileNameSanitize: Boolean, parser: MXParser): String
             // backward compatibility - we don't write PROFILE_NAME_TAG anymore
             return parser.getAttributeValue(null, "profile_name") ?: findName()
           }
+          else if (parser.name == "configuration") {
+            // run configuration
+            return parser.getAttributeValue(null, "name")
+          }
           else {
             return null
           }
