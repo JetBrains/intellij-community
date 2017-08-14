@@ -1214,25 +1214,15 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         if (LOG.isDebugEnabled()) {
           LOG.debug("Invoking " + interfaceType.name() + "." + method.name());
         }
-        if (Patches.JDK_BUG_ID_8042123) {
-          //TODO: remove reflection after move to java 8 or 9, this API was introduced in 1.8.0_45
-          java.lang.reflect.Method invokeMethod =
-            ReflectionUtil.getMethod(InterfaceType.class, "invokeMethod", ThreadReference.class, Method.class, List.class, int.class);
-          if (invokeMethod == null) {
-            throw new IllegalStateException("Interface method invocation is not supported in JVM " +
-                                            SystemInfo.JAVA_VERSION +
-                                            ". Use JVM 1.8.0_45 or higher to run " +
-                                            ApplicationNamesInfo.getInstance().getFullProductName());
-          }
-          try {
-            return (Value)invokeMethod.invoke(interfaceType, thread, method, args, invokePolicy);
-          }
-          catch (Exception e) {
-            throw new RuntimeException(e);
-          }
-        }
-        else {
+
+        try {
           return interfaceType.invokeMethod(thread, method, args, invokePolicy);
+        }
+        catch (LinkageError e) {
+          throw new IllegalStateException("Interface method invocation is not supported in JVM " +
+                                          SystemInfo.JAVA_VERSION +
+                                          ". Use JVM 1.8.0_45 or higher to run " +
+                                          ApplicationNamesInfo.getInstance().getFullProductName());
         }
       }
     }.start((EvaluationContextImpl)evaluationContext, false);
