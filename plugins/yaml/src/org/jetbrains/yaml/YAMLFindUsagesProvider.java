@@ -3,14 +3,12 @@ package org.jetbrains.yaml;
 import com.intellij.lang.HelpID;
 import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.lang.findUsages.FindUsagesProvider;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.yaml.psi.YAMLMapping;
-import org.jetbrains.yaml.psi.YAMLScalar;
-import org.jetbrains.yaml.psi.YAMLScalarText;
-import org.jetbrains.yaml.psi.YAMLSequence;
+import org.jetbrains.yaml.psi.*;
 
 /**
  * @author shalupov
@@ -42,6 +40,8 @@ public class YAMLFindUsagesProvider implements FindUsagesProvider {
       return "sequence";
     } else if (element instanceof YAMLMapping) {
       return "mapping";
+    } else if (element instanceof YAMLKeyValue) {
+      return "key-value";
     } else {
       return "";
     }
@@ -50,9 +50,8 @@ public class YAMLFindUsagesProvider implements FindUsagesProvider {
   @NotNull
   @Override
   public String getDescriptiveName(@NotNull PsiElement element) {
-    final String name = element instanceof PsiNamedElement ? ((PsiNamedElement)element).getName() : null;
-    if (name != null) {
-      return name;
+    if (element instanceof PsiNamedElement) {
+      return StringUtil.notNullize(((PsiNamedElement)element).getName(), "<unnamed>");
     }
 
     if (element instanceof YAMLScalar) {
