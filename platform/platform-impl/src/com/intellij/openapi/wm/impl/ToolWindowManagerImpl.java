@@ -228,7 +228,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
           }
         }
       })
-      .bind();
+      .bind(myProject);
   }
 
   private void updateToolWindowHeaders() {

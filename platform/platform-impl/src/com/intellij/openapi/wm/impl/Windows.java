@@ -15,10 +15,12 @@
  */
 package com.intellij.openapi.wm.impl;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.FocusCommand;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -89,7 +91,8 @@ public class Windows {
       return KeymapManager.getInstance().getActiveKeymap().getShortcuts(actionId);
     }
 
-    public void bind() {
+    public void bind(Project project) {
+
       AWTEventListener listener = new AWTEventListener() {
         @Override
         public void eventDispatched(AWTEvent event) {
@@ -126,6 +129,17 @@ public class Windows {
       };
 
       Toolkit.getDefaultToolkit().addAWTEventListener(listener, AWTEvent.MOUSE_EVENT_MASK | AWTEvent.FOCUS_EVENT_MASK | AWTEvent.KEY_EVENT_MASK);
+
+      Disposable listenerDisposer = new Disposable() {
+
+        @Override
+        public void dispose() {
+          Toolkit.getDefaultToolkit().removeAWTEventListener(listener);
+        }
+      };
+
+      Disposer.register(project, listenerDisposer);
+
     }
   }
 
