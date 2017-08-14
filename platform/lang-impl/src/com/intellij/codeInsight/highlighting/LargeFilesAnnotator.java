@@ -22,26 +22,21 @@ import com.intellij.openapi.vfs.PersistentFSConstants;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.SingleRootFileViewProvider;
 import org.jetbrains.annotations.NotNull;
 
 public class LargeFilesAnnotator implements Annotator {
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
     if (element instanceof PsiFile) {
-      long length = getFileLength((PsiFile)element);
-      int limit = PersistentFSConstants.getMaxIntellisenseFileSize();
-      if (length > limit) {
+      VirtualFile file = ((PsiFile)element).getViewProvider().getVirtualFile();
+      if (SingleRootFileViewProvider.isTooLargeForIntelligence(file)) {
         holder.createWarningAnnotation(element, "The file size (" +
-                                                StringUtil.formatFileSize(length) + ") " +
+                                                StringUtil.formatFileSize(file.getLength()) + ") " +
                                                 "exceeds configured limit (" +
-                                                StringUtil.formatFileSize(limit) + "). " +
+                                                StringUtil.formatFileSize(PersistentFSConstants.getMaxIntellisenseFileSize()) + "). " +
                                                 "Code insight features are not available.").setFileLevelAnnotation(true);
       }
     }
-  }
-
-  private static long getFileLength(@NotNull PsiFile file) {
-    VirtualFile virtualFile = file.getVirtualFile();
-    return virtualFile != null ? virtualFile.getLength() : file.getTextLength();
   }
 }
