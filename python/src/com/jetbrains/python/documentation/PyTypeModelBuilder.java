@@ -30,7 +30,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.jetbrains.python.documentation.DocumentationBuilderKit.$;
 import static com.jetbrains.python.documentation.DocumentationBuilderKit.combUp;
 
 /**
@@ -421,13 +420,8 @@ public class PyTypeModelBuilder {
 
     @Override
     protected void addType(String name) {
-      final PyType type = PyTypeParser.getTypeByName(myAnchor, name);
-      if (type instanceof PyClassType) {
-        myBody.addWith(new DocumentationBuilderKit.LinkWrapper(PythonDocumentationProvider.LINK_TYPE_TYPENAME + name), $(name));
-      }
-      else {
-        add(name);
-      }
+      final TypeEvalContext context = TypeEvalContext.userInitiated(myAnchor.getProject(), myAnchor.getContainingFile());
+      myBody.addItem(PyDocumentationLink.toPossibleClass(name, myAnchor, context));
     }
   }
 

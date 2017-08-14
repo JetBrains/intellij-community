@@ -16,7 +16,6 @@
 package com.jetbrains.python.documentation;
 
 import com.google.common.collect.Lists;
-import com.intellij.codeInsight.documentation.DocumentationManagerProtocol;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.xml.CommonXmlStrings;
@@ -50,6 +49,9 @@ class DocumentationBuilderKit {
 
   @NotNull
   static final Function<String, String> WRAP_IN_ITALIC = s -> "<i>" + s + "</i>";
+
+  @NotNull
+  static final Function<String, String> WRAP_IN_CODE = s -> "<code>" + s + "</code>";
 
   private DocumentationBuilderKit() {
   }
@@ -100,20 +102,5 @@ class DocumentationBuilderKit {
       return wrapInTag(myTag, myAttributes, contents);
     }
 
-  }
-
-  static class LinkWrapper implements Function<Iterable<String>, Iterable<String>> {
-    private final String myLink;
-
-    LinkWrapper(String link) {
-      myLink = link;
-    }
-
-    public Iterable<String> apply(Iterable<String> contents) {
-      return new ChainIterable<String>()
-        .addItem("<a href=\"").addItem(DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL).addItem(myLink).addItem("\">")
-        .add(contents).addItem("</a>")
-      ;
-    }
   }
 }

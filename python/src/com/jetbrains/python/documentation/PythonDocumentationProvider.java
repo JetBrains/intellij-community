@@ -44,15 +44,12 @@ import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
-import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.PyTypeParser;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.toolbox.ChainIterable;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.HeadMethod;
 import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jsoup.Jsoup;
@@ -74,11 +71,6 @@ import static com.jetbrains.python.documentation.DocumentationBuilderKit.*;
  * Generates documentation stub
  */
 public class PythonDocumentationProvider extends AbstractDocumentationProvider implements ExternalDocumentationProvider {
-
-  @NonNls static final String LINK_TYPE_CLASS = "#class#";
-  @NonNls static final String LINK_TYPE_PARENT = "#parent#";
-  @NonNls static final String LINK_TYPE_PARAM = "#param#";
-  @NonNls static final String LINK_TYPE_TYPENAME = "#typename#";
 
   // provides ctrl+hover info
   @Override
@@ -282,7 +274,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     final String name = cls.getName();
     cat.addItem("class ");
     if (allowHtml && linkOwnName) {
-      cat.addWith(LinkMyClass, $(name));
+      cat.addItem(PyDocumentationLink.toContainingClass(name));
     }
     else {
       cat.addWith(nameWrapper, $(name));
@@ -303,7 +295,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
           isNotFirst = true;
         }
         if (allowHtml) {
-          cat.addWith(new LinkWrapper(LINK_TYPE_PARENT + parentName), $(parentName));
+          cat.addItem(PyDocumentationLink.toAncestorOfContainingClass(parentName));
         }
         else {
           cat.addItem(parentName);
@@ -344,30 +336,9 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
 
   @Override
   public PsiElement getDocumentationElementForLink(PsiManager psiManager, @NotNull String link, @NotNull PsiElement context) {
-    if (link.equals(LINK_TYPE_CLASS)) {
-      return inferContainingClassOf(context);
-    }
-    else if (link.equals(LINK_TYPE_PARAM)) {
-      return inferClassOfParameter(context);
-    }
-    else if (link.startsWith(LINK_TYPE_PARENT)) {
-      final PyClass cls = inferContainingClassOf(context);
-      if (cls != null) {
-        final String desiredName = link.substring(LINK_TYPE_PARENT.length());
-        for (PyClass parent : cls.getAncestorClasses(null)) {
-          final String parentName = parent.getName();
-          if (parentName != null && parentName.equals(desiredName)) return parent;
-        }
-      }
-    }
-    else if (link.startsWith(LINK_TYPE_TYPENAME)) {
-      final String typeName = link.substring(LINK_TYPE_TYPENAME.length());
-      final PyType type = PyTypeParser.getTypeByName(context, typeName);
-      if (type instanceof PyClassType) {
-        return ((PyClassType)type).getPyClass();
-      }
-    }
-    return null;
+    return PyDocumentationLink.elementForLink(link,
+                                              context,
+                                              TypeEvalContext.userInitiated(context.getProject(), context.getContainingFile()));
   }
 
   @Override
@@ -585,30 +556,4 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     }
     return super.getCustomDocumentationElement(editor, file, contextElement);
   }
-
-  @Nullable
-  private static PyClass inferContainingClassOf(PsiElement context) {
-    if (context instanceof PyClass) return (PyClass)context;
-    if (context instanceof PyFunction) {
-      return ((PyFunction)context).getContainingClass();
-    }
-    else {
-      return PsiTreeUtil.getParentOfType(context, PyClass.class);
-    }
-  }
-
-  @Nullable
-  private static PyClass inferClassOfParameter(@NotNull PsiElement context) {
-    if (context instanceof PyNamedParameter) {
-      final PyType type = TypeEvalContext.userInitiated(context.getProject(), context.getContainingFile()).getType(
-        (PyNamedParameter)context);
-      if (type instanceof PyClassType) {
-        return ((PyClassType)type).getPyClass();
-      }
-    }
-    return null;
-  }
-
-  public static final LinkWrapper LinkMyClass = new LinkWrapper(LINK_TYPE_CLASS);
-  // link item to containing class
 }
