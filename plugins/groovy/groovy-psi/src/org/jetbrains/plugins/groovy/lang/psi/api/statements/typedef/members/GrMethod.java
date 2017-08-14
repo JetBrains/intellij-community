@@ -48,6 +48,8 @@ public interface GrMethod extends GrMembersDeclaration, GrNamedElement, PsiMetho
   @Nullable
   GrOpenBlock getBlock();
 
+  default boolean hasBlock() { return getBlock() != null; }
+
   void setBlock(GrCodeBlock newBlock);
 
   @Nullable
