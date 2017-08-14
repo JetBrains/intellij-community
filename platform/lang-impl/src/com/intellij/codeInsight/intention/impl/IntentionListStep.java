@@ -35,6 +35,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.ThreeState;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
@@ -52,11 +53,16 @@ import java.util.stream.Collectors;
 public class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>, SpeedSearchFilter<IntentionActionWithTextCaching> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.IntentionListStep");
 
-  private final Set<IntentionActionWithTextCaching> myCachedIntentions = ContainerUtil.newConcurrentSet(ACTION_TEXT_AND_CLASS_EQUALS);
-  private final Set<IntentionActionWithTextCaching> myCachedErrorFixes = ContainerUtil.newConcurrentSet(ACTION_TEXT_AND_CLASS_EQUALS);
-  private final Set<IntentionActionWithTextCaching> myCachedInspectionFixes = ContainerUtil.newConcurrentSet(ACTION_TEXT_AND_CLASS_EQUALS);
-  private final Set<IntentionActionWithTextCaching> myCachedGutters = ContainerUtil.newConcurrentSet(ACTION_TEXT_AND_CLASS_EQUALS);
-  private final Set<IntentionActionWithTextCaching> myCachedNotifications = ContainerUtil.newConcurrentSet(ACTION_TEXT_AND_CLASS_EQUALS);
+  private final Set<IntentionActionWithTextCaching> myCachedIntentions =
+    ConcurrentCollectionFactory.createConcurrentSet(ACTION_TEXT_AND_CLASS_EQUALS);
+  private final Set<IntentionActionWithTextCaching> myCachedErrorFixes =
+    ConcurrentCollectionFactory.createConcurrentSet(ACTION_TEXT_AND_CLASS_EQUALS);
+  private final Set<IntentionActionWithTextCaching> myCachedInspectionFixes =
+    ConcurrentCollectionFactory.createConcurrentSet(ACTION_TEXT_AND_CLASS_EQUALS);
+  private final Set<IntentionActionWithTextCaching> myCachedGutters =
+    ConcurrentCollectionFactory.createConcurrentSet(ACTION_TEXT_AND_CLASS_EQUALS);
+  private final Set<IntentionActionWithTextCaching> myCachedNotifications =
+    ConcurrentCollectionFactory.createConcurrentSet(ACTION_TEXT_AND_CLASS_EQUALS);
   private final IntentionManagerSettings mySettings;
   @Nullable
   private final IntentionHintComponent myIntentionHintComponent;

@@ -50,10 +50,10 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
 
   public String VISIBILITY = "public";
 
-  public final CodeStyleSettings.TypeToNameMap FIELD_TYPE_TO_NAME = new CodeStyleSettings.TypeToNameMap();
-  public final CodeStyleSettings.TypeToNameMap STATIC_FIELD_TYPE_TO_NAME = new CodeStyleSettings.TypeToNameMap();
-  @NonNls public final CodeStyleSettings.TypeToNameMap PARAMETER_TYPE_TO_NAME = new CodeStyleSettings.TypeToNameMap();
-  public final CodeStyleSettings.TypeToNameMap LOCAL_VARIABLE_TYPE_TO_NAME = new CodeStyleSettings.TypeToNameMap();
+  public CodeStyleSettings.TypeToNameMap FIELD_TYPE_TO_NAME = new CodeStyleSettings.TypeToNameMap();
+  public CodeStyleSettings.TypeToNameMap STATIC_FIELD_TYPE_TO_NAME = new CodeStyleSettings.TypeToNameMap();
+  public CodeStyleSettings.TypeToNameMap PARAMETER_TYPE_TO_NAME = new CodeStyleSettings.TypeToNameMap();
+  public CodeStyleSettings.TypeToNameMap LOCAL_VARIABLE_TYPE_TO_NAME = new CodeStyleSettings.TypeToNameMap();
 
   public boolean USE_EXTERNAL_ANNOTATIONS;
   public boolean INSERT_OVERRIDE_ANNOTATION = true;
@@ -108,8 +108,8 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
   public boolean INSERT_INNER_CLASS_IMPORTS;
   public int CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 5;
   public int NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND = 3;
-  public final PackageEntryTable PACKAGES_TO_USE_IMPORT_ON_DEMAND = new PackageEntryTable();
-  public final PackageEntryTable IMPORT_LAYOUT_TABLE = new PackageEntryTable();
+  public PackageEntryTable PACKAGES_TO_USE_IMPORT_ON_DEMAND = new PackageEntryTable();
+  public PackageEntryTable IMPORT_LAYOUT_TABLE = new PackageEntryTable();
 
   // region JavaDoc
   public boolean ENABLE_JAVADOC_FORMATTING = true;
@@ -311,6 +311,26 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
     JD_PARAM_DESCRIPTION_ON_NEW_LINE = rootSettings.JD_PARAM_DESCRIPTION_ON_NEW_LINE;
 
     JD_INDENT_ON_CONTINUATION = rootSettings.JD_INDENT_ON_CONTINUATION;
+  }
+
+  @Override
+  public Object clone() {
+    JavaCodeStyleSettings cloned = (JavaCodeStyleSettings)super.clone();
+    cloned.myRepeatAnnotations = new ArrayList<>();
+    cloned.setRepeatAnnotations(getRepeatAnnotations());
+    cloned.FIELD_TYPE_TO_NAME = new CodeStyleSettings.TypeToNameMap();
+    cloned.FIELD_TYPE_TO_NAME.copyFrom(FIELD_TYPE_TO_NAME);
+    cloned.STATIC_FIELD_TYPE_TO_NAME = new CodeStyleSettings.TypeToNameMap();
+    cloned.STATIC_FIELD_TYPE_TO_NAME.copyFrom(STATIC_FIELD_TYPE_TO_NAME);
+    cloned.PARAMETER_TYPE_TO_NAME = new CodeStyleSettings.TypeToNameMap();
+    cloned.PARAMETER_TYPE_TO_NAME.copyFrom(PARAMETER_TYPE_TO_NAME);
+    cloned.LOCAL_VARIABLE_TYPE_TO_NAME = new CodeStyleSettings.TypeToNameMap();
+    cloned.LOCAL_VARIABLE_TYPE_TO_NAME.copyFrom(LOCAL_VARIABLE_TYPE_TO_NAME);
+    cloned.PACKAGES_TO_USE_IMPORT_ON_DEMAND = new PackageEntryTable();
+    cloned.PACKAGES_TO_USE_IMPORT_ON_DEMAND.copyFrom(PACKAGES_TO_USE_IMPORT_ON_DEMAND);
+    cloned.IMPORT_LAYOUT_TABLE = new PackageEntryTable();
+    cloned.IMPORT_LAYOUT_TABLE.copyFrom(IMPORT_LAYOUT_TABLE);
+    return cloned;
   }
 
   @Override

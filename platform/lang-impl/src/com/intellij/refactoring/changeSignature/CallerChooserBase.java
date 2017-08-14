@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,6 @@ import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
@@ -58,7 +57,7 @@ import java.util.*;
 public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrapper {
   private final M myMethod;
   private final Alarm myAlarm = new Alarm();
-  private MethodNodeBase<M> myRoot;
+  private MemberNodeBase<M> myRoot;
   protected final Project myProject;
   private Tree myTree;
   private final Consumer<Set<M>> myCallback;
@@ -68,7 +67,7 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
   private final boolean myInitDone;
   private final String myFileName;
 
-  protected abstract MethodNodeBase<M> createTreeNode(M method, HashSet<M> called, Runnable cancelCallback);
+  protected abstract MemberNodeBase<M> createTreeNode(M method, HashSet<M> called, Runnable cancelCallback);
 
   protected abstract M[] findDeepestSuperMethods(M method);
 
@@ -105,14 +104,14 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
     }
     else {
       final CheckedTreeNode root = (CheckedTreeNode)myTree.getModel().getRoot();
-      myRoot = (MethodNodeBase)root.getFirstChild();
+      myRoot = (MemberNodeBase)root.getFirstChild();
     }
     myTreeSelectionListener = new TreeSelectionListener() {
       @Override
       public void valueChanged(TreeSelectionEvent e) {
         final TreePath path = e.getPath();
         if (path != null) {
-          final MethodNodeBase<M> node = (MethodNodeBase)path.getLastPathComponent();
+          final MemberNodeBase<M> node = (MemberNodeBase)path.getLastPathComponent();
           myAlarm.cancelAllRequests();
           myAlarm.addRequest(() -> updateEditorTexts(node), 300);
         }
@@ -129,7 +128,7 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
       myTree.getSelectionModel().addSelectionPath(selectionPath);
     }
 
-    final MethodNodeBase<M> node = (MethodNodeBase)selectionPath.getLastPathComponent();
+    final MemberNodeBase<M> node = (MemberNodeBase)selectionPath.getLastPathComponent();
     updateEditorTexts(node);
 
     splitter.setSecondComponent(callSitesViewer);
@@ -137,12 +136,12 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
     return result;
   }
 
-  private void updateEditorTexts(final MethodNodeBase<M> node) {
-    final MethodNodeBase<M> parentNode = getCalleeNode(node);
-    final MethodNodeBase<M> callerNode = getCallerNode(node);
-    final String callerText = node != myRoot ? getText(callerNode.getMethod()) : getEmptyCallerText();
+  private void updateEditorTexts(final MemberNodeBase<M> node) {
+    final MemberNodeBase<M> parentNode = getCalleeNode(node);
+    final MemberNodeBase<M> callerNode = getCallerNode(node);
+    final String callerText = node != myRoot ? getText(callerNode.getMember()) : getEmptyCallerText();
     final Document callerDocument = myCallerEditor.getDocument();
-    final String calleeText = node != myRoot ? getText(parentNode.getMethod()) : getEmptyCalleeText();
+    final String calleeText = node != myRoot ? getText(parentNode.getMember()) : getEmptyCalleeText();
     final Document calleeDocument = myCalleeEditor.getDocument();
 
     ApplicationManager.getApplication().runWriteAction(() -> {
@@ -150,7 +149,7 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
       calleeDocument.setText(calleeText);
     });
 
-    final M caller = callerNode.getMethod();
+    final M caller = callerNode.getMember();
     final PsiElement callee = parentNode != null ? parentNode.getElementToSearch() : null;
     if (caller != null && caller.isPhysical() && callee != null) {
       HighlightManager highlighter = HighlightManager.getInstance(myProject);
@@ -164,11 +163,11 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
     }
   }
 
-  protected MethodNodeBase<M> getCalleeNode(MethodNodeBase<M> node) {
-    return (MethodNodeBase<M>)node.getParent();
+  protected MemberNodeBase<M> getCalleeNode(MemberNodeBase<M> node) {
+    return (MemberNodeBase<M>)node.getParent();
   }
 
-  protected MethodNodeBase<M> getCallerNode(MethodNodeBase<M> node) {
+  protected MemberNodeBase<M> getCallerNode(MemberNodeBase<M> node) {
     return node;
   }
 
@@ -250,8 +249,8 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
                                     boolean leaf,
                                     int row,
                                     boolean hasFocus) {
-        if (value instanceof MethodNodeBase) {
-          ((MethodNodeBase)value).customizeRenderer(getTextRenderer());
+        if (value instanceof MemberNodeBase) {
+          ((MemberNodeBase)value).customizeRenderer(getTextRenderer());
         }
       }
     };
@@ -262,19 +261,19 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
     return tree;
   }
 
-  protected M getTopMethod() {
+  protected M getTopMember() {
     return myMethod;
   }
   
   private void getSelectedMethods(Set<M> methods) {
-    MethodNodeBase<M> node = myRoot;
+    MemberNodeBase<M> node = myRoot;
     getSelectedMethodsInner(node, methods);
-    methods.remove(node.getMethod());
+    methods.remove(node.getMember());
   }
 
-  private void getSelectedMethodsInner(final MethodNodeBase<M> node, final Set<M> allMethods) {
+  private void getSelectedMethodsInner(final MemberNodeBase<M> node, final Set<M> allMethods) {
     if (node.isChecked()) {
-      M method = node.getMethod();
+      M method = node.getMember();
       final M[] superMethods = method == myMethod ? null : findDeepestSuperMethods(method);
       if (superMethods == null || superMethods.length == 0) {
         allMethods.add(method);
@@ -285,23 +284,23 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
 
       final Enumeration children = node.children();
       while (children.hasMoreElements()) {
-        getSelectedMethodsInner((MethodNodeBase)children.nextElement(), allMethods);
+        getSelectedMethodsInner((MemberNodeBase)children.nextElement(), allMethods);
       }
     }
   }
 
-  protected Set<MethodNodeBase<M>> getSelectedNodes() {
-    final Set<MethodNodeBase<M>> nodes = new LinkedHashSet<>();
+  protected Set<MemberNodeBase<M>> getSelectedNodes() {
+    final Set<MemberNodeBase<M>> nodes = new LinkedHashSet<>();
     collectSelectedNodes(myRoot, nodes);
     return nodes;
   }
   
-  private void collectSelectedNodes(final MethodNodeBase<M> node, final Set<MethodNodeBase<M>> nodes) {
+  private void collectSelectedNodes(final MemberNodeBase<M> node, final Set<MemberNodeBase<M>> nodes) {
     if (node.isChecked()) {
       nodes.add(node);
       final Enumeration children = node.children();
       while (children.hasMoreElements()) {
-        collectSelectedNodes((MethodNodeBase)children.nextElement(), nodes);
+        collectSelectedNodes((MemberNodeBase)children.nextElement(), nodes);
       }
     }
   }

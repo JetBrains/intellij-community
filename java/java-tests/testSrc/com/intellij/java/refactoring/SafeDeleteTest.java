@@ -370,6 +370,14 @@ public class SafeDeleteTest extends MultiFileTestCase {
     });
   }
 
+  public void testDeepDeleteFieldAndInitializerMethod() throws Exception {
+    doSingleFileTest();
+  }
+
+  public void testDeleteMethodCascadeWithField() throws Exception {
+    doSingleFileTest();
+  }
+
   private void doTest(@NonNls final String qClassName) {
     doTest((rootDir, rootAfter) -> this.performAction(qClassName));
   }

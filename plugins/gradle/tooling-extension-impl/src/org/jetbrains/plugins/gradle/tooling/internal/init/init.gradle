@@ -55,15 +55,16 @@ class JetGradlePlugin implements Plugin<Gradle> {
         it.register(extraModelBuilderInstance)
       }
     }
-  }
-}
-
-allprojects {
-  apply plugin: 'idea'
-  if (parent == null && !idea.project.extensions.findByName('settings')) {
-    idea.project.extensions.create('settings', DynamicSettings)
-  }
-  if (!idea.module.extensions.findByName('settings')) {
-    idea.module.extensions.create('settings', DynamicSettings)
+    gradle.allprojects { project ->
+      project.pluginManager.withPlugin('idea') { plugin ->
+        def ideaModel = project.extensions.getByName('idea')
+        if (project.parent == null && !ideaModel.project.extensions.findByName('settings')) {
+          ideaModel.project.extensions.create('settings', DynamicSettings)
+        }
+        if (!ideaModel.module.extensions.findByName('settings')) {
+          ideaModel.module.extensions.create('settings', DynamicSettings)
+        }
+      }
+    }
   }
 }

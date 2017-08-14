@@ -22,6 +22,7 @@ import com.intellij.ide.projectView.impl.ProjectViewTree
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.ui.*
 import com.intellij.openapi.util.Ref
@@ -33,9 +34,7 @@ import com.intellij.openapi.wm.impl.WindowManagerImpl
 import com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame
 import com.intellij.testGuiFramework.cellReader.ExtendedJListCellReader
 import com.intellij.testGuiFramework.cellReader.ExtendedJTableCellReader
-import com.intellij.testGuiFramework.fixtures.MessageDialogFixture
-import com.intellij.testGuiFramework.fixtures.MessagesFixture
-import com.intellij.testGuiFramework.fixtures.SettingsTreeFixture
+import com.intellij.testGuiFramework.fixtures.*
 import com.intellij.testGuiFramework.fixtures.extended.ExtendedTreeFixture
 import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.generators.Utils.clicks
@@ -94,7 +93,7 @@ class JButtonGenerator : ComponentCodeGenerator<JButton> {
   override fun generate(cmp: JButton, me: MouseEvent, cp: Point) = "button(\"${cmp.text}\").click()"
 }
 
-class ComponentWithBrowseButtonGenerator : ComponentCodeGenerator<FixedSizeButton>{
+class ComponentWithBrowseButtonGenerator : ComponentCodeGenerator<FixedSizeButton> {
   override fun accept(cmp: Component): Boolean {
     return cmp.parent.parent is ComponentWithBrowseButton<*>
   }
@@ -168,13 +167,13 @@ class SimpleTreeGenerator : ComponentCodeGenerator<SimpleTree> {
   }
 }
 
-class JTableGenerator: ComponentCodeGenerator<JTable> {
+class JTableGenerator : ComponentCodeGenerator<JTable> {
   override fun accept(cmp: Component) = cmp is JTable
 
   override fun generate(cmp: JTable, me: MouseEvent, cp: Point): String {
     val row = cmp.rowAtPoint(cp)
     val col = cmp.columnAtPoint(cp)
-    val cellText =  ExtendedJTableCellReader().valueAt(cmp, row, col)
+    val cellText = ExtendedJTableCellReader().valueAt(cmp, row, col)
     return "table(\"$cellText\").cell(\"$cellText\")".addClick(me)
   }
 }
@@ -343,7 +342,14 @@ class WelcomeFrameGenerator : GlobalContextCodeGenerator<FlatWelcomeFrame>() {
 }
 
 class JDialogGenerator : GlobalContextCodeGenerator<JDialog>() {
-  override fun accept(cmp: Component) = (cmp as JComponent).rootPane.parent is JDialog
+  override fun accept(cmp: Component): Boolean {
+    if (cmp !is JComponent || cmp.rootPane == null || cmp.rootPane.parent == null || cmp.rootPane.parent !is JDialog) return false
+    val dialog = cmp.rootPane.parent as JDialog
+    if (dialog.title == "This should not be shown") return false //do not add context for a SheetMessages on Mac
+    return true
+
+  }
+
   override fun generate(cmp: JDialog) = "dialog(\"${cmp.title}\") {"
 }
 
@@ -505,6 +511,24 @@ class EditorGenerator : LocalContextCodeGenerator<EditorComponentImpl>() {
 
 }
 
+class MainToolbarGenerator : LocalContextCodeGenerator<ActionToolbarImpl>() {
+  override fun acceptor(): (Component) -> Boolean = { component ->
+    component is ActionToolbarImpl
+    && MainToolbarFixture.isMainToolbar(component)
+  }
+
+  override fun generate(cmp: ActionToolbarImpl): String = "toolbar {"
+}
+
+class NavigationBarGenerator : LocalContextCodeGenerator<JPanel>() {
+  override fun acceptor(): (Component) -> Boolean = { component ->
+    component is JPanel
+    && NavigationBarFixture.isNavBar(component)
+  }
+
+  override fun generate(cmp: JPanel): String = "navigationBar {"
+}
+
 
 //class JBPopupMenuGenerator: LocalContextCodeGenerator<JBPopupMenu>() {
 //
@@ -645,7 +669,8 @@ object Utils {
     //let's try to find bounded label firstly
     try {
       return getBoundedLabel(hierarchyLevel, target).text
-    } catch (e: ComponentLookupException) {
+    }
+    catch (e: ComponentLookupException) {
       //do nothing
     }
 

@@ -408,16 +408,48 @@ open class GuiTestCase : GuiTestBase() {
   else throw UnsupportedOperationException(
     "Sorry, unable to find PluginTable component with ${target().toString()} as a Container")
 
+
+  /**
+   * Finds a Message component in hierarchy of context component by a title MessageFixture.
+   *
+   * @timeout in seconds to find component for Message
+   * @throws ComponentLookupException if component has not been found or timeout exceeded
+   */
+  fun <S, C : Component> ComponentFixture<S, C>.message(title: String, timeout: Long = defaultTimeout, func: MessagesFixture.() -> Unit) {
+    if (target() is Container) {
+      val messagesFixture = message(target() as Container, title, timeout)
+      func(messagesFixture)
+    }
+    else throw UnsupportedOperationException(
+      "Sorry, unable to find PluginTable component with ${target().toString()} as a Container")
+
+  }
+
+
   //*********FIXTURES METHODS FOR IDEFRAME WITHOUT ROBOT and TARGET
 
   /**
    * Context function for IdeFrame: get current editor and creates EditorFixture instance as receiver object. Code block after
    * it call methods on the receiver object (EditorFixture instance).
-   *
-   * @timeout in seconds to find get EditorFixture
    */
-  fun IdeFrameFixture.editor(timeout: Long = defaultTimeout, func: EditorFixture.() -> Unit) {
+  fun IdeFrameFixture.editor(func: EditorFixture.() -> Unit) {
     func(this.editor)
+  }
+
+  /**
+   * Context function for IdeFrame: creates a MainToolbarFixture instance as receiver object. Code block after
+   * it call methods on the receiver object (MainToolbarFixture instance).
+   */
+  fun IdeFrameFixture.toolbar(func: MainToolbarFixture.() -> Unit) {
+    func(this.toolbar)
+  }
+
+  /**
+   * Context function for IdeFrame: creates a NavigationBarFixture instance as receiver object. Code block after
+   * it call methods on the receiver object (NavigationBarFixture instance).
+   */
+  fun IdeFrameFixture.navigationBar(func: NavigationBarFixture.() -> Unit) {
+    func(this.navigationBar)
   }
 
   /**

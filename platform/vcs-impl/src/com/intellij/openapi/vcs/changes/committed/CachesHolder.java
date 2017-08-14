@@ -24,6 +24,7 @@ import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.CommonProcessors.CollectProcessor;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,14 +34,13 @@ import java.util.Collection;
 import java.util.Map;
 
 import static com.intellij.util.containers.ContainerUtil.find;
-import static com.intellij.util.containers.ContainerUtil.newConcurrentMap;
 import static org.apache.commons.codec.digest.DigestUtils.md5Hex;
 
 public class CachesHolder {
   @NonNls private static final String VCS_CACHE_PATH = "vcsCache";
 
   @NotNull private final Project myProject;
-  @NotNull private final Map<String, ChangesCacheFile> myCacheFiles = newConcurrentMap();
+  @NotNull private final Map<String, ChangesCacheFile> myCacheFiles = ContainerUtil.newConcurrentMap();
   @NotNull private final RepositoryLocationCache myLocationCache;
   @NotNull private final ProjectLevelVcsManager myPlManager;
 

@@ -35,6 +35,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.SmartList;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.messages.MessageBus;
@@ -553,7 +554,8 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   }
 
   private static class DelegatingDisposable implements Disposable {
-    private static final ConcurrentMap<Disposable, DelegatingDisposable> ourInstances = ContainerUtil.newConcurrentMap(ContainerUtil.<Disposable>identityStrategy());
+    private static final ConcurrentMap<Disposable, DelegatingDisposable> ourInstances =
+      ConcurrentCollectionFactory.createMap(ContainerUtil.<Disposable>identityStrategy());
     private final TObjectIntHashMap<VirtualFilePointerImpl> myCounts = new TObjectIntHashMap<>(); // guarded by this
     private final Disposable myParent;
 

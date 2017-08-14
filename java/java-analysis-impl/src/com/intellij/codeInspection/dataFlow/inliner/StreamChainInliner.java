@@ -15,10 +15,8 @@
  */
 package com.intellij.codeInspection.dataFlow.inliner;
 
-import com.intellij.codeInspection.dataFlow.CFGBuilder;
-import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
-import com.intellij.codeInspection.dataFlow.NullabilityProblem;
-import com.intellij.codeInspection.dataFlow.Nullness;
+import com.intellij.codeInspection.dataFlow.*;
+import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
@@ -40,8 +38,14 @@ public class StreamChainInliner implements CallInliner {
       "average", "forEach", "forEachOrdered", "min", "max", "toList", "toSet"};
   private static final CallMatcher TERMINAL_CALL = instanceCall(JAVA_UTIL_STREAM_BASE_STREAM, TERMINALS);
 
-  private static final CallMatcher LAMBDA_TERMINAL = instanceCall(JAVA_UTIL_STREAM_BASE_STREAM, "anyMatch", "allMatch",
-                                                                  "noneMatch", "forEach", "forEachOrdered").parameterCount(1);
+  private static final CallMatcher FOR_TERMINAL = instanceCall(JAVA_UTIL_STREAM_BASE_STREAM, "forEach", "forEachOrdered").parameterCount(1);
+  private static final CallMatcher MATCH_TERMINAL = instanceCall(JAVA_UTIL_STREAM_BASE_STREAM, "anyMatch", "allMatch",
+                                                                 "noneMatch").parameterCount(1);
+  private static final CallMatcher SUM_TERMINAL = instanceCall(JAVA_UTIL_STREAM_BASE_STREAM, "sum", "count").parameterCount(0);
+  private static final CallMatcher OPTIONAL_TERMINAL =
+    anyOf(instanceCall(JAVA_UTIL_STREAM_BASE_STREAM, "min", "max").parameterCount(0),
+          instanceCall(JAVA_UTIL_STREAM_BASE_STREAM, "min", "max", "reduce").parameterCount(1),
+          instanceCall(JAVA_UTIL_STREAM_BASE_STREAM, "findFirst", "findAny").parameterCount(0));
 
   private static final CallMatcher SKIP_STEP =
     instanceCall(JAVA_UTIL_STREAM_BASE_STREAM, "unordered", "parallel", "sequential", "sorted").parameterCount(0);
@@ -61,6 +65,23 @@ public class StreamChainInliner implements CallInliner {
     staticCall(JAVA_UTIL_STREAM_INT_STREAM, "generate").parameterCount(1),
     staticCall(JAVA_UTIL_STREAM_LONG_STREAM, "generate").parameterCount(1),
     staticCall(JAVA_UTIL_STREAM_DOUBLE_STREAM, "generate").parameterCount(1));
+  private static final CallMatcher STREAM_EMPTY = anyOf(
+    staticCall(JAVA_UTIL_STREAM_STREAM, "empty").parameterCount(0),
+    staticCall(JAVA_UTIL_STREAM_INT_STREAM, "empty").parameterCount(0),
+    staticCall(JAVA_UTIL_STREAM_LONG_STREAM, "empty").parameterCount(0),
+    staticCall(JAVA_UTIL_STREAM_DOUBLE_STREAM, "empty").parameterCount(0));
+  private static final CallMatcher STREAM_OF = anyOf(
+    staticCall(JAVA_UTIL_STREAM_STREAM, "of").parameterTypes("T"),
+    staticCall(JAVA_UTIL_STREAM_INT_STREAM, "of").parameterTypes("int"),
+    staticCall(JAVA_UTIL_STREAM_LONG_STREAM, "of").parameterTypes("long"),
+    staticCall(JAVA_UTIL_STREAM_DOUBLE_STREAM, "of").parameterTypes("double"));
+  private static final CallMatcher STREAM_OF_ARRAY = anyOf(
+    staticCall(JAVA_UTIL_STREAM_STREAM, "of").parameterTypes("T[]"),
+    staticCall(JAVA_UTIL_STREAM_INT_STREAM, "of").parameterTypes("int[]"),
+    staticCall(JAVA_UTIL_STREAM_LONG_STREAM, "of").parameterTypes("long[]"),
+    staticCall(JAVA_UTIL_STREAM_DOUBLE_STREAM, "of").parameterTypes("double[]"));
+  private static final CallMatcher ARRAYS_STREAM = staticCall(JAVA_UTIL_ARRAYS, "stream").parameterCount(1);
+  private static final CallMatcher COLLECTION_STREAM = instanceCall(JAVA_UTIL_COLLECTION, "stream").parameterCount(0);
 
   private static final CallMapper<UnaryOperator<Step>> INTERMEDIATE_STEP_MAPPER = new CallMapper<UnaryOperator<Step>>()
     .register(FILTER, (PsiMethodCallExpression call) -> (Step next) -> new FilterStep(call, next))
@@ -70,6 +91,12 @@ public class StreamChainInliner implements CallInliner {
     .register(SORTED, (PsiMethodCallExpression call) -> (Step next) -> new SortedStep(call, next))
     .register(BOXED, (PsiMethodCallExpression call) -> (Step next) -> new BoxedStep(call, next))
     .register(STATE_FILTER, (PsiMethodCallExpression call) -> (Step next) -> new StateFilterStep(call, next));
+
+  private static final CallMapper<Step> TERMINAL_STEP_MAPPER = new CallMapper<Step>()
+    .register(FOR_TERMINAL, LambdaTerminalStep::new)
+    .register(MATCH_TERMINAL, MatchTerminalStep::new)
+    .register(SUM_TERMINAL, SumTerminalStep::new)
+    .register(OPTIONAL_TERMINAL, OptionalTerminalStep::new);
 
   static abstract class Step {
     final Step myNext;
@@ -92,6 +119,16 @@ public class StreamChainInliner implements CallInliner {
     }
 
     abstract void iteration(CFGBuilder builder);
+
+    void pushResult(CFGBuilder builder) {
+      if (myNext != null) {
+        myNext.pushResult(builder);
+      }
+      else {
+        builder.push(builder.getFactory()
+                       .createTypeValue(myCall.getType(), DfaPsiUtil.getElementNullability(myCall.getType(), myCall.resolveMethod())));
+      }
+    }
   }
 
   static class UnknownTerminalStep extends Step {
@@ -114,6 +151,31 @@ public class StreamChainInliner implements CallInliner {
     }
   }
 
+  static abstract class TerminalStep extends Step {
+    PsiVariable myResult;
+
+    TerminalStep(@NotNull PsiMethodCallExpression call, PsiExpression function) {
+      super(call, null, function);
+    }
+
+    @Override
+    void before(CFGBuilder builder) {
+      myResult = builder.createTempVariable(myCall.getType());
+      builder.pushVariable(myResult)
+        .chain(this::pushInitialValue)
+        .assign()
+        .pop()
+        .chain(super::before);
+    }
+
+    protected abstract void pushInitialValue(CFGBuilder builder);
+
+    @Override
+    void pushResult(CFGBuilder builder) {
+      builder.push(builder.getFactory().getVarFactory().createVariableValue(myResult, false));
+    }
+  }
+
   static class LambdaTerminalStep extends Step {
     LambdaTerminalStep(@NotNull PsiMethodCallExpression call) {
       super(call, null, call.getArgumentList().getExpressions()[0]);
@@ -122,6 +184,74 @@ public class StreamChainInliner implements CallInliner {
     @Override
     void iteration(CFGBuilder builder) {
       builder.invokeFunction(1, myFunction).pop();
+    }
+  }
+
+  static class SumTerminalStep extends TerminalStep {
+    SumTerminalStep(@NotNull PsiMethodCallExpression call) {
+      super(call, null);
+    }
+
+    @Override
+    protected void pushInitialValue(CFGBuilder builder) {
+      PsiType type = myCall.getType();
+      Object value = null;
+      if (PsiType.INT.equals(type)) {
+        value = 0;
+      }
+      else if (PsiType.LONG.equals(type)) {
+        value = 0L;
+      }
+      else if (PsiType.DOUBLE.equals(type)) {
+        value = 0.0;
+      }
+      builder.push(builder.getFactory().getConstFactory().createFromValue(value, type, null));
+    }
+
+    @Override
+    void iteration(CFGBuilder builder) {
+      builder.pushVariable(myResult).pushUnknown().assign().splice(2);
+    }
+  }
+
+  static class OptionalTerminalStep extends TerminalStep {
+    OptionalTerminalStep(@NotNull PsiMethodCallExpression call) {
+      super(call, ArrayUtil.getFirstElement(call.getArgumentList().getExpressions()));
+    }
+
+    @Override
+    protected void pushInitialValue(CFGBuilder builder) {
+      builder.push(builder.getFactory().getOptionalFactory().getOptional(false));
+    }
+
+    @Override
+    void iteration(CFGBuilder builder) {
+      if (myFunction != null) {
+        builder.pushUnknown().invokeFunction(2, myFunction);
+      }
+      builder.pushVariable(myResult).push(builder.getFactory().getOptionalFactory().getOptional(true)).assign().splice(2);
+    }
+  }
+
+  static class MatchTerminalStep extends TerminalStep {
+    MatchTerminalStep(@NotNull PsiMethodCallExpression call) {
+      super(call, call.getArgumentList().getExpressions()[0]);
+    }
+
+    @Override
+    protected void pushInitialValue(CFGBuilder builder) {
+      builder.push(builder.getFactory().getBoolean(!"anyMatch".equals(myCall.getMethodExpression().getReferenceName())));
+    }
+
+    @Override
+    void iteration(CFGBuilder builder) {
+      builder.invokeFunction(1, myFunction)
+        .ifConditionIs(!"allMatch".equals(myCall.getMethodExpression().getReferenceName()))
+        .pushVariable(myResult)
+        .push(builder.getFactory().getBoolean("anyMatch".equals(myCall.getMethodExpression().getReferenceName())))
+        .assign()
+        .pop()
+        .endIf();
     }
   }
 
@@ -178,9 +308,22 @@ public class StreamChainInliner implements CallInliner {
             streamSource = body;
             chain = next;
             if (body instanceof PsiMethodCallExpression) {
-              chain = buildChain((PsiMethodCallExpression)body, next);
-              if (chain != next) {
+              Step filteredNext = new Step(call, next, null) {
+                @Override
+                void before(CFGBuilder builder) {
+                  // skip following steps: their before behavior is added before the main loop
+                }
+
+                @Override
+                void iteration(CFGBuilder builder) {
+                  myNext.iteration(builder);
+                }
+              };
+              chain = buildChain((PsiMethodCallExpression)body, filteredNext);
+              if (chain != filteredNext) {
                 streamSource = chain.myCall.getMethodExpression().getQualifierExpression();
+              } else {
+                streamSource = body;
               }
             }
           }
@@ -300,15 +443,10 @@ public class StreamChainInliner implements CallInliner {
     PsiMethodCallExpression qualifierCall = MethodCallUtils.getQualifierMethodCall(call);
     Step terminalStep = createTerminalStep(call);
     Step firstStep = buildChain(qualifierCall, terminalStep);
-    if (firstStep == terminalStep) {
-      // Do not handle specially case when only terminal operation is known: at least one intermediate op should be known as well
-      return false;
-    }
     PsiExpression originalQualifier = firstStep.myCall.getMethodExpression().getQualifierExpression();
     if (originalQualifier == null) return false;
     buildStreamCFG(builder, firstStep, originalQualifier);
-    builder.push(
-      builder.getFactory().createTypeValue(call.getType(), DfaPsiUtil.getElementNullability(call.getType(), call.resolveMethod())));
+    firstStep.pushResult(builder);
     return true;
   }
 
@@ -326,19 +464,92 @@ public class StreamChainInliner implements CallInliner {
         .assign()
         .chain(firstStep::iteration)
         .endWhileUnknown();
-    } else {
-      builder
-        .pushExpression(originalQualifier)
-        .checkNotNull(firstStep.myCall, NullabilityProblem.callNPE)
-        .pop()
-        .chain(firstStep::before)
-        .doWhile()
-        .pushVariable(builder.createTempVariable(inType))
-        .push(builder.getFactory().createTypeValue(inType, DfaPsiUtil.getTypeNullability(inType)))
-        .assign()
-        .chain(firstStep::iteration)
-        .endWhileUnknown();
+      return;
     }
+    boolean empty = STREAM_EMPTY.test(sourceCall);
+    boolean array = ARRAYS_STREAM.test(sourceCall);
+    boolean single = STREAM_OF.test(sourceCall);
+    if (STREAM_OF_ARRAY.test(sourceCall)) {
+      PsiExpression[] args = sourceCall.getArgumentList().getExpressions();
+      if(args.length == 0) {
+        empty = true;
+      } else if(args.length == 1) {
+        if(MethodCallUtils.isVarArgCall(sourceCall)) {
+          single = true;
+        } else {
+          array = true;
+        }
+      } else {
+        builder
+          .pushExpression(originalQualifier)
+          .pop()
+          .chain(firstStep::before)
+          .chain(b -> makeMainLoop(b, firstStep, inType));
+        return;
+      }
+    }
+    if (empty) {
+      builder.chain(firstStep::before); // skip loop at all
+      return;
+    }
+    if (single) {
+      // exactly single element
+      builder
+        .pushExpression(sourceCall.getArgumentList().getExpressions()[0])
+        .chain(firstStep::before)
+        .chain(firstStep::iteration);
+      return;
+    }
+    if (array) {
+      PsiExpression qualifierExpression = sourceCall.getArgumentList().getExpressions()[0];
+      DfaValue qualifierValue = builder.getFactory().createValue(qualifierExpression);
+      if (qualifierValue != null) {
+        builder.pushExpression(qualifierExpression)
+          .chain(firstStep::before)
+          .checkNotNull(qualifierExpression, NullabilityProblem.passingNullableToNotNullParameter)
+          .pop()
+          .push(SpecialField.ARRAY_LENGTH.createValue(builder.getFactory(), qualifierValue))
+          .push(builder.getFactory().getConstFactory().createFromValue(0, PsiType.INT, null))
+          .ifCondition(JavaTokenType.GT)
+          .chain(b -> makeMainLoop(b, firstStep, inType))
+          .endIf();
+        return;
+      }
+    }
+    if (COLLECTION_STREAM.test(sourceCall)) {
+      PsiExpression qualifierExpression = sourceCall.getMethodExpression().getQualifierExpression();
+      DfaValue qualifierValue = builder.getFactory().createValue(qualifierExpression);
+      if (qualifierValue != null) {
+        builder.pushExpression(qualifierExpression)
+          .chain(firstStep::before)
+          .checkNotNull(sourceCall, NullabilityProblem.callNPE)
+          .pop()
+          .push(SpecialField.COLLECTION_SIZE.createValue(builder.getFactory(), qualifierValue))
+          .push(builder.getFactory().getConstFactory().createFromValue(0, PsiType.INT, null))
+          .ifCondition(JavaTokenType.GT)
+          .chain(b -> makeMainLoop(b, firstStep, inType))
+          .endIf();
+        return;
+      }
+    }
+    builder
+      .pushExpression(originalQualifier)
+      .checkNotNull(firstStep.myCall, NullabilityProblem.callNPE)
+      .pop()
+      .chain(firstStep::before)
+      .pushUnknown()
+      .ifConditionIs(true)
+      .chain(b -> makeMainLoop(b, firstStep, inType))
+      .endIf();
+  }
+
+  private static void makeMainLoop(CFGBuilder builder, Step firstStep, PsiType inType) {
+    builder.doWhile()
+      .pushVariable(builder.createTempVariable(inType))
+      .push(builder.getFactory().createTypeValue(inType, DfaPsiUtil.getTypeNullability(inType)))
+      .assign()
+      .chain(firstStep::iteration)
+      .endWhileUnknown();
   }
 
   static Step buildChain(PsiMethodCallExpression qualifierCall, Step terminalStep) {
@@ -361,9 +572,7 @@ public class StreamChainInliner implements CallInliner {
   }
 
   private static Step createTerminalStep(PsiMethodCallExpression call) {
-    if (LAMBDA_TERMINAL.test(call)) {
-      return new LambdaTerminalStep(call);
-    }
-    return new UnknownTerminalStep(call);
+    Step step = TERMINAL_STEP_MAPPER.mapFirst(call);
+    return step == null ? new UnknownTerminalStep(call) : step;
   }
 }

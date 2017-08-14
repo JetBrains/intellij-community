@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,33 +15,32 @@
  */
 package com.intellij.refactoring.safeDelete.usageInfo;
 
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiMember;
 import com.intellij.util.IncorrectOperationException;
 
-public class SafeDeleteMethodCalleeUsageInfo extends SafeDeleteUsageInfo implements SafeDeleteCustomUsageInfo {
+public class SafeDeleteMemberCalleeUsageInfo extends SafeDeleteUsageInfo implements SafeDeleteCustomUsageInfo {
 
-  private final PsiMethod myCalledMethod;
-  private final PsiMethod myCallerMethod;
+  private final PsiMember myCalledMember;
+  private final PsiMember myCallerMember;
 
-  public SafeDeleteMethodCalleeUsageInfo(PsiMethod calledMethod, PsiMethod callerMethod) {
-    super(calledMethod, calledMethod);
-    myCalledMethod = calledMethod;
-    myCallerMethod = callerMethod;
+  public SafeDeleteMemberCalleeUsageInfo(PsiMember calledMember, PsiMember callerMember) {
+    super(calledMember, calledMember);
+    myCalledMember = calledMember;
+    myCallerMember = callerMember;
   }
 
   public void performRefactoring() throws IncorrectOperationException {
-    final PsiMethod callee = myCalledMethod;
+    final PsiMember callee = myCalledMember;
     if (callee != null && callee.isValid()) {
       callee.delete();
     }
   }
 
-  public PsiMethod getCalledMethod() {
-    return myCalledMethod;
+  public PsiMember getCalledMember() {
+    return myCalledMember;
   }
 
-  public PsiMethod getCallerMethod() {
-    return myCallerMethod;
+  public PsiMember getCallerMember() {
+    return myCallerMember;
   }
 }

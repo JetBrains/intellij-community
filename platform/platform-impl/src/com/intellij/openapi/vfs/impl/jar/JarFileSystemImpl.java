@@ -25,7 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.ArchiveHandler;
 import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -39,7 +39,8 @@ public class JarFileSystemImpl extends JarFileSystem {
 
   public JarFileSystemImpl() {
     boolean noCopy = SystemProperties.getBooleanProperty("idea.jars.nocopy", !SystemInfo.isWindows);
-    myNoCopyJarPaths = noCopy ? null : ContainerUtil.newConcurrentSet(FileUtil.PATH_HASHING_STRATEGY);
+    //noinspection deprecation
+    myNoCopyJarPaths = noCopy ? null : ConcurrentCollectionFactory.createConcurrentSet(FileUtil.PATH_HASHING_STRATEGY);
 
     // to prevent platform .jar files from copying
     boolean runningFromDist = new File(PathManager.getLibPath(), "openapi.jar").exists();

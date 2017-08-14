@@ -41,6 +41,7 @@ final class WeakKeySoftValueHashMap<K,V> extends RefKeyRefValueHashMap<K,V> impl
     }
   }
 
+  @NotNull
   @Override
   protected ValueReference<K, V> createValueReference(@NotNull RefHashMap.Key<K> key,
                                                       V referent,

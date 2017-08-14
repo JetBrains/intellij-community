@@ -18,6 +18,7 @@ package com.intellij.util.containers;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ref.GCUtil;
 import gnu.trove.TObjectHashingStrategy;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
 import java.util.Map;
@@ -26,11 +27,10 @@ import java.util.concurrent.ConcurrentMap;
 
 import static org.junit.Assert.*;
 
-@SuppressWarnings("deprecation")
 public class ConcurrentMapsTest {
   private static final long TIMEOUT = 5 * 60 * 1000;  // 5 minutes
 
-  private static final TObjectHashingStrategy<String> CUSTOM_STRATEGY = new TObjectHashingStrategy<String>() {
+  private static final TObjectHashingStrategy<String> IGNORE_CASE_WITH_CRAZY_HASH_STRATEGY = new TObjectHashingStrategy<String>() {
     @Override
     public int computeHashCode(String object) {
       return Character.toLowerCase(object.charAt(object.length() - 1));
@@ -121,7 +121,7 @@ public class ConcurrentMapsTest {
 
   @Test(timeout = TIMEOUT)
   public void testSoftMapCustomStrategy() {
-    SoftHashMap<String, String> map = new SoftHashMap<>(CUSTOM_STRATEGY);
+    SoftHashMap<String, String> map = new SoftHashMap<>(IGNORE_CASE_WITH_CRAZY_HASH_STRATEGY);
 
     map.put("ab", "ab");
     assertTrue(map.containsKey("AB"));
@@ -132,10 +132,10 @@ public class ConcurrentMapsTest {
 
   @Test(timeout = TIMEOUT)
   public void testWeakMapCustomStrategy() {
-    WeakHashMap<String, String> map = new WeakHashMap<>(10,0.5f,CUSTOM_STRATEGY);
+    WeakHashMap<String, String> map = new WeakHashMap<>(10, 0.5f, IGNORE_CASE_WITH_CRAZY_HASH_STRATEGY);
 
     String keyL = "ab";
-    String keyU = "AB";
+    String keyU = StringUtil.toUpperCase(keyL);
     String value = "asdfab";
     map.put(keyL, value);
     assertTrue(map.containsKey(keyU));
@@ -176,7 +176,7 @@ public class ConcurrentMapsTest {
 
   @Test(timeout = TIMEOUT)
   public void testConcurrentSoftCustomStrategy() {
-    ConcurrentMap<String, String> map = ContainerUtil.createConcurrentSoftMap(10,0.7f,16,CUSTOM_STRATEGY);
+    ConcurrentMap<String, String> map = ContainerUtil.createConcurrentSoftMap(10, 0.7f, 16, IGNORE_CASE_WITH_CRAZY_HASH_STRATEGY);
 
     map.put("ab", "ab");
     assertEquals(1, map.size());
@@ -201,14 +201,14 @@ public class ConcurrentMapsTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void testConcurrentWeakSoftNullKey() {
-    Map<String, String> map = ContainerUtil.createConcurrentWeakKeySoftValueMap(1, 1, 1, CUSTOM_STRATEGY);
+    Map<String, String> map = ContainerUtil.createConcurrentWeakKeySoftValueMap(1, 1, 1, IGNORE_CASE_WITH_CRAZY_HASH_STRATEGY);
 
     tryToInsertNullKeys(map);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testConcurrentWeakWeakNullKey() {
-    Map<String, String> map = ContainerUtil.createConcurrentWeakKeyWeakValueMap(CUSTOM_STRATEGY);
+    Map<String, String> map = ContainerUtil.createConcurrentWeakKeyWeakValueMap(IGNORE_CASE_WITH_CRAZY_HASH_STRATEGY);
 
     tryToInsertNullKeys(map);
   }
@@ -224,7 +224,7 @@ public class ConcurrentMapsTest {
 
   @Test(timeout = TIMEOUT)
   public void testConcurrentWeakSoftCustomStrategy() {
-    ConcurrentMap<String, String> map = ContainerUtil.createConcurrentWeakKeySoftValueMap(1, 1, 1, CUSTOM_STRATEGY);
+    ConcurrentMap<String, String> map = ContainerUtil.createConcurrentWeakKeySoftValueMap(1, 1, 1, IGNORE_CASE_WITH_CRAZY_HASH_STRATEGY);
 
     map.put("ab", "ab");
     assertEquals(1, map.size());
@@ -236,24 +236,25 @@ public class ConcurrentMapsTest {
 
   @Test(timeout = TIMEOUT)
   public void testSoftKeySoftValueTossedSoftKeyAndValue() {
-    SoftKeySoftValueHashMap<Object, Object> map = new SoftKeySoftValueHashMap<>();
+    Map<Object, Object> map = ContainerUtil.createSoftKeySoftValueMap();
     map.put(new Object(), new Object());
 
     do {
       GCUtil.tryGcSoftlyReachableObjects();
       System.gc();
+      map.remove(this); // to call processQueue()
     }
-    while (!map.processQueue());
+    while (!map.isEmpty());
     assertTrue(map.isEmpty());
   }
 
   @Test(timeout = TIMEOUT)
   public void testWeakKeyWeakValueTossedWeakKeyAndValue() {
-    WeakKeyWeakValueHashMap<Object, Object> map = new WeakKeyWeakValueHashMap<>();
-    checkTossed(map);
+    RefKeyRefValueHashMap<Object, Object> map = (RefKeyRefValueHashMap<Object, Object>)ContainerUtil.createWeakKeyWeakValueMap();
+    checkTossedKeyAndValue(map);
   }
 
-  private static void checkTossed(RefKeyRefValueHashMap<Object, Object> map) {
+  private static void checkTossedKeyAndValue(@NotNull RefKeyRefValueHashMap<Object, Object> map) {
     map.put(new Object(), new Object());
 
     do {
@@ -272,6 +273,7 @@ public class ConcurrentMapsTest {
     }
     while (!map.processQueue());
     assertTrue(map.isEmpty());
+    assertSame(map, hardKey);
 
     Object hardValue = map;
     map.put(new Object(), hardValue);
@@ -282,12 +284,13 @@ public class ConcurrentMapsTest {
     }
     while (!map.processQueue());
     assertTrue(map.isEmpty());
+    assertSame(map, hardValue);
   }
 
   @Test(timeout = TIMEOUT)
   public void testWeakKeySoftValueTossedWeakKeyAndValue() {
-    WeakKeySoftValueHashMap<Object, Object> map = new WeakKeySoftValueHashMap<>();
-    checkTossed(map);
+    RefKeyRefValueHashMap<Object, Object> map = (RefKeyRefValueHashMap<Object, Object>)ContainerUtil.createWeakKeySoftValueMap();
+    checkTossedKeyAndValue(map);
   }
 
   @Test(timeout = TIMEOUT)
@@ -369,7 +372,9 @@ public class ConcurrentMapsTest {
     while (!map.isEmpty());
   }
 
+  @SuppressWarnings("FieldCanBeLocal")
   private volatile Object strong;
+
   @Test
   public void testConcurrentWeakValueSize() {
     Map<String, Object> map = ContainerUtil.createConcurrentWeakValueMap();

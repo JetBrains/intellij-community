@@ -368,8 +368,12 @@ public class OptionalIsPresentInspection extends BaseJavaBatchLocalInspectionToo
       if(!(trueElement instanceof PsiExpression) || !(falseElement instanceof PsiExpression)) return ProblemType.NONE;
       PsiExpression trueExpression = (PsiExpression)trueElement;
       PsiExpression falseExpression = (PsiExpression)falseElement;
-      return (isSimpleOrUnchecked(falseExpression)) ?
-             getTypeByLambdaCandidate(optionalVariable, trueExpression, falseExpression) : ProblemType.NONE;
+      PsiType trueType = trueExpression.getType();
+      PsiType falseType = falseExpression.getType();
+      if (trueType == null || falseType == null || !trueType.isAssignableFrom(falseType) || !isSimpleOrUnchecked(falseExpression)) {
+        return ProblemType.NONE;
+      }
+      return getTypeByLambdaCandidate(optionalVariable, trueExpression, falseExpression);
     }
 
     @Override

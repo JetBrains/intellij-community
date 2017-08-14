@@ -49,6 +49,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.DateFormatUtil;
@@ -78,8 +79,9 @@ import java.util.stream.Collectors;
 
 public class UnusedDeclarationPresentation extends DefaultInspectionToolPresentation {
 
-  private final Set<RefEntity> myIgnoreElements = ContainerUtil.newConcurrentSet(ContainerUtil.identityStrategy());
-  private final Map<RefEntity, UnusedDeclarationHint> myFixedElements = ContainerUtil.newConcurrentMap(ContainerUtil.identityStrategy());
+  private final Set<RefEntity> myIgnoreElements = ConcurrentCollectionFactory.createConcurrentSet(ContainerUtil.identityStrategy());
+  private final Map<RefEntity, UnusedDeclarationHint> myFixedElements =
+    ConcurrentCollectionFactory.createMap(ContainerUtil.identityStrategy());
 
   private WeakUnreferencedFilter myFilter;
   private DeadHTMLComposer myComposer;

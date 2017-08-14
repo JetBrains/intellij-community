@@ -24,7 +24,7 @@ abstract class RefKeyRefValueHashMap<K,V> implements Map<K,V>{
   private final RefHashMap<K, ValueReference<K,V>> myWeakKeyMap;
   private final ReferenceQueue<V> myQueue = new ReferenceQueue<V>();
 
-  public RefKeyRefValueHashMap(@NotNull RefHashMap<K, ValueReference<K, V>> weakKeyMap) {
+  RefKeyRefValueHashMap(@NotNull RefHashMap<K, ValueReference<K, V>> weakKeyMap) {
     myWeakKeyMap = weakKeyMap;
   }
 
@@ -38,6 +38,7 @@ abstract class RefKeyRefValueHashMap<K,V> implements Map<K,V>{
     return reference == null ? null : reference.get();
   }
 
+  @NotNull
   protected abstract ValueReference<K,V> createValueReference(@NotNull RefHashMap.Key<K> key, V referent, ReferenceQueue<? super V> q);
 
   // returns true if some refs were tossed

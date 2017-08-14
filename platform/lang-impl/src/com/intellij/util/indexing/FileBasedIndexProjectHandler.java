@@ -30,6 +30,7 @@ import com.intellij.openapi.project.*;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
@@ -113,6 +114,9 @@ public class FileBasedIndexProjectHandler implements IndexableFileSet, Disposabl
     myIndex.removeIndexableSet(this);
   }
 
+  private static final int ourMinFilesToStartDumMode = Registry.intValue("ide.dumb.mode.minFilesToStart", 20);
+  private static final int ourMinFilesSizeToStartDumMode = Registry.intValue("ide.dumb.mode.minFilesSizeToStart", 1048576);
+  
   @Nullable
   public static DumbModeTask createChangedFilesIndexingTask(final Project project) {
     final FileBasedIndex i = FileBasedIndex.getInstance();
@@ -121,8 +125,8 @@ public class FileBasedIndexProjectHandler implements IndexableFileSet, Disposabl
     }
 
     final FileBasedIndexImpl index = (FileBasedIndexImpl)i;
-    if (index.getChangedFileCount() < 20) {
-      return null;
+    if (index.getChangedFileCount() < ourMinFilesToStartDumMode) {
+      if (index.getChangedFilesSize() < ourMinFilesSizeToStartDumMode) return null;
     }
 
     return new DumbModeTask(project.getComponent(FileBasedIndexProjectHandler.class)) {

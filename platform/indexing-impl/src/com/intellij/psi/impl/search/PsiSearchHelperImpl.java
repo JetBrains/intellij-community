@@ -33,6 +33,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -61,6 +62,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class PsiSearchHelperImpl implements PsiSearchHelper {
   private static final ExtensionPointName<ScopeOptimizer> USE_SCOPE_OPTIMIZER_EP_NAME = ExtensionPointName.create("com.intellij.useScopeOptimizer");
@@ -924,18 +926,22 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       return SearchCostResult.TOO_MANY_OCCURRENCES;
     }
 
-    final AtomicInteger count = new AtomicInteger();
-    final ProgressIndicator indicator = progress == null ? new EmptyProgressIndicator() : progress;
+    final AtomicInteger filesCount = new AtomicInteger();
+    final AtomicLong filesSizeToProcess = new AtomicLong();
+    
     final Processor<VirtualFile> processor = new Processor<VirtualFile>() {
       private final VirtualFile virtualFileToIgnoreOccurrencesIn =
         fileToIgnoreOccurrencesIn == null ? null : fileToIgnoreOccurrencesIn.getVirtualFile();
+      private final int maxFilesToProcess = Registry.intValue("ide.unused.symbol.calculation.maxFilesToSearchUsagesIn", 10);
+      private final int maxFilesSizeToProcess = Registry.intValue("ide.unused.symbol.calculation.maxFilesSizeToSearchUsagesIn", 524288);
 
       @Override
       public boolean process(VirtualFile file) {
         ProgressManager.checkCanceled();
         if (Comparing.equal(file, virtualFileToIgnoreOccurrencesIn)) return true;
-        final int value = count.incrementAndGet();
-        return value < 10;
+        int currentFilesCount = filesCount.incrementAndGet();
+        long accumulatedFileSizeToProcess = filesSizeToProcess.addAndGet(file.isDirectory() ? 0 : file.getLength());
+        return currentFilesCount < maxFilesToProcess && accumulatedFileSizeToProcess < maxFilesSizeToProcess;
       }
     };
     List<IdIndexEntry> keys = getWordEntries(name, true);
@@ -945,7 +951,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       return SearchCostResult.TOO_MANY_OCCURRENCES;
     }
 
-    return count.get() == 0 ? SearchCostResult.ZERO_OCCURRENCES : SearchCostResult.FEW_OCCURRENCES;
+    return filesCount.get() == 0 ? SearchCostResult.ZERO_OCCURRENCES : SearchCostResult.FEW_OCCURRENCES;
   }
 
   private static boolean processFilesContainingAllKeys(@NotNull Project project,

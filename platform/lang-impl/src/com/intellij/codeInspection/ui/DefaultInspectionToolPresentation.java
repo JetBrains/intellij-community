@@ -40,6 +40,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.Equality;
@@ -64,7 +65,8 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
   protected InspectionNode myToolNode;
 
   private static final Object lock = new Object();
-  private final Map<RefEntity, CommonProblemDescriptor[]> myProblemElements = ContainerUtil.newConcurrentMap(ContainerUtil.identityStrategy());
+  private final Map<RefEntity, CommonProblemDescriptor[]> myProblemElements =
+    ConcurrentCollectionFactory.createMap(ContainerUtil.identityStrategy());
   protected final Map<String, Set<RefEntity>> myContents = Collections.synchronizedMap(new HashMap<String, Set<RefEntity>>(1)); // keys can be null
   private final Set<RefModule> myModulesProblems = Collections.synchronizedSet(ContainerUtil.newIdentityTroveSet());
   private final Map<CommonProblemDescriptor, RefEntity> myProblemToElements = Collections.synchronizedMap(ContainerUtil.newIdentityTroveMap());

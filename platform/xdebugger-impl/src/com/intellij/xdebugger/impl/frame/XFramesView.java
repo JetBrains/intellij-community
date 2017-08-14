@@ -298,8 +298,8 @@ public class XFramesView extends XDebugView {
       StackFramesListBuilder builder = getOrCreateBuilder(executionStack, session);
       builder.setToSelect(frameToSelect != null ? frameToSelect : mySelectedFrameIndex);
       myListenersEnabled = false;
-      builder.initModel(myFramesList.getModel());
-      myListenersEnabled = !builder.start();
+      boolean selected = builder.initModel(myFramesList.getModel());
+      myListenersEnabled = !builder.start() || selected;
     }
   }
 
@@ -314,6 +314,7 @@ public class XFramesView extends XDebugView {
   private void processFrameSelection(XDebugSession session, boolean force) {
     mySelectedFrameIndex = myFramesList.getSelectedIndex();
     myExecutionStacksWithSelection.put(mySelectedStack, mySelectedFrameIndex);
+    getOrCreateBuilder(mySelectedStack, session).setToSelect(null);
     
     Object selected = myFramesList.getSelectedValue();
     if (selected instanceof XStackFrame) {
@@ -439,12 +440,13 @@ public class XFramesView extends XDebugView {
       myRunning = false;
     }
 
-    private void selectCurrentFrame() {
+    private boolean selectCurrentFrame() {
       if (myToSelect instanceof XStackFrame) {
         if (!Objects.equals(myFramesList.getSelectedValue(), myToSelect) && myFramesList.getModel().contains(myToSelect)) {
           myFramesList.setSelectedValue(myToSelect, true);
           processFrameSelection(mySession, false);
           myListenersEnabled = true;
+          return true;
         }
         if (myAllFramesLoaded && myFramesList.getSelectedValue() == null) {
           LOG.error("Frame was not found, " + myToSelect.getClass() + " must correctly override equals");
@@ -458,12 +460,14 @@ public class XFramesView extends XDebugView {
           myFramesList.setSelectedIndex(selectedFrameIndex);
           processFrameSelection(mySession, false);
           myListenersEnabled = true;
+          return true;
         }
       }
+      return false;
     }
 
     @SuppressWarnings("unchecked")
-    public void initModel(final DefaultListModel model) {
+    public boolean initModel(final DefaultListModel model) {
       model.removeAllElements();
       myStackFrames.forEach(model::addElement);
       if (myErrorMessage != null) {
@@ -472,7 +476,7 @@ public class XFramesView extends XDebugView {
       else if (!myAllFramesLoaded) {
         model.addElement(null);
       }
-      selectCurrentFrame();
+      return selectCurrentFrame();
     }
   }
 }

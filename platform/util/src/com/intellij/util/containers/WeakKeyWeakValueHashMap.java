@@ -21,6 +21,10 @@ import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.Map;
 
+/**
+ * @deprecated use {@link ContainerUtil#createWeakKeyWeakValueMap()} instead
+ */
+@Deprecated
 public final class WeakKeyWeakValueHashMap<K,V> extends RefKeyRefValueHashMap<K,V> implements Map<K,V>{
   public WeakKeyWeakValueHashMap() {
     super(new WeakHashMap<K, ValueReference<K, V>>());
@@ -41,6 +45,7 @@ public final class WeakKeyWeakValueHashMap<K,V> extends RefKeyRefValueHashMap<K,
     }
   }
 
+  @NotNull
   @Override
   protected ValueReference<K, V> createValueReference(@NotNull RefHashMap.Key<K> key,
                                                       V referent,

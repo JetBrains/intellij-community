@@ -76,7 +76,7 @@ public class AutoPopupController implements Disposable {
 
 
   private final Project myProject;
-  private final Alarm myAlarm = new Alarm();
+  private final Alarm myAlarm;
 
   public static AutoPopupController getInstance(Project project){
     return ServiceManager.getService(project, AutoPopupController.class);
@@ -84,6 +84,7 @@ public class AutoPopupController implements Disposable {
 
   public AutoPopupController(Project project) {
     myProject = project;
+    myAlarm = new Alarm(this);
     setupListeners();
   }
 
@@ -160,7 +161,9 @@ public class AutoPopupController implements Disposable {
   }
 
   private void addRequest(final Runnable request, final int delay) {
-    Runnable runnable = () -> myAlarm.addRequest(request, delay);
+    Runnable runnable = () -> {
+      if (!myAlarm.isDisposed()) myAlarm.addRequest(request, delay);
+    };
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       runnable.run();
     } else {
