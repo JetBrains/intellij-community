@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,11 +23,11 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class OctalAndDecimalIntegersMixedInspection
-  extends BaseInspection {
+public class OctalAndDecimalIntegersMixedInspection extends BaseInspection {
 
   @Override
   @NotNull
@@ -38,15 +38,13 @@ public class OctalAndDecimalIntegersMixedInspection
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "octal.and.decimal.integers.in.same.array.display.name");
+    return InspectionGadgetsBundle.message("octal.and.decimal.integers.in.same.array.display.name");
   }
 
   @Override
   @NotNull
   public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "octal.and.decimal.integers.in.same.array.problem.descriptor");
+    return InspectionGadgetsBundle.message("octal.and.decimal.integers.in.same.array.problem.descriptor");
   }
 
   @NotNull
@@ -63,20 +61,18 @@ public class OctalAndDecimalIntegersMixedInspection
     return new OctalAndDecimalIntegersMixedVisitor();
   }
 
-  private static class OctalAndDecimalIntegersMixedVisitor
-    extends BaseInspectionVisitor {
+  private static class OctalAndDecimalIntegersMixedVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitArrayInitializerExpression(
-      PsiArrayInitializerExpression expression) {
+    public void visitArrayInitializerExpression(PsiArrayInitializerExpression expression) {
       super.visitArrayInitializerExpression(expression);
       final PsiExpression[] initializers = expression.getInitializers();
       boolean hasDecimalLiteral = false;
       boolean hasOctalLiteral = false;
-      for (final PsiExpression initializer : initializers) {
+      for (PsiExpression initializer : initializers) {
+        initializer = ParenthesesUtils.stripParentheses(initializer);
         if (initializer instanceof PsiLiteralExpression) {
-          final PsiLiteralExpression literal =
-            (PsiLiteralExpression)initializer;
+          final PsiLiteralExpression literal = (PsiLiteralExpression)initializer;
           if (isDecimalLiteral(literal)) {
             hasDecimalLiteral = true;
           }
@@ -92,14 +88,10 @@ public class OctalAndDecimalIntegersMixedInspection
 
     private static boolean isDecimalLiteral(PsiLiteralExpression literal) {
       final PsiType type = literal.getType();
-      if (!PsiType.INT.equals(type) &&
-          !PsiType.LONG.equals(type)) {
+      if (!PsiType.INT.equals(type) && !PsiType.LONG.equals(type)) {
         return false;
       }
       final String text = literal.getText();
-      if ("0".equals(text)) {
-        return false;
-      }
       return text.charAt(0) != '0';
     }
 
@@ -109,11 +101,11 @@ public class OctalAndDecimalIntegersMixedInspection
         return false;
       }
       @NonNls final String text = literal.getText();
-      if ("0".equals(text) || "0L".equals(text)) {
+      if (text.charAt(0) != '0' || text.length() < 2) {
         return false;
       }
-      return text.charAt(0) == '0' && !text.startsWith("0x") &&
-             !text.startsWith("0X");
+      final char c1 = text.charAt(1);
+      return c1 == '_' || (c1 >= '0' && c1 <= '7');
     }
   }
 }
