@@ -136,7 +136,7 @@ public class DfaExpressionFactory {
       }
 
       if (DfaValueFactory.isEffectivelyUnqualified(refExpr) || isStaticFinalConstantWithoutInitializationHacks(var)) {
-        if (isFieldDereferenceBeforeInitialization(refExpr)) {
+        if (isFieldDereferenceBeforeInitialization(refExpr) && !(refExpr.getType() instanceof PsiPrimitiveType)) {
           return myFactory.getConstFactory().getNull();
         }
 
