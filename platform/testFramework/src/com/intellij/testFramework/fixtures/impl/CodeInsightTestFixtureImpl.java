@@ -1874,8 +1874,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     // overrides "getElementToMakeWritable" or has the following line:
     // if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
 
-    ReadonlyStatusHandlerImpl handler = (ReadonlyStatusHandlerImpl)ReadonlyStatusHandler.getInstance(file.getProject());
-    VirtualFile vFile = InjectedLanguageUtil.getTopLevelFile(file).getVirtualFile();
+    Project project = file.getProject();
+    ReadonlyStatusHandlerImpl handler = (ReadonlyStatusHandlerImpl)ReadonlyStatusHandler.getInstance(project);
+    VirtualFile vFile = Objects.requireNonNull(InjectedLanguageUtil.getTopLevelFile(file)).getVirtualFile();
     setReadOnly(vFile, true);
     handler.setClearReadOnlyInTests(true);
     AtomicBoolean result = new AtomicBoolean();
@@ -1883,6 +1884,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       ApplicationManager.getApplication().invokeLater(
         () -> result.set(ShowIntentionActionsHandler.chooseActionAndInvoke(file, editor, action, actionText)));
       UIUtil.dispatchAllInvocationEvents();
+      checkPsiTextConsistency(project, vFile);
     }
     catch (AssertionError e) {
       ExceptionUtil.rethrowUnchecked(ExceptionUtil.getRootCause(e));
@@ -1893,6 +1895,13 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       setReadOnly(vFile, false);
     }
     return result.get();
+  }
+
+  private static void checkPsiTextConsistency(Project project, VirtualFile vFile) {
+    PsiFile topLevelPsi = vFile.isValid() ? PsiManager.getInstance(project).findFile(vFile) : null;
+    if (topLevelPsi != null) {
+      PsiTestUtil.checkStubsMatchText(topLevelPsi);
+    }
   }
 
   private static void setReadOnly(VirtualFile vFile, boolean readOnlyStatus) {
