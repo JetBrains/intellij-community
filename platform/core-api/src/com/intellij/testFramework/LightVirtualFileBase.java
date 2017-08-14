@@ -21,7 +21,6 @@ import com.intellij.openapi.vfs.NonPhysicalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,8 +32,8 @@ import java.io.IOException;
  */
 public abstract class LightVirtualFileBase extends VirtualFile {
   private FileType myFileType;
-  private String myName = "";
-  private long myModStamp = LocalTimeCounter.currentTime();
+  private String myName;
+  private long myModStamp;
   private boolean myIsWritable = true;
   private boolean myValid = true;
   private VirtualFile myOriginalFile;
@@ -45,7 +44,7 @@ public abstract class LightVirtualFileBase extends VirtualFile {
     myModStamp = modificationStamp;
   }
 
-  public void setFileType(final FileType fileType) {
+  public void setFileType(@NotNull FileType fileType) {
     myFileType = fileType;
   }
 
