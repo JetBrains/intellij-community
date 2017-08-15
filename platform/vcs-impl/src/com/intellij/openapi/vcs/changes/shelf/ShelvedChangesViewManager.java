@@ -241,6 +241,10 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     myPostUpdateRunnable = null;
   }
 
+  private ToolWindow getVcsToolWindow() {
+    return ToolWindowManager.getInstance(myProject).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
+  }
+
   @NotNull
   private JPanel createRootPanel() {
     JScrollPane pane = ScrollPaneFactory.createScrollPane(myTree);
@@ -323,10 +327,10 @@ public class ShelvedChangesViewManager implements ProjectComponent {
   public void activateView(final ShelvedChangeList list) {
     Runnable runnable = () -> {
       if (list != null) {
-        TreeUtil.selectNode(myTree, TreeUtil.findNodeWithObject(myRoot, list));
+        selectShelvedList(list);
       }
       myContentManager.setSelectedContent(myContent);
-      ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
+      ToolWindow window = getVcsToolWindow();
       if (!window.isVisible()) {
         window.activate(null);
       }
@@ -337,6 +341,15 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     else {
       runnable.run();
     }
+  }
+
+  public void selectShelvedList(@NotNull ShelvedChangeList list) {
+    DefaultMutableTreeNode treeNode = TreeUtil.findNodeWithObject(myRoot, list);
+    if (treeNode == null) {
+      LOG.warn(String.format("Shelved changeList %s not found", list.DESCRIPTION));
+      return;
+    }
+    TreeUtil.selectNode(myTree, treeNode);
   }
 
   private class ShelfTree extends Tree implements DataProvider {
