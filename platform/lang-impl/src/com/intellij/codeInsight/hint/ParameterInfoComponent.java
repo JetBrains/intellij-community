@@ -234,7 +234,7 @@ public class ParameterInfoComponent extends JPanel {
       context.i = i;
       final Object o = myObjects[i];
 
-      if (singleParameterInfo && !context.isHighlighted()) {
+      if (singleParameterInfo && myObjects.length > 1 && !context.isHighlighted()) {
         setVisible(i, false);
       }
       else {
