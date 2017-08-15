@@ -23,6 +23,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.*;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PathMacroManager;
@@ -41,7 +42,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.Equality;
@@ -54,8 +54,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.util.*;
 import java.util.function.Predicate;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class DefaultInspectionToolPresentation implements ProblemDescriptionsProcessor, InspectionToolPresentation {
   protected static final Logger LOG = Logger.getInstance(DefaultInspectionToolPresentation.class);
@@ -654,18 +652,6 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
     if (descriptor == null) return true;
     CommonProblemDescriptor[] descriptors = getIgnoredElements().get(refEntity);
     return descriptors != null && ArrayUtil.contains(descriptor, descriptors);
-  }
-
-  @Override
-  @NotNull
-  public FileStatus getProblemStatus(@NotNull final CommonProblemDescriptor descriptor) {
-    return FileStatus.NOT_CHANGED;
-  }
-
-  @NotNull
-  @Override
-  public FileStatus getElementStatus(final RefEntity element) {
-    return FileStatus.NOT_CHANGED;
   }
 
   @NotNull

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,10 +23,8 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemDescriptorUtil;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
-import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.PsiElement;
 import com.intellij.xml.util.XmlStringUtil;
 import gnu.trove.TObjectIntHashMap;
@@ -132,14 +130,6 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
       presentation.amnesty(getElement(), getDescriptor());
     }
     super.amnestyElement(manager);
-  }
-
-  @Override
-  public FileStatus getNodeStatus() {
-    if (myElement instanceof RefElement) {
-      return getPresentation().getProblemStatus(myDescriptor);
-    }
-    return FileStatus.NOT_CHANGED;
   }
 
   @Override

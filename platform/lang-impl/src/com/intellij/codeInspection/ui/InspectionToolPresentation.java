@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,8 +73,6 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
   boolean isGraphNeeded();
   boolean isElementIgnored(final RefEntity element);
   @NotNull
-  FileStatus getElementStatus(final RefEntity element);
-  @NotNull
   Set<RefEntity> getIgnoredRefElements();
   @Nullable
   IntentionAction findQuickFixes(@NotNull CommonProblemDescriptor descriptor, final String hint);
@@ -89,8 +87,6 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
   Map<RefEntity, CommonProblemDescriptor[]> getProblemElements();
   @NotNull
   Collection<CommonProblemDescriptor> getProblemDescriptors();
-  @NotNull
-  FileStatus getProblemStatus(@NotNull CommonProblemDescriptor descriptor);
   boolean isProblemResolved(RefEntity refEntity, CommonProblemDescriptor descriptor);
   void ignoreCurrentElementProblem(RefEntity refEntity, CommonProblemDescriptor descriptor);
   void addProblemElement(RefEntity refElement, boolean filterSuppressed, @NotNull CommonProblemDescriptor... descriptions);
