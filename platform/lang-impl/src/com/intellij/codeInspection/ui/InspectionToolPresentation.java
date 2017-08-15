@@ -24,7 +24,6 @@ import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefModule;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.vcs.FileStatus;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -66,11 +65,9 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
   Map<String, Set<RefEntity>> getContent();
 
   void ignoreCurrentElement(RefEntity refEntity);
-  void amnesty(RefEntity refEntity);
   void amnesty(RefEntity refEntity, CommonProblemDescriptor descriptor);
   void cleanup();
   void finalCleanup();
-  boolean isGraphNeeded();
   boolean isElementIgnored(final RefEntity element);
   @NotNull
   Set<RefEntity> getIgnoredRefElements();

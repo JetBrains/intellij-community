@@ -301,11 +301,6 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
   }
 
   @Override
-  public void amnesty(RefEntity refEntity) {
-    getIgnoredElements().remove(refEntity);
-  }
-
-  @Override
   public void amnesty(RefEntity refEntity, CommonProblemDescriptor descriptor) {
     final CommonProblemDescriptor[] ignoredDescriptors = getIgnoredElements().get(refEntity);
     if (ignoredDescriptors != null) {
@@ -505,11 +500,6 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
         System.out.println("Cannot save results for " + refEntity.getName() + ", inspection which caused problem: " + myToolWrapper.getShortName());
       }
     }
-  }
-
-  @Override
-  public boolean isGraphNeeded() {
-    return false;
   }
 
   @Override

@@ -563,25 +563,14 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
   }
 
   @Override
-  public void amnesty(RefEntity refEntity) {
-    myIgnoreElements.remove(refEntity);
-  }
-
-  @Override
   public void cleanup() {
     super.cleanup();
     myIgnoreElements.clear();
   }
 
-
   @Override
   public void finalCleanup() {
     super.finalCleanup();
-  }
-
-  @Override
-  public boolean isGraphNeeded() {
-    return true;
   }
 
   @Override
