@@ -23,10 +23,7 @@
 //import com.intellij.openapi.util.UserDataHolderBase;
 //import com.intellij.testFramework.PlatformTestCase;
 //import com.intellij.util.containers.ContainerUtil;
-//import com.intellij.xdebugger.attach.XAttachDebugger;
-//import com.intellij.xdebugger.attach.XAttachDebuggerProvider;
-//import com.intellij.xdebugger.attach.XAttachGroup;
-//import com.intellij.xdebugger.attach.XDefaultAttachGroup;
+//import com.intellij.xdebugger.attach.*;
 //import org.jetbrains.annotations.NotNull;
 //import org.jetbrains.annotations.Nullable;
 //
@@ -221,8 +218,8 @@
 //                "2 exec2: dbg1\n",
 //                new TestDebuggerProvider(new TestAttachGroup("group", 0) {
 //                  @Override
-//                  public int compare(@NotNull Project project, @NotNull ProcessInfo a, @NotNull ProcessInfo b, @NotNull UserDataHolder dataHolder) {
-//                    return a.getPid() - b.getPid();
+//                  public int compare(@NotNull Project project, @NotNull AttachToProcessSettings a, @NotNull AttachToProcessSettings b, @NotNull UserDataHolder dataHolder) {
+//                    return a.getInfo().getPid() - b.getInfo().getPid();
 //                  }
 //                }, "dbg1"));
 //    assertItems("----group----\n" +
@@ -230,8 +227,8 @@
 //                "1 exec1: dbg1\n",
 //                new TestDebuggerProvider(new TestAttachGroup("group", 0) {
 //                  @Override
-//                  public int compare(@NotNull Project project, @NotNull ProcessInfo a, @NotNull ProcessInfo b, @NotNull UserDataHolder dataHolder) {
-//                    return b.getPid() - a.getPid();
+//                  public int compare(@NotNull Project project, @NotNull AttachToProcessSettings a, @NotNull AttachToProcessSettings b, @NotNull UserDataHolder dataHolder) {
+//                    return b.getInfo().getPid() - a.getInfo().getPid();
 //                  }
 //                }, "dbg1"));
 //  }
@@ -243,7 +240,7 @@
 //                new TestDebuggerProvider(new TestAttachGroup("group", 0) {
 //                  @NotNull
 //                  @Override
-//                  public String getProcessDisplayText(@NotNull Project project, @NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder) {
+//                  public String getItemDisplayText(@NotNull Project project, @NotNull AttachToProcessSettings info, @NotNull UserDataHolder dataHolder) {
 //                    return "custom";
 //                  }
 //                }, "dbg1"));
@@ -251,18 +248,23 @@
 //
 //  public void testHistory() throws Exception {
 //    ProcessInfo info1 = new ProcessInfo(1, "command line 1", "exec1", "args1");
+//    LocalAttachSettings settings1 = new LocalAttachSettings(info1);
 //    ProcessInfo info2 = new ProcessInfo(1, "command line 2", "exec1", "args1");
+//    LocalAttachSettings settings2 = new LocalAttachSettings(info2);
 //    ProcessInfo info3 = new ProcessInfo(1, "command line 3", "exec1", "args1");
+//    LocalAttachSettings settings3 = new LocalAttachSettings(info3);
 //    ProcessInfo info4 = new ProcessInfo(1, "command line 4", "exec1", "args1");
+//    LocalAttachSettings settings4 = new LocalAttachSettings(info4);
 //    ProcessInfo info5 = new ProcessInfo(1, "command line 5", "exec1", "args1");
+//    LocalAttachSettings settings5 = new LocalAttachSettings(info5);
 //
-//    List<XAttachDebugger> debuggers = createDebuggers("gdb");
+//    List<XAttachDebugger<LocalAttachSettings>> debuggers = createDebuggers("gdb");
 //    UserDataHolderBase dataHolder = new UserDataHolderBase();
-//    AttachToLocalProcessItem item1 = new AttachToLocalProcessItem(XAttachGroup.DEFAULT, true, info1, debuggers, dataHolder);
-//    AttachToLocalProcessItem item2 = new AttachToLocalProcessItem(XAttachGroup.DEFAULT, true, info2, debuggers, dataHolder);
-//    AttachToLocalProcessItem item3 = new AttachToLocalProcessItem(XAttachGroup.DEFAULT, true, info3, debuggers, dataHolder);
-//    AttachToLocalProcessItem item4 = new AttachToLocalProcessItem(XAttachGroup.DEFAULT, true, info4, debuggers, dataHolder);
-//    AttachToLocalProcessItem item5 = new AttachToLocalProcessItem(XAttachGroup.DEFAULT, true, info5, debuggers, dataHolder);
+//    AttachToLocalProcessItem item1 = new AttachToLocalProcessItem(XAttachGroup.DEFAULT, true, settings1, debuggers, dataHolder);
+//    AttachToLocalProcessItem item2 = new AttachToLocalProcessItem(XAttachGroup.DEFAULT, true, settings2, debuggers, dataHolder);
+//    AttachToLocalProcessItem item3 = new AttachToLocalProcessItem(XAttachGroup.DEFAULT, true, settings3, debuggers, dataHolder);
+//    AttachToLocalProcessItem item4 = new AttachToLocalProcessItem(XAttachGroup.DEFAULT, true, settings4, debuggers, dataHolder);
+//    AttachToLocalProcessItem item5 = new AttachToLocalProcessItem(XAttachGroup.DEFAULT, true, settings5, debuggers, dataHolder);
 //
 //    HistoryItem historyItem1 = new HistoryItem(info1, XAttachGroup.DEFAULT, "gdb");
 //    HistoryItem historyItem2 = new HistoryItem(info2, XAttachGroup.DEFAULT, "gdb");
@@ -606,8 +608,8 @@
 //  }
 //
 //  @NotNull
-//  private static List<XAttachDebugger> createDebuggers(String... names) {
-//    return ContainerUtil.map(names, s -> new XAttachDebugger() {
+//  private static List<XAttachDebugger<LocalAttachSettings>> createDebuggers(String... names) {
+//    return ContainerUtil.map(names, s -> new XAttachDebugger<LocalAttachSettings>() {
 //      @NotNull
 //      @Override
 //      public String getDebuggerDisplayName() {
@@ -615,7 +617,7 @@
 //      }
 //
 //      @Override
-//      public void attachDebugSession(@NotNull Project project, @NotNull ProcessInfo processInfo) throws ExecutionException {
+//      public void attachDebugSession(@NotNull Project project, @NotNull LocalAttachSettings processInfo) throws ExecutionException {
 //      }
 //    });
 //  }
@@ -641,14 +643,14 @@
 //    }
 //  }
 //
-//  private static class TestDebuggerProvider implements XAttachDebuggerProvider {
+//  private static class TestDebuggerProvider implements XAttachDebuggerProvider<AttachToProcessSettings> {
 //    @Nullable private final Integer myFilterPID;
 //    @NotNull private final XAttachGroup myGroup;
-//    @NotNull private final List<XAttachDebugger> myDebuggers;
+//    @NotNull private final List<XAttachDebugger<AttachToProcessSettings>> myDebuggers;
 //
 //    public TestDebuggerProvider(@Nullable Integer filterPID,
 //                                @NotNull XAttachGroup group,
-//                                @NotNull List<XAttachDebugger> debuggers) {
+//                                @NotNull List<XAttachDebugger<AttachToProcessSettings>> debuggers) {
 //      myFilterPID = filterPID;
 //      myGroup = group;
 //      myDebuggers = debuggers;
@@ -674,10 +676,10 @@
 //
 //    @NotNull
 //    @Override
-//    public List<XAttachDebugger> getAvailableDebuggers(@NotNull Project project,
-//                                                            @NotNull ProcessInfo processInfo,
+//    public List<XAttachDebugger<AttachToProcessSettings>> getAvailableDebuggers(@NotNull Project project,
+//                                                            @NotNull AttachToProcessSettings processInfo,
 //                                                            @NotNull UserDataHolder contextHolder) {
-//      if (myFilterPID != null && processInfo.getPid() != myFilterPID) return Collections.emptyList();
+//      if (myFilterPID != null && processInfo.getInfo().getPid() != myFilterPID) return Collections.emptyList();
 //      return myDebuggers;
 //    }
 //  }
