@@ -40,6 +40,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author Dmitry Batkovich
@@ -82,7 +84,7 @@ public class InspectionNodeInfo extends JPanel {
     String descriptionText = toolWrapper.loadDescription();
     LOG.assertTrue(descriptionText != null, "Inspection '" + toolWrapper.getShortName() + "' has no description");
     final String toolDescription =
-      DefaultInspectionToolPresentation.stripUIRefsFromInspectionDescription(StringUtil.notNullize(descriptionText));
+      stripUIRefsFromInspectionDescription(StringUtil.notNullize(descriptionText));
     SingleInspectionProfilePanel.readHTML(description, SingleInspectionProfilePanel.toHTML(description, toolDescription == null ? "" : toolDescription, false));
     JScrollPane pane = ScrollPaneFactory.createScrollPane(description, true);
     int maxWidth = getFontMetrics(UIUtil.getLabelFont()).charWidth('f') * 110 - pane.getMinimumSize().width;
@@ -121,5 +123,22 @@ public class InspectionNodeInfo extends JPanel {
         new GridBagConstraints(0, 2, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
                                new JBInsets(15, 9, 9, 0), 0, 0));
 
+  }
+
+  public static String stripUIRefsFromInspectionDescription(@NotNull String description) {
+    final int descriptionEnd = description.indexOf("<!-- tooltip end -->");
+    if (descriptionEnd < 0) {
+      final Pattern pattern = Pattern.compile(".*Use.*(the (panel|checkbox|checkboxes|field|button|controls).*below).*", Pattern.DOTALL);
+      final Matcher matcher = pattern.matcher(description);
+      int startFindIdx = 0;
+      while (matcher.find(startFindIdx)) {
+        final int end = matcher.end(1);
+        startFindIdx = end;
+        description = description.substring(0, matcher.start(1)) + " inspection settings " + description.substring(end);
+      }
+    } else {
+      description = description.substring(0, descriptionEnd);
+    }
+    return description;
   }
 }

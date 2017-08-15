@@ -81,23 +81,6 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
     myContext = context;
   }
 
-  public static String stripUIRefsFromInspectionDescription(@NotNull String description) {
-    final int descriptionEnd = description.indexOf("<!-- tooltip end -->");
-    if (descriptionEnd < 0) {
-      final Pattern pattern = Pattern.compile(".*Use.*(the (panel|checkbox|checkboxes|field|button|controls).*below).*", Pattern.DOTALL);
-      final Matcher matcher = pattern.matcher(description);
-      int startFindIdx = 0;
-      while (matcher.find(startFindIdx)) {
-        final int end = matcher.end(1);
-        startFindIdx = end;
-        description = description.substring(0, matcher.start(1)) + " inspection settings " + description.substring(end);
-      }
-    } else {
-      description = description.substring(0, descriptionEnd);
-    }
-    return description;
-  }
-
   @Override
   public HighlightSeverity getSeverity(@NotNull RefElement element) {
     final PsiElement psiElement = element.getPointer().getContainingFile();
