@@ -201,7 +201,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     return Collections.singletonList(expression);
   }
 
-  private static boolean isSixWithMetaclassCall(@NotNull PyExpression expression) {
+  public static boolean isSixWithMetaclassCall(@NotNull PyExpression expression) {
     if (expression instanceof PyCallExpression){
       final PyCallExpression call = (PyCallExpression)expression;
       final PyExpression callee = call.getCallee();

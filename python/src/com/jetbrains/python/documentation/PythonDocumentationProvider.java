@@ -43,11 +43,13 @@ import com.jetbrains.python.console.PydevDocumentationProvider;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.impl.PyClassImpl;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.toolbox.ChainIterable;
+import one.util.streamex.StreamEx;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.HeadMethod;
 import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
@@ -325,6 +327,25 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
                  escaper.apply("[") +
                  describeSuperClass(indexExpression, escaper, true, context) +
                  escaper.apply("]");
+        }
+      }
+      else if (expression instanceof PyKeywordArgument) {
+        final String keyword = ((PyKeywordArgument)expression).getKeyword();
+        final PyExpression valueExpression = ((PyKeywordArgument)expression).getValueExpression();
+
+        if (PyNames.METACLASS.equals(keyword) && valueExpression != null) {
+          return escaper.apply(PyNames.METACLASS + "=") + describeSuperClass(valueExpression, escaper, true, context);
+        }
+      }
+      else if (PyClassImpl.isSixWithMetaclassCall(expression)) {
+        final PyCallExpression callExpression = (PyCallExpression)expression;
+        final PyExpression callee = callExpression.getCallee();
+
+        if (callee != null) {
+          return StreamEx
+            .of(callExpression.getArguments())
+            .map(argument -> describeSuperClass(argument, escaper, true, context))
+            .joining(escaper.apply(", "), escaper.apply(callee.getText() + "("), escaper.apply(")"));
         }
       }
     }
