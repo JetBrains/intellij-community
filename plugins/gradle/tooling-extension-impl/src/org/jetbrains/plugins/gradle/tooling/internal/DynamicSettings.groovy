@@ -16,33 +16,34 @@
 package org.jetbrains.plugins.gradle.tooling.internal
 
 import groovy.json.JsonOutput
+import org.gradle.api.Project
 
 /**
  * @author Vladislav.Soroka
  */
 class DynamicSettings extends GroovyObjectSupport {
-  Map objects = [:]
+  Map content = [:]
+  Project project
 
-  DynamicSettings() {
+  DynamicSettings(Project project) {
+    this.project = project
   }
 
   def methodMissing(String name, def args) {
     if (args.length == 1 && args[0] instanceof Closure) {
       def value = JDelegate.cloneDelegateAndGetContent((Closure)args[0])
-      objects.put(name, value)
-      return objects
+      content.put(name, value)
+      return content
     }
   }
 
   def propertyMissing(String name) {
-    def content = super.getContent()
-    if (content instanceof Map) return content.get(name)
+    return content[name] ?: project.findProperty(name)
   }
 
   @Override
   String toString() {
-    return JsonOutput.toJson(this.objects)
-//    return JsonOutput.prettyPrint(JsonOutput.toJson(this.objects))
+    return JsonOutput.toJson(content)
   }
 }
 
