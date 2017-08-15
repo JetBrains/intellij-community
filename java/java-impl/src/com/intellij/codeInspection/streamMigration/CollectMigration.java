@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
@@ -121,11 +122,11 @@ class CollectMigration extends BaseStreamApiMigration {
 
   @Nullable
   static CollectTerminal extractCollectTerminal(@NotNull TerminalBlock tb, @Nullable List<PsiVariable> nonFinalVariables) {
+    GroupingTerminal groupingTerminal = GroupingTerminal.tryExtract(tb, nonFinalVariables);
+    if(groupingTerminal != null) return groupingTerminal;
     if(nonFinalVariables != null && !nonFinalVariables.isEmpty()) {
       return null;
     }
-
-
     PsiMethodCallExpression call;
     call = tb.getSingleMethodCall();
     if (call == null) return null;
@@ -134,7 +135,7 @@ class CollectMigration extends BaseStreamApiMigration {
     if (tb.dependsOn(qualifierExpression)) return null;
 
     List<BiFunction<TerminalBlock, PsiMethodCallExpression, CollectTerminal>> extractors = Arrays
-      .asList(AddingTerminal::tryExtract, GroupingTerminal::tryExtract, ToMapTerminal::tryExtract, AddingAllTerminal::tryExtractAddAll);
+      .asList(AddingTerminal::tryExtract, ToMapTerminal::tryExtract, AddingAllTerminal::tryExtractAddAll);
 
     CollectTerminal terminal = StreamEx.of(extractors).map(extractor -> extractor.apply(tb, call)).nonNull().findFirst().orElse(null);
     if (terminal != null) {
@@ -428,7 +429,129 @@ class CollectMigration extends BaseStreamApiMigration {
     }
 
     @Nullable
-    public static GroupingTerminal tryExtract(TerminalBlock tb, PsiMethodCallExpression call) {
+    static GroupingTerminal tryExtract(@NotNull TerminalBlock tb, @Nullable List<PsiVariable> nonFinalVariables) {
+      PsiStatement[] statements = tb.getStatements();
+      if (statements.length == 1) {
+        if(nonFinalVariables != null && nonFinalVariables.isEmpty()) return null;
+        PsiMethodCallExpression call = tb.getSingleExpression(PsiMethodCallExpression.class);
+        return tryExtract(tb, call);
+      }
+      return tryExtractJava7Style(tb, statements, nonFinalVariables);
+    }
+
+    /*
+      List<String> tmp = map.get(s.length());
+      if(tmp == null) {
+          tmp = new ArrayList<>();
+          map.put(s.length(), tmp);
+      }
+      tmp.add(s);
+     */
+    @Nullable
+    private static GroupingTerminal tryExtractJava7Style(@NotNull TerminalBlock terminalBlock,
+                                                         @NotNull PsiStatement[] statements,
+                                                         @Nullable List<PsiVariable> nonFinalVariables) {
+      if(nonFinalVariables != null && nonFinalVariables.size() != 1) return null;
+      if (statements.length != 3) return null;
+      PsiDeclarationStatement declaration = tryCast(statements[0], PsiDeclarationStatement.class);
+      PsiIfStatement ifStatement = tryCast(statements[1], PsiIfStatement.class);
+      PsiExpressionStatement additionToListStatement = tryCast(statements[2], PsiExpressionStatement.class);
+      if (declaration == null || ifStatement == null || additionToListStatement == null) return null;
+      PsiElement[] declaredElements = declaration.getDeclaredElements();
+      if (declaredElements.length != 1) return null;
+
+      PsiLocalVariable target = tryCast(declaredElements[0], PsiLocalVariable.class);
+      if (target == null) return null;
+      if(nonFinalVariables != null && !target.equals(nonFinalVariables.get(0))) return null;
+
+      if (!InheritanceUtil.isInheritor(target.getType(), CommonClassNames.JAVA_UTIL_LIST)) return null;
+      PsiExpression initializer = target.getInitializer();
+      PsiMethodCallExpression getCall = tryCast(initializer, PsiMethodCallExpression.class);
+      if (!isCallOf(getCall, CommonClassNames.JAVA_UTIL_MAP, "get")) return null;
+      PsiExpression[] expressions = getCall.getArgumentList().getExpressions();
+      if (expressions.length != 1) return null;
+      PsiExpression keyExtractor = expressions[0];
+      PsiReferenceExpression mapReference =
+        tryCast(getCall.getMethodExpression().getQualifierExpression(), PsiReferenceExpression.class);
+      if (mapReference == null) return null;
+      PsiLocalVariable mapVariable = tryCast(mapReference.resolve(), PsiLocalVariable.class);
+
+      if (!isValidIf(ifStatement, target, keyExtractor, mapVariable)) return null;
+      PsiMethodCallExpression addCall = extractAddMethod(terminalBlock, additionToListStatement);
+      if(addCall == null) return null;
+      PsiType type = target.getType();
+      PsiClassReferenceType referenceType = tryCast(type, PsiClassReferenceType.class);
+      if(referenceType == null) return null;
+      PsiType[] parameters = referenceType.getParameters();
+      if(parameters.length != 1) return null;
+      PsiType typeParameter = parameters[0];
+      InitializerUsageStatus status = getInitializerUsageStatus(terminalBlock.getVariable(), terminalBlock.getMainLoop());
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(terminalBlock.getMainLoop().getProject());
+      PsiExpression text = factory.createExpressionFromText("new ArrayList<String>()", additionToListStatement);
+      AddingTerminal adding = new AddingTerminal(typeParameter, text, terminalBlock.getVariable(), addCall);
+      return new GroupingTerminal(adding, mapVariable, keyExtractor, status);
+    }
+
+    private static PsiMethodCallExpression extractAddMethod(@NotNull TerminalBlock terminalBlock, PsiExpressionStatement additionToListStatement) {
+      PsiMethodCallExpression additionToList = tryCast(additionToListStatement.getExpression(), PsiMethodCallExpression.class);
+      if (!isCallOf(additionToList, CommonClassNames.JAVA_UTIL_LIST, "add")) return null;
+      PsiExpression[] additionArgs = additionToList.getArgumentList().getExpressions();
+      if (additionArgs.length != 1) return null;
+      PsiExpression arg = additionArgs[0];
+      PsiReferenceExpression referenceExpression = tryCast(arg, PsiReferenceExpression.class);
+      if (referenceExpression == null) return null;
+      PsiVariable savedVar = tryCast(referenceExpression.resolve(), PsiVariable.class);
+      if (!savedVar.equals(terminalBlock.getVariable())) return null;
+      return additionToList;
+    }
+
+    private static boolean isValidIf(PsiIfStatement ifStatement,
+                                     PsiLocalVariable variable,
+                                     PsiExpression keyExtractor,
+                                     PsiVariable getMapVar) {
+      if (ifStatement.getElseBranch() != null) return false;
+      PsiExpression condition = ifStatement.getCondition();
+      if (condition == null) return false;
+      PsiVariable nullChecked = ExpressionUtils.getVariableFromNullComparison(condition, true);
+      if (!variable.equals(nullChecked)) return false;
+      PsiBlockStatement blockStatement = tryCast(ifStatement.getThenBranch(), PsiBlockStatement.class);
+      if (blockStatement == null) return false;
+      PsiStatement[] ifStatements = blockStatement.getCodeBlock().getStatements();
+      if (ifStatements.length != 2) return false;
+
+      PsiExpression assignment = ExpressionUtils.getAssignmentTo(ifStatements[0], variable);
+      PsiNewExpression newExpression = tryCast(assignment, PsiNewExpression.class);
+      if (newExpression == null) return false;
+      PsiJavaCodeReferenceElement reference = newExpression.getClassReference();
+      if (reference == null) return false;
+      PsiClass aClass = tryCast(reference.resolve(), PsiClass.class);
+      if (!CommonClassNames.JAVA_UTIL_ARRAY_LIST.equals(aClass.getQualifiedName())) return false;
+
+      PsiExpressionStatement mapPutStatement = tryCast(ifStatements[1], PsiExpressionStatement.class);
+      if (mapPutStatement == null) return false;
+      PsiMethodCallExpression mapPut = tryCast(mapPutStatement.getExpression(), PsiMethodCallExpression.class);
+      if (!isCallOf(mapPut, CommonClassNames.JAVA_UTIL_MAP, "put")) return false;
+
+      PsiReferenceExpression mapPutQualifierReference =
+        tryCast(mapPut.getMethodExpression().getQualifierExpression(), PsiReferenceExpression.class);
+      if(mapPutQualifierReference == null) return false;
+      PsiVariable putMapVar = tryCast(mapPutQualifierReference.resolve(), PsiVariable.class);
+      if(putMapVar == null) return false;
+      if (!putMapVar.equals(getMapVar)) return false;
+
+      PsiExpression[] mapPutArgs = mapPut.getArgumentList().getExpressions();
+      if (mapPutArgs.length != 2) return false;
+      PsiExpression putKeyExtractor = mapPutArgs[0];
+      if (!EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(putKeyExtractor, keyExtractor)) return false;
+      PsiReferenceExpression referenceExpression = tryCast(mapPutArgs[1], PsiReferenceExpression.class);
+      if (referenceExpression == null) return false;
+      PsiVariable savingVar = tryCast(referenceExpression.resolve(), PsiVariable.class);
+      if (!variable.equals(savingVar)) return false;
+      return true;
+    }
+
+    @Nullable
+    public static GroupingTerminal tryExtract(@NotNull TerminalBlock tb, @Nullable PsiMethodCallExpression call) {
       if (!isCallOf(call, CommonClassNames.JAVA_UTIL_COLLECTION, "add")) return null;
       PsiReferenceExpression methodExpression = call.getMethodExpression();
       PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
