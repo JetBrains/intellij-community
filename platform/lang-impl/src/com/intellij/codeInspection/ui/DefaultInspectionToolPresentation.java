@@ -31,6 +31,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -57,11 +58,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class DefaultInspectionToolPresentation implements ProblemDescriptionsProcessor, InspectionToolPresentation {
-  @NotNull private final InspectionToolWrapper myToolWrapper;
+  protected static final Logger LOG = Logger.getInstance(DefaultInspectionToolPresentation.class);
 
-  @NotNull
-  private final GlobalInspectionContextImpl myContext;
-  private static String ourOutputPath;
+  @NotNull private final InspectionToolWrapper myToolWrapper;
+  @NotNull private final GlobalInspectionContextImpl myContext;
   protected InspectionNode myToolNode;
 
   private static final Object lock = new Object();
@@ -74,7 +74,6 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
   private final Map<RefEntity, Set<QuickFix>> myQuickFixActions = Collections.synchronizedMap(ContainerUtil.newIdentityTroveMap());
   private final Map<RefEntity, CommonProblemDescriptor[]> myIgnoredElements = Collections.synchronizedMap(ContainerUtil.newIdentityTroveMap());
 
-  protected static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.DescriptorProviderInspection");
   private volatile boolean isDisposed;
 
   public DefaultInspectionToolPresentation(@NotNull InspectionToolWrapper toolWrapper, @NotNull GlobalInspectionContextImpl context) {
@@ -183,7 +182,7 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
     if (refElement == null) return;
     if (descriptors.length == 0) return;
     if (filterSuppressed) {
-      if (!isOutputPathSet() || !(myToolWrapper instanceof LocalInspectionToolWrapper)) {
+      if (myContext.getOutputPath() == null || !(myToolWrapper instanceof LocalInspectionToolWrapper)) {
         synchronized (lock) {
           Map<RefEntity, CommonProblemDescriptor[]> problemElements = getProblemElements();
           CommonProblemDescriptor[] problems = problemElements.get(refElement);
@@ -259,11 +258,11 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
     final List<Element> list = parentNode.getChildren();
 
     @NonNls final String ext = ".xml";
-    final String fileName = ourOutputPath + File.separator + myToolWrapper.getShortName() + ext;
+    final String fileName = myContext.getOutputPath() + File.separator + myToolWrapper.getShortName() + ext;
     final PathMacroManager pathMacroManager = PathMacroManager.getInstance(getContext().getProject());
     PrintWriter printWriter = null;
     try {
-      new File(ourOutputPath).mkdirs();
+      FileUtil.createDirectory(new File(myContext.getOutputPath()));
       final File file = new File(fileName);
       final StringWriter writer = new StringWriter();
       if (!file.exists()) {
@@ -769,13 +768,5 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
         return true;
       }
     };
-  }
-
-  public static synchronized void setOutputPath(final String output) {
-    ourOutputPath = output;
-  }
-
-  private static synchronized boolean isOutputPathSet() {
-    return ourOutputPath != null;
   }
 }

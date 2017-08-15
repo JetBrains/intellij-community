@@ -104,6 +104,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
 
   private final NotNullLazyValue<ContentManager> myContentManager;
   private volatile InspectionResultsView myView;
+  private volatile String myOutputPath;
   private Content myContent;
   private volatile boolean myViewClosed = true;
   private long myInspectionStartedTimestamp;
@@ -193,13 +194,13 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     setCurrentScope(scope);
 
     final Runnable action = () -> {
-      DefaultInspectionToolPresentation.setOutputPath(outputPath);
+      myOutputPath = outputPath;
       try {
         performInspectionsWithProgress(scope, runGlobalToolsOnly, isOfflineInspections);
         exportResults(inspectionsResults, outputPath);
       }
       finally {
-        DefaultInspectionToolPresentation.setOutputPath(null);
+        myOutputPath = null;
       }
     };
     if (isOfflineInspections) {
@@ -303,6 +304,10 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
 
   public InspectionResultsView getView() {
     return myView;
+  }
+
+  public String getOutputPath() {
+    return myOutputPath;
   }
 
   private void ignoreElementRecursively(@NotNull InspectionToolWrapper toolWrapper, final RefEntity refElement) {
