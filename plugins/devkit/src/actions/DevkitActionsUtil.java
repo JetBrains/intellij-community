@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.devkit.actions;
 
+import com.intellij.CommonBundle;
 import com.intellij.ide.actions.CreateFileAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -23,6 +24,7 @@ import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.ChooseModulesDialog;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaDirectoryService;
@@ -85,7 +87,9 @@ public final class DevkitActionsUtil {
       }
     }
 
-    throw new IncorrectOperationException(DevKitBundle.message("error.no.plugin.xml"));
+    Messages.showMessageDialog(project, DevKitBundle.message("error.no.plugin.xml"),
+                               CommonBundle.getErrorTitle(), Messages.getErrorIcon());
+    return null;
   }
 
   public static PsiClass createSingleClass(String name, String classTemplateName, PsiDirectory directory) {
@@ -131,7 +135,9 @@ public final class DevkitActionsUtil {
     @Override
     protected String getItemLocation(Module item) {
       XmlFile pluginXml = PluginModuleType.getPluginXml(item);
-      assert pluginXml != null;
+      if (pluginXml == null) {
+        return null;
+      }
 
       VirtualFile virtualFile = pluginXml.getVirtualFile();
       VirtualFile projectPath = item.getProject().getBaseDir();
@@ -140,9 +146,8 @@ public final class DevkitActionsUtil {
 
       if (VfsUtilCore.isAncestor(projectPath, virtualFile, false)) {
         return VfsUtilCore.getRelativePath(virtualFile, projectPath, File.separatorChar);
-      } else {
-        return virtualFile.getPresentableUrl();
       }
+      return virtualFile.getPresentableUrl();
     }
   }
 }
