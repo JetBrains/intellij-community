@@ -37,7 +37,7 @@ abstract class FoldRegionsTree {
   private static final Comparator<FoldRegion> BY_END_OFFSET = Comparator.comparingInt(RangeMarker::getEndOffset);
   private static final Comparator<? super FoldRegion> BY_END_OFFSET_REVERSE = Collections.reverseOrder(BY_END_OFFSET);
 
-  private static final TObjectHashingStrategy<FoldRegion> OFFSET_BASED_HASHING_STRATEGY = new TObjectHashingStrategy<FoldRegion>() {
+  static final TObjectHashingStrategy<FoldRegion> OFFSET_BASED_HASHING_STRATEGY = new TObjectHashingStrategy<FoldRegion>() {
     @Override
     public int computeHashCode(FoldRegion o) {
       return o.getStartOffset() * 31 + o.getEndOffset();
@@ -77,13 +77,14 @@ abstract class FoldRegionsTree {
       public boolean process(int offset, @NotNull FoldRegionImpl region, boolean atStart, @NotNull Collection<FoldRegionImpl> overlapping) {
         if (atStart) {
           if (sameRange(region, lastRegion)) {
-            if (region.getUserData(VISIBLE) == null) {
+            if (region.getUserData(VISIBLE) == null || lastRegion.getUserData(VISIBLE) != null && region.isExpanded()) {
               duplicatesToKill.add(region);
               return true;
             }
             else {
               duplicatesToKill.add(lastRegion);
               if (!visible.isEmpty() && lastRegion == visible.get(visible.size() - 1)) removeFromVisible(visible.size() - 1);
+              if (lastRegion == lastCollapsedRegion) lastCollapsedRegion = null;
             }
           }
           lastRegion = region;

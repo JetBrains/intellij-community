@@ -34,12 +34,13 @@ import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.awt.*;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -622,10 +623,57 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
 
   @TestOnly
   void validateState() {
-    for (FoldRegion region : getAllFoldRegions()) {
-      LOG.assertTrue (!region.isValid() ||
-                      !DocumentUtil.isInsideSurrogatePair(myEditor.getDocument(), region.getStartOffset()) &&
-                      !DocumentUtil.isInsideSurrogatePair(myEditor.getDocument(), region.getEndOffset()));
+    if (myEditor.getDocument().isInBulkUpdate()) return;
+
+    FoldRegion[] allFoldRegions = getAllFoldRegions();
+    boolean[] invisibleRegions = new boolean[allFoldRegions.length];
+    for (int i = 0; i < allFoldRegions.length; i++) {
+      FoldRegion r1 = allFoldRegions[i];
+      LOG.assertTrue(r1.isValid() &&
+                     !DocumentUtil.isInsideSurrogatePair(myEditor.getDocument(), r1.getStartOffset()) &&
+                     !DocumentUtil.isInsideSurrogatePair(myEditor.getDocument(), r1.getEndOffset()),
+                     "Invalid region");
+      for (int j = i + 1; j < allFoldRegions.length; j++) {
+        FoldRegion r2 = allFoldRegions[j];
+        int r1s = r1.getStartOffset();
+        int r1e = r1.getEndOffset();
+        int r2s = r2.getStartOffset();
+        int r2e = r2.getEndOffset();
+        LOG.assertTrue(r1s < r2s && (r1e <= r2s || r1e >= r2e) || 
+                       r1s == r2s && r1e != r2e || 
+                       r1s > r2s && r1s < r2e && r1e <= r2e || 
+                       r1s >= r2e,
+                       "Disallowed relative position of regions");
+        if (!r1.isExpanded() && r1s <= r2s && r1e >= r2e) invisibleRegions[j] = true;
+        if (!r2.isExpanded() && r2s <= r1s && r2e >= r1e) invisibleRegions[i] = true;
+      }
+    }
+    Set<FoldRegion> visibleRegions = new THashSet<>(FoldRegionsTree.OFFSET_BASED_HASHING_STRATEGY);
+    List<FoldRegion> topLevelRegions = new ArrayList<>();
+    for (int i = 0; i < allFoldRegions.length; i++) {
+      if (!invisibleRegions[i]) {
+        FoldRegion region = allFoldRegions[i];
+        LOG.assertTrue(visibleRegions.add(region), "Duplicate visible regions");
+        if (!region.isExpanded()) topLevelRegions.add(region);
+      }
+    }
+    Collections.sort(topLevelRegions, Comparator.comparingInt(r -> r.getStartOffset()));
+
+    FoldRegion[] actualVisibles = fetchVisible();
+    if (actualVisibles != null) {
+      for (FoldRegion r : actualVisibles) {
+        LOG.assertTrue(visibleRegions.remove(r), "Unexpected visible region");
+      }
+      LOG.assertTrue(visibleRegions.isEmpty(), "Missing visible region");
+    }
+
+    FoldRegion[] actualTopLevels = fetchTopLevel();
+    if (actualTopLevels != null) {
+      LOG.assertTrue(actualTopLevels.length == topLevelRegions.size(), "Wrong number of top-level regions");
+      for (int i = 0; i < actualTopLevels.length; i++) {
+        LOG.assertTrue(FoldRegionsTree.OFFSET_BASED_HASHING_STRATEGY.equals(actualTopLevels[i], topLevelRegions.get(i)), 
+                       "Unexpected top-level region");
+      }
     }
   }
 
