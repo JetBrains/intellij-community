@@ -276,7 +276,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     myMoveRenameInfo.clear();
 
     for(ShelvedChangeList changeList: changeLists) {
-      DefaultMutableTreeNode node = new DefaultMutableTreeNode(changeList);
+      DefaultMutableTreeNode node = new ShelvedListNode(changeList);
       model.insertNodeInto(node, myRoot, myRoot.getChildCount());
 
       final List<Object> shelvedFilesNodes = new ArrayList<>();
@@ -838,6 +838,20 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       catch (VcsException | IOException e) {
         throw new DiffRequestProducerException("Can't show diff for '" + getRequestName(provider) + "'", e);
       }
+    }
+  }
+
+  private static class ShelvedListNode extends DefaultMutableTreeNode {
+    @NotNull private final ShelvedChangeList myList;
+
+    public ShelvedListNode(@NotNull ShelvedChangeList list) {
+      super(list);
+      myList = list;
+    }
+
+    @NotNull
+    public ShelvedChangeList getList() {
+      return myList;
     }
   }
 }
