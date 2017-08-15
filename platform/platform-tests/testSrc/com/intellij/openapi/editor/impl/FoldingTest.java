@@ -337,10 +337,17 @@ public class FoldingTest extends AbstractEditorTest {
     assertEquals(21, ((FoldingModelImpl)myEditor.getFoldingModel()).getTotalNumberOfFoldedLines());
   }
 
-  public void testInnerRegionAtTheEndOfOuterRegion() {
+  public void _testInnerRegionAtTheEndOfOuterRegion() {
     addFoldRegion(10, 20, "outer");
     FoldRegion inner = addFoldRegion(15, 20, "inner");
     myModel.runBatchFoldingOperation(() -> inner.setExpanded(false));
+    Assert.assertArrayEquals(new FoldRegion[]{inner}, myModel.fetchTopLevel());
+  }
+
+  public void _testNestedRegions() {
+    addFoldRegion(10, 20, "outer");
+    FoldRegion inner = addCollapsedFoldRegion(10, 15, "inner");
+    addCollapsedFoldRegion(11, 12, "innermost");
     Assert.assertArrayEquals(new FoldRegion[]{inner}, myModel.fetchTopLevel());
   }
 }
