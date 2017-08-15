@@ -158,7 +158,7 @@ public class FSRecords implements IFSRecords {
       setParent(id, parentId);
     }
     catch (Throwable e) {
-      handleError(e);
+      requestRebuild(e);
     }
     finally {
       w.unlock();
@@ -167,7 +167,7 @@ public class FSRecords implements IFSRecords {
 
   void requestVfsRebuild(Throwable e) {
     //noinspection ThrowableResultOfMethodCallIgnored
-    handleError(e);
+    requestRebuild(e);
   }
 
   File basePath() {
@@ -520,7 +520,7 @@ public class FSRecords implements IFSRecords {
   }
 
   @Override
-  public void handleError(@NotNull Throwable e) throws RuntimeException, Error {
+  public void requestRebuild(@NotNull Throwable e) throws RuntimeException, Error {
     if (!myIsDisposed) {
       // No need to forcibly mark VFS corrupted if it is already shut down
       if (!myCorrupted && w.tryLock()) { // avoid deadlock if r lock is occupied by current thread
@@ -537,8 +537,8 @@ public class FSRecords implements IFSRecords {
   }
 
   @Override
-  public void handleError(int fileId, @NotNull Throwable e) throws RuntimeException, Error {
-    handleError(e);
+  public void requestRebuild(int fileId, @NotNull Throwable e) throws RuntimeException, Error {
+    requestRebuild(e);
   }
 
   private static class AttrPageAwareCapacityAllocationPolicy extends CapacityAllocationPolicy {
@@ -604,7 +604,7 @@ public class FSRecords implements IFSRecords {
       }
     }
     catch (Throwable e) {
-      handleError(e);
+      requestRebuild(e);
     }
     finally {
       w.unlock();
@@ -638,7 +638,7 @@ public class FSRecords implements IFSRecords {
       }
     }
     catch (Throwable e) {
-      handleError(e);
+      requestRebuild(e);
     }
     finally {
       w.unlock();
@@ -660,7 +660,7 @@ public class FSRecords implements IFSRecords {
       addToFreeRecordsList(id);
     }
     catch (Throwable e) {
-      handleError(e);
+      requestRebuild(e);
     }
     finally {
       w.unlock();
@@ -685,7 +685,7 @@ public class FSRecords implements IFSRecords {
       addToFreeRecordsList(id);
     }
     catch (Throwable e) {
-      handleError(e);
+      requestRebuild(e);
     }
     finally {
       w.unlock();
@@ -734,12 +734,12 @@ public class FSRecords implements IFSRecords {
 
   @Override
   @NotNull
-  public int[] listRoots() {
+  public RootRecord[] listRoots() {
     try {
       r.lock();
       try {
         if (ourStoreRootsSeparately) {
-          TIntArrayList result = new TIntArrayList();
+          ArrayList<RootRecord> result = new ArrayList<>();
 
           try {
             try (LineNumberReader stream = new LineNumberReader(new BufferedReader(new InputStreamReader(new FileInputStream(myRootsFile))))) {
@@ -747,24 +747,29 @@ public class FSRecords implements IFSRecords {
               while((str = stream.readLine()) != null) {
                 int index = str.indexOf(' ');
                 int id = Integer.parseInt(str.substring(0, index));
-                result.add(id);
+                String url = str.substring(index).trim();
+                result.add(new RootRecord(id, url));
               }
             }
           } catch (FileNotFoundException ignored) {}
 
-          return result.toNativeArray();
+          return result.toArray(new RootRecord[0]);
         }
 
         final DataInputStream input = readAttributeNoLock(ROOT_RECORD_ID, ourChildrenAttr);
-        if (input == null) return ArrayUtil.EMPTY_INT_ARRAY;
+        if (input == null) return new RootRecord[0];
 
         try {
           final int count = DataInputOutputUtil.readINT(input);
-          int[] result = ArrayUtil.newIntArray(count);
+          RootRecord[] result = new RootRecord[count];
           int prevId = 0;
+          int prevNameId = 0;
           for (int i = 0; i < count; i++) {
-            DataInputOutputUtil.readINT(input); // Name
-            prevId = result[i] = DataInputOutputUtil.readINT(input) + prevId; // Id
+            int nameId = DataInputOutputUtil.readINT(input) + prevNameId;
+            int recId = DataInputOutputUtil.readINT(input) + prevId;
+            result[i] = new RootRecord(recId, myNames.valueOf(nameId));
+            prevId = recId;
+            prevNameId = nameId;
           }
           return result;
         }
@@ -777,8 +782,8 @@ public class FSRecords implements IFSRecords {
       }
     }
     catch (Throwable e) {
-      handleError(e);
-      return ArrayUtil.EMPTY_INT_ARRAY;
+      requestRebuild(e);
+      return new RootRecord[0];
     }
   }
 
@@ -864,7 +869,7 @@ public class FSRecords implements IFSRecords {
       return id;
     }
     catch (Throwable e) {
-      handleError(e);
+      requestRebuild(e);
     }
     finally {
       w.unlock();
@@ -935,7 +940,7 @@ public class FSRecords implements IFSRecords {
       }
     }
     catch (Throwable e) {
-      handleError(e);
+      requestRebuild(e);
     }
     finally {
       w.unlock();
@@ -965,7 +970,7 @@ public class FSRecords implements IFSRecords {
       }
     }
     catch (Throwable e) {
-      handleError(e);
+      requestRebuild(e);
       return ArrayUtil.EMPTY_INT_ARRAY;
     }
   }
@@ -996,7 +1001,7 @@ public class FSRecords implements IFSRecords {
       }
     }
     catch (Throwable e) {
-      handleError(e);
+      requestRebuild(e);
       return NameId.EMPTY_ARRAY;
     }
   }
@@ -1012,7 +1017,7 @@ public class FSRecords implements IFSRecords {
       }
     }
     catch (Throwable e) {
-      handleError(e);
+      requestRebuild(e);
     }
     return false;
   }
@@ -1041,7 +1046,7 @@ public class FSRecords implements IFSRecords {
       }
     }
     catch (Throwable e) {
-      handleError(e);
+      requestRebuild(e);
     }
     finally {
       w.unlock();
@@ -1095,7 +1100,7 @@ public class FSRecords implements IFSRecords {
       }
     }
     catch (Throwable e) {
-      handleError(e);
+      requestRebuild(e);
     }
     return -1;
   }
@@ -1122,7 +1127,7 @@ public class FSRecords implements IFSRecords {
       } while (parentId != 0);
     }
     catch (Throwable e) {
-      handleError(e);
+      requestRebuild(e);
     }
     finally {
       r.unlock();
@@ -1143,7 +1148,7 @@ public class FSRecords implements IFSRecords {
       putRecordInt(id, PARENT_OFFSET, parentId);
     }
     catch (Throwable e) {
-      handleError(e);
+      requestRebuild(e);
     }
     finally {
       w.unlock();
@@ -1162,7 +1167,7 @@ public class FSRecords implements IFSRecords {
       }
     }
     catch (Throwable e) {
-      handleError(e);
+      requestRebuild(e);
     }
     return -1;
   }
@@ -1179,7 +1184,7 @@ public class FSRecords implements IFSRecords {
       }
     }
     catch (Throwable e) {
-      handleError(e);
+      requestRebuild(e);
     }
     return -1;
   }
@@ -1203,7 +1208,7 @@ public class FSRecords implements IFSRecords {
       }
     }
     catch (Throwable e) {
-      handleError(e);
+      requestRebuild(e);
       return "";
     }
   }
@@ -1217,7 +1222,7 @@ public class FSRecords implements IFSRecords {
       putRecordInt(id, NAME_OFFSET, nameId);
     }
     catch (Throwable e) {
-      handleError(e);
+      requestRebuild(e);
     }
     finally {
       w.unlock();
@@ -1245,7 +1250,7 @@ public class FSRecords implements IFSRecords {
       putRecordInt(id, FLAGS_OFFSET, flags);
     }
     catch (Throwable e) {
-      handleError(e);
+      requestRebuild(e);
     }
     finally {
       w.unlock();
@@ -1275,7 +1280,7 @@ public class FSRecords implements IFSRecords {
       }
     }
     catch (Throwable e) {
-      handleError(e);
+      requestRebuild(e);
     }
     finally {
       w.unlock();
@@ -1305,7 +1310,7 @@ public class FSRecords implements IFSRecords {
       }
     }
     catch (Throwable e) {
-      handleError(e);
+      requestRebuild(e);
     }
     finally {
       w.unlock();
@@ -1373,7 +1378,7 @@ public class FSRecords implements IFSRecords {
       return doReadContentById(page);
     }
     catch (Throwable e) {
-      handleError(e);
+      requestRebuild(e);
     }
     return null;
   }
@@ -1385,7 +1390,7 @@ public class FSRecords implements IFSRecords {
       return doReadContentById(contentId);
     }
     catch (Throwable e) {
-      handleError(e);
+      requestRebuild(e);
     }
     return null;
   }
@@ -1427,7 +1432,7 @@ public class FSRecords implements IFSRecords {
       }
     }
     catch (Throwable e) {
-      handleError(e);
+      requestRebuild(e);
     }
     return null;
   }
@@ -1576,7 +1581,7 @@ public class FSRecords implements IFSRecords {
       return record;
     }
     catch (Throwable e) {
-      handleError(e);
+      requestRebuild(e);
     }
     finally {
       w.unlock();
@@ -1596,7 +1601,7 @@ public class FSRecords implements IFSRecords {
       }
     }
     catch (Throwable e) {
-      handleError(e);
+      requestRebuild(e);
     }
     finally {
       w.unlock();
@@ -1615,7 +1620,7 @@ public class FSRecords implements IFSRecords {
       }
     }
     catch (Throwable e) {
-      handleError(e);
+      requestRebuild(e);
     }
     return -1;
   }
@@ -1634,7 +1639,7 @@ public class FSRecords implements IFSRecords {
       writeBytes(fileId, bytes, readOnly);
     }
     catch (Throwable e) {
-      handleError(e);
+      requestRebuild(e);
     }
   }
 
@@ -1657,7 +1662,7 @@ public class FSRecords implements IFSRecords {
       return recordId;
     }
     catch (IOException e) {
-      handleError(e);
+      requestRebuild(e);
     }
     finally {
       w.unlock();
@@ -1751,7 +1756,7 @@ public class FSRecords implements IFSRecords {
         FSRecords.this.writeBytes(myFileId, new ByteSequence(_out.getInternalBuffer(), 0, _out.size()), myFixedSize);
       }
       catch (Throwable e) {
-        handleError(e);
+        requestRebuild(e);
       }
     }
   }
@@ -1881,7 +1886,7 @@ public class FSRecords implements IFSRecords {
         }
       }
       catch (Throwable e) {
-        handleError(e);
+        requestRebuild(e);
       }
     }
 
@@ -1979,7 +1984,7 @@ public class FSRecords implements IFSRecords {
       closeFiles();
     }
     catch (Throwable e) {
-      handleError(e);
+      requestRebuild(e);
     }
     finally {
       myIsDisposed = true;
@@ -2060,7 +2065,7 @@ public class FSRecords implements IFSRecords {
         checkAttributesSanity(attributeRecordId, usedAttributeRecordIds, validAttributeIds);
       }
       catch (IOException ex) {
-        handleError(ex);
+        requestRebuild(ex);
       }
     }
   }

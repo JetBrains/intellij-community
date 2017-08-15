@@ -343,6 +343,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponentAdap
                                        @NotNull final Project project,
                                        @Nullable final GlobalSearchScope scope,
                                        @NotNull StubIdListContainerAction action) {
+    System.out.println("doProcessStubs: scope = " + scope);
     final FileBasedIndexImpl fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
     fileBasedIndex.ensureUpToDate(StubUpdatingIndex.INDEX_ID, project, scope);
 
@@ -408,6 +409,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponentAdap
 
   @Override
   public <K> boolean processAllKeys(@NotNull StubIndexKey<K, ?> indexKey, @NotNull Processor<K> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter idFilter) {
+    System.out.println("processAllKeys: scope = " + scope);
     FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, scope.getProject(), scope);
 
     final MyIndex<K> index = (MyIndex<K>)getAsyncState().myIndices.get(indexKey);

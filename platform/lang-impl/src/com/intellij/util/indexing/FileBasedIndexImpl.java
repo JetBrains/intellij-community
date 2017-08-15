@@ -585,6 +585,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   @Override
   @NotNull
   public <K> Collection<K> getAllKeys(@NotNull final ID<K, ?> indexId, @NotNull Project project) {
+    System.out.println("getAllKeys");
     Set<K> allKeys = new THashSet<>();
     processAllKeys(indexId, Processors.cancelableCollectProcessor(allKeys), project);
     return allKeys;
@@ -597,6 +598,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
   @Override
   public <K> boolean processAllKeys(@NotNull ID<K, ?> indexId, @NotNull Processor<K> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter idFilter) {
+    System.out.println("processAllKeys: scope = " + scope);
     try {
       waitUntilIndicesAreInitialized();
       final UpdatableIndex<K, ?, FileContent> index = getIndex(indexId);
@@ -730,6 +732,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   @Override
   @NotNull
   public <K, V> List<V> getValues(@NotNull final ID<K, V> indexId, @NotNull K dataKey, @NotNull final GlobalSearchScope filter) {
+    System.out.println("getValues: scope = " + filter);
     VirtualFile restrictToFile = null;
 
     if (filter instanceof Iterable) {
@@ -817,6 +820,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
                                          @NotNull K key,
                                          @NotNull Project project,
                                          @NotNull IdValueProcessor<V> processor) {
+    System.out.println("processAllValues");
     return processValueIterator(indexId, key, null, GlobalSearchScope.allScope(project), valueIt -> {
       while (valueIt.hasNext()) {
         V value = valueIt.next();
@@ -897,6 +901,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
                                               @Nullable IdFilter idFilter,
                                               @NotNull ValueProcessor<V> processor) {
     PersistentFS fs = (PersistentFS)ManagingFS.getInstance();
+    System.out.println("processValuesInScrope: scope = " + scope);
     IdFilter filter = idFilter != null ? idFilter : projectIndexableFiles(scope.getProject());
 
     return processValueIterator(indexId, dataKey, null, scope, valueIt -> {
@@ -925,6 +930,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
                                               @Nullable VirtualFile restrictToFile,
                                               @NotNull GlobalSearchScope scope,
                                               @NotNull Processor<InvertedIndexValueIterator<V>> valueProcessor) {
+    System.out.println("processValueIterator: scope = " + scope);
     final Boolean result = processExceptions(indexId, restrictToFile, scope,
                                              index -> valueProcessor.process((InvertedIndexValueIterator<V>)index.getData(dataKey).getValueIterator()));
     return result == null || result.booleanValue();
@@ -936,6 +942,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
                                                       @NotNull final GlobalSearchScope filter,
                                                       @Nullable Condition<V> valueChecker,
                                                       @NotNull final Processor<VirtualFile> processor) {
+    System.out.println("processFilesContainingAllKeys: filter = " + filter);
     ProjectIndexableFilesFilter filesSet = projectIndexableFiles(filter.getProject());
     final TIntHashSet set = collectFileIdsContainingAllKeys(indexId, dataKeys, filter, valueChecker, filesSet);
     return set != null && processVirtualFiles(set, filter, processor);
@@ -1460,6 +1467,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   public void indexFileContent(@Nullable Project project, @NotNull com.intellij.ide.caches.FileContent content) {
     VirtualFile file = content.getVirtualFile();
     final int fileId = Math.abs(getIdMaskingNonIdBasedFile(file));
+    System.out.println("Indexing file: " + file.getPath() + " fileId: " + fileId);
 
     try {
       // if file was scheduled for update due to vfs events then it is present in myFilesToUpdate

@@ -33,6 +33,8 @@ import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -58,6 +60,7 @@ public class UnindexedFilesUpdater extends DumbModeTask {
   }
 
   private void updateUnindexedFiles(ProgressIndicator indicator) {
+    if (!PersistentFSImpl.getImpl().indexer) return;
     PerformanceWatcher.Snapshot snapshot = PerformanceWatcher.takeSnapshot();
     PushedFilePropertiesUpdater.getInstance(myProject).pushAllPropertiesNow();
     boolean trackResponsiveness = !ApplicationManager.getApplication().isUnitTestMode();

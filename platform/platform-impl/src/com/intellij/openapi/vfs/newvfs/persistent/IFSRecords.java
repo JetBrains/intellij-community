@@ -31,6 +31,21 @@ import java.io.IOException;
 import java.util.function.IntPredicate;
 
 public interface IFSRecords {
+
+  class RootRecord {
+    final int id;
+    final String url;
+
+    public RootRecord(int id, String url) {
+      this.id = id;
+      this.url = url;
+    }
+
+    public RootRecord withId(int id) {
+      return new RootRecord(id, url);
+    }
+  }
+
   void writeAttributesToRecord(int id, int parentId, @NotNull FileAttributes attributes, @NotNull String name);
 
   void connect(PagedFileStorage.StorageLockContext lockContext, PersistentStringEnumerator names, FileNameCache fileNameCache, VfsDependentEnum<String> attrsList);
@@ -41,9 +56,9 @@ public interface IFSRecords {
 
   long getTimestamp();
 
-  void handleError(@NotNull Throwable e) throws RuntimeException, Error;
+  void requestRebuild(@NotNull Throwable e) throws RuntimeException, Error;
 
-  void handleError(int fileId, @NotNull Throwable e) throws RuntimeException, Error;
+  void requestRebuild(int fileId, @NotNull Throwable e) throws RuntimeException, Error;
 
   long getCreationTimestamp();
 
@@ -53,7 +68,7 @@ public interface IFSRecords {
   void deleteRecordRecursively(int id);
 
   @NotNull
-  int[] listRoots();
+  RootRecord[] listRoots();
 
   int findRootRecord(@NotNull String rootUrl);
 

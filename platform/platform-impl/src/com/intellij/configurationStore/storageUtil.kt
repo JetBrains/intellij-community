@@ -33,6 +33,7 @@ import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectMacrosUtil
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.systemIndependentPath
@@ -136,17 +137,14 @@ fun getOrCreateVirtualFile(requestor: Any?, file: Path): VirtualFile {
     return virtualFile
   }
 
-  val absoluteFile = file.toAbsolutePath()
-
-  val parentFile = absoluteFile.parent
-  parentFile.createDirectories()
-
-  // need refresh if the directory has just been created
-  val parentVirtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(parentFile.systemIndependentPath) ?: throw IOException(
-    ProjectBundle.message("project.configuration.save.file.not.found", parentFile))
+  val runnable = {
+    val absoluteFile = file.toAbsolutePath()
+    val parentVirtualFile = VfsUtil.createDirectories(absoluteFile.parent.systemIndependentPath)
+    parentVirtualFile.createChildData(requestor, file.fileName.toString())
+  }
 
   if (ApplicationManager.getApplication().isWriteAccessAllowed) {
-    return parentVirtualFile.createChildData(requestor, file.fileName.toString())
+    return runnable()
   }
-  return runUndoTransparentWriteAction { parentVirtualFile.createChildData(requestor, file.fileName.toString()) }
+  return runUndoTransparentWriteAction(runnable)
 }

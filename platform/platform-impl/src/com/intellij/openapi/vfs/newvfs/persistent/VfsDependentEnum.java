@@ -40,6 +40,7 @@ public class VfsDependentEnum<T> {
   private static final String DEPENDENT_PERSISTENT_LIST_START_PREFIX = "vfs_enum_";
   private final File myFile;
   private final DataExternalizer<T> myKeyDescriptor;
+  private final IFSRecords myRecords;
   private int myVersion;
 
   // GuardedBy("myLock")
@@ -51,14 +52,14 @@ public class VfsDependentEnum<T> {
   private boolean myTriedToLoadFile;
 
   public VfsDependentEnum(String fileName, KeyDescriptor<T> descriptor, int version) {
-    this(FSRecords.defaultBasePath(), fileName, descriptor, version);
+    this(FSRecords.defaultBasePath(), fileName, descriptor, version, PersistentFSImpl.getImpl().getRecords());
   }
 
-  public VfsDependentEnum(File base, String fileName, KeyDescriptor<T> descriptor, int version) {
+  public VfsDependentEnum(File base, String fileName, KeyDescriptor<T> descriptor, int version, IFSRecords fsRecords) {
+    myRecords = fsRecords;
     myFile = new File(base, DEPENDENT_PERSISTENT_LIST_START_PREFIX + fileName + FSRecords.VFS_FILES_EXTENSION);
     myKeyDescriptor = descriptor;
     myVersion = version;
-
   }
 
   static File getBaseFile() {
@@ -97,7 +98,7 @@ public class VfsDependentEnum<T> {
 
     try {
       if (myFile.length() == 0) {
-        DataInputOutputUtil.writeTIME(output, PersistentFS.getInstance().getCreationTimestamp());
+        DataInputOutputUtil.writeTIME(output, myRecords.getCreationTimestamp());
         DataInputOutputUtil.writeINT(output, myVersion);
       }
       myKeyDescriptor.save(output, instance);
@@ -115,7 +116,7 @@ public class VfsDependentEnum<T> {
       DataInputStream input = new DataInputStream(new BufferedInputStream(new FileInputStream(myFile)));
       long vfsVersion = DataInputOutputUtil.readTIME(input);
 
-      if (vfsVersion != PersistentFS.getInstance().getCreationTimestamp()) {
+      if (vfsVersion != myRecords.getCreationTimestamp()) {
         // vfs was rebuilt, so the list will be rebuit
         try { input.close(); } catch (IOException ignore) {}
         FileUtil.deleteWithRenaming(myFile);
@@ -160,7 +161,7 @@ public class VfsDependentEnum<T> {
 
   protected void doInvalidation(Throwable e) {
     FileUtil.deleteWithRenaming(myFile); // better alternatives ?
-    ((PersistentFSImpl)(PersistentFS.getInstance())).requestVfsRebuild(e);
+    myRecords.requestRebuild(e);
   }
 
   private void register(@NotNull T instance, int id) {

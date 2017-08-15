@@ -109,8 +109,8 @@ public class RefreshSessionImpl extends RefreshSession {
 
   @Override
   public void launch() {
-    mySemaphore.down();
-    ((RefreshQueueImpl)RefreshQueue.getInstance()).execute(this);
+    //mySemaphore.down();
+    //((RefreshQueueImpl)RefreshQueue.getInstance()).execute(this);
   }
 
   public void scan() {

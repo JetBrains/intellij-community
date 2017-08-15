@@ -76,13 +76,13 @@ public class FSRecordsShard implements IFSRecords {
   }
 
   @Override
-  public void handleError(@NotNull Throwable e) throws RuntimeException, Error {
-    myDelegate.handleError(e);
+  public void requestRebuild(@NotNull Throwable e) throws RuntimeException, Error {
+    myDelegate.requestRebuild(e);
   }
 
   @Override
-  public void handleError(int fileId, @NotNull Throwable e) throws RuntimeException, Error {
-    myDelegate.handleError(removeShardId(fileId), e);
+  public void requestRebuild(int fileId, @NotNull Throwable e) throws RuntimeException, Error {
+    myDelegate.requestRebuild(removeShardId(fileId), e);
   }
 
   @Override
@@ -102,8 +102,8 @@ public class FSRecordsShard implements IFSRecords {
 
   @NotNull
   @Override
-  public int[] listRoots() {
-    return addShardId(myDelegate.listRoots());
+  public RootRecord[] listRoots() {
+    return ContainerUtil.map(myDelegate.listRoots(), record -> record.withId(addShardId(record.id)), new RootRecord[0]);
   }
 
   @Override

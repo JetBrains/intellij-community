@@ -171,8 +171,8 @@ public class IndexingStamp {
         try {
 
           if ((DataInputOutputUtil.readINT(in) == currentIndexVersion || currentIndexVersion == ANY_VERSION) &&
-              DataInputOutputUtil.readINT(in) == VERSION &&
-              DataInputOutputUtil.readTIME(in) == PersistentFS.getInstance().getCreationTimestamp()) {
+              DataInputOutputUtil.readINT(in) == VERSION
+              /*DataInputOutputUtil.readTIME(in) == PersistentFS.getInstance().getCreationTimestamp()*/) {
             version = new IndexVersion(in);
             ourIndexIdToCreationStamp.put(indexName, version);
             return version;

@@ -2,6 +2,7 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
+import com.intellij.util.io.PersistentStringEnumerator;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntHashSet;
 
@@ -54,18 +55,20 @@ interface FSRecordsSource {
   class FSRecordsSourceImpl implements FSRecordsSource {
 
     private final IFSRecords myRecords;
+    private PersistentStringEnumerator mySourceNames;
     private int myMaxId;
 
-    FSRecordsSourceImpl(IFSRecords records) {
+    FSRecordsSourceImpl(IFSRecords records, PersistentStringEnumerator sourceNames) {
       myRecords = records;
+      mySourceNames = sourceNames;
     }
 
     @Override
     public SourceInfo connect() {
-      int[] roots = myRecords.listRoots();
+      IFSRecords.RootRecord[] roots = myRecords.listRoots();
       HashMap<String, Integer> rootsMap = new HashMap<>();
-      for (int root : roots) {
-        rootsMap.put(myRecords.getName(root), root);
+      for (IFSRecords.RootRecord root : roots) {
+        rootsMap.put(root.url, root.id);
       }
       myMaxId = ((FSRecords)myRecords).getMaxId();
       return new SourceInfo(myMaxId, rootsMap);

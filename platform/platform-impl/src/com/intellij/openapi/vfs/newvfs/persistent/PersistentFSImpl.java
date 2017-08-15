@@ -51,7 +51,6 @@ import java.io.*;
 import java.io.DataOutputStream;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Supplier;
 
 /**
  * @author max
@@ -79,7 +78,6 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     return (PersistentFSImpl)PersistentFS.getInstance();
   }
 
-  @TestOnly
   public IFSRecords getRecords() {
     return myRecords;
   }
@@ -94,6 +92,8 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     LowMemoryWatcher.register(this::clearIdCache, this);
   }
 
+  public static boolean indexer = false;
+
   @Override
   public void initComponent() {
     final AtomicBoolean once = new AtomicBoolean();
@@ -104,34 +104,39 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
       assert !once.get();
       once.set(true);
 
-      FSRecords sourceRecords = new FSRecords(new File(FSRecords.getCachesDir()));
-      try {
-        File sourceNamesFile = new File(cachesDir, "names" + FSRecords.VFS_FILES_EXTENSION);
-        PagedFileStorage.StorageLockContext sourceLockContext = new PagedFileStorage.StorageLockContext(false);
-        PersistentStringEnumerator sourceNames = new PersistentStringEnumerator(sourceNamesFile, sourceLockContext);
-        FileNameCache sourceNameCache = new FileNameCache(sourceNames);
-        VfsDependentEnum<String> sourceAttrList =
-          new VfsDependentEnum<>(new File(cachesDir), "attrib", EnumeratorStringDescriptor.INSTANCE, 1);
-        sourceRecords.connect(sourceLockContext, sourceNames, sourceNameCache, sourceAttrList);
-      } catch (IOException e){
-        throw new RuntimeException(e);
+      if (indexer) {
+        return new FSRecords(new File(FSRecords.getCachesDir()));
+      } else {
+        FSRecords sourceRecords = new FSRecords(new File(FSRecords.getCachesDir()));
+        try {
+          File sourceNamesFile = new File(cachesDir, "names" + FSRecords.VFS_FILES_EXTENSION);
+          PagedFileStorage.StorageLockContext sourceLockContext = new PagedFileStorage.StorageLockContext(false);
+          PersistentStringEnumerator sourceNames = new PersistentStringEnumerator(sourceNamesFile, sourceLockContext);
+          FileNameCache sourceNameCache = new FileNameCache(sourceNames);
+          VfsDependentEnum<String> sourceAttrList =
+            new VfsDependentEnum<>(new File(cachesDir), "attrib", EnumeratorStringDescriptor.INSTANCE, 1, sourceRecords);
+          sourceRecords.connect(sourceLockContext, sourceNames, sourceNameCache, sourceAttrList);
+          FSRecordsSource.FSRecordsSourceImpl source = new FSRecordsSource.FSRecordsSourceImpl(sourceRecords, sourceNames);
+          FSRecords sink = new FSRecords(sinkFile);
+          return new LazyFSRecords(sinkFile, sink, source);
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
       }
 
-      FSRecordsSource.FSRecordsSourceImpl source = new FSRecordsSource.FSRecordsSourceImpl(sourceRecords);
-      FSRecords sink = new FSRecords(sinkFile);
-      return new LazyFSRecords(sinkFile, sink, source) ;
     });
 
     File namesFile = new File(sinkFile, "names" + FSRecords.VFS_FILES_EXTENSION);
     PagedFileStorage.StorageLockContext lockContext = new PagedFileStorage.StorageLockContext(false);
     try {
       myNames = new PersistentStringEnumerator(namesFile, lockContext);
-      VfsDependentEnum<String> attrsList = new VfsDependentEnum<>(sinkFile, "attrib", EnumeratorStringDescriptor.INSTANCE, 1);
+      VfsDependentEnum<String> attrsList = new VfsDependentEnum<>(sinkFile, "attrib", EnumeratorStringDescriptor.INSTANCE, 1, myRecords);
       myNamesCache = new FileNameCache(myNames);
       myRecords.connect(lockContext, myNames, myNamesCache, attrsList);
     }
     catch (IOException e) {
-      myRecords.handleError(e);
+      myRecords.requestRebuild(e);
     }
     System.out.println("CONNECTED");
   }
@@ -171,7 +176,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   }
 
   public void requestVfsRebuild(Throwable e) {
-    myRecords.handleError(e);
+    myRecords.requestRebuild(e);
   }
 
   @NotNull
@@ -187,7 +192,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   @Override
   @NotNull
   public String[] list(@NotNull final VirtualFile file) {
-    System.out.println("list: file = [" + file + "]");
+    //System.out.println("list: file = [" + file + "]");
     int id = getFileId(file);
 
     FSRecords.NameId[] nameIds = myRecords.listAll(id);
@@ -200,7 +205,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   @Override
   @NotNull
   public String[] listPersisted(@NotNull VirtualFile parent) {
-    System.out.println("listPersisted: parent = [" + parent + "]");
+    //System.out.println("listPersisted: parent = [" + parent + "]");
     return listPersisted(myRecords.list(getFileId(parent)));
   }
 
@@ -257,7 +262,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   @Override
   @NotNull
   public FSRecords.NameId[] listAll(@NotNull VirtualFile parent) {
-    System.out.println("listAll = [" + parent + "]");
+    //System.out.println("listAll = [" + parent + "]");
     final int parentId = getFileId(parent);
 
     FSRecords.NameId[] nameIds = myRecords.listAll(parentId);
@@ -275,7 +280,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   @Override
   @Nullable
   public DataInputStream readAttribute(@NotNull final VirtualFile file, @NotNull final FileAttribute att) {
-    System.out.println("readAttribute file = [" + file + "], att = [" + att + "]");
+    //System.out.println("readAttribute file = [" + file + "], att = [" + att + "]");
     return myRecords.readAttribute(getFileId(file), att);
   }
 
@@ -306,13 +311,13 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
   @Override
   public int storeUnlinkedContent(@NotNull byte[] bytes) {
-    System.out.println("storeUnlinkedContent: bytes = [" + bytes + "]");
+    //System.out.println("storeUnlinkedContent: bytes = [" + bytes + "]");
     return myRecords.storeUnlinkedContent(bytes);
   }
 
   @Override
   public int getModificationCount(@NotNull final VirtualFile file) {
-    System.out.println("getModificationCount: file = [" + file + "]");
+    //System.out.println("getModificationCount: file = [" + file + "]");
     return myRecords.getModCount(getFileId(file));
   }
 
@@ -356,7 +361,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
   @Override
   public int getFileAttributes(int id) {
-    System.out.println("getFileAttributes: id = [" + id + "]");
+    //System.out.println("getFileAttributes: id = [" + id + "]");
     assert id > 0;
     //noinspection MagicConstant
     return myRecords.getFlags(id);
@@ -373,13 +378,13 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
   @Override
   public boolean exists(@NotNull final VirtualFile fileOrDirectory) {
-    System.out.println("exists: fileOrDirectory = [" + fileOrDirectory + "]");
+    //System.out.println("exists: fileOrDirectory = [" + fileOrDirectory + "]");
     return ((VirtualFileWithId)fileOrDirectory).getId() > 0;
   }
 
   @Override
   public long getTimeStamp(@NotNull final VirtualFile file) {
-    System.out.println("getTimeStamp: file = [" + file + "]");
+    //System.out.println("getTimeStamp: file = [" + file + "]");
     return myRecords.getTimestamp(getFileId(file));
   }
 
@@ -429,7 +434,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
   @Override
   public int getId(@NotNull VirtualFile parent, @NotNull String childName, @NotNull NewVirtualFileSystem fs) {
-    System.out.println("getId: parent = [" + parent + "], childName = [" + childName + "], fs = [" + fs + "]");
+    //System.out.println("getId: parent = [" + parent + "], childName = [" + childName + "], fs = [" + fs + "]");
     int parentId = getFileId(parent);
     int[] children = myRecords.list(parentId);
 
@@ -461,7 +466,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
   @Override
   public long getLength(@NotNull VirtualFile file) {
-    System.out.println("getLength: file = [" + file + "]");
+    //System.out.println("getLength: file = [" + file + "]");
     long len;
     if (mustReloadContent(file)) {
       len = reloadLengthFromDelegate(file, getDelegate(file));
@@ -475,7 +480,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
   @Override
   public long getLastRecordedLength(@NotNull VirtualFile file) {
-    System.out.println("getLastRecordedLength: file = [" + file + "]");
+    //System.out.println("getLastRecordedLength: file = [" + file + "]");
     int id = getFileId(file);
     return myRecords.getLength(id);
   }
@@ -547,7 +552,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   @Override
   @NotNull
   public byte[] contentsToByteArray(@NotNull final VirtualFile file, boolean cacheContent) throws IOException {
-    System.out.println("contentsToByteArray: file = [" + file + "], cacheContent = [" + cacheContent + "]");
+    //System.out.println("contentsToByteArray: file = [" + file + "], cacheContent = [" + cacheContent + "]");
     InputStream contentStream = null;
     boolean reloadFromDelegate;
     boolean outdated;
@@ -598,7 +603,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
         return FileUtil.loadBytes(contentStream, (int)length);
       }
       catch (IOException e) {
-        myRecords.handleError(fileId, e);
+        myRecords.requestRebuild(fileId, e);
         return ArrayUtil.EMPTY_BYTE_ARRAY;
       }
     }
@@ -615,7 +620,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   @Override
   @NotNull
   public InputStream getInputStream(@NotNull final VirtualFile file) throws IOException {
-    System.out.println("getInputStream: file = [" + file + "]");
+    //System.out.println("getInputStream: file = [" + file + "]");
     synchronized (myInputLock) {
       InputStream contentStream;
       if (mustReloadContent(file) || FileUtilRt.isTooLarge(file.getLength()) || (contentStream = readContent(file)) == null) {
@@ -1303,16 +1308,16 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
   @Override
   public String getName(int id) {
-    System.out.println("getName: id = [" + id + "]");
+    //System.out.println("getName: id = [" + id + "]");
     assert id > 0;
     return myRecords.getName(id);
   }
 
   @TestOnly
   public void cleanPersistedContents() {
-    int[] roots = myRecords.listRoots();
-    for (int root : roots) {
-      markForContentReloadRecursively(root);
+    IFSRecords.RootRecord[] roots = myRecords.listRoots();
+    for (IFSRecords.RootRecord root : roots) {
+      markForContentReloadRecursively(root.id);
     }
   }
 

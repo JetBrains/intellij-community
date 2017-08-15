@@ -16,7 +16,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.function.IntPredicate;
 import java.util.function.Supplier;
 
@@ -98,26 +101,18 @@ public class ShardingFSRecords implements IFSRecords {
   }
 
   @Override
-  public void handleError(@NotNull Throwable e) throws RuntimeException, Error {
+  public void requestRebuild(@NotNull Throwable e) throws RuntimeException, Error {
 
   }
 
   @Override
-  public void handleError(int fileId, @NotNull Throwable e) throws RuntimeException, Error {
-    getShard(fileId).handleError(fileId, e);
+  public void requestRebuild(int fileId, @NotNull Throwable e) throws RuntimeException, Error {
+    getShard(fileId).requestRebuild(fileId, e);
   }
 
   @Override
   public long getCreationTimestamp() {
-    if (getShards().isEmpty()) {
-      return getShard(1).getCreationTimestamp();
-    }
-    // TODO: not thread safe!!!
-    long ts = Long.MAX_VALUE;
-    for (IFSRecords records : getShards()) {
-      ts = Math.min(records.getCreationTimestamp(), ts);
-    }
-    return ts;
+    return getShard(1).getCreationTimestamp();
   }
 
   @Override
@@ -132,12 +127,12 @@ public class ShardingFSRecords implements IFSRecords {
 
   @NotNull
   @Override
-  public int[] listRoots() {
-    TIntArrayList l = new TIntArrayList();
+  public RootRecord[] listRoots() {
+    List<RootRecord> l = new ArrayList<>();
     for (IFSRecords records : getShards()) {
-      l.add(records.listRoots());
+      l.addAll(Arrays.asList(records.listRoots()));
     }
-    return l.toNativeArray();
+    return l.toArray(new RootRecord[0]);
   }
 
   @Override
@@ -183,20 +178,12 @@ public class ShardingFSRecords implements IFSRecords {
 
   @Override
   public int getLocalModCount() {
-    int res = 0;
-    for (IFSRecords records : getShards()) {
-      res += records.getLocalModCount();
-    }
-    return res;
+    return getShard(1).getLocalModCount();
   }
 
   @Override
   public int getModCount() {
-    int res = 0;
-    for (IFSRecords records : getShards()) {
-      res += records.getModCount();
-    }
-    return res;
+    return getShard(1).getModCount();
   }
 
   @NotNull
@@ -226,7 +213,7 @@ public class ShardingFSRecords implements IFSRecords {
       return myNames.enumerate(name);
     }
     catch (Throwable e) {
-      handleError(e);
+      requestRebuild(e);
     }
     return -1;
   }

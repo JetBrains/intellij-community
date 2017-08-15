@@ -39,10 +39,10 @@ public class LazyFSRecords implements IFSRecords {
   @Override
   public void writeAttributesToRecord(int id, int parentId, @NotNull FileAttributes attributes, @NotNull String name) {
     ensureLoaded(new int[]{id, parentId});
-    mySink.writeAttributesToRecord(toSinkId(id), toSinkId(parentId), attributes, name);
+    mySink.writeAttributesToRecord(toSinkIdAsserting(id), toSinkIdAsserting(parentId), attributes, name);
   }
 
-  private void ensureLoaded(int[] ids){
+  private boolean ensureLoaded(int[] ids){
     TIntArrayList idsToLoad = new TIntArrayList();
     for (int id : ids) {
       if (id > mySourceMaxId) continue;
@@ -51,7 +51,7 @@ public class LazyFSRecords implements IFSRecords {
       }
     }
     TIntArrayList recordsToLoad = new TIntArrayList();
-    if (idsToLoad.isEmpty()) return;
+    if (idsToLoad.isEmpty()) return false;
     TIntArrayList ancestors = mySource.getAllAncestors(idsToLoad);
     ancestors.forEach(p -> {
       if (toSinkId(p) == -1) {
@@ -64,7 +64,7 @@ public class LazyFSRecords implements IFSRecords {
     FSRecordsSource.RecordInfo[] records = mySource.loadRecords(recordsToLoad);
     for (FSRecordsSource.RecordInfo record : records) {
       synchronized (mySink) {
-        if (toSinkId(record.id) != -1) {
+        if (toSinkId(record.id) == -1) {
           int newRecord = mySink.createChildRecord(-1);
           mySink.setName(newRecord, record.name);
           mySink.setTimestamp(newRecord, record.timestamp);
@@ -76,6 +76,7 @@ public class LazyFSRecords implements IFSRecords {
         }
       }
     }
+    return true;
   }
 
 
@@ -196,7 +197,7 @@ public class LazyFSRecords implements IFSRecords {
 
   int toSinkIdAsserting(int publicId) {
     int x = toSinkId(publicId);
-    if (x < 0) throw new AssertionError(publicId);
+    if (x < 0) throw new AssertionError("x = " + x + " id: " + publicId);
     return x;
   }
 
@@ -216,13 +217,13 @@ public class LazyFSRecords implements IFSRecords {
   }
 
   @Override
-  public void handleError(@NotNull Throwable e) throws RuntimeException, Error {
-    mySink.handleError(e);
+  public void requestRebuild(@NotNull Throwable e) throws RuntimeException, Error {
+    mySink.requestRebuild(e);
   }
 
   @Override
-  public void handleError(int fileId, @NotNull Throwable e) throws RuntimeException, Error {
-    mySink.handleError(fileId, e);
+  public void requestRebuild(int fileId, @NotNull Throwable e) throws RuntimeException, Error {
+    mySink.requestRebuild(toSinkId(fileId), e);
   }
 
   @Override
@@ -241,7 +242,7 @@ public class LazyFSRecords implements IFSRecords {
   }
 
   @Override
-  public int createChildRecord(int parentId) {
+  synchronized public int createChildRecord(int parentId) {
     System.out.println("LazyFSRecords.createChildRecord");
     System.out.println("parentId = [" + parentId + "]");
     ensureLoaded(new int [] { parentId });
@@ -286,7 +287,7 @@ public class LazyFSRecords implements IFSRecords {
   }
 
   @Override
-  public void deleteRecordRecursively(int id) {
+  synchronized public void deleteRecordRecursively(int id) {
     System.out.println("LazyFSRecords.deleteRecordRecursively");
     System.out.println("id = [" + id + "]");
     ensureLoaded(new int[]{id});
@@ -305,12 +306,12 @@ public class LazyFSRecords implements IFSRecords {
 
   @NotNull
   @Override
-  public int[] listRoots() {
+  synchronized public RootRecord[] listRoots() {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public int findRootRecord(@NotNull String rootUrl) {
+  synchronized public int findRootRecord(@NotNull String rootUrl) {
     System.out.println("LazyFSRecords.findRootRecord");
     System.out.println("rootUrl = [" + rootUrl + "]");
     Integer publicRootId = myRoots.get(rootUrl);
@@ -324,7 +325,7 @@ public class LazyFSRecords implements IFSRecords {
   }
 
   @Override
-  public void deleteRootRecord(int id) {
+  synchronized public void deleteRootRecord(int id) {
     System.out.println("LazyFSRecords.deleteRootRecord");
     System.out.println("id = [" + id + "]");
     int sinkId = toSinkId(id);
@@ -354,7 +355,7 @@ public class LazyFSRecords implements IFSRecords {
 
   @NotNull
   @Override
-  public int[] list(int id) {
+  synchronized public int[] list(int id) {
     System.out.println("LazyFSRecords.list");
     System.out.println("id = [" + id + "]");
     int[] offline = listOffline(toSinkIdAsserting(id));
@@ -372,44 +373,48 @@ public class LazyFSRecords implements IFSRecords {
 
   @NotNull
   @Override
-  public NameId[] listAll(int parentId) {
+  synchronized public NameId[] listAll(int parentId) {
     int[] children = list(parentId);
     ensureLoaded(children);
-    NameId[] sinkNameIds = mySink.listAll(toSinkId(parentId));
-    return ContainerUtil.map(sinkNameIds, (nameId) -> nameId.withId(toPublicId(nameId.id)), new NameId[0]);
+    NameId[] result = new NameId[children.length];
+    for (int i = 0; i < children.length; i++) {
+      result[i] = new NameId(children[i], getNameId(children[i]), getName(children[i]));
+    }
+    return result;
   }
 
   @Override
-  public boolean wereChildrenAccessed(int id) {
+  synchronized public boolean wereChildrenAccessed(int id) {
     int sinkId = toSinkId(id);
     return sinkId > 0 && mySink.wereChildrenAccessed(sinkId);
   }
 
   @Override
-  public void updateList(int id, @NotNull int[] childIds) {
+  synchronized public void updateList(int id, @NotNull int[] childIds) {
     System.out.println("LazyFSRecords.updateList");
     System.out.println("id = [" + id + "], childIds = [" + childIds + "]");
-    updateLocalList(toSinkIdAsserting(id), childIds);
+    int sinkId = toSinkIdAsserting(id);
+    updateLocalList(sinkId, childIds);
     int[] sinkChildren = new int[childIds.length];
     for (int i = 0; i < childIds.length; i++) {
-      sinkChildren[i] = toSinkId(childIds[i]);
+      sinkChildren[i] = toSinkIdAsserting(childIds[i]);
     }
-    mySink.updateList(toSinkId(id), sinkChildren);
+    mySink.updateList(sinkId, sinkChildren);
   }
 
   @Override
-  public int getLocalModCount() {
+  synchronized public int getLocalModCount() {
     return mySink.getLocalModCount();
   }
 
   @Override
-  public int getModCount() {
+  synchronized public int getModCount() {
     return mySink.getModCount();
   }
 
   @NotNull
   @Override
-  public TIntArrayList getParents(int id, @NotNull IntPredicate cached) {
+  synchronized public TIntArrayList getParents(int id, @NotNull IntPredicate cached) {
     ensureLoaded(new int[]{id});
     TIntArrayList parents = mySink.getParents(toSinkId(id), recordId -> cached.test(toPublicId(recordId)));
     parents.transformValues(sinkId -> toPublicId(sinkId));
@@ -417,94 +422,94 @@ public class LazyFSRecords implements IFSRecords {
   }
 
   @Override
-  public void setParent(int id, int parentId) {
+  synchronized public void setParent(int id, int parentId) {
     System.out.println("LazyFSRecords.setParent");
     System.out.println("id = [" + id + "], parentId = [" + parentId + "]");
     ensureLoaded(new int[]{id, parentId});
-    mySink.setParent(toSinkId(id), toSinkId(parentId));
+    mySink.setParent(toSinkIdAsserting(id), toSinkIdAsserting(parentId));
   }
 
   @Override
-  public int getParent(int id) {
+  synchronized public int getParent(int id) {
     ensureLoaded(new int[]{id});
     return toPublicId(mySink.getParent(toSinkId(id)));
   }
 
   @Override
-  public int getNameId(int id) {
+  synchronized public int getNameId(int id) {
     ensureLoaded(new int[]{id});
     return mySink.getNameId(toSinkId(id));
   }
 
   @Override
-  public int getNameId(String name) {
+  synchronized public int getNameId(String name) {
     return mySink.getNameId(name);
   }
 
   @Override
-  public String getName(int recordId) {
+  synchronized public String getName(int recordId) {
     ensureLoaded(new int[]{recordId});
     return mySink.getName(toSinkId(recordId));
   }
 
   @NotNull
   @Override
-  public CharSequence getNameSequence(int id) {
+  synchronized public CharSequence getNameSequence(int id) {
     ensureLoaded(new int[] {id});
     return mySink.getNameSequence(toSinkId(id));
   }
 
   @Override
-  public void setName(int id, @NotNull String name) {
+  synchronized public void setName(int id, @NotNull String name) {
     ensureLoaded(new int[]{id});
     mySink.setName(toSinkId(id), name);
   }
 
   @Override
-  public int getFlags(int id) {
+  synchronized public int getFlags(int id) {
     ensureLoaded(new int[] {id});
     return mySink.getFlags(toSinkId(id));
   }
 
   @Override
-  public void setFlags(int id, int flags, boolean markAsChange) {
+  synchronized public void setFlags(int id, int flags, boolean markAsChange) {
     ensureLoaded(new int[] {id});
     mySink.setFlags(toSinkId(id), flags, markAsChange);
   }
 
   @Override
-  public long getLength(int id) {
+  synchronized public long getLength(int id) {
     ensureLoaded(new int[] {id});
     return mySink.getLength(toSinkId(id));
   }
 
   @Override
-  public void setLength(int id, long len) {
+  synchronized public void setLength(int id, long len) {
     ensureLoaded(new int[] {id});
     mySink.setLength(toSinkId(id), len);
   }
 
   @Override
-  public long getTimestamp(int id) {
+  synchronized public long getTimestamp(int id) {
     ensureLoaded(new int[] {id});
     return mySink.getTimestamp(toSinkId(id));
   }
 
   @Override
-  public void setTimestamp(int id, long value) {
+  synchronized public void setTimestamp(int id, long value) {
     ensureLoaded(new int[] {id});
     mySink.setTimestamp(toSinkId(id), value);
   }
 
   @Override
-  public int getModCount(int id) {
+  synchronized public int getModCount(int id) {
     ensureLoaded(new int[] {id});
     return mySink.getModCount(toSinkId(id));
   }
 
   @Nullable
   @Override
-  public DataInputStream readContent(int fileId) {
+  synchronized public DataInputStream readContent(int fileId) {
     ensureContentLoaded(fileId);
     int sinkId = toSinkId(fileId);
     if (sinkId == DELETED) return null;
@@ -513,13 +518,13 @@ public class LazyFSRecords implements IFSRecords {
 
   @Nullable
   @Override
-  public DataInputStream readContentById(int contentId) {
+  synchronized public DataInputStream readContentById(int contentId) {
     return mySink.readContentById(contentId);
   }
 
   @Nullable
   @Override
-  public DataInputStream readAttribute(int fileId, FileAttribute att) {
+  synchronized public DataInputStream readAttribute(int fileId, FileAttribute att) {
     ensureAttributeLoaded(fileId, att);
     int sinkid = toSinkId(fileId);
     if (sinkid == DELETED) return null;
@@ -527,49 +532,49 @@ public class LazyFSRecords implements IFSRecords {
   }
 
   @Override
-  public int acquireFileContent(int fileId) {
+  synchronized public int acquireFileContent(int fileId) {
     ensureContentLoaded(fileId);
     return mySink.acquireFileContent(toSinkIdAsserting(fileId));
   }
 
   @Override
-  public void releaseContent(int contentId) {
+  synchronized public void releaseContent(int contentId) {
     mySink.releaseContent(contentId);
   }
 
   @Override
-  public int getContentId(int fileId) {
+  synchronized public int getContentId(int fileId) {
     ensureContentLoaded(fileId);
     return mySink.getContentId(toSinkIdAsserting(fileId));
   }
 
   @NotNull
   @Override
-  public DataOutputStream writeContent(int fileId, boolean fixedSize) {
+  synchronized public DataOutputStream writeContent(int fileId, boolean fixedSize) {
     ensureLoaded(new int []{fileId});
     return mySink.writeContent(toSinkIdAsserting(fileId), fixedSize);
   }
 
   @Override
-  public void writeContent(int fileId, ByteSequence bytes, boolean fixedSize) {
+  synchronized public void writeContent(int fileId, ByteSequence bytes, boolean fixedSize) {
     ensureLoaded(new int[]{fileId});
     mySink.writeContent(toSinkIdAsserting(fileId), bytes, fixedSize);
   }
 
   @Override
-  public int storeUnlinkedContent(byte[] bytes) {
+  synchronized public int storeUnlinkedContent(byte[] bytes) {
     return mySink.storeUnlinkedContent(bytes);
   }
 
   @NotNull
   @Override
-  public DataOutputStream writeAttribute(int fileId, @NotNull FileAttribute att) {
+  synchronized public DataOutputStream writeAttribute(int fileId, @NotNull FileAttribute att) {
     ensureLoaded(new int[]{fileId});
     return mySink.writeAttribute(toSinkIdAsserting(fileId), att);
   }
 
   @Override
-  public void writeBytes(int fileId, ByteSequence bytes, boolean preferFixedSize) throws IOException {
+  synchronized public void writeBytes(int fileId, ByteSequence bytes, boolean preferFixedSize) throws IOException {
     ensureLoaded(new int[]{fileId});
     mySink.writeBytes(toSinkIdAsserting(fileId), bytes, preferFixedSize);
   }
