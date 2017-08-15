@@ -67,7 +67,20 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
   private final boolean myInitDone;
   private final String myFileName;
 
-  protected abstract MemberNodeBase<M> createTreeNode(M method, HashSet<M> called, Runnable cancelCallback);
+  protected MemberNodeBase<M> createTreeNodeFor(M method, HashSet<M> called, Runnable cancelCallback) {
+    return createTreeNode(method, called, cancelCallback);
+  }
+
+  /**
+   * @see CallerChooserBase#createTreeNodeFor(PsiElement, com.intellij.util.containers.HashSet, Runnable)
+   *
+   * @deprecated to be removed in IDEA 2019.1
+   */
+  @SuppressWarnings({"DeprecatedIsStillUsed", "unused"})
+  @Deprecated
+  protected MethodNodeBase<M> createTreeNode(M method, HashSet<M> called, Runnable cancelCallback) {
+    throw new UnsupportedOperationException();
+  }
 
   protected abstract M[] findDeepestSuperMethods(M method);
 
@@ -237,8 +250,8 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
         throw new ProcessCanceledException();
       }
     };
-    final CheckedTreeNode root = createTreeNode(null, new HashSet<>(), cancelCallback);
-    myRoot = createTreeNode(myMethod, new HashSet<>(), cancelCallback);
+    final CheckedTreeNode root = createTreeNodeFor(null, new HashSet<>(), cancelCallback);
+    myRoot = createTreeNodeFor(myMethod, new HashSet<>(), cancelCallback);
     root.add(myRoot);
     final CheckboxTree.CheckboxTreeCellRenderer cellRenderer = new CheckboxTree.CheckboxTreeCellRenderer(true, false) {
       @Override

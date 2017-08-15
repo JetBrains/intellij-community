@@ -41,7 +41,7 @@ public class JavaCallerChooser extends AbstractJavaMemberCallerChooser<PsiMethod
   }
 
   @Override
-  protected MemberNodeBase<PsiMethod> createTreeNode(PsiMethod method, HashSet<PsiMethod> called, Runnable cancelCallback) {
+  protected MemberNodeBase<PsiMethod> createTreeNodeFor(PsiMethod method, HashSet<PsiMethod> called, Runnable cancelCallback) {
     return new JavaMethodNode(method, called, myProject, cancelCallback);
   }
 

@@ -72,9 +72,9 @@ abstract class MakeStaticJavaCallerChooser extends JavaCallerChooser {
   protected abstract ArrayList<UsageInfo> getTopLevelItems();
 
   @Override
-  protected JavaMethodNode createTreeNode(PsiMethod nodeMethod,
-                                          com.intellij.util.containers.HashSet<PsiMethod> called,
-                                          Runnable cancelCallback) {
+  protected JavaMethodNode createTreeNodeFor(PsiMethod nodeMethod,
+                                             com.intellij.util.containers.HashSet<PsiMethod> called,
+                                             Runnable cancelCallback) {
     final MakeStaticJavaMethodNode node =
       new MakeStaticJavaMethodNode(nodeMethod, called, cancelCallback, nodeMethod != null ? nodeMethod.getProject() : myProject);
     if (getTopMember().equals(nodeMethod)) {
