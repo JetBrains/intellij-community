@@ -17,6 +17,7 @@ package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.FullValueEvaluatorProvider;
+import com.intellij.debugger.engine.JavaDebugProcess;
 import com.intellij.debugger.engine.JavaValue;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -49,7 +50,7 @@ public interface OnDemandRenderer extends FullValueEvaluatorProvider {
   String getLinkText();
 
   default boolean isOnDemand(EvaluationContext evaluationContext, ValueDescriptor valueDescriptor) {
-    return isOnDemandForced(evaluationContext);
+    return isOnDemandForced((DebugProcessImpl)evaluationContext.getDebugProcess());
   }
 
   default boolean isShowValue(ValueDescriptor valueDescriptor, EvaluationContext evaluationContext) {
@@ -81,8 +82,8 @@ public interface OnDemandRenderer extends FullValueEvaluatorProvider {
     ON_DEMAND_CALCULATED.set(descriptor, true);
   }
 
-  static boolean isOnDemandForced(EvaluationContext evaluationContext) {
-    return ForceOnDemandRenderersAction.isForcedOnDemand(
-      (XDebugSessionImpl)((DebugProcessImpl)evaluationContext.getDebugProcess()).getXdebugProcess().getSession());
+  static boolean isOnDemandForced(DebugProcessImpl debugProcess) {
+    JavaDebugProcess process = debugProcess.getXdebugProcess();
+    return process != null && ForceOnDemandRenderersAction.isForcedOnDemand((XDebugSessionImpl)process.getSession());
   }
 }

@@ -281,10 +281,12 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   protected String calcRepresentation(EvaluationContextImpl context, DescriptorLabelListener labelListener){
     DebuggerManagerThreadImpl.assertIsManagerThread();
 
-    final NodeRenderer renderer = getRenderer(context.getDebugProcess());
+    DebugProcessImpl debugProcess = context.getDebugProcess();
+    NodeRenderer renderer = getRenderer(debugProcess);
 
-    final EvaluateException valueException = myValueException;
-    myIsExpandable = (valueException == null || valueException.getExceptionFromTargetVM() != null) && renderer.isExpandable(getValue(), context, this);
+    EvaluateException valueException = myValueException;
+    myIsExpandable = (valueException == null || valueException.getExceptionFromTargetVM() != null) &&
+                     getChildrenRenderer(debugProcess).isExpandable(getValue(), context, this);
 
     try {
       setValueIcon(renderer.calcValueIcon(this, context, labelListener));
@@ -401,7 +403,11 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     return myRenderer != null ? myRenderer: myAutoRenderer;
   }
 
-  public NodeRenderer getRenderer (DebugProcessImpl debugProcess) {
+  public NodeRenderer getChildrenRenderer(DebugProcessImpl debugProcess) {
+    return OnDemandRenderer.isOnDemandForced(debugProcess) ? DebugProcessImpl.getDefaultRenderer(getValue()) : getRenderer(debugProcess);
+  }
+
+  public NodeRenderer getRenderer(DebugProcessImpl debugProcess) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     Type type = getType();
     if(type != null && myRenderer != null && myRenderer.isApplicable(type)) {
@@ -431,7 +437,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
       }
 
       return DebuggerTreeNodeExpression.substituteThis(
-        vDescriptor.getRenderer(context.getDebugProcess()).getChildValueExpression(new DebuggerTreeNodeMock(value), context),
+        vDescriptor.getChildrenRenderer(context.getDebugProcess()).getChildValueExpression(new DebuggerTreeNodeMock(value), context),
         ((PsiExpression)parentEvaluation), vDescriptor.getValue()
       );
     }

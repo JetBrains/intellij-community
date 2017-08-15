@@ -372,8 +372,8 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
       }
 
       @Override
-      public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
-        myValueDescriptor.getRenderer(myEvaluationContext.getDebugProcess())
+      public void contextAction(@NotNull SuspendContextImpl suspendContext) {
+        myValueDescriptor.getChildrenRenderer(myEvaluationContext.getDebugProcess())
           .buildChildren(myValueDescriptor.getValue(), new ChildrenBuilder() {
           @Override
           public NodeDescriptorFactory getDescriptorManager() {
