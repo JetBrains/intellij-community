@@ -25,11 +25,10 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiTreeChangeEvent;
+import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.ApiStatus;
@@ -136,8 +135,14 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTr
     }) {
       PsiFile file = o instanceof PsiFile ? (PsiFile)o : null;
       if (file == null) {
-        Language language = o == null ? null : o.getLanguage();
-        incLanguageModificationCount(language);
+        try {
+          IElementType type = PsiUtilCore.getElementType(o);
+          Language language = type != null ? type.getLanguage() : o != null ? o.getLanguage() : null;
+          incLanguageModificationCount(language);
+        }
+        catch (PsiInvalidElementAccessException e) {
+          PsiDocumentManagerBase.LOG.warn(e);
+        }
       }
       else {
         for (Language language : file.getViewProvider().getLanguages()) {
