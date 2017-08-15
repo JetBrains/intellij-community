@@ -49,6 +49,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,11 +60,14 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
+import javax.swing.plaf.TreeUI;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.util.*;
 import java.util.List;
 
@@ -79,7 +83,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
   private static final Border RIGHT_BORDER = IdeBorderFactory.createBorder(SideBorder.TOP | SideBorder.LEFT);
 
   private final Project myProject;
-  private final Tree myChangesTree;
+  @NotNull private final ChangesBrowserTree myChangesTree;
   private final RepositoryChangesBrowser myDetailsView;
   private List<CommittedChangeList> myChangeLists;
   private List<CommittedChangeList> mySelectedChangeLists;
@@ -122,6 +126,13 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     myChangesTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
       public void valueChanged(TreeSelectionEvent e) {
         updateBySelectionChange();
+      }
+    });
+
+    myChangesTree.addComponentListener(new ComponentAdapter() {
+      @Override
+      public void componentResized(ComponentEvent e) {
+        myChangesTree.invalidateNodeSizes();
       }
     });
 
@@ -549,6 +560,16 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
           }
         }
       }
+    }
+
+    public void invalidateNodeSizes() {
+      TreeUI ui = getUI();
+
+      if (ui instanceof WideSelectionTreeUI) {
+        ((WideSelectionTreeUI)ui).invalidateNodeSizes();
+      }
+
+      repaint();
     }
   }
 
