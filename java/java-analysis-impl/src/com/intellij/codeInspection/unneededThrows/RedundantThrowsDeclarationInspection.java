@@ -21,6 +21,7 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -242,15 +243,22 @@ public class RedundantThrowsDeclarationInspection extends GlobalJavaBatchInspect
         //check read-only status for derived methods
         if (!FileModificationService.getInstance().preparePsiElementsForWrite(refsToDelete)) return;
 
-        for (final PsiJavaCodeReferenceElement aRefsToDelete : refsToDelete) {
-          if (aRefsToDelete.isValid()) {
-            aRefsToDelete.delete();
+        WriteAction.run(() -> {
+          for (final PsiJavaCodeReferenceElement aRefsToDelete : refsToDelete) {
+            if (aRefsToDelete.isValid()) {
+              aRefsToDelete.delete();
+            }
           }
-        }
+        });
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);
       }
+    }
+
+    @Override
+    public boolean startInWriteAction() {
+      return false;
     }
 
     private static void removeException(final RefMethod refMethod,
