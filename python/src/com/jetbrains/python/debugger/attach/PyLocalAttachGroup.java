@@ -15,16 +15,16 @@
  */
 package com.jetbrains.python.debugger.attach;
 
-import com.intellij.execution.process.ProcessInfo;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.xdebugger.attach.XLocalAttachGroup;
+import com.intellij.xdebugger.attach.LocalAttachSettings;
+import com.intellij.xdebugger.attach.XAttachGroup;
 import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-class PyLocalAttachGroup implements XLocalAttachGroup {
+class PyLocalAttachGroup implements XAttachGroup<LocalAttachSettings> {
   public static final PyLocalAttachGroup INSTANCE = new PyLocalAttachGroup();
 
   private PyLocalAttachGroup() {
@@ -32,7 +32,7 @@ class PyLocalAttachGroup implements XLocalAttachGroup {
 
   @Override
   public int getOrder() {
-    return XLocalAttachGroup.DEFAULT.getOrder() - 10;
+    return XAttachGroup.DEFAULT.getOrder() - 10;
   }
 
   @NotNull
@@ -43,18 +43,21 @@ class PyLocalAttachGroup implements XLocalAttachGroup {
 
   @NotNull
   @Override
-  public Icon getProcessIcon(@NotNull Project project, @NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder) {
+  public Icon getIcon(@NotNull Project project, @NotNull LocalAttachSettings info, @NotNull UserDataHolder dataHolder) {
     return PythonIcons.Python.Python;
   }
 
   @NotNull
   @Override
-  public String getProcessDisplayText(@NotNull Project project, @NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder) {
-    return info.getArgs();
+  public String getItemDisplayText(@NotNull Project project, @NotNull LocalAttachSettings settings, @NotNull UserDataHolder dataHolder) {
+    return settings.getInfo().getArgs();
   }
 
   @Override
-  public int compare(@NotNull Project project, @NotNull ProcessInfo a, @NotNull ProcessInfo b, @NotNull UserDataHolder dataHolder) {
-    return XLocalAttachGroup.DEFAULT.compare(project, a, b, dataHolder);
+  public int compare(@NotNull Project project,
+                     @NotNull LocalAttachSettings a,
+                     @NotNull LocalAttachSettings b,
+                     @NotNull UserDataHolder dataHolder) {
+    return XAttachGroup.DEFAULT.compare(project, a, b, dataHolder);
   }
 }
