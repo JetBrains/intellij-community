@@ -16,6 +16,7 @@
 package git4idea.repo;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
@@ -32,6 +33,7 @@ import java.util.List;
 import java.util.Set;
 
 import static com.intellij.dvcs.DvcsUtil.ensureAllChildrenInVfs;
+import static git4idea.repo.GitRepository.GIT_REPO_CHANGE;
 
 /**
  * Listens to .git service files changes and updates {@link GitRepository} when needed.
@@ -104,7 +106,7 @@ final class GitRepositoryUpdater implements Disposable, AsyncVfsEventsListener {
       myRepository.update();
     }
     else if (tagChanged) {
-      myRepository.getProject().getMessageBus().syncPublisher(GitRepository.GIT_REPO_CHANGE).repositoryChanged(myRepository);
+      BackgroundTaskUtil.syncPublisher(myRepository.getProject(), GIT_REPO_CHANGE).repositoryChanged(myRepository);
     }
   }
 

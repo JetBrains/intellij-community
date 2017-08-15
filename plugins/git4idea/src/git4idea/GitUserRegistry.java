@@ -16,9 +16,9 @@
 package git4idea;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -102,12 +102,12 @@ public class GitUserRegistry implements Disposable, VcsListener {
     final VirtualFile[] roots = myVcsManager.getRootsUnderVcs(vcs);
     final Collection<VirtualFile> rootsToCheck = ContainerUtil.filter(roots, root -> getUser(root) == null);
     if (!rootsToCheck.isEmpty()) {
-      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      Runnable task = () -> {
         for (VirtualFile root : rootsToCheck) {
           getOrReadUser(root);
         }
-      });
+      };
+      BackgroundTaskUtil.executeOnPooledThread(task, myProject);
     }
   }
-
 }

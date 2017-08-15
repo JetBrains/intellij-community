@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
@@ -259,7 +260,8 @@ public class GitConflictResolver {
     @Override public void hyperlinkUpdate(@NotNull final Notification notification, @NotNull HyperlinkEvent event) {
       if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED && event.getDescription().equals("resolve")) {
         notification.expire();
-        ApplicationManager.getApplication().executeOnPooledThread((Runnable)() -> mergeNoProceed());
+        Runnable task = () -> mergeNoProceed();
+        BackgroundTaskUtil.executeOnPooledThread(task, myProject);
       }
     }
   }
