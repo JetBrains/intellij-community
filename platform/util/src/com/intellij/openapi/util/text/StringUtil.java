@@ -1976,6 +1976,14 @@ public class StringUtil extends StringUtilRt {
     return text.substring(i + subString.length());
   }
 
+  @Nullable
+  @Contract(pure = true)
+  public static String substringAfterLast(@NotNull String text, @NotNull String subString) {
+    int i = text.lastIndexOf(subString);
+    if (i == -1) return null;
+    return text.substring(i + subString.length());
+  }
+
   /**
    * Allows to retrieve index of last occurrence of the given symbols at {@code [start; end)} sub-sequence of the given text.
    *
@@ -3105,34 +3113,44 @@ public class StringUtil extends StringUtilRt {
   }
 
   /**
-     * Does the string have an uppercase character?
-     * @param s  the string to test.
-     * @return   true if the string has an uppercase character, false if not.
-     */
-    public static boolean hasUpperCaseChar(String s) {
-        char[] chars = s.toCharArray();
-        for (char c : chars) {
-            if (Character.isUpperCase(c)) {
-                return true;
-            }
-        }
-        return false;
-    }
+   * Does the string have an uppercase character?
+   * @param s  the string to test.
+   * @return   true if the string has an uppercase character, false if not.
+   */
+  public static boolean hasUpperCaseChar(String s) {
+      char[] chars = s.toCharArray();
+      for (char c : chars) {
+          if (Character.isUpperCase(c)) {
+              return true;
+          }
+      }
+      return false;
+  }
 
   /**
-     * Does the string have a lowercase character?
-     * @param s  the string to test.
-     * @return   true if the string has a lowercase character, false if not.
-     */
-    public static boolean hasLowerCaseChar(String s) {
-        char[] chars = s.toCharArray();
-        for (char c : chars) {
-            if (Character.isLowerCase(c)) {
-                return true;
-            }
-        }
-        return false;
-    }
+   * Does the string have a lowercase character?
+   * @param s  the string to test.
+   * @return   true if the string has a lowercase character, false if not.
+   */
+  public static boolean hasLowerCaseChar(String s) {
+      char[] chars = s.toCharArray();
+      for (char c : chars) {
+          if (Character.isLowerCase(c)) {
+              return true;
+          }
+      }
+      return false;
+  }
+
+  /**
+   * Inserts a space before each word in a camelCased string.
+   * "myClass" -> "my Class", "MyClass" -> "My Class", "MyXML" -> "My XML".
+   */
+  @NotNull
+  @Contract(pure = true)
+  public static String splitCamelCase(@NotNull String s) {
+    return s.replaceAll("(?<=[A-Z])(?=[A-Z][a-z])|(?<=[^A-Z])(?=[A-Z])|(?<=[A-Za-z])(?=[^A-Za-z])", " ");
+  }
 
 
   private static final Pattern UNICODE_CHAR = Pattern.compile("\\\\u[0-9a-eA-E]{4}");
