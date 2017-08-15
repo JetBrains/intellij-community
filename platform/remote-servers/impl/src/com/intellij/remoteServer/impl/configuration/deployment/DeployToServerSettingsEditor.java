@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.RemoteServersManager;
@@ -31,6 +32,7 @@ import com.intellij.remoteServer.configuration.deployment.DeploymentConfigurator
 import com.intellij.remoteServer.configuration.deployment.DeploymentSource;
 import com.intellij.remoteServer.configuration.deployment.DeploymentSourceType;
 import com.intellij.remoteServer.impl.configuration.RemoteServerListConfigurable;
+import com.intellij.remoteServer.util.CloudBundle;
 import com.intellij.ui.*;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.UIUtil;
@@ -40,12 +42,18 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.util.Comparator;
 
 /**
  * @author nik
  */
-public class DeployToServerSettingsEditor<S extends ServerConfiguration, D extends DeploymentConfiguration> extends SettingsEditor<DeployToServerRunConfiguration<S, D>> {
+public class DeployToServerSettingsEditor<S extends ServerConfiguration, D extends DeploymentConfiguration>
+  extends SettingsEditor<DeployToServerRunConfiguration<S, D>> {
+
+  private static final String CREATE_NEW_SERVER = "Create new server" + "\u0000"; //special character to distinct from any server name
+  private static final Comparator<String> ACTIONS_LAST = Comparator.comparing(text -> CREATE_NEW_SERVER.equals(text) ? 1 : 0);
+
   private final ServerType<S> myServerType;
   private final DeploymentConfigurator<D, S> myDeploymentConfigurator;
   private final Project myProject;
@@ -57,35 +65,31 @@ public class DeployToServerSettingsEditor<S extends ServerConfiguration, D exten
   private SettingsEditor<D> myDeploymentSettingsEditor;
   private DeploymentSource myLastSelectedSource;
   private RemoteServer<S> myLastSelectedServer;
+  private String myServerSelectionReminder;
 
   public DeployToServerSettingsEditor(final ServerType<S> type, DeploymentConfigurator<D, S> deploymentConfigurator, Project project) {
     myServerType = type;
     myDeploymentConfigurator = deploymentConfigurator;
     myProject = project;
 
-    myServerListModel = new SortedComboBoxModel<>(String.CASE_INSENSITIVE_ORDER);
+    myServerListModel = new SortedComboBoxModel<>(ACTIONS_LAST.thenComparing(String.CASE_INSENSITIVE_ORDER));
     myServerComboBox = new ComboboxWithBrowseButton(new ComboBox<>(myServerListModel));
     fillApplicationServersList(null);
-    myServerComboBox.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        String preSelection = myLastSelectedServer != null ? myLastSelectedServer.getName() : null;
-        RemoteServerListConfigurable configurable = RemoteServerListConfigurable.createConfigurable(type, preSelection);
-        if (ShowSettingsUtil.getInstance().editConfigurable(myServerComboBox, configurable)) {
-          fillApplicationServersList(configurable.getLastSelectedServer());
-        }
-      }
-    });
-    myServerComboBox.getComboBox().addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        updateDeploymentSettingsEditor();
-      }
-    });
+
+    myServerComboBox.addActionListener(this::onBrowseServer);
+    myServerComboBox.getComboBox().addActionListener(this::onServerComboBoxSelected);
+    myServerComboBox.getComboBox().addItemListener(this::onItemUnselected);
+
+    //noinspection unchecked
     myServerComboBox.getComboBox().setRenderer(new ColoredListCellRenderer<String>() {
       @Override
-      protected void customizeCellRenderer(@NotNull JList<? extends String> list, String value, int index, boolean selected, boolean hasFocus) {
+      protected void customizeCellRenderer(@NotNull JList<? extends String> l, String value, int index, boolean selected, boolean focused) {
         if (value == null) return;
+        if (CREATE_NEW_SERVER.equals(value)) {
+          setIcon(null);
+          append(CloudBundle.getText("deployment.editor.create.new.server"), SimpleTextAttributes.REGULAR_ITALIC_ATTRIBUTES);
+          return;
+        }
         RemoteServer<S> server = RemoteServersManager.getInstance().findByName(value, type);
         SimpleTextAttributes attributes = server == null ? SimpleTextAttributes.ERROR_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES;
         setIcon(server != null ? server.getType().getIcon() : null);
@@ -93,8 +97,7 @@ public class DeployToServerSettingsEditor<S extends ServerConfiguration, D exten
       }
     });
 
-    mySourceListModel = new SortedComboBoxModel<>(
-      (o1, o2) -> o1.getPresentableName().compareToIgnoreCase(o2.getPresentableName()));
+    mySourceListModel = new SortedComboBoxModel<>((o1, o2) -> o1.getPresentableName().compareToIgnoreCase(o2.getPresentableName()));
     mySourceListModel.addAll(deploymentConfigurator.getAvailableDeploymentSources());
     mySourceComboBox = new ComboBox<>(mySourceListModel);
     mySourceComboBox.setRenderer(new ListCellRendererWrapper<DeploymentSource>() {
@@ -107,12 +110,7 @@ public class DeployToServerSettingsEditor<S extends ServerConfiguration, D exten
     });
 
     myDeploymentSettingsComponent = new JPanel(new BorderLayout());
-    mySourceComboBox.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        updateDeploymentSettingsEditor();
-      }
-    });
+    mySourceComboBox.addActionListener(e -> updateDeploymentSettingsEditor());
   }
 
   private void fillApplicationServersList(@Nullable RemoteServer<?> newSelection) {
@@ -121,11 +119,40 @@ public class DeployToServerSettingsEditor<S extends ServerConfiguration, D exten
     for (RemoteServer<?> server : RemoteServersManager.getInstance().getServers(myServerType)) {
       myServerListModel.add(server.getName());
     }
+    myServerListModel.add(CREATE_NEW_SERVER);
     myServerComboBox.getComboBox().setSelectedItem(newSelection != null ? newSelection.getName() : oldSelection);
+  }
+
+  private void onItemUnselected(ItemEvent e) {
+    if (e.getStateChange() == ItemEvent.DESELECTED) {
+      myServerSelectionReminder = (String)e.getItem();
+    }
+  }
+
+  private void onServerComboBoxSelected(ActionEvent e) {
+    RecursionManager.doPreventingRecursion(this, false, () -> {
+      if (CREATE_NEW_SERVER.equals(myServerListModel.getSelectedItem())) {
+        String selectedBefore = myServerSelectionReminder;
+        RemoteServersManager manager = RemoteServersManager.getInstance();
+        RemoteServer<?> newServer = manager.createServer(myServerType);
+        manager.addServer(newServer);
+        if (!editServer(RemoteServerListConfigurable.createConfigurable(myServerType, newServer.getName()))) {
+          manager.removeServer(newServer);
+          selectServerInCombo(selectedBefore);
+        }
+      }
+      updateDeploymentSettingsEditor();
+      return null;
+    });
   }
 
   private void updateDeploymentSettingsEditor() {
     String serverName = myServerListModel.getSelectedItem();
+    if (CREATE_NEW_SERVER.equals(serverName)) {
+      //temporary state just after selecting the action item
+      return;
+    }
+
     RemoteServer<S> selectedServer = serverName != null ? RemoteServersManager.getInstance().findByName(serverName, myServerType) : null;
     DeploymentSource selectedSource = mySourceListModel.getSelectedItem();
     if (Comparing.equal(selectedSource, myLastSelectedSource) && Comparing.equal(selectedServer, myLastSelectedServer)) {
@@ -156,12 +183,8 @@ public class DeployToServerSettingsEditor<S extends ServerConfiguration, D exten
   }
 
   @Override
-  protected void resetEditorFrom(@NotNull DeployToServerRunConfiguration<S,D> configuration) {
-    String serverName = configuration.getServerName();
-    if (serverName != null && !myServerListModel.getItems().contains(serverName)) {
-      myServerListModel.add(serverName);
-    }
-    myServerComboBox.getComboBox().setSelectedItem(serverName);
+  protected void resetEditorFrom(@NotNull DeployToServerRunConfiguration<S, D> configuration) {
+    selectServerInCombo(configuration.getServerName());
     mySourceComboBox.setSelectedItem(configuration.getDeploymentSource());
     D deploymentConfiguration = configuration.getDeploymentConfiguration();
     updateDeploymentSettingsEditor();
@@ -170,8 +193,15 @@ public class DeployToServerSettingsEditor<S extends ServerConfiguration, D exten
     }
   }
 
+  private void selectServerInCombo(String serverName) {
+    if (serverName != null && !myServerListModel.getItems().contains(serverName)) {
+      myServerListModel.add(serverName);
+    }
+    myServerComboBox.getComboBox().setSelectedItem(serverName);
+  }
+
   @Override
-  protected void applyEditorTo(@NotNull DeployToServerRunConfiguration<S,D> configuration) throws ConfigurationException {
+  protected void applyEditorTo(@NotNull DeployToServerRunConfiguration<S, D> configuration) throws ConfigurationException {
     updateDeploymentSettingsEditor();
 
     configuration.setServerName(myServerListModel.getSelectedItem());
@@ -201,5 +231,18 @@ public class DeployToServerSettingsEditor<S extends ServerConfiguration, D exten
       .addLabeledComponent("Deployment:", mySourceComboBox)
       .addComponentFillVertically(myDeploymentSettingsComponent, UIUtil.DEFAULT_VGAP)
       .getPanel();
+  }
+
+  private boolean onBrowseServer(ActionEvent e) {
+    return editServer(RemoteServerListConfigurable.createConfigurable(myServerType, myServerListModel.getSelectedItem()));
+  }
+
+  private boolean editServer(@NotNull RemoteServerListConfigurable configurable) {
+    boolean isOk = ShowSettingsUtil.getInstance().editConfigurable(myServerComboBox, configurable);
+    if (isOk) {
+      RemoteServer<?> lastSelectedServer = configurable.getLastSelectedServer();
+      fillApplicationServersList(lastSelectedServer);
+    }
+    return isOk;
   }
 }
