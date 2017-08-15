@@ -21,6 +21,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
@@ -113,6 +114,12 @@ public class OutputChecker {
     assert outs.exists() || outs.mkdirs() : outs;
 
     File outFile = new File(outs, myTestName + ".out");
+    if (JavaSdkUtil.isJdkAtLeast(jdk, JavaSdkVersion.JDK_1_9)) {
+      File jdk9Out = new File(outs, myTestName + ".jdk9.out");
+      if (jdk9Out.exists()) {
+        outFile = jdk9Out;
+      }
+    }
     if (!outFile.exists()) {
       if (SystemInfo.isWindows) {
         final File winOut = new File(outs, myTestName + ".win.out");
