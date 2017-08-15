@@ -82,15 +82,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreeModel;
-import javax.swing.tree.TreePath;
+import javax.swing.event.*;
+import javax.swing.tree.*;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
@@ -149,7 +144,33 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     myTree = new ShelfTree();
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
+    myTree.setEditable(true);
+    myTree.setHorizontalAutoScrollingEnabled(false);
     myTree.setCellRenderer(new ShelfTreeCellRenderer(project, myMoveRenameInfo));
+    DefaultTreeCellEditor treeCellEditor = new DefaultTreeCellEditor(myTree, null) {
+      @Override
+      public boolean isCellEditable(EventObject event) {
+        return !(event instanceof MouseEvent) && super.isCellEditable(event);
+      }
+    };
+    myTree.setCellEditor(treeCellEditor);
+    treeCellEditor.addCellEditorListener(new CellEditorListener() {
+      @Override
+      public void editingStopped(ChangeEvent e) {
+        DefaultMutableTreeNode node = (DefaultMutableTreeNode)myTree.getLastSelectedPathComponent();
+        if (node != null && node instanceof ShelvedListNode && e.getSource() instanceof TreeCellEditor) {
+          String editorValue = ((TreeCellEditor)e.getSource()).getCellEditorValue().toString();
+          ShelvedChangeList shelvedChangeList = ((ShelvedListNode)node).getList();
+          ShelveChangesManager.getInstance(project).renameChangeList(shelvedChangeList, editorValue);
+          myTree.getModel().valueForPathChanged(TreeUtil.getPathFromRoot(node), shelvedChangeList);
+        }
+      }
+
+      @Override
+      public void editingCanceled(ChangeEvent e) {
+      }
+    });
+    myTree.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0), "startEditing");
     new TreeLinkMouseListener(new ShelfTreeCellRenderer(project, myMoveRenameInfo)).installOn(myTree);
     DnDSupport.createBuilder(myTree).disableAsTarget().setImageProvider(this::createDraggedImage).setBeanProvider(this::createDragStartBean)
       .install();
@@ -353,6 +374,12 @@ public class ShelvedChangesViewManager implements ProjectComponent {
   }
 
   private class ShelfTree extends Tree implements DataProvider {
+
+    @Override
+    public boolean isPathEditable(TreePath path) {
+      return isEditable() && myTree.getSelectionCount() == 1 && path.getLastPathComponent() instanceof ShelvedListNode;
+    }
+
     @Nullable
     @Override
     public Object getData(@NonNls String dataId) {
