@@ -80,7 +80,7 @@ public class MavenWebArtifactRootCopyingHandlerProvider extends ArtifactRootCopy
         relativePathInWar = FileUtil.getRelativePath(new File(artifact.getOutputPath()), new File(targetDirectory, root.getName()));
         if (relativePathInWar != null) {
           // cut the exploded directory name
-          relativePathInWar = StringUtil.substringAfter(relativePathInWar, String.valueOf(File.separatorChar));
+          relativePathInWar = StringUtil.substringAfter(relativePathInWar, File.separator);
         }
         if (relativePathInWar == null) return null;
       }
