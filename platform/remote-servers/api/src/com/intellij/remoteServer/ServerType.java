@@ -42,6 +42,18 @@ public abstract class ServerType<C extends ServerConfiguration> {
   @NotNull
   public abstract Icon getIcon();
 
+  /**
+   * Returns whether the instance returned from {@link #createDefaultConfiguration()} has <em>reasonably good</em> chances to work correctly.
+   * The auto-detected instance is <em>not</em> required to work perfectly, connection to it will be tested, and the instance will
+   * be persisted only if the test is successful.
+   * <p/>
+   * The capability to auto-detect configurations will unlock UI elements which normally requires user to manually configure the server.
+   * E.g deployments for auto-detecting server types will be always shown in the 'New' popup in 'Edit Configurations' dialog.
+   */
+  public boolean canAutoDetectConfiguration() {
+    return false;
+  }
+
   @NotNull
   public abstract C createDefaultConfiguration();
 

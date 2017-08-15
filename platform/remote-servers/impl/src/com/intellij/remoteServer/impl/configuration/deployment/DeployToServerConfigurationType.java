@@ -68,12 +68,12 @@ public class DeployToServerConfigurationType extends ConfigurationTypeBase {
 
     @Override
     public boolean isApplicable(@NotNull Project project) {
-      return !RemoteServersManager.getInstance().getServers(myServerType).isEmpty();
+      return myServerType.canAutoDetectConfiguration() || !RemoteServersManager.getInstance().getServers(myServerType).isEmpty();
     }
 
     @Override
     public void onNewConfigurationCreated(@NotNull RunConfiguration configuration) {
-      DeployToServerRunConfiguration<?,?> deployConfiguration = (DeployToServerRunConfiguration<?,?>)configuration;
+      DeployToServerRunConfiguration<?, ?> deployConfiguration = (DeployToServerRunConfiguration<?, ?>)configuration;
       if (deployConfiguration.getServerName() == null) {
         RemoteServer<?> server = ContainerUtil.getFirstItem(RemoteServersManager.getInstance().getServers(myServerType));
         if (server != null) {
@@ -86,7 +86,9 @@ public class DeployToServerConfigurationType extends ConfigurationTypeBase {
       }
     }
 
-    private <S extends ServerConfiguration, D extends DeploymentConfiguration> void setupDeploymentSource(@NotNull RunConfiguration configuration, DeployToServerRunConfiguration<S, D> deployConfiguration) {
+    private <S extends ServerConfiguration, D extends DeploymentConfiguration> void setupDeploymentSource(
+      @NotNull RunConfiguration configuration, @NotNull DeployToServerRunConfiguration<S, D> deployConfiguration) {
+
       DeploymentConfigurator<D, S> deploymentConfigurator = deployConfiguration.getDeploymentConfigurator();
       List<DeploymentSource> sources = deploymentConfigurator.getAvailableDeploymentSources();
       DeploymentSource source = ContainerUtil.getFirstItem(sources);
@@ -100,7 +102,8 @@ public class DeployToServerConfigurationType extends ConfigurationTypeBase {
     }
 
     @Override
-    public RunConfiguration createTemplateConfiguration(Project project) {
+    @NotNull
+    public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
       DeploymentConfigurator<?, ?> deploymentConfigurator = myServerType.createDeploymentConfigurator(project);
       return new DeployToServerRunConfiguration(project, this, "", myServerType, deploymentConfigurator);
     }
