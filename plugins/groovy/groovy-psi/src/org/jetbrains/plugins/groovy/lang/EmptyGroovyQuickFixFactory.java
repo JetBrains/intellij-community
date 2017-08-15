@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -141,5 +141,10 @@ public class EmptyGroovyQuickFixFactory extends GroovyQuickFixFactory {
   @Override
   public IntentionAction createInvestigateFix(String reason) {
     return QuickFixes.EMPTY_ACTION;
+  }
+
+  @Override
+  public GroovyFix createMultipleAssignmentFix(int size) {
+    return GroovyFix.EMPTY_FIX;
   }
 }

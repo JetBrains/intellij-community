@@ -833,6 +833,29 @@ def foo() {
 '''
   }
 
+  void testMultiAssignmentWithTypeError() {
+    testHighlighting'''
+import groovy.transform.CompileStatic
+
+@CompileStatic
+def foo() {
+    def list = ["", ""]
+    def (Integer a, b) = <error>list</error>
+}
+'''
+  }
+
+  void testMultiAssignmentLiteralWithTypeError() {
+    testHighlighting'''
+import groovy.transform.CompileStatic
+
+@CompileStatic
+def foo() {
+    def (Integer <error>a</error>, b) = ["", ""]
+}
+'''
+  }
+
   void testMultiAssignment() {
     testHighlighting'''
 import groovy.transform.CompileStatic
