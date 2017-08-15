@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,22 +75,6 @@ public class SvnRepositoryLocation implements RepositoryLocation {
 
   @Override
   public void onAfterBatch() {
-  }
-
-  @Nullable
-  public static FilePath getLocalPath(final String fullPath, final NotNullFunction<File, Boolean> detector, final SvnVcs vcs) {
-    if (vcs.getProject().isDefault()) return null;
-    final RootUrlInfo rootForUrl = vcs.getSvnFileUrlMapping().getWcRootForUrl(fullPath);
-    FilePath result = null;
-
-    if (rootForUrl != null) {
-      String relativePath = SvnUtil.getRelativeUrl(rootForUrl.getUrl(), fullPath);
-      File file = new File(rootForUrl.getPath(), relativePath);
-      VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(file);
-      result = virtualFile != null ? VcsUtil.getFilePath(virtualFile) : VcsUtil.getFilePath(file, detector.fun(file).booleanValue());
-    }
-
-    return result;
   }
 
   public SVNURL toSvnUrl() throws SvnBindException {
