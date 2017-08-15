@@ -295,7 +295,7 @@ public class ParameterInfoComponent extends JPanel {
 
     @Override
     public String toString() {
-      return Stream.of(myOneLineComponents).map(Object::toString).collect(Collectors.joining());
+      return Stream.of(myOneLineComponents).filter(Objects::nonNull).map(Object::toString).collect(Collectors.joining());
     }
 
     private String setup(String text,
