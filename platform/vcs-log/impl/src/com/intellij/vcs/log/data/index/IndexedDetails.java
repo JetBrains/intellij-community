@@ -15,9 +15,12 @@
  */
 package com.intellij.vcs.log.data.index;
 
+import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogStorage;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 public class IndexedDetails extends LoadingDetails {
   @NotNull private final IndexDataGetter myDataGetter;
@@ -55,5 +58,11 @@ public class IndexedDetails extends LoadingDetails {
     int subjectEnd = fullMessage.indexOf("\n\n");
     if (subjectEnd > 0) return fullMessage.substring(0, subjectEnd).replace("\n", " ");
     return fullMessage.replace("\n", " ");
+  }
+
+  @NotNull
+  @Override
+  public List<Hash> getParents() {
+    return myDataGetter.getParents(myCommitIndex);
   }
 }
