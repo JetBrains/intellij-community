@@ -17,7 +17,10 @@ package com.intellij.refactoring.changeSignature;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.ui.ColoredTreeCellRenderer;
 
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -31,6 +34,9 @@ public abstract class MethodNodeBase<M extends PsiElement> extends MemberNodeBas
                            Runnable cancelCallback) {
     super(method, called, project, cancelCallback);
   }
+
+  @Override
+  protected abstract MethodNodeBase<M> createNode(M caller, HashSet<M> called);
 
   public M getMethod() {
     return getMember();
