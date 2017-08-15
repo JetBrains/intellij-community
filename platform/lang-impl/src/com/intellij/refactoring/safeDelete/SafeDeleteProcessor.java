@@ -65,6 +65,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
   private boolean mySearchNonJava;
   private boolean myPreviewNonCodeUsages = true;
   private Runnable myAfterRefactoringCallback;
+  private Runnable myCustomRefactoringCallback;
 
   private SafeDeleteProcessor(Project project, @Nullable Runnable prepareSuccessfulCallback,
                               PsiElement[] elementsToDelete, boolean isSearchInComments, boolean isSearchNonJava) {
@@ -385,14 +386,19 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
         }
       }
 
-      for (PsiElement element : myElements) {
-        for (SafeDeleteProcessorDelegate delegate : Extensions.getExtensions(SafeDeleteProcessorDelegate.EP_NAME)) {
-          if (delegate.handlesElement(element)) {
-            delegate.prepareForDeletion(element);
+      if (myCustomRefactoringCallback != null) {
+        myCustomRefactoringCallback.run();
+      }
+      else {
+        for (PsiElement element : myElements) {
+          for (SafeDeleteProcessorDelegate delegate : Extensions.getExtensions(SafeDeleteProcessorDelegate.EP_NAME)) {
+            if (delegate.handlesElement(element)) {
+              delegate.prepareForDeletion(element);
+            }
           }
-        }
 
-        element.delete();
+          element.delete();
+        }
       }
       if (myAfterRefactoringCallback != null) myAfterRefactoringCallback.run();
     } catch (IncorrectOperationException e) {
@@ -504,5 +510,9 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
 
   public void setAfterRefactoringCallback(Runnable afterRefactoringCallback) {
     myAfterRefactoringCallback = afterRefactoringCallback;
+  }
+
+  public void setCustomRefactoringCallback(Runnable customRefactoringCallback) {
+    myCustomRefactoringCallback = customRefactoringCallback;
   }
 }
