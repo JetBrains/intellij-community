@@ -23,6 +23,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.*;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PathMacroManager;
@@ -31,6 +32,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -40,7 +42,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.Equality;
@@ -53,15 +54,12 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.util.*;
 import java.util.function.Predicate;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class DefaultInspectionToolPresentation implements ProblemDescriptionsProcessor, InspectionToolPresentation {
-  @NotNull private final InspectionToolWrapper myToolWrapper;
+  protected static final Logger LOG = Logger.getInstance(DefaultInspectionToolPresentation.class);
 
-  @NotNull
-  private final GlobalInspectionContextImpl myContext;
-  private static String ourOutputPath;
+  @NotNull private final InspectionToolWrapper myToolWrapper;
+  @NotNull private final GlobalInspectionContextImpl myContext;
   protected InspectionNode myToolNode;
 
   private static final Object lock = new Object();
@@ -74,29 +72,11 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
   private final Map<RefEntity, Set<QuickFix>> myQuickFixActions = Collections.synchronizedMap(ContainerUtil.newIdentityTroveMap());
   private final Map<RefEntity, CommonProblemDescriptor[]> myIgnoredElements = Collections.synchronizedMap(ContainerUtil.newIdentityTroveMap());
 
-  protected static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.DescriptorProviderInspection");
   private volatile boolean isDisposed;
 
   public DefaultInspectionToolPresentation(@NotNull InspectionToolWrapper toolWrapper, @NotNull GlobalInspectionContextImpl context) {
     myToolWrapper = toolWrapper;
     myContext = context;
-  }
-
-  public static String stripUIRefsFromInspectionDescription(@NotNull String description) {
-    final int descriptionEnd = description.indexOf("<!-- tooltip end -->");
-    if (descriptionEnd < 0) {
-      final Pattern pattern = Pattern.compile(".*Use.*(the (panel|checkbox|checkboxes|field|button|controls).*below).*", Pattern.DOTALL);
-      final Matcher matcher = pattern.matcher(description);
-      int startFindIdx = 0;
-      while (matcher.find(startFindIdx)) {
-        final int end = matcher.end(1);
-        startFindIdx = end;
-        description = description.substring(0, matcher.start(1)) + " inspection settings " + description.substring(end);
-      }
-    } else {
-      description = description.substring(0, descriptionEnd);
-    }
-    return description;
   }
 
   @Override
@@ -183,7 +163,7 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
     if (refElement == null) return;
     if (descriptors.length == 0) return;
     if (filterSuppressed) {
-      if (!isOutputPathSet() || !(myToolWrapper instanceof LocalInspectionToolWrapper)) {
+      if (myContext.getOutputPath() == null || !(myToolWrapper instanceof LocalInspectionToolWrapper)) {
         synchronized (lock) {
           Map<RefEntity, CommonProblemDescriptor[]> problemElements = getProblemElements();
           CommonProblemDescriptor[] problems = problemElements.get(refElement);
@@ -259,11 +239,11 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
     final List<Element> list = parentNode.getChildren();
 
     @NonNls final String ext = ".xml";
-    final String fileName = ourOutputPath + File.separator + myToolWrapper.getShortName() + ext;
+    final String fileName = myContext.getOutputPath() + File.separator + myToolWrapper.getShortName() + ext;
     final PathMacroManager pathMacroManager = PathMacroManager.getInstance(getContext().getProject());
     PrintWriter printWriter = null;
     try {
-      new File(ourOutputPath).mkdirs();
+      FileUtil.createDirectory(new File(myContext.getOutputPath()));
       final File file = new File(fileName);
       final StringWriter writer = new StringWriter();
       if (!file.exists()) {
@@ -318,11 +298,6 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
     if (refEntity == null) return;
     getIgnoredElements().put(refEntity, mergeDescriptors(getIgnoredElements().getOrDefault(refEntity, CommonProblemDescriptor.EMPTY_ARRAY),
                                                          getProblemElements().getOrDefault(refEntity, CommonProblemDescriptor.EMPTY_ARRAY)));
-  }
-
-  @Override
-  public void amnesty(RefEntity refEntity) {
-    getIgnoredElements().remove(refEntity);
   }
 
   @Override
@@ -528,11 +503,6 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
   }
 
   @Override
-  public boolean isGraphNeeded() {
-    return false;
-  }
-
-  @Override
   public boolean hasReportedProblems() {
     return !myProblemToElements.isEmpty();
   }
@@ -674,18 +644,6 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
     return descriptors != null && ArrayUtil.contains(descriptor, descriptors);
   }
 
-  @Override
-  @NotNull
-  public FileStatus getProblemStatus(@NotNull final CommonProblemDescriptor descriptor) {
-    return FileStatus.NOT_CHANGED;
-  }
-
-  @NotNull
-  @Override
-  public FileStatus getElementStatus(final RefEntity element) {
-    return FileStatus.NOT_CHANGED;
-  }
-
   @NotNull
   @Override
   public Set<RefEntity> getIgnoredRefElements() {
@@ -769,13 +727,5 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
         return true;
       }
     };
-  }
-
-  public static synchronized void setOutputPath(final String output) {
-    ourOutputPath = output;
-  }
-
-  private static synchronized boolean isOutputPathSet() {
-    return ourOutputPath != null;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import com.intellij.codeInspection.ui.ProblemDescriptionNode;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.FileStatus;
 import org.jetbrains.annotations.NotNull;
 
 public class OfflineProblemDescriptorNode extends ProblemDescriptionNode {
@@ -46,11 +45,6 @@ public class OfflineProblemDescriptorNode extends ProblemDescriptionNode {
                                             resolveResult.getResolvedDescriptor(),
                                             presentation,
                                             offlineDescriptor);
-  }
-
-  @Override
-  public FileStatus getNodeStatus() {
-    return FileStatus.NOT_CHANGED;
   }
 
   @NotNull

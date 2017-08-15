@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.codeInspection.assignment
+package org.jetbrains.plugins.groovy.codeInspection.cs
 
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.project.Project
@@ -27,8 +27,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner
+import org.jetbrains.plugins.groovy.refactoring.DefaultGroovyVariableNameValidator
+import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil
 
-internal val fixVariableName = "storedList"
+internal val defaultFixVariableName = "storedList"
 
 class GrReplaceMultiAssignmentFix(val size: Int) : GroovyFix() {
   override fun doFix(project: Project, descriptor: ProblemDescriptor) {
@@ -39,7 +41,8 @@ class GrReplaceMultiAssignmentFix(val size: Int) : GroovyFix() {
     var initializer = element.text
     if (element !is GrReferenceExpression || element.resolve() !is GrVariable) {
       val factory = GroovyPsiElementFactory.getInstance(element.project)
-      val varDefinition = factory.createStatementFromText("def $fixVariableName = ${initializer}")
+      val fixVariableName = generateVariableName(element)
+      val varDefinition = factory.createStatementFromText("def ${fixVariableName} = ${initializer}")
       grStatementOwner.addStatementBefore(varDefinition, grStatement)
       initializer = fixVariableName
     }
@@ -47,7 +50,13 @@ class GrReplaceMultiAssignmentFix(val size: Int) : GroovyFix() {
     GrInspectionUtil.replaceExpression(element, generateListLiteral(initializer))
   }
 
-  fun generateListLiteral(varName: String): String {
+  private fun generateVariableName(expression: GrExpression): String {
+    val validator = DefaultGroovyVariableNameValidator(expression)
+    val suggestedNames = GroovyNameSuggestionUtil.suggestVariableNameByType(expression.type, validator)
+    return if (suggestedNames.isNotEmpty()) suggestedNames[0] else defaultFixVariableName
+  }
+
+  private fun generateListLiteral(varName: String): String {
     return (0..(size - 1)).joinToString(", ", "[", "]") { "$varName[$it]" }
   }
 

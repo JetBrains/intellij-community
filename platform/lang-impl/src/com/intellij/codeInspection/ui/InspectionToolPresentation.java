@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefModule;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.vcs.FileStatus;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -66,14 +65,10 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
   Map<String, Set<RefEntity>> getContent();
 
   void ignoreCurrentElement(RefEntity refEntity);
-  void amnesty(RefEntity refEntity);
   void amnesty(RefEntity refEntity, CommonProblemDescriptor descriptor);
   void cleanup();
   void finalCleanup();
-  boolean isGraphNeeded();
   boolean isElementIgnored(final RefEntity element);
-  @NotNull
-  FileStatus getElementStatus(final RefEntity element);
   @NotNull
   Set<RefEntity> getIgnoredRefElements();
   @Nullable
@@ -89,8 +84,6 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
   Map<RefEntity, CommonProblemDescriptor[]> getProblemElements();
   @NotNull
   Collection<CommonProblemDescriptor> getProblemDescriptors();
-  @NotNull
-  FileStatus getProblemStatus(@NotNull CommonProblemDescriptor descriptor);
   boolean isProblemResolved(RefEntity refEntity, CommonProblemDescriptor descriptor);
   void ignoreCurrentElementProblem(RefEntity refEntity, CommonProblemDescriptor descriptor);
   void addProblemElement(RefEntity refElement, boolean filterSuppressed, @NotNull CommonProblemDescriptor... descriptions);

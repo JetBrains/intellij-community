@@ -504,6 +504,8 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
   @Override
   @Nullable
   public GrDocComment getDocComment() {
+    final GrMethodStub stub = getStub();
+    if (stub != null && !stub.hasComment()) return null;
     return GrDocCommentUtil.findDocComment(this);
   }
 

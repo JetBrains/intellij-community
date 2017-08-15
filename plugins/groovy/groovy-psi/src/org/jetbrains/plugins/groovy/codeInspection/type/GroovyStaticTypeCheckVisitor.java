@@ -32,7 +32,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.codeInspection.assignment.GrReplaceMultiAssignmentFix;
+import org.jetbrains.plugins.groovy.codeInspection.GroovyQuickFixFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
@@ -92,7 +92,7 @@ public class GroovyStaticTypeCheckVisitor extends GroovyTypeCheckVisitor {
     registerError(
       initializer,
       GroovyBundle.message("multiple.assignments.without.list.expr"),
-      new LocalQuickFix[]{new GrReplaceMultiAssignmentFix(types.length)},
+      new LocalQuickFix[]{GroovyQuickFixFactory.getInstance().createMultipleAssignmentFix(types.length)},
       ProblemHighlightType.GENERIC_ERROR
     );
   }

@@ -999,7 +999,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
       final GrVariableDeclaration tuple = (GrVariableDeclaration)parent;
       final GrExpression initializer = tuple.getTupleInitializer();
       if (initializer == null) return;
-      if (!(initializer instanceof GrListOrMap)) {
+      if (!(initializer instanceof GrListOrMap) && !PsiUtil.isCompileStatic(variable)) {
         PsiType type = initializer.getType();
         if (type == null) return;
         PsiType valueType = extractIterableTypeParameter(type, false);

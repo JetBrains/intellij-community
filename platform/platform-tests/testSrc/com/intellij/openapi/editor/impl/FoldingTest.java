@@ -350,4 +350,11 @@ public class FoldingTest extends AbstractEditorTest {
     addCollapsedFoldRegion(11, 12, "innermost");
     Assert.assertArrayEquals(new FoldRegion[]{inner}, myModel.fetchTopLevel());
   }
+
+  public void testIdenticalRegionsOtherCase() {
+    FoldRegion inner = addCollapsedFoldRegion(10, 15, "inner");
+    addFoldRegion(10, 20, "outer");
+    WriteCommandAction.runWriteCommandAction(ourProject, () -> myEditor.getDocument().deleteString(15, 20));
+    Assert.assertArrayEquals(new FoldRegion[]{inner}, myModel.fetchTopLevel());
+  }
 }

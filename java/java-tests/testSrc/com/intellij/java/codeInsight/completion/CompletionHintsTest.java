@@ -528,7 +528,7 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     checkResultWithInlays("class C { void m() { System.setProperty(<hint text=\"key:\"/>System.getProperty(<hint text=\"key:\"/>, <HINT text=\"def:\"/><caret>), <hint text=\"value:\"/>) } }");
   }
 
-  public void testHintPopupContents() throws Exception {
+  public void testHintPopupContentsForMethodWithOverloads() throws Exception {
     configureJava("class C { void m() { System.getPro<caret> } }");
     complete("getProperty(String key, String def)");
     waitForAllAsyncStuff();
@@ -542,6 +542,21 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     waitForAllAsyncStuff();
     checkHintContents("<html><font color=gray>@NotNull String key</font color=gray></html>\n" +
                       "<html>@NotNull String key, <b>String def</b></html>");
+  }
+
+  public void testHintPopupContentsForMethodWithoutOverloads() throws Exception {
+    configureJava("class C { void m() { System.setPro<caret> } }");
+    complete("setProperty");
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C { void m() { System.setProperty(<HINT text=\"key:\"/><caret>, <hint text=\"value:\"/>) } }");
+    checkHintContents("<html>@NotNull String</html>");
+    next();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C { void m() { System.setProperty(<hint text=\"key:\"/>, <HINT text=\"value:\"/><caret>) } }");
+    checkHintContents("<html>String</html>");
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_SHOW_PARAMETER_INFO);
+    waitForAllAsyncStuff();
+    checkHintContents("<html>@NotNull String key, <b>String value</b></html>");
   }
 
   private void checkResult(String text) {

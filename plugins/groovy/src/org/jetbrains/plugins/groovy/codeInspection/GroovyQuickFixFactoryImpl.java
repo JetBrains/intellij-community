@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicProperty
 import org.jetbrains.plugins.groovy.codeInspection.bugs.AddClassToExtendsFix;
 import org.jetbrains.plugins.groovy.codeInspection.bugs.AddMethodFix;
 import org.jetbrains.plugins.groovy.codeInspection.confusing.ReplaceWithImportFix;
+import org.jetbrains.plugins.groovy.codeInspection.cs.GrReplaceMultiAssignmentFix;
 import org.jetbrains.plugins.groovy.codeInspection.local.RemoveUnusedGrParameterFix;
 import org.jetbrains.plugins.groovy.codeInspection.naming.RenameFix;
 import org.jetbrains.plugins.groovy.dsl.InvestigateFix;
@@ -149,5 +150,10 @@ public class GroovyQuickFixFactoryImpl extends GroovyQuickFixFactory {
   @Override
   public IntentionAction createInvestigateFix(String reason) {
     return new InvestigateFix(reason);
+  }
+
+  @Override
+  public GroovyFix createMultipleAssignmentFix(int size) {
+    return new GrReplaceMultiAssignmentFix(size);
   }
 }
