@@ -114,7 +114,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
   override fun getName(): String {
     val configuration = configuration
     if (isTemplate) {
-      return "<template> of ${configuration.factory.name}"
+      return "<template> of ${configuration.factory.id}"
     }
     return configuration.name
   }
@@ -240,7 +240,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
       }
 
       element.setAttribute(CONFIGURATION_TYPE_ATTRIBUTE, factory.type.id)
-      element.setAttribute(FACTORY_NAME_ATTRIBUTE, factory.name)
+      element.setAttribute(FACTORY_NAME_ATTRIBUTE, factory.id)
       if (folderName != null) {
         element.setAttribute(FOLDER_NAME, folderName!!)
       }

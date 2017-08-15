@@ -15,8 +15,12 @@
  */
 package com.intellij.execution.configurations;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -27,14 +31,16 @@ import javax.swing.*;
 public class UnknownConfigurationType implements ConfigurationType {
   public static final UnknownConfigurationType INSTANCE = new UnknownConfigurationType();
 
-  public static final String NAME = "Unknown";
+  @NonNls public static final String NAME = "Unknown";
 
   public static final ConfigurationFactory FACTORY = new ConfigurationFactory(new UnknownConfigurationType()) {
+    @NotNull
     @Override
     public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
       return new UnknownRunConfiguration(this, project);
     }
 
+    @Contract(pure = true)
     @Override
     public boolean canConfigurationBeSingleton() {
       return false;
@@ -42,13 +48,15 @@ public class UnknownConfigurationType implements ConfigurationType {
   };
 
   @Override
+  @Nls
   public String getDisplayName() {
     return getId();
   }
 
   @Override
+  @Nls
   public String getConfigurationTypeDescription() {
-    return "Configuration which cannot be loaded due to some reasons";
+    return ExecutionBundle.message("run.configuration.unknown.description");
   }
 
   @Override
@@ -58,6 +66,7 @@ public class UnknownConfigurationType implements ConfigurationType {
 
   @Override
   @NotNull
+  @NonNls
   public String getId() {
     return NAME;
   }

@@ -234,7 +234,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
   }
 
   override fun getConfigurationTemplate(factory: ConfigurationFactory): RunnerAndConfigurationSettingsImpl {
-    val key = "${factory.type.id}.${factory.name}"
+    val key = "${factory.type.id}.${factory.id}"
     return lock.read { templateIdToConfiguration.get(key) } ?: lock.write {
       templateIdToConfiguration.getOrPut(key) {
         val template = createTemplateSettings(factory)
@@ -767,7 +767,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     if (settings.isTemplate) {
       val factory = settings.factory
       lock.write {
-        templateIdToConfiguration.put("${factory.type.id}.${factory.name}", settings)
+        templateIdToConfiguration.put("${factory.type.id}.${factory.id}", settings)
       }
     }
     else {
@@ -797,21 +797,22 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
   override fun getConfigurationType(typeName: String) = idToType.get(typeName)
 
   @JvmOverloads
-  fun getFactory(typeName: String?, _factoryName: String?, checkUnknown: Boolean = false): ConfigurationFactory? {
-    var type = idToType.get(typeName)
+  fun getFactory(typeId: String?, _factoryId: String?, checkUnknown: Boolean = false): ConfigurationFactory? {
+    var type = idToType.get(typeId)
     if (type == null) {
-      if (checkUnknown && typeName != null) {
-        UnknownFeaturesCollector.getInstance(project).registerUnknownRunConfiguration(typeName)
+      if (checkUnknown && typeId != null) {
+        UnknownFeaturesCollector.getInstance(project).registerUnknownRunConfiguration(typeId)
       }
       type = idToType.get(UnknownConfigurationType.NAME) ?: return null
     }
 
-    if (type is UnknownConfigurationType) {
+    if (type is UnknownConfigurationType || _factoryId == null) {
       return type.getConfigurationFactories().get(0)
     }
 
-    val factoryName = _factoryName ?: type.configurationFactories.get(0).name
-    return type.configurationFactories.firstOrNull { it.name == factoryName }
+    return type.configurationFactories.firstOrNull {
+      it.id == _factoryId
+    }
   }
 
   override fun setTemporaryConfiguration(tempConfiguration: RunnerAndConfigurationSettings?) {

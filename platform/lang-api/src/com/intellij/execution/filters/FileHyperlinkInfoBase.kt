@@ -54,21 +54,21 @@ abstract class FileHyperlinkInfoBase(private val myProject: Project,
       FileEditorManager.getInstance(project).openTextEditor(it, true)
     }
   }
-}
 
-/**
- * Calculates an offset, that matches given line and column of the document.
- *
- * @param document [Document] instance
- * @param documentLine zero-based line of the document
- * @param documentColumn zero-based column of the document
- * @return calculated offset or `null` if it's impossible to calculate
- */
-private fun calculateOffset(document: Document?, documentLine: Int, documentColumn: Int): Int? {
-  document ?: return null
-  if (documentLine < 0 || document.lineCount <= documentLine) return null
-  val lineStartOffset = document.getLineStartOffset(documentLine)
-  val lineEndOffset = document.getLineEndOffset(documentLine)
-  val fixedColumn = Math.min(Math.max(documentColumn, 0), lineEndOffset - lineStartOffset)
-  return lineStartOffset + fixedColumn
+  /**
+   * Calculates an offset, that matches given line and column of the document.
+   *
+   * @param document [Document] instance
+   * @param documentLine zero-based line of the document
+   * @param documentColumn zero-based column of the document
+   * @return calculated offset or `null` if it's impossible to calculate
+   */
+  protected open fun calculateOffset(document: Document?, documentLine: Int, documentColumn: Int): Int? {
+    document ?: return null
+    if (documentLine < 0 || document.lineCount <= documentLine) return null
+    val lineStartOffset = document.getLineStartOffset(documentLine)
+    val lineEndOffset = document.getLineEndOffset(documentLine)
+    val fixedColumn = Math.min(Math.max(documentColumn, 0), lineEndOffset - lineStartOffset)
+    return lineStartOffset + fixedColumn
+  }
 }
