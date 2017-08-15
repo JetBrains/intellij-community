@@ -218,6 +218,7 @@ class ApplierCompleter<T> extends CountedCompleter<Void> {
     ApplierCompleter<T> right = this;
     Throwable result = throwable;
     while (right != null) {
+      ProgressManager.checkCanceled();
       if (right.tryUnfork()) {
         right.execAndForkSubTasks();
         result = moreImportant(result, right.throwable);
