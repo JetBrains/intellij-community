@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.versionBrowser.VcsRevisionNumberAware;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ConstantFunction;
 import com.intellij.util.NotNullFunction;
@@ -293,7 +294,20 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
 
   @Nullable
   private FilePath getLocalPath(final String path, final NotNullFunction<File, Boolean> detector) {
-    return SvnRepositoryLocation.getLocalPath(myRepositoryRoot + path, detector, myVcs);
+    if (myVcs.getProject().isDefault()) return null;
+
+    String absoluteUrl = myRepositoryRoot + path;
+    final RootUrlInfo rootForUrl = myVcs.getSvnFileUrlMapping().getWcRootForUrl(absoluteUrl);
+    FilePath result = null;
+
+    if (rootForUrl != null) {
+      String relativePath = SvnUtil.getRelativeUrl(rootForUrl.getUrl(), absoluteUrl);
+      File file = new File(rootForUrl.getPath(), relativePath);
+      VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(file);
+      result = virtualFile != null ? VcsUtil.getFilePath(virtualFile) : VcsUtil.getFilePath(file, detector.fun(file).booleanValue());
+    }
+
+    return result;
   }
 
   private long getRevision(final boolean isBeforeRevision) {
