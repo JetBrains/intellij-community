@@ -176,9 +176,8 @@ public class SelectBranchPopup {
         return doFinalStep(() -> myCallback.branchSelected(myProject, myConfiguration, selectedValue, -1));
       }
       else {
-        showBranchPopup(selectedValue);
+        return doFinalStep(() -> showBranchPopup(selectedValue));
       }
-      return FINAL_CHOICE;
     }
 
     private void loadBranches(@NotNull String selectedBranchesHolder, @NotNull Runnable runnable) {
