@@ -295,4 +295,33 @@ class C {
     fixture.configureByText '_.groovy', 'C.staticVoidMethod()'
     fixture.checkHighlighting()
   }
+
+  void 'test do not load AST when method has no comment'() {
+    def file = fixture.tempDirFixture.createFile('classes.groovy', '''\
+class C {
+  static void someMethod() {}
+  /**
+  *
+  */
+  static void someMethodWithDocs() {}
+}
+''')
+    def psiFile = psiManager.findFile(file) as GroovyFileImpl
+    assert !psiFile.contentsLoaded
+
+    def typeDefinition = psiFile.typeDefinitions.first()
+    assert !psiFile.contentsLoaded
+
+    def method = typeDefinition.findMethodsByName('someMethod', false).first()
+    assert !psiFile.contentsLoaded
+
+    assert method.docComment == null
+    assert !psiFile.contentsLoaded
+
+    def methodWithDocs = typeDefinition.findMethodsByName('someMethodWithDocs', false).first()
+    assert !psiFile.contentsLoaded
+
+    assert methodWithDocs.docComment != null
+    assert psiFile.contentsLoaded
+  }
 }
