@@ -86,6 +86,8 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
       }
     }
 
+    final TypeEvalContext context = TypeEvalContext.userInitiated(originalElement.getProject(), originalElement.getContainingFile());
+
     if (element instanceof PyFunction) {
       final PyFunction func = (PyFunction)element;
       final StringBuilder cat = new StringBuilder();
@@ -121,13 +123,12 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
         summary = docString.getSummary();
       }
 
-      final TypeEvalContext context = TypeEvalContext.userInitiated(originalElement.getProject(), originalElement.getContainingFile());
       return describeDecorators(cls, Function.identity(), TO_ONE_LINE_AND_ESCAPE, ", ", "\n")
                .add(describeClass(cls, Function.identity(), TO_ONE_LINE_AND_ESCAPE, false, false, context))
                .toString() + "\n" + summary;
     }
     else if (element instanceof PyExpression) {
-      return describeExpression((PyExpression)element, originalElement);
+      return describeExpression((PyExpression)element, originalElement, ESCAPE_ONLY, context);
     }
     return null;
   }
@@ -158,33 +159,35 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
   }
 
   @Nullable
-  private static String describeExpression(@NotNull PyExpression expr, @NotNull PsiElement originalElement) {
-    final String name = expr.getName();
+  private static String describeExpression(@NotNull PyExpression expression,
+                                           @NotNull PsiElement originalElement,
+                                           @NotNull Function<String, String> escaper,
+                                           @NotNull TypeEvalContext context) {
+    final String name = expression.getName();
     if (name != null) {
-      final StringBuilder result = new StringBuilder((expr instanceof PyNamedParameter) ? "parameter" : "variable");
+      final StringBuilder result = new StringBuilder(expression instanceof PyNamedParameter ? "parameter" : "variable");
       result.append(String.format(" \"%s\"", name));
-      if (expr instanceof PyNamedParameter) {
-        final PyFunction function = PsiTreeUtil.getParentOfType(expr, PyFunction.class);
+
+      if (expression instanceof PyNamedParameter) {
+        final PyFunction function = PsiTreeUtil.getParentOfType(expression, PyFunction.class);
         if (function != null) {
-          result.append(" of ").append(function.getContainingClass() == null ? "function" : "method");
-          result.append(String.format(" \"%s\"", function.getName()));
+          result
+            .append(" of ")
+            .append(function.getContainingClass() == null ? "function" : "method")
+            .append(String.format(" \"%s\"", function.getName()));
         }
       }
+
       if (originalElement instanceof PyTypedElement) {
-        final String typeName = getTypeName(((PyTypedElement)originalElement));
+        final String typeName = getTypeName(context.getType(((PyTypedElement)originalElement)), context);
         result
           .append("\n")
           .append(String.format("Inferred type: %s", typeName));
       }
-      return result.toString();
+
+      return escaper.apply(result.toString());
     }
     return null;
-  }
-
-  @NotNull
-  private static String getTypeName(@NotNull PyTypedElement element) {
-    final TypeEvalContext context = TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile());
-    return getTypeName(context.getType(element), context);
   }
 
   /**

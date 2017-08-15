@@ -41,11 +41,14 @@ class DocumentationBuilderKit {
   static final Function<Iterable<String>, Iterable<String>> LSame2 = what -> what;
 
   @NotNull
-  static final Function<String, String> TO_ONE_LINE_AND_ESCAPE = s -> StringUtil.escapeXml(s.replace('\n', ' '));
+  static final Function<String, String> ESCAPE_ONLY = StringUtil::escapeXml;
+
+  @NotNull
+  static final Function<String, String> TO_ONE_LINE_AND_ESCAPE = s -> ESCAPE_ONLY.apply(s.replace('\n', ' '));
 
   @NotNull
   static final Function<String, String> ESCAPE_AND_SAVE_NEW_LINES_AND_SPACES =
-    s -> StringUtil.escapeXml(s).replace("\n", BR).replace(" ", CommonXmlStrings.NBSP);
+    s -> ESCAPE_ONLY.apply(s).replace("\n", BR).replace(" ", CommonXmlStrings.NBSP);
 
   @NotNull
   static final Function<String, String> WRAP_IN_ITALIC = s -> "<i>" + s + "</i>";
