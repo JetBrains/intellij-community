@@ -36,10 +36,7 @@ import javax.swing.event.DocumentListener;
 import javax.swing.plaf.FontUIResource;
 import javax.swing.plaf.UIResource;
 import javax.swing.plaf.basic.BasicTextFieldUI;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.Document;
-import javax.swing.text.JTextComponent;
-import javax.swing.text.Position;
+import javax.swing.text.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
@@ -199,6 +196,11 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
     throws BadLocationException {
     int position = DarculaUIUtil.getPatchedNextVisualPositionFrom(t, pos, direction);
     return position != -1 ? position : super.getNextVisualPositionFrom(t, pos, b, direction, biasRet);
+  }
+
+  @Override
+  protected Caret createCaret() {
+    return Registry.is("ide.text.mouse.selection.new") ? new MyCaret(getComponent()) : super.createCaret();
   }
 
   @Override
@@ -630,6 +632,26 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
     @Override
     public String toString() {
       return "clear";
+    }
+  }
+
+  static class MyCaret extends BasicCaret {
+    private final JTextComponent myComponent;
+
+    public MyCaret(JTextComponent component) {
+      myComponent = component;
+    }
+
+    @Override
+    public void mouseDragged(MouseEvent e) {
+      if (e.getID() == MouseEvent.MOUSE_DRAGGED && !myComponent.getText().contains("\n")) {
+        boolean consumed = e.isConsumed();
+        e = new MouseEvent(e.getComponent(), e.getID(), e.getWhen(), e.getModifiers() | e.getModifiersEx(), e.getX(),
+                           myComponent.getHeight() / 2,
+                           e.getClickCount(), e.isPopupTrigger(), e.getButton());
+        if (consumed) e.consume();
+      }
+      super.mouseDragged(e);
     }
   }
 }
