@@ -18,8 +18,7 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.util.Segment;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.Key;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Consumer;
@@ -34,6 +33,7 @@ abstract class FoldRegionsTree {
   private final RangeMarkerTree<FoldRegionImpl> myMarkerTree;
   @NotNull private volatile CachedData myCachedData = new CachedData();
 
+  private static final Key<Boolean> VISIBLE = Key.create("visible.fold.region");
   private static final Comparator<FoldRegion> BY_END_OFFSET = Comparator.comparingInt(RangeMarker::getEndOffset);
   private static final Comparator<? super FoldRegion> BY_END_OFFSET_REVERSE = Collections.reverseOrder(BY_END_OFFSET);
 
@@ -66,36 +66,59 @@ abstract class FoldRegionsTree {
 
   CachedData rebuild() {
     List<FoldRegion> visible = new ArrayList<>(myMarkerTree.size());
-
     List<FoldRegionImpl> duplicatesToKill = new ArrayList<>();
+
     SweepProcessor.Generator<FoldRegionImpl> generator = processor -> myMarkerTree.processOverlappingWith(0, Integer.MAX_VALUE, processor);
-    // current regions which are nested with each other.
-    // to determine visible regions (i.e. all regions which are not inside collapsed), for each endpoint
-    // we should sort this list by inclusion (from the biggest to the smallest length), find the longest collapsed (with index i) and report all (0..i] as visible
-    final List<FoldRegionImpl> nested = new ArrayList<>();
     SweepProcessor.sweep(generator, new SweepProcessor<FoldRegionImpl>() {
-      int lastEnd = -1; // offset (with atStart==false) which was reported last by sweep
+      FoldRegionImpl lastRegion;
+      FoldRegionImpl lastCollapsedRegion;
 
       @Override
       public boolean process(int offset, @NotNull FoldRegionImpl region, boolean atStart, @NotNull Collection<FoldRegionImpl> overlapping) {
         if (atStart) {
-          if (!isNestedWithLast(nested, region)) {
-            reportVisible(nested, lastEnd, visible, duplicatesToKill);
+          if (sameRange(region, lastRegion)) {
+            if (region.getUserData(VISIBLE) == null) {
+              duplicatesToKill.add(region);
+              return true;
+            }
+            else {
+              duplicatesToKill.add(lastRegion);
+              if (!visible.isEmpty() && lastRegion == visible.get(visible.size() - 1)) removeFromVisible(visible.size() - 1);
+            }
           }
-          addToNested(nested, region);
-        }
-        else {
-          if (lastEnd != offset) {
-            reportVisible(nested, lastEnd, visible, duplicatesToKill);
-            lastEnd = offset;
+          lastRegion = region;
+          
+          if (lastCollapsedRegion == null || region.getEndOffset() > lastCollapsedRegion.getEndOffset()) {
+            if (!region.isExpanded()) {
+              hideContainedRegions(region);
+              lastCollapsedRegion = region;
+            }
+            visible.add(region);
+            region.putUserData(VISIBLE, Boolean.TRUE);
+          }
+          else {
+            region.putUserData(VISIBLE, null);
           }
         }
         return true;
       }
+
+      private void hideContainedRegions(FoldRegion region) {
+        for (int i = visible.size() - 1; i >= 0; i--) {
+          if (region.getStartOffset() == visible.get(i).getStartOffset()) removeFromVisible(i);
+          else break;
+        }
+      }
+
+      private void removeFromVisible(int index) {
+        visible.remove(index).putUserData(VISIBLE, null);
+      }
+
+      private boolean sameRange(@NotNull FoldRegion region, @Nullable FoldRegion otherRegion) {
+        return otherRegion != null && 
+               region.getStartOffset() == otherRegion.getStartOffset() && region.getEndOffset() == otherRegion.getEndOffset();
+      }
     });
-    if (!nested.isEmpty()) {
-      reportVisible(nested, nested.get(nested.size()-1).getEndOffset(), visible, duplicatesToKill);
-    }
 
     for (FoldRegionImpl region : duplicatesToKill) {
       myMarkerTree.removeInterval(region);
@@ -106,80 +129,6 @@ abstract class FoldRegionsTree {
     Arrays.sort(visibleRegions, BY_END_OFFSET_REVERSE);
 
     return updateCachedAndSortOffsets(visibleRegions);
-  }
-
-  private static boolean isNestedWithLast(List<FoldRegionImpl> nested, @NotNull FoldRegion region) {
-    if (nested.isEmpty()) return true;
-    FoldRegion last = nested.get(nested.size() - 1);
-    return TextRange.containsRange(last, region) || TextRange.containsRange(region, last);
-  }
-
-  private static void addToNested(List<FoldRegionImpl> nested, @NotNull FoldRegionImpl region) {
-    // maintain invariant: nested list should be sorted by inclusion: from biggest to smallest and then first expanded then collapsed
-    for (int i=nested.size();i>=0;i--) {
-      FoldRegion prev = i==0 ? null : nested.get(i - 1);
-      if (prev == null ||
-          TextRange.containsRange(prev, region) && (!TextRange.containsRange(region, prev) || prev.isExpanded() || !region.isExpanded())) {
-        nested.add(i,region);
-        break;
-      }
-    }
-  }
-
-  // process and report regions which getEndOffset() == endOffset
-  private static void reportVisible(List<FoldRegionImpl> nested,
-                                    int endOffset,
-                                    List<FoldRegion> outVisible,
-                                    List<FoldRegionImpl> outDuplicatesToKill) {
-    if (nested.isEmpty()) return;
-    FoldRegion topCollapsed = null;
-
-    int start;
-    for (start = nested.size()-1; start>=0; start--) {
-      FoldRegion region = nested.get(start);
-      if (!region.isExpanded()) topCollapsed = region;
-
-      if (endOffset != region.getEndOffset()) {
-        break;
-      }
-    }
-
-    if (start != nested.size()-1) {
-      for (int i = start-1; i>=0; i--) {
-        FoldRegion region = nested.get(i);
-        if (!region.isExpanded()) topCollapsed = region;
-      }
-      boolean toReport = true;
-      for (int i = start+1; i < nested.size(); i++) {
-        FoldRegionImpl region = nested.get(i);
-        FoldRegion next = i==nested.size()-1?null:nested.get(i+1);
-
-        // there can be multiple regions with the same offsets, collapsed and expanded.
-        // in that case dispose the expanded and preserve collapsed (to reduce flickering)
-        if (next != null && Segment.BY_START_OFFSET_THEN_END_OFFSET.compare(next, region) == 0) {
-          // regions are sorted by expanded, so expanded are first
-          outDuplicatesToKill.add(region);
-          if (topCollapsed == region) {
-            // should update topCollapsed or it will be disposed otherwise
-            topCollapsed = next.isExpanded() ? null : next;
-          }
-          continue;
-        }
-
-        // report all these top regions as visible, until we met collapsed
-        if (topCollapsed != null && topCollapsed != region) {
-          // no, all these regions are inside collapsed, nothing to report
-          toReport = false;
-        }
-        if (toReport) {
-          outVisible.add(region);
-          if (!region.isExpanded()) {
-            toReport = false;
-          }
-        }
-      }
-      nested.subList(start+1, nested.size()).clear();
-    }
   }
 
   @NotNull
