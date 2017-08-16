@@ -942,7 +942,12 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
 
     if (moduleVersion == null) {
       if (binaryPath.isFile()) {
-        boolean isModuleLocalLibrary = FileUtil.isAncestor(gradleModule.getGradleProject().getProjectDirectory(), binaryPath, false);
+        boolean isModuleLocalLibrary = false;
+        try {
+          isModuleLocalLibrary = FileUtil.isAncestor(gradleModule.getGradleProject().getProjectDirectory(), binaryPath, false);
+        } catch (UnsupportedMethodException e) {
+          // ignore, generate project-level library for the dependency
+        }
         if (isModuleLocalLibrary) {
           level = LibraryLevel.MODULE;
         } else {
