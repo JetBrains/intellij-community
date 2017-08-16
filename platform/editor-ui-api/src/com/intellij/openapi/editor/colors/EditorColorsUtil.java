@@ -41,7 +41,8 @@ public class EditorColorsUtil {
 
   @Nullable
   public static Color getGlobalOrDefaultColor(@NotNull ColorKey colorKey) {
-    return getColorSchemeForBackground(null).getColor(colorKey);
+    Color color = getColorSchemeForBackground(null).getColor(colorKey);
+    return color != null? color : colorKey.getDefaultColor();
   }
 
   /**

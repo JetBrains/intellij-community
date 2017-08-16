@@ -15,6 +15,7 @@
  */
 package com.intellij.vcs.log.impl;
 
+import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.vcs.log.RefGroup;
 import com.intellij.vcs.log.VcsRef;
 import org.jetbrains.annotations.NotNull;
@@ -53,6 +54,7 @@ public class SingletonRefGroup implements RefGroup {
   @NotNull
   @Override
   public List<Color> getColors() {
-    return Collections.singletonList(myRef.getType().getBackgroundColor());
+    Color color = EditorColorsUtil.getGlobalOrDefaultColor(myRef.getType().getBgColorKey());
+    return Collections.singletonList(color);
   }
 }

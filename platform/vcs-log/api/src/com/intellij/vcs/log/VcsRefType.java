@@ -1,8 +1,7 @@
 package com.intellij.vcs.log;
 
+import com.intellij.openapi.editor.colors.ColorKey;
 import org.jetbrains.annotations.NotNull;
-
-import java.awt.*;
 
 /**
  * @author Kirill Likhodedov
@@ -31,5 +30,5 @@ public interface VcsRefType {
    * TODO maybe this is not the right place for color
    */
   @NotNull
-  Color getBackgroundColor();
+  ColorKey getBgColorKey();
 }

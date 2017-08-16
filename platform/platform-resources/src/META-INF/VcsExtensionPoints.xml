@@ -63,7 +63,9 @@
                     interface="com.intellij.openapi.vcs.actions.VcsQuickListContentProvider"/>
     <extensionPoint name="patch.extension" interface="com.intellij.openapi.diff.impl.patch.PatchEP" area="IDEA_PROJECT"/>
     <extensionPoint name="vcsChangesViewRefresher" interface="com.intellij.openapi.vcs.changes.ChangesViewRefresher" area="IDEA_PROJECT"/>
-    <extensionPoint name="vcsAnnotationGutterActionProvider" interface="com.intellij.openapi.vcs.annotate.AnnotationGutterActionProvider"/>
+    <extensionPoint name="vcsAnnotationGutterActionProvider"
+                    interface="com.intellij.openapi.vcs.annotate.AnnotationGutterActionProvider"/>
+    <extensionPoint name="vcsColorsProvider" interface="com.intellij.vcs.VcsColorsProvider"/>
 
     <extensionPoint name="vcs.taskHandler" interface="com.intellij.openapi.vcs.VcsTaskHandler" area="IDEA_PROJECT"/>
 
