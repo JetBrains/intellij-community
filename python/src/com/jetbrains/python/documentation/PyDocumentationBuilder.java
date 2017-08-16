@@ -58,6 +58,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -231,7 +232,7 @@ public class PyDocumentationBuilder {
     final AccessDirection direction = AccessDirection.of((PyElement)outerElement);
     final Maybe<PyCallable> accessor = property.getByDirection(direction);
     myProlog.addItem("property ").addWith(TagBold, $().addWith(TagCode, $(elementName)))
-      .addItem(" of ").add(PythonDocumentationProvider.describeClass(cls, TagCode, true, true));
+      .addItem(" of ").add(PythonDocumentationProvider.describeClass(cls, Function.identity(), TO_ONE_LINE_AND_ESCAPE, true, true, context));
     if (accessor.isDefined() && property.getDoc() != null) {
       myBody.addItem(": ").addItem(property.getDoc()).addItem(BR);
     }
@@ -283,18 +284,22 @@ public class PyDocumentationBuilder {
   private void buildFromDocstring(@NotNull final PsiElement elementDefinition, boolean isProperty) {
     PyClass pyClass = null;
     final PyStringLiteralExpression docStringExpression = getEffectiveDocStringExpression((PyDocStringOwner)elementDefinition);
+    final TypeEvalContext context = TypeEvalContext.userInitiated(elementDefinition.getProject(), elementDefinition.getContainingFile());
 
     if (elementDefinition instanceof PyClass) {
       pyClass = (PyClass)elementDefinition;
       myBody.add(PythonDocumentationProvider.describeDecorators(pyClass, WRAP_IN_ITALIC, ESCAPE_AND_SAVE_NEW_LINES_AND_SPACES, BR, BR));
-      myBody.add(PythonDocumentationProvider.describeClass(pyClass, TagBold, true, false));
+      myBody.add(PythonDocumentationProvider.describeClass(pyClass, WRAP_IN_BOLD, ESCAPE_AND_SAVE_NEW_LINES_AND_SPACES, false, true, context));
     }
     else if (elementDefinition instanceof PyFunction) {
       final PyFunction pyFunction = (PyFunction)elementDefinition;
       if (!isProperty) {
         pyClass = pyFunction.getContainingClass();
         if (pyClass != null) {
-          myBody.addWith(TagSmall, PythonDocumentationProvider.describeClass(pyClass, TagCode, true, true)).addItem(BR).addItem(BR);
+          myBody
+            .addWith(TagSmall, PythonDocumentationProvider.describeClass(pyClass, Function.identity(), TO_ONE_LINE_AND_ESCAPE, true, true, context))
+            .addItem(BR)
+            .addItem(BR);
         }
       }
       myBody.add(PythonDocumentationProvider.describeDecorators(pyFunction, WRAP_IN_ITALIC, ESCAPE_AND_SAVE_NEW_LINES_AND_SPACES, BR, BR));

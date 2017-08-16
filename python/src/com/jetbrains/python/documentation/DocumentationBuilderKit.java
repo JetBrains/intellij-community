@@ -53,6 +53,9 @@ class DocumentationBuilderKit {
   @NotNull
   static final Function<String, String> WRAP_IN_CODE = s -> "<code>" + s + "</code>";
 
+  @NotNull
+  static final Function<String, String> WRAP_IN_BOLD = s -> "<b>" + s + "</b>";
+
   private DocumentationBuilderKit() {
   }
 

@@ -343,4 +343,12 @@ public class PyQuickDocTest extends LightMarkedTestCase {
   public void testHoverOverManyDecoratorsClass() {
     checkHover();
   }
+
+  public void testClassWithAllKindSuperClassExpressions() {
+    runWithLanguageLevel(LanguageLevel.PYTHON30, this::checkHTMLOnly);
+  }
+
+  public void testHoverOverClassWithAllKindSuperClassExpressions() {
+    runWithLanguageLevel(LanguageLevel.PYTHON30, this::checkHover);
+  }
 }

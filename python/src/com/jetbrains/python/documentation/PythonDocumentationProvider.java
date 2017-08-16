@@ -43,6 +43,7 @@ import com.jetbrains.python.console.PydevDocumentationProvider;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -118,8 +119,9 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
         summary = docString.getSummary();
       }
 
+      final TypeEvalContext context = TypeEvalContext.userInitiated(originalElement.getProject(), originalElement.getContainingFile());
       return describeDecorators(cls, Function.identity(), TO_ONE_LINE_AND_ESCAPE, ", ", "\n")
-               .add(describeClass(cls, LSame2, false, false))
+               .add(describeClass(cls, Function.identity(), TO_ONE_LINE_AND_ESCAPE, false, false, context))
                .toString() + "\n" + summary;
     }
     else if (element instanceof PyExpression) {
@@ -257,53 +259,77 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     return result;
   }
 
-  /**
-   * Creates a HTML description of function definition.
-   *
-   * @param cls         the class
-   * @param nameWrapper wrapper to render the name with
-   * @param allowHtml
-   * @param linkOwnName if true, add link to class's own name  @return cat for easy chaining
-   */
   @NotNull
   static ChainIterable<String> describeClass(@NotNull PyClass cls,
-                                             Function<Iterable<String>, Iterable<String>> nameWrapper,
-                                             boolean allowHtml,
-                                             boolean linkOwnName) {
-    final ChainIterable<String> cat = new ChainIterable<>();
-    final String name = cls.getName();
-    cat.addItem("class ");
-    if (allowHtml && linkOwnName) {
-      cat.addItem(PyDocumentationLink.toContainingClass(name));
-    }
-    else {
-      cat.addWith(nameWrapper, $(name));
-    }
-    final PyExpression[] ancestors = cls.getSuperClassExpressions();
-    if (ancestors.length > 0) {
-      cat.addItem("(");
+                                             @NotNull Function<String, String> escapedNameMapper,
+                                             @NotNull Function<String, String> escaper,
+                                             boolean link,
+                                             boolean linkAncestors,
+                                             @NotNull TypeEvalContext context) {
+    final ChainIterable<String> result = new ChainIterable<>();
+
+    final String name = escapedNameMapper.apply(escaper.apply(cls.getName()));
+    result.addItem(escaper.apply("class "));
+    result.addItem(link ? PyDocumentationLink.toContainingClass(name) : name);
+
+    final PyExpression[] superClasses = cls.getSuperClassExpressions();
+    if (superClasses.length > 0) {
+      result.addItem(escaper.apply("("));
       boolean isNotFirst = false;
-      for (PyExpression parent : ancestors) {
-        final String parentName = parent.getName();
-        if (parentName == null) {
-          continue;
-        }
+
+      for (PyExpression superClass : superClasses) {
         if (isNotFirst) {
-          cat.addItem(", ");
+          result.addItem(escaper.apply(", "));
         }
         else {
           isNotFirst = true;
         }
-        if (allowHtml) {
-          cat.addItem(PyDocumentationLink.toAncestorOfContainingClass(parentName));
-        }
-        else {
-          cat.addItem(parentName);
+
+        result.addItem(describeSuperClass(superClass, escaper, linkAncestors, context));
+      }
+
+      result.addItem(escaper.apply(")"));
+    }
+
+    return result;
+  }
+
+  @NotNull
+  private static String describeSuperClass(@NotNull PyExpression expression,
+                                           @NotNull Function<String, String> escaper,
+                                           boolean link,
+                                           @NotNull TypeEvalContext context) {
+    if (link) {
+      if (expression instanceof PyReferenceExpression) {
+        final PyReferenceExpression referenceExpression = (PyReferenceExpression)expression;
+        if (!referenceExpression.isQualified()) {
+          final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+
+          for (ResolveResult result : referenceExpression.getReference(resolveContext).multiResolve(false)) {
+            final PsiElement element = result.getElement();
+            if (element instanceof PyClass) {
+              final String name = ((PyClass)element).getName();
+              if (name != null) {
+                return PyDocumentationLink.toAncestorOfContainingClass(name);
+              }
+            }
+          }
         }
       }
-      cat.addItem(")");
+      else if (expression instanceof PySubscriptionExpression) {
+        final PyExpression operand = ((PySubscriptionExpression)expression).getOperand();
+        final PyExpression indexExpression = ((PySubscriptionExpression)expression).getIndexExpression();
+
+        if (indexExpression != null) {
+          return describeSuperClass(operand, escaper, true, context) +
+                 escaper.apply("[") +
+                 escaper.apply(indexExpression.getText()) +
+                 escaper.apply("]");
+        }
+      }
     }
-    return cat;
+
+    return escaper.apply(expression.getText());
   }
 
   @NotNull
