@@ -835,27 +835,37 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
   override fun addNewScheme(scheme: T, replaceExisting: Boolean) {
     var toReplace = -1
     val schemes = schemes
-    for (i in schemes.indices) {
-      val existing = schemes.get(i)
-      if (existing.name == scheme.name) {
-        if (existing.javaClass != scheme.javaClass) {
-          LOG.warn("'${scheme.name}' ${existing.javaClass.simpleName} replaced with ${scheme.javaClass.simpleName}")
-        }
+    for ((index, existing) in schemes.withIndex()) {
+      if (existing.name != scheme.name) {
+        continue
+      }
 
-        toReplace = i
-        if (replaceExisting && processor.isExternalizable(existing)) {
-          val oldInfo = schemeToInfo.remove(existing)
-          if (oldInfo != null && processor.isExternalizable(scheme) && !schemeToInfo.containsKey(scheme)) {
-            schemeToInfo.put(scheme, oldInfo)
-          }
-        }
+      toReplace = index
+      if (existing === scheme) {
+        // do not just return, below scheme will be removed from filesToDelete list
         break
+      }
+
+      if (existing.javaClass != scheme.javaClass) {
+        LOG.warn("'${scheme.name}' ${existing.javaClass.simpleName} replaced with ${scheme.javaClass.simpleName}")
+      }
+
+      if (replaceExisting && processor.isExternalizable(existing)) {
+        val oldInfo = schemeToInfo.remove(existing)
+        if (oldInfo != null && processor.isExternalizable(scheme) && !schemeToInfo.containsKey(scheme)) {
+          schemeToInfo.put(scheme, oldInfo)
+        }
       }
     }
 
     when {
       toReplace == -1 -> schemes.add(scheme)
-      replaceExisting || !processor.isExternalizable(scheme) -> schemes.set(toReplace, scheme)
+      (replaceExisting || !processor.isExternalizable(scheme)) -> {
+        if (schemes.get(toReplace) !== scheme) {
+          // avoid "set" (LockFreeCopyOnWriteArrayList calls ARRAY_UPDATER.compareAndSet and so on)
+          schemes.set(toReplace, scheme)
+        }
+      }
       else -> {
         (scheme as ExternalizableScheme).renameScheme(UniqueNameGenerator.generateUniqueName(scheme.name, collectExistingNames(schemes)))
         schemes.add(scheme)

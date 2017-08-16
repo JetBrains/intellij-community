@@ -269,22 +269,24 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
       existingId?.let {
         if (newId != it) {
           idToSettings.remove(it)
+
+          if (selectedConfigurationId == it) {
+            selectedConfigurationId = newId
+          }
         }
       }
 
       idToSettings.put(newId, settings)
 
-      if (selectedConfigurationId != null && selectedConfigurationId == existingId) {
-        selectedConfigurationId = newId
-      }
-
       if (existingId == null) {
         refreshUsagesList(settings)
-        settings.schemeManager?.addScheme(settings as RunnerAndConfigurationSettingsImpl)
       }
       else {
         (if (settings.isShared) workspaceSchemeManager else projectSchemeManager)?.removeScheme(settings as RunnerAndConfigurationSettingsImpl)
       }
+
+      // scheme level can be changed (workspace -> project), so, ensure that scheme is added to corresponding scheme manager (if exists, doesn't harm)
+      settings.schemeManager?.addScheme(settings as RunnerAndConfigurationSettingsImpl)
     }
 
     if (existingId == null) {
