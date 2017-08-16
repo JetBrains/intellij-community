@@ -31,6 +31,7 @@ class JavaIntentionPolicy extends IntentionPolicy {
            actionText.startsWith("Attach annotations") || // changes project model
            actionText.startsWith("Change class type parameter") || // doesn't change file text (starts live template)
            actionText.startsWith("Rename reference") || // doesn't change file text (starts live template)
+           actionText.equals("Remove") || // IDEA-177220
            super.shouldSkipIntention(actionText);
   }
 

@@ -18,6 +18,7 @@ package com.intellij.java.propertyBased;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.propertyBased.CompletionPolicy;
@@ -43,6 +44,9 @@ class JavaCompletionPolicy extends CompletionPolicy {
     if (refElement instanceof PsiJavaCodeReferenceElement && 
         !shouldSuggestJavaTarget((PsiJavaCodeReferenceElement)refElement, target)) {
       return false;
+    }
+    if (ref instanceof FileReference && target instanceof PsiFile) {
+      return false; // IDEA-177167
     }
     return true;
   }
