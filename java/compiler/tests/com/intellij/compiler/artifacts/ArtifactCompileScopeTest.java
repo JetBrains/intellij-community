@@ -11,7 +11,6 @@ import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.util.TimeoutUtil;
 
 import java.io.File;
-import java.io.IOException;
 
 import static com.intellij.compiler.artifacts.ArtifactsTestCase.commitModel;
 
@@ -61,7 +60,7 @@ public class ArtifactCompileScopeTest extends ArtifactCompilerTestCase {
     assertOutput(a, fs().file("A.class").file("a.txt"));
   }
 
-  public void testDoNotRebuildIncludedModulesOnRebuildingArtifact() throws IOException {
+  public void testDoNotRebuildIncludedModulesOnRebuildingArtifact() {
     Module m = addModule("m", createFile("src/AB.java", "class A{} class B{}").getParent());
     Artifact a = addArtifact(root().module(m));
     make(a);
@@ -92,7 +91,7 @@ public class ArtifactCompileScopeTest extends ArtifactCompilerTestCase {
     CompilerTestUtil.setupJavacForTests(myProject);
   }
 
-  public void testMakeModule() throws Exception {
+  public void testMakeModule() {
     final VirtualFile file1 = createFile("src1/A.java", "public class A {}");
     final Module module1 = addModule("module1", file1.getParent());
     final VirtualFile file2 = createFile("src2/B.java", "public class B {}");
@@ -118,7 +117,7 @@ public class ArtifactCompileScopeTest extends ArtifactCompilerTestCase {
     commitModel(model);
   }
 
-  public void testMakeFullArtifactIfIncludedModuleIsCompiled() throws Exception {
+  public void testMakeFullArtifactIfIncludedModuleIsCompiled() {
     final VirtualFile file1 = createFile("src1/A.java", "public class A{}");
     final Module module1 = addModule("module1", file1.getParent());
     final VirtualFile file2 = createFile("src2/B.java", "public class B{}");
@@ -133,7 +132,7 @@ public class ArtifactCompileScopeTest extends ArtifactCompilerTestCase {
   }
 
   //IDEA-58529
-  public void testDoNotRebuildArtifactOnForceCompileOfSingleFile() throws Exception {
+  public void testDoNotRebuildArtifactOnForceCompileOfSingleFile() {
     final VirtualFile file1 = createFile("src/A.java", "public class A{}");
     final VirtualFile file2 = createFile("src/B.java", "public class B{}");
     final Module module = addModule("module", file1.getParent());

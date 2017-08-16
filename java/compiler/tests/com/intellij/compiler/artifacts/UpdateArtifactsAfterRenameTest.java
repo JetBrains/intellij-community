@@ -14,7 +14,7 @@ import java.io.IOException;
  */
 public class UpdateArtifactsAfterRenameTest extends PackagingElementsTestCase {
 
-  public void testRenameFile() throws Exception {
+  public void testRenameFile() {
     final VirtualFile file = createFile("a.txt");
     final Artifact artifact = addArtifact(root().dir("xxx").file(file));
     renameFile(file, "b.txt");
@@ -23,7 +23,7 @@ public class UpdateArtifactsAfterRenameTest extends PackagingElementsTestCase {
                            "  file:" + getProjectBasePath() + "/b.txt");
   }
 
-  public void testRenameDirectory() throws Exception {
+  public void testRenameDirectory() {
     final VirtualFile dir = createFile("dir/a.txt").getParent();
     final Artifact artifact = addArtifact(root().dirCopy(dir));
     renameFile(dir, "xxx");
@@ -31,7 +31,7 @@ public class UpdateArtifactsAfterRenameTest extends PackagingElementsTestCase {
                            " dir:" + getProjectBasePath() + "/xxx");
   }
 
-  public void testMoveFile() throws Exception {
+  public void testMoveFile() {
     final VirtualFile file = createFile("a/xxx.txt");
     final Artifact artifact = addArtifact(root().file(file));
     VirtualFile baseDir = getBaseDir();
@@ -40,7 +40,7 @@ public class UpdateArtifactsAfterRenameTest extends PackagingElementsTestCase {
                            " file:" + getProjectBasePath() + "/b/xxx.txt");
   }
 
-  public void testRenameParentDir() throws Exception {
+  public void testRenameParentDir() {
     final VirtualFile file = createFile("x/a.txt");
     final Artifact artifact = addArtifact(root().file(file));
     renameFile(file.getParent(), "y");
@@ -48,7 +48,7 @@ public class UpdateArtifactsAfterRenameTest extends PackagingElementsTestCase {
                            " file:" + getProjectBasePath() + "/y/a.txt");
   }
 
-  public void testMoveParentDir() throws Exception {
+  public void testMoveParentDir() {
     final VirtualFile file = createFile("a/b/c.txt");
     final Artifact artifact = addArtifact(root().file(file));
     VirtualFile baseDir = getBaseDir();
@@ -57,7 +57,7 @@ public class UpdateArtifactsAfterRenameTest extends PackagingElementsTestCase {
                            " file:" + getProjectBasePath() + "/d/b/c.txt");
   }
 
-  public void testRenameArtifact() throws Exception {
+  public void testRenameArtifact() {
     final Artifact xxx = addArtifact("xxx");
     final Artifact artifact = addArtifact(root().artifact(xxx));
     rename(xxx, "yyy");
@@ -65,11 +65,11 @@ public class UpdateArtifactsAfterRenameTest extends PackagingElementsTestCase {
                            " artifact:yyy");
   }
 
-  public void testRenameModule() throws Exception {
+  public void testRenameModule() {
     final ModuleManager moduleManager = ModuleManager.getInstance(myProject);
     final Module module = new WriteAction<Module>() {
       @Override
-      protected void run(@NotNull Result<Module> result) throws Throwable {
+      protected void run(@NotNull Result<Module> result) {
         Module res = moduleManager.newModule(getProjectBasePath() + "/myModule.iml", StdModuleTypes.JAVA.getId());
         result.setResult(res);
       }

@@ -7,7 +7,7 @@ import com.intellij.packaging.impl.artifacts.PlainArtifactType;
  * @author nik
  */
 public class ArtifactPointerTest extends ArtifactsTestCase {
-  public void testCreateFromName() throws Exception {
+  public void testCreateFromName() {
     final Artifact artifact = addArtifact("art");
     final ArtifactPointer pointer = getPointerManager().createPointer("art");
     assertSame(artifact, pointer.getArtifact());
@@ -16,7 +16,7 @@ public class ArtifactPointerTest extends ArtifactsTestCase {
     assertEquals("art", pointer.getArtifactName());
   }
 
-  public void testCreateFromArtifact() throws Exception {
+  public void testCreateFromArtifact() {
     final Artifact artifact = addArtifact("aaa");
     final ArtifactPointer pointer = getPointerManager().createPointer(artifact);
     assertSame(artifact, pointer.getArtifact());
@@ -24,7 +24,7 @@ public class ArtifactPointerTest extends ArtifactsTestCase {
     assertSame(pointer, getPointerManager().createPointer("aaa"));
   }
 
-  public void testRenameArtifact() throws Exception {
+  public void testRenameArtifact() {
     final Artifact artifact = addArtifact("art1");
     final ArtifactPointer pointer = getPointerManager().createPointer("art1");
     assertSame(artifact, pointer.getArtifact());
@@ -36,7 +36,7 @@ public class ArtifactPointerTest extends ArtifactsTestCase {
     assertSame(pointer, getPointerManager().createPointer("art2"));
   }
 
-  public void testCreateArtifactAfterPointer() throws Exception {
+  public void testCreateArtifactAfterPointer() {
     final ArtifactPointer pointer = getPointerManager().createPointer("xxx");
     assertNull(pointer.getArtifact());
 
@@ -46,7 +46,7 @@ public class ArtifactPointerTest extends ArtifactsTestCase {
     assertSame(pointer, getPointerManager().createPointer(artifact));
   }
 
-  public void testDeleteArtifact() throws Exception {
+  public void testDeleteArtifact() {
     final Artifact artifact = addArtifact("abc");
     final ArtifactPointer pointer = getPointerManager().createPointer(artifact);
     assertSame(artifact, pointer.getArtifact());
@@ -55,7 +55,7 @@ public class ArtifactPointerTest extends ArtifactsTestCase {
     assertNull(pointer.getArtifact());
   }
 
-  public void testRemoveAndAdd() throws Exception {
+  public void testRemoveAndAdd() {
     final Artifact artifact = addArtifact("abc");
     final ArtifactPointer pointer = getPointerManager().createPointer(artifact);
     assertSame(artifact, pointer.getArtifact());
@@ -69,7 +69,7 @@ public class ArtifactPointerTest extends ArtifactsTestCase {
     assertSame(pointer, getPointerManager().createPointer(artifact2));
   }
 
-  public void testReloadArtifact() throws Exception {
+  public void testReloadArtifact() {
     final Artifact oldArtifact = addArtifact("xxx");
     final ArtifactPointer pointer = getPointerManager().createPointer(oldArtifact);
 
@@ -92,7 +92,7 @@ public class ArtifactPointerTest extends ArtifactsTestCase {
     assertSame(newArtifact2, pointer.getArtifact());
   }
 
-  public void testRenameModifiable() throws Exception {
+  public void testRenameModifiable() {
     final Artifact a = addArtifact("a");
     final ArtifactPointer p = getPointerManager().createPointer(a);
 
@@ -111,7 +111,7 @@ public class ArtifactPointerTest extends ArtifactsTestCase {
     assertEquals("b", p.getArtifactName());
   }
 
-  public void testModifyArtifact() throws Exception {
+  public void testModifyArtifact() {
     final Artifact artifact = addArtifact("a");
     ArtifactPointer pointer = getPointerManager().createPointer(artifact);
 
@@ -131,7 +131,7 @@ public class ArtifactPointerTest extends ArtifactsTestCase {
     assertSame(artifact, pointer.getArtifact());
   }
 
-  public void testSurviveAfterCommit() throws Exception {
+  public void testSurviveAfterCommit() {
     final ModifiableArtifactModel model = getArtifactManager().createModifiableModel();
     final ModifiableArtifact a = model.addArtifact("a", PlainArtifactType.getInstance());
     final ArtifactPointer pointer = getPointerManager().createPointer(a);
@@ -154,7 +154,7 @@ public class ArtifactPointerTest extends ArtifactsTestCase {
     assertEquals("c", pointer.getArtifactName());
   }
   
-  public void testSurviveAfterReload() throws Exception {
+  public void testSurviveAfterReload() {
     final Artifact artifact = addArtifact("a");
     final ArtifactPointer pointer = getPointerManager().createPointer(artifact);
     assertSame(artifact, pointer.getArtifact());
@@ -166,7 +166,7 @@ public class ArtifactPointerTest extends ArtifactsTestCase {
     assertSame(newArtifact, pointer.getArtifact());
   }
 
-  public void testDisposePointer() throws Exception {
+  public void testDisposePointer() {
     final ModifiableArtifactModel model = getArtifactManager().createModifiableModel();
     final ModifiableArtifact artifact = model.addArtifact("a", PlainArtifactType.getInstance());
     final ArtifactPointer pointer = getPointerManager().createPointer(artifact, model);

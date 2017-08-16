@@ -33,7 +33,7 @@ public class JarFromModulesTemplateTest extends PackagingElementsTestCase {
     CompilerConfiguration.getInstance(getProject()).addResourceFilePattern("?*.MF");
   }
 
-  public void testSimpleModule() throws Exception {
+  public void testSimpleModule() {
     final Module a = addModuleWithSourceRoot("a");
     createFromTemplate(a, null, null, true);
     assertLayout("a.jar\n" +
@@ -44,7 +44,7 @@ public class JarFromModulesTemplateTest extends PackagingElementsTestCase {
     return addModule(name, createDir("src-" + name));
   }
 
-  public void testSimpleModuleWithMainClass() throws Exception {
+  public void testSimpleModuleWithMainClass() {
     final VirtualFile file = createFile("src/A.java");
     final Module a = addModule("a", file.getParent());
     createFromTemplate(a, "A", file.getParent().getPath(), true);
@@ -54,7 +54,7 @@ public class JarFromModulesTemplateTest extends PackagingElementsTestCase {
     assertManifest("A", null);
   }
 
-  public void testSimpleModuleWithExternalManifest() throws Exception {
+  public void testSimpleModuleWithExternalManifest() {
     final VirtualFile file = createFile("src/A.java");
     final VirtualFile baseDir = file.getParent().getParent();
     final Module a = addModule("a", file.getParent());
@@ -68,7 +68,7 @@ public class JarFromModulesTemplateTest extends PackagingElementsTestCase {
 
   }
 
-  public void testModuleWithLibraryJar() throws Exception {
+  public void testModuleWithLibraryJar() {
     final Module module = addModuleWithSourceRoot("a");
     addProjectLibrary(module, "jdom", getJDomJar());
     createFromTemplate(module, null, null, true);
@@ -77,7 +77,7 @@ public class JarFromModulesTemplateTest extends PackagingElementsTestCase {
                  " extracted:" + getLocalJarPath(getJDomJar()) + "!/");
   }
 
-  public void testModuleWithLibraryJarWithManifest() throws Exception {
+  public void testModuleWithLibraryJarWithManifest() {
     final VirtualFile file = createFile("src/A.java");
     final Module module = addModule("a", file.getParent());
     addProjectLibrary(module, "jdom", getJDomJar());
@@ -89,7 +89,7 @@ public class JarFromModulesTemplateTest extends PackagingElementsTestCase {
     assertManifest(null, "jdom.jar");
   }
 
-  public void testSkipTestLibrary() throws Exception {
+  public void testSkipTestLibrary() {
     final Module a = addModuleWithSourceRoot("a");
     addProjectLibrary(a, "jdom", DependencyScope.TEST, getJDomJar());
     createFromTemplate(a, null, null, true);
@@ -97,7 +97,7 @@ public class JarFromModulesTemplateTest extends PackagingElementsTestCase {
                  " module:a");
   }
 
-  public void testSkipProvidedLibrary() throws Exception {
+  public void testSkipProvidedLibrary() {
     final Module a = addModuleWithSourceRoot("a");
     addProjectLibrary(a, "jdom", DependencyScope.PROVIDED, getJDomJar());
     createFromTemplate(a, null, null, true);
@@ -125,7 +125,7 @@ public class JarFromModulesTemplateTest extends PackagingElementsTestCase {
                  " extracted:" + getLocalJarPath(getJDomJar()) + "!/");
   }
 
-  public void testTwoIndependentModules() throws Exception {
+  public void testTwoIndependentModules() {
     final Module a = addModuleWithSourceRoot("a");
     addModuleWithSourceRoot("b");
     createFromTemplate(a, null, null, true);
@@ -133,7 +133,7 @@ public class JarFromModulesTemplateTest extends PackagingElementsTestCase {
                  " module:a");
   }
 
-  public void testJarForProject() throws Exception {
+  public void testJarForProject() {
     addModuleWithSourceRoot("a");
     addModuleWithSourceRoot("b");
     createFromTemplate(null, null, null, true);
@@ -152,7 +152,7 @@ public class JarFromModulesTemplateTest extends PackagingElementsTestCase {
                  " module:b");
   }
 
-  public void testDependentModuleWithLibrary() throws Exception {
+  public void testDependentModuleWithLibrary() {
     final Module a = addModuleWithSourceRoot("a");
     final Module b = addModuleWithSourceRoot("b");
     addModuleDependency(a, b);
@@ -164,7 +164,7 @@ public class JarFromModulesTemplateTest extends PackagingElementsTestCase {
                  " extracted:" + getLocalJarPath(getJDomJar()) + "!/");
   }
 
-  public void testExtractedLibraryWithDirectories() throws Exception {
+  public void testExtractedLibraryWithDirectories() {
     final VirtualFile dir = createDir("lib");
     final Module a = addModuleWithSourceRoot("a");
     addProjectLibrary(a, "dir", dir);
@@ -174,7 +174,7 @@ public class JarFromModulesTemplateTest extends PackagingElementsTestCase {
                  " lib:dir(project)");
   }
 
-  public void testCopiedLibraryWithDirectories() throws Exception {
+  public void testCopiedLibraryWithDirectories() {
     final VirtualFile dir = createDir("lib");
     final Module a = addModuleWithSourceRoot("a");
     addProjectLibrary(a, "dir", dir);
@@ -188,7 +188,7 @@ public class JarFromModulesTemplateTest extends PackagingElementsTestCase {
                  "  dir:" + dir.getPath());
   }
 
-  public void testExtractedLibraryWithJarsAndDirs() throws Exception {
+  public void testExtractedLibraryWithJarsAndDirs() {
     final VirtualFile dir = createDir("lib");
     final Module a = addModuleWithSourceRoot("a");
     addProjectLibrary(a, "dir", dir, getJDomJar());
@@ -199,7 +199,7 @@ public class JarFromModulesTemplateTest extends PackagingElementsTestCase {
                  " extracted:" + getLocalJarPath(getJDomJar()) + "!/");
   }
 
-  public void testCopiedLibraryWithJarsAndDirs() throws Exception {
+  public void testCopiedLibraryWithJarsAndDirs() {
     final VirtualFile dir = createDir("lib");
     final Module a = addModuleWithSourceRoot("a");
     addProjectLibrary(a, "dir", dir, getJDomJar());

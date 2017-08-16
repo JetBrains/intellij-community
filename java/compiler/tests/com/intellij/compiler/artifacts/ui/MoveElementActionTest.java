@@ -9,7 +9,7 @@ import com.intellij.packaging.artifacts.Artifact;
  * @author nik
  */
 public class MoveElementActionTest extends ArtifactEditorActionTestCase {
-  public void testSimple() throws Exception {
+  public void testSimple() {
     createEditor(addArtifact(root()
                               .dir("a").end()
                               .dir("b")));
@@ -25,7 +25,7 @@ public class MoveElementActionTest extends ArtifactEditorActionTestCase {
                  " a/");
   }
 
-  public void testMoveIncludedArtifact() throws Exception {
+  public void testMoveIncludedArtifact() {
     final Artifact included = addArtifact("included", root().file(createFile("a.txt")));
     createEditor(addArtifact(root().artifact(included).dir("b")));
 
@@ -39,14 +39,14 @@ public class MoveElementActionTest extends ArtifactEditorActionTestCase {
                  " artifact:included");
   }
 
-  public void testDoNotMoveInIncludedArtifact() throws Exception {
+  public void testDoNotMoveInIncludedArtifact() {
     final Artifact included = addArtifact("included", root().file(createFile("a.txt")).file(createFile("b.txt")));
     createEditor(addArtifact(root().artifact(included)), true);
     selectNode("a.txt");
     assertDisabled();
   }
 
-  public void testDoNotMixWithElementsFromIncludedArtifact() throws Exception {
+  public void testDoNotMixWithElementsFromIncludedArtifact() {
     final Artifact included = addArtifact("included", root().dir("dir").file(createFile("a.txt")));
     createEditor(addArtifact(root()
                               .dir("dir")

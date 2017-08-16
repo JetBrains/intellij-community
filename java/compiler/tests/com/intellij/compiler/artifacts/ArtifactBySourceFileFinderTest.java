@@ -12,7 +12,7 @@ import java.util.Collection;
  * @author nik
  */
 public class ArtifactBySourceFileFinderTest extends PackagingElementsTestCase {
-  public void testAddRemoveDirectoryCopy() throws Exception {
+  public void testAddRemoveDirectoryCopy() {
     final VirtualFile file = createFile("a/b/c.txt");
     assertEmpty(findArtifacts(file));
 
@@ -26,7 +26,7 @@ public class ArtifactBySourceFileFinderTest extends PackagingElementsTestCase {
     assertEmpty(findArtifacts(file));
   }
 
-  public void testAddRemoveArtifact() throws Exception {
+  public void testAddRemoveArtifact() {
     final VirtualFile file = createFile("a/b/c.txt");
     assertEmpty(findArtifacts(file));
 
@@ -38,7 +38,7 @@ public class ArtifactBySourceFileFinderTest extends PackagingElementsTestCase {
     assertEmpty(findArtifacts(file));
   }
 
-  public void testFindFileUnderSourceRoot() throws Exception {
+  public void testFindFileUnderSourceRoot() {
     final VirtualFile file = createFile("src/a.xml");
     final Module module = addModule("mmm", file.getParent());
     final Artifact a = addArtifact(root().module(module));

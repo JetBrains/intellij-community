@@ -14,7 +14,7 @@ import java.util.List;
  * @author nik
  */
 public class ArtifactUtilTest extends PackagingElementsTestCase {
-  public void testProcessElementsWithRelativePath() throws Exception {
+  public void testProcessElementsWithRelativePath() {
     final Artifact a = addArtifact(root().dir("lib").file(createFile("a.txt")));
     final ElementToStringCollector processor = new ElementToStringCollector(true);
     ArtifactUtil.processElementsByRelativePath(a.getRootElement(), "lib/a.txt", getContext(), PlainArtifactType.getInstance(),
@@ -22,7 +22,7 @@ public class ArtifactUtilTest extends PackagingElementsTestCase {
     assertEquals("/lib/file:" + getProjectBasePath() + "/a.txt\n", processor.getOutput());
   }
 
-  public void testProcessDirectory() throws Exception {
+  public void testProcessDirectory() {
     final ElementToStringCollector processor = new ElementToStringCollector();
     final Artifact a = addArtifact(root().dir("lib").file(createFile("x.jar")));
     processDirectoryChildren(a.getRootElement(), "lib/", processor);
@@ -34,7 +34,7 @@ public class ArtifactUtilTest extends PackagingElementsTestCase {
                  "file:" + getProjectBasePath() + "/y.jar\n", processor.getOutput());
   }
 
-  public void testProcessParents() throws Exception {
+  public void testProcessParents() {
     final Artifact exploded = addArtifact("exploded:", root());
     final Artifact war = addArtifact("war", PlainArtifactType.getInstance(),
                                     archive("web.war")

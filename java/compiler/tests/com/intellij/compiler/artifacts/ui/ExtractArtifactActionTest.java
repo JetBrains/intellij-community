@@ -16,7 +16,7 @@ import com.intellij.packaging.impl.artifacts.PlainArtifactType;
  */
 public class ExtractArtifactActionTest extends ArtifactEditorActionTestCase {
 
-  public void testSimple() throws Exception {
+  public void testSimple() {
     createEditor(addArtifact(root().file(createFile("a.txt"))));
     assertDisabled();
 
@@ -30,7 +30,7 @@ public class ExtractArtifactActionTest extends ArtifactEditorActionTestCase {
                                                                    " file:" + getProjectBasePath() + "/a.txt");
   }
 
-  public void testDisabledForJarFromLib() throws Exception {
+  public void testDisabledForJarFromLib() {
     final VirtualFile jar = getJDomJar();
     createEditor(addArtifact(root().lib(addProjectLibrary(null, "dom", jar))), true);
 
@@ -38,7 +38,7 @@ public class ExtractArtifactActionTest extends ArtifactEditorActionTestCase {
     assertWillNotBePerformed();
   }
 
-  public void testDirectoryFromIncludedArtifact() throws Exception {
+  public void testDirectoryFromIncludedArtifact() {
     final Artifact included = addArtifact("included", root().dir("dir").file(createFile("a.txt")));
     createEditor(addArtifact(root()
                               .artifact(included)

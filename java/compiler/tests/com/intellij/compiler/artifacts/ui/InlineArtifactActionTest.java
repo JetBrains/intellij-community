@@ -25,7 +25,7 @@ public class InlineArtifactActionTest extends ArtifactEditorActionTestCase {
     super.tearDown();
   }
 
-  public void testSimple() throws Exception {
+  public void testSimple() {
     createEditor(addArtifact(root().artifact(myIncluded)));
     selectNode("included");
     perform();
@@ -33,7 +33,7 @@ public class InlineArtifactActionTest extends ArtifactEditorActionTestCase {
                  " module:mod");
   }
 
-  public void testDisabledForIncluded() throws Exception {
+  public void testDisabledForIncluded() {
     final Artifact a = addArtifact("a", root().artifact(myIncluded));
     createEditor(addArtifact(root().artifact(a)));
     showContent("a");
@@ -41,7 +41,7 @@ public class InlineArtifactActionTest extends ArtifactEditorActionTestCase {
     assertWillNotBePerformed();
   }
 
-  public void testInlineIntoDirectory() throws Exception {
+  public void testInlineIntoDirectory() {
     final Artifact a = addArtifact("a", root().dir("dir").file("a.txt"));
     createEditor(addArtifact(root()
                               .artifact(a)

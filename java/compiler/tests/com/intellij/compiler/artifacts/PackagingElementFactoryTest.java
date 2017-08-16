@@ -8,7 +8,7 @@ import com.intellij.packaging.elements.PackagingElementFactory;
  * @author nik
  */
 public class PackagingElementFactoryTest extends PackagingElementsTestCase {
-  public void testDirectory() throws Exception {
+  public void testDirectory() {
     final CompositePackagingElement<?> root = createRoot();
 
     assertSame(root, dir(root, ""));
@@ -32,7 +32,7 @@ public class PackagingElementFactoryTest extends PackagingElementsTestCase {
                        "  sub3/\n");
   }
 
-  public void testArchive() throws Exception {
+  public void testArchive() {
     final CompositePackagingElement<?> root = createRoot();
     final CompositePackagingElement<?> archive = archive(root, "/a/out.jar");
     assertLayout(archive, "out.jar\n");
@@ -41,14 +41,14 @@ public class PackagingElementFactoryTest extends PackagingElementsTestCase {
                        "  out.jar\n");
   }
   
-  public void testFileCopy() throws Exception {
+  public void testFileCopy() {
     assertLayout(file("/", "/temp/file.txt"), "file:/temp/file.txt\n");
     assertLayout(file("/xxx/yyy/", "/temp/file.txt"), "xxx/\n" +
                                                       " yyy/\n" +
                                                       "  file:/temp/file.txt\n");
   }
 
-  public void testDirectoryCopy() throws Exception {
+  public void testDirectoryCopy() {
     assertLayout(dir("/", "/temp/dir"), "dir:/temp/dir");
     assertLayout(dir("/aaa/bbb", "/temp/dir"), "aaa/\n" +
                                                " bbb/\n" +

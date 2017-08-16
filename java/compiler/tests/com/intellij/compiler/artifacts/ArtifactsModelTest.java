@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ArtifactsModelTest extends ArtifactsTestCase {
 
-  public void testAddArtifact() throws Exception {
+  public void testAddArtifact() {
     assertEmpty(getArtifacts());
 
     final long count = getModificationCount();
@@ -35,7 +35,7 @@ public class ArtifactsModelTest extends ArtifactsTestCase {
     return getArtifactManager().getModificationTracker().getModificationCount();
   }
 
-  public void testRemoveArtifact() throws Exception {
+  public void testRemoveArtifact() {
     Artifact artifact = addArtifact("aaa");
     assertSame(artifact, assertOneElement(getArtifacts()));
 
@@ -48,11 +48,11 @@ public class ArtifactsModelTest extends ArtifactsTestCase {
     assertEquals("removed:aaa;", listener.clearMessages());
   }
 
-  public void testChangeAndRemoveArtifact() throws Exception {
+  public void testChangeAndRemoveArtifact() {
     doTestChangeAndRemove(false);
   }
 
-  public void testChangeAndRemoveOriginalArtifact() throws Exception {
+  public void testChangeAndRemoveOriginalArtifact() {
     doTestChangeAndRemove(true);
   }
 
@@ -74,7 +74,7 @@ public class ArtifactsModelTest extends ArtifactsTestCase {
     ApplicationManager.getApplication().runWriteAction(() -> model.commit());
   }
 
-  public void testChangeArtifact() throws Exception {
+  public void testChangeArtifact() {
     final Artifact artifact = addArtifact("xxx");
 
     final long count = getModificationCount();

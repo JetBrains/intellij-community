@@ -9,7 +9,7 @@ import com.intellij.packaging.artifacts.Artifact;
  */
 public class RemoveActionTest extends ArtifactEditorTestCase {
 
-  public void testSimple() throws Exception {
+  public void testSimple() {
     createEditor(addArtifact(root().file(createFile("a.txt"))));
 
     assertLayout("<root>\n" +
@@ -20,7 +20,7 @@ public class RemoveActionTest extends ArtifactEditorTestCase {
     assertLayout("<root>");
   }
 
-  public void testElementInIncludedArtifact() throws Exception {
+  public void testElementInIncludedArtifact() {
     final Artifact included = addArtifact("included", root().file(createFile("a.txt")));
     createEditor(addArtifact(archive("x.jar").artifact(included)), true);
     selectNode("a.txt");
@@ -33,7 +33,7 @@ public class RemoveActionTest extends ArtifactEditorTestCase {
                            " file:" + getProjectBasePath() + "/a.txt");
   }
 
-  public void testElementInDirInIncludedArtifact() throws Exception {
+  public void testElementInDirInIncludedArtifact() {
     final Artifact included = addArtifact("included", root().dir("y").file(createFile("z.txt")));
     createEditor(addArtifact(root().dir("x").artifact(included)), true);
 
@@ -44,7 +44,7 @@ public class RemoveActionTest extends ArtifactEditorTestCase {
                  " x/\n");
   }
 
-  public void testJarFileInLibrary() throws Exception {
+  public void testJarFileInLibrary() {
     final Library library = addProjectLibrary(null, "jdom", getJDomJar());
     createEditor(addArtifact(root().lib(library)), true);
 
@@ -54,7 +54,7 @@ public class RemoveActionTest extends ArtifactEditorTestCase {
     assertLayout("<root>");
   }
 
-  public void testOneFileInThreeArtifacts() throws Exception {
+  public void testOneFileInThreeArtifacts() {
     final VirtualFile file = createFile("a.txt");
     final Artifact a1 = addArtifact("a1", root().file(file));
     final Artifact a2 = addArtifact("a2", root().file(file));
@@ -70,7 +70,7 @@ public class RemoveActionTest extends ArtifactEditorTestCase {
     assertLayout("<root>");
   }
 
-  public void testDirectoryFromTwoArtifacts() throws Exception {
+  public void testDirectoryFromTwoArtifacts() {
     final Artifact a1 = addArtifact("a1", root().dir("dir").file(createFile("a.txt")));
     final Artifact a2 = addArtifact("a2", root().dir("dir").file(createFile("b.txt")));
     createEditor(addArtifact(root().dir("x").artifact(a1).artifact(a2)), true);
@@ -86,7 +86,7 @@ public class RemoveActionTest extends ArtifactEditorTestCase {
                  " x/");
   }
 
-  public void testArtifactIncludedInArtifact() throws Exception {
+  public void testArtifactIncludedInArtifact() {
     final Artifact a1 = addArtifact("a1", root().file(createFile("a.txt")));
     final Artifact a2 = addArtifact("a2", root().artifact(a1));
     createEditor(addArtifact(root().artifact(a2)), true);
