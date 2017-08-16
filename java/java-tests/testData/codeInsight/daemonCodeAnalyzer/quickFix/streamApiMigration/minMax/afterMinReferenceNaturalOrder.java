@@ -27,7 +27,7 @@ public class Main {
       new Person("James", 25),
       new Person("Kelly", 12)
     );
-      Person minPerson = personList.stream().filter(p -> p.getAge() > 13).min(Comparator.comparing(Comparator.naturalOrder())).orElse(null);
+      Person minPerson = personList.stream().filter(p -> p.getAge() > 13).min(Comparator.naturalOrder()).orElse(null);
 
       return minPerson;
   }

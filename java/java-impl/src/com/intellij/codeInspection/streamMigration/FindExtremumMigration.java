@@ -243,13 +243,6 @@ class FindExtremumMigration extends BaseStreamApiMigration {
                                      boolean isNegated);
   }
 
-  @NotNull
-  private static String getLambdaText(PsiExpression loopVarExpression, TerminalBlock terminalBlock) {
-    return ExpressionUtils.isReferenceTo(loopVarExpression, terminalBlock.getVariable())
-           ? CommonClassNames.JAVA_UTIL_COMPARATOR + ".naturalOrder()"
-           : LambdaUtil.createLambda(terminalBlock.getVariable(), loopVarExpression);
-  }
-
   //Person maxPerson = null;
   //int maxAge = 0;
   //for (Person person : personList) {
@@ -301,7 +294,7 @@ class FindExtremumMigration extends BaseStreamApiMigration {
       TerminalBlock blockWithFilter =
         myTerminalBlock.add(new StreamApiMigrationInspection.FilterOp(condition, myTerminalBlock.getVariable(), false));
 
-      String lambdaText = getLambdaText(myExtremumKeyExpr, myTerminalBlock);
+      String lambdaText = LambdaUtil.createLambda(myTerminalBlock.getVariable(), myExtremumKeyExpr);
       String comparator;
       if(myComparator == null) {
         comparator = CommonClassNames.JAVA_UTIL_COMPARATOR + "." + method + "(" + lambdaText + ")";
@@ -566,10 +559,14 @@ class FindExtremumMigration extends BaseStreamApiMigration {
       if (loopVarExpressionType == null) return null;
       final String comparator;
       if(myComparator == null) {
-        String method = getComparingMethod(loopVarExpressionType);
-        if (method == null) return null;
-        String lambdaText = getLambdaText(myLoopVarExpression, myTerminalBlock);
-        comparator = CommonClassNames.JAVA_UTIL_COMPARATOR + "." + method + "(" + lambdaText + ")";
+        if(ExpressionUtils.isReferenceTo(myLoopVarExpression, myTerminalBlock.getVariable())) {
+          comparator = CommonClassNames.JAVA_UTIL_COMPARATOR + ".naturalOrder()";
+        } else {
+          String method = getComparingMethod(loopVarExpressionType);
+          if (method == null) return null;
+          String lambdaText = LambdaUtil.createLambda(myTerminalBlock.getVariable(), myLoopVarExpression);
+          comparator = CommonClassNames.JAVA_UTIL_COMPARATOR + "." + method + "(" + lambdaText + ")";
+        }
       } else {
         String comparatorName = myComparator.getName();
         if(comparatorName == null) return null;
