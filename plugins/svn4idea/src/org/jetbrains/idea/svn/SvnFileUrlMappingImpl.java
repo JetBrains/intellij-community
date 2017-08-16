@@ -29,8 +29,8 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.info.Info;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
@@ -42,6 +42,7 @@ import static com.intellij.openapi.application.ApplicationManager.getApplication
 import static com.intellij.openapi.util.io.FileUtil.toSystemIndependentName;
 import static com.intellij.util.containers.ContainerUtil.newArrayList;
 import static org.jetbrains.idea.svn.SvnFormatSelector.findRootAndGetFormat;
+import static org.jetbrains.idea.svn.SvnUtil.append;
 import static org.jetbrains.idea.svn.SvnUtil.getRelativeUrl;
 
 @State(name = "SvnFileUrlMappingImpl", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
@@ -118,9 +119,9 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
     }
     final String relativePath = absolutePath.substring(rootAbsPath.length());
     try {
-      return rootUrlInfo.getAbsoluteUrlAsUrl().appendPath(toSystemIndependentName(relativePath), true);
+      return append(rootUrlInfo.getAbsoluteUrlAsUrl(), toSystemIndependentName(relativePath));
     }
-    catch (SVNException e) {
+    catch (SvnBindException e) {
       LOG.info(e);
       return null;
     }
