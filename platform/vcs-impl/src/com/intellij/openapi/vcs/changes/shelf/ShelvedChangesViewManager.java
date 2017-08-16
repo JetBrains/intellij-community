@@ -75,6 +75,8 @@ import com.intellij.util.messages.MessageBus;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.util.ui.update.MergingUpdateQueue;
+import com.intellij.util.ui.update.Update;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
@@ -111,8 +113,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
   private final ShelfTree myTree;
   private Content myContent = null;
   private final DeleteProvider myDeleteProvider = new MyShelveDeleteProvider();
-  private boolean myUpdatePending = false;
-  private Runnable myPostUpdateRunnable = null;
+  private final MergingUpdateQueue myUpdateQueue;
 
   public static final DataKey<ShelvedChangeList[]> SHELVED_CHANGELIST_KEY = DataKey.create("ShelveChangesManager.ShelvedChangeListData");
   public static final DataKey<ShelvedChangeList[]> SHELVED_RECYCLED_CHANGELIST_KEY = DataKey.create("ShelveChangesManager.ShelvedRecycledChangeListData");
@@ -132,11 +133,11 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     myProject = project;
     myContentManager = contentManager;
     myShelveChangesManager = shelveChangesManager;
+    myUpdateQueue = new MergingUpdateQueue("Update Shelf Content", 200, true, null, myProject, null, true);
     bus.connect().subscribe(ShelveChangesManager.SHELF_TOPIC, new ChangeListener() {
       @Override
       public void stateChanged(ChangeEvent e) {
-        myUpdatePending = true;
-        ApplicationManager.getApplication().invokeLater(() -> updateChangesContent(), ModalityState.NON_MODAL);
+        myUpdateQueue.queue(new MyContentUpdater());
       }
     });
     myMoveRenameInfo = new HashMap<>();
@@ -224,7 +225,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       LOG.error("Couldn't start loading shelved changes");
       return;
     }
-    startupManager.registerPostStartupActivity((DumbAwareRunnable)() -> updateChangesContent());
+    startupManager.registerPostStartupActivity((DumbAwareRunnable)() -> myUpdateQueue.queue(new MyContentUpdater()));
   }
 
   @Override
@@ -233,8 +234,8 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     return "ShelvedChangesViewManager";
   }
 
+  @CalledInAwt
   private void updateChangesContent() {
-    myUpdatePending = false;
     final List<ShelvedChangeList> changeLists = new ArrayList<>(myShelveChangesManager.getShelvedChangeLists());
     changeLists.addAll(myShelveChangesManager.getRecycledShelvedChangeLists());
     if (changeLists.size() == 0) {
@@ -255,11 +256,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       TreeState state = TreeState.createOn(myTree);
       myTree.setModel(buildChangesModel());
       state.applyTo(myTree);
-      if (myPostUpdateRunnable != null) {
-        myPostUpdateRunnable.run();
-      }
     }
-    myPostUpdateRunnable = null;
   }
 
   private ToolWindow getVcsToolWindow() {
@@ -346,7 +343,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
   }
 
   public void activateView(final ShelvedChangeList list) {
-    Runnable runnable = () -> {
+    runAfterUpdate(() -> {
       if (list != null) {
         selectShelvedList(list);
       }
@@ -355,13 +352,20 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       if (!window.isVisible()) {
         window.activate(null);
       }
-    };
-    if (myUpdatePending) {
-      myPostUpdateRunnable = runnable;
-    }
-    else {
-      runnable.run();
-    }
+    });
+  }
+
+  private void runAfterUpdate(@NotNull Runnable postUpdateRunnable) {
+    ApplicationManager.getApplication().invokeLater(() -> {
+      myUpdateQueue.cancelAllUpdates();
+      updateChangesContent();
+      postUpdateRunnable.run();
+    }, ModalityState.NON_MODAL);
+  }
+
+  @Override
+  public void disposeComponent() {
+    myUpdateQueue.cancelAllUpdates();
   }
 
   public void selectShelvedList(@NotNull ShelvedChangeList list) {
@@ -892,6 +896,22 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     @NotNull
     public ShelvedChangeList getList() {
       return myList;
+    }
+  }
+
+  private class MyContentUpdater extends Update {
+    public MyContentUpdater() {
+      super("ShelfContentUpdate");
+    }
+
+    @Override
+    public void run() {
+      updateChangesContent();
+    }
+
+    @Override
+    public boolean canEat(Update update) {
+      return true;
     }
   }
 }
