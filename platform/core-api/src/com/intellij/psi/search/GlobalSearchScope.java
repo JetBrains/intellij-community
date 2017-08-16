@@ -488,7 +488,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     }
 
     private UnionScope(@NotNull GlobalSearchScope[] scopes) {
-      super(ContainerUtil.getFirstItem(ContainerUtil.mapNotNull(scopes, scope -> scope.getProject()), null));
+      super(ContainerUtil.getFirstItem(ContainerUtil.mapNotNull(scopes, GlobalSearchScope::getProject), null));
       if (scopes.length <= 1) throw new IllegalArgumentException("Too few scopes: "+ Arrays.asList(scopes));
       myScopes = scopes;
       final int[] nested = {0};
@@ -518,7 +518,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
     @Override
     public boolean isSearchOutsideRootModel() {
-      return ContainerUtil.find(myScopes, scope -> scope.isSearchOutsideRootModel()) != null;
+      return ContainerUtil.find(myScopes, GlobalSearchScope::isSearchOutsideRootModel) != null;
     }
 
     @Override
@@ -560,7 +560,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
     @Override
     public boolean isSearchInLibraries() {
-      return ContainerUtil.find(myScopes, scope -> scope.isSearchInLibraries()) != null;
+      return ContainerUtil.find(myScopes, GlobalSearchScope::isSearchInLibraries) != null;
     }
 
     @Override
