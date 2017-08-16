@@ -238,7 +238,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
       }
       PsiElement element = statement;
       while (element != declarationScope && !(element instanceof PsiFile)) {
-        if (element instanceof PsiClass) {
+        if (element instanceof PsiClass || element instanceof PsiLambdaExpression) {
           statement = statement.getParent();
           continue nextInnerClass;
         }
