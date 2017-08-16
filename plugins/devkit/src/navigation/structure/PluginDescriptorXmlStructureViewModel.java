@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.devkit.navigation.structure;
 
+import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.impl.xml.XmlStructureViewTreeModel;
 import com.intellij.openapi.editor.Editor;
@@ -24,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
 
-public class PluginDescriptorXmlStructureViewModel extends XmlStructureViewTreeModel {
+public class PluginDescriptorXmlStructureViewModel extends XmlStructureViewTreeModel implements StructureViewModel.ElementInfoProvider {
   public PluginDescriptorXmlStructureViewModel(@NotNull XmlFile file, @Nullable Editor editor) {
     super(file, editor);
   }
@@ -43,5 +44,15 @@ public class PluginDescriptorXmlStructureViewModel extends XmlStructureViewTreeM
 
     // shouldn't happen; just for additional safety
     return super.getRoot();
+  }
+
+  @Override
+  public boolean isAlwaysShowsPlus(StructureViewTreeElement element) {
+    return false;
+  }
+
+  @Override
+  public boolean isAlwaysLeaf(StructureViewTreeElement element) {
+    return false;
   }
 }
