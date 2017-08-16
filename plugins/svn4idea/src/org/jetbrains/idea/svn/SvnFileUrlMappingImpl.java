@@ -32,16 +32,17 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.info.Info;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
 import java.io.File;
 import java.util.List;
 import java.util.Set;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
+import static com.intellij.util.containers.ContainerUtil.find;
 import static com.intellij.util.containers.ContainerUtil.newArrayList;
 import static org.jetbrains.idea.svn.SvnFormatSelector.findRootAndGetFormat;
 import static org.jetbrains.idea.svn.SvnUtil.*;
+import static org.tmatesoft.svn.core.internal.util.SVNPathUtil.isAncestor;
 
 @State(name = "SvnFileUrlMappingImpl", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentStateComponent<SvnMappingSavedPart> {
@@ -127,7 +128,10 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
   @Nullable
   public RootUrlInfo getWcRootForFilePath(@NotNull File file) {
     synchronized (myMonitor) {
-      String root = getRootForPath(file);
+      String convertedPath = file.getAbsolutePath();
+      convertedPath = file.isDirectory() && !convertedPath.endsWith(File.separator) ? convertedPath + File.separator : convertedPath;
+      String root = myMoreRealMapping.getRootForPath(convertedPath);
+
       return root != null ? myMoreRealMapping.byFile(root) : null;
     }
   }
@@ -137,7 +141,7 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
   public RootUrlInfo getWcRootForUrl(@NotNull String url) {
     synchronized (myMonitor) {
       RootUrlInfo result = null;
-      String rootUrl = getUrlRootForUrl(url);
+      String rootUrl = find(myMoreRealMapping.getUrls(), parentRootUrl -> isAncestor(parentRootUrl, url));
 
       if (rootUrl != null) {
         result = myMoreRealMapping.byUrl(rootUrl);
@@ -266,26 +270,6 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
       } else {
         BackgroundTaskUtil.syncPublisher(myProject, SvnVcs.ROOTS_RELOADED).consume(false);
       }
-    }
-  }
-
-  @Nullable
-  public String getUrlRootForUrl(final String currentUrl) {
-    for (String url : myMoreRealMapping.getUrls()) {
-      if (SVNPathUtil.isAncestor(url, currentUrl)) {
-        return url;
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  public String getRootForPath(@NotNull File currentPath) {
-    String convertedPath = currentPath.getAbsolutePath();
-    convertedPath = currentPath.isDirectory() && !convertedPath.endsWith(File.separator) ? convertedPath + File.separator : convertedPath;
-
-    synchronized (myMonitor) {
-      return myMoreRealMapping.getRootForPath(convertedPath);
     }
   }
 
