@@ -145,11 +145,14 @@ class LineStatusTrackerManager(
 
   override fun getLineStatusTracker(document: Document): LineStatusTracker<*>? {
     synchronized(LOCK) {
-      if (isDisposed) return null
       return trackers[document]?.tracker
     }
   }
 
+  override fun getLineStatusTracker(file: VirtualFile): LineStatusTracker<*>? {
+    val document = fileDocumentManager.getCachedDocument(file) ?: return null
+    return getLineStatusTracker(document)
+  }
 
   @CalledInAwt
   override fun requestTrackerFor(document: Document, requester: Any) {

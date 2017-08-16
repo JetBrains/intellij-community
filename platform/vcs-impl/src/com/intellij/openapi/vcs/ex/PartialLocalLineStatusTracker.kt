@@ -254,6 +254,36 @@ class PartialLocalLineStatusTracker(project: Project,
   }
 
 
+  @CalledInAwt
+  fun handlePartialCommit(side: Side, changelistId: String): PartialCommitHelper {
+    val marker = ChangeListMarker(changelistId)
+
+    val contentToCommit = documentTracker.getContentWithPartiallyAppliedBlocks(side) { it.marker == marker }
+
+    return object : PartialCommitHelper(contentToCommit) {
+      override fun applyChanges() {
+        if (isReleased) return
+
+        val success = updateDocument(side) { doc ->
+          documentTracker.doFrozen(side) {
+            documentTracker.partiallyApplyBlocks(side, { it.marker == marker }, { _, _ -> })
+
+            doc.setText(contentToCommit)
+          }
+        }
+
+        if (!success) {
+          LOG.warn("Can't update document state on partial commit: $virtualFile")
+        }
+      }
+    }
+  }
+
+  abstract class PartialCommitHelper(val content: String) {
+    @CalledInAwt abstract fun applyChanges()
+  }
+
+
   protected class MyLineStatusMarkerRenderer(override val tracker: PartialLocalLineStatusTracker) :
     LineStatusTracker.LocalLineStatusMarkerRenderer(tracker) {
 

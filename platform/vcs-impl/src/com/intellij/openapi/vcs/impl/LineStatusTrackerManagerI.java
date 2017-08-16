@@ -26,6 +26,8 @@ public interface LineStatusTrackerManagerI {
   @Nullable
   LineStatusTracker<?> getLineStatusTracker(Document document);
 
+  @Nullable
+  LineStatusTracker<?> getLineStatusTracker(@NotNull VirtualFile file);
 
   @CalledInAwt
   void requestTrackerFor(@NotNull Document document, @NotNull Object requester);

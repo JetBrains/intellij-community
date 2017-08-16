@@ -46,7 +46,9 @@ abstract class LineStatusTrackerBase<R : Range> {
   protected val documentTracker: DocumentTracker
   protected abstract val renderer: LineStatusMarkerRenderer
 
-  private var isReleased: Boolean = false
+  var isReleased: Boolean = false
+    private set
+
   private var isInitialized: Boolean = false
 
   protected val blocks: List<Block> get() = documentTracker.blocks

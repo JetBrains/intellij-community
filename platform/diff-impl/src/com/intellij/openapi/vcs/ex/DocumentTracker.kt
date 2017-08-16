@@ -37,6 +37,7 @@ import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.CalledInAwt
 import java.util.*
 import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.read
 import kotlin.concurrent.withLock
 
 class DocumentTracker : Disposable {
@@ -227,6 +228,26 @@ class DocumentTracker : Disposable {
         freezeHelper.setFrozenContent(side, document.immutableCharSequence)
       }
     }
+  }
+
+  fun getContentWithPartiallyAppliedBlocks(side: Side, condition: (Block) -> Boolean): String {
+    val otherSide = side.other()
+    val affectedBlocks = LOCK.read {
+      tracker.blocks.filter(condition)
+    }
+
+    val content = getContent(side)
+    val otherContent = getContent(otherSide)
+
+    val lineOffsets = content.lineOffsets
+    val otherLineOffsets = otherContent.lineOffsets
+
+    val ranges = affectedBlocks.map {
+      Range(it.range.start(side), it.range.end(side),
+            it.range.start(otherSide), it.range.end(otherSide))
+    }
+
+    return DiffUtil.applyModification(content, lineOffsets, otherContent, otherLineOffsets, ranges)
   }
 
 
