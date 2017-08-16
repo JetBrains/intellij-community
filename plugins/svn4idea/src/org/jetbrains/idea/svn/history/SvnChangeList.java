@@ -101,7 +101,18 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
     myKnownAsDirectories = new HashSet<>(0);
   }
 
-  public SvnChangeList(SvnVcs vcs, @NotNull final SvnRepositoryLocation location, final LogEntry logEntry, String repositoryRoot) {
+  public SvnChangeList(@NotNull SvnVcs vcs,
+                       @NotNull SvnRepositoryLocation location,
+                       @NotNull LogEntry logEntry,
+                       @NotNull SVNURL repositoryRoot) {
+    this(vcs, location, logEntry, repositoryRoot.toDecodedString());
+  }
+
+  @Deprecated // Required for compatibility with external plugins.
+  public SvnChangeList(@NotNull SvnVcs vcs,
+                       @NotNull SvnRepositoryLocation location,
+                       @NotNull LogEntry logEntry,
+                       @NotNull String repositoryRoot) {
     myVcs = vcs;
     myLocation = location;
     setRevision(logEntry.getRevision());
@@ -121,7 +132,7 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
       }
 
       myCommonPathSearcher.next(path);
-      
+
       if (entry.getType() == 'A') {
         if (entry.getCopyPath() != null) {
           myCopiedAddedPaths.put(path, entry.getCopyPath());

@@ -131,7 +131,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
                                    @NotNull AsynchConsumer<CommittedChangeList> consumer) throws VcsException {
     try {
       SvnRepositoryLocation svnLocation = (SvnRepositoryLocation)location;
-      String repositoryRoot = getRepositoryRoot(svnLocation);
+      SVNURL repositoryRoot = getRepositoryRoot(svnLocation);
       ChangeBrowserSettings.Filter filter = settings.createFilter();
       Consumer<LogEntry> resultConsumer = logEntry -> {
         SvnChangeList list = new SvnChangeList(myVcs, svnLocation, logEntry, repositoryRoot);
@@ -155,7 +155,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
                                                  int maxCount) throws VcsException {
     SvnRepositoryLocation svnLocation = (SvnRepositoryLocation)location;
     List<SvnChangeList> result = newArrayList();
-    String repositoryRoot = getRepositoryRoot(svnLocation);
+    SVNURL repositoryRoot = getRepositoryRoot(svnLocation);
     Consumer<LogEntry> resultConsumer = logEntry -> result.add(new SvnChangeList(myVcs, svnLocation, logEntry, repositoryRoot));
     SvnTarget target = SvnTarget.fromURL(svnLocation.toSvnUrl(), createBeforeRevision(settings));
 
@@ -170,7 +170,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
                                                     @NotNull PairConsumer<SvnChangeList, LogHierarchyNode> finalConsumer)
     throws VcsException {
     SvnRepositoryLocation svnLocation = (SvnRepositoryLocation)location;
-    String repositoryRoot = getRepositoryRoot(svnLocation);
+    SVNURL repositoryRoot = getRepositoryRoot(svnLocation);
     MergeSourceHierarchyBuilder builder = new MergeSourceHierarchyBuilder(
       node -> finalConsumer.consume(new SvnChangeList(myVcs, svnLocation, node.getMe(), repositoryRoot), node));
     SvnMergeSourceTracker mergeSourceTracker = new SvnMergeSourceTracker(builder);
@@ -188,7 +188,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
   }
 
   @NotNull
-  private String getRepositoryRoot(@NotNull SvnRepositoryLocation svnLocation) throws VcsException {
+  private SVNURL getRepositoryRoot(@NotNull SvnRepositoryLocation svnLocation) throws VcsException {
     // TODO: Additionally SvnRepositoryLocation could possibly be refactored to always contain FilePath (or similar local item)
     // TODO: So here we could get repository url without performing remote svn command
 
@@ -198,7 +198,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
       throw new SvnBindException("Could not resolve repository root url for " + svnLocation);
     }
 
-    return rootUrl.toDecodedString();
+    return rootUrl;
   }
 
   private void getCommittedChangesImpl(@NotNull ChangeBrowserSettings settings,

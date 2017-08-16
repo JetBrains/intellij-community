@@ -147,7 +147,7 @@ public class SingleCommittedListProvider {
 
   @NotNull
   private SvnChangeList createChangeList(@NotNull LogEntry logEntry) {
-    return new SvnChangeList(myVcs, svnRootLocation, logEntry, repositoryUrl.toDecodedString());
+    return new SvnChangeList(myVcs, svnRootLocation, logEntry, repositoryUrl);
   }
 
   private void checkDisposed() {
