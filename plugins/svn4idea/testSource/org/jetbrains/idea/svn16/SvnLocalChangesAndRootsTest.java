@@ -36,7 +36,7 @@ public class SvnLocalChangesAndRootsTest extends Svn16TestCase {
   private ChangeListManager myClManager;
 
   @Override
-  public void setUp() throws Exception {
+  public void setUp() {
     /*super.setUp();
 
     myAlienRoot = new File(myTempDirFixture.getTempDirPath(), "alien");
@@ -87,12 +87,12 @@ public class SvnLocalChangesAndRootsTest extends Svn16TestCase {
   }
 
   @Override
-  public void tearDown() throws Exception {
+  public void tearDown() {
     //super.tearDown();
   }
 
   @Test
-  public void testAlienRoot() throws Throwable {
+  public void testAlienRoot() {
     /*final AlienTree alienTree = new AlienTree(myAlienRoot.getAbsolutePath());
 
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
@@ -134,7 +134,7 @@ public class SvnLocalChangesAndRootsTest extends Svn16TestCase {
     private VirtualFile myNonVersionedUpper;
     private final VirtualFile myMappingTarget;
 
-    private SubTree(final VirtualFile base, final VirtualFile projectRoot) throws Throwable {
+    private SubTree(final VirtualFile base, final VirtualFile projectRoot) {
       // todo +-
       myMappingTarget = projectRoot.getParent();
       myOuterDir = createDirInCommand(myMappingTarget, "outer" + System.currentTimeMillis());
@@ -167,7 +167,7 @@ public class SvnLocalChangesAndRootsTest extends Svn16TestCase {
   }
 
   @Test
-  public void testSvnVcsRootAbove() throws Throwable {
+  public void testSvnVcsRootAbove() {
     /*enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
 
@@ -187,7 +187,7 @@ public class SvnLocalChangesAndRootsTest extends Svn16TestCase {
   }
 
   @Test
-  public void testFakeScopeDontBreakTheView() throws Throwable {
+  public void testFakeScopeDontBreakTheView() {
     /*enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
 

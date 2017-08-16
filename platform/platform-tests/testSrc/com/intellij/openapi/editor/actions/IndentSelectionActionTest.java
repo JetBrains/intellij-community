@@ -19,27 +19,27 @@ import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCa
 
 public class IndentSelectionActionTest extends LightPlatformCodeInsightFixtureTestCase {
 
-  public void testWithoutSelection() throws Exception {
+  public void testWithoutSelection() {
     verifyAction("some text",
                  null);
   }
 
-  public void testWithInlineSelection() throws Exception {
+  public void testWithInlineSelection() {
     verifyAction("some <selection>text</selection>",
                  "    some <selection>text</selection>");
   }
 
-  public void testWithInlineWhitespaceOnlySelection() throws Exception {
+  public void testWithInlineWhitespaceOnlySelection() {
     verifyAction("some<selection> </selection>text",
                  null);
   }
 
-  public void testWithLineSelection() throws Exception {
+  public void testWithLineSelection() {
     verifyAction("<selection>some text</selection>",
                  "    <selection>some text</selection>");
   }
 
-  public void testWithLineSelectionExcludingSpaces() throws Exception {
+  public void testWithLineSelectionExcludingSpaces() {
     verifyAction(" <selection>some text</selection>",
                  "     <selection>some text</selection>");
   }

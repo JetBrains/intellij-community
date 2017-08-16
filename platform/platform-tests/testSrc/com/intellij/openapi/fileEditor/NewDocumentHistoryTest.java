@@ -53,7 +53,7 @@ public class NewDocumentHistoryTest extends HeavyFileEditorManagerTestCase {
     }
   }
 
-  public void testBackNavigationBetweenEditors() throws Exception {
+  public void testBackNavigationBetweenEditors() {
     PlatformTestUtil.registerExtension(FileEditorProvider.EP_FILE_EDITOR_PROVIDER, new FileEditorManagerTest.MyFileEditorProvider(), myFixture.getTestRootDisposable());
     VirtualFile file = getFile("/src/1.txt");
     assertNotNull(file);
@@ -68,7 +68,7 @@ public class NewDocumentHistoryTest extends HeavyFileEditorManagerTestCase {
     assertEquals("mockEditor", myManager.getSelectedEditor(file).getName());
   }
 
-  public void testSelectFileOnNavigation() throws Exception {
+  public void testSelectFileOnNavigation() {
     VirtualFile file1 = getFile("/src/1.txt");
     myManager.openFile(file1, true);
     VirtualFile file2 = getFile("/src/2.txt");

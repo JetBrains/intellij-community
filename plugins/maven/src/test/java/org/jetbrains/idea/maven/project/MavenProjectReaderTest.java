@@ -239,7 +239,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertEquals("name", p.getName());
   }
 
-  public void testDefaults() throws Exception {
+  public void testDefaults() {
     VirtualFile file = new WriteAction<VirtualFile>() {
       @Override
       protected void run(@NotNull Result<VirtualFile> result) throws Throwable {
@@ -304,7 +304,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertEquals("1", id.getVersion());
   }
 
-  public void testCustomSettings() throws Exception {
+  public void testCustomSettings() {
     VirtualFile file = new WriteAction<VirtualFile>() {
       @Override
       protected void run(@NotNull Result<VirtualFile> result) throws Throwable {

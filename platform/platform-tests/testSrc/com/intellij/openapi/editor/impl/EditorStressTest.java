@@ -99,7 +99,7 @@ public class EditorStressTest extends AbstractEditorTest {
       int offset = random.nextInt(document.getTextLength() + 1);
       new WriteCommandAction.Simple(getProject()) {
         @Override
-        protected void run() throws Throwable {
+        protected void run() {
           document.insertString(offset, myText);
         }
       }.execute().throwException();
@@ -115,7 +115,7 @@ public class EditorStressTest extends AbstractEditorTest {
       int offset = random.nextInt(textLength);
       new WriteCommandAction.Simple(getProject()) {
         @Override
-        protected void run() throws Throwable {
+        protected void run() {
           document.deleteString(offset, offset + 1);
         }
       }.execute().throwException();
@@ -133,7 +133,7 @@ public class EditorStressTest extends AbstractEditorTest {
       if (targetOffset < offset || targetOffset > offset + 1) {
         new WriteCommandAction.Simple(getProject()) {
           @Override
-          protected void run() throws Throwable {
+          protected void run() {
             ((DocumentEx)document).moveText(offset, offset + 1, targetOffset);
           }
         }.execute().throwException();

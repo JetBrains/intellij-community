@@ -236,11 +236,12 @@ public class AsmCodeGeneratorTest extends TestCase {
     return ethalon.isAssignableFrom(object.getClass());
   }
 
-  private static Object invokeMethod(Object obj, String methodName) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+  private static Object invokeMethod(Object obj, String methodName) throws InvocationTargetException, IllegalAccessException {
     return invokeMethod(obj, methodName, ArrayUtil.EMPTY_CLASS_ARRAY, ArrayUtil.EMPTY_OBJECT_ARRAY);
   }
 
-  private static Object invokeMethod(Object obj, String methodName, Class[] params, Object[] args) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+  private static Object invokeMethod(Object obj, String methodName, Class[] params, Object[] args) throws
+                                                                                                   InvocationTargetException, IllegalAccessException {
     final Method method = findMethod(obj.getClass(), methodName, params);
     return method.invoke(obj, args);
   }

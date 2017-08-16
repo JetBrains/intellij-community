@@ -186,7 +186,7 @@ public class XmlFormatterTest extends XmlFormatterTestBase {
     doTest();
   }
 
-  public void testSCR1574() throws Exception {
+  public void testSCR1574() {
     XmlCodeStyleSettings xmlSettings = getSettings().getCustomSettings(XmlCodeStyleSettings.class);
     xmlSettings.XML_SPACE_INSIDE_EMPTY_TAG = true;
     doTextTest("<test/>", "<test />");
@@ -199,13 +199,13 @@ public class XmlFormatterTest extends XmlFormatterTestBase {
     doSanityTest(true);
   }
 
-  public void testSCR1798() throws Exception {
+  public void testSCR1798() {
     XmlCodeStyleSettings xmlSettings = getSettings().getCustomSettings(XmlCodeStyleSettings.class);
     xmlSettings.XML_SPACE_INSIDE_EMPTY_TAG = true;
     doTextTest("<a attr=\"value\"/>", "<a attr=\"value\" />");
   }
 
-  public void testIDEA55230() throws Exception {
+  public void testIDEA55230() {
     doTextTest("<a b=\"/>","<a b=\"/>");
   }
 
@@ -347,7 +347,7 @@ public class XmlFormatterTest extends XmlFormatterTestBase {
     doTest();
   }
   
-  public void testIdea52549() throws Exception {
+  public void testIdea52549() {
     doTextTest(
       "<para>\n" +
       "  My <link>link</link> within text.\n" +
@@ -359,7 +359,7 @@ public class XmlFormatterTest extends XmlFormatterTestBase {
     );
   }
 
-  public void testDontKeepLineBreaksInText() throws Throwable {
+  public void testDontKeepLineBreaksInText() {
     final CodeStyleSettings settings = getSettings();
     final XmlCodeStyleSettings xmlSettings = settings.getCustomSettings(XmlCodeStyleSettings.class);
     settings.setDefaultRightMargin(15);

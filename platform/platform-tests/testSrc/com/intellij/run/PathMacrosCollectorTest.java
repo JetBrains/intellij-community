@@ -48,7 +48,7 @@ public class PathMacrosCollectorTest extends TestCase {
     UsefulTestCase.assertSameElements(macros, "MACro1", "macro4", "mac_ro6", "macr.o7", "mac-ro8", "root");
   }
 
-  public void testWithRecursiveFilter() throws Exception {
+  public void testWithRecursiveFilter() {
     Element root = new Element("root");
     final Element configuration = new Element("configuration");
     configuration.setAttribute("value", "some text$macro5$fdsjfhdskjfsd$MACRO$");
@@ -64,7 +64,7 @@ public class PathMacrosCollectorTest extends TestCase {
     UsefulTestCase.assertSameElements(macros, "macro5", "MACRO", "root");
   }
 
-  public void testWithFilter() throws Exception {
+  public void testWithFilter() {
     Element root = new Element("root");
     final Element testTag = new Element("test");
     testTag.setAttribute("path", "$MACRO$");

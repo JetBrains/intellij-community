@@ -139,7 +139,7 @@ public class MergeTestUtils {
     return new Range(DiffColors.DIFF_INSERTED.getExternalName(), createRange(start, length));
   }
 
-  protected void tearDown() throws Exception {
+  protected void tearDown() {
     EditorFactory editorFactory = EditorFactory.getInstance();
     for (Editor editor : myEditorsToDispose) {
       editorFactory.releaseEditor(editor);

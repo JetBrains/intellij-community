@@ -29,92 +29,92 @@ public class RngHighlightingTest extends HighlightingTestBase {
     return "highlighting/rng";
   }
 
-  public void testSimpleSchema() throws Throwable {
+  public void testSimpleSchema() {
     doHighlightingTest("simple.rng");
   }
 
-  public void testRef1() throws Throwable {
+  public void testRef1() {
     doHighlightingTest("ref-1.rng");
   }
 
-  public void testRef2() throws Throwable {
+  public void testRef2() {
     doHighlightingTest("ref-2.rng");
   }
 
-  public void testRef3() throws Throwable {
+  public void testRef3() {
     doHighlightingTest("ref-3.rng");
   }
 
-  public void testBadRef() throws Throwable {
+  public void testBadRef() {
     doHighlightingTest("bad-ref.rng");
   }
 
-  public void testBadRef2() throws Throwable {
+  public void testBadRef2() {
     doHighlightingTest("bad-ref-2.rng");
   }
 
-  public void testBadRef3() throws Throwable {
+  public void testBadRef3() {
     doHighlightingTest("bad-ref-3.rng");
   }
 
-  public void testBadRef4() throws Throwable {
+  public void testBadRef4() {
     doHighlightingTest("bad-ref-4.rng");
   }
 
-  public void testCreateDefinition1() throws Throwable {
+  public void testCreateDefinition1() {
     doTestQuickFix("create-definition-1", "rng");
   }
 
-  public void testParentRef1() throws Throwable {
+  public void testParentRef1() {
     doHighlightingTest("parent-ref-1.rng");
   }
 
-  public void testParentRef2() throws Throwable {
+  public void testParentRef2() {
     myTestFixture.copyFileToProject("include.rng");
     doHighlightingTest("parent-ref-2.rng");
   }
 
-  public void testBadParentRef1() throws Throwable {
+  public void testBadParentRef1() {
     doHighlightingTest("bad-parent-ref-1.rng");
   }
 
-  public void testBadParentRef2() throws Throwable {
+  public void testBadParentRef2() {
     myTestFixture.copyFileToProject("bad-parent-ref-1.rng");
     doHighlightingTest("bad-parent-ref-2.rng");
   }
 
-  public void testCreateDefinition2() throws Throwable {
+  public void testCreateDefinition2() {
     doTestQuickFix("create-definition-2", "rng");
   }
 
-  public void testMissingStartElement() throws Throwable {
+  public void testMissingStartElement() {
     doCustomHighlighting("missing-start-element.rng", false, true);
   }
 
-  public void testMissingStartElementAndInclude() throws Throwable {
+  public void testMissingStartElementAndInclude() {
     myTestFixture.copyFileToProject("included-grammar.rng");
     doCustomHighlighting("missing-start-element-and-include.rng", false, true);
   }
 
-  public void testBadNsPrefix() throws Throwable {
+  public void testBadNsPrefix() {
     doHighlightingTest("bad-ns-prefix.rng");
   }
 
-  public void testBadElement() throws Throwable {
+  public void testBadElement() {
     doExternalToolHighlighting("bad-element.rng");
   }
 
-  public void testInclude() throws Throwable {
+  public void testInclude() {
     myTestFixture.copyFileToProject("include.rng");
     doHighlightingTest("good-include.rng");
   }
 
-  public void testIncludedRef1() throws Throwable {
+  public void testIncludedRef1() {
     myTestFixture.copyFileToProject("include.rng");
     doHighlightingTest("good-include-ref-1.rng");
   }
 
-  public void testResolveIncludedRef1() throws Throwable {
+  public void testResolveIncludedRef1() {
     myTestFixture.copyFileToProject("include.rng");
 
     final PsiReference ref = myTestFixture.getReferenceAtCaretPositionWithAssertion("resolve-include-ref-1.rng");
@@ -124,7 +124,7 @@ public class RngHighlightingTest extends HighlightingTestBase {
     assertEquals(0, ((XmlTag)element).getSubTags().length);
   }
 
-  public void testResolveIncludedRef2() throws Throwable {
+  public void testResolveIncludedRef2() {
     myTestFixture.copyFileToProject("include.rng");
 
     final PsiReference ref = myTestFixture.getReferenceAtCaretPositionWithAssertion("resolve-include-ref-2.rng");
@@ -149,7 +149,7 @@ public class RngHighlightingTest extends HighlightingTestBase {
     }
   }
 
-  public void testBadInclude() throws Throwable {
+  public void testBadInclude() {
     doHighlightingTest("bad-include.rng");
   }
 }

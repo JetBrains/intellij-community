@@ -65,7 +65,7 @@ public class FoldingTest extends AbstractEditorTest {
     assertSize(1, myModel.getAllFoldRegions());
   }
 
-  public void testIntersects () throws Exception {
+  public void testIntersects () {
     myModel.runBatchFoldingOperation(() -> {
       FoldRegion region = myModel.addFoldRegion(5, 10, ".");
       assertNotNull(region);

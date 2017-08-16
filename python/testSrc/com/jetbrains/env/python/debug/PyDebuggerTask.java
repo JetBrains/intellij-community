@@ -41,7 +41,6 @@ import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.net.ServerSocket;
 import java.util.Set;
 import java.util.concurrent.Semaphore;
@@ -95,7 +94,7 @@ public class PyDebuggerTask extends PyBaseDebuggerTask {
 
     new WriteAction() {
       @Override
-      protected void run(@NotNull Result result) throws Throwable {
+      protected void run(@NotNull Result result) {
         RunManager runManager = RunManager.getInstance(project);
         runManager.addConfiguration(settings, false);
         runManager.setSelectedConfiguration(settings);
@@ -219,7 +218,7 @@ public class PyDebuggerTask extends PyBaseDebuggerTask {
     myWaitForTermination = waitForTermination;
   }
 
-  protected void waitForAllThreadsPause() throws InterruptedException, InvocationTargetException {
+  protected void waitForAllThreadsPause() throws InterruptedException {
     waitForPause();
     Assert.assertTrue(String.format("All threads didn't stop within timeout\n" +
                                     "Output: %s", output()), waitForAllThreads());
@@ -235,7 +234,7 @@ public class PyDebuggerTask extends PyBaseDebuggerTask {
   }
 
   @Override
-  protected void disposeDebugProcess() throws InterruptedException {
+  protected void disposeDebugProcess() {
     if (myDebugProcess != null) {
       ProcessHandler processHandler = myDebugProcess.getProcessHandler();
 

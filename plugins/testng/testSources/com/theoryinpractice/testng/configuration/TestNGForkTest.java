@@ -48,7 +48,7 @@ public class TestNGForkTest {
       new TestNGForkedSplitter(tempFile.getCanonicalPath(), Collections.singletonList(tempFile.getCanonicalPath())) {
         private boolean myStarted = false;
         @Override
-        protected int startChildFork(List args, File workingDir, String classpath, String repeatCount) throws IOException, InterruptedException {
+        protected int startChildFork(List args, File workingDir, String classpath, String repeatCount) throws IOException {
           Assert.assertEquals(dynamicClasspath, myDynamicClasspath);
           Assert.assertArrayEquals(vmParams, myVMParameters.toArray());
           Assert.assertEquals(workingDirFromFile, workingDir.getName());

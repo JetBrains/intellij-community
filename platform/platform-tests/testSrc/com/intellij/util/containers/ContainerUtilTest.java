@@ -75,7 +75,7 @@ public class ContainerUtilTest {
   }
 
   @Test
-  public void testIterateWithCondition() throws Exception {
+  public void testIterateWithCondition() {
     Condition<Integer> cond = integer -> integer > 2;
 
     assertIterating(Arrays.asList(1, 4, 2, 5), cond, 4, 5);
@@ -90,7 +90,7 @@ public class ContainerUtilTest {
   }
 
   @Test
-  public void testIteratingBackward() throws Exception {
+  public void testIteratingBackward() {
     List<String> ss = new ArrayList<>();
     ss.add("a");
     ss.add("b");

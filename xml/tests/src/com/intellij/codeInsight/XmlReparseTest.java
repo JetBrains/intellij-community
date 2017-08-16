@@ -39,7 +39,7 @@ public class XmlReparseTest extends AbstractReparseTestCase {
     setFileType(StdFileTypes.XML);
   }
 
-  public void test1() throws Exception{
+  public void test1() {
     String s1 = "<a>";
     String s2 = "</a>";
 
@@ -49,7 +49,7 @@ public class XmlReparseTest extends AbstractReparseTestCase {
     assertEquals("Tree changed after empty reparse", beforeReparse, DebugUtil.treeToString(((XmlFileImpl)myDummyFile).getTreeElement(), true));
   }
 
-  public void testTagData1() throws Exception {
+  public void testTagData1() {
     String s1 = "<a>";
     String s2 = "</a>";
 
@@ -61,7 +61,7 @@ public class XmlReparseTest extends AbstractReparseTestCase {
     insert("xxxxx");
   }
 
-  public void testTagData2() throws Exception {
+  public void testTagData2() {
     String s1 = "<a><b>\nSomeDataHere";
     String s2 = "\n</b></a>";
 
@@ -78,7 +78,7 @@ public class XmlReparseTest extends AbstractReparseTestCase {
     assertSame(element1, ((XmlFile)myDummyFile).getDocument().getRootTag());
   }
 
-  public void testTagInTag1() throws Exception {
+  public void testTagInTag1() {
     String s1 = "<a><b>";
     String s2 = "</b></a>";
 
@@ -90,7 +90,7 @@ public class XmlReparseTest extends AbstractReparseTestCase {
     insert(">");
   }
 
-  public void testTagInTag2() throws Exception {
+  public void testTagInTag2() {
     String s1 = "<a><b>";
     String s2 = "</b></a>";
 
@@ -106,7 +106,7 @@ public class XmlReparseTest extends AbstractReparseTestCase {
     insert(">");
   }
 
-  public void testTagInTag3() throws Exception {
+  public void testTagInTag3() {
     String s1 = "<a><b>";
     String s2 = "</b></a>";
 
@@ -118,7 +118,7 @@ public class XmlReparseTest extends AbstractReparseTestCase {
     insert(">");
   }
 
-  public void testSCR5925() throws Exception {
+  public void testSCR5925() {
     String s1 = "<one>     <two ";
     String s2 = ",b\"/></one>";
 
@@ -171,7 +171,7 @@ public class XmlReparseTest extends AbstractReparseTestCase {
     return PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') + "/xml/tests/testData/";
   }
 
-  public void testXml() throws Exception{
+  public void testXml() {
     setFileType(StdFileTypes.XML);
     String text2 = "</root>";
     final String text1 = "<root>/n";

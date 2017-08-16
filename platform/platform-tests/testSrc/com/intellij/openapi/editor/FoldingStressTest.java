@@ -23,13 +23,13 @@ import com.intellij.testFramework.PlatformTestUtil;
 
 public class FoldingStressTest extends LightPlatformTestCase {
 
-  public void testStressFoldingFromZeroOffset() throws Exception {
+  public void testStressFoldingFromZeroOffset() {
     for (int len = 2; len < 25; len++) {
       stress(len);
     }
   }
 
-  public void testStress8() throws Exception {
+  public void testStress8() {
     DocumentImpl doc = new DocumentImpl("0123456789\n123456789\n23456789");
     Editor editor = EditorFactory.getInstance().createEditor(doc);
     try {

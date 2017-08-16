@@ -96,7 +96,7 @@ public class BinaryOSProcessHandlerTest {
     private static final int SEND_TIMEOUT = 500;
 
     @SuppressWarnings("BusyWait")
-    public static void main(String[] args) throws IOException, InterruptedException {
+    public static void main(String[] args) throws InterruptedException {
       System.err.print(TEXT);
 
       for (int offset = 0; offset < BYTES.length; offset += PACKET_SIZE) {

@@ -39,12 +39,12 @@ public class PropertiesEnterTest extends LightPlatformCodeInsightTestCase {
     type('\n');
   }
 
-  public void testEndLine() throws Exception { doTest(); }
-  public void testComment() throws Exception { doTest(); }
-  public void testKey() throws Exception { doTest(); }
-  public void testValue() throws Exception { doTest(); }
-  public void testBackslash() throws Exception { doTest(); }
-  public void testBeforeComment() throws Exception { doTest(); }
+  public void testEndLine() { doTest(); }
+  public void testComment() { doTest(); }
+  public void testKey() { doTest(); }
+  public void testValue() { doTest(); }
+  public void testBackslash() { doTest(); }
+  public void testBeforeComment() { doTest(); }
 
   public void testPerformance() {
     String line = "some.relatively.long.property.name=And here's some property value for that really unique key, nice to have\n";
@@ -56,7 +56,7 @@ public class PropertiesEnterTest extends LightPlatformCodeInsightTestCase {
     }).assertTiming();
   }
 
-  private void doTest() throws Exception {
+  private void doTest() {
     configureByFile(BASE_PATH + getTestName(false)+".properties");
     typeEnter();
     checkResultByFile(BASE_PATH + getTestName(false)+"_after.properties");

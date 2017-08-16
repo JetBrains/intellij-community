@@ -21,8 +21,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.events.DomEvent;
@@ -42,7 +40,7 @@ public class DomChildrenTest extends DomTestCase {
     return createElement(xml, MyElement.class);
   }
 
-  public void testGetChild() throws Throwable {
+  public void testGetChild() {
     final MyElement element = createElement("<a>" + "<child>foo</child>" + "</a>");
     element.toString();
     assertEquals("foo", element.getMyChild().getValue());
@@ -51,19 +49,19 @@ public class DomChildrenTest extends DomTestCase {
     assertNull(element.getChild239().getXmlTag());
   }
 
-  public void testGetChild239() throws Throwable {
+  public void testGetChild239() {
     final MyElement element = createElement("<a><child/><child-239/></a>");
     assertNotNull(element.getChild239().getXmlTag());
   }
 
-  public void testGetChildren() throws Throwable {
+  public void testGetChildren() {
     final MyElement element = createElement("<a>" + "<child-element>foo</child-element>" + "<child-element>bar</child-element>" + "</a>");
     assertSubBars(element.getMyChildren());
     assertSubBars(element.getChildElements());
     assertSubBars(element.getMyChildren2());
   }
 
-  public void testGetChildrenMultipleTimes() throws Throwable {
+  public void testGetChildrenMultipleTimes() {
     final MyElement element = createElement("<a>" + "<child-element>" + " <child-element/>" + "</child-element>" + "</a>");
     for (int i = 0; i < 239; i++) {
       final List<MyElement> children = element.getChildElements();
@@ -80,7 +78,7 @@ public class DomChildrenTest extends DomTestCase {
     assertEquals("bar", subBars.get(1).getValue());
   }
 
-  public void testClassChoosers() throws Throwable {
+  public void testClassChoosers() {
     getTypeChooserManager().registerTypeChooser(MyAbstractElement.class, new MyTypeChooser());
     try {
       MyElement element = createElement("<a>" +
@@ -97,7 +95,7 @@ public class DomChildrenTest extends DomTestCase {
     }
   }
 
-  public void testAddConcreteElements() throws Throwable {
+  public void testAddConcreteElements() {
     getTypeChooserManager().registerTypeChooser(MyAbstractElement.class, new MyTypeChooser());
     try {
       MyElement element = createElement("<a/>");
@@ -120,13 +118,13 @@ public class DomChildrenTest extends DomTestCase {
     }
   }
 
-  public void testIndexedChild() throws Throwable {
+  public void testIndexedChild() {
     MyElement element = createElement("<a>" + "<child>foo</child>" + "<child>bar</child>" + "</a>");
     assertCached(element.getChild2(), element.getXmlTag().getSubTags()[1]);
     assertEquals(0, element.getChildElements().size());
   }
 
-  public void testDefiningIndexedChild() throws Throwable {
+  public void testDefiningIndexedChild() {
     final MyElement element = createElement("<a/>");
     final XmlTag tag = element.getChild2().ensureTagExists();
     final XmlTag[] subTags = element.getXmlTag().findSubTags("child");
@@ -149,7 +147,7 @@ public class DomChildrenTest extends DomTestCase {
     assertResultsAndClear();
   }
 
-  public void testAddChild() throws Throwable {
+  public void testAddChild() {
     final MyElement element = createElement("<a><child-element/></a>");
     assertEquals(1, element.getChildElements().size());
     final MyElement firstChild = element.getChildElements().get(0);
@@ -195,7 +193,7 @@ public class DomChildrenTest extends DomTestCase {
     assertSame(lastChildTag, element.getXmlTag().findSubTags("child-element")[3]);
   }
 
-  public void testUndefineCollectionChild() throws Throwable {
+  public void testUndefineCollectionChild() {
     final MyElement element = createElement("<a><child-element/><child-element/><child-element/></a>");
     final MyElement child1 = element.getChildElements().get(0);
     final MyElement child2 = element.getChildElements().get(1);
@@ -223,10 +221,10 @@ public class DomChildrenTest extends DomTestCase {
     myCallRegistry.assertResultsAndClear();
   }
 
-  public void testUndefineFixedChild() throws Throwable {
+  public void testUndefineFixedChild() {
     new WriteCommandAction.Simple(getProject()) {
       @Override
-      protected void run() throws Throwable {
+      protected void run() {
         final MyElement child = createElement("<a><child/></a>").getChild();
 
         incModCount();
@@ -247,7 +245,7 @@ public class DomChildrenTest extends DomTestCase {
     }.execute().throwException();
   }
 
-  public void testAttributes() throws Throwable {
+  public void testAttributes() {
     final MyElement element = createElement("<a/>");
     final GenericAttributeValue<String> attr = element.getAttr();
     assertSame(element.getXmlTag(), attr.getXmlTag());
@@ -270,10 +268,10 @@ public class DomChildrenTest extends DomTestCase {
     assertNull(attr.getXmlAttribute());
   }
 
-  public void testUndefineLastFixedChildWithNotEmptyCollection() throws Throwable {
+  public void testUndefineLastFixedChildWithNotEmptyCollection() {
     new WriteCommandAction.Simple(getProject()) {
       @Override
-      protected void run() throws Throwable {
+      protected void run() {
         final MyElement element = createElement("<a>" + "<child>1</child>" + "<child attr=\"\">2</child>" + "<child/></a>");
         final MyElement child = element.getChild();
         final MyElement child2 = element.getChild2();
@@ -304,10 +302,10 @@ public class DomChildrenTest extends DomTestCase {
     }.execute().throwException();
   }
 
-  public void testUndefineNotLastFixedChild() throws Throwable {
+  public void testUndefineNotLastFixedChild() {
     new WriteCommandAction.Simple(getProject()) {
       @Override
-      protected void run() throws Throwable {
+      protected void run() {
         final MyElement element = createElement("<a>" + "<child>1</child>" + "<child attr=\"\">2</child>" + "</a>");
         final MyElement child = element.getChild();
         final MyElement child2 = element.getChild2();
@@ -333,10 +331,10 @@ public class DomChildrenTest extends DomTestCase {
     }.execute().throwException();
   }
 
-  public void testUndefineLastFixedChild() throws Throwable {
+  public void testUndefineLastFixedChild() {
     new WriteCommandAction.Simple(getProject()) {
       @Override
-      protected void run() throws Throwable {
+      protected void run() {
         final MyElement element =
           createElement("<a>" + "<child>1</child>" + "<child attr=\"\">2</child>" + "<child attr=\"\">2</child>" + "</a>");
         final MyElement child = element.getChild();
@@ -358,10 +356,10 @@ public class DomChildrenTest extends DomTestCase {
     }.execute().throwException();
   }
 
-  public void testUndefineFixedChildWithNoTag() throws Throwable {
+  public void testUndefineFixedChildWithNoTag() {
     new WriteCommandAction.Simple(getProject()) {
       @Override
-      protected void run() throws Throwable {
+      protected void run() {
         final MyElement element = createElement("<a/>");
         final MyElement child = element.getChild();
         child.undefine();
@@ -375,16 +373,16 @@ public class DomChildrenTest extends DomTestCase {
     }.execute().throwException();
   }
 
-  public void testGenericValuesCollection() throws Throwable {
+  public void testGenericValuesCollection() {
     final MyElement element = createElement("<a><generic-child>239</generic-child></a>");
     assertEquals(239, (int)element.getGenericChildren().get(0).getValue());
   }
 
-  public void testIsBooleanGenericValueMethod() throws Throwable {
+  public void testIsBooleanGenericValueMethod() {
     assertNull(createElement("").isGenericValue().getValue());
   }
 
-  public void testGetParentOfType() throws Throwable {
+  public void testGetParentOfType() {
     getTypeChooserManager().registerTypeChooser(MyAbstractElement.class, new MyTypeChooser());
     try {
       final MyElement element = createElement("");
@@ -403,7 +401,7 @@ public class DomChildrenTest extends DomTestCase {
     }
   }
 
-  public void testChildrenValidAfterUndefine() throws Throwable {
+  public void testChildrenValidAfterUndefine() {
     final MyElement element = createElement("<a><child/></a>");
     final MyElement child = element.getChild();
     ApplicationManager.getApplication().runWriteAction(() -> element.undefine());
@@ -412,7 +410,7 @@ public class DomChildrenTest extends DomTestCase {
     assertFalse(child.isValid());
   }
 
-  public void testGetCompositeCollection() throws Throwable {
+  public void testGetCompositeCollection() {
     final MyElement element = createElement("");
     final MyFooConcreteElement foo = element.addFooChild();
     final MyElement child = element.addChildElement();
@@ -420,7 +418,7 @@ public class DomChildrenTest extends DomTestCase {
     assertEquals(Arrays.asList(foo, bar, child), element.getCompositeList());
   }
 
-  public void testAddToCompositeCollection() throws Throwable {
+  public void testAddToCompositeCollection() {
     final MyElement element = createElement("");
     final MyBarConcreteElement bar = element.addBarComposite();
     final MyElement child = element.addChildComposite();
@@ -430,21 +428,21 @@ public class DomChildrenTest extends DomTestCase {
     assertEquals(Arrays.asList(foo2, bar, child, foo1, child2), element.getCompositeList());
   }
 
-  public void testCreateElementWithRequiredChild() throws Throwable {
+  public void testCreateElementWithRequiredChild() {
     final MyElement element = createElement("").addChildElement();
     assertNotNull(element.getAttr().getXmlAttribute());
     assertNotNull(element.isGenericValue().getXmlTag());
     assertTrue(element.getMyChildren2().isEmpty());
   }
 
-  public void testSetRequiredChildValue() throws Throwable {
+  public void testSetRequiredChildValue() {
     final MyElement element = createElement("<a/>").getChild();
     element.isGenericValue().setStringValue("true");
     assertEquals(1, element.getXmlTag().findSubTags("generic-value").length);
     assertTrue(element.isGenericValue().getValue());
   }
 
-  public void testGetFixedPath() throws Throwable {
+  public void testGetFixedPath() {
     final MyElement element = createElement("");
     final MyElement child2 = element.getChild2();
     assertEquals(Arrays.asList("getChild2", "getChild2", "getChild239", "getAbstractChild", "getChild2"),
@@ -455,7 +453,7 @@ public class DomChildrenTest extends DomTestCase {
     assertNull(DomUtil.getFixedPath(element.addChildElement().getChild()));
   }
 
-  public void testGetDomElementCustomChild() throws Throwable {
+  public void testGetDomElementCustomChild() {
     final MyElement myElement = createElement("<a><abstract-child/><generic-value/><bar/></a>", MyElement.class);
     final XmlTag tag = myElement.getXmlTag();
     assertEquals(1, myElement.getCustomChildren().size());
@@ -464,13 +462,13 @@ public class DomChildrenTest extends DomTestCase {
     assertInstanceOf(getDomManager().getDomElement(tag.getSubTags()[2]), MyElement.class);
   }
 
-  public void testNoChildrenForMalformedTags() throws Throwable {
+  public void testNoChildrenForMalformedTags() {
     final MyElement myElement = createElement("<a><</a>", MyElement.class);
     final XmlTag tag = myElement.getXmlTag();
     assertEquals(0, myElement.getCustomChildren().size());
   }
 
-  public void testCustomNameChildren() throws Throwable {
+  public void testCustomNameChildren() {
     final MyElement myElement = createElement("<a><foo/><bar/><foo xmlns=\"z\"/></a>", MyElement.class);
     final XmlTag tag = myElement.getXmlTag();
     final List<MyElement> customChildren = myElement.getCustomChildren();
@@ -491,7 +489,7 @@ public class DomChildrenTest extends DomTestCase {
     return ContainerUtil.map2List(DomUtil.getFixedPath(element), s -> s.getName());
   }
 
-  public void testElementsWithoutXmlGetItLater() throws Throwable {
+  public void testElementsWithoutXmlGetItLater() {
     final MyElement element = createElement("<a/>");
     final MyElement child = element.getChild();
     final MyElement child2 = element.getChild2();

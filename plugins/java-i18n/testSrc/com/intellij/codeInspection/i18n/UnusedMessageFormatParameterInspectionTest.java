@@ -5,23 +5,23 @@ import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.InspectionTestCase;
 
 public class UnusedMessageFormatParameterInspectionTest extends InspectionTestCase {
-  private void doTest() throws Exception {
+  private void doTest() {
     doTest("unusedParameter/" + getTestName(true), new UnusedMessageFormatParameterInspection());
   }
 
-  public void testSimpleString() throws Exception {
+  public void testSimpleString() {
     doTest();
   }
 
-  public void testCorruptedValue() throws Exception{
+  public void testCorruptedValue() {
     doTest();
   }
 
-  public void testWithChoiceFormat() throws Exception{
+  public void testWithChoiceFormat() {
     doTest();
   }
 
-  public void testRegexp() throws Exception {
+  public void testRegexp() {
     doTest();
   }
 

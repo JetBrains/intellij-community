@@ -38,7 +38,7 @@ public class MavenModelReadingAndWritingTest extends MavenImportingTestCase {
                   "<version>1</version>");
   }
 
-  public void testReading() throws Exception {
+  public void testReading() {
     MavenDomProjectModel model = getDomModel();
 
     assertEquals("test", model.getGroupId().getStringValue());

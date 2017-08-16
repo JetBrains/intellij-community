@@ -53,7 +53,7 @@ public class TestDataGuessByExistingFilesUtilTest extends TestDataPathTestCase {
   }
 
   @Override
-  protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
+  protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
     moduleBuilder.addLibrary("junit3", JavaSdkUtil.getJunit3JarPath());
   }
 
@@ -63,7 +63,7 @@ public class TestDataGuessByExistingFilesUtilTest extends TestDataPathTestCase {
     assertEquals("TestName", result);
   }
 
-  public void testCollectTestDataByExistingFilesBeforeAndAfter() throws IOException {
+  public void testCollectTestDataByExistingFilesBeforeAndAfter() {
     PsiMethod testMethod = getTestMethodWithBeforeAndAfterTestData();
     List<String> result = TestDataGuessByExistingFilesUtil.collectTestDataByExistingFiles(testMethod);
     verifyResultForBeforeAndAfter(result);
@@ -76,7 +76,7 @@ public class TestDataGuessByExistingFilesUtilTest extends TestDataPathTestCase {
     verifyResultForBeforeAndAfter(result);
   }
 
-  public void testCollectTestDataByExistingFilesBeforeAndSame() throws IOException {
+  public void testCollectTestDataByExistingFilesBeforeAndSame() {
     PsiMethod testMethod = getTestMethodWithBeforeAndSameTestData();
     List<String> result = TestDataGuessByExistingFilesUtil.collectTestDataByExistingFiles(testMethod);
     verifyResultForBeforeAndSame(result);
@@ -89,7 +89,7 @@ public class TestDataGuessByExistingFilesUtilTest extends TestDataPathTestCase {
     verifyResultForBeforeAndSame(result);
   }
 
-  public void testCollectTestDataByExistingFilesAfterAndSame() throws IOException {
+  public void testCollectTestDataByExistingFilesAfterAndSame() {
     PsiMethod testMethod = getTestMethodWithAfterAndSameTestData();
     List<String> result = TestDataGuessByExistingFilesUtil.collectTestDataByExistingFiles(testMethod);
     verifyResultForAfterAndSame(result);
@@ -102,7 +102,7 @@ public class TestDataGuessByExistingFilesUtilTest extends TestDataPathTestCase {
     verifyResultForAfterAndSame(result);
   }
 
-  public void testCollectTestDataByExistingFilesOnlySame() throws IOException {
+  public void testCollectTestDataByExistingFilesOnlySame() {
     PsiMethod testMethod = getTestMethodWithOnlySameTestData();
     List<String> result = TestDataGuessByExistingFilesUtil.collectTestDataByExistingFiles(testMethod);
     verifyResultForOnlySame(result);

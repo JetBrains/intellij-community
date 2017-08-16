@@ -63,7 +63,7 @@ public class MakeClassStaticTest extends LightRefactoringTestCase {
     perform();
   }
 
-  public void testFieldWithMyPrefix() throws Exception {
+  public void testFieldWithMyPrefix() {
     final JavaCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCustomSettings(JavaCodeStyleSettings.class);
     String oldPrefix = settings.FIELD_NAME_PREFIX;
     settings.FIELD_NAME_PREFIX = "my";

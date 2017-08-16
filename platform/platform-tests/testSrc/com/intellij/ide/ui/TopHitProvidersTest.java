@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
  * @author Konstantin Bulenkov
  */
 public class TopHitProvidersTest extends PlatformTestCase {
-  public void testUiSettings() throws Exception {
+  public void testUiSettings() {
     List<OptionsTopHitProvider> providers = getProvider(AppearanceOptionsTopHitProvider.ID);
     for (OptionsTopHitProvider provider: providers) {
       for (OptionDescription option : provider.getOptions(null)) {

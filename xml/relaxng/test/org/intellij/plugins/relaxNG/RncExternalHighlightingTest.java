@@ -31,24 +31,24 @@ public class RncExternalHighlightingTest extends HighlightingTestBase {
 //    ExternalResourceManager.getInstance().addResource("http://relaxng.org/ns/structure/1.0", new File("highlighting/relaxng.rng").getAbsolutePath());
   }
 
-  public void testAddressBook() throws Throwable {
+  public void testAddressBook() {
     doExternalToolHighlighting("addressbook.rnc");
   }
 
-  public void testMissingContent() throws Throwable {
+  public void testMissingContent() {
     doExternalToolHighlighting("missing-content.rnc");
   }
 
   @CopyFile("included.rnc")
-  public void testMissingStart() throws Throwable {
+  public void testMissingStart() {
     doExternalToolHighlighting("missing-start.rnc");
   }
 
-  public void testUndefinedRef() throws Throwable {
+  public void testUndefinedRef() {
     doExternalToolHighlighting("undefined-ref-ok.rnc");
   }
 
-  public void testRngSchema() throws Throwable {
+  public void testRngSchema() {
     doExternalToolHighlighting("rng-schema.rnc");
   }
 }

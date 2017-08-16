@@ -28,7 +28,7 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
  */
 public class JavadocFormatterTest extends AbstractJavaFormatterTest {
 
-  public void testRightMargin() throws Exception {
+  public void testRightMargin() {
     getSettings().WRAP_LONG_LINES = true;
     getSettings().RIGHT_MARGIN = 35;
     doTextTest(
@@ -65,7 +65,7 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
   }
   
 
-  public void testDoNotWrapLink() throws Exception {
+  public void testDoNotWrapLink() {
     getSettings().WRAP_LONG_LINES = true;
     getSettings().RIGHT_MARGIN = 70;
     doTextTest(
@@ -104,7 +104,7 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
   }
 
 
-  public void testPackageJavadoc() throws Exception {
+  public void testPackageJavadoc() {
     doTextTest(
       "/**\n" +
       " *              super auper\n" +
@@ -172,7 +172,7 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
     );
   }
 
-  public void testEA49739() throws Exception {
+  public void testEA49739() {
     getSettings().WRAP_LONG_LINES = true;
     getSettings().RIGHT_MARGIN = 35;
     getSettings().WRAP_COMMENTS = true;
@@ -195,7 +195,7 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
                "}");
   }
 
-  public void testOneLineCommentWrappedByRightMarginIntoMultiLine() throws Exception {
+  public void testOneLineCommentWrappedByRightMarginIntoMultiLine() {
     getSettings().getRootSettings().WRAP_COMMENTS = true;
     getJavaSettings().ENABLE_JAVADOC_FORMATTING = true;
     getJavaSettings().JD_DO_NOT_WRAP_ONE_LINE_COMMENTS = true;
@@ -235,7 +235,7 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
     );
   }
   
-  public void testSCR11296() throws Exception {
+  public void testSCR11296() {
     final CommonCodeStyleSettings settings = getSettings();
     settings.RIGHT_MARGIN = 50;
     settings.getRootSettings().WRAP_COMMENTS = true;
@@ -245,7 +245,7 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
     doTest();
   }
 
-  public void testSCR2632() throws Exception {
+  public void testSCR2632() {
     getJavaSettings().ENABLE_JAVADOC_FORMATTING = true;
     getSettings().getRootSettings().WRAP_COMMENTS = true;
     getSettings().RIGHT_MARGIN = 20;
@@ -327,7 +327,7 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
     );
   }
 
-  public void testParameterDescriptionNotOnNewLine() throws Exception {
+  public void testParameterDescriptionNotOnNewLine() {
     // IDEA-107383
     getJavaSettings().ENABLE_JAVADOC_FORMATTING = true;
     getJavaSettings().JD_ALIGN_PARAM_COMMENTS = true;
@@ -351,7 +351,7 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
       "}");
   }
 
-  public void testWrappedParameterDescription() throws Exception {
+  public void testWrappedParameterDescription() {
     // Inspired by IDEA-13072
     getJavaSettings().ENABLE_JAVADOC_FORMATTING = true;
     getSettings().getRootSettings().WRAP_COMMENTS = true;
@@ -421,7 +421,7 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
     doTextTest(before, after);
   }
 
-  public void testDoNotWrapMultiLineCommentIntoOneLine() throws Exception {
+  public void testDoNotWrapMultiLineCommentIntoOneLine() {
     getJavaSettings().ENABLE_JAVADOC_FORMATTING = true;
     getJavaSettings().JD_DO_NOT_WRAP_ONE_LINE_COMMENTS = true;
     String test = "/**\n" +
@@ -433,7 +433,7 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
     doClassTest(test, test);
   }
 
-  public void testLeaveOneLineComment() throws Exception {
+  public void testLeaveOneLineComment() {
     getJavaSettings().ENABLE_JAVADOC_FORMATTING = true;
     getJavaSettings().JD_DO_NOT_WRAP_ONE_LINE_COMMENTS = true;
     String test = "/** foo */\n" +
@@ -443,7 +443,7 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
     doClassTest(test, test);
   }
 
-  public void testWrapOneLineComment() throws Exception {
+  public void testWrapOneLineComment() {
     getJavaSettings().ENABLE_JAVADOC_FORMATTING = true;
     getJavaSettings().JD_DO_NOT_WRAP_ONE_LINE_COMMENTS = false;
     String test = "/** foo */\n" +
@@ -459,7 +459,7 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
     doClassTest(test, after);
   }
 
-  public void testWrapStrangeComment() throws Exception {
+  public void testWrapStrangeComment() {
     getJavaSettings().ENABLE_JAVADOC_FORMATTING = true;
     getJavaSettings().JD_DO_NOT_WRAP_ONE_LINE_COMMENTS = false;
     String test = "/** foo" +
@@ -476,7 +476,7 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
     doClassTest(test, after);
   }
 
-  public void testWrapStrangeCommentIfNotWrapOneLines() throws Exception {
+  public void testWrapStrangeCommentIfNotWrapOneLines() {
     getJavaSettings().ENABLE_JAVADOC_FORMATTING = true;
     getJavaSettings().JD_DO_NOT_WRAP_ONE_LINE_COMMENTS = true;
     String test = "/** foo\n" +
@@ -494,7 +494,7 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
   }
 
 
-  public void testReturnTagAlignment() throws Exception {
+  public void testReturnTagAlignment() {
     getJavaSettings().ENABLE_JAVADOC_FORMATTING = true;
     getSettings().RIGHT_MARGIN = 80;
     getJavaSettings().JD_LEADING_ASTERISKS_ARE_ENABLED = true;
@@ -522,7 +522,7 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
   }
 
 
-  public void testReturnTagAlignmentWithPreTagOnFirstLine() throws Exception {
+  public void testReturnTagAlignmentWithPreTagOnFirstLine() {
     getJavaSettings().ENABLE_JAVADOC_FORMATTING = true;
     getSettings().RIGHT_MARGIN = 80;
     getJavaSettings().JD_LEADING_ASTERISKS_ARE_ENABLED = true;
@@ -574,7 +574,7 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
     );
   }
 
-  public void testSeeTagAlignment() throws Exception {
+  public void testSeeTagAlignment() {
     getJavaSettings().ENABLE_JAVADOC_FORMATTING = true;
     getSettings().RIGHT_MARGIN = 80;
     getJavaSettings().JD_LEADING_ASTERISKS_ARE_ENABLED = true;
@@ -601,7 +601,7 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
     doClassTest(before, after);
   }
 
-  public void testDummySinceTagAlignment() throws Exception {
+  public void testDummySinceTagAlignment() {
     getJavaSettings().ENABLE_JAVADOC_FORMATTING = true;
     getSettings().RIGHT_MARGIN = 80;
     getJavaSettings().JD_LEADING_ASTERISKS_ARE_ENABLED = true;
@@ -628,7 +628,7 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
     doClassTest(before, after);
   }
 
-  public void testDummyDeprecatedTagAlignment() throws Exception {
+  public void testDummyDeprecatedTagAlignment() {
     getJavaSettings().ENABLE_JAVADOC_FORMATTING = true;
     getSettings().RIGHT_MARGIN = 80;
     getJavaSettings().JD_LEADING_ASTERISKS_ARE_ENABLED = true;
@@ -818,7 +818,7 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
     doTextTest(before, after);
   }
 
-  public void testDoNotWrapLongLineCommentWithSpaceInStart() throws Exception {
+  public void testDoNotWrapLongLineCommentWithSpaceInStart() {
     getSettings().KEEP_FIRST_COLUMN_COMMENT = true;
     getSettings().WRAP_LONG_LINES = true;
     getSettings().RIGHT_MARGIN = 200;
@@ -832,7 +832,7 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
   }
 
 
-  public void testNotGenerateSelfClosingPTagIfLanguageLevelJava8() throws Exception {
+  public void testNotGenerateSelfClosingPTagIfLanguageLevelJava8() {
     getJavaSettings().JD_P_AT_EMPTY_LINES = true;
     getJavaSettings().ENABLE_JAVADOC_FORMATTING = true;
     String before = "/**\n" +
@@ -852,7 +852,7 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
     doClassTest(before, after);
   }
 
-  public void testPTagIfLanguageLevelNotJava8() throws Exception {
+  public void testPTagIfLanguageLevelNotJava8() {
     getJavaSettings().JD_P_AT_EMPTY_LINES = true;
     getJavaSettings().ENABLE_JAVADOC_FORMATTING = true;
     LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_7);

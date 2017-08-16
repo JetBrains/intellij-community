@@ -15,7 +15,10 @@
  */
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.openapi.editor.colors.*;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.FontPreferences;
+import com.intellij.openapi.editor.colors.ModifiableFontPreferences;
 import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions;
 import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl;
@@ -54,7 +57,7 @@ public class EditorColorsSchemeDelegateTest extends AbstractEditorTest {
     }
   }
   
-  public void testSecondaryFontIsAvailable() throws Exception {
+  public void testSecondaryFontIsAvailable() {
     String secondaryFont = getExistingNonDefaultFontName();
     FontPreferences globalPrefs = AppEditorFontOptions.getInstance().getFontPreferences();
     FontPreferences tempCopy = new FontPreferencesImpl();

@@ -832,7 +832,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     doItemTest();
   }
 
-  public void testInsertOverride() throws Exception {
+  public void testInsertOverride() {
     JavaCodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(getProject()).getCustomSettings(JavaCodeStyleSettings.class);
     styleSettings.INSERT_OVERRIDE_ANNOTATION = true;
     doItemTest();

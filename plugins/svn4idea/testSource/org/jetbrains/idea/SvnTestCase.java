@@ -346,7 +346,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
       }
     }
 
-    public SubTree(final VirtualFile base) throws Exception {
+    public SubTree(final VirtualFile base) {
       myRootDir = findOrCreateChild(base, "root", null);
       mySourceDir = findOrCreateChild(myRootDir, "source", null);
       myS1File = findOrCreateChild(mySourceDir, "s1.txt", ourS1Contents);

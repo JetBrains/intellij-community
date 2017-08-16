@@ -152,7 +152,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
           }
 
           @Override
-          public void run() throws Throwable {
+          public void run() {
             for (int i = 0; i < 5_000_000; i++) {
               checkRootsEqual();
             }

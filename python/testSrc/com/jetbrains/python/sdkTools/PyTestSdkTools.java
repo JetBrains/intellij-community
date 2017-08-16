@@ -66,7 +66,7 @@ public final class PyTestSdkTools {
                                   @NotNull final SdkCreationType sdkCreationType,
                                   @Nullable final Module module
   )
-    throws InvalidSdkException, IOException {
+    throws InvalidSdkException {
     final Ref<Sdk> ref = Ref.create();
     EdtTestUtil.runInEdtAndWait(() -> {
       final Sdk sdk = SdkConfigurationUtil.setupSdk(NO_SDK, sdkHome, PythonSdkType.getInstance(), true, null, null);
@@ -94,7 +94,7 @@ public final class PyTestSdkTools {
   public static void generateTempSkeletonsOrPackages(@NotNull final Sdk sdk,
                                                      final boolean addSkeletons,
                                                      @Nullable final Module module)
-    throws InvalidSdkException, IOException {
+    throws InvalidSdkException {
     Project project = null;
 
     if (module != null) {

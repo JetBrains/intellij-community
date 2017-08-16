@@ -16,7 +16,10 @@ import com.jetbrains.env.ut.PyTestTestProcessRunner;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.sdkTools.SdkCreationType;
-import com.jetbrains.python.testing.*;
+import com.jetbrains.python.testing.PyTestConfiguration;
+import com.jetbrains.python.testing.PyTestFactory;
+import com.jetbrains.python.testing.PyTestFrameworkService;
+import com.jetbrains.python.testing.TestTargetType;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
@@ -41,11 +44,11 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
 
   // Ensures setup/teardown does not break anything
   @Test
-  public void testSetupTearDown() throws Exception {
+  public void testSetupTearDown() {
     runPythonTest(new SetupTearDownTestTask<PyTestTestProcessRunner>() {
       @NotNull
       @Override
-      protected PyTestTestProcessRunner createProcessRunner() throws Exception {
+      protected PyTestTestProcessRunner createProcessRunner() {
         return new PyTestTestProcessRunner("test_test.py", 1);
       }
     });
@@ -55,11 +58,11 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
    * Ensures that python target pointing to module works correctly
    */
   @Test
-  public void testRunModuleAsFile() throws Exception {
+  public void testRunModuleAsFile() {
     runPythonTest(new RunModuleAsFileTask<PyTestTestProcessRunner>() {
       @NotNull
       @Override
-      protected PyTestTestProcessRunner createProcessRunner() throws Exception {
+      protected PyTestTestProcessRunner createProcessRunner() {
         return new PyTestTestProcessRunner(TARGET, 0);
       }
     });
@@ -67,11 +70,11 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
 
 
   @Test
-  public void testRerunSubfolder() throws Exception {
+  public void testRerunSubfolder() {
     runPythonTest(new RerunSubfolderTask<PyTestTestProcessRunner>(2) {
       @NotNull
       @Override
-      protected PyTestTestProcessRunner createProcessRunner() throws Exception {
+      protected PyTestTestProcessRunner createProcessRunner() {
         return new PyTestTestProcessRunner(".", 1);
       }
     });
@@ -79,13 +82,13 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
 
 
   @Test
-  public void testParametrized() throws Exception {
+  public void testParametrized() {
     runPythonTest(
       new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>("/testRunner/env/pytest/parametrized", SdkCreationType.EMPTY_SDK) {
 
         @NotNull
         @Override
-        protected PyTestTestProcessRunner createProcessRunner() throws Exception {
+        protected PyTestTestProcessRunner createProcessRunner() {
           return new PyTestTestProcessRunner("test_pytest_parametrized.py", 1);
         }
 
@@ -111,13 +114,13 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
    * See https://github.com/JetBrains/teamcity-messages/issues/131
    */
   @Test
-  public void testTestNameBeforeTestStarted() throws Exception {
+  public void testTestNameBeforeTestStarted() {
     runPythonTest(
       new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>("/testRunner/env/pytest/testNameBeforeTestStarted", SdkCreationType.EMPTY_SDK) {
 
         @NotNull
         @Override
-        protected PyTestTestProcessRunner createProcessRunner() throws Exception {
+        protected PyTestTestProcessRunner createProcessRunner() {
           return new PyTestTestProcessRunner("test_test.py", 0);
         }
 
@@ -147,13 +150,13 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
 
   // Ensure test survives patched strftime
   @Test
-  public void testMonkeyPatch() throws Exception {
+  public void testMonkeyPatch() {
     runPythonTest(
       new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>("/testRunner/env/pytest/monkeyPatch", SdkCreationType.EMPTY_SDK) {
 
         @NotNull
         @Override
-        protected PyTestTestProcessRunner createProcessRunner() throws Exception {
+        protected PyTestTestProcessRunner createProcessRunner() {
           return new PyTestTestProcessRunner("test_test.py", 0);
         }
 
@@ -169,13 +172,13 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
 
   // Ensure slow test is not run when -m "not slow" is provided
   @Test
-  public void testMarkerWithSpaces() throws Exception {
+  public void testMarkerWithSpaces() {
     runPythonTest(
       new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>("/testRunner/env/pytest/test_with_markers", SdkCreationType.EMPTY_SDK) {
 
         @NotNull
         @Override
-        protected PyTestTestProcessRunner createProcessRunner() throws Exception {
+        protected PyTestTestProcessRunner createProcessRunner() {
           return new PyTestTestProcessRunner("test_with_markers.py", 0) {
             @Override
             protected void configurationCreatedAndWillLaunch(@NotNull PyTestConfiguration configuration) throws IOException {
@@ -205,7 +208,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
    * New configuration should have closest src set as its working dir
    */
   @Test
-  public void testClosestSrcIsWorkDirOnNewConfig() throws Exception {
+  public void testClosestSrcIsWorkDirOnNewConfig() {
     runPythonTest(
       new CreateConfigurationTestTask<PyTestConfiguration>(myFrameworkName,
                                                            PyTestConfiguration.class) {
@@ -234,12 +237,12 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
    * In case when workdir is not set we should use closest src
    */
   @Test
-  public void testClosestSrcIsWorkDirDynamically() throws Exception {
+  public void testClosestSrcIsWorkDirDynamically() {
     runPythonTest(
       new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>("/testRunner/env/createConfigurationTest/", SdkCreationType.EMPTY_SDK) {
         @NotNull
         @Override
-        protected PyTestTestProcessRunner createProcessRunner() throws Exception {
+        protected PyTestTestProcessRunner createProcessRunner() {
           return new PyTestTestProcessRunner(TEST_TARGET_PREFIX + "test_test.test_test", 0) {
             @Override
             protected void configurationCreatedAndWillLaunch(@NotNull PyTestConfiguration configuration) throws IOException {
@@ -275,13 +278,13 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
   }
 
   @Test
-  public void testConfigurationProducer() throws Exception {
+  public void testConfigurationProducer() {
     runPythonTest(
       new CreateConfigurationByFileTask<>(myFrameworkName, PyTestConfiguration.class));
   }
 
   @Test
-  public void testMultipleCases() throws Exception {
+  public void testMultipleCases() {
     runPythonTest(
       new CreateConfigurationMultipleCasesTask<>(myFrameworkName, PyTestConfiguration.class));
   }
@@ -290,13 +293,13 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
    * Checks tests are resolved when launched from subfolder
    */
   @Test
-  public void testTestsInSubFolderResolvable() throws Exception {
+  public void testTestsInSubFolderResolvable() {
     runPythonTest(
       new PyTestsInSubFolderRunner<PyTestTestProcessRunner>("test_metheggs", "test_funeggs",
                                                             "test_first") {
         @NotNull
         @Override
-        protected PyTestTestProcessRunner createProcessRunner() throws Exception {
+        protected PyTestTestProcessRunner createProcessRunner() {
           return new PyTestTestProcessRunner(toFullPath("tests"), 0) {
             @Override
             protected void configurationCreatedAndWillLaunch(@NotNull PyTestConfiguration configuration) throws IOException {
@@ -312,12 +315,12 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
    * Ensures test output works
    */
   @Test
-  public void testOutput() throws Exception {
+  public void testOutput() {
     runPythonTest(
       new PyTestsOutputRunner<PyTestTestProcessRunner>("test_metheggs", "test_funeggs", "test_first") {
         @NotNull
         @Override
-        protected PyTestTestProcessRunner createProcessRunner() throws Exception {
+        protected PyTestTestProcessRunner createProcessRunner() {
           return new PyTestTestProcessRunner(toFullPath("tests"), 0) {
             @Override
             protected void configurationCreatedAndWillLaunch(@NotNull PyTestConfiguration configuration) throws IOException {
@@ -330,7 +333,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
   }
 
   @Test(expected = RuntimeConfigurationWarning.class)
-  public void testValidation() throws Exception {
+  public void testValidation() {
 
     final CreateConfigurationTestTask.PyConfigurationCreationTask<PyTestConfiguration> task =
       new CreateConfigurationTestTask.PyConfigurationCreationTask<PyTestConfiguration>() {
@@ -345,14 +348,14 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
   }
 
   @Test
-  public void testConfigurationProducerOnDirectory() throws Exception {
+  public void testConfigurationProducerOnDirectory() {
     runPythonTest(
       new CreateConfigurationByFileTask.CreateConfigurationTestAndRenameFolderTask<>(myFrameworkName,
                                                                                      PyTestConfiguration.class));
   }
 
   @Test
-  public void testProduceConfigurationOnFile() throws Exception {
+  public void testProduceConfigurationOnFile() {
     runPythonTest(
       new CreateConfigurationByFileTask<PyTestConfiguration>(myFrameworkName,
                                                              PyTestConfiguration.class, "spam.py") {
@@ -365,7 +368,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
   }
 
   @Test
-  public void testRenameClass() throws Exception {
+  public void testRenameClass() {
     runPythonTest(
       new CreateConfigurationByFileTask.CreateConfigurationTestAndRenameClassTask<>(
         myFrameworkName,
@@ -376,11 +379,11 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
    * Ensure dots in test names do not break anything (PY-13833)
    */
   @Test
-  public void testEscape() throws Exception {
+  public void testEscape() {
     runPythonTest(new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>("/testRunner/env/pytest/", SdkCreationType.EMPTY_SDK) {
       @NotNull
       @Override
-      protected PyTestTestProcessRunner createProcessRunner() throws Exception {
+      protected PyTestTestProcessRunner createProcessRunner() {
         return new PyTestTestProcessRunner("test_escape_me.py", 0);
       }
 
@@ -403,7 +406,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
 
       @NotNull
       @Override
-      protected PyTestTestProcessRunner createProcessRunner() throws Exception {
+      protected PyTestTestProcessRunner createProcessRunner() {
         return new PyTestTestProcessRunner(".", 0);
       }
 
@@ -422,11 +425,11 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
    * Ensure element dir is used as curdir even if not set explicitly
    */
   @Test
-  public void testCurrentDir() throws Exception {
+  public void testCurrentDir() {
     runPythonTest(new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>("/testRunner/env/pytest/", SdkCreationType.EMPTY_SDK) {
       @NotNull
       @Override
-      protected PyTestTestProcessRunner createProcessRunner() throws Exception {
+      protected PyTestTestProcessRunner createProcessRunner() {
         return new PyTestTestProcessRunner("", 0) {
           @Override
           protected void configurationCreatedAndWillLaunch(@NotNull final PyTestConfiguration configuration) throws IOException {
@@ -458,7 +461,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
     runPythonTest(new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>("/testRunner/env/pytest", SdkCreationType.EMPTY_SDK) {
       @NotNull
       @Override
-      protected PyTestTestProcessRunner createProcessRunner() throws Exception {
+      protected PyTestTestProcessRunner createProcessRunner() {
         return new PyTestTestProcessRunner("test1.py", 0);
       }
 
@@ -487,7 +490,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
     runPythonTest(new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>("/testRunner/env/pytest", SdkCreationType.EMPTY_SDK) {
       @NotNull
       @Override
-      protected PyTestTestProcessRunner createProcessRunner() throws Exception {
+      protected PyTestTestProcessRunner createProcessRunner() {
         if (getLevelForSdk().isPy3K()) {
           return new PyTestTestProcessRunner("folder_no_init_py/test_test.py", 2);
         }
@@ -525,7 +528,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
     runPythonTest(new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>("/testRunner/env/pytest", SdkCreationType.EMPTY_SDK) {
       @NotNull
       @Override
-      protected PyTestTestProcessRunner createProcessRunner() throws Exception {
+      protected PyTestTestProcessRunner createProcessRunner() {
         return new PyTestTestProcessRunner("test2.py", 1);
       }
 
@@ -572,7 +575,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
     runPythonTest(new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>("/testRunner/env/unit", SdkCreationType.EMPTY_SDK) {
       @NotNull
       @Override
-      protected PyTestTestProcessRunner createProcessRunner() throws Exception {
+      protected PyTestTestProcessRunner createProcessRunner() {
         return new PyTestTestProcessRunner(fileName, 0);
       }
 

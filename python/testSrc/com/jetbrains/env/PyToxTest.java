@@ -119,7 +119,7 @@ public final class PyToxTest extends PyEnvTestCase {
    * Checks empty envs for all but 2.7
    */
   @Test
-  public void textToxOneInterpreter() throws Exception {
+  public void textToxOneInterpreter() {
     runPythonTest(new MyPyProcessWithConsoleTestTask("/toxtest/toxOneInterpreter/", 0,
                                                      () -> new MyTestProcessRunner(),
                                                      Arrays.asList(
@@ -137,7 +137,7 @@ public final class PyToxTest extends PyEnvTestCase {
    * Ensures test is not launched 2 times because folder added 2 times
    */
   @Test
-  public void testDoubleRun() throws Exception {
+  public void testDoubleRun() {
     runPythonTest(new MyPyProcessWithConsoleTestTask("/toxtest/toxDoubleRun/", 1,
                                                      () -> new MyTestProcessRunner(),
                                                      Collections.singletonList(
@@ -169,7 +169,7 @@ public final class PyToxTest extends PyEnvTestCase {
    * Ensures rerun works for tox
    */
   @Test
-  public void testEnvRerun() throws Exception {
+  public void testEnvRerun() {
     runPythonTest(new MyPyProcessWithConsoleTestTask("/toxtest/toxConcreteEnv/", 0,
                                                      () -> new MyTestProcessRunner(1),
                                                      Arrays.asList(
@@ -187,13 +187,13 @@ public final class PyToxTest extends PyEnvTestCase {
    * Provide certain env and check it is launched
    */
   @Test
-  public void testConcreteEnv() throws Exception {
+  public void testConcreteEnv() {
     final String[] envsToRun = {"py27", "py34"};
     runPythonTest(
       new PyProcessWithConsoleTestTask<PyAbstractTestProcessRunner<PyToxConfiguration>>("/toxtest/toxSuccess/", SdkCreationType.EMPTY_SDK) {
         @NotNull
         @Override
-        protected PyAbstractTestProcessRunner<PyToxConfiguration> createProcessRunner() throws Exception {
+        protected PyAbstractTestProcessRunner<PyToxConfiguration> createProcessRunner() {
           return new PyAbstractTestProcessRunner<PyToxConfiguration>(PyToxConfigurationFactory.INSTANCE, PyToxConfiguration.class, 0) {
             @Override
             protected void configurationCreatedAndWillLaunch(@NotNull final PyToxConfiguration configuration) throws IOException {
@@ -376,7 +376,7 @@ public final class PyToxTest extends PyEnvTestCase {
 
     @NotNull
     @Override
-    protected MyTestProcessRunner createProcessRunner() throws Exception {
+    protected MyTestProcessRunner createProcessRunner() {
       return myRunnerSupplier.get();
     }
   }

@@ -24,7 +24,6 @@ import com.intellij.openapi.editor.impl.AbstractEditorTest;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.testFramework.TestFileType;
 
-import java.io.IOException;
 import java.util.Arrays;
 
 /**
@@ -33,7 +32,7 @@ import java.util.Arrays;
  */
 public class FoldingProcessingOnDocumentModificationTest extends AbstractEditorTest {
   
-  public void testUnexpectedClassLevelJavadocExpandingOnClassSignatureChange() throws IOException {
+  public void testUnexpectedClassLevelJavadocExpandingOnClassSignatureChange() {
     // Inspired by IDEA-61275
 
     String text =
@@ -60,7 +59,7 @@ public class FoldingProcessingOnDocumentModificationTest extends AbstractEditorT
     assertFalse(foldRegion.isExpanded());
   }
   
-  public void testCollapseAllHappensBeforeFirstCodeFoldingPass() throws Exception {
+  public void testCollapseAllHappensBeforeFirstCodeFoldingPass() {
     init("class Foo {\n" +
          "    void m() {\n" +
          "        System.out.println();\n" +
@@ -74,7 +73,7 @@ public class FoldingProcessingOnDocumentModificationTest extends AbstractEditorT
     assertEquals(1, myEditor.getFoldingModel().getAllFoldRegions().length);
   }
   
-  public void testSurvivingBrokenPsi() throws Exception {
+  public void testSurvivingBrokenPsi() {
     openJavaEditor("class Foo {\n" +
                    "    void m() {\n" +
                    "\n" +
@@ -98,7 +97,7 @@ public class FoldingProcessingOnDocumentModificationTest extends AbstractEditorT
     checkFoldingState("[FoldRegion +(25:33), placeholder='{}']");
   }
   
-  public void testInvalidRegionIsRemovedOnExpanding() throws Exception {
+  public void testInvalidRegionIsRemovedOnExpanding() {
     openJavaEditor("class Foo {\n" +
                    "    void m() {\n" +
                    "\n" +
@@ -120,7 +119,7 @@ public class FoldingProcessingOnDocumentModificationTest extends AbstractEditorT
     checkFoldingState("[FoldRegion -(0:37), placeholder='/.../']");
   }
   
-  public void testEditingNearRegionExpandsIt() throws Exception {
+  public void testEditingNearRegionExpandsIt() {
     openJavaEditor("class Foo {\n" +
                    "    void m() <caret>{\n" +
                    "\n" +
@@ -131,7 +130,7 @@ public class FoldingProcessingOnDocumentModificationTest extends AbstractEditorT
     checkFoldingState("[]");
   }
   
-  private void openJavaEditor(String text) throws Exception {
+  private void openJavaEditor(String text) {
     init(text, TestFileType.JAVA);
     buildInitialFoldRegions();
     runFoldingPass(true);

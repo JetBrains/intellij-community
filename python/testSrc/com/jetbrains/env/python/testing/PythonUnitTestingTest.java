@@ -53,7 +53,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
   }
 
   @Test
-  public void testSetupPyRunner() throws Exception {
+  public void testSetupPyRunner() {
     // We need to make sure setup.py is called using different runner
     runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/failFast", "setup.py") {
 
@@ -68,7 +68,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
   }
 
   @Test
-  public void testRenameClass() throws Exception {
+  public void testRenameClass() {
     runPythonTest(
       new CreateConfigurationByFileTask.CreateConfigurationTestAndRenameClassTask<>(
         PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME,
@@ -76,7 +76,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
   }
 
   @Test(expected = RuntimeConfigurationWarning.class)
-  public void testValidation() throws Exception {
+  public void testValidation() {
 
     final CreateConfigurationTestTask.PyConfigurationCreationTask<PyUnitTestConfiguration> task =
       new CreateConfigurationTestTask.PyConfigurationCreationTask<PyUnitTestConfiguration>() {
@@ -98,13 +98,13 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
    * tests failfast as example of argument
    */
   @Test
-  public void testFailFast() throws Exception {
+  public void testFailFast() {
 
     runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/failFast", "test_test.py") {
 
       @NotNull
       @Override
-      protected PyUnitTestProcessRunner createProcessRunner() throws Exception {
+      protected PyUnitTestProcessRunner createProcessRunner() {
         return new PyUnitTestProcessRunner(toFullPath(getMyScriptName()), 1) {
           @Override
           protected void configurationCreatedAndWillLaunch(@NotNull final PyUnitTestConfiguration configuration) throws IOException {
@@ -134,7 +134,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
    * check non-ascii (127+) chars are supported in skip messaged
    */
   @Test
-  public void testNonAsciiMessage() throws Exception {
+  public void testNonAsciiMessage() {
 
     runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/nonAscii", "test_test.py") {
 
@@ -161,12 +161,12 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
   // Ensure failed and error subtests work
   @Test
   @EnvTestTagsRequired(tags = "python3")
-  public void testSubTestError() throws Exception {
+  public void testSubTestError() {
     runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/subtestError", "test_test.py") {
 
       @NotNull
       @Override
-      protected PyUnitTestProcessRunner createProcessRunner() throws Exception {
+      protected PyUnitTestProcessRunner createProcessRunner() {
         return new PyUnitTestProcessRunner(toFullPath(getMyScriptName()), 1);
       }
 
@@ -191,7 +191,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
    */
   @EnvTestTagsRequired(tags = "python3")
   @Test
-  public void testDotsInSubtest() throws Exception {
+  public void testDotsInSubtest() {
     runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/subtestDots", "test_test.py") {
 
       @NotNull
@@ -226,12 +226,12 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
 
   @EnvTestTagsRequired(tags = "unittest2")
   @Test
-  public void testUnitTest2() throws Exception {
+  public void testUnitTest2() {
     runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/unittest2", "test_test.py") {
 
       @NotNull
       @Override
-      protected PyUnitTestProcessRunner createProcessRunner() throws Exception {
+      protected PyUnitTestProcessRunner createProcessRunner() {
         return new PyUnitTestProcessRunner(toFullPath(getMyScriptName()), 1);
       }
 
@@ -265,7 +265,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
    * Raising SkipTest on class setup should not lead to KeyError
    */
   @Test
-  public void testSkipInSetup() throws Exception {
+  public void testSkipInSetup() {
     runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/skipInSetup", "test_test.py") {
 
 
@@ -292,12 +292,12 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
    */
   @Test
   @EnvTestTagsRequired(tags = "python3")
-  public void testScriptWithHyphen() throws Exception {
+  public void testScriptWithHyphen() {
     runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/withHyphen", "test-foobar.py") {
 
       @NotNull
       @Override
-      protected PyUnitTestProcessRunner createProcessRunner() throws Exception {
+      protected PyUnitTestProcessRunner createProcessRunner() {
         return new PyUnitTestProcessRunner(toFullPath(getMyScriptName()), 1);
       }
 
@@ -325,12 +325,12 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
    * Make sure test rerun works when pattern is enabled (PY-23416)
    */
   @Test
-  public void testPatternRerun() throws Exception {
+  public void testPatternRerun() {
     runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/patternRerun", ".") {
 
       @NotNull
       @Override
-      protected PyUnitTestProcessRunner createProcessRunner() throws Exception {
+      protected PyUnitTestProcessRunner createProcessRunner() {
         // Full pass is required because it is folder
         return new PyUnitTestProcessRunner(toFullPath(getMyScriptName()), 2) {
           @Override
@@ -358,11 +358,11 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
   }
 
   @Test
-  public void testRerunSubfolder() throws Exception {
+  public void testRerunSubfolder() {
     runPythonTest(new RerunSubfolderTask<PyUnitTestProcessRunner>(1) {
       @NotNull
       @Override
-      protected PyUnitTestProcessRunner createProcessRunner() throws Exception {
+      protected PyUnitTestProcessRunner createProcessRunner() {
         return new PyUnitTestProcessRunner(".", 1) {
           @Override
           protected void configurationCreatedAndWillLaunch(@NotNull PyUnitTestConfiguration configuration) throws IOException {
@@ -379,12 +379,12 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
   @EnvTestTagsRequired(tags = "python3") // Rerun for this scenario does not work for unitttest and py2
   //https://github.com/JetBrains/teamcity-messages/issues/129
   @Test
-  public void testPackageInsideFolder() throws Exception {
+  public void testPackageInsideFolder() {
     runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/package_in_folder", "tests") {
 
       @NotNull
       @Override
-      protected PyUnitTestProcessRunner createProcessRunner() throws Exception {
+      protected PyUnitTestProcessRunner createProcessRunner() {
         // Full pass is required because it is folder
         return new PyUnitTestProcessRunner(toFullPath(getMyScriptName()), 2) {
           @Override
@@ -412,7 +412,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
 
   @EnvTestTagsRequired(tags = "python3") // No subtest in py2
   @Test
-  public void testSubtest() throws Exception {
+  public void testSubtest() {
     runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/", "test_subtest.py", 1) {
       @Override
       protected void checkTestResults(@NotNull PyUnitTestProcessRunner runner,
@@ -441,7 +441,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
 
   @EnvTestTagsRequired(tags = "python3") // No subtest in py2
   @Test
-  public void testSubtestSkipped() throws Exception {
+  public void testSubtestSkipped() {
     runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/", "test_skipped_subtest.py", 1) {
       @Override
       protected void checkTestResults(@NotNull PyUnitTestProcessRunner runner,
@@ -456,7 +456,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
 
   // PY-24407
   @Test
-  public void testWorkingDirectoryDependsOnRelativeImport() throws Exception {
+  public void testWorkingDirectoryDependsOnRelativeImport() {
     runPythonTest(new CreateConfigurationTestTask<PyUnitTestConfiguration>(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME,
                                                                            PyUnitTestConfiguration.class) {
       @NotNull
@@ -500,12 +500,12 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
    * Checks tests are resolved when launched from subfolder
    */
   @Test
-  public void testTestsInSubFolderResolvable() throws Exception {
+  public void testTestsInSubFolderResolvable() {
     runPythonTest(
       new PyTestsInSubFolderRunner<PyUnitTestProcessRunner>("test_metheggs", "test_first") {
         @NotNull
         @Override
-        protected PyUnitTestProcessRunner createProcessRunner() throws Exception {
+        protected PyUnitTestProcessRunner createProcessRunner() {
           return new PyUnitTestProcessRunner(toFullPath("tests"), 0) {
             @Override
             protected void configurationCreatedAndWillLaunch(@NotNull PyUnitTestConfiguration configuration) throws IOException {
@@ -521,12 +521,12 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
    * Ensures test output works
    */
   @Test
-  public void testOutput() throws Exception {
+  public void testOutput() {
     runPythonTest(
       new PyTestsOutputRunner<PyUnitTestProcessRunner>("test_metheggs", "test_first") {
         @NotNull
         @Override
-        protected PyUnitTestProcessRunner createProcessRunner() throws Exception {
+        protected PyUnitTestProcessRunner createProcessRunner() {
           return new PyUnitTestProcessRunner(toFullPath("tests"), 0) {
             @Override
             protected void configurationCreatedAndWillLaunch(@NotNull PyUnitTestConfiguration configuration) throws IOException {
@@ -543,7 +543,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
    * Checks <a href="https://docs.python.org/2/library/unittest.html#load-tests-protocol">Load test protocol</a>
    */
   @Test
-  public void testLoadProtocol() throws Exception {
+  public void testLoadProtocol() {
     runPythonTest(new PyUnitTestProcessWithConsoleTestTask("/testRunner/env/unit", "test_load_protocol.py") {
       @Override
       public boolean isLanguageLevelSupported(@NotNull final LanguageLevel level) {
@@ -617,7 +617,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
 
 
   @Test
-  public void testConfigurationProducerOnDirectory() throws Exception {
+  public void testConfigurationProducerOnDirectory() {
     runPythonTest(
       new CreateConfigurationByFileTask.CreateConfigurationTestAndRenameFolderTask<>(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME,
                                                                                      PyUnitTestConfiguration.class));
@@ -625,7 +625,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
 
 
   @Test
-  public void testConfigurationProducer() throws Exception {
+  public void testConfigurationProducer() {
     runPythonTest(new CreateConfigurationByFileTask<>(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME, PyUnitTestConfiguration.class));
   }
 
@@ -633,7 +633,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
    * Ensures newly created configuration inherits working dir from default if set
    */
   @Test
-  public void testConfigurationProducerObeysDefaultDir() throws Exception {
+  public void testConfigurationProducerObeysDefaultDir() {
     runPythonTest(
       new CreateConfigurationByFileTask<PyUnitTestConfiguration>(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME,
                                                                  PyUnitTestConfiguration.class) {
@@ -660,7 +660,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
   }
 
   @Test
-  public void testMultipleCases() throws Exception {
+  public void testMultipleCases() {
     runPythonTest(
       new CreateConfigurationMultipleCasesTask<PyUnitTestConfiguration>(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME,
                                                                         PyUnitTestConfiguration.class) {

@@ -39,7 +39,7 @@ public class SvnTestDirtyScopeStateTest extends Svn16TestCase {
   }
 
   @Test
-  public void testWhatIsDirty() throws Exception {
+  public void testWhatIsDirty() {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
 
     final VcsDirtyScopeManagerImpl vcsDirtyScopeManager = (VcsDirtyScopeManagerImpl) VcsDirtyScopeManager.getInstance(myProject);
@@ -84,7 +84,7 @@ public class SvnTestDirtyScopeStateTest extends Svn16TestCase {
   }
 
   @Test
-  public void testOkToAddScopeUnderWriteAction() throws Exception {
+  public void testOkToAddScopeUnderWriteAction() {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
 
     final VcsDirtyScopeManagerImpl vcsDirtyScopeManager = (VcsDirtyScopeManagerImpl) VcsDirtyScopeManager.getInstance(myProject);
@@ -101,7 +101,7 @@ public class SvnTestDirtyScopeStateTest extends Svn16TestCase {
 
     new WriteCommandAction.Simple(myProject) {
       @Override
-      protected void run() throws Throwable {
+      protected void run() {
         vcsDirtyScopeManager.fileDirty(file);
         vcsDirtyScopeManager.fileDirty(fileB);
       }

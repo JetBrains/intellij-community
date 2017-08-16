@@ -172,7 +172,7 @@ public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
     checkHighlighting();
   }
 
-  public void testAddingStructureReadingProblemsToParentTag() throws Exception {
+  public void testAddingStructureReadingProblemsToParentTag() {
     myFixture.saveText(myProjectPom,
                      "<project>" +
                      "  <modelVersion>4.0.0</modelVersion>" +

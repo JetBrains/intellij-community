@@ -37,7 +37,7 @@ public class MavenProjectIndicesManagerTest extends MavenIndicesTestCase {
     }
   }
 
-  public void testAutomaticallyAddAndUpdateLocalRepository() throws Exception {
+  public void testAutomaticallyAddAndUpdateLocalRepository() {
     List<MavenIndex> indices = myIndicesFixture.getProjectIndicesManager().getIndices();
 
     assertEquals(1, indices.size());

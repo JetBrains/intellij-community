@@ -51,14 +51,14 @@ public class GeneralIdBasedToSMTRunnerEventsConvertorTest extends BaseSMTRunnerT
     assertTrue(myRootProxy.isLeaf());
   }
 
-  public void testOnTestStarted() throws InterruptedException {
+  public void testOnTestStarted() {
     onTestStarted("my test", null, "1", TreeNodeEvent.ROOT_NODE_ID, true);
     SMTestProxy proxy = validateTest("1", "my test", null, true, myRootProxy);
     onTestFailed("1", "", 1);
     validateTestFailure("1", proxy, 1);
   }
 
-  public void testRunningSuite() throws Exception {
+  public void testRunningSuite() {
     onSuiteStarted("Code", null, "1", TreeNodeEvent.ROOT_NODE_ID);
     SMTestProxy suiteProxy = validateSuite("1", "Code", null, myRootProxy);
     onTestStarted("should work", null, "2", "1", true);
@@ -74,7 +74,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertorTest extends BaseSMTRunnerT
     assertFalse(bugsSuiteProxy.isInProgress());
   }
 
-  public void testRunningSuiteWithMetainfo() throws Exception {
+  public void testRunningSuiteWithMetainfo() {
     onSuiteStarted("Code", "any:info:string:that:can:help?navigation", "1", TreeNodeEvent.ROOT_NODE_ID);
     SMTestProxy suiteProxy = validateSuite("1", "Code", "any:info:string:that:can:help?navigation", myRootProxy);
     onTestStarted("should work", "but is not a part of primary key", "2", "1", true);

@@ -25,7 +25,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.EditorTestUtil;
 
 public class EditorMultiCaretStateRestoreTest extends HeavyFileEditorManagerTestCase {
-  public void testRestoreState() throws Exception {
+  public void testRestoreState() {
     String text = "some<caret> text<caret>\n" +
                   "some <selection><caret>other</selection> <selection>text<caret></selection>\n" +
                   "<selection>ano<caret>ther</selection> line";

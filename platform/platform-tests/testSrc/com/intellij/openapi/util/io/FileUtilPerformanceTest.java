@@ -27,7 +27,7 @@ public class FileUtilPerformanceTest {
   private String mySimpleTestPath = "file.txt";
 
   @Test
-  public void toCanonicalPath() throws Exception {
+  public void toCanonicalPath() {
     assertEquals(myCanonicalPath, FileUtil.toCanonicalPath(myTestPath));
 
     PlatformTestUtil.startPerformanceTest("toCanonicalPath", 650, () -> {
@@ -39,7 +39,7 @@ public class FileUtilPerformanceTest {
   }
 
   @Test
-  public void toCanonicalPathSimple() throws Exception {
+  public void toCanonicalPathSimple() {
     assertEquals(mySimpleTestPath, FileUtil.toCanonicalPath(mySimpleTestPath));
 
     PlatformTestUtil.startPerformanceTest("toCanonicalPathSimple", 210, () -> {
@@ -51,7 +51,7 @@ public class FileUtilPerformanceTest {
   }
 
   @Test
-  public void isAncestor() throws Exception {
+  public void isAncestor() {
     assertTrue(FileUtil.isAncestor(myTestPath, myCanonicalPath, false));
 
     PlatformTestUtil.startPerformanceTest("isAncestor", 3000, () -> {

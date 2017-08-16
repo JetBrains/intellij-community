@@ -52,7 +52,7 @@ public class PyOverrideTest extends PyTestCase {
   /**
    * Ensures loops in class hierarchy does not lead to SO
    */
-  public final void testCircle() throws Exception {
+  public final void testCircle() {
     doTest();
   }
 

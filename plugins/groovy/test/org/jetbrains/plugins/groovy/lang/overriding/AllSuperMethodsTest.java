@@ -9,14 +9,14 @@ public class AllSuperMethodsTest extends OverridingTester {
     return super.getBasePath() + "allSuperMethods";
   }
 
-  public void testExtendsAndImplements() throws Throwable { doTest(); }
-  public void testExtendsClass() throws Throwable { doTest(); }
-  public void testImplementsImplements() throws Throwable { doTest(); }
-  public void testImplementsInterface() throws Throwable { doTest(); }
-  public void testManyOverrMethods2() throws Throwable { doTest(); }
-  public void testManySuperMethods() throws Throwable { doTest(); }
-  public void testMethodWithoutParameters() throws Throwable { doTest(); }
-  public void testMethodWithParameters() throws Throwable { doTest(); }
+  public void testExtendsAndImplements() { doTest(); }
+  public void testExtendsClass() { doTest(); }
+  public void testImplementsImplements() { doTest(); }
+  public void testImplementsInterface() { doTest(); }
+  public void testManyOverrMethods2() { doTest(); }
+  public void testManySuperMethods() { doTest(); }
+  public void testMethodWithoutParameters() { doTest(); }
+  public void testMethodWithParameters() { doTest(); }
 
   @Override
   PsiMethod[] findMethod(PsiMethod method) {

@@ -32,75 +32,75 @@ import org.jetbrains.annotations.NotNull;
  */
 public class JavaFXHighlightingTest extends AbstractJavaFXTestCase {
 
-  public void testLoginForm() throws Exception {
+  public void testLoginForm() {
     doTest();
   }
 
-  public void testUnresolvedTopLevelController() throws Exception {
+  public void testUnresolvedTopLevelController() {
     doTest();
   }
 
-  public void testController() throws Exception {
+  public void testController() {
     doTest();
   }
 
-  public void testCoercedTypes() throws Exception {
+  public void testCoercedTypes() {
     doTest();
   }
 
-  public void testRootTagCoercedUnchecked() throws Exception {
+  public void testRootTagCoercedUnchecked() {
     doTest();
   }
 
-  public void testStaticProperties() throws Exception {
+  public void testStaticProperties() {
     doTest();
   }
 
-  public void testStaticPropertiesCustomLayout() throws Exception {
+  public void testStaticPropertiesCustomLayout() {
     myFixture.addClass("import javafx.scene.layout.GridPane;\n" +
                        "public class MyGridPane extends GridPane {}\n");
     myFixture.testHighlighting(false, false, false, getTestName(true) + ".fxml");
   }
 
-  public void testEnumValues() throws Exception {
+  public void testEnumValues() {
     doTest();
   }
 
-  public void testDefaultTagProperties() throws Exception {
+  public void testDefaultTagProperties() {
     doTest();
   }
 
-  public void testDefaultTagInList() throws Exception {
+  public void testDefaultTagInList() {
     doTest();
   }
 
-  public void testUnresolvedImport() throws Exception {
+  public void testUnresolvedImport() {
     doTest();
   }
 
-  public void testImageIcon() throws Exception {
+  public void testImageIcon() {
     myFixture.copyFileToProject("appIcon.png");
     myFixture.configureByFiles(getTestName(true) + ".fxml");
     myFixture.testHighlighting(false, false, false, getTestName(true) + ".fxml");
   }
 
-  public void testControllerIdRef() throws Exception {
+  public void testControllerIdRef() {
     doTestIdController();
   }
 
-  public void testEventHandlers() throws Exception {
+  public void testEventHandlers() {
     myFixture.testHighlighting(false, false, false, getTestName(true) + ".fxml");
   }
 
-  public void testPackageLocalController() throws Exception {
+  public void testPackageLocalController() {
     doTest(getTestName(false) + ".java");
   }
 
-  public void testNoParamsHandler() throws Exception {
+  public void testNoParamsHandler() {
     doTest(getTestName(false) + ".java");
   }
 
-  private void doTestIdController() throws Exception {
+  private void doTestIdController() {
     final String controllerClassName = getTestName(false) + "Controller";
     myFixture.configureByFiles(getTestName(true) + ".fxml", controllerClassName + ".java");
     final PsiClass controllerClass = myFixture.findClass(controllerClassName);
@@ -112,27 +112,27 @@ public class JavaFXHighlightingTest extends AbstractJavaFXTestCase {
     assertEquals(controllerClass.getFields()[0], reference.resolve());
   }
 
-  public void testConstantNavigation() throws Exception {
+  public void testConstantNavigation() {
     doTestNavigation("java.lang.Double", "NEGATIVE_INFINITY");
   }
 
-  public void testEnumNavigation() throws Exception {
+  public void testEnumNavigation() {
     doTestNavigation("javafx.geometry.Pos", "CENTER");
   }
 
-  public void testCustomComponentFields() throws Exception {
+  public void testCustomComponentFields() {
     doTestNavigation("CustomVBox", "tf", "custom/" + getTestName(true) + ".fxml", "custom/CustomVBox.java");
   }
 
-  public void testCustomComponentFieldsWithSameProperties() throws Exception {
+  public void testCustomComponentFieldsWithSameProperties() {
     doTest("custom/" + getTestName(true) + ".fxml", "custom/" + getTestName(false) + ".java");
   }
 
-  public void testCustomComponent_Fields() throws Exception {
+  public void testCustomComponent_Fields() {
     doTest("custom/" + getTestName(true) + ".fxml", "custom/_CustomVBox.java");
   }
 
-  public void testInjectedController() throws Exception {
+  public void testInjectedController() {
     myFixture.copyFileToProject("injected/MyController.java");
     myFixture.copyFileToProject("injected/FooVBox.java");
 
@@ -147,19 +147,19 @@ public class JavaFXHighlightingTest extends AbstractJavaFXTestCase {
     }
   }
 
-  public void testControllerInExpression() throws Exception{
+  public void testControllerInExpression() {
     doTest(getTestName(true) + ".fxml", getTestName(false) + ".java", getTestName(false) + "Wrapper.java");
   }
 
-  public void testNamedColor() throws Exception {
+  public void testNamedColor() {
     doTestNavigation(JavaFxCommonNames.JAVAFX_SCENE_COLOR, "ORANGE");
   }
 
-  private void doTestNavigation(String resultClassName, String resultFieldName) throws Exception {
+  private void doTestNavigation(String resultClassName, String resultFieldName) {
     doTestNavigation(resultClassName, resultFieldName, ArrayUtil.EMPTY_STRING_ARRAY);
   }
 
-  private void doTestNavigation(String resultClassName, String resultFieldName, String... additionalPaths) throws Exception {
+  private void doTestNavigation(String resultClassName, String resultFieldName, String... additionalPaths) {
     if (additionalPaths.length == 0) {
       myFixture.configureByFiles(getTestName(true) + ".fxml");
     } else {
@@ -175,7 +175,7 @@ public class JavaFXHighlightingTest extends AbstractJavaFXTestCase {
     assertEquals(resultField, reference.resolve());
   }
 
-  public void testNavigationFromMainToFxml() throws Exception {
+  public void testNavigationFromMainToFxml() {
     myFixture.configureByFiles(getTestName(false) + ".java", getTestName(true) + ".fxml");
     final int offset = myFixture.getCaretOffset();
     final PsiReference reference = myFixture.getFile().findReferenceAt(offset);
@@ -187,63 +187,63 @@ public class JavaFXHighlightingTest extends AbstractJavaFXTestCase {
     assertEquals(getTestName(true) + ".fxml", containingFile.getName());
   }
 
-  public void testSourceAttrRecognition() throws Exception {
+  public void testSourceAttrRecognition() {
     doTest();
   }
 
-  public void testReferenceAttributes() throws Exception {
+  public void testReferenceAttributes() {
     doTest();
   }
 
-  public void testVariables() throws Exception {
+  public void testVariables() {
     doTest();
   }
 
-  public void testDefineAttributes() throws Exception {
+  public void testDefineAttributes() {
     doTest();
   }
 
-  public void testDefinedElements() throws Exception {
+  public void testDefinedElements() {
     doTest();
   }
 
-  public void testPropertyElementsWithAnyAttributes() throws Exception {
+  public void testPropertyElementsWithAnyAttributes() {
     doTest();
   }
 
-  public void testHandlerWithoutController() throws Exception {
+  public void testHandlerWithoutController() {
     doTest();
   }
 
-  public void testHandlerWithoutPageLanguage() throws Exception {
+  public void testHandlerWithoutPageLanguage() {
     doTest();
   }
 
-  public void testIdOutOfHierarchy() throws Exception {
+  public void testIdOutOfHierarchy() {
     doTest("btn.fxml", "MyController.java");
   }
 
-  public void testIncludeBtn() throws Exception {
+  public void testIncludeBtn() {
     doTest("btn.fxml");
   }
 
-  public void testWrongBindingType() throws Exception {
+  public void testWrongBindingType() {
     doTest(getTestName(false) + ".java");
   }
 
-  public void testAllowIncludeTagInsideDefine() throws Exception {
+  public void testAllowIncludeTagInsideDefine() {
     doTest("btn.fxml");
   }
 
-  public void testValueOfAcceptance() throws Exception {
+  public void testValueOfAcceptance() {
     doTest();
   }
 
-  public void testInstantiationAcceptance() throws Exception {
+  public void testInstantiationAcceptance() {
     doTest();
   }
 
-  public void testInstantiationAcceptanceWithNameArg() throws Exception {
+  public void testInstantiationAcceptanceWithNameArg() {
     myFixture.addClass("package p;\n" +
                        "public class Root extends javafx.scene.layout.GridPane{\n" +
                        "  public Root(@javafx.beans.NamedArg(\"axis\") javafx.scene.Node node ) {\n" +
@@ -255,47 +255,47 @@ public class JavaFXHighlightingTest extends AbstractJavaFXTestCase {
     doTest(getTestName(true) + ".fxml");
   }
 
-  public void testFqnTagNames() throws Exception {
+  public void testFqnTagNames() {
     doTest();
   }
 
-  public void testRootTag() throws Exception {
+  public void testRootTag() {
     doTest();
   }
 
-  public void testUnresolvedRootTag() throws Exception {
+  public void testUnresolvedRootTag() {
     doTest();
   }
 
-  public void testRootTagWithoutType() throws Exception {
+  public void testRootTagWithoutType() {
     doTest();
   }
 
-  public void testRootTagWithImport() throws Exception {
+  public void testRootTagWithImport() {
     doTest();
   }
 
-  public void testReadOnly() throws Exception {
+  public void testReadOnly() {
     doTest();
   }
 
-  public void testReadOnly1() throws Exception {
+  public void testReadOnly1() {
     doTest();
   }
 
-  public void testScriptSource() throws Exception {
+  public void testScriptSource() {
     doTest("s1.js");
   }
 
-  public void testPropertyNameExpression() throws Exception {
+  public void testPropertyNameExpression() {
     doTest();
   }
 
-  public void testPropertyChainExpression() throws Exception {
+  public void testPropertyChainExpression() {
     doTest();
   }
 
-  public void testIncorrectPropertyExpressionSyntax() throws Exception {
+  public void testIncorrectPropertyExpressionSyntax() {
     doTest();
   }
 
@@ -309,135 +309,135 @@ public class JavaFXHighlightingTest extends AbstractJavaFXTestCase {
     myFixture.testHighlighting(false, false, false, paths[0]);
   }
 
-  public void testExpressionBinding() throws Exception {
+  public void testExpressionBinding() {
     doTest();
   }
 
-  public void testPropertyWithoutField() throws Exception {
+  public void testPropertyWithoutField() {
     doTest();
   }
 
-  public void testRootTagProperties() throws Exception {
+  public void testRootTagProperties() {
     doTest();
   }
 
-  public void testBooleanPropertyWithoutField() throws Exception {
+  public void testBooleanPropertyWithoutField() {
     doTest();
   }
 
-  public void testShortNamesInRootType() throws Exception {
+  public void testShortNamesInRootType() {
     doTest();
   }
 
-  public void testLineChartInstantiation() throws Exception {
+  public void testLineChartInstantiation() {
     doTest();
   }
 
-  public void testUnexpectedNode() throws Exception {
+  public void testUnexpectedNode() {
     doTest();
   }
 
-  public void testDefaultPropertyField() throws Exception {
+  public void testDefaultPropertyField() {
     doTest();
   }
 
-  public void testPrimitiveSubtags() throws Exception {
+  public void testPrimitiveSubtags() {
     doTest();
   }
 
-  public void testReferencePosition() throws Exception {
+  public void testReferencePosition() {
     doTest();
   }
 
-  public void testAcceptReferenceInsideDefine() throws Exception {
+  public void testAcceptReferenceInsideDefine() {
     doTest();
   }
 
-  public void testRootTagOnDifferentLevels() throws Exception {
+  public void testRootTagOnDifferentLevels() {
     doTest();
   }
 
-  public void testAbsenceOfDefineAttributes() throws Exception {
+  public void testAbsenceOfDefineAttributes() {
     doTest();
   }
 
-  public void testCopyReference() throws Exception {
+  public void testCopyReference() {
     doTest();
   }
 
-  public void testConstantValue() throws Exception {
+  public void testConstantValue() {
     doTest();
   }
 
-  public void testEnumConstantValue() throws Exception {
+  public void testEnumConstantValue() {
     doTest();
   }
 
-  public void testNestedClassConstants() throws Exception {
+  public void testNestedClassConstants() {
     doTest("model/" + getTestName(false) + "Model.java");
   }
 
-  public void testBoxedConstantValue() throws Exception {
+  public void testBoxedConstantValue() {
     doTest();
   }
 
-  public void testLiteralValue() throws Exception {
+  public void testLiteralValue() {
     doTest();
   }
 
-  public void testNullObjectValue() throws Exception {
+  public void testNullObjectValue() {
     doTest();
   }
 
-  public void testNullPrimitiveValue() throws Exception {
+  public void testNullPrimitiveValue() {
     doTest();
   }
 
-  public void testFactoryMethod() throws Exception {
+  public void testFactoryMethod() {
     doTest();
   }
 
-  public void testPrivateControllerMethod() throws Exception {
+  public void testPrivateControllerMethod() {
     doTest(getTestName(false) + ".java");
   }
 
-  public void testPropertyTagCompatibleClass() throws Exception {
+  public void testPropertyTagCompatibleClass() {
     doTest();
   }
 
-  public void testPropertyTagCompatiblePrimitive() throws Exception {
+  public void testPropertyTagCompatiblePrimitive() {
     doTest();
   }
 
-  public void testPropertyTagIncompatibleClass() throws Exception {
+  public void testPropertyTagIncompatibleClass() {
     doTest();
   }
 
-  public void testPropertyTagIncompatiblePrimitive() throws Exception {
+  public void testPropertyTagIncompatiblePrimitive() {
     doTest();
   }
 
-  public void testPropertyTagUnrelatedClass() throws Exception {
+  public void testPropertyTagUnrelatedClass() {
     doWarningsTest();
   }
 
-  public void testPropertyTagUnrelatedPrimitive() throws Exception {
+  public void testPropertyTagUnrelatedPrimitive() {
     doWarningsTest();
   }
 
-  public void testCharsetInInclude() throws Exception {
+  public void testCharsetInInclude() {
     myFixture.addFileToProject("sample.fxml", "<?import javafx.scene.layout.GridPane?>\n" +
                                                  "<fx:root type=\"javafx.scene.layout.GridPane\" xmlns:fx=\"http://javafx.com/fxml\"/>\n");
     doWarningsTest();
   }
 
-  public void testIncludedForm() throws Exception {
+  public void testIncludedForm() {
     myFixture.addFileToProject("sample.fxml", "<?import javafx.scene.layout.GridPane?>\n" +
                                               "<fx:root type=\"javafx.scene.layout.GridPane\" xmlns:fx=\"http://javafx.com/fxml\"/>\n");
     doWarningsTest();
   }
   
-  public void testInjectedControllerFields() throws Exception {
+  public void testInjectedControllerFields() {
     myFixture.addFileToProject("sample.fxml", "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
                                               "<?import javafx.scene.control.*?>\n" +
                                               "<?import javafx.scene.layout.*?>\n" +
@@ -447,32 +447,32 @@ public class JavaFXHighlightingTest extends AbstractJavaFXTestCase {
     myFixture.testHighlighting(true, false, false, getTestName(false) + ".java");
   }
 
-  public void testAbsoluteRemoteUrl() throws Exception {
+  public void testAbsoluteRemoteUrl() {
     doTest();
   }
 
-  public void testMultipleStylesheetsAttribute() throws Exception {
+  public void testMultipleStylesheetsAttribute() {
     myFixture.addFileToProject("mystyle.css", ".myStyle {}");
     myFixture.addFileToProject("very/deeply/located/small.css", ".small {}");
     doTest();
   }
 
-  public void testMultipleStylesheetsTag() throws Exception {
+  public void testMultipleStylesheetsTag() {
     myFixture.addFileToProject("mystyle.css", ".myStyle {}");
     myFixture.addFileToProject("very/deeply/located/small.css", ".small {}");
     doTest();
   }
 
-  public void testPrivateEventHandler() throws Exception {
+  public void testPrivateEventHandler() {
     myFixture.configureByFiles(getTestName(true) + ".fxml", getTestName(false) + ".java");
     myFixture.testHighlighting(true, true, true, getTestName(false) + ".java");
   }
 
-  public void testFxIdInSuperclass() throws Exception {
+  public void testFxIdInSuperclass() {
     doTestControllerSuperclass();
   }
 
-  public void testEventHandlerInSuperclass() throws Exception {
+  public void testEventHandlerInSuperclass() {
     doTestControllerSuperclass();
   }
 
@@ -490,13 +490,13 @@ public class JavaFXHighlightingTest extends AbstractJavaFXTestCase {
     myFixture.testHighlighting(true, true, true, superclass + ".java");
   }
 
-  public void testResourceKeyInAttribute() throws Exception {
+  public void testResourceKeyInAttribute() {
     myFixture.addFileToProject("messages.properties", "string.key=My text\n" +
                                                       "double.key=123.456\n");
     doTest();
   }
 
-  public void testFxIdUsedInSameNode() throws Exception {
+  public void testFxIdUsedInSameNode() {
     myFixture.configureByFiles(getTestName(true) + ".fxml", getTestName(false) + ".java");
     doTest();
   }

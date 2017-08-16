@@ -131,7 +131,7 @@ public class FileTypesTest extends PlatformTestCase {
     assertFalse(pattern.matcher("x/a\\b").matches());
   }
 
-  public void testAddNewExtension() throws Exception {
+  public void testAddNewExtension() {
     FileTypeAssocTable<FileType> associations = new FileTypeAssocTable<>();
     associations.addAssociation(FileTypeManager.parseFromString("*.java"), FileTypes.ARCHIVE);
     associations.addAssociation(FileTypeManager.parseFromString("*.xyz"), StdFileTypes.XML);
@@ -349,7 +349,7 @@ public class FileTypesTest extends PlatformTestCase {
     log("T: ensureRedetected: clear");
   }
 
-  public void testReassignedPredefinedFileType() throws Exception {
+  public void testReassignedPredefinedFileType() {
     final FileType perlFileType = myFileTypeManager.getFileTypeByFileName("foo.pl");
     assertEquals("Perl", perlFileType.getName());
     assertEquals(PlainTextFileType.INSTANCE, myFileTypeManager.getFileTypeByFileName("foo.cgi"));
@@ -414,7 +414,7 @@ public class FileTypesTest extends PlatformTestCase {
     assertEquals(typeFromPlugin, mappings.values().iterator().next().first);
   }
 
-  public void testPreserveUninstalledPluginAssociations() throws Exception {
+  public void testPreserveUninstalledPluginAssociations() {
     final FileType typeFromPlugin = new FileType() {
       @NotNull
       @Override
@@ -528,7 +528,7 @@ public class FileTypesTest extends PlatformTestCase {
     }
   }
 
-  public void testDefaultFileType() throws Exception {
+  public void testDefaultFileType() {
     final String extension = "veryRareExtension";
     final FileType idl = myFileTypeManager.findFileTypeByName("IDL");
     ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.associatePattern(idl, "*." + extension));
@@ -602,7 +602,7 @@ public class FileTypesTest extends PlatformTestCase {
     }
   }
 
-  public void _testStressPlainTextFileWithEverIncreasingLength() throws IOException, InterruptedException {
+  public void _testStressPlainTextFileWithEverIncreasingLength() throws IOException {
     FrequentEventDetector.disableUntil(getTestRootDisposable());
 
     File f = createTempFile("xx.lkjlkjlkjlj", "a");
@@ -664,7 +664,7 @@ public class FileTypesTest extends PlatformTestCase {
     if (exception.get() != null) throw new RuntimeException(exception.get());
   }
 
-  public void _testStressPlainTextFileWithEverIncreasingLength2() throws IOException, InterruptedException {
+  public void _testStressPlainTextFileWithEverIncreasingLength2() throws IOException {
     FrequentEventDetector.disableUntil(getTestRootDisposable());
 
     File f = createTempFile("xx.asdkjfhlkasjdhf", StringUtil.repeatSymbol(' ', (int)PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD - 100));

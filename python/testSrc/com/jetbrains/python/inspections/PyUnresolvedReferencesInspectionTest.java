@@ -469,7 +469,7 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
   }
 
   // PY-14359, PY-14158
-  public void testInspectionSettingsSerializable() throws Exception {
+  public void testInspectionSettingsSerializable() {
     final PyUnresolvedReferencesInspection inspection = new PyUnresolvedReferencesInspection();
     inspection.ignoredIdentifiers.add("foo.Bar.*");
     final Element serialized = new Element("tmp");

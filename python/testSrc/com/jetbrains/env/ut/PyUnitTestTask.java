@@ -135,7 +135,7 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
   }
 
   @Override
-  public void tearDown() throws Exception {
+  public void tearDown() {
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       try {
         if (mySetUp) {
@@ -195,7 +195,7 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
 
     new WriteAction() {
       @Override
-      protected void run(@NotNull Result result) throws Throwable {
+      protected void run(@NotNull Result result) {
         RunManager runManager = RunManager.getInstance(project);
         runManager.addConfiguration(settings, false);
         runManager.setSelectedConfiguration(settings);

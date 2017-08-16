@@ -18,66 +18,66 @@ public class JavaFxEventHandlerInspectionTest extends AbstractJavaFXTestCase {
   }
 
 
-  public void testHighlightExact() throws Exception {
+  public void testHighlightExact() {
     doHighlightingTest();
   }
 
-  public void testHighlightNonVoid() throws Exception {
+  public void testHighlightNonVoid() {
     final JavaFxEventHandlerInspection inspection = new JavaFxEventHandlerInspection();
     inspection.myDetectNonVoidReturnType = true;
     myFixture.enableInspections(inspection);
     doHighlightingTest();
   }
 
-  public void testHighlightAmbiguous() throws Exception {
+  public void testHighlightAmbiguous() {
     doHighlightingTest();
   }
 
-  public void testHighlightGeneric() throws Exception {
+  public void testHighlightGeneric() {
     doHighlightingTest();
   }
 
-  public void testHighlightRaw() throws Exception {
+  public void testHighlightRaw() {
     doHighlightingTest();
   }
 
-  public void testHighlightHalfRaw() throws Exception {
+  public void testHighlightHalfRaw() {
     doHighlightingTest();
   }
 
-  public void testHighlightSpecific() throws Exception {
+  public void testHighlightSpecific() {
     doHighlightingTest();
   }
 
-  public void testHighlightSuper() throws Exception {
+  public void testHighlightSuper() {
     doHighlightingTest();
   }
 
-  public void testHighlightWildcard() throws Exception {
+  public void testHighlightWildcard() {
     doHighlightingTest();
   }
 
-  public void testQuickfixRaw() throws Exception {
+  public void testQuickfixRaw() {
     doQuickfixTest("Create method 'void onSort(SortEvent)'");
   }
 
-  public void testQuickfixHalfRaw() throws Exception {
+  public void testQuickfixHalfRaw() {
     doQuickfixTest("Create method 'void onSort(SortEvent)'");
   }
 
-  public void testQuickfixSpecific() throws Exception {
+  public void testQuickfixSpecific() {
     doQuickfixTest("Create method 'void onSort(SortEvent)'");
   }
 
-  public void testQuickfixNoField() throws Exception {
+  public void testQuickfixNoField() {
     doQuickfixTest("Create method 'void onSort(SortEvent)'");
   }
 
-  public void testQuickfixFieldType()throws Exception {
+  public void testQuickfixFieldType() {
     doQuickfixTest("Change field 'table' type to 'javafx.scene.control.TableView<java.util.Map<java.lang.String,java.lang.Double>>'");
   }
 
-  public void testQuickfixNoFieldNested() throws Exception {
+  public void testQuickfixNoFieldNested() {
     final JavaCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCustomSettings(JavaCodeStyleSettings.class);
     final boolean oldImports = settings.INSERT_INNER_CLASS_IMPORTS;
     try {
@@ -89,16 +89,16 @@ public class JavaFxEventHandlerInspectionTest extends AbstractJavaFXTestCase {
     }
   }
 
-  public void testQuickfixSuper() throws Exception {
+  public void testQuickfixSuper() {
     doQuickfixTest("Create method 'void click(MouseEvent)'");
   }
 
-  private void doHighlightingTest() throws Exception {
+  private void doHighlightingTest() {
     myFixture.configureByFiles(getTestName(true) + ".fxml", getTestName(false) + ".java");
     myFixture.checkHighlighting();
   }
 
-  private void doQuickfixTest(final String actionName) throws Exception {
+  private void doQuickfixTest(final String actionName) {
     String path = getTestName(true) + ".fxml";
     final IntentionAction intention = myFixture.getAvailableIntention(actionName, path, getTestName(false) + ".java");
     assertNotNull(intention);

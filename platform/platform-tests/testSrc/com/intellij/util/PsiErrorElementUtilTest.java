@@ -30,12 +30,12 @@ public class PsiErrorElementUtilTest extends LightPlatformCodeInsightFixtureTest
     return PlatformTestUtil.getPlatformTestDataPath();
   }
 
-  public void testNoErrors() throws Exception {
+  public void testNoErrors() {
     PsiFile file = myFixture.configureByText(StdFileTypes.XML, "<hello></hello>");
     Assert.assertFalse(PsiErrorElementUtil.hasErrors(getProject(), file.getVirtualFile()));
   }
 
-  public void testErrors() throws Exception {
+  public void testErrors() {
     PsiFile file = myFixture.configureByText(StdFileTypes.XML, "<hello></hello");
     Assert.assertTrue(PsiErrorElementUtil.hasErrors(getProject(), file.getVirtualFile()));
   }

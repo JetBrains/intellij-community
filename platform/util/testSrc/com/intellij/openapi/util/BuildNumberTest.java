@@ -33,7 +33,7 @@ public class BuildNumberTest {
   }
 
   @Test
-  public void branchBasedBuild() throws Exception {
+  public void branchBasedBuild() {
     assertParsed(BuildNumber.fromString("145"), 145, 0, "145.0");
     assertParsed(BuildNumber.fromString("145.1"), 145, 1, "145.1");
     assertParsed(BuildNumber.fromString("145.1.2"), 145, 1, "145.1.2");
@@ -54,7 +54,7 @@ public class BuildNumberTest {
   }
 
   @Test
-  public void comparingVersion() throws Exception {
+  public void comparingVersion() {
     assertTrue(BuildNumber.fromString("145.1").compareTo(BuildNumber.fromString("145.*")) < 0);
     assertTrue(BuildNumber.fromString("145.1.1").compareTo(BuildNumber.fromString("145.*")) < 0);
     assertTrue(BuildNumber.fromString("145.1.1.1.1").compareTo(BuildNumber.fromString("145.*")) < 0);
@@ -80,7 +80,7 @@ public class BuildNumberTest {
   }
 
   @Test
-  public void devSnapshotVersion() throws Exception {
+  public void devSnapshotVersion() {
     BuildNumber b = BuildNumber.fromString("__BUILD_NUMBER__");
     assertTrue(b.asString(), b.getBaselineVersion() >= 145 && b.getBaselineVersion() <= 3000);
     assertTrue(b.isSnapshot());
@@ -129,7 +129,7 @@ public class BuildNumberTest {
   }
 
   @Test
-  public void currentVersion() throws Exception {
+  public void currentVersion() {
     BuildNumber current = BuildNumber.currentVersion();
     assertTrue(current.isSnapshot());
 

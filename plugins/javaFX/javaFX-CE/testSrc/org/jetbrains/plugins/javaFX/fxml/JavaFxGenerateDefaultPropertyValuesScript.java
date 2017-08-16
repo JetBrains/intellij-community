@@ -51,7 +51,7 @@ public class JavaFxGenerateDefaultPropertyValuesScript extends Application {
   }
 
   @Override
-  public void start(Stage primaryStage) throws Exception {
+  public void start(Stage primaryStage) {
     Button b = new Button();
     b.setText("Generate");
     b.setOnAction(event -> generate());

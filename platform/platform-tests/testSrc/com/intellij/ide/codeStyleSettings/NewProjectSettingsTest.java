@@ -51,7 +51,7 @@ public class NewProjectSettingsTest extends CodeStyleTestCase {
   }
 
   @Override
-  protected void setupProject() throws Exception {
+  protected void setupProject() {
     Runnable setupRunnable = ourSetupMap.get(getTestName(true));
     if (setupRunnable != null) setupRunnable.run();
   }
@@ -66,7 +66,7 @@ public class NewProjectSettingsTest extends CodeStyleTestCase {
     manager.setMainProjectCodeStyle(null);
   }
 
-  public void testNonDefaultSettings() throws Exception {
+  public void testNonDefaultSettings() {
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
     CodeStyleSettings appSettings = CodeStyleSettingsManager.getInstance().getMainProjectCodeStyle();
     assertNotNull(appSettings);

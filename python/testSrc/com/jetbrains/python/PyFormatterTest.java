@@ -661,7 +661,7 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
-  public void testDoNotDestroyAlignment_OnPostponedFormatting() throws Exception {
+  public void testDoNotDestroyAlignment_OnPostponedFormatting() {
     getPythonCodeStyleSettings().DICT_ALIGNMENT = PyCodeStyleSettings.DICT_ALIGNMENT_ON_COLON;
     doTest();
   }

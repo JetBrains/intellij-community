@@ -38,7 +38,7 @@ public class DescriptionTypeRelatedItemLineMarkerProviderTest extends JavaCodeIn
   }
 
   @Override
-  protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
+  protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
     String pathForClass = PathUtil.getJarPathForClass(LocalInspectionEP.class);
     moduleBuilder.addLibrary("lang-api", pathForClass);
     String platformApiJar = PathUtil.getJarPathForClass(JBList.class);

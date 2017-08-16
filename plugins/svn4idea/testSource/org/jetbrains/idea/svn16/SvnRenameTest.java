@@ -365,7 +365,7 @@ public class SvnRenameTest extends Svn16TestCase {
     verifySorted(runSvn("status"), "? a.txt", "? unversioned");
   }
 
-  private VirtualFile moveToNewPackage(final VirtualFile file, final String packageName) throws Exception {
+  private VirtualFile moveToNewPackage(final VirtualFile file, final String packageName) {
     final VirtualFile[] dir = new VirtualFile[1];
     new WriteCommandAction.Simple(myProject) {
       @Override

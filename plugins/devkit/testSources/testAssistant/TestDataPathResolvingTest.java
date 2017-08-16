@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 @TestDataPath("$CONTENT_ROOT/testData/resolveTestDataPath/")
 public class TestDataPathResolvingTest extends TestDataPathTestCase {
-  public void testProjectRootReference() throws Exception {
+  public void testProjectRootReference() {
     doTest(PsiManager.getInstance(myFixture.getProject()).findDirectory(myFixture.getProject().getBaseDir()));
   }
 

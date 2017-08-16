@@ -518,7 +518,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     e.execute(new EmptyProgressIndicator());
   }
 
-  protected void removeFromLocalRepository(String relativePath) throws IOException {
+  protected void removeFromLocalRepository(String relativePath) {
     FileUtil.delete(new File(getRepositoryPath(), relativePath));
   }
 

@@ -27,7 +27,7 @@ import org.testng.annotations.Test;
 public class TestNGSuiteTest extends LightCodeInsightFixtureTestCase {
   @BeforeMethod
   @Override
-  protected void setUp() throws Exception {
+  protected void setUp() {
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       try {
         TestNGSuiteTest.super.setUp();
@@ -40,7 +40,7 @@ public class TestNGSuiteTest extends LightCodeInsightFixtureTestCase {
 
   @AfterMethod
   @Override
-  protected void tearDown() throws Exception {
+  protected void tearDown() {
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       try {
         TestNGSuiteTest.super.tearDown();
@@ -53,7 +53,7 @@ public class TestNGSuiteTest extends LightCodeInsightFixtureTestCase {
 
   public void testNothing(){}
 
-  public void testTestNGSuiteFile() throws Throwable {
+  public void testTestNGSuiteFile() {
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       try {
         myFixture.addClass("package org.testng.annotations; public @interface DataProvider {}");

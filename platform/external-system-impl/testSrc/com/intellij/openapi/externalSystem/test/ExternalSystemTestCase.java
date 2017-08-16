@@ -120,7 +120,7 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
     CompilerTestUtil.enableExternalCompiler();
   }
 
-  protected void collectAllowedRoots(List<String> roots) throws IOException {
+  protected void collectAllowedRoots(List<String> roots) {
   }
 
   public static Collection<String> collectRootsInside(String root) {
@@ -253,7 +253,7 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
   }
 
   @Override
-  protected void invokeTestRunnable(@NotNull Runnable runnable) throws Exception {
+  protected void invokeTestRunnable(@NotNull Runnable runnable) {
     runnable.run();
   }
 
@@ -288,11 +288,11 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
     return FileUtil.toSystemIndependentName(root.getPath() + "/" + relPath);
   }
 
-  protected Module createModule(String name) throws IOException {
+  protected Module createModule(String name) {
     return createModule(name, StdModuleTypes.JAVA);
   }
 
-  protected Module createModule(final String name, final ModuleType type) throws IOException {
+  protected Module createModule(final String name, final ModuleType type) {
     return new WriteCommandAction<Module>(myProject) {
       @Override
       protected void run(@NotNull Result<Module> moduleResult) throws Throwable {
@@ -304,11 +304,11 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
     }.execute().getResultObject();
   }
 
-  protected VirtualFile createProjectConfig(@NonNls String config) throws IOException {
+  protected VirtualFile createProjectConfig(@NonNls String config) {
     return myProjectConfig = createConfigFile(myProjectRoot, config);
   }
 
-  protected VirtualFile createConfigFile(final VirtualFile dir, String config) throws IOException {
+  protected VirtualFile createConfigFile(final VirtualFile dir, String config) {
     final String configFileName = getExternalSystemConfigFileName();
     VirtualFile f = dir.findChild(configFileName);
     if (f == null) {
@@ -502,7 +502,7 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
     fs.assertFileEqual(file);
   }
 
-  private static void setFileContent(final VirtualFile file, final String content, final boolean advanceStamps) throws IOException {
+  private static void setFileContent(final VirtualFile file, final String content, final boolean advanceStamps) {
     new WriteAction<VirtualFile>() {
       @Override
       protected void run(@NotNull Result<VirtualFile> result) throws Throwable {

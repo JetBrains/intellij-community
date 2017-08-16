@@ -106,14 +106,14 @@ public class VcsLogRefresherTest extends VcsPlatformTest {
     myDataWaiter.get();
   }
 
-  public void test_first_refresh_reports_full_history() throws InterruptedException, ExecutionException, TimeoutException {
+  public void test_first_refresh_reports_full_history() throws InterruptedException {
     myLoader.readFirstBlock();
 
     DataPack result = myDataWaiter.get();
     assertDataPack(log(myCommits), result.getPermanentGraph().getAllCommits());
   }
 
-  public void test_first_refresh_waits_for_full_log() throws InterruptedException, ExecutionException, TimeoutException {
+  public void test_first_refresh_waits_for_full_log() throws InterruptedException {
     myLogProvider.blockFullLog();
     myLoader.readFirstBlock();
     assertTimeout("Refresh waiter should have failed on the timeout");
@@ -194,7 +194,7 @@ public class VcsLogRefresherTest extends VcsPlatformTest {
     assertNoMoreResultsArrive();
   }
 
-  private void assertTimeout(@NotNull String message) throws InterruptedException, ExecutionException {
+  private void assertTimeout(@NotNull String message) throws InterruptedException {
     assertNull(message, myDataWaiter.myQueue.poll(500, TimeUnit.MILLISECONDS));
   }
 

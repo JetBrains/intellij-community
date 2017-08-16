@@ -144,7 +144,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     assertEquals("mockEditor", selectedEditors[0].getName());
   }
 
-  public void testTrackSelectedEditor() throws Exception {
+  public void testTrackSelectedEditor() {
     PlatformTestUtil
       .registerExtension(FileEditorProvider.EP_FILE_EDITOR_PROVIDER, new MyFileEditorProvider(), myFixture.getTestRootDisposable());
     VirtualFile file = getFile("/src/1.txt");
@@ -160,7 +160,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     assertEquals("mockEditor", myManager.getSelectedEditor(file).getName());
   }
 
-  public void testWindowClosingRetainsOtherWindows() throws Exception {
+  public void testWindowClosingRetainsOtherWindows() {
     VirtualFile file = getFile("/src/1.txt");
     assertNotNull(file);
     myManager.openFile(file, false);
@@ -174,7 +174,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     assertEquals(2, myManager.getWindows().length);
   }
 
-  public void testStoringCaretStateForFileWithFoldingsWithNoTabs() throws Exception {
+  public void testStoringCaretStateForFileWithFoldingsWithNoTabs() {
     UISettings.getInstance().setEditorTabPlacement(UISettings.TABS_NONE);
     VirtualFile file = getFile("/src/Test.java");
     assertNotNull(file);
@@ -207,7 +207,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     assertEquals(textLength, editor.getSelectionModel().getSelectionEnd());
   }
 
-  public void testOpenInDumbMode() throws Exception {
+  public void testOpenInDumbMode() {
     PlatformTestUtil
       .registerExtension(FileEditorProvider.EP_FILE_EDITOR_PROVIDER, new MyFileEditorProvider(), myFixture.getTestRootDisposable());
     PlatformTestUtil

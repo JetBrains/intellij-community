@@ -108,13 +108,13 @@ public class ForwardBackwardParagraphActionTest extends AbstractEditorTest {
                    "abc");
   }
 
-  private void doTestForward(String initialText, String resultText) throws Exception {
+  private void doTestForward(String initialText, String resultText) {
     initText(initialText);
     executeAction(IdeActions.ACTION_EDITOR_FORWARD_PARAGRAPH);
     checkResultByText(resultText);
   }
 
-  private void doTestBackward(String initialText, String resultText) throws Exception {
+  private void doTestBackward(String initialText, String resultText) {
     initText(initialText);
     executeAction(IdeActions.ACTION_EDITOR_BACKWARD_PARAGRAPH);
     checkResultByText(resultText);

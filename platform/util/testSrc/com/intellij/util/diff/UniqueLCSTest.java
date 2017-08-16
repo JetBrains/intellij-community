@@ -18,7 +18,7 @@ package com.intellij.util.diff;
 import junit.framework.TestCase;
 
 public class UniqueLCSTest extends TestCase {
-  public void testNoUnique() throws FilesTooBigForDiffException {
+  public void testNoUnique() {
     int[][] change = buildChange(new int[]{1, 2, 3}, new int[]{4, 5, 6});
     assertNull(change);
 
@@ -47,7 +47,7 @@ public class UniqueLCSTest extends TestCase {
     assertNull(change);
   }
 
-  public void testSingleUnique() throws FilesTooBigForDiffException {
+  public void testSingleUnique() {
     int[][] change = buildChange(new int[]{1}, new int[]{1});
     checkChange(change, new int[]{0}, new int[]{0});
 
@@ -67,28 +67,28 @@ public class UniqueLCSTest extends TestCase {
     checkChange(change, new int[]{1}, new int[]{1});
   }
 
-  public void testSingleSequence() throws FilesTooBigForDiffException {
+  public void testSingleSequence() {
     int[][] change = buildChange(new int[]{2, 4, 6, 1, 8, 3, 8, 2, 6, 5, 2, 4, 7, 11, 13}, new int[]{1, 10, 2, 3, 5, 7, 11, 13, 12});
     checkChange(change, new int[]{3, 5, 9, 12, 13, 14}, new int[]{0, 3, 4, 5, 6, 7});
   }
 
-  public void testLargestLCS1() throws FilesTooBigForDiffException {
+  public void testLargestLCS1() {
     checkMaxSequence(new int[]{1, 2, 3}, new int[]{1, 2, 3});
   }
 
-  public void testLargestLCS2() throws FilesTooBigForDiffException {
+  public void testLargestLCS2() {
     checkMaxSequence(new int[]{5, 6, 1, 2, 3}, new int[]{1, 2, 3});
   }
 
-  public void testLargestLCS3() throws FilesTooBigForDiffException {
+  public void testLargestLCS3() {
     checkMaxSequence(new int[]{0, 8, 4, 12, 2, 10, 6, 14, 1, 9, 5, 13, 3, 7, 15}, new int[]{0, 2, 6, 9, 13, 15});
   }
 
-  public void testLargestLCS4() throws FilesTooBigForDiffException {
+  public void testLargestLCS4() {
     checkMaxSequence(new int[]{1, 9, 3, 8, 11, 4, 5, 6, 19, 7}, new int[]{1, 3, 4, 5, 6, 7});
   }
 
-  private static int[][] buildChange(int[] first, int[] second) throws FilesTooBigForDiffException {
+  private static int[][] buildChange(int[] first, int[] second) {
     UniqueLCS uniqueLCS = new UniqueLCS(first, second);
     return uniqueLCS.execute();
   }
@@ -102,7 +102,7 @@ public class UniqueLCSTest extends TestCase {
     }
   }
 
-  private static void checkMaxSequence(int[] sequence, int[] expected) throws FilesTooBigForDiffException {
+  private static void checkMaxSequence(int[] sequence, int[] expected) {
     int max = 0;
     for (int i = 0; i < sequence.length; i++) {
       max = Math.max(sequence[i] + 1, max);

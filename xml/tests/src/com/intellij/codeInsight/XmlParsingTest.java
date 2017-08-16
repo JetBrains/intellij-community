@@ -41,7 +41,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.*;
 import com.intellij.testFramework.ParsingTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -258,7 +257,7 @@ public class XmlParsingTest extends ParsingTestCase {
 
     new WriteCommandAction(getProject(), file) {
       @Override
-      protected void run(@NotNull final Result result) throws Throwable {
+      protected void run(@NotNull final Result result) {
         PlatformTestUtil.startPerformanceTest("XML reparse using PsiBuilder", 2500, () -> {
           for (int i = 0; i < 10; i++) {
             final long tm = System.currentTimeMillis();
@@ -556,7 +555,7 @@ public class XmlParsingTest extends ParsingTestCase {
     doTestXml("<a><b><b/></c></a>");
   }
 
-  public void testDtdUrl1() throws Exception {
+  public void testDtdUrl1() {
     XmlFile file = (XmlFile)createFile("test.xml", "<!DOCTYPE greeting SYSTEM \"hello.dtd\">");
 
     XmlDocument document = file.getDocument();

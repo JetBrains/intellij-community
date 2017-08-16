@@ -29,7 +29,6 @@ import org.junit.platform.launcher.TestPlan;
 import org.opentest4j.AssertionFailedError;
 import org.opentest4j.MultipleFailuresError;
 
-import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.Arrays;
@@ -46,7 +45,7 @@ class JUnit5EventsTest {
     myBuf = new StringBuffer();
     myExecutionListener = new JUnit5TestExecutionListener(new PrintStream(new OutputStream() {
       @Override
-      public void write(int b) throws IOException {
+      public void write(int b) {
         myBuf.append(new String(new byte[]{(byte)b}));
       }
     })) {

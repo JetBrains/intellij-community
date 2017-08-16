@@ -30,11 +30,7 @@ import com.jetbrains.python.run.PythonConfigurationFactoryBase;
 import com.jetbrains.python.run.PythonRunConfiguration;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdkTools.SdkCreationType;
-import com.jetbrains.python.testing.AbstractPythonTestRunConfiguration;
-import com.jetbrains.python.testing.TestRunnerService;
-import com.jetbrains.python.testing.PyAbstractTestConfiguration;
-import com.jetbrains.python.testing.PyAbstractTestFactory;
-import com.jetbrains.python.testing.TestTargetType;
+import com.jetbrains.python.testing.*;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -168,7 +164,7 @@ public abstract class CreateConfigurationTestTask<T extends AbstractPythonTestRu
     }
 
     @Override
-    public void runTestOn(final String sdkHome) throws Exception {
+    public void runTestOn(final String sdkHome) {
       final T configuration =
         createFactory().createTemplateConfiguration(getProject());
       configuration.setModule(myFixture.getModule());

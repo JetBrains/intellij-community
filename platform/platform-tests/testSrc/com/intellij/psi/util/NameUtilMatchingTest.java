@@ -40,7 +40,7 @@ import java.util.List;
  */
 public class NameUtilMatchingTest extends UsefulTestCase {
 
-  public void testSimpleCases() throws Exception {
+  public void testSimpleCases() {
     assertMatches("N", "NameUtilTest");
     assertMatches("NU", "NameUtilTest");
     assertMatches("NUT", "NameUtilTest");
@@ -66,7 +66,7 @@ public class NameUtilMatchingTest extends UsefulTestCase {
     assertDoesntMatch("ABCD", "AbstractButton.DISABLED_ICON_CHANGED_PROPERTY");
   }
   
-  public void testSimpleCasesWithFirstLowercased() throws Exception {
+  public void testSimpleCasesWithFirstLowercased() {
     assertMatches("N", "nameUtilTest");
     assertDoesntMatch("N", "anameUtilTest");
     assertMatches("NU", "nameUtilTest");
@@ -80,7 +80,7 @@ public class NameUtilMatchingTest extends UsefulTestCase {
     assertMatches("NaUtTe", "nameUtilTest");
   }
   
-  public void testSpaceDelimiters() throws Exception {
+  public void testSpaceDelimiters() {
     assertMatches("Na Ut Te", "name util test");
     assertMatches("Na Ut Te", "name Util Test");
     assertDoesntMatch("Na Ut Ta", "name Util Test");
@@ -91,18 +91,18 @@ public class NameUtilMatchingTest extends UsefulTestCase {
     assertDoesntMatch("na ti", "name_util_test");
   }
   
-  public void testXMLCompletion() throws Exception {
+  public void testXMLCompletion() {
     assertDoesntMatch("N_T", "NameUtilTest");
     assertMatches("ORGS_ACC", "ORGS_POSITION_ACCOUNTABILITY");
     assertMatches("ORGS-ACC", "ORGS-POSITION_ACCOUNTABILITY");
     assertMatches("ORGS.ACC", "ORGS.POSITION_ACCOUNTABILITY");
   }
 
-  public void testStarFalsePositive() throws Exception {
+  public void testStarFalsePositive() {
     assertDoesntMatch("ar*l*p", "AbstractResponseHandler");
   }
 
-  public void testUnderscoreStyle() throws Exception {
+  public void testUnderscoreStyle() {
     assertMatches("N_U_T", "NAME_UTIL_TEST");
     assertMatches("NUT", "NAME_UTIL_TEST");
     assertDoesntMatch("NUT", "NameutilTest");
@@ -112,7 +112,7 @@ public class NameUtilMatchingTest extends UsefulTestCase {
     assertMatches("NOS", "NetOutputStream");
   }
 
-  public void testCommonFileNameConventions() throws Exception {
+  public void testCommonFileNameConventions() {
     // See IDEADEV-12310
 
     assertMatches("BLWN", "base_layout_without_navigation.xhtml");
@@ -159,7 +159,7 @@ public class NameUtilMatchingTest extends UsefulTestCase {
     assertDoesntMatch("A*.html", "10_after.html");
   }
 
-  public void testIDEADEV15503() throws Exception {
+  public void testIDEADEV15503() {
     assertMatches("AR.jsp", "add_relationship.jsp");
     assertMatches("AR.jsp", "advanced_rule.jsp");
     assertMatches("AR.jsp", "alarm_reduction.jsp");
@@ -208,23 +208,23 @@ public class NameUtilMatchingTest extends UsefulTestCase {
     assertMatches("combobox", "comboBox");
   }
   
-  public void testStartsWithDot() throws Exception {
+  public void testStartsWithDot() {
     assertMatches(".foo", ".foo");
   }
 
-  public void testProperDotEscaping() throws Exception {
+  public void testProperDotEscaping() {
     assertMatches("*inspection*.pro", "InspectionsBundle.properties");
     assertDoesntMatch("*inspection*.pro", "InspectionsInProgress.png");
   }
 
-  public void testLeadingUnderscore() throws Exception {
+  public void testLeadingUnderscore() {
     assertDoesntMatch("form", "_form.html.erb");
     assertMatches("_form", "_form.html.erb");
     assertMatches("_form", "__form");
     assertTrue(firstLetterMatcher("_form").matches("__form"));
   }
 
-  public void testLowerCaseWords() throws Exception {
+  public void testLowerCaseWords() {
     assertMatches("uct", "unit_controller_test");
     assertMatches("unictest", "unit_controller_test");
     assertMatches("uc", "unit_controller_test");
@@ -232,7 +232,7 @@ public class NameUtilMatchingTest extends UsefulTestCase {
     assertDoesntMatch("utc", "unit_controller_test");
   }
 
-  public void testObjectiveCCases() throws Exception {
+  public void testObjectiveCCases() {
     assertMatches("h*:", "h:aaa");
     assertMatches("h:", "h:aaa");
     assertMatches("text:sh", "textField:shouldChangeCharactersInRange:replacementString:");
@@ -358,11 +358,11 @@ public class NameUtilMatchingTest extends UsefulTestCase {
     return NameUtil.buildMatcher(pattern, NameUtil.MatchingCaseSensitivity.FIRST_LETTER);
   }
 
-  public void testSpaceInCompletionPrefix() throws Exception {
+  public void testSpaceInCompletionPrefix() {
     assertTrue(caseInsensitiveMatcher("create ").matches("create module"));
   }
 
-  public void testLong() throws Exception {
+  public void testLong() {
     assertMatches("Product.findByDateAndNameGreaterThanEqualsAndQualityGreaterThanEqual",
                   "Product.findByDateAndNameGreaterThanEqualsAndQualityGreaterThanEqualsIntellijIdeaRulezzz");
   }

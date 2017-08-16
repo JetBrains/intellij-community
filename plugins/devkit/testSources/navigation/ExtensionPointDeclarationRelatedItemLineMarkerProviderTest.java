@@ -35,7 +35,7 @@ public class ExtensionPointDeclarationRelatedItemLineMarkerProviderTest extends 
   }
 
   @Override
-  protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
+  protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
     String extensionsJar = PathUtil.getJarPathForClass(ExtensionPointName.class);
     moduleBuilder.addLibrary("extensions", extensionsJar);
     String platformApiJar = PathUtil.getJarPathForClass(JBList.class);

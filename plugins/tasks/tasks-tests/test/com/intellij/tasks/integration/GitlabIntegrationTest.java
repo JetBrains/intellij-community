@@ -22,7 +22,7 @@ public class GitlabIntegrationTest extends TaskManagerTestCase {
   private static final String SERVER_URL = "http://trackers-tests.labs.intellij.net:8045";
   private GitlabRepository myRepository;
 
-  public void testCommitMessageFormat() throws Exception {
+  public void testCommitMessageFormat() {
     String issueJson = "{\n" +
                        "    \"id\": 1,\n" +
                        "    \"iid\": 2,\n" +

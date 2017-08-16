@@ -56,7 +56,7 @@ public class CodeStyleSchemesModelTest extends CodeStyleTestCase {
     }
   }
 
-  public void testDefaults() throws Exception {
+  public void testDefaults() {
     CodeStyleScheme defaultScheme = myModel.getSelectedScheme();
     assertEquals(CodeStyleScheme.DEFAULT_SCHEME_NAME, defaultScheme.getName());
     assertEquals(new CodeStyleSettings(), defaultScheme.getCodeStyleSettings());
@@ -64,7 +64,7 @@ public class CodeStyleSchemesModelTest extends CodeStyleTestCase {
     assertFalse(myModel.isUsePerProjectSettings());
   }
 
-  public void testCopyToIde() throws Exception {
+  public void testCopyToIde() {
     CodeStyleScheme projectScheme = myModel.getProjectScheme();
     myModel.selectScheme(projectScheme, null);
     assertEquals(CodeStyleScheme.PROJECT_SCHEME_NAME, myModel.getSelectedScheme().getName());

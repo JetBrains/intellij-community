@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nls;
 
 public class CapitalizationTest extends TestCase {
 
-  public void testCapitalization() throws Exception {
+  public void testCapitalization() {
     assertTrue(TitleCapitalizationInspection.checkCapitalization("Fix SQL issues", Nls.Capitalization.Sentence));
     assertTrue(TitleCapitalizationInspection.checkCapitalization("Fix I18n issues", Nls.Capitalization.Sentence));
     assertTrue(TitleCapitalizationInspection.checkCapitalization("Fix C issues", Nls.Capitalization.Sentence));

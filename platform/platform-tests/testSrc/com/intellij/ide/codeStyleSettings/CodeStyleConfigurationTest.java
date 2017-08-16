@@ -32,7 +32,7 @@ public class CodeStyleConfigurationTest extends CodeStyleTestCase {
   /**
    * Check that indent options are correcly read if mixed with other language options
    */
-  public void testIndentOptionsRead() throws Exception {
+  public void testIndentOptionsRead() {
     org.jdom.Element rootElement = new Element("option");
 
     Element langCodeStyle = new Element("codeStyleSettings");

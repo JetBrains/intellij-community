@@ -24,8 +24,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
-
 /**
  * @author nik
  */
@@ -61,7 +59,7 @@ public class GeneratedSourceFileChangeTrackerTest extends CodeInsightFixtureTest
     assertTrue(isEditedGeneratedFile(file));
   }
 
-  public void testChangeGeneratedExternally() throws IOException {
+  public void testChangeGeneratedExternally() {
     PsiFile file = myFixture.configureByText("Gen.txt", "");
     myFixture.saveText(file.getVirtualFile(), "abc");
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();

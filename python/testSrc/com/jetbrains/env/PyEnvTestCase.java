@@ -136,7 +136,7 @@ public abstract class PyEnvTestCase {
   }
 
   @Before
-  public void setUp() throws Exception {
+  public void setUp() {
     if (myRequiredTags != null) { // Ensure all tags exist between available interpreters
       Assume.assumeThat(
         "Can't find some tags between all available interpreter, test (all methods) will be skipped",
@@ -159,7 +159,7 @@ public abstract class PyEnvTestCase {
     return allAvailableTags;
   }
 
-  protected void invokeTestRunnable(@NotNull final Runnable runnable) throws Exception {
+  protected void invokeTestRunnable(@NotNull final Runnable runnable) {
     if (runInWriteAction()) {
       UIUtil.invokeAndWaitIfNeeded((Runnable)() -> ApplicationManager.getApplication().runWriteAction(runnable));
     }
@@ -351,7 +351,7 @@ public abstract class PyEnvTestCase {
    * Always call parrent when overwrite
    */
   @After
-  public void tearDown() throws Exception {
+  public void tearDown() {
     // We can stop message capturing even if it was not started as cleanup process.
     stopMessageCapture();
   }

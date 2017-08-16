@@ -40,27 +40,27 @@ import java.util.Arrays;
 
 public class JavaFXRenameTest extends AbstractJavaFXRenameTest {
 
-  public void testCustomComponent() throws Exception {
+  public void testCustomComponent() {
     doTest(getTestName(false) + "1");
   }
 
-  public void testInRoot() throws Exception {
+  public void testInRoot() {
     doTest(getTestName(false) + "1");
   }
 
-  public void testControllerField() throws Exception {
+  public void testControllerField() {
     doTest("newFieldName");
   }
 
-  public void testControllerFieldWithRefs() throws Exception {
+  public void testControllerFieldWithRefs() {
     doTest("newFieldName");
   }
 
-  public void testHandler() throws Exception {
+  public void testHandler() {
     doTest("newHandlerName");
   }
 
-  public void testPrivateSuperHandler() throws Exception {
+  public void testPrivateSuperHandler() {
     final String newName = "newHandlerName";
     final String fxmlPath = getTestName(true) + ".fxml";
     final String fxmlPathAfter = getTestName(true) + "_after.fxml";
@@ -76,15 +76,15 @@ public class JavaFXRenameTest extends AbstractJavaFXRenameTest {
     assertMethodExists(psiClass, newName);
   }
 
-  public void testCustomComponentTag() throws Exception {
+  public void testCustomComponentTag() {
     doTest("Foo", true);
   }
 
-  public void testCustomComponentPropertyTag() throws Exception {
+  public void testCustomComponentPropertyTag() {
     doTest("Foo", true);
   }
 
-  public void testFromReference() throws Exception {
+  public void testFromReference() {
     final String newName = "lbl1";
     doTest(newName);
     final PsiClass controllerClass = myFixture.findClass(getTestName(false));
@@ -92,7 +92,7 @@ public class JavaFXRenameTest extends AbstractJavaFXRenameTest {
     assertFieldExists(controllerClass, newName);
   }
 
-  public void testIdWithRefs() throws Exception {
+  public void testIdWithRefs() {
     myFixture.configureByFiles(getTestName(true) + ".fxml");
     PsiElement element = TargetElementUtil
       .findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
@@ -101,15 +101,15 @@ public class JavaFXRenameTest extends AbstractJavaFXRenameTest {
     myFixture.checkResultByFile(getTestName(true) + "_after.fxml");
   }
 
-  public void testControllerBare() throws Exception {
+  public void testControllerBare() {
     doTestErrorHint("Foo", "Cannot rename built-in property");
   }
 
-  public void testControllerInExpr() throws Exception {
+  public void testControllerInExpr() {
     doTestErrorHint("Foo", "Cannot rename built-in property");
   }
 
-  private void doTestErrorHint(String newName, String message) throws Exception {
+  private void doTestErrorHint(String newName, String message) {
     try {
       doTest(newName, true);
       fail(message);
@@ -119,15 +119,15 @@ public class JavaFXRenameTest extends AbstractJavaFXRenameTest {
     }
   }
 
-  public void testPropertyRenameHandlerPresent() throws Exception {
+  public void testPropertyRenameHandlerPresent() {
     doTestPropertyRenameHandler(getTestName(true) + ".fxml", getTestName(false) + ".java");
   }
 
-  public void testPropertyRenameHandlerPresentForStatic() throws Exception {
+  public void testPropertyRenameHandlerPresentForStatic() {
     doTestPropertyRenameHandler(getTestName(true) + ".fxml", "container/MyCustomContainer.java");
   }
 
-  public void doTestPropertyRenameHandler(String... files) throws Exception {
+  public void doTestPropertyRenameHandler(String... files) {
     myFixture.configureByFiles(files);
     final MapDataContext dataContext = new MapDataContext();
     dataContext.put(CommonDataKeys.EDITOR, getEditor());
@@ -135,15 +135,15 @@ public class JavaFXRenameTest extends AbstractJavaFXRenameTest {
     assertTrue(renameHandler instanceof JavaFxPropertyRenameHandler);
   }
 
-  public void testStaticPropertyImportClass() throws Exception {
+  public void testStaticPropertyImportClass() {
     doTestStaticProperty("newPropName2", "container.MyCustomContainer");
   }
 
-  public void testStaticPropertyImportPackage() throws Exception {
+  public void testStaticPropertyImportPackage() {
     doTestStaticProperty("newPropName2", "container.MyCustomContainer");
   }
 
-  public void doTestStaticProperty(@NonNls String newName, String className) throws Exception {
+  public void doTestStaticProperty(@NonNls String newName, String className) {
     myFixture.configureByFiles(getTestName(true) + ".fxml", className.replace('.', '/') + ".java");
 
     final MapDataContext dataContext = new MapDataContext();
@@ -162,7 +162,7 @@ public class JavaFXRenameTest extends AbstractJavaFXRenameTest {
     assertMethodExists(psiClass, "set" + propName);
   }
 
-  public void testStaticPropertyMethod() throws Exception {
+  public void testStaticPropertyMethod() {
     final String className="container.MyCustomContainer";
     final String methodName = "setStaticProp";
     final String newName = "setNewMethodName";
@@ -181,21 +181,21 @@ public class JavaFXRenameTest extends AbstractJavaFXRenameTest {
     assertMethodExists(psiClass, newName);
   }
 
-  public void testStaticPropertyFromLibrary() throws Exception {
+  public void testStaticPropertyFromLibrary() {
     doTestErrorHint("Foo", RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.cannot.be.renamed")));
   }
 
-  public void testControllerMethod() throws Exception {
+  public void testControllerMethod() {
     final PsiClass psiClass = doTestHandler("newName", null);
     assertMethodExists(psiClass, "getNewName");
   }
 
-  public void testNestedControllerIdFromFxml() throws Exception {
+  public void testNestedControllerIdFromFxml() {
     doTestHandler("newName", getTestName(false) + "Internal");
     myFixture.checkResultByFile(getTestName(false) + ".java", getTestName(false) + "_after.java", false);
   }
 
-  public void testNestedControllerIdFromJava() throws Exception {
+  public void testNestedControllerIdFromJava() {
     myFixture.configureByFiles(getTestName(false) + ".java", getTestName(false) + "Internal.java", getTestName(true) + ".fxml");
     final PsiElement elementAtCaret = myFixture.getElementAtCaret();
     new RenameProcessor(getProject(), elementAtCaret, "newName", false, false).run();
@@ -211,11 +211,11 @@ public class JavaFXRenameTest extends AbstractJavaFXRenameTest {
     doTestProperty("newName", true);
   }
 
-  public void testModelIdProperty() throws Exception {
+  public void testModelIdProperty() {
     doTestProperty("newName", "model.Data", false);
   }
 
-  public void testModelFieldProperty() throws Exception {
+  public void testModelFieldProperty() {
     doTestProperty("newName", "model.Data", false);
   }
 
@@ -226,11 +226,11 @@ public class JavaFXRenameTest extends AbstractJavaFXRenameTest {
     myFixture.checkResultByFile(getTestName(true) + ".properties", getTestName(true) + "_after.properties", false);
   }
 
-  public void doTestProperty(String name, boolean isBoolean) throws Exception {
+  public void doTestProperty(String name, boolean isBoolean) {
     doTestProperty(name, null, isBoolean);
   }
 
-  public void doTestProperty(@NonNls String name, String className, boolean isBoolean) throws Exception {
+  public void doTestProperty(@NonNls String name, String className, boolean isBoolean) {
     final PsiClass psiClass = doTestHandler(name, className);
     final String propName = name.substring(0, 1).toUpperCase() + name.substring(1);
     assertMethodExists(psiClass, (isBoolean ? "is" : "get") + propName);
@@ -240,7 +240,7 @@ public class JavaFXRenameTest extends AbstractJavaFXRenameTest {
   }
 
   @NotNull
-  public PsiClass doTestHandler(String newName, String className) throws Exception {
+  public PsiClass doTestHandler(String newName, String className) {
     if (className == null) {
       className = getTestName(false);
       myFixture.configureByFiles(getTestName(true) + ".fxml", getTestName(false) + ".java");
@@ -271,11 +271,11 @@ public class JavaFXRenameTest extends AbstractJavaFXRenameTest {
     assertOrderedEquals(Arrays.stream(methods).map(PsiMethod::getName).toArray(), name);
   }
 
-  private void doTest(final String newName) throws Exception {
+  private void doTest(final String newName) {
     doTest(newName, false);
   }
 
-  private void doTest(final String newName, boolean inline) throws Exception {
+  private void doTest(final String newName, boolean inline) {
     myFixture.configureByFiles(getTestName(true) + ".fxml", getTestName(false) + ".java");
     PsiElement element = TargetElementUtil
       .findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);

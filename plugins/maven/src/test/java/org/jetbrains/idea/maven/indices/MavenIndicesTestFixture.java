@@ -68,7 +68,7 @@ public class MavenIndicesTestFixture {
     myRepositoryHelper.copy(relPath, myLocalRepoDir);
   }
 
-  public void tearDown() throws Exception {
+  public void tearDown() {
     getIndicesManager().doShutdownInTests();
     MavenServerManager.getInstance().shutdown(true);
   }

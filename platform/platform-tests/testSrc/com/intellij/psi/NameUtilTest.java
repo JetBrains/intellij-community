@@ -27,32 +27,32 @@ import static org.junit.Assert.assertEquals;
  */
 public class NameUtilTest {
   @Test
-  public void testSplitIntoWords1() throws Exception {
+  public void testSplitIntoWords1() {
     assertSplitEquals(new String[]{"I", "Base"}, "IBase");
   }
 
   @Test
-  public void testSplitIntoWords2() throws Exception {
+  public void testSplitIntoWords2() {
     assertSplitEquals(new String[]{"Order", "Index"}, "OrderIndex");
   }
 
   @Test
-  public void testSplitIntoWords3() throws Exception {
+  public void testSplitIntoWords3() {
     assertSplitEquals(new String[]{"order", "Index"}, "orderIndex");
   }
 
   @Test
-  public void testSplitIntoWords4() throws Exception {
+  public void testSplitIntoWords4() {
     assertSplitEquals(new String[]{"Order", "Index"}, "Order_Index");
   }
 
   @Test
-  public void testSplitIntoWords5() throws Exception {
+  public void testSplitIntoWords5() {
     assertSplitEquals(new String[]{"ORDER", "INDEX"}, "ORDER_INDEX");
   }
 
   @Test
-  public void testSplitIntoWords6() throws Exception {
+  public void testSplitIntoWords6() {
     assertSplitEquals(new String[]{"gg", "J"}, "ggJ");
   }
 

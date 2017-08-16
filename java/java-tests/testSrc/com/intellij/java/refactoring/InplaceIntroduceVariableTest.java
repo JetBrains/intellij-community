@@ -62,7 +62,7 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
      });
   }
 
-  public void testConflictingInnerClassName() throws Exception {
+  public void testConflictingInnerClassName() {
     final JavaCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCustomSettings(JavaCodeStyleSettings.class);
     final boolean oldOption = settings.INSERT_INNER_CLASS_IMPORTS;
     try {

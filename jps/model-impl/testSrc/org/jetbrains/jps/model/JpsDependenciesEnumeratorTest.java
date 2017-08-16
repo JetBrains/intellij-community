@@ -58,7 +58,7 @@ public class JpsDependenciesEnumeratorTest extends JpsJavaModelTestCase {
     return jdk;
   }
 
-  public void testLibrary() throws Exception {
+  public void testLibrary() {
     JpsModuleRootModificationUtil.addDependency(myModule, createJDomLibrary());
 
     assertClassRoots(dependencies(myModule), getRtJarJdk17(), getJDomJar());
@@ -109,7 +109,7 @@ public class JpsDependenciesEnumeratorTest extends JpsJavaModelTestCase {
     return library;
   }
 
-  public void testModuleSources() throws Exception {
+  public void testModuleSources() {
     final String srcRoot = addSourceRoot(myModule, false);
     final String testRoot = addSourceRoot(myModule, true);
     final String output = setModuleOutput(myModule, false);
@@ -124,7 +124,7 @@ public class JpsDependenciesEnumeratorTest extends JpsJavaModelTestCase {
     assertEnumeratorRoots(dependencies(myModule).withoutSdk().productionOnly().classes().withoutSelfModuleOutput());
   }
 
-  public void testLibraryScope() throws Exception {
+  public void testLibraryScope() {
     JpsLibraryDependency dependency = myModule.getDependenciesList().addLibraryDependency(createJDomLibrary());
     getJavaService().getOrCreateDependencyExtension(dependency).setScope(JpsJavaDependencyScope.RUNTIME);
     JpsModuleRootModificationUtil.addDependency(myModule, createJDomLibrary(), JpsJavaDependencyScope.RUNTIME, false);
@@ -134,7 +134,7 @@ public class JpsDependenciesEnumeratorTest extends JpsJavaModelTestCase {
     assertClassRoots(dependencies(myModule).withoutSdk().compileOnly());
   }
 
-  public void testModuleDependency() throws Exception {
+  public void testModuleDependency() {
     final JpsModule dep = addModule("dep");
     final String depSrcRoot = addSourceRoot(dep, false);
     final String depTestRoot = addSourceRoot(dep, true);
@@ -171,7 +171,7 @@ public class JpsDependenciesEnumeratorTest extends JpsJavaModelTestCase {
     assertEnumeratorRoots(dependencies(myModule).productionOnly().withoutModuleSourceEntries().withoutSdk().withoutDepModules().classes());
   }
 
-  public void testModuleJpsJavaDependencyScope() throws Exception {
+  public void testModuleJpsJavaDependencyScope() {
     final JpsModule dep = addModule("dep");
     JpsModuleRootModificationUtil.addDependency(dep, createJDomLibrary(), JpsJavaDependencyScope.COMPILE, true);
     JpsModuleRootModificationUtil.addDependency(myModule, dep, JpsJavaDependencyScope.TEST, true);
@@ -185,7 +185,7 @@ public class JpsDependenciesEnumeratorTest extends JpsJavaModelTestCase {
     assertClassRoots(dependencies(myProject).withoutSdk().productionOnly(), getJDomJar());
   }
 
-  public void testNotExportedLibrary() throws Exception {
+  public void testNotExportedLibrary() {
     final JpsModule dep = addModule("dep");
     JpsModuleRootModificationUtil.addDependency(dep, createJDomLibrary(), JpsJavaDependencyScope.COMPILE, false);
     JpsModuleRootModificationUtil.addDependency(myModule, createAsmLibrary(), JpsJavaDependencyScope.COMPILE, false);
@@ -209,7 +209,7 @@ public class JpsDependenciesEnumeratorTest extends JpsJavaModelTestCase {
     assertEnumeratorRoots(dependencies(myModule).annotations(), moduleUrl, libraryUrl);
   }
 
-  public void testJdkIsNotExported() throws Exception {
+  public void testJdkIsNotExported() {
     assertClassRoots(dependencies(myModule).exportedOnly());
   }
 
@@ -222,7 +222,7 @@ public class JpsDependenciesEnumeratorTest extends JpsJavaModelTestCase {
     assertClassRoots(dependencies(dep).recursively(), getRtJarJdk18());
   }
 
-  public void testProject() throws Exception {
+  public void testProject() {
     JpsModuleRootModificationUtil.addDependency(myModule, createJDomLibrary());
 
     final String srcRoot = addSourceRoot(myModule, false);
@@ -234,7 +234,7 @@ public class JpsDependenciesEnumeratorTest extends JpsJavaModelTestCase {
     assertSourceRoots(dependencies(myProject).withoutSdk(), srcRoot, testRoot, getJDomSources());
   }
 
-  public void testModules() throws Exception {
+  public void testModules() {
     JpsModuleRootModificationUtil.addDependency(myModule, createJDomLibrary());
 
     final String srcRoot = addSourceRoot(myModule, false);

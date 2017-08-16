@@ -42,7 +42,7 @@ public class ModelBuildScriptClasspathBuilderImplTest extends AbstractModelBuild
 
   @Test
   @TargetVersions("2.0+")
-  public void testModelBuildScriptClasspathBuilder() throws Exception {
+  public void testModelBuildScriptClasspathBuilder() {
 
     DomainObjectSet<? extends IdeaModule> ideaModules = allModels.getIdeaProject().getModules();
 

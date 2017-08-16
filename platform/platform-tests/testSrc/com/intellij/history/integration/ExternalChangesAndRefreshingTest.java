@@ -144,7 +144,7 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
     assertEquals("content", content[0]);
   }
 
-  public void testDeletionOfFilteredDirectoryExternallyDoesNotThrowExceptionDuringRefresh() throws Exception {
+  public void testDeletionOfFilteredDirectoryExternallyDoesNotThrowExceptionDuringRefresh() {
     int before = getRevisionsFor(myRoot).size();
 
     createChildDirectory(myRoot, FILTERED_DIR_NAME);

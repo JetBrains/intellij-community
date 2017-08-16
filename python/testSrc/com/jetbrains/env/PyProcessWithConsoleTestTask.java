@@ -29,7 +29,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
@@ -98,7 +97,7 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
     Disposer.dispose(runner);
   }
 
-  private void executeRunner(final String sdkHome, final T runner) throws InterruptedException, InvocationTargetException {
+  private void executeRunner(final String sdkHome, final T runner) throws InterruptedException {
     // Semaphore to wait end of process
     final Semaphore processStartedSemaphore = new Semaphore(1);
     processStartedSemaphore.acquire();

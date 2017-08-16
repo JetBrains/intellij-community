@@ -52,21 +52,21 @@ public class EditorLastActionTrackerTest extends LightPlatformCodeInsightFixture
     super.tearDown();
   }
 
-  public void testLastActionIsAvailable() throws Exception {
+  public void testLastActionIsAvailable() {
     assertEquals(SAMPLE_ACTION, myTracker.getLastActionId());
   }
 
-  public void testMouseClickClearsLastAction() throws Exception {
+  public void testMouseClickClearsLastAction() {
     new EditorMouseFixture((EditorImpl)myFixture.getEditor()).clickAt(0, 1);
     assertNull(myTracker.getLastActionId());
   }
 
-  public void testTypingClearsLastAction() throws Exception {
+  public void testTypingClearsLastAction() {
     myFixture.type('A');
     assertNull(myTracker.getLastActionId());
   }
 
-  public void testTwoEditors() throws Exception {
+  public void testTwoEditors() {
     myFixture.configureByText(getTestName(true) + "-other.txt", "doesn't matter as well");
     myFixture.performEditorAction(SAMPLE_ACTION);
   }

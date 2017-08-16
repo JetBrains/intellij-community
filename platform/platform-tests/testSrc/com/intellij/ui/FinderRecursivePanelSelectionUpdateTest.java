@@ -29,7 +29,7 @@ import java.util.List;
 @SkipInHeadlessEnvironment
 public class FinderRecursivePanelSelectionUpdateTest extends LightPlatformTestCase {
 
-  public void testUpdate() throws InterruptedException {
+  public void testUpdate() {
     StringFinderRecursivePanel panel_0 = new StringFinderRecursivePanel(getProject());
     disposeOnTearDown(panel_0);
 

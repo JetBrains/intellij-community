@@ -15,8 +15,11 @@
  */
 package org.intellij.lang.xpath.xslt;
 
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.formatter.xml.XmlCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.intellij.lang.xpath.TestBase;
@@ -24,10 +27,6 @@ import org.intellij.lang.xpath.psi.XPathVariable;
 import org.intellij.lang.xpath.psi.XPathVariableReference;
 import org.intellij.lang.xpath.xslt.refactoring.VariableInlineHandler;
 import org.intellij.lang.xpath.xslt.refactoring.extractTemplate.XsltExtractTemplateAction;
-
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import org.jetbrains.annotations.Nullable;
 
 public class XsltRefactoringTest extends TestBase {
@@ -40,39 +39,39 @@ public class XsltRefactoringTest extends TestBase {
     settings.getIndentOptions(StdFileTypes.XML).INDENT_SIZE = 2;
   }
 
-  public void testExtractTemplate() throws Throwable {
+  public void testExtractTemplate() {
     doExtractTemplate();
   }
 
-  public void testExtractTemplateWithComment() throws Throwable {
+  public void testExtractTemplateWithComment() {
     doExtractTemplate();
   }
 
-  public void testExtractTemplateOneVar() throws Throwable {
+  public void testExtractTemplateOneVar() {
     doExtractTemplate();
   }
 
-  public void testExtractTemplateOneVar2() throws Throwable {
+  public void testExtractTemplateOneVar2() {
     doExtractTemplate();
   }
 
-  public void testExtractTemplateTwoVars() throws Throwable {
+  public void testExtractTemplateTwoVars() {
     doExtractTemplate();
   }
 
-  public void testExtractTemplateTwoVars2() throws Throwable {
+  public void testExtractTemplateTwoVars2() {
     doExtractTemplate();
   }
 
-  public void testExtractTemplateUnresolvedVar() throws Throwable {
+  public void testExtractTemplateUnresolvedVar() {
     doExtractTemplate();
   }
 
-  public void testExtractTemplateUnresolvedVar2() throws Throwable {
+  public void testExtractTemplateUnresolvedVar2() {
     doExtractTemplate();
   }
 
-  private void doExtractTemplate() throws Throwable {
+  private void doExtractTemplate() {
     myFixture.configureByFile(getTestFileName() + ".xsl");
 
     final XsltExtractTemplateAction action = new XsltExtractTemplateAction();
@@ -81,15 +80,15 @@ public class XsltRefactoringTest extends TestBase {
     myFixture.checkResultByFile(getTestFileName() + "_after.xsl");
   }
 
-  public void testInlineVariable() throws Throwable {
+  public void testInlineVariable() {
     doInlineVariable();
   }
 
-  public void testInlineVariableOnDecl() throws Throwable {
+  public void testInlineVariableOnDecl() {
     doInlineVariable();
   }
 
-  private void doInlineVariable() throws Throwable {
+  private void doInlineVariable() {
     myFixture.configureByFile(getTestFileName() + ".xsl");
 
     final XPathVariable variable = findVariable();

@@ -31,7 +31,7 @@ public class WrongPropertyKeyValueDelimiterInspectionTest extends InspectionTest
     return PluginPathManager.getPluginHomePath("properties") + "/testData";
   }
 
-  public void testSimple() throws Exception {
+  public void testSimple() {
     doTest("wrongPropertyKeyDelimiter/", new WrongPropertyKeyValueDelimiterInspection());
   }
 }

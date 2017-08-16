@@ -1527,7 +1527,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                  findMatchesCount(s9, "java.lang.String.'_method ( '_params* )"));
   }
 
-  public void testAnnotations() throws Exception {
+  public void testAnnotations() {
     String s1 = "@MyBean(\"\")\n" +
                 "@MyBean2(\"\")\n" +
                 "public class TestBean {}\n" +
@@ -2040,7 +2040,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals(7,findMatchesCount(s3, s4));
   }
 
-  public void testMultiStatementPatternWithTypedVariable() throws Exception {
+  public void testMultiStatementPatternWithTypedVariable() {
     String s = "class X {{ Integer i; i.valueOf(); }}";
     assertEquals(1, findMatchesCount(s, "Integer '_i;\n'_i.valueOf();"));
 
@@ -2052,21 +2052,21 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals(1, findMatchesCount(s, pattern));
   }
 
-  public void testFindAnnotationDeclarations() throws Exception {
+  public void testFindAnnotationDeclarations() {
     String s = "interface Foo {} interface Bar {} @interface X {}";
     String s2 = "@interface 'x {}";
 
     assertEquals(1, findMatchesCount(s,s2));
   }
 
-  public void testFindEnums() throws Exception {
+  public void testFindEnums() {
     String s = "class Foo {} class Bar {} enum X {}";
     String s2 = "enum 'x {}";
 
     assertEquals(1, findMatchesCount(s,s2));
   }
 
-  public void testFindDeclaration() throws Exception {
+  public void testFindDeclaration() {
     String s = "public class F {\n" +
                "  static Category cat = Category.getInstance(F.class.getName());\n" +
                "  Category cat2 = Category.getInstance(F.class.getName());\n" +

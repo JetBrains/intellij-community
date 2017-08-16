@@ -8,9 +8,9 @@ import com.jetbrains.env.python.testing.CreateConfigurationTestTask.PyConfigurat
 import com.jetbrains.env.ut.PyNoseTestProcessRunner;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.sdkTools.SdkCreationType;
-import com.jetbrains.python.testing.PyTestFrameworkService;
 import com.jetbrains.python.testing.PyNoseTestConfiguration;
 import com.jetbrains.python.testing.PyNoseTestFactory;
+import com.jetbrains.python.testing.PyTestFrameworkService;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 import org.junit.Test;
@@ -33,7 +33,7 @@ public final class PythonNoseTestingTest extends PyEnvTestCase {
     runPythonTest(new PyProcessWithConsoleTestTask<PyNoseTestProcessRunner>("/testRunner/env/nose/generators", SdkCreationType.EMPTY_SDK) {
       @NotNull
       @Override
-      protected PyNoseTestProcessRunner createProcessRunner() throws Exception {
+      protected PyNoseTestProcessRunner createProcessRunner() {
         return new PyNoseTestProcessRunner(toFullPath("test_nose_generator.py"), 1);
       }
 
@@ -57,11 +57,11 @@ public final class PythonNoseTestingTest extends PyEnvTestCase {
 
   // Ensures setup/teardown does not break anything
   @Test
-  public void testSetupTearDown() throws Exception {
+  public void testSetupTearDown() {
     runPythonTest(new SetupTearDownTestTask<PyNoseTestProcessRunner>() {
       @NotNull
       @Override
-      protected PyNoseTestProcessRunner createProcessRunner() throws Exception {
+      protected PyNoseTestProcessRunner createProcessRunner() {
         return new PyNoseTestProcessRunner("test_test.py", 1);
       }
     });
@@ -71,22 +71,22 @@ public final class PythonNoseTestingTest extends PyEnvTestCase {
    * Ensures that python target pointing to module works correctly
    */
   @Test
-  public void testRunModuleAsFile() throws Exception {
+  public void testRunModuleAsFile() {
     runPythonTest(new RunModuleAsFileTask<PyNoseTestProcessRunner>(){
       @NotNull
       @Override
-      protected PyNoseTestProcessRunner createProcessRunner() throws Exception {
+      protected PyNoseTestProcessRunner createProcessRunner() {
         return new PyNoseTestProcessRunner(TARGET, 0);
       }
     });
   }
 
   @Test
-  public void testRerunSubfolder() throws Exception {
+  public void testRerunSubfolder() {
     runPythonTest(new RerunSubfolderTask<PyNoseTestProcessRunner>(2) {
       @NotNull
       @Override
-      protected PyNoseTestProcessRunner createProcessRunner() throws Exception {
+      protected PyNoseTestProcessRunner createProcessRunner() {
         return new PyNoseTestProcessRunner(".", 1);
       }
     });
@@ -94,20 +94,20 @@ public final class PythonNoseTestingTest extends PyEnvTestCase {
 
   // Ensure slow test is not run when --attr="!slow"  is provided
   @Test
-  public void testMarkerWithSlow() throws Exception {
+  public void testMarkerWithSlow() {
     runPythonTest(new SlowRunnerTask("--attr=\"!slow\" -vvv"));
   }
   @Test
-  public void testMarkerWithSlowSingleQuotes() throws Exception {
+  public void testMarkerWithSlowSingleQuotes() {
     runPythonTest(new SlowRunnerTask("--attr='!slow' -vvv"));
   }
   @Test
-  public void testMarkerWithSlowRegexp() throws Exception {
+  public void testMarkerWithSlowRegexp() {
     runPythonTest(new SlowRunnerTask("--attr='!slow' -vvv -m \"(?:^|[\\b_\\./-])[Tt]est\""));
   }
 
   @Test
-  public void testMultipleCases() throws Exception {
+  public void testMultipleCases() {
     runPythonTest(
       new CreateConfigurationMultipleCasesTask<>(PyTestFrameworkService.getSdkReadableNameByFramework(PyNames.NOSE_TEST),
                                                  PyNoseTestConfiguration.class));
@@ -117,13 +117,13 @@ public final class PythonNoseTestingTest extends PyEnvTestCase {
    * Checks tests are resolved when launched from subfolder
    */
   @Test
-  public void testTestsInSubFolderResolvable() throws Exception {
+  public void testTestsInSubFolderResolvable() {
     runPythonTest(
       new PyTestsInSubFolderRunner<PyNoseTestProcessRunner>("test_metheggs", "test_funeggs",
                                                             "test_first") {
         @NotNull
         @Override
-        protected PyNoseTestProcessRunner createProcessRunner() throws Exception {
+        protected PyNoseTestProcessRunner createProcessRunner() {
           return new PyNoseTestProcessRunner(toFullPath("tests"), 0) {
             @Override
             protected void configurationCreatedAndWillLaunch(@NotNull PyNoseTestConfiguration configuration) throws IOException {
@@ -139,12 +139,12 @@ public final class PythonNoseTestingTest extends PyEnvTestCase {
    * Ensures test output works
    */
   @Test
-  public void testOutput() throws Exception {
+  public void testOutput() {
     runPythonTest(
       new PyTestsOutputRunner<PyNoseTestProcessRunner>("test_metheggs", "test_funeggs", "test_first") {
         @NotNull
         @Override
-        protected PyNoseTestProcessRunner createProcessRunner() throws Exception {
+        protected PyNoseTestProcessRunner createProcessRunner() {
           return new PyNoseTestProcessRunner(toFullPath("tests"), 0) {
             @Override
             protected void configurationCreatedAndWillLaunch(@NotNull PyNoseTestConfiguration configuration) throws IOException {
@@ -158,7 +158,7 @@ public final class PythonNoseTestingTest extends PyEnvTestCase {
 
 
   @Test(expected = RuntimeConfigurationWarning.class)
-  public void testValidation() throws Exception {
+  public void testValidation() {
 
     final PyConfigurationCreationTask<PyNoseTestConfiguration> task =
       new PyConfigurationCreationTask<PyNoseTestConfiguration>() {
@@ -173,20 +173,20 @@ public final class PythonNoseTestingTest extends PyEnvTestCase {
   }
 
   @Test
-  public void testConfigurationProducer() throws Exception {
+  public void testConfigurationProducer() {
     runPythonTest(
       new CreateConfigurationByFileTask<>(myFrameworkName, PyNoseTestConfiguration.class));
   }
 
   @Test
-  public void testConfigurationProducerOnDirectory() throws Exception {
+  public void testConfigurationProducerOnDirectory() {
     runPythonTest(
       new CreateConfigurationByFileTask.CreateConfigurationTestAndRenameFolderTask<>(myFrameworkName,
                                                                                      PyNoseTestConfiguration.class));
   }
 
   @Test
-  public void testRenameClass() throws Exception {
+  public void testRenameClass() {
     runPythonTest(
       new CreateConfigurationByFileTask.CreateConfigurationTestAndRenameClassTask<>(
         myFrameworkName,
@@ -200,7 +200,7 @@ public final class PythonNoseTestingTest extends PyEnvTestCase {
 
       @NotNull
       @Override
-      protected PyNoseTestProcessRunner createProcessRunner() throws Exception {
+      protected PyNoseTestProcessRunner createProcessRunner() {
         return new PyNoseTestProcessRunner("test1.py", 0);
       }
 
@@ -220,7 +220,7 @@ public final class PythonNoseTestingTest extends PyEnvTestCase {
     runPythonTest(new PyProcessWithConsoleTestTask<PyNoseTestProcessRunner>("/testRunner/env/nose", SdkCreationType.EMPTY_SDK) {
       @NotNull
       @Override
-      protected PyNoseTestProcessRunner createProcessRunner() throws Exception {
+      protected PyNoseTestProcessRunner createProcessRunner() {
         return new PyNoseTestProcessRunner("test2.py", 0);
       }
 
@@ -247,7 +247,7 @@ public final class PythonNoseTestingTest extends PyEnvTestCase {
 
     @NotNull
     @Override
-    protected PyNoseTestProcessRunner createProcessRunner() throws Exception {
+    protected PyNoseTestProcessRunner createProcessRunner() {
       return new PyNoseTestProcessRunner("test_with_slow.py", 0) {
         @Override
         protected void configurationCreatedAndWillLaunch(@NotNull PyNoseTestConfiguration configuration) throws IOException {

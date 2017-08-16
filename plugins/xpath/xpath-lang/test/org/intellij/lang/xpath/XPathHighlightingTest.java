@@ -33,73 +33,73 @@ public class XPathHighlightingTest extends TestBase {
       });
     }
 
-    public void testPathTypeMismatch() throws Throwable {
+    public void testPathTypeMismatch() {
         doXPathHighlighting();
     }
 
-    public void testUnknownFunction() throws Throwable {
+    public void testUnknownFunction() {
         doXPathHighlighting();
     }
 
-    public void testMissingArgument() throws Throwable {
+    public void testMissingArgument() {
         doXPathHighlighting();
     }
 
-    public void testInvalidArgument() throws Throwable {
+    public void testInvalidArgument() {
         doXPathHighlighting();
     }
 
-    public void testIndexZero() throws Throwable {
+    public void testIndexZero() {
         doXPathHighlighting();
     }
 
-    public void testSillyStep() throws Throwable {
+    public void testSillyStep() {
         doXPathHighlighting();
     }
 
-    public void testNonSillyStepIDEADEV33539() throws Throwable {
+    public void testNonSillyStepIDEADEV33539() {
         doXPathHighlighting();
     }
 
-    public void testHardwiredPrefix() throws Throwable {
+    public void testHardwiredPrefix() {
         doXPathHighlighting();
     }
 
-    public void testNumberFollowedByToken() throws Throwable {
+    public void testNumberFollowedByToken() {
       doXPathHighlighting();
     }
 
-    public void testScientificNotationNumber() throws Throwable {
+    public void testScientificNotationNumber() {
       doXPathHighlighting();
     }
 
-    public void testMalformedStringLiteral() throws Throwable {
+    public void testMalformedStringLiteral() {
       doXPathHighlighting();
     }
 
-    public void testMalformedStringLiteral2() throws Throwable {
+    public void testMalformedStringLiteral2() {
       doXPathHighlighting();
     }
 
-    public void testMalformedEmptyStringLiteral() throws Throwable {
+    public void testMalformedEmptyStringLiteral() {
       doXPathHighlighting();
     }
 
-    public void testQuotedStringLiteral() throws Throwable {
+    public void testQuotedStringLiteral() {
       doXPathHighlighting();
     }
 
     // IDEA-67413
-    public void testUnionSubExpression() throws Throwable {
+    public void testUnionSubExpression() {
       doXPathHighlighting();
     }
 
     // IDEA-102422
-    public void testPrefixedNameAnd() throws Throwable {
+    public void testPrefixedNameAnd() {
       doXPathHighlighting();
     }
 
-    private void doXPathHighlighting(String... moreFiles) throws Throwable {
+    private void doXPathHighlighting(String... moreFiles) {
         final String name = getTestFileName();
         myFixture.testHighlighting(true, false, false, ArrayUtil.append(moreFiles, name + ".xpath"));
     }

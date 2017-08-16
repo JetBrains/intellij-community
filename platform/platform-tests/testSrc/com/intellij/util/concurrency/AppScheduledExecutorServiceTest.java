@@ -67,7 +67,7 @@ public class AppScheduledExecutorServiceTest extends TestCase {
     super.tearDown();
   }
 
-  public void testDelayedWorks() throws InterruptedException, TimeoutException {
+  public void testDelayedWorks() throws InterruptedException {
     assertFalse(service.isShutdown());
     assertFalse(service.isTerminated());
 
@@ -236,7 +236,7 @@ public class AppScheduledExecutorServiceTest extends TestCase {
     assertEquals(N, usedThreads.size());
   }
 
-  public void testAwaitTerminationMakesSureTasksTransferredToBackendExecutorAreFinished() throws InterruptedException, ExecutionException {
+  public void testAwaitTerminationMakesSureTasksTransferredToBackendExecutorAreFinished() throws InterruptedException {
     final AppScheduledExecutorService service = new AppScheduledExecutorService(getName());
     final List<LogInfo> log = Collections.synchronizedList(new ArrayList<>());
 

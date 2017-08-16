@@ -31,7 +31,10 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.psi.search.DelegatingGlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.CommonProcessors;
+import com.intellij.util.PathsList;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
@@ -1124,7 +1127,7 @@ public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
     // Create directories for m5 and m6 which we will use for this test.
     new WriteCommandAction.Simple(myProject) {
       @Override
-      protected void run() throws Throwable {
+      protected void run() {
         createProjectSubDirs("m5/src/main/java",
                              "m5/src/test/java",
 
@@ -1265,7 +1268,7 @@ public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
 
     new WriteCommandAction.Simple(myProject) {
       @Override
-      protected void run() throws Throwable {
+      protected void run() {
         ModuleRootModificationUtil.addDependency(nonMavenM1, nonMavenM2, DependencyScope.COMPILE, true);
         ModuleRootModificationUtil.addDependency(nonMavenM2, modules.get(0), DependencyScope.COMPILE, true);
         createProjectSubDirs("nonMavenM1/src/main/java", "nonMavenM1/src/test/java",
@@ -1372,7 +1375,7 @@ public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
     assertPaths(expectedPaths, actualPathsList.getPathList());
   }
 
-  private void assertModuleScopes(String... modules) throws Exception {
+  private void assertModuleScopes(String... modules) {
     for (String each : modules) {
       assertModuleSearchScope(each,
                               getProjectPath() + "/" + each + "/src/main/java",
@@ -1380,33 +1383,33 @@ public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
     }
   }
 
-  private void assertModuleSearchScope(String moduleName, String... paths) throws Exception {
+  private void assertModuleSearchScope(String moduleName, String... paths) {
     assertSearchScope(moduleName, Scope.MODULE, null, paths);
   }
 
-  private void assertAllProductionSearchScope(String moduleName, String... paths) throws Exception {
+  private void assertAllProductionSearchScope(String moduleName, String... paths) {
     assertCompileProductionSearchScope(moduleName, paths);
     assertRuntimeProductionSearchScope(moduleName, paths);
   }
 
-  private void assertAllTestsSearchScope(String moduleName, String... paths) throws Exception {
+  private void assertAllTestsSearchScope(String moduleName, String... paths) {
     assertCompileTestsSearchScope(moduleName, paths);
     assertRuntimeTestsSearchScope(moduleName, paths);
   }
 
-  private void assertCompileProductionSearchScope(String moduleName, String... paths) throws Exception {
+  private void assertCompileProductionSearchScope(String moduleName, String... paths) {
     assertSearchScope(moduleName, Scope.COMPILE, Type.PRODUCTION, paths);
   }
 
-  private void assertCompileTestsSearchScope(String moduleName, String... paths) throws Exception {
+  private void assertCompileTestsSearchScope(String moduleName, String... paths) {
     assertSearchScope(moduleName, Scope.COMPILE, Type.TESTS, paths);
   }
 
-  private void assertRuntimeProductionSearchScope(String moduleName, String... paths) throws Exception {
+  private void assertRuntimeProductionSearchScope(String moduleName, String... paths) {
     assertSearchScope(moduleName, Scope.RUNTIME, Type.PRODUCTION, paths);
   }
 
-  private void assertRuntimeTestsSearchScope(String moduleName, String... paths) throws Exception {
+  private void assertRuntimeTestsSearchScope(String moduleName, String... paths) {
     assertSearchScope(moduleName, Scope.RUNTIME, Type.TESTS, paths);
   }
 

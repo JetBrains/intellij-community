@@ -92,7 +92,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
   }
 
   @Override
-  public void tearDown() throws Exception {
+  public void tearDown() {
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       try {
         if (myConsoleView != null) {
@@ -107,7 +107,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
     });
   }
 
-  private void disposeConsole() throws InterruptedException {
+  private void disposeConsole() {
     if (myCommunication != null) {
       UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
         try {
@@ -129,7 +129,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
     if (myConsoleView != null) {
       new WriteAction() {
         @Override
-        protected void run(@NotNull Result result) throws Throwable {
+        protected void run(@NotNull Result result) {
           Disposer.dispose(myConsoleView);
           myConsoleView = null;
         }
@@ -223,7 +223,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
     }
   }
 
-  private void disposeConsoleProcess() throws InterruptedException {
+  private void disposeConsoleProcess() {
     myProcessHandler.destroyProcess();
 
     waitFor(myProcessHandler);

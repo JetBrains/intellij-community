@@ -55,7 +55,7 @@ public class JsonSchemaReadTest extends CompletionTestCase {
     Assert.assertEquals("#/definitions/positiveIntegerDefault0", minLength.getRef());
   }
 
-  public void testMainSchemaHighlighting() throws Exception {
+  public void testMainSchemaHighlighting() {
     final JsonSchemaService service = JsonSchemaService.Impl.get(myProject);
     final List<JsonSchemaFileProvider> providers = new JsonSchemaProjectSelfProviderFactory().getProviders(myProject);
     Assert.assertEquals(1, providers.size());

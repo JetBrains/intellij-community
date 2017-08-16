@@ -51,7 +51,7 @@ public class FileListeningTest extends IntegrationTestCase {
     assertEquals(2, getRevisionsFor(f).size());
   }
 
-  public void testCreatingDirectories() throws Exception {
+  public void testCreatingDirectories() {
     VirtualFile f = createDirectory("dir");
     assertEquals(2, getRevisionsFor(f).size());
   }
@@ -63,7 +63,7 @@ public class FileListeningTest extends IntegrationTestCase {
     assertEquals(before, getRevisionsFor(myRoot).size());
   }
 
-  public void testIgnoringFilteredDirectories() throws Exception {
+  public void testIgnoringFilteredDirectories() {
     int before = getRevisionsFor(myRoot).size();
 
     createDirectory(FILTERED_DIR_NAME);
@@ -152,7 +152,7 @@ public class FileListeningTest extends IntegrationTestCase {
 
     addFileListenerDuring(l, new RunnableAdapter() {
       @Override
-      public void doRun() throws IOException {
+      public void doRun() {
         rename(f, "new.txt");
       }
     });
@@ -195,7 +195,7 @@ public class FileListeningTest extends IntegrationTestCase {
     assertEquals(3, getRevisionsFor(f).size());
   }
 
-  public void testRenamingNonFilteredDirectoriesToFiltered() throws Exception {
+  public void testRenamingNonFilteredDirectoriesToFiltered() {
     int before = getRevisionsFor(myRoot).size();
 
     VirtualFile f = createDirectory("not_filtered");
@@ -235,7 +235,7 @@ public class FileListeningTest extends IntegrationTestCase {
     });
   }
 
-  public void testDeletion() throws Exception {
+  public void testDeletion() {
     VirtualFile f = createDirectory("f.txt");
 
     int before = getRevisionsFor(myRoot).size();
@@ -244,7 +244,7 @@ public class FileListeningTest extends IntegrationTestCase {
     assertEquals(before + 1, getRevisionsFor(myRoot).size());
   }
 
-  public void testDeletionOfFilteredDirectoryDoesNotThrowsException() throws Exception {
+  public void testDeletionOfFilteredDirectoryDoesNotThrowsException() {
     int before = getRevisionsFor(myRoot).size();
 
     VirtualFile f = createDirectory(FILTERED_DIR_NAME);

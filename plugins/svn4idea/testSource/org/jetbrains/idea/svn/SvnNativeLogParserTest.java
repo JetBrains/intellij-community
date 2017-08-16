@@ -33,7 +33,7 @@ public class SvnNativeLogParserTest extends TestCase {
     null
   };
 
-  public void testWindows() throws Exception {
+  public void testWindows() {
     for (int i = 0; i < ourCases.length; i++) {
       final String aCase = ourCases[i];
       final NativeLogReader.CallInfo info = SvnNativeLogParser.parse(aCase);

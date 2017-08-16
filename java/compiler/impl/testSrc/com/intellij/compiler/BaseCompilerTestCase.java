@@ -344,7 +344,7 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
     PlatformTestCase.myFilesToDelete.add(moduleFile);
     return new WriteAction<Module>() {
       @Override
-      protected void run(@NotNull Result<Module> result) throws Throwable {
+      protected void run(@NotNull Result<Module> result) {
         Module module = ModuleManager.getInstance(myProject)
           .newModule(FileUtil.toSystemIndependentName(moduleFile.getAbsolutePath()), getModuleType().getId());
         module.getModuleFile();

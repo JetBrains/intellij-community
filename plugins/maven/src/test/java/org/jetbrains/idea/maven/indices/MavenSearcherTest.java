@@ -40,7 +40,7 @@ public class MavenSearcherTest extends MavenIndicesTestCase {
     }
   }
 
-  public void testClassSearch() throws Exception {
+  public void testClassSearch() {
     assertTrue(!getClassSearchResults("").isEmpty());
 
     assertClassSearchResults("TestCas",
@@ -91,7 +91,7 @@ public class MavenSearcherTest extends MavenIndicesTestCase {
     assertClassSearchResults("!@][#$%)(^&*()_"); // shouldn't throw
   }
 
-  public void testArtifactSearch() throws Exception {
+  public void testArtifactSearch() {
     assertArtifactSearchResults("",
                                 "asm:asm:3.3.1 asm:asm:3.3",
                                 "asm:asm-attrs:2.2.1",

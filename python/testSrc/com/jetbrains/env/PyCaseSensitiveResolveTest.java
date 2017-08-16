@@ -28,7 +28,7 @@ import org.junit.Test;
  */
 public final class PyCaseSensitiveResolveTest extends PyEnvTestCase {
   @Test
-  public void testCaseSensitive() throws Exception {
+  public void testCaseSensitive() {
     runTest(new PyExecutionFixtureTestTask(null) {
       @NotNull
       @Override

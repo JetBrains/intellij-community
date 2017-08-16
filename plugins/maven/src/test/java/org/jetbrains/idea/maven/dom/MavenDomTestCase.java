@@ -49,7 +49,6 @@ import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageTargetUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
@@ -97,13 +96,13 @@ public abstract class MavenDomTestCase extends MavenImportingTestCase {
     return PsiManager.getInstance(myProject).findFile(f);
   }
 
-  protected void configTest(VirtualFile f) throws IOException {
+  protected void configTest(VirtualFile f) {
     if (Comparing.equal(myConfigTimestamps.get(f), f.getTimeStamp())) return;
     myFixture.configureFromExistingVirtualFile(f);
     myConfigTimestamps.put(f, f.getTimeStamp());
   }
 
-  protected void type(VirtualFile f, char c) throws IOException {
+  protected void type(VirtualFile f, char c) {
     configTest(f);
     myFixture.type(c);
   }
@@ -113,7 +112,7 @@ public abstract class MavenDomTestCase extends MavenImportingTestCase {
     return findPsiFile(f).findReferenceAt(getEditorOffset(f));
   }
 
-  protected PsiReference getReferenceAt(VirtualFile f, int offset) throws IOException {
+  protected PsiReference getReferenceAt(VirtualFile f, int offset) {
     configTest(f);
     return findPsiFile(f).findReferenceAt(offset);
   }
@@ -123,11 +122,11 @@ public abstract class MavenDomTestCase extends MavenImportingTestCase {
     return findPsiFile(f).findElementAt(getEditorOffset(f));
   }
 
-  protected Editor getEditor() throws IOException {
+  protected Editor getEditor() {
     return getEditor(myProjectPom);
   }
 
-  protected Editor getEditor(VirtualFile f) throws IOException {
+  protected Editor getEditor(VirtualFile f) {
     configTest(f);
     return myFixture.getEditor();
   }
@@ -136,15 +135,15 @@ public abstract class MavenDomTestCase extends MavenImportingTestCase {
     return getEditorOffset(myProjectPom);
   }
 
-  protected int getEditorOffset(VirtualFile f) throws IOException {
+  protected int getEditorOffset(VirtualFile f) {
     return getEditor(f).getCaretModel().getOffset();
   }
 
-  protected PsiFile getTestPsiFile() throws IOException {
+  protected PsiFile getTestPsiFile() {
     return getTestPsiFile(myProjectPom);
   }
 
-  private PsiFile getTestPsiFile(VirtualFile f) throws IOException {
+  private PsiFile getTestPsiFile(VirtualFile f) {
     configTest(f);
     return myFixture.getFile();
   }
@@ -245,20 +244,20 @@ public abstract class MavenDomTestCase extends MavenImportingTestCase {
     return ref;
   }
 
-  protected void assertCompletionVariants(VirtualFile f, String... expected) throws IOException {
+  protected void assertCompletionVariants(VirtualFile f, String... expected) {
     List<String> actual = getCompletionVariants(f);
     assertUnorderedElementsAreEqual(actual, expected);
   }
 
-  protected void assertCompletionVariantsInclude(VirtualFile f, String... expected) throws IOException {
+  protected void assertCompletionVariantsInclude(VirtualFile f, String... expected) {
     assertContain(getCompletionVariants(f), expected);
   }
 
-  protected void assertCompletionVariantsDoNotInclude(VirtualFile f, String... expected) throws IOException {
+  protected void assertCompletionVariantsDoNotInclude(VirtualFile f, String... expected) {
     assertDoNotContain(getCompletionVariants(f), expected);
   }
 
-  protected List<String> getCompletionVariants(VirtualFile f) throws IOException {
+  protected List<String> getCompletionVariants(VirtualFile f) {
     configTest(f);
     LookupElement[] variants = myFixture.completeBasic();
 
@@ -288,11 +287,11 @@ public abstract class MavenDomTestCase extends MavenImportingTestCase {
     checkHighlighting(myProjectPom);
   }
 
-  protected void checkHighlighting(VirtualFile f) throws IOException {
+  protected void checkHighlighting(VirtualFile f) {
     checkHighlighting(f, true, false, true);
   }
 
-  protected void checkHighlighting(VirtualFile f, boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings) throws IOException {
+  protected void checkHighlighting(VirtualFile f, boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings) {
     configTest(myProjectPom);
     try {
       myFixture.testHighlighting(checkWarnings, checkInfos, checkWeakWarnings, f);
@@ -302,11 +301,11 @@ public abstract class MavenDomTestCase extends MavenImportingTestCase {
     }
   }
 
-  protected IntentionAction getIntentionAtCaret(String intentionName) throws IOException {
+  protected IntentionAction getIntentionAtCaret(String intentionName) {
     return getIntentionAtCaret(myProjectPom, intentionName);
   }
 
-  protected IntentionAction getIntentionAtCaret(VirtualFile pomFile, String intentionName) throws IOException {
+  protected IntentionAction getIntentionAtCaret(VirtualFile pomFile, String intentionName) {
     configTest(pomFile);
     try {
       List<IntentionAction> intentions = myFixture.getAvailableIntentions();
@@ -349,7 +348,7 @@ public abstract class MavenDomTestCase extends MavenImportingTestCase {
     renameHandler.invoke(myProject, PsiElement.EMPTY_ARRAY, context);
   }
 
-  private MapDataContext createDataContext(VirtualFile f) throws IOException {
+  private MapDataContext createDataContext(VirtualFile f) {
     MapDataContext context = new MapDataContext();
     context.put(CommonDataKeys.EDITOR, getEditor(f));
     context.put(CommonDataKeys.PSI_FILE, getTestPsiFile(f));
@@ -386,7 +385,7 @@ public abstract class MavenDomTestCase extends MavenImportingTestCase {
     return ContainerUtil.map(result, psiReference -> psiReference.getElement());
   }
 
-  protected void assertHighlighted(VirtualFile file, HighlightInfo... expected) throws IOException {
+  protected void assertHighlighted(VirtualFile file, HighlightInfo... expected) {
     Editor editor = getEditor(file);
     HighlightUsagesHandler.invoke(myProject, editor, getTestPsiFile(file));
 

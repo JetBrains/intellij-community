@@ -133,7 +133,7 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
     assertEquals("[root]", rootTreeNode.toString());
   }
 
-  public void testOnTestStarted() throws InterruptedException {
+  public void testOnTestStarted() {
     onTestStarted("some_test");
     final String fullName = myEventsProcessor.getFullTestName("some_test");
     final SMTestProxy proxy = myEventsProcessor.getProxyByFullTestName(fullName);
@@ -161,7 +161,7 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
     assertEquals(1, myEventsProcessor.getRunningTestsQuantity());
   }
 
-  public void testOnTestStarted_WithLocation() throws InterruptedException {
+  public void testOnTestStarted_WithLocation() {
     onTestStarted("some_test", "file://some/file.rb:1");
     final String fullName = myEventsProcessor.getFullTestName("some_test");
     final SMTestProxy proxy = myEventsProcessor.getProxyByFullTestName(fullName);

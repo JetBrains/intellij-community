@@ -40,12 +40,12 @@ public class MicrodataCompletionTest extends CodeInsightFixtureTestCase {
     return true;
   }
 
-  private void doTestInHtml(String text, String... items) throws Throwable {
+  private void doTestInHtml(String text, String... items) {
     configureAndComplete(text);
     assertContainsElements(myFixture.getLookupElementStrings(), Arrays.asList(items));
   }
 
-  private void doFailTestInHtml(String text, String... items) throws Throwable {
+  private void doFailTestInHtml(String text, String... items) {
     configureAndComplete(text);
     final List<String> lookups = myFixture.getLookupElementStrings();
     assertNotNull(lookups);
@@ -59,54 +59,54 @@ public class MicrodataCompletionTest extends CodeInsightFixtureTestCase {
     myFixture.complete(CompletionType.BASIC);
   }
 
-  public void testScopeType() throws Throwable {
+  public void testScopeType() {
     doTestInHtml("<section <caret>></section>", "itemscope");
   }
 
-  public void testScopeInDivTag() throws Throwable {
+  public void testScopeInDivTag() {
     doTestInHtml("<div <caret>></div>", "itemscope");
   }
 
-  public void testScopeInSpanTag() throws Throwable {
+  public void testScopeInSpanTag() {
     doTestInHtml("<span <caret>></span>", "itemscope");
   }
 
-  public void testScopeInATag() throws Throwable {
+  public void testScopeInATag() {
     doTestInHtml("<a <caret>></a>", "itemscope");
   }
 
-  public void _testTypeInATag() throws Throwable {
+  public void _testTypeInATag() {
     doFailTestInHtml("<a <caret>></a>", "itemtype", "itemid");
   }
 
-  public void testTypeInScope() throws Throwable {
+  public void testTypeInScope() {
     doTestInHtml("<section itemscope <caret>><div></div></section>", "itemtype", "itemid");
   }
 
-  public void testPropInScope() throws Throwable {
+  public void testPropInScope() {
     doTestInHtml("<section itemscope><div <caret>></div></section>", "itemprop");
   }
 
-  public void _testTypeWithinScope() throws Throwable {
+  public void _testTypeWithinScope() {
     doFailTestInHtml("<section <caret>><div></div></section>", "itemtype", "itemid");
   }
 
-  public void _testPropWithinScope() throws Throwable {
+  public void _testPropWithinScope() {
     doFailTestInHtml("<section><div <caret>></div></section>", "itemprop");
   }
 
-  public void testPropWithinScopeWithRef() throws Throwable {
+  public void testPropWithinScopeWithRef() {
     doTestInHtml("<body>" +
                  "<section itemscope itemref=\"bar foo\"></section>" +
                  "<section id=\"foo\"><div <caret>></div></section>" +
                  "</body>", "itemprop");
   }
 
-  public void testRefInScope() throws Throwable {
+  public void testRefInScope() {
     doTestInHtml("<section itemscope itemref=\"b<caret>\"></section><p id=\"bar\"></p><p id=\"baz\"></p>", "bar", "baz");
   }
 
-  public void testPropValue() throws Throwable {
+  public void testPropValue() {
     final VirtualFile virtualFile = myFixture.copyFileToProject("Person.html");
     ApplicationManager.getApplication().runWriteAction(() -> ExternalResourceManager.getInstance().addResource("http://data-vocabulary.org/Person", virtualFile.getPath()));
     doTestInHtml("<section itemscope itemtype=\"http://data-vocabulary.org/Person\"><div itemprop=\"<caret>\"></div></section>",
@@ -114,7 +114,7 @@ public class MicrodataCompletionTest extends CodeInsightFixtureTestCase {
     );
   }
 
-  public void testPropValueSchemaOrgFormat() throws Throwable {
+  public void testPropValueSchemaOrgFormat() {
     final VirtualFile virtualFile = myFixture.copyFileToProject("Product.html");
     ApplicationManager.getApplication().runWriteAction(() -> ExternalResourceManager.getInstance().addResource("http://schema.org/Product", virtualFile.getPath()));
     doTestInHtml("<section itemscope itemtype=\"http://schema.org/Product\"><div itemprop=\"<caret>\"></div></section>",
@@ -151,7 +151,7 @@ public class MicrodataCompletionTest extends CodeInsightFixtureTestCase {
     );
   }
 
-  public void testPropValueSchemaOrgFormatWithLinks() throws Throwable {
+  public void testPropValueSchemaOrgFormatWithLinks() {
     final VirtualFile virtualFile = myFixture.copyFileToProject("Rating.html");
     ApplicationManager.getApplication().runWriteAction(() -> ExternalResourceManager.getInstance().addResource("http://schema.org/Rating", virtualFile.getPath()));
     doTestInHtml("<section itemscope itemtype=\"http://schema.org/Rating\"><div itemprop=\"<caret>\"></div></section>",
@@ -169,7 +169,7 @@ public class MicrodataCompletionTest extends CodeInsightFixtureTestCase {
     );
   }
 
-  public void testPropValueFromTwoTypes() throws Throwable {
+  public void testPropValueFromTwoTypes() {
     final VirtualFile personFile = myFixture.copyFileToProject("Person.html");
     final VirtualFile addressFile = myFixture.copyFileToProject("Address.html");
     ApplicationManager.getApplication().runWriteAction(() -> {
@@ -183,7 +183,7 @@ public class MicrodataCompletionTest extends CodeInsightFixtureTestCase {
     );
   }
 
-  public void testPropValueFromRef() throws Throwable {
+  public void testPropValueFromRef() {
     final VirtualFile virtualFile = myFixture.copyFileToProject("Person.html");
     ApplicationManager.getApplication().runWriteAction(() -> ExternalResourceManager.getInstance().addResource("http://data-vocabulary.org/Person", virtualFile.getPath()));
     doTestInHtml("<body>" +
@@ -194,7 +194,7 @@ public class MicrodataCompletionTest extends CodeInsightFixtureTestCase {
     );
   }
 
-  public void testPropValueNestedScopes() throws Throwable {
+  public void testPropValueNestedScopes() {
     final VirtualFile personFile = myFixture.copyFileToProject("Person.html");
     final VirtualFile addressFile = myFixture.copyFileToProject("Address.html");
     ApplicationManager.getApplication().runWriteAction(() -> {
@@ -212,7 +212,7 @@ public class MicrodataCompletionTest extends CodeInsightFixtureTestCase {
     );
   }
 
-  public void testPropValueNestedScopesDifferentTrees() throws Throwable {
+  public void testPropValueNestedScopesDifferentTrees() {
     final VirtualFile personFile = myFixture.copyFileToProject("Person.html");
     final VirtualFile addressFile = myFixture.copyFileToProject("Address.html");
     ApplicationManager.getApplication().runWriteAction(() -> {

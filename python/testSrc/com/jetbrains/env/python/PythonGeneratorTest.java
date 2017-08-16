@@ -17,7 +17,7 @@ public class PythonGeneratorTest extends PyEnvTestCase {
     runPythonTest(new PyProcessWithConsoleTestTask<PyUnitTestProcessRunner>("/helpers", SdkCreationType.EMPTY_SDK) {
       @NotNull
       @Override
-      protected PyUnitTestProcessRunner createProcessRunner() throws Exception {
+      protected PyUnitTestProcessRunner createProcessRunner() {
         return new PyUnitTestProcessRunner("test_generator.py", 0);
       }
 

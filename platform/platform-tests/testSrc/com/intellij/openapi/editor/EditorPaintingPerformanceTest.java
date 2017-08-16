@@ -26,13 +26,13 @@ import java.awt.*;
 public class EditorPaintingPerformanceTest extends AbstractEditorTest {
   private static final int EDITOR_WIDTH_PX = 1000;
 
-  public void testScrollingThroughLongTextFile() throws Exception {
+  public void testScrollingThroughLongTextFile() {
     initText(StringUtil.repeat(LOREM_IPSUM + '\n', 15000));
 
     doTestScrollingPerformance("scrolling through text file with many lines", 3600);
   }
 
-  public void testScrollingThroughLongSoftWrappedLine() throws Exception {
+  public void testScrollingThroughLongSoftWrappedLine() {
     initText(StringUtil.repeat(LOREM_IPSUM + ' ', 15000));
     EditorTestUtil.configureSoftWraps(myEditor, EDITOR_WIDTH_PX, TEST_CHAR_WIDTH);
     

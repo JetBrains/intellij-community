@@ -38,7 +38,7 @@ public class PyTypeTest extends PyTestCase {
   /**
    * Call of union returns union of all callable types in this union
    */
-  public void testCallableInUnion() throws Exception {
+  public void testCallableInUnion() {
     doTest("str",
            "import random\n" +
            "def spam():\n" +

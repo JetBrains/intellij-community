@@ -26,7 +26,7 @@ import static com.intellij.testFramework.UsefulTestCase.assertSameElements;
 
 public class JdkBundleListTest {
   @Test
-  public void testAddBundle() throws Exception {
+  public void testAddBundle() {
     JdkBundle jb0 = new JdkBundle(new File("/jb0"), "java", Pair.create(new Version(1, 8, 0), new Integer(0)), true, false);
     JdkBundle jb1 = new JdkBundle(new File("/jb1"), "java", Pair.create(new Version(1, 8, 0), new Integer(1)), false, false);
     JdkBundle jb2 = new JdkBundle(new File("/jb2"), "java", Pair.create(new Version(1, 8, 0), new Integer(2)), false, false);

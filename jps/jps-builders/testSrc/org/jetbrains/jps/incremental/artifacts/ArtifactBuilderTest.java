@@ -359,7 +359,7 @@ public class ArtifactBuilderTest extends ArtifactBuilderTestCase {
     assertOutput(artifact, fs().file("A.class"));
   }
   
-  public void testClearOutputOnRebuild() throws IOException {
+  public void testClearOutputOnRebuild() {
     String file = createFile("d/a.txt");
     JpsArtifact a = addArtifact(root().parentDirCopy(file));
     buildAll();
@@ -371,7 +371,7 @@ public class ArtifactBuilderTest extends ArtifactBuilderTestCase {
     assertOutput(a, fs().file("a.txt").file("b.txt"));
   }
 
-  public void testDeleteOnlyOutputFileOnRebuildForArchiveArtifact() throws IOException {
+  public void testDeleteOnlyOutputFileOnRebuildForArchiveArtifact() {
     String file = createFile("a.txt");
     JpsArtifact a = addArtifact(archive("a.jar").fileCopy(file));
     buildAll();

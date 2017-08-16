@@ -22,7 +22,7 @@ public final class PythonDocTestingTest extends PyEnvTestCase {
 
 
   @Test
-  public void testConfigurationProducer() throws Exception {
+  public void testConfigurationProducer() {
     runPythonTest(
       new CreateConfigurationByFileTask<>(null, PythonDocTestRunConfiguration.class, "doctest_test.py"));
   }
@@ -33,7 +33,7 @@ public final class PythonDocTestingTest extends PyEnvTestCase {
     runPythonTest(new PyProcessWithConsoleTestTask<PyDocTestProcessRunner>("/testRunner/env/doc", SdkCreationType.EMPTY_SDK) {
       @NotNull
       @Override
-      protected PyDocTestProcessRunner createProcessRunner() throws Exception {
+      protected PyDocTestProcessRunner createProcessRunner() {
         return new PyDocTestProcessRunner("subfolder", 0) {
           @Override
           protected void configurationCreatedAndWillLaunch(@NotNull PythonDocTestRunConfiguration configuration) throws IOException {
@@ -60,7 +60,7 @@ public final class PythonDocTestingTest extends PyEnvTestCase {
     runPythonTest(new PyProcessWithConsoleTestTask<PyDocTestProcessRunner>("/testRunner/env/doc", SdkCreationType.EMPTY_SDK) {
       @NotNull
       @Override
-      protected PyDocTestProcessRunner createProcessRunner() throws Exception {
+      protected PyDocTestProcessRunner createProcessRunner() {
         return new PyDocTestProcessRunner("test1.py", 0);
       }
 
@@ -81,7 +81,7 @@ public final class PythonDocTestingTest extends PyEnvTestCase {
     runPythonTest(new PyProcessWithConsoleTestTask<PyDocTestProcessRunner>("/testRunner/env/doc", SdkCreationType.EMPTY_SDK) {
       @NotNull
       @Override
-      protected PyDocTestProcessRunner createProcessRunner() throws Exception {
+      protected PyDocTestProcessRunner createProcessRunner() {
         return new PyDocTestProcessRunner("test1.py::FirstGoodTest", 0);
       }
 
@@ -97,11 +97,11 @@ public final class PythonDocTestingTest extends PyEnvTestCase {
   }
 
   @Test
-  public void testDiff() throws Exception {
+  public void testDiff() {
     runPythonTest(new PyProcessWithConsoleTestTask<PyDocTestProcessRunner>("/testRunner/env/doc", SdkCreationType.EMPTY_SDK) {
       @NotNull
       @Override
-      protected PyDocTestProcessRunner createProcessRunner() throws Exception {
+      protected PyDocTestProcessRunner createProcessRunner() {
         return new PyDocTestProcessRunner("test_Diff.py::test_dff", 0);
       }
 
@@ -122,7 +122,7 @@ public final class PythonDocTestingTest extends PyEnvTestCase {
     runPythonTest(new PyProcessWithConsoleTestTask<PyDocTestProcessRunner>("/testRunner/env/doc", SdkCreationType.EMPTY_SDK) {
       @NotNull
       @Override
-      protected PyDocTestProcessRunner createProcessRunner() throws Exception {
+      protected PyDocTestProcessRunner createProcessRunner() {
         return new PyDocTestProcessRunner("test1.py::SecondGoodTest::test_passes", 0);
       }
 
@@ -142,7 +142,7 @@ public final class PythonDocTestingTest extends PyEnvTestCase {
     runPythonTest(new PyProcessWithConsoleTestTask<PyDocTestProcessRunner>("/testRunner/env/doc", SdkCreationType.EMPTY_SDK) {
       @NotNull
       @Override
-      protected PyDocTestProcessRunner createProcessRunner() throws Exception {
+      protected PyDocTestProcessRunner createProcessRunner() {
         return new PyDocTestProcessRunner("test1.py::factorial", 0);
       }
 
@@ -162,7 +162,7 @@ public final class PythonDocTestingTest extends PyEnvTestCase {
     runPythonTest(new PyProcessWithConsoleTestTask<PyDocTestProcessRunner>("/testRunner/env/doc", SdkCreationType.EMPTY_SDK) {
       @NotNull
       @Override
-      protected PyDocTestProcessRunner createProcessRunner() throws Exception {
+      protected PyDocTestProcessRunner createProcessRunner() {
         return new PyDocTestProcessRunner("test2.py", 0);
       }
 

@@ -33,7 +33,7 @@ import static org.junit.Assert.assertTrue;
 public class ExtraModelBuilderTest {
 
   @Test
-  public void testVersionMatching() throws Exception {
+  public void testVersionMatching() {
 
     assertTrue(isMatching("1.8", TestModelBuilderService_v_1_8.class));
     assertTrue(isMatching("1.8-rc-1", TestModelBuilderService_v_1_8.class));

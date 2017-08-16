@@ -26,7 +26,7 @@ import java.util.ArrayList;
 
 import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertTrue;
-import static junit.framework.TestCase.*;
+import static junit.framework.TestCase.assertFalse;
 
 public class JdkBundleTest {
 
@@ -41,7 +41,7 @@ public class JdkBundleTest {
   }
 
   @Test
-  public void testJdk6OnMac() throws Exception {
+  public void testJdk6OnMac() {
     if (!SystemInfo.isMac) return;
 
     boolean testPassed;
@@ -84,7 +84,7 @@ public class JdkBundleTest {
   }
 
   @Test
-  public void testJre7OnMac() throws Exception {
+  public void testJre7OnMac() {
     if (!SystemInfo.isMac || !"true".equals(System.getProperty("idea.jre.check"))) return;
 
     File standardJdkLocationDirectory = new File(STANDARD_JDK_LOCATION_ON_MAC_OS_X);
@@ -113,7 +113,7 @@ public class JdkBundleTest {
     }
   }
 
-  public void doTestCreateBundle(File homeJDK) throws Exception {
+  public void doTestCreateBundle(File homeJDK) {
     if (!new File(homeJDK, "lib/tools.jar").exists()) return; // Skip pure jre
 
     File bootJDK = SystemInfo.isMac ? homeJDK.getParentFile().getParentFile() : homeJDK;
@@ -139,7 +139,7 @@ public class JdkBundleTest {
   }
 
   @Test
-  public void testCreateBundle() throws Exception {
+  public void testCreateBundle() {
     File home = new File(System.getProperty("java.home"));
 
     doTestCreateBundle(home);
@@ -148,7 +148,7 @@ public class JdkBundleTest {
   }
 
   @Test
-  public void testCreateBoot() throws Exception {
+  public void testCreateBoot() {
     File homeJDK = new File(System.getProperty("java.home")).getParentFile();
 
     if (!new File(homeJDK, "lib/tools.jar").exists()) return; // Skip pure jre

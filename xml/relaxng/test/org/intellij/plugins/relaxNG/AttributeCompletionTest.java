@@ -25,31 +25,31 @@ public class AttributeCompletionTest extends HighlightingTestBase {
     return "completion";
   }
 
-  public void testAttributeCompletion1() throws Throwable {
+  public void testAttributeCompletion1() {
     doTestCompletion("attribute-completion-1.xml", new String[]{ "foo" });
   }
 
-  public void testAttributeCompletion2() throws Throwable {
+  public void testAttributeCompletion2() {
     doTestCompletion("attribute-completion-2.xml", new String[]{ "1.0" });
   }
 
-  public void testAttributeCompletion3() throws Throwable {
+  public void testAttributeCompletion3() {
     doTestCompletion("attribute-completion-3.xml", "1.0", "2.0");
   }
 
-  public void testAttributeCompletion4() throws Throwable {
+  public void testAttributeCompletion4() {
     doTestCompletion("attribute-completion-4.xml", "1.0", "2.0");
   }
 
-  public void testAttributeCompletion5() throws Throwable {
+  public void testAttributeCompletion5() {
     doTestCompletion("attribute-completion-5.xml", "foo", "bar");
   }
 
-  public void testAttributeCompletion6() throws Throwable {
+  public void testAttributeCompletion6() {
     doTestCompletion("attribute-completion-6.xml", "p:foo", "p:bar");
   }
 
-  public void testAttrCombine() throws Throwable {
+  public void testAttrCombine() {
     doTestCompletion("attr-combine.xml", "foo", "bar");
   }
 }

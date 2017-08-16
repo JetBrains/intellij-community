@@ -103,7 +103,7 @@ public class PythonCodeInsightSanityTest extends PyEnvTestCase {
     final String subfolder = "sanity";
     runTest(new PyExecutionFixtureTestTask(subfolder) {
       @Override
-      public void runTestOn(String sdkHome) throws Exception {
+      public void runTestOn(String sdkHome) {
         ApplicationManager.getApplication().invokeAndWait(() -> {
           final Pair<String, CodeInsightTestFixture> pathAndFixture =
             Pair.create(new File(myFixture.getTestDataPath(), subfolder).getPath(), myFixture);

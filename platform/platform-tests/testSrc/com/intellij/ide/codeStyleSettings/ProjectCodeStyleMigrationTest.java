@@ -16,21 +16,16 @@
 package com.intellij.ide.codeStyleSettings;
 
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.LegacyCodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.ProjectCodeStyleSettingsManager;
-import com.intellij.testFramework.LightProjectDescriptor;
 import org.jdom.Document;
 import org.jdom.Element;
-import org.jdom.JDOMException;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.IOException;
 
 import static com.intellij.psi.codeStyle.CodeStyleScheme.CODE_STYLE_TAG_NAME;
 
@@ -53,7 +48,7 @@ public class ProjectCodeStyleMigrationTest extends CodeStyleTestCase {
   }
 
   @SuppressWarnings("deprecation")
-  public void testMigrateDefault() throws IOException {
+  public void testMigrateDefault() {
     CodeStyleSettingsManager settingsManager = CodeStyleSettingsManager.getInstance(getProject());
     assertInstanceOf(settingsManager, ProjectCodeStyleSettingsManager.class);
     CodeStyleSettings projectSettings = settingsManager.getCurrentSettings();
@@ -65,7 +60,7 @@ public class ProjectCodeStyleMigrationTest extends CodeStyleTestCase {
   }
 
   @SuppressWarnings("deprecation")
-  public void testMigrateChanged() throws IOException {
+  public void testMigrateChanged() {
     CodeStyleSettingsManager settingsManager = CodeStyleSettingsManager.getInstance(getProject());
     assertInstanceOf(settingsManager, ProjectCodeStyleSettingsManager.class);
     CodeStyleSettings projectSettings = settingsManager.getCurrentSettings();

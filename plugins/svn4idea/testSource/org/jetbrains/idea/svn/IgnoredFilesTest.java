@@ -83,7 +83,7 @@ public class IgnoredFilesTest extends Svn17TestCase {
   }
 
   @After
-  public void tearDown() throws Exception {
+  public void tearDown() {
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       try {
         myVcsManager.unregisterVcs(myVcs);

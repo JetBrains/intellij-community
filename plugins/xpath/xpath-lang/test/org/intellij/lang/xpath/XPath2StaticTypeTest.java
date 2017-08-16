@@ -22,7 +22,7 @@ import org.intellij.lang.xpath.psi.XPathType;
 
 public class XPath2StaticTypeTest extends TestCase {
 
-  public void testStatic() throws Throwable {
+  public void testStatic() {
     assertTrue(XPathType.isAssignable(XPath2Type.NODE, XPath2Type.ITEM));
 
     assertFalse(XPathType.isAssignable(XPath2Type.NODE, XPath2Type.STRING));

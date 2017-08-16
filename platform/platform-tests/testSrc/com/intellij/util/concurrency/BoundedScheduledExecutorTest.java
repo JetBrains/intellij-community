@@ -111,7 +111,7 @@ public class BoundedScheduledExecutorTest extends TestCase {
     assertTrue(executor.awaitTermination(100, TimeUnit.SECONDS));
   }
 
-  public void testEarlyCancelPreventsRunning() throws ExecutionException, InterruptedException {
+  public void testEarlyCancelPreventsRunning() throws InterruptedException {
     AtomicBoolean run = new AtomicBoolean();
     BoundedScheduledExecutorService executor = createBoundedScheduledExecutor(AppExecutorUtil.getAppExecutorService(), 1);
 
@@ -208,7 +208,7 @@ public class BoundedScheduledExecutorTest extends TestCase {
   }
 
 
-  public void testShutdownNowMustCancel() throws ExecutionException, InterruptedException {
+  public void testShutdownNowMustCancel() throws InterruptedException {
     BoundedScheduledExecutorService executor = createBoundedScheduledExecutor(AppExecutorUtil.getAppExecutorService(), 1);
     int N = 100000;
     StringBuffer log = new StringBuffer(N*4);
@@ -243,7 +243,7 @@ public class BoundedScheduledExecutorTest extends TestCase {
     assertTrue(executor.awaitTermination(100, TimeUnit.SECONDS));
   }
 
-  public void testShutdownMustDisableSubmit() throws ExecutionException, InterruptedException {
+  public void testShutdownMustDisableSubmit() throws InterruptedException {
     BoundedScheduledExecutorService executor = createBoundedScheduledExecutor(AppExecutorUtil.getAppExecutorService(), 1);
     int N = 100000;
     StringBuffer log = new StringBuffer(N*4);

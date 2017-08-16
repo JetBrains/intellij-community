@@ -204,7 +204,7 @@ public class PyStubsTest extends PyTestCase {
 
     new WriteCommandAction(myFixture.getProject(), fileImpl) {
       @Override
-      protected void run(@NotNull final Result result) throws Throwable {
+      protected void run(@NotNull final Result result) {
         pyClass.setName("RenamedClass");
         assertEquals("RenamedClass", pyClass.getName());
       }
@@ -215,7 +215,7 @@ public class PyStubsTest extends PyTestCase {
 
     new WriteCommandAction(myFixture.getProject(), fileImpl) {
       @Override
-      protected void run(@NotNull Result result) throws Throwable {
+      protected void run(@NotNull Result result) {
         ((SingleRootFileViewProvider)fileImpl.getViewProvider()).onContentReload();
       }
     }.execute();

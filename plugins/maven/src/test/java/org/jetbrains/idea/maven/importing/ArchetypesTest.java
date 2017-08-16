@@ -29,7 +29,7 @@ import java.util.Collections;
 import java.util.Map;
 
 public class ArchetypesTest extends MavenTestCase {
-  public void testGenerating() throws Exception {
+  public void testGenerating() {
     if (!hasMavenInstallation()) return;
 
     File dir = new File(myDir.getPath(), "generated");

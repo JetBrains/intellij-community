@@ -103,7 +103,7 @@ public class RollbackTest extends BaseLineStatusTrackerTestCase{
     doTestRollback("\n1\n2\n3\n4\n5\n6\n7", () -> deleteString(5, 13), Range.DELETED);
   }
 
-  public void testRollbackEmptyLastLineDeletion() throws FilesTooBigForDiffException {
+  public void testRollbackEmptyLastLineDeletion() {
     String text1 = "1\n2\n3\n\n";
     String text2 = "1\n2\n3\n";
     createDocument(text2, text1);

@@ -129,7 +129,7 @@ public class RecentProjectsTest extends PlatformTestCase {
     Assert.assertEquals(Arrays.toString(groups), Arrays.toString(recentGroups.toArray()));
   }
 
-  private static String createAndOpenProject(String name) throws IOException, JDOMException, InterruptedException {
+  private static String createAndOpenProject(String name) throws IOException, JDOMException {
     Project project = null;
     try {
       File path = PlatformTestCase.createTempDir(name);

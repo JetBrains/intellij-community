@@ -40,7 +40,7 @@ public final class PyLineMarkerProviderTest extends PyTestCase {
   /**
    * Checks method has "up" arrow when overrides, and this arrow works
    */
-  public void testOverriding() throws Exception {
+  public void testOverriding() {
     myFixture.copyDirectoryToProject("lineMarkerTest", "");
     myFixture.configureByFile("spam.py");
 
