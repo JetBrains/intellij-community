@@ -308,9 +308,9 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
           for (ResolveResult result : referenceExpression.getReference(resolveContext).multiResolve(false)) {
             final PsiElement element = result.getElement();
             if (element instanceof PyClass) {
-              final String name = ((PyClass)element).getName();
-              if (name != null) {
-                return PyDocumentationLink.toAncestorOfContainingClass(name);
+              final String qualifiedName = ((PyClass)element).getQualifiedName();
+              if (qualifiedName != null) {
+                return PyDocumentationLink.toPossibleClass(escaper.apply(expression.getText()), qualifiedName, element, context);
               }
             }
           }
@@ -323,7 +323,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
         if (indexExpression != null) {
           return describeSuperClass(operand, escaper, true, context) +
                  escaper.apply("[") +
-                 escaper.apply(indexExpression.getText()) +
+                 describeSuperClass(indexExpression, escaper, true, context) +
                  escaper.apply("]");
         }
       }

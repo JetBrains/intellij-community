@@ -28,18 +28,12 @@ import com.jetbrains.python.psi.types.TypeEvalContext
 object PyDocumentationLink {
 
   private const val LINK_TYPE_CLASS = "#class#"
-  private const val LINK_TYPE_PARENT = "#parent#"
   private const val LINK_TYPE_PARAM = "#param#"
   private const val LINK_TYPE_TYPENAME = "#typename#"
 
   @JvmStatic
   fun toContainingClass(content: String?): String {
     return "<a href=\"${DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL}$LINK_TYPE_CLASS\">$content</a>"
-  }
-
-  @JvmStatic
-  fun toAncestorOfContainingClass(ancestor: String?): String {
-    return "<a href=\"${DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL}$LINK_TYPE_PARENT$ancestor\">$ancestor</a>"
   }
 
   @JvmStatic
@@ -52,11 +46,14 @@ object PyDocumentationLink {
   }
 
   @JvmStatic
-  fun toPossibleClass(type: String, anchor: PsiElement, context: TypeEvalContext): String {
-    val pyType = PyTypeParser.getTypeByName(anchor, type, context)
+  fun toPossibleClass(type: String, anchor: PsiElement, context: TypeEvalContext) = toPossibleClass(type, type, anchor, context)
+
+  @JvmStatic
+  fun toPossibleClass(content: String, qualifiedName: String, anchor: PsiElement, context: TypeEvalContext): String {
+    val pyType = PyTypeParser.getTypeByName(anchor, qualifiedName, context)
     return when (pyType) {
-      is PyClassType -> "<a href=\"${DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL}$LINK_TYPE_TYPENAME$type\">$type</a>"
-      else -> type
+      is PyClassType -> "<a href=\"${DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL}$LINK_TYPE_TYPENAME$qualifiedName\">$content</a>"
+      else -> content
     }
   }
 
@@ -67,9 +64,6 @@ object PyDocumentationLink {
     }
     else if (link == LINK_TYPE_PARAM) {
       parameterPossibleClass(element, context)
-    }
-    else if (link.startsWith(LINK_TYPE_PARENT)) {
-      ancestorOfContainingClass(element, link.substring(LINK_TYPE_PARENT.length), context)
     }
     else if (link.startsWith(LINK_TYPE_TYPENAME)) {
       possibleClass(link.substring(LINK_TYPE_TYPENAME.length), element, context)
@@ -86,12 +80,6 @@ object PyDocumentationLink {
       is PyFunction -> element.containingClass
       else -> PsiTreeUtil.getParentOfType(element, PyClass::class.java)
     }
-  }
-
-  @JvmStatic
-  private fun ancestorOfContainingClass(element: PsiElement, ancestor: String, context: TypeEvalContext): PyClass? {
-    val ancestors = containingClass(element)?.getAncestorClasses(context)
-    return ancestors?.find { it.name == ancestor }
   }
 
   @JvmStatic

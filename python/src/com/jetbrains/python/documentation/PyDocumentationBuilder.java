@@ -392,8 +392,14 @@ public class PyDocumentationBuilder {
         if (inheritedDoc.length() > 1) {
           myEpilog.addItem(BR).addItem(BR);
           final String ancestorName = ancestor.getName();
-          final String ancestorLink =
-            pyClass == ancestor ? PyDocumentationLink.toContainingClass(ancestorName) : PyDocumentationLink.toAncestorOfContainingClass(ancestorName);
+          final String ancestorQualifiedName = ancestor.getQualifiedName();
+          final TypeEvalContext context = TypeEvalContext.userInitiated(pyFunction.getProject(), pyFunction.getContainingFile());
+
+          final String ancestorLink = pyClass == ancestor
+                                      ? PyDocumentationLink.toContainingClass(ancestorName)
+                                      : ancestorName != null && ancestorQualifiedName != null
+                                        ? PyDocumentationLink.toPossibleClass(ancestorName, ancestorQualifiedName, pyClass, context)
+                                        : null;
           if (isFromClass) {
             myEpilog.addItem(PyBundle.message("QDOC.copied.from.class.$0", ancestorLink));
           }
