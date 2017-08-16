@@ -39,7 +39,10 @@ import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.*
-import com.intellij.util.containers.*
+import com.intellij.util.containers.ConcurrentList
+import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.catch
+import com.intellij.util.containers.filterSmart
 import com.intellij.util.io.*
 import com.intellij.util.messages.MessageBus
 import com.intellij.util.text.UniqueNameGenerator
@@ -849,15 +852,14 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
         break
       }
     }
-    if (toReplace == -1) {
-      schemes.add(scheme)
-    }
-    else if (replaceExisting || !processor.isExternalizable(scheme)) {
-      schemes.set(toReplace, scheme)
-    }
-    else {
-      (scheme as ExternalizableScheme).renameScheme(UniqueNameGenerator.generateUniqueName(scheme.name, collectExistingNames(schemes)))
-      schemes.add(scheme)
+
+    when {
+      toReplace == -1 -> schemes.add(scheme)
+      replaceExisting || !processor.isExternalizable(scheme) -> schemes.set(toReplace, scheme)
+      else -> {
+        (scheme as ExternalizableScheme).renameScheme(UniqueNameGenerator.generateUniqueName(scheme.name, collectExistingNames(schemes)))
+        schemes.add(scheme)
+      }
     }
 
     if (processor.isExternalizable(scheme) && filesToDelete.isNotEmpty()) {
