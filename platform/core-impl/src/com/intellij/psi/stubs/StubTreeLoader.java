@@ -70,6 +70,8 @@ public abstract class StubTreeLoader {
 
   @NotNull
   public RuntimeException stubTreeAndIndexDoNotMatch(@NotNull String _message, @NotNull ObjectStubTree stubTree, @NotNull PsiFileWithStubSupport psiFile) {
+    StubTextInconsistencyException.checkStubTextConsistency(psiFile);
+    
     VirtualFile file = psiFile.getViewProvider().getVirtualFile();
     StubTree stubTreeFromIndex = (StubTree)readFromVFile(psiFile.getProject(), file);
     boolean compiled = psiFile instanceof PsiCompiledElement;
