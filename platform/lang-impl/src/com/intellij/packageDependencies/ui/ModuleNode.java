@@ -15,14 +15,16 @@
  */
 package com.intellij.packageDependencies.ui;
 
-import com.intellij.openapi.module.ModuleGrouper;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleGrouper;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.NavigatableWithText;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.IconUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,7 +68,25 @@ public class ModuleNode extends PackageDependenciesNode implements NavigatableWi
 
   @Override
   public Icon getIcon() {
-    return myModule.isDisposed() ? super.getIcon() : ModuleType.get(myModule).getIcon();
+    // Android Studio: Use icons from module
+    return myModule.isDisposed() ? super.getIcon() : getModuleIcon();
+  }
+
+  /**
+   * Android Studio: Try to get Icon from file based on icon providers, if none is returned by providers, then use icon depending on module type
+   *
+   * @return Icon based on module type.
+   */
+  private Icon getModuleIcon() {
+    Icon icon = null;
+    VirtualFile virtualFile = myModule.getModuleFile();
+    if (virtualFile != null) {
+      icon = IconUtil.getIcon(virtualFile, 0, myModule.getProject());
+    }
+    if (icon == null) {
+      icon = ModuleType.get(myModule).getIcon();
+    }
+    return icon;
   }
 
   @Override

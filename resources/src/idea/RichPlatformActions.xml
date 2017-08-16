@@ -33,15 +33,17 @@
     <action id="RerunFailedTests" class="com.intellij.execution.testframework.actions.RerunFailedTestsAction"
             icon="AllIcons.RunConfigurations.RerunFailedTests"/>
 
+    <!-- Android Studio: Use Android Studio icon -->
     <action id="FileChooser.GotoModule" class="com.intellij.openapi.fileChooser.actions.GotoModuleDirectory"
-            icon="AllIcons.Nodes.Module">
+            icon="StudioIcons.Shell.Filetree.ANDROID_MODULE">
       <add-to-group group-id="FileChooserToolbar" anchor="after" relative-to-action="FileChooser.GotoProject"/>
     </action>
 
 
     <group id="NewGroup1">
+      <!-- Android Studio: Use Android Studio icon -->
       <action id="NewModuleInGroup" class="com.intellij.openapi.roots.ui.configuration.actions.NewModuleInGroupAction"
-              icon="AllIcons.Nodes.Module"/>
+              icon="StudioIcons.Shell.Filetree.ANDROID_MODULE"/>
 
       <add-to-group group-id="NewGroup" anchor="first"/>
     </group>
