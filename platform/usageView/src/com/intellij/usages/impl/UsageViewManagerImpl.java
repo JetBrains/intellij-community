@@ -128,6 +128,9 @@ public class UsageViewManagerImpl extends UsageViewManager {
                                     @NotNull final UsageViewPresentation presentation,
                                     @NotNull final FindUsagesProcessPresentation processPresentation,
                                     @Nullable final UsageViewStateListener listener) {
+    if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
+      throw new IllegalStateException("Can't start find usages from under write action. Please consider Application.invokeLater() it instead.");
+    }
     final SearchScope searchScopeToWarnOfFallingOutOf = getMaxSearchScopeToWarnOfFallingOutOf(searchFor);
     final AtomicReference<UsageViewImpl> usageViewRef = new AtomicReference<>();
     long start = System.currentTimeMillis();
