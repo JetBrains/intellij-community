@@ -1256,6 +1256,8 @@ public class ListUtils {
   void testInstanceMagicMethod() throws Exception { doTest() }
 
   void testNoDotOverwrite() throws Exception { doTest('.') }
+  
+  void testNoModifierListOverwrite() { doTest('\t') }
 
   void testStaticInnerExtendingOuter() throws Exception { doTest() }
 
