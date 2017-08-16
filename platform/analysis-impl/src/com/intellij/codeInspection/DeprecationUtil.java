@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,12 @@
  */
 package com.intellij.codeInspection;
 
-import org.jetbrains.annotations.NonNls;
-
 public class DeprecationUtil {
-  @NonNls public static final String DEPRECATION_SHORT_NAME = "Deprecation";
-  @NonNls public static final String DEPRECATION_DISPLAY_NAME = InspectionsBundle.message("inspection.deprecated.display.name");
-  @NonNls public static final String DEPRECATION_ID = "deprecation";
+  public static final String DEPRECATION_SHORT_NAME = "Deprecation";
+  public static final String DEPRECATION_DISPLAY_NAME = InspectionsBundle.message("inspection.deprecated.display.name");
+  public static final String DEPRECATION_ID = "deprecation";
 
-  @NonNls public static final String FOR_REMOVAL_SHORT_NAME = "MarkedForRemoval";
-  @NonNls public static final String FOR_REMOVAL_DISPLAY_NAME = InspectionsBundle.message("inspection.marked.for.removal.display.name");
-  @NonNls public static final String FOR_REMOVAL_ID = "removal";
+  public static final String FOR_REMOVAL_SHORT_NAME = "MarkedForRemoval";
+  public static final String FOR_REMOVAL_DISPLAY_NAME = InspectionsBundle.message("inspection.marked.for.removal.display.name");
+  public static final String FOR_REMOVAL_ID = "removal";
 }
