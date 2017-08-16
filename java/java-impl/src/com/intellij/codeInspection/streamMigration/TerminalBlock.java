@@ -113,14 +113,36 @@ class TerminalBlock {
 
   @Nullable
   private TerminalBlock extractFilter() {
-    if(getSingleStatement() instanceof PsiIfStatement) {
-      PsiIfStatement ifStatement = (PsiIfStatement)getSingleStatement();
+    PsiStatement single = getSingleStatement();
+    if (single instanceof PsiIfStatement) {
+      PsiIfStatement ifStatement = (PsiIfStatement)single;
       if(ifStatement.getElseBranch() == null && ifStatement.getCondition() != null) {
         PsiStatement thenBranch = ifStatement.getThenBranch();
         if(thenBranch != null) {
           return new TerminalBlock(this, new FilterOp(ifStatement.getCondition(), myVariable, false), myVariable, thenBranch);
         }
       }
+    }
+    else if (single instanceof PsiLoopStatement) {
+      // Try extract nested filter like this:
+      // for(List subList : list) for(T t : subList) if(condition.test(t)) { ...; break; }
+      // if t is not used in "...", then this could be converted to
+      // list.stream().filter(subList -> subList.stream().anyMatch(condition)).forEach(subList -> ...)
+      PsiLoopStatement loopStatement = (PsiLoopStatement)single;
+      StreamSource source = StreamSource.tryCreate(loopStatement);
+      final PsiStatement body = loopStatement.getBody();
+      if (source == null || body == null) return null;
+      TerminalBlock innerTb = from(source, body);
+      FilterOp innerFilter = innerTb.getLastOperation(FilterOp.class);
+      if (innerFilter == null) return null;
+      if (!VariableAccessUtils.variableIsUsed(myVariable, body)) return null;
+      PsiStatement[] statements = innerTb.getStatements();
+      PsiStatement lastStatement = statements[statements.length - 1];
+      PsiReturnStatement returnStatement = tryCast(lastStatement, PsiReturnStatement.class);
+      if (returnStatement == null) return null;
+      if (!ExpressionUtils.isReferenceTo(returnStatement.getReturnValue(), getVariable())) return null;
+      return new TerminalBlock(this, new CompoundFilterOp(source, myVariable, innerFilter),
+                               myVariable, statements);
     }
     if(myStatements.length >= 1) {
       PsiStatement first = myStatements[0];
@@ -179,7 +201,8 @@ class TerminalBlock {
           PsiStatement lastStatement = statements[statements.length-1];
           if (lastStatement instanceof PsiBreakStatement && op.breaksMe((PsiBreakStatement)lastStatement) &&
               ReferencesSearch.search(withFlatMapFilter.getVariable(), new LocalSearchScope(statements)).findFirst() == null) {
-            return new TerminalBlock(this, new CompoundFilterOp((FilterOp)withFlatMapFilter.getLastOperation(), op),
+            FilterOp filterOp = (FilterOp)withFlatMapFilter.getLastOperation();
+            return new TerminalBlock(this, new CompoundFilterOp(op.getSource(), op.getVariable(), filterOp),
                                      myVariable, Arrays.copyOfRange(statements, 0, statements.length-1));
           }
         }

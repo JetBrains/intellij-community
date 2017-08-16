@@ -743,30 +743,33 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     }
   }
 
-  static class CompoundFilterOp extends FilterOp {
-    private final FlatMapOp myFlatMapOp;
+   static class CompoundFilterOp extends FilterOp {
+    private final PsiExpression myMatchExpression;
+    private final StreamSource mySource;
     private final PsiVariable myMatchVariable;
 
-    CompoundFilterOp(FilterOp source, FlatMapOp flatMapOp) {
-      super(source.getExpression(), flatMapOp.myVariable, source.myNegated);
-      myMatchVariable = source.myVariable;
-      myFlatMapOp = flatMapOp;
+    protected CompoundFilterOp(StreamSource source, PsiVariable matchVariable, FilterOp sourceFilter) {
+      super(sourceFilter.getExpression(), matchVariable, sourceFilter.isNegated());
+      myMatchExpression = sourceFilter.getExpression();
+      mySource = source;
+      myMatchVariable = sourceFilter.getVariable();
     }
+
 
     @Override
     PsiExpression makeIntermediateExpression(PsiElementFactory factory) {
-      return factory.createExpressionFromText(myFlatMapOp.getStreamExpression() + ".anyMatch(" +
-                                              LambdaUtil.createLambda(myMatchVariable, myExpression) + ")", myExpression);
+      return factory.createExpressionFromText(mySource.createReplacement() + ".anyMatch(" +
+                                              LambdaUtil.createLambda(myMatchVariable, myMatchExpression) + ")", myMatchExpression);
     }
 
     @Override
     boolean isWriteAllowed(PsiVariable variable, PsiExpression reference) {
-      return myFlatMapOp.isWriteAllowed(variable, reference);
+      return mySource.isWriteAllowed(variable, reference);
     }
 
     @Override
     StreamEx<PsiExpression> expressions() {
-      return StreamEx.of(myExpression, myFlatMapOp.myExpression);
+      return StreamEx.of(myMatchExpression, mySource.getExpression());
     }
   }
 
@@ -818,6 +821,10 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
         return ".mapToObj(" + lambda + ")." + operation + "(" + CommonClassNames.JAVA_UTIL_FUNCTION_FUNCTION + ".identity())";
       }
       return "." + operation + "(" + lambda + ")";
+    }
+
+    public StreamSource getSource() {
+      return mySource;
     }
 
     @NotNull
