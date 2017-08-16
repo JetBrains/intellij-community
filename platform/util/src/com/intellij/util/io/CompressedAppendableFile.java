@@ -35,7 +35,7 @@ import java.util.Arrays;
  */
 public class CompressedAppendableFile {
   private final File myBaseFile;
-  @SuppressWarnings({"FieldCanBeLocal", "unused"}) private final LowMemoryWatcher myLowMemoryWatcher;
+  private final LowMemoryWatcher myLowMemoryWatcher;
 
   // force will clear the buffer and reset the position
   private byte[] myNextChunkBuffer;
@@ -74,6 +74,10 @@ public class CompressedAppendableFile {
       @Override
       public void run() {
         dropCaches();
+        
+        synchronized (ourDecompressedCache) {
+          ourDecompressedCache.clear();
+        }
       }
     });
   }
@@ -460,6 +464,7 @@ public class CompressedAppendableFile {
 
   public synchronized void dispose() {
     force();
+    myLowMemoryWatcher.stop();
   }
 
   public synchronized long length() {
@@ -482,19 +487,9 @@ public class CompressedAppendableFile {
 
   private static class FileChunkReadCache extends SLRUMap<FileChunkKey<CompressedAppendableFile>, byte[]> {
     private final FileChunkKey<CompressedAppendableFile> myKey = new FileChunkKey<CompressedAppendableFile>(null, 0);
-    @SuppressWarnings({"FieldCanBeLocal", "unused"}) private final LowMemoryWatcher myLowMemoryWatcher;
 
     FileChunkReadCache() {
       super(64, 64);
-
-      myLowMemoryWatcher = LowMemoryWatcher.register(new Runnable() {
-        @Override
-        public void run() {
-          synchronized (ourDecompressedCache) {
-            ourDecompressedCache.clear();
-          }
-        }
-      });
     }
 
     @NotNull
