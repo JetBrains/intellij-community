@@ -125,7 +125,7 @@ public class SingleCommittedListProvider {
 
   // return changed path, if any
   private FilePath searchFromHead(@NotNull SVNURL url) throws VcsException {
-    final SvnCopyPathTracker pathTracker = new SvnCopyPathTracker(repositoryUrl.toDecodedString(), repositoryRelativeUrl);
+    SvnCopyPathTracker pathTracker = new SvnCopyPathTracker(repositoryUrl, repositoryRelativeUrl);
     SvnTarget target = SvnTarget.fromURL(url);
 
     myVcs.getFactory(target).createHistoryClient()
