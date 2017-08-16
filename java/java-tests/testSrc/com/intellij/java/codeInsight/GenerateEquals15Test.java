@@ -37,11 +37,11 @@ public class GenerateEquals15Test extends GenerateEqualsTestCase {
   }
 
   public void testDifferentTypesAllNotNull() {
-    doTest(Functions.id(), Functions.id(), Functions.id(), true);
+    doTestWithTemplate(EqualsHashCodeTemplatesManager.INTELLI_J_DEFAULT);
   }
 
   public void testDifferentTypesSuperEqualsAndHashCode() {
-    doTest(Functions.id(), Functions.id(), Functions.id(), true);
+    doTestWithTemplate(EqualsHashCodeTemplatesManager.INTELLI_J_DEFAULT);
   }
 
   public void testDifferentTypesNoDouble() {
@@ -49,7 +49,7 @@ public class GenerateEquals15Test extends GenerateEqualsTestCase {
   }
 
   public void testNameConflicts() {
-    doTest(Functions.id(), Functions.id(), Functions.id(), true);
+    doTestWithTemplate(EqualsHashCodeTemplatesManager.INTELLI_J_DEFAULT);
   }
 
   public void testClassWithTypeParams() {

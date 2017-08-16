@@ -19,24 +19,27 @@
  */
 package org.jetbrains.java.generate.template;
 
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.Function;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.generate.element.FieldElement;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.lang.reflect.Method;
 import java.util.*;
 
 public abstract class TemplatesManager implements PersistentStateComponent<TemplatesState> {
@@ -93,14 +96,28 @@ public abstract class TemplatesManager implements PersistentStateComponent<Templ
   }
 
   public TemplateResource getDefaultTemplate() {
-        for (TemplateResource template : getAllTemplates()) {
-            if (Comparing.equal(template.getFileName(), myState.defaultTempalteName)) {
-                return template;
-            }
-        }
+    TemplateResource resource = findTemplateByName(myState.defaultTempalteName);
+    if (resource != null) return resource;
 
-        return getAllTemplates().iterator().next();
+    String initialTemplateName = getInitialTemplateName();
+    resource = initialTemplateName != null ? findTemplateByName(initialTemplateName) : null;
+    return ObjectUtils.notNull(resource, getAllTemplates().iterator().next());
+  }
+
+  protected String getInitialTemplateName () {
+    return null;
+  }
+
+  @Nullable
+  public TemplateResource findTemplateByName(String templateName) {
+    for (TemplateResource template : getAllTemplates()) {
+      if (Comparing.equal(template.getFileName(), templateName)) {
+        return template;
+      }
     }
+
+    return null;
+  }
 
 
     public void setDefaultTemplate(TemplateResource res) {
