@@ -18,7 +18,6 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.util.Key;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Consumer;
@@ -33,7 +32,6 @@ abstract class FoldRegionsTree {
   private final RangeMarkerTree<FoldRegionImpl> myMarkerTree;
   @NotNull private volatile CachedData myCachedData = new CachedData();
 
-  private static final Key<Boolean> VISIBLE = Key.create("visible.fold.region");
   private static final Comparator<FoldRegion> BY_END_OFFSET = Comparator.comparingInt(RangeMarker::getEndOffset);
   private static final Comparator<? super FoldRegion> BY_END_OFFSET_REVERSE = Collections.reverseOrder(BY_END_OFFSET);
 
@@ -77,13 +75,13 @@ abstract class FoldRegionsTree {
       public boolean process(int offset, @NotNull FoldRegionImpl region, boolean atStart, @NotNull Collection<FoldRegionImpl> overlapping) {
         if (atStart) {
           if (sameRange(region, lastRegion)) {
-            if (region.getUserData(VISIBLE) == null || lastRegion.getUserData(VISIBLE) != null && region.isExpanded()) {
+            if (region.isExpanded()) {
               duplicatesToKill.add(region);
               return true;
             }
             else {
               duplicatesToKill.add(lastRegion);
-              if (!visible.isEmpty() && lastRegion == visible.get(visible.size() - 1)) removeFromVisible(visible.size() - 1);
+              if (!visible.isEmpty() && lastRegion == visible.get(visible.size() - 1)) visible.remove(visible.size() - 1);
               if (lastRegion == lastCollapsedRegion) lastCollapsedRegion = null;
             }
           }
@@ -95,10 +93,6 @@ abstract class FoldRegionsTree {
               lastCollapsedRegion = region;
             }
             visible.add(region);
-            region.putUserData(VISIBLE, Boolean.TRUE);
-          }
-          else {
-            region.putUserData(VISIBLE, null);
           }
         }
         return true;
@@ -106,13 +100,9 @@ abstract class FoldRegionsTree {
 
       private void hideContainedRegions(FoldRegion region) {
         for (int i = visible.size() - 1; i >= 0; i--) {
-          if (region.getStartOffset() == visible.get(i).getStartOffset()) removeFromVisible(i);
+          if (region.getStartOffset() == visible.get(i).getStartOffset()) visible.remove(i);
           else break;
         }
-      }
-
-      private void removeFromVisible(int index) {
-        visible.remove(index).putUserData(VISIBLE, null);
       }
 
       private boolean sameRange(@NotNull FoldRegion region, @Nullable FoldRegion otherRegion) {
