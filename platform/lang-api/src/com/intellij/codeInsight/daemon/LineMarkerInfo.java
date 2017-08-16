@@ -18,6 +18,7 @@ package com.intellij.codeInsight.daemon;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.SeparatorPlacement;
@@ -36,6 +37,7 @@ import javax.swing.*;
 import java.awt.*;
 
 public class LineMarkerInfo<T extends PsiElement> {
+  private static final Logger LOG = Logger.getInstance(LineMarkerInfo.class);
   protected final Icon myIcon;
   private final SmartPsiElementPointer<T> elementRef;
   public final int startOffset;
@@ -78,10 +80,17 @@ public class LineMarkerInfo<T extends PsiElement> {
     endOffset = range.getEndOffset();
     this.updatePass = 11; //Pass.LINE_MARKERS;
     PsiElement firstChild;
-    if (ApplicationManager.getApplication().isUnitTestMode() && !(element instanceof PsiFile) && (firstChild = element.getFirstChild()) != null) {
-      throw new IllegalArgumentException("LineMarker is supposed to be registered for leaf elements only, but got: "+
-                element+ " (" +element.getClass()+") instead. First child: "+ firstChild+ " (" +firstChild.getClass()+")"+
-                "\nPlease see LineMarkerProvider#getLineMarkerInfo(PsiElement) javadoc for detailed explanations");
+    if (!(element instanceof PsiFile) && (firstChild = element.getFirstChild()) != null) {
+      String msg = "Performance warning: LineMarker is supposed to be registered for leaf elements only, but got: " +
+                   element + " (" + element.getClass() + ") instead. First child: " +
+                   firstChild + " (" + firstChild.getClass() + ")" +
+                   "\nPlease see LineMarkerProvider#getLineMarkerInfo(PsiElement) javadoc for detailed explanations.";
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        LOG.error(msg);
+      }
+      else {
+        LOG.warn(msg);
+      }
     }
   }
 
