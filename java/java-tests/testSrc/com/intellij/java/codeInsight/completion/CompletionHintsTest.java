@@ -29,8 +29,6 @@ import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.testFramework.fixtures.EditorHintFixture;
 import com.intellij.util.ui.UIUtil;
 
@@ -40,16 +38,15 @@ import java.util.concurrent.locks.LockSupport;
 import java.util.stream.Stream;
 
 public class CompletionHintsTest extends LightFixtureCompletionTestCase {
-  private RegistryValue myRegistryValue = Registry.get("java.completion.argument.hints");
-  private boolean myStoredRegistryValue;
+  private boolean myStoredSettingValue;
   private EditorHintFixture myHintFixture;
   private int myStoredAutoPopupDelay;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myStoredRegistryValue = myRegistryValue.asBoolean();
-    myRegistryValue.setValue(true);
+    myStoredSettingValue = CodeInsightSettings.getInstance().COMPLETE_FUNCTION_PARAMETERS;
+    CodeInsightSettings.getInstance().COMPLETE_FUNCTION_PARAMETERS = true;
     myHintFixture = new EditorHintFixture(getTestRootDisposable());
     myStoredAutoPopupDelay = CodeInsightSettings.getInstance().PARAMETER_INFO_DELAY;
     CodeInsightSettings.getInstance().PARAMETER_INFO_DELAY = 100; // speed up tests
@@ -59,7 +56,7 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
   protected void tearDown() throws Exception {
     try {
       CodeInsightSettings.getInstance().PARAMETER_INFO_DELAY = myStoredAutoPopupDelay;
-      myRegistryValue.setValue(myStoredRegistryValue);
+      CodeInsightSettings.getInstance().COMPLETE_FUNCTION_PARAMETERS = myStoredSettingValue;
     }
     finally {
       super.tearDown();

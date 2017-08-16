@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.editorActions;
 
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.CompletionMemory;
 import com.intellij.codeInsight.completion.JavaMethodCallElement;
 import com.intellij.codeInsight.hint.ParameterInfoController;
@@ -54,7 +55,7 @@ abstract class JavaMethodOverloadSwitchHandler extends EditorActionHandler {
     if (myOriginalHandler.isEnabled(editor, caret, dataContext)) return true;
 
     if (editor.getUserData(SWITCH_DISABLED) != null || 
-        !ParameterInfoController.areParametersHintsEnabledOnCompletion() || !ParameterInfoController.existsForEditor(editor)) return false;
+        !CodeInsightSettings.getInstance().COMPLETE_FUNCTION_PARAMETERS || !ParameterInfoController.existsForEditor(editor)) return false;
 
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) return false;
@@ -78,8 +79,8 @@ abstract class JavaMethodOverloadSwitchHandler extends EditorActionHandler {
   protected void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
     if (caret == null) caret = editor.getCaretModel().getPrimaryCaret();
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    if (project != null && editor.getUserData(SWITCH_DISABLED) == null && 
-        ParameterInfoController.areParametersHintsEnabledOnCompletion() && 
+    if (project != null && editor.getUserData(SWITCH_DISABLED) == null &&
+        CodeInsightSettings.getInstance().COMPLETE_FUNCTION_PARAMETERS && 
         ParameterInfoController.existsWithVisibleHintForEditor(editor, false)) {
       doSwitch(editor, caret, project);
     }
@@ -201,7 +202,7 @@ abstract class JavaMethodOverloadSwitchHandler extends EditorActionHandler {
     @Override
     public void update(AnActionEvent e) {
       Editor editor = e.getData(CommonDataKeys.EDITOR);
-      e.getPresentation().setEnabled(ParameterInfoController.areParametersHintsEnabledOnCompletion() && editor != null && 
+      e.getPresentation().setEnabled(CodeInsightSettings.getInstance().COMPLETE_FUNCTION_PARAMETERS && editor != null && 
                                      ParameterInfoController.existsWithVisibleHintForEditor(editor, false));
     }
 

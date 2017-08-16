@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.AutoPopupController;
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.util.MethodParenthesesHandler;
 import com.intellij.codeInsight.hint.ParameterInfoController;
 import com.intellij.codeInsight.hint.ShowParameterInfoContext;
@@ -307,7 +308,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     if (parameterOwner == null || !"()".equals(parameterOwner.getText()) ||
         parametersCount == 0 ||
         context.getCompletionChar() == Lookup.COMPLETE_STATEMENT_SELECT_CHAR || context.getCompletionChar() == Lookup.REPLACE_SELECT_CHAR ||
-        !ParameterInfoController.areParametersHintsEnabledOnCompletion()) {
+        !CodeInsightSettings.getInstance().COMPLETE_FUNCTION_PARAMETERS) {
       return;
     }
 

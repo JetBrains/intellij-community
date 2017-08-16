@@ -104,6 +104,8 @@ public abstract class UsefulTestCase extends TestCase {
 
     try {
       CodeInsightSettings defaultSettings = new CodeInsightSettings();
+      defaultSettings.COMPLETE_FUNCTION_PARAMETERS = true; // TODO [batrdmi] remove this hack along with the code in CodeInsightSettings 
+                                                           // constructor after migration from registry setting to UI is considered complete
       Element oldS = new Element("temp");
       defaultSettings.writeExternal(oldS);
       DEFAULT_SETTINGS_EXTERNALIZED = JDOMUtil.writeElement(oldS);

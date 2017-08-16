@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,14 @@
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.editorActions.SmartBackspaceMode;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializationException;
@@ -46,6 +48,16 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
     return ServiceManager.getService(CodeInsightSettings.class);
   }
 
+  public CodeInsightSettings() {
+    Application application = ApplicationManager.getApplication();
+    if (Registry.is("java.completion.argument.hints") ||
+        (application != null && application.isInternal()) && Registry.is("java.completion.argument.hints.internal")) {
+      COMPLETE_FUNCTION_PARAMETERS = true;
+      Registry.get("java.completion.argument.hints").setValue(false);
+      Registry.get("java.completion.argument.hints.internal").setValue(false);
+    }
+  }
+
   @Override
   @Nullable
   public CodeInsightSettings clone() {
@@ -57,6 +69,7 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
     }
   }
 
+  public boolean COMPLETE_FUNCTION_PARAMETERS;
   public boolean AUTO_POPUP_PARAMETER_INFO = true;
   public int PARAMETER_INFO_DELAY = 1000;
   public boolean AUTO_POPUP_JAVADOC_INFO;

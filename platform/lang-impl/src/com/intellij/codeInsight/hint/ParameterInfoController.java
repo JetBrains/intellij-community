@@ -17,6 +17,7 @@
 package com.intellij.codeInsight.hint;
 
 import com.intellij.codeInsight.AutoPopupController;
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager;
 import com.intellij.codeInsight.hints.ParameterHintsPassFactory;
 import com.intellij.codeInsight.lookup.Lookup;
@@ -384,7 +385,7 @@ public class ParameterInfoController implements Disposable {
   private void moveToParameterAtOffset(int offset) {
     PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
     PsiElement argsList = findArgumentList(file, offset, -1);
-    if (argsList == null && !areParametersHintsEnabledOnCompletion()) return;
+    if (argsList == null && !CodeInsightSettings.getInstance().COMPLETE_FUNCTION_PARAMETERS) return;
 
     if (!myHint.isVisible()) AutoPopupController.getInstance(myProject).autoPopupParameterInfo(myEditor, null);
     
@@ -429,7 +430,7 @@ public class ParameterInfoController implements Disposable {
     int currentParameterIndex =
       noDelimiter ? JBIterable.of(parameters).indexOf((o) -> o.getTextRange().containsOffset(offset)) :
       ParameterInfoUtils.getCurrentParameterIndex(argList.getNode(), offset, handler.getActualParameterDelimiterType());
-    if (areParametersHintsEnabledOnCompletion()) {
+    if (CodeInsightSettings.getInstance().COMPLETE_FUNCTION_PARAMETERS) {
       if (currentParameterIndex < 0 || currentParameterIndex >= parameters.length) return -1;
       if (offset >= argList.getTextRange().getEndOffset()) currentParameterIndex = isNext ? -1 : parameters.length;
       int prevOrNextParameterIndex = currentParameterIndex + (isNext ? 1 : -1);
@@ -565,18 +566,7 @@ public class ParameterInfoController implements Disposable {
   }
 
   public static boolean areParameterTemplatesEnabledOnCompletion() {
-    return Registry.is("java.completion.argument.live.template") && !areParametersHintsEnabledInternallyOnCompletion();
-  }
-
-  public static boolean areParametersHintsEnabledOnCompletion() {
-    return Registry.is("java.completion.argument.hints") && !Registry.is("java.completion.argument.live.template") || 
-           areParametersHintsEnabledInternallyOnCompletion();
-  }
-
-  private static boolean areParametersHintsEnabledInternallyOnCompletion() {
-    return Registry.is("java.completion.argument.hints.internal") && 
-           ApplicationManager.getApplication().isInternal() && 
-           !ApplicationManager.getApplication().isUnitTestMode();
+    return Registry.is("java.completion.argument.live.template") && !CodeInsightSettings.getInstance().COMPLETE_FUNCTION_PARAMETERS;
   }
 
   public class MyUpdateParameterInfoContext implements UpdateParameterInfoContext {
