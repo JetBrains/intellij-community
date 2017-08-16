@@ -41,7 +41,7 @@ public class PatchTest extends PatchTestCase {
 
   @Test
   public void testBasics() throws Exception {
-    Patch patch = createPatch();
+    Patch patch = createPatch(spec -> spec.setRenameRootDirectory(true));
     assertThat(sortActions(patch.getActions())).containsExactly(
       new DeleteAction(patch, "bin/idea.bat", CHECKSUMS.IDEA_BAT),
       new CreateAction(patch, "newDir/"),
@@ -58,7 +58,8 @@ public class PatchTest extends PatchTestCase {
                           Collections.emptyList(),
                           Collections.emptyList(),
                           Collections.singletonList("com/intellij/ide/ClassloaderUtil.class"),
-                          CHECKSUMS.BOOTSTRAP_JAR));
+                          CHECKSUMS.BOOTSTRAP_JAR),
+      new RenameRootDirectoryAction(patch, "oldDir", "newDir"));
   }
 
   @Test
@@ -294,6 +295,14 @@ public class PatchTest extends PatchTestCase {
       new CreateAction(patch, "lib64/redist/"),
       new UpdateAction(patch, "lib/redist/annotations.bin", "lib64/annotations.bin", CHECKSUMS.ANNOTATIONS_JAR_BIN, true),
       new UpdateAction(patch, "lib64/redist/annotations.bin", "lib64/annotations.bin", CHECKSUMS.ANNOTATIONS_JAR_BIN, true));
+  }
+
+  @Test
+  public void testRenameRootDirectory() throws Exception {
+    Patch patch = createPatch(spec -> spec.setRenameRootDirectory(true));
+    assertThat(sortActions(patch.getActions())).last().isEqualTo(
+      new RenameRootDirectoryAction(patch, "oldDir", "newDir")
+    );
   }
 
   @Test

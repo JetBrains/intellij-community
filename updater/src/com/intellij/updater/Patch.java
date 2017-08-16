@@ -18,6 +18,9 @@ package com.intellij.updater;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.LinkOption;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.zip.ZipFile;
 
@@ -27,6 +30,7 @@ public class Patch {
   private static final int UPDATE_ZIP_ACTION_KEY = 3;
   private static final int DELETE_ACTION_KEY = 4;
   private static final int VALIDATE_ACTION_KEY = 5;
+  private static final int RENAME_ROOT_DIRECTORY_ACTION_KEY = 6;
 
   private final String myOldBuild;
   private final String myNewBuild;
@@ -135,7 +139,24 @@ public class Patch {
       action.setCritical(spec.getCriticalFiles().contains(action.getPath()));
       action.setOptional(spec.getOptionalFiles().contains(action.getPath()));
     }
+    addRenameRootDirectoryActionIfNeeded(spec, actions);
     return actions;
+  }
+
+  private void addRenameRootDirectoryActionIfNeeded(PatchSpec spec, List<PatchAction> actions) throws IOException {
+    if (!spec.isRenameRootDirectory()) {
+      return;
+    }
+    Path oldPath = Paths.get(spec.getOldFolder()).toRealPath(LinkOption.NOFOLLOW_LINKS).getFileName();
+    Path newPath = Paths.get(spec.getNewFolder()).toRealPath(LinkOption.NOFOLLOW_LINKS).getFileName();
+
+    String oldFilename = oldPath != null ? oldPath.toString() : null;
+    String newFilename = newPath != null ? newPath.toString() : null;
+
+    if (oldFilename == null || newFilename == null || oldFilename.equals(newFilename)) {
+      return;
+    }
+    actions.add(new RenameRootDirectoryAction(this, oldFilename, newFilename));
   }
 
   public List<PatchAction> getActions() {
@@ -207,6 +228,9 @@ public class Patch {
       else if (clazz == ValidateAction.class) {
         key = VALIDATE_ACTION_KEY;
       }
+      else if (clazz == RenameRootDirectoryAction.class) {
+        key = RENAME_ROOT_DIRECTORY_ACTION_KEY;
+      }
       else {
         throw new RuntimeException("Unknown action " + each);
       }
@@ -255,6 +279,9 @@ public class Patch {
           break;
         case VALIDATE_ACTION_KEY:
           a = new ValidateAction(this, in);
+          break;
+        case RENAME_ROOT_DIRECTORY_ACTION_KEY:
+          a = new RenameRootDirectoryAction(this, in);
           break;
         default:
           throw new RuntimeException("Unknown action type " + key);
