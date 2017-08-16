@@ -17,6 +17,7 @@ package com.intellij.java.propertyBased;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.testFramework.propertyBased.*;
@@ -31,6 +32,12 @@ import java.util.function.Function;
  */
 @SkipSlowTestLocally
 public class JavaCodeInsightSanityTest extends LightCodeInsightFixtureTestCase {
+
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_9;
+  }
 
   public void testRandomActivity() {
     MadTestingUtil.enableAllInspections(getProject(), getTestRootDisposable());

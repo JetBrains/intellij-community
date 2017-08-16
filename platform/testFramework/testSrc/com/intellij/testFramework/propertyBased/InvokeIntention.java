@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -119,10 +120,15 @@ public class InvokeIntention extends ActionOnRange {
   private static void checkNoNewErrors(Project project, Editor editor, String intentionString) {
     List<HighlightInfo> errors = highlightErrors(project, editor);
     if (!errors.isEmpty()) {
-      throw new AssertionError("New highlighting errors introduced after invoking " + intentionString + 
+      throw new AssertionError("New highlighting errors introduced after invoking " + intentionString +
                                "\nIf this is correct, add it to IntentionPolicy#mayBreakCode." +
-                               "\nErrors found: " + errors);
+                               "\nErrors found: " + StringUtil.join(errors, i -> shortInfoText(i), ","));
     }
+  }
+
+  @NotNull
+  private static String shortInfoText(HighlightInfo info) {
+    return "'" + info.getDescription() + "'(" + info.startOffset + "," + info.endOffset + ")";
   }
 
   @NotNull

@@ -17,7 +17,6 @@ package com.intellij.java.propertyBased;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.propertyBased.IntentionPolicy;
 import org.jetbrains.annotations.NotNull;
@@ -37,18 +36,12 @@ class JavaIntentionPolicy extends IntentionPolicy {
 
   @Override
   public boolean mayBreakCode(@NotNull IntentionAction action, @NotNull Editor editor, @NotNull PsiFile file) {
-    String actionText = action.getText();
-    if (actionText.contains("which always throws exception") && isMockJdk(file)) {
-      return true; // can insert reference to some exception missing in mock jdk
-    }
-
-    return mayBreakCompilation(actionText);
+    return mayBreakCompilation(action.getText());
   }
 
   protected static boolean mayBreakCompilation(String actionText) {
     return actionText.startsWith("Flip") || // doesn't care about compilability
            actionText.startsWith("Convert to string literal") || // can produce uncompilable code by design
-           actionText.startsWith("Convert to 'enum'") || // IDEA-177489
            actionText.startsWith("Detail exceptions") || // can produce uncompilable code if 'catch' section contains 'instanceof's
            actionText.startsWith("Insert call to super method") || // super method can declare checked exceptions, unexpected at this point
            actionText.startsWith("Cast to ") || // produces uncompilable code by design
@@ -57,9 +50,6 @@ class JavaIntentionPolicy extends IntentionPolicy {
            actionText.startsWith("Unimplement"); // e.g. leaves red references to the former superclass methods
   }
 
-  private static boolean isMockJdk(PsiFile file) {
-    return JavaPsiFacade.getInstance(file.getProject()).findClass("java.io.NotSerializableException", file.getResolveScope()) == null;
-  }
 }
 
 class JavaGreenIntentionPolicy extends JavaIntentionPolicy {
