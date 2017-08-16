@@ -31,6 +31,7 @@ import com.intellij.diff.fragments.MergeLineFragment;
 import com.intellij.diff.fragments.MergeWordFragment;
 import com.intellij.diff.impl.DiffSettingsHolder.DiffSettings;
 import com.intellij.diff.requests.ContentDiffRequest;
+import com.intellij.diff.tools.util.DiffNotifications;
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings;
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.diff.tools.util.text.*;
@@ -476,7 +477,16 @@ public class DiffUtil {
   @Nullable
   private static JComponent createTitleWithNotifications(@Nullable JComponent title,
                                                          @NotNull DiffContent content) {
-    List<JComponent> notifications = getCustomNotifications(content);
+    List<JComponent> notifications = new ArrayList<>();
+    notifications.addAll(getCustomNotifications(content));
+
+    if (content instanceof DocumentContent) {
+      Document document = ((DocumentContent)content).getDocument();
+      if (FileDocumentManager.getInstance().isPartialPreviewOfALargeFile(document)) {
+        notifications.add(DiffNotifications.createNotification("File is too large. Only preview is loaded."));
+      }
+    }
+
     if (notifications.isEmpty()) return title;
 
     JPanel panel = new JPanel(new BorderLayout(0, TITLE_GAP));

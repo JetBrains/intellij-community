@@ -84,6 +84,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
   private static final Key<String> LINE_SEPARATOR_KEY = Key.create("LINE_SEPARATOR_KEY");
   private static final Key<VirtualFile> FILE_KEY = Key.create("FILE_KEY");
   private static final Key<Boolean> MUST_RECOMPUTE_FILE_TYPE = Key.create("Must recompute file type");
+  private static final Key<Boolean> BIG_FILE_PREVIEW = Key.create("BIG_FILE_PREVIEW");
 
   private final Set<Document> myUnsavedDocuments = ContainerUtil.newConcurrentSet();
 
@@ -196,6 +197,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
 
         document = (DocumentEx)createDocument(text, file);
         document.setModificationStamp(file.getModificationStamp());
+        document.putUserData(BIG_FILE_PREVIEW, tooLarge ? Boolean.TRUE : null);
         final FileType fileType = file.getFileType();
         document.setReadOnly(tooLarge || !file.isWritable() || fileType.isBinary());
 
@@ -547,6 +549,11 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
   }
 
   @Override
+  public boolean isPartialPreviewOfALargeFile(@NotNull Document document) {
+    return document.getUserData(BIG_FILE_PREVIEW) == Boolean.TRUE;
+  }
+
+  @Override
   public void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
     final VirtualFile file = event.getFile();
     if (VirtualFile.PROP_WRITABLE.equals(event.getPropertyName())) {
@@ -626,11 +633,11 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
               boolean wasWritable = document.isWritable();
               document.setReadOnly(false);
               boolean tooLarge = FileUtilRt.isTooLarge(file.getLength());
-              CharSequence reloaded = tooLarge ? LoadTextUtil.loadText(file, getPreviewCharCount(file)) : LoadTextUtil.loadText(file);
               isReloadable[0] = isReloadable(file, document, project);
               if (isReloadable[0]) {
-                DocumentEx documentEx = (DocumentEx)document;
-                documentEx.replaceText(reloaded, file.getModificationStamp());
+                CharSequence reloaded = tooLarge ? LoadTextUtil.loadText(file, getPreviewCharCount(file)) : LoadTextUtil.loadText(file);
+                ((DocumentEx)document).replaceText(reloaded, file.getModificationStamp());
+                document.putUserData(BIG_FILE_PREVIEW, tooLarge ? Boolean.TRUE : null);
               }
               document.setReadOnly(!wasWritable);
             }
