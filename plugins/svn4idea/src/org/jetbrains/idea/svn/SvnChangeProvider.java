@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.*;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ObjectUtils;
@@ -48,9 +47,10 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.ISVNStatusFileProvider;
 
 import java.io.File;
-import java.util.*;
-
-import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author max
@@ -103,9 +103,7 @@ public class SvnChangeProvider implements ChangeProvider {
       processCopiedAndDeleted(context, dirtyScope);
       processUnsaved(dirtyScope, addGate, context);
 
-      final Set<NestedCopyInfo> nestedCopies = nestedCopiesBuilder.getCopies();
-      mySvnFileUrlMapping.acceptNestedData(nestedCopies);
-      putAdministrative17UnderVfsListener(nestedCopies);
+      mySvnFileUrlMapping.acceptNestedData(nestedCopiesBuilder.getCopies());
     } catch (SvnExceptionWrapper e) {
       LOG.info(e);
       throw new VcsException(e.getCause());
@@ -114,21 +112,6 @@ public class SvnChangeProvider implements ChangeProvider {
         throw new VcsException(e.getMessage() + " " + e.getCause().getMessage(), e);
       }
       throw new VcsException(e);
-    }
-  }
-
-  /**
-   * TODO: Currently could not find exact case when "file status is not correctly refreshed after external commit" that is covered by this
-   * TODO: code. So for now, checks for formats greater than 1.7 are not added here.
-   */
-  private static void putAdministrative17UnderVfsListener(Set<NestedCopyInfo> pointInfos) {
-    if (! SvnVcs.ourListenToWcDb) return;
-    final LocalFileSystem lfs = LocalFileSystem.getInstance();
-    for (NestedCopyInfo info : pointInfos) {
-      if (WorkingCopyFormat.ONE_DOT_SEVEN.equals(info.getFormat()) && ! NestedCopyType.switched.equals(info.getType())) {
-        final VirtualFile root = info.getFile();
-        lfs.refreshIoFiles(Collections.singletonList(SvnUtil.getWcDb(virtualToIoFile(root))), true, false, null);
-      }
     }
   }
 
