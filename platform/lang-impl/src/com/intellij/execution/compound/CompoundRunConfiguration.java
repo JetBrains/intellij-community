@@ -13,162 +13,163 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.execution.compound;
+package com.intellij.execution.compound
 
-import com.intellij.execution.*;
-import com.intellij.execution.configurations.*;
-import com.intellij.execution.executors.DefaultRunExecutor;
-import com.intellij.execution.impl.ExecutionManagerImpl;
-import com.intellij.execution.impl.RunManagerImpl;
-import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.runners.ExecutionUtil;
-import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.icons.AllIcons;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.options.SettingsEditor;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.WriteExternalException;
-import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.execution.*
+import com.intellij.execution.configurations.*
+import com.intellij.execution.executors.DefaultRunExecutor
+import com.intellij.execution.impl.ExecutionManagerImpl
+import com.intellij.execution.impl.RunManagerImpl
+import com.intellij.execution.runners.ExecutionEnvironment
+import com.intellij.execution.runners.ExecutionUtil
+import com.intellij.execution.runners.ProgramRunner
+import com.intellij.icons.AllIcons
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.options.SettingsEditor
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.InvalidDataException
+import com.intellij.openapi.util.Pair
+import com.intellij.openapi.util.WriteExternalException
+import gnu.trove.THashSet
+import org.jdom.Element
 
-import javax.swing.*;
-import java.util.*;
+import javax.swing.*
+import java.util.*
 
-public class CompoundRunConfiguration extends RunConfigurationBase implements RunnerIconProvider, WithoutOwnBeforeRunSteps, Cloneable {
-  static final Comparator<RunConfiguration> COMPARATOR = (o1, o2) -> {
-    int i = o1.getType().getDisplayName().compareTo(o2.getType().getDisplayName());
-    return (i != 0) ? i : o1.getName().compareTo(o2.getName());
-  };
-  private Set<Pair<String, String>> myPairs = new HashSet<>();
-  private Set<RunConfiguration> mySetToRun = new TreeSet<>(COMPARATOR);
-  private boolean myInitialized = false;
+class CompoundRunConfiguration(project: Project, type: CompoundRunConfigurationType, name: String) : RunConfigurationBase(project,
+                                                                                                                          type.configurationFactories[0],
+                                                                                                                          name), RunnerIconProvider, WithoutOwnBeforeRunSteps, Cloneable {
+  private var myPairs: MutableSet<Pair<String, String>> = THashSet()
+  private var mySetToRun: MutableSet<RunConfiguration> = TreeSet(COMPARATOR)
+  private var myInitialized = false
 
-  public CompoundRunConfiguration(Project project, @NotNull CompoundRunConfigurationType type, String name) {
-    super(project, type.getConfigurationFactories()[0], name);
+  val setToRun: Set<RunConfiguration>
+    get() = getSetToRun(null)
+
+  fun getSetToRun(runManager: RunManagerImpl?): Set<RunConfiguration> {
+    initIfNeed(runManager)
+    return mySetToRun
   }
 
-  public Set<RunConfiguration> getSetToRun() {
-    initIfNeed();
-    return mySetToRun;
-  }
+  private fun initIfNeed(runManager: RunManagerImpl?) {
+    var runManager = runManager
+    if (myInitialized) {
+      return
+    }
 
-  private void initIfNeed() {
-    if (myInitialized) return;
-    mySetToRun.clear();
-    RunManagerImpl manager = RunManagerImpl.getInstanceImpl(getProject());
-    for (Pair<String, String> pair : myPairs) {
-      RunnerAndConfigurationSettings settings = manager.findConfigurationByTypeAndName(pair.first, pair.second);
-      if (settings != null && settings.getConfiguration() != this) {
-        mySetToRun.add(settings.getConfiguration());
+    mySetToRun.clear()
+
+    if (runManager == null) {
+      runManager = RunManagerImpl.getInstanceImpl(project)
+    }
+
+    for (pair in myPairs) {
+      val settings = runManager.findConfigurationByTypeAndName(pair.first, pair.second)
+      if (settings != null && settings.configuration !== this) {
+        mySetToRun.add(settings.configuration)
       }
     }
-    myInitialized = true;
+    myInitialized = true
   }
 
-  @NotNull
-  @Override
-  public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
-    return new CompoundRunConfigurationSettingsEditor(getProject());
+  override fun getConfigurationEditor(): SettingsEditor<out RunConfiguration> {
+    return CompoundRunConfigurationSettingsEditor(project)
   }
 
-  @Override
-  public void checkConfiguration() throws RuntimeConfigurationException {
-    if (getSetToRun().isEmpty()) throw new RuntimeConfigurationException("There is nothing to run");
+  @Throws(RuntimeConfigurationException::class)
+  override fun checkConfiguration() {
+    if (setToRun.isEmpty()) {
+      throw RuntimeConfigurationException("There is nothing to run")
+    }
   }
 
-  @Nullable
-  @Override
-  public RunProfileState getState(@NotNull Executor executor, @NotNull final ExecutionEnvironment environment) throws ExecutionException {
+  @Throws(ExecutionException::class)
+  override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState? {
     try {
-      checkConfiguration();
+      checkConfiguration()
     }
-    catch (RuntimeConfigurationException e) {
-      throw new ExecutionException(e.getMessage());
+    catch (e: RuntimeConfigurationException) {
+      throw ExecutionException(e.message)
     }
-    return new RunProfileState() {
-      @Nullable
-      @Override
-      public ExecutionResult execute(final Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
-        ApplicationManager.getApplication().invokeLater(() -> {
-          RunManagerImpl manager = RunManagerImpl.getInstanceImpl(getProject());
-          for (RunConfiguration configuration : getSetToRun()) {
-            RunnerAndConfigurationSettings settings = manager.getSettings(configuration);
-            if (settings != null) {
-              ExecutionUtil.runConfiguration(settings, executor);
-            }
+
+    return RunProfileState { executor, runner ->
+      ApplicationManager.getApplication().invokeLater {
+        val manager = RunManagerImpl.getInstanceImpl(project)
+        for (configuration in setToRun) {
+          val settings = manager.getSettings(configuration)
+          if (settings != null) {
+            ExecutionUtil.runConfiguration(settings, executor)
           }
-        });
-        return null;
+        }
       }
-    };
+      null
+    }
   }
 
-  @Override
-  public void readExternal(Element element) throws InvalidDataException {
-    super.readExternal(element);
-    myPairs.clear();
-    List<Element> children = element.getChildren("toRun");
-    for (Element child : children) {
-      String type = child.getAttributeValue("type");
-      String name = child.getAttributeValue("name");
+  @Throws(InvalidDataException::class)
+  override fun readExternal(element: Element) {
+    super.readExternal(element)
+    myPairs.clear()
+    val children = element.getChildren("toRun")
+    for (child in children) {
+      val type = child.getAttributeValue("type")
+      val name = child.getAttributeValue("name")
       if (type != null && name != null) {
-        myPairs.add(Pair.create(type, name));
+        myPairs.add(Pair.create(type, name))
       }
     }
   }
 
-  @Override
-  public void writeExternal(Element element) throws WriteExternalException {
-    super.writeExternal(element);
-    for (RunConfiguration configuration : getSetToRun()) {
-      Element child = new Element("toRun");
-      child.setAttribute("type", configuration.getType().getId());
-      child.setAttribute("name", configuration.getName());
-      element.addContent(child);
+  @Throws(WriteExternalException::class)
+  override fun writeExternal(element: Element) {
+    super.writeExternal(element)
+    for (configuration in setToRun) {
+      val child = Element("toRun")
+      child.setAttribute("type", configuration.type.id)
+      child.setAttribute("name", configuration.name)
+      element.addContent(child)
     }
   }
 
-  @Override
-  public RunConfiguration clone() {
-    CompoundRunConfiguration clone = (CompoundRunConfiguration)super.clone();
-    clone.myPairs = new HashSet<>();
-    clone.myPairs.addAll(myPairs);
-    clone.mySetToRun = new TreeSet<>(COMPARATOR);
-    clone.mySetToRun.addAll(getSetToRun());
-    return clone;
+  override fun clone(): RunConfiguration {
+    val clone = super.clone() as CompoundRunConfiguration
+    clone.myPairs = THashSet(myPairs)
+    clone.mySetToRun = TreeSet(COMPARATOR)
+    clone.mySetToRun.addAll(setToRun)
+    return clone
   }
 
-
-  @Nullable
-  @Override
-  public Icon getExecutorIcon(@NotNull RunConfiguration configuration, @NotNull Executor executor) {
-    if (DefaultRunExecutor.EXECUTOR_ID.equals(executor.getId()) && hasRunningSingletones()) {
-      return AllIcons.Actions.Restart;
+  override fun getExecutorIcon(configuration: RunConfiguration, executor: Executor): Icon? {
+    return if (DefaultRunExecutor.EXECUTOR_ID == executor.id && hasRunningSingletons()) {
+      AllIcons.Actions.Restart
     }
-    return executor.getIcon();
+    else executor.icon
   }
 
-  protected boolean hasRunningSingletones() {
-    Project project = getProject();
-    if (project.isDisposed()) return false;
-    final ExecutionManagerImpl executionManager = ExecutionManagerImpl.getInstance(project);
+  protected fun hasRunningSingletons(): Boolean {
+    val project = project
+    if (project.isDisposed) return false
+    val executionManager = ExecutionManagerImpl.getInstance(project)
 
-    return executionManager.getRunningDescriptors(s -> {
-      RunManagerImpl manager = RunManagerImpl.getInstanceImpl(project);
-      for (RunConfiguration runConfiguration : mySetToRun) {
-        if (runConfiguration instanceof CompoundRunConfiguration && ((CompoundRunConfiguration)runConfiguration).hasRunningSingletones()) {
-          return true;
+    return executionManager.getRunningDescriptors { s ->
+      val manager = RunManagerImpl.getInstanceImpl(project)
+      for (runConfiguration in mySetToRun) {
+        if (runConfiguration is CompoundRunConfiguration && runConfiguration.hasRunningSingletons()) {
+          return@executionManager.getRunningDescriptors true
         }
-        RunnerAndConfigurationSettings settings =
-          manager.findConfigurationByTypeAndName(runConfiguration.getType().getId(), runConfiguration.getName());
-        if (settings != null && settings.isSingleton() && runConfiguration.equals(s.getConfiguration())) {
-          return true;
+        val settings = manager.findConfigurationByTypeAndName(runConfiguration.type.id, runConfiguration.name)
+        if (settings != null && settings.isSingleton && runConfiguration == s.configuration) {
+          return@executionManager.getRunningDescriptors true
         }
       }
-      return false;
-    }).size() > 0;
+      false
+    }.size > 0
+  }
+
+  companion object {
+    internal val COMPARATOR = { o1, o2 ->
+      val i = o1.getType().getDisplayName().compareTo(o2.getType().getDisplayName())
+      if (i != 0) i else o1.getName().compareTo(o2.getName())
+    }
   }
 }
