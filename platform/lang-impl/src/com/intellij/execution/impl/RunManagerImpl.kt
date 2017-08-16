@@ -491,10 +491,9 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
 
   override fun getState(): Element {
     for (settings in idToSettings.values) {
-      if (settings.type is UnknownConfigurationType) {
-        continue
+      if (settings.type !is UnknownConfigurationType) {
+        checkIfDependenciesAreStable(settings.configuration)
       }
-      checkIfDependenciesAreStable(settings.configuration)
     }
 
     val element = Element("state")
@@ -1067,18 +1066,34 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
   }
 
   private fun checkIfDependenciesAreStable(configuration: RunConfiguration) {
-    if (isFirstLoadState.get()) return
+    if (isFirstLoadState.get()) {
+      return
+    }
+
     for (runTask in configuration.beforeRunTasks) {
       if (runTask is RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask && runTask.settings != null && runTask.settings.isTemporary) {
         makeStable(runTask.settings)
         checkIfDependenciesAreStable(runTask.settings.configuration)
       }
     }
+
     if (configuration is CompoundRunConfiguration) {
-      configuration.setToRun.mapNotNull { getSettings(it) }.forEach {
-        if (it.isTemporary) {
-          makeStable(it)
-          checkIfDependenciesAreStable(it.configuration)
+      val children = configuration.getConfigurations(this)
+      for (otherSettings in allSettings) {
+        if (!otherSettings.isTemporary) {
+          continue
+        }
+
+        val otherConfiguration = otherSettings.configuration
+        if (otherConfiguration === configuration) {
+          continue
+        }
+
+        if (ContainerUtil.containsIdentity(children, otherConfiguration)) {
+          if (otherSettings.isTemporary) {
+            makeStable(otherSettings)
+            checkIfDependenciesAreStable(otherConfiguration)
+          }
         }
       }
     }
