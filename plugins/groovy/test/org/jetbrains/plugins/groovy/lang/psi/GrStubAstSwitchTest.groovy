@@ -288,11 +288,11 @@ class A {
   void 'test do not load contents in highlighting'() {
     def file = fixture.tempDirFixture.createFile('classes.groovy', '''\
 class C {
-  static void staticVoidMethod() {}
+  static void staticVoidMethod(a, b = 1) {}
 }
 ''')
     ((JavaCodeInsightTestFixtureImpl)fixture).virtualFileFilter = { it == file }
-    fixture.configureByText '_.groovy', 'C.staticVoidMethod()'
+    fixture.configureByText '_.groovy', 'C.staticVoidMethod(1)'
     fixture.checkHighlighting()
   }
 
