@@ -30,10 +30,13 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.FontSize;
 import com.intellij.openapi.options.SchemeState;
 import com.intellij.openapi.util.*;
+import com.intellij.ui.ColorUtil;
 import com.intellij.util.JdomKt;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.JBIterable;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -49,12 +52,15 @@ import java.util.function.Predicate;
 
 import static com.intellij.openapi.editor.colors.CodeInsightColors.*;
 import static com.intellij.openapi.editor.colors.EditorColors.*;
-import static com.intellij.openapi.editor.markup.TextAttributes.USE_INHERITED_MARKER;
 import static com.intellij.openapi.util.Couple.of;
 import static com.intellij.ui.ColorUtil.fromHex;
 
 @SuppressWarnings("UseJBColor")
 public abstract class AbstractColorsScheme extends EditorFontCacheImpl implements EditorColorsScheme, SerializableScheme {
+  public static final TextAttributes INHERITED_ATTRS_MARKER = new TextAttributes();
+  public static final Color INHERITED_COLOR_MARKER = ColorUtil.marker("INHERITED_COLOR_MARKER");
+  public static final Color NULL_COLOR_MARKER = ColorUtil.marker("NULL_COLOR_MARKER");
+
   private static final int CURR_VERSION = 142;
 
   // todo: unify with UIUtil.DEF_SYSTEM_FONT_SIZE
@@ -186,22 +192,9 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     newScheme.myVersion = myVersion;
   }
 
-  public void clearColors(@NotNull Predicate<ColorKey> predicate) {
-    Iterator<ColorKey> iterator = myColorsMap.keySet().iterator();
-    while (iterator.hasNext()) {
-      ColorKey key = iterator.next();
-      if (predicate.test(key)) iterator.remove();
-    }
-  }
-
-  public Map<ColorKey,Color> getColors(@NotNull Predicate<ColorKey> predicate) {
-    Map<ColorKey,Color> colorMap = ContainerUtilRt.newHashMap();
-    for (ColorKey key : myColorsMap.keySet()) {
-      if (predicate.test(key)) {
-        colorMap.put(key, myColorsMap.get(key));
-      }
-    }
-    return colorMap;
+  @NotNull
+  public Set<ColorKey> getColorKeys() {
+    return myColorsMap.keySet();
   }
 
   @Override
@@ -417,15 +410,12 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
 
   public void readAttributes(@NotNull Element childNode) {
     for (Element e : childNode.getChildren(OPTION_ELEMENT)) {
+      String keyName = e.getAttributeValue(NAME_ATTR);
       Element valueElement = e.getChild(VALUE_ELEMENT);
-      TextAttributesKey key = TextAttributesKey.find(e.getAttributeValue(NAME_ATTR));
-      if (valueElement == null) {
-        if (e.getAttributeValue(BASE_ATTRIBUTES_ATTR) != null) {
-          myAttributesMap.put(key, USE_INHERITED_MARKER);
-        }
-        continue;
-      }
-      TextAttributes attr = myValueReader.read(TextAttributes.class, valueElement);
+      TextAttributesKey key = TextAttributesKey.find(keyName);
+      TextAttributes attr = valueElement != null ? myValueReader.read(TextAttributes.class, valueElement) :
+                            e.getAttributeValue(BASE_ATTRIBUTES_ATTR) != null ? INHERITED_ATTRS_MARKER :
+                            null;
       if (attr != null) {
         myAttributesMap.put(key, attr);
         migrateErrorStripeColorFrom14(key, attr);
@@ -457,15 +447,17 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
 
   private void readColors(Element childNode) {
     for (Element colorElement : childNode.getChildren(OPTION_ELEMENT)) {
+      String keyName = colorElement.getAttributeValue(NAME_ATTR);
       Color valueColor = myValueReader.read(Color.class, colorElement);
-      final String colorName = colorElement.getAttributeValue(NAME_ATTR);
-      if (BACKGROUND_COLOR_NAME.equals(colorName)) {
+      if (valueColor == null && colorElement.getAttributeValue(BASE_ATTRIBUTES_ATTR) != null) {
+        valueColor = INHERITED_COLOR_MARKER;
+      }
+      if (BACKGROUND_COLOR_NAME.equals(keyName)) {
         // This setting has been deprecated to usages of HighlighterColors.TEXT attributes.
         myDeprecatedBackgroundColor = valueColor;
       }
-
-      ColorKey name = ColorKey.find(colorName);
-      myColorsMap.put(name, valueColor);
+      ColorKey name = ColorKey.find(keyName);
+      myColorsMap.put(name, ObjectUtils.notNull(valueColor, NULL_COLOR_MARKER));
     }
   }
 
@@ -658,42 +650,43 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     }
   }
 
-  private boolean isParentOverwritingInheritance(@NotNull TextAttributesKey key) {
-    TextAttributes parentAttributes =
-      myParentScheme instanceof AbstractColorsScheme ? ((AbstractColorsScheme)myParentScheme).getDirectlyDefinedAttributes(key) : null;
-    return parentAttributes != null && parentAttributes != USE_INHERITED_MARKER;
-  }
-
   private void writeAttributes(@NotNull Element attrElements) throws WriteExternalException {
     List<TextAttributesKey> list = new ArrayList<>(myAttributesMap.keySet());
     list.sort(null);
     for (TextAttributesKey key : list) {
-      TextAttributes attributes = myAttributesMap.get(key);
-      TextAttributesKey baseKey = key.getFallbackAttributeKey();
-      if (attributes == USE_INHERITED_MARKER) {
-        // do not store if  inheritance = on in the parent scheme (https://youtrack.jetbrains.com/issue/IDEA-162774)
-        if (baseKey != null && isParentOverwritingInheritance(key)) {
-          attrElements.addContent(new Element(OPTION_ELEMENT)
-                                    .setAttribute(NAME_ATTR, key.getExternalName())
-                                    .setAttribute(BASE_ATTRIBUTES_ATTR, baseKey.getExternalName()));
-        }
-        continue;
-      }
-
-      if (myParentScheme != null) {
-        // fallback attributes must be not used, otherwise derived scheme as copy will not have such key
-        TextAttributes parentAttributes = myParentScheme instanceof AbstractColorsScheme
-                                          ? ((AbstractColorsScheme)myParentScheme).getDirectlyDefinedAttributes(key)
-                                          : myParentScheme.getAttributes(key);
-        if (parentAttributes != null && attributes.equals(parentAttributes)) {
-          continue;
-        }
-      }
-
-      Element valueElement = new Element(VALUE_ELEMENT);
-      attributes.writeExternal(valueElement);
-      attrElements.addContent(new Element(OPTION_ELEMENT).setAttribute(NAME_ATTR, key.getExternalName()).addContent(valueElement));
+      writeAttribute(attrElements, key);
     }
+  }
+
+  private void writeAttribute(@NotNull Element attrElements, @NotNull TextAttributesKey key) {
+    TextAttributes attributes = myAttributesMap.get(key);
+    if (attributes == INHERITED_ATTRS_MARKER) {
+      TextAttributesKey baseKey = key.getFallbackAttributeKey();
+      // IDEA-162774 do not store if  inheritance = on in the parent scheme
+      TextAttributes parentAttributes = myParentScheme instanceof AbstractColorsScheme ?
+                                        ((AbstractColorsScheme)myParentScheme).getDirectlyDefinedAttributes(key) : null;
+      boolean parentOverwritingInheritance = parentAttributes != null && parentAttributes != INHERITED_ATTRS_MARKER;
+      if (baseKey != null && parentOverwritingInheritance) {
+        attrElements.addContent(new Element(OPTION_ELEMENT)
+                                  .setAttribute(NAME_ATTR, key.getExternalName())
+                                  .setAttribute(BASE_ATTRIBUTES_ATTR, baseKey.getExternalName()));
+      }
+      return;
+    }
+
+    if (myParentScheme != null) {
+      // fallback attributes must be not used, otherwise derived scheme as copy will not have such key
+      TextAttributes parentAttributes = myParentScheme instanceof AbstractColorsScheme
+                                        ? ((AbstractColorsScheme)myParentScheme).getDirectlyDefinedAttributes(key)
+                                        : myParentScheme.getAttributes(key);
+      if (parentAttributes != null && attributes.equals(parentAttributes)) {
+        return;
+      }
+    }
+
+    Element valueElement = new Element(VALUE_ELEMENT);
+    attributes.writeExternal(valueElement);
+    attrElements.addContent(new Element(OPTION_ELEMENT).setAttribute(NAME_ATTR, key.getExternalName()).addContent(valueElement));
   }
 
   public void optimizeAttributeMap() {
@@ -701,23 +694,29 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     if (parentScheme == null) {
       return;
     }
-
-    for (TextAttributesKey key : new ArrayList<>(myAttributesMap.keySet())) {
-      TextAttributes attributes = myAttributesMap.get(key);
-      if (attributes == USE_INHERITED_MARKER) {
-        if (key.getFallbackAttributeKey() == null) {
-          myAttributesMap.remove(key);
+    myAttributesMap.keySet().removeAll(JBIterable.from(myAttributesMap.keySet()).filter(
+      key -> {
+        TextAttributes attrs = myAttributesMap.get(key);
+        if (attrs == INHERITED_ATTRS_MARKER) {
+          return key.getFallbackAttributeKey() == null;
         }
-        continue;
+        TextAttributes parent = parentScheme instanceof DefaultColorsScheme ?
+                                ((DefaultColorsScheme)parentScheme).getAttributes(key, false) : parentScheme.getAttributes(key);
+        return Comparing.equal(parent, attrs);
       }
+    ).toList());
+    myColorsMap.keySet().removeAll(JBIterable.from(myColorsMap.keySet()).filter(
+      key -> {
+        Color color = myColorsMap.get(key);
+        if (color == INHERITED_COLOR_MARKER) {
+          return key.getFallbackColorKey() == null;
+        }
 
-      TextAttributes parentAttributes = parentScheme instanceof DefaultColorsScheme
-                                        ? ((DefaultColorsScheme)parentScheme).getAttributes(key, false)
-                                        : parentScheme.getAttributes(key);
-      if (Comparing.equal(parentAttributes, attributes)) {
-        myAttributesMap.remove(key);
+        Color parent = parentScheme instanceof DefaultColorsScheme ?
+                       ((DefaultColorsScheme)parentScheme).getColor(key, false) : parentScheme.getColor(key);
+        return Comparing.equal(parent, color);
       }
-    }
+    ).toList());
   }
   
   @NotNull
@@ -736,35 +735,40 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     return metaInfoElement;
   }
 
-  protected Color getOwnColor(ColorKey key) {
-    return myColorsMap.get(key);
-  }
-
   private void writeColors(Element colorElements) {
     List<ColorKey> list = new ArrayList<>(myColorsMap.keySet());
     list.sort(null);
     for (ColorKey key : list) {
-      if (haveToWrite(key)) {
-        Color value = myColorsMap.get(key);
-        String value1 = value == null ? "" : Integer.toString(value.getRGB() & 0xFFFFFF, 16);
-        JdomKt.addOptionTag(colorElements, key.getExternalName(), value1);
-      }
+      writeColor(colorElements, key);
     }
   }
 
-  private boolean haveToWrite(@NotNull ColorKey key) {
-    Color value = myColorsMap.get(key);
-    if (myParentScheme != null) {
-      if (myParentScheme instanceof AbstractColorsScheme) {
-        if (Comparing.equal(((AbstractColorsScheme)myParentScheme).getOwnColor(key), value) && ((AbstractColorsScheme)myParentScheme).myColorsMap.containsKey(key)) {
-          return false;
-        }
+  private void writeColor(@NotNull Element colorElements, @NotNull ColorKey key) {
+    Color color = myColorsMap.get(key);
+    if (color == INHERITED_COLOR_MARKER) {
+      ColorKey fallbackKey = key.getFallbackColorKey();
+      Color parentFallback = myParentScheme instanceof AbstractColorsScheme ?
+                             ((AbstractColorsScheme)myParentScheme).getDirectlyDefinedColor(key) : null;
+      boolean parentOverwritingInheritance = parentFallback != null && parentFallback != INHERITED_COLOR_MARKER;
+      if (fallbackKey != null && parentOverwritingInheritance) {
+        colorElements.addContent(new Element(OPTION_ELEMENT)
+                                  .setAttribute(NAME_ATTR, key.getExternalName())
+                                  .setAttribute(BASE_ATTRIBUTES_ATTR, fallbackKey.getExternalName()));
       }
-      else if (Comparing.equal((myParentScheme).getColor(key), value)) {
-        return false;
+      return;
+    }
+
+    if (myParentScheme != null) {
+      Color parentColor = myParentScheme instanceof AbstractColorsScheme
+                          ? ((AbstractColorsScheme)myParentScheme).getDirectlyDefinedColor(key)
+                          : myParentScheme.getColor(key);
+      if (parentColor != null && color.equals(parentColor)) {
+        return;
       }
     }
-    return true;
+
+    String rgb = color == NULL_COLOR_MARKER ? "" : Integer.toString(color.getRGB() & 0xFFFFFF, 16);
+    JdomKt.addOptionTag(colorElements, key.getExternalName(), rgb);
   }
 
   private ModifiableFontPreferences ensureEditableFontPreferences() {
@@ -850,13 +854,33 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     ensureEditableConsoleFontPreferences().setLineSpacing(lineSpacing);
   }
 
+  @Nullable
   protected TextAttributes getFallbackAttributes(@NotNull TextAttributesKey fallbackKey) {
-    TextAttributes fallbackAttributes = getDirectlyDefinedAttributes(fallbackKey);
-    TextAttributesKey fallbackKeyFallbackKey = fallbackKey.getFallbackAttributeKey();
-    if (fallbackAttributes != null && (fallbackAttributes != USE_INHERITED_MARKER || fallbackKeyFallbackKey == null)) {
-      return fallbackAttributes;
+    TextAttributesKey cur = fallbackKey;
+    while (true) {
+      TextAttributes attrs = getDirectlyDefinedAttributes(cur);
+      TextAttributesKey next = cur.getFallbackAttributeKey();
+      if (attrs != null && (attrs != INHERITED_ATTRS_MARKER || next == null)) {
+        return attrs;
+      }
+      if (next == null) return null;
+      cur = next;
     }
-    return fallbackKeyFallbackKey == null ? null : getFallbackAttributes(fallbackKeyFallbackKey);
+  }
+
+  @Nullable
+  protected Color getFallbackColor(@NotNull ColorKey fallbackKey) {
+    ColorKey cur = fallbackKey;
+    while (true) {
+      Color color = getDirectlyDefinedColor(cur);
+      if (color == NULL_COLOR_MARKER) return null;
+      ColorKey next = cur.getFallbackColorKey();
+      if (color != null && (color != INHERITED_COLOR_MARKER || next == null)) {
+        return color;
+      }
+      if (next == null) return null;
+      cur = next;
+    }
   }
 
   /**
@@ -868,10 +892,23 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   @Nullable
   public TextAttributes getDirectlyDefinedAttributes(@NotNull TextAttributesKey key) {
     TextAttributes attributes = myAttributesMap.get(key);
-    if (attributes != null) {
-      return attributes;
-    }
-    return myParentScheme instanceof AbstractColorsScheme ? ((AbstractColorsScheme)myParentScheme).getDirectlyDefinedAttributes(key) : null;
+    return attributes != null ? attributes :
+           myParentScheme instanceof AbstractColorsScheme ? ((AbstractColorsScheme)myParentScheme).getDirectlyDefinedAttributes(key) :
+           null;
+  }
+
+  /**
+   * Looks for explicitly specified color either in the scheme or its parent scheme. No fallback keys are used.
+   *
+   * @param key The key to use for search.
+   * @return Explicitly defined color or {@code null} if not found.
+   */
+  @Nullable
+  public Color getDirectlyDefinedColor(@NotNull ColorKey key) {
+    Color attributes = myColorsMap.get(key);
+    return attributes != null ? attributes :
+           myParentScheme instanceof AbstractColorsScheme ? ((AbstractColorsScheme)myParentScheme).getDirectlyDefinedColor(key) :
+           null;
   }
 
   @NotNull

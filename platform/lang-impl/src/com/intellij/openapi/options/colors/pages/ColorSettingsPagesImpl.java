@@ -16,53 +16,60 @@
 package com.intellij.openapi.options.colors.pages;
 
 import com.intellij.application.options.colors.ColorSettingsUtil;
+import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.options.colors.AttributesDescriptor;
-import com.intellij.openapi.options.colors.ColorSettingsPage;
-import com.intellij.openapi.options.colors.ColorSettingsPages;
+import com.intellij.openapi.options.colors.*;
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.containers.FactoryMap;
+import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.Map;
 
 public class ColorSettingsPagesImpl extends ColorSettingsPages {
-  private final List<ColorSettingsPage> myPages = new ArrayList<>();
-  private boolean myExtensionsLoaded = false;
-  private final Map<TextAttributesKey, Pair<ColorSettingsPage, AttributesDescriptor>> myKeyToDescriptorMap =
-    new HashMap<>();
+  private final Map<Object, Pair<ColorAndFontDescriptorsProvider, ? extends AbstractKeyDescriptor>> myCache =
+    FactoryMap.createMap(this::getDescriptorImpl);
 
   @Override
   public void registerPage(ColorSettingsPage page) {
-    myPages.add(page);
+    Extensions.getRootArea().getExtensionPoint(ColorSettingsPage.EP_NAME).registerExtension(page);
   }
 
   @Override
   public ColorSettingsPage[] getRegisteredPages() {
-    if (!myExtensionsLoaded) {
-      myExtensionsLoaded = true;
-      Collections.addAll(myPages, Extensions.getExtensions(ColorSettingsPage.EP_NAME));
-    }
-    return myPages.toArray(new ColorSettingsPage[myPages.size()]);
+    return ColorSettingsPage.EP_NAME.getExtensions();
   }
 
-  @Override
   @Nullable
-  public Pair<ColorSettingsPage,AttributesDescriptor> getAttributeDescriptor(TextAttributesKey key) {
-    if (myKeyToDescriptorMap.containsKey(key)) {
-      return myKeyToDescriptorMap.get(key);
-    }
-    else {
-      for (ColorSettingsPage page : getRegisteredPages()) {
-        for (AttributesDescriptor descriptor : ColorSettingsUtil.getAllAttributeDescriptors(page)) {
-          if (descriptor.getKey() == key) {
-            Pair<ColorSettingsPage,AttributesDescriptor> result = Pair.create(page, descriptor);
-            myKeyToDescriptorMap.put(key, result);
-            return result;
-          }
+  @Override
+  public Pair<ColorAndFontDescriptorsProvider, AttributesDescriptor> getAttributeDescriptor(TextAttributesKey key) {
+    //noinspection unchecked
+    return (Pair<ColorAndFontDescriptorsProvider, AttributesDescriptor>)myCache.get(key);
+  }
+
+  @Nullable
+  @Override
+  public Pair<ColorAndFontDescriptorsProvider, ColorDescriptor> getColorDescriptor(ColorKey key) {
+    //noinspection unchecked
+    return (Pair<ColorAndFontDescriptorsProvider, ColorDescriptor>)myCache.get(key);
+  }
+
+  @Nullable
+  private Pair<ColorAndFontDescriptorsProvider, ? extends AbstractKeyDescriptor> getDescriptorImpl(Object key) {
+    ColorAndFontDescriptorsProvider[] extensions = Extensions.getExtensions(ColorAndFontDescriptorsProvider.EP_NAME);
+    JBIterable<ColorAndFontDescriptorsProvider> providers = JBIterable.empty();
+    for (ColorAndFontDescriptorsProvider page : providers.append(getRegisteredPages()).append(extensions)) {
+      Iterable<? extends AbstractKeyDescriptor> descriptors =
+        key instanceof TextAttributesKey ? ColorSettingsUtil.getAllAttributeDescriptors(page) :
+        key instanceof ColorKey ? JBIterable.of(page.getColorDescriptors()) :
+        Collections.emptyList();
+      for (AbstractKeyDescriptor descriptor : descriptors) {
+        if (descriptor.getKey() == key) {
+          return Pair.create(page, descriptor);
         }
       }
-      myKeyToDescriptorMap.put(key, null);
     }
     return null;
   }

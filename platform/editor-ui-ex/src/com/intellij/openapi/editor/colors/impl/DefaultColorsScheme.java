@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.SchemeManager;
 import com.intellij.openapi.options.SchemeState;
+import com.intellij.util.ObjectUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,21 +42,16 @@ public class DefaultColorsScheme extends AbstractColorsScheme implements ReadOnl
   }
 
   @Nullable
-  public TextAttributes getAttributes(@NotNull TextAttributesKey key, boolean isUseDefault) {
+  public TextAttributes getAttributes(@NotNull TextAttributesKey key, boolean useDefaults) {
     TextAttributes attrs = myAttributesMap.get(key);
-    if (attrs == null) {
-      if (key.getFallbackAttributeKey() != null) {
-        attrs = getFallbackAttributes(key.getFallbackAttributeKey());
-        if (attrs != null && attrs != TextAttributes.USE_INHERITED_MARKER) {
-          return attrs;
-        }
-      }
+    if (attrs != null) return attrs;
 
-      if (isUseDefault) {
-        attrs = getKeyDefaults(key);
-      }
-    }
-    return attrs;
+    TextAttributesKey fallbackKey = key.getFallbackAttributeKey();
+    TextAttributes fallback = fallbackKey == null ? null : myAttributesMap.get(fallbackKey);
+    TextAttributes fallbackDefaults = fallbackKey == null ? null : getKeyDefaults(fallbackKey);
+    if (fallback != null && fallback != AbstractColorsScheme.INHERITED_ATTRS_MARKER) return fallback;
+
+    return useDefaults ? ObjectUtils.chooseNotNull(getKeyDefaults(key), fallbackDefaults) : null;
   }
 
   @Nullable
@@ -65,10 +61,21 @@ public class DefaultColorsScheme extends AbstractColorsScheme implements ReadOnl
 
   @Nullable
   @Override
-  public Color getColor(ColorKey key) {
-    if (key == null) return null;
+  public Color getColor(@Nullable ColorKey key) {
+    return key == null ? null : getColor(key, true);
+  }
+
+  @Nullable
+  public Color getColor(@NotNull ColorKey key, boolean useDefaults) {
     Color color = myColorsMap.get(key);
-    return color != null ? color : key.getDefaultColor();
+    if (color != null) return color;
+
+    ColorKey fallbackKey = key.getFallbackColorKey();
+    Color fallback = fallbackKey == null ? null : myColorsMap.get(fallbackKey);
+    Color fallbackDefault = fallbackKey == null ? null : fallbackKey.getDefaultColor();
+    if (fallback != null && fallback != AbstractColorsScheme.INHERITED_COLOR_MARKER) return fallback;
+
+    return useDefaults ? ObjectUtils.chooseNotNull(key.getDefaultColor(), fallbackDefault) : null;
   }
 
   @Override

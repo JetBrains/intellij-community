@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.ExternalizableScheme;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,8 +32,6 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Predicate;
-
-import static com.intellij.openapi.editor.markup.TextAttributes.USE_INHERITED_MARKER;
 
 public class EditorColorsSchemeImpl extends AbstractColorsScheme implements ExternalizableScheme {
   private final Map<TextAttributesKey, TextAttributes> myAttributesTempMap = ContainerUtil.newConcurrentMap();
@@ -52,7 +51,7 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
     if (TextAttributesKey.isTemp(key)) {
       myAttributesTempMap.put(key, attributes);
     }
-    else if (attributes == USE_INHERITED_MARKER || attributes != getAttributes(key)) {
+    else if (attributes == INHERITED_ATTRS_MARKER || !Comparing.equal(attributes, getAttributes(key))) {
       myAttributesMap.put(key, attributes);
       myAttributesTempMap.clear();
     }
@@ -60,8 +59,8 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
 
   @Override
   public void setColor(ColorKey key, Color color) {
-    if (!Comparing.equal(color, getColor(key))) {
-      myColorsMap.put(key, color);
+    if (color == INHERITED_COLOR_MARKER || !Comparing.equal(color, getColor(key))) {
+      myColorsMap.put(key, ObjectUtils.notNull(color, NULL_COLOR_MARKER));
     }
   }
 
@@ -73,7 +72,7 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
       }
       
       TextAttributes attributes = getDirectlyDefinedAttributes(key);
-      if (attributes != null && attributes != USE_INHERITED_MARKER) {
+      if (attributes != null && attributes != INHERITED_ATTRS_MARKER) {
         return attributes;
       }
 
@@ -91,12 +90,24 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
   @Nullable
   @Override
   public Color getColor(ColorKey key) {
-    if (myColorsMap.containsKey(key)) {
-      return myColorsMap.get(key);
+    if (key != null) {
+      Color color = getDirectlyDefinedColor(key);
+      if (color == NULL_COLOR_MARKER) {
+        return null;
+      }
+      if (color != null && color != INHERITED_COLOR_MARKER) {
+        return color;
+      }
+
+      ColorKey fallbackKey = key.getFallbackColorKey();
+      if (fallbackKey != null) {
+        color = getFallbackColor(fallbackKey);
+        if (color != null) {
+          return color;
+        }
+      }
     }
-    else {
-      return myParentScheme.getColor(key);
-    }
+    return myParentScheme.getColor(key);
   }
 
   @Override
