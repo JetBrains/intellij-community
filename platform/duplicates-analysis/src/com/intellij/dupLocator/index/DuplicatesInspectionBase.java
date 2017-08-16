@@ -104,14 +104,17 @@ public class DuplicatesInspectionBase extends LocalInspectionTool {
       TextRange rangeInElement = entry.getValue();
       final int offsetInOtherFile = processor.reportedOffsetInOtherFiles.get(offset);
 
-      LocalQuickFix fix = createNavigateToDupeFix(file, offsetInOtherFile);
+      LocalQuickFix fix = isOnTheFly ? createNavigateToDupeFix(file, offsetInOtherFile) : null;
       long hash = processor.fragmentHash.get(offset);
 
-      LocalQuickFix viewAllDupesFix = hash != 0 ? createShowOtherDupesFix(virtualFile, offset, (int)hash, (int)(hash >> 32)) : null;
+      int hash2 = (int)(hash >> 32);
+      LocalQuickFix viewAllDupesFix = isOnTheFly && hash != 0 ? createShowOtherDupesFix(virtualFile, offset, (int)hash, hash2) : null;
+      LocalQuickFix extractMethodFix =
+        isOnTheFly && hash != 0 ? createExtractMethodFix(targetElement, rangeInElement, (int)hash, hash2) : null;
 
       ProblemDescriptor descriptor = manager
         .createProblemDescriptor(targetElement, rangeInElement, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly, fix,
-                                 viewAllDupesFix);
+                                 viewAllDupesFix, extractMethodFix);
       descriptors.add(descriptor);
     }
 
@@ -162,6 +165,13 @@ public class DuplicatesInspectionBase extends LocalInspectionTool {
   }
 
   protected LocalQuickFix createShowOtherDupesFix(VirtualFile file, int offset, int hash, int hash2) {
+    return null;
+  }
+
+  protected LocalQuickFix createExtractMethodFix(@NotNull PsiElement targetElement,
+                                                 @Nullable TextRange rangeInElement,
+                                                 int hash,
+                                                 int hash2) {
     return null;
   }
 
