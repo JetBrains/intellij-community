@@ -87,7 +87,16 @@ public class ApplicationNamesInfo {
   }
 
   /**
-   * Returns full product name with edition. Vendor prefix is not included. * See {@link #getFullProductName()}, {@link #getEditionName()}.
+   * <p>Returns full product name with edition. Vendor prefix is not included.</p>
+   *
+   * <p>Use only when omitting an edition may potentially cause a confusion.<br/>
+   * Example #1: include the edition in generated shortcuts, since a user may have several editions installed.<br/>
+   * Example #2: exclude the edition from "Restart ...?" confirmation, as it only hampers readability.</p>
+   *
+   * <p><strong>Rarely needed, consider using {@link #getFullProductName()} instead.</strong></p>
+   *
+   * @see #getFullProductName()
+   * @see #getEditionName()
    */
   public String getFullProductNameWithEdition() {
     return myEditionName != null ? myFullProductName + ' ' + myEditionName : myFullProductName;
