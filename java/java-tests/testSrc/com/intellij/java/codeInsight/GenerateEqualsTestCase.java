@@ -15,6 +15,7 @@
  */
 package com.intellij.java.codeInsight;
 
+import com.intellij.codeInsight.generation.EqualsHashCodeTemplatesManager;
 import com.intellij.codeInsight.generation.GenerateEqualsHelper;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.psi.PsiClass;
@@ -33,6 +34,12 @@ import java.util.ArrayList;
  * @author yole
  */
 public abstract class GenerateEqualsTestCase extends LightCodeInsightTestCase {
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    EqualsHashCodeTemplatesManager.getInstance().setDefaultTemplate(EqualsHashCodeTemplatesManager.INTELLI_J_DEFAULT);
+  }
+
   protected void doTest(final int[] equals,
                         final int[] hashCode,
                         final int[] nonNull,
