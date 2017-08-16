@@ -67,7 +67,6 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
   void ignoreCurrentElement(RefEntity refEntity);
   void amnesty(RefEntity refEntity, CommonProblemDescriptor descriptor);
   void cleanup();
-  void finalCleanup();
   boolean isElementIgnored(final RefEntity element);
   @NotNull
   Set<RefEntity> getIgnoredRefElements();
@@ -102,7 +101,7 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
 
   default JComponent getCustomPreviewPanel(RefEntity entity) {
     return null;
-  };
+  }
 
   /**
    * see {@link com.intellij.codeInspection.deadCode.DummyEntryPointsPresentation}

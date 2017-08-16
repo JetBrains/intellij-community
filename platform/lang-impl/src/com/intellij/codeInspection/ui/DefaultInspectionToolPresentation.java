@@ -34,7 +34,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
@@ -62,7 +61,7 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
   @NotNull private final GlobalInspectionContextImpl myContext;
   protected InspectionNode myToolNode;
 
-  private static final Object lock = new Object();
+  private final Object myLock = new Object();
   private final Map<RefEntity, CommonProblemDescriptor[]> myProblemElements =
     ConcurrentCollectionFactory.createMap(ContainerUtil.identityStrategy());
   protected final Map<String, Set<RefEntity>> myContents = Collections.synchronizedMap(new HashMap<String, Set<RefEntity>>(1)); // keys can be null
@@ -164,7 +163,7 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
     if (descriptors.length == 0) return;
     if (filterSuppressed) {
       if (myContext.getOutputPath() == null || !(myToolWrapper instanceof LocalInspectionToolWrapper)) {
-        synchronized (lock) {
+        synchronized (myLock) {
           Map<RefEntity, CommonProblemDescriptor[]> problemElements = getProblemElements();
           CommonProblemDescriptor[] problems = problemElements.get(refElement);
           problems = problems == null ? descriptors : mergeDescriptors(problems, descriptors);
@@ -321,7 +320,7 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
     if (isIgnoreProblem(fixes, localQuickFixes, idx)){
       getProblemToElements().remove(problem);
       Map<RefEntity, CommonProblemDescriptor[]> problemElements = getProblemElements();
-      synchronized (lock) {
+      synchronized (myLock) {
         CommonProblemDescriptor[] descriptors = problemElements.get(refEntity);
         if (descriptors != null) {
           ArrayList<CommonProblemDescriptor> newDescriptors = new ArrayList<>(Arrays.asList(descriptors));
@@ -382,7 +381,7 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
 
   @Override
   public void cleanup() {
-    synchronized (lock) {
+    synchronized (myLock) {
       myProblemElements.clear();
       myProblemToElements.clear();
       myQuickFixActions.clear();
@@ -392,11 +391,6 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
     }
 
     isDisposed = true;
-  }
-
-  @Override
-  public void finalCleanup() {
-    cleanup();
   }
 
   @Override
@@ -426,7 +420,7 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
   public void exportResults(@NotNull final Element parentNode,
                             @NotNull RefEntity refEntity,
                             @NotNull Predicate<CommonProblemDescriptor> isDescriptorExcluded) {
-    synchronized (lock) {
+    synchronized (myLock) {
       if (getProblemElements().containsKey(refEntity)) {
         CommonProblemDescriptor[] descriptions = getDescriptions(refEntity);
         if (descriptions != null) {
