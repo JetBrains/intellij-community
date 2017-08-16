@@ -107,7 +107,7 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
       }
     }
 
-    buildContext.ant.move(file: "${unixDistPath}/bin/executable.sh", tofile: "${unixDistPath}/bin/$name")
+    buildContext.ant.move(file: "${unixDistPath}/bin/executable-template.sh", tofile: "${unixDistPath}/bin/$name")
 
     String inspectScript = buildContext.productProperties.inspectCommandName
     if (inspectScript != "inspect") {

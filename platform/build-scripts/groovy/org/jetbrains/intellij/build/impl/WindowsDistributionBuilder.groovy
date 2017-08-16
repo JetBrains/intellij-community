@@ -143,7 +143,7 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
       }
     }
 
-    buildContext.ant.move(file: "$winDistPath/bin/executable.bat", tofile: "$winDistPath/bin/$batName")
+    buildContext.ant.move(file: "$winDistPath/bin/executable-template.bat", tofile: "$winDistPath/bin/$batName")
 
     String inspectScript = buildContext.productProperties.inspectCommandName
     if (inspectScript != "inspect") {
