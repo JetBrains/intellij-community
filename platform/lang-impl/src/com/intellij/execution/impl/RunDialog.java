@@ -103,21 +103,23 @@ public class RunDialog extends DialogWrapper implements RunDialogBase {
     super.dispose();
   }
 
-  public static boolean editConfiguration(final Project project, final RunnerAndConfigurationSettings configuration, final String title) {
+  public static boolean editConfiguration(final Project project, @NotNull RunnerAndConfigurationSettings configuration, final String title) {
     return editConfiguration(project, configuration, title, null);
   }
 
   public static boolean editConfiguration(@NotNull ExecutionEnvironment environment, @NotNull String title) {
+    //noinspection ConstantConditions
     return editConfiguration(environment.getProject(), environment.getRunnerAndConfigurationSettings(), title, environment.getExecutor());
   }
 
-  public static boolean editConfiguration(final Project project, final RunnerAndConfigurationSettings configuration, final String title, @Nullable final Executor executor) {
-    final SingleConfigurationConfigurable<RunConfiguration> configurable =
-      SingleConfigurationConfigurable.editSettings(configuration, executor);
+  public static boolean editConfiguration(final Project project, @NotNull RunnerAndConfigurationSettings configuration, final String title, @Nullable final Executor executor) {
+    SingleConfigurationConfigurable<RunConfiguration> configurable = SingleConfigurationConfigurable.editSettings(configuration, executor);
     final SingleConfigurableEditor dialog = new SingleConfigurableEditor(project, configurable, IdeModalityType.IDE) {
       {
-        if (executor != null) setOKButtonText(executor.getActionName());
-        if (executor != null) setOKButtonIcon(executor.getIcon());
+        if (executor != null) {
+          setOKButtonText(executor.getActionName());
+          setOKButtonIcon(executor.getIcon());
+        }
       }
     };
 

@@ -15,7 +15,6 @@
  */
 package com.intellij.debugger.engine;
 
-import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ProgramRunnerUtil;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
@@ -38,6 +37,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author egor
@@ -51,7 +51,7 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
     }
 
     @Override
-    public void attachDebugSession(@NotNull Project project, @NotNull ProcessInfo processInfo) throws ExecutionException {
+    public void attachDebugSession(@NotNull Project project, @NotNull ProcessInfo processInfo) {
       Pair<String, Integer> address = getAttachAddress(processInfo);
       assert address != null;
 
@@ -68,7 +68,7 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
 
       String name = getAttachString(address);
       RunnerAndConfigurationSettings runSettings = RunManager.getInstance(project)
-        .createRunConfiguration(name, ConfigurationTypeUtil.findConfigurationType("Remote").getConfigurationFactories()[0]);
+        .createRunConfiguration(name, Objects.requireNonNull(ConfigurationTypeUtil.findConfigurationType("Remote")).getConfigurationFactories()[0]);
 
       RunConfiguration remoteConfiguration = runSettings.getConfiguration();
       ReflectionUtil.setField(remoteConfiguration.getClass(), remoteConfiguration, String.class, "HOST", address.first);
@@ -76,7 +76,7 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
       ReflectionUtil.setField(remoteConfiguration.getClass(), remoteConfiguration, boolean.class, "USE_SOCKET_TRANSPORT", true);
       ReflectionUtil.setField(remoteConfiguration.getClass(), remoteConfiguration, boolean.class, "SERVER_MODE", false);
 
-      ProgramRunnerUtil.executeConfiguration(project, runSettings, DefaultDebugExecutor.getDebugExecutorInstance());
+      ProgramRunnerUtil.executeConfiguration(runSettings, DefaultDebugExecutor.getDebugExecutorInstance());
     }
   };
 
