@@ -100,6 +100,10 @@ public abstract class ChooseElementsDialog<T> extends DialogWrapper {
   @Nullable
   protected abstract Icon getItemIcon(T item);
 
+  /**
+   * Override this method and return non-null value to specify location of {@code item}.
+   * It will be shown as grayed text next to the {@link #getItemText(T) item text}.
+   */
   protected String getItemLocation(T item) {
     return null; // default implementation
   }
