@@ -65,6 +65,9 @@ public interface RunnerAndConfigurationSettings {
     return false;
   }
 
+  default void setShared(boolean value) {
+  }
+
   /**
    * Marks the configuration as temporary or permanent.
    *

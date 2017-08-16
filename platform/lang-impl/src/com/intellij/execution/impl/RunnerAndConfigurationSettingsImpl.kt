@@ -84,13 +84,13 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
 
   override fun isTemporary() = level == RunConfigurationLevel.TEMPORARY
 
-  override fun isShared() = level == RunConfigurationLevel.PROJECT
-
   override fun setTemporary(value: Boolean) {
     level = if (value) RunConfigurationLevel.TEMPORARY else RunConfigurationLevel.WORKSPACE
   }
 
-  fun setShared(value: Boolean) {
+  override fun isShared() = level == RunConfigurationLevel.PROJECT
+
+  override fun setShared(value: Boolean) {
     if (value) {
       level = RunConfigurationLevel.PROJECT
     }

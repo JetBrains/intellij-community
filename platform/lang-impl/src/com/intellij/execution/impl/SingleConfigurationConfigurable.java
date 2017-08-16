@@ -118,14 +118,17 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   @Override
   public void apply() throws ConfigurationException {
     RunnerAndConfigurationSettings settings = getSettings();
-    if (settings == null) return;
+    if (settings == null) {
+      return;
+    }
+
     RunConfiguration runConfiguration = settings.getConfiguration();
-    final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(runConfiguration.getProject());
     settings.setName(getNameText());
     settings.setSingleton(mySingleton);
     settings.setFolderName(myFolderName);
+    settings.setShared(myStoreProjectConfiguration);
     super.apply();
-    runManager.addConfiguration(settings, myStoreProjectConfiguration);
+    RunManagerImpl.getInstanceImpl(runConfiguration.getProject()).addConfiguration(settings);
   }
 
   @Override
