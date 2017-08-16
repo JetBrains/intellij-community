@@ -807,7 +807,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     }
 
     if (type is UnknownConfigurationType || _factoryId == null) {
-      return type.getConfigurationFactories().get(0)
+      return type.configurationFactories.get(0)
     }
 
     return type.configurationFactories.firstOrNull {
