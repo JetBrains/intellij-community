@@ -39,11 +39,9 @@ import java.util.List;
 import java.util.Set;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
-import static com.intellij.openapi.util.io.FileUtil.toSystemIndependentName;
 import static com.intellij.util.containers.ContainerUtil.newArrayList;
 import static org.jetbrains.idea.svn.SvnFormatSelector.findRootAndGetFormat;
-import static org.jetbrains.idea.svn.SvnUtil.append;
-import static org.jetbrains.idea.svn.SvnUtil.getRelativeUrl;
+import static org.jetbrains.idea.svn.SvnUtil.*;
 
 @State(name = "SvnFileUrlMappingImpl", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentStateComponent<SvnMappingSavedPart> {
@@ -103,28 +101,19 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
   @Override
   @Nullable
   public SVNURL getUrlForFile(@NotNull File file) {
-    final RootUrlInfo rootUrlInfo = getWcRootForFilePath(file);
-    if (rootUrlInfo == null) {
-      return null;
+    SVNURL result = null;
+    RootUrlInfo rootUrlInfo = getWcRootForFilePath(file);
+
+    if (rootUrlInfo != null) {
+      try {
+        result = append(rootUrlInfo.getAbsoluteUrlAsUrl(), getRelativePath(rootUrlInfo.getPath(), file.getAbsolutePath()));
+      }
+      catch (SvnBindException e) {
+        LOG.info(e);
+      }
     }
 
-    final String absolutePath = file.getAbsolutePath();
-    final String rootAbsPath = rootUrlInfo.getIoFile().getAbsolutePath();
-    if (absolutePath.length() < rootAbsPath.length()) {
-      // remove last separator from etalon name
-      if (absolutePath.equals(rootAbsPath.substring(0, rootAbsPath.length() - 1))) {
-        return rootUrlInfo.getAbsoluteUrlAsUrl();
-      }
-      return null;
-    }
-    final String relativePath = absolutePath.substring(rootAbsPath.length());
-    try {
-      return append(rootUrlInfo.getAbsoluteUrlAsUrl(), toSystemIndependentName(relativePath));
-    }
-    catch (SvnBindException e) {
-      LOG.info(e);
-      return null;
-    }
+    return result;
   }
 
   @Override
