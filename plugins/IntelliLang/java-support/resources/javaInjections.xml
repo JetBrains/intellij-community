@@ -38,10 +38,10 @@
     <display-name>NamedNativeQuery.query (javax.persistence)</display-name>
     <place><![CDATA[psiMethod().withName("query").withParameters().definedInClass("javax.persistence.NamedNativeQuery")]]></place>
   </injection>
-  <injection language="JPAQL" injector-id="java">
-    <display-name>NamedQuery.query (javax.persistence)</display-name>
-    <place><![CDATA[psiMethod().withName("query").withParameters().definedInClass("javax.persistence.NamedQuery")]]></place>
-  </injection>
+  <!--<injection language="JPAQL" injector-id="java">-->
+    <!--<display-name>NamedQuery.query (javax.persistence)</display-name>-->
+    <!--<place><![CDATA[psiMethod().withName("query").withParameters().definedInClass("javax.persistence.NamedQuery")]]></place>-->
+  <!--</injection>-->
   <injection language="XPath" injector-id="java">
     <display-name>Node.createXPath (org.dom4j)</display-name>
     <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("createXPath").withParameters("java.lang.String").definedInClass("org.dom4j.Node"))]]></place>
@@ -95,19 +95,19 @@
     <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("createNativeQuery").withParameters("java.lang.String", "java.lang.String").definedInClass("org.hibernate.query.QueryProducer"))]]></place>
   </injection>
 
-  <injection language="SQL" injector-id="java">
-    <display-name>Statement (java.sql)</display-name>
-    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("addBatch").withParameters("java.lang.String").definedInClass("java.sql.Statement"))]]></place>
-    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("execute").withParameters("java.lang.String").definedInClass("java.sql.Statement"))]]></place>
-    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("execute").withParameters("java.lang.String", "int").definedInClass("java.sql.Statement"))]]></place>
-    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("execute").withParameters("java.lang.String", "int[]").definedInClass("java.sql.Statement"))]]></place>
-    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("execute").withParameters("java.lang.String", "java.lang.String[]").definedInClass("java.sql.Statement"))]]></place>
-    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("executeQuery").withParameters("java.lang.String").definedInClass("java.sql.Statement"))]]></place>
-    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("executeUpdate").withParameters("java.lang.String").definedInClass("java.sql.Statement"))]]></place>
-    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("executeUpdate").withParameters("java.lang.String", "int").definedInClass("java.sql.Statement"))]]></place>
-    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("executeUpdate").withParameters("java.lang.String", "int[]").definedInClass("java.sql.Statement"))]]></place>
-    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("executeUpdate").withParameters("java.lang.String", "java.lang.String[]").definedInClass("java.sql.Statement"))]]></place>
-  </injection>
+  <!--<injection language="SQL" injector-id="java">-->
+    <!--<display-name>Statement (java.sql)</display-name>-->
+    <!--<place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("addBatch").withParameters("java.lang.String").definedInClass("java.sql.Statement"))]]></place>-->
+    <!--<place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("execute").withParameters("java.lang.String").definedInClass("java.sql.Statement"))]]></place>-->
+    <!--<place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("execute").withParameters("java.lang.String", "int").definedInClass("java.sql.Statement"))]]></place>-->
+    <!--<place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("execute").withParameters("java.lang.String", "int[]").definedInClass("java.sql.Statement"))]]></place>-->
+    <!--<place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("execute").withParameters("java.lang.String", "java.lang.String[]").definedInClass("java.sql.Statement"))]]></place>-->
+    <!--<place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("executeQuery").withParameters("java.lang.String").definedInClass("java.sql.Statement"))]]></place>-->
+    <!--<place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("executeUpdate").withParameters("java.lang.String").definedInClass("java.sql.Statement"))]]></place>-->
+    <!--<place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("executeUpdate").withParameters("java.lang.String", "int").definedInClass("java.sql.Statement"))]]></place>-->
+    <!--<place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("executeUpdate").withParameters("java.lang.String", "int[]").definedInClass("java.sql.Statement"))]]></place>-->
+    <!--<place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("executeUpdate").withParameters("java.lang.String", "java.lang.String[]").definedInClass("java.sql.Statement"))]]></place>-->
+  <!--</injection>-->
   <injection language="RegExp" injector-id="java">
     <display-name>String (java.lang)</display-name>
     <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("replaceAll").withParameters("java.lang.String", "java.lang.String").definedInClass("java.lang.String"))]]></place>
