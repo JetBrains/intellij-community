@@ -539,8 +539,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
   }
 
   @Override
-  public void ignoreCurrentElement(RefEntity refEntity) {
-    if (refEntity == null) return;
+  public void ignoreCurrentElement(@NotNull RefEntity refEntity) {
     myIgnoreElements.add(refEntity);
   }
 
@@ -568,7 +567,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
   }
 
   @Override
-  public boolean isElementIgnored(final RefEntity element) {
+  public boolean isElementIgnored(@NotNull RefEntity element) {
     return myIgnoreElements.contains(element);
   }
 
@@ -631,8 +630,9 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     }
   }
 
+  @NotNull
   @Override
-  public JComponent getCustomPreviewPanel(RefEntity entity) {
+  public JComponent getCustomPreviewPanel(@NotNull RefEntity entity) {
     final Project project = entity.getRefManager().getProject();
     JEditorPane htmlView = new JEditorPane() {
       @Override
@@ -693,7 +693,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
   }
 
   @Override
-  public int getProblemsCount(InspectionTree tree) {
+  public int getProblemsCount(@NotNull InspectionTree tree) {
     return 0;
   }
 }
