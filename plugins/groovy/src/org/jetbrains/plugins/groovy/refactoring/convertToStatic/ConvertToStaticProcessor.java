@@ -33,9 +33,14 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 
+import java.util.ArrayDeque;
+import java.util.Arrays;
+import java.util.Queue;
+
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_TRANSFORM_COMPILE_STATIC;
 
 public class ConvertToStaticProcessor extends BaseRefactoringProcessor {
+  private static final int maxIterations = 5;
   private static final Logger LOG = Logger.getInstance(ConvertToStaticProcessor.class);
 
   private final GroovyFile[] myFiles;
@@ -70,8 +75,10 @@ public class ConvertToStaticProcessor extends BaseRefactoringProcessor {
 
   @Override
   protected void performRefactoring(@NotNull UsageInfo[] usages) {
-
-    for (GroovyFile file : myFiles) {
+    Queue<GroovyFile> files = new ArrayDeque<>(Arrays.asList(myFiles));
+    int currentIteration = 0;
+    while (files.peek() != null) {
+      GroovyFile file = files.peek();
       TypeChecker checker = new TypeChecker();
       final Document document = PsiDocumentManager.getInstance(myProject).getDocument(file);
       PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(file.getProject());
@@ -87,16 +94,22 @@ public class ConvertToStaticProcessor extends BaseRefactoringProcessor {
         }
         checkErrors((GrTypeDefinition)psiClass, checker);
       }
-      checker.applyFixes();
+
+      if (checker.applyFixes() == 0 || currentIteration == maxIterations) {
+        files.poll();
+        currentIteration = 0;
+      } else {
+        currentIteration++;
+      }
+
 
       PsiDocumentManager.getInstance(myProject).commitDocument(document);
-
       doPostProcessing(file);
     }
   }
 
   private static void checkErrors(@NotNull GrTypeDefinition psiClass, @NotNull TypeChecker checker) {
-    psiClass.accept(new PsiRecursiveElementWalkingVisitor() {
+    psiClass.accept(new PsiRecursiveElementVisitor() {
       @Override
       public void visitElement(PsiElement element) {
         element.accept(new GroovyPsiElementVisitor(checker));

@@ -22,12 +22,12 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.codeInspection.type.GroovyTypeCheckVisitor;
+import org.jetbrains.plugins.groovy.codeInspection.type.GroovyStaticTypeCheckVisitor;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class TypeChecker extends GroovyTypeCheckVisitor {
+public class TypeChecker extends GroovyStaticTypeCheckVisitor {
   List<ProblemFix> toApply = new ArrayList<>();
 
   @Override
@@ -46,10 +46,11 @@ public class TypeChecker extends GroovyTypeCheckVisitor {
     }
   }
 
-  void applyFixes() {
+  int applyFixes() {
     for (ProblemFix fix : toApply) {
       fix.apply();
     }
+    return toApply.size();
   }
 
   private static class ProblemFix {
