@@ -111,7 +111,7 @@ public final class PythonUnitTestUtil {
         result.set(true);
         return false;
       }
-      return false;
+      return true;
     }, true, context);
     return result.get();
   }
