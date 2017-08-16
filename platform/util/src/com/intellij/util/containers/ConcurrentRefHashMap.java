@@ -265,7 +265,7 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
 
   /* Internal class for entry sets */
   private class EntrySet extends AbstractSet<Map.Entry<K, V>> {
-    Set<Map.Entry<KeyReference<K, V>, V>> hashEntrySet = myMap.entrySet();
+    private final Set<Map.Entry<KeyReference<K, V>, V>> hashEntrySet = myMap.entrySet();
 
     @NotNull
     @Override
