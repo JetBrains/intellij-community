@@ -35,6 +35,7 @@ import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
 import java.io.File;
@@ -103,6 +104,22 @@ public class OutputChecker {
     checkValid(jdk, false);
   }
 
+  @NotNull
+  File getOutFile(File outs, Sdk jdk, @Nullable File current, String prefix) {
+    String name = myTestName + prefix;
+    File res = new File(outs, name + ".out");
+    if (current == null || res.exists()) {
+      current = res;
+    }
+    if (JavaSdkUtil.isJdkAtLeast(jdk, JavaSdkVersion.JDK_1_9)) {
+      File outFile = new File(outs, name + ".jdk9.out");
+      if (outFile.exists()) {
+        current = outFile;
+      }
+    }
+    return current;
+  }
+
   public void checkValid(Sdk jdk, boolean sortClassPath) throws Exception {
     if (IdeaLogger.ourErrorsOccurred != null) {
       throw IdeaLogger.ourErrorsOccurred;
@@ -113,25 +130,13 @@ public class OutputChecker {
     File outs = new File(myAppPath + File.separator + "outs");
     assert outs.exists() || outs.mkdirs() : outs;
 
-    File outFile = new File(outs, myTestName + ".out");
-    if (JavaSdkUtil.isJdkAtLeast(jdk, JavaSdkVersion.JDK_1_9)) {
-      File jdk9Out = new File(outs, myTestName + ".jdk9.out");
-      if (jdk9Out.exists()) {
-        outFile = jdk9Out;
-      }
-    }
+    File outFile = getOutFile(outs, jdk, null, "");
     if (!outFile.exists()) {
       if (SystemInfo.isWindows) {
-        final File winOut = new File(outs, myTestName + ".win.out");
-        if (winOut.exists()) {
-          outFile = winOut;
-        }
+        outFile = getOutFile(outs, jdk, outFile, ".win");
       }
       else if (SystemInfo.isUnix) {
-        final File unixOut = new File(outs, myTestName + ".unx.out");
-        if (unixOut.exists()) {
-          outFile = unixOut;
-        }
+        outFile = getOutFile(outs, jdk, outFile, ".unx");
       }
     }
 
