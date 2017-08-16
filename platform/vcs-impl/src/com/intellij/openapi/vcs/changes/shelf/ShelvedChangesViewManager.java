@@ -322,6 +322,15 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     return model;
   }
 
+  @CalledInAwt
+  public void startEditing(@NotNull ShelvedChangeList shelvedChangeList) {
+    //need to wait until model is synchronized with tree ui
+    myUpdateQueue.cancelAllUpdates();
+    updateChangesContent();
+    selectShelvedList(shelvedChangeList);
+    myTree.startEditingAtPath(myTree.getLeadSelectionPath());
+  }
+  
   private static class ChangelistComparator implements Comparator<ShelvedChangeList> {
     private final static ChangelistComparator ourInstance = new ChangelistComparator();
 

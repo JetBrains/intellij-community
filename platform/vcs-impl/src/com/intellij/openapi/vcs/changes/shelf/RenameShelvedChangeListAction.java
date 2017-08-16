@@ -19,13 +19,8 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.NonEmptyInputValidator;
-import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.CalledInAwt;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -34,18 +29,7 @@ public class RenameShelvedChangeListAction extends AnAction {
     final Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     final List<ShelvedChangeList> changelists = ShelvedChangesViewManager.getShelvedLists(e.getDataContext());
     final ShelvedChangeList changeList = ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(changelists));
-    suggestToRenameShelvedList(project, changeList);
-  }
-
-  @CalledInAwt
-  public static void suggestToRenameShelvedList(@NotNull Project project, @NotNull ShelvedChangeList changeList) {
-    String newName = Messages.showInputDialog(project, "",
-                                              VcsBundle.message("shelve.changes.rename.title"),
-                                              Messages.getQuestionIcon(), changeList.DESCRIPTION, new NonEmptyInputValidator());
-
-    if (newName != null && !newName.equals(changeList.DESCRIPTION)) {
-      ShelveChangesManager.getInstance(project).renameChangeList(changeList, newName);
-    }
+    ShelvedChangesViewManager.getInstance(project).startEditing(changeList);
   }
 
   public void update(final AnActionEvent e) {

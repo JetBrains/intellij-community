@@ -744,8 +744,8 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
 
     if (completed) {
       VcsNotifier.getInstance(myProject).notifySuccess("Changes shelved successfully");
-      if (isShelfContentActive() && result.size() == 1) {
-        RenameShelvedChangeListAction.suggestToRenameShelvedList(myProject, result.get(0));
+      if (result.size() == 1 && isShelfContentActive()) {
+        ShelvedChangesViewManager.getInstance(myProject).startEditing(result.get(0));
       }
     }
   }
@@ -1050,7 +1050,6 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
 
   public void renameChangeList(final ShelvedChangeList changeList, final String newName) {
     changeList.DESCRIPTION = newName;
-    notifyStateChanged();
   }
 
   @NotNull
