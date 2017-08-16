@@ -40,7 +40,7 @@ import java.util.List;
  * @author egor
  */
 public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider {
-  private static final XAttachDebugger<LocalAttachSettings> ourAttachDebugger = new XAttachDebugger<LocalAttachSettings>() {
+  private static final XLocalAttachDebugger ourAttachDebugger = new XLocalAttachDebugger() {
     @NotNull
     @Override
     public String getDebuggerDisplayName() {
@@ -48,8 +48,8 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
     }
 
     @Override
-    public void attachDebugSession(@NotNull Project project, @NotNull LocalAttachSettings settings) throws ExecutionException {
-      Pair<String, Integer> address = getAttachAddress(settings.getInfo());
+    public void attachDebugSession(@NotNull Project project, @NotNull ProcessInfo info) throws ExecutionException {
+      Pair<String, Integer> address = getAttachAddress(info);
       assert address != null;
 
       // TODO: first need to remove circular dependency with execution-impl
@@ -114,9 +114,9 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
   @NotNull
   @Override
   public List<XAttachDebugger<LocalAttachSettings>> getAvailableDebuggers(@NotNull Project project,
-                                                                          @NotNull LocalAttachSettings settings,
+                                                                          @NotNull ProcessInfo info,
                                                                           @NotNull UserDataHolder contextHolder) {
-    Pair<String, Integer> address = getAttachAddress(settings.getInfo());
+    Pair<String, Integer> address = getAttachAddress(info);
     if (address != null) {
       return Collections.singletonList(ourAttachDebugger);
     }
