@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -114,7 +114,7 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     if (value instanceof PsiClass) {
       PsiClass psiClass = (PsiClass)value;
       if (psiClass.getContainingClass() != null &&
-          !StringUtil.containsChar(domValue.getRawText(), '$')) {
+          !StringUtil.containsChar(StringUtil.notNullize(domValue.getRawText()), '$')) {
         holder.createProblem(domValue, "Inner class must be separated with '$'");
       }
     }
