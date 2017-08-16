@@ -479,10 +479,10 @@ public class DiffUtil {
     List<JComponent> notifications = getCustomNotifications(content);
     if (notifications.isEmpty()) return title;
 
-    List<JComponent> components = new ArrayList<>();
-    if (title != null) components.add(title);
-    components.addAll(notifications);
-    return createStackedComponents(components, TITLE_GAP);
+    JPanel panel = new JPanel(new BorderLayout(0, TITLE_GAP));
+    if (title != null) panel.add(title, BorderLayout.NORTH);
+    panel.add(createStackedComponents(notifications, TITLE_GAP), BorderLayout.SOUTH);
+    return panel;
   }
 
   @Nullable
