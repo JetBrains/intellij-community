@@ -19,7 +19,7 @@ import com.google.common.collect.Sets
 import com.jetbrains.env.PyProcessWithConsoleTestTask
 import com.jetbrains.env.ut.PyScriptTestProcessRunner
 import com.jetbrains.env.ut.PyUnitTestProcessRunner
-import com.jetbrains.python.sdkTools.SdkCreationType
+import com.jetbrains.python.tools.sdkTools.SdkCreationType
 import java.util.function.Function
 
 /**

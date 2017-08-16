@@ -20,7 +20,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.util.ThrowableRunnable;
 import com.jetbrains.env.PyProcessWithConsoleTestTask;
 import com.jetbrains.env.ut.PyScriptTestProcessRunner;
-import com.jetbrains.python.sdkTools.SdkCreationType;
+import com.jetbrains.python.tools.sdkTools.SdkCreationType;
 import org.jetbrains.annotations.NotNull;
 
 /**
