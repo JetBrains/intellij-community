@@ -45,17 +45,17 @@ public class ClassWithTooManyDependenciesInspection
   }
 
   @Override
-  public void runInspection(
-    @NotNull AnalysisScope scope,
-    @NotNull final InspectionManager inspectionManager,
-    @NotNull GlobalInspectionContext globalInspectionContext,
-    @NotNull final ProblemDescriptionsProcessor problemDescriptionsProcessor) {
+  public void runInspection(@NotNull AnalysisScope scope,
+                            @NotNull final InspectionManager inspectionManager,
+                            @NotNull GlobalInspectionContext globalInspectionContext,
+                            @NotNull final ProblemDescriptionsProcessor problemDescriptionsProcessor) {
     final RefManager refManager = globalInspectionContext.getRefManager();
     refManager.iterate(new RefJavaVisitor() {
 
       @Override
       public void visitClass(@NotNull RefClass refClass) {
         super.visitClass(refClass);
+        if (!globalInspectionContext.shouldCheck(refClass, ClassWithTooManyDependenciesInspection.this)) return;
         if (refClass.getOwner() instanceof RefClass) {
           return;
         }
