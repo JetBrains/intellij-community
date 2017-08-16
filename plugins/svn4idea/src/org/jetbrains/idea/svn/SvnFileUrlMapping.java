@@ -26,21 +26,24 @@ import java.util.List;
 
 public interface SvnFileUrlMapping extends AbstractVcs.RootsConvertor {
   @Nullable
-  SVNURL getUrlForFile(final File file);
+  SVNURL getUrlForFile(@NotNull File file);
 
   @Nullable
   File getLocalPath(@NotNull String url);
 
   @Nullable
-  RootUrlInfo getWcRootForUrl(final String url);
+  RootUrlInfo getWcRootForUrl(@NotNull String url);
 
+  @NotNull
   List<RootUrlInfo> getAllWcInfos();
 
   @Nullable
-  RootUrlInfo getWcRootForFilePath(final File file);
+  RootUrlInfo getWcRootForFilePath(@NotNull File file);
 
+  @NotNull
   List<RootUrlInfo> getErrorRoots();
 
+  @NotNull
   VirtualFile[] getNotFilteredRoots();
 
   boolean isEmpty();
