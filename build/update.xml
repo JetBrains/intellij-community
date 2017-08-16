@@ -17,7 +17,6 @@
   <dirname property="build" file="${ant.file}"/>
   <property name="project.home" value="${build}/../"/>
   <property name="gant.home" value="${project.home}/build/lib/gant"/>
-  <property name="modules.output" value="${project.home}/out"/>
 
   <macrodef name="run">
     <attribute name="script"/>
@@ -36,7 +35,6 @@
       <java failonerror="true" classname="org.apache.tools.ant.Main" fork="true">
         <jvmarg line="-Xms64m -Xmx512m"/>
         <jvmarg line="&quot;-Ddeploy=@{deploy}&quot;"/>
-        <jvmarg line="&quot;-Dmodules.output=${modules.output}&quot;"/>
         <jvmarg line="&quot;-Dgant.script=@{script}&quot;"/>
         <jvmarg line="&quot;-Dgant.target=@{target}&quot;"/>
 
