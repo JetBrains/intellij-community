@@ -66,7 +66,6 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.pom.NavigatableAdapter;
 import com.intellij.ui.*;
-import com.intellij.ui.content.Content;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.IconUtil;
 import com.intellij.util.IconUtil.IconSizeWrapper;
@@ -111,7 +110,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
   private final ShelveChangesManager myShelveChangesManager;
   private final Project myProject;
   private final ShelfTree myTree;
-  private Content myContent = null;
+  private MyShelfContent myContent = null;
   private final DeleteProvider myDeleteProvider = new MyShelveDeleteProvider();
   private final MergingUpdateQueue myUpdateQueue;
 
@@ -173,8 +172,6 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     });
     myTree.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0), "startEditing");
     new TreeLinkMouseListener(new ShelfTreeCellRenderer(project, myMoveRenameInfo)).installOn(myTree);
-    DnDSupport.createBuilder(myTree).disableAsTarget().setImageProvider(this::createDraggedImage).setBeanProvider(this::createDragStartBean)
-      .install();
 
     final AnAction showDiffAction = ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_DIFF_COMMON);
     showDiffAction.registerCustomShortcutSet(showDiffAction.getShortcutSet(), myTree);
@@ -252,6 +249,13 @@ public class ShelvedChangesViewManager implements ProjectComponent {
         myContent = new MyShelfContent(rootPanel, VcsBundle.message("shelf.tab"), false);
         myContent.setCloseable(false);
         myContentManager.addContent(myContent);
+        DnDSupport.createBuilder(myTree)
+          .setImageProvider(this::createDraggedImage)
+          .setBeanProvider(this::createDragStartBean)
+          .setTargetChecker(myContent)
+          .setDropHandler(myContent)
+          .setDisposableParent(myContent)
+          .install();
       }
       TreeState state = TreeState.createOn(myTree);
       myTree.setModel(buildChangesModel());
