@@ -30,7 +30,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.CommonProcessors;
-import com.intellij.util.ui.UIUtil;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -58,7 +57,6 @@ public class GotoImplementationTest extends CodeInsightTestCase {
     myProject = ProjectManagerEx.getInstanceEx().loadProject(projectFile.getPath());
 
     ProjectManagerEx.getInstanceEx().openTestProject(myProject);
-    UIUtil.dispatchAllInvocationEvents(); // startup activities
   }
 
   public void test() {
