@@ -15,13 +15,13 @@
  */
 package com.intellij.java.parser;
 
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LanguageASTFactory;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.lang.java.parser.JavaParserUtil;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.impl.LanguageLevelProjectExtensionImpl;
 import com.intellij.pom.java.LanguageLevel;
@@ -94,8 +94,8 @@ public abstract class JavaParsingTestCase extends ParsingTestCase {
 
     TEST_PARSER = parser;
 
-    final LightVirtualFile virtualFile = new LightVirtualFile(name + '.' + myFileExt, StdFileTypes.JAVA, text, -1);
-    final FileViewProvider viewProvider = new SingleRootFileViewProvider(PsiManager.getInstance(getProject()), virtualFile, true);
+    LightVirtualFile virtualFile = new LightVirtualFile(name + '.' + myFileExt, JavaFileType.INSTANCE, text, -1);
+    FileViewProvider viewProvider = new SingleRootFileViewProvider(PsiManager.getInstance(getProject()), virtualFile, true);
     return new PsiJavaFileImpl(viewProvider) {
       @NotNull
       @Override
