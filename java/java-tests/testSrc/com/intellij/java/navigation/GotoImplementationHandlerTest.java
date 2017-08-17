@@ -15,7 +15,9 @@
  */
 package com.intellij.java.navigation;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.navigation.GotoTargetHandler;
+import com.intellij.idea.Bombed;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
@@ -26,8 +28,11 @@ import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.util.containers.ContainerUtil;
 
 import java.util.Arrays;
+import java.util.Calendar;
+import java.util.List;
 
 public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCase {
   public void testMultipleImplsFromAbstractCall() {
@@ -305,6 +310,52 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
     myFixture.getEditor().getCaretModel().moveToOffset(aClass.getTextOffset());
 
     assertSize(2, getTargets(file));
+  }
+
+  @Bombed(month = Calendar.SEPTEMBER, user = "Maxim.Mossienko", day = 15)
+  public void testAnonymousAndLocalClassesInLibrary() {
+    ModuleRootModificationUtil.addModuleLibrary(
+      myModule, 
+      "jar://" + JavaTestUtil.getJavaTestDataPath() + "/codeInsight/navigation/MyInterfaceLibrary.jar!/"
+    );
+    PsiFile psiFile = myFixture.addFileToProject("MyInterfaceImplementation.java",
+                                               "import com.company.MyInterface;\n" +
+                                               "\n" +
+                                               "public class MyInterfaceImplementation implements My<caret>Interface {\n" +
+                                               "    @Override\n" +
+                                               "    public void doIt() {}\n" +
+                                               "}\n");
+
+    myFixture.configureFromExistingVirtualFile(psiFile.getVirtualFile());
+
+    PsiClass implementation = myFixture.findClass("MyInterfaceImplementation");
+    assertNotNull(implementation);
+    PsiClass[] supers = implementation.getSupers();
+    assertTrue(supers.length == 2 && "com.company.MyInterface".equalsIgnoreCase(supers[1].getQualifiedName()));
+    
+    PsiElement[] targets = getTargets(psiFile);
+    assertSize(5, targets);
+
+    List<String> names = ContainerUtil.map(targets, element -> ((PsiClass)element).getName());
+
+    assertContainsElements(names, "1");
+    assertContainsElements(names, "2");
+    assertContainsElements(names, "MyLocalClassImplementation");
+    assertContainsElements(names, "MyLocalClassImplementationInInner");
+    assertContainsElements(names, "MyInterfaceImplementation");
+
+    /* // todo
+    implementation = myFixture.getJavaFacade().findClass("MyLocalClassImplementation");
+    assertNull(implementation);
+    implementation = myFixture.getJavaFacade().findClass("MyLocalClassImplementationInInner");
+    assertNull(implementation);
+
+    implementation = myFixture.getJavaFacade().findClass("1");
+    assertNull(implementation);
+
+    implementation = myFixture.getJavaFacade().findClass("2");
+    assertNull(implementation);
+    */
   }
 
   private PsiElement[] getTargets(PsiFile file) {
