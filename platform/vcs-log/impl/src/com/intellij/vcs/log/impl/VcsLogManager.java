@@ -85,8 +85,6 @@ public class VcsLogManager implements Disposable {
     if (scheduleRefreshImmediately) {
       scheduleInitialization();
     }
-
-    Disposer.register(project, this);
   }
 
   @CalledInAwt
