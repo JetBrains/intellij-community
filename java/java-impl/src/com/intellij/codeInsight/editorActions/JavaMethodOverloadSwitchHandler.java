@@ -20,11 +20,14 @@ import com.intellij.codeInsight.completion.CompletionMemory;
 import com.intellij.codeInsight.completion.JavaMethodCallElement;
 import com.intellij.codeInsight.hint.ParameterInfoController;
 import com.intellij.codeInsight.hints.ParameterHintsPass;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -181,47 +184,53 @@ abstract class JavaMethodOverloadSwitchHandler extends EditorActionHandler {
   }
 
   public static class UpInEditor extends UpDownInEditor {
-    public UpInEditor() {
-      super(true);
+    public UpInEditor(EditorActionHandler originalHandler) {
+      super(originalHandler, true);
     }
   }
 
   public static class DownInEditor extends UpDownInEditor {
-    public DownInEditor() {
-      super(false);
+    public DownInEditor(EditorActionHandler originalHandler) {
+      super(originalHandler, false);
     }
   }
   
-  private static abstract class UpDownInEditor extends AnAction {
+  private static abstract class UpDownInEditor extends EditorActionHandler {
+    private final EditorActionHandler myOriginalHandler;
     private final boolean myUp;
     
-    private UpDownInEditor(boolean up) {
+    private UpDownInEditor(EditorActionHandler originalHandler, boolean up) {
+      myOriginalHandler = originalHandler;
       myUp = up;
     }
 
     @Override
-    public void update(AnActionEvent e) {
-      Editor editor = e.getData(CommonDataKeys.EDITOR);
-      e.getPresentation().setEnabled(CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION && editor != null &&
-                                     ParameterInfoController.existsWithVisibleHintForEditor(editor, false));
+    protected boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
+      return myOriginalHandler.isEnabled(editor, caret, dataContext) ||
+             isEnabled(editor);
+    }
+
+    private static boolean isEnabled(@NotNull Editor editor) {
+      return CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION &&
+             ParameterInfoController.existsWithVisibleHintForEditor(editor, false);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
-      Editor editor = e.getData(CommonDataKeys.EDITOR);
-      assert editor != null;
-      ParameterInfoController.hideAllHints(editor);
+    protected void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
+      if (isEnabled(editor)) {
+        ParameterInfoController.hideAllHints(editor);
+      }
       // hints can be hidden asynchronously (with animation), so we disable switching explicitly here
       editor.putUserData(SWITCH_DISABLED, Boolean.TRUE);
       try {
-        ActionManager actionManager = ActionManager.getInstance();
-        AnAction action = actionManager.getAction(myUp ? IdeActions.ACTION_LOOKUP_UP
-                                                       : IdeActions.ACTION_LOOKUP_DOWN);
-        if (action == null) {
-          action = actionManager.getAction(myUp ? IdeActions.ACTION_EDITOR_MOVE_CARET_UP
-                                                         : IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN);
+        if (myOriginalHandler.isEnabled(editor, caret, dataContext)) {
+          myOriginalHandler.execute(editor, caret, dataContext);
         }
-        action.actionPerformed(e);
+        else {
+          EditorActionManager.getInstance().getActionHandler(myUp ? IdeActions.ACTION_EDITOR_MOVE_CARET_UP 
+                                                                  : IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN)
+            .execute(editor, caret, dataContext);
+        }
       }
       finally {
         editor.putUserData(SWITCH_DISABLED, null);

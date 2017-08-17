@@ -565,7 +565,7 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     waitForAllAsyncStuff();
     checkHintContents("<html><b>@NotNull String key</b></html>\n" +
                       "<html><b>@NotNull String key</b>, String def</html>");
-    myFixture.performEditorAction("EditorOverloadUp");
+    myFixture.performEditorAction(IdeActions.ACTION_LOOKUP_UP);
     waitForAllAsyncStuff();
     checkResultWithInlays("<caret>class C { void m() { System.getProperty(<hint text=\"key:\"/>, <hint text=\"def:\"/>) } }");
     checkHintContents(null);
@@ -580,7 +580,7 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     waitForAllAsyncStuff();
     checkHintContents("<html><b>@NotNull String key</b></html>\n" +
                       "<html><b>@NotNull String key</b>, String def</html>");
-    myFixture.performEditorAction("EditorOverloadDown");
+    myFixture.performEditorAction(IdeActions.ACTION_LOOKUP_DOWN);
     waitForAllAsyncStuff();
     checkResultWithInlays("class C { void m() { System.getProperty(<hint text=\"key:\"/>, <hint text=\"def:\"/>) } }<caret>");
     checkHintContents(null);

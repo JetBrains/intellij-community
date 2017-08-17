@@ -17,13 +17,6 @@
   <id>com.intellij</id>
   <name>IDEA CORE</name>
 
-  <actions>
-    <action id="EditorOverloadUp" class="com.intellij.codeInsight.editorActions.JavaMethodOverloadSwitchHandler$UpInEditor"
-            use-shortcut-of="EditorLookupUp"/>
-    <action id="EditorOverloadDown" class="com.intellij.codeInsight.editorActions.JavaMethodOverloadSwitchHandler$DownInEditor"
-            use-shortcut-of="EditorLookupDown"/>
-  </actions>
-
   <xi:include href="/META-INF/IdeTipsAndTricks.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/idea/RichPlatformPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <module value="com.intellij.modules.java"/>
@@ -1431,6 +1424,8 @@
     <editorActionHandler action="PrevParameter" implementationClass="com.intellij.codeInsight.editorActions.JavaVarArgPrevParameterHandler"/>
     <editorActionHandler action="EditorUp" implementationClass="com.intellij.codeInsight.editorActions.JavaMethodOverloadSwitchHandler$Up"/>
     <editorActionHandler action="EditorDown" implementationClass="com.intellij.codeInsight.editorActions.JavaMethodOverloadSwitchHandler$Down"/>
+    <editorActionHandler action="EditorLookupUp" implementationClass="com.intellij.codeInsight.editorActions.JavaMethodOverloadSwitchHandler$UpInEditor"/>
+    <editorActionHandler action="EditorLookupDown" implementationClass="com.intellij.codeInsight.editorActions.JavaMethodOverloadSwitchHandler$DownInEditor"/>
 
     <editorSmartKeysConfigurable instance="com.intellij.application.options.JavadocOptionsProvider"
                                  id="editor.preferences.javadocOptions"

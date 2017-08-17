@@ -20,16 +20,18 @@ import com.intellij.codeInsight.completion.CodeCompletionFeatures;
 import com.intellij.codeInsight.completion.CompletionProgressIndicator;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.lookup.CharFilter;
-import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.CaretAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
-import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.editor.actionSystem.EditorActionManager;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.ScrollingUtil;
 import org.jetbrains.annotations.NotNull;
@@ -105,39 +107,44 @@ public abstract class LookupActionHandler extends EditorActionHandler {
 
   }
 
-  public static class UpAction extends DumbAwareAction {
-
-    @Override
-    public void actionPerformed(AnActionEvent e) {
-      FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_CONTROL_ARROWS);
-      LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(CommonDataKeys.EDITOR.getData(e.getDataContext()));
-      assert lookup != null : LookupImpl.getLastLookupDisposeTrace();
-      lookup.hideLookup(true);
-      ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP).actionPerformed(e);
-    }
-
-    @Override
-    public void update(AnActionEvent e) {
-      Lookup lookup = LookupManager.getActiveLookup(CommonDataKeys.EDITOR.getData(e.getDataContext()));
-      e.getPresentation().setEnabled(lookup != null);
+  public static class UpAction extends EditorAction implements DumbAware {
+    public UpAction() {
+      super(new UpDownInEditorHandler(true));
     }
   }
 
-  public static class DownAction extends DumbAwareAction {
+  public static class DownAction extends EditorAction implements DumbAware {
+    public DownAction() {
+      super(new UpDownInEditorHandler(false));
+    }
+  }
 
-    @Override
-    public void actionPerformed(AnActionEvent e) {
-      FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_CONTROL_ARROWS);
-      LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(CommonDataKeys.EDITOR.getData(e.getDataContext()));
-      assert lookup != null : LookupImpl.getLastLookupDisposeTrace();
-      lookup.hideLookup(true);
-      ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN).actionPerformed(e);
+  private static class UpDownInEditorHandler extends EditorActionHandler {
+    private final boolean myUp;
+
+    private UpDownInEditorHandler(boolean up) {
+      myUp = up;
     }
 
     @Override
-    public void update(AnActionEvent e) {
-      Lookup lookup = LookupManager.getActiveLookup(CommonDataKeys.EDITOR.getData(e.getDataContext()));
-      e.getPresentation().setEnabled(lookup != null);
+    public boolean executeInCommand(@NotNull Editor editor, DataContext dataContext) {
+      return false;
+    }
+
+    @Override
+    protected boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
+      return LookupManager.getActiveLookup(editor) != null;
+    }
+
+    @Override
+    protected void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
+      FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_CONTROL_ARROWS);
+      LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
+      assert lookup != null : LookupImpl.getLastLookupDisposeTrace();
+      lookup.hideLookup(true);
+      EditorActionManager.getInstance().getActionHandler(myUp ? IdeActions.ACTION_EDITOR_MOVE_CARET_UP 
+                                                              : IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN)
+        .execute(editor, caret, dataContext);      
     }
   }
 
