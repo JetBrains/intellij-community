@@ -54,9 +54,9 @@ class BuildOptions {
   static final SOURCES_ARCHIVE_STEP = "sources_archive"
   /** build Mac OS X artifacts */
   static final MAC_ARTIFACTS = "mac_artifacts"
-  /** product DMG file for Mac OS X. If it is skipped only sit archive will be produced. */
+  /** produce DMG file for Mac OS X. If it is skipped only sit archive will be produced. */
   static final MAC_DMG_STEP = "mac_dmg"
-  /** product TAR.GZ file for Linux. */
+  /** produce TAR.GZ file for Linux. */
   static final LINUX_TAR_GZ_STEP = "linux_targz"
   /** sign additional binary files in Mac OS X distribution */
   static final MAC_SIGN_STEP = "mac_sign"
