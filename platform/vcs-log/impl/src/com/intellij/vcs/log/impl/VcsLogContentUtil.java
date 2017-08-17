@@ -152,16 +152,12 @@ public class VcsLogContentUtil {
     logUi.invokeOnChange(openLogAndRun);
   }
 
-  public static void closeLogTabs(@NotNull Project project, @NotNull Collection<String> tabs) {
-    ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS);
-
-    if (toolWindow != null) {
-      for (String tabName : tabs) {
-        Content content = toolWindow.getContentManager().findContent(tabName);
-        LOG.assertTrue(content != null, "Could not find content for tab " + tabName);
-        if (content.isCloseable()) {
-          ContentsUtil.closeContentTab(toolWindow.getContentManager(), content);
-        }
+  public static void closeLogTabs(@NotNull ToolWindow toolWindow, @NotNull Collection<String> tabs) {
+    for (String tabName : tabs) {
+      Content content = toolWindow.getContentManager().findContent(tabName);
+      LOG.assertTrue(content != null, "Could not find content for tab " + tabName);
+      if (content.isCloseable()) {
+        ContentsUtil.closeContentTab(toolWindow.getContentManager(), content);
       }
     }
   }
