@@ -21,12 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.components.JBPanel;
-import com.intellij.ui.content.Content;
-import com.intellij.util.ContentsUtil;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.vcs.log.ui.VcsLogPanel;
@@ -65,7 +60,7 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
 
       @Override
       public void logDisposed(@NotNull VcsLogManager logManager) {
-        dispose(logManager);
+        disposeLogUi(logManager);
       }
     });
 
@@ -85,12 +80,19 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
     }
   }
 
-  private void dispose(@Nullable VcsLogManager logManager) {
+  @CalledInAwt
+  private void disposeLogUi(@Nullable VcsLogManager logManager) {
     LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
+
+    // main ui
     myContainer.removeAll();
     VcsLogUiImpl ui = myProjectLog.getMainLogUi();
     if (ui != null) Disposer.dispose(ui);
-    if (logManager != null) closeLogTabs(logManager);
+
+    // other tabs
+    if (logManager != null) {
+      VcsLogContentUtil.closeLogTabs(myProject, logManager.getTabNames());
+    }
   }
 
   @Override
@@ -101,20 +103,7 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
 
   @Override
   public void disposeContent() {
-    dispose(myProjectLog.getLogManager());
-  }
-
-  private void closeLogTabs(@NotNull VcsLogManager logManager) {
-    ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.VCS);
-
-    if (toolWindow != null) {
-      for (String tabName : logManager.getTabNames()) {
-        if (!TAB_NAME.equals(tabName)) { // main tab is closed by the ChangesViewContentManager
-          Content content = toolWindow.getContentManager().findContent(tabName);
-          ContentsUtil.closeContentTab(toolWindow.getContentManager(), content);
-        }
-      }
-    }
+    disposeLogUi(myProjectLog.getLogManager());
   }
 
   public static class VcsLogVisibilityPredicate implements NotNullFunction<Project, Boolean> {

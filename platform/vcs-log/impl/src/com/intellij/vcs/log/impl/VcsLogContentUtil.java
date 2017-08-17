@@ -15,6 +15,7 @@
  */
 package com.intellij.vcs.log.impl;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Condition;
@@ -28,6 +29,7 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.TabbedContent;
 import com.intellij.util.Consumer;
 import com.intellij.util.ContentUtilEx;
+import com.intellij.util.ContentsUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
@@ -36,12 +38,15 @@ import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.Collection;
 import java.util.List;
 
 /**
  * Utility methods to operate VCS Log tabs as {@link Content}s of the {@link ContentManager} of the VCS toolwindow.
  */
 public class VcsLogContentUtil {
+  private static final Logger LOG = Logger.getInstance(VcsLogContentUtil.class);
+
   public static <U extends AbstractVcsLogUi> boolean findAndSelectContent(@NotNull Project project,
                                                                           @NotNull Class<U> clazz,
                                                                           @NotNull Condition<U> condition) {
@@ -88,7 +93,8 @@ public class VcsLogContentUtil {
     }
     else {
       List<Content> contents = ContainerUtil.filter(toolWindow.getContentManager().getContents(),
-                                                    content -> VcsLogContentProvider.TAB_NAME.equals(content.getUserData(Content.TAB_GROUP_NAME_KEY)));
+                                                    content -> VcsLogContentProvider.TAB_NAME
+                                                      .equals(content.getUserData(Content.TAB_GROUP_NAME_KEY)));
       return String.valueOf(contents.size() + 1);
     }
   }
@@ -144,5 +150,19 @@ public class VcsLogContentUtil {
     }
 
     logUi.invokeOnChange(openLogAndRun);
+  }
+
+  public static void closeLogTabs(@NotNull Project project, @NotNull Collection<String> tabs) {
+    ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS);
+
+    if (toolWindow != null) {
+      for (String tabName : tabs) {
+        Content content = toolWindow.getContentManager().findContent(tabName);
+        LOG.assertTrue(content != null, "Could not find content for tab " + tabName);
+        if (content.isCloseable()) {
+          ContentsUtil.closeContentTab(toolWindow.getContentManager(), content);
+        }
+      }
+    }
   }
 }
