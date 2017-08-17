@@ -17,6 +17,7 @@ package com.intellij.project
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.util.SystemProperties
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.serialization.JpsSerializationManager
 import java.io.File
@@ -32,7 +33,8 @@ class IntelliJProjectConfiguration {
   private val projectLibraryRoots: Map<String, List<File>>
 
   init {
-    val project = JpsSerializationManager.getInstance().loadModel(projectHome, null).project
+    val m2Repo = FileUtil.toSystemIndependentName(File(SystemProperties.getUserHome(), ".m2/repository").absolutePath)
+    val project = JpsSerializationManager.getInstance().loadProject(projectHome, mapOf("MAVEN_REPOSITORY" to m2Repo))
     projectLibraryRoots = project.libraryCollection.libraries.associateBy({ it.name }, { it.getFiles(JpsOrderRootType.COMPILED) })
   }
 
