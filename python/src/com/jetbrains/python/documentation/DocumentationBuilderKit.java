@@ -35,10 +35,7 @@ class DocumentationBuilderKit {
   static final TagWrapper TagCode = new TagWrapper("code");
   static final TagWrapper TagSpan = new TagWrapper("span");
 
-  static final Function<String, String> LCombUp = argname -> combUp(argname);
   final static @NonNls String BR = "<br>";
-  static final Function<String, String> LSame1 = name -> name;
-  static final Function<Iterable<String>, Iterable<String>> LSame2 = what -> what;
 
   @NotNull
   static final Function<String, String> ESCAPE_ONLY = StringUtil::escapeXml;

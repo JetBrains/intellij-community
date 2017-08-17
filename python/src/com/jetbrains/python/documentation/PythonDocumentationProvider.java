@@ -105,7 +105,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
       }
       return $(cat.toString())
                .add(describeDecorators(func, Function.identity(), TO_ONE_LINE_AND_ESCAPE, ", ", "\n"))
-               .add(describeFunction(func, LSame2, LSame1))
+               .add(describeFunction(func, Function.identity(), ESCAPE_ONLY, context))
                .toString() + "\n" + summary;
     }
     else if (element instanceof PyClass) {
@@ -133,29 +133,25 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     return null;
   }
 
-  /**
-   * Creates a HTML description of function definition.
-   *
-   * @param fun             the function
-   * @param funcNameWrapper puts a tag around the function name
-   * @param escaper         sanitizes values that come directly from doc string or code
-   * @return chain of strings for further chaining
-   */
   @NotNull
-  static ChainIterable<String> describeFunction(@NotNull PyFunction fun,
-                                                Function<Iterable<String>, Iterable<String>> funcNameWrapper,
-                                                @NotNull Function<String, String> escaper
-  ) {
-    final ChainIterable<String> cat = new ChainIterable<>();
-    final String name = fun.getName();
-    cat.addItem("def ").addWith(funcNameWrapper, $(name));
-    cat.addItem(escaper.apply(PyUtil.getReadableRepr(fun.getParameterList(), false)));
+  static ChainIterable<String> describeFunction(@NotNull PyFunction function,
+                                                @NotNull Function<String, String> escapedNameMapper,
+                                                @NotNull Function<String, String> escaper,
+                                                @NotNull TypeEvalContext context) {
+    final ChainIterable<String> result = new ChainIterable<>();
+    final String name = function.getName();
+
+    result
+      .addItem(escaper.apply("def "))
+      .addItem(escapedNameMapper.apply(escaper.apply(name)))
+      .addItem(escaper.apply(PyUtil.getReadableRepr(function.getParameterList(), false)));
+
     if (!PyNames.INIT.equals(name)) {
-      cat.addItem(escaper.apply("\nInferred type: "));
-      describeTypeWithLinks(fun, cat);
-      cat.addItem(BR);
+      result.addItem(escaper.apply("\nInferred type: "));
+      describeTypeWithLinks(context.getType(function), context, function, result);
     }
-    return cat;
+
+    return result;
   }
 
   @Nullable
@@ -198,11 +194,6 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
   @NotNull
   public static String getTypeName(@Nullable PyType type, @NotNull TypeEvalContext context) {
     return buildTypeModel(type, context).asString();
-  }
-
-  private static void describeTypeWithLinks(@NotNull PyTypedElement element, @NotNull ChainIterable<String> body) {
-    final TypeEvalContext context = TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile());
-    describeTypeWithLinks(context.getType(element), context, element, body);
   }
 
   /**
