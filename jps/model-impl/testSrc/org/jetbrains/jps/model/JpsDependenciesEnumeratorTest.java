@@ -70,7 +70,7 @@ public class JpsDependenciesEnumeratorTest extends JpsJavaModelTestCase {
   }
 
   private static String getJDomSources() {
-    return getJarUrlFromLibDir("src/jdom.zip");
+    return JpsPathUtil.urlToPath(assertOneElement(IntelliJProjectConfiguration.getProjectLibrarySourceRootUrls("JDOM")));
   }
 
   private static String getJDomJar() {

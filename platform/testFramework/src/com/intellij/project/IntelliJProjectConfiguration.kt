@@ -35,16 +35,23 @@ import java.io.File
  */
 class IntelliJProjectConfiguration {
   private val projectHome = PathManager.getHomePath()
-  private val projectLibraryRoots: Map<String, List<File>>
+  private val projectLibraryClassesRoots: Map<String, List<File>>
+  private val projectLibrarySourcesUrls: Map<String, List<String>>
 
   init {
     val m2Repo = FileUtil.toSystemIndependentName(File(SystemProperties.getUserHome(), ".m2/repository").absolutePath)
     val project = JpsSerializationManager.getInstance().loadProject(projectHome, mapOf("MAVEN_REPOSITORY" to m2Repo))
-    projectLibraryRoots = project.libraryCollection.libraries.associateBy({ it.name }, { it.getFiles(JpsOrderRootType.COMPILED) })
+    projectLibraryClassesRoots = project.libraryCollection.libraries.associateBy({ it.name }, { it.getFiles(JpsOrderRootType.COMPILED) })
+    projectLibrarySourcesUrls = project.libraryCollection.libraries.associateBy({ it.name }, { it.getRootUrls(JpsOrderRootType.SOURCES) })
   }
 
-  private fun getProjectLibraryRoots(libraryName: String): List<File> {
-    return instance.projectLibraryRoots[libraryName]
+  private fun getProjectLibraryClassesRoots(libraryName: String): List<File> {
+    return instance.projectLibraryClassesRoots[libraryName]
+           ?: throw IllegalArgumentException("Cannot find project library '$libraryName' in ${instance.projectHome}")
+  }
+
+  private fun getProjectLibrarySourceRoots(libraryName: String): List<String> {
+    return instance.projectLibrarySourcesUrls[libraryName]
            ?: throw IllegalArgumentException("Cannot find project library '$libraryName' in ${instance.projectHome}")
   }
 
@@ -53,12 +60,17 @@ class IntelliJProjectConfiguration {
 
     @JvmStatic
     fun getProjectLibraryClassesRootPaths(libraryName: String): List<String> {
-      return instance.getProjectLibraryRoots(libraryName).map { FileUtil.toSystemIndependentName(it.absolutePath) }
+      return instance.getProjectLibraryClassesRoots(libraryName).map { FileUtil.toSystemIndependentName(it.absolutePath) }
     }
 
     @JvmStatic
     fun getProjectLibraryClassesRootUrls(libraryName: String): List<String> {
-      return instance.getProjectLibraryRoots(libraryName).map { JpsPathUtil.getLibraryRootUrl(it) }
+      return instance.getProjectLibraryClassesRoots(libraryName).map { JpsPathUtil.getLibraryRootUrl(it) }
+    }
+
+    @JvmStatic
+    fun getProjectLibrarySourceRootUrls(libraryName: String): List<String> {
+      return instance.getProjectLibrarySourceRoots(libraryName)
     }
 
     @JvmStatic
