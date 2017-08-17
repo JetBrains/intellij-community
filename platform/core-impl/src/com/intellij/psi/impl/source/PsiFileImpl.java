@@ -368,6 +368,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     return treeElement;
   }
 
+  @Override
   public void clearCaches() {
     myModificationStamp ++;
   }
