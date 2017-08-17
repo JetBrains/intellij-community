@@ -1243,6 +1243,69 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     assertModuleLibDepScope("project2_test", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.COMPILE);
   }
 
+  @TargetVersions("2.0+")
+  @Test
+  public void testJavadocAndSourcesForDependencyWithMultipleArtifacts() throws Exception {
+    createProjectSubFile("repo/depGroup/depArtifact/1.0-SNAPSHOT/ivy-1.0-SNAPSHOT.xml",
+                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                         "<ivy-module version=\"2.0\" xmlns:m=\"http://ant.apache.org/ivy/maven\">\n" +
+                         "  <info organisation=\"depGroup\" module=\"depArtifact\" revision=\"1.0-SNAPSHOT\" status=\"integration\" publication=\"20170817121528\"/>\n" +
+                         "  <configurations>\n" +
+                         "    <conf name=\"compile\" visibility=\"public\"/>\n" +
+                         "    <conf name=\"default\" visibility=\"public\" extends=\"compile\"/>\n" +
+                         "    <conf name=\"sources\" visibility=\"public\"/>\n" +
+                         "    <conf name=\"javadoc\" visibility=\"public\"/>\n" +
+                         "  </configurations>\n" +
+                         "  <publications>\n" +
+                         "    <artifact name=\"depArtifact\" type=\"jar\" ext=\"jar\" conf=\"compile\"/>\n" +
+                         "    <artifact name=\"depArtifact-api\" type=\"javadoc\" ext=\"jar\" conf=\"javadoc\" m:classifier=\"javadoc\"/>\n" +
+                         "    <artifact name=\"depArtifact-api\" type=\"source\" ext=\"jar\" conf=\"sources\" m:classifier=\"sources\"/>\n" +
+                         "    <artifact name=\"depArtifact\" type=\"source\" ext=\"jar\" conf=\"sources\" m:classifier=\"sources\"/>\n" +
+                         "    <artifact name=\"depArtifact\" type=\"javadoc\" ext=\"jar\" conf=\"javadoc\" m:classifier=\"javadoc\"/>\n" +
+                         "  </publications>\n" +
+                         "  <dependencies/>\n" +
+                         "</ivy-module>\n");
+    VirtualFile classesJar = createProjectJarSubFile("repo/depGroup/depArtifact/1.0-SNAPSHOT/depArtifact-1.0-SNAPSHOT.jar");
+    VirtualFile javadocJar = createProjectJarSubFile("repo/depGroup/depArtifact/1.0-SNAPSHOT/depArtifact-1.0-SNAPSHOT-javadoc.jar");
+    VirtualFile sourcesJar = createProjectJarSubFile("repo/depGroup/depArtifact/1.0-SNAPSHOT/depArtifact-1.0-SNAPSHOT-sources.jar");
+    createProjectJarSubFile("repo/depGroup/depArtifact/1.0-SNAPSHOT/depArtifact-api-1.0-SNAPSHOT.jar");
+    createProjectJarSubFile("repo/depGroup/depArtifact/1.0-SNAPSHOT/depArtifact-api-1.0-SNAPSHOT-javadoc.jar");
+    createProjectJarSubFile("repo/depGroup/depArtifact/1.0-SNAPSHOT/depArtifact-api-1.0-SNAPSHOT-sources.jar");
+
+    importProject(
+      "apply plugin: 'java'\n" +
+      "\n" +
+      "repositories {\n" +
+      "  ivy { url file('repo') }\n" +
+      "}\n" +
+      "\n" +
+      "dependencies {\n" +
+      "  compile 'depGroup:depArtifact:1.0-SNAPSHOT'\n" +
+      "}\n" +
+      "apply plugin: 'idea'\n" +
+      "idea.module.downloadJavadoc true"
+    );
+
+    assertModules("project", "project_main", "project_test");
+
+    assertModuleModuleDepScope("project_test", "project_main", DependencyScope.COMPILE);
+
+    final String depName = "Gradle: depGroup:depArtifact:1.0-SNAPSHOT";
+    assertModuleLibDep("project_main", depName, classesJar.getUrl(), sourcesJar.getUrl(), javadocJar.getUrl());
+    assertModuleLibDepScope("project_main", depName, DependencyScope.COMPILE);
+    assertModuleLibDep("project_test", depName, classesJar.getUrl(), sourcesJar.getUrl(), javadocJar.getUrl());
+    assertModuleLibDepScope("project_test", depName, DependencyScope.COMPILE);
+
+    importProjectUsingSingeModulePerGradleProject();
+    assertModules("project");
+
+    // Gradle built-in models has been fixed since 2.3 version, https://issues.gradle.org/browse/GRADLE-3170
+    if(GradleVersion.version(gradleVersion).compareTo(GradleVersion.version("2.3")) >= 0) {
+      assertModuleLibDep("project", depName, classesJar.getUrl(), sourcesJar.getUrl(), javadocJar.getUrl());
+    }
+    assertMergedModuleCompileLibDepScope("project", depName);
+  }
+
   private void assertMergedModuleCompileLibDepScope(String moduleName, String depName) {
     if (isGradleOlderThen_3_4()) {
       assertModuleLibDepScope(moduleName, depName, DependencyScope.COMPILE);
