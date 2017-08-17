@@ -17,10 +17,8 @@ package com.intellij.codeInspection;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.ex.JobDescriptor;
-import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.codeInspection.reference.RefGraphAnnotator;
-import com.intellij.codeInspection.reference.RefManager;
-import com.intellij.codeInspection.reference.RefVisitor;
+import com.intellij.codeInspection.reference.*;
+import com.intellij.psi.SmartPsiElementPointer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -78,10 +76,25 @@ public abstract class GlobalInspectionTool extends InspectionProfileEntry {
     globalContext.getRefManager().iterate(new RefVisitor() {
       @Override public void visitElement(@NotNull RefEntity refEntity) {
         if (!globalContext.shouldCheck(refEntity, GlobalInspectionTool.this)) return;
+        if (notInScope(refEntity)) return;
         CommonProblemDescriptor[] descriptors = checkElement(refEntity, scope, manager, globalContext, problemDescriptionsProcessor);
         if (descriptors != null) {
           problemDescriptionsProcessor.addProblemElement(refEntity, descriptors);
         }
+      }
+
+      private boolean notInScope(@NotNull RefEntity refEntity) {
+        if (refEntity instanceof RefElement) {
+          SmartPsiElementPointer pointer = ((RefElement)refEntity).getPointer();
+          if (pointer != null) {
+            if (!scope.contains(pointer.getVirtualFile())) return true;
+          }
+          else {
+            RefEntity owner = refEntity.getOwner();
+            return owner != null && notInScope(owner);
+          }
+        }
+        return false;
       }
     });
   }

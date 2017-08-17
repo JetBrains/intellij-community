@@ -391,6 +391,9 @@ public class AnalysisScope {
         return myModule == module;
       case MODULES:
         return myModules.contains(module);
+      case CUSTOM:
+        VirtualFile moduleFile = module.getModuleFile();
+        return moduleFile != null && myScope.contains(moduleFile);
       default:
         return false;
     }

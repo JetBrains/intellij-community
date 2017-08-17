@@ -66,6 +66,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
@@ -674,6 +675,10 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     final boolean canBeExternalUsages = !(scope.getScopeType() == AnalysisScope.PROJECT && scope.isIncludeTestSource());
     for (Tools tools : globalTools) {
       for (ScopeToolState state : tools.getTools()) {
+        if (!state.isEnabled()) continue;
+        NamedScope stateScope = state.getScope(getProject());
+        if (stateScope == null) continue;
+        AnalysisScope scopeForState = new AnalysisScope(GlobalSearchScopesCore.filterScope(getProject(), stateScope), getProject());
         final InspectionToolWrapper toolWrapper = state.getTool();
         final GlobalInspectionTool tool = (GlobalInspectionTool)toolWrapper.getTool();
         final InspectionToolPresentation toolPresentation = getPresentation(toolWrapper);
@@ -688,7 +693,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
             }
           }
           ApplicationManager.getApplication().runReadAction(() -> {
-            tool.runInspection(scope, inspectionManager, this, toolPresentation);
+            tool.runInspection(scopeForState, inspectionManager, this, toolPresentation);
             //skip phase when we are sure that scope already contains everything, unused declaration though needs to proceed with its suspicious code
             if ((canBeExternalUsages || tool.getAdditionalJobs(this) != null) &&
                 tool.queryExternalUsagesRequests(inspectionManager, this, toolPresentation)) {
