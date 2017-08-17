@@ -31,7 +31,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.ScrollingUtil;
 import org.jetbrains.annotations.NotNull;
@@ -107,13 +106,13 @@ public abstract class LookupActionHandler extends EditorActionHandler {
 
   }
 
-  public static class UpAction extends EditorAction implements DumbAware {
+  public static class UpAction extends EditorAction {
     public UpAction() {
       super(new UpDownInEditorHandler(true));
     }
   }
 
-  public static class DownAction extends EditorAction implements DumbAware {
+  public static class DownAction extends EditorAction {
     public DownAction() {
       super(new UpDownInEditorHandler(false));
     }
