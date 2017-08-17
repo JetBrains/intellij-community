@@ -21,7 +21,6 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.SchemeManager;
 import com.intellij.openapi.options.SchemeState;
-import com.intellij.util.ObjectUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,11 +46,13 @@ public class DefaultColorsScheme extends AbstractColorsScheme implements ReadOnl
     if (attrs != null) return attrs;
 
     TextAttributesKey fallbackKey = key.getFallbackAttributeKey();
-    TextAttributes fallback = fallbackKey == null ? null : myAttributesMap.get(fallbackKey);
-    TextAttributes fallbackDefaults = fallbackKey == null ? null : getKeyDefaults(fallbackKey);
+    TextAttributes fallback = fallbackKey == null ? null : getFallbackAttributes(fallbackKey);
     if (fallback != null && fallback != AbstractColorsScheme.INHERITED_ATTRS_MARKER) return fallback;
 
-    return useDefaults ? ObjectUtils.chooseNotNull(getKeyDefaults(key), fallbackDefaults) : null;
+    if (!useDefaults) return null;
+    TextAttributes keyDefaults = getKeyDefaults(key);
+    if (keyDefaults != null) return keyDefaults;
+    return fallbackKey == null ? null : getKeyDefaults(fallbackKey);
   }
 
   @Nullable
@@ -71,11 +72,13 @@ public class DefaultColorsScheme extends AbstractColorsScheme implements ReadOnl
     if (color != null) return color;
 
     ColorKey fallbackKey = key.getFallbackColorKey();
-    Color fallback = fallbackKey == null ? null : myColorsMap.get(fallbackKey);
-    Color fallbackDefault = fallbackKey == null ? null : fallbackKey.getDefaultColor();
+    Color fallback = fallbackKey == null ? null : getFallbackColor(fallbackKey);
     if (fallback != null && fallback != AbstractColorsScheme.INHERITED_COLOR_MARKER) return fallback;
 
-    return useDefaults ? ObjectUtils.chooseNotNull(key.getDefaultColor(), fallbackDefault) : null;
+    if (!useDefaults) return null;
+    Color keyDefaults = key.getDefaultColor();
+    if (keyDefaults != null) return keyDefaults;
+    return fallbackKey == null ? null : fallbackKey.getDefaultColor();
   }
 
   @Override

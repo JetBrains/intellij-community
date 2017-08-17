@@ -714,7 +714,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
 
         Color parent = parentScheme instanceof DefaultColorsScheme ?
                        ((DefaultColorsScheme)parentScheme).getColor(key, false) : parentScheme.getColor(key);
-        return Comparing.equal(parent, color);
+        return Comparing.equal(parent, color == NULL_COLOR_MARKER ? null : color);
       }
     ).toList());
   }
