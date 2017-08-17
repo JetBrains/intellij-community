@@ -15,5 +15,17 @@
  */
 package com.intellij.xdebugger.attach;
 
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.process.ProcessInfo;
+import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
+
 public interface XLocalAttachDebugger extends XAttachDebugger<LocalAttachSettings> {
+
+  default void attachDebugSession(@NotNull Project project, @NotNull LocalAttachSettings settings) throws ExecutionException {
+    attachDebugSession(project, settings.getInfo());
+  }
+
+  @Deprecated
+  void attachDebugSession(@NotNull Project project, @NotNull ProcessInfo info) throws ExecutionException;
 }

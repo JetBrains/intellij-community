@@ -15,8 +15,28 @@
  */
 package com.intellij.xdebugger.attach;
 
+import com.intellij.execution.process.ProcessInfo;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.UserDataHolder;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 public interface XLocalAttachDebuggerProvider extends XAttachDebuggerProvider<LocalAttachSettings> {
   ExtensionPointName<XLocalAttachDebuggerProvider> EP = ExtensionPointName.create("com.intellij.xdebugger.localAttachDebuggerProvider");
+
+  @Deprecated
+  @NotNull
+  List<XAttachDebugger<LocalAttachSettings>> getAvailableDebuggers(@NotNull Project project,
+                                                                   @NotNull ProcessInfo info,
+                                                                   @NotNull UserDataHolder contextHolder);
+
+  @NotNull
+  @Override
+  default List<XAttachDebugger<LocalAttachSettings>> getAvailableDebuggers(@NotNull Project project,
+                                                                           @NotNull LocalAttachSettings settings,
+                                                                           @NotNull UserDataHolder contextHolder) {
+    return getAvailableDebuggers(project, settings.getInfo(), contextHolder);
+  }
 }
