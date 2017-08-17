@@ -1,4 +1,4 @@
 class Abc {
 }
 
-Abc.annotation(1/2)
+Abc.asSubclass(1/2)
