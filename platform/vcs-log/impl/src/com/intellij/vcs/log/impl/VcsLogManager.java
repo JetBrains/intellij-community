@@ -74,7 +74,7 @@ public class VcsLogManager implements Disposable {
     myRecreateMainLogHandler = recreateHandler;
 
     Map<VirtualFile, VcsLogProvider> logProviders = findLogProviders(roots, myProject);
-    myLogData = new VcsLogData(myProject, logProviders, new MyFatalErrorsHandler());
+    myLogData = new VcsLogData(myProject, logProviders, new MyFatalErrorsHandler(), this);
     myPostponableRefresher = new PostponableLogRefresher(myLogData);
     myTabsLogRefresher = new VcsLogTabsWatcher(myProject, myPostponableRefresher, myLogData);
 
@@ -173,10 +173,6 @@ public class VcsLogManager implements Disposable {
     return logProviders;
   }
 
-  public void disposeLog() {
-    Disposer.dispose(myLogData);
-  }
-
   /*
    * Use VcsLogProjectManager to get main log.
    * Left here for upsource plugin.
@@ -199,7 +195,6 @@ public class VcsLogManager implements Disposable {
 
   @Override
   public void dispose() {
-    disposeLog();
   }
 
   @NotNull
