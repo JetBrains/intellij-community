@@ -1644,7 +1644,7 @@ private fun getType(_node: DefaultMutableTreeNode?): ConfigurationType? {
     (node.userObject as? ConfigurationType)?.let {
       return it
     }
-    node = node.parent as DefaultMutableTreeNode
+    node = node.parent as? DefaultMutableTreeNode
   }
   return null
 }
