@@ -729,8 +729,18 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   }
 
   @Override
+  public void onContentReload() {
+    super.onContentReload();
+    invalidateCaches();
+  }
+
+  @Override
   public void subtreeChanged() {
     super.subtreeChanged();
+    invalidateCaches();
+  }
+
+  private void invalidateCaches() {
     ControlFlowCache.clear(this);
     myDunderAllCalculated = false;
     myFutureFeatures.clear(); // probably no need to synchronize
