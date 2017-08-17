@@ -21,7 +21,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.colors.*;
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.containers.FactoryMap;
+import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,7 +30,7 @@ import java.util.Map;
 
 public class ColorSettingsPagesImpl extends ColorSettingsPages {
   private final Map<Object, Pair<ColorAndFontDescriptorsProvider, ? extends AbstractKeyDescriptor>> myCache =
-    FactoryMap.createMap(this::getDescriptorImpl);
+    ConcurrentFactoryMap.createMap(this::getDescriptorImpl);
 
   @Override
   public void registerPage(ColorSettingsPage page) {
