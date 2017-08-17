@@ -15,9 +15,7 @@
  */
 package com.intellij.openapi.roots.ui.configuration.projectRoot
 
-import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.project.IntelliJProjectConfiguration
 import com.intellij.testFramework.LightPlatformTestCase
 
 /**
@@ -25,9 +23,7 @@ import com.intellij.testFramework.LightPlatformTestCase
  */
 class ConvertToRepositoryLibraryActionTest : LightPlatformTestCase() {
   fun `test read Maven coordinates`() {
-    val jarFile = PathManager.findFileInLibDirectory("commons-codec-1.9.jar")
-    val file = VirtualFileManager.getInstance().refreshAndFindFileByUrl(VfsUtil.getUrlForLibraryRoot(jarFile))
-    assertNotNull(jarFile.absolutePath, file)
+    val file = IntelliJProjectConfiguration.getJarFromSingleJarProjectLibrary("commons-codec")
     val coordinates = assertOneElement(ConvertToRepositoryLibraryActionBase.detectMavenCoordinates(arrayOf(file!!)))
     assertEquals("commons-codec", coordinates.groupId)
     assertEquals("commons-codec", coordinates.artifactId)

@@ -15,7 +15,6 @@
  */
 package com.intellij.compiler.artifacts;
 
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
@@ -25,17 +24,14 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.elements.PackagingElement;
+import com.intellij.project.IntelliJProjectConfiguration;
 import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.io.File;
 
 /**
  * @author nik
@@ -88,24 +84,11 @@ public abstract class PackagingElementsTestCase extends ArtifactsTestCase {
   }
 
   protected static VirtualFile getJDomJar() {
-    return getJarFromLibDirectory("jdom.jar");
+    return IntelliJProjectConfiguration.getJarFromSingleJarProjectLibrary("JDOM");
   }
 
   protected static String getLocalJarPath(VirtualFile jarEntry) {
     return PathUtil.getLocalFile(jarEntry).getPath();
-  }
-
-  protected static String getJUnitJarPath() {
-    return getLocalJarPath(getJarFromLibDirectory("junit.jar"));
-  }
-
-  private static VirtualFile getJarFromLibDirectory(final String relativePath) {
-    final File file = PathManager.findFileInLibDirectory(relativePath);
-    final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(file);
-    assertNotNull(file.getAbsolutePath() + " not found", virtualFile);
-    final VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(virtualFile);
-    assertNotNull(jarRoot);
-    return jarRoot;
   }
 
   protected Library addProjectLibrary(final @Nullable Module module, final String name, final VirtualFile... jars) {

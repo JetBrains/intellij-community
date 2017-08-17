@@ -25,6 +25,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.project.IntelliJProjectConfiguration;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.ModuleTestCase;
 import com.intellij.testFramework.PsiTestUtil;
@@ -91,7 +92,7 @@ public abstract class ModuleRootManagerTestCase extends ModuleTestCase {
   }
 
   protected VirtualFile getJDomJar() {
-    return getJarFromLibDir("jdom.jar");
+    return IntelliJProjectConfiguration.getJarFromSingleJarProjectLibrary("JDOM");
   }
 
   protected VirtualFile getJDomSources() {
@@ -143,6 +144,6 @@ public abstract class ModuleRootManagerTestCase extends ModuleTestCase {
   }
 
   protected VirtualFile getAsmJar() {
-    return getJarFromLibDir("asm-all.jar");
+    return IntelliJProjectConfiguration.getJarFromSingleJarProjectLibrary("ASM");
   }
 }

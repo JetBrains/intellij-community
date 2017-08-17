@@ -17,9 +17,14 @@ package com.intellij.project
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.SystemProperties
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.serialization.JpsSerializationManager
+import org.jetbrains.jps.util.JpsPathUtil
+import org.junit.Assert
 import java.io.File
 
 /**
@@ -50,5 +55,19 @@ class IntelliJProjectConfiguration {
     fun getProjectLibraryClassesRootPaths(libraryName: String): List<String> {
       return instance.getProjectLibraryRoots(libraryName).map { FileUtil.toSystemIndependentName(it.absolutePath) }
     }
+
+    @JvmStatic
+    fun getProjectLibraryClassesRootUrls(libraryName: String): List<String> {
+      return instance.getProjectLibraryRoots(libraryName).map { JpsPathUtil.getLibraryRootUrl(it) }
+    }
+
+    @JvmStatic
+    fun getJarFromSingleJarProjectLibrary(projectLibraryName: String): VirtualFile {
+      val jarUrl = UsefulTestCase.assertOneElement(getProjectLibraryClassesRootUrls(projectLibraryName))
+      val jarRoot = VirtualFileManager.getInstance().refreshAndFindFileByUrl(jarUrl)
+      Assert.assertNotNull(jarRoot)
+      return jarRoot!!
+    }
+
   }
 }
