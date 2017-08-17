@@ -27,6 +27,7 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -39,6 +40,7 @@ import org.jetbrains.idea.maven.model.MavenResource;
 import org.jetbrains.idea.maven.project.MavenImportingSettings;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
 import org.jetbrains.jps.model.java.JavaSourceRootProperties;
@@ -46,10 +48,7 @@ import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class MavenFoldersImporter {
   private final MavenProject myMavenProject;
@@ -103,7 +102,9 @@ public class MavenFoldersImporter {
       configOutputFolders();
     }
     configGeneratedFolders();
-    if (!FileUtil.namesEqual("pom", myMavenProject.getFile().getNameWithoutExtension())) {
+    if (!updateTargetFoldersOnly
+        && !FileUtil.namesEqual("pom", myMavenProject.getFile().getNameWithoutExtension())
+        && MavenUtil.streamPomFiles(myModel.getModule().getProject(), myMavenProject.getDirectoryFile()).skip(1).findAny().isPresent()) {
       generateNewContentRoots();
     }
     configExcludedFolders();
@@ -210,23 +211,36 @@ public class MavenFoldersImporter {
   }
 
   private void generateNewContentRoots() {
+    Map<String, SourceFolder> sourceFoldersMap = new TreeMap<>(FileUtil::comparePaths);
+    for (String sourceRootUrl : myModel.getSourceRootUrls(true)) {
+      String sourceRootPath = FileUtil.toSystemDependentName(VfsUtil.urlToPath(sourceRootUrl));
+      SourceFolder sourceFolder = myModel.getSourceFolder(new File(sourceRootPath));
+      if (sourceFolder != null) {
+        sourceFoldersMap.put(sourceRootUrl, sourceFolder);
+      }
+    }
+
     ModifiableRootModel rootModel = myModel.getRootModel();
     for (ContentEntry contentEntry : rootModel.getContentEntries()) {
       rootModel.removeContentEntry(contentEntry);
     }
 
-    String[] sourceRoots = myModel.getSourceRootUrls(true);
-    ContainerUtil.sort(sourceRoots, FileUtil::comparePaths);
-
-    Set<String> topLevelSourceRoots = ContainerUtil.newHashSet();
-    for (String sourceRoot : sourceRoots) {
-      if (topLevelSourceRoots.stream().noneMatch(root -> FileUtil.isAncestor(root, sourceRoot, false))) {
-        topLevelSourceRoots.add(sourceRoot);
+    Set<String> topLevelSourceFolderUrls = ContainerUtil.newHashSet();
+    for (String sourceRoot : sourceFoldersMap.keySet()) {
+      if (topLevelSourceFolderUrls.stream().noneMatch(root -> FileUtil.isAncestor(root, sourceRoot, false))) {
+        topLevelSourceFolderUrls.add(sourceRoot);
       }
     }
 
-    for (String sourceRoot : topLevelSourceRoots) {
-      rootModel.addContentEntry(sourceRoot);
+    for (String sourceFolderUrl : topLevelSourceFolderUrls) {
+      ContentEntry contentEntry = rootModel.addContentEntry(sourceFolderUrl);
+      for (Map.Entry<String, SourceFolder> entry : sourceFoldersMap.entrySet()) {
+        if (FileUtil.isAncestor(sourceFolderUrl, entry.getKey(), false)) {
+          SourceFolder oldSourceFolder = entry.getValue();
+          SourceFolder newSourceFolder = contentEntry.addSourceFolder(oldSourceFolder.getUrl(), oldSourceFolder.getRootType());
+          newSourceFolder.setPackagePrefix(oldSourceFolder.getPackagePrefix());
+        }
+      }
     }
   }
 
