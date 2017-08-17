@@ -80,7 +80,7 @@ class UastLanguageInjector : MultiHostInjector {
                             uLiteral: ULiteralExpression): InjectionInfo? {
     for (injection in injections) {
       if (injection.acceptsPsiElement(element)) {
-        return InjectionInfo(injection.injectedLanguageId, injection.prefix, injection.suffix, uLiteral)
+        return InjectionInfo(injection.injectedLanguageId, injection.prefix, injection.suffix)
       }
     }
 
@@ -88,7 +88,7 @@ class UastLanguageInjector : MultiHostInjector {
   }
 
   //copied from KotlinLanguageInjector
-  private class InjectionInfo(val languageId: String?, val prefix: String?, val suffix: String?, val uElement: UElement) {
+  private class InjectionInfo(val languageId: String?, val prefix: String?, val suffix: String?) {
     fun toBaseInjection(injectionSupport: LanguageInjectionSupport): BaseInjection? {
       if (languageId == null) return null
 
