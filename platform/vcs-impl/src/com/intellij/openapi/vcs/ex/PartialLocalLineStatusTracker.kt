@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.actions.AnnotationsSettings
+import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 import com.intellij.openapi.vcs.changes.ChangeListWorker
 import com.intellij.openapi.vcs.changes.LocalChangeList
@@ -31,10 +32,14 @@ import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker.LocalRange
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.CalledInAwt
+import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.Graphics
 import java.awt.Point
 import java.util.*
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JPanel
 
 class PartialLocalLineStatusTracker(project: Project,
                                     document: Document,
@@ -238,6 +243,18 @@ class PartialLocalLineStatusTracker(project: Project,
       val colors = AnnotationsSettings.getInstance().getAuthorsColors(editor.colorsScheme)
       val seed = range.changelistId.hashCode()
       return colors[Math.abs(seed % colors.size)]
+    }
+
+    override fun createAdditionalInfoPanel(editor: Editor, range: Range): JComponent? {
+      if (range !is LocalRange) return null
+
+      val list = ChangeListManager.getInstance(tracker.project).getChangeList(range.changelistId) ?: return null
+
+      val panel = JPanel(BorderLayout())
+      panel.add(JLabel(list.name), BorderLayout.CENTER)
+      panel.border = JBUI.Borders.emptyLeft(5)
+      panel.isOpaque = false
+      return panel
     }
 
     override fun createToolbarActions(editor: Editor, range: Range, mousePosition: Point?): List<AnAction> {

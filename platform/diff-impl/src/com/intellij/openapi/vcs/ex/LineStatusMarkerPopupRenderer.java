@@ -96,6 +96,11 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
     return VcsApplicationSettings.getInstance().SHOW_LST_WORD_DIFFERENCES;
   }
 
+  @Nullable
+  protected JComponent createAdditionalInfoPanel(@NotNull Editor editor, @NotNull Range range) {
+    return null;
+  }
+
 
   public void scrollAndShow(@NotNull Editor editor, @NotNull Range range) {
     if (!myTracker.isValid()) return;
@@ -137,7 +142,9 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
     toolbar.updateActionsImmediately(); // we need valid ActionToolbar.getPreferredSize() to calc size of popup
     toolbar.setReservePlaceAutoPopupIcon(false);
 
-    PopupPanel popupPanel = new PopupPanel(editor, toolbar, editorComponent);
+    JComponent additionalInfoPanel = createAdditionalInfoPanel(editor, range);
+
+    PopupPanel popupPanel = new PopupPanel(editor, toolbar, editorComponent, additionalInfoPanel);
 
     LightweightHint hint = new LightweightHint(popupPanel);
     HintListener closeListener = new HintListener() {
@@ -308,7 +315,8 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
 
     public PopupPanel(@NotNull Editor editor,
                       @NotNull ActionToolbar toolbar,
-                      @Nullable JComponent editorComponent) {
+                      @Nullable JComponent editorComponent,
+                      @Nullable JComponent additionalInfo) {
       super(new BorderLayout());
       setOpaque(false);
 
@@ -328,6 +336,10 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
       Border outsideToolbarBorder = JBUI.Borders.customLine(borderColor, 1, 1, isEditorVisible ? 0 : 1, 1);
       Border insideToolbarBorder = JBUI.Borders.empty(1, 5, 1, 5);
       toolbarPanel.setBorder(BorderFactory.createCompoundBorder(outsideToolbarBorder, insideToolbarBorder));
+
+      if (additionalInfo != null) {
+        toolbarPanel.add(additionalInfo, BorderLayout.EAST);
+      }
 
       if (myEditorComponent != null) {
         // default border of EditorFragmentComponent is replaced here with our own.
