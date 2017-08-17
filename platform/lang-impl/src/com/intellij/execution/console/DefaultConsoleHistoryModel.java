@@ -18,8 +18,8 @@ package com.intellij.execution.console;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.FactoryMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,21 +38,14 @@ public class DefaultConsoleHistoryModel extends SimpleModificationTracker implem
   /**
    * @noinspection MismatchedQueryAndUpdateOfCollection
    */
-  private final static FactoryMap<String, DefaultConsoleHistoryModel> ourModels = new FactoryMap<String, DefaultConsoleHistoryModel>() {
-    @Override
-    protected Map<String, DefaultConsoleHistoryModel> createMap() {
-      return ContainerUtil.createConcurrentWeakValueMap();
-    }
-
-    @Override
-    protected DefaultConsoleHistoryModel create(String key) {
-      return new DefaultConsoleHistoryModel(null);
-    }
-  };
+  private final static Map<String, DefaultConsoleHistoryModel> ourModels =
+    ConcurrentFactoryMap.createMap(key -> new DefaultConsoleHistoryModel(null),
+                                   ContainerUtil::createConcurrentWeakValueMap);
 
   public static DefaultConsoleHistoryModel createModel(String persistenceId) {
     return ourModels.get(persistenceId).copy();
   }
+
   private final Object myLock;
   private final LinkedList<String> myEntries;
   private int myIndex;
