@@ -133,7 +133,9 @@ public class MavenFoldersImporter {
     List<String> addedPaths = new ArrayList<>();
     for (JpsModuleSourceRootType<?> type : roots.keySet()) {
       for (String path : roots.get(type)) {
-        addSourceFolderIfNotOverlap(path, type, addedPaths);
+        if (path != null) {
+          addSourceFolderIfNotOverlap(path, type, addedPaths);
+        }
       }
     }
   }
