@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package org.jetbrains.idea.svn.rollback;
 
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilterFilePathStrings;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.FilePathsHelper;
@@ -25,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnChangeProvider;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
-import org.tmatesoft.svn.core.SVNException;
 
 import java.io.File;
 import java.util.*;
@@ -42,7 +40,7 @@ public class ChangesChecker {
   private final SvnChangeProvider myChangeProvider;
   @NotNull private final UnversionedAndNotTouchedFilesGroupCollector myCollector;
 
-  private final List<VcsException> myExceptions;
+  private final List<SvnBindException> myExceptions;
 
   ChangesChecker(@NotNull SvnVcs vcs, @NotNull UnversionedAndNotTouchedFilesGroupCollector collector) {
     myChangeProvider = (SvnChangeProvider)vcs.getChangeProvider();
@@ -81,9 +79,6 @@ public class ChangesChecker {
         try {
           myChangeProvider.getChanges(files.get(path), true, myCollector);
         }
-        catch (SVNException e) {
-          myExceptions.add(new VcsException(e));
-        }
         catch (SvnBindException e) {
           myExceptions.add(e);
         }
@@ -112,7 +107,7 @@ public class ChangesChecker {
     return myForDeletes.getParentPaths();
   }
 
-  public List<VcsException> getExceptions() {
+  public List<SvnBindException> getExceptions() {
     return myExceptions;
   }
 

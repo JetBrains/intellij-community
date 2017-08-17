@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,11 +32,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.NodeKind;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationManager;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.history.SimplePropertyRevision;
 import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.status.StatusType;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
@@ -68,7 +68,7 @@ class SvnChangeProviderContext implements StatusReceiver {
     myBranchConfigurationManager = SvnBranchConfigurationManager.getInstance(myVcs.getProject());
   }
 
-  public void process(FilePath path, Status status) throws SVNException {
+  public void process(FilePath path, Status status) throws SvnBindException {
     if (status != null) {
       processStatusFirstPass(path, status);
     }
@@ -166,7 +166,7 @@ class SvnChangeProviderContext implements StatusReceiver {
     ContainerUtil.putIfNotNull(filePath, status.getCopyFromURL(), myCopyFromURLs);
   }
 
-  void processStatusFirstPass(@NotNull FilePath filePath, @NotNull Status status) throws SVNException {
+  void processStatusFirstPass(@NotNull FilePath filePath, @NotNull Status status) throws SvnBindException {
     if (status.getRemoteLock() != null) {
       myChangelistBuilder.processLogicallyLockedFolder(filePath.getVirtualFile(), status.getRemoteLock().toLogicalLock(false));
     }
@@ -194,7 +194,7 @@ class SvnChangeProviderContext implements StatusReceiver {
     }
   }
 
-  void processStatus(@NotNull FilePath filePath, @NotNull Status status) throws SVNException {
+  void processStatus(@NotNull FilePath filePath, @NotNull Status status) throws SvnBindException {
     WorkingCopyFormat format = myVcs.getWorkingCopyFormat(filePath.getIOFile());
     if (!WorkingCopyFormat.UNKNOWN.equals(format) && format.less(WorkingCopyFormat.ONE_DOT_SEVEN)) {
       loadEntriesFile(filePath);
@@ -251,7 +251,7 @@ class SvnChangeProviderContext implements StatusReceiver {
     }
   }
 
-  public void addModifiedNotSavedChange(@NotNull VirtualFile file) throws SVNException {
+  public void addModifiedNotSavedChange(@NotNull VirtualFile file) throws SvnBindException {
     final FilePath filePath = VcsUtil.getFilePath(file);
     final Info svnInfo = myVcs.getInfo(file);
 
@@ -267,7 +267,7 @@ class SvnChangeProviderContext implements StatusReceiver {
   private void processChangeInList(@Nullable ContentRevision beforeRevision,
                                    @Nullable ContentRevision afterRevision,
                                    @NotNull FileStatus fileStatus,
-                                   @NotNull Status status) throws SVNException {
+                                   @NotNull Status status) throws SvnBindException {
     Change change = createChange(beforeRevision, afterRevision, fileStatus, status);
 
     myChangelistBuilder.processChangeInList(change, SvnUtil.getChangelistName(status), SvnVcs.getKey());
@@ -316,7 +316,7 @@ class SvnChangeProviderContext implements StatusReceiver {
   Change createMovedChange(@NotNull ContentRevision before,
                            @NotNull ContentRevision after,
                            @Nullable Status copiedStatus,
-                           @NotNull Status deletedStatus) throws SVNException {
+                           @NotNull Status deletedStatus) throws SvnBindException {
     // todo no convertion needed for the contents status?
     ConflictedSvnChange change =
       new ConflictedSvnChange(before, after, ConflictState.mergeState(getState(copiedStatus), getState(deletedStatus)),
@@ -334,8 +334,7 @@ class SvnChangeProviderContext implements StatusReceiver {
   private Change createChange(@Nullable ContentRevision before,
                               @Nullable ContentRevision after,
                               @NotNull FileStatus fStatus,
-                              @NotNull Status svnStatus)
-    throws SVNException {
+                              @NotNull Status svnStatus) throws SvnBindException {
     ConflictedSvnChange change =
       new ConflictedSvnChange(before, after, fStatus, getState(svnStatus), after == null ? before.getFile() : after.getFile());
 
@@ -347,7 +346,7 @@ class SvnChangeProviderContext implements StatusReceiver {
   }
 
   private void patchWithPropertyChange(@NotNull Change change, @NotNull Status svnStatus, @Nullable Status deletedStatus)
-    throws SVNException {
+    throws SvnBindException {
     if (svnStatus.isProperty(StatusType.STATUS_CONFLICTED, StatusType.CHANGED, StatusType.STATUS_ADDED, StatusType.STATUS_DELETED,
                              StatusType.STATUS_MODIFIED, StatusType.STATUS_REPLACED, StatusType.MERGED)) {
       change.addAdditionalLayerElement(SvnChangeProvider.PROPERTY_LAYER, createPropertyChange(change, svnStatus, deletedStatus));
@@ -356,7 +355,7 @@ class SvnChangeProviderContext implements StatusReceiver {
 
   @NotNull
   private Change createPropertyChange(@NotNull Change change, @NotNull Status svnStatus, @Nullable Status deletedStatus)
-    throws SVNException {
+    throws SvnBindException {
     final File ioFile = ChangesUtil.getFilePath(change).getIOFile();
     final File beforeFile = deletedStatus != null ? deletedStatus.getFile() : ioFile;
 
@@ -375,7 +374,7 @@ class SvnChangeProviderContext implements StatusReceiver {
 
   @Nullable
   private ContentRevision createPropertyRevision(@NotNull Change change, @NotNull File file, boolean isBeforeRevision)
-    throws SVNException {
+    throws SvnBindException {
     FilePath path = ChangesUtil.getFilePath(change);
     ContentRevision contentRevision = isBeforeRevision ? change.getBeforeRevision() : change.getAfterRevision();
     SVNRevision revision = isBeforeRevision ? SVNRevision.BASE : SVNRevision.WORKING;

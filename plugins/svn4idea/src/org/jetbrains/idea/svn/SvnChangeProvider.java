@@ -42,7 +42,6 @@ import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.commandLine.SvnExceptionWrapper;
 import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.status.StatusType;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.ISVNStatusFileProvider;
 
@@ -107,18 +106,12 @@ public class SvnChangeProvider implements ChangeProvider {
     } catch (SvnExceptionWrapper e) {
       LOG.info(e);
       throw new VcsException(e.getCause());
-    } catch (SVNException e) {
-      if (e.getCause() != null) {
-        throw new VcsException(e.getMessage() + " " + e.getCause().getMessage(), e);
-      }
-      throw new VcsException(e);
     }
   }
 
   private static void processUnsaved(@NotNull VcsDirtyScope dirtyScope,
                                      @NotNull ChangeListManagerGate addGate,
-                                     @NotNull SvnChangeProviderContext context)
-    throws SVNException {
+                                     @NotNull SvnChangeProviderContext context) throws SvnBindException {
     FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
 
     for (Document unsavedDocument : fileDocumentManager.getUnsavedDocuments()) {
@@ -157,7 +150,8 @@ public class SvnChangeProvider implements ChangeProvider {
     return parent -> result.get(parent.getAbsolutePath());
   }
 
-  private void processCopiedAndDeleted(@NotNull SvnChangeProviderContext context, @Nullable VcsDirtyScope dirtyScope) throws SVNException {
+  private void processCopiedAndDeleted(@NotNull SvnChangeProviderContext context, @Nullable VcsDirtyScope dirtyScope)
+    throws SvnBindException {
     for(SvnChangedFile copiedFile: context.getCopiedFiles()) {
       context.checkCanceled();
       processCopiedFile(copiedFile, context, dirtyScope);
@@ -168,8 +162,7 @@ public class SvnChangeProvider implements ChangeProvider {
     }
   }
 
-  public void getChanges(@NotNull FilePath path, boolean recursive, @NotNull ChangelistBuilder builder)
-    throws SVNException, SvnBindException {
+  public void getChanges(@NotNull FilePath path, boolean recursive, @NotNull ChangelistBuilder builder) throws SvnBindException {
     final SvnChangeProviderContext context = new SvnChangeProviderContext(myVcs, builder, null);
     SvnRecursiveStatusWalker walker = new SvnRecursiveStatusWalker(myVcs, context, ProgressManager.getInstance().getProgressIndicator());
     walker.go(path, recursive ? Depth.INFINITY : Depth.IMMEDIATES);
@@ -178,7 +171,7 @@ public class SvnChangeProvider implements ChangeProvider {
 
   private void processCopiedFile(@NotNull SvnChangedFile copiedFile,
                                  @NotNull SvnChangeProviderContext context,
-                                 @Nullable VcsDirtyScope dirtyScope) throws SVNException {
+                                 @Nullable VcsDirtyScope dirtyScope) throws SvnBindException {
     boolean foundRename = false;
     final Status copiedStatus = copiedFile.getStatus();
     final String copyFromURL = ObjectUtils.assertNotNull(copiedFile.getCopyFromURL());
@@ -254,7 +247,7 @@ public class SvnChangeProvider implements ChangeProvider {
                                 @NotNull Set<SvnChangedFile> deletedToDelete,
                                 @NotNull SvnChangedFile deletedFile,
                                 @Nullable Status copiedStatus,
-                                @Nullable String clName) throws SVNException {
+                                @Nullable String clName) throws SvnBindException {
     final Change change = context
       .createMovedChange(createBeforeRevision(deletedFile, true), CurrentContentRevision.create(oldPath), copiedStatus,
                          deletedFile.getStatus());

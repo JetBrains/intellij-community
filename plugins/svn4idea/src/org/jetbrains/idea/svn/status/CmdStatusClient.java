@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,12 +98,7 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
           status.setPath(path.getAbsolutePath());
           status.setContentsStatus(StatusType.STATUS_NORMAL);
           status.setInfoGetter(() -> createInfoGetter(null).convert(path));
-          try {
-            handler.consume(status);
-          }
-          catch (SVNException e) {
-            throw new SvnBindException(e);
-          }
+          handler.consume(status);
         }
       }
     }
@@ -203,6 +198,9 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
           handler.consume(pending);
         }
         catch (SVNException e) {
+          throw new SvnExceptionWrapper(e);
+        }
+        catch (SvnBindException e) {
           throw new SvnExceptionWrapper(e);
         }
       }

@@ -46,9 +46,6 @@ import org.jetbrains.idea.svn.history.SvnRepositoryContentRevision;
 import org.jetbrains.idea.svn.properties.PropertyConsumer;
 import org.jetbrains.idea.svn.properties.PropertyData;
 import org.jetbrains.idea.svn.properties.PropertyValue;
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -240,13 +237,8 @@ public class ShowPropertiesDiffAction extends AnAction implements DumbAware {
 
   @NotNull
   public static List<PropertyData> getPropertyList(@NotNull SvnVcs vcs, @NotNull File ioFile, @Nullable SVNRevision revision)
-    throws SVNException {
-    try {
-      return getPropertyList(vcs, SvnTarget.fromFile(ioFile, revision), revision);
-    }
-    catch (SvnBindException e) {
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_GENERAL, e), e);
-    }
+    throws SvnBindException {
+    return getPropertyList(vcs, SvnTarget.fromFile(ioFile, revision), revision);
   }
 
   @NotNull
