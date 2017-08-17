@@ -16,7 +16,11 @@
 package com.intellij.refactoring.util.duplicates;
 
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -85,13 +89,16 @@ public class AdditionalParameter {
     return false;
   }
 
-  public static List<Match> getCompatibleMatches(List<Match> matches) {
+  public static List<Match> getCompatibleMatches(List<Match> matches, PsiElement[] pattern) {
     Set<PsiVariable> patternVariables = null;
     List<Match> result = new ArrayList<>();
     for (Match match : matches) {
       List<AdditionalParameter> parameters = match.getAdditionalParameters();
       if (patternVariables == null) {
         patternVariables = getPatternVariables(parameters);
+        if (containsModifiedField(pattern, patternVariables)) {
+          return Collections.emptyList();
+        }
         result.add(match);
       }
       else if (patternVariables.equals(getPatternVariables(parameters))) {
@@ -99,6 +106,24 @@ public class AdditionalParameter {
       }
     }
     return result;
+  }
+
+  private static boolean containsModifiedField(PsiElement[] pattern, Set<PsiVariable> variables) {
+    Set<PsiField> fields = StreamEx.of(variables)
+      .select(PsiField.class)
+      .filter(field -> !field.hasModifierProperty(PsiModifier.FINAL))
+      .toSet();
+
+    if (!fields.isEmpty()) {
+      FieldModificationVisitor visitor = new FieldModificationVisitor(fields);
+      for (PsiElement element : pattern) {
+        element.accept(visitor);
+        if (visitor.myModified) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   @NotNull
@@ -127,5 +152,52 @@ public class AdditionalParameter {
       return candidateType;
     }
     return null;
+  }
+
+  private static class FieldModificationVisitor extends JavaRecursiveElementWalkingVisitor {
+    private final Set<PsiField> myFields;
+    private boolean myModified;
+
+    public FieldModificationVisitor(Set<PsiField> fields) {
+      myFields = fields;
+    }
+
+    @Override
+    public void visitAssignmentExpression(PsiAssignmentExpression expression) {
+      super.visitAssignmentExpression(expression);
+
+      visitModifiedExpression(expression.getLExpression());
+    }
+
+    @Override
+    public void visitPrefixExpression(PsiPrefixExpression expression) {
+      super.visitPrefixExpression(expression);
+
+      IElementType op = expression.getOperationTokenType();
+      if (op == JavaTokenType.PLUSPLUS || op == JavaTokenType.MINUSMINUS) {
+        visitModifiedExpression(expression.getOperand());
+      }
+    }
+
+    @Override
+    public void visitPostfixExpression(PsiPostfixExpression expression) {
+      super.visitPostfixExpression(expression);
+
+      IElementType op = expression.getOperationTokenType();
+      if (op == JavaTokenType.PLUSPLUS || op == JavaTokenType.MINUSMINUS) {
+        visitModifiedExpression(expression.getOperand());
+      }
+    }
+
+    private void visitModifiedExpression(PsiExpression modifiedExpression) {
+      PsiExpression expression = PsiUtil.skipParenthesizedExprDown(modifiedExpression);
+      if (expression instanceof PsiReferenceExpression) {
+        PsiField field = ObjectUtils.tryCast(((PsiReferenceExpression)expression).resolve(), PsiField.class);
+        if (field != null && myFields.contains(field)) {
+          myModified = true;
+          stopWalking();
+        }
+      }
+    }
   }
 }
