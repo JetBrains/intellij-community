@@ -30,6 +30,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.java.generate.GenerationUtil;
+import org.jetbrains.java.generate.template.TemplateResource;
 
 import java.util.*;
 
@@ -261,6 +262,25 @@ public class GenerateEqualsHelper implements Runnable {
 
   static PsiMethod findMethod(PsiClass aClass, MethodSignature signature) {
     return MethodSignatureUtil.findMethodBySignature(aClass, signature, false);
+  }
+
+  public void executeWithDefaultTemplateWhenNotApplicable() {
+    EqualsHashCodeTemplatesManager manager = EqualsHashCodeTemplatesManager.getInstance();
+    String baseName = manager.getDefaultTemplateBaseName();
+    try {
+      TemplateResource defaultTemplate = manager.getDefaultTemplate();
+      String className = defaultTemplate.getClassName();
+      if (className != null) {
+        PsiClass usedClass = JavaPsiFacade.getInstance(myClass.getProject()).findClass(className, myClass.getResolveScope());
+        if (usedClass == null || PsiUtil.getLanguageLevel(myClass).isLessThan(PsiUtil.getLanguageLevel(usedClass))) {
+          manager.setDefaultTemplate(EqualsHashCodeTemplatesManager.INTELLI_J_DEFAULT);
+        }
+      }
+      run();
+    }
+    finally {
+      manager.setDefaultTemplate(baseName);
+    }
   }
 
   static class EqualsFieldsComparator implements Comparator<PsiField> {
