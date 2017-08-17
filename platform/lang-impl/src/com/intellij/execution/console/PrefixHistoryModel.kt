@@ -24,24 +24,19 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.concurrency.AtomicFieldUpdater
+import com.intellij.util.containers.ConcurrentFactoryMap
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.containers.FactoryMap
-import org.pcollections.PVector
-import org.pcollections.TreePVector
+import kotlinx.collections.immutable.*
 
 /**
  * @author Yuli Fiterman
  */
 
-private object MasterModels : FactoryMap<String, MasterModel>() {
-  override fun createMap(): Map<String, MasterModel> {
-    return ContainerUtil.createConcurrentWeakValueMap<String, MasterModel>()
-  }
-
-  override fun create(key: String): MasterModel {
-    return MasterModel()
-  }
-}
+private val MasterModels = ConcurrentFactoryMap.createMap<String, MasterModel>({
+  MasterModel()
+}, {
+  ContainerUtil.createConcurrentWeakValueMap()
+})
 
 fun createModel(persistenceId: String, console: LanguageConsoleView): ConsoleHistoryModel {
 
@@ -95,8 +90,8 @@ private class PrefixHistoryModel constructor(private val masterModel: MasterMode
     this.userContent = userContent
   }
 
-  var myEntries: PVector<String>? = null
-  var index: Int = 0
+  private var myEntries: ImmutableList<String>? = null
+  private var index: Int = 0
 
 
   init {
@@ -132,7 +127,7 @@ private class PrefixHistoryModel constructor(private val masterModel: MasterMode
 
 
   override fun getHistoryNext(): TextWithOffset? {
-    val entries: PVector<String> = myEntries ?: masterModel.entriesSnap.apply { index = this.size }
+    val entries: ImmutableList<String> = myEntries ?: masterModel.entriesSnap.apply { index = this.size }
     if (index <= 0) {
       return null
     }
@@ -149,7 +144,7 @@ private class PrefixHistoryModel constructor(private val masterModel: MasterMode
 
 
   override fun getHistoryPrev(): TextWithOffset? {
-    val entries: PVector<String> = myEntries ?: return null
+    val entries: ImmutableList<String> = myEntries ?: return null
     val searchPrefix = getPrefixFn()
     val prevOffset = entries.subList(index + 1, entries.size).indexOfFirst { it.startsWith(searchPrefix) || searchPrefix.isEmpty() }
     return if (prevOffset != -1) {
@@ -173,14 +168,13 @@ private class PrefixHistoryModel constructor(private val masterModel: MasterMode
 private class MasterModel : ConsoleHistoryModel, EntriesWithPositionHolder() {
   override fun setContent(userContent: String) = throw IllegalStateException("Should not be invoked")
 
-  val entriesSnap: PVector<String>
+  val entriesSnap: ImmutableList<String>
     get() = myState.entries
 
 
   override fun resetEntries(ent: MutableList<String>) {
-    updateAtomically {
-      state ->
-      val newEntries = TreePVector.from(ent)
+    updateAtomically { state ->
+      val newEntries = ent.toImmutableList()
       return@updateAtomically State(newEntries, newEntries.size)
     }
   }
@@ -189,15 +183,14 @@ private class MasterModel : ConsoleHistoryModel, EntriesWithPositionHolder() {
   override fun addToHistory(statement: String?) {
     val stmt = statement ?: return
 
-    updateAtomically {
-      state ->
+    updateAtomically { state ->
       val maxHistorySize = maxHistorySize
       val entries = myState.entries
-      var newEntries = entries.minus(stmt)
+      var newEntries = entries - stmt
       if (newEntries.size >= maxHistorySize) {
-        newEntries = newEntries.minus(0)
+        newEntries = newEntries.removeAt(0)
       }
-      newEntries = newEntries.plus(stmt)
+      newEntries = newEntries + stmt
 
       return@updateAtomically State(newEntries, newEntries.size)
     }
@@ -207,10 +200,9 @@ private class MasterModel : ConsoleHistoryModel, EntriesWithPositionHolder() {
 
   override fun removeFromHistory(statement: String?) {
     val stmt = statement ?: return
-    updateAtomically {
-      state ->
+    updateAtomically { state ->
       val entries = myState.entries
-      val newEntries = entries.minus(stmt)
+      val newEntries = entries - stmt
       return@updateAtomically if (newEntries !== entries) {
         State(newEntries, newEntries.size)
       }
@@ -271,7 +263,7 @@ private class MasterModel : ConsoleHistoryModel, EntriesWithPositionHolder() {
 private fun String.defaultOffset() = TextWithOffset(this, -1)
 
 private open class EntriesWithPositionHolder : SimpleModificationTracker() {
-  protected data class State(val entries: PVector<String>, val index: Int)
+  protected data class State(val entries: ImmutableList<String>, val index: Int)
 
   protected fun State.currentEntry(): String? {
     val (entries, index) = this
@@ -279,7 +271,7 @@ private open class EntriesWithPositionHolder : SimpleModificationTracker() {
   }
 
   @Volatile
-  protected var myState = State(TreePVector.empty(), -1)
+  protected var myState = State(immutableListOf(), -1)
 
   protected inline fun updateAtomically(fn: (State) -> State): State {
     var newState: State
@@ -292,6 +284,6 @@ private open class EntriesWithPositionHolder : SimpleModificationTracker() {
   }
 
   companion object {
-    val updater = AtomicFieldUpdater.forFieldOfType(EntriesWithPositionHolder::class.java, EntriesWithPositionHolder.State::class.java)
+    val updater = AtomicFieldUpdater.forFieldOfType(EntriesWithPositionHolder::class.java, State::class.java)
   }
 }
