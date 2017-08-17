@@ -48,6 +48,7 @@ import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.pyi.PyiUtil;
 import com.jetbrains.python.toolbox.ChainIterable;
 import one.util.streamex.StreamEx;
 import org.apache.commons.httpclient.HttpClient;
@@ -156,6 +157,9 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
                                                 @NotNull Function<String, String> escapedNameMapper,
                                                 @NotNull Function<String, String> escaper,
                                                 @NotNull TypeEvalContext context) {
+    final List<PyFunction> overloads = PyiUtil.getOverloads(function, context);
+    if (!overloads.isEmpty()) return describeOverload(function, overloads, escapedNameMapper, escaper, context);
+
     final ChainIterable<String> result = new ChainIterable<>();
     final String name = function.getName();
 
@@ -167,6 +171,33 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     if (!PyNames.INIT.equals(name)) {
       result.addItem(escaper.apply("\nInferred type: "));
       describeTypeWithLinks(context.getType(function), context, function, result);
+    }
+
+    return result;
+  }
+
+  @NotNull
+  private static ChainIterable<String> describeOverload(@NotNull PyFunction function,
+                                                        @NotNull List<PyFunction> overloads,
+                                                        @NotNull Function<String, String> escapedNameMapper,
+                                                        @NotNull Function<String, String> escaper,
+                                                        @NotNull TypeEvalContext context) {
+    final ChainIterable<String> result = new ChainIterable<>();
+    final String name = function.getName();
+
+    result
+      .addItem(escaper.apply("def "))
+      .addItem(escapedNameMapper.apply(escaper.apply(name)))
+      .addItem(escaper.apply("\nPossible types:\n"));
+
+    boolean first = true;
+    for (PyFunction overload : overloads) {
+      if (!first) {
+        result.addItem(escaper.apply("\n"));
+      }
+      result.addItem(escaper.apply("\u2022 "));
+      describeTypeWithLinks(context.getType(overload), context, function, result);
+      first = false;
     }
 
     return result;

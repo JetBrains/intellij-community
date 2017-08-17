@@ -351,4 +351,35 @@ public class PyQuickDocTest extends LightMarkedTestCase {
   public void testHoverOverClassWithAllKindSuperClassExpressions() {
     runWithLanguageLevel(LanguageLevel.PYTHON30, this::checkHover);
   }
+
+  // PY-23247
+  public void testOverloads() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::checkHTMLOnly);
+  }
+
+  // PY-23247
+  public void testHoverOverOverloads() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::checkHover);
+  }
+
+  // PY-23247
+  public void testOverloadsAndImplementation() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::checkHTMLOnly);
+  }
+
+  // PY-23247
+  public void testHoverOverOverloadsAndImplementation() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::checkHover);
+  }
+
+  // PY-23247
+  public void testDocOnImplementationWithOverloads() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> {
+        final PsiElement originalElement = loadTest().get("<the_ref>");
+        checkByHTML(myProvider.generateDoc(originalElement.getParent(), originalElement));
+      }
+    );
+  }
 }
