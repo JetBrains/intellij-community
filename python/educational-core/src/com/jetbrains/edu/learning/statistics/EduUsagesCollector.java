@@ -15,7 +15,6 @@
  */
 package com.jetbrains.edu.learning.statistics;
 
-import com.intellij.internal.statistic.CollectUsagesException;
 import com.intellij.internal.statistic.UsagesCollector;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
@@ -29,8 +28,6 @@ import java.util.Set;
 public class EduUsagesCollector extends UsagesCollector {
   private static final String GROUP_ID = "educational";
 
-  private final TObjectIntHashMap<String> myUsageDescriptors = new TObjectIntHashMap<>();
-
   public static void projectTypeCreated(@NotNull String projectTypeId) {
     advanceKey("project.created." + projectTypeId);
   }
@@ -40,34 +37,34 @@ public class EduUsagesCollector extends UsagesCollector {
   }
 
   public static void taskChecked() {
-    advanceKey("checkTask.");
+    advanceKey("checkTask");
   }
 
   public static void hintShown() {
-    advanceKey("showHint.");
+    advanceKey("showHint");
   }
 
   public static void taskNavigation() {
-    advanceKey("navigateToTask.");
+    advanceKey("navigateToTask");
   }
 
   public static void courseUploaded() {
-    advanceKey("uploadCourse.");
+    advanceKey("uploadCourse");
   }
 
   public static void createdCourseArchive() {
-    advanceKey("courseArchive.");
+    advanceKey("courseArchive");
   }
 
   @NotNull
   @Override
-  public Set<UsageDescriptor> getUsages() throws CollectUsagesException {
+  public Set<UsageDescriptor> getUsages() {
     HashSet<UsageDescriptor> descriptors = new HashSet<>();
-    myUsageDescriptors.forEachEntry((key, value) -> {
+    getDescriptors().forEachEntry((key, value) -> {
       descriptors.add(new UsageDescriptor(key, value));
       return true;
     });
-    myUsageDescriptors.clear();
+    getDescriptors().clear();
     return descriptors;
   }
 
@@ -79,8 +76,12 @@ public class EduUsagesCollector extends UsagesCollector {
   }
 
   private static void advanceKey(@NotNull String key) {
-    TObjectIntHashMap<String> descriptors = ServiceManager.getService(EduUsagesCollector.class).myUsageDescriptors;
+    TObjectIntHashMap<String> descriptors = getDescriptors();
     int oldValue = descriptors.get(key);
     descriptors.put(key, oldValue + 1);
+  }
+
+  private static TObjectIntHashMap<String> getDescriptors() {
+    return ServiceManager.getService(EduStatistics.class).getUsageDescriptors();
   }
 }
