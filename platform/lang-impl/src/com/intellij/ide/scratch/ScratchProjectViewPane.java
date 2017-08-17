@@ -36,6 +36,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
@@ -116,9 +117,10 @@ public class ScratchProjectViewPane extends ProjectViewPane {
 
       @Override
       protected boolean canSelect(PsiFileSystemItem file) {
-        if (!super.canSelect(file)) return false;
-        final VirtualFile vFile = file.getVirtualFile();
+        VirtualFile vFile = PsiUtilCore.getVirtualFile(file);
         if (vFile == null || !vFile.isValid()) return false;
+        if (!vFile.isInLocalFileSystem()) return false;
+
         return ScratchFileService.getInstance().getRootType(vFile) != null;
       }
 

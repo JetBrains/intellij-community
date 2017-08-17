@@ -248,6 +248,11 @@ public class PsiTestUtil {
     ModuleRootModificationUtil.updateModel(module, model -> addLibrary(module, model, libName, libPath, jarArr));
   }
 
+  public static void addProjectLibrary(Module module, String libName, List<String> classesRootPaths) {
+    List<VirtualFile> roots = ContainerUtil.map(classesRootPaths, path -> VirtualFileManager.getInstance().refreshAndFindFileByUrl(VfsUtil.getUrlForLibraryRoot(new File(path))));
+    addProjectLibrary(module, libName, roots, Collections.emptyList());
+  }
+
   public static void addProjectLibrary(Module module, String libName, VirtualFile... classesRoots) {
     addProjectLibrary(module, libName, Arrays.asList(classesRoots), Collections.emptyList());
   }

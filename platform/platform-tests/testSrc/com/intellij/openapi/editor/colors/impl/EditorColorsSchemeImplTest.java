@@ -33,7 +33,7 @@ import java.util.Arrays;
 import java.util.Collections;
 
 import static com.intellij.openapi.editor.colors.FontPreferencesTest.*;
-import static com.intellij.openapi.editor.markup.TextAttributes.USE_INHERITED_MARKER;
+import static com.intellij.openapi.editor.colors.impl.AbstractColorsScheme.INHERITED_ATTRS_MARKER;
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
 import static java.util.Collections.singletonList;
 
@@ -266,7 +266,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
 
 
   public void testSaveInheritance() {
-    Pair<EditorColorsScheme, TextAttributes> result = doTestWriteRead(DefaultLanguageHighlighterColors.STATIC_METHOD, USE_INHERITED_MARKER);
+    Pair<EditorColorsScheme, TextAttributes> result = doTestWriteRead(DefaultLanguageHighlighterColors.STATIC_METHOD, INHERITED_ATTRS_MARKER);
     TextAttributes fallbackAttrs = result.first.getAttributes(DefaultLanguageHighlighterColors.STATIC_METHOD.getFallbackAttributeKey());
     assertSame(result.second, fallbackAttrs);
   }
@@ -280,11 +280,11 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
   }
 
   public void testSaveInheritanceForEmptyAttrs() {
-    Pair<EditorColorsScheme, TextAttributes> result = doTestWriteRead(DefaultLanguageHighlighterColors.INSTANCE_FIELD, USE_INHERITED_MARKER);
+    Pair<EditorColorsScheme, TextAttributes> result = doTestWriteRead(DefaultLanguageHighlighterColors.INSTANCE_FIELD, INHERITED_ATTRS_MARKER);
     TextAttributes fallbackAttrs = result.first.getAttributes(DefaultLanguageHighlighterColors.INSTANCE_FIELD.getFallbackAttributeKey());
     TextAttributes directlyDefined =
       ((AbstractColorsScheme)result.first).getDirectlyDefinedAttributes(DefaultLanguageHighlighterColors.INSTANCE_FIELD);
-    assertTrue(directlyDefined != null && directlyDefined == USE_INHERITED_MARKER);
+    assertTrue(directlyDefined != null && directlyDefined == INHERITED_ATTRS_MARKER);
     assertSame(fallbackAttrs, result.second);
   }
 
@@ -352,7 +352,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     TextAttributes defaultAttributes = new TextAttributes(null, null, Color.BLACK, EffectType.LINE_UNDERSCORE, Font.PLAIN);
     TextAttributesKey testKey = TextAttributesKey.createTextAttributesKey("TEST_KEY", DefaultLanguageHighlighterColors.PARAMETER);
     parentScheme.setAttributes(testKey, defaultAttributes);
-    editorColorsScheme.setAttributes(testKey, USE_INHERITED_MARKER);
+    editorColorsScheme.setAttributes(testKey, INHERITED_ATTRS_MARKER);
     try {
       Element root = new Element("scheme");
       ((AbstractColorsScheme)editorColorsScheme).writeExternal(root);
@@ -363,7 +363,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
         }
       }
       TextAttributes targetAttributes = ((AbstractColorsScheme)targetScheme).getDirectlyDefinedAttributes(testKey);
-      assertTrue(targetAttributes != null && targetAttributes == USE_INHERITED_MARKER);
+      assertTrue(targetAttributes != null && targetAttributes == INHERITED_ATTRS_MARKER);
     }
     finally {
       TextAttributesKey.removeTextAttributesKey(testKey.getExternalName());

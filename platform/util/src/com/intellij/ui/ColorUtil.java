@@ -20,6 +20,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.NotNullProducer;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,6 +34,27 @@ import java.lang.annotation.Annotation;
  */
 public class ColorUtil {
   private ColorUtil() {
+  }
+
+  @NotNull
+  public static Color marker(@NotNull final String name) {
+    return new JBColor(new NotNullProducer<Color>() {
+      @NotNull
+      @Override
+      public Color produce() {
+        throw new AssertionError(name);
+      }
+    }) {
+      @Override
+      public boolean equals(Object obj) {
+        return this == obj;
+      }
+
+      @Override
+      public String toString() {
+        return name;
+      }
+    };
   }
 
   public static Color softer(@NotNull Color color) {

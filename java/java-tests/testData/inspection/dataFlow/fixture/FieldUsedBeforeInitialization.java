@@ -12,3 +12,24 @@ class Foo {
     field = "x";
   }
 }
+
+class StaticFieldTest {
+  static final String FOO;
+  static { FOO = ""; }
+
+  static final String bar = FOO.trim();
+}
+
+class InstanceFieldTest {
+  final String FOO;
+  { FOO = ""; }
+
+  String bar = FOO.trim();
+}
+
+class MixedFieldTest {
+  String bar = FOO.trim();
+
+  static final String FOO;
+  static { FOO = ""; }
+}

@@ -22,17 +22,15 @@ import com.intellij.openapi.editor.colors.ColorKey;
  *
  * @see ColorSettingsPage#getColorDescriptors()
  */
-public final class ColorDescriptor {
+public final class ColorDescriptor extends AbstractKeyDescriptor<ColorKey> {
   public static final ColorDescriptor[] EMPTY_ARRAY = new ColorDescriptor[0];
 
-  public static enum Kind {
+  public enum Kind {
     BACKGROUND,
     FOREGROUND
   }
 
   private final Kind myKind;
-  private final String myDisplayName;
-  private final ColorKey myKey;
 
   /**
    * Creates a color descriptor with the specified name and color key.
@@ -42,9 +40,8 @@ public final class ColorDescriptor {
    * @param kind        the type of color corresponding to the color key (foreground or background).
    */
   public ColorDescriptor(String displayName, ColorKey key, Kind kind) {
+    super(displayName, key);
     myKind = kind;
-    myDisplayName = displayName;
-    myKey = key;
   }
 
   /**
@@ -56,21 +53,13 @@ public final class ColorDescriptor {
     return myKind;
   }
 
-  /**
-   * Returns the name of the color shown in the colors list.
-   *
-   * @return the name of the color.
-   */
+  @Override
   public String getDisplayName() {
-    return myDisplayName;
+    return super.getDisplayName();
   }
 
-  /**
-   * Returns the color key for which the color is specified.
-   *
-   * @return the color key.
-   */
+  @Override
   public ColorKey getKey() {
-    return myKey;
+    return super.getKey();
   }
 }

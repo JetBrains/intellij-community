@@ -39,7 +39,7 @@ public class GrContainerTypeConverter extends GrTypeConverter {
   @Override
   public Boolean isConvertible(@NotNull PsiType lType, @NotNull PsiType rType, @NotNull GroovyPsiElement context) {
     if (!isCollectionOrArray(lType) || !isCollectionOrArray(rType)) return null;
-    if (isCompileStatic(context)) return false;
+    if (isCompileStatic(context)) return null;
 
     final PsiType lComponentType = extractComponentType(lType);
     final PsiType rComponentType = extractComponentType(rType);

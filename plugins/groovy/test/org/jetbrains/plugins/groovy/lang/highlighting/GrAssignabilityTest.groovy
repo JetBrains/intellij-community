@@ -866,4 +866,15 @@ def foo() {
 }
 '''
   }
+
+  void testRawListReturn() {
+    testHighlighting'''
+import groovy.transform.CompileStatic
+
+@CompileStatic
+List foo() {
+    return [""]
+}
+'''
+  }
 }

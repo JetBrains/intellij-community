@@ -56,6 +56,7 @@ import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -71,6 +72,7 @@ import java.util.*;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import static com.intellij.openapi.actionSystem.CommonDataKeys.PROJECT;
 import static com.intellij.openapi.actionSystem.PlatformDataKeys.CONTEXT_COMPONENT;
@@ -676,8 +678,8 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
                                                   String group,
                                                   @Nullable ColorKey backgroundKey,
                                                   @Nullable ColorKey foregroundKey,
-                                                  @NotNull EditorColorsScheme scheme) {
-    list.add(new EditorSettingColorDescription(name, group, backgroundKey, foregroundKey, calcType(backgroundKey, foregroundKey), scheme));
+                                                  @NotNull MyColorScheme scheme) {
+    list.add(new EditorSettingColorDescription(name, group, backgroundKey, foregroundKey, scheme));
   }
 
   private static void addSchemedDescription(@NotNull List<EditorSchemeAttributeDescriptor> list,
@@ -803,12 +805,14 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
   private static class SchemeTextAttributesDescription extends TextAttributesDescription {
     @NotNull private final TextAttributes myInitialAttributes;
     @NotNull private final TextAttributesKey key;
-    private TextAttributes myFallbackAttributes;
-    private Pair<ColorSettingsPage,AttributesDescriptor> myBaseAttributeDescriptor;
-    private boolean myIsInheritedInitial = false;
 
-    private SchemeTextAttributesDescription(String name, String group, @NotNull TextAttributesKey key, @NotNull MyColorScheme  scheme, Icon icon,
-                                           String toolTip) {
+    private TextAttributes myFallbackAttributes;
+    private Pair<ColorAndFontDescriptorsProvider, AttributesDescriptor> myBaseAttributeDescriptor;
+    private boolean myIsInheritedInitial;
+
+    private SchemeTextAttributesDescription(String name, String group,
+                                            @NotNull TextAttributesKey key, @NotNull MyColorScheme scheme,
+                                            Icon icon, String toolTip) {
       super(name, group,
             getInitialAttributes(scheme, key).clone(),
             key, scheme, icon, toolTip);
@@ -826,21 +830,10 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
       myIsInheritedInitial = scheme.isInherited(key);
       setInherited(myIsInheritedInitial);
       if (myIsInheritedInitial) {
-        setInheritedAttributes(getTextAttributes());
+        getTextAttributes().copyFrom(myFallbackAttributes);
       }
       initCheckedStatus();
     }
-
-
-    private void setInheritedAttributes(@NotNull TextAttributes attributes) {
-      attributes.setFontType(myFallbackAttributes.getFontType());
-      attributes.setForegroundColor(myFallbackAttributes.getForegroundColor());
-      attributes.setBackgroundColor(myFallbackAttributes.getBackgroundColor());
-      attributes.setErrorStripeColor(myFallbackAttributes.getErrorStripeColor());
-      attributes.setEffectColor(myFallbackAttributes.getEffectColor());
-      attributes.setEffectType(myFallbackAttributes.getEffectType());
-    }
-
 
     @NotNull
     private static TextAttributes getInitialAttributes(@NotNull MyColorScheme scheme, @NotNull TextAttributesKey key) {
@@ -850,22 +843,11 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
 
     @Override
     public void apply(EditorColorsScheme scheme) {
-      if (scheme == null) {
-        scheme = getScheme();
-      }
-
-      if (scheme instanceof EditorColorsSchemeImpl) {
-        if (!isInherited()) {
-          scheme.setAttributes(key, getTextAttributes());
-        }
-        else if (!myIsInheritedInitial) {
-          // set only if previously was not inherited (and, so, we must mark it as inherited)
-          // https://youtrack.jetbrains.com/issue/IDEA-162844
-          scheme.setAttributes(key, USE_INHERITED_MARKER);
-        }
-      }
-      else {
-        scheme.setAttributes(key, isInherited() ? USE_INHERITED_MARKER : getTextAttributes());
+      if (scheme == null) scheme = getScheme();
+      boolean skip = scheme instanceof EditorColorsSchemeImpl && isInherited() && myIsInheritedInitial;
+      if (!skip) {
+        // IDEA-162844 set only if previously was not inherited (and, so, we must mark it as inherited)
+        scheme.setAttributes(key, isInherited() ? AbstractColorsScheme.INHERITED_ATTRS_MARKER : getTextAttributes());
       }
     }
 
@@ -890,60 +872,48 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
 
     @Nullable
     @Override
-    public Pair<ColorSettingsPage,AttributesDescriptor> getBaseAttributeDescriptor() {
+    public Pair<ColorAndFontDescriptorsProvider, ? extends AbstractKeyDescriptor> getFallbackKeyDescriptor() {
       return myBaseAttributeDescriptor;
     }
   }
 
-  private static class GetSetColor {
-    private final ColorKey myKey;
-    private final EditorColorsScheme myScheme;
-    private final Color myInitialColor;
-    private Color myColor;
-
-    private GetSetColor(ColorKey key, EditorColorsScheme scheme) {
-      myKey = key;
-      myScheme = scheme;
-      myColor = myScheme.getColor(myKey);
-      myInitialColor = myColor;
-    }
-
-    public Color getColor() {
-      return myColor;
-    }
-
-    public void setColor(Color col) {
-      if (getColor() == null || !getColor().equals(col)) {
-        myColor = col;
-      }
-    }
-
-    public void apply(EditorColorsScheme scheme) {
-      if (scheme == null) scheme = myScheme;
-      scheme.setColor(myKey, myColor);
-    }
-
-    public boolean isModified() {
-      return !Comparing.equal(myColor, myInitialColor);
-    }
-  }
-
   private static class EditorSettingColorDescription extends ColorAndFontDescription {
-    private GetSetColor myGetSetForeground;
-    private GetSetColor myGetSetBackground;
+    private final ColorKey myColorKey;
+    private final ColorDescriptor.Kind myKind;
+    private final Color myInitialColor;
 
-    private EditorSettingColorDescription(String name,
-                                         String group,
-                                         ColorKey backgroundKey,
-                                         ColorKey foregroundKey,
-                                         String type,
-                                         EditorColorsScheme scheme) {
-      super(name, group, type, scheme, null, null);
-      if (backgroundKey != null) {
-        myGetSetBackground = new GetSetColor(backgroundKey, scheme);
+    private Color myColor;
+    private TextAttributes myFallbackAttributes;
+    private Pair<ColorAndFontDescriptorsProvider, ColorDescriptor> myBaseAttributeDescriptor;
+    private boolean myIsInheritedInitial;
+
+    EditorSettingColorDescription(String name,
+                                  String group,
+                                  ColorKey backgroundKey,
+                                  ColorKey foregroundKey,
+                                  MyColorScheme scheme) {
+      super(name, group, calcType(backgroundKey, foregroundKey), scheme, null, null);
+      myColorKey = ObjectUtils.chooseNotNull(foregroundKey, backgroundKey);
+      myKind = myColorKey == foregroundKey ? ColorDescriptor.Kind.FOREGROUND : ColorDescriptor.Kind.BACKGROUND;
+      ColorKey fallbackKey = myColorKey == null ? null : myColorKey.getFallbackColorKey();
+      Color fallbackColor = null;
+      if (fallbackKey != null) {
+        fallbackColor = scheme.getColor(fallbackKey);
+        myBaseAttributeDescriptor = ColorSettingsPages.getInstance().getColorDescriptor(fallbackKey);
+        if (myBaseAttributeDescriptor == null) {
+          myBaseAttributeDescriptor = Pair.create(null, new ColorDescriptor(fallbackKey.getExternalName(), fallbackKey, myKind));
+        }
+        myFallbackAttributes = new TextAttributes(myKind == ColorDescriptor.Kind.FOREGROUND ? fallbackColor : null,
+                                                  myKind == ColorDescriptor.Kind.BACKGROUND ? fallbackColor : null,
+                                                  null, null, Font.PLAIN);
       }
-      if (foregroundKey != null) {
-        myGetSetForeground = new GetSetColor(foregroundKey, scheme);
+      myColor = scheme.getColor(myColorKey);
+      myInitialColor = ObjectUtils.chooseNotNull(fallbackColor, myColor);
+
+      myIsInheritedInitial = scheme.isInherited(myColorKey);
+      setInherited(myIsInheritedInitial);
+      if (myIsInheritedInitial) {
+        //setInheritedAttributes(getTextAttributes());
       }
       initCheckedStatus();
     }
@@ -978,34 +948,26 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
 
     @Override
     public Color getExternalForeground() {
-      if (myGetSetForeground == null) {
-        return null;
-      }
-      return myGetSetForeground.getColor();
+      return myKind == ColorDescriptor.Kind.FOREGROUND ? myColor : null;
     }
 
     @Override
     public void setExternalForeground(Color col) {
-      if (myGetSetForeground == null) {
-        return;
-      }
-      myGetSetForeground.setColor(col);
+      if (myKind != ColorDescriptor.Kind.FOREGROUND) return;
+      if (myColor != null && myColor.equals(col)) return;
+      myColor = col;
     }
 
     @Override
     public Color getExternalBackground() {
-      if (myGetSetBackground == null) {
-        return null;
-      }
-      return myGetSetBackground.getColor();
+      return myKind == ColorDescriptor.Kind.BACKGROUND ? myColor : null;
     }
 
     @Override
     public void setExternalBackground(Color col) {
-      if (myGetSetBackground == null) {
-        return;
-      }
-      myGetSetBackground.setColor(col);
+      if (myKind != ColorDescriptor.Kind.BACKGROUND) return;
+      if (myColor != null && myColor.equals(col)) return;
+      myColor = col;
     }
 
     @Override
@@ -1024,12 +986,12 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
 
     @Override
     public boolean isForegroundEnabled() {
-      return myGetSetForeground != null;
+      return myKind == ColorDescriptor.Kind.FOREGROUND;
     }
 
     @Override
     public boolean isBackgroundEnabled() {
-      return myGetSetBackground != null;
+      return myKind == ColorDescriptor.Kind.BACKGROUND;
     }
 
     @Override
@@ -1039,18 +1001,31 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
 
     @Override
     public boolean isModified() {
-      return myGetSetBackground != null && myGetSetBackground.isModified()
-             || myGetSetForeground != null && myGetSetForeground.isModified();
+      if (isInherited()) {
+        return !myIsInheritedInitial;
+      }
+      return !Comparing.equal(myInitialColor, myColor) || myIsInheritedInitial;
+    }
+
+    @Nullable
+    @Override
+    public TextAttributes getBaseAttributes() {
+      return myFallbackAttributes;
     }
 
     @Override
     public void apply(EditorColorsScheme scheme) {
-      if (myGetSetBackground != null) {
-        myGetSetBackground.apply(scheme);
+      if (scheme == null) scheme = getScheme();
+      boolean skip = scheme instanceof EditorColorsSchemeImpl && isInherited() && myIsInheritedInitial;
+      if (!skip) {
+        scheme.setColor(myColorKey, isInherited() ? AbstractColorsScheme.INHERITED_COLOR_MARKER : myColor);
       }
-      if (myGetSetForeground != null) {
-        myGetSetForeground.apply(scheme);
-      }
+    }
+
+    @Nullable
+    @Override
+    public Pair<ColorAndFontDescriptorsProvider, ? extends AbstractKeyDescriptor> getFallbackKeyDescriptor() {
+      return myBaseAttributeDescriptor;
     }
   }
 
@@ -1189,7 +1164,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
 
     @Override
     public Object clone() {
-      return null;
+      throw new UnsupportedOperationException();
     }
 
     public void setIsNew() {
@@ -1212,13 +1187,31 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
         if (myParentScheme instanceof AbstractColorsScheme) {
           TextAttributes ownAttrs = ((AbstractColorsScheme)myParentScheme).getDirectlyDefinedAttributes(key);
           if (ownAttrs != null) {
-            return ownAttrs == TextAttributes.USE_INHERITED_MARKER;
+            return ownAttrs == AbstractColorsScheme.INHERITED_ATTRS_MARKER;
           }
         }
         TextAttributes attributes = getAttributes(key);
         if (attributes != null) {
           TextAttributes fallbackAttributes = getAttributes(fallbackKey);
           return attributes == fallbackAttributes;
+        }
+      }
+      return false;
+    }
+
+    public boolean isInherited(ColorKey key) {
+      ColorKey fallbackKey = key.getFallbackColorKey();
+      if (fallbackKey != null) {
+        if (myParentScheme instanceof AbstractColorsScheme) {
+          Color ownAttrs = ((AbstractColorsScheme)myParentScheme).getDirectlyDefinedColor(key);
+          if (ownAttrs != null) {
+            return ownAttrs == AbstractColorsScheme.INHERITED_COLOR_MARKER;
+          }
+        }
+        Color attributes = getColor(key);
+        if (attributes != null) {
+          Color fallback = getColor(fallbackKey);
+          return attributes == fallback;
         }
       }
       return false;
@@ -1235,9 +1228,9 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
 
     private static void copyPreservingFileStatusColors(@NotNull AbstractColorsScheme source,
                                                        @NotNull AbstractColorsScheme target) {
-      Map<ColorKey, Color> fileStatusColors = target.getColors(FILE_STATUS_COLORS);
+      Map<ColorKey, Color> fileStatusColors = target.getColorKeys().stream().filter(FILE_STATUS_COLORS).collect(
+        Collectors.toMap(Function.identity(), target::getDirectlyDefinedColor));
       source.copyTo(target);
-      target.clearColors(FILE_STATUS_COLORS);
       for (ColorKey key : fileStatusColors.keySet()) {
         target.setColor(key, fileStatusColors.get(key));
       }

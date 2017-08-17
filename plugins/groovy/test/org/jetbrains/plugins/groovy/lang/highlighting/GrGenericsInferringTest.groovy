@@ -415,6 +415,19 @@ class SomeClass2 {
   '''
   }
 
+  void testListToArrayCoercionWithHierarchy() {
+    testHighlighting '''\
+  import groovy.transform.CompileStatic
+  
+  @CompileStatic
+  class SomeClass2 {
+      static Number[] join() {
+          <error>return</error> [1]
+      }
+  }
+  '''
+  }
+
   void testComponentCoercion() {
     testHighlighting '''\
 import groovy.transform.CompileStatic
