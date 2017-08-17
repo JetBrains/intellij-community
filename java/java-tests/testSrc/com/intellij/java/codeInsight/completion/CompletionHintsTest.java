@@ -157,7 +157,7 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     complete("toChars(int codePoint)");
     checkResultWithInlays("class C { void m() { Character.toChars(<HINT text=\"codePoint:\"/><caret>) } }");
     showParameterInfo();
-    myFixture.performEditorAction("MethodOverloadSwitchDown");
+    down();
     checkResultWithInlays(
       "class C { void m() { Character.toChars(<HINT text=\"codePoint:\"/><caret>, <hint text=\"dst:\"/>, <hint text=\"dstIndex:\"/>) } }");
   }
@@ -168,7 +168,7 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     type("123");
     checkResultWithInlays("class C { void m() { Character.toChars(<HINT text=\"codePoint:\"/>123<caret>) } }");
     showParameterInfo();
-    myFixture.performEditorAction("MethodOverloadSwitchDown");
+    down();
     checkResultWithInlays("class C { void m() { Character.toChars(<hint text=\"codePoint:\"/>123, <HINT text=\"dst:\"/><caret>, <hint text=\"dstIndex:\"/>) } }");
   }
 
@@ -185,7 +185,7 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
                           "  void m() { some(<HINT text=\"from:\"/><caret>, <hint text=\"to:\"/>, <hint text=\"other:\"/>) }\n" +
                           "}");
     showParameterInfo();
-    myFixture.performEditorAction("MethodOverloadSwitchDown");
+    down();
     waitForAllAsyncStuff();
     checkResultWithInlays("class C {\n" +
                           "  int some(int from, int to) { return 0; }\n" +
@@ -538,7 +538,7 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     waitForAllAsyncStuff();
     checkResultWithInlays("class C { void m() { System.getProperty(<hint text=\"key:\"/>, <HINT text=\"def:\"/><caret>) } }");
     checkHintContents("<html>String</html>");
-    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_SHOW_PARAMETER_INFO);
+    showParameterInfo();
     waitForAllAsyncStuff();
     checkHintContents("<html><font color=gray>@NotNull String key</font color=gray></html>\n" +
                       "<html>@NotNull String key, <b>String def</b></html>");
@@ -554,9 +554,39 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     waitForAllAsyncStuff();
     checkResultWithInlays("class C { void m() { System.setProperty(<hint text=\"key:\"/>, <HINT text=\"value:\"/><caret>) } }");
     checkHintContents("<html>String</html>");
-    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_SHOW_PARAMETER_INFO);
+    showParameterInfo();
     waitForAllAsyncStuff();
     checkHintContents("<html>@NotNull String key, <b>String value</b></html>");
+  }
+
+  public void testUpInEditor() throws Exception {
+    configureJava("class C { void m() { System.getPro<caret> } }");
+    complete("getProperty(String key, String def)");
+    waitForAllAsyncStuff();
+    checkHintContents("<html>@NotNull String</html>");
+    showParameterInfo();
+    waitForAllAsyncStuff();
+    checkHintContents("<html><b>@NotNull String key</b></html>\n" +
+                      "<html><b>@NotNull String key</b>, String def</html>");
+    myFixture.performEditorAction("EditorOverloadUp");
+    waitForAllAsyncStuff();
+    checkResultWithInlays("<caret>class C { void m() { System.getProperty(<hint text=\"key:\"/>, <hint text=\"def:\"/>) } }");
+    checkHintContents(null);
+  }
+
+  public void testDownInEditor() throws Exception {
+    configureJava("class C { void m() { System.getPro<caret> } }");
+    complete("getProperty(String key, String def)");
+    waitForAllAsyncStuff();
+    checkHintContents("<html>@NotNull String</html>");
+    showParameterInfo();
+    waitForAllAsyncStuff();
+    checkHintContents("<html><b>@NotNull String key</b></html>\n" +
+                      "<html><b>@NotNull String key</b>, String def</html>");
+    myFixture.performEditorAction("EditorOverloadDown");
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C { void m() { System.getProperty(<hint text=\"key:\"/>, <hint text=\"def:\"/>) } }<caret>");
+    checkHintContents(null);
   }
 
   private void checkResult(String text) {
@@ -587,6 +617,10 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT);
   }
 
+  private void down() {
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN);
+  }
+
   private void delete() {
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_DELETE);
   }
@@ -600,7 +634,7 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
   }
 
   private void showParameterInfo() {
-    myFixture.performEditorAction("ParameterInfo");
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_SHOW_PARAMETER_INFO);
     UIUtil.dispatchAllInvocationEvents();
   }
 

@@ -17,6 +17,13 @@
   <id>com.intellij</id>
   <name>IDEA CORE</name>
 
+  <actions>
+    <action id="EditorOverloadUp" class="com.intellij.codeInsight.editorActions.JavaMethodOverloadSwitchHandler$UpInEditor"
+            use-shortcut-of="EditorLookupUp"/>
+    <action id="EditorOverloadDown" class="com.intellij.codeInsight.editorActions.JavaMethodOverloadSwitchHandler$DownInEditor"
+            use-shortcut-of="EditorLookupDown"/>
+  </actions>
+
   <xi:include href="/META-INF/IdeTipsAndTricks.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/idea/RichPlatformPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <module value="com.intellij.modules.java"/>
@@ -1422,6 +1429,8 @@
     <editorActionHandler action="EditorLineStart" implementationClass="com.intellij.codeInsight.editorActions.JavadocLineStartHandler"/>
     <editorActionHandler action="NextParameter" implementationClass="com.intellij.codeInsight.editorActions.JavaVarArgNextParameterHandler"/>
     <editorActionHandler action="PrevParameter" implementationClass="com.intellij.codeInsight.editorActions.JavaVarArgPrevParameterHandler"/>
+    <editorActionHandler action="EditorUp" implementationClass="com.intellij.codeInsight.editorActions.JavaMethodOverloadSwitchHandler$Up"/>
+    <editorActionHandler action="EditorDown" implementationClass="com.intellij.codeInsight.editorActions.JavaMethodOverloadSwitchHandler$Down"/>
 
     <editorSmartKeysConfigurable instance="com.intellij.application.options.JavadocOptionsProvider"
                                  id="editor.preferences.javadocOptions"
@@ -2003,8 +2012,6 @@
 
     <diff.lang.DiffIgnoredRangeProvider implementation="com.intellij.diff.lang.JavaDiffIgnoredRangeProvider"/>
 
-    <actionPromoter implementation="com.intellij.codeInsight.editorActions.JavaMethodOverloadSwitchActionPromoter" />
-
     <library.type implementation="com.intellij.jarRepository.RepositoryLibraryType"/>
     <library.dependencyScopeSuggester implementation="com.intellij.jarRepository.RepositoryLibraryDependencyScopeSuggester"/>
     <projectService serviceImplementation="com.intellij.jarRepository.services.MavenRepositoryServicesManager"/>
@@ -2050,9 +2057,6 @@
     <action class="com.intellij.execution.testDiscovery.ConfigureTestDiscoveryAction" internal="true" id="TestDiscoveryIndexChooser" text="Choose external test discovery indices">
       <add-to-group group-id="Internal" anchor="last"/>
     </action>
-
-    <action id="MethodOverloadSwitchUp" class="com.intellij.codeInsight.editorActions.JavaMethodOverloadSwitchUpAction"/>
-    <action id="MethodOverloadSwitchDown" class="com.intellij.codeInsight.editorActions.JavaMethodOverloadSwitchDownAction" />
 
     <action id="JShell.Console"
             class="com.intellij.execution.jshell.LaunchJShellConsoleAction"

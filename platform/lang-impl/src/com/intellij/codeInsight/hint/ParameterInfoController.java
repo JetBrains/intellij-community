@@ -124,9 +124,18 @@ public class ParameterInfoController implements Disposable {
     return !getAllControllers(editor).isEmpty();
   }
 
-  public static boolean isAlreadyShown(Editor editor, int lbraceOffset, boolean singleParameterInfo) {
-    ParameterInfoController controller = findControllerAtOffset(editor, lbraceOffset);
-    return controller != null && controller.myHint.isVisible() && (!controller.mySingleParameterInfo || singleParameterInfo);
+  public static boolean existsWithVisibleHintForEditor(@NotNull Editor editor, boolean anyHintType) {
+    return getAllControllers(editor).stream().anyMatch(c -> c.isHintShown(anyHintType));
+  }
+
+  public static void hideAllHints(@NotNull Editor editor) {
+    getAllControllers(editor).forEach(c -> { 
+      if (c.myHint.isVisible()) c.myHint.hide(); 
+    });
+  }
+
+  public boolean isHintShown(boolean anyType) {
+    return myHint.isVisible() && (!mySingleParameterInfo || anyType);
   }
 
   public ParameterInfoController(@NotNull Project project,

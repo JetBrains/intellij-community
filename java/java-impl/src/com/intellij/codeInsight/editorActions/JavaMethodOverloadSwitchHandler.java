@@ -19,14 +19,15 @@ import com.intellij.codeInsight.completion.CompletionMemory;
 import com.intellij.codeInsight.completion.JavaMethodCallElement;
 import com.intellij.codeInsight.hint.ParameterInfoController;
 import com.intellij.codeInsight.hints.ParameterHintsPass;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
+import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.util.containers.ContainerUtil;
@@ -37,17 +38,23 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-public class JavaMethodOverloadSwitchHandler extends EditorWriteActionHandler {
+abstract class JavaMethodOverloadSwitchHandler extends EditorActionHandler {
+  private static final Key<Boolean> SWITCH_DISABLED = Key.create("switch.disabled");
   private static final Key<Map<String, String>> ENTERED_PARAMETERS = Key.create("entered.parameters");
+  private final EditorActionHandler myOriginalHandler;
   private final boolean mySwitchUp;
 
-  public JavaMethodOverloadSwitchHandler(boolean up) {
+  private JavaMethodOverloadSwitchHandler(EditorActionHandler originalHandler, boolean up) {
+    myOriginalHandler = originalHandler;
     mySwitchUp = up;
   }
 
   @Override
   protected boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
-    if (!ParameterInfoController.areParametersHintsEnabledOnCompletion() || !ParameterInfoController.existsForEditor(editor)) return false;
+    if (myOriginalHandler.isEnabled(editor, caret, dataContext)) return true;
+
+    if (editor.getUserData(SWITCH_DISABLED) != null || 
+        !ParameterInfoController.areParametersHintsEnabledOnCompletion() || !ParameterInfoController.existsForEditor(editor)) return false;
 
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) return false;
@@ -68,21 +75,29 @@ public class JavaMethodOverloadSwitchHandler extends EditorWriteActionHandler {
   }
 
   @Override
-  public void executeWriteAction(Editor editor, @Nullable Caret caret, DataContext dataContext) {
+  protected void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
     if (caret == null) caret = editor.getCaretModel().getPrimaryCaret();
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    if (project == null) return;
+    if (project != null && editor.getUserData(SWITCH_DISABLED) == null && 
+        ParameterInfoController.areParametersHintsEnabledOnCompletion() && 
+        ParameterInfoController.existsWithVisibleHintForEditor(editor, false)) {
+      doSwitch(editor, caret, project);
+    }
+    else {
+      myOriginalHandler.execute(editor, caret, dataContext);
+    }
+  }
 
+  private void doSwitch(@NotNull final Editor editor, @NotNull Caret caret, @NotNull Project project) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
-
     PsiElement exprList = getExpressionList(editor, caret.getOffset(), project);
     if (!(exprList instanceof PsiExpressionList)) return;
     PsiElement call = exprList.getParent();
     if (!(call instanceof PsiCall)) return;
-
     int lbraceOffset = exprList.getTextRange().getStartOffset();
     ParameterInfoController controller = ParameterInfoController.findControllerAtOffset(editor, lbraceOffset);
-    if (controller == null) return;
+    if (controller == null || !controller.isHintShown(false)) return;
+
     Object[] objects = controller.getObjects();
     Object highlighted = controller.getHighlighted();
     if (objects == null || objects.length <= 1 || highlighted == null) return;
@@ -112,24 +127,28 @@ public class JavaMethodOverloadSwitchHandler extends EditorWriteActionHandler {
       }
     }
 
-    PsiMethod targetMethod = (PsiMethod)((CandidateInfo)objects[(currentIndex + (mySwitchUp ? -1 : 1) + objects.length) % objects.length]).getElement();
+    final PsiMethod targetMethod =
+      (PsiMethod)((CandidateInfo)objects[(currentIndex + (mySwitchUp ? -1 : 1) + objects.length) % objects.length]).getElement();
     PsiParameterList parameterList = targetMethod.getParameterList();
-    int parametersCount = parameterList.getParametersCount();
+    final int parametersCount = parameterList.getParametersCount();
     caret.moveToOffset(lbraceOffset); // avoid caret impact on hints location
-    int offset = lbraceOffset + 1;
-    int endOffset = exprList.getTextRange().getEndOffset() - 1;
-    editor.getDocument().deleteString(offset, endOffset);
-    int targetCaretPosition = -1;
-    for (int i = 0; i < parametersCount; i++) {
-      String key = getParameterKey(targetMethod, i);
-      String value = enteredParameters.getOrDefault(key, "");
-      if (value.isEmpty() && targetCaretPosition == -1) targetCaretPosition = offset;
-      if (i < parametersCount - 1) value += ", ";
-      editor.getDocument().insertString(offset, value);
-      offset += value.length();
-    }
-    if (targetCaretPosition == -1) targetCaretPosition = offset;
-    caret.moveToLogicalPosition(editor.offsetToLogicalPosition(targetCaretPosition).leanForward(true));
+    final int endOffset = exprList.getTextRange().getEndOffset() - 1;
+    Map<String, String> finalEnteredParameters = enteredParameters;
+    Ref<Integer> targetCaretPosition = new Ref<>();
+    WriteAction.run(() -> {
+      int offset = lbraceOffset + 1;
+      editor.getDocument().deleteString(offset, endOffset);
+      for (int i = 0; i < parametersCount; i++) {
+        String key = getParameterKey(targetMethod, i);
+        String value = finalEnteredParameters.getOrDefault(key, "");
+        if (value.isEmpty() && targetCaretPosition.isNull()) targetCaretPosition.set(offset);
+        if (i < parametersCount - 1) value += ", ";
+        editor.getDocument().insertString(offset, value);
+        offset += value.length();
+      }
+      if (targetCaretPosition.isNull()) targetCaretPosition.set(offset);
+    });
+    caret.moveToLogicalPosition(editor.offsetToLogicalPosition(targetCaretPosition.get()).leanForward(true));
     PsiCall methodCall = (PsiCall)call;
     if (!JavaMethodCallElement.isCompletionMode(methodCall)) {
       JavaMethodCallElement.setCompletionMode(methodCall, true);
@@ -146,5 +165,66 @@ public class JavaMethodOverloadSwitchHandler extends EditorWriteActionHandler {
   private static String getParameterKey(PsiMethod method, int parameterIndex) {
     PsiParameter parameter = method.getParameterList().getParameters()[parameterIndex];
     return parameter.getName() + ":" + parameter.getType().getCanonicalText();
+  }
+
+  public static class Up extends JavaMethodOverloadSwitchHandler {
+    public Up(EditorActionHandler originalHandler) {
+      super(originalHandler, true);
+    }
+  }
+
+  public static class Down extends JavaMethodOverloadSwitchHandler {
+    public Down(EditorActionHandler originalHandler) {
+      super(originalHandler, false);
+    }
+  }
+
+  public static class UpInEditor extends UpDownInEditor {
+    public UpInEditor() {
+      super(true);
+    }
+  }
+
+  public static class DownInEditor extends UpDownInEditor {
+    public DownInEditor() {
+      super(false);
+    }
+  }
+  
+  private static abstract class UpDownInEditor extends AnAction {
+    private final boolean myUp;
+    
+    private UpDownInEditor(boolean up) {
+      myUp = up;
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      Editor editor = e.getData(CommonDataKeys.EDITOR);
+      e.getPresentation().setEnabled(ParameterInfoController.areParametersHintsEnabledOnCompletion() && editor != null && 
+                                     ParameterInfoController.existsWithVisibleHintForEditor(editor, false));
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      Editor editor = e.getData(CommonDataKeys.EDITOR);
+      assert editor != null;
+      ParameterInfoController.hideAllHints(editor);
+      // hints can be hidden asynchronously (with animation), so we disable switching explicitly here
+      editor.putUserData(SWITCH_DISABLED, Boolean.TRUE);
+      try {
+        ActionManager actionManager = ActionManager.getInstance();
+        AnAction action = actionManager.getAction(myUp ? IdeActions.ACTION_LOOKUP_UP
+                                                       : IdeActions.ACTION_LOOKUP_DOWN);
+        if (action == null) {
+          action = actionManager.getAction(myUp ? IdeActions.ACTION_EDITOR_MOVE_CARET_UP
+                                                         : IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN);
+        }
+        action.actionPerformed(e);
+      }
+      finally {
+        editor.putUserData(SWITCH_DISABLED, null);
+      }
+    }
   }
 }

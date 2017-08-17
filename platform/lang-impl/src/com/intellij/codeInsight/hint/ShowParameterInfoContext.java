@@ -128,7 +128,8 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
                                         final ParameterInfoHandler handler,
                                         final boolean requestFocus,
                                         boolean singleParameterInfo) {
-    if (ParameterInfoController.isAlreadyShown(editor, elementStart, singleParameterInfo)) return;
+    ParameterInfoController pic = ParameterInfoController.findControllerAtOffset(editor, elementStart);
+    if (pic != null && pic.isHintShown(singleParameterInfo)) return;
 
     if (editor.isDisposed() || !editor.getComponent().isVisible()) return;
 
