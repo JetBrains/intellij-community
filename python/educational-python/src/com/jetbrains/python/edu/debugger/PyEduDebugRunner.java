@@ -26,6 +26,7 @@ import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
+import com.jetbrains.edu.learning.statistics.EduUsagesCollector;
 import com.jetbrains.python.console.PythonDebugLanguageConsoleView;
 import com.jetbrains.python.debugger.PyDebugProcess;
 import com.jetbrains.python.debugger.PyDebugRunner;
@@ -62,6 +63,7 @@ public class PyEduDebugRunner extends PyDebugRunner {
       if (file != null) {
         int line = getBreakpointLineNumber(file, session.getProject());
         if (line != NO_LINE) {
+          EduUsagesCollector.stepThroughInvoked();
           return new PyEduDebugProcess(session, serverSocket,
                                        executionConsole, processHandler,
                                        isMultiProcess, scriptName, line + 1);

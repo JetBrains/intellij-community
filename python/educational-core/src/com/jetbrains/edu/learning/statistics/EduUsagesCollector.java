@@ -28,6 +28,30 @@ import java.util.Set;
 public class EduUsagesCollector extends UsagesCollector {
   private static final String GROUP_ID = "educational";
 
+  public static void coursePreviewed() {
+    advanceKey("coursePreview");
+  }
+
+  public static void stepikAuthorization() {
+    advanceKey("stepikAuthorization");
+  }
+
+  public static void localCourseAdded() {
+    advanceKey("localCourseAdded");
+  }
+
+  public static void fileRefreshed() {
+    advanceKey("refreshFile");
+  }
+
+  public static void placeholdersFilled() {
+    advanceKey("fillPlaceholders");
+  }
+
+  public static void stepThroughInvoked() {
+    advanceKey("stepThroughCode");
+  }
+
   public static void projectTypeCreated(@NotNull String projectTypeId) {
     advanceKey("project.created." + projectTypeId);
   }

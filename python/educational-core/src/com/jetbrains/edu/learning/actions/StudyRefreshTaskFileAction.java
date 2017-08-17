@@ -33,6 +33,7 @@ import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
 import com.jetbrains.edu.learning.editor.StudyChoiceVariantsPanel;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import com.jetbrains.edu.learning.navigation.StudyNavigator;
+import com.jetbrains.edu.learning.statistics.EduUsagesCollector;
 import com.jetbrains.edu.learning.ui.StudyToolWindow;
 import icons.EducationalCoreIcons;
 import org.jetbrains.annotations.NotNull;
@@ -58,6 +59,7 @@ public class StudyRefreshTaskFileAction extends StudyActionWithShortcut {
         return;
       }
       refreshFile(studyState, project);
+      EduUsagesCollector.fileRefreshed();
     }));
   }
 
