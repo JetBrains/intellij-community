@@ -1,4 +1,4 @@
-package com.intellij.configurationStore
+package com.intellij.configurationStore.schemeManager
 
 import com.intellij.openapi.application.runUndoTransparentWriteAction
 import com.intellij.openapi.project.ProjectBundle

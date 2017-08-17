@@ -141,7 +141,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     result
   }
 
-  private val eventPublisher: RunManagerListener
+  internal val eventPublisher: RunManagerListener
     get() = project.messageBus.syncPublisher(RunManagerListener.TOPIC)
 
   init {

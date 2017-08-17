@@ -15,6 +15,8 @@
  */
 package com.intellij.configurationStore
 
+import com.intellij.configurationStore.schemeManager.createDir
+import com.intellij.configurationStore.schemeManager.getOrCreateChild
 import com.intellij.openapi.application.runUndoTransparentWriteAction
 import com.intellij.openapi.components.StateSplitter
 import com.intellij.openapi.components.StateSplitterEx

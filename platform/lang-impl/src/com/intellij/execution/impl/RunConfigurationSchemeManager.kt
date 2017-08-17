@@ -18,15 +18,23 @@
 package com.intellij.execution.impl
 
 import com.intellij.configurationStore.LazySchemeProcessor
+import com.intellij.configurationStore.SchemeContentChangedHandler
 import com.intellij.configurationStore.SchemeDataHolder
 import com.intellij.openapi.util.InvalidDataException
 import com.intellij.util.attribute
 import org.jdom.Element
 import java.util.function.Function
 
-internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl, private val isShared: Boolean) : LazySchemeProcessor<RunnerAndConfigurationSettingsImpl, RunnerAndConfigurationSettingsImpl>() {
+internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl, private val isShared: Boolean) :
+  LazySchemeProcessor<RunnerAndConfigurationSettingsImpl, RunnerAndConfigurationSettingsImpl>(), SchemeContentChangedHandler<RunnerAndConfigurationSettingsImpl> {
   override fun createScheme(dataHolder: SchemeDataHolder<RunnerAndConfigurationSettingsImpl>, name: String, attributeProvider: Function<String, String?>, isBundled: Boolean): RunnerAndConfigurationSettingsImpl {
     val settings = RunnerAndConfigurationSettingsImpl(manager)
+    val element = readData(settings, dataHolder)
+    manager.addConfiguration(element, settings)
+    return settings
+  }
+
+  private fun readData(settings: RunnerAndConfigurationSettingsImpl, dataHolder: SchemeDataHolder<RunnerAndConfigurationSettingsImpl>): Element {
     var element = dataHolder.read()
     if (isShared && element.name == "component") {
       element = element.getChild("configuration")
@@ -38,9 +46,7 @@ internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl
     catch (e: InvalidDataException) {
       RunManagerImpl.LOG.error(e)
     }
-
-    manager.addConfiguration(element, settings)
-    return settings
+    return element
   }
 
   override fun getName(attributeProvider: Function<String, String?>, fileNameWithoutExtension: String): String {
@@ -57,6 +63,15 @@ internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl
   }
 
   override fun isExternalizable(scheme: RunnerAndConfigurationSettingsImpl) = true
+
+  override fun schemeContentChanged(scheme: RunnerAndConfigurationSettingsImpl, name: String, dataHolder: SchemeDataHolder<RunnerAndConfigurationSettingsImpl>) {
+    readData(scheme, dataHolder)
+    manager.eventPublisher.runConfigurationChanged(scheme)
+  }
+
+  override fun onSchemeAdded(scheme: RunnerAndConfigurationSettingsImpl) {
+    // createScheme automatically call addConfiguration
+  }
 
   override fun onSchemeDeleted(scheme: RunnerAndConfigurationSettingsImpl) {
     manager.removeConfiguration(scheme)
