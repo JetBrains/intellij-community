@@ -18,7 +18,9 @@ package com.intellij.psi;
 import com.google.common.util.concurrent.Atomics;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.command.undo.UndoConstants;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
@@ -552,10 +554,10 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     int fileLength = myContent.getTextLength();
     for (FileElement fileElement : knownTreeRoots) {
       int nodeLength = fileElement.getTextLength();
-      if (nodeLength != fileLength) {
+      if (!isDocumentConsistentWithPsi(fileLength, fileElement, nodeLength)) {
         PsiUtilCore.ensureValid(fileElement.getPsi());
-        List<Attachment> attachments = ContainerUtil.newArrayList(new Attachment(myVirtualFile.getNameWithoutExtension() + ".tree.txt", fileElement.getText()),
-                                                                  new Attachment(myVirtualFile.getNameWithoutExtension() + ".file.txt", myContent.toString()));
+        List<Attachment> attachments = ContainerUtil.newArrayList(new Attachment(myVirtualFile.getName(), myContent.getText().toString()),
+                                                                  new Attachment(myVirtualFile.getNameWithoutExtension() + ".tree.txt", fileElement.getText()));
         if (document != null) {
           attachments.add(new Attachment(myVirtualFile.getNameWithoutExtension() + ".document.txt", document.getText()));
         }
@@ -564,6 +566,16 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
                   attachments.toArray(Attachment.EMPTY_ARRAY));
       }
     }
+  }
+
+  private boolean isDocumentConsistentWithPsi(int fileLength, FileElement fileElement, int nodeLength) {
+    if (nodeLength != fileLength) return false;
+
+    if (ApplicationManager.getApplication().isUnitTestMode() && !ApplicationInfoImpl.isInStressTest()) {
+      return fileElement.textMatches(myContent.getText());
+    }
+
+    return true;
   }
 
   @NonNls
