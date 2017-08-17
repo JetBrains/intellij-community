@@ -15,13 +15,12 @@
  */
 package com.jetbrains.edu.learning.statistics;
 
-import com.intellij.internal.statistic.CollectUsagesException;
 import com.intellij.internal.statistic.UsagesCollector;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.hash.HashSet;
+import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
@@ -29,47 +28,43 @@ import java.util.Set;
 public class EduUsagesCollector extends UsagesCollector {
   private static final String GROUP_ID = "educational";
 
-  private final FactoryMap<String, UsageDescriptor> myUsageDescriptors = new FactoryMap<String, UsageDescriptor>() {
-    @Override
-    protected UsageDescriptor create(String key) {
-      return new UsageDescriptor(key, 0);
-    }
-  };
-
   public static void projectTypeCreated(@NotNull String projectTypeId) {
-    ServiceManager.getService(EduUsagesCollector.class).myUsageDescriptors.get("project.created." + projectTypeId).advance();
+    advanceKey("project.created." + projectTypeId);
   }
 
   public static void projectTypeOpened(@NotNull String projectTypeId) {
-    ServiceManager.getService(EduUsagesCollector.class).myUsageDescriptors.get("project.opened." + projectTypeId).advance();
+    advanceKey("project.opened." + projectTypeId);
   }
 
   public static void taskChecked() {
-    ServiceManager.getService(EduUsagesCollector.class).myUsageDescriptors.get("checkTask.").advance();
+    advanceKey("checkTask");
   }
 
   public static void hintShown() {
-    ServiceManager.getService(EduUsagesCollector.class).myUsageDescriptors.get("showHint.").advance();
+    advanceKey("showHint");
   }
 
   public static void taskNavigation() {
-    ServiceManager.getService(EduUsagesCollector.class).myUsageDescriptors.get("navigateToTask.").advance();
+    advanceKey("navigateToTask");
   }
 
   public static void courseUploaded() {
-    ServiceManager.getService(EduUsagesCollector.class).myUsageDescriptors.get("uploadCourse.").advance();
+    advanceKey("uploadCourse");
   }
 
   public static void createdCourseArchive() {
-    ServiceManager.getService(EduUsagesCollector.class).myUsageDescriptors.get("courseArchive.").advance();
+    advanceKey("courseArchive");
   }
 
   @NotNull
   @Override
-  public Set<UsageDescriptor> getUsages() throws CollectUsagesException {
+  public Set<UsageDescriptor> getUsages() {
     HashSet<UsageDescriptor> descriptors = new HashSet<>();
-    descriptors.addAll(myUsageDescriptors.values());
-    myUsageDescriptors.clear();
+    getDescriptors().forEachEntry((key, value) -> {
+      descriptors.add(new UsageDescriptor(key, value));
+      return true;
+    });
+    getDescriptors().clear();
     return descriptors;
   }
 
@@ -78,5 +73,15 @@ public class EduUsagesCollector extends UsagesCollector {
   @Override
   public GroupDescriptor getGroupId() {
     return GroupDescriptor.create(GROUP_ID);
+  }
+
+  private static void advanceKey(@NotNull String key) {
+    TObjectIntHashMap<String> descriptors = getDescriptors();
+    int oldValue = descriptors.get(key);
+    descriptors.put(key, oldValue + 1);
+  }
+
+  private static TObjectIntHashMap<String> getDescriptors() {
+    return ServiceManager.getService(EduStatistics.class).getUsageDescriptors();
   }
 }

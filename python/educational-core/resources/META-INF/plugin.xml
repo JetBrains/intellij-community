@@ -174,7 +174,7 @@
     <renameHandler implementation="com.jetbrains.edu.learning.StudyRenameHandler"/>
     <refactoring.moveHandler implementation="com.jetbrains.edu.learning.StudyMoveDelegate" order="first"/>
     <statistics.usagesCollector implementation="com.jetbrains.edu.learning.statistics.EduUsagesCollector"/>
-    <applicationService serviceImplementation="com.jetbrains.edu.learning.statistics.EduUsagesCollector"/>
+    <applicationService serviceImplementation="com.jetbrains.edu.learning.statistics.EduStatistics"/>
     <applicationService serviceImplementation="com.jetbrains.edu.learning.StudySettings"/>
     <editorTabTitleProvider implementation="com.jetbrains.edu.learning.StudyTabTitleProvider"/>
     <typedHandler implementation="com.jetbrains.edu.learning.StudyTypeHandlerDelegate" order="first, before completionAutoPopup"/>
