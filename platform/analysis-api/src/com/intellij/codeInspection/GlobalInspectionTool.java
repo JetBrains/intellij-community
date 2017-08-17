@@ -76,22 +76,22 @@ public abstract class GlobalInspectionTool extends InspectionProfileEntry {
     globalContext.getRefManager().iterate(new RefVisitor() {
       @Override public void visitElement(@NotNull RefEntity refEntity) {
         if (!globalContext.shouldCheck(refEntity, GlobalInspectionTool.this)) return;
-        if (notInScope(refEntity)) return;
+        if (!isInScope(refEntity)) return;
         CommonProblemDescriptor[] descriptors = checkElement(refEntity, scope, manager, globalContext, problemDescriptionsProcessor);
         if (descriptors != null) {
           problemDescriptionsProcessor.addProblemElement(refEntity, descriptors);
         }
       }
 
-      private boolean notInScope(@NotNull RefEntity refEntity) {
+      private boolean isInScope(@NotNull RefEntity refEntity) {
         if (refEntity instanceof RefElement) {
           SmartPsiElementPointer pointer = ((RefElement)refEntity).getPointer();
           if (pointer != null) {
-            if (!scope.contains(pointer.getVirtualFile())) return true;
+            if (scope.contains(pointer.getVirtualFile())) return true;
           }
           else {
             RefEntity owner = refEntity.getOwner();
-            return owner != null && notInScope(owner);
+            return owner == null || isInScope(owner);
           }
         }
         return false;
