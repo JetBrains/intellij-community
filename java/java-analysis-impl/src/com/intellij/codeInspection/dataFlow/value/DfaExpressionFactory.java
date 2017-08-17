@@ -19,6 +19,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.codeInspection.dataFlow.SpecialField;
+import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
@@ -27,6 +28,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.impl.light.LightVariableBuilder;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -167,10 +170,35 @@ public class DfaExpressionFactory {
     PsiField placeField = PsiTreeUtil.getParentOfType(ref, PsiField.class, true, PsiClass.class, PsiLambdaExpression.class);
     if (placeField == null) return false;
 
+    PsiClass placeClass = placeField.getContainingClass();
     PsiElement target = ref.resolve();
-    return target instanceof PsiField &&
-           placeField.getContainingClass() == ((PsiField)target).getContainingClass() &&
-           ((PsiField)target).getInitializer() == null;
+    if (target instanceof PsiField) {
+      PsiField targetField = (PsiField)target;
+      if (placeClass != null && placeClass == targetField.getContainingClass() && targetField.getInitializer() == null) {
+        if (!targetField.hasModifier(JvmModifier.FINAL)) return true;
+        
+        if (!placeField.hasModifier(JvmModifier.STATIC) && targetField.hasModifier(JvmModifier.STATIC)) {
+          return false;
+        }
+
+        return !isWrittenInClassInitializer(placeClass, targetField, ref.getTextRange().getStartOffset());
+      }
+    }
+    return false;
+  }
+
+  private static boolean isWrittenInClassInitializer(PsiClass placeClass, PsiField field, int beforeOffset) {
+    for (PsiReference reference : ReferencesSearch.search(field, new LocalSearchScope(placeClass)).findAll()) {
+      if (reference instanceof PsiReferenceExpression) {
+        PsiReferenceExpression expr = (PsiReferenceExpression)reference;
+        if (PsiUtil.isAccessedForWriting(expr) &&
+            PsiTreeUtil.getParentOfType(expr, PsiClassInitializer.class) != null &&
+            (expr).getTextRange().getStartOffset() < beforeOffset) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   @Nullable
