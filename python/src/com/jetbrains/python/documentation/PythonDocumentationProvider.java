@@ -65,9 +65,11 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
 
-import static com.jetbrains.python.documentation.DocumentationBuilderKit.*;
+import static com.jetbrains.python.documentation.DocumentationBuilderKit.ESCAPE_ONLY;
+import static com.jetbrains.python.documentation.DocumentationBuilderKit.TO_ONE_LINE_AND_ESCAPE;
 
 /**
  * Provides quick docs for classes, methods, and functions.
@@ -89,46 +91,62 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     final TypeEvalContext context = TypeEvalContext.userInitiated(originalElement.getProject(), originalElement.getContainingFile());
 
     if (element instanceof PyFunction) {
-      final PyFunction func = (PyFunction)element;
-      final StringBuilder cat = new StringBuilder();
-      final PyClass cls = func.getContainingClass();
+      final PyFunction function = (PyFunction)element;
+      final ChainIterable<String> result = new ChainIterable<>();
+
+      final PyClass cls = function.getContainingClass();
       if (cls != null) {
         final String clsName = cls.getName();
-        cat.append("class ").append(clsName).append("\n");
-        // It would be nice to have class import info here, but we don't know the ctrl+hovered reference and context
+        if (clsName != null) {
+          result.addItem("class ").addItem(clsName).addItem("\n");
+          // It would be nice to have class import info here, but we don't know the ctrl+hovered reference and context
+        }
       }
-      String summary = "";
-      final PyStringLiteralExpression docStringExpression = PyDocumentationBuilder.getEffectiveDocStringExpression(func);
-      if (docStringExpression != null) {
-        final StructuredDocString docString = DocStringUtil.parse(docStringExpression.getStringValue(), docStringExpression);
-        summary = docString.getSummary();
+
+      result
+        .add(describeDecorators(function, Function.identity(), TO_ONE_LINE_AND_ESCAPE, ", ", "\n"))
+        .add(describeFunction(function, Function.identity(), ESCAPE_ONLY, context));
+
+      final String docStringSummary = getDocStringSummary(function);
+      if (docStringSummary != null) {
+        result.addItem("\n").addItem(docStringSummary);
       }
-      return $(cat.toString())
-               .add(describeDecorators(func, Function.identity(), TO_ONE_LINE_AND_ESCAPE, ", ", "\n"))
-               .add(describeFunction(func, Function.identity(), ESCAPE_ONLY, context))
-               .toString() + "\n" + summary;
+
+      return result.toString();
     }
     else if (element instanceof PyClass) {
       final PyClass cls = (PyClass)element;
-      String summary = "";
-      PyStringLiteralExpression docStringExpression = PyDocumentationBuilder.getEffectiveDocStringExpression(cls);
-      if (docStringExpression == null) {
-        final PyFunction initOrNew = cls.findInitOrNew(false, null);
-        if (initOrNew != null) {
-          docStringExpression = PyDocumentationBuilder.getEffectiveDocStringExpression(initOrNew);
-        }
+      final ChainIterable<String> result = new ChainIterable<>();
+
+      result
+        .add(describeDecorators(cls, Function.identity(), TO_ONE_LINE_AND_ESCAPE, ", ", "\n"))
+        .add(describeClass(cls, Function.identity(), TO_ONE_LINE_AND_ESCAPE, false, false, context));
+
+      final String docStringSummary = getDocStringSummary(cls);
+      if (docStringSummary != null) {
+        result.addItem("\n").addItem(docStringSummary);
       }
-      if (docStringExpression != null) {
-        final StructuredDocString docString = DocStringUtil.parse(docStringExpression.getStringValue(), docStringExpression);
-        summary = docString.getSummary();
+      else {
+        Optional
+          .ofNullable(cls.findInitOrNew(false, context))
+          .map(PythonDocumentationProvider::getDocStringSummary)
+          .ifPresent(summary -> result.addItem("\n").addItem(summary));
       }
 
-      return describeDecorators(cls, Function.identity(), TO_ONE_LINE_AND_ESCAPE, ", ", "\n")
-               .add(describeClass(cls, Function.identity(), TO_ONE_LINE_AND_ESCAPE, false, false, context))
-               .toString() + "\n" + summary;
+      return result.toString();
     }
     else if (element instanceof PyExpression) {
       return describeExpression((PyExpression)element, originalElement, ESCAPE_ONLY, context);
+    }
+    return null;
+  }
+
+  @Nullable
+  private static String getDocStringSummary(@NotNull PyDocStringOwner owner) {
+    final PyStringLiteralExpression docStringExpression = PyDocumentationBuilder.getEffectiveDocStringExpression(owner);
+    if (docStringExpression != null) {
+      final StructuredDocString docString = DocStringUtil.parse(docStringExpression.getStringValue(), docStringExpression);
+      return docString.getSummary();
     }
     return null;
   }
