@@ -17,6 +17,7 @@ package com.intellij.compiler;
 
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -55,6 +56,7 @@ public class CompilerTestUtil {
     EdtTestUtil.runInEdtAndWait(() -> {
       doSaveComponent((PersistentStateComponent<?>)ProjectJdkTable.getInstance());
       doSaveComponent((PersistentStateComponent<?>)FileTypeManager.getInstance());
+      doSaveComponent((PersistentStateComponent<?>)PathMacros.getInstance());
     });
   }
 
