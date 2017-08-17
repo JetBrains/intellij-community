@@ -179,13 +179,11 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
       oldCharset = myProjectCharset;
       myProjectCharset = charset;
     }
+    else if (charset == null) {
+      oldCharset = myMapping.remove(virtualFileOrDir);
+    }
     else {
-      if (charset == null) {
-        oldCharset = myMapping.remove(virtualFileOrDir);
-      }
-      else {
-        oldCharset = myMapping.put(virtualFileOrDir, charset);
-      }
+      oldCharset = myMapping.put(virtualFileOrDir, charset);
     }
 
     if (!Comparing.equal(oldCharset, charset) || virtualFileOrDir != null && !Comparing.equal(virtualFileOrDir.getCharset(), charset)) {
@@ -376,11 +374,11 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
     }
   }
 
-  private boolean tryStartReloadWithProgress(@NotNull final Runnable reloadAction) {
+  private void tryStartReloadWithProgress(@NotNull final Runnable reloadAction) {
     Boolean suppress = SUPPRESS_RELOAD.get();
-    if (suppress == Boolean.TRUE) return false;
+    if (suppress == Boolean.TRUE) return;
     FileDocumentManager.getInstance().saveAllDocuments();  // consider all files as unmodified
-    return ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> suppressReloadDuring(reloadAction), "Reload Files", false, myProject);
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> suppressReloadDuring(reloadAction), "Reload Files", false, myProject);
   }
 
   private void reloadAllFilesUnder(@Nullable final VirtualFile root) {
@@ -456,21 +454,19 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
   }
 
   public enum BOMForNewUTF8Files {
-    ALWAYS {
-      @Override
-      public String toString() {
-        return "with BOM";
-      }
-    }, NEVER{
-      @Override
-      public String toString() {
-        return "with NO BOM";
-      }
-    }, WINDOWS_ONLY{
-      @Override
-      public String toString() {
-        return "with BOM under Windows, with no BOM otherwise";
-      }
+    ALWAYS("with BOM"),
+    NEVER("with NO BOM"),
+    WINDOWS_ONLY("with BOM under Windows, with no BOM otherwise");
+
+    private final String name;
+
+    BOMForNewUTF8Files(@NotNull String name) {
+      this.name = name;
+    }
+
+    @Override
+    public String toString() {
+      return name;
     }
   }
   void setBOMForNewUtf8Files(@NotNull BOMForNewUTF8Files option) {

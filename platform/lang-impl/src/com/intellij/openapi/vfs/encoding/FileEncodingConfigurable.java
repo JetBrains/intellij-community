@@ -72,16 +72,21 @@ class FileEncodingConfigurable extends PerFileConfigurableBase<Charset> {
 
   private void updateExplanationLabelText() {
     EncodingProjectManagerImpl.BOMForNewUTF8Files item = (EncodingProjectManagerImpl.BOMForNewUTF8Files)myBOMForUTF8Combo.getSelectedItem();
+    String I = ApplicationNamesInfo.getInstance().getProductName();
     if (item != null) {
       switch (item) {
         case ALWAYS:
-          myExplanationLabel.setHtmlText("<html>IDEA will add <a href=''>UTF-8 BOM</a> to every created file in UTF-8 encoding</html>");
+          myExplanationLabel.setHtmlText(
+            "<html>" + I + " will add <a>UTF-8 BOM</a> to every created file in UTF-8 encoding</html>");
           break;
         case NEVER:
-          myExplanationLabel.setHtmlText("<html>IDEA will NOT add <a href=''>UTF-8 BOM</a> to every created file in UTF-8 encoding</html>");
+          myExplanationLabel.setHtmlText(
+            "<html>" + I + " will NOT add <a>UTF-8 BOM</a> to every created file in UTF-8 encoding</html>");
           break;
         case WINDOWS_ONLY:
-          myExplanationLabel.setHtmlText("<html>IDEA will add <a href=''>UTF-8 BOM</a> to every created UTF-8 file only when it's running under Windows.</html>");
+          myExplanationLabel.setHtmlText("<html>" +
+                                         I +
+                                         " will add <a>UTF-8 BOM</a> to every created UTF-8 file only when it's running under Windows.</html>");
           break;
       }
     }
