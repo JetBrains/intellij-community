@@ -18,7 +18,6 @@ package com.intellij.vcs.log.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
@@ -36,7 +35,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.Set;
 
 public class VcsLogTabsWatcher implements Disposable {
   private static final String TOOLWINDOW_ID = ChangesViewContentManager.TOOLWINDOW_ID;
@@ -47,7 +45,7 @@ public class VcsLogTabsWatcher implements Disposable {
   @NotNull private final MyRefreshPostponedEventsListener myPostponedEventsListener;
   @Nullable private ToolWindow myToolWindow;
 
-  public VcsLogTabsWatcher(@NotNull Project project, @NotNull PostponableLogRefresher refresher, @NotNull Disposable parentDisposable) {
+  public VcsLogTabsWatcher(@NotNull Project project, @NotNull PostponableLogRefresher refresher) {
     myRefresher = refresher;
     myToolWindowManager = ToolWindowManagerEx.getInstanceEx(project);
 
@@ -56,8 +54,6 @@ public class VcsLogTabsWatcher implements Disposable {
       myToolWindowManager.addToolWindowManagerListener(myPostponedEventsListener);
       installContentListener();
     });
-
-    Disposer.register(parentDisposable, this);
   }
 
   @Nullable
@@ -84,11 +80,6 @@ public class VcsLogTabsWatcher implements Disposable {
     }
   }
 
-  @Override
-  public void dispose() {
-    removeListeners();
-  }
-
   private void removeListeners() {
     myToolWindowManager.removeToolWindowManagerListener(myPostponedEventsListener);
 
@@ -103,12 +94,18 @@ public class VcsLogTabsWatcher implements Disposable {
     }
   }
 
-  @NotNull
-  public Set<String> getTabNames() {
-    return StreamEx.of(myRefresher.getLogWindows())
-      .select(VcsLogTab.class)
-      .map(VcsLogTab::getTabName)
-      .toSet();
+  public void closeLogTabs() {
+    if (myToolWindow != null) {
+      VcsLogContentUtil.closeLogTabs(myToolWindow, StreamEx.of(myRefresher.getLogWindows())
+        .select(VcsLogTab.class)
+        .map(VcsLogTab::getTabName)
+        .toSet());
+    }
+  }
+
+  @Override
+  public void dispose() {
+    removeListeners();
   }
 
   public class VcsLogTab extends PostponableLogRefresher.VcsLogWindow {
@@ -177,7 +174,8 @@ public class VcsLogTabsWatcher implements Disposable {
       if (myToolWindow == null) return;
       if (myToolWindowManager.getToolWindow(TOOLWINDOW_ID) == null) {
         removeListeners();
-      } else {
+      }
+      else {
         selectionChanged();
       }
     }

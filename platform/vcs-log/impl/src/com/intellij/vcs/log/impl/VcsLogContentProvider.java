@@ -99,9 +99,9 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
       Disposer.dispose(ui);
     }
 
-    // other tabs
+    // other ui
     if (logManager != null) {
-      VcsLogContentUtil.closeLogTabs(myProject, logManager.getTabNames());
+      logManager.disposeUi();
     }
   }
 

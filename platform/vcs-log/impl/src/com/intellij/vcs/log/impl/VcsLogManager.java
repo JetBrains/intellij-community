@@ -44,7 +44,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Collection;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class VcsLogManager implements Disposable {
@@ -76,7 +75,7 @@ public class VcsLogManager implements Disposable {
     Map<VirtualFile, VcsLogProvider> logProviders = findLogProviders(roots, myProject);
     myLogData = new VcsLogData(myProject, logProviders, new MyFatalErrorsHandler(), this);
     myPostponableRefresher = new PostponableLogRefresher(myLogData);
-    myTabsLogRefresher = new VcsLogTabsWatcher(myProject, myPostponableRefresher, myLogData);
+    myTabsLogRefresher = new VcsLogTabsWatcher(myProject, myPostponableRefresher);
 
     refreshLogOnVcsEvents(logProviders, myPostponableRefresher, myLogData);
 
@@ -193,13 +192,13 @@ public class VcsLogManager implements Disposable {
     return ServiceManager.getService(myProject, VcsProjectLog.class).getMainLogUi();
   }
 
-  @Override
-  public void dispose() {
+  public void disposeUi() {
+    myTabsLogRefresher.closeLogTabs();
+    Disposer.dispose(myTabsLogRefresher);
   }
 
-  @NotNull
-  public Set<String> getTabNames() {
-    return myTabsLogRefresher.getTabNames();
+  @Override
+  public void dispose() {
   }
 
   private class MyFatalErrorsHandler implements FatalErrorHandler {
