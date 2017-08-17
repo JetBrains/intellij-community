@@ -148,7 +148,7 @@ public class CodeCompletionPanel {
     myParameterInfoDelayField.setEnabled(codeInsightSettings.AUTO_POPUP_PARAMETER_INFO);
     myParameterInfoDelayField.setText(String.valueOf(codeInsightSettings.PARAMETER_INFO_DELAY));
     myCbShowFullParameterSignatures.setSelected(codeInsightSettings.SHOW_FULL_SIGNATURES_IN_PARAMETER_INFO);
-    myCbCompleteFunctionWithParameters.setSelected(codeInsightSettings.COMPLETE_FUNCTION_PARAMETERS);
+    myCbCompleteFunctionWithParameters.setSelected(codeInsightSettings.SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION);
 
     myCbAutocompletion.setSelected(codeInsightSettings.AUTO_POPUP_COMPLETION_LOOKUP);
     myCbSorting.setSelected(UISettings.getInstance().getSortLookupElementsLexicographically());
@@ -175,7 +175,7 @@ public class CodeCompletionPanel {
     codeInsightSettings.PARAMETER_INFO_DELAY = getIntegerValue(myParameterInfoDelayField.getText(), 0);
     codeInsightSettings.JAVADOC_INFO_DELAY = getIntegerValue(myAutopopupJavaDocField.getText(), 0);
     
-    codeInsightSettings.COMPLETE_FUNCTION_PARAMETERS = myCbCompleteFunctionWithParameters.isSelected();
+    codeInsightSettings.SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION = myCbCompleteFunctionWithParameters.isSelected();
     
     UISettings.getInstance().setSortLookupElementsLexicographically(myCbSorting.isSelected());
 
@@ -198,7 +198,7 @@ public class CodeCompletionPanel {
     isModified |= isModified(myCbShowFullParameterSignatures, codeInsightSettings.SHOW_FULL_SIGNATURES_IN_PARAMETER_INFO);
     isModified |= isModified(myCbParameterInfoPopup, codeInsightSettings.AUTO_POPUP_PARAMETER_INFO);
     isModified |= isModified(myCbAutocompletion, codeInsightSettings.AUTO_POPUP_COMPLETION_LOOKUP);
-    isModified |= isModified(myCbCompleteFunctionWithParameters, codeInsightSettings.COMPLETE_FUNCTION_PARAMETERS);
+    isModified |= isModified(myCbCompleteFunctionWithParameters, codeInsightSettings.SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION);
     isModified |= isModified(myCbAutopopupJavaDoc, codeInsightSettings.AUTO_POPUP_JAVADOC_INFO);
     isModified |= isModified(myParameterInfoDelayField, codeInsightSettings.PARAMETER_INFO_DELAY, 0);
     isModified |= isModified(myAutopopupJavaDocField, codeInsightSettings.JAVADOC_INFO_DELAY, 0);

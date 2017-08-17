@@ -385,7 +385,7 @@ public class ParameterInfoController implements Disposable {
   private void moveToParameterAtOffset(int offset) {
     PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
     PsiElement argsList = findArgumentList(file, offset, -1);
-    if (argsList == null && !CodeInsightSettings.getInstance().COMPLETE_FUNCTION_PARAMETERS) return;
+    if (argsList == null && !CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION) return;
 
     if (!myHint.isVisible()) AutoPopupController.getInstance(myProject).autoPopupParameterInfo(myEditor, null);
     
@@ -430,7 +430,7 @@ public class ParameterInfoController implements Disposable {
     int currentParameterIndex =
       noDelimiter ? JBIterable.of(parameters).indexOf((o) -> o.getTextRange().containsOffset(offset)) :
       ParameterInfoUtils.getCurrentParameterIndex(argList.getNode(), offset, handler.getActualParameterDelimiterType());
-    if (CodeInsightSettings.getInstance().COMPLETE_FUNCTION_PARAMETERS) {
+    if (CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION) {
       if (currentParameterIndex < 0 || currentParameterIndex >= parameters.length) return -1;
       if (offset >= argList.getTextRange().getEndOffset()) currentParameterIndex = isNext ? -1 : parameters.length;
       int prevOrNextParameterIndex = currentParameterIndex + (isNext ? 1 : -1);
@@ -566,7 +566,7 @@ public class ParameterInfoController implements Disposable {
   }
 
   public static boolean areParameterTemplatesEnabledOnCompletion() {
-    return Registry.is("java.completion.argument.live.template") && !CodeInsightSettings.getInstance().COMPLETE_FUNCTION_PARAMETERS;
+    return Registry.is("java.completion.argument.live.template") && !CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION;
   }
 
   public class MyUpdateParameterInfoContext implements UpdateParameterInfoContext {

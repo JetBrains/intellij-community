@@ -45,8 +45,8 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myStoredSettingValue = CodeInsightSettings.getInstance().COMPLETE_FUNCTION_PARAMETERS;
-    CodeInsightSettings.getInstance().COMPLETE_FUNCTION_PARAMETERS = true;
+    myStoredSettingValue = CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION;
+    CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION = true;
     myHintFixture = new EditorHintFixture(getTestRootDisposable());
     myStoredAutoPopupDelay = CodeInsightSettings.getInstance().PARAMETER_INFO_DELAY;
     CodeInsightSettings.getInstance().PARAMETER_INFO_DELAY = 100; // speed up tests
@@ -56,7 +56,7 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
   protected void tearDown() throws Exception {
     try {
       CodeInsightSettings.getInstance().PARAMETER_INFO_DELAY = myStoredAutoPopupDelay;
-      CodeInsightSettings.getInstance().COMPLETE_FUNCTION_PARAMETERS = myStoredSettingValue;
+      CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION = myStoredSettingValue;
     }
     finally {
       super.tearDown();

@@ -54,8 +54,8 @@ abstract class JavaMethodOverloadSwitchHandler extends EditorActionHandler {
   protected boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
     if (myOriginalHandler.isEnabled(editor, caret, dataContext)) return true;
 
-    if (editor.getUserData(SWITCH_DISABLED) != null || 
-        !CodeInsightSettings.getInstance().COMPLETE_FUNCTION_PARAMETERS || !ParameterInfoController.existsForEditor(editor)) return false;
+    if (editor.getUserData(SWITCH_DISABLED) != null ||
+        !CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION || !ParameterInfoController.existsForEditor(editor)) return false;
 
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) return false;
@@ -80,7 +80,7 @@ abstract class JavaMethodOverloadSwitchHandler extends EditorActionHandler {
     if (caret == null) caret = editor.getCaretModel().getPrimaryCaret();
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project != null && editor.getUserData(SWITCH_DISABLED) == null &&
-        CodeInsightSettings.getInstance().COMPLETE_FUNCTION_PARAMETERS && 
+        CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION &&
         ParameterInfoController.existsWithVisibleHintForEditor(editor, false)) {
       doSwitch(editor, caret, project);
     }
@@ -202,7 +202,7 @@ abstract class JavaMethodOverloadSwitchHandler extends EditorActionHandler {
     @Override
     public void update(AnActionEvent e) {
       Editor editor = e.getData(CommonDataKeys.EDITOR);
-      e.getPresentation().setEnabled(CodeInsightSettings.getInstance().COMPLETE_FUNCTION_PARAMETERS && editor != null && 
+      e.getPresentation().setEnabled(CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION && editor != null &&
                                      ParameterInfoController.existsWithVisibleHintForEditor(editor, false));
     }
 

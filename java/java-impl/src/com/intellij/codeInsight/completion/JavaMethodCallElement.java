@@ -308,7 +308,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     if (parameterOwner == null || !"()".equals(parameterOwner.getText()) ||
         parametersCount == 0 ||
         context.getCompletionChar() == Lookup.COMPLETE_STATEMENT_SELECT_CHAR || context.getCompletionChar() == Lookup.REPLACE_SELECT_CHAR ||
-        !CodeInsightSettings.getInstance().COMPLETE_FUNCTION_PARAMETERS) {
+        !CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION) {
       return;
     }
 

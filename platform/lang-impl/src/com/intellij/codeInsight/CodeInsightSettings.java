@@ -52,7 +52,7 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
     Application application = ApplicationManager.getApplication();
     if (Registry.is("java.completion.argument.hints") ||
         (application != null && application.isInternal()) && Registry.is("java.completion.argument.hints.internal")) {
-      COMPLETE_FUNCTION_PARAMETERS = true;
+      SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION = true;
       Registry.get("java.completion.argument.hints").setValue(false);
       Registry.get("java.completion.argument.hints.internal").setValue(false);
     }
@@ -69,7 +69,7 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
     }
   }
 
-  public boolean COMPLETE_FUNCTION_PARAMETERS;
+  public boolean SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION;
   public boolean AUTO_POPUP_PARAMETER_INFO = true;
   public int PARAMETER_INFO_DELAY = 1000;
   public boolean AUTO_POPUP_JAVADOC_INFO;
