@@ -80,12 +80,11 @@ abstract class JavaMethodOverloadSwitchHandler extends EditorActionHandler {
 
   @Override
   protected void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
-    if (caret == null) caret = editor.getCaretModel().getPrimaryCaret();
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project != null && editor.getUserData(SWITCH_DISABLED) == null &&
         CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION &&
         ParameterInfoController.existsWithVisibleHintForEditor(editor, false)) {
-      doSwitch(editor, caret, project);
+      doSwitch(editor, caret == null ? editor.getCaretModel().getPrimaryCaret() : caret, project);
     }
     else {
       myOriginalHandler.execute(editor, caret, dataContext);
