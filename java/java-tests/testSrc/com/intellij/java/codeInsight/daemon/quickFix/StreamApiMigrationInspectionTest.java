@@ -38,6 +38,7 @@ import org.junit.runners.Suite;
   StreamApiMigrationInspectionTest.FindFirstTest.class,
   StreamApiMigrationInspectionTest.FlatMapFirstTest.class,
   StreamApiMigrationInspectionTest.ForeachFirstTest.class,
+  StreamApiMigrationInspectionTest.JoiningTest.class,
   StreamApiMigrationInspectionTest.LimitTest.class,
   StreamApiMigrationInspectionTest.MinMaxTest.class,
   StreamApiMigrationInspectionTest.NoneMatchTest.class,
