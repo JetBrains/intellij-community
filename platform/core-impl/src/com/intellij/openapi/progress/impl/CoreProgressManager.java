@@ -741,4 +741,12 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     boolean runHook(@Nullable ProgressIndicator indicator);
   }
 
+  public static void assertUnderProgress(@NotNull ProgressIndicator indicator) {
+    synchronized (threadsUnderIndicator) {
+      Set<Thread> threads = threadsUnderIndicator.get(indicator);
+      if (threads == null || !threads.contains(Thread.currentThread())) {
+        throw new IllegalStateException("Must be executed under progress indicator: "+indicator+". Please see e.g. ProgressManager.runProcess()");
+      }
+    }
+  }
 }

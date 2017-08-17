@@ -19,6 +19,10 @@ import com.intellij.lang.FCTSBackedLighterAST
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.psi.*
 import com.intellij.psi.impl.PsiDocumentManagerBase
 import com.intellij.psi.impl.search.JavaNullMethodArgumentUtil
@@ -30,6 +34,7 @@ import com.intellij.testFramework.SkipSlowTestLocally
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.util.ref.GCUtil
 import groovy.transform.CompileStatic
+import org.jetbrains.annotations.NotNull
 
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Future
@@ -200,12 +205,18 @@ class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
 
       assert file.node.lighterAST instanceof FCTSBackedLighterAST
       List<Future> futures = []
-      futures << ApplicationManager.application.executeOnPooledThread { ReadAction.run {
-        assert !JavaNullMethodArgumentUtil.hasNullArgument(clazz.methods[0], 0)
-      } }
-      futures << ApplicationManager.application.executeOnPooledThread { ReadAction.run {
-        assert JavaPsiFacade.getInstance(project).findClass('Foo', GlobalSearchScope.allScope(project))
-      } }
+      futures << ((CoreProgressManager)ProgressManager.instance).runProcessWithProgressAsynchronously(new Task.Backgroundable(myFixture.project, "hasNull") {
+        @Override
+        void run(@NotNull ProgressIndicator indicator) { ReadAction.run {
+          assert !JavaNullMethodArgumentUtil.hasNullArgument(clazz.methods[0], 0)
+        }}
+      })
+      futures << ((CoreProgressManager)ProgressManager.instance).runProcessWithProgressAsynchronously(new Task.Backgroundable(myFixture.project, "findClass") {
+        @Override
+        void run(@NotNull ProgressIndicator indicator) { ReadAction.run {
+          assert JavaPsiFacade.getInstance(project).findClass('Foo', GlobalSearchScope.allScope(project))
+        }}
+      })
       futures.each { it.get() }
     }
   }

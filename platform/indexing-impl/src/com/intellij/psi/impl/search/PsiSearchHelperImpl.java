@@ -28,6 +28,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.progress.util.TooManyUsagesStatus;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -340,6 +341,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                                                     @NotNull final Processor<VirtualFile> localProcessor) {
     ApplicationEx app = (ApplicationEx)ApplicationManager.getApplication();
     final AtomicBoolean canceled = new AtomicBoolean(false);
+    if (!app.isDispatchThread()) {
+      CoreProgressManager.assertUnderProgress(progress);
+    }
 
     while (true) {
       ProgressManager.checkCanceled();
