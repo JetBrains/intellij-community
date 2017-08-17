@@ -75,7 +75,7 @@ public class ThreadDumpAction extends AnAction implements AnAction.TransparentUp
     }
   }
 
-  static List<ThreadState> buildThreadStates(VirtualMachineProxyImpl vmProxy) {
+  public static List<ThreadState> buildThreadStates(VirtualMachineProxyImpl vmProxy) {
     final List<ThreadReference> threads = vmProxy.getVirtualMachine().allThreads();
     final List<ThreadState> result = new ArrayList<>();
     final Map<String, ThreadState> nameToThreadMap = new HashMap<>();
