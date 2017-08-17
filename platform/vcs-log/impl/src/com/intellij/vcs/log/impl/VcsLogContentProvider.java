@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentEP;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.util.NotNullFunction;
@@ -47,6 +48,8 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
   @NotNull private final VcsProjectLog myProjectLog;
   @NotNull private final JPanel myContainer = new JBPanel(new BorderLayout());
 
+  @Nullable private volatile VcsLogUiImpl myUi;
+
   public VcsLogContentProvider(@NotNull Project project, @NotNull VcsProjectLog projectLog) {
     myProject = project;
     myProjectLog = projectLog;
@@ -70,13 +73,17 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
     }
   }
 
+  @Nullable
+  public VcsLogUiImpl getUi() {
+    return myUi;
+  }
+
   @CalledInAwt
   private void addLogUi(@NotNull VcsLogManager logManager) {
     LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
-    if (myProjectLog.getMainLogUi() == null) {
-      VcsLogUiImpl ui = logManager.createLogUi(VcsLogTabsProperties.MAIN_LOG_ID, TAB_NAME);
-      myProjectLog.setMainUi(ui);
-      myContainer.add(new VcsLogPanel(logManager, ui), BorderLayout.CENTER);
+    if (myUi == null) {
+      myUi = logManager.createLogUi(VcsLogTabsProperties.MAIN_LOG_ID, TAB_NAME);
+      myContainer.add(new VcsLogPanel(logManager, myUi), BorderLayout.CENTER);
     }
   }
 
@@ -86,8 +93,11 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
 
     // main ui
     myContainer.removeAll();
-    VcsLogUiImpl ui = myProjectLog.getMainLogUi();
-    if (ui != null) Disposer.dispose(ui);
+    if (myUi != null) {
+      VcsLogUiImpl ui = myUi;
+      myUi = null;
+      Disposer.dispose(ui);
+    }
 
     // other tabs
     if (logManager != null) {
@@ -104,6 +114,17 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
   @Override
   public void disposeContent() {
     disposeLogUi(myProjectLog.getLogManager());
+  }
+
+  @Nullable
+  public static VcsLogContentProvider getInstance(@NotNull Project project) {
+    ChangesViewContentEP[] extensions = project.getExtensions(ChangesViewContentEP.EP_NAME);
+    for (ChangesViewContentEP ep: extensions) {
+      if (ep.getClassName().equals(VcsLogContentProvider.class.getName())) {
+        return (VcsLogContentProvider)ep.getInstance(project);
+      }
+    }
+    return null;
   }
 
   public static class VcsLogVisibilityPredicate implements NotNullFunction<Project, Boolean> {
