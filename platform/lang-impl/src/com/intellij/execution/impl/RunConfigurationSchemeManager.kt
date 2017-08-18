@@ -13,8 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-
 package com.intellij.execution.impl
 
 import com.intellij.configurationStore.LazySchemeProcessor
@@ -36,6 +34,9 @@ internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl
 
   private fun readData(settings: RunnerAndConfigurationSettingsImpl, dataHolder: SchemeDataHolder<RunnerAndConfigurationSettingsImpl>): Element {
     var element = dataHolder.read()
+    // very important to not write file with only changed line separators.
+    dataHolder.updateDigest(element)
+
     if (isShared && element.name == "component") {
       element = element.getChild("configuration")
     }
