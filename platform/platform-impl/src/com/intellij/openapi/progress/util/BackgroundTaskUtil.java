@@ -28,6 +28,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PairConsumer;
 import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.CalledInAwt;
@@ -236,7 +237,15 @@ public class BackgroundTaskUtil {
         if (indicator.isRunning()) indicator.cancel();
       }
     };
-    Disposer.register(parent, disposable);
+
+    try {
+      Disposer.register(parent, disposable);
+    }
+    catch (IncorrectOperationException e) {
+      LOG.error(e);
+      indicator.cancel();
+      return indicator;
+    }
 
     indicator.start();
 
