@@ -24,27 +24,27 @@ import java.io.File;
 import java.io.FileFilter;
 
 /**
-* @author nik
-*/
+ * @author nik
+ */
 public class MavenResourceFileFilter implements FileFilter {
   private File myRoot;
-  private String myRelativePath;
+  private String myRelativeDirectoryPath;
   private MavenPatternFileFilter myMavenPatternFileFilter;
 
   public MavenResourceFileFilter(@NotNull File rootFile, @NotNull FilePattern filePattern) {
     this(rootFile, filePattern, null);
   }
 
-  public MavenResourceFileFilter(@NotNull File rootFile, @NotNull FilePattern filePattern, @Nullable String relativePath) {
+  public MavenResourceFileFilter(@NotNull File rootFile, @NotNull FilePattern filePattern, @Nullable String relativeDirectoryPath) {
     myMavenPatternFileFilter = new MavenPatternFileFilter(filePattern.includes, filePattern.excludes);
     myRoot = rootFile;
-    myRelativePath = relativePath;
+    myRelativeDirectoryPath = relativeDirectoryPath;
   }
 
   @Override
   public boolean accept(@NotNull File file) {
-    String relPath = myRelativePath != null && myRelativePath.endsWith(file.getName()) ?
-                     myRelativePath : FileUtil.getRelativePath(myRoot, file);
-    return relPath != null && myMavenPatternFileFilter.accept(relPath);
+    String relativeFilePath = myRelativeDirectoryPath != null ?
+                              myRelativeDirectoryPath + File.separator + file.getName() : FileUtil.getRelativePath(myRoot, file);
+    return relativeFilePath != null && myMavenPatternFileFilter.accept(relativeFilePath);
   }
 }
