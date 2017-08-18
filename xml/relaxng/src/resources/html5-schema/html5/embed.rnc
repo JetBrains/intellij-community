@@ -165,7 +165,6 @@ namespace local = ""
 			                    | translate
 			                    | style
 			                    | tabindex
-			                    | contextmenu
 			                    | contenteditable
 			                    | draggable
 			                    | dropzone
@@ -224,7 +223,6 @@ namespace local = ""
 			                    | onseeked
 			                    | onseeking
 			                    | onselect
-			                    | onshow
 			                    | onsort
 			                    | onstalled
 			                    | onsubmit
