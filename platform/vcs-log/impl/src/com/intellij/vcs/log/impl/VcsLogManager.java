@@ -188,9 +188,17 @@ public class VcsLogManager implements Disposable {
     return ServiceManager.getService(myProject, VcsProjectLog.class).getMainLogUi();
   }
 
-  public void disposeUi() {
+  public void dispose(@Nullable Runnable callback) {
+    LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
+
     myTabsLogRefresher.closeLogTabs();
     Disposer.dispose(myTabsLogRefresher);
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      Disposer.dispose(this);
+      if (callback != null) {
+        callback.run();
+      }
+    });
   }
 
   @Override

@@ -24,7 +24,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
@@ -178,14 +177,7 @@ public class VcsProjectLog implements Disposable {
     public synchronized void drop(@Nullable Runnable callback) {
       if (myValue != null) {
         myMessageBus.syncPublisher(VCS_PROJECT_LOG_CHANGED).logDisposed(myValue);
-        myValue.disposeUi();
-        VcsLogManager value = myValue;
-        ApplicationManager.getApplication().executeOnPooledThread(() -> {
-          Disposer.dispose(value);
-          if (callback != null) {
-            callback.run();
-          }
-        });
+        myValue.dispose(callback);
       }
       myValue = null;
     }
