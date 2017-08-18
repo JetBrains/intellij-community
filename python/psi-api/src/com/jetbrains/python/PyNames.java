@@ -183,6 +183,12 @@ public class PyNames {
   public static final String SIZEOF = "__sizeof__";
   public static final String INIT_SUBCLASS = "__init_subclass__";
   public static final String FSPATH = "__fspath__";
+  public static final String COMPLEX = "__complex__";
+  public static final String FLOAT = "__float__";
+  public static final String INT = "__int__";
+  public static final String BYTES = "__bytes__";
+  public static final String ABS = "__abs__";
+  public static final String ROUND = "__round__";
 
   public static final String NAME = "__name__";
   public static final String ENTER = "__enter__";
@@ -295,7 +301,7 @@ public class PyNames {
   private static final BuiltinDescription _exit_descr = new BuiltinDescription("(self, exc_type, exc_val, exc_tb)");
 
   private static final ImmutableMap<String, BuiltinDescription> BuiltinMethods = ImmutableMap.<String, BuiltinDescription>builder()
-    .put("__abs__", _only_self_descr)
+    .put(ABS, _only_self_descr)
     .put("__add__", _self_other_descr)
     .put("__and__", _self_other_descr)
       //_BuiltinMethods.put("__all__", _only_self_descr);
@@ -306,7 +312,7 @@ public class PyNames {
       //_BuiltinMethods.put("__class__", _only_self_descr);
     .put("__cmp__", _self_other_descr)
     .put("__coerce__", _self_other_descr)
-    .put("__complex__", _only_self_descr)
+    .put(COMPLEX, _only_self_descr)
     .put("__contains__", _self_item_descr)
     .put("__copy__", _only_self_descr)
       //_BuiltinMethods.put("__debug__", _only_self_descr);
@@ -324,7 +330,7 @@ public class PyNames {
     .put("__exit__", _exit_descr)
     .put("__eq__", _self_other_descr)
       //_BuiltinMethods.put("__file__", _only_self_descr);
-    .put("__float__", _only_self_descr)
+    .put(FLOAT, _only_self_descr)
     .put("__floor__", _only_self_descr)
     .put("__floordiv__", _self_other_descr)
       //_BuiltinMethods.put("__future__", _only_self_descr);
@@ -350,7 +356,7 @@ public class PyNames {
     .put("__imul__", _self_other_descr)
     .put("__index__", _only_self_descr)
     .put(INIT, _only_self_descr)
-    .put("__int__", _only_self_descr)
+    .put(INT, _only_self_descr)
     .put("__invert__", _only_self_descr)
     .put("__ior__", _self_other_descr)
     .put("__ipow__", _self_other_descr)
@@ -425,11 +431,11 @@ public class PyNames {
   public static final ImmutableMap<String, BuiltinDescription> PY3_BUILTIN_METHODS = ImmutableMap.<String, BuiltinDescription>builder()
     .putAll(BuiltinMethods)
     .put("__bool__", _only_self_descr)
-    .put("__bytes__", _only_self_descr)
+    .put(BYTES, _only_self_descr)
     .put("__format__", new BuiltinDescription("(self, format_spec)"))
     .put("__instancecheck__", new BuiltinDescription("(self, instance)"))
     .put("__prepare__", new BuiltinDescription("(metacls, name, bases)"))
-    .put("__round__", new BuiltinDescription("(self, n=None)"))
+    .put(ROUND, new BuiltinDescription("(self, n=None)"))
     .put("__subclasscheck__", new BuiltinDescription("(self, subclass)"))
     .put(DUNDER_NEXT, _only_self_descr)
     .build();

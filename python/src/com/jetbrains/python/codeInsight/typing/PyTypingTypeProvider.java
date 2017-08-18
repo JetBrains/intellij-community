@@ -75,6 +75,12 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   private static final String CALLABLE = "typing.Callable";
 
   public static final String NAMEDTUPLE_SIMPLE = "NamedTuple";
+  public static final String SUPPORTS_INT_SIMPLE = "SupportsInt";
+  public static final String SUPPORTS_FLOAT_SIMPLE = "SupportsFloat";
+  public static final String SUPPORTS_COMPLEX_SIMPLE = "SupportsComplex";
+  public static final String SUPPORTS_BYTES_SIMPLE = "SupportsBytes";
+  public static final String SUPPORTS_ABS_SIMPLE = "SupportsAbs";
+  public static final String SUPPORTS_ROUND_SIMPLE = "SupportsRound";
 
   public static final Pattern TYPE_COMMENT_PATTERN = Pattern.compile("# *type: *(.*)");
 
