@@ -129,7 +129,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
   private val workspaceSchemeManager = SchemeManagerFactory.getInstance(project).create("workspace", RunConfigurationSchemeManager(this, false), streamProvider = workspaceSchemeManagerProvider, autoSave = false)
 
   @Suppress("LeakingThis")
-  private var projectSchemeManager = if (isUseProjectSchemeManager()) SchemeManagerFactory.getInstance(project).create("runConfigurations", RunConfigurationSchemeManager(this, true), isUseOldFileNameSanitize = true) else null
+  private var projectSchemeManager = SchemeManagerFactory.getInstance(project).create("runConfigurations", RunConfigurationSchemeManager(this, true), isUseOldFileNameSanitize = true)
 
   private val isFirstLoadState = AtomicBoolean(true)
 
@@ -282,7 +282,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
         refreshUsagesList(settings)
       }
       else {
-        (if (settings.isShared) workspaceSchemeManager else projectSchemeManager)?.removeScheme(settings as RunnerAndConfigurationSettingsImpl)
+        (if (settings.isShared) workspaceSchemeManager else projectSchemeManager).removeScheme(settings as RunnerAndConfigurationSettingsImpl)
       }
 
       // scheme level can be changed (workspace -> project), so, ensure that scheme is added to corresponding scheme manager (if exists, doesn't harm)
@@ -357,7 +357,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
   }
 
   // comparator is null if want just to save current order (e.g. if want to keep order even after reload)
-  // yes, on hot reload, because our ProjectRunConfigurationManager doesn't use SchemeManager and change of some RC file leads to reload of all configurations
+  // yes, on hot reload, because our DeprecatedProjectRunConfigurationManager doesn't use SchemeManager and change of some RC file leads to reload of all configurations
   fun setOrder(comparator: Comparator<RunnerAndConfigurationSettings>?) {
     lock.write {
       val sorted = idToSettings.values.filterTo(ArrayList(idToSettings.size)) { it.type !is UnknownConfigurationType }
@@ -610,7 +610,8 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
 
   override fun noStateLoaded() {
     isFirstLoadState.set(false)
-    projectSchemeManager?.loadSchemes()
+    projectSchemeManager.loadSchemes()
+    projectRunConfigurationFirstLoaded()
   }
 
   override fun loadState(parentNode: Element) {
@@ -649,7 +650,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
       customOrder.ensureCapacity(order.size)
       order.mapIndexed { index, id -> customOrder.put(id, index) }
 
-      // ProjectRunConfigurationManager will not call requestSort if no shared configurations
+      // DeprecatedProjectRunConfigurationManager will not call requestSort if no shared configurations
       requestSort()
 
       recentlyUsedTemporaries.clear()
@@ -670,13 +671,21 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     }
 
     if (isFirstLoadState) {
-      projectSchemeManager?.loadSchemes()
+      projectSchemeManager.loadSchemes()
+      projectRunConfigurationFirstLoaded()
     }
 
     fireBeforeRunTasksUpdated()
 
     if (!isFirstLoadState && oldSelectedConfigurationId != null && oldSelectedConfigurationId != selectedConfigurationId) {
       eventPublisher.runConfigurationSelected()
+    }
+  }
+
+  private fun projectRunConfigurationFirstLoaded() {
+    requestSort()
+    if (selectedConfiguration == null) {
+      selectedConfiguration = allSettings.firstOrNull { it.type !is UnknownRunConfiguration }
     }
   }
 
@@ -826,19 +835,6 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     if (Registry.`is`("select.run.configuration.from.context")) {
       selectedConfiguration = tempConfiguration
     }
-  }
-
-  fun getSharedConfigurations(): List<RunnerAndConfigurationSettings> {
-    var result: MutableList<RunnerAndConfigurationSettings>? = null
-    for (configuration in allSettings) {
-      if (configuration.isShared) {
-        if (result == null) {
-          result = ArrayList()
-        }
-        result.add(configuration)
-      }
-    }
-    return result ?: emptyList()
   }
 
   override val tempConfigurationsList: List<RunnerAndConfigurationSettings>
@@ -1099,28 +1095,6 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     }
   }
 
-  fun removeNotExistingSharedConfigurations(existing: Set<String>) {
-    var removed: MutableList<RunnerAndConfigurationSettings>? = null
-    lock.write {
-      val iterator = idToSettings.values.iterator()
-      for (settings in iterator) {
-        if (!settings.isTemplate && settings.isShared && !existing.contains(settings.uniqueID)) {
-          if (removed == null) {
-            immutableSortedSettingsList = null
-            removed = SmartList<RunnerAndConfigurationSettings>()
-          }
-          removed!!.add(settings)
-          iterator.remove()
-        }
-      }
-    }
-
-    if (removed != null) {
-      val publisher = eventPublisher
-      removed?.forEach { publisher.runConfigurationRemoved(it) }
-    }
-  }
-
   fun fireBeginUpdate() {
     eventPublisher.beginUpdate()
   }
@@ -1199,5 +1173,3 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     changedSettings.forEach { eventPublisher.runConfigurationChanged(it, null) }
   }
 }
-
-internal fun isUseProjectSchemeManager() = Registry.`is`("runManager.use.schemeManager", false)

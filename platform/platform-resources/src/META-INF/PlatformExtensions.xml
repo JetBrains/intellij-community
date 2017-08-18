@@ -353,7 +353,6 @@
                         serviceImplementation="com.intellij.ide.RemoteDesktopDetector"/>
 
     <projectService serviceInterface="com.intellij.execution.RunManager" serviceImplementation="com.intellij.execution.impl.RunManagerImpl"/>
-    <projectService serviceImplementation="com.intellij.execution.impl.ProjectRunConfigurationManager"/>
 
     <fileEditorProvider implementation="com.intellij.openapi.fileEditor.impl.http.HttpFileEditorProvider"/>
     <editorActionHandler action="EditorEscape" implementationClass="com.intellij.codeInsight.hint.EscapeHandler" id="hide-hints"/>
