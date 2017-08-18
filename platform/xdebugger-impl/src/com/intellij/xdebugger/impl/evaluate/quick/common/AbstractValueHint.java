@@ -252,6 +252,7 @@ public abstract class AbstractValueHint {
       return false;
     }
 
+    AppUIUtil.targetToDevice(myCurrentHint.getComponent(), myEditor.getComponent());
     Point p = HintManagerImpl.getHintPosition(myCurrentHint, myEditor, myEditor.xyToLogicalPosition(myPoint), HintManager.UNDER);
     HintHint hint = HintManagerImpl.createHintHint(myEditor, p, myCurrentHint, HintManager.UNDER, true);
     hint.setShowImmediately(true);
