@@ -20,18 +20,17 @@
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.ProjectGroup;
-import com.intellij.ide.ProjectGroupActionGroup;
-import com.intellij.ide.RecentProjectsManager;
-import com.intellij.ide.ReopenProjectAction;
+import com.intellij.ide.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.UniqueNameBuilder;
@@ -45,6 +44,8 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
@@ -56,8 +57,13 @@ import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
+import java.util.Collection;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class RecentProjectPanel extends JPanel {
   public static final String RECENT_PROJECTS_LABEL = "Recent Projects";
@@ -82,6 +88,8 @@ public class RecentProjectPanel extends JPanel {
     }
   };
 
+  protected FilePathChecker myChecker;
+
 
   private boolean rectInListCoordinatesContains(Rectangle listCellBounds,  Point p) {
 
@@ -99,18 +107,33 @@ public class RecentProjectPanel extends JPanel {
     return rectInListCoordinates.contains(p);
   }
 
-  public RecentProjectPanel(@Nullable Disposable parentDisposable) {
+  public RecentProjectPanel(@NotNull Disposable parentDisposable) {
     super(new BorderLayout());
 
     final AnAction[] recentProjectActions = RecentProjectsManager.getInstance().getRecentProjectsActions(false, isUseGroups());
 
     myPathShortener = new UniqueNameBuilder<>(SystemProperties.getUserHome(), File.separator, 40);
+    Collection<String> pathsToCheck = ContainerUtil.newHashSet();
     for (AnAction action : recentProjectActions) {
       if (action instanceof ReopenProjectAction) {
         final ReopenProjectAction item = (ReopenProjectAction)action;
 
         myPathShortener.addPath(item, item.getProjectPath());
+        pathsToCheck.add(item.getProjectPath());
       }
+    }
+
+    if (Registry.is("autocheck.availability.welcome.screen.projects")) {
+      myChecker = new FilePathChecker(new Runnable() {
+        @Override
+        public void run() {
+          if (myList.isShowing()) {
+            myList.revalidate();
+            myList.repaint();
+          }
+        }
+      }, pathsToCheck);
+      Disposer.register(parentDisposable, myChecker);
     }
 
     myList = createList(recentProjectActions, getPreferredScrollableViewportSize());
@@ -218,6 +241,10 @@ public class RecentProjectPanel extends JPanel {
     }
 
     setBorder(new LineBorder(WelcomeScreenColors.BORDER_COLOR));
+  }
+
+  protected boolean isPathValid(String path) {
+    return myChecker == null || myChecker.isValid(path);
   }
 
   protected static void removeRecentProjectElement(Object element) {
@@ -512,6 +539,57 @@ public class RecentProjectPanel extends JPanel {
     @Override
     public Dimension getSize() {
       return getPreferredSize();
+    }
+  }
+
+  private static class FilePathChecker implements Disposable {
+    private static final int MIN_AUTO_UPDATE_MILLIS = 2500;
+    private final ScheduledExecutorService myService = AppExecutorUtil.createBoundedScheduledExecutorService("CheckRecentProjectPaths service", 2);
+    private Map<String, AtomicBoolean> myStates = ContainerUtil.newHashMap();
+
+    private final Runnable myCallback;
+    private final Collection<String> myPaths;
+
+     FilePathChecker(Runnable callback, Collection<String>paths) {
+      myCallback = callback;
+      myPaths = paths;
+      for (String path : myPaths) {
+        myStates.put(path, new AtomicBoolean(true));//initially everything is valid
+      }
+      if (!PowerSaveMode.isEnabled()) {
+         for (String path : paths) {
+           scheduleCheck(path, MIN_AUTO_UPDATE_MILLIS);
+         }
+       }
+    }
+
+     boolean isValid(String path) {
+      AtomicBoolean b = myStates.get(path);
+      return b == null || b.get();
+    }
+
+    @Override
+    public void dispose() {
+      myService.shutdownNow();
+    }
+
+    private void scheduleCheck(String path, long delay) {
+      if (myService.isShutdown()) return;
+      
+      myService.schedule(() -> {
+        final long startTime = System.currentTimeMillis();
+        boolean exists;
+        try {
+          exists = new File(path).exists();
+        }
+        catch (Exception e) {
+          exists = false;
+        }
+        if (myStates.get(path).getAndSet(exists) != exists) {
+          ApplicationManager.getApplication().invokeLater(myCallback);
+        }
+        scheduleCheck(path, Math.max(MIN_AUTO_UPDATE_MILLIS, 10 * (System.currentTimeMillis() - startTime)));
+      }, delay, TimeUnit.MILLISECONDS);
     }
   }
 }
