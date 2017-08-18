@@ -721,7 +721,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     }
     else {
       IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-        requestFocus();
+        super.requestFocus();
       });
     }
   }
