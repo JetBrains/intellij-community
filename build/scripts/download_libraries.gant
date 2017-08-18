@@ -24,6 +24,6 @@ import org.jetbrains.jps.idea.IdeaProjectLoader
 target("default": "Download repository libraries for IntelliJ IDEA project") {
   String home = IdeaProjectLoader.guessHome(this)
   String outputDir = "$home/out/compilation"
-  def context = CompilationContextImpl.create("$home/community", home, outputDir)
+  def context = CompilationContextImpl.create("$home", home, outputDir)
   CompilationTasks.create(context).resolveProjectDependencies()
 }
