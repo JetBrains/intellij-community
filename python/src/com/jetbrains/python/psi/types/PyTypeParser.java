@@ -528,6 +528,10 @@ public class PyTypeParser {
         final PyClassType type = builtinCache.getDictType();
         return type != null ? new ParseResult(type, range) : EMPTY_RESULT;
       }
+      else if (PyNames.BASESTRING.equals(name)) {
+        final PyType type = builtinCache.getStrOrUnicodeType();
+        return type != null ? new ParseResult(type, range) : EMPTY_RESULT;
+      }
 
       final PyType builtinType = builtinCache.getObjectType(name);
       if (builtinType != null) {

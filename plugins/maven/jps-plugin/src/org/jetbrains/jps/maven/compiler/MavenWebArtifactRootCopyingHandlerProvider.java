@@ -73,18 +73,14 @@ public class MavenWebArtifactRootCopyingHandlerProvider extends ArtifactRootCopy
     }
 
     ResourceRootConfiguration rootConfiguration = artifactResourceConfiguration.getRootConfiguration(root);
-    String relativePathInWar = null;
+    String relativeDirInWar = null;
     if (rootConfiguration == null) {
       if (artifact.getOutputPath() != null &&
           !FileUtil.isAncestor(new File(artifactResourceConfiguration.warSourceDirectory), root, false)) {
-        relativePathInWar = FileUtil.getRelativePath(new File(artifact.getOutputPath()), new File(targetDirectory, root.getName()));
-        if (relativePathInWar != null) {
-          // cut the exploded directory name
-          relativePathInWar = StringUtil.substringAfter(relativePathInWar, File.separator);
-        }
-        if (relativePathInWar == null) return null;
+        relativeDirInWar = FileUtil.getRelativePath(new File(artifact.getOutputPath()), targetDirectory);
+        if (relativeDirInWar == null) return null;
       }
-      return new MavenWebArtifactCopyingHandler(artifactResourceConfiguration, moduleResourceConfiguration, relativePathInWar);
+      return new MavenWebArtifactCopyingHandler(artifactResourceConfiguration, moduleResourceConfiguration, relativeDirInWar);
     }
 
     MavenResourceFileProcessor fileProcessor = new MavenResourceFileProcessor(projectConfiguration, model.getProject(), moduleResourceConfiguration);
@@ -98,14 +94,14 @@ public class MavenWebArtifactRootCopyingHandlerProvider extends ArtifactRootCopy
 
     public MavenWebArtifactCopyingHandler(@NotNull MavenWebArtifactConfiguration artifactConfig,
                                           @NotNull MavenModuleResourceConfiguration moduleResourceConfig,
-                                          @Nullable String relativePath) {
-      this(getWarRootConfig(artifactConfig, moduleResourceConfig), moduleResourceConfig, relativePath);
+                                          @Nullable String relativeDirectoryPath) {
+      this(getWarRootConfig(artifactConfig, moduleResourceConfig), moduleResourceConfig, relativeDirectoryPath);
     }
 
     private MavenWebArtifactCopyingHandler(@NotNull ResourceRootConfiguration warRootConfig,
                                            @NotNull MavenModuleResourceConfiguration moduleResourceConfig,
-                                           @Nullable String relativePath) {
-      this(new MavenResourceFileFilter(new File(toSystemDependentName(warRootConfig.directory)), warRootConfig, relativePath),
+                                           @Nullable String relativeDirectoryPath) {
+      this(new MavenResourceFileFilter(new File(toSystemDependentName(warRootConfig.directory)), warRootConfig, relativeDirectoryPath),
            warRootConfig, moduleResourceConfig);
     }
 

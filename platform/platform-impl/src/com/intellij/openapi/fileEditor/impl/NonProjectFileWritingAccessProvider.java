@@ -176,12 +176,18 @@ public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
 
   public static void disableChecksDuring(@NotNull Runnable runnable) {
     Application app = getApp();
-    ACCESS_ALLOWED.getValue(app).incrementAndGet();
-    try {
+    if (app.isUnitTestMode() && app.getUserData(ENABLE_IN_TESTS) == Boolean.TRUE) {
+      // reject disabling checks if checks in tests are enabled explicitly
       runnable.run();
     }
-    finally {
-      ACCESS_ALLOWED.getValue(app).decrementAndGet();
+    else {
+      ACCESS_ALLOWED.getValue(app).incrementAndGet();
+      try {
+        runnable.run();
+      }
+      finally {
+        ACCESS_ALLOWED.getValue(app).decrementAndGet();
+      }
     }
   }
 

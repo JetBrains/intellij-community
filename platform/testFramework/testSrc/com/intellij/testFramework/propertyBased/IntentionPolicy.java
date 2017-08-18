@@ -51,6 +51,6 @@ public class IntentionPolicy {
    * and include found intentions one by one (or make them not break the code).  
    */
   public boolean mayBreakCode(@NotNull IntentionAction action, @NotNull Editor editor, @NotNull PsiFile file) {
-    return false;
+    return "Flip ','".equals(action.getText()); // just does text operations, doesn't care about correctness
   }
 }

@@ -17,6 +17,7 @@ package com.jetbrains.python.codeInsight.controlflow;
 
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
@@ -26,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Stack;
 import java.util.function.Function;
@@ -183,6 +185,10 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
         members.add(transformTypeFromAssertion(tupleType.getElementType(i), transformToDefinition));
       }
       return PyUnionType.union(members);
+    }
+    else if (type instanceof PyUnionType) {
+      final Collection<PyType> members = ((PyUnionType)type).getMembers();
+      return PyUnionType.union(ContainerUtil.map(members, member -> transformTypeFromAssertion(member, transformToDefinition)));
     }
     else if (type instanceof PyInstantiableType) {
       final PyInstantiableType instantiableType = (PyInstantiableType)type;

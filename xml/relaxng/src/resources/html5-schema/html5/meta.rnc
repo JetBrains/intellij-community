@@ -163,6 +163,9 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	referrerpolicy?
 		&	link.attrs.sizes?
 		&	link.attrs.color?
+		&	link.attrs.scope?
+		&	link.attrs.updateviacache?
+		&	link.attrs.workertype?
 		#	link.attrs.title included in common.attrs
 		&	embedded.content.attrs.crossorigin?
 		&	(	common.attrs.aria.role.link
@@ -211,6 +214,21 @@ datatypes w = "http://whattf.org/datatype-draft"
 		link.attrs.color =
 			attribute color {
 				common.data.color
+			}
+		link.attrs.scope =
+			attribute scope {
+				common.data.uri
+			}
+		link.attrs.updateviacache =
+			attribute updateviacache {
+				string "imports"
+			|	string "all"
+			|	string "none"
+			}
+		link.attrs.workertype =
+			attribute workertype {
+				string "classic"
+			|	string "module"
 			}
 	link.inner =
 		( empty )

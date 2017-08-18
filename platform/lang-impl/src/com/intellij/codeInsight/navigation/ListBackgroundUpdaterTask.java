@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,11 +23,19 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Comparator;
 import java.util.List;
 
 public abstract class ListBackgroundUpdaterTask extends BackgroundUpdaterTask<JBList> {
+  /**
+   * @deprecated, use {@link #ListBackgroundUpdaterTask(Project, String, Comparator)}
+   */
   public ListBackgroundUpdaterTask(@Nullable final Project project, @NotNull final String title) {
     super(project, title);
+  }
+  
+  public ListBackgroundUpdaterTask(@Nullable final Project project, @NotNull final String title, @Nullable Comparator<PsiElement> comparator) {
+    super(project, title, comparator);
   }
 
   @Override

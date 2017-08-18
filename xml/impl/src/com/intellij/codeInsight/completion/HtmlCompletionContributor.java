@@ -46,6 +46,18 @@ import static com.intellij.html.impl.util.MicrodataUtil.*;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
 public class HtmlCompletionContributor extends CompletionContributor implements DumbAware {
+
+  public static final String[] TARGET = {"_blank", "_top", "_self", "_parent"};
+  public static final String[] ENCTYPE = {"multipart/form-data", "application/x-www-form-urlencoded"};
+  public static final String[] REL = {"alternate", "author", "bookmark", "help", "icon", "license", "next", "nofollow",
+    "noreferrer", "noopener", "prefetch", "prev", "search", "stylesheet", "tag", "start", "contents", "index",
+    "glossary", "copyright", "chapter", "section", "subsection", "appendix", "script", "import",
+    "apple-touch-icon", "apple-touch-icon-precomposed", "apple-touch-startup-image"};
+  public static final String[] MEDIA = {"all", "braille", "embossed", "handheld", "print", "projection", "screen", "speech", "tty", "tv"};
+  public static final String[] LANGUAGE =
+    {"JavaScript", "VBScript", "JScript", "JavaScript1.2", "JavaScript1.3", "JavaScript1.4", "JavaScript1.5"};
+  public static final String[] TYPE = {"text/css", "text/html", "text/plain", "text/xml"};
+
   public HtmlCompletionContributor() {
     extend(CompletionType.BASIC, psiElement().inside(XmlPatterns.xmlAttributeValue()), new CompletionProvider<CompletionParameters>() {
       @Override
@@ -76,7 +88,7 @@ public class HtmlCompletionContributor extends CompletionContributor implements 
 
   @NotNull
   @NonNls
-  protected static String[] addSpecificCompletions(final XmlAttribute attribute) {
+  public static String[] addSpecificCompletions(final XmlAttribute attribute) {
     @NonNls String name = attribute.getName();
     final XmlTag tag = attribute.getParent();
     if (tag == null) return ArrayUtil.EMPTY_STRING_ARRAY;
@@ -91,25 +103,22 @@ public class HtmlCompletionContributor extends CompletionContributor implements 
     if (XmlUtil.XHTML_URI.equals(namespace) || XmlUtil.HTML_URI.equals(namespace)) {
 
       if ("target".equals(name)) {
-        return new String[]{"_blank", "_top", "_self", "_parent"};
+        return TARGET;
       }
       else if ("enctype".equals(name)) {
-        return new String[]{"multipart/form-data", "application/x-www-form-urlencoded"};
+        return ENCTYPE;
       }
       else if ("rel".equals(name) || "rev".equals(name)) {
-        return new String[]{"alternate", "author", "bookmark", "help", "icon", "license", "next", "nofollow",
-          "noreferrer", "noopener", "prefetch", "prev", "search", "stylesheet", "tag", "start", "contents", "index",
-          "glossary", "copyright", "chapter", "section", "subsection", "appendix", "script", "import",
-          "apple-touch-icon", "apple-touch-icon-precomposed", "apple-touch-startup-image"};
+        return REL;
       }
       else if ("media".equals(name)) {
-        return new String[]{ "all", "braille", "embossed", "handheld", "print", "projection", "screen", "speech", "tty", "tv" };
+        return MEDIA;
       }
       else if ("language".equals(name)) {
-        return new String[]{"JavaScript", "VBScript", "JScript", "JavaScript1.2", "JavaScript1.3", "JavaScript1.4", "JavaScript1.5"};
+        return LANGUAGE;
       }
       else if ("type".equals(name) && "link".equals(tagName)) {
-        return new String[]{"text/css", "text/html", "text/plain", "text/xml"};
+        return TYPE;
       }
       else if ("http-equiv".equals(name) && "meta".equals(tagName)) {
         return HtmlUtil.RFC2616_HEADERS;

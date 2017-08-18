@@ -7,8 +7,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 ## Additions to Common Attributes
 
 	common.attrs.interact &=
-		(	common.attrs.contextmenu?
-		&	common.attrs.contenteditable?
+		(	common.attrs.contenteditable?
 		&	common.attrs.draggable?
 		&	common.attrs.dropzone?
 		&	common.attrs.hidden?
@@ -16,13 +15,6 @@ datatypes w = "http://whattf.org/datatype-draft"
 		)
 		
 	common.attrs.other &= common.attrs.interact
-
-## Context Menu: contextmenu
-
-	common.attrs.contextmenu =
-		attribute contextmenu {
-			common.data.idref
-		}
 
 ## Editable Content: contenteditable
 
@@ -135,13 +127,12 @@ datatypes w = "http://whattf.org/datatype-draft"
 		( common.inner.flow )
 	common.elem.flow |= dialog.elem
 
-## Toolbar: <menu type=toolbar>
+## Toolbar: <menu>
 
-	menu.toolbar.elem =
-		element menu { menu.toolbar.inner & menu.toolbar.attrs }
-	menu.toolbar.attrs =
+	menu.elem =
+		element menu { menu.inner & menu.attrs }
+	menu.attrs =
 		(	common.attrs
-		&	menu.toolbar.attrs.type?
 		&	(	common.attrs.aria.implicit.toolbar
 			|	common.attrs.aria.role.directory
 			|	common.attrs.aria.role.list
@@ -154,16 +145,12 @@ datatypes w = "http://whattf.org/datatype-draft"
 			|	common.attrs.aria.role.presentation
 			)?
 		)
-		menu.toolbar.attrs.type =
-			attribute type {
-				w:string "toolbar"
-			}
-	menu.toolbar.inner =
+	menu.inner =
 		(	mli.elem*
-		|	common.inner.flow
+		&	common.elem.script-supporting*
 		)
-	menu.elem |= menu.toolbar.elem
-	
+	common.elem.flow |= menu.elem
+
 ## Toolbar item: <li>
 
 	mli.elem =
@@ -183,55 +170,6 @@ datatypes w = "http://whattf.org/datatype-draft"
 		)
 	mli.inner =
 		( common.inner.flow )
-
-## Popup menu: <menu type=context>
-
-	menu.context.elem =
-		element menu { menu.context.inner & menu.context.attrs }
-	menu.context.attrs =
-		(	common.attrs
-		&	menu.context.attrs.type?
-		&	menu.attrs.label?
-		&	common.attrs.aria?
-		)
-		menu.context.attrs.type =
-			attribute type {
-				w:string "context"
-			}
-		menu.attrs.label =
-			attribute label {
-				string
-			}
-	menu.context.inner =
-		(	menuitem.elem*
-		&	hr.elem*
-		&	menu.context.elem*
-		&	common.elem.script-supporting*
-		)
-	menu.elem |= menu.context.elem
-
-## Ambiguous menu: <menu> (with no "type" attribute)
-	menu.ambiguous.elem =
-		element menu { menu.ambiguous.inner & menu.ambiguous.attrs }
-	menu.ambiguous.attrs =
-		(	common.attrs
-		&	menu.attrs.label?
-		&	common.attrs.aria?
-		)
-	menu.ambiguous.inner =
-		(	(	menuitem.elem*
-			&	hr.elem*
-			&	menu.ambiguous.elem*
-			&	common.elem.script-supporting*
-			)
-		|	(	mli.elem*
-			|	common.inner.flow
-			)
-		)
-	menu.elem |= menu.ambiguous.elem
-
-	common.elem.flow |= menu.elem
-	# REVISIT allow nested menus
 
 ## Explicit command in popup menu: <menuitem type=command>
 	menuitem.explicit.command.elem =

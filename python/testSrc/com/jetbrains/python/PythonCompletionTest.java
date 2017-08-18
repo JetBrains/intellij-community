@@ -1138,8 +1138,6 @@ public class PythonCompletionTest extends PyTestCase {
 
   // PY-18246
   public void testTypingNamedTupleCreatedViaCallInstance() {
-    myFixture.copyDirectoryToProject("../typing", "");
-
     final List<String> suggested = doTestByText(
       "from typing import NamedTuple\n" +
       "EmployeeRecord = NamedTuple('EmployeeRecord', [\n" +
@@ -1157,8 +1155,6 @@ public class PythonCompletionTest extends PyTestCase {
 
   // PY-18246
   public void testTypingNamedTupleCreatedViaKwargsCallInstance() {
-    myFixture.copyDirectoryToProject("../typing", "");
-
     final List<String> suggested = doTestByText(
       "from typing import NamedTuple\n" +
       "EmployeeRecord = NamedTuple('EmployeeRecord', name=str, age=int, title=str, department=str)\n" +
@@ -1174,8 +1170,6 @@ public class PythonCompletionTest extends PyTestCase {
     runWithLanguageLevel(
       LanguageLevel.PYTHON36,
       () -> {
-        myFixture.copyDirectoryToProject("../typing", "");
-
         final List<String> suggested = doTestByText(
           "from typing import NamedTuple\n" +
           "class EmployeeRecord(NamedTuple):\n" +
@@ -1194,7 +1188,6 @@ public class PythonCompletionTest extends PyTestCase {
 
   // PY-21519
   public void testTypeComment() {
-    myFixture.copyDirectoryToProject("../typing", "");
     final List<String> variants = doTestByFile();
     assertContainsElements(variants, "List", "Union", "Optional");
   }
@@ -1203,6 +1196,11 @@ public class PythonCompletionTest extends PyTestCase {
     final List<String> variants = doTestByFile();
     assertContainsElements(variants, "upper", "split", "__len__");
     assertDoesntContain(variants, "illegal");
+  }
+
+  // PY-8132
+  public void testOuterCompletionVariantDoesNotOverwriteClosestOne() {
+    doTest();
   }
 
   @Override
