@@ -377,7 +377,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
     if (!myLookupUpdated) {
       if (myLookup.getAdvertisements().isEmpty() && !isAutopopupCompletion() && !DumbService.isDumb(getProject())) {
-        DefaultCompletionContributor.addDefaultAdvertisements(myParameters, myLookup, myHasPsiElements);
+        DefaultCompletionContributor.addDefaultAdvertisements(myLookup, myHasPsiElements);
       }
       myLookup.getAdvertiser().showRandomText();
     }
