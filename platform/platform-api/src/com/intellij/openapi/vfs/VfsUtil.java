@@ -215,25 +215,6 @@ public class VfsUtil extends VfsUtilCore {
     return virtualFile;
   }
 
-  public static VirtualFile copyFileRelative(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile toDir, @NotNull String relativePath) throws IOException {
-    StringTokenizer tokenizer = new StringTokenizer(relativePath,"/");
-    VirtualFile curDir = toDir;
-
-    while (true) {
-      String token = tokenizer.nextToken();
-      if (tokenizer.hasMoreTokens()) {
-        VirtualFile childDir = curDir.findChild(token);
-        if (childDir == null) {
-          childDir = curDir.createChildDirectory(requestor, token);
-        }
-        curDir = childDir;
-      }
-      else {
-        return copyFile(requestor, file, curDir, token);
-      }
-    }
-  }
-
   /**
    * @return correct URL, must be used only for external communication
    */
@@ -390,6 +371,7 @@ public class VfsUtil extends VfsUtilCore {
     return name == null || name.isEmpty() || "/".equals(name) || "\\".equals(name);
   }
 
+  @SuppressWarnings("RedundantThrows")
   public static VirtualFile createDirectories(@NotNull final String directoryPath) throws IOException {
     return new WriteAction<VirtualFile>() {
       @Override
@@ -619,6 +601,26 @@ public class VfsUtil extends VfsUtilCore {
       }
     }
     return null;
+  }
+
+  /** @deprecated to be removed in IDEA 2018 */
+  public static VirtualFile copyFileRelative(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile toDir, @NotNull String relativePath) throws IOException {
+    StringTokenizer tokenizer = new StringTokenizer(relativePath,"/");
+    VirtualFile curDir = toDir;
+
+    while (true) {
+      String token = tokenizer.nextToken();
+      if (tokenizer.hasMoreTokens()) {
+        VirtualFile childDir = curDir.findChild(token);
+        if (childDir == null) {
+          childDir = curDir.createChildDirectory(requestor, token);
+        }
+        curDir = childDir;
+      }
+      else {
+        return copyFile(requestor, file, curDir, token);
+      }
+    }
   }
   //</editor-fold>
 }

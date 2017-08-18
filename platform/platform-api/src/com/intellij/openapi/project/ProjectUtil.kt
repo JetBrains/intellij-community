@@ -48,34 +48,33 @@ val Module.rootManager: ModuleRootManager
   get() = ModuleRootManager.getInstance(this)
 
 @JvmOverloads
-fun calcRelativeToProjectPath(file: VirtualFile, project: Project?, includeFilePath: Boolean = true, includeUniqueFilePath: Boolean = false, keepModuleAlwaysOnTheLeft: Boolean = false): String {
+fun calcRelativeToProjectPath(file: VirtualFile,
+                              project: Project?,
+                              includeFilePath: Boolean = true,
+                              includeUniqueFilePath: Boolean = false,
+                              keepModuleAlwaysOnTheLeft: Boolean = false): String {
   if (file is VirtualFilePathWrapper && file.enforcePresentableName()) {
     return if (includeFilePath) file.presentablePath else file.name
   }
 
-  val url = if (includeFilePath) {
-    file.presentableUrl
-  }
-  else if (includeUniqueFilePath) {
-    UniqueVFilePathBuilder.getInstance().getUniqueVirtualFilePath(project, file)
-  }
-  else {
-    file.name
+  val url = when {
+    includeFilePath -> file.presentableUrl
+    includeUniqueFilePath -> UniqueVFilePathBuilder.getInstance().getUniqueVirtualFilePath(project, file)
+    else -> file.name
   }
 
-  if (project == null) {
-    return url
-  }
-  return displayUrlRelativeToProject(file, url, project, includeFilePath, keepModuleAlwaysOnTheLeft)
+  return if (project == null) url
+         else displayUrlRelativeToProject(file, url, project, includeFilePath, keepModuleAlwaysOnTheLeft)
 }
 
 fun guessProjectForFile(file: VirtualFile?): Project? = ProjectLocator.getInstance().guessProjectForFile(file)
 
-/***
+/**
  * guessProjectForFile works incorrectly - even if file is config (idea config file) first opened project will be returned
  */
 @JvmOverloads
-fun guessProjectForContentFile(file: VirtualFile, fileType: FileType = FileTypeManager.getInstance().getFileTypeByFileName(file.nameSequence)): Project? {
+fun guessProjectForContentFile(file: VirtualFile,
+                               fileType: FileType = FileTypeManager.getInstance().getFileTypeByFileName(file.nameSequence)): Project? {
   if (ProjectCoreUtil.isProjectOrWorkspaceFile(file, fileType)) {
     return null
   }
@@ -83,7 +82,7 @@ fun guessProjectForContentFile(file: VirtualFile, fileType: FileType = FileTypeM
   val list = ProjectManager.getInstance().openProjects.filter {
     !it.isDefault && it.isInitialized && !it.isDisposed && ProjectRootManager.getInstance(it).fileIndex.isInContent(file)
   }
-  
+
   return list.firstOrNull { WindowManager.getInstance().getFrame(it)?.isActive ?: false } ?: list.firstOrNull()
 }
 
@@ -112,11 +111,11 @@ inline fun <T> Project.modifyModules(crossinline task: ModifiableModuleModel.() 
 }
 
 fun isProjectDirectoryExistsUsingIo(parent: VirtualFile): Boolean {
-  try {
-    return Paths.get(FileUtil.toSystemDependentName(parent.path), Project.DIRECTORY_STORE_FOLDER).exists()
+  return try {
+    Paths.get(FileUtil.toSystemDependentName(parent.path), Project.DIRECTORY_STORE_FOLDER).exists()
   }
   catch (e: InvalidPathException) {
-    return false
+    false
   }
 }
 
