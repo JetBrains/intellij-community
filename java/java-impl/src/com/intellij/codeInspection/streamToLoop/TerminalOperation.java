@@ -297,28 +297,28 @@ abstract class TerminalOperation extends Operation {
    * Eliminates &lt;? extends&gt; wildcards from type parameters which directly map to the supplied superclass
    * type parameters and performs downstream correction steps if necessary.
    *
-   * @param type type to process
-   * @param superClass superclass which type parameters should be corrected
+   * @param resultType type to process
+   * @param superClassName superclass which type parameters should be corrected
    * @param downstreamCorrectors Map which keys are superclass type parameter names and values are functions to perform additional
    *                             superclass type parameter correction if necessary
    * @return the corrected type.
    */
   @NotNull
-  static PsiType correctTypeParameters(PsiType type, String superClass, Map<String, Function<PsiType, PsiType>> downstreamCorrectors) {
-    PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);
-    if(aClass == null) return type;
+  static PsiType correctTypeParameters(PsiType resultType, String superClassName, Map<String, Function<PsiType, PsiType>> downstreamCorrectors) {
+    PsiClass resultClass = PsiUtil.resolveClassInClassTypeOnly(resultType);
+    if(resultClass == null) return resultType;
 
-    PsiSubstitutor origSubstitutor = ((PsiClassType)type).resolveGenerics().getSubstitutor();
+    PsiSubstitutor origSubstitutor = ((PsiClassType)resultType).resolveGenerics().getSubstitutor();
     PsiSubstitutor substitutor = origSubstitutor;
-    Project project = aClass.getProject();
-    PsiClass baseClass = JavaPsiFacade.getInstance(project).findClass(superClass, aClass.getResolveScope());
-    if(baseClass == null) return type;
-    PsiSubstitutor superClassSubstitutor = TypeConversionUtil.getMaybeSuperClassSubstitutor(baseClass, aClass, PsiSubstitutor.EMPTY, null);
+    Project project = resultClass.getProject();
+    PsiClass superClass = JavaPsiFacade.getInstance(project).findClass(superClassName, resultClass.getResolveScope());
+    if(superClass == null) return resultType;
+    PsiSubstitutor superClassSubstitutor = TypeConversionUtil.getMaybeSuperClassSubstitutor(superClass, resultClass, PsiSubstitutor.EMPTY, null);
     if(superClassSubstitutor == null) {
       // inconsistent class hierarchy: probably something is not resolved
-      superClassSubstitutor = PsiSubstitutor.EMPTY;
+      return resultType;
     }
-    for (PsiTypeParameter baseParameter : baseClass.getTypeParameters()) {
+    for (PsiTypeParameter baseParameter : superClass.getTypeParameters()) {
       PsiClass substitution = PsiUtil.resolveClassInClassTypeOnly(superClassSubstitutor.substitute(baseParameter));
       if(substitution instanceof PsiTypeParameter) {
         PsiTypeParameter subClassParameter = (PsiTypeParameter)substitution;
@@ -330,7 +330,7 @@ abstract class TerminalOperation extends Operation {
         }
       }
     }
-    return substitutor == origSubstitutor ? type : JavaPsiFacade.getElementFactory(project).createType(aClass, substitutor);
+    return substitutor == origSubstitutor ? resultType : JavaPsiFacade.getElementFactory(project).createType(resultClass, substitutor);
   }
 
   abstract static class AccumulatedOperation extends TerminalOperation {
