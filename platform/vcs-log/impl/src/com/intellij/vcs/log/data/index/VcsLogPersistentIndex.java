@@ -132,6 +132,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
 
   @Override
   public synchronized void scheduleIndex(boolean full) {
+    if (Disposer.isDisposed(this)) return;
     if (myCommitsToIndex.isEmpty() || myIndexStorage == null) return;
     Map<VirtualFile, TIntHashSet> commitsToIndex = myCommitsToIndex;
 
