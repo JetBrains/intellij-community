@@ -54,6 +54,9 @@ public class JUnit5MalformedParameterizedTest extends LightInspectionTestCase {
                         "public @interface CsvSource {String[] value();}");
     addEnvironmentClass("package org.junit.jupiter.params.provider;\n" +
                         "public interface Arguments {static Arguments of(Object... arguments){}}\n");
+
+    addEnvironmentClass("package org.junit.jupiter.params.provider;\n" +
+                        "public @interface ArgumentsSource {}");
   }
 
   public void testMalformedSources() { doTest(); }

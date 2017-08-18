@@ -73,7 +73,7 @@ class JUnit5MalformedParameterizedInspection : BaseJavaBatchLocalInspectionTool(
 
           var noMultiArgsProvider = true
           var source : PsiAnnotation? = null
-          AnnotationUtil.findAnnotations(method, JUnitCommonClassNames.SOURCE_ANNOTATIONS).forEach {
+          MetaAnnotationUtil.findMetaAnnotations(method, JUnitCommonClassNames.SOURCE_ANNOTATIONS).forEach {
             when (it.qualifiedName) {
               JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PROVIDER_METHOD_SOURCE -> {
                 checkMethodSource(method, it)

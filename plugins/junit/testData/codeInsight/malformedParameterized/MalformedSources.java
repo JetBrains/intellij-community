@@ -64,3 +64,12 @@ class ParameterizedTestsDemo {
   @CsvSource({"foo, 1"})
   void testWithCsvSource(String first, int second) {}
 }
+
+@org.junit.jupiter.params.provider.ArgumentsSource()
+@interface CustomSource { }
+
+class CustomArgProviderTest {
+  @ParameterizedTest
+  @CustomSource
+  void jsonSourceTest(String param) { }
+}
