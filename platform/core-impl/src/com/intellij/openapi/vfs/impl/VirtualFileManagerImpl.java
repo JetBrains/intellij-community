@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,6 @@ import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -50,14 +49,19 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx {
       }
     };
 
-  private final List<VirtualFileSystem> myPhysicalFileSystems = new ArrayList<>();
+  private final VirtualFileSystem[] myPhysicalFileSystems;
   private final EventDispatcher<VirtualFileListener> myVirtualFileListenerMulticaster = EventDispatcher.create(VirtualFileListener.class);
   private final List<VirtualFileManagerListener> myVirtualFileManagerListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private int myRefreshCount;
 
   public VirtualFileManagerImpl(@NotNull VirtualFileSystem[] fileSystems, @NotNull MessageBus bus) {
+    myPhysicalFileSystems = fileSystems;
+
     for (VirtualFileSystem fileSystem : fileSystems) {
-      registerFileSystem(fileSystem);
+      myCollector.addExplicitExtension(fileSystem.getProtocol(), fileSystem);
+      if (!(fileSystem instanceof CachingVirtualFileSystem)) {
+        fileSystem.addVirtualFileListener(myVirtualFileListenerMulticaster.getMulticaster());
+      }
     }
 
     if (LOG.isDebugEnabled() && !ApplicationInfoImpl.isInStressTest()) {
@@ -65,14 +69,6 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx {
     }
 
     bus.connect().subscribe(VFS_CHANGES, new BulkVirtualFileListenerAdapter(myVirtualFileListenerMulticaster.getMulticaster()));
-  }
-
-  private void registerFileSystem(@NotNull VirtualFileSystem fileSystem) {
-    myCollector.addExplicitExtension(fileSystem.getProtocol(), fileSystem);
-    if (!(fileSystem instanceof CachingVirtualFileSystem)) {
-      fileSystem.addVirtualFileListener(myVirtualFileListenerMulticaster.getMulticaster());
-    }
-    myPhysicalFileSystems.add(fileSystem);
   }
 
   @Override
@@ -108,7 +104,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx {
       ApplicationManager.getApplication().assertIsDispatchThread();
     }
 
-    for (VirtualFileSystem fileSystem : getPhysicalFileSystems()) {
+    for (VirtualFileSystem fileSystem : myPhysicalFileSystems) {
       if (!(fileSystem instanceof CachingVirtualFileSystem)) {
         fileSystem.refresh(asynchronous);
       }
@@ -123,7 +119,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx {
       ApplicationManager.getApplication().assertIsDispatchThread();
     }
 
-    for (VirtualFileSystem fileSystem : getPhysicalFileSystems()) {
+    for (VirtualFileSystem fileSystem : myPhysicalFileSystems) {
       if (fileSystem instanceof CachingVirtualFileSystem) {
         ((CachingVirtualFileSystem)fileSystem).refreshWithoutFileWatcher(asynchronous);
       }
@@ -131,10 +127,6 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx {
         fileSystem.refresh(asynchronous);
       }
     }
-  }
-
-  private List<VirtualFileSystem> getPhysicalFileSystems() {
-    return myPhysicalFileSystems;
   }
 
   @Override
