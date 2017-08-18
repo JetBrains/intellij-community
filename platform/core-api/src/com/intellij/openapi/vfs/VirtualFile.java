@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -743,9 +743,11 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * It is always null for directories and binaries, and possibly null if a separator isn't yet known.
    * @see LineSeparator
    */
+  @Nullable
   public String getDetectedLineSeparator() {
     return getUserData(DETECTED_LINE_SEPARATOR_KEY);
   }
+
   public void setDetectedLineSeparator(@Nullable String separator) {
     putUserData(DETECTED_LINE_SEPARATOR_KEY, separator);
   }
