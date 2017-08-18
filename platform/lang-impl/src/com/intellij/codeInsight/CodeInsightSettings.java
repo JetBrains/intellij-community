@@ -51,7 +51,8 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
   public CodeInsightSettings() {
     Application application = ApplicationManager.getApplication();
     if (Registry.is("java.completion.argument.hints") ||
-        (application != null && application.isInternal()) && Registry.is("java.completion.argument.hints.internal")) {
+        (application != null && application.isInternal() && !application.isUnitTestMode()) && 
+        Registry.is("java.completion.argument.hints.internal")) {
       SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION = true;
       Registry.get("java.completion.argument.hints").setValue(false);
       Registry.get("java.completion.argument.hints.internal").setValue(false);
