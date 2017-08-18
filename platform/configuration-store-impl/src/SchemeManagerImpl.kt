@@ -677,14 +677,14 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
 
         if (renamed) {
           val oldFile = dir.findChild(externalInfo!!.fileName)
-          oldFile?.let {
+          if (oldFile != null) {
             // VFS doesn't allow to rename to existing file, so, check it
-            if (dir!!.findChild(fileName) == null) {
-              runUndoTransparentWriteAction { it.rename(this, fileName) }
+            if (dir.findChild(fileName) == null) {
+              runUndoTransparentWriteAction { oldFile.rename(this, fileName) }
               file = oldFile
             }
             else {
-              externalInfo!!.scheduleDelete()
+              externalInfo.scheduleDelete()
             }
           }
         }
