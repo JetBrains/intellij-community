@@ -513,11 +513,11 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
         }
       })
 
-      selectedConfiguration?.let {
-        element.setAttribute(SELECTED_ATTR, it.uniqueID)
-      }
-
       if (idToSettings.size > 1) {
+        selectedConfiguration?.let {
+          element.setAttribute(SELECTED_ATTR, it.uniqueID)
+        }
+
         var order: MutableList<String>? = null
         for (settings in idToSettings.values) {
           if (settings.type is UnknownConfigurationType) {
