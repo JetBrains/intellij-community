@@ -9,6 +9,7 @@ To develop IntelliJ IDEA, you can use either IntelliJ IDEA Community Edition or 
 * Unless you're running on a Mac with an Apple JDK, add <JDK_HOME>/lib/tools.jar to the set of "**IDEA jdk**" jars.
 * Configure a JSDK named "**1.8**", pointing to an installation of JDK 1.8.
 * Add <JDK_18_HOME>/lib/tools.jar to the set of "**1.8**" jars.
+* If 'Maven Integration' plugin is disabled add path variable 'MAVEN_REPOSITORY' pointing to '<USER_HOME>/.m2/repository' directory (File | Settings | Appearance & Behavior | Path Variables).
 * Use Build | Build Project to build the code.
 
 To run the IDE from the built code
