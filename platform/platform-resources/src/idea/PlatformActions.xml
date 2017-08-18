@@ -57,6 +57,8 @@
       <keyboard-shortcut first-keystroke="shift ENTER" keymap="$default"/>
     </action>>
     <action id="SearchEverywhere" class="com.intellij.ide.actions.SearchEverywhereAction" />
+    <action id="SmartSelect" class="com.intellij.ide.actions.SmartSelect" use-shortcut-of="EditorSelectWord"/>
+    <action id="SmartUnSelect" class="com.intellij.ide.actions.SmartUnSelect" use-shortcut-of="EditorUnSelectWord"/>
 
     <group id="TemplateParametersNavigation">
       <action id="NextTemplateParameter" class="com.intellij.codeInsight.completion.NextPrevParameterAction$Next" text="Next Parameter">
