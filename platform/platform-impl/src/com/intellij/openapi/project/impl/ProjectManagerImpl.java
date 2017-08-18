@@ -64,6 +64,7 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -173,6 +174,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   @SuppressWarnings("StaticNonFinalField") public static int TEST_PROJECTS_CREATED;
   private static final boolean LOG_PROJECT_LEAKAGE_IN_TESTS = Boolean.parseBoolean(System.getProperty("idea.log.leaked.projects.in.tests", "true"));
   private static final int MAX_LEAKY_PROJECTS = 5;
+  private static final long LEAK_CHECK_INTERVAL = TimeUnit.MINUTES.toMillis(30);
+  private static long CHECK_START = System.currentTimeMillis();
   @SuppressWarnings("FieldCanBeLocal") private final Map<Project, String> myProjects = new WeakHashMap<>();
 
   @Override
@@ -238,8 +241,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       return;
     }
 
-    if (Math.random() >= 0.05) {
-      return; // Check for leaked projects ~ every 20 tests
+    long currentTime = System.currentTimeMillis();
+    if (currentTime - CHECK_START < LEAK_CHECK_INTERVAL) {
+      return; // check every N minutes
     }
 
     for (int i = 0; i < 3 && getLeakedProjects().count() >= MAX_LEAKY_PROJECTS; i++) {
@@ -247,6 +251,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     }
 
     System.gc();
+
+    //noinspection AssignmentToStaticFieldFromInstanceMethod
+    CHECK_START = currentTime;
 
     if (getLeakedProjects().count() >= MAX_LEAKY_PROJECTS) {
       List<Project> copy = getLeakedProjects().collect(Collectors.toCollection(UnsafeWeakList::new));
