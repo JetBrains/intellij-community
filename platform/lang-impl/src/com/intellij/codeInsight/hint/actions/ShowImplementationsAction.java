@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -422,7 +422,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
     private PsiElement[] myElements;
 
     private ImplementationsUpdaterTask(@NotNull PsiElement element, final Editor editor, final String caption, boolean includeSelf) {
-      super(element.getProject(), ImplementationSearcher.SEARCHING_FOR_IMPLEMENTATIONS);
+      super(element.getProject(), ImplementationSearcher.SEARCHING_FOR_IMPLEMENTATIONS, null);
       myCaption = caption;
       myEditor = editor;
       myElement = element;
@@ -462,7 +462,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
 
           @Override
           protected void processElement(PsiElement element) {
-            if (!updateComponent(element, null)) {
+            if (!updateComponent(element)) {
               indicator.cancel();
             }
             indicator.checkCanceled();
