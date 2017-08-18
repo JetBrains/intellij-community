@@ -245,7 +245,7 @@ private fun doWrite(requestor: Any, file: VirtualFile, content: Any, lineSeparat
   }
 }
 
-internal fun detectLineSeparators(chars: CharSequence, defaultSeparator: LineSeparator?): LineSeparator {
+internal fun detectLineSeparators(chars: CharSequence, defaultSeparator: LineSeparator? = null): LineSeparator {
   for (c in chars) {
     if (c == '\r') {
       return LineSeparator.CRLF
