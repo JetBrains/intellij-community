@@ -178,6 +178,7 @@ public class VcsProjectLog implements Disposable {
     public synchronized void drop(@Nullable Runnable callback) {
       if (myValue != null) {
         myMessageBus.syncPublisher(VCS_PROJECT_LOG_CHANGED).logDisposed(myValue);
+        myValue.disposeUi();
         VcsLogManager value = myValue;
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
           Disposer.dispose(value);
