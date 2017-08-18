@@ -339,7 +339,6 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
 
   private class MyPopupListElementRenderer extends PopupListElementRenderer<Object> implements IconListPopupRenderer {
 
-    private ErrorLabel myPrefixLabel;
     private ErrorLabel myInfoLabel;
     private IconComponent myIconLabel;
 
@@ -378,7 +377,6 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
       }
       myIconLabel.setIcon(myDescriptor.getIconFor(value));
       PopupElementWithAdditionalInfo additionalInfoAction = getSpecificAction(value, PopupElementWithAdditionalInfo.class);
-      updateInfoComponent(myPrefixLabel, additionalInfoAction != null ? additionalInfoAction.getPrefixInfo() : null, isSelected);
       updateInfoComponent(myInfoLabel, additionalInfoAction != null ? additionalInfoAction.getInfoText() : null, isSelected);
     }
 
@@ -402,12 +400,6 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
 
     @Override
     protected JComponent createItemComponent() {
-      myPrefixLabel = new ErrorLabel();
-      myPrefixLabel.setOpaque(true);
-      myPrefixLabel.setBorder(JBUI.Borders.empty(1, 1, 1, DEFAULT_HGAP));
-      Font minusOneFont = FontUtil.minusOne(myPrefixLabel.getFont());
-      myPrefixLabel.setFont(minusOneFont);
-
       myTextLabel = new ErrorLabel();
       myTextLabel.setOpaque(true);
       myTextLabel.setBorder(JBUI.Borders.empty(1));
@@ -415,7 +407,7 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
       myInfoLabel = new ErrorLabel();
       myInfoLabel.setOpaque(true);
       myInfoLabel.setBorder(JBUI.Borders.empty(1, DEFAULT_HGAP, 1, 1));
-      myInfoLabel.setFont(minusOneFont);
+      myInfoLabel.setFont(FontUtil.minusOne(myInfoLabel.getFont()));
 
       JPanel compoundPanel = new OpaquePanel(new BorderLayout(), JBColor.WHITE);
       myIconLabel = new IconComponent();
@@ -425,7 +417,6 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
       compoundPanel.add(myIconLabel, BorderLayout.WEST);
       textPanel.add(myTextLabel, BorderLayout.WEST);
       textPanel.add(myInfoLabel, BorderLayout.CENTER);
-      compoundTextPanel.add(myPrefixLabel, BorderLayout.WEST);
       compoundTextPanel.add(textPanel, BorderLayout.CENTER);
       compoundPanel.add(compoundTextPanel, BorderLayout.CENTER);
       return layoutComponent(compoundPanel);
@@ -552,7 +543,7 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
     public MyToolbarButton(@NotNull String text, @NotNull Icon icon, @NotNull Icon rolloverIcon, @NotNull ActionListener buttonListener) {
       super(icon);
       setToolTipText(text);
-      setBorder(IdeBorderFactory.createEmptyBorder());
+      setBorder(JBUI.Borders.empty());
       setBorderPainted(false);
       setContentAreaFilled(false);
       setOpaque(false);
