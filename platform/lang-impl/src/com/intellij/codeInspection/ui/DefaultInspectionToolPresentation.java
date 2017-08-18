@@ -207,6 +207,7 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
         if (!Comparing.equal(p1.getTextRange(), p2.getTextRange())) return false;
         if (!Comparing.equal(p1.getHighlightType(), p2.getHighlightType())) return false;
         if (!Comparing.equal(p1.getProblemGroup(), p2.getProblemGroup())) return false;
+        if (!Comparing.equal(p1.getLineNumber(), p2.getLineNumber())) return false;
         if (!Comparing.equal(p1.getStartElement(), p2.getStartElement())) return false;
         if (!Comparing.equal(p1.getEndElement(), p2.getEndElement())) return false;
       }
