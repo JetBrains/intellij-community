@@ -15,6 +15,8 @@
  */
 package org.intellij.plugins.relaxNG;
 
+import com.intellij.idea.Bombed;
+
 /**
  * @author Eugene.Kudelevsky
  */
@@ -90,6 +92,7 @@ public class RngHtml5CompletionTest extends HighlightingTestBase {
     myTestFixture.testCompletionTyping("html5_16.xml", "\n", "html5_16_after.xml");
   }
 
+  @Bombed(year = 2018, month = 3, day = 1, user = "denofevil", description = "menu will be most likely removed from html 5.2")
   public void testHtml5_17() {
     doTestCompletion("html5_17");
   }

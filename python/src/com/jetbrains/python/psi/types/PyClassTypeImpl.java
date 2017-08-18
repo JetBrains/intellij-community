@@ -720,11 +720,8 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     boolean withinOurClass = containingClass == getPyClass() || isInSuperCall(expressionHook);
 
     final CompletionVariantsProcessor processor = new CompletionVariantsProcessor(
-      expressionHook, new FilterNotInstance(myClass), null
+      expressionHook, new FilterNotInstance(myClass), null, false, suppressParentheses
     );
-    if (suppressParentheses) {
-      processor.suppressParentheses();
-    }
     myClass.processClassLevelDeclarations(processor);
 
     // We are here because of completion (see call stack), so we use code complete here
