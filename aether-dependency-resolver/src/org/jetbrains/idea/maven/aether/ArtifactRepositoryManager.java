@@ -6,12 +6,19 @@ import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.artifact.DefaultArtifact;
 import org.eclipse.aether.collection.CollectRequest;
+import org.eclipse.aether.collection.CollectResult;
 import org.eclipse.aether.connector.basic.BasicRepositoryConnectorFactory;
 import org.eclipse.aether.graph.Dependency;
+import org.eclipse.aether.graph.DependencyFilter;
+import org.eclipse.aether.graph.DependencyNode;
+import org.eclipse.aether.graph.DependencyVisitor;
 import org.eclipse.aether.impl.DefaultServiceLocator;
 import org.eclipse.aether.repository.LocalRepository;
 import org.eclipse.aether.repository.RemoteRepository;
-import org.eclipse.aether.resolution.*;
+import org.eclipse.aether.resolution.ArtifactRequest;
+import org.eclipse.aether.resolution.ArtifactResult;
+import org.eclipse.aether.resolution.VersionRangeRequest;
+import org.eclipse.aether.resolution.VersionRangeResult;
 import org.eclipse.aether.spi.connector.RepositoryConnectorFactory;
 import org.eclipse.aether.spi.connector.transport.TransporterFactory;
 import org.eclipse.aether.transfer.TransferCancelledException;
@@ -19,8 +26,11 @@ import org.eclipse.aether.transfer.TransferEvent;
 import org.eclipse.aether.transfer.TransferListener;
 import org.eclipse.aether.transport.file.FileTransporterFactory;
 import org.eclipse.aether.transport.http.HttpTransporterFactory;
+import org.eclipse.aether.util.artifact.DelegatingArtifact;
 import org.eclipse.aether.util.artifact.JavaScopes;
 import org.eclipse.aether.util.filter.DependencyFilterUtils;
+import org.eclipse.aether.util.graph.visitor.FilteringDependencyVisitor;
+import org.eclipse.aether.util.graph.visitor.TreeDependencyVisitor;
 import org.eclipse.aether.util.version.GenericVersionScheme;
 import org.eclipse.aether.version.*;
 import org.jetbrains.annotations.NotNull;
@@ -127,25 +137,29 @@ public class ArtifactRepositoryManager {
 
   @NotNull
   public Collection<Artifact> resolveDependencyAsArtifact(String groupId, String artifactId, String versionConstraint, final Set<ArtifactKind> artifactKinds) throws Exception {
-    final List<Artifact> artifacts = new ArrayList<>();
     final Set<VersionConstraint> constraints = Collections.singleton(asVersionConstraint(versionConstraint));
+    //RepositorySystem.resolveDependencies() ignores classifiers, so we need to collect dependencies for the default classifier, and then
+    // resolve artifacts with specified classifiers for each found dependency
+    CollectRequest collectRequest = createCollectRequest(groupId, artifactId, constraints, EnumSet.of(ArtifactKind.ARTIFACT));
+    CollectResult collectResult = ourSystem.collectDependencies(mySession, collectRequest);
 
+    ArtifactRequestBuilder builder = new ArtifactRequestBuilder();
+    DependencyFilter filter = DependencyFilterUtils.classpathFilter(JavaScopes.COMPILE);
+    DependencyVisitor visitor = new TreeDependencyVisitor(new FilteringDependencyVisitor(builder, filter));
+    collectResult.getRoot().accept(visitor);
+
+    List<ArtifactRequest> requests = new ArrayList<>();
     for (ArtifactKind kind : artifactKinds) {
-      try {
-        final DependencyRequest dependencyRequest = new DependencyRequest(
-          createCollectRequest(groupId, artifactId, constraints, EnumSet.of(kind)),
-          DependencyFilterUtils.classpathFilter(JavaScopes.COMPILE)
-        );
-        final DependencyResult result = ourSystem.resolveDependencies(mySession, dependencyRequest);
-        for (ArtifactResult artifactResult : result.getArtifactResults()) {
-          artifacts.add(artifactResult.getArtifact());
-        }
+      for (ArtifactRequest request : builder.myRequests) {
+        ArtifactWithChangedClassifier artifact = new ArtifactWithChangedClassifier(request.getArtifact(), kind.getClassifier());
+        requests.add(new ArtifactRequest(artifact, request.getRepositories(), request.getRequestContext()));
       }
-      catch (DependencyResolutionException e) {
-        if (kind == ArtifactKind.ARTIFACT) {
-          throw e;
-        }
-      }
+    }
+
+    List<ArtifactResult> results = ourSystem.resolveArtifacts(mySession, requests);
+    final List<Artifact> artifacts = new ArrayList<>();
+    for (ArtifactResult artifactResult : results) {
+      artifacts.add(artifactResult.getArtifact());
     }
     return artifacts;
   }
@@ -203,4 +217,40 @@ public class ArtifactRepositoryManager {
     return result;
   }
 
+  private static class ArtifactWithChangedClassifier extends DelegatingArtifact {
+    private final String myClassifier;
+
+    public ArtifactWithChangedClassifier(Artifact artifact, String classifier) {
+      super(artifact);
+      myClassifier = classifier;
+    }
+
+    @Override
+    protected DelegatingArtifact newInstance(Artifact artifact) {
+      return new ArtifactWithChangedClassifier(artifact, myClassifier);
+    }
+
+    @Override
+    public String getClassifier() {
+      return myClassifier;
+    }
+  }
+
+  /**
+   * Simplified copy of package-local org.eclipse.aether.internal.impl.ArtifactRequestBuilder
+    */
+  private static class ArtifactRequestBuilder implements DependencyVisitor {
+    private List<ArtifactRequest> myRequests = new ArrayList<>();
+
+    public boolean visitEnter(DependencyNode node) {
+      if (node.getDependency() != null) {
+        myRequests.add(new ArtifactRequest(node));
+      }
+      return true;
+    }
+
+    public boolean visitLeave(DependencyNode node) {
+      return true;
+    }
+  }
 }
