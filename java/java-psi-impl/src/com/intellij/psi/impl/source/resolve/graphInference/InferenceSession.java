@@ -69,6 +69,7 @@ public class InferenceSession {
   private static final String EQUALITY_CONSTRAINTS_PRESENTATION = "equality constraints";
   private static final String UPPER_BOUNDS_PRESENTATION = "upper bounds";
   private static final String LOWER_BOUNDS_PRESENTATION = "lower bounds";
+  static final Key<PsiCapturedWildcardType> ORIGINAL_CAPTURE = Key.create("ORIGINAL_CAPTURE");
 
   private final Set<InferenceVariable> myInferenceVariables = new LinkedHashSet<>();
   private final List<ConstraintFormula> myConstraints = new ArrayList<>();
@@ -389,7 +390,7 @@ public class InferenceSession {
 
           if (targetType != null && !PsiType.VOID.equals(targetType)) {
             PsiType actualType = PsiUtil.isRawSubstitutor(method, mySiteSubstitutor) ? returnType : mySiteSubstitutor.substitute(returnType);
-            registerReturnTypeConstraints(actualType, targetType);
+            registerReturnTypeConstraints(actualType, targetType, myContext);
             expectedActualErrorMessage = "Incompatible types. Required " + targetType.getPresentableText() + " but '" + method.getName() + "' was inferred to " + actualType.getPresentableText() + ":";
           }
         }
@@ -704,7 +705,7 @@ public class InferenceSession {
     return result.toArray(new InferenceVariable[result.size()]);
   }
 
-  public void registerReturnTypeConstraints(PsiType returnType, PsiType targetType) {
+  public void registerReturnTypeConstraints(PsiType returnType, PsiType targetType, PsiElement context) {
     returnType = substituteWithInferenceVariables(returnType);
     if (myErased) {
       final InferenceVariable inferenceVariable = getInferenceVariable(returnType);
@@ -720,7 +721,7 @@ public class InferenceSession {
       final PsiClass psiClass = resolveResult.getElement();
       if (psiClass != null) {
         LOG.assertTrue(returnType instanceof PsiClassType);
-        PsiClassType substitutedCapture = (PsiClassType)PsiUtil.captureToplevelWildcards(returnType, myContext);
+        PsiClassType substitutedCapture = (PsiClassType)PsiUtil.captureToplevelWildcards(returnType, context);
         final PsiTypeParameter[] typeParameters = psiClass.getTypeParameters();
         final PsiType[] parameters = substitutedCapture.getParameters();
         final InferenceVariable[] copy = initFreshVariablesForCapturedBounds(typeParameters, parameters);
@@ -744,7 +745,7 @@ public class InferenceSession {
         final PsiSubstitutor substitutor = resolveSubset(Collections.singletonList(inferenceVariable), mySiteSubstitutor);
         final PsiType substitutedReturnType = substitutor.substitute(inferenceVariable);
         if (substitutedReturnType != null) {
-          addConstraint(new TypeCompatibilityConstraint(targetType, PsiUtil.captureToplevelWildcards(substitutedReturnType, myContext)));
+          addConstraint(new TypeCompatibilityConstraint(targetType, PsiUtil.captureToplevelWildcards(substitutedReturnType, context)));
         }
       }
       else {
@@ -767,7 +768,14 @@ public class InferenceSession {
           restParamSubstitution = restParamSubstitution.put(typeParameters[i], parameter);
         }
       }
-      return initBounds(null, restParamSubstitution, capturedParams.toArray(PsiTypeParameter.EMPTY_ARRAY));
+      InferenceVariable[] variables = initBounds(null, restParamSubstitution, capturedParams.toArray(PsiTypeParameter.EMPTY_ARRAY));
+      int idx = 0;
+      for (PsiType parameter : parameters) {
+        if (parameter instanceof PsiCapturedWildcardType) {
+          variables[idx++].putUserData(ORIGINAL_CAPTURE, (PsiCapturedWildcardType)parameter);
+        }
+      }
+      return variables;
     }
     return initBounds(null, typeParameters);
   }
@@ -1219,12 +1227,22 @@ public class InferenceSession {
   }
 
   private PsiType checkBoundsConsistency(PsiSubstitutor substitutor, InferenceVariable var) {
-    final PsiType eqBound = getEqualsBound(var, substitutor);
+    PsiType eqBound = getEqualsBound(var, substitutor);
     if (eqBound != PsiType.NULL && eqBound instanceof PsiPrimitiveType) return PsiType.NULL;
     final PsiType lowerBound = getLowerBound(var, substitutor);
     final PsiType upperBound = getUpperBound(var, substitutor);
     PsiType type;
     if (eqBound != PsiType.NULL && (myErased || eqBound != null)) {
+      PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(eqBound);
+      if (aClass instanceof PsiTypeParameter && TypeConversionUtil.isFreshVariable((PsiTypeParameter)aClass)) {
+        PsiCapturedWildcardType capturedWildcard = var.getUserData(ORIGINAL_CAPTURE);
+
+        //restore captured wildcard from method return type when no additional constraints were inferred
+        //to preserve equality of type arguments
+        if (capturedWildcard != null && capturedWildcard.getUpperBound().equals(getUpperBound(aClass))) {
+          eqBound = capturedWildcard;
+        }
+      }
       if (lowerBound != PsiType.NULL && !TypeConversionUtil.isAssignable(eqBound, lowerBound)) {
         final String incompatibleBoundsMessage =
           incompatibleBoundsMessage(var, substitutor, InferenceBound.EQ, EQUALITY_CONSTRAINTS_PRESENTATION, InferenceBound.LOWER, LOWER_BOUNDS_PRESENTATION);

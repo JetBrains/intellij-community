@@ -189,7 +189,7 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
           //the constraint reduces to the bound set B3 which would be used to determine the method reference's invocation type 
           //when targeting the return type of the function type, as defined in 18.5.2.
           session.collectApplicabilityConstraints(myExpression, ((MethodCandidateInfo)resolve), groundTargetType);
-          session.registerReturnTypeConstraints(psiSubstitutor.substitute(referencedMethodReturnType), returnType);
+          session.registerReturnTypeConstraints(psiSubstitutor.substitute(referencedMethodReturnType), returnType, myExpression);
           return true;
         }
       }
