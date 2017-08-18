@@ -87,14 +87,14 @@ public abstract class GlobalInspectionTool extends InspectionProfileEntry {
         if (refEntity instanceof RefElement) {
           SmartPsiElementPointer pointer = ((RefElement)refEntity).getPointer();
           if (pointer != null) {
-            if (scope.contains(pointer.getVirtualFile())) return true;
+            if (!scope.contains(pointer.getVirtualFile())) return false;
           }
           else {
             RefEntity owner = refEntity.getOwner();
             return owner == null || isInScope(owner);
           }
         }
-        return false;
+        return true;
       }
     });
   }
