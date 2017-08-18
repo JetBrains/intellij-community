@@ -26,6 +26,7 @@ import com.intellij.debugger.streams.wrapper.impl.*;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.siyeh.ig.psiutils.ClassUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,8 +49,10 @@ public class JavaChainTransformerImpl implements ChainTransformer.Java {
     final PsiMethodCallExpression firstCall = streamExpressions.get(0);
 
     final PsiExpression qualifierExpression = firstCall.getMethodExpression().getQualifierExpression();
-    final GenericType typeAfterQualifier = resolveType(firstCall);
-
+    final PsiType qualifierType = qualifierExpression == null ? null : qualifierExpression.getType();
+    final GenericType typeAfterQualifier = qualifierType == null
+                                           ? getGenericTypeOfThis(qualifierExpression)
+                                           : GenericTypeUtil.fromStreamPsiType(qualifierType);
     final QualifierExpressionImpl qualifier =
       qualifierExpression == null
       ? new QualifierExpressionImpl("", TextRange.EMPTY_RANGE, typeAfterQualifier)
@@ -62,6 +65,14 @@ public class JavaChainTransformerImpl implements ChainTransformer.Java {
     final TerminatorStreamCall terminationCall = createTerminationCall(typeBefore, streamExpressions.get(streamExpressions.size() - 1));
 
     return new StreamChainImpl(qualifier, intermediateCalls, terminationCall, context);
+  }
+
+  @NotNull
+  private GenericType getGenericTypeOfThis(PsiExpression expression) {
+    final PsiClass klass = ClassUtils.getContainingClass(expression);
+
+    return klass == null ? GenericType.OBJECT
+                         : GenericTypeUtil.fromPsiClass(klass);
   }
 
   @NotNull
