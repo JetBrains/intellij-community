@@ -24,6 +24,6 @@
     <orderEntry type="library" exported="" scope="TEST" name="hamcrest" level="project" />
     <orderEntry type="module" module-name="xml-openapi" />
     <orderEntry type="module" module-name="lang-tests" scope="TEST" />
-    <orderEntry type="module" module-name="tools" scope="TEST" />
+    <orderEntry type="module" module-name="python-community-tools" scope="TEST" />
   </component>
 </module>

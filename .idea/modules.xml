@@ -232,6 +232,7 @@
       <module fileurl="file://$PROJECT_DIR$/python/pluginMinor/python-community-plugin-minor.iml" filepath="$PROJECT_DIR$/python/pluginMinor/python-community-plugin-minor.iml" group="python" />
       <module fileurl="file://$PROJECT_DIR$/python/python-community-plugin-resources.iml" filepath="$PROJECT_DIR$/python/python-community-plugin-resources.iml" group="python" />
       <module fileurl="file://$PROJECT_DIR$/python/testSrc/python-community-tests.iml" filepath="$PROJECT_DIR$/python/testSrc/python-community-tests.iml" group="python" />
+      <module fileurl="file://$PROJECT_DIR$/python/tools/python-community-tools.iml" filepath="$PROJECT_DIR$/python/tools/python-community-tools.iml" group="python" />
       <module fileurl="file://$PROJECT_DIR$/python/educational-python/build/python-edu-build.iml" filepath="$PROJECT_DIR$/python/educational-python/build/python-edu-build.iml" group="python/educational" />
       <module fileurl="file://$PROJECT_DIR$/python/python-helpers.iml" filepath="$PROJECT_DIR$/python/python-helpers.iml" group="python" />
       <module fileurl="file://$PROJECT_DIR$/python/openapi/python-openapi.iml" filepath="$PROJECT_DIR$/python/openapi/python-openapi.iml" group="python" />
