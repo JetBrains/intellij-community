@@ -34,26 +34,13 @@ import java.util.*;
  * @author Eugene Zhuravlev
  *         Date: Dec 10, 2007
  */
-public class MemoryIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, Value>, IndexStorage.Dumpable {
+public class MemoryIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, Value>, BufferingIndexStorage {
   private final Map<Key, ChangeTrackingValueContainer<Value>> myMap = new HashMap<>();
   @NotNull
   private final IndexStorage<Key, Value> myBackendStorage;
   private final List<BufferingStateListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final ID<?, ?> myIndexId;
   private boolean myBufferingEnabled;
-
-  @Override
-  public void dump() {
-    if (myBackendStorage instanceof Dumpable) {
-      ((Dumpable)myBackendStorage).dump();
-    }
-  }
-
-  public interface BufferingStateListener {
-    void bufferingStateChanged(boolean newState);
-
-    void memoryStorageCleared();
-  }
 
   public MemoryIndexStorage(@NotNull IndexStorage<Key, Value> backend) {
     this(backend, null);
@@ -69,14 +56,17 @@ public class MemoryIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key,
     return myBackendStorage;
   }
 
+  @Override
   public void addBufferingStateListener(@NotNull BufferingStateListener listener) {
     myListeners.add(listener);
   }
 
+  @Override
   public void removeBufferingStateListener(@NotNull BufferingStateListener listener) {
     myListeners.remove(listener);
   }
 
+  @Override
   public void setBufferingEnabled(boolean enabled) {
     final boolean wasEnabled = myBufferingEnabled;
     assert wasEnabled != enabled;
@@ -87,14 +77,17 @@ public class MemoryIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key,
     }
   }
 
+  @Override
   public boolean isBufferingEnabled() {
     return myBufferingEnabled;
   }
 
+  @Override
   public void clearMemoryMap() {
     myMap.clear();
   }
 
+  @Override
   public void fireMemoryStorageCleared() {
     for (BufferingStateListener listener : myListeners) {
       listener.memoryStorageCleared();

@@ -32,6 +32,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
@@ -103,7 +104,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponentAdap
 
   public void dumpToServer() {
     for (MyIndex<?> index : getAsyncState().myIndices.values()) {
-      index.dumpToServer();
+      //index.dumpToServer();
     }
   }
 
@@ -144,6 +145,9 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponentAdap
         );
 
         final MemoryIndexStorage<K, StubIdList> memStorage = new MemoryIndexStorage<>(storage, indexKey);
+        IndexStorage<K, StubIdList> finalStorage = PersistentFSImpl.indexer ? new IndexerIndexStorage<>(memStorage, indexKey, extension.getKeyDescriptor(),
+                                                                                                        StubIdExternalizer.INSTANCE)
+                                                             : memStorage;
         MyIndex<K> index = new MyIndex<>(new IndexExtension<K, StubIdList, Void>() {
           @NotNull
           @Override
@@ -173,7 +177,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponentAdap
           public int getVersion() {
             return extension.getVersion();
           }
-        }, memStorage);
+        }, finalStorage);
         synchronized (state) {
           state.myIndices.put(indexKey, index);
         }
@@ -501,7 +505,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponentAdap
   public void setDataBufferingEnabled(final boolean enabled) {
     for (UpdatableIndex index : getAsyncState().myIndices.values()) {
       final IndexStorage indexStorage = ((VfsAwareMapReduceIndex)index).getStorage();
-      ((MemoryIndexStorage)indexStorage).setBufferingEnabled(enabled);
+      ((BufferingIndexStorage)indexStorage).setBufferingEnabled(enabled);
     }
   }
 
@@ -510,7 +514,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponentAdap
       final IndexStorage indexStorage = ((VfsAwareMapReduceIndex)index).getStorage();
       index.getWriteLock().lock();
       try {
-        ((MemoryIndexStorage)indexStorage).clearMemoryMap();
+        ((BufferingIndexStorage)indexStorage).clearMemoryMap();
       }
       finally {
         index.getWriteLock().unlock();

@@ -31,10 +31,6 @@ import java.io.IOException;
 @ApiStatus.Experimental
 public interface IndexStorage<Key, Value> extends Flushable {
 
-  interface Dumpable {
-    void dump();
-  }
-  
   void addValue(Key key, int inputId, Value value) throws StorageException;
 
   void removeAllValues(@NotNull Key key, int inputId) throws StorageException;

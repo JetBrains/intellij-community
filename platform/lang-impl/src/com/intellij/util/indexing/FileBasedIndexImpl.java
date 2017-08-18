@@ -55,6 +55,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.openapi.vfs.newvfs.persistent.FlushingDaemon;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -74,6 +75,7 @@ import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.gist.GistManager;
 import com.intellij.util.gist.GistManagerImpl;
+import com.intellij.util.indexing.impl.IndexStorage;
 import com.intellij.util.indexing.impl.InvertedIndexValueIterator;
 import com.intellij.util.indexing.impl.MapReduceIndex;
 import com.intellij.util.io.DataOutputStream;
@@ -170,7 +172,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     for (ID<?, ?> id : getState().getIndexIDs()) {
       UpdatableIndex<?, ?, FileContent> index = getState().getIndex(id);
       if (index instanceof MapReduceIndex<?, ?, ?>) {
-        ((MapReduceIndex)index).dumpToServer();
+        //((MapReduceIndex)index).dumpToServer();
       }
     }
   }
@@ -392,8 +394,15 @@ public class FileBasedIndexImpl extends FileBasedIndex {
           });
         }
 
+        MemoryIndexStorage<K, V> mem = new MemoryIndexStorage<>(storage, name);
+        IndexStorage<K, V> finalStorage;
+        if (PersistentFSImpl.indexer) {
+          finalStorage = new IndexerIndexStorage<>(mem, name, extension.getKeyDescriptor(), extension.getValueExternalizer());
+        } else {
+          finalStorage = mem;
+        }
         state.registerIndex(name,
-                            createIndex(extension, new MemoryIndexStorage<>(storage, name)),
+                            createIndex(extension, finalStorage),
                             file -> file instanceof VirtualFileWithId && inputFilter.acceptInput(file),
                             version,
                             addedTypes);
@@ -456,7 +465,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
   @NotNull
   private static <K, V> UpdatableIndex<K, V, FileContent> createIndex(@NotNull final FileBasedIndexExtension<K, V> extension,
-                                                                      @NotNull final MemoryIndexStorage<K, V> storage)
+                                                                      @NotNull final IndexStorage<K, V> storage)
     throws StorageException, IOException {
     final VfsAwareMapReduceIndex<K, V, FileContent> index;
     if (extension instanceof CustomImplementationFileBasedIndexExtension) {
@@ -1355,7 +1364,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
           for (ID<?, ?> indexId : state.getIndexIDs()) {
             final MapReduceIndex index = (MapReduceIndex)state.getIndex(indexId);
             assert index != null;
-            ((MemoryIndexStorage)index.getStorage()).setBufferingEnabled(enabled);
+            ((BufferingIndexStorage)index.getStorage()).setBufferingEnabled(enabled);
           }
           myPreviousDataBufferingState = enabled;
         }
@@ -1371,7 +1380,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     for (ID<?, ?> indexId : state.getIndexIDs()) {
       final MapReduceIndex index = (MapReduceIndex)state.getIndex(indexId);
       assert index != null;
-      final MemoryIndexStorage memStorage = (MemoryIndexStorage)index.getStorage();
+      final BufferingIndexStorage memStorage = (BufferingIndexStorage)index.getStorage();
       index.getWriteLock().lock();
       try {
         memStorage.clearMemoryMap();

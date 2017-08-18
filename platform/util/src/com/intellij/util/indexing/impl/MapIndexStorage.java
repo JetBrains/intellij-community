@@ -30,7 +30,7 @@ import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-public abstract class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, IndexStorage.Dumpable {
+public abstract class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value> {
   private static final Logger LOG = Logger.getInstance(MapIndexStorage.class);
   protected PersistentMap<Key, UpdatableValueContainer<Value>> myMap;
   protected SLRUCache<Key, ChangeTrackingValueContainer<Value>> myCache;
@@ -65,11 +65,6 @@ public abstract class MapIndexStorage<Key, Value> implements IndexStorage<Key, V
     myKeyIsUniqueForIndexedFile = keyIsUniqueForIndexedFile;
     myReadOnly = readOnly;
     if (initialize) initMapAndCache();
-  }
-
-  @Override
-  public void dump() {
-    ((PersistentHashMap)myMap).dump();
   }
 
   protected void initMapAndCache() throws IOException {

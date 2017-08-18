@@ -42,6 +42,10 @@
     </component>
 
     <component>
+      <implementation-class>com.intellij.util.indexing.CassandraIndexTable</implementation-class>
+    </component>
+
+    <component>
       <implementation-class>com.intellij.ide.script.IdeStartupScripts</implementation-class>
     </component>
 

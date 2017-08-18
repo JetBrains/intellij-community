@@ -88,7 +88,7 @@ public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer
 
   // need 'synchronized' to ensure atomic initialization of merged data
   // because several threads that acquired read lock may simultaneously execute the method
-  private ValueContainerImpl<Value> getMergedData() {
+  public UpdatableValueContainer<Value> getMergedData() {
     ValueContainerImpl<Value> merged = myMerged;
     if (merged != null) {
       return merged;
@@ -106,7 +106,7 @@ public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer
       if (fromDisk instanceof ValueContainerImpl) {
         newMerged = ((ValueContainerImpl<Value>)fromDisk).copy();
       } else {
-        newMerged = ((ChangeTrackingValueContainer<Value>)fromDisk).getMergedData().copy();
+        newMerged = ((ValueContainerImpl<Value>)((ChangeTrackingValueContainer<Value>)fromDisk).getMergedData()).copy();
       }
 
       if ((myAdded != null || myInvalidated != null) &&

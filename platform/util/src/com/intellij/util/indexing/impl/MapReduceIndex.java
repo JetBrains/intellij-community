@@ -236,17 +236,6 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     return myForwardIndex.getDiffBuilder(inputId);
   }
 
-  public void dumpToServer() {
-    System.out.println("dumping forward indexes");
-    if (myForwardIndex instanceof ForwardIndex.Dumpable) {
-      ((ForwardIndex.Dumpable)myForwardIndex).dump();
-    }
-    System.out.println("dumping inverted indexes");
-    if (myStorage instanceof IndexStorage.Dumpable) {
-      ((IndexStorage.Dumpable)myStorage).dump();
-    }
-  }
-
   @NotNull
   protected UpdateData<Key, Value> createUpdateData(Map<Key, Value> data,
                                                     ThrowableComputable<InputDataDiffBuilder<Key, Value>, IOException> keys,

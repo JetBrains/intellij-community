@@ -92,7 +92,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     LowMemoryWatcher.register(this::clearIdCache, this);
   }
 
-  public static boolean indexer = false;
+  public static boolean indexer = true;
 
   @Override
   public void initComponent() {

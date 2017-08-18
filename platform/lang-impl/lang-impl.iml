@@ -31,5 +31,6 @@
     <orderEntry type="library" name="commons-logging" level="project" />
     <orderEntry type="module" module-name="diff-impl" />
     <orderEntry type="module" module-name="built-in-server-api" />
+    <orderEntry type="library" name="com.datastax.cassandra:cassandra-driver-core:3.3.0" level="project" />
   </component>
 </module>

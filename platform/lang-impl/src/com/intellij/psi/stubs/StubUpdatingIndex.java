@@ -320,9 +320,9 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
   public UpdatableIndex<Integer, SerializedStubTree, FileContent> createIndexImplementation(@NotNull final FileBasedIndexExtension<Integer, SerializedStubTree> extension,
                                                                                             @NotNull IndexStorage<Integer, SerializedStubTree> storage)
     throws StorageException, IOException {
-    if (storage instanceof MemoryIndexStorage) {
-      final MemoryIndexStorage<Integer, SerializedStubTree> memStorage = (MemoryIndexStorage<Integer, SerializedStubTree>)storage;
-      memStorage.addBufferingStateListener(new MemoryIndexStorage.BufferingStateListener() {
+    if (storage instanceof BufferingIndexStorage) {
+      final BufferingIndexStorage memStorage = (BufferingIndexStorage)storage;
+      memStorage.addBufferingStateListener(new BufferingIndexStorage.BufferingStateListener() {
         @Override
         public void bufferingStateChanged(final boolean newState) {
           ((StubIndexImpl)StubIndex.getInstance()).setDataBufferingEnabled(newState);

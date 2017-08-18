@@ -243,8 +243,8 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
 
   private void installMemoryModeListener() {
     IndexStorage<Key, Value> storage = getStorage();
-    if (storage instanceof MemoryIndexStorage) {
-      ((MemoryIndexStorage)storage).addBufferingStateListener(new MemoryIndexStorage.BufferingStateListener() {
+    if (storage instanceof BufferingIndexStorage) {
+      ((BufferingIndexStorage)storage).addBufferingStateListener(new BufferingIndexStorage.BufferingStateListener() {
         @Override
         public void bufferingStateChanged(boolean newState) {
           myInMemoryMode.set(newState);
