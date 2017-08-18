@@ -41,7 +41,7 @@ import com.intellij.psi.xml.*;
 
 ALPHA=[:letter:]
 DIGIT=[0-9]
-WHITE_SPACE_CHARS=[ \n\r\t\f]+
+WHITE_SPACE_CHARS=[ \n\r\t\f\u2028\u2029\u0085]+
 
 TAG_NAME=({ALPHA}|"_"|":")({ALPHA}|{DIGIT}|"_"|":"|"."|"-")*
 TAG_NAME_FWT=("#")({ALPHA}|{DIGIT}|"_"|":"|"."|"-")*
