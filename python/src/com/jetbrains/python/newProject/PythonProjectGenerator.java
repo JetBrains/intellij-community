@@ -62,7 +62,7 @@ import java.util.function.Consumer;
  * @param <T> project settings
  */
 public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> extends DirectoryProjectGeneratorBase<T> {
-  public static final Object NO_SETTINGS = new Object();
+  public static final PyNewProjectSettings NO_SETTINGS = new PyNewProjectSettings();
 
   private final List<SettingsListener> myListeners = ContainerUtil.newArrayList();
   private final boolean myAllowRemoteProjectCreation;
