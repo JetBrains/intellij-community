@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Konstantin Bulenkov
  */
 public interface SmartSelectProvider<T> {
-  ExtensionPointName<SmartSelectProvider> EP = ExtensionPointName.create("smartSelectProvider");
+  ExtensionPointName<SmartSelectProvider> EP = ExtensionPointName.create("com.intellij.smartSelectProvider");
 
   void increaseSelection(T source);
 
