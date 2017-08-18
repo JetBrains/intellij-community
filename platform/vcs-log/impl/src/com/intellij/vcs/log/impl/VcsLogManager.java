@@ -33,14 +33,16 @@ import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsLogRefresher;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VcsLogStorage;
-import com.intellij.vcs.log.ui.*;
+import com.intellij.vcs.log.ui.AbstractVcsLogUi;
+import com.intellij.vcs.log.ui.VcsLogColorManager;
+import com.intellij.vcs.log.ui.VcsLogColorManagerImpl;
+import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.visible.VcsLogFilterer;
 import com.intellij.vcs.log.visible.VisiblePackRefresherImpl;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -101,12 +103,6 @@ public class VcsLogManager implements Disposable {
   @NotNull
   public VcsLogData getDataManager() {
     return myLogData;
-  }
-
-  @NotNull
-  public JComponent createLogPanel(@NotNull String logId, @Nullable String contentTabName) {
-    AbstractVcsLogUi ui = createLogUi(logId, contentTabName);
-    return new VcsLogPanel(this, ui);
   }
 
   @NotNull

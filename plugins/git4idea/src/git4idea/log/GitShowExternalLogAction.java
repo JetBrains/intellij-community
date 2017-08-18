@@ -18,6 +18,7 @@ package git4idea.log;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -45,6 +46,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.impl.VcsLogContentProvider;
 import com.intellij.vcs.log.impl.VcsLogManager;
 import com.intellij.vcs.log.impl.VcsLogTabsProperties;
+import com.intellij.vcs.log.ui.AbstractVcsLogUi;
+import com.intellij.vcs.log.ui.VcsLogPanel;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.config.GitVersion;
@@ -120,10 +123,16 @@ public class GitShowExternalLogAction extends DumbAwareAction {
     }
     VcsLogManager manager = new VcsLogManager(project, ServiceManager.getService(project, VcsLogTabsProperties.class),
                                               ContainerUtil.map(roots, root -> new VcsRoot(vcs, root)));
-    return new MyContentComponent(manager.createLogPanel(calcLogId(roots), tabName), roots, () -> {
-      for (VirtualFile root : roots) {
-        repositoryManager.removeExternalRepository(root);
-      }
+    AbstractVcsLogUi ui = manager.createLogUi(calcLogId(roots), tabName);
+    return new MyContentComponent(new VcsLogPanel(manager, ui), roots, () -> {
+      Disposer.dispose(ui);
+      manager.disposeUi();
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        Disposer.dispose(manager);
+        for (VirtualFile root : roots) {
+          repositoryManager.removeExternalRepository(root);
+        }
+      });
     });
   }
 
