@@ -52,22 +52,22 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
   public VcsLogContentProvider(@NotNull Project project, @NotNull VcsProjectLog projectLog) {
     myProjectLog = projectLog;
 
-    MessageBusConnection connection = project.getMessageBus().connect(project);
+    MessageBusConnection connection = project.getMessageBus().connect(projectLog);
     connection.subscribe(VcsProjectLog.VCS_PROJECT_LOG_CHANGED, new VcsProjectLog.ProjectLogListener() {
       @Override
       public void logCreated(@NotNull VcsLogManager logManager) {
-        addLogUi(logManager);
+        addMainUi(logManager);
       }
 
       @Override
       public void logDisposed(@NotNull VcsLogManager logManager) {
-        disposeLogUi(logManager);
+        disposeMainUi();
       }
     });
 
     VcsLogManager manager = myProjectLog.getLogManager();
     if (manager != null) {
-      addLogUi(manager);
+      addMainUi(manager);
     }
   }
 
@@ -77,7 +77,7 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
   }
 
   @CalledInAwt
-  private void addLogUi(@NotNull VcsLogManager logManager) {
+  private void addMainUi(@NotNull VcsLogManager logManager) {
     LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
     if (myUi == null) {
       myUi = logManager.createLogUi(VcsLogTabsProperties.MAIN_LOG_ID, TAB_NAME);
@@ -86,20 +86,14 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
   }
 
   @CalledInAwt
-  private void disposeLogUi(@Nullable VcsLogManager logManager) {
+  private void disposeMainUi() {
     LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
 
-    // main ui
     myContainer.removeAll();
     if (myUi != null) {
       VcsLogUiImpl ui = myUi;
       myUi = null;
       Disposer.dispose(ui);
-    }
-
-    // other ui
-    if (logManager != null) {
-      logManager.disposeUi();
     }
   }
 
@@ -111,7 +105,7 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
 
   @Override
   public void disposeContent() {
-    disposeLogUi(myProjectLog.getLogManager());
+    disposeMainUi();
   }
 
   @Nullable
