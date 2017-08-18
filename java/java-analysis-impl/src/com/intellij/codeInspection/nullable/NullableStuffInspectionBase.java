@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.nullable;
 
+import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.GroupNames;
@@ -47,6 +48,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
@@ -138,6 +140,31 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
       @Override
       public void visitParameter(PsiParameter parameter) {
         check(parameter, holder, parameter.getType());
+      }
+
+      @Override
+      public void visitTypeElement(PsiTypeElement type) {
+        NullableNotNullManager manager = NullableNotNullManager.getInstance(type.getProject());
+        List<PsiAnnotation> annotations = getExclusiveAnnotations(type);
+
+        checkType(null, holder, type.getType(),
+                  ContainerUtil.find(annotations, a -> manager.getNotNulls().contains(a.getQualifiedName())),
+                  ContainerUtil.find(annotations, a -> manager.getNullables().contains(a.getQualifiedName())));
+      }
+
+      private List<PsiAnnotation> getExclusiveAnnotations(PsiTypeElement type) {
+        List<PsiAnnotation> annotations = ContainerUtil.newArrayList(type.getAnnotations());
+        PsiTypeElement topMost = Objects.requireNonNull(SyntaxTraverser.psiApi().parents(type).filter(PsiTypeElement.class).last());
+        PsiElement parent = topMost.getParent();
+        if (parent instanceof PsiModifierListOwner && type.getType().equals(topMost.getType().getDeepComponentType())) {
+          PsiModifierList modifierList = ((PsiModifierListOwner)parent).getModifierList();
+          if (modifierList != null) {
+            PsiAnnotation.TargetType[] targets = ArrayUtil.remove(AnnotationTargetUtil.getTargetsForLocation(modifierList), PsiAnnotation.TargetType.TYPE_USE);
+            annotations.addAll(ContainerUtil.filter(modifierList.getAnnotations(),
+                                                    a -> AnnotationTargetUtil.isTypeAnnotation(a) && AnnotationTargetUtil.findAnnotationTarget(a, targets) == null));
+          }
+        }
+        return annotations;
       }
 
       @Override
@@ -508,22 +535,29 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
       this.isDeclaredNullable = isDeclaredNullable;
     }
   }
-  private static Annotated check(final PsiModifierListOwner parameter, final ProblemsHolder holder, PsiType type) {
+  private static Annotated check(final PsiModifierListOwner owner, final ProblemsHolder holder, PsiType type) {
     final NullableNotNullManager manager = NullableNotNullManager.getInstance(holder.getProject());
-    PsiAnnotation isDeclaredNotNull = AnnotationUtil.findAnnotation(parameter, manager.getNotNulls());
-    PsiAnnotation isDeclaredNullable = AnnotationUtil.findAnnotation(parameter, manager.getNullables());
-    if (isDeclaredNullable != null && isDeclaredNotNull != null) {
-      reportNullableNotNullConflict(holder, parameter, isDeclaredNullable, isDeclaredNotNull);
-    }
-    if ((isDeclaredNotNull != null || isDeclaredNullable != null) && type != null && TypeConversionUtil.isPrimitive(type.getCanonicalText())) {
-      PsiAnnotation annotation = isDeclaredNotNull == null ? isDeclaredNullable : isDeclaredNotNull;
-      reportPrimitiveType(holder, annotation, annotation, parameter);
-    }
-    if (parameter instanceof PsiParameter) {
-      checkLoopParameterNullability(holder, isDeclaredNotNull, isDeclaredNullable, DfaPsiUtil.inferParameterNullability((PsiParameter)parameter));
-    }
+    PsiAnnotation isDeclaredNotNull = AnnotationUtil.findAnnotation(owner, manager.getNotNulls());
+    PsiAnnotation isDeclaredNullable = AnnotationUtil.findAnnotation(owner, manager.getNullables());
+    checkType(owner, holder, type, isDeclaredNotNull, isDeclaredNullable);
 
     return new Annotated(isDeclaredNotNull != null,isDeclaredNullable != null);
+  }
+
+  private static void checkType(@Nullable PsiModifierListOwner listOwner,
+                                ProblemsHolder holder,
+                                PsiType type,
+                                @Nullable PsiAnnotation notNull, @Nullable PsiAnnotation nullable) {
+    if (nullable != null && notNull != null) {
+      reportNullableNotNullConflict(holder, listOwner, nullable, notNull);
+    }
+    if ((notNull != null || nullable != null) && type != null && TypeConversionUtil.isPrimitive(type.getCanonicalText())) {
+      PsiAnnotation annotation = notNull == null ? nullable : notNull;
+      reportPrimitiveType(holder, annotation, listOwner);
+    }
+    if (listOwner instanceof PsiParameter) {
+      checkLoopParameterNullability(holder, notNull, nullable, DfaPsiUtil.inferParameterNullability((PsiParameter)listOwner));
+    }
   }
 
   private static void checkLoopParameterNullability(ProblemsHolder holder, @Nullable PsiAnnotation notNull, @Nullable PsiAnnotation nullable, Nullness expectedNullability) {
@@ -537,9 +571,9 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
     }
   }
 
-  private static void reportPrimitiveType(final ProblemsHolder holder, final PsiElement psiElement, final PsiAnnotation annotation,
-                                          final PsiModifierListOwner listOwner) {
-    holder.registerProblem(psiElement.isPhysical() ? psiElement : listOwner.getNavigationElement(),
+  private static void reportPrimitiveType(ProblemsHolder holder, PsiAnnotation annotation,
+                                          @Nullable PsiModifierListOwner listOwner) {
+    holder.registerProblem(!annotation.isPhysical() && listOwner != null ? listOwner.getNavigationElement() : annotation,
                            InspectionsBundle.message("inspection.nullable.problems.primitive.type.annotation"),
                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new RemoveAnnotationQuickFix(annotation, listOwner));
   }

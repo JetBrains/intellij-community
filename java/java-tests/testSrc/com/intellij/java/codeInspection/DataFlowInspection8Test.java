@@ -176,8 +176,12 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   public void testIgnoreNullabilityOnPrimitiveCast() { doTestWithCustomAnnotations();}
 
   public void testArrayComponentAndMethodAnnotationConflict() {
-    setupCustomAnnotations("withTypeUse", "{ElementType.METHOD, ElementType.TYPE_USE}", myFixture);
+    setupAmbiguousAnnotations("withTypeUse", myFixture);
     doTest();
+  }
+
+  static void setupAmbiguousAnnotations(String pkg, JavaCodeInsightTestFixture fixture) {
+    setupCustomAnnotations(pkg, "{ElementType.METHOD, ElementType.TYPE_USE}", fixture);
   }
 
   public void testLambdaInlining() { doTest(); }
@@ -190,7 +194,7 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   public void testStreamKnownSource() { doTest(); }
 
   public void testMethodVsExpressionTypeAnnotationConflict() {
-    setupCustomAnnotations("withTypeUse", "{ElementType.METHOD, ElementType.TYPE_USE}", myFixture);
+    setupAmbiguousAnnotations("withTypeUse", myFixture);
     doTest();
   }
 
