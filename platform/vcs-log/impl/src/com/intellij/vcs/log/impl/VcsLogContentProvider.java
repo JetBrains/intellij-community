@@ -44,14 +44,12 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
   private static final Logger LOG = Logger.getInstance(VcsLogContentProvider.class);
   public static final String TAB_NAME = "Log";
 
-  @NotNull private final Project myProject;
   @NotNull private final VcsProjectLog myProjectLog;
   @NotNull private final JPanel myContainer = new JBPanel(new BorderLayout());
 
   @Nullable private volatile VcsLogUiImpl myUi;
 
   public VcsLogContentProvider(@NotNull Project project, @NotNull VcsProjectLog projectLog) {
-    myProject = project;
     myProjectLog = projectLog;
 
     MessageBusConnection connection = project.getMessageBus().connect(project);
