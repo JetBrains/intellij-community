@@ -43,7 +43,8 @@ fun main(args: Array<String>) {
 
       println("Running on $python")
 
-      val sdk = PySdkTools.createTempSdk(VfsUtil.findFileByIoFile(File(PythonSdkType.getPythonExecutable(python.absolutePath)!!), true)!!,
+      val executable = PythonSdkType.getPythonExecutable(python.absolutePath)!!
+      val sdk = PySdkTools.createTempSdk(VfsUtil.findFileByIoFile(File(executable), true)!!,
                                          SdkCreationType.SDK_PACKAGES_AND_SKELETONS, null)
 
       val skeletonsDir = File(System.getProperty("user.dir"), "skeletons-${sdk.versionString!!.replace(" ", "_")}_" + +Math.abs(sdk.homePath!!.hashCode()))
