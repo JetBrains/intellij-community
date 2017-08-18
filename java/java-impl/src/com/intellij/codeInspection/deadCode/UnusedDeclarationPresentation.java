@@ -22,6 +22,7 @@ import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.*;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
 import com.intellij.codeInspection.util.RefFilter;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -35,7 +36,6 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -49,7 +49,6 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
-import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.DateFormatUtil;
@@ -540,8 +539,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
   }
 
   @Override
-  public void ignoreCurrentElement(RefEntity refEntity) {
-    if (refEntity == null) return;
+  public void ignoreCurrentElement(@NotNull RefEntity refEntity) {
     myIgnoreElements.add(refEntity);
   }
 
@@ -569,12 +567,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
   }
 
   @Override
-  public void finalCleanup() {
-    super.finalCleanup();
-  }
-
-  @Override
-  public boolean isElementIgnored(final RefEntity element) {
+  public boolean isElementIgnored(@NotNull RefEntity element) {
     return myIgnoreElements.contains(element);
   }
 
@@ -637,8 +630,9 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     }
   }
 
+  @NotNull
   @Override
-  public JComponent getCustomPreviewPanel(RefEntity entity) {
+  public JComponent getCustomPreviewPanel(@NotNull RefEntity entity) {
     final Project project = entity.getRefManager().getProject();
     JEditorPane htmlView = new JEditorPane() {
       @Override
@@ -699,7 +693,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
   }
 
   @Override
-  public int getProblemsCount(InspectionTree tree) {
+  public int getProblemsCount(@NotNull InspectionTree tree) {
     return 0;
   }
 }

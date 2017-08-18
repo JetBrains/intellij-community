@@ -152,7 +152,7 @@ common.attrs.i18n =
 		attribute dir {
 			w:string "ltr" | w:string "rtl" | w:string "auto"
 		}
-	# This lang definition is a hack for enviroments where
+	# This lang definition is a hack for environments where
 	# the HTML5 parser maps lang to xml:lang.
 	# Sameness check left to Schematron
 	common.attrs.language =

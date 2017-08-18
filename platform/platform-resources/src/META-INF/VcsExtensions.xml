@@ -7,6 +7,8 @@
                         serviceImplementation="com.intellij.codeInsight.actions.VcsAwareFormatChangedTextUtil" overrides="true"/>
     <applicationService serviceInterface="com.intellij.openapi.vcs.actions.AnnotationsSettings"
                         serviceImplementation="com.intellij.openapi.vcs.actions.AnnotationsSettings"/>
+    <applicationService serviceInterface="com.intellij.vfs.AsyncVfsEventsPostProcessor"
+                        serviceImplementation="com.intellij.vfs.AsyncVfsEventsPostProcessorImpl"/>
 
     <projectService serviceInterface="com.intellij.openapi.vcs.AbstractVcsHelper"
                     serviceImplementation="com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl"/>

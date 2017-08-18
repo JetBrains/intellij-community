@@ -867,7 +867,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     for (Tools tools : getTools().values()) {
       for (ScopeToolState state : tools.getTools()) {
         InspectionToolWrapper toolWrapper = state.getTool();
-        getPresentation(toolWrapper).finalCleanup();
+        getPresentation(toolWrapper).cleanup();
       }
     }
     super.close(noSuspiciousCodeFound);

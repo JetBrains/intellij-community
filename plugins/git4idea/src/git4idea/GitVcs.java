@@ -26,6 +26,7 @@ import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
@@ -531,10 +532,11 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   @Override
   @CalledInAwt
   public void enableIntegration() {
-    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+    Runnable task = () -> {
       Collection<VcsRoot> roots = ServiceManager.getService(myProject, VcsRootDetector.class).detect();
-      new GitIntegrationEnabler(GitVcs.this, myGit).enable(roots);
-    });
+      new GitIntegrationEnabler(this, myGit).enable(roots);
+    };
+    BackgroundTaskUtil.executeOnPooledThread(task, myProject);
   }
 
   @Override

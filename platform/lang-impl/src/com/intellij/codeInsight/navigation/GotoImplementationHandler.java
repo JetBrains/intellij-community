@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.ContainerProvider;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
-import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.editor.Editor;
@@ -37,7 +36,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
-import java.util.Map;
 
 public class GotoImplementationHandler extends GotoTargetHandler {
   @Override
@@ -138,11 +136,10 @@ public class GotoImplementationHandler extends GotoTargetHandler {
     private final Editor myEditor;
     private final int myOffset;
     private final GotoData myGotoData;
-    private final Map<Object, PsiElementListCellRenderer> renderers = new HashMap<>();
     private final PsiReference myReference;
 
     ImplementationsUpdaterTask(@NotNull GotoData gotoData, @NotNull Editor editor, int offset, final PsiReference reference) {
-      super(gotoData.source.getProject(), ImplementationSearcher.SEARCHING_FOR_IMPLEMENTATIONS);
+      super(gotoData.source.getProject(), ImplementationSearcher.SEARCHING_FOR_IMPLEMENTATIONS, createComparator(new HashMap<>(), gotoData));
       myEditor = editor;
       myOffset = offset;
       myGotoData = gotoData;
@@ -153,7 +150,7 @@ public class GotoImplementationHandler extends GotoTargetHandler {
     public void run(@NotNull final ProgressIndicator indicator) {
       super.run(indicator);
       for (PsiElement element : myGotoData.targets) {
-        if (!updateComponent(element, createComparator(renderers, myGotoData))) {
+        if (!updateComponent(element)) {
           return;
         }
       }
@@ -163,7 +160,7 @@ public class GotoImplementationHandler extends GotoTargetHandler {
           indicator.checkCanceled();
           if (!TargetElementUtil.getInstance().acceptImplementationForReference(myReference, element)) return;
           if (myGotoData.addTarget(element)) {
-            if (!updateComponent(element, createComparator(renderers, myGotoData))) {
+            if (!updateComponent(element)) {
               indicator.cancel();
             }
           }

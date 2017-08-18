@@ -19,14 +19,13 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.VcsNotifier
@@ -203,9 +202,9 @@ class GitRewordOperation(private val repository: GitRepository,
     val connection = project.messageBus.connect()
     notification.whenExpired { connection.disconnect() }
     connection.subscribe(GitRepository.GIT_REPO_CHANGE, GitRepositoryChangeListener {
-      ApplicationManager.getApplication().executeOnPooledThread {
+      BackgroundTaskUtil.executeOnPooledThread(Runnable {
         if (checkUndoPossibility(project) !is UndoPossibility.Possible) notification.expire()
-      }
+      }, repository)
     })
 
     notifier.notify(notification)

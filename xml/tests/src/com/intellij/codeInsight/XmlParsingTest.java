@@ -668,6 +668,11 @@ public class XmlParsingTest extends ParsingTestCase {
     doTestXml("<a>< a</a>");
   }
 
+  public void testAllWhitespaces() throws Exception {
+    doTestXml("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n" +
+              "<Root><page><content><locatieblok><locatie label=\"Locatie\">EXAMPLE</locatie>\u2029<straat label=\"Straat\">EXAMPLE</straat>\u2029<postcode label=\"Postcode\">EXAMPLE</postcode> <plaats label=\"Plaats\">EXAMPLE</plaats>\u2029\u2029<telomschrijving label=\"Telefoon omschrijving\">T.</telomschrijving> <telefoon label=\"Telefoon\">EXAMPLE</telefoon>\u2029\u2029<internet label=\"Internet\">EXAMPLE</internet></locatieblok><naamblok><aanhefnaam label=\"Aanhef Naam Achternaam\">Aanhef Naam Achternaam</aanhefnaam>\u2029<functie label=\"Functie\">Functie</functie>\u2029<mobielomschr label=\"Mobiel omschrijving\">M.</mobielomschr>\t<mobiel label=\"Mobiel\">EXAMPLE</mobiel>\u2029<emailomschr label=\"Email omschrijving\">E.</emailomschr>\t<email label=\"Email\">EXAMPLE</email></naamblok></content></page></Root>\n");
+  }
+
   public void testCustomMimeType() throws Exception {
     final Language language = new MyLanguage();
     addExplicitExtension(LanguageHtmlScriptContentProvider.INSTANCE, language, new HtmlScriptContentProvider() {

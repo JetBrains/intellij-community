@@ -106,8 +106,8 @@ public final class PythonSdkType extends SdkType {
   static final int MINUTE = 60 * 1000; // 60 seconds, used with script timeouts
   @NonNls public static final String SKELETONS_TOPIC = "Skeletons";
   private static final String[] DIRS_WITH_BINARY = new String[]{"", "bin", "Scripts"};
-  private static final String[] UNIX_BINARY_NAMES = new String[]{"jython", "pypy", "python"};
-  private static final String[] WIN_BINARY_NAMES = new String[]{"jython.bat", "ipy.exe", "pypy.exe", "python.exe"};
+  private static final String[] UNIX_BINARY_NAMES = new String[]{"jython", "pypy", "python", "python3"};
+  private static final String[] WIN_BINARY_NAMES = new String[]{"jython.bat", "ipy.exe", "pypy.exe", "python.exe", "python3.exe"};
 
   private static final Key<WeakReference<Component>> SDK_CREATOR_COMPONENT_KEY = Key.create("#com.jetbrains.python.sdk.creatorComponent");
   public static final Predicate<Sdk> REMOTE_SDK_PREDICATE = sdk -> isRemote(sdk);

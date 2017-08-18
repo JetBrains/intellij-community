@@ -65,7 +65,18 @@ public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase
     super.tearDown();
   }
 
-  public void testProblems() { doTest(); }
+  public void testProblems() { doTest();}
+
+  public void testAnnotatingPrimitivesTypeUse() {
+    DataFlowInspection8Test.setupTypeUseAnnotations("typeUse", myFixture);
+    doTest();
+  }
+
+  public void testAnnotatingPrimitivesAmbiguous() {
+    DataFlowInspection8Test.setupAmbiguousAnnotations("withTypeUse", myFixture);
+    doTest();
+  }
+
   public void testProblems2() { doTest(); }
   public void testNullableFieldNotnullParam() { doTest(); }
   public void testNotNullFieldNullableParam() { doTest(); }

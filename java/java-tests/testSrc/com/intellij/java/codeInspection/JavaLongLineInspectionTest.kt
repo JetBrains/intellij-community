@@ -26,6 +26,10 @@ class JavaLongLineInspectionTest : JavaCodeInsightFixtureTestCase() {
     doTest()
   }
 
+  fun testLongLine() {
+    doTest()
+  }
+
   private fun doTest() {
     myFixture.enableInspections(LongLineInspection())
     myFixture.testHighlighting(true, false, false, getTestName(false) + ".java")
