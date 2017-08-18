@@ -508,5 +508,6 @@
     <tasks.contextProvider implementation="com.intellij.tasks.context.XDebuggerWatchesProvider"/>
 
     <actionPromoter implementation="com.intellij.execution.testframework.TestTreeViewActionsPromoter"/>
+    <smartSelectProvider implementation="com.intellij.ui.tree.TreeSmartSelectProvider"/>
   </extensions>
 </idea-plugin>
