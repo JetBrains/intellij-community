@@ -151,6 +151,28 @@ public class AccessCanBeTightenedInspectionTest extends LightInspectionTestCase 
     myFixture.configureByFiles("y/C.java","x/Sub.java");
     myFixture.checkHighlighting();
   }
+  
+  public void testQualifiedAccessFromSubclassSamePackage() {
+    myFixture.allowTreeAccessForAllFiles();
+    myFixture.addFileToProject("x/Sub.java",
+      "package x; " +
+      "import y.C; " +
+      "class Sub extends C {}" +
+      "");
+    myFixture.addFileToProject("y/C.java",
+      "package y; public class C {\n" +
+      "  public int foo = 0;\n" +
+      "  public void bar() {}\n"+
+      "}");
+    myFixture.addFileToProject("y/U.java", 
+     "package y; import x.Sub;\n" +
+      "public class U {{\n" +
+     "  Sub s = new Sub();\n" +
+     "  s.bar(); int a = s.foo;\n" +
+     " }}");
+    myFixture.configureByFiles("y/C.java","x/Sub.java");
+    myFixture.checkHighlighting();
+  }
 
   public void testDoNotSuggestPrivateInAnonymousClassIfPrivatesForInnersIsOff() {
     myVisibilityInspection.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = false;

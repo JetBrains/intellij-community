@@ -268,23 +268,23 @@ class AccessCanBeTightenedInspection extends BaseJavaBatchLocalInspectionTool {
       //if (file == memberFile) {
       //  return PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL;
       //}
+      PsiExpression qualifier = null;
+      if (element instanceof PsiReferenceExpression) {
+        qualifier = ((PsiReferenceExpression)element).getQualifierExpression();
+      }
+      else if (element instanceof PsiMethodCallExpression) {
+        qualifier = ((PsiMethodCallExpression)element).getMethodExpression().getQualifierExpression();
+      }
+
+      if (qualifier != null && !(qualifier instanceof PsiThisExpression) && !(qualifier instanceof PsiSuperExpression)) {
+        return PsiUtil.ACCESS_LEVEL_PUBLIC;
+      }
       PsiDirectory directory = file.getContainingDirectory();
       PsiPackage aPackage = directory == null ? null : JavaDirectoryService.getInstance().getPackage(directory);
       if (aPackage == memberPackage || aPackage != null && memberPackage != null && Comparing.strEqual(aPackage.getQualifiedName(), memberPackage.getQualifiedName())) {
         return suggestPackageLocal(member);
       }
       if (innerClass != null && memberClass != null && innerClass.isInheritor(memberClass, true)) {
-        PsiExpression qualifier = null;
-        if (element instanceof PsiReferenceExpression) {
-          qualifier = ((PsiReferenceExpression)element).getQualifierExpression();
-        }
-        else if (element instanceof PsiMethodCallExpression) {
-          qualifier = ((PsiMethodCallExpression)element).getMethodExpression().getQualifierExpression();
-        }
-
-        if (qualifier != null && !(qualifier instanceof PsiThisExpression) && !(qualifier instanceof PsiSuperExpression)) {
-          return PsiUtil.ACCESS_LEVEL_PUBLIC;
-        }
         //access from subclass can be via protected, except for constructors
         PsiElement resolved = element instanceof PsiReference ? ((PsiReference)element).resolve() : null;
         boolean isConstructor = resolved instanceof PsiClass && element.getParent() instanceof PsiNewExpression
