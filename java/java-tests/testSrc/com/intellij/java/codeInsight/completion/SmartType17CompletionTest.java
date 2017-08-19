@@ -48,6 +48,10 @@ public class SmartType17CompletionTest extends LightFixtureCompletionTestCase {
     doTest();
   }
 
+  public void testDiamondCollapsedWithOverloadedConstructors() {
+    doTest();
+  }
+
   public void testDiamondNotCollapsed() {
     doTest();
   }
