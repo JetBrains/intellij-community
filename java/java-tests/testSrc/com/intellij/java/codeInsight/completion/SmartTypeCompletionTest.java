@@ -1266,5 +1266,6 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testNewHashMapTypeArguments() { doTest(); }
   public void testNewMapTypeArguments() { doTest(); }
+  public void testNewMapObjectTypeArguments() { doTest(); }
 
 }

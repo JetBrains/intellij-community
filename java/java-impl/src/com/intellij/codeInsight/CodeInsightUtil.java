@@ -415,7 +415,7 @@ public class CodeInsightUtil {
 
       PsiType argSubstitution = expectedType.getSubstitutor().substitute(parameter);
       PsiType substitution = JavaPsiFacade.getInstance(context.getProject()).getResolveHelper()
-        .getSubstitutionForTypeParameter(typeParam, paramSubstitution, argSubstitution, false, PsiUtil.getLanguageLevel(context));
+        .getSubstitutionForTypeParameter(typeParam, paramSubstitution, argSubstitution, true, PsiUtil.getLanguageLevel(context));
       if (substitution != null && substitution != PsiType.NULL) {
         return substitution;
       }
