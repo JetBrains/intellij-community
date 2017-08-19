@@ -59,7 +59,7 @@ public class ApplicationNamesInfo {
       Element rootElement = doc.getRootElement();
       Element names = rootElement.getChild("names", rootElement.getNamespace());
       myProductName = names.getAttributeValue("product");
-      myFullProductName = names.getAttributeValue("fullname");
+      myFullProductName = names.getAttributeValue("fullname", myProductName);
       myEditionName = names.getAttributeValue("edition");
       myScriptName = names.getAttributeValue("script");
       myDefaultLauncherName = names.getAttributeValue("default-launcher-name", myScriptName);

@@ -9,7 +9,7 @@
          copyrightForeground="313131" linkColor="1f29b2"/>
   <icon size32="/PyCharmCore32.png" size16="/PyCharmCore16.png" ico="PyCharmCore.ico"/>
   <package code="__PACKAGE_CODE__"/>
-  <names product="PyCharm" fullname="PyCharm" edition="Community Edition" script="charm"/>
+  <names product="PyCharm" edition="Community Edition" script="charm"/>
 
   <welcome-screen logo-url="/PyCharmCoreWelcomeScreen.png"/>
 

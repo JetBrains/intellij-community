@@ -55,6 +55,7 @@
       <xs:annotation>
         <xs:documentation>
           Name of the product without vendor name (e.g. "IntelliJ IDEA").
+          May be omitted if same as the @product attribute.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
@@ -76,6 +77,7 @@
       <xs:annotation>
         <xs:documentation>
           Default name of the command-line launcher to be suggested in 'Create Launcher Script' dialog.
+          May be omitted if same as the @script attribute.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>

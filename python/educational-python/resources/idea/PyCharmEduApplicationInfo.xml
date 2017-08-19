@@ -9,7 +9,7 @@
          copyrightForeground="858585" linkColor="589df6"/>
   <icon size32="/PyCharmEdu32.png" size16="/PyCharmEdu16.png" ico="PyCharmEdu.ico"/>
   <package code="__PACKAGE_CODE__"/>
-  <names product="PyCharm" fullname="PyCharm" edition="Edu" script="charm"/>
+  <names product="PyCharm" edition="Edu" script="charm"/>
 
   <welcome-screen logo-url="/PyCharmEduWelcomeScreen.png"/>
 

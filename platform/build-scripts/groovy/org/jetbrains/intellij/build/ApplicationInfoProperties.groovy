@@ -49,7 +49,7 @@ class ApplicationInfoProperties {
     patchVersion = root.version.first().@patch ?: "0"
     fullVersionFormat = root.version.first().@full ?: "{0}.{1}"
     shortProductName = root.names.first().@product
-    productName = root.names.first().@fullname
+    productName = root.names.first().@fullname ?: shortProductName
     edition = root.names.first().@edition
     companyName = root.company.first().@name
     minorVersionMainPart = minorVersion.takeWhile { it != '.' }
