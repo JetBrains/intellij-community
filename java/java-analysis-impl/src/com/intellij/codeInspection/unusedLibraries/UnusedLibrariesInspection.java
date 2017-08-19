@@ -71,8 +71,7 @@ public class UnusedLibrariesInspection extends GlobalInspectionTool {
     if (refEntity instanceof RefModule) {
       final RefModule refModule = (RefModule)refEntity;
       final Module module = refModule.getModule();
-      if (module.isDisposed() || !scope.containsModule(module)) return null;
-
+     
       VirtualFile[] givenRoots =
         OrderEnumerator.orderEntries(module).withoutSdk()
           .withoutModuleSourceEntries()

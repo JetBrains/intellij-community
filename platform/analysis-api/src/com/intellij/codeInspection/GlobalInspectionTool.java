@@ -18,6 +18,7 @@ package com.intellij.codeInspection;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.ex.JobDescriptor;
 import com.intellij.codeInspection.reference.*;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.SmartPsiElementPointer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -87,12 +88,16 @@ public abstract class GlobalInspectionTool extends InspectionProfileEntry {
         if (refEntity instanceof RefElement) {
           SmartPsiElementPointer pointer = ((RefElement)refEntity).getPointer();
           if (pointer != null) {
-            if (!scope.contains(pointer.getVirtualFile())) return false;
+            VirtualFile virtualFile = pointer.getVirtualFile();
+            if (virtualFile != null && !scope.contains(virtualFile)) return false;
           }
           else {
             RefEntity owner = refEntity.getOwner();
             return owner == null || isInScope(owner);
           }
+        }
+        if (refEntity instanceof RefModule) {
+          return scope.containsModule(((RefModule)refEntity).getModule());
         }
         return true;
       }

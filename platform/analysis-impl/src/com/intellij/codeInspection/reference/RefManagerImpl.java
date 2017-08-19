@@ -132,7 +132,7 @@ public class RefManagerImpl extends RefManager {
     }
     if (myModules != null) {
       for (RefModule refModule : myModules.values()) {
-        refModule.accept(visitor);
+        if (myScope.containsModule(refModule.getModule())) refModule.accept(visitor);
       }
     }
     for (RefManagerExtension extension : myExtensions.values()) {
