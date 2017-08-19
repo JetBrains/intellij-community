@@ -25,8 +25,10 @@ import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.PathUtil;
+import com.intellij.util.ui.UIUtil;
 
 @TestDataPath("$CONTENT_ROOT/testData/navigation/extensionPointDeclaration")
 public class ExtensionPointDeclarationRelatedItemLineMarkerProviderTest extends JavaCodeInsightFixtureTestCase {
@@ -61,10 +63,11 @@ public class ExtensionPointDeclarationRelatedItemLineMarkerProviderTest extends 
     String path = file.getVirtualFile().getPath();
     Module module = ModuleUtilCore.findModuleForPsiElement(file);
     assertNotNull(module);
+    String color = ColorUtil.toHex(UIUtil.getInactiveTextColor());
     int expectedTagPosition = file.getText().indexOf("<extensionPoint name=\"myStringEP\" interface=\"java.lang.String\"/>");
     String expectedTooltip = "<html><body>&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"#navigation/" + path
                              + ":" + expectedTagPosition + "\">myStringEP</a> EP declaration in plugin.xml " +
-                             "<font color=6c6c6c>[" + module.getName() + "]</font><br></body></html>";
+                             "<font color=" + color + ">[" + module.getName() + "]</font><br></body></html>";
 
     final GutterMark gutter = myFixture.findGutter(filePath);
     DevKitGutterTargetsChecker.checkGutterTargets(gutter, expectedTooltip, AllIcons.Nodes.Plugin, "extensionPoint");
