@@ -19,6 +19,8 @@ import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
@@ -51,10 +53,12 @@ public class ExtensionDeclarationRelatedItemLineMarkerProviderTest extends JavaC
   public void testMyProjectService() {
     PsiFile file = myFixture.configureByFile("plugin.xml");
     String path = file.getVirtualFile().getPath();
+    Module module = ModuleUtilCore.findModuleForPsiElement(file);
+    assertNotNull(module);
     int expectedTagPosition = file.getText().indexOf("<myEp implementation=\"MyExtension\"/>");
     String expectedTooltip = "<html><body>&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"#navigation/" + path
-                             + ":" + expectedTagPosition + "\">myEp</a> extension declaration in <a href=\"#navigation/" + path
-                             + ":0\">plugin.xml</a><br></body></html>";
+                             + ":" + expectedTagPosition + "\">myEp</a> declaration in plugin.xml " +
+                             "<font color=6c6c6c>[" + module.getName() + "]</font><br></body></html>";
 
     GutterMark gutter = myFixture.findGutter("MyExtension.java");
     DevKitGutterTargetsChecker.checkGutterTargets(gutter, expectedTooltip, AllIcons.Nodes.Plugin, "myEp");
