@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -125,17 +125,21 @@ public class JarFileSystemImpl extends JarFileSystem {
 
   @Override
   public VirtualFile findFileByPath(@NotNull String path) {
-    return VfsImplUtil.findFileByPath(this, path);
+    return isValid(path) ? VfsImplUtil.findFileByPath(this, path) : null;
   }
 
   @Override
   public VirtualFile findFileByPathIfCached(@NotNull String path) {
-    return VfsImplUtil.findFileByPathIfCached(this, path);
+    return isValid(path) ? VfsImplUtil.findFileByPathIfCached(this, path) : null;
   }
 
   @Override
   public VirtualFile refreshAndFindFileByPath(@NotNull String path) {
-    return VfsImplUtil.refreshAndFindFileByPath(this, path);
+    return isValid(path) ? VfsImplUtil.refreshAndFindFileByPath(this, path) : null;
+  }
+
+  private static boolean isValid(String path) {
+    return path.contains(JAR_SEPARATOR);
   }
 
   @Override
