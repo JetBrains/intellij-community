@@ -25,7 +25,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.PomManager;
@@ -321,7 +320,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
   protected final Map<String, CachedValue<XmlNSDescriptor>> getNSDescriptorsMap() {
     return CachedValuesManager.getCachedValue(this, () ->
       CachedValueProvider.Result.create(computeNsDescriptorMap(),
-                                        PsiModificationTracker.MODIFICATION_COUNT, externalResourceModificationTracker()));
+                                        PsiModificationTracker.MODIFICATION_COUNT, ExternalResourceManagerEx.getInstanceEx()));
   }
 
   @NotNull
@@ -466,13 +465,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
   public XmlElementDescriptor getDescriptor() {
     return CachedValuesManager.getCachedValue(this, () ->
       CachedValueProvider.Result.create(computeElementDescriptor(),
-                                        PsiModificationTracker.MODIFICATION_COUNT, externalResourceModificationTracker()));
-  }
-
-  private ModificationTracker externalResourceModificationTracker() {
-    Project project = getProject();
-    ExternalResourceManagerEx manager = ExternalResourceManagerEx.getInstanceEx();
-    return () -> manager.getModificationCount(project);
+                                        PsiModificationTracker.MODIFICATION_COUNT, ExternalResourceManagerEx.getInstanceEx()));
   }
 
   @Nullable
