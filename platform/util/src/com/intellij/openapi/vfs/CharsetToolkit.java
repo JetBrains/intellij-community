@@ -430,6 +430,7 @@ public class CharsetToolkit {
       }
       else if (b0 < BINARY_THRESHOLD) {
         hasBinary = true;
+        break;
       }
       if (!validU8Char) break;
       i++;
