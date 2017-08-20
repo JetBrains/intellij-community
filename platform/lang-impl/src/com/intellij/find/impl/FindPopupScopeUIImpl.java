@@ -44,8 +44,7 @@ import java.awt.*;
 import java.awt.event.ActionListener;
 import java.util.Arrays;
 
-public class FindPopupScopeUIImpl implements FindPopupScopeUI {
-
+class FindPopupScopeUIImpl implements FindPopupScopeUI {
   private final ScopeType PROJECT = new ScopeType("Project", FindBundle.message("find.popup.scope.project"), EmptyIcon.ICON_0);
   private final ScopeType MODULE = new ScopeType("Module", FindBundle.message("find.popup.scope.module"), EmptyIcon.ICON_0);
   private final ScopeType DIRECTORY = new ScopeType("Directory", FindBundle.message("find.popup.scope.directory"), EmptyIcon.ICON_0);
@@ -54,23 +53,24 @@ public class FindPopupScopeUIImpl implements FindPopupScopeUI {
   @NotNull private final FindUIHelper myHelper;
   @NotNull private final Project myProject;
   @NotNull private final FindPopupPanel myFindPopupPanel;
-  @NotNull private final Pair[] myComponents;
+  @NotNull private final Pair<ScopeType, JComponent>[] myComponents;
 
   private ComboBox<String> myModuleComboBox;
   private FindPopupDirectoryChooser myDirectoryChooser;
   private ScopeChooserCombo myScopeCombo;
 
-  public FindPopupScopeUIImpl(@NotNull FindPopupPanel panel) {
+  FindPopupScopeUIImpl(@NotNull FindPopupPanel panel) {
     myHelper = panel.getHelper();
     myProject = panel.getProject();
     myFindPopupPanel = panel;
     initComponents();
 
-    myComponents = new Pair[]{
-      new Pair(PROJECT, new JLabel()),
-      new Pair(MODULE, shrink(myModuleComboBox)),
-      new Pair(DIRECTORY, myDirectoryChooser),
-      new Pair(SCOPE, shrink(myScopeCombo)),
+    //noinspection unchecked
+    myComponents = (Pair<ScopeType, JComponent>[])new Pair[]{
+      new Pair<>(PROJECT, new JLabel()),
+      new Pair<>(MODULE, shrink(myModuleComboBox)),
+      new Pair<>(DIRECTORY, myDirectoryChooser),
+      new Pair<>(SCOPE, shrink(myScopeCombo)),
     };
   }
 
@@ -152,7 +152,7 @@ public class FindPopupScopeUIImpl implements FindPopupScopeUI {
     }
     else if (selectedScope == DIRECTORY) {
       String directory = myDirectoryChooser.getDirectory();
-      findModel.setDirectoryName(directory == null ? "" : directory);
+      findModel.setDirectoryName(directory);
     }
     else if (selectedScope == MODULE) {
       findModel.setModuleName((String)myModuleComboBox.getSelectedItem());
@@ -177,7 +177,7 @@ public class FindPopupScopeUIImpl implements FindPopupScopeUI {
 
   @Override
   public boolean hideAllPopups() {
-    final JComboBox[] candidates = new JComboBox[] { myModuleComboBox, myScopeCombo.getComboBox(), myDirectoryChooser.getComboBox() };
+    final JComboBox[] candidates = { myModuleComboBox, myScopeCombo.getComboBox(), myDirectoryChooser.getComboBox() };
     for (JComboBox candidate : candidates) {
       if (candidate.isPopupVisible()) {
         candidate.hidePopup();
@@ -224,13 +224,13 @@ public class FindPopupScopeUIImpl implements FindPopupScopeUI {
   private ScopeType getScope(FindModel model) {
     if (model.isCustomScope()) {
       return SCOPE;
-    } else
+    }
     if (model.isProjectScope()) {
       return PROJECT;
-    } else
+    }
     if (model.getDirectoryName() != null) {
       return DIRECTORY;
-    } else
+    }
     if (model.getModuleName() != null) {
       return MODULE;
     }
