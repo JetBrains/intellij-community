@@ -1,53 +1,60 @@
-plugins {
-  id "org.jetbrains.intellij" version "0.2.14"
-  id 'de.undercouch.download' version '3.2.0'
+buildscript {
+  repositories {
+    mavenCentral()
+    maven { url 'http://dl.bintray.com/jetbrains/intellij-plugin-service' }
+    maven { url 'https://jitpack.io' }
+  }
+  dependencies {
+    classpath "com.github.hurricup:gradle-grammar-kit-plugin:2017.1.1"
+  }
 }
+
+plugins {
+    id "org.jetbrains.intellij" version "0.2.16"
+}
+
+import org.jetbrains.grammarkit.tasks.GenerateLexer
+import org.jetbrains.grammarkit.tasks.GenerateParser
 
 allprojects {
 
   apply plugin: 'java'
   apply plugin: 'idea'
+  apply plugin: 'org.jetbrains.intellij'
+  apply plugin: 'org.jetbrains.grammarkit'
   apply plugin: 'jacoco'
 
   group pluginGroup
   version = pluginVersion
 
   sourceCompatibility = javaVersion
-  targetCompatibility = javaTargetVersion
+  targetCompatibility = javaVersion
+
+  tasks.withType(JavaCompile) { options.encoding = 'UTF-8' }
+
+  sourceSets {
+    main {
+      java {
+        srcDirs = ['src/main/java',
+                   'generated/src']
+      }
+      resources {
+        srcDirs = ['src/main/resources',
+                   'generated/resources']
+      }
+    }
+  }
 
   repositories {
     mavenCentral()
-    mavenLocal()
+    maven { url 'https://dl.bintray.com/jetbrains/markdown' }
+    maven { url 'https://jitpack.io' }
   }
 }
 
-tasks.withType(JavaCompile) {
-  options.encoding = 'UTF-8'
-
-  if (!Boolean.valueOf(System.getenv('CI'))) {
-    def javaHome = System.getenv("JAVA_HOME")
-    if (null == javaHome || "".equals(javaHome)) {
-      javaHome = JDK6_HOME
-    }
-
-    if (!file("$javaHome/lib/rt.jar").exists() && file("$javaHome/jre/lib/rt.jar").exists()) {
-      options.bootClasspath = "$javaHome/jre/lib/rt.jar"
-    } else {
-      options.bootClasspath = "$javaHome/lib/rt.jar"
-    }
-  }
-}
-
-sourceSets {
-  main {
-    java {
-      srcDirs = ['src/main/java',
-                 'generated/src']
-    }
-    resources {
-      srcDirs = ['src/main/resources',
-                 'generated/resources']
-    }
+idea {
+  project {
+    languageLevel = javaVersion
   }
 }
 
@@ -58,7 +65,7 @@ intellij {
 
   pluginName pluginName
   downloadSources !Boolean.valueOf(System.getenv('CI'))
-  alternativeIdePath idePath
+
   updateSinceUntilBuild false
   sameSinceUntilBuild Boolean.valueOf(isEAP)
 
@@ -66,19 +73,17 @@ intellij {
 
   plugins 'coverage'
 
-}
-
-publishPlugin {
-  channels publishChannel
-  username publishUsername
-  password publishPassword
-}
-
-idea {
-  project {
-    jdkName = javaVersion
-    languageLevel = javaVersion
+  publishPlugin {
+    username publishUsername
+    password publishPassword
   }
+}
+
+grammarKit {
+  //tag or short commit hash of IntelliJ patched JFlex
+  jflexRelease = '1.7.0'
+  //tag or short commit hash of Grammar-Kit to use
+  grammarKitRelease = '1.5.2'
 }
 
 plugins.withType(JavaPlugin) {
@@ -94,12 +99,8 @@ jacocoTestReport {
   }
 }
 
-check.dependsOn jacocoTestReport
-
 // Configurations
 configurations {
-  bnf
-
   lombok
   hrisey
 }
@@ -108,8 +109,6 @@ dependencies {
   lombok group: 'org.projectlombok', name: 'lombok', version: '1.16.18', classifier: 'sources', ext: 'jar'
   hrisey group: 'pl.mg6.hrisey', name: 'hrisey', version: '0.3.1', classifier: 'sources', ext: 'jar'
 
-  bnf files("$buildDir/tools/GrammarKit/lib/grammar-kit.jar")
-
   compile(project(':patcher')) {
     exclude group: 'org.javassist'
   }
@@ -117,8 +116,6 @@ dependencies {
   testCompile group: 'junit', name: 'junit', version: '4.12'
   testCompile group: 'org.mockito', name: 'mockito-core', version: '1.+'
 }
-
-import de.undercouch.gradle.tasks.download.Download
 
 // Tasks
 copy {
@@ -165,78 +162,27 @@ copy {
   into("generated/resources")
 }
 
+task generateLombokConfigParser(type: GenerateParser) {
+  println "Generating Parser for GrammerKit: ${grammarKit.grammarKitRelease}"
 
-task downloadJFlexJar(type: Download) {
-  description 'Downloads JFlex.'
-
-  src 'https://github.com/JetBrains/intellij-community/raw/master/tools/lexer/jflex-1.7.0-SNAPSHOT.jar'
-  dest "$buildDir/tools/JFlex.jar"
-  onlyIf { !file("$buildDir/tools/JFlex.jar").exists() }
+  source 'src/main/resources/de/plushnikov/intellij/plugin/language/lombokConfig.bnf'
+  targetRoot = 'generated/src'
+  pathToParser '/de/plushnikov/intellij/plugin/language/parser/LombokConfigParser.java'
+  pathToPsiRoot '/de/plushnikov/intellij/plugin/language/psi'
 }
 
-task downloadJFlexSkeleton(type: Download) {
-  description 'Downloads JFlex skeleton.'
+task generateLombokConfigLexer(type: GenerateLexer) {
+  dependsOn generateLombokConfigParser
+  println "Generating Lexer for JFlexRelease: ${grammarKit.jflexRelease}"
 
-  src 'https://github.com/JetBrains/intellij-community/raw/master/tools/lexer/idea-flex.skeleton'
-  dest "$buildDir/tools/idea-flex.skeleton"
-  onlyIf { !file("$buildDir/tools/idea-flex.skeleton").exists() }
-}
-
-task downloadGrammarKit(type: Download) {
-  description 'Downloads GrammarKit.'
-
-  // Because of inconsistency in the way GrammarKit is published, we sometimes need custom URLs
-  if (grammarKitOverrideUrl == "") {
-    src "https://github.com/JetBrains/Grammar-Kit/releases/download/${versionOfGrammarKit}/GrammarKit.zip"
-  } else {
-    println "Using GrammarKit override download URL"
-    src grammarKitOverrideUrl
-  }
-  dest "$buildDir/tools/GrammarKit.zip"
-  onlyIfNewer true
-}
-
-
-task unzipGrammarKit(type: Copy) {
-  description 'Extracts GrammarKit files.'
-  dependsOn downloadGrammarKit
-
-  from zipTree("$buildDir/tools/GrammarKit.zip")
-  into "${buildDir}/tools/"
-  include "GrammarKit/lib/*"
-}
-
-task generateLexer(type: JavaExec) {
-  description 'Generates lexer sources with JFlex.'
-  dependsOn downloadJFlexJar, downloadJFlexSkeleton
-
-  main '-jar'
-  args = ["$buildDir/tools/JFlex.jar",
-          '-nobak',
-          '-skel',
-          "$buildDir/tools/idea-flex.skeleton",
-          '-d',
-          "generated/src/de/plushnikov/intellij/plugin/language/",
-          "$projectDir/src/main/resources/de/plushnikov/intellij/plugin/language/lombokConfig.flex",
-  ]
-}
-
-task generateParser(type: JavaExec) {
-  description 'Generates parser sources with GrammarKit.'
-  dependsOn unzipGrammarKit
-
-  main = 'org.intellij.grammar.Main'
-  args = ["generated/src", file("src/main/resources/de/plushnikov/intellij/plugin/language/lombokConfig.bnf")]
-
-  classpath = configurations.bnf + configurations.idea
-}
-
-task generateSources() {
-  dependsOn generateParser, generateLexer
+  source = "src/main/resources/de/plushnikov/intellij/plugin/language/lombokConfig.flex"
+  targetDir = "generated/src/de/plushnikov/intellij/plugin/language"
+  targetClass = "LombokConfigLexer"
 }
 
 clean.doFirst {
   delete 'generated', 'out'
 }
 
-compileJava.dependsOn generateSources
+compileJava.dependsOn generateLombokConfigLexer
+check.dependsOn jacocoTestReport

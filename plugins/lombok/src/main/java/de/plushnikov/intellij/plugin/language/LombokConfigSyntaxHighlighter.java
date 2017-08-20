@@ -13,7 +13,6 @@ import de.plushnikov.intellij.plugin.language.psi.LombokConfigTypes;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
-import java.io.Reader;
 
 public class LombokConfigSyntaxHighlighter extends SyntaxHighlighterBase {
   public static final TextAttributesKey CLEAR = TextAttributesKey.createTextAttributesKey("SIMPLE_CLEAN", DefaultLanguageHighlighterColors.CONSTANT);
@@ -36,7 +35,7 @@ public class LombokConfigSyntaxHighlighter extends SyntaxHighlighterBase {
   @NotNull
   @Override
   public Lexer getHighlightingLexer() {
-    return new FlexAdapter(new LombokConfigLexer((Reader) null));
+    return new FlexAdapter(new LombokConfigLexer(null));
   }
 
   @NotNull

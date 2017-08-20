@@ -18,6 +18,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 
 public class LombokConfigCompletionContributor extends CompletionContributor {
@@ -43,7 +44,7 @@ public class LombokConfigCompletionContributor extends CompletionContributor {
       "lombok.synchronized.flagUsage", "lombok.toString.flagUsage", "lombok.val.flagUsage", "lombok.value.flagUsage",
       "lombok.wither.flagUsage"));
 
-    final Collection<String> flagUsageAllowable = new HashSet<String>(Arrays.asList(
+    final Collection<String> flagUsageAllowable = new HashSet<String>(Collections.singletonList(
       "lombok.var.flagUsage"
     ));
 

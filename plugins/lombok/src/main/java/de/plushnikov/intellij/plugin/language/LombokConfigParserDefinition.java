@@ -18,18 +18,16 @@ import de.plushnikov.intellij.plugin.language.psi.LombokConfigFile;
 import de.plushnikov.intellij.plugin.language.psi.LombokConfigTypes;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.Reader;
-
 public class LombokConfigParserDefinition implements ParserDefinition {
-  public static final TokenSet WHITE_SPACES = TokenSet.create(TokenType.WHITE_SPACE);
-  public static final TokenSet COMMENTS = TokenSet.create(LombokConfigTypes.COMMENT);
+  private static final TokenSet WHITE_SPACES = TokenSet.create(TokenType.WHITE_SPACE);
+  private static final TokenSet COMMENTS = TokenSet.create(LombokConfigTypes.COMMENT);
 
-  public static final IFileElementType FILE = new IFileElementType(Language.findInstance(LombokConfigLanguage.class));
+  private static final IFileElementType FILE = new IFileElementType(Language.findInstance(LombokConfigLanguage.class));
 
   @NotNull
   @Override
   public Lexer createLexer(Project project) {
-    return new FlexAdapter(new LombokConfigLexer((Reader) null));
+    return new FlexAdapter(new LombokConfigLexer(null));
   }
 
   @NotNull
