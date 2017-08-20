@@ -216,6 +216,7 @@ public class DeployToServerSettingsEditor<S extends ServerConfiguration, D exten
       private final Object myStateLock = new Object();
       private volatile TestConnectionState myTestConnectionState;
       private RemoteServer<S> myServerInstance;
+      private long myLastStartedTestConnectionMillis = -1;
 
       public AutoDetectedItem() {
         super(null);
@@ -252,6 +253,7 @@ public class DeployToServerSettingsEditor<S extends ServerConfiguration, D exten
           RemoteServerConnectionTester tester = new RemoteServerConnectionTester(myServerInstance);
           setTestConnectionState(TestConnectionState.IN_PROGRESS);
           tester.testConnection(this::connectionTested);
+          myLastStartedTestConnectionMillis = System.currentTimeMillis();
         }
       }
 
@@ -281,6 +283,8 @@ public class DeployToServerSettingsEditor<S extends ServerConfiguration, D exten
       }
 
       private void connectionTested(boolean wasConnected, String errorStatus) {
+        waitABit(2000);
+
         final RemoteServer testedServer = myServerInstance;
         myServerInstance = null;
 
@@ -294,6 +298,23 @@ public class DeployToServerSettingsEditor<S extends ServerConfiguration, D exten
         else {
           setTestConnectionState(TestConnectionState.FAILED);
         }
+      }
+
+      /**
+       * Too quick validation just flickers the screen, so we will ensure that validation message is shown for at least some time
+       */
+      private void waitABit(@SuppressWarnings("SameParameterValue") long maxTotalDelayMillis) {
+        final long THRESHOLD_MS = 50;
+        long naturalDelay = System.currentTimeMillis() - myLastStartedTestConnectionMillis;
+        if (naturalDelay > 0 && naturalDelay + THRESHOLD_MS < maxTotalDelayMillis) {
+          try {
+            Thread.sleep(maxTotalDelayMillis - naturalDelay - THRESHOLD_MS);
+          }
+          catch (InterruptedException e) {
+            //
+          }
+        }
+        myLastStartedTestConnectionMillis = -1;
       }
     }
   }
