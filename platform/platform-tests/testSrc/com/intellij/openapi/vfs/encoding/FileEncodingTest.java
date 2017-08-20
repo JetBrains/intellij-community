@@ -931,4 +931,13 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
       manager.setDefaultCharsetName(oldProject);
     }
   }
+
+  public void testBigFileAutoDetectedAsTextMustDetermineItsEncodingFromTheWholeTextToMinimizePossibilityOfUmlautInTheEndMisdetectionError() {
+    VirtualFile vTestRoot = getTestRoot();
+    VirtualFile file = vTestRoot.findChild("BIGCHANGES");
+    assertNotNull(file);
+
+    assertNull(file.getBOM());
+    assertEquals(CharsetToolkit.UTF8_CHARSET, file.getCharset());
+  }
 }

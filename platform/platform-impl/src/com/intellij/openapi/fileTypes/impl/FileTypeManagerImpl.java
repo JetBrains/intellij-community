@@ -60,6 +60,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.containers.ConcurrentPackedBitsArray;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashSetQueue;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
@@ -76,8 +77,6 @@ import java.io.*;
 import java.net.URL;
 import java.nio.channels.FileChannel;
 import java.util.*;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -253,8 +252,10 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
             log("F: after() queued to redetect: " + files);
           }
 
-          if (filesToRedetect.addAll(files)) {
-            awakeReDetectExecutor();
+          synchronized (filesToRedetect) {
+            if (filesToRedetect.addAll(files)) {
+              awakeReDetectExecutor();
+            }
           }
         }
       }
@@ -351,20 +352,23 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   private final BoundedTaskExecutor reDetectExecutor = new BoundedTaskExecutor("FileTypeManager redetect pool", PooledThreadExecutor.INSTANCE, 1, this);
-  private final BlockingQueue<VirtualFile> filesToRedetect = new LinkedBlockingDeque<>();
+  private final HashSetQueue<VirtualFile> filesToRedetect = new HashSetQueue<>();
 
+  private static final int CHUNK_SIZE = 10;
   private void awakeReDetectExecutor() {
-    reDetectExecutor.submit(new Runnable() {
-      private static final int CHUNK = 10;
-      @Override
-      public void run() {
-        List<VirtualFile> files = new ArrayList<>();
-        int drained = filesToRedetect.drainTo(files, CHUNK);
-        reDetect(files);
-        if (drained == CHUNK) {
-          awakeReDetectExecutor();
+    reDetectExecutor.submit(() -> {
+      List<VirtualFile> files = new ArrayList<>(CHUNK_SIZE);
+      synchronized (filesToRedetect) {
+        for (int i = 0; i < CHUNK_SIZE; i++) {
+          VirtualFile file = filesToRedetect.poll();
+          if (file == null) break;
+          files.add(file);
         }
       }
+      if (files.size() == CHUNK_SIZE) {
+        awakeReDetectExecutor();
+      }
+      reDetect(files);
     });
   }
 
@@ -381,7 +385,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   @TestOnly
   @NotNull
   Collection<VirtualFile> dumpReDetectQueue() {
-    return new ArrayList<>(filesToRedetect);
+    synchronized (filesToRedetect) {
+      return new ArrayList<>(filesToRedetect);
+    }
   }
 
   @TestOnly
@@ -501,6 +507,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     return getFileTypeByFileName((CharSequence)fileName);
   }
 
+  @Override
   @NotNull
   public FileType getFileTypeByFileName(@NotNull CharSequence fileName) {
     FileType type = myPatternsTable.findAssociatedFileType(fileName);
@@ -765,80 +772,77 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     return file.getFileSystem() instanceof FileSystemInterface;
   }
 
-  private boolean processFirstBytes(@NotNull final InputStream stream, final int length, @NotNull Processor<ByteSequence> processor) throws IOException {
+  /**
+   * Read first {@code firstChunkLength} bytes from the {@code stream} to pass them to the {@code processor}.
+   * {@code processor} may later request all the bytes from the stream by calling {@code Getter<ByteSequence>.get()}
+   */
+  private void processFirstBytes(@NotNull InputStream stream, int fileLength, int firstChunkLength, @NotNull PairConsumer<ByteSequence, Getter<ByteSequence>> processor) throws IOException {
     final byte[] bytes = FileUtilRt.getThreadLocalBuffer();
-    assert bytes.length >= length : "Cannot process more than " + bytes.length + " in one call, requested:" + length;
+    assert bytes.length >= firstChunkLength : "Cannot process more than " + bytes.length + " in one call, requested:" + firstChunkLength;
 
-    int n = stream.read(bytes, 0, length);
+    int n = readSafely(stream, bytes, 0, firstChunkLength);
+    if (n<=0) return;
+
+    ByteSequence firstChunk = new ByteSequence(bytes, 0, n);
+
+    processor.consume(firstChunk, ()->{
+      if (fileLength <= n) {
+        // the file is small, fit into the first chunk
+        return firstChunk;
+      }
+      byte[] buffer = bytes.length >= fileLength ? bytes : ArrayUtil.realloc(bytes, fileLength);
+      int read;
+      try {
+        read = readSafely(stream, buffer, n, fileLength - n);
+      }
+      catch (IOException e) {
+        return null;
+      }
+      if (read <= 0) return null;
+      return new ByteSequence(buffer, 0, n+read);
+    });
+  }
+
+  private int readSafely(InputStream stream, byte[] buffer, int offset, int length) throws IOException {
+    int n = stream.read(buffer, offset, length);
     if (n <= 0) {
       // maybe locked because someone else is writing to it
       // repeat inside read action to guarantee all writes are finished
       if (toLog()) {
         log("F: processFirstBytes(): inputStream.read() returned "+n+"; retrying with read action. stream="+ streamInfo(stream));
       }
-      n = ApplicationManager.getApplication().runReadAction((ThrowableComputable<Integer, IOException>)() -> stream.read(bytes, 0, length));
+      n = ApplicationManager.getApplication().runReadAction((ThrowableComputable<Integer, IOException>)() -> stream.read(buffer, offset, length));
       if (toLog()) {
         log("F: processFirstBytes(): under read action inputStream.read() returned "+n+"; stream="+ streamInfo(stream));
       }
-      if (n <= 0) {
-        return false;
-      }
     }
-
-    return processor.process(new ByteSequence(bytes, 0, n));
+    return n;
   }
 
   @NotNull
   private FileType detectFromContentAndCache(@NotNull final VirtualFile file) throws IOException {
     long start = System.currentTimeMillis();
     Ref<FileType> result = new Ref<>(UnknownFileType.INSTANCE);
-    boolean r = false;
     InputStream inputStream = ((FileSystemInterface)file.getFileSystem()).getInputStream(file);
     try {
       if (toLog()) {
         log("F: detectFromContentAndCache(" + file.getName() + "):" + " inputStream=" + streamInfo(inputStream));
       }
 
-      r = processFirstBytes(inputStream, DETECT_BUFFER_SIZE, byteSequence -> {
-        // use PlainTextFileType because it doesn't supply its own charset detector
-        // help set charset in the process to avoid double charset detection from content
-        LoadTextUtil.processTextFromBinaryPresentationOrNull(byteSequence.getBytes(),
-                                                             byteSequence.getOffset(), byteSequence.getOffset()+byteSequence.getLength(),
-                                                             file, true, true,
-                                                             PlainTextFileType.INSTANCE, (@Nullable CharSequence text) -> {
-            FileTypeDetector[] detectors = Extensions.getExtensions(FileTypeDetector.EP_NAME);
-            if (toLog()) {
-              log("F: detectFromContentAndCache.processFirstBytes(" + file.getName() + "): byteSequence.length=" + byteSequence.getLength() +
-                  "; isText=" + (text != null) + "; text='" + (text == null ? null : StringUtil.first(text, 100, true)) + "'" +
-                  ", detectors=" + Arrays.toString(detectors));
-            }
-            FileType detected = null;
-            for (FileTypeDetector detector : detectors) {
-              try {
-                detected = detector.detect(file, byteSequence, text);
-              }
-              catch (Exception e) {
-                LOG.error("Detector " + detector + " (" + detector.getClass() + ") exception occurred:", e);
-              }
-              if (detected != null) {
-                if (toLog()) {
-                  log("F: detectFromContentAndCache.processFirstBytes(" + file.getName() + "): detector " + detector + " type as " + detected.getName());
-                }
-                break;
-              }
-            }
-
-            if (detected == null) {
-              detected = text == null ? UnknownFileType.INSTANCE : PlainTextFileType.INSTANCE;
-              if (toLog()) {
-                log("F: detectFromContentAndCache.processFirstBytes(" + file.getName() + "): " +
-                    "no detector was able to detect. assigned " + detected.getName());
-              }
-            }
-            result.set(detected);
-          });
-
-        return true;
+      processFirstBytes(inputStream, (int)file.getLength(), DETECT_BUFFER_SIZE, (firstChunk,entireFileBytesGetter) -> {
+        detect(file, result, firstChunk);
+        if (result.get() == UnknownFileType.INSTANCE) {
+          // detected as binary
+          return;
+        }
+        int firstChunkLength = firstChunk.getLength();
+        // It seems the file is text but the problem is we might have detected its charset wrong
+        // The first DETECT_BUFFER_SIZE bytes might have been not enough to e.g. encounter some specific UTF-8 byte sequences
+        // Need to scan all the file text
+        ByteSequence entireFile = entireFileBytesGetter.get();
+        if (entireFile != null && entireFile.getLength() != firstChunkLength) {
+          detect(file, result, entireFile);
+        }
       });
     }
     finally {
@@ -848,7 +852,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
             byte[] buffer = new byte[50];
             int n = newStream.read(buffer, 0, buffer.length);
             log("F: detectFromContentAndCache(" + file.getName() + "): result: " + result.get().getName() +
-                "; processor ret: " + r +
                 "; stream: " + streamInfo(inputStream) +
                 "; newStream: " + streamInfo(newStream) +
                 "; read: " + n +
@@ -872,6 +875,46 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     elapsedAutoDetect.addAndGet(elapsed);
 
     return fileType;
+  }
+
+  private void detect(@NotNull VirtualFile file, Ref<FileType> result, ByteSequence byteSequence) {
+    // use PlainTextFileType because it doesn't supply its own charset detector
+    // help set charset in the process to avoid double charset detection from content
+    LoadTextUtil.processTextFromBinaryPresentationOrNull(byteSequence.getBytes(),
+                                                         byteSequence.getOffset(), byteSequence.getOffset()+byteSequence.getLength(),
+                                                         file, true, true,
+                                                         PlainTextFileType.INSTANCE, (@Nullable CharSequence text) -> {
+        FileTypeDetector[] detectors = Extensions.getExtensions(FileTypeDetector.EP_NAME);
+        if (toLog()) {
+          log("F: detectFromContentAndCache.processFirstBytes(" + file.getName() + "): byteSequence.length=" + byteSequence.getLength() +
+              "; isText=" + (text != null) + "; text='" + (text == null ? null : StringUtil.first(text, 100, true)) + "'" +
+              ", detectors=" + Arrays.toString(detectors));
+        }
+        FileType detected = null;
+        for (FileTypeDetector detector : detectors) {
+          try {
+            detected = detector.detect(file, byteSequence, text);
+          }
+          catch (Exception e) {
+            LOG.error("Detector " + detector + " (" + detector.getClass() + ") exception occurred:", e);
+          }
+          if (detected != null) {
+            if (toLog()) {
+              log("F: detectFromContentAndCache.processFirstBytes(" + file.getName() + "): detector " + detector + " type as " + detected.getName());
+            }
+            break;
+          }
+        }
+
+        if (detected == null) {
+          detected = text == null ? UnknownFileType.INSTANCE : PlainTextFileType.INSTANCE;
+          if (toLog()) {
+            log("F: detectFromContentAndCache.processFirstBytes(" + file.getName() + "): " +
+                "no detector was able to detect. assigned " + detected.getName());
+          }
+        }
+        result.set(detected);
+      });
   }
 
   // for diagnostics
@@ -1297,7 +1340,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     }
 
     StringTokenizer tokenizer = new StringTokenizer(semicolonDelimited, FileTypeConsumer.EXTENSION_DELIMITER, false);
-    ArrayList<FileNameMatcher> list = new ArrayList<>();
+    ArrayList<FileNameMatcher> list = new ArrayList<>(semicolonDelimited.length() / "py;".length());
     while (tokenizer.hasMoreTokens()) {
       list.add(new ExtensionFileNameMatcher(tokenizer.nextToken().trim()));
     }
