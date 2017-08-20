@@ -39,6 +39,8 @@ import com.intellij.openapi.vcs.FileStatusListener
 import com.intellij.openapi.vcs.FileStatusManager
 import com.intellij.openapi.vcs.VcsApplicationSettings
 import com.intellij.openapi.vcs.ex.LineStatusTracker
+import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker
+import com.intellij.openapi.vcs.ex.SimpleLocalLineStatusTracker
 import com.intellij.openapi.vcs.history.VcsRevisionNumber
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileListener
@@ -48,6 +50,7 @@ import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.GuiUtils
 import com.intellij.util.concurrency.QueueProcessorRemovePartner
 import com.intellij.util.containers.HashMap
+import com.intellij.vcsUtil.VcsUtil
 import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.annotations.NonNls
 import java.nio.charset.Charset
@@ -221,6 +224,13 @@ class LineStatusTrackerManager(
     return true
   }
 
+  private fun arePartialChangelistsEnabled(virtualFile: VirtualFile): Boolean {
+    if (getTrackingMode() == LineStatusTracker.Mode.SILENT) return false
+
+    val vcs = VcsUtil.getVcsFor(project, virtualFile)
+    return vcs != null && vcs.arePartialChangelistsSupported()
+  }
+
   @CalledInAwt
   private fun installTracker(virtualFile: VirtualFile, document: Document) {
     if (!canGetBaseRevisionFor(virtualFile)) return
@@ -229,7 +239,12 @@ class LineStatusTrackerManager(
       if (isDisposed) return
       if (trackers[document] != null) return
 
-      val tracker = LineStatusTracker.createOn(virtualFile, document, project, getTrackingMode())
+      val tracker = if (arePartialChangelistsEnabled(virtualFile)) {
+        PartialLocalLineStatusTracker.createTracker(project, document, virtualFile, getTrackingMode())
+      }
+      else {
+        SimpleLocalLineStatusTracker.createTracker(project, document, virtualFile, getTrackingMode())
+      }
 
       trackers.put(document, TrackerData(tracker))
 
