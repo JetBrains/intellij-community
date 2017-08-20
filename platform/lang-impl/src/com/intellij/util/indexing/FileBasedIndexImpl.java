@@ -399,7 +399,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         if (PersistentFSImpl.indexer) {
           finalStorage = new IndexerIndexStorage<>(mem, name, extension.getKeyDescriptor(), extension.getValueExternalizer());
         } else {
-          finalStorage = mem;
+          finalStorage = new ClientIndexStorage<>(mem, name, extension.getKeyDescriptor(), extension.getValueExternalizer());
         }
         state.registerIndex(name,
                             createIndex(extension, finalStorage),

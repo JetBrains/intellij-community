@@ -145,9 +145,8 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponentAdap
         );
 
         final MemoryIndexStorage<K, StubIdList> memStorage = new MemoryIndexStorage<>(storage, indexKey);
-        IndexStorage<K, StubIdList> finalStorage = PersistentFSImpl.indexer ? new IndexerIndexStorage<>(memStorage, indexKey, extension.getKeyDescriptor(),
-                                                                                                        StubIdExternalizer.INSTANCE)
-                                                             : memStorage;
+        IndexStorage<K, StubIdList> finalStorage = PersistentFSImpl.indexer ? new IndexerIndexStorage<>(memStorage, indexKey, extension.getKeyDescriptor(), StubIdExternalizer.INSTANCE)
+                                                             : new ClientIndexStorage<>(memStorage, indexKey, extension.getKeyDescriptor(), StubIdExternalizer.INSTANCE);
         MyIndex<K> index = new MyIndex<>(new IndexExtension<K, StubIdList, Void>() {
           @NotNull
           @Override

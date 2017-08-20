@@ -92,7 +92,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     LowMemoryWatcher.register(this::clearIdCache, this);
   }
 
-  public static boolean indexer = true;
+  public static boolean indexer = false;
 
   @Override
   public void initComponent() {
@@ -104,7 +104,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
       assert !once.get();
       once.set(true);
 
-      if (indexer) {
+      if (indexer || true) {
         return new FSRecords(new File(FSRecords.getCachesDir()));
       } else {
         FSRecords sourceRecords = new FSRecords(new File(FSRecords.getCachesDir()));

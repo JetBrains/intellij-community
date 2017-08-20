@@ -41,7 +41,7 @@ import java.util.List;
  * @author Eugene Zhuravlev
  *         Date: Dec 20, 2007
  */
-class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implements Cloneable{
+public class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implements Cloneable{
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.impl.ValueContainerImpl");
   private final static Object myNullValue = new Object();
 

@@ -19,6 +19,7 @@ package com.intellij.util.indexing.impl;
 import com.intellij.util.indexing.ValueContainer;
 import com.intellij.util.io.DataExternalizer;
 
+import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
