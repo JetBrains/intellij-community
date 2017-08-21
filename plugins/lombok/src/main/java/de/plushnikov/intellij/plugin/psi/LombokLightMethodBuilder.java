@@ -23,7 +23,6 @@ import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.impl.light.LightModifierList;
 import com.intellij.psi.impl.light.LightTypeParameterListBuilder;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.StringBuilderSpinAllocator;
 import de.plushnikov.intellij.plugin.icon.LombokIcons;
 import de.plushnikov.intellij.plugin.util.ReflectionUtil;
 import org.jetbrains.annotations.NonNls;
@@ -162,48 +161,40 @@ public class LombokLightMethodBuilder extends LightMethodBuilder {
   }
 
   private String getAllModifierProperties(LightModifierList modifierList) {
-    final StringBuilder builder = StringBuilderSpinAllocator.alloc();
-    try {
-      for (String modifier : modifierList.getModifiers()) {
-        if (!PsiModifier.PACKAGE_LOCAL.equals(modifier)) {
-          builder.append(modifier).append(' ');
-        }
+    final StringBuilder builder = new StringBuilder();
+    for (String modifier : modifierList.getModifiers()) {
+      if (!PsiModifier.PACKAGE_LOCAL.equals(modifier)) {
+        builder.append(modifier).append(' ');
       }
-      return builder.toString();
-    } finally {
-      StringBuilderSpinAllocator.dispose(builder);
     }
+    return builder.toString();
   }
 
   private PsiMethod rebuildMethodFromString() {
-    final StringBuilder methodTextDeclaration = StringBuilderSpinAllocator.alloc();
-    try {
-      methodTextDeclaration.append(getAllModifierProperties((LightModifierList) getModifierList()));
-      PsiType returnType = getReturnType();
-      if (null != returnType) {
-        methodTextDeclaration.append(returnType.getCanonicalText()).append(' ');
-      }
-      methodTextDeclaration.append(getName());
-      methodTextDeclaration.append('(');
-      if (getParameterList().getParametersCount() > 0) {
-        for (PsiParameter parameter : getParameterList().getParameters()) {
-          methodTextDeclaration.append(parameter.getType().getCanonicalText()).append(' ').append(parameter.getName()).append(',');
-        }
-        methodTextDeclaration.deleteCharAt(methodTextDeclaration.length() - 1);
-      }
-      methodTextDeclaration.append(')');
-      methodTextDeclaration.append('{').append("  ").append('}');
-
-      final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(getManager().getProject());
-
-      final PsiMethod methodFromText = elementFactory.createMethodFromText(methodTextDeclaration.toString(), getContainingClass());
-      if (null != getBody()) {
-        methodFromText.getBody().replace(getBody());
-      }
-      return methodFromText;
-    } finally {
-      StringBuilderSpinAllocator.dispose(methodTextDeclaration);
+    final StringBuilder methodTextDeclaration = new StringBuilder();
+    methodTextDeclaration.append(getAllModifierProperties((LightModifierList) getModifierList()));
+    PsiType returnType = getReturnType();
+    if (null != returnType) {
+      methodTextDeclaration.append(returnType.getCanonicalText()).append(' ');
     }
+    methodTextDeclaration.append(getName());
+    methodTextDeclaration.append('(');
+    if (getParameterList().getParametersCount() > 0) {
+      for (PsiParameter parameter : getParameterList().getParameters()) {
+        methodTextDeclaration.append(parameter.getType().getCanonicalText()).append(' ').append(parameter.getName()).append(',');
+      }
+      methodTextDeclaration.deleteCharAt(methodTextDeclaration.length() - 1);
+    }
+    methodTextDeclaration.append(')');
+    methodTextDeclaration.append('{').append("  ").append('}');
+
+    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(getManager().getProject());
+
+    final PsiMethod methodFromText = elementFactory.createMethodFromText(methodTextDeclaration.toString(), getContainingClass());
+    if (null != getBody()) {
+      methodFromText.getBody().replace(getBody());
+    }
+    return methodFromText;
   }
 
   public PsiElement copy() {

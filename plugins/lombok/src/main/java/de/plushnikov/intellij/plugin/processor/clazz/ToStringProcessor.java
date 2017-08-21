@@ -12,7 +12,6 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.StringBuilderSpinAllocator;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigKey;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
@@ -144,46 +143,42 @@ public class ToStringProcessor extends AbstractClassProcessor {
     final boolean doNotUseGetters = readAnnotationOrConfigProperty(psiAnnotation, psiClass, "doNotUseGetters", ConfigKey.TOSTRING_DO_NOT_USE_GETTERS);
     final boolean includeFieldNames = readAnnotationOrConfigProperty(psiAnnotation, psiClass, "includeFieldNames", ConfigKey.TOSTRING_INCLUDE_FIELD_NAMES);
 
-    final StringBuilder paramString = StringBuilderSpinAllocator.alloc();
-    try {
-      if (callSuper) {
-        paramString.append("super=\" + super.toString() + \", ");
-      }
-
-      for (PsiField classField : psiFields) {
-        final String fieldName = classField.getName();
-
-        if (includeFieldNames) {
-          paramString.append(fieldName).append('=');
-        }
-        paramString.append("\"+");
-
-        final PsiType classFieldType = classField.getType();
-        if (classFieldType instanceof PsiArrayType) {
-          final PsiType componentType = ((PsiArrayType) classFieldType).getComponentType();
-          if (componentType instanceof PsiPrimitiveType) {
-            paramString.append("java.util.Arrays.toString(");
-          } else {
-            paramString.append("java.util.Arrays.deepToString(");
-          }
-        }
-
-        final String fieldAccessor = buildAttributeNameString(doNotUseGetters, classField, psiClass);
-        paramString.append("this.").append(fieldAccessor);
-
-        if (classFieldType instanceof PsiArrayType) {
-          paramString.append(")");
-        }
-
-        paramString.append("+\", ");
-      }
-      if (paramString.length() > 2) {
-        paramString.delete(paramString.length() - 2, paramString.length());
-      }
-      return paramString.toString();
-    } finally {
-      StringBuilderSpinAllocator.dispose(paramString);
+    final StringBuilder paramString = new StringBuilder();
+    if (callSuper) {
+      paramString.append("super=\" + super.toString() + \", ");
     }
+
+    for (PsiField classField : psiFields) {
+      final String fieldName = classField.getName();
+
+      if (includeFieldNames) {
+        paramString.append(fieldName).append('=');
+      }
+      paramString.append("\"+");
+
+      final PsiType classFieldType = classField.getType();
+      if (classFieldType instanceof PsiArrayType) {
+        final PsiType componentType = ((PsiArrayType) classFieldType).getComponentType();
+        if (componentType instanceof PsiPrimitiveType) {
+          paramString.append("java.util.Arrays.toString(");
+        } else {
+          paramString.append("java.util.Arrays.deepToString(");
+        }
+      }
+
+      final String fieldAccessor = buildAttributeNameString(doNotUseGetters, classField, psiClass);
+      paramString.append("this.").append(fieldAccessor);
+
+      if (classFieldType instanceof PsiArrayType) {
+        paramString.append(")");
+      }
+
+      paramString.append("+\", ");
+    }
+    if (paramString.length() > 2) {
+      paramString.delete(paramString.length() - 2, paramString.length());
+    }
+    return paramString.toString();
   }
 
   @Override

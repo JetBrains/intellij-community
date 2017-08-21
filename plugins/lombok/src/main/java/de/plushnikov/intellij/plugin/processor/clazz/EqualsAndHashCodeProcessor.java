@@ -14,7 +14,6 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.StringBuilderSpinAllocator;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigKey;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
@@ -250,53 +249,50 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
 
     final String psiClassName = psiClass.getName();
 
-    final StringBuilder builder = StringBuilderSpinAllocator.alloc();
-    try {
-      builder.append("if (o == this) return true;\n");
-      builder.append("if (!(o instanceof ").append(psiClassName).append(")) return false;\n");
-      builder.append("final ").append(psiClassName).append(" other = (").append(psiClassName).append(")o;\n");
+    final StringBuilder builder = new StringBuilder();
 
-      if (hasCanEqualMethod) {
-        builder.append("if (!other.canEqual((java.lang.Object)this)) return false;\n");
-      }
-      if (callSuper) {
-        builder.append("if (!super.equals(o)) return false;\n");
-      }
+    builder.append("if (o == this) return true;\n");
+    builder.append("if (!(o instanceof ").append(psiClassName).append(")) return false;\n");
+    builder.append("final ").append(psiClassName).append(" other = (").append(psiClassName).append(")o;\n");
 
-      final Collection<PsiField> psiFields = filterFields(psiClass, psiAnnotation, true);
-      for (PsiField classField : psiFields) {
-        final String fieldName = classField.getName();
-
-        final String fieldAccessor = buildAttributeNameString(doNotUseGetters, classField, psiClass);
-
-        final PsiType classFieldType = classField.getType();
-        if (classFieldType instanceof PsiPrimitiveType) {
-          if (PsiType.FLOAT.equals(classFieldType)) {
-            builder.append("if (java.lang.Float.compare(this.").append(fieldAccessor).append(", other.").append(fieldAccessor).append(") != 0) return false;\n");
-          } else if (PsiType.DOUBLE.equals(classFieldType)) {
-            builder.append("if (java.lang.Double.compare(this.").append(fieldAccessor).append(", other.").append(fieldAccessor).append(") != 0) return false;\n");
-          } else {
-            builder.append("if (this.").append(fieldAccessor).append(" != other.").append(fieldAccessor).append(") return false;\n");
-          }
-        } else if (classFieldType instanceof PsiArrayType) {
-          final PsiType componentType = ((PsiArrayType) classFieldType).getComponentType();
-          if (componentType instanceof PsiPrimitiveType) {
-            builder.append("if (!java.util.Arrays.equals(this.").append(fieldAccessor).append(", other.").append(fieldAccessor).append(")) return false;\n");
-          } else {
-            builder.append("if (!java.util.Arrays.deepEquals(this.").append(fieldAccessor).append(", other.").append(fieldAccessor).append(")) return false;\n");
-          }
-        } else {
-          builder.append("final java.lang.Object this$").append(fieldName).append(" = this.").append(fieldAccessor).append(";\n");
-          builder.append("final java.lang.Object other$").append(fieldName).append(" = other.").append(fieldAccessor).append(";\n");
-          builder.append("if (this$").append(fieldName).append(" == null ? other$").append(fieldName).append(" != null : !this$")
-            .append(fieldName).append(".equals(other$").append(fieldName).append(")) return false;\n");
-        }
-      }
-      builder.append("return true;\n");
-      return builder.toString();
-    } finally {
-      StringBuilderSpinAllocator.dispose(builder);
+    if (hasCanEqualMethod) {
+      builder.append("if (!other.canEqual((java.lang.Object)this)) return false;\n");
     }
+    if (callSuper) {
+      builder.append("if (!super.equals(o)) return false;\n");
+    }
+
+    final Collection<PsiField> psiFields = filterFields(psiClass, psiAnnotation, true);
+    for (PsiField classField : psiFields) {
+      final String fieldName = classField.getName();
+
+      final String fieldAccessor = buildAttributeNameString(doNotUseGetters, classField, psiClass);
+
+      final PsiType classFieldType = classField.getType();
+      if (classFieldType instanceof PsiPrimitiveType) {
+        if (PsiType.FLOAT.equals(classFieldType)) {
+          builder.append("if (java.lang.Float.compare(this.").append(fieldAccessor).append(", other.").append(fieldAccessor).append(") != 0) return false;\n");
+        } else if (PsiType.DOUBLE.equals(classFieldType)) {
+          builder.append("if (java.lang.Double.compare(this.").append(fieldAccessor).append(", other.").append(fieldAccessor).append(") != 0) return false;\n");
+        } else {
+          builder.append("if (this.").append(fieldAccessor).append(" != other.").append(fieldAccessor).append(") return false;\n");
+        }
+      } else if (classFieldType instanceof PsiArrayType) {
+        final PsiType componentType = ((PsiArrayType) classFieldType).getComponentType();
+        if (componentType instanceof PsiPrimitiveType) {
+          builder.append("if (!java.util.Arrays.equals(this.").append(fieldAccessor).append(", other.").append(fieldAccessor).append(")) return false;\n");
+        } else {
+          builder.append("if (!java.util.Arrays.deepEquals(this.").append(fieldAccessor).append(", other.").append(fieldAccessor).append(")) return false;\n");
+        }
+      } else {
+        builder.append("final java.lang.Object this$").append(fieldName).append(" = this.").append(fieldAccessor).append(";\n");
+        builder.append("final java.lang.Object other$").append(fieldName).append(" = other.").append(fieldAccessor).append(";\n");
+        builder.append("if (this$").append(fieldName).append(" == null ? other$").append(fieldName).append(" != null : !this$")
+          .append(fieldName).append(".equals(other$").append(fieldName).append(")) return false;\n");
+      }
+    }
+    builder.append("return true;\n");
+    return builder.toString();
   }
 
   private static final int PRIME_FOR_HASHCODE = 59;
@@ -307,57 +303,53 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
     final boolean callSuper = readCallSuperAnnotationOrConfigProperty(psiAnnotation, psiClass);
     final boolean doNotUseGetters = readAnnotationOrConfigProperty(psiAnnotation, psiClass, "doNotUseGetters", ConfigKey.EQUALSANDHASHCODE_DO_NOT_USE_GETTERS);
 
-    final StringBuilder builder = StringBuilderSpinAllocator.alloc();
-    try {
+    final StringBuilder builder = new StringBuilder();
 
-      final Collection<PsiField> psiFields = filterFields(psiClass, psiAnnotation, true);
+    final Collection<PsiField> psiFields = filterFields(psiClass, psiAnnotation, true);
 
-      if (!psiFields.isEmpty() || callSuper) {
-        builder.append("final int PRIME = ").append(PRIME_FOR_HASHCODE).append(";\n");
-      }
-      builder.append("int result = 1;\n");
-
-      if (callSuper) {
-        builder.append("result = result * PRIME + super.hashCode();\n");
-      }
-
-      for (PsiField classField : psiFields) {
-        final String fieldName = classField.getName();
-
-        final String fieldAccessor = buildAttributeNameString(doNotUseGetters, classField, psiClass);
-
-        final PsiType classFieldType = classField.getType();
-        if (classFieldType instanceof PsiPrimitiveType) {
-          if (PsiType.BOOLEAN.equals(classFieldType)) {
-            builder.append("result = result * PRIME + (this.").append(fieldAccessor).append(" ? ").append(PRIME_FOR_TRUE).append(" : ").append(PRIME_FOR_FALSE).append(");\n");
-          } else if (PsiType.LONG.equals(classFieldType)) {
-            builder.append("final long $").append(fieldName).append(" = this.").append(fieldAccessor).append(";\n");
-            builder.append("result = result * PRIME + (int)($").append(fieldName).append(" >>> 32 ^ $").append(fieldName).append(");\n");
-          } else if (PsiType.FLOAT.equals(classFieldType)) {
-            builder.append("result = result * PRIME + java.lang.Float.floatToIntBits(this.").append(fieldAccessor).append(");\n");
-          } else if (PsiType.DOUBLE.equals(classFieldType)) {
-            builder.append("final long $").append(fieldName).append(" = java.lang.Double.doubleToLongBits(this.").append(fieldAccessor).append(");\n");
-            builder.append("result = result * PRIME + (int)($").append(fieldName).append(" >>> 32 ^ $").append(fieldName).append(");\n");
-          } else {
-            builder.append("result = result * PRIME + this.").append(fieldAccessor).append(";\n");
-          }
-        } else if (classFieldType instanceof PsiArrayType) {
-          final PsiType componentType = ((PsiArrayType) classFieldType).getComponentType();
-          if (componentType instanceof PsiPrimitiveType) {
-            builder.append("result = result * PRIME + java.util.Arrays.hashCode(this.").append(fieldAccessor).append(");\n");
-          } else {
-            builder.append("result = result * PRIME + java.util.Arrays.deepHashCode(this.").append(fieldAccessor).append(");\n");
-          }
-        } else {
-          builder.append("final java.lang.Object $").append(fieldName).append(" = this.").append(fieldAccessor).append(";\n");
-          builder.append("result = result * PRIME + ($").append(fieldName).append(" == null ? 43 : $").append(fieldName).append(".hashCode());\n");
-        }
-      }
-      builder.append("return result;\n");
-      return builder.toString();
-    } finally {
-      StringBuilderSpinAllocator.dispose(builder);
+    if (!psiFields.isEmpty() || callSuper) {
+      builder.append("final int PRIME = ").append(PRIME_FOR_HASHCODE).append(";\n");
     }
+    builder.append("int result = 1;\n");
+
+    if (callSuper) {
+      builder.append("result = result * PRIME + super.hashCode();\n");
+    }
+
+    for (PsiField classField : psiFields) {
+      final String fieldName = classField.getName();
+
+      final String fieldAccessor = buildAttributeNameString(doNotUseGetters, classField, psiClass);
+
+      final PsiType classFieldType = classField.getType();
+      if (classFieldType instanceof PsiPrimitiveType) {
+        if (PsiType.BOOLEAN.equals(classFieldType)) {
+          builder.append("result = result * PRIME + (this.").append(fieldAccessor).append(" ? ").append(PRIME_FOR_TRUE).append(" : ").append(PRIME_FOR_FALSE).append(");\n");
+        } else if (PsiType.LONG.equals(classFieldType)) {
+          builder.append("final long $").append(fieldName).append(" = this.").append(fieldAccessor).append(";\n");
+          builder.append("result = result * PRIME + (int)($").append(fieldName).append(" >>> 32 ^ $").append(fieldName).append(");\n");
+        } else if (PsiType.FLOAT.equals(classFieldType)) {
+          builder.append("result = result * PRIME + java.lang.Float.floatToIntBits(this.").append(fieldAccessor).append(");\n");
+        } else if (PsiType.DOUBLE.equals(classFieldType)) {
+          builder.append("final long $").append(fieldName).append(" = java.lang.Double.doubleToLongBits(this.").append(fieldAccessor).append(");\n");
+          builder.append("result = result * PRIME + (int)($").append(fieldName).append(" >>> 32 ^ $").append(fieldName).append(");\n");
+        } else {
+          builder.append("result = result * PRIME + this.").append(fieldAccessor).append(";\n");
+        }
+      } else if (classFieldType instanceof PsiArrayType) {
+        final PsiType componentType = ((PsiArrayType) classFieldType).getComponentType();
+        if (componentType instanceof PsiPrimitiveType) {
+          builder.append("result = result * PRIME + java.util.Arrays.hashCode(this.").append(fieldAccessor).append(");\n");
+        } else {
+          builder.append("result = result * PRIME + java.util.Arrays.deepHashCode(this.").append(fieldAccessor).append(");\n");
+        }
+      } else {
+        builder.append("final java.lang.Object $").append(fieldName).append(" = this.").append(fieldAccessor).append(";\n");
+        builder.append("result = result * PRIME + ($").append(fieldName).append(" == null ? 43 : $").append(fieldName).append(".hashCode());\n");
+      }
+    }
+    builder.append("return result;\n");
+    return builder.toString();
   }
 
   private boolean readCallSuperAnnotationOrConfigProperty(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass) {

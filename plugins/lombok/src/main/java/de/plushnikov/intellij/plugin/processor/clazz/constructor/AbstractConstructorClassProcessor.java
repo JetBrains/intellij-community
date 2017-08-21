@@ -20,7 +20,6 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.impl.light.LightTypeParameterBuilder;
 import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.util.StringBuilderSpinAllocator;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigKey;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.clazz.AbstractClassProcessor;
@@ -359,17 +358,13 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
   }
 
   private String joinParameters(PsiParameterList parameterList) {
-    final StringBuilder builder = StringBuilderSpinAllocator.alloc();
-    try {
-      for (PsiParameter psiParameter : parameterList.getParameters()) {
-        builder.append(psiParameter.getName()).append(',');
-      }
-      if (parameterList.getParameters().length > 0) {
-        builder.deleteCharAt(builder.length() - 1);
-      }
-      return builder.toString();
-    } finally {
-      StringBuilderSpinAllocator.dispose(builder);
+    final StringBuilder builder = new StringBuilder();
+    for (PsiParameter psiParameter : parameterList.getParameters()) {
+      builder.append(psiParameter.getName()).append(',');
     }
+    if (parameterList.getParameters().length > 0) {
+      builder.deleteCharAt(builder.length() - 1);
+    }
+    return builder.toString();
   }
 }

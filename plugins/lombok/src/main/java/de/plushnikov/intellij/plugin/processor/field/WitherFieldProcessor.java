@@ -10,7 +10,6 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiType;
-import com.intellij.util.StringBuilderSpinAllocator;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.processor.clazz.constructor.RequiredArgsConstructorProcessor;
@@ -221,25 +220,21 @@ public class WitherFieldProcessor extends AbstractFieldProcessor {
   }
 
   private String getConstructorCall(@NotNull PsiField psiField, @NotNull PsiClass psiClass) {
-    final StringBuilder paramString = StringBuilderSpinAllocator.alloc();
-    try {
-      final Collection<PsiField> psiFields = filterFields(psiClass);
-      for (PsiField classField : psiFields) {
-        final String classFieldName = classField.getName();
-        if (classField.equals(psiField)) {
-          paramString.append(classFieldName);
-        } else {
-          paramString.append("this.").append(classFieldName);
-        }
-        paramString.append(',');
+    final StringBuilder paramString = new StringBuilder();
+    final Collection<PsiField> psiFields = filterFields(psiClass);
+    for (PsiField classField : psiFields) {
+      final String classFieldName = classField.getName();
+      if (classField.equals(psiField)) {
+        paramString.append(classFieldName);
+      } else {
+        paramString.append("this.").append(classFieldName);
       }
-      if (paramString.length() > 1) {
-        paramString.deleteCharAt(paramString.length() - 1);
-      }
-      return paramString.toString();
-    } finally {
-      StringBuilderSpinAllocator.dispose(paramString);
+      paramString.append(',');
     }
+    if (paramString.length() > 1) {
+      paramString.deleteCharAt(paramString.length() - 1);
+    }
+    return paramString.toString();
   }
 
   @Override
