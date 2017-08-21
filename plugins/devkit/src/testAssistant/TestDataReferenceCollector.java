@@ -17,6 +17,7 @@ package org.jetbrains.idea.devkit.testAssistant;
 
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NullableComputable;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -70,7 +71,7 @@ public class TestDataReferenceCollector {
   @NotNull
   private List<String> collectTestDataReferences(final PsiMethod method,
                                                  final Map<String, Computable<UValue>> argumentMap,
-                                                 final HashSet<PsiMethod> proceed) {
+                                                 final HashSet<Pair<PsiMethod, Set<UExpression>>> proceed) {
     final List<String> result = new ArrayList<>();
     if (myTestDataPath == null) {
       return result;
@@ -94,7 +95,8 @@ public class TestDataReferenceCollector {
             }
           }
         }
-        if (callee != null && proceed.add(callee)) {
+        Pair<PsiMethod, Set<UExpression>> methodWithArguments = new Pair<>(callee, new HashSet<>(expression.getValueArguments()));
+        if (callee != null && proceed.add(methodWithArguments)) {
           boolean haveAnnotatedParameters = false;
           final PsiParameter[] psiParameters = callee.getParameterList().getParameters();
           for (int i = 0, psiParametersLength = psiParameters.length; i < psiParametersLength; i++) {
