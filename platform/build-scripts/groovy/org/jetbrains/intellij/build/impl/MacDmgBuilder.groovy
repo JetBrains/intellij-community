@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,8 +43,7 @@ class MacDmgBuilder {
     this.remoteDir = remoteDir
   }
 
-  static void signBinaryFiles(BuildContext buildContext, MacDistributionCustomizer customizer, MacHostProperties macHostProperties,
-                                     String macDistPath) {
+  static void signBinaryFiles(BuildContext buildContext, MacDistributionCustomizer customizer, MacHostProperties macHostProperties, String macDistPath) {
     def dmgBuilder = createInstance(buildContext, customizer, macHostProperties)
     dmgBuilder.doSignBinaryFiles(macDistPath)
   }
@@ -56,7 +55,7 @@ class MacDmgBuilder {
       dmgBuilder.doSignAndBuildDmg(macZipPath, jreArchivePath)
     }
     else {
-      buildContext.messages.info("Skipping building Mac OS distribution with bundled JRE because JRE archive is missing")
+      buildContext.messages.info("Skipping building macOS distribution with bundled JRE because JRE archive is missing")
     }
     if (buildContext.options.buildDmgWithoutBundledJre) {
       dmgBuilder.doSignAndBuildDmg(macZipPath, null)
