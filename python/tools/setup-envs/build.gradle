@@ -17,7 +17,7 @@
 import org.apache.tools.ant.taskdefs.condition.Os
 
 plugins {
-  id "com.jetbrains.python.envs" version "0.0.17"
+  id "com.jetbrains.python.envs" version "0.0.18"
 }
 
 
@@ -26,8 +26,10 @@ envs {
   envsDirectory = new File(System.getenv().getOrDefault("PYCHARM_PYTHON_VIRTUAL_ENVS", new File(buildDir, 'envs').path))
   _64Bits = true
 
-  zipRepository = new URL(System.getenv().getOrDefault("PYCHARM_ZIP_REPOSITORY", null))
-  conditionToUseZipsFromRepository = Os.isFamily(Os.FAMILY_WINDOWS)
+  if (System.getenv().containsKey("PYCHARM_ZIP_REPOSITORY")) {
+    zipRepository = new URL(System.getenv().get("PYCHARM_ZIP_REPOSITORY"))
+    shouldUseZipsFromRespository = Os.isFamily(Os.FAMILY_WINDOWS)
+  }
 
   python "python27", "2.7.13"
   python "python36", "3.6.2"
