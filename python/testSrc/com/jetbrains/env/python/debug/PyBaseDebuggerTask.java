@@ -44,7 +44,6 @@ import org.jetbrains.annotations.TestOnly;
 import org.junit.Assert;
 
 import java.io.PrintWriter;
-import java.lang.reflect.InvocationTargetException;
 import java.util.Set;
 import java.util.concurrent.Semaphore;
 
@@ -72,7 +71,9 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
     XDebuggerTestUtil.waitForSwing();
   }
 
-  abstract PyDebugProcess getPyDebugProcess();
+  protected PyDebugProcess getPyDebugProcess() {
+    return (PyDebugProcess) myDebugProcess;
+  }
 
   protected void waitForTerminate() throws InterruptedException {
     setProcessCanTerminate(true);
