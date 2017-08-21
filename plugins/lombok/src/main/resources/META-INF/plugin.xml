@@ -268,6 +268,7 @@
             <li>Fixed #337: Component name collision: 'UpdateComponent'</li>
             <li>Fixed #339: Delombok for @ToString should use simpleName for class</li>
             <li>Fixed #342: @EqualsAndHashCode/@ToString should treat explicit "of = {}" differently</li>
+            <li>Fixed #399: IndexNotReadyException in FieldFindUsagesHandler</li>
 				</ol>
 			</li>
 		<li>0.14
