@@ -709,6 +709,24 @@ def foo(List list) {
 ''', 'java.util.List<java.util.List>')
   }
 
+  void testReturnNullWithGeneric() {
+    doTest('''
+     import groovy.transform.CompileStatic
+
+    @CompileStatic
+    class SomeClass {
+      protected List foo(String text) {
+        return null
+      }
+
+      def bar() {
+        fo<caret>o("")
+      }
+    }
+  }
+''', 'java.util.List')
+  }
+
 
   void testClassExpressions() {
     doExprTest 'String[]', 'java.lang.Class<java.lang.String[]>'
