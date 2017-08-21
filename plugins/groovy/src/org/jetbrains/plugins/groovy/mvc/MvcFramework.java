@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,7 +52,6 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
@@ -243,23 +242,23 @@ public abstract class MvcFramework {
     final List<File> toExclude = new ArrayList<>();
 
     VirtualFile sdkRoot = getSdkRoot(module);
-    if (sdkRoot != null) toExclude.add(VfsUtil.virtualToIoFile(sdkRoot));
+    if (sdkRoot != null) toExclude.add(VfsUtilCore.virtualToIoFile(sdkRoot));
 
     ContainerUtil.addIfNotNull(toExclude, getCommonPluginsDir(module));
     final VirtualFile appRoot = findAppRoot(module);
     if (appRoot != null) {
       VirtualFile pluginDir = appRoot.findChild(MvcModuleStructureUtil.PLUGINS_DIRECTORY);
-      if (pluginDir != null) toExclude.add(VfsUtil.virtualToIoFile(pluginDir));
+      if (pluginDir != null) toExclude.add(VfsUtilCore.virtualToIoFile(pluginDir));
 
 
       VirtualFile libDir = appRoot.findChild("lib");
-      if (libDir != null) toExclude.add(VfsUtil.virtualToIoFile(libDir));
+      if (libDir != null) toExclude.add(VfsUtilCore.virtualToIoFile(libDir));
     }
 
     final Library library = MvcModuleStructureUtil.findUserLibrary(module, getUserLibraryName());
     if (library != null) {
       for (VirtualFile file : library.getFiles(OrderRootType.CLASSES)) {
-        toExclude.add(VfsUtil.virtualToIoFile(PathUtil.getLocalFile(file)));
+        toExclude.add(VfsUtilCore.virtualToIoFile(VfsUtil.getLocalFile(file)));
       }
     }
     return toExclude;
@@ -276,7 +275,7 @@ public abstract class MvcFramework {
     eachRoot:
     for (VirtualFile file : rootFiles) {
       for (final File excluded : toExclude) {
-        if (VfsUtil.isAncestor(excluded, VfsUtil.virtualToIoFile(file), false)) {
+        if (VfsUtilCore.isAncestor(excluded, VfsUtilCore.virtualToIoFile(file), false)) {
           continue eachRoot;
         }
       }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jetbrains.plugins.groovy.util;
 
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiManager;
@@ -79,19 +79,15 @@ public abstract class SdkHomeSettings implements PersistentStateComponent<SdkHom
   }
 
   private static List<VirtualFile> calcRoots(@Nullable VirtualFile home) {
-    if (home == null) {
-      return Collections.emptyList();
-    }
+    if (home == null) return Collections.emptyList();
 
-    final VirtualFile lib = home.findChild("lib");
-    if (lib == null) {
-      return Collections.emptyList();
-    }
+    VirtualFile lib = home.findChild("lib");
+    if (lib == null) return Collections.emptyList();
 
     List<VirtualFile> result = new ArrayList<>();
     for (VirtualFile file : lib.getChildren()) {
       if ("jar".equals(file.getExtension())) {
-        ContainerUtil.addIfNotNull(result, StandardFileSystems.getJarRootForLocalFile(file));
+        ContainerUtil.addIfNotNull(result, JarFileSystem.getInstance().getRootByLocal(file));
       }
     }
     return result;
