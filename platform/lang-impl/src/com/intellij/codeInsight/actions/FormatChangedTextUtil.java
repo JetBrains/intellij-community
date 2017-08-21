@@ -162,5 +162,15 @@ public class FormatChangedTextUtil {
   public ChangedRangesInfo getChangedRangesInfo(@NotNull PsiFile file) throws FilesTooBigForDiffException {
     return null;
   }
-  
+
+  /**
+   * Allows to temporally suppress document modification tracking.
+   *
+   * Ex: To perform a task, that might delete whole document and re-create it from scratch.
+   * Such modification would destroy all existing ranges. While using `runHeavyModificationTask` would make trackers to compare
+   * only starting end finishing document states, ignoring intermediate modifications (because "actual" differences might be small).
+   */
+  public void runHeavyModificationTask(@NotNull Project project, @NotNull Document document, @NotNull Runnable o) {
+    o.run();
+  }
 }

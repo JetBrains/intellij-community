@@ -176,5 +176,15 @@ class VcsAwareFormatChangedTextUtil extends FormatChangedTextUtil {
 
     return false;
   }
-  
+
+  @Override
+  public void runHeavyModificationTask(@NotNull Project project, @NotNull Document document, @NotNull Runnable o) {
+    LineStatusTracker<?> tracker = LineStatusTrackerManager.getInstance(project).getLineStatusTracker(document);
+    if (tracker != null) {
+      tracker.doFrozen(o);
+    }
+    else {
+      o.run();
+    }
+  }
 }

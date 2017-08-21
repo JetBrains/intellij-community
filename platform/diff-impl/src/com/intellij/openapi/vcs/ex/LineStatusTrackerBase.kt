@@ -123,6 +123,11 @@ abstract class LineStatusTrackerBase<R : Range> {
     return DiffUtil.executeWriteCommand(doc, project, commandName, { task(doc) })
   }
 
+  @CalledInAwt
+  fun doFrozen(task: Runnable) {
+    documentTracker.doFrozen({ task.run() })
+  }
+
 
   fun release() {
     val runnable = Runnable {
