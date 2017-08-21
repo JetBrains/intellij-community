@@ -15,10 +15,12 @@
  */
 package com.intellij.openapi.roots.impl.libraries;
 
+import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ComponentSerializationUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtilCore;
@@ -39,6 +41,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.io.URLUtil;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
 import gnu.trove.THashSet;
@@ -215,14 +218,16 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
     return VfsUtilCore.toVirtualFileArray(expanded);
   }
 
-  public static void collectJarFiles(final VirtualFile dir, final List<VirtualFile> container, final boolean recursively) {
+  public static void collectJarFiles(VirtualFile dir, List<VirtualFile> container, boolean recursively) {
     VfsUtilCore.visitChildrenRecursively(dir, new VirtualFileVisitor(SKIP_ROOT, recursively ? null : ONE_LEVEL_DEEP) {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
-        final VirtualFile jarRoot = file.isDirectory() ? null : StandardFileSystems.getJarRootForLocalFile(file);
-        if (jarRoot != null) {
-          container.add(jarRoot);
-          return false;
+        if (!file.isDirectory() && FileTypeRegistry.getInstance().getFileTypeByFileName(file.getName()) == ArchiveFileType.INSTANCE) {
+          VirtualFile jarRoot = StandardFileSystems.jar().findFileByPath(file.getPath() + URLUtil.JAR_SEPARATOR);
+          if (jarRoot != null) {
+            container.add(jarRoot);
+            return false;
+          }
         }
         return true;
       }
