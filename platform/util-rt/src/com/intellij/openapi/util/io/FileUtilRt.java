@@ -238,7 +238,7 @@ public class FileUtilRt {
   public static String getRelativePath(File base, File file) {
     if (base == null || file == null) return null;
 
-    if (base.isFile()) {
+    if (base.exists() && !base.isDirectory()) {
       base = base.getParentFile();
       if (base == null) return null;
     }
