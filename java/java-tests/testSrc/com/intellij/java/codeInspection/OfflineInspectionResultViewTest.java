@@ -148,26 +148,26 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
     TreeUtil.expandAll(tree);
     PlatformTestUtil.assertTreeEqual(tree, "-" + getProject() + "\n" +
                                            " -Declaration redundancy\n" +
-                                           "  -" + myUnusedToolWrapper + "\n"
-                                           + "   -" + getModule() + "\n"
-                                           + "    -<default>\n"
-                                           + "     -Test\n"
-                                           + "      -foo()\n"
-                                           + "       " + varMessage() + "\n"
-                                           + "      -main(String[])\n"
-                                           + "       " + varMessage() + "\n"
-                                           + "      -f()\n"
-                                           + "       -D\n"
-                                           + "        -b()\n"
-                                           + "         " + varMessage() + "\n"
-                                           + "         -anonymous (Runnable)\n"
-                                           + "          -run()\n"
-                                           + "           " + varMessage() + "\n"
-                                           + "      -ff()\n"
-                                           + "       " + varMessage() + "\n"
-                                           + "       " + varMessage() + "\n" +
+                                           "  -unused\n" +
+                                           "   -Module: 'testOfflineWithInvalid'\n" +
+                                           "    -<default>\n" +
+                                           "     -Test\n" +
+                                           "      -foo()\n" +
+                                           "       Variable <code>j</code> is never used.\n" +
+                                           "      -main(String[])\n" +
+                                           "       Variable <code>test</code> is never used.\n" +
+                                           "      -f()\n" +
+                                           "       -D\n" +
+                                           "        -b()\n" +
+                                           "         Variable <code>r</code> is never used.\n" +
+                                           "         -anonymous (Runnable)\n" +
+                                           "          -run()\n" +
+                                           "           Variable <code>i</code> is never used.\n" +
+                                           "      -ff()\n" +
+                                           "       Variable <code>a</code> is never used.\n" +
+                                           "       Variable <code>d</code> is never used.\n" +
                                            " -Probable bugs\n" +
-                                           "  -" + myDataFlowToolWrapper + "\n" +
+                                           "  -EqualsWithItself\n" +
                                            "   -Module: 'testOfflineWithInvalid'\n" +
                                            "    -<default>\n" +
                                            "     -Test\n" +
@@ -187,25 +187,25 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
     InspectionTree tree = updateTree();
     TreeUtil.expandAll(tree);
     PlatformTestUtil.assertTreeEqual(tree, "-" + getProject() + "\n" +
-                                           " -Declaration redundancy\n"
-                                           + "  -" + myUnusedToolWrapper + "\n"
-                                           + "   -" + getModule() + "\n"
-                                           + "    -<default>\n"
-                                           + "     -Test\n"
-                                           + "      -foo()\n"
-                                           + "       " + varMessage() + "\n"
-                                           + "      -main(String[])\n"
-                                           + "       " + varMessage() + "\n"
-                                           + "      -f()\n"
-                                           + "       -D\n"
-                                           + "        -b()\n"
-                                           + "         " + varMessage() + "\n"
-                                           + "         -anonymous (Runnable)\n"
-                                           + "          -run()\n"
-                                           + "           " + varMessage() + "\n"
-                                           + "      -ff()\n"
-                                           + "       " + varMessage() + "\n"
-                                           + "       " + varMessage() + "\n" +
+                                           " -Declaration redundancy\n" +
+                                           "  -unused\n" +
+                                           "   -Module: 'testOfflineView'\n" +
+                                           "    -<default>\n" +
+                                           "     -Test\n" +
+                                           "      -foo()\n" +
+                                           "       Variable <code>j</code> is never used.\n" +
+                                           "      -main(String[])\n" +
+                                           "       Variable <code>test</code> is never used.\n" +
+                                           "      -f()\n" +
+                                           "       -D\n" +
+                                           "        -b()\n" +
+                                           "         Variable <code>r</code> is never used.\n" +
+                                           "         -anonymous (Runnable)\n" +
+                                           "          -run()\n" +
+                                           "           Variable <code>i</code> is never used.\n" +
+                                           "      -ff()\n" +
+                                           "       Variable <code>a</code> is never used.\n" +
+                                           "       Variable <code>d</code> is never used.\n" +
                                            " -Probable bugs\n" +
                                            "  -" + myDataFlowToolWrapper + "\n" +
                                            "   -Module: 'testOfflineView'\n" +
@@ -219,26 +219,26 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
                                          );
     myView.getGlobalInspectionContext().getUIOptions().SHOW_STRUCTURE = false;
     tree = updateTree();
-    PlatformTestUtil.assertTreeEqual(tree, "-" + getProject() + "\n"
-                                           + " -Declaration redundancy\n"
-                                           + "  -" + myUnusedToolWrapper + "\n"
-                                           + "   -Test\n"
-                                           + "    -foo()\n"
-                                           + "     " + varMessage() + "\n"
-                                           + "    -main(String[])\n"
-                                           + "     " + varMessage() + "\n"
-                                           + "    -f()\n"
-                                           + "     -D\n"
-                                           + "      -b()\n"
-                                           + "       " + varMessage() + "\n"
-                                           + "       -anonymous (Runnable)\n"
-                                           + "        -run()\n"
-                                           + "         " + varMessage() + "\n"
-                                           + "    -ff()\n"
-                                           + "     " + varMessage() + "\n"
-                                           + "     " + varMessage() + "\n"
-                                           + " -Probable bugs\n"
-                                           + "  -" + myDataFlowToolWrapper + "\n" +
+    PlatformTestUtil.assertTreeEqual(tree, "-" + getProject() + "\n" +
+                                           " -Declaration redundancy\n" +
+                                           "  -unused\n" +
+                                           "   -Test\n" +
+                                           "    -foo()\n" +
+                                           "     Variable <code>j</code> is never used.\n" +
+                                           "    -main(String[])\n" +
+                                           "     Variable <code>test</code> is never used.\n" +
+                                           "    -f()\n" +
+                                           "     -D\n" +
+                                           "      -b()\n" +
+                                           "       Variable <code>r</code> is never used.\n" +
+                                           "       -anonymous (Runnable)\n" +
+                                           "        -run()\n" +
+                                           "         Variable <code>i</code> is never used.\n" +
+                                           "    -ff()\n" +
+                                           "     Variable <code>a</code> is never used.\n" +
+                                           "     Variable <code>d</code> is never used.\n" +
+                                           " -Probable bugs\n" +
+                                           "  -" + myDataFlowToolWrapper + "\n" +
                                            "   -Test\n" +
                                            "    'equals()' called on itself\n" +
                                            "   -Test2\n" +
@@ -258,24 +258,24 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
     tree = updateTree();
     PlatformTestUtil.assertTreeEqual(tree, "-" + getProject() + "\n"
                                            + " -Declaration redundancy\n"
-                                           + "  -" + myUnusedToolWrapper + "\n"
-                                           + "   -Test\n"
-                                           + "    -foo()\n"
-                                           + "     " + varMessage() + "\n"
-                                           + "    -main(String[])\n"
-                                           + "     " + varMessage() + "\n"
-                                           + "    -f()\n"
-                                           + "     -D\n"
-                                           + "      -b()\n"
-                                           + "       " + varMessage() + "\n"
-                                           + "       -anonymous (Runnable)\n"
-                                           + "        -run()\n"
-                                           + "         " + varMessage() + "\n"
-                                           + "    -ff()\n"
-                                           + "     " + varMessage() + "\n"
-                                           + "     " + varMessage() + "\n"
-                                           + " -Probable bugs\n"
-                                           + "  -" + myDataFlowToolWrapper + "\n" +
+                                           + "  -unused\n"
+                                           + "   -Test\n" +
+                                           "    -foo()\n" +
+                                           "     Variable <code>j</code> is never used.\n" +
+                                           "    -main(String[])\n" +
+                                           "     Variable <code>test</code> is never used.\n" +
+                                           "    -f()\n" +
+                                           "     -D\n" +
+                                           "      -b()\n" +
+                                           "       Variable <code>r</code> is never used.\n" +
+                                           "       -anonymous (Runnable)\n" +
+                                           "        -run()\n" +
+                                           "         Variable <code>i</code> is never used.\n" +
+                                           "    -ff()\n" +
+                                           "     Variable <code>a</code> is never used.\n" +
+                                           "     Variable <code>d</code> is never used.\n" +
+                                           " -Probable bugs\n" +
+                                           "  -" + myDataFlowToolWrapper + "\n" +
                                            "   -Test\n" +
                                            "    'equals()' called on itself\n" +
                                            "   -Test2\n" +
