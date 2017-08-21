@@ -59,7 +59,7 @@ import java.util.List;
 import java.util.Set;
 
 public class PyActiveSdkConfigurable implements UnnamedConfigurable {
-  private final Project myProject;
+  @NotNull private final Project myProject;
   @Nullable private final Module myModule;
   private MySdkModelListener mySdkModelListener = new MySdkModelListener();
   private PyConfigurableInterpreterList myInterpreterList;
