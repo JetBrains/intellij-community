@@ -203,11 +203,9 @@ public class PyTypeModelBuilder {
   
   static class GenericType extends TypeModel {
     private final String name;
-    private final List<TypeModel> bounds;
 
-    public GenericType(@Nullable String name, @NotNull List<TypeModel> bounds) {
+    public GenericType(@Nullable String name) {
       this.name = name;
-      this.bounds = bounds;
     }
 
     @Override
@@ -297,19 +295,7 @@ public class PyTypeModelBuilder {
       }
     }
     else if (type instanceof PyGenericType) {
-      //assert !((PyGenericType)type).isDefinition()
-      final PyType bound = ((PyGenericType)type).getBound();
-      final List<TypeModel> boundNames;
-      if (bound instanceof PyUnionType) {
-        boundNames = ContainerUtil.map(((PyUnionType)bound).getMembers(), t -> build(t, allowUnions));
-      }
-      else if (bound != null) {
-        boundNames = Collections.singletonList(build(bound, allowUnions));
-      }
-      else {
-        boundNames = Collections.emptyList();
-      }
-      result = new GenericType(type.getName(), boundNames);
+      result = new GenericType(type.getName());
     }
     if (result == null) {
       result = NamedType.nameOrAny(type);
@@ -572,21 +558,7 @@ public class PyTypeModelBuilder {
 
     @Override
     public void genericType(GenericType type) {
-      add("TypeVar('");
       add(type.name);
-      add("'");
-      if (!type.bounds.isEmpty()) {
-        add(", ");
-        boolean first = true;
-        for (TypeModel bound : type.bounds) {
-          if (!first) {
-            add(", ");
-          }
-          bound.accept(this);
-          first = false;
-        }
-      }
-      add(")");
     }
   }
 }
