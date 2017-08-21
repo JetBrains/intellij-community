@@ -19,7 +19,6 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.indexing.impl.*;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.PersistentHashMap;
-import com.intellij.util.io.PersistentMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

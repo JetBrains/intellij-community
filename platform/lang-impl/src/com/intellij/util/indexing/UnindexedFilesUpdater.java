@@ -60,6 +60,7 @@ public class UnindexedFilesUpdater extends DumbModeTask {
   }
 
   private void updateUnindexedFiles(ProgressIndicator indicator) {
+    PushedFilePropertiesUpdater.getInstance(myProject).pushAllPropertiesNow();
     if (!PersistentFSImpl.getImpl().indexer) return;
     PerformanceWatcher.Snapshot snapshot = PerformanceWatcher.takeSnapshot();
     PushedFilePropertiesUpdater.getInstance(myProject).pushAllPropertiesNow();

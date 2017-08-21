@@ -83,18 +83,26 @@ public class ClientIndexStorage<K, V> implements VfsAwareIndexStorage<K, V>, Buf
 
   }
 
+  private void ensureCached(K k) throws StorageException {
+    if (!myCachedKeys.contains(k)) {
+      synchronized (myCachedKeys) {
+        if (!myCachedKeys.contains(k)) {
+          try {
+            cacheKey(k);
+          }
+          catch (IOException e) {
+            throw new StorageException(e);
+          }
+          myCachedKeys.add(k);
+        }
+      }
+    }
+  }
+
   @NotNull
   @Override
   public ValueContainer<V> read(K k) throws StorageException {
-    if (!myCachedKeys.contains(k)) {
-      try {
-        cacheKey(k);
-      }
-      catch (IOException e) {
-        throw new StorageException(e);
-      }
-      myCachedKeys.add(k);
-    }
+    ensureCached(k);
     return myDelegate.read(k);
   }
 

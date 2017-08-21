@@ -23,6 +23,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.psi.impl.cache.impl.id.IdIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
@@ -204,6 +205,17 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
   @Nullable
   private static <Key, Value> ForwardIndex<Key, Value> getForwardIndex(@NotNull IndexExtension<Key, Value, ?> indexExtension)
     throws IOException {
+
+    if (PersistentFSImpl.indexer) {
+      return new IndexerForwardIndex<>(new MyForwardIndex<>(indexExtension),
+                                       createInputsIndexExternalizer(indexExtension),
+                                       indexExtension.getName());
+    } else {
+      return new ClientForwardIndex<>(new MyForwardIndex<>(indexExtension),
+                                      createInputsIndexExternalizer(indexExtension),
+                                      indexExtension.getName());
+    }
+/*
     final boolean hasSnapshotMapping = indexExtension instanceof FileBasedIndexExtension &&
                                        ((FileBasedIndexExtension<Key, Value>)indexExtension).hasSnapshotMapping() &&
                                        IdIndex.ourSnapshotMappingsEnabled;
@@ -211,7 +223,7 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
 
     MapBasedForwardIndex<Key, Value> backgroundIndex =
       !SharedIndicesData.ourFileSharedIndicesEnabled || SharedIndicesData.DO_CHECKS ? new MyForwardIndex<>(indexExtension) : null;
-    return new SharedMapBasedForwardIndex<>(indexExtension, backgroundIndex);
+    return new SharedMapBasedForwardIndex<>(indexExtension, backgroundIndex);*/
   }
 
   private static class MyForwardIndex<Key, Value> extends MapBasedForwardIndex<Key, Value> {
