@@ -28,6 +28,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
@@ -176,17 +177,9 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
     }
 
     private static String createNewVariableName(@NotNull PsiElement scope, @NotNull PsiType type) {
-      final Project project = scope.getProject();
-      final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
-      @NonNls String baseName;
+      final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(scope.getProject());
       final SuggestedNameInfo suggestions = codeStyleManager.suggestVariableName(VariableKind.LOCAL_VARIABLE, null, null, type);
-      final String[] names = suggestions.names;
-      if (names != null && names.length > 0) {
-        baseName = names[0];
-      }
-      else {
-        baseName = "entry";
-      }
+      @NonNls String baseName = (suggestions.names != null && suggestions.names.length > 0) ? suggestions.names[0] : "entry";
       if (baseName == null || baseName.isEmpty()) {
         baseName = "entry";
       }
@@ -321,15 +314,10 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
         return false;
       }
       final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression;
-      final PsiElement target = referenceExpression.resolve();
-      if (!(target instanceof PsiVariable)) {
+      if (!TypeUtils.expressionHasTypeOrSubtype(referenceExpression, CommonClassNames.JAVA_UTIL_MAP)) {
         return false;
       }
-      final PsiVariable targetVariable = (PsiVariable)target;
-      if (!TypeUtils.variableHasTypeOrSubtype(targetVariable, CommonClassNames.JAVA_UTIL_MAP)) {
-        return false;
-      }
-      final GetValueFromMapChecker checker = new GetValueFromMapChecker(targetVariable, key);
+      final GetValueFromMapChecker checker = new GetValueFromMapChecker(referenceExpression, key);
       context.accept(checker);
       return checker.isGetValueFromMap();
     }
@@ -338,12 +326,12 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
   private static class GetValueFromMapChecker extends JavaRecursiveElementWalkingVisitor {
 
     private final PsiVariable key;
-    private final PsiVariable map;
+    private final PsiReferenceExpression mapReference;
     private boolean getValueFromMap;
     private boolean tainted;
 
-    GetValueFromMapChecker(@NotNull PsiVariable map, @NotNull PsiVariable key) {
-      this.map = map;
+    GetValueFromMapChecker(@NotNull PsiReferenceExpression mapReference, @NotNull PsiVariable key) {
+      this.mapReference = mapReference;
       this.key = key;
     }
 
@@ -356,7 +344,7 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
       final PsiElement parent = expression.getParent();
       if (parent instanceof PsiAssignmentExpression) {
         final PsiElement target = expression.resolve();
-        if (key.equals(target) || map.equals(target)) {
+        if (key.equals(target) || EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(mapReference, expression)) {
           tainted = true;
         }
       }
@@ -369,13 +357,7 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
       }
       final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
       final PsiReferenceExpression methodExpression = (PsiReferenceExpression)parent;
-      final PsiElement target = expression.resolve();
-      if (!map.equals(target)) {
-        return;
-      }
-      final PsiExpression qualifierExpression = expression.getQualifierExpression();
-      if (qualifierExpression != null &&
-          !(qualifierExpression instanceof PsiThisExpression || qualifierExpression instanceof PsiSuperExpression)) {
+      if (!EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(mapReference, expression)) {
         return;
       }
       @NonNls final String methodName = methodExpression.getReferenceName();
@@ -387,7 +369,7 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
       if (arguments.length != 1) {
         return;
       }
-      final PsiExpression argument = arguments[0];
+      final PsiExpression argument = ParenthesesUtils.stripParentheses(arguments[0]);
       if (!(argument instanceof PsiReferenceExpression)) {
         return;
       }

@@ -704,8 +704,8 @@ public class EquivalenceChecker {
     else {
       return EXACT_MATCH;
     }
-    final PsiExpression qualifier1 = referenceExpression1.getQualifierExpression();
-    final PsiExpression qualifier2 = referenceExpression2.getQualifierExpression();
+    final PsiExpression qualifier1 = ParenthesesUtils.stripParentheses(referenceExpression1.getQualifierExpression());
+    final PsiExpression qualifier2 = ParenthesesUtils.stripParentheses(referenceExpression2.getQualifierExpression());
     if (qualifier1 != null && !(qualifier1 instanceof PsiThisExpression || qualifier1 instanceof PsiSuperExpression)) {
       if (qualifier2 == null) {
         return EXACT_MISMATCH;
