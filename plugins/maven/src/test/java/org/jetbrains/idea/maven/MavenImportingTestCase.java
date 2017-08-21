@@ -54,6 +54,7 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -78,12 +79,28 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     try {
       Messages.setTestDialog(TestDialog.DEFAULT);
       removeFromLocalRepository("test");
-      PathKt.delete(BuildManager.getInstance().getBuildSystemDirectory());
+      deleteBuildSystemDirectory();
     }
     finally {
       myProjectsManager = null;
       myProjectsTree = null;
       super.tearDown();
+    }
+  }
+
+  private static void deleteBuildSystemDirectory() {
+    Path buildSystemDirectory = BuildManager.getInstance().getBuildSystemDirectory();
+    try {
+      PathKt.delete(buildSystemDirectory);
+      return;
+    }
+    catch (Exception ignore) {
+    }
+    try {
+      FileUtil.delete(buildSystemDirectory.toFile());
+    }
+    catch (Exception e) {
+      LOG.warn("Unable to remove build system directory.", e);
     }
   }
 

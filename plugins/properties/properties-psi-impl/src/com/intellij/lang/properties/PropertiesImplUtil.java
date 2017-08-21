@@ -136,12 +136,14 @@ public class PropertiesImplUtil extends PropertiesUtil {
     FileBasedIndex.getInstance().processValues(XmlPropertiesIndex.NAME, new XmlPropertiesIndex.Key(key), null, (file, value) -> {
       if (files.add(file)) {
         PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
-        PropertiesFile propertiesFile = XmlPropertiesFileImpl.getPropertiesFile(psiFile);
-        if (propertiesFile != null) {
-          properties.addAll(propertiesFile.findPropertiesByKey(key));
+        if (psiFile != null) {
+          PropertiesFile propertiesFile = XmlPropertiesFileImpl.getPropertiesFile(psiFile);
+          if (propertiesFile != null) {
+            properties.addAll(propertiesFile.findPropertiesByKey(key));
+          }
         }
       }
-      return false;
+      return true;
     }, scope);
     return properties;
   }

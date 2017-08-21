@@ -39,7 +39,7 @@ public class TreeSmartSelectProvider implements SmartSelectProvider<JTree> {
     TreePath parentPath = path.getParentPath();
     if (parentPath == null) return;
     boolean madeSelection = false;
-    for (int i = 0; i < tree.getVisibleRowCount(); i++) {
+    for (int i = 0; i < tree.getRowCount(); i++) {
       TreePath row = tree.getPathForRow(i);
       if (parentPath.isDescendant(row) && !row.equals(parentPath)) {
         if (!tree.isRowSelected(i)) {

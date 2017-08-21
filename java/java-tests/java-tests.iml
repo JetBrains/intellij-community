@@ -54,7 +54,6 @@
     <orderEntry type="module" module-name="xml-psi-impl" />
     <orderEntry type="library" scope="TEST" name="KotlinTest" level="project" />
     <orderEntry type="module" module-name="built-in-server-api" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="memoryfilesystem" level="project" />
     <orderEntry type="module" module-name="testExtensions" scope="TEST" />
     <orderEntry type="module" module-name="configuration-store-impl" scope="TEST" />
   </component>

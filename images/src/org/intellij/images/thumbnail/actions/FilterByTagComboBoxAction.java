@@ -35,6 +35,10 @@ public final class FilterByTagComboBoxAction extends ComboBoxAction {
     
     public void update(final AnActionEvent e) {
         Project project = e.getProject();
+        if (project == null) {
+            e.getPresentation().setEnabledAndVisible(false);
+            return;
+        }
         ThumbnailView view = ThumbnailViewActionUtil.getVisibleThumbnailView(e);
         ImageTagManager tagManager = ImageTagManager.getInstance(project);
         e.getPresentation().setVisible(view != null && !tagManager.getAllTags().isEmpty());

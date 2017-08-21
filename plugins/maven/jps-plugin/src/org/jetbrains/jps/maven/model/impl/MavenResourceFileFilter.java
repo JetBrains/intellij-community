@@ -43,8 +43,10 @@ public class MavenResourceFileFilter implements FileFilter {
 
   @Override
   public boolean accept(@NotNull File file) {
-    String relativeFilePath = myRelativeDirectoryPath != null ?
-                              myRelativeDirectoryPath + File.separator + file.getName() : FileUtil.getRelativePath(myRoot, file);
-    return relativeFilePath != null && myMavenPatternFileFilter.accept(relativeFilePath);
+    String relativePath = FileUtil.getRelativePath(myRoot, file);
+    if (myRelativeDirectoryPath != null) {
+      relativePath = myRelativeDirectoryPath + (relativePath != null ? File.separator + relativePath : "");
+    }
+    return relativePath != null && myMavenPatternFileFilter.accept(relativePath);
   }
 }
