@@ -298,12 +298,18 @@ class Intf {
     def clazz = myFixture.addClass("package foo.bar; class Goo implements Runnable { public void run() {} }")
     def ourRun = null
     def sdkRun = null
+    def sdkRun2 = null
+    def sdkRun3 = null
     runInEdtAndWait {
       ourRun = clazz.methods[0]
       sdkRun = ourRun.containingClass.interfaces[0].methods[0]
+      sdkRun2 = myFixture.javaFacade.findClass("java.security.PrivilegedAction").methods[0]
+      sdkRun3 = myFixture.javaFacade.findClass("java.security.PrivilegedExceptionAction").methods[0]
     }
 
     def withLibs = filterJavaItems(getPopupElements(new GotoSymbolModel2(project), 'run ', true))
+    withLibs.remove(sdkRun2)
+    withLibs.remove(sdkRun3)
     assert withLibs == [sdkRun]
     assert !(ourRun in withLibs)
 
