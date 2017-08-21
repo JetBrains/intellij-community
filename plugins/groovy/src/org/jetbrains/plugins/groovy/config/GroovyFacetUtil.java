@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.groovy.config;
 
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
@@ -27,14 +26,12 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.PathUtil;
 import icons.JetgroovyIcons;
+import org.codehaus.groovy.runtime.DefaultGroovyMethods;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 import java.io.File;
-import java.util.Arrays;
 
 public class GroovyFacetUtil {
   public static final String PLUGIN_MODULE_ID = "PLUGIN_MODULE";
@@ -72,15 +69,10 @@ public class GroovyFacetUtil {
   }
 
   public static File getBundledGroovyJar() {
-    final File[] groovyJars = LibrariesUtil.getFilesInDirectoryByPattern(getLibDirectory(), GroovyConfigUtils.GROOVY_ALL_JAR_PATTERN);
-    assert groovyJars.length == 1 : Arrays.asList(groovyJars);
-    return groovyJars[0];
-  }
-
-  public static String getLibDirectory() {
-    if (new File(PathUtil.getJarPathForClass(GroovyFacetUtil.class)).isDirectory()) {
-      return FileUtil.toCanonicalPath(PluginPathManager.getPluginHomePath("groovy") + "/../../lib/");
-    }
-    return PathManager.getHomePath() + "/lib/";
+    String jarPath = PathManager.getJarPathForClass(DefaultGroovyMethods.class);
+    assert jarPath != null : "Cannot find JAR containing groovy classes";
+    File jar = new File(jarPath);
+    assert GroovyConfigUtils.GROOVY_ALL_JAR_PATTERN.matcher(jar.getName()).matches() : "Incorrect path to groovy JAR: " + jarPath;
+    return jar;
   }
 }
