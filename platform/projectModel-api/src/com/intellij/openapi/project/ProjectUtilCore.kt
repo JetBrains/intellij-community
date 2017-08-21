@@ -36,7 +36,7 @@ fun displayUrlRelativeToProject(file: VirtualFile, url: String, project: Project
   }
 
   if (SystemInfo.isMac && file.fileSystem is LocalFileProvider) {
-    val localFile = (file.fileSystem as LocalFileProvider).getLocalVirtualFileFor(file)
+    @Suppress("DEPRECATION") val localFile = (file.fileSystem as LocalFileProvider).getLocalVirtualFileFor(file)
     if (localFile != null) {
       val libraryEntry = LibraryUtil.findLibraryEntry(file, project)
       result = when {
