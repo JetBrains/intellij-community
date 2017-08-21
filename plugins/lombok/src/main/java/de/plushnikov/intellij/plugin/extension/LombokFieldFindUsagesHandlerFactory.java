@@ -4,6 +4,7 @@ import com.intellij.find.findUsages.FindUsagesHandler;
 import com.intellij.find.findUsages.JavaFindUsagesHandler;
 import com.intellij.find.findUsages.JavaFindUsagesHandlerFactory;
 import com.intellij.ide.util.SuperMethodWarningUtil;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -26,7 +27,7 @@ public class LombokFieldFindUsagesHandlerFactory extends JavaFindUsagesHandlerFa
 
   @Override
   public boolean canFindUsages(@NotNull PsiElement element) {
-    return element instanceof PsiField;
+    return element instanceof PsiField && !DumbService.isDumb(element.getProject());
   }
 
   @Override
