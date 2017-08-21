@@ -42,6 +42,8 @@ import java.awt.*;
 
 public class RenameTo extends ShowSuggestions implements SpellCheckerQuickFix {
 
+  public static final String FIX_NAME = "RenameTo";
+
   public RenameTo(String wordWithTypo) {
     super(wordWithTypo);
   }
@@ -51,6 +53,10 @@ public class RenameTo extends ShowSuggestions implements SpellCheckerQuickFix {
     return SpellCheckerBundle.message("rename.to");
   }
 
+  @NotNull
+  public String getName() {
+    return FIX_NAME;
+  }
 
   @Nullable
   private static DictionarySuggestionProvider findProvider() {
