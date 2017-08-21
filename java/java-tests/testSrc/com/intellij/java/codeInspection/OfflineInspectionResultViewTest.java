@@ -53,10 +53,6 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
   private GlobalInspectionToolWrapper myUnusedToolWrapper;
   private LocalInspectionToolWrapper myDataFlowToolWrapper;
 
-  private static String varMessage() {
-    return "Problem detected by global inspection 'Unused declaration'";
-  }
-
   @Override
   protected void setUp() throws Exception {
     super.setUp();
