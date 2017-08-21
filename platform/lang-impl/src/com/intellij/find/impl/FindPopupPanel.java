@@ -220,6 +220,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       if (!myCbPreserveCase.isVisible()) {
         panelSize.width += myCbPreserveCase.getPreferredSize().width + 8;
       }
+      panelSize.width += JBUI.scale(24);//hidden 'loading' icon
       panelSize.height *= 2;
       if (prev != null && prev.height < panelSize.height) prev.height = panelSize.height;
       myBalloon.setMinimumSize(panelSize);
