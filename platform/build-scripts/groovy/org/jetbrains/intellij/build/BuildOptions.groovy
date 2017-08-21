@@ -60,8 +60,8 @@ class BuildOptions {
   static final MAC_DMG_STEP = "mac_dmg"
   /** Sign additional binary files in macOS distribution. */
   static final MAC_SIGN_STEP = "mac_sign"
-  /** produce TAR.GZ file for Linux. */
-  static final LINUX_TAR_GZ_STEP = "linux_targz"
+  /** Build Linux artifacts. */
+  static final LINUX_ARTIFACTS_STEP = "linux_artifacts"
   /** Build *.exe installer for Windows distribution. If skipped, only .zip archive will be produced. */
   static final WINDOWS_EXE_INSTALLER_STEP = "windows_exe_installer"
   /** Build Frankenstein artifacts. */

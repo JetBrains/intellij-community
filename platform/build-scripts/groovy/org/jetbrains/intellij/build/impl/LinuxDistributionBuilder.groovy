@@ -66,7 +66,7 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
 
   @Override
   void buildArtifacts(String osSpecificDistPath) {
-    buildContext.executeStep("Build Linux .tar.gz", BuildOptions.LINUX_TAR_GZ_STEP) {
+    buildContext.executeStep("Build Linux .tar.gz", BuildOptions.LINUX_ARTIFACTS_STEP) {
       if (customizer.buildTarGzWithoutBundledJre) {
         buildTarGz(null, osSpecificDistPath)
       }
