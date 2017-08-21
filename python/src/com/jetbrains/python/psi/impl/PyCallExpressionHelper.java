@@ -897,6 +897,7 @@ public class PyCallExpressionHelper {
           }
           else {
             parametersMappedToVariadicKeywordArguments.add(parameter);
+            mappedVariadicArgumentsToParameters = true;
           }
         }
         else {

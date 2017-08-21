@@ -322,6 +322,11 @@ public class PyArgumentListInspectionTest extends PyTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
   }
 
+  // PY-16968
+  public void testKwargsAgainstKeywordOnly() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
+
   private void doMultiFileTest() {
     final String folderPath = "inspections/PyArgumentListInspection/" + getTestName(false) + "/";
 
