@@ -23,6 +23,7 @@ import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefGraphAnnotator;
 import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.codeInspection.reference.RefModule;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -48,12 +49,21 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class UnusedLibrariesInspection extends GlobalInspectionTool {
   private static final Logger LOG = Logger.getInstance(UnusedLibrariesInspection.class);
+
+  public boolean IGNORE_LIBRARY_PARTS = true;
+
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel("Don't report unused library roots inside used library", this, "IGNORE_LIBRARY_PARTS");
+  }
 
   @Nullable
   @Override
@@ -97,7 +107,7 @@ public class UnusedLibrariesInspection extends GlobalInspectionTool {
             String message = InspectionsBundle.message("unused.library.problem.descriptor", entry.getPresentableName());
             result.add(manager.createProblemDescriptor(message, new RemoveUnusedLibrary(refModule, entry, null)));
           }
-          else if (!files.isEmpty()) {
+          else if (!files.isEmpty() && !IGNORE_LIBRARY_PARTS) {
             final String unusedLibraryRoots = StringUtil.join(files, file -> file.getPresentableName(), ",");
             String message =
               InspectionsBundle.message("unused.library.roots.problem.descriptor", unusedLibraryRoots, entry.getPresentableName());
