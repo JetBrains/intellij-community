@@ -251,8 +251,6 @@
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/profilers/profilers.iml" filepath="$PROJECT_DIR$/../adt/idea/profilers/profilers.iml" group="android/profilers" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/profilers-android/profilers-android.iml" filepath="$PROJECT_DIR$/../adt/idea/profilers-android/profilers-android.iml" group="android/profilers" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/profilers-ui/profilers-ui.iml" filepath="$PROJECT_DIR$/../adt/idea/profilers-ui/profilers-ui.iml" group="android/profilers" />
-      <module fileurl="file://$PROJECT_DIR$/../adt/idea/project-system/project-system.iml" filepath="$PROJECT_DIR$/../adt/idea/project-system/project-system.iml" group="android" />
-      <module fileurl="file://$PROJECT_DIR$/../adt/idea/project-system-gradle/project-system-gradle.iml" filepath="$PROJECT_DIR$/../adt/idea/project-system-gradle/project-system-gradle.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/platform/projectModel-api/projectModel-api.iml" filepath="$PROJECT_DIR$/platform/projectModel-api/projectModel-api.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/projectModel-impl/projectModel-impl.iml" filepath="$PROJECT_DIR$/platform/projectModel-impl/projectModel-impl.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/plugins/properties/properties.iml" filepath="$PROJECT_DIR$/plugins/properties/properties.iml" group="plugins" />
