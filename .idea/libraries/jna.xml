@@ -1,13 +1,14 @@
 <component name="libraryTable">
-  <library name="jna">
+  <library name="jna" type="repository">
+    <properties maven-id="net.java.dev.jna:jna-platform:4.4.0" />
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/lib/jna.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/jna-platform.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/net/java/dev/jna/jna-platform/4.4.0/jna-platform-4.4.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/net/java/dev/jna/jna/4.4.0/jna-4.4.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/lib/src/jna.zip!/" />
-      <root url="jar://$PROJECT_DIR$/lib/src/jna-platform.zip!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/net/java/dev/jna/jna-platform/4.4.0/jna-platform-4.4.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/net/java/dev/jna/jna/4.4.0/jna-4.4.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
