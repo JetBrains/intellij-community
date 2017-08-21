@@ -113,7 +113,7 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
     ChangesViewContentEP[] extensions = project.getExtensions(ChangesViewContentEP.EP_NAME);
     for (ChangesViewContentEP ep: extensions) {
       if (ep.getClassName().equals(VcsLogContentProvider.class.getName())) {
-        return (VcsLogContentProvider)ep.getInstance(project);
+        return (VcsLogContentProvider)ep.getCachedInstance();
       }
     }
     return null;

@@ -75,8 +75,13 @@ public class ChangesViewContentEP implements PluginAware {
 
   public ChangesViewContentProvider getInstance(Project project) {
     if (myInstance == null) {
-      myInstance = (ChangesViewContentProvider) newClassInstance(project, className); 
+      myInstance = (ChangesViewContentProvider) newClassInstance(project, className);
     }
+    return myInstance;
+  }
+
+  @Nullable
+  public ChangesViewContentProvider getCachedInstance() {
     return myInstance;
   }
 
