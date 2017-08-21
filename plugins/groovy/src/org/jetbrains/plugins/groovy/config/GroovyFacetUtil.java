@@ -26,8 +26,8 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.Messages;
+import groovy.lang.GroovyObject;
 import icons.JetgroovyIcons;
-import org.codehaus.groovy.runtime.DefaultGroovyMethods;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
@@ -69,7 +69,7 @@ public class GroovyFacetUtil {
   }
 
   public static File getBundledGroovyJar() {
-    String jarPath = PathManager.getJarPathForClass(DefaultGroovyMethods.class);
+    String jarPath = PathManager.getJarPathForClass(GroovyObject.class);
     assert jarPath != null : "Cannot find JAR containing groovy classes";
     File jar = new File(jarPath);
     assert GroovyConfigUtils.GROOVY_ALL_JAR_PATTERN.matcher(jar.getName()).matches() : "Incorrect path to groovy JAR: " + jarPath;
