@@ -105,7 +105,7 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
     myAssociateWithNewProject = false;
   }
 
-  public void associateWithProject(Project project) {
+  public void associateWithProject(@NotNull Project project) {
     final String path = project.getBasePath();
     if (path != null) {
       myAssociatedProjectPath = FileUtil.toSystemIndependentName(path);
@@ -117,7 +117,7 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
     myAssociateWithNewProject = true;
   }
 
-  public void reassociateWithCreatedProject(Project project) {
+  public void reassociateWithCreatedProject(@NotNull Project project) {
     if (myAssociateWithNewProject) {
       associateWithProject(project);
     }

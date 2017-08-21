@@ -355,7 +355,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
       additionalData = new PythonSdkAdditionalData(PythonSdkFlavor.getFlavor(modificator.getHomePath()));
       modificator.setSdkAdditionalData(additionalData);
     }
-    if (isAssociated) {
+    if (isAssociated && myProject != null) {
       additionalData.associateWithProject(myProject);
     }
     else {

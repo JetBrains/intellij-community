@@ -192,7 +192,7 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
             if (myNewProject) {
               ((PythonSdkAdditionalData)additionalData).associateWithNewProject();
             }
-            else {
+            else if (myProject != null) {
               ((PythonSdkAdditionalData)additionalData).associateWithProject(myProject);
             }
           }
