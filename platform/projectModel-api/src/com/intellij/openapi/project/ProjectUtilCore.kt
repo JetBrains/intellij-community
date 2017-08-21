@@ -20,7 +20,6 @@ import com.intellij.configurationStore.IS_EXTERNAL_STORAGE_ENABLED
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.roots.JdkOrderEntry
 import com.intellij.openapi.roots.libraries.LibraryUtil
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileProvider
 import com.intellij.openapi.vfs.VirtualFile
@@ -35,7 +34,7 @@ fun displayUrlRelativeToProject(file: VirtualFile, url: String, project: Project
     }
   }
 
-  if (SystemInfo.isMac && file.fileSystem is LocalFileProvider) {
+  if (file.fileSystem is LocalFileProvider) {
     @Suppress("DEPRECATION") val localFile = (file.fileSystem as LocalFileProvider).getLocalVirtualFileFor(file)
     if (localFile != null) {
       val libraryEntry = LibraryUtil.findLibraryEntry(file, project)
@@ -50,8 +49,8 @@ fun displayUrlRelativeToProject(file: VirtualFile, url: String, project: Project
   val module = ModuleUtilCore.findModuleForFile(file, project)
   return when {
     module == null -> result
-    !moduleOnTheLeft && SystemInfo.isMac -> "$result - [${module.name}]"
-    else -> "[${module.name}] - $result"
+    moduleOnTheLeft -> "[${module.name}] - $result"
+    else -> "$result - [${module.name}]"
   }
 }
 
