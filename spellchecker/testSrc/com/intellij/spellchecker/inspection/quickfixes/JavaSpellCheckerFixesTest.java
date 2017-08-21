@@ -23,4 +23,8 @@ public class JavaSpellCheckerFixesTest extends AbstractSpellCheckerFixesTest {
   public void testSimpleWordChangeTo() {
     doChangeToTest();
   }
+  
+  public void testInjectionChangeTo() {
+    doChangeToTest();
+  }
 }
