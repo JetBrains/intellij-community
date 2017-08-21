@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import org.apache.tools.ant.taskdefs.condition.Os
+
 plugins {
   id "com.jetbrains.python.envs" version "0.0.17"
 }
@@ -22,9 +24,11 @@ plugins {
 envs {
   bootstrapDirectory = new File(System.getenv().getOrDefault("PYCHARM_PYTHONS", new File(buildDir, 'pythons').path))
   envsDirectory = new File(System.getenv().getOrDefault("PYCHARM_PYTHON_VIRTUAL_ENVS", new File(buildDir, 'envs').path))
-  minicondaVersion = 'latest'
   _64Bits = true
 
-  python "python27", "2.7.13", "64", []
-  python "python36", "3.6.2", "64", []
+  zipRepository = new URL(System.getenv().getOrDefault("PYCHARM_ZIP_REPOSITORY", null))
+  conditionToUseZipsFromRepository = Os.isFamily(Os.FAMILY_WINDOWS)
+
+  python "python27", "2.7.13"
+  python "python36", "3.6.2"
 }
