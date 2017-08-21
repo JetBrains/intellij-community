@@ -20,6 +20,7 @@ import com.intellij.configurationStore.IS_EXTERNAL_STORAGE_ENABLED
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.roots.JdkOrderEntry
 import com.intellij.openapi.roots.libraries.LibraryUtil
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileProvider
 import com.intellij.openapi.vfs.VirtualFile
@@ -29,8 +30,9 @@ fun displayUrlRelativeToProject(file: VirtualFile, url: String, project: Project
 
   if (includeFilePath) {
     val projectHomeUrl = project.baseDir?.presentableUrl
-    if (projectHomeUrl != null && result.startsWith(projectHomeUrl)) {
-      result = "...${result.substring(projectHomeUrl.length)}"
+    result = when {
+      projectHomeUrl != null && result.startsWith(projectHomeUrl) -> "...${result.substring(projectHomeUrl.length)}"
+      else -> FileUtil.getLocationRelativeToUserHome(file.presentableUrl)
     }
   }
 
@@ -38,10 +40,9 @@ fun displayUrlRelativeToProject(file: VirtualFile, url: String, project: Project
     @Suppress("DEPRECATION") val localFile = (file.fileSystem as LocalFileProvider).getLocalVirtualFileFor(file)
     if (localFile != null) {
       val libraryEntry = LibraryUtil.findLibraryEntry(file, project)
-      result = when {
-        libraryEntry is JdkOrderEntry -> "$result - [${libraryEntry.jdkName}]"
-        libraryEntry != null -> "$result - [${libraryEntry.presentableName}]"
-        else -> "$result - [${localFile.name}]"
+      when {
+        libraryEntry is JdkOrderEntry -> return "$result [${libraryEntry.jdkName}]"
+        libraryEntry != null -> return "$result [${libraryEntry.presentableName}]"
       }
     }
   }
@@ -49,8 +50,8 @@ fun displayUrlRelativeToProject(file: VirtualFile, url: String, project: Project
   val module = ModuleUtilCore.findModuleForFile(file, project)
   return when {
     module == null -> result
-    moduleOnTheLeft -> "[${module.name}] - $result"
-    else -> "$result - [${module.name}]"
+    moduleOnTheLeft -> "[${module.name}] $result"
+    else -> "$result [${module.name}]"
   }
 }
 
