@@ -78,12 +78,21 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     try {
       Messages.setTestDialog(TestDialog.DEFAULT);
       removeFromLocalRepository("test");
-      PathKt.delete(BuildManager.getInstance().getBuildSystemDirectory());
+      deleteBuildSystemDirectory();
     }
     finally {
       myProjectsManager = null;
       myProjectsTree = null;
       super.tearDown();
+    }
+  }
+
+  private static void deleteBuildSystemDirectory() {
+    try {
+      PathKt.delete(BuildManager.getInstance().getBuildSystemDirectory());
+    }
+    catch (Exception e) {
+      LOG.warn("Unable to remove build system directory.", e);
     }
   }
 
