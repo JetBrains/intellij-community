@@ -85,7 +85,9 @@ public class MvcProjectWithoutLibraryNotificator implements StartupActivity, Dum
 
       @Override
       public void onCanceled(@NotNull ProgressIndicator indicator) {
-        ProgressIndicatorUtils.scheduleWithWriteActionPriority(this);
+        if (!project.isDisposed()) {
+          ProgressIndicatorUtils.scheduleWithWriteActionPriority(this);
+        }
       }
     });
   }

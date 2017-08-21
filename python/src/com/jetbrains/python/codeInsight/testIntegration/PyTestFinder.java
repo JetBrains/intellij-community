@@ -22,6 +22,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testIntegration.TestFinder;
 import com.intellij.testIntegration.TestFinderHelper;
+import com.intellij.util.ThreeState;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyDocStringOwner;
 import com.jetbrains.python.psi.PyFunction;
@@ -60,7 +61,7 @@ public class PyTestFinder implements TestFinder {
       for (String eachName : names) {
         if (eachName.contains(sourceName)) {
           for (PyClass eachClass : PyClassNameIndex.find(eachName, element.getProject(), GlobalSearchScope.projectScope(element.getProject()))) {
-            if (PythonUnitTestUtil.isTestCaseClass(eachClass, null) || PythonDocTestUtil.isDocTestClass(eachClass)) {
+            if (PythonUnitTestUtil.isTestClass(eachClass, ThreeState.UNSURE, null) || PythonDocTestUtil.isDocTestClass(eachClass)) {
               classesWithProximities.add(
                   new Pair<PsiNamedElement, Integer>(eachClass, TestFinderHelper.calcTestNameProximity(sourceName, eachName)));
             }
@@ -73,8 +74,8 @@ public class PyTestFinder implements TestFinder {
       for (String eachName : names) {
         if (eachName.contains(sourceName)) {
           for (PyFunction eachFunction : PyFunctionNameIndex.find(eachName, element.getProject(), GlobalSearchScope.projectScope(element.getProject()))) {
-            if (PythonUnitTestUtil.isTestCaseFunction(
-              eachFunction) || PythonDocTestUtil.isDocTestFunction(eachFunction)) {
+            if (PythonUnitTestUtil.isTestFunction(
+              eachFunction, ThreeState.UNSURE, null) || PythonDocTestUtil.isDocTestFunction(eachFunction)) {
               classesWithProximities.add(
                 new Pair<PsiNamedElement, Integer>(eachFunction, TestFinderHelper.calcTestNameProximity(sourceName, eachName)));
             }

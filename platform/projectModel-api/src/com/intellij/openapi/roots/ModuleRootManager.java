@@ -74,7 +74,7 @@ public abstract class ModuleRootManager implements ModuleRootModel, ProjectModel
    * Checks if the current module directly depends on the specified module.
    *
    * @param module the module to check.
-   * @return true if <code>module</code> is contained in the list of dependencies for the current module, false otherwise.
+   * @return true if {@code module} is contained in the list of dependencies for the current module, false otherwise.
    */
   public abstract boolean isDependsOn(Module module);
 }

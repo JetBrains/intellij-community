@@ -40,7 +40,7 @@ public class CreateSwitchTest extends JavaCodeInsightFixtureTestCase {
   }
 
   public void testString() {
-    doTestString();
+    withJava7(this::doTest);
   }
 
   public void testPrimitive() {
@@ -58,13 +58,17 @@ public class CreateSwitchTest extends JavaCodeInsightFixtureTestCase {
   public void testNotAvailableInForUpdate() {
     doTestNotAvailable();
   }
+  
+  public void testNotAvailableOnRedCode() {
+    withJava7(this::doTestNotAvailable);
+  }
 
-  private void doTestString() {
+  private void withJava7(Runnable runnable) {
     final LanguageLevelProjectExtension languageLevelProjectExtension = LanguageLevelProjectExtension.getInstance(getProject());
     final LanguageLevel oldLanguageLevel = languageLevelProjectExtension.getLanguageLevel();
     languageLevelProjectExtension.setLanguageLevel(LanguageLevel.JDK_1_7);
     try {
-      doTest();
+      runnable.run();
     }
     finally {
       languageLevelProjectExtension.setLanguageLevel(oldLanguageLevel);

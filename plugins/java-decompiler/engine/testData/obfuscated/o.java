@@ -154,7 +154,7 @@ public class o {
 
       try {
          if (this.a instanceof Boolean) {
-            return ((Boolean)this.a).booleanValue();
+            return (Boolean)this.a;
          }
       } catch (IllegalArgumentException var3) {
          throw var3;

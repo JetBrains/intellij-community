@@ -3,13 +3,9 @@ java.lang.Object -> Array Bar Foo
 
 Backward References:
 Array in Array occurrences = 1
-Array.<init>(0) in Array occurrences = 1
 Array.method(1) in Array occurrences = 1
 Bar in Array Bar occurrences = 2
-Bar.<init>(0) in Bar occurrences = 1
 Foo in Array Foo occurrences = 2
-Foo.<init>(0) in Foo occurrences = 1
-java.lang.Object.<init>(0) in Array Bar Foo occurrences = 3
 
 Class Definitions:
 Array in Array

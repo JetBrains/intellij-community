@@ -48,11 +48,11 @@ public class MovePackageAsDirectoryTest extends MultiFileTestCase {
     return "/refactoring/movePackageAsDir/";
   }
 
-  public void testMovePackage() throws Exception {
+  public void testMovePackage() {
     doTest(createAction("pack1", "target"));
   }
 
-  public void testRenamePackage() throws Exception {
+  public void testRenamePackage() {
     final PerformAction action = (rootDir, rootAfter) -> {
       final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(myProject);
       final PsiPackage sourcePackage = psiFacade.findPackage("pack1");
@@ -64,7 +64,7 @@ public class MovePackageAsDirectoryTest extends MultiFileTestCase {
     doTest(action);
   }
 
-  public void testRenamePackageStaticImportsToNestedClasses() throws Exception {
+  public void testRenamePackageStaticImportsToNestedClasses() {
     final PerformAction action = (rootDir, rootAfter) -> {
       final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(myProject);
       final PsiPackage sourcePackage = psiFacade.findPackage("pack1.pack2");
@@ -76,11 +76,11 @@ public class MovePackageAsDirectoryTest extends MultiFileTestCase {
     doTest(action);
   }
 
-  public void testMovePackageWithTxtFilesInside() throws Exception {
+  public void testMovePackageWithTxtFilesInside() {
     doTest(createAction("pack1", "target"));
   }
 
-  public void testMultipleClassesInOneFile() throws Exception {
+  public void testMultipleClassesInOneFile() {
     final boolean [] fileWasDeleted = new boolean[]{false};
     final VirtualFileListener fileAdapter = new VirtualFileListener() {
       @Override
@@ -99,16 +99,16 @@ public class MovePackageAsDirectoryTest extends MultiFileTestCase {
   }
 
 
-  public void testRemoveUnresolvedImports() throws Exception {
+  public void testRemoveUnresolvedImports() {
     doTest(createAction("pack1", "target"));
   }
 
-  public void testXmlDirRefs() throws Exception {
+  public void testXmlDirRefs() {
     doTest(createAction("pack1", "target"));
   }
 
   private static final String EMPTY_TXT = "empty.txt";
-  public void testXmlEmptyDirRefs() throws Exception {
+  public void testXmlEmptyDirRefs() {
     final String packageName = "pack1";
     doTest(new MyPerformAction(packageName, "target"){
       @Override
@@ -129,7 +129,7 @@ public class MovePackageAsDirectoryTest extends MultiFileTestCase {
     });
   }
 
-  public void testEmptySubDirs() throws Exception {
+  public void testEmptySubDirs() {
     final String packageName = "pack1";
     doTest(new MyPerformAction(packageName, "target"){
       private static final String FOO = "pack1.subPack.Foo";
@@ -178,7 +178,7 @@ public class MovePackageAsDirectoryTest extends MultiFileTestCase {
     }
 
     @Override
-    public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
+    public void performAction(VirtualFile rootDir, VirtualFile rootAfter) {
       final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(myProject);
       final Comparator<PsiDirectory> directoryComparator = Comparator.comparing(o -> o.getVirtualFile().getPresentableUrl());
 

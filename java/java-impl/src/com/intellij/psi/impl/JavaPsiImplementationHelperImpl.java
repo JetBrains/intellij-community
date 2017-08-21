@@ -40,6 +40,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.arrangement.MemberOrderService;
 import com.intellij.psi.impl.compiled.ClsClassImpl;
 import com.intellij.psi.impl.compiled.ClsElementImpl;
+import com.intellij.psi.impl.file.impl.JavaFileManager;
 import com.intellij.psi.impl.source.codeStyle.ImportHelper;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -49,9 +50,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -63,47 +62,58 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
 
   private final Project myProject;
 
-  public JavaPsiImplementationHelperImpl(Project project) {
+  public JavaPsiImplementationHelperImpl(@NotNull Project project) {
     myProject = project;
   }
 
+  @NotNull
   @Override
-  public PsiClass getOriginalClass(PsiClass psiClass) {
-    PsiCompiledElement cls = psiClass.getUserData(ClsElementImpl.COMPILED_ELEMENT);
-    if (cls != null && cls.isValid()) return (PsiClass)cls;
+  public PsiClass getOriginalClass(@NotNull PsiClass psiClass) {
+    return findCompiledElement(psiClass, scope -> {
+      String fqn = psiClass.getQualifiedName();
+      return fqn != null ? Arrays.asList(JavaPsiFacade.getInstance(myProject).findClasses(fqn, scope)) : Collections.emptyList();
+    });
+  }
 
-    if (DumbService.isDumb(myProject)) return psiClass;
+  @NotNull
+  @Override
+  public PsiJavaModule getOriginalModule(@NotNull PsiJavaModule module) {
+    return findCompiledElement(module, scope -> JavaFileManager.getInstance(myProject).findModules(module.getName(), scope));
+  }
 
-    VirtualFile vFile = psiClass.getContainingFile().getVirtualFile();
-    final ProjectFileIndex idx = ProjectRootManager.getInstance(myProject).getFileIndex();
-    if (vFile == null || !idx.isInLibrarySource(vFile)) return psiClass;
+  private <T extends PsiElement> T findCompiledElement(T original, Function<GlobalSearchScope, Collection<T>> candidateFinder) {
+    PsiCompiledElement cls = original.getUserData(ClsElementImpl.COMPILED_ELEMENT);
+    if (cls != null && cls.isValid()) {
+      @SuppressWarnings("unchecked") T t = (T)cls;
+      return t;
+    }
 
-    String fqn = psiClass.getQualifiedName();
-    if (fqn == null) return psiClass;
-
-    final Set<OrderEntry> orderEntries = ContainerUtil.newHashSet(idx.getOrderEntriesForFile(vFile));
-    GlobalSearchScope librariesScope = LibraryScopeCache.getInstance(myProject).getLibrariesOnlyScope();
-    for (PsiClass original : JavaPsiFacade.getInstance(myProject).findClasses(fqn, librariesScope)) {
-      PsiFile psiFile = original.getContainingFile();
-      if (psiFile != null) {
-        VirtualFile candidateFile = psiFile.getVirtualFile();
-        if (candidateFile != null) {
-          // order for file and vFile has non empty intersection.
-          List<OrderEntry> entries = idx.getOrderEntriesForFile(candidateFile);
-          //noinspection ForLoopReplaceableByForEach
-          for (int i = 0; i < entries.size(); i++) {
-            if (orderEntries.contains(entries.get(i))) return original;
+    if (!DumbService.isDumb(myProject)) {
+      VirtualFile vFile = original.getContainingFile().getVirtualFile();
+      ProjectFileIndex idx = ProjectRootManager.getInstance(myProject).getFileIndex();
+      if (vFile != null && idx.isInLibrarySource(vFile)) {
+        GlobalSearchScope librariesScope = LibraryScopeCache.getInstance(myProject).getLibrariesOnlyScope();
+        Set<OrderEntry> originalEntries = ContainerUtil.newHashSet(idx.getOrderEntriesForFile(vFile));
+        for (T candidate : candidateFinder.apply(librariesScope)) {
+          PsiFile candidateFile = candidate.getContainingFile();
+          if (candidateFile != null) {
+            VirtualFile candidateVFile = candidateFile.getVirtualFile();
+            if (candidateVFile != null) {
+              for (OrderEntry candidateEntry : idx.getOrderEntriesForFile(candidateVFile)) {
+                if (originalEntries.contains(candidateEntry)) return candidate;
+              }
+            }
           }
         }
       }
     }
 
-    return psiClass;
+    return original;
   }
 
   @NotNull
   @Override
-  public PsiElement getClsFileNavigationElement(PsiJavaFile clsFile) {
+  public PsiElement getClsFileNavigationElement(@NotNull PsiJavaFile clsFile) {
     Function<VirtualFile, VirtualFile> finder = null;
 
     PsiClass[] classes = clsFile.getClasses();
@@ -138,20 +148,18 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
   @NotNull
   @Override
   public LanguageLevel getEffectiveLanguageLevel(@Nullable VirtualFile virtualFile) {
-    if (virtualFile == null) return PsiUtil.getLanguageLevel(myProject);
-
     // For default project, do not look into virtual file system.
     // It is important for Upsource, where operations are done in default project to
     // prevent expensive look-up into VFS
-    if (myProject.isDefault()) return PsiUtil.getLanguageLevel(myProject);
+    if (virtualFile == null || myProject.isDefault()) return PsiUtil.getLanguageLevel(myProject);
 
-    final VirtualFile folder = virtualFile.getParent();
-    if (folder != null) {
-      final LanguageLevel level = folder.getUserData(LanguageLevel.KEY);
+    VirtualFile parent = virtualFile.getParent();
+    if (parent != null) {
+      LanguageLevel level = parent.getUserData(LanguageLevel.KEY);
       if (level != null) return level;
     }
 
-    final ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
+    ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
     Module module = index.getModuleForFile(virtualFile);
     if (module != null && index.isInSourceContent(virtualFile)) {
       return EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(module);
@@ -221,7 +229,7 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
   }
 
   @Override
-  public ASTNode getDefaultImportAnchor(PsiImportList list, PsiImportStatementBase statement) {
+  public ASTNode getDefaultImportAnchor(@NotNull PsiImportList list, @NotNull PsiImportStatementBase statement) {
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(list.getProject());
     ImportHelper importHelper = new ImportHelper(settings);
     return importHelper.getDefaultAnchor(list, statement);
@@ -269,7 +277,7 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
   }
 
   private static PsiElement skipWhitespaces(PsiClass aClass, PsiElement anchor) {
-    if (anchor != null && PsiTreeUtil.skipSiblingsForward(anchor, PsiWhiteSpace.class) == aClass.getRBrace()) {
+    if (anchor != null && PsiTreeUtil.skipWhitespacesForward(anchor) == aClass.getRBrace()) {
       // Given member should be inserted as the last child.
       return aClass.getRBrace();
     }
@@ -278,22 +286,23 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
 
   @Override
   public void setupCatchBlock(@NotNull String exceptionName, @NotNull PsiType exceptionType, PsiElement context, @NotNull PsiCatchSection catchSection) {
-    final FileTemplate catchBodyTemplate = FileTemplateManager.getInstance(catchSection.getProject()).getCodeTemplate(JavaTemplateUtil.TEMPLATE_CATCH_BODY);
-    LOG.assertTrue(catchBodyTemplate != null);
+    FileTemplate template = FileTemplateManager.getInstance(catchSection.getProject()).getCodeTemplate(JavaTemplateUtil.TEMPLATE_CATCH_BODY);
+    if (template == null) throw new IncorrectOperationException("Missing template: " + JavaTemplateUtil.TEMPLATE_CATCH_BODY);
 
     Properties props = FileTemplateManager.getInstance(myProject).getDefaultProperties();
     props.setProperty(FileTemplate.ATTRIBUTE_EXCEPTION, exceptionName);
     props.setProperty(FileTemplate.ATTRIBUTE_EXCEPTION_TYPE, exceptionType.getCanonicalText());
     if (context != null && context.isPhysical()) {
-      final PsiDirectory directory = context.getContainingFile().getContainingDirectory();
+      PsiDirectory directory = context.getContainingFile().getContainingDirectory();
       if (directory != null) {
         JavaTemplateUtil.setPackageNameAttribute(props, directory);
       }
     }
 
-    final PsiCodeBlock codeBlockFromText;
     try {
-      codeBlockFromText = PsiElementFactory.SERVICE.getInstance(myProject).createCodeBlockFromText("{\n" + catchBodyTemplate.getText(props) + "\n}", null);
+      PsiCodeBlock block =
+        PsiElementFactory.SERVICE.getInstance(myProject).createCodeBlockFromText("{\n" + template.getText(props) + "\n}", null);
+      Objects.requireNonNull(catchSection.getCatchBlock()).replace(block);
     }
     catch (ProcessCanceledException ce) {
       throw ce;
@@ -301,6 +310,5 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
     catch (Exception e) {
       throw new IncorrectOperationException("Incorrect file template", (Throwable)e);
     }
-    catchSection.getCatchBlock().replace(codeBlockFromText);
   }
 }

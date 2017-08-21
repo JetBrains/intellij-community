@@ -48,6 +48,7 @@ import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEventMulticasterEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -320,7 +321,14 @@ public class DaemonListeners implements Disposable {
       }
     }, this);
 
-    ((EditorEventMulticasterEx)eventMulticaster).addErrorStripeListener(new ErrorStripeHandler(myProject), this);
+    ((EditorEventMulticasterEx)eventMulticaster).addErrorStripeListener(e -> {
+      RangeHighlighter highlighter = e.getHighlighter();
+      if (!highlighter.isValid()) return;
+      Object info = highlighter.getErrorStripeTooltip();
+      if (info instanceof HighlightInfo) {
+        GotoNextErrorHandler.navigateToError(myProject, e.getEditor(), (HighlightInfo)info);
+      }
+    }, this);
 
     ModalityStateListener modalityStateListener = entering -> {
       // before showing dialog we are in non-modal context yet, and before closing dialog we are still in modal context
@@ -370,7 +378,7 @@ public class DaemonListeners implements Disposable {
     if (project != null && project != myProject) return false;
     // cached is essential here since we do not want to create PSI file in alien project
     PsiFile psiFile = myPsiDocumentManager.getCachedPsiFile(document);
-    return psiFile != null && psiFile.getOriginalFile() == psiFile;
+    return psiFile != null && psiFile.isPhysical() && psiFile.getOriginalFile() == psiFile;
   }
 
   @Override

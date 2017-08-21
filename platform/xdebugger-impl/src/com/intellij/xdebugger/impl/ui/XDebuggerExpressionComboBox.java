@@ -17,6 +17,7 @@ package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
@@ -190,7 +191,8 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
         @Override
         protected void onEditorCreate(EditorEx editor) {
           editor.putUserData(DebuggerCopyPastePreprocessor.REMOVE_NEWLINES_ON_PASTE, true);
-          editor.getColorsScheme().setEditorFontSize(myComboBox.getFont().getSize());
+          editor.getColorsScheme().setEditorFontSize(
+            Math.min(myComboBox.getFont().getSize(), EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize()));
         }
       };
       myDelegate.getEditorComponent().setFontInheritedFromLAF(false);

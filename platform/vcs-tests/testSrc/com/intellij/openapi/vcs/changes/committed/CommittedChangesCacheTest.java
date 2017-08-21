@@ -84,7 +84,7 @@ public class CommittedChangesCacheTest extends PlatformTestCase {
   }
 
   @Override
-  protected void tearDown() throws Exception {
+  protected void tearDown() {
     new RunAll(
       () -> {
         if (myConnection != null) myConnection.disconnect();

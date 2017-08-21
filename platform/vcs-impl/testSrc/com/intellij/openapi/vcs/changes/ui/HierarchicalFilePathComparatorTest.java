@@ -29,65 +29,65 @@ import java.util.Collection;
 import java.util.List;
 
 public class HierarchicalFilePathComparatorTest extends TestCase {
-  public void testInOneDirectory() throws Exception {
+  public void testInOneDirectory() {
     assertEquals(-1, compare("~/project/A.java", "~/project/B.java"));
     assertEquals(1, compare("~/project/Z.java", "~/project/B.java"));
   }
 
-  public void testInDifferentDirs() throws Exception {
+  public void testInDifferentDirs() {
     assertEquals(-1, compare("~/project/aaa/A.java", "~/project/bbb/B.java"));
     assertEquals(-1, compare("~/project/aaa/B.java", "~/project/zzz/A.java"));
     assertEquals(1, compare("~/project/zzz/A.java", "~/project/aaa/B.java"));
   }
 
-  public void testInSubDir() throws Exception {
+  public void testInSubDir() {
     // all folders precede plain files
     assertEquals("Folders should precede plain files", -1, compare("~/project/dir/subdir/A.java", "~/project/dir/B.java"));
     assertEquals("Folders should precede plain files", -1, compare("~/project/dir/A.java", "~/project/B.java"));
     assertEquals("Folders should precede plain files", 1, compare("~/project/B.java", "~/project/dir/subdir/A.java"));
   }
 
-  public void testEqualPaths() throws Exception {
+  public void testEqualPaths() {
     assertEquals("Equal paths should compare to 0", 0, compare("~/project/A.java", "~/project/A.java"));
     assertEquals("Equal paths should compare to 0", 0, compare("~/project/aaa/A.java", "~/project/aaa/A.java"));
   }
 
-  public void testEmptyPaths() throws Exception {
+  public void testEmptyPaths() {
     assertEquals(0, compare("", ""));
   }
 
-  public void testSamePrefixFolder() throws Exception {
+  public void testSamePrefixFolder() {
     assertEquals(-1, compare("~/project/aaa/", "~/project/aaa-qwe/"));
     assertEquals(-1, compare("~/project/aaa/A.java", "~/project/aaa-qwe/A.java"));
     assertEquals(1, compare("~/project/zzz-qwe.java", "~/project/zzz/"));
   }
 
-  public void testRootDirectory() throws Exception {
+  public void testRootDirectory() {
     assertEquals(0, compare("A.java", "A.java"));
     assertEquals(0, compare("/aaa/", "/aaa/"));
     assertEquals(-1, compare("/aaa/", "/aaa-qwe/"));
     assertEquals(-1, compare("/aaa/", "/ZZ.java"));
   }
 
-  public void testCaseIgnored() throws Exception {
+  public void testCaseIgnored() {
     assertEquals(-1, compare("a.java", "B.java"));
     assertEquals(-1, compare("A.java", "b.java"));
   }
 
-  public void testAssociativeBug() throws Exception {
+  public void testAssociativeBug() {
     assertEquals(1, compare("/folder/aaa-qwerty/", "/folder/aaa/"));
     assertEquals(1, compare("/folder/aaa/.gitignore", "/folder/aaa/"));
     assertEquals(-1, compare("/folder/aaa/.gitignore", "/folder/aaa-qwerty/"));
     assertEquals(1, compare("/folder/aaa-qwerty/qwerty", "/folder/aaa/qwerty/"));
   }
 
-  public void testTransitiveBug() throws Exception {
+  public void testTransitiveBug() {
     assertEquals(1, compare("/folder/abd", "/folder/abd/"));
     assertEquals(1, compare("/folder/abx/", "/folder/abd/"));
     assertEquals(-1, compare("/folder/abx/", "/folder/abd"));
   }
 
-  public void testTransitive() throws Exception {
+  public void testTransitive() {
     Collection<String> paths = ContainerUtil.list(
       "",
       "/",

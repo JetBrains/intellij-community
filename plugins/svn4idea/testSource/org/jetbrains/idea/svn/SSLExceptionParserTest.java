@@ -23,7 +23,7 @@ import javax.net.ssl.SSLProtocolException;
 
 public class SSLExceptionParserTest {
   @Test
-  public void testRealLifeCase() throws Exception {
+  public void testRealLifeCase() {
     final String original = "handshake alert:  unrecognized_name";
     final SSLProtocolException exception = new SSLProtocolException(original);
     final SSLProtocolExceptionParser parser = new SSLProtocolExceptionParser(exception.getMessage());

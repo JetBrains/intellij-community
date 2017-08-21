@@ -101,14 +101,15 @@ public class EditorSearchSession implements SearchSession,
                                new RemoveOccurrenceAction(),
                                new SelectAllAction(),
                                new Separator())
-      .addSecondarySearchActions(new ToggleInCommentsAction(),
+      .addSecondarySearchActions(new ToggleAnywhereAction(),
+                                 new ToggleInCommentsAction(),
                                  new ToggleInLiteralsOnlyAction(),
                                  new ToggleExceptCommentsAction(),
                                  new ToggleExceptLiteralsAction(),
                                  new ToggleExceptCommentsAndLiteralsAction())
       .addExtraSearchActions(new ToggleMatchCase(),
-                             new ToggleRegex(),
                              new ToggleWholeWordsOnlyAction(),
+                             new ToggleRegex(),
                              new StatusTextAction(),
                              new DefaultCustomComponentAction(myClickToHighlightLabel))
       .addSearchFieldActions(new RestorePreviousSettingsAction())

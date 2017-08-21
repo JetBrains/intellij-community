@@ -37,13 +37,14 @@ public class FindUIHelper implements Disposable {
    FindModel myPreviousModel;
   @NotNull private Runnable myOkHandler;
 
-  private FindUI myUI;
+  FindUI myUI;
 
   public FindUIHelper(@NotNull Project project, @NotNull FindModel model, @NotNull Runnable okHandler) {
     myProject = project;
     myModel = model;
     myOkHandler = okHandler;
     myUI = getOrCreateUI();
+    myUI.initByModel();
   }
 
   protected FindUI getOrCreateUI() {
@@ -72,7 +73,7 @@ public class FindUIHelper implements Disposable {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         myModel.setReplaceState(replace);
-        findDialog.updateReplaceVisibility();
+        findDialog.initByModel();
       }
       //@NotNull
       //private DataContextWrapper prepareDataContextForFind(@NotNull AnActionEvent e) {
@@ -114,7 +115,6 @@ public class FindUIHelper implements Disposable {
   public void setModel(@NotNull FindModel model) {
     myModel = model;
     myUI.initByModel();
-    myUI.updateReplaceVisibility();
   }
 
   public void setOkHandler(@NotNull Runnable okHandler) {
@@ -128,6 +128,9 @@ public class FindUIHelper implements Disposable {
 
   @Override
   public void dispose() {
+    if (myUI != null && !Disposer.isDisposed(myUI.getDisposable())) {
+      Disposer.dispose(myUI.getDisposable());
+    }
     myUI = null;
   }
 
@@ -177,9 +180,8 @@ public class FindUIHelper implements Disposable {
   }
 
   void setUseSeparateView(boolean separateView) {
-    if (myModel.isOpenInNewTabEnabled()) {
-      myModel.setOpenInNewTab(separateView);
-    }
+    if (!myModel.isOpenInNewTabEnabled()) throw new IllegalStateException("'Open in new Tab' is not enabled");
+    myModel.setOpenInNewTab(separateView);
     FindSettings.getInstance().setShowResultsInSeparateView(separateView);
   }
 

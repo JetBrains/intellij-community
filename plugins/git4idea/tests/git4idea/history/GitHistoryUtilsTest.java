@@ -227,7 +227,7 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
     }
   }
 
-  private static TestCommit move(String file, File dir, String message) throws Exception {
+  private static TestCommit move(String file, File dir, String message) {
     final String NAME = "PostHighlightingPass.java";
     mv(file, dir.getPath());
     file = new File(dir, NAME).getPath();

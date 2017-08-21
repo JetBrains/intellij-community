@@ -40,117 +40,117 @@ public class ExtractEnumTest extends MultiFileTestCase {
     return "/refactoring/extractEnum/";
   }
 
-  public void testOneConstant() throws Exception {
+  public void testOneConstant() {
     doTest(new RefactoringTestUtil.MemberDescriptor("FOO", PsiField.class, true));
   }
 
-  public void testDependantConstants() throws Exception {
+  public void testDependantConstants() {
     doTest(new RefactoringTestUtil.MemberDescriptor("FOO", PsiField.class, true),
            new RefactoringTestUtil.MemberDescriptor("BAR", PsiField.class, true));
   }
   
-  public void testConstructorCall() throws Exception {
+  public void testConstructorCall() {
     doTest(new RefactoringTestUtil.MemberDescriptor("STATE_STARTED", PsiField.class, true),
            new RefactoringTestUtil.MemberDescriptor("STATE_STOPPED", PsiField.class, true));
   }
  
-  public void testCondition() throws Exception {
+  public void testCondition() {
     doTest(new RefactoringTestUtil.MemberDescriptor("STATE_STARTED", PsiField.class, true),
            new RefactoringTestUtil.MemberDescriptor("STATE_STOPPED", PsiField.class, true));
   }
 
-  public void testReferencesOnEnumConstantInEnum() throws Exception {
+  public void testReferencesOnEnumConstantInEnum() {
     doTest(new RefactoringTestUtil.MemberDescriptor("FOO", PsiField.class, true),
            new RefactoringTestUtil.MemberDescriptor("foo", PsiMethod.class));
   }
 
-  public void testReferencesOnEnumConstantInOriginal() throws Exception {
+  public void testReferencesOnEnumConstantInOriginal() {
     doTest(new RefactoringTestUtil.MemberDescriptor("FOO", PsiField.class, true));
   }
 
-  public void testUsageInVariableInitializer() throws Exception {
+  public void testUsageInVariableInitializer() {
     doTest(new RefactoringTestUtil.MemberDescriptor("FOO", PsiField.class, true));
   }
 
-  public void testForwardReferenceConflict() throws Exception {
+  public void testForwardReferenceConflict() {
     doTest("Unable to migrate statement to enum constant.", false,
            new RefactoringTestUtil.MemberDescriptor("FOO", PsiField.class, false),
            new RefactoringTestUtil.MemberDescriptor("BAR", PsiField.class, true));
   }
 
-  public void testValueNameConflict() throws Exception {
+  public void testValueNameConflict() {
     doTest(new RefactoringTestUtil.MemberDescriptor("FOO", PsiField.class, true),
            new RefactoringTestUtil.MemberDescriptor("value", PsiField.class, false));
   }
 
-  public void testChangeMethodParameter() throws Exception {
+  public void testChangeMethodParameter() {
     doTest(new RefactoringTestUtil.MemberDescriptor("FOO", PsiField.class, true),
            new RefactoringTestUtil.MemberDescriptor("BAR", PsiField.class, true));
   }
 
-  public void testCantChangeMethodParameter() throws Exception {
+  public void testCantChangeMethodParameter() {
     doTest("Unable to migrate statement to enum constant.", false,
            new RefactoringTestUtil.MemberDescriptor("FOO", PsiField.class, true),
            new RefactoringTestUtil.MemberDescriptor("BAR", PsiField.class, true));
   }
 
-  public void testDontChangeOtherConstants() throws Exception {
+  public void testDontChangeOtherConstants() {
     doTest("Unable to migrate statement to enum constant. Node.WARNING can not be replaced with enum", false,
            new RefactoringTestUtil.MemberDescriptor("OK", PsiField.class, true),
            new RefactoringTestUtil.MemberDescriptor("ERROR", PsiField.class, true));
   }
 
-  public void testCantChangeMethodParameter1() throws Exception {
+  public void testCantChangeMethodParameter1() {
     doTest("Unable to migrate statement to enum constant.", false,
            new RefactoringTestUtil.MemberDescriptor("FOO", PsiField.class, true),
            new RefactoringTestUtil.MemberDescriptor("BAR", PsiField.class, true));
   }
 
-  public void testChangeReturnType() throws Exception {
+  public void testChangeReturnType() {
     doTest(new RefactoringTestUtil.MemberDescriptor("FOO", PsiField.class, true),
            new RefactoringTestUtil.MemberDescriptor("BAR", PsiField.class, true));
   }
 
-  public void testCantChangeReturnType() throws Exception {
+  public void testCantChangeReturnType() {
     doTest("Unable to migrate statement to enum constant. Field &lt;b&gt;&lt;code&gt;length&lt;/code&gt;&lt;/b&gt; is out of project", false,
            new RefactoringTestUtil.MemberDescriptor("FOO", PsiField.class, true),
            new RefactoringTestUtil.MemberDescriptor("BAR", PsiField.class, true));
   }
 
-  public void testCantChangeReturnType1() throws Exception {
+  public void testCantChangeReturnType1() {
     doTest("Unable to migrate statement to enum constant.", false,
            new RefactoringTestUtil.MemberDescriptor("FOO", PsiField.class, true),
            new RefactoringTestUtil.MemberDescriptor("BAR", PsiField.class, true));
   }
 
-  public void testChangeMethodParameterAndReplaceOtherUsages() throws Exception {
+  public void testChangeMethodParameterAndReplaceOtherUsages() {
     doTest(new RefactoringTestUtil.MemberDescriptor("FOO", PsiField.class, true),
            new RefactoringTestUtil.MemberDescriptor("BAR", PsiField.class, true));
   }
 
-  public void testReferencesOnEnumConstantElsewhere() throws Exception {
+  public void testReferencesOnEnumConstantElsewhere() {
     doTest(new RefactoringTestUtil.MemberDescriptor("FOO", PsiField.class, true),
            new RefactoringTestUtil.MemberDescriptor("BAR", PsiField.class, true));
   }
 
-  public void testNormalize() throws Exception {
+  public void testNormalize() {
     doTest(new RefactoringTestUtil.MemberDescriptor("FOO", PsiField.class, true),
            new RefactoringTestUtil.MemberDescriptor("BAR", PsiField.class, true));
   }
 
-  public void testUnknownSwitchLabel() throws Exception {
+  public void testUnknownSwitchLabel() {
     doTest("Unable to migrate statement to enum constant. 8 can not be replaced with enum", false,
            new RefactoringTestUtil.MemberDescriptor("FOO", PsiField.class, true),
            new RefactoringTestUtil.MemberDescriptor("BAR", PsiField.class, true));
   }
 
-  private void doTest(final RefactoringTestUtil.MemberDescriptor... memberDescriptors) throws Exception {
+  private void doTest(final RefactoringTestUtil.MemberDescriptor... memberDescriptors) {
     doTest(null, false, memberDescriptors);
   }
 
   private void doTest(final String conflicts,
                       final boolean generateAccessors,
-                      final RefactoringTestUtil.MemberDescriptor... memberDescriptors) throws Exception {
+                      final RefactoringTestUtil.MemberDescriptor... memberDescriptors) {
     doTest((rootDir, rootAfter) -> {
       final PsiClass aClass = myJavaFacade.findClass("Test", GlobalSearchScope.projectScope(myProject));
       assertNotNull("Class Test not found", aClass);

@@ -96,7 +96,7 @@ public class PyDebuggerTask extends PyBaseDebuggerTask {
 
     new WriteAction() {
       @Override
-      protected void run(@NotNull Result result) throws Throwable {
+      protected void run(@NotNull Result result) {
         RunManager runManager = RunManager.getInstance(project);
         runManager.addConfiguration(settings, false);
         runManager.setSelectedConfiguration(settings);
@@ -147,9 +147,7 @@ public class PyDebuggerTask extends PyBaseDebuggerTask {
       myOutputPrinter.start();
     }
 
-
     myPausedSemaphore = new Semaphore(0);
-    
 
     mySession.addSessionListener(new XDebugSessionListener() {
       @Override
@@ -172,7 +170,7 @@ public class PyDebuggerTask extends PyBaseDebuggerTask {
     return new WriteAction<ExecutionResult>() {
       @Override
       protected void run(@NotNull Result<ExecutionResult> result) throws Throwable {
-        myExecutionResult = pyState.execute(executor, patchers);
+        myExecutionResult =  pyState.execute(executor, patchers);
 
         mySession = XDebuggerManager.getInstance(getProject()).
           startSession(env, new XDebugProcessStarter() {
@@ -181,31 +179,27 @@ public class PyDebuggerTask extends PyBaseDebuggerTask {
               myDebugProcess =
                 new PyDebugProcess(session, serverSocket, myExecutionResult.getExecutionConsole(), myExecutionResult.getProcessHandler(), isMultiprocessDebug());
 
-
               addTerminationHandlerProcessListener();
-
-
 
               return myDebugProcess;
             }
-
-
           });
         result.setResult(myExecutionResult);
       }
     };
   }
+
   protected void addTerminationHandlerProcessListener() {
     myDebugProcess.getProcessHandler().addProcessListener(new ProcessAdapter() {
       StringBuilder output = new StringBuilder();
 
       @Override
-      public void onTextAvailable(ProcessEvent event, Key outputType) {
+      public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
         output.append(event.getText());
       }
 
       @Override
-      public void processTerminated(ProcessEvent event) {
+      public void processTerminated(@NotNull ProcessEvent event) {
         myTerminateSemaphore.release();
         if (event.getExitCode() != 0 && !myProcessCanTerminate) {
           Assert.fail("Process terminated unexpectedly\n" + output.toString());
@@ -235,7 +229,7 @@ public class PyDebuggerTask extends PyBaseDebuggerTask {
     myWaitForTermination = waitForTermination;
   }
 
-  protected void waitForAllThreadsPause() throws InterruptedException, InvocationTargetException {
+  protected void waitForAllThreadsPause() throws InterruptedException {
     waitForPause();
     Assert.assertTrue(String.format("All threads didn't stop within timeout\n" +
                                     "Output: %s", output()), waitForAllThreads());
@@ -256,7 +250,7 @@ public class PyDebuggerTask extends PyBaseDebuggerTask {
   }
 
   @Override
-  protected void disposeDebugProcess() throws InterruptedException {
+  protected void disposeDebugProcess() {
     if (myDebugProcess != null) {
       ProcessHandler processHandler = myDebugProcess.getProcessHandler();
 

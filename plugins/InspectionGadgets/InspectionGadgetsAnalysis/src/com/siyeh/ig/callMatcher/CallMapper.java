@@ -16,6 +16,7 @@
 package com.siyeh.ig.callMatcher;
 
 import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiMethodReferenceExpression;
 import one.util.streamex.StreamEx;
 
 import java.util.ArrayList;
@@ -31,7 +32,7 @@ import java.util.stream.Stream;
  * @author Tagir Valeev
  */
 public class CallMapper<T> {
-  private Map<String, List<Function<PsiMethodCallExpression, T>>> myMap = new HashMap<>();
+  private Map<String, List<CallHandler<T>>> myMap = new HashMap<>();
 
   public CallMapper() {}
 
@@ -61,7 +62,7 @@ public class CallMapper<T> {
 
   public T mapFirst(PsiMethodCallExpression call) {
     if (call == null) return null;
-    List<Function<PsiMethodCallExpression, T>> functions = myMap.get(call.getMethodExpression().getReferenceName());
+    List<CallHandler<T>> functions = myMap.get(call.getMethodExpression().getReferenceName());
     if (functions == null) return null;
     for (Function<PsiMethodCallExpression, T> function : functions) {
       T t = function.apply(call);
@@ -72,9 +73,22 @@ public class CallMapper<T> {
     return null;
   }
 
+  public T mapFirst(PsiMethodReferenceExpression methodRef) {
+    if (methodRef == null) return null;
+    List<CallHandler<T>> functions = myMap.get(methodRef.getReferenceName());
+    if (functions == null) return null;
+    for (CallHandler<T> function : functions) {
+      T t = function.applyMethodReference(methodRef);
+      if (t != null) {
+        return t;
+      }
+    }
+    return null;
+  }
+
   public Stream<T> mapAll(PsiMethodCallExpression call) {
     if (call == null) return null;
-    List<Function<PsiMethodCallExpression, T>> functions = myMap.get(call.getMethodExpression().getReferenceName());
+    List<CallHandler<T>> functions = myMap.get(call.getMethodExpression().getReferenceName());
     if (functions == null) return StreamEx.empty();
     return StreamEx.of(functions).map(fn -> fn.apply(call)).nonNull();
   }

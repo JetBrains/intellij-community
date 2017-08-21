@@ -56,7 +56,7 @@ public class PyNamedParameterElementType extends PyStubElementType<PyNamedParame
   @NotNull
   public PyNamedParameterStub createStub(@NotNull final PyNamedParameter psi, final StubElement parentStub) {
     return new PyNamedParameterStubImpl(psi.getName(), psi.isPositionalContainer(), psi.isKeywordContainer(), psi.hasDefaultValue(),
-                                        psi.getTypeCommentAnnotation(), parentStub, getStubElementType());
+                                        psi.getTypeCommentAnnotation(), psi.getAnnotationValue() , parentStub, getStubElementType());
   }
 
   @NotNull
@@ -74,6 +74,7 @@ public class PyNamedParameterElementType extends PyStubElementType<PyNamedParame
     if (stub.hasDefaultValue()) flags |= HAS_DEFAULT_VALUE;
     dataStream.writeByte(flags);
     dataStream.writeName(stub.getTypeComment());
+    dataStream.writeName(stub.getAnnotation());
   }
 
   @NotNull
@@ -81,13 +82,14 @@ public class PyNamedParameterElementType extends PyStubElementType<PyNamedParame
     String name = StringRef.toString(dataStream.readName());
     byte flags = dataStream.readByte();
     final StringRef typeComment = dataStream.readName();
+    final StringRef annotation = dataStream.readName();
     return new PyNamedParameterStubImpl(name,
                                         (flags & POSITIONAL_CONTAINER) != 0,
                                         (flags & KEYWORD_CONTAINER) != 0,
                                         (flags & HAS_DEFAULT_VALUE) != 0,
                                         typeComment == null ? null : typeComment.getString(), 
-                                        parentStub,
-                                        getStubElementType());
+                                        annotation == null ? null : annotation.getString(),
+                                        parentStub, getStubElementType());
   }
 
   @Override

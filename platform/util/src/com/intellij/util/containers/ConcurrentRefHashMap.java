@@ -30,7 +30,7 @@ import java.util.concurrent.ConcurrentMap;
  * Null values are NOT allowed
  */
 abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements ConcurrentMap<K, V>, TObjectHashingStrategy<K> {
-  protected final ReferenceQueue<K> myReferenceQueue = new ReferenceQueue<K>();
+  final ReferenceQueue<K> myReferenceQueue = new ReferenceQueue<K>();
   private final ConcurrentMap<KeyReference<K, V>, V> myMap; // hashing strategy must be canonical, we compute corresponding hash codes using our own myHashingStrategy
   @NotNull
   private final TObjectHashingStrategy<K> myHashingStrategy;
@@ -47,7 +47,8 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
     int hashCode();
   }
 
-  protected abstract KeyReference<K, V> createKeyReference(@NotNull K key, @NotNull V value, @NotNull TObjectHashingStrategy<K> hashingStrategy);
+  @NotNull
+  abstract KeyReference<K, V> createKeyReference(@NotNull K key, @NotNull V value, @NotNull TObjectHashingStrategy<K> hashingStrategy);
 
   private static final HardKey NULL_KEY = new HardKey() {
     @Override
@@ -80,18 +81,15 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
     }
     return processed;
   }
+  private static final float LOAD_FACTOR = 0.75f;
+  private static final int DEFAULT_CAPACITY = 16;
 
-  public ConcurrentRefHashMap(@NotNull Map<? extends K, ? extends V> t) {
-    this(Math.max(2 * t.size(), 11), ConcurrentHashMap.LOAD_FACTOR);
-    putAll(t);
+  ConcurrentRefHashMap() {
+    this(DEFAULT_CAPACITY);
   }
 
-  public ConcurrentRefHashMap() {
-    this(ConcurrentHashMap.DEFAULT_CAPACITY);
-  }
-
-  public ConcurrentRefHashMap(int initialCapacity) {
-    this(initialCapacity, ConcurrentHashMap.LOAD_FACTOR);
+  ConcurrentRefHashMap(int initialCapacity) {
+    this(initialCapacity, LOAD_FACTOR);
   }
 
   private static final TObjectHashingStrategy THIS = new TObjectHashingStrategy() {
@@ -105,20 +103,20 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
       throw new UnsupportedOperationException();
     }
   };
-  public ConcurrentRefHashMap(int initialCapacity, float loadFactor) {
+  private ConcurrentRefHashMap(int initialCapacity, float loadFactor) {
     this(initialCapacity, loadFactor, 4, THIS);
   }
 
-  public ConcurrentRefHashMap(@NotNull final TObjectHashingStrategy<K> hashingStrategy) {
-    this(ConcurrentHashMap.DEFAULT_CAPACITY, ConcurrentHashMap.LOAD_FACTOR, 2, hashingStrategy);
+  ConcurrentRefHashMap(@NotNull final TObjectHashingStrategy<K> hashingStrategy) {
+    this(DEFAULT_CAPACITY, LOAD_FACTOR, 2, hashingStrategy);
   }
 
-  public ConcurrentRefHashMap(int initialCapacity,
+  ConcurrentRefHashMap(int initialCapacity,
                               float loadFactor,
                               int concurrencyLevel,
                               @NotNull TObjectHashingStrategy<K> hashingStrategy) {
     myHashingStrategy = hashingStrategy == THIS ? this : hashingStrategy;
-    myMap = ContainerUtil.<KeyReference<K, V>, V>newConcurrentMap(initialCapacity, loadFactor, concurrencyLevel, CANONICAL);
+    myMap = ContainerUtil.newConcurrentMap(initialCapacity, loadFactor, concurrencyLevel);
   }
 
   @Override
@@ -128,7 +126,8 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
 
   @Override
   public boolean isEmpty() {
-    return entrySet().isEmpty();
+    // make easier and alloc-free call to myMap first
+    return myMap.isEmpty() || entrySet().isEmpty();
   }
 
   @Override
@@ -266,7 +265,7 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
 
   /* Internal class for entry sets */
   private class EntrySet extends AbstractSet<Map.Entry<K, V>> {
-    Set<Map.Entry<KeyReference<K, V>, V>> hashEntrySet = myMap.entrySet();
+    private final Set<Map.Entry<KeyReference<K, V>, V>> hashEntrySet = myMap.entrySet();
 
     @NotNull
     @Override
@@ -357,8 +356,9 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
   @NotNull
   @Override
   public Set<Map.Entry<K, V>> entrySet() {
-    if (entrySet == null) entrySet = new EntrySet();
-    return entrySet;
+    Set<Entry<K, V>> es = entrySet;
+    if (es == null) entrySet = es = new EntrySet();
+    return es;
   }
 
   @Override
@@ -390,9 +390,9 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
   public int computeHashCode(final K object) {
     int h = object.hashCode();
     h += ~(h << 9);
-    h ^= (h >>> 14);
-    h += (h << 4);
-    h ^= (h >>> 10);
+    h ^= h >>> 14;
+    h += h << 4;
+    h ^= h >>> 10;
     return h;
   }
 

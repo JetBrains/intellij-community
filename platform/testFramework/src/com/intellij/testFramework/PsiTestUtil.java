@@ -36,14 +36,13 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.impl.DebugUtil;
-import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.psi.stubs.StubTree;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.stubs.StubTextInconsistencyException;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -56,6 +55,7 @@ import org.junit.Assert;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.function.Consumer;
 
 public class PsiTestUtil {
   public static VirtualFile createTestProjectStructure(Project project,
@@ -213,11 +213,29 @@ public class PsiTestUtil {
     });
   }
 
-  public static void checkFileStructure(PsiFile file) throws IncorrectOperationException {
-    String originalTree = DebugUtil.psiTreeToString(file, false);
-    PsiFile dummyFile = PsiFileFactory.getInstance(file.getProject()).createFileFromText(file.getName(), file.getFileType(), file.getText());
-    String reparsedTree = DebugUtil.psiTreeToString(dummyFile, false);
-    Assert.assertEquals(reparsedTree, originalTree);
+  public static void checkFileStructure(PsiFile file) {
+    compareFromAllRoots(file, f -> DebugUtil.psiTreeToString(f, false));
+  }
+
+  private static void compareFromAllRoots(PsiFile file, Function<PsiFile, String> fun) {
+    PsiFile dummyFile = createDummyCopy(file);
+
+    String psiTree = StringUtil.join(file.getViewProvider().getAllFiles(), fun, "\n");
+    String reparsedTree = StringUtil.join(dummyFile.getViewProvider().getAllFiles(), fun, "\n");
+    if (!psiTree.equals(reparsedTree)) {
+      Assert.assertEquals("Re-created from text:\n" + reparsedTree, "PSI structure:\n" + psiTree);
+    }
+  }
+
+  @NotNull
+  private static PsiFile createDummyCopy(PsiFile file) {
+    LightVirtualFile copy = new LightVirtualFile(file.getName(), file.getText());
+    copy.setOriginalFile(file.getViewProvider().getVirtualFile());
+    return Objects.requireNonNull(file.getManager().findFile(copy));
+  }
+
+  public static void checkPsiMatchesTextIgnoringWhitespace(PsiFile file) {
+    compareFromAllRoots(file, f -> DebugUtil.psiTreeToString(f, true));
   }
 
   public static void addLibrary(Module module, String libPath) {
@@ -228,6 +246,11 @@ public class PsiTestUtil {
 
   public static void addLibrary(Module module, String libName, String libPath, String... jarArr) {
     ModuleRootModificationUtil.updateModel(module, model -> addLibrary(module, model, libName, libPath, jarArr));
+  }
+
+  public static void addProjectLibrary(Module module, String libName, List<String> classesRootPaths) {
+    List<VirtualFile> roots = ContainerUtil.map(classesRootPaths, path -> VirtualFileManager.getInstance().refreshAndFindFileByUrl(VfsUtil.getUrlForLibraryRoot(new File(path))));
+    addProjectLibrary(module, libName, roots, Collections.emptyList());
   }
 
   public static void addProjectLibrary(Module module, String libName, VirtualFile... classesRoots) {
@@ -248,7 +271,7 @@ public class PsiTestUtil {
     LibraryTable libraryTable = ProjectLibraryTable.getInstance(module.getProject());
     RunResult<Library> result = new WriteAction<Library>() {
       @Override
-      protected void run(@NotNull Result<Library> result) throws Throwable {
+      protected void run(@NotNull Result<Library> result) {
         Library library = libraryTable.createLibrary(libName);
         Library.ModifiableModel libraryModel = library.getModifiableModel();
         try {
@@ -323,7 +346,7 @@ public class PsiTestUtil {
   public static Module addModule(Project project, ModuleType type, String name, VirtualFile root) {
     return new WriteCommandAction<Module>(project) {
       @Override
-      protected void run(@NotNull Result<Module> result) throws Throwable {
+      protected void run(@NotNull Result<Module> result) {
         String moduleName;
         ModifiableModuleModel moduleModel = ModuleManager.getInstance(project).getModifiableModel();
         try {
@@ -403,33 +426,22 @@ public class PsiTestUtil {
   }
 
   public static void checkStubsMatchText(@NotNull PsiFile file) {
-    Project project = file.getProject();
-
-    StubTree tree = getStubTree(file);
-    StubTree copyTree = getStubTree(
-      PsiFileFactory.getInstance(project).createFileFromText(file.getName(), file.getLanguage(), file.getText()));
-    if (tree == null || copyTree == null) return;
-
-    String fromText = DebugUtil.stubTreeToString(copyTree.getRoot());
-    String fromPsi = DebugUtil.stubTreeToString(tree.getRoot());
-    if (!fromText.equals(fromPsi)) {
-      Assert.assertEquals("Re-created from text:\n" + fromText, "Stubs from PSI structure:\n" + fromPsi);
+    try {
+      StubTextInconsistencyException.checkStubTextConsistency(file);
     }
-
-    Document document = file.getViewProvider().getDocument();
-    assert document != null;
-    if (!PsiDocumentManager.getInstance(project).isCommitted(document)) {
-      PsiDocumentManager.getInstance(project).commitDocument(document);
-      checkStubsMatchText(file);
+    catch (StubTextInconsistencyException e) {
+      Assert.assertEquals("Re-created from text:\n" + e.getStubsFromText(), "Stubs from PSI structure:\n" + e.getStubsFromPsi());
+      throw e;
     }
   }
 
-  @Nullable
-  private static StubTree getStubTree(PsiFile file) {
-    if (!(file instanceof PsiFileImpl)) return null;
-    if (((PsiFileImpl)file).getElementTypeForStubBuilder() == null) return null;
-
-    StubTree tree = ((PsiFileImpl)file).getStubTree();
-    return tree != null ? tree : ((PsiFileImpl)file).calcStubTree();
+  public static void checkPsiStructureWithCommit(@NotNull PsiFile psiFile, Consumer<PsiFile> checker) {
+    checker.accept(psiFile);
+    Document document = psiFile.getViewProvider().getDocument();
+    Project project = psiFile.getProject();
+    if (document != null && PsiDocumentManager.getInstance(project).isUncommited(document)) {
+      PsiDocumentManager.getInstance(project).commitDocument(document);
+      checker.accept(psiFile);
+    }
   }
 }

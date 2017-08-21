@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -262,38 +265,47 @@ public class ConfigurableExtensionPointUtil {
    * @return the map of different groups of settings
    */
   public static Map<String, List<Configurable>> groupConfigurables(@NotNull List<Configurable> configurables) {
-    Map<String, Node<ConfigurableWrapper>> tree = ContainerUtil.newHashMap();
+    Map<String, Node<ConfigurableWrapper>> tree = new THashMap<>();
     for (Configurable configurable : configurables) {
-      if (configurable instanceof ConfigurableWrapper) {
-        ConfigurableWrapper wrapper = (ConfigurableWrapper)configurable;
-        String id = wrapper.getId();
-        Node<ConfigurableWrapper> node = Node.get(tree, id);
-        if (node.myValue != null) {
-          LOG.warn("ignore configurable with duplicated id: " + id);
+      if (!(configurable instanceof ConfigurableWrapper)) {
+        Node.add(tree, "other", configurable);
+        continue;
+      }
+
+      ConfigurableWrapper wrapper = (ConfigurableWrapper)configurable;
+      String id;
+      try {
+        id = wrapper.getId();
+      }
+      catch (Throwable e) {
+        LOG.error("Cannot create configurable", e);
+        continue;
+      }
+
+      Node<ConfigurableWrapper> node = Node.get(tree, id);
+      if (node.myValue != null) {
+        LOG.warn("ignore configurable with duplicated id: " + id);
+        continue;
+      }
+
+      String parentId = wrapper.getParentId();
+      String groupId = wrapper.getExtensionPoint().groupId;
+      if (groupId != null) {
+        if (parentId != null) {
+          LOG.warn("ignore deprecated groupId: " + groupId + " for id: " + id);
         }
         else {
-          String parentId = wrapper.getParentId();
-          String groupId = wrapper.getExtensionPoint().groupId;
-          if (groupId != null) {
-            if (parentId != null) {
-              LOG.warn("ignore deprecated groupId: " + groupId + " for id: " + id);
-            }
-            else {
-              //TODO:LOG.warn("use deprecated groupId: " + groupId + " for id: " + id);
-              parentId = groupId;
-            }
-          }
-          parentId = Node.cyclic(tree, parentId, "other", id, node);
-          node.myParent = Node.add(tree, parentId, node);
-          node.myValue = wrapper;
+          //TODO:LOG.warn("use deprecated groupId: " + groupId + " for id: " + id);
+          parentId = groupId;
         }
       }
-      else {
-        Node.add(tree, "other", configurable);
-      }
+      parentId = Node.cyclic(tree, parentId, "other", id, node);
+      node.myParent = Node.add(tree, parentId, node);
+      node.myValue = wrapper;
     }
-    Map<String, List<Configurable>> map = ContainerUtil.newHashMap();
-    for (String id : tree.keySet().toArray(new String[tree.size()])) {
+
+    Map<String, List<Configurable>> map = new THashMap<>();
+    for (String id : ArrayUtilRt.toStringArray(tree.keySet())) {
       Node<ConfigurableWrapper> node = tree.get(id);
       if (node != null) {
         List<Configurable> list = getConfigurables(tree, node);
@@ -548,7 +560,7 @@ public class ConfigurableExtensionPointUtil {
     Node<V> myParent;
     V myValue;
 
-    private static <I, V> Node<V> get(Map<I, Node<V>> tree, I id) {
+    private static <I, V> Node<V> get(@NotNull Map<I, Node<V>> tree, @NotNull I id) {
       Node<V> node = tree.get(id);
       if (node == null) {
         node = new Node<>();
@@ -557,16 +569,16 @@ public class ConfigurableExtensionPointUtil {
       return node;
     }
 
-    private static <I, V> Node<V> add(Map<I, Node<V>> tree, I id, Object child) {
+    private static <I, V> Node<V> add(@NotNull Map<I, Node<V>> tree, @NotNull I id, Object child) {
       Node<V> node = get(tree, id);
       if (node.myChildren == null) {
-        node.myChildren = ContainerUtil.newArrayList();
+        node.myChildren = new SmartList<>();
       }
       node.myChildren.add(child);
       return node;
     }
 
-    private static <I, V> boolean cyclic(Map<I, Node<V>> tree, I id, Node<V> parent) {
+    private static <I, V> boolean cyclic(@NotNull Map<I, Node<V>> tree, @NotNull I id, Node<V> parent) {
       for (Node<V> node = tree.get(id); node != null; node = node.myParent) {
         if (node == parent) {
           return true;
@@ -575,7 +587,7 @@ public class ConfigurableExtensionPointUtil {
       return false;
     }
 
-    private static <I, V> I cyclic(Map<I, Node<V>> tree, I id, I idDefault, I idNode, Node<V> parent) {
+    private static <I, V> I cyclic(@NotNull Map<I, Node<V>> tree, @Nullable I id, I idDefault, I idNode, Node<V> parent) {
       if (id == null) {
         id = idDefault;
       }

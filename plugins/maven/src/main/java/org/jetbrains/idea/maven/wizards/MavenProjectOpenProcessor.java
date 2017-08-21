@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.util.Collections;
 import java.util.List;
@@ -36,6 +37,11 @@ public class MavenProjectOpenProcessor extends ProjectOpenProcessorBase<MavenPro
   @Nullable
   public String[] getSupportedExtensions() {
     return MavenConstants.POM_NAMES;
+  }
+
+  @Override
+  public boolean canOpenProject(VirtualFile file) {
+    return super.canOpenProject(file) || MavenUtil.isPomFile(file);
   }
 
   public boolean doQuickImport(VirtualFile file, WizardContext wizardContext) {

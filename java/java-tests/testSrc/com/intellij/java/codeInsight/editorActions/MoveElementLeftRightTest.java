@@ -133,7 +133,7 @@ public class MoveElementLeftRightTest extends AbstractMoveElementLeftRightTest {
   }
 
   @Override
-  protected void configureEditor(String contents) throws Exception {
+  protected void configureEditor(String contents) {
     init(contents, TestFileType.JAVA);
   }
 }

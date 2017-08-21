@@ -29,26 +29,26 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public class CreateSubclassTest extends MultiFileTestCase {
-  public void testGenerics() throws Exception {
+  public void testGenerics() {
     doTest();
   }
 
-  public void testImports() throws Exception {
+  public void testImports() {
     doTest();
   }
 
-  public void testInnerClassImplement() throws Exception {
+  public void testInnerClassImplement() {
     doTestInner();
   }
 
-  public void testInnerClass() throws Exception {
+  public void testInnerClass() {
     doTestInner();
   }
 
-  private void doTestInner() throws Exception {
+  private void doTestInner() {
     doTest(new PerformAction() {
       @Override
-      public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {
+      public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) {
         PsiClass superClass = myJavaFacade.findClass("Test", ProjectScope.getAllScope(myProject));
         assertNotNull(superClass);
         final PsiClass inner = superClass.findInnerClassByName("Inner", false);
@@ -59,10 +59,10 @@ public class CreateSubclassTest extends MultiFileTestCase {
     });
   }
 
-  private void doTest() throws Exception {
+  private void doTest() {
     doTest(new PerformAction() {
       @Override
-      public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {
+      public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) {
         PsiDirectory root = myPsiManager.findDirectory(rootDir);
         PsiClass superClass = myJavaFacade.findClass("Superclass", ProjectScope.getAllScope(myProject));
         ApplicationManager.getApplication().invokeLater(

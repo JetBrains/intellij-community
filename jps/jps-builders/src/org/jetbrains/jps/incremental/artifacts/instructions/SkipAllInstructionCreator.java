@@ -17,6 +17,8 @@ package org.jetbrains.jps.incremental.artifacts.instructions;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
+
 /**
  * @author nik
  */
@@ -45,5 +47,10 @@ public class SkipAllInstructionCreator extends ArtifactCompilerInstructionCreato
 
   public SkipAllInstructionCreator archive(@NotNull String archiveFileName) {
     return this;
+  }
+
+  @Override
+  public File getTargetDirectory() {
+    return null;
   }
 }

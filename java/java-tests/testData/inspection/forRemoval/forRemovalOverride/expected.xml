@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>Test.java</file>
+    <line>7</line>
+    <description>Overrides method marked for removal in 'Test'</description>
+  </problem>
+
+  <problem>
+    <file>Test.java</file>
+    <line>8</line>
+    <description>'foo()' is deprecated and marked for removal</description>
+  </problem>
+</problems>

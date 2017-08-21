@@ -26,11 +26,11 @@ public class DeprecatedIsStillUsedInspectionTest extends InspectionTestCase {
     return JavaTestUtil.getJavaTestDataPath() + "/inspection";
   }
 
-  private void doTest() throws Exception {
+  private void doTest() {
     doTest("deprecatedIsStillUsed/" + getTestName(true), new DeprecatedIsStillUsedInspection());
   }
 
-  public void testSimple() throws Exception{
+  public void testSimple() {
     doTest();
   }
 }

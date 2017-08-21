@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package com.siyeh.ig.numeric;
 
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -37,7 +37,7 @@ import java.util.Set;
 
 public class CachedNumberConstructorCallInspection extends BaseInspection {
 
-  private static final Set<String> cachedNumberTypes = new HashSet<>();
+  static final Set<String> cachedNumberTypes = new HashSet<>();
 
   static {
     cachedNumberTypes.add(CommonClassNames.JAVA_LANG_LONG);
@@ -47,27 +47,30 @@ public class CachedNumberConstructorCallInspection extends BaseInspection {
   }
 
   @SuppressWarnings("PublicField")
-  public static boolean ignoreStringArguments = false;
+  public boolean ignoreStringArguments = false;
+
+  @SuppressWarnings("PublicField")
+  public boolean reportOnlyWhenDeprecated = true;
 
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "cached.number.constructor.call.display.name");
+    return InspectionGadgetsBundle.message("cached.number.constructor.call.display.name");
   }
 
   @Override
   @NotNull
-  public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
+  public String buildErrorString(Object... infos) { return InspectionGadgetsBundle.message(
       "cached.number.constructor.call.problem.descriptor");
   }
 
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("cached.number.constructor.call.ignore.string.arguments.option"),
-                                          this, "ignoreStringArguments");
+    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
+    panel.addCheckbox(InspectionGadgetsBundle.message("cached.number.constructor.call.ignore.string.arguments.option"), "ignoreStringArguments");
+    panel.addCheckbox(InspectionGadgetsBundle.message("cached.number.constructor.call.report.only.deprecated"), "reportOnlyWhenDeprecated");
+    return panel;
   }
 
   @Override
@@ -125,11 +128,10 @@ public class CachedNumberConstructorCallInspection extends BaseInspection {
     }
   }
 
-  private static class LongConstructorVisitor extends BaseInspectionVisitor {
+  private class LongConstructorVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitNewExpression(
-      @NotNull PsiNewExpression expression) {
+    public void visitNewExpression(@NotNull PsiNewExpression expression) {
       super.visitNewExpression(expression);
       final PsiType type = expression.getType();
       if (type == null) {
@@ -154,6 +156,10 @@ public class CachedNumberConstructorCallInspection extends BaseInspection {
       final PsiExpression argument = arguments[0];
       final PsiType argumentType = argument.getType();
       if (argumentType == null || (ignoreStringArguments && argumentType.equalsToText(CommonClassNames.JAVA_LANG_STRING))) {
+        return;
+      }
+      final PsiMethod method = expression.resolveMethod();
+      if (method == null || (reportOnlyWhenDeprecated && !method.isDeprecated())) {
         return;
       }
       registerNewExpressionError(expression, expression);

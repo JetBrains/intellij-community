@@ -40,8 +40,10 @@ import com.intellij.pom.tree.events.ChangeInfo;
 import com.intellij.pom.tree.events.TreeChange;
 import com.intellij.pom.tree.events.TreeChangeEvent;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiTreeDebugBuilder;
 import com.intellij.psi.impl.file.impl.FileManager;
@@ -49,6 +51,7 @@ import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade;
 import com.intellij.psi.impl.source.codeStyle.IndentHelperImpl;
 import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.text.CharArrayUtil;
@@ -65,6 +68,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
   private final PsiManager myPsiManager;
   private final TreeAspect myTreeAspect;
   private static final Key<Throwable> REFORMAT_ORIGINATOR = Key.create("REFORMAT_ORIGINATOR");
+  private static final Key<Boolean> REPARSE_PENDING = Key.create("REPARSE_PENDING");
 
   private static class Holder {
     private static final boolean STORE_REFORMAT_ORIGINATOR_STACKTRACE = ApplicationManager.getApplication().isInternal();
@@ -179,6 +183,8 @@ public class PostprocessReformattingAspect implements PomModelAspect {
         for (final ASTNode node : changeSet.getChangedElements()) {
           final TreeChange treeChange = changeSet.getChangesByElement(node);
           for (final ASTNode affectedChild : treeChange.getAffectedChildren()) {
+            checkForOuters(containingFile, (TreeElement)affectedChild);
+
             final ChangeInfo childChange = treeChange.getChangeByChild(affectedChild);
             switch (childChange.getChangeType()) {
               case ChangeInfo.ADD:
@@ -202,6 +208,19 @@ public class PostprocessReformattingAspect implements PomModelAspect {
             }
           }
         }
+      }
+
+      private void checkForOuters(PsiFile containingFile, TreeElement affectedChild) {
+        affectedChild.acceptTree(new RecursiveTreeElementWalkingVisitor() {
+          @Override
+          protected void visitNode(TreeElement element) {
+            if (element instanceof OuterLanguageElement) {
+              containingFile.putUserData(REPARSE_PENDING, true);
+              return;
+            }
+            super.visitNode(element);
+          }
+        });
       }
     });
   }
@@ -344,23 +363,31 @@ public class PostprocessReformattingAspect implements PomModelAspect {
         toDispose.addAll(normalizedActions);
 
         // only in following loop real changes in document are made
+        final FileViewProvider viewProvider = key;
         for (final PostponedAction normalizedAction : normalizedActions) {
-          CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(myPsiManager.getProject());
-          boolean old = settings.ENABLE_JAVADOC_FORMATTING;
-          settings.ENABLE_JAVADOC_FORMATTING = false;
-          try {
-            normalizedAction.execute(key);
-          }
-          finally {
-            settings.ENABLE_JAVADOC_FORMATTING = old;
-          }
+          CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(myPsiManager.getProject());
+          codeStyleManager.runWithDocCommentFormattingDisabled(
+            viewProvider.getPsi(viewProvider.getBaseLanguage()), () -> normalizedAction.execute(viewProvider));
         }
       }
+
+      reparseByTextIfNeeded(key, document);
     }
     finally {
       for (Disposable disposable : toDispose) {
         //noinspection SSBasedInspection
         disposable.dispose();
+      }
+    }
+  }
+
+  private void reparseByTextIfNeeded(@NotNull FileViewProvider key, Document document) {
+    if (PsiDocumentManager.getInstance(myProject).isCommitted(document)) {
+      for (PsiFile file : key.getAllFiles()) {
+        if (file.getUserData(REPARSE_PENDING) != null) {
+          ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(myProject)).reparseFileFromText((PsiFileImpl)file);
+          file.putUserData(REPARSE_PENDING, null);
+        }
       }
     }
   }

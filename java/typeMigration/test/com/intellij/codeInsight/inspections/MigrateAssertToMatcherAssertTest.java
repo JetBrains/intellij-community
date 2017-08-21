@@ -18,12 +18,12 @@ package com.intellij.codeInsight.inspections;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.project.IntelliJProjectConfiguration;
 import com.intellij.refactoring.typeMigration.inspections.MigrateAssertToMatcherAssertInspection;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
-import org.junit.Assert;
+import com.intellij.util.ArrayUtil;
 
 /**
  * @author Dmitry Batkovich
@@ -35,8 +35,8 @@ public class MigrateAssertToMatcherAssertTest extends JavaCodeInsightFixtureTest
   }
 
   @Override
-  protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
-    moduleBuilder.addLibraryJars("test-env", PathManager.getHomePathFor(Assert.class) + "/lib", "junit-4.12.jar", "hamcrest-core-1.3.jar");
+  protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
+    moduleBuilder.addLibrary("test-env", ArrayUtil.toStringArray(IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("JUnit4")));
   }
 
   public void testAll() {

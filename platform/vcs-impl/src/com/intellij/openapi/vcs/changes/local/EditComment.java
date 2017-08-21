@@ -52,6 +52,7 @@ public class EditComment implements ChangeListCommand {
     }
   }
 
+  @Nullable
   public String getOldComment() {
     return myOldComment;
   }

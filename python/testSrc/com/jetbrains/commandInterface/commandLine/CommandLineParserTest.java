@@ -37,7 +37,7 @@ public final class CommandLineParserTest extends ParsingTestCase {
     return CommandTestTools.TEST_PATH;
   }
 
-  public void testSpaces() throws Exception {
+  public void testSpaces() {
     doTest(true);
     final CommandLineFile commandLineFile = (CommandLineFile)myFile;
     Assert.assertEquals("Bad argument value", "spam and eggs", commandLineFile.getArguments().iterator().next().getValueNoQuotes());
@@ -49,21 +49,21 @@ public final class CommandLineParserTest extends ParsingTestCase {
   /**
    * Should be ok
    */
-  public void testCommandLine() throws Exception {
+  public void testCommandLine() {
     doTest(true);
   }
 
   /**
    * Should have a lot of errors
    */
-  public void testJunk() throws Exception {
+  public void testJunk() {
     doTest(true);
   }
 
   /**
    * Should have error because option ends with "="
    */
-  public void testOptionNoValueJunk() throws Exception {
+  public void testOptionNoValueJunk() {
     doTest(true);
   }
 }

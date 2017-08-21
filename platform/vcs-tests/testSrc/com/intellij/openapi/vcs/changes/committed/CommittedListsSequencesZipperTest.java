@@ -31,42 +31,42 @@ import static org.junit.Assert.assertTrue;
 public class CommittedListsSequencesZipperTest {
 
   @Test
-  public void testSimple() throws Exception {
+  public void testSimple() {
     long[][] valuesWithCount = {{1, 3}, {2, 2}, {3, 1}, {5, 1}, {7, 2}, {8, 1}, {17, 1}, {18, 1}, {21, 2}};
 
     check(valuesWithCount, list(1, 2, 7, 8, 18, 21), list(1, 2, 5, 7, 21), list(1, 3, 17));
   }
 
   @Test
-  public void testVar1() throws Exception {
+  public void testVar1() {
     long[][] valuesWithCount = {{1, 1}, {2, 1}, {3, 1}, {5, 1}, {6, 1}, {7, 1}, {11, 1}, {17, 1}, {18, 1}, {22, 1}, {111, 1}};
 
     check(valuesWithCount, list(1, 7, 11, 111), list(2, 6, 18, 22), list(3, 5, 17));
   }
 
   @Test
-  public void testVar2() throws Exception {
+  public void testVar2() {
     long[][] valuesWithCount = {{1, 1}, {2, 1}, {3, 1}, {5, 1}, {6, 1}, {7, 2}, {11, 1}, {17, 1}, {18, 1}, {22, 1}, {111, 1}};
 
     check(valuesWithCount, list(1, 7, 11, 111), list(2, 6, 7, 18, 22), list(3, 5, 17));
   }
 
   @Test
-  public void testVar3() throws Exception {
+  public void testVar3() {
     long[][] valuesWithCount = {{1, 2}, {2, 1}, {3, 1}, {5, 1}, {6, 1}, {7, 1}, {11, 1}, {17, 1}, {18, 1}, {22, 1}, {111, 1}};
 
     check(valuesWithCount, list(1, 7, 11, 111), list(1, 2, 6, 18, 22), list(3, 5, 17));
   }
 
   @Test
-  public void testVar4() throws Exception {
+  public void testVar4() {
     long[][] valuesWithCount = {{1, 1}, {2, 1}, {3, 1}, {5, 1}, {6, 1}, {7, 1}, {11, 1}, {17, 1}, {18, 1}, {22, 1}, {111, 3}};
 
     check(valuesWithCount, list(1, 7, 11, 111), list(2, 6, 18, 22, 111), list(3, 5, 17, 111));
   }
 
   @Test
-  public void testSame() throws Exception {
+  public void testSame() {
     long[][] valuesWithCount = {{1, 3}, {7, 3}, {11, 3}, {111, 3}};
 
     check(valuesWithCount, list(1, 7, 11, 111), list(1, 7, 11, 111), list(1, 7, 11, 111));

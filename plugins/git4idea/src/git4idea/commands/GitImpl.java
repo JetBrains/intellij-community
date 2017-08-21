@@ -46,7 +46,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static git4idea.GitUtil.COMMENT_CHAR;
+import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
+import static java.util.Collections.singletonList;
 
 /**
  * Easy-to-use wrapper of common native Git commands.
@@ -58,6 +61,7 @@ import static java.util.Collections.singleton;
 public class GitImpl implements Git {
 
   private static final Logger LOG = Logger.getInstance(Git.class);
+  private static final List<String> REBASE_CONFIG_PARAMS = singletonList("core.commentChar=" + COMMENT_CHAR);
 
   public GitImpl() {
   }
@@ -83,7 +87,7 @@ public class GitImpl implements Git {
    *    ignored files checker.</p>
    *
    * @param files files that are to be checked for the unversioned files among them.
-   *              <b>Pass <code>null</code> to query the whole repository.</b>
+   *              <b>Pass {@code null} to query the whole repository.</b>
    * @return Unversioned not ignored files from the given scope.
    */
   @Override
@@ -573,7 +577,7 @@ public class GitImpl implements Git {
                                  @NotNull GitLineHandlerListener... listeners) {
     Project project = repository.getProject();
     VirtualFile root = repository.getRoot();
-    GitLineHandler handler = new GitLineHandler(project, root, GitCommand.REBASE);
+    GitLineHandler handler = new GitLineHandler(project, root, GitCommand.REBASE, REBASE_CONFIG_PARAMS);
     handler.addParameters(parameters.asCommandLineArguments());
     addListeners(handler, listeners);
 
@@ -614,7 +618,7 @@ public class GitImpl implements Git {
                                         @NotNull GitLineHandlerListener[] listeners) {
     Project project = repository.getProject();
     VirtualFile root = repository.getRoot();
-    GitLineHandler handler = new GitLineHandler(project, root, GitCommand.REBASE);
+    GitLineHandler handler = new GitLineHandler(project, root, GitCommand.REBASE, REBASE_CONFIG_PARAMS);
     handler.addParameters(rebaseMode.asCommandLineArgument());
     addListeners(handler, listeners);
     return runWithEditor(handler, createEditor(project, root, handler, false));
@@ -688,7 +692,7 @@ public class GitImpl implements Git {
   }
 
   private static void addListeners(@NotNull GitLineHandler handler, @NotNull GitLineHandlerListener... listeners) {
-    addListeners(handler, Arrays.asList(listeners));
+    addListeners(handler, asList(listeners));
   }
 
   private static void addListeners(@NotNull GitLineHandler handler, @NotNull List<GitLineHandlerListener> listeners) {

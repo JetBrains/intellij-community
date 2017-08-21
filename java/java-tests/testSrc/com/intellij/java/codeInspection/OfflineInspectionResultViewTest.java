@@ -141,7 +141,7 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
     return map;
   }
 
-  public void testOfflineWithInvalid() throws Exception {
+  public void testOfflineWithInvalid() {
     ApplicationManager.getApplication().runWriteAction(() -> getJavaFacade().findClass("Test2").getContainingFile().delete());
     myView.getGlobalInspectionContext().getUIOptions().SHOW_STRUCTURE = true;
     InspectionTree tree = updateTree();
@@ -182,7 +182,7 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
     assertFalse(node.isValid());
   }
 
-  public void testOfflineView() throws Exception {
+  public void testOfflineView() {
     myView.getGlobalInspectionContext().getUIOptions().SHOW_STRUCTURE = true;
     InspectionTree tree = updateTree();
     TreeUtil.expandAll(tree);

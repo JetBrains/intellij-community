@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,10 +21,12 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.*;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.Debugger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -73,7 +75,7 @@ public abstract class DumbService {
    * Note that it's not guaranteed that the dumb mode won't start again during this runnable execution, it should manage that situation explicitly.
    * @param runnable runnable to run
    */
-  public abstract void runWhenSmart(@NotNull Runnable runnable);
+  public abstract void runWhenSmart(@Debugger.Capture @NotNull Runnable runnable);
 
   /**
    * Pause the current thread until dumb mode ends and then continue execution.
@@ -85,6 +87,7 @@ public abstract class DumbService {
   /**
    * Pause the current thread until dumb mode ends, and then run the read action. Index is guaranteed to be available inside that read action,
    * unless this method is already called with read access allowed.
+   * @throws ProcessCanceledException if the project is closed during dumb mode
    */
   public <T> T runReadActionInSmartMode(@NotNull final Computable<T> r) {
     final Ref<T> result = new Ref<>();
@@ -113,9 +116,12 @@ public abstract class DumbService {
   /**
    * Pause the current thread until dumb mode ends, and then run the read action. Index is guaranteed to be available inside that read action,
    * unless this method is already called with read access allowed.
+   * @throws ProcessCanceledException if the project is closed during dumb mode
    */
-  public void runReadActionInSmartMode(@NotNull final Runnable r) {
+  public void runReadActionInSmartMode(@NotNull Runnable r) {
     if (ApplicationManager.getApplication().isReadAccessAllowed()) {
+      // we can't wait for smart mode to begin (it'd result in a deadlock),
+      // so let's just pretend it's already smart and fail with IndexNotReadyException if not
       r.run();
       return;
     }
@@ -123,6 +129,9 @@ public abstract class DumbService {
     while (true) {
       waitForSmartMode();
       boolean success = ReadAction.compute(() -> {
+        if (getProject().isDisposed()) {
+          throw new ProcessCanceledException();
+        }
         if (isDumb()) {
           return false;
         }
@@ -155,11 +164,15 @@ public abstract class DumbService {
   }
 
   /**
-   * Invoke the runnable later on EventDispatchThread AND when IDEA isn't in dumb mode
-   * @param runnable runnable
+   * Invoke the runnable later on EventDispatchThread AND when IDEA isn't in dumb mode.
+   * The runnable won't be invoked if the project is disposed during dumb mode
    */
   public abstract void smartInvokeLater(@NotNull Runnable runnable);
 
+  /**
+   * Invoke the runnable later on EventDispatchThread with the given modality state AND when IDEA isn't in dumb mode.
+   * The runnable won't be invoked if the project is disposed during dumb mode
+   */
   public abstract void smartInvokeLater(@NotNull Runnable runnable, @NotNull ModalityState modalityState);
 
   private static final NotNullLazyKey<DumbService, Project> INSTANCE_KEY = ServiceManager.createLazyKey(DumbService.class);

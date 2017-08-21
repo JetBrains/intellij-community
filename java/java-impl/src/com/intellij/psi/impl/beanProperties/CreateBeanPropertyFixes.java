@@ -16,17 +16,17 @@
 package com.intellij.psi.impl.beanProperties;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.JvmCommonIntentionActionsFactory;
 import com.intellij.codeInspection.IntentionWrapper;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.lang.jvm.JvmModifier;
+import com.intellij.lang.jvm.actions.JvmElementActionsFactory;
+import com.intellij.lang.jvm.actions.MemberRequest;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.uast.UClass;
-import org.jetbrains.uast.UastContextKt;
 
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 import static com.intellij.util.ArrayUtil.toObjectArray;
@@ -35,14 +35,14 @@ import static com.intellij.util.ArrayUtil.toObjectArray;
 public class CreateBeanPropertyFixes {
 
   public static LocalQuickFix[] createFixes(String propertyName,
-                                            @NotNull PsiClass psiClass,
+                                            @NotNull @JvmCommon PsiClass psiClass,
                                             @Nullable PsiType type,
                                             final boolean createSetter) {
     return IntentionWrapper.wrapToQuickFixes(createActions(propertyName, psiClass, type, createSetter), psiClass.getContainingFile());
   }
 
   public static IntentionAction[] createActions(String propertyName,
-                                                @NotNull PsiClass psiClass,
+                                                @NotNull @JvmCommon PsiClass psiClass,
                                                 @Nullable PsiType type,
                                                 final boolean createSetter) {
     if (psiClass instanceof PsiCompiledElement) return IntentionAction.EMPTY_ARRAY;
@@ -53,11 +53,11 @@ public class CreateBeanPropertyFixes {
       if (aClass == null) return IntentionAction.EMPTY_ARRAY;
       type = facade.getElementFactory().createType(aClass);
     }
-    JvmCommonIntentionActionsFactory factory = JvmCommonIntentionActionsFactory.forLanguage(psiClass.getLanguage());
+    JvmElementActionsFactory factory = JvmElementActionsFactory.forLanguage(psiClass.getLanguage());
     if (factory == null) return IntentionAction.EMPTY_ARRAY;
-    UClass uClass = UastContextKt.toUElement(psiClass, UClass.class);
-    if (uClass == null) return IntentionAction.EMPTY_ARRAY;
-    return toObjectArray(factory.createAddBeanPropertyActions(uClass, propertyName, PsiModifier.PUBLIC, type, createSetter, !createSetter),
-                         IntentionAction.class);
+    return toObjectArray(
+      factory.createAddPropertyActions(psiClass,
+                                       new MemberRequest.Property(propertyName, JvmModifier.PUBLIC, type, createSetter, !createSetter)),
+      IntentionAction.class);
   }
 }

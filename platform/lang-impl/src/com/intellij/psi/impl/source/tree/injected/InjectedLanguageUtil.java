@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -171,6 +171,21 @@ public class InjectedLanguageUtil {
   }
 
   /**
+   * This is a quick check, that can be performed before committing document and invoking 
+   * {@link #getEditorForInjectedLanguageNoCommit(Editor, Caret, PsiFile)} or other methods here, which don't work 
+   * for uncommitted documents.
+   */
+  public static boolean mightHaveInjectedFragmentAtCaret(@NotNull Project project, @NotNull Document hostDocument, int hostOffset) {
+    PsiFile hostPsiFile = PsiDocumentManager.getInstance(project).getCachedPsiFile(hostDocument);
+    if (hostPsiFile == null || !hostPsiFile.isValid()) return false;
+    ConcurrentList<DocumentWindow> documents = getCachedInjectedDocuments(hostPsiFile);
+    for (DocumentWindow document : documents) {
+      if (document.isValid() && document.getHostRange(hostOffset) != null) return true;
+    }
+    return false;
+  }
+
+  /**
    * Invocation of this method on uncommitted {@code file} can lead to unexpected results, including throwing an exception!
    */
   public static Editor getEditorForInjectedLanguageNoCommit(@Nullable Editor editor, @Nullable Caret caret, @Nullable PsiFile file) {
@@ -308,11 +323,8 @@ public class InjectedLanguageUtil {
       ProgressManager.checkCanceled();
       if ("EL".equals(current.getLanguage().getID())) break;
       ParameterizedCachedValue<MultiHostRegistrarImpl, PsiElement> data = current.getUserData(INJECTED_PSI);
-      if (data == null) {
+      if (data == null || (registrar = data.getValue(current)) == null || !registrar.isValid()) {
         registrar = InjectedPsiCachedValueProvider.doCompute(current, injectedManager, project, hostPsiFile);
-      }
-      else {
-        registrar = data.getValue(current);
       }
 
       current = current.getParent(); // cache no injection for current
@@ -323,9 +335,12 @@ public class InjectedLanguageUtil {
         TextRange elementRange = element.getTextRange();
         for (Pair<Place, PsiFile> pair : places) {
           Place place = pair.first;
-          for (PsiLanguageInjectionHost.Shred shred : place) {
-            if (shred.getHost().getTextRange().intersects(elementRange)) {
-              if (place.isValid()) break nextParent;
+          if (place.isValid()) {
+            for (PsiLanguageInjectionHost.Shred shred : place) {
+              PsiLanguageInjectionHost hostElement = shred.getHost();
+              if (hostElement != null && hostElement.getTextRange().intersects(elementRange)) {
+                break nextParent;
+              }
             }
           }
         }

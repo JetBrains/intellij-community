@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<settings>
-   <setting persistent-component="com.intellij.cdi.CdiProjectComponent" properties="named,binding" />
-   <setting persistent-component="com.intellij.openapi.editor.ex.EditorSettingsExternalizable" properties="virtualSpace" />
-</settings>

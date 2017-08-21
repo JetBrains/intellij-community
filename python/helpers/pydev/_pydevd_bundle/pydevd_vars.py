@@ -247,7 +247,7 @@ def resolve_compound_variable(thread_id, frame_id, scope, attrs):
 
     try:
         _type, _typeName, resolver = get_type(var)
-        return resolver.get_dictionary(var)
+        return _typeName, resolver.get_dictionary(var)
     except:
         sys.stderr.write('Error evaluating: thread_id: %s\nframe_id: %s\nscope: %s\nattrs: %s\n' % (
             thread_id, frame_id, scope, attrs,))

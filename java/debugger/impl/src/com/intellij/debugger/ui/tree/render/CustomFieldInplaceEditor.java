@@ -78,7 +78,7 @@ public class CustomFieldInplaceEditor extends XDebuggerTreeInplaceEditor {
       }
 
       @Override
-      protected List<Pair<String, TextWithImports>> getRendererChildren() {
+      protected List<EnumerationChildrenRenderer.ChildInfo> getRendererChildren() {
         if (myRenderer != null) {
           return myRenderer.getChildren();
         }
@@ -110,20 +110,21 @@ public class CustomFieldInplaceEditor extends XDebuggerTreeInplaceEditor {
     return type != null ? type.name() : null;
   }
 
-  protected List<Pair<String, TextWithImports>> getRendererChildren() {
+  protected List<EnumerationChildrenRenderer.ChildInfo> getRendererChildren() {
     return myRenderer.getChildren();
   }
 
   @Override
   public void doOKAction() {
-    List<Pair<String, TextWithImports>> children = getRendererChildren();
+    List<EnumerationChildrenRenderer.ChildInfo> children = getRendererChildren();
     TextWithImports newText = TextWithImportsImpl.fromXExpression(myExpressionEditor.getExpression());
     if (myDescriptor == null) {
-      children.add(0, Pair.create("", newText));
+      children.add(0, new EnumerationChildrenRenderer.ChildInfo("", newText, false));
     }
     else {
       int index = myDescriptor.getEnumerationIndex();
-      children.set(index, Pair.create(children.get(index).first, newText));
+      EnumerationChildrenRenderer.ChildInfo old = children.get(index);
+      children.set(index, new EnumerationChildrenRenderer.ChildInfo(old.myName, newText, old.myOnDemand));
     }
 
     myTree.putClientProperty(XDebuggerTreeRestorer.SELECTION_PATH_PROPERTY,

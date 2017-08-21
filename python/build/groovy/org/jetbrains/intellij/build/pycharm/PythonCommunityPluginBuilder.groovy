@@ -15,7 +15,6 @@
  */
 package org.jetbrains.intellij.build.pycharm
 
-import org.codehaus.gant.GantBinding
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.BuildTasks
@@ -25,20 +24,16 @@ import org.jetbrains.intellij.build.ProprietaryBuildTools
  * @author vlan
  */
 class PythonCommunityPluginBuilder {
-  private final GantBinding binding
   private final String home
 
-  PythonCommunityPluginBuilder(String home, GantBinding binding) {
+  PythonCommunityPluginBuilder(String home) {
     this.home = home
-    this.binding = binding
   }
 
   def build() {
     def pluginBuildNumber = System.getProperty("build.number", "SNAPSHOT")
     def options = new BuildOptions(targetOS: BuildOptions.OS_NONE, buildNumber: pluginBuildNumber, outputRootPath: "$home/out/pycharmCE")
-    def buildContext = BuildContext.createContext(binding.ant, binding.projectBuilder, binding.project, binding.global,
-                                                  home, home, new PythonCommunityPluginProperties(),
-                                                  ProprietaryBuildTools.DUMMY, options)
+    def buildContext = BuildContext.createContext(home, home, new PythonCommunityPluginProperties(), ProprietaryBuildTools.DUMMY, options)
     def buildTasks = BuildTasks.create(buildContext)
     buildTasks.buildDistributions()
     def pluginsPaths = new File("$buildContext.paths.buildOutputRoot/plugins-paths.txt")

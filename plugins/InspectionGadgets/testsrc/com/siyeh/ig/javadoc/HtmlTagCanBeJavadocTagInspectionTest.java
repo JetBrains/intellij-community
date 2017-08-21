@@ -6,7 +6,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class HtmlTagCanBeJavadocTagInspectionTest extends LightInspectionTestCase {
 
-  public void testHtmlTagCanBeJavadocTag() throws Exception {
+  public void testHtmlTagCanBeJavadocTag() {
     doTest();
   }
 

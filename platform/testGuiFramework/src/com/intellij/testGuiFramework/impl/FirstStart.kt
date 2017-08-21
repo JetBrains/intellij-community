@@ -16,13 +16,15 @@
 package com.intellij.testGuiFramework.impl
 
 import com.intellij.ide.PrivacyPolicy
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ConfigImportHelper
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.testGuiFramework.fixtures.JDialogFixture
 import com.intellij.testGuiFramework.impl.FirstStart.Utils.button
 import com.intellij.testGuiFramework.impl.FirstStart.Utils.dialog
 import com.intellij.testGuiFramework.impl.FirstStart.Utils.radioButton
 import com.intellij.testGuiFramework.launcher.ide.IdeType
-import com.intellij.util.PlatformUtils
 import org.fest.swing.core.GenericTypeMatcher
 import org.fest.swing.core.Robot
 import org.fest.swing.core.SmartWaitRobot
@@ -35,6 +37,7 @@ import org.fest.swing.timing.Timeout
 import java.awt.Component
 import java.awt.Container
 import java.awt.Frame
+import java.io.File
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JButton
@@ -51,41 +54,32 @@ abstract class FirstStart(val ideType: IdeType) {
 
   protected val LOG = Logger.getInstance(this.javaClass.name)
 
-  companion object {
-
-    @Suppress("unused") //Called via reflection from FirstStarter
-    @JvmStatic
-    fun guessIdeAndStartRobot(): FirstStart {
-      when (System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY, PlatformUtils.IDEA_PREFIX)) {
-        PlatformUtils.IDEA_PREFIX -> return IdeaUltimateFirstStart()
-        PlatformUtils.IDEA_CE_PREFIX -> return IdeaCommunityFirstStart()
-        PlatformUtils.APPCODE_PREFIX -> TODO("Create complete installation case for AppCode")
-        PlatformUtils.CLION_PREFIX -> TODO("Create complete installation case for CLion")
-        PlatformUtils.PYCHARM_PREFIX -> TODO("Create complete installation case for PyCharm")
-        PlatformUtils.PYCHARM_CE_PREFIX -> TODO("Create complete installation case for PyCharm")
-        PlatformUtils.PYCHARM_EDU_PREFIX -> TODO("Create complete installation case for PyCharm")
-        PlatformUtils.RUBY_PREFIX -> TODO("Create complete installation case for RubyMine")
-        PlatformUtils.PHP_PREFIX -> TODO("Create complete installation case for PhpStorm")
-        PlatformUtils.WEB_PREFIX -> return WebStormFirstStart()
-        PlatformUtils.DBE_PREFIX -> TODO("Create complete installation case for DataGrip")
-        PlatformUtils.RIDER_PREFIX -> TODO("Create complete installation case for Rider")
-        PlatformUtils.GOIDE_PREFIX -> TODO("Create complete installation case for Gogland")
-        else -> return IdeaCommunityFirstStart()
-      }
-
-    }
-  }
-
   val myRobot: Robot
 
   val robotThread: Thread = thread(start = false, name = FIRST_START_ROBOT_THREAD) {
     completeFirstStart()
   }
 
+  // should be initialized before IDE has been started
+  private val newConfigFolder: Boolean by lazy {
+    if (ApplicationManager.getApplication() != null) throw Exception(
+      "Cannot get status (new or not) of config folder because IDE has been already started")
+    !File(PathManager.getConfigPath()).exists() || System.getProperty("intellij.first.ide.session") == "true"
+  }
+
+
   init {
     myRobot = SmartWaitRobot()
     LOG.info("Starting separated thread: '$FIRST_START_ROBOT_THREAD' to complete initial installation")
     robotThread.start()
+  }
+
+  companion object {
+    fun guessIdeAndStartRobot() {
+      val firstStartClass = System.getProperty("idea.gui.test.first.start.class")
+      val firstStart = Class.forName(firstStartClass).newInstance() as FirstStart
+      firstStart.completeInstallation()
+    }
   }
 
   protected abstract fun completeFirstStart()
@@ -95,7 +89,11 @@ abstract class FirstStart(val ideType: IdeType) {
 
   private val checkIsFrameFunction: (Frame) -> Boolean
     get() {
-      val checkIsFrame: (Frame) -> Boolean = { frame -> frame.javaClass.simpleName == "FlatWelcomeFrame" }
+      val checkIsFrame: (Frame) -> Boolean = { frame ->
+        frame.javaClass.simpleName == "FlatWelcomeFrame"
+        && frame.isShowing
+        && frame.isEnabled
+      }
       return checkIsFrame
     }
 
@@ -104,6 +102,12 @@ abstract class FirstStart(val ideType: IdeType) {
     LOG.info("Closing Welcome Frame")
     val welcomeFrame = Frame.getFrames().find(checkIsFrameFunction)
     myRobot.close(welcomeFrame!!)
+    Pause.pause(object : Condition("Welcome Frame is gone") {
+      override fun test(): Boolean {
+        if (Frame.getFrames().any { checkIsFrameFunction(it) }) myRobot.close(welcomeFrame)
+        return false
+      }
+    }, Timeout.timeout(180, TimeUnit.SECONDS))
   }
 
   protected fun waitWelcomeFrame() {
@@ -114,11 +118,9 @@ abstract class FirstStart(val ideType: IdeType) {
   }
 
   protected fun acceptAgreement() {
+    if (!needToShowAgreement()) return
     with(myRobot) {
       val policyAgreementTitle = "Privacy Policy Agreement"
-      val policy = PrivacyPolicy.getContent()
-      val showPrivacyPolicyAgreement = !PrivacyPolicy.isVersionAccepted(policy.getFirst())
-      if (!showPrivacyPolicyAgreement) return
       try {
         LOG.info("Waiting for '$policyAgreementTitle' dialog")
         with(JDialogFixture.findByPartOfTitle(myRobot, policyAgreementTitle, Timeout.timeout(2, TimeUnit.MINUTES))) {
@@ -133,6 +135,7 @@ abstract class FirstStart(val ideType: IdeType) {
   }
 
   protected fun completeInstallation() {
+    if (!needToShowCompleteInstallation()) return
     with(myRobot) {
       val title = "Complete Installation"
       LOG.info("Waiting for '$title' dialog")
@@ -143,17 +146,8 @@ abstract class FirstStart(val ideType: IdeType) {
     }
   }
 
-  protected fun webStormInitialConfiguration() {
-    with(myRobot) {
-      val title = "WebStorm Initial Configuration"
-      LOG.info("Waiting for '$title' dialog")
-      dialog(title, 120)
-      LOG.info("Click OK on '$title'")
-      button("OK", 120)
-    }
-  }
-
   protected fun customizeIntellijIdea() {
+    if (!needToShowCustomizeWizard()) return
     with(myRobot) {
       val title = "Customize IntelliJ IDEA"
       LOG.info("Waiting for '$title' dialog")
@@ -162,6 +156,19 @@ abstract class FirstStart(val ideType: IdeType) {
       LOG.info("Click '$buttonText'")
       button(buttonText, 120)
     }
+  }
+
+  protected fun needToShowAgreement(): Boolean {
+    val policy = PrivacyPolicy.getContent()
+    return !PrivacyPolicy.isVersionAccepted(policy.getFirst())
+  }
+
+  protected fun needToShowCompleteInstallation(): Boolean {
+    return newConfigFolder
+  }
+
+  protected fun needToShowCustomizeWizard(): Boolean {
+    return (newConfigFolder && !ConfigImportHelper.isConfigImported())
   }
 
   object Utils {
@@ -186,10 +193,10 @@ abstract class FirstStart(val ideType: IdeType) {
     }
 
     fun <ComponentType : Component> waitUntilFound(myRobot: Robot,
-                                                           container: Container?,
-                                                           componentClass: Class<ComponentType>,
-                                                           timeoutSeconds: Long,
-                                                           matcher: (ComponentType) -> Boolean): ComponentType {
+                                                   container: Container?,
+                                                   componentClass: Class<ComponentType>,
+                                                   timeoutSeconds: Long,
+                                                   matcher: (ComponentType) -> Boolean): ComponentType {
       return waitUntilFound(myRobot, container, object : GenericTypeMatcher<ComponentType>(componentClass) {
         override fun isMatching(cmp: ComponentType): Boolean = matcher(cmp)
       }, Timeout.timeout(timeoutSeconds, TimeUnit.SECONDS))
@@ -221,38 +228,3 @@ abstract class FirstStart(val ideType: IdeType) {
   }
 
 }
-
-class IdeaCommunityFirstStart : FirstStart(ideType = IdeType.IDEA_COMMUNITY) {
-
-  override fun completeFirstStart() {
-    acceptAgreement()
-    completeInstallation()
-    customizeIntellijIdea()
-    waitWelcomeFrameAndClose()
-  }
-}
-
-class IdeaUltimateFirstStart : FirstStart(ideType = IdeType.IDEA_ULTIMATE) {
-
-  override fun completeFirstStart() {
-    acceptAgreement()
-    completeInstallation()
-    customizeIntellijIdea()
-    waitWelcomeFrameAndClose()
-  }
-
-
-}
-
-class WebStormFirstStart : FirstStart(ideType = IdeType.WEBSTORM) {
-
-  override fun completeFirstStart() {
-    acceptAgreement()
-    completeInstallation()
-    waitWelcomeFrame()
-    webStormInitialConfiguration()
-    waitWelcomeFrameAndClose()
-  }
-
-}
-

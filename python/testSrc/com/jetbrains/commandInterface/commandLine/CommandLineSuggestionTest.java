@@ -34,7 +34,7 @@ public final class CommandLineSuggestionTest extends PyTestCase {
   /**
    * Ensures suggestions are correct
    */
-  public void testSuggestions() throws Exception {
+  public void testSuggestions() {
     CommandTestTools.initFileType();
     CommandTestTools.createFileByText(myFixture, "command positional_ar --a");
 

@@ -31,6 +31,8 @@ import com.intellij.openapi.module.*;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -89,7 +91,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
 
   private LinkedHashSet<ModulePath> myModulePathsToLoad;
   private final Set<ModulePath> myFailedModulePaths = new THashSet<>();
-  private Map<String, UnloadedModuleDescriptionImpl> myUnloadedModules = new LinkedHashMap<>();
+  private final Map<String, UnloadedModuleDescriptionImpl> myUnloadedModules = new LinkedHashMap<>();
 
   public static ModuleManagerImpl getInstanceImpl(Project project) {
     return (ModuleManagerImpl)getInstance(project);
@@ -212,7 +214,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     }
 
     loadModules((ModuleModelImpl)model);
-    ApplicationManager.getApplication().runWriteAction(() -> model.commit());
+    ApplicationManager.getApplication().runWriteAction(model::commit);
     // clear only if successfully loaded
     myModulePathsToLoad.clear();
   }
@@ -253,7 +255,6 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     progressIndicator.setText("Loading modules...");
     progressIndicator.setText2("");
 
-    List<Module> modulesWithUnknownTypes = new SmartList<>();
     List<ModuleLoadingErrorDescription> errors = Collections.synchronizedList(new ArrayList<>());
     ModuleGroupInterner groupInterner = new ModuleGroupInterner();
 
@@ -273,19 +274,22 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
       }
       tasks.add(Pair.create(service.submit(() -> {
         progressIndicator.setFraction(progressIndicator.getFraction() + myProgressStep);
-        try {
-          return myProject.isDisposed() ? null : moduleModel.loadModuleInternal(path);
-        }
-        catch (IOException e) {
-          reportError(errors, modulePath, e);
-        }
-        catch (Exception e) {
-          LOG.error(e);
-        }
-        return null;
+        return ProgressManager.getInstance().runProcess(() -> {
+          try {
+            return myProject.isDisposed() ? null : moduleModel.loadModuleInternal(path);
+          }
+          catch (IOException e) {
+            reportError(errors, modulePath, e);
+          }
+          catch (Exception e) {
+            LOG.error(e);
+          }
+          return null;
+        }, ProgressWrapper.wrap(progressIndicator));
       }), modulePath));
     }
 
+    List<Module> modulesWithUnknownTypes = new SmartList<>();
     for (Pair<Future<Module>, ModulePath> task : tasks) {
       if (progressIndicator.isCanceled()) {
         break;
@@ -373,7 +377,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
 
   protected void fireModulesRenamed(@NotNull List<Module> modules, @NotNull final Map<Module, String> oldNames) {
     if (!modules.isEmpty()) {
-      myMessageBus.syncPublisher(ProjectTopics.MODULES).modulesRenamed(myProject, modules, module -> oldNames.get(module));
+      myMessageBus.syncPublisher(ProjectTopics.MODULES).modulesRenamed(myProject, modules, oldNames::get);
     }
   }
 
@@ -415,7 +419,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
   private class ModuleSaveItem extends SaveItem {
     private final Module myModule;
 
-    public ModuleSaveItem(@NotNull Module module) {
+    ModuleSaveItem(@NotNull Module module) {
       myModule = module;
     }
 
@@ -736,7 +740,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
 
     @Override
     @NotNull
-    public Module loadModule(@NotNull String filePath) throws IOException, ModuleWithNameAlreadyExists {
+    public Module loadModule(@NotNull String filePath) throws IOException {
       assertWritable();
       String resolvedPath = FileUtilRt.toSystemIndependentName(resolveShortWindowsName(filePath));
       try {
@@ -1033,9 +1037,10 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
       }
     }
     List<ModulePath> oldFailedPaths = new ArrayList<>(myFailedModulePaths);
-    myModulePathsToLoad = toLoad.values().stream().map(d -> d.getModulePath()).collect(Collectors.toCollection(LinkedHashSet::new));
+    myModulePathsToLoad = toLoad.values().stream().map(
+      UnloadedModuleDescriptionImpl::getModulePath).collect(Collectors.toCollection(LinkedHashSet::new));
     loadModules((ModuleModelImpl)model);
-    ApplicationManager.getApplication().runWriteAction(() -> model.commit());
+    ApplicationManager.getApplication().runWriteAction(model::commit);
     myFailedModulePaths.addAll(oldFailedPaths);
     myModulePathsToLoad.clear();
   }

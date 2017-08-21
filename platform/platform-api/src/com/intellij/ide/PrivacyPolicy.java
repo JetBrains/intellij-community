@@ -74,6 +74,10 @@ public final class PrivacyPolicy {
     ourCachedPolicyFile = new File(dataDir, CACHED_RESOURCE_NAME);
   }
 
+  public static File getCachedPolicyFile() {
+    return ourCachedPolicyFile;
+  }
+
   public static boolean isVersionAccepted(final Version ver) {
     if (ver.isUnknown() || MAGIC_VERSION.equals(ver)) {
       return true;

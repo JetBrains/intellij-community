@@ -36,16 +36,15 @@ import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 
 import java.io.File;
-import java.io.IOException;
 
 public class JarRootsRefreshTest extends PlatformTestCase {
-  public void testJarRefreshOnRenameOrMove() throws IOException {
+  public void testJarRefreshOnRenameOrMove() {
     File jar = IoTestUtil.createTestJar();
     VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(jar);
     assertNotNull(vFile);
     new WriteCommandAction.Simple(myProject) {
       @Override
-      protected void run() throws Throwable {
+      protected void run() {
         PsiTestUtil.addContentRoot(myModule, vFile.getParent());
       }
     }.execute();

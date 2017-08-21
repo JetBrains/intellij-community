@@ -47,6 +47,26 @@ class Foo {
 
   }
 
+  void "test parameter"() {
+    myFixture.configureByText 'a.java', '''
+class Foo {
+    static String foo(String s<caret>tr) {
+        return str.trim();
+    }
+}
+'''
+    myFixture.launchAction(myFixture.findSingleIntention("Insert '@NotNull'"))
+    myFixture.checkResult '''import org.jetbrains.annotations.NotNull;
+
+class Foo {
+    static String foo(@NotNull String str) {
+        return str.trim();
+    }
+}
+'''
+
+  }
+
   void "test custom notNull"() {
     myFixture.addClass("package foo; public @interface MyNotNull {}")
     NullableNotNullManager.getInstance(project).notNulls = ['foo.MyNotNull']

@@ -20,6 +20,7 @@ import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
+import com.jetbrains.python.PyNames
 import com.jetbrains.python.PythonHelper
 
 /**
@@ -37,7 +38,8 @@ class PyPyTestExecutionEnvironment(configuration: PyTestConfiguration, environme
 }
 
 
-class PyTestConfiguration(project: Project, factory: PyTestFactory) : PyAbstractTestConfiguration(project, factory) {
+class PyTestConfiguration(project: Project, factory: PyTestFactory)
+  : PyAbstractTestConfiguration(project, factory, PyTestFrameworkService.getSdkReadableNameByFramework(PyNames.PY_TEST)) {
   @ConfigField
   var keywords = ""
 
@@ -53,12 +55,12 @@ class PyTestConfiguration(project: Project, factory: PyTestFactory) : PyAbstract
       else -> "-k $keywords"
     }
 
-  override fun isFrameworkInstalled() = VFSTestFrameworkListener.getInstance().isPyTestInstalled(sdk)
+  override fun isFrameworkInstalled() = VFSTestFrameworkListener.getInstance().isTestFrameworkInstalled(sdk, PyNames.PY_TEST)
 
 }
 
 object PyTestFactory : PyAbstractTestFactory<PyTestConfiguration>() {
   override fun createTemplateConfiguration(project: Project) = PyTestConfiguration(project, this)
 
-  override fun getName(): String = PythonTestConfigurationsModel.PY_TEST_NAME
+  override fun getName(): String =  PyTestFrameworkService.getSdkReadableNameByFramework(PyNames.PY_TEST)
 }

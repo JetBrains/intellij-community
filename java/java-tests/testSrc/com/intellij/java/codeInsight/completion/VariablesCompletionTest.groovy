@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 package com.intellij.java.codeInsight.completion
+
 import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
 import com.intellij.ide.highlighter.JavaFileType
-import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings
 
 class VariablesCompletionTest extends LightFixtureCompletionTestCase {
   public static final String FILE_PREFIX = "/codeInsight/completion/variables/"
@@ -119,7 +120,7 @@ class VariablesCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   void testFieldNameCompletion1() throws Exception {
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject())
+    JavaCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCustomSettings(JavaCodeStyleSettings.class)
     String oldPrefix = settings.FIELD_NAME_PREFIX
     settings.FIELD_NAME_PREFIX = "my"
     try {
@@ -131,7 +132,7 @@ class VariablesCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   void testFieldNameCompletion2() throws Exception {
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project)
+    JavaCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project).getCustomSettings(JavaCodeStyleSettings.class)
     String oldPrefix = settings.FIELD_NAME_PREFIX
     settings.FIELD_NAME_PREFIX = "my"
     configureByFile(FILE_PREFIX + "locals/" + "FieldNameCompletion2.java")
@@ -140,7 +141,7 @@ class VariablesCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   void testFieldNameCompletion3() throws Exception {
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project)
+    JavaCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project).getCustomSettings(JavaCodeStyleSettings.class)
     String oldPrefix = settings.FIELD_NAME_PREFIX
     settings.FIELD_NAME_PREFIX = "my"
     configureByFile(FILE_PREFIX + "locals/" + "FieldNameCompletion3.java")
@@ -214,7 +215,7 @@ class VariablesCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   void testConstructorParameterNameWithPrefix() {
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project)
+    JavaCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project).getCustomSettings(JavaCodeStyleSettings.class)
     String oldField = settings.FIELD_NAME_PREFIX
     String oldParam = settings.PARAMETER_NAME_PREFIX
     settings.FIELD_NAME_PREFIX = "my"

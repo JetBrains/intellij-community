@@ -45,14 +45,18 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
+import java.lang.reflect.Field;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 public class CodeStyleSettings extends CommonCodeStyleSettings implements Cloneable, JDOMExternalizable, ImportsLayoutSettings {
+  public static final int CURR_VERSION = 173;
+
   public static final int MAX_RIGHT_MARGIN = 1000;
   
   private static final Logger LOG = Logger.getInstance(CodeStyleSettings.class);
+  public static final String VERSION_ATTR = "version";
 
   private final ClassMap<CustomCodeStyleSettings> myCustomSettings = new ClassMap<>();
 
@@ -65,6 +69,8 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
   private static CodeStyleSettings myDefaults;
 
   private UnknownElementWriter myUnknownElementWriter = UnknownElementWriter.EMPTY;
+
+  private int myVersion = CURR_VERSION;
 
   public CodeStyleSettings() {
     this(true);
@@ -168,6 +174,9 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
       }
 
       myCommonSettingsManager = from.myCommonSettingsManager.clone(this);
+      
+      myRepeatAnnotations.clear();
+      myRepeatAnnotations.addAll(from.myRepeatAnnotations);
     }
   }
 
@@ -183,13 +192,6 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
   public boolean IGNORE_SAME_INDENTS_FOR_LANGUAGES;
 
   public boolean AUTODETECT_INDENTS = true;
-
-  @Deprecated
-  public final IndentOptions JAVA_INDENT_OPTIONS = new IndentOptions();
-  @Deprecated
-  public final IndentOptions JSP_INDENT_OPTIONS = new IndentOptions();
-  @Deprecated
-  public final IndentOptions XML_INDENT_OPTIONS = new IndentOptions();
 
   public final IndentOptions OTHER_INDENT_OPTIONS = new IndentOptions();
 
@@ -213,46 +215,90 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
 // region Java settings (legacy)
 //----------------- NAMING CONVENTIONS --------------------
 
+  /** @deprecated Use JavaCodeStyleSettings.FIELD_NAME_PREFIX */
+  @Deprecated
   public String FIELD_NAME_PREFIX = "";
+  /** @deprecated Use JavaCodeStyleSettings.STATIC_FIELD_NAME_PREFIX */
+  @Deprecated
   public String STATIC_FIELD_NAME_PREFIX = "";
+  /** @deprecated Use JavaCodeStyleSettings.PARAMETER_NAME_PREFIX */
+  @Deprecated
   public String PARAMETER_NAME_PREFIX = "";
+  /** @deprecated Use JavaCodeStyleSettings.LOCAL_VARIABL_NAME_PREFIX */
+  @Deprecated
   public String LOCAL_VARIABLE_NAME_PREFIX = "";
 
+  /** @deprecated Use JavaCodeStyleSettings.FIELD_NAME_SUFFIX */
+  @Deprecated
   public String FIELD_NAME_SUFFIX = "";
+  /** @deprecated Use JavaCodeStyleSettings.STATIC_FIELD_NAME_SUFFIX */
+  @Deprecated
   public String STATIC_FIELD_NAME_SUFFIX = "";
+  /** @deprecated Use JavaCodeStyleSettings.PARAMETER_NAME_SUFFIX */
+  @Deprecated
   public String PARAMETER_NAME_SUFFIX = "";
+  /** @deprecated Use JavaCodeStyleSettings.LOCAL_VARIABLE_NAME_SUFFIX */
+  @Deprecated
   public String LOCAL_VARIABLE_NAME_SUFFIX = "";
 
+  /** @deprecated Use JavaCodeStyleSettings.PREFER_LONGER_NAMES */
+  @Deprecated
   public boolean PREFER_LONGER_NAMES = true;
 
+  /** @deprecated Use JavaCodeStyleSettings.FILED_TYPE_TO_NAME */
+  @Deprecated
   public final TypeToNameMap FIELD_TYPE_TO_NAME = new TypeToNameMap();
+  /** @deprecated Use JavaCodeStyleSettings.STATIC_FIELD_TYPE_TO_NAME */
+  @Deprecated
   public final TypeToNameMap STATIC_FIELD_TYPE_TO_NAME = new TypeToNameMap();
+  /** @deprecated Use JavaCodeStyleSettings.PARAMETER_TYPE_TO_NAME */
+  @Deprecated
   @NonNls public final TypeToNameMap PARAMETER_TYPE_TO_NAME = new TypeToNameMap();
+  /** @deprecated Use JavaCodeStyleSettings.LOCAL_VARIABLE_TYPE_TO_NAME */
+  @Deprecated
   public final TypeToNameMap LOCAL_VARIABLE_TYPE_TO_NAME = new TypeToNameMap();
 
 //----------------- 'final' modifier settings -------
+  /** @deprecated Use JavaCodeStyleSettings.GENERATE_FINAL_LOCALS */
+  @Deprecated
   public boolean GENERATE_FINAL_LOCALS;
+  /** @deprecated Use JavaCodeStyleSettings.GENERATE_FINAL_PARAMETERS */
+  @Deprecated
   public boolean GENERATE_FINAL_PARAMETERS;
 
 //----------------- visibility -----------------------------
+  /** @deprecated Use JavaCodeStyleSettings.VISIBILITY */
+  @Deprecated
   public String VISIBILITY = "public";
 
 //----------------- generate parentheses around method arguments ----------
+  /** @deprecated Use RubyCodeStyleSettings.PARENTHESES_AROUND_METHOD_ARGUMENTS */
+  @Deprecated
   public boolean PARENTHESES_AROUND_METHOD_ARGUMENTS = true;
 
 //----------------- annotations ----------------
+  /** @deprecated Use JavaCodeStyleSettings.USE_EXTERNAL_ANNOTATIONS */
+  @Deprecated
   public boolean USE_EXTERNAL_ANNOTATIONS;
+  /** @deprecated Use JavaCodeStyleSettings.INSERT_OVERRIDE_ANNOTATIONS */
+  @Deprecated
   public boolean INSERT_OVERRIDE_ANNOTATION = true;
 
 //----------------- override -------------------
+  /** @deprecated Use JavaCodeStyleSettings.REPEAT_SYNCHRONIZED */
+  @Deprecated
   public boolean REPEAT_SYNCHRONIZED = true;
 
   private List<String> myRepeatAnnotations = new ArrayList<>();
 
+  /** @deprecated Use JavaCodeStyleSettings.getRepeatAnnotations() */
+  @Deprecated
   public List<String> getRepeatAnnotations() {
     return myRepeatAnnotations;
   }
 
+  /** @deprecated Use JavaCodeStyleSettings.setRepeatAnnotations() */
+  @Deprecated
   public void setRepeatAnnotations(List<String> repeatAnnotations) {
     myRepeatAnnotations.clear();
     myRepeatAnnotations.addAll(repeatAnnotations);
@@ -260,91 +306,142 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
 
   //----------------- FUNCTIONAL EXPRESSIONS -----
 
+  /** @deprecated Use JavaCodeStyleSettings.REPLACE_INSTANCE_OF */
+  @Deprecated
   public boolean REPLACE_INSTANCEOF = false;
+  /** @deprecated Use JavaCodeStyleSettings.REPLACE_CAST */
+  @Deprecated
   public boolean REPLACE_CAST = false;
+  /** @deprecated Use JavaCodeStyleSettings.REPLACE_NULL_CHECK */
+  @Deprecated
   public boolean REPLACE_NULL_CHECK = true;
 
 
-  //----------------- IMPORTS --------------------
+  //----------------- JAVA IMPORTS (deprecated, moved to JavaCodeStyleSettings) --------------------
 
+  /** @deprecated Use JavaCodeStyleSettings.LAYOUT_STATIC_IMPORTS_SEPARATELY */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
   public boolean LAYOUT_STATIC_IMPORTS_SEPARATELY = true;
+
+  /** @deprecated Use JavaCodeStyleSettings.USE_FQ_CLASS_NAMES */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
   public boolean USE_FQ_CLASS_NAMES;
 
   /** @deprecated use com.intellij.psi.codeStyle.JavaCodeStyleSettings.CLASS_NAMES_IN_JAVADOC */
   @Deprecated
   public boolean USE_FQ_CLASS_NAMES_IN_JAVADOC = true;
+
+  /** @deprecated Use JavaCodeStyleSettings.USE_SINGLE_CLASS_IMPORTS */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
   public boolean USE_SINGLE_CLASS_IMPORTS = true;
+
+  /** @deprecated Use JavaCodeStyleSettings.INSERT_INNER_CLASS_IMPORTS */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
   public boolean INSERT_INNER_CLASS_IMPORTS;
+
+  /** @deprecated Use JavaCodeStyleSettings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
   public int CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 5;
+
+  /** @deprecated Use JavaCodeStyleSettings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
   public int NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND = 3;
+
+  /** @deprecated Use JavaCodeStyleSettings.PACKAGES_TO_USE_IMPORT_ON_DEMAND */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
   public final PackageEntryTable PACKAGES_TO_USE_IMPORT_ON_DEMAND = new PackageEntryTable();
+
+  /** @deprecated Use JavaCodeStyleSettings.IMPORT_LAYOUT_TABLE */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
   public final PackageEntryTable IMPORT_LAYOUT_TABLE = new PackageEntryTable();
   
   @Override
+  @Deprecated
   public boolean isLayoutStaticImportsSeparately() {
     return LAYOUT_STATIC_IMPORTS_SEPARATELY;
   }
 
   @Override
+  @Deprecated
   public void setLayoutStaticImportsSeparately(boolean value) {
     LAYOUT_STATIC_IMPORTS_SEPARATELY = value;
   }
-  
+
+  @Deprecated
   @Override
   public int getNamesCountToUseImportOnDemand() {
     return NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND;
   }
-  
+
+  @Deprecated
   @Override
   public void setNamesCountToUseImportOnDemand(int value) {
     NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND = value;
   }
 
+  @Deprecated
   @Override
   public int getClassCountToUseImportOnDemand() {
     return CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND;
   }
 
+  @Deprecated
   @Override
   public void setClassCountToUseImportOnDemand(int value) {
     CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = value;
   }
 
+  @Deprecated
   @Override
   public boolean isInsertInnerClassImports() {
     return INSERT_INNER_CLASS_IMPORTS;
   }
 
+  @Deprecated
   @Override
   public void setInsertInnerClassImports(boolean value) {
     INSERT_INNER_CLASS_IMPORTS = value;
   }
 
+  @Deprecated
   @Override
   public boolean isUseSingleClassImports() {
     return USE_SINGLE_CLASS_IMPORTS;
   }
 
+  @Deprecated
   @Override
   public void setUseSingleClassImports(boolean value) {
     USE_SINGLE_CLASS_IMPORTS = value;
   }
-  
+
+  @Deprecated
   @Override
   public boolean isUseFqClassNames() {
     return USE_FQ_CLASS_NAMES;
   }
 
+  @Deprecated
   @Override
   public void setUseFqClassNames(boolean value) {
     USE_FQ_CLASS_NAMES = value;
   }
 
+  @Deprecated
   @Override
   public PackageEntryTable getImportLayoutTable() {
     return IMPORT_LAYOUT_TABLE;
   }
-  
+
+  @Deprecated
   @Override
   public PackageEntryTable getPackagesToUseImportOnDemand() {
     return PACKAGES_TO_USE_IMPORT_ON_DEMAND;
@@ -354,13 +451,13 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
 
 // region ORDER OF MEMBERS
 
-  public int STATIC_FIELDS_ORDER_WEIGHT = 1;
-  public int FIELDS_ORDER_WEIGHT = 2;
-  public int CONSTRUCTORS_ORDER_WEIGHT = 3;
-  public int STATIC_METHODS_ORDER_WEIGHT = 4;
-  public int METHODS_ORDER_WEIGHT = 5;
-  public int STATIC_INNER_CLASSES_ORDER_WEIGHT = 6;
-  public int INNER_CLASSES_ORDER_WEIGHT = 7;
+  @Deprecated public int STATIC_FIELDS_ORDER_WEIGHT = 1;
+  @Deprecated public int FIELDS_ORDER_WEIGHT = 2;
+  @Deprecated public int CONSTRUCTORS_ORDER_WEIGHT = 3;
+  @Deprecated public int STATIC_METHODS_ORDER_WEIGHT = 4;
+  @Deprecated public int METHODS_ORDER_WEIGHT = 5;
+  @Deprecated public int STATIC_INNER_CLASSES_ORDER_WEIGHT = 6;
+  @Deprecated public int INNER_CLASSES_ORDER_WEIGHT = 7;
 
 // endregion
 
@@ -368,7 +465,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
   /**
    * @deprecated Use get/setRightMargin() methods instead.
    */
-  @Deprecated
+  @SuppressWarnings("DeprecatedIsStillUsed")
   public int RIGHT_MARGIN = 120;
   /**
    * <b>Do not use this field directly since it doesn't reflect a setting for a specific language which may
@@ -382,99 +479,107 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
 
 // region Javadoc formatting options
 
+  /**
+   * @deprecated  Use JavaCodeStyleSettings.ENABLE_JAVADOC_FORMATTING
+   */
+  @Deprecated
   public boolean ENABLE_JAVADOC_FORMATTING = true;
 
   /**
-   * Align parameter comments to longest parameter name
+   * Align parameter comments to longest parameter name.JD_ALIGN_PARAM_COMMENTS
+   * @deprecated Use JavaCodeStyleSettings.JD_ALIGN_PARAM_COMMENTS
    */
+  @Deprecated
   public boolean JD_ALIGN_PARAM_COMMENTS = true;
 
   /**
    * Align exception comments to longest exception name
+   * @deprecated Use JavaCodeStyleSettings.JD_ALIGN_EXCEPTION_COMMENTS
    */
+  @Deprecated
   public boolean JD_ALIGN_EXCEPTION_COMMENTS = true;
 
+  /**
+   * @deprecated Use JavaCodeStyleSettings.
+   */
+  @Deprecated
   public boolean JD_ADD_BLANK_AFTER_PARM_COMMENTS;
+  /**
+   * @deprecated Use JavaCodeStyleSettings.
+   */
+  @Deprecated
   public boolean JD_ADD_BLANK_AFTER_RETURN;
+  /**
+   * @deprecated Use JavaCodeStyleSettings.
+   */
+  @Deprecated
   public boolean JD_ADD_BLANK_AFTER_DESCRIPTION = true;
+  /**
+   * @deprecated Use JavaCodeStyleSettings.
+   */
+  @Deprecated
   public boolean JD_P_AT_EMPTY_LINES = true;
 
+  /**
+   * @deprecated Use JavaCodeStyleSettings.
+   */
+  @Deprecated
   public boolean JD_KEEP_INVALID_TAGS = true;
+  /**
+   * @deprecated Use JavaCodeStyleSettings.
+   */
+  @Deprecated
   public boolean JD_KEEP_EMPTY_LINES = true;
+  /**
+   * @deprecated Use JavaCodeStyleSettings.
+   */
+  @Deprecated
   public boolean JD_DO_NOT_WRAP_ONE_LINE_COMMENTS;
 
+  /**
+   * @deprecated Use JavaCodeStyleSettings.
+   */
+  @Deprecated
   public boolean JD_USE_THROWS_NOT_EXCEPTION = true;
+  /**
+   * @deprecated Use JavaCodeStyleSettings.
+   */
+  @Deprecated
   public boolean JD_KEEP_EMPTY_PARAMETER = true;
+  /**
+   * @deprecated Use JavaCodeStyleSettings.
+   */
+  @Deprecated
   public boolean JD_KEEP_EMPTY_EXCEPTION = true;
+  /**
+   * @deprecated Use JavaCodeStyleSettings.
+   */
+  @Deprecated
   public boolean JD_KEEP_EMPTY_RETURN = true;
 
 
+  /**
+   * @deprecated Use JavaCodeStyleSettings.JD_LEADING_ASTERISKS_ARE_ENABLED
+   */
+  @Deprecated
   public boolean JD_LEADING_ASTERISKS_ARE_ENABLED = true;
+  /**
+   * @deprecated Use JavaCodeStyleSettings.JD_PRESERVE_LINE_FEEDS
+   */
+  @Deprecated
   public boolean JD_PRESERVE_LINE_FEEDS;
+  /**
+   * @deprecated Use JavaCodeStyleSettings.JD_PARAM_DESCRIPTION_ON_NEW_LINE
+   */
+  @Deprecated
   public boolean JD_PARAM_DESCRIPTION_ON_NEW_LINE;
-
+  /**
+   * @deprecated Use JavaCodeStyleSettings.JD_INDENT_ON_CONTINUATION
+   */
+  @Deprecated
   public boolean JD_INDENT_ON_CONTINUATION = false;
 
 // endregion
-
-// region Legacy(!) XML formatting options
-
-  /**
-   * @deprecated Use XmlCodeStyleSettings.
-   */
-  public boolean XML_KEEP_WHITESPACES;
-  /**
-   * @deprecated Use XmlCodeStyleSettings.
-   */
-  public int XML_ATTRIBUTE_WRAP = WRAP_AS_NEEDED;
-  /**
-   * @deprecated Use XmlCodeStyleSettings.
-   */
-  public int XML_TEXT_WRAP = WRAP_AS_NEEDED;
-  /**
-   * @deprecated Use XmlCodeStyleSettings.
-   */
-  public boolean XML_KEEP_LINE_BREAKS = true;
-  /**
-   * @deprecated Use XmlCodeStyleSettings.
-   */
-  public boolean XML_KEEP_LINE_BREAKS_IN_TEXT = true;
-  /**
-   * @deprecated Use XmlCodeStyleSettings.
-   */
-  public int XML_KEEP_BLANK_LINES = 2;
-
-  /**
-   * @deprecated Use XmlCodeStyleSettings.
-   */
-  public boolean XML_ALIGN_ATTRIBUTES = true;
-  /**
-   * @deprecated Use XmlCodeStyleSettings.
-   */
-  public boolean XML_ALIGN_TEXT;
-  /**
-   * @deprecated Use XmlCodeStyleSettings.
-   */
-  public boolean XML_SPACE_AROUND_EQUALITY_IN_ATTRIBUTE;
-  /**
-   * @deprecated Use XmlCodeStyleSettings.
-   */
-  public boolean XML_SPACE_AFTER_TAG_NAME;
-  /**
-   * @deprecated Use XmlCodeStyleSettings.
-   */
-  public boolean XML_SPACE_INSIDE_EMPTY_TAG;
-  /**
-   * @deprecated Use XmlCodeStyleSettings.
-   */
-  public boolean XML_KEEP_WHITE_SPACES_INSIDE_CDATA;
-  /**
-   * @deprecated Use XmlCodeStyleSettings.
-   */
-  public int XML_WHITE_SPACE_AROUND_CDATA;
-
-// endregion
-
 
 // region HTML formatting options (legacy)
 
@@ -509,9 +614,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
 
 // endregion
 
-  // true if <%page import="x.y.z, x.y.t"%>
-  // false if <%page import="x.y.z"%>
-  //          <%page import="x.y.t"%>
+  @Deprecated
   public boolean JSP_PREFER_COMMA_SEPARATED_IMPORT_LIST;
 
   //----------------------------------------------------------------------------------------
@@ -577,8 +680,28 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
     }
   }
 
+  private static void setVersion(@NotNull Element element, int version) {
+    element.setAttribute(VERSION_ATTR, Integer.toString(version));
+  }
+
+  private static int getVersion(@NotNull Element element) {
+    String versionStr = element.getAttributeValue(VERSION_ATTR);
+    if (versionStr == null) {
+      return 0;
+    }
+    else {
+      try {
+        return Integer.parseInt(versionStr);
+      }
+      catch (NumberFormatException nfe) {
+        return CURR_VERSION;
+      }
+    }
+  }
+
   @Override
   public void readExternal(Element element) throws InvalidDataException {
+    myVersion = getVersion(element);
     DefaultJDOMExternalizer.readExternal(this, element);
     if (LAYOUT_STATIC_IMPORTS_SEPARATELY) {
       // add <all other static imports> entry if there is none
@@ -636,10 +759,13 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
     if (USE_SAME_INDENTS) {
       IGNORE_SAME_INDENTS_FOR_LANGUAGES = true;
     }
+
+    migrateLegacySettings();
   }
 
   @Override
   public void writeExternal(Element element) throws WriteExternalException {
+    setVersion(element, myVersion);
     CodeStyleSettings parentSettings = new CodeStyleSettings();
     DefaultJDOMExternalizer.writeExternal(this, element, new DifferenceFilter<>(this, parentSettings));
 
@@ -849,18 +975,6 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
 
   public boolean useTabCharacter(FileType fileType) {
     return getIndentOptions(fileType).USE_TAB_CHARACTER;
-  }
-
-  //used in generate equals/hashCode
-  @SuppressWarnings("unused")
-  public boolean isGenerateFinalLocals() {
-    return GENERATE_FINAL_LOCALS;
-  }
-
-  //used in generate equals/hashCode
-  @SuppressWarnings("unused")
-  public boolean isGenerateFinalParameters() {
-    return GENERATE_FINAL_PARAMETERS;
   }
 
   public static class TypeToNameMap implements JDOMExternalizable {
@@ -1160,5 +1274,32 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
       myDefaults = new CodeStyleSettings();
     }
     return myDefaults;
+  }
+
+  private void migrateLegacySettings() {
+    if (myVersion < CURR_VERSION) {
+      for (CustomCodeStyleSettings settings : myCustomSettings.values()) {
+        settings.importLegacySettings(this);
+      }
+      myVersion = CURR_VERSION;
+    }
+  }
+
+  @SuppressWarnings("deprecation")
+  public void resetDeprecatedFields() {
+    CodeStyleSettings defaults = getDefaults();
+    ReflectionUtil.copyFields(this.getClass().getFields(), defaults, this, new DifferenceFilter<CodeStyleSettings>(this, defaults){
+      @Override
+      public boolean isAccept(@NotNull Field field) {
+        return field.getAnnotation(Deprecated.class) != null;
+      }
+    });
+    IMPORT_LAYOUT_TABLE.copyFrom(defaults.IMPORT_LAYOUT_TABLE);
+    PACKAGES_TO_USE_IMPORT_ON_DEMAND.copyFrom(defaults.PACKAGES_TO_USE_IMPORT_ON_DEMAND);
+    myRepeatAnnotations.clear();
+  }
+
+  public int getVersion() {
+    return myVersion;
   }
 }

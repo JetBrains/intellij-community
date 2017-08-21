@@ -78,7 +78,7 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
       return getTextFromRoots(roots, visibleRoots.size() == getAllRoots().size());
     }
     else {
-      return getTextFromFilePaths(files, "folders", files.isEmpty());
+      return getTextFromFilePaths(files, "folders", false);
     }
   }
 

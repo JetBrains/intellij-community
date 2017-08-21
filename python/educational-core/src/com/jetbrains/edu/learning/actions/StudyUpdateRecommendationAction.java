@@ -19,10 +19,9 @@ import com.jetbrains.edu.learning.stepic.EduAdaptiveStepicConnector;
 import icons.EducationalCoreIcons;
 
 public class StudyUpdateRecommendationAction extends DumbAwareAction {
-  public static final String ACTION_ID = "Edu.UpdateRecommendation";
 
   public StudyUpdateRecommendationAction() {
-    super("Update course", "Update course", EducationalCoreIcons.Stepik);
+    super("Synchronize Course", "Synchronize Course", EducationalCoreIcons.StepikRefresh);
   }
 
   @Override
@@ -43,7 +42,7 @@ public class StudyUpdateRecommendationAction extends DumbAwareAction {
         ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
         return StudyUtils.execCancelable(() -> EduAdaptiveStepicConnector.getNextRecommendation(project, (RemoteCourse)course));
       },
-      "Updating Course", true, project);
+      "Synchronizing Course", true, project);
 
     if (lastRecommendationOnStepik != null && lastRecommendationOnStepik.getStepId() != lastRecommendationInCourse.getStepId()) {
       lastRecommendationOnStepik.initTask(adaptiveLesson, false);

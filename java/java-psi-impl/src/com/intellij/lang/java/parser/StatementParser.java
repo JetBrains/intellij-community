@@ -53,35 +53,7 @@ public class StatementParser {
     if (builder.getTokenType() != JavaTokenType.LBRACE) return null;
     else if (isStatement && isParseStatementCodeBlocksDeep(builder)) return parseCodeBlockDeep(builder, false);
 
-    final PsiBuilder.Marker codeBlock = builder.mark();
-    builder.advanceLexer();
-
-    boolean greedyBlock = false;
-    int braceCount = 1;
-    while (true) {
-      final IElementType tokenType = builder.getTokenType();
-      if (tokenType == null) {
-        greedyBlock = true;
-        break;
-      }
-      if (tokenType == JavaTokenType.LBRACE) {
-        braceCount++;
-      }
-      else if (tokenType == JavaTokenType.RBRACE) {
-        braceCount--;
-      }
-      builder.advanceLexer();
-
-      if (braceCount == 0) {
-        break;
-      }
-    }
-
-    codeBlock.collapse(JavaElementType.CODE_BLOCK);
-    if (greedyBlock) {
-      codeBlock.setCustomEdgeTokenBinders(null, WhitespacesBinders.GREEDY_RIGHT_BINDER);
-    }
-    return codeBlock;
+    return parseBlockLazy(builder, JavaTokenType.LBRACE, JavaTokenType.RBRACE, JavaElementType.CODE_BLOCK);
   }
 
   @Nullable

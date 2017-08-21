@@ -20,6 +20,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.QuickFix;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -56,6 +57,14 @@ public abstract class PerformFixesModalTask implements SequentialTask {
 
   @Override
   public boolean iteration() {
+    if (DumbService.getInstance(myProject).isDumb()) {
+      //wait in progress until smart
+      try {
+        Thread.sleep(1000);
+      }
+      catch (InterruptedException ignore) { }
+      return false;
+    }
     final CommonProblemDescriptor descriptor = myDescriptors[myCount++];
     ProgressIndicator indicator = myTask.getIndicator();
     if (indicator != null) {

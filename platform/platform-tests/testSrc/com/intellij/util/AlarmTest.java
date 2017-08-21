@@ -53,7 +53,7 @@ public class AlarmTest extends PlatformTestCase {
     assertRequestsExecuteSequentially(alarm);
   }
 
-  private static void assertRequestsExecuteSequentially(@NotNull Alarm alarm) throws InterruptedException, ExecutionException, TimeoutException {
+  private static void assertRequestsExecuteSequentially(@NotNull Alarm alarm) throws InterruptedException, ExecutionException {
     int N = 10000;
     StringBuffer log = new StringBuffer(N*4);
     StringBuilder expected = new StringBuilder(N * 4);
@@ -81,7 +81,7 @@ public class AlarmTest extends PlatformTestCase {
     assertEquals(expected.toString(), log.toString());
   }
 
-  public void testOneAlarmDoesNotStartTooManyThreads() throws InterruptedException, ExecutionException, TimeoutException {
+  public void testOneAlarmDoesNotStartTooManyThreads() {
     Alarm alarm = new Alarm(getTestRootDisposable());
     Map<Thread, StackTraceElement[]> before = Thread.getAllStackTraces();
     AtomicInteger executed = new AtomicInteger();
@@ -96,7 +96,7 @@ public class AlarmTest extends PlatformTestCase {
     assertTrue("before: "+before.size()+"; after: "+after.size(), after.size() - before.size() < 10);
   }
 
-  public void testManyAlarmsDoNotStartTooManyThreads() throws InterruptedException, ExecutionException, TimeoutException {
+  public void testManyAlarmsDoNotStartTooManyThreads() {
     Map<Thread, StackTraceElement[]> before = Thread.getAllStackTraces();
     AtomicInteger executed = new AtomicInteger();
     int N = 100000;

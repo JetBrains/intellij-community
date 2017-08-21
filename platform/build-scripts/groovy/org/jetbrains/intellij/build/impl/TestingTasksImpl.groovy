@@ -45,7 +45,7 @@ class TestingTasksImpl extends TestingTasks {
   void runTests(List<String> additionalJvmOptions, String defaultMainModule, Predicate<File> rootExcludeCondition) {
     def compilationTasks = CompilationTasks.create(context)
     if (options.mainModule != null) {
-      compilationTasks.compileModules(["tests_bootstrap"], [options.mainModule])
+      compilationTasks.compileModules(["tests_bootstrap"], [options.mainModule, "platform-build-scripts"])
     }
     else {
       compilationTasks.compileAllModulesAndTests()
@@ -53,8 +53,8 @@ class TestingTasksImpl extends TestingTasks {
     setupTestingDependencies()
 
     def mainModule = options.mainModule ?: defaultMainModule
-    List<String> testsClasspath = context.projectBuilder.moduleRuntimeClasspath(context.findRequiredModule(mainModule), true)
-    List<String> bootstrapClasspath = context.projectBuilder.moduleRuntimeClasspath(context.findRequiredModule("tests_bootstrap"), false)
+    List<String> testsClasspath = context.getModuleRuntimeClasspath(context.findRequiredModule(mainModule), true)
+    List<String> bootstrapClasspath = context.getModuleRuntimeClasspath(context.findRequiredModule("tests_bootstrap"), false)
     def classpathFile = new File("$context.paths.temp/junit.classpath")
     FileUtilRt.createParentDirs(classpathFile)
     classpathFile.text = testsClasspath.findAll({ new File(it).exists() }).join('\n')
@@ -62,7 +62,7 @@ class TestingTasksImpl extends TestingTasks {
     List<String> jvmArgs = [
       "-ea",
       "-server",
-      "-Xbootclasspath/p:${context.projectBuilder.moduleOutput(context.findRequiredModule("boot"))}".toString(),
+      "-Xbootclasspath/a:${context.getModuleOutputPath(context.findRequiredModule("boot"))}".toString(),
       "-XX:+HeapDumpOnOutOfMemoryError",
       "-XX:ReservedCodeCacheSize=300m",
       "-XX:SoftRefLRUPolicyMSPerMB=50",
@@ -108,14 +108,14 @@ class TestingTasksImpl extends TestingTasks {
         systemProperties[key.substring("pass.".length())] = value
       }
     }
-    
+
     if (rootExcludeCondition != null) {
       List<JpsModule> excludedModules = context.project.modules.findAll {
         List<String> contentRoots = it.contentRootsList.urls
         !contentRoots.isEmpty() && rootExcludeCondition.test(JpsPathUtil.urlToFile(contentRoots.first()))
       }
       List<String> excludedRoots = excludedModules.collectMany {
-        [context.projectBuilder.moduleOutput(it), context.projectBuilder.moduleTestsOutput(it)]
+        [context.getModuleOutputPath(it), context.getModuleTestsOutputPath(it)]
       }
       File excludedRootsFile = new File("$context.paths.temp/excluded.classpath")
       excludedRootsFile.text = excludedRoots.findAll { new File(it).exists() }.join('\n')
@@ -136,6 +136,9 @@ class TestingTasksImpl extends TestingTasks {
     }
 
     context.messages.info("Starting ${options.testGroups != null ? "test from groups '$options.testGroups'" : "all tests"}")
+    if (options.customJrePath != null) {
+      context.messages.info("JVM: $options.customJrePath")
+    }
     context.messages.info("JVM options: $jvmArgs")
     context.messages.info("System properties: $systemProperties")
     context.messages.info("Bootstrap classpath: $bootstrapClasspath")
@@ -147,7 +150,11 @@ class TestingTasksImpl extends TestingTasks {
 ---------------------------------------^------^------^------^------^------^------^----------------------------------------
 """)
     }
-    runJUnitTask(jvmArgs, systemProperties, bootstrapClasspath)
+    if (isBootstrapSuiteDefault())
+      runJUnitTask(jvmArgs, systemProperties, bootstrapClasspath)
+     else
+      //run other suites instead of BootstrapTests
+      runJUnitTask(jvmArgs, systemProperties, testsClasspath)
   }
 
   @CompileDynamic
@@ -157,23 +164,80 @@ class TestingTasksImpl extends TestingTasks {
     String junitTemp = "$context.paths.temp/junit"
     context.ant.mkdir(dir: junitTemp)
 
-    context.ant.junit(fork: true, showoutput: true, logfailedtests: false, tempdir: junitTemp) {
+    List<String> teamCityFormatterClasspath = createTeamCityFormatterClasspath()
+
+    String jvmExecutablePath = options.customJrePath != null ? "$options.customJrePath/bin/java" : ""
+    context.ant.junit(fork: true, showoutput: true, logfailedtests: false, tempdir: junitTemp, jvm: jvmExecutablePath, printsummary: (underTeamCity ? "off" : "on")) {
       jvmArgs.each { jvmarg(value: it) }
       systemProperties.each { key, value ->
         if (value != null) {
           sysproperty(key: key, value: value)
         }
       }
+
+      if (teamCityFormatterClasspath != null) {
+        classpath {
+          teamCityFormatterClasspath.each {
+            pathelement(location: it)
+          }
+        }
+        formatter(classname: "jetbrains.buildServer.ant.junit.AntJUnitFormatter2", usefile: false)
+        context.messages.info("Added TeamCity's formatter to JUnit task")
+      }
+      if (!underTeamCity) {
+        classpath {
+          pathelement(location: context.getModuleTestsOutputPath(context.findRequiredModule("platform-build-scripts")))
+        }
+        formatter(classname: "org.jetbrains.intellij.build.JUnitLiveTestProgressFormatter", usefile: false)
+      }
+
       classpath {
         bootstrapClasspath.each {
           pathelement(location: it)
         }
       }
 
-      test(name: 'com.intellij.tests.BootstrapTests')
+      test(name: options.bootstrapSuite)
     }
   }
-  
+
+  /**
+   * In simple cases when JUnit tests are started from Ant scripts TeamCity will automatically add its formatter to JUnit task. However it
+   * doesn't work if JUnit task is called from Groovy code via a new instance of AntBuilder, so in such cases we need to add the formatter
+   * explicitly.
+   * @return classpath for TeamCity's JUnit formatter or {@code null} if the formatter shouldn't be added
+   */
+  private List<String> createTeamCityFormatterClasspath() {
+    if (!underTeamCity) return null
+
+    if (context.ant.project.buildListeners.any { it.class.name.startsWith("jetbrains.buildServer.") }) {
+      context.messages.info("TeamCity's BuildListener is registered in the Ant project so its formatter will be added to JUnit task automatically.")
+      return null
+    }
+
+    String agentHomeDir = System.getProperty("agent.home.dir")
+    if (agentHomeDir == null) {
+      context.messages.error("'agent.home.dir' system property isn't set, cannot add TeamCity JARs to classpath.")
+    }
+    List<String> classpath = [
+      "$agentHomeDir/lib/runtime-util.jar",
+      "$agentHomeDir/lib/serviceMessages.jar",
+      "$agentHomeDir/plugins/antPlugin/ant-runtime.jar",
+      "$agentHomeDir/plugins/junitPlugin/junit-runtime.jar",
+      "$agentHomeDir/plugins/junitPlugin/junit-support.jar"
+    ].collect {it.toString()}
+    classpath.each {
+      if (!new File(it).exists()) {
+        context.messages.error("Cannot add required JARs from $agentHomeDir to classpath: $it doesn't exist")
+      }
+    }
+    return classpath
+  }
+
+  private static boolean isUnderTeamCity() {
+    System.getProperty("teamcity.buildType.id") != null
+  }
+
   static boolean dependenciesInstalled
   private def setupTestingDependencies() {
     if (!dependenciesInstalled) {
@@ -198,5 +262,9 @@ class TestingTasksImpl extends TestingTasks {
     pathJUnit.createPathElement().setLocation(new File("$communityLib/ant/lib/ant-junit4.jar"))
     ant.project.addReference(junitTaskLoaderRef, new AntClassLoader(ant.project.getClass().getClassLoader(), ant.project, pathJUnit))
     ant.taskdef(name: "junit", classname: "org.apache.tools.ant.taskdefs.optional.junit.JUnitTask", loaderRef: junitTaskLoaderRef)
+  }
+
+  private boolean isBootstrapSuiteDefault() {
+    return options.bootstrapSuite == TestingOptions.BOOTSTRAP_SUITE_DEFAULT
   }
 }

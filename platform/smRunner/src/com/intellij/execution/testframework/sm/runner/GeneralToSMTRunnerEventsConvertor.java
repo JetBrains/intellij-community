@@ -40,37 +40,56 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
   private final TestSuiteStack mySuitesStack;
   private final Set<SMTestProxy> myCurrentChildren = new LinkedHashSet<>();
   private boolean myGetChildren = true;
-  private final SMTestProxy.SMRootTestProxy myTestsRootNode;
+
 
   private boolean myIsTestingFinished;
-  private SMTestLocator myLocator = null;
-  private boolean myTreeBuildBeforeStart = false;
+
 
   public GeneralToSMTRunnerEventsConvertor(Project project, @NotNull SMTestProxy.SMRootTestProxy testsRootNode,
                                            @NotNull String testFrameworkName) {
-    super(project, testFrameworkName);
-    myTestsRootNode = testsRootNode;
+    super(project, testFrameworkName, testsRootNode);
     mySuitesStack = new TestSuiteStack(testFrameworkName);
   }
 
   @Override
-  public void setLocator(@NotNull SMTestLocator locator) {
-    myLocator = locator;
+  protected SMTestProxy createProxy(String testName, String locationHint, String id, String parentNodeId) {
+    SMTestProxy proxy = super.createProxy(testName, locationHint, id, parentNodeId);
+    SMTestProxy currentSuite = getCurrentSuite();
+    currentSuite.addChild(proxy);
+    return proxy;
+  }
+
+  @Override
+  protected SMTestProxy createSuite(String suiteName, String locationHint, String id, String parentNodeId) {
+    SMTestProxy newSuite = super.createSuite(suiteName, locationHint, id, parentNodeId);
+    final SMTestProxy parentSuite = getCurrentSuite();
+
+    parentSuite.addChild(newSuite);
+
+    mySuitesStack.pushSuite(newSuite);
+
+    return newSuite;
+  }
+
+  @Override
+  public void onSuiteTreeEnded(String suiteName) {
+    myBuildTreeRunnables.add(() -> mySuitesStack.popSuite(suiteName));
+    super.onSuiteTreeEnded(suiteName);
   }
 
   public void onStartTesting() {
     addToInvokeLater(() -> {
-      mySuitesStack.pushSuite(myTestsRootNode);
-      myTestsRootNode.setStarted();
+      mySuitesStack.pushSuite(myTestsRootProxy);
+      myTestsRootProxy.setStarted();
 
       //fire
-      fireOnTestingStarted(myTestsRootNode);
+      fireOnTestingStarted(myTestsRootProxy);
     });
   }
 
   @Override
   public void onTestsReporterAttached() {
-    addToInvokeLater(() -> fireOnTestsReporterAttached(myTestsRootNode));
+    addToInvokeLater(() -> fireOnTestsReporterAttached(myTestsRootProxy));
   }
 
   public void onFinishTesting() {
@@ -85,98 +104,18 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
       // or it finished after all tests have been run
       // Lets assume, if at finish all suites except root suite are passed
       // then all is ok otherwise process was terminated by user
-      if (!isTreeComplete(myRunningTestsFullNameToProxy.keySet(), myTestsRootNode)) {
-        myTestsRootNode.setTerminated();
+      if (!isTreeComplete(myRunningTestsFullNameToProxy.keySet(), myTestsRootProxy)) {
+        myTestsRootProxy.setTerminated();
         myRunningTestsFullNameToProxy.clear();
       }
       mySuitesStack.clear();
-      myTestsRootNode.setFinished();
+      myTestsRootProxy.setFinished();
 
 
       //fire events
-      fireOnTestingFinished(myTestsRootNode);
+      fireOnTestingFinished(myTestsRootProxy);
     });
     stopEventProcessing();
-  }
-
-  @Override
-  public void onRootPresentationAdded(final String rootName, final String comment, final String rootLocation) {
-    addToInvokeLater(() -> {
-      myTestsRootNode.setPresentation(rootName);
-      myTestsRootNode.setComment(comment);
-      myTestsRootNode.setRootLocationUrl(rootLocation);
-      if (myLocator != null) {
-        myTestsRootNode.setLocator(myLocator);
-      }
-    });
-  }
-
-  private final List<Runnable> myBuildTreeRunnables = new ArrayList<>();
-  
-  @Override
-  public void onSuiteTreeNodeAdded(final String testName, final String locationHint) {
-    myTreeBuildBeforeStart = true;
-    myBuildTreeRunnables.add(() -> {
-      final SMTestProxy testProxy = new SMTestProxy(testName, false, locationHint);
-      testProxy.setTreeBuildBeforeStart();
-      if (myLocator != null) {
-        testProxy.setLocator(myLocator);
-      }
-      SMTestProxy currentSuite = getCurrentSuite();
-      currentSuite.addChild(testProxy);
-      myEventPublisher.onSuiteTreeNodeAdded(testProxy);
-      for (SMTRunnerEventsListener adapter : myListenerAdapters) {
-        adapter.onSuiteTreeNodeAdded(testProxy);
-      }
-    });
-  }
-
-  @Override
-  public void onSuiteTreeStarted(final String suiteName, final String locationHint) {
-    myTreeBuildBeforeStart = true;
-    myBuildTreeRunnables.add(() -> {
-      final SMTestProxy parentSuite = getCurrentSuite();
-      final SMTestProxy newSuite = new SMTestProxy(suiteName, true, locationHint);
-      if (myLocator != null) {
-        newSuite.setLocator(myLocator);
-      }
-      newSuite.setTreeBuildBeforeStart();
-      parentSuite.addChild(newSuite);
-
-      mySuitesStack.pushSuite(newSuite);
-
-      myEventPublisher.onSuiteTreeStarted(newSuite);
-      for (SMTRunnerEventsListener adapter : myListenerAdapters) {
-        adapter.onSuiteTreeStarted(newSuite);
-      }
-    });
-  }
-
-  @Override
-  public void onSuiteTreeEnded(final String suiteName) {
-    myBuildTreeRunnables.add(() -> mySuitesStack.popSuite(suiteName));
-    
-    if (myBuildTreeRunnables.size() > 100) {
-      final ArrayList<Runnable> runnables = new ArrayList<>(myBuildTreeRunnables);
-      myBuildTreeRunnables.clear();
-      processTreeBuildEvents(runnables);
-    }
-  }
-
-  @Override
-  public void onBuildTreeEnded() {
-    final ArrayList<Runnable> runnables = new ArrayList<>(myBuildTreeRunnables);
-    myBuildTreeRunnables.clear();
-    processTreeBuildEvents(runnables);
-  }
-
-  private void processTreeBuildEvents(final List<Runnable> runnables) {
-    addToInvokeLater(() -> {
-      for (Runnable runnable : runnables) {
-        runnable.run();
-      }
-      runnables.clear();
-    });
   }
 
   @Override
@@ -203,7 +142,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
                                                   : findChildByName(parentSuite, fullName, false);
       if (testProxy == null) {
         // creates test
-        testProxy = new SMTestProxy(testName, false, locationUrl);
+        testProxy = new SMTestProxy(testName, false, locationUrl, testStartedEvent.getMetainfo(), false);
         testProxy.setConfig(isConfig);
         if (myTreeBuildBeforeStart) testProxy.setTreeBuildBeforeStart();
 
@@ -244,8 +183,10 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
                                                  : findChildByName(parentSuite, suiteName, true);
       if (newSuite == null) {
         //new suite
-        newSuite = new SMTestProxy(suiteName, true, locationUrl, parentSuite.isPreservePresentableName());
-        if (myTreeBuildBeforeStart)newSuite.setTreeBuildBeforeStart();
+        newSuite = new SMTestProxy(suiteName, true, locationUrl, suiteStartedEvent.getMetainfo(), parentSuite.isPreservePresentableName());
+        if (myTreeBuildBeforeStart) {
+          newSuite.setTreeBuildBeforeStart();
+        }
 
         if (myLocator != null) {
           newSuite.setLocator(myLocator);
@@ -492,7 +433,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
     // or may be we are in debug mode
     logProblem("Current suite is undefined. Root suite will be used.");
     myGetChildren = true;
-    return myTestsRootNode;
+    return myTestsRootProxy;
 
   }
  
@@ -562,7 +503,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
       //current suite
       //
       // ProcessHandler can fire output available event before processStarted event
-      currentProxy = mySuitesStack.isEmpty() ? myTestsRootNode : getCurrentSuite();
+      currentProxy = mySuitesStack.isEmpty() ? myTestsRootProxy : getCurrentSuite();
     }
     return currentProxy;
   }

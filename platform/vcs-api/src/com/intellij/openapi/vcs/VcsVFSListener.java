@@ -283,7 +283,7 @@ public abstract class VcsVFSListener implements Disposable {
     final String newPath = newParentPath + "/" + newName;
     MovedFileInfo existingMovedFile = ContainerUtil.find(myMovedFiles, (info) -> Comparing.equal(info.myFile, file));
     if (existingMovedFile != null) {
-      LOG.debug("Reusing existing moved file " + file);
+      LOG.debug("Reusing existing moved file [" + file + "] with new path [" + newPath + "]");
       existingMovedFile.myNewPath = newPath;
     }
     else {

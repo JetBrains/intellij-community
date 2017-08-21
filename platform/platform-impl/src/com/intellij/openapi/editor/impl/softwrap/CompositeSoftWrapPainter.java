@@ -43,14 +43,14 @@ import static java.util.Arrays.asList;
 public class CompositeSoftWrapPainter implements SoftWrapPainter {
 
   /**
-   * Defines a key to use for checking for code of the custom unicode symbol to use for <code>'before soft wrap'</code> representation.
+   * Defines a key to use for checking for code of the custom unicode symbol to use for {@code 'before soft wrap'} representation.
    * <p/>
    * Target value (if any) is assumed to be in hex format.
    */
   public static final String CUSTOM_BEFORE_SOFT_WRAP_SIGN_KEY = "idea.editor.wrap.soft.before.code";
 
   /**
-   * Defines a key to use for checking for code of the custom unicode symbol to use for <code>'after soft wrap'</code> representation.
+   * Defines a key to use for checking for code of the custom unicode symbol to use for {@code 'after soft wrap'} representation.
    * <p/>
    * Target value (if any) is assumed to be in hex format.
    */

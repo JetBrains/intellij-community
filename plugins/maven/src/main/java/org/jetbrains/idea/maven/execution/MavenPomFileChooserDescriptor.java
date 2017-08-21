@@ -35,6 +35,6 @@ public class MavenPomFileChooserDescriptor extends FileChooserDescriptor {
   @Override
   public boolean isFileSelectable(VirtualFile file) {
     if (!super.isFileSelectable(file)) return false;
-    return MavenUtil.streamPomFiles(myProject, file).count() != 0;
+    return MavenUtil.streamPomFiles(myProject, file).findAny().isPresent();
   }
 }

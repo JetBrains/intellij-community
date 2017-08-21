@@ -36,13 +36,6 @@ public class GroovySynchronizationOnVariableInitializedWithLiteralInspection ext
   @Override
   @Nls
   @NotNull
-  public String getGroupDisplayName() {
-    return THREADING_ISSUES;
-  }
-
-  @Override
-  @Nls
-  @NotNull
   public String getDisplayName() {
     return "Synchronization on variable initialized with literal";
   }

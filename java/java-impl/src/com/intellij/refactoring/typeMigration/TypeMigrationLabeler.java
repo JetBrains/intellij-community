@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,6 +90,7 @@ public class TypeMigrationLabeler {
     new HashMap<>();
   private final Map<Pair<TypeMigrationUsageInfo, TypeMigrationUsageInfo>, Set<PsiElement>> myRootUsagesTree = new HashMap<>();
   private final Set<TypeMigrationUsageInfo> myProcessedRoots = new HashSet<>();
+  private final Set<PsiTypeParameter> myDisappearedTypeParameters = new HashSet<>();
 
   public TypeMigrationLabeler(TypeMigrationRules rules, PsiType rootType, Project project) {
     this(rules, Functions.constant(rootType), null, project);
@@ -595,17 +596,12 @@ public class TypeMigrationLabeler {
     LOG.assertTrue(originalType != null);
     type = userDefinedType ? type : TypeEvaluator.substituteType(type, originalType, isContraVariantPosition);
 
-    if (!userDefinedType) {
-      final Set<PsiTypeParameter> collector;
-      if (type instanceof PsiClassType) {
-        PsiTypesUtil.TypeParameterSearcher searcher = new PsiTypesUtil.TypeParameterSearcher();
-        type.accept(searcher);
-        collector = searcher.getTypeParameters();
-      } else {
-        collector = Collections.emptySet();
-      }
-      if (typeContainsTypeParameters(originalType, collector)) return false;
+    if (userDefinedType) {
+      Set<PsiTypeParameter> disappearedTypeParameters = getTypeParameters(originalType);
+      disappearedTypeParameters.removeAll(getTypeParameters(type));
+      myDisappearedTypeParameters.addAll(disappearedTypeParameters);
     }
+    else if (typeContainsTypeParameters(originalType, getTypeParameters(type))) return false;
 
     if (type instanceof PsiCapturedWildcardType) {
       return false;
@@ -709,6 +705,16 @@ public class TypeMigrationLabeler {
     }
   }
 
+  @NotNull
+  private static Set<PsiTypeParameter> getTypeParameters(@NotNull PsiType type) {
+    if (type instanceof PsiClassType) {
+      PsiTypesUtil.TypeParameterSearcher searcher = new PsiTypesUtil.TypeParameterSearcher();
+      type.accept(searcher);
+      return searcher.getTypeParameters();
+    }
+    return Collections.emptySet();
+  }
+
   @Nullable
   private String isMethodNameCanBeChanged(PsiMethod method) {
     if (myCurrentRoot == null) {
@@ -750,23 +756,13 @@ public class TypeMigrationLabeler {
     return null;
   }
 
-  static boolean typeContainsTypeParameters(@Nullable PsiType originalType, @NotNull Set<PsiTypeParameter> excluded) {
-    if (originalType instanceof PsiClassType) {
-      final PsiClassType psiClassType = (PsiClassType)originalType;
-      PsiClassType.ClassResolveResult resolveResult = psiClassType.resolveGenerics();
-      PsiClass aClass = resolveResult.getElement();
-      if (aClass instanceof PsiTypeParameter) {
+  private boolean typeContainsTypeParameters(@Nullable PsiType type, @NotNull Set<PsiTypeParameter> excluded) {
+    if (!(type instanceof PsiClassType)) return false;
+    PsiTypesUtil.TypeParameterSearcher searcher = new PsiTypesUtil.TypeParameterSearcher();
+    type.accept(searcher);
+    for (PsiTypeParameter parameter : searcher.getTypeParameters()) {
+      if (!excluded.contains(parameter) && !myDisappearedTypeParameters.contains(parameter)) {
         return true;
-      }
-      if (aClass != null) {
-        PsiSubstitutor substitutor = resolveResult.getSubstitutor();
-        for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(aClass)) {
-          PsiType paramType = substitutor.substitute(parameter);
-          if (paramType instanceof PsiClassType) {
-            final PsiClass resolved = ((PsiClassType)paramType).resolve();
-            if (resolved instanceof PsiTypeParameter && !excluded.contains(resolved)) return true;
-          }
-        }
       }
     }
     return false;

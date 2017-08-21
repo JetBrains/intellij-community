@@ -22,35 +22,35 @@ public class ExternalRncParsingTest extends HighlightingTestBase {
     return "parsing";
   }
 
-  public void testParseSimple() throws Throwable {
+  public void testParseSimple() {
     doTestHighlighting("simple.rnc");
   }
 
-  public void testParseEscaped() throws Throwable {
+  public void testParseEscaped() {
     doTestHighlighting("escaped.rnc");
   }
 
-  public void testParseEscapedBroken1() throws Throwable {
+  public void testParseEscapedBroken1() {
     doTestHighlighting("escaped-broken-1.rnc");
   }
 
-  public void testParseEscapedBroken2() throws Throwable {
+  public void testParseEscapedBroken2() {
     doTestHighlighting("escaped-broken-2.rnc");
   }
 
-  public void testParseEscapedBroken3() throws Throwable {
+  public void testParseEscapedBroken3() {
     doTestHighlighting("escaped-broken-3.rnc");
   }
 
-  public void testParseEscapedBroken4() throws Throwable {
+  public void testParseEscapedBroken4() {
     doTestHighlighting("escaped-broken-4.rnc");
   }
 
-  public void testParseEscapedBroken5() throws Throwable {
+  public void testParseEscapedBroken5() {
     doTestHighlighting("escaped-broken-5.rnc");
   }
 
-  private void doTestHighlighting(String s) throws Throwable {
+  private void doTestHighlighting(String s) {
     doExternalToolHighlighting(s);
   }
 }

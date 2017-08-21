@@ -164,7 +164,7 @@ public class LibraryDataService extends AbstractProjectDataService<LibraryData, 
     final LibraryTable.ModifiableModel librariesModel = modelsProvider.getModifiableProjectLibrariesModel();
     for (Library library : librariesModel.getLibraries()) {
       if (!ExternalSystemApiUtil.isExternalSystemLibrary(library, projectData.getOwner())) continue;
-      if (isOrphanProjectLibrary(library, modelsProvider)) {
+      if (isOrphanProjectLibrary(library, modelsProvider) && !modelsProvider.isSubstituted(library.getName())) {
         orphanIdeLibraries.add(library);
       }
     }

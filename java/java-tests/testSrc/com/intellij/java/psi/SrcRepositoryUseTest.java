@@ -320,7 +320,7 @@ public class SrcRepositoryUseTest extends PsiTestCase{
     teardownLoadingFilter();
   }
 
-  public void testFieldType() throws Exception {
+  public void testFieldType() {
     setupLoadingFilter();
 
     PsiClass aClass = myJavaFacade.findClass("pack.MyClass2", GlobalSearchScope.allScope(myProject));
@@ -350,7 +350,7 @@ public class SrcRepositoryUseTest extends PsiTestCase{
     teardownLoadingFilter();
   }
 
-  public void testHasInitializer() throws Exception {
+  public void testHasInitializer() {
     setupLoadingFilter();
 
     PsiClass aClass = myJavaFacade.findClass("pack.MyClass2", GlobalSearchScope.allScope(myProject));
@@ -362,7 +362,7 @@ public class SrcRepositoryUseTest extends PsiTestCase{
     teardownLoadingFilter();
   }
 
-  public void testMethodType() throws Exception {
+  public void testMethodType() {
     setupLoadingFilter();
 
     PsiClass aClass = myJavaFacade.findClass("pack.MyClass2", GlobalSearchScope.allScope(myProject));
@@ -380,7 +380,7 @@ public class SrcRepositoryUseTest extends PsiTestCase{
     teardownLoadingFilter();
   }
 
-  public void testIsConstructor() throws Exception {
+  public void testIsConstructor() {
     setupLoadingFilter();
 
     PsiClass aClass = myJavaFacade.findClass("pack.MyClass2", GlobalSearchScope.allScope(myProject));
@@ -390,7 +390,7 @@ public class SrcRepositoryUseTest extends PsiTestCase{
     teardownLoadingFilter();
   }
 
-  public void testComponentType() throws Exception {
+  public void testComponentType() {
     setupLoadingFilter();
 
     PsiClass aClass = myJavaFacade.findClass("pack.MyClass2", GlobalSearchScope.allScope(myProject));
@@ -407,7 +407,7 @@ public class SrcRepositoryUseTest extends PsiTestCase{
     teardownLoadingFilter();
   }
 
-  public void testTypeReference() throws Exception {
+  public void testTypeReference() {
     setupLoadingFilter();
 
     PsiClass aClass = myJavaFacade.findClass("pack.MyClass2", GlobalSearchScope.allScope(myProject));
@@ -454,7 +454,7 @@ public class SrcRepositoryUseTest extends PsiTestCase{
     teardownLoadingFilter();
   }
 
-  public void testResolveTypeReference() throws Exception {
+  public void testResolveTypeReference() {
     setupLoadingFilter();
 
     PsiClass aClass = myJavaFacade.findClass("pack.MyClass2", GlobalSearchScope.allScope(myProject));
@@ -473,7 +473,7 @@ public class SrcRepositoryUseTest extends PsiTestCase{
     teardownLoadingFilter();
   }
 
-  public void testExtendsList() throws Exception {
+  public void testExtendsList() {
     setupLoadingFilter();
 
     PsiClass aClass = myJavaFacade.findClass("pack.MyClass2", GlobalSearchScope.allScope(myProject));
@@ -487,7 +487,7 @@ public class SrcRepositoryUseTest extends PsiTestCase{
     teardownLoadingFilter();
   }
 
-  public void testImplementsList() throws Exception {
+  public void testImplementsList() {
     setupLoadingFilter();
 
     PsiClass aClass = myJavaFacade.findClass("pack.MyClass2", GlobalSearchScope.allScope(myProject));
@@ -501,7 +501,7 @@ public class SrcRepositoryUseTest extends PsiTestCase{
     teardownLoadingFilter();
   }
 
-  public void testThrowsList() throws Exception {
+  public void testThrowsList() {
     setupLoadingFilter();
 
     PsiClass aClass = myJavaFacade.findClass("pack.MyClass2", GlobalSearchScope.allScope(myProject));
@@ -516,7 +516,7 @@ public class SrcRepositoryUseTest extends PsiTestCase{
     teardownLoadingFilter();
   }
 
-  public void testParameters() throws Exception {
+  public void testParameters() {
     setupLoadingFilter();
 
     PsiClass aClass = myJavaFacade.findClass("pack.MyClass2", GlobalSearchScope.allScope(myProject));
@@ -566,7 +566,7 @@ public class SrcRepositoryUseTest extends PsiTestCase{
     assertEquals("pack.AAA", type.getCanonicalText());
   }
 
-  public void testAnonymousClass() throws Exception {
+  public void testAnonymousClass() {
     setupLoadingFilter();
 
     PsiClass cloneableClass = myJavaFacade.findClass("java.lang.Cloneable", GlobalSearchScope.allScope(myProject));
@@ -593,7 +593,7 @@ public class SrcRepositoryUseTest extends PsiTestCase{
     PsiManagerEx.getInstanceEx(getProject()).setAssertOnFileLoadingFilter(VirtualFileFilter.ALL, getTestRootDisposable());
   }
 
-  public void testAnonymousClass2() throws Exception {
+  public void testAnonymousClass2() {
     setupLoadingFilter();
 
     PsiClass throwable = myJavaFacade.findClass("java.lang.Throwable", GlobalSearchScope.allScope(myProject));
@@ -612,7 +612,7 @@ public class SrcRepositoryUseTest extends PsiTestCase{
     assertTrue(anonClass.getParent() instanceof PsiNewExpression);
   }
 
-  public void testLocalClass() throws Exception {
+  public void testLocalClass() {
     setupLoadingFilter();
 
     PsiClass cloneableClass = myJavaFacade.findClass("java.lang.Cloneable", GlobalSearchScope.allScope(myProject));
@@ -626,7 +626,7 @@ public class SrcRepositoryUseTest extends PsiTestCase{
     assertTrue(localClass.getParent() instanceof PsiDeclarationStatement);
   }
 
-  public void testClassNameModification() throws Exception {
+  public void testClassNameModification() {
     PsiClass aClass = myJavaFacade.findClass("pack.MyClass2", GlobalSearchScope.allScope(myProject));
     assertNotNull(aClass);
 
@@ -637,7 +637,7 @@ public class SrcRepositoryUseTest extends PsiTestCase{
     assertEquals("pack.NewName", aClass.getQualifiedName());
   }
 
-  public void testModification1() throws Exception {
+  public void testModification1() {
     PsiClass aClass = myJavaFacade.findClass("pack.MyClass2", GlobalSearchScope.allScope(myProject));
     assertNotNull(aClass);
 
@@ -649,7 +649,7 @@ public class SrcRepositoryUseTest extends PsiTestCase{
     assertTrue(field.isValid());
   }
 
-  public void testModification2() throws Exception {
+  public void testModification2() {
     PsiClass aClass = myJavaFacade.findClass("pack.MyClass2", GlobalSearchScope.allScope(myProject));
     ApplicationManager.getApplication().runWriteAction(() -> PsiUtil.setModifierProperty(aClass, PsiModifier.FINAL, true));
 
@@ -658,7 +658,7 @@ public class SrcRepositoryUseTest extends PsiTestCase{
     assertEquals(aClass, aClass2);
   }
 
-  public void testModification3() throws Exception {
+  public void testModification3() {
     PsiClass aClass = myJavaFacade.findClass("pack.MyInterface1", GlobalSearchScope.allScope(myProject));
     TextRange classRange = aClass.getTextRange();
     String text = aClass.getText();
@@ -696,14 +696,14 @@ public class SrcRepositoryUseTest extends PsiTestCase{
     }
   }
 
-  public void testRenamePackage() throws Exception {
+  public void testRenamePackage() {
     renamePackage("pack", "renamedPack");
 
     PsiClass psiClass = myJavaFacade.findClass("renamedPack.MyInterface1", GlobalSearchScope.allScope(myProject));
     assertNotNull(psiClass);
   }
 
-  public void testReplaceRootWithSubRoot1() throws Exception {
+  public void testReplaceRootWithSubRoot1() {
     final PsiClass aClass = myJavaFacade.findClass("pack.MyInterface1", GlobalSearchScope.allScope(myProject));
     final PsiFile psiFile = aClass.getContainingFile();
     ((PsiJavaFile) psiFile).getClasses();
@@ -716,7 +716,7 @@ public class SrcRepositoryUseTest extends PsiTestCase{
     assertEquals("MyInterface1", aClass.getName());
   }
 
-  public void testReplaceRootWithSubRoot2() throws Exception {
+  public void testReplaceRootWithSubRoot2() {
     final PsiClass aClass = myJavaFacade.findClass("pack.MyInterface1", GlobalSearchScope.allScope(myProject));
     assertNotNull(aClass);
 
@@ -749,7 +749,7 @@ public class SrcRepositoryUseTest extends PsiTestCase{
     );
   }
 
-  public void testParentIdAssert() throws Exception {
+  public void testParentIdAssert() {
     PsiClass jpanelClass = myJavaFacade.findClass("javax.swing.JPanel", GlobalSearchScope.allScope(myProject));
     PsiClass[] inheritors = ClassInheritorsSearch.search(jpanelClass, GlobalSearchScope.projectScope(myProject), true).toArray(PsiClass.EMPTY_ARRAY);
     assertEquals(2, inheritors.length);
@@ -797,7 +797,7 @@ public class SrcRepositoryUseTest extends PsiTestCase{
     myClass.getChildren();
   }
 
-  public void testCopyableUserDataChild() throws Exception {
+  public void testCopyableUserDataChild() {
     final PsiClass aClass = myJavaFacade.findClass("pack.MyInterface1", GlobalSearchScope.allScope(myProject));
     assertNotNull(aClass);
     final PsiFile containingFile = aClass.getContainingFile();
@@ -815,7 +815,7 @@ public class SrcRepositoryUseTest extends PsiTestCase{
     vFile.refresh(false, false);
   }
 
-  private void renamePackage(String packageName, String newPackageName) throws Exception {
+  private void renamePackage(String packageName, String newPackageName) {
     PsiPackage aPackage = JavaPsiFacade.getInstance(myPsiManager.getProject()).findPackage(packageName);
     assertNotNull("Package " + packageName + " not found", aPackage);
 

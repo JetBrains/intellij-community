@@ -55,7 +55,7 @@ public class SvnAuthenticationTest extends PlatformTestCase {
   }
 
   @Override
-  protected void setUp() throws Exception {
+  protected void setUp() {
     EdtTestUtil.runInEdtAndWait(() -> super.setUp());
 
 
@@ -81,7 +81,7 @@ public class SvnAuthenticationTest extends PlatformTestCase {
   }
 
   @Override
-  protected void tearDown() throws Exception {
+  protected void tearDown() {
     EdtTestUtil.runInEdtAndWait(() -> super.tearDown());
 
     FileUtil.delete(new File(myConfiguration.getConfigurationDirectory()));
@@ -869,7 +869,7 @@ public class SvnAuthenticationTest extends PlatformTestCase {
     SVNJNAUtil.setJNAEnabled(true);
   }
 
-  private static void synchronousBackground(final Runnable runnable) throws InterruptedException {
+  private static void synchronousBackground(final Runnable runnable) {
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
     ApplicationManager.getApplication().executeOnPooledThread((Runnable)() -> {

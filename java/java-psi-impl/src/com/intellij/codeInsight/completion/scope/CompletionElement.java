@@ -16,12 +16,14 @@
 package com.intellij.codeInsight.completion.scope;
 
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Arrays;
 
 public class CompletionElement{
   private final Object myElement;
@@ -63,7 +65,9 @@ public class CompletionElement{
       return ((PsiPackage)myElement).getQualifiedName();
     }
     if(myElement instanceof PsiMethod){
-      return Pair.create(((PsiMethod)myElement).getSignature(mySubstitutor), myQualifierText);
+      return Trinity.create(((PsiMethod)myElement).getName(),
+                            Arrays.asList(MethodSignatureUtil.calcErasedParameterTypes(((PsiMethod)myElement).getSignature(mySubstitutor))),
+                            myQualifierText);
     }
     if (myElement instanceof PsiVariable) {
       return "#" + ((PsiVariable)myElement).getName();

@@ -346,7 +346,8 @@ public abstract class PythonCommandLineState extends CommandLineState {
   }
 
   private static void setupVirtualEnvVariables(PythonRunParams myConfig, Map<String, String> env, String sdkHome) {
-    if (PythonSdkType.isVirtualEnv(sdkHome)) {
+    Sdk sdk = PythonSdkType.findSdkByPath(sdkHome);
+    if (PythonSdkType.isVirtualEnv(sdkHome) || (sdk != null && PythonSdkType.isCondaVirtualEnv(sdk))) {
       PyVirtualEnvReader reader = new PyVirtualEnvReader(sdkHome);
       if (reader.getActivate() != null) {
         try {

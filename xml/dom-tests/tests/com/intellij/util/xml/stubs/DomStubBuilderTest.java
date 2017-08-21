@@ -41,11 +41,11 @@ import org.jetbrains.annotations.NotNull;
  */
 public class DomStubBuilderTest extends DomStubTest {
 
-  public void testDomLoading() throws Exception {
+  public void testDomLoading() {
     getRootStub("foo.xml");
   }
 
-  public void testFoo() throws Exception {
+  public void testFoo() {
     doBuilderTest("foo.xml", "File:foo\n" +
                              "  Element:foo\n" +
                              "    Element:id:foo\n" +
@@ -70,14 +70,14 @@ public class DomStubBuilderTest extends DomStubTest {
     assertEquals("foo", idElementStub.getValue());
   }
 
-  public void testIncompleteAttribute() throws Exception {
+  public void testIncompleteAttribute() {
     doBuilderTest("incompleteAttribute.xml", "File:foo\n" +
                                              "  Element:foo\n" +
                                              "    Element:bar\n" +
                                              "      Attribute:string:\n");
   }
 
-  public void testDomExtension() throws Exception {
+  public void testDomExtension() {
     DomExtenderEP ep = new DomExtenderEP();
     ep.domClassName = Bar.class.getName();
     ep.extenderClassName = TestExtender.class.getName();
@@ -90,7 +90,7 @@ public class DomStubBuilderTest extends DomStubTest {
                                   "    Element:bar\n");
   }
 
-  public void testNullTag() throws Exception {
+  public void testNullTag() {
     VirtualFile virtualFile = myFixture.copyFileToProject("nullTag.xml");
     assertNotNull(virtualFile);
     PsiFile psiFile = ((PsiManagerEx)getPsiManager()).getFileManager().findFile(virtualFile);
@@ -102,7 +102,7 @@ public class DomStubBuilderTest extends DomStubTest {
     assertNull(stubTree); // no stubs for invalid XML
   }
 
-  public void testInclusion() throws Exception {
+  public void testInclusion() {
     myFixture.copyFileToProject("include.xml");
     doBuilderTest("inclusion.xml", "File:foo\n" +
                                    "  Element:foo\n" +

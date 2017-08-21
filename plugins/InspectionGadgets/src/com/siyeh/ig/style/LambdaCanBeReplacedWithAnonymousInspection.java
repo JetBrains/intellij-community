@@ -81,7 +81,7 @@ public class LambdaCanBeReplacedWithAnonymousInspection extends BaseInspection {
     PsiCodeBlock blockFromText = psiElementFactory.createCodeBlockFromText(blockText, lambdaExpression);
     qualifyThisExpressions(lambdaExpression, psiElementFactory, blockFromText);
     blockFromText = psiElementFactory.createCodeBlockFromText(blockFromText.getText(), null);
-    
+
     PsiNewExpression newExpression = (PsiNewExpression)psiElementFactory.createExpressionFromText("new " + functionalInterfaceType.getCanonicalText() + "(){}", lambdaExpression);
     newExpression = (PsiNewExpression)JavaCodeStyleManager.getInstance(project).shortenClassReferences(lambdaExpression.replace(newExpression));
 
@@ -183,7 +183,7 @@ public class LambdaCanBeReplacedWithAnonymousInspection extends BaseInspection {
       super.visitLambdaExpression(lambdaExpression);
       if (isConvertibleLambdaExpression(lambdaExpression)) {
         PsiParameterList parameterList = lambdaExpression.getParameterList();
-        PsiElement nextElement = PsiTreeUtil.skipSiblingsForward(parameterList, PsiWhiteSpace.class, PsiComment.class);
+        PsiElement nextElement = PsiTreeUtil.skipWhitespacesAndCommentsForward(parameterList);
         if (PsiUtil.isJavaToken(nextElement, JavaTokenType.ARROW)) {
           registerErrorAtRange(parameterList, nextElement);
         }

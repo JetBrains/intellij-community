@@ -41,7 +41,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.*;
 import com.intellij.testFramework.ParsingTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -258,7 +257,7 @@ public class XmlParsingTest extends ParsingTestCase {
 
     new WriteCommandAction(getProject(), file) {
       @Override
-      protected void run(@NotNull final Result result) throws Throwable {
+      protected void run(@NotNull final Result result) {
         PlatformTestUtil.startPerformanceTest("XML reparse using PsiBuilder", 2500, () -> {
           for (int i = 0; i < 10; i++) {
             final long tm = System.currentTimeMillis();
@@ -556,7 +555,7 @@ public class XmlParsingTest extends ParsingTestCase {
     doTestXml("<a><b><b/></c></a>");
   }
 
-  public void testDtdUrl1() throws Exception {
+  public void testDtdUrl1() {
     XmlFile file = (XmlFile)createFile("test.xml", "<!DOCTYPE greeting SYSTEM \"hello.dtd\">");
 
     XmlDocument document = file.getDocument();
@@ -667,6 +666,11 @@ public class XmlParsingTest extends ParsingTestCase {
 
   public void testWhitespaceBeforeName() throws Exception {
     doTestXml("<a>< a</a>");
+  }
+
+  public void testAllWhitespaces() throws Exception {
+    doTestXml("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n" +
+              "<Root><page><content><locatieblok><locatie label=\"Locatie\">EXAMPLE</locatie>\u2029<straat label=\"Straat\">EXAMPLE</straat>\u2029<postcode label=\"Postcode\">EXAMPLE</postcode> <plaats label=\"Plaats\">EXAMPLE</plaats>\u2029\u2029<telomschrijving label=\"Telefoon omschrijving\">T.</telomschrijving> <telefoon label=\"Telefoon\">EXAMPLE</telefoon>\u2029\u2029<internet label=\"Internet\">EXAMPLE</internet></locatieblok><naamblok><aanhefnaam label=\"Aanhef Naam Achternaam\">Aanhef Naam Achternaam</aanhefnaam>\u2029<functie label=\"Functie\">Functie</functie>\u2029<mobielomschr label=\"Mobiel omschrijving\">M.</mobielomschr>\t<mobiel label=\"Mobiel\">EXAMPLE</mobiel>\u2029<emailomschr label=\"Email omschrijving\">E.</emailomschr>\t<email label=\"Email\">EXAMPLE</email></naamblok></content></page></Root>\n");
   }
 
   public void testCustomMimeType() throws Exception {

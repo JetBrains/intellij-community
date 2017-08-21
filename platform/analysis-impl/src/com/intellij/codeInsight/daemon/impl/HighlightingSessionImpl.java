@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -53,10 +54,15 @@ public class HighlightingSessionImpl implements HighlightingSession {
     myEditorColorsScheme = editorColorsScheme;
     myProject = psiFile.getProject();
     myDocument = PsiDocumentManager.getInstance(myProject).getDocument(psiFile);
-    myEDTQueue = new TransferToEDTQueue<>("Apply highlighting results", runnable -> {
+    myEDTQueue = new TransferToEDTQueue<Runnable>("Apply highlighting results", runnable -> {
       runnable.run();
       return true;
-    }, o -> myProject.isDisposed() || getProgressIndicator().isCanceled(), 200);
+    }, o -> myProject.isDisposed() || getProgressIndicator().isCanceled(), 200) {
+      @Override
+      protected void schedule(@NotNull Runnable updateRunnable) {
+        ApplicationManager.getApplication().invokeLater(updateRunnable, ModalityState.any());
+      }
+    };
   }
 
   private static final Key<ConcurrentMap<PsiFile, HighlightingSession>> HIGHLIGHTING_SESSION = Key.create("HIGHLIGHTING_SESSION");

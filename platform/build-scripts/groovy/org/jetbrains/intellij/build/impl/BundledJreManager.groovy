@@ -59,7 +59,7 @@ class BundledJreManager {
   }
 
   /**
-   * Return path to a .tar.gz archive containing distribution of JRE for Mac OS which will be bundled with the product
+   * Return path to a .tar.gz archive containing distribution of JRE for macOS which will be bundled with the product
    */
   String findMacJreArchive() {
     return findJreArchive("osx")?.absolutePath
@@ -120,7 +120,7 @@ class BundledJreManager {
   private File findJreArchive(String osName, JvmArchitecture arch = JvmArchitecture.x64, JreVendor vendor = JreVendor.JetBrains) {
     def dependenciesDir = new File(buildContext.paths.communityHome, 'build/dependencies')
     def jreDir = new File(dependenciesDir, 'build/jbre')
-    def jreVersion = getExpectedJreVersion(dependenciesDir)
+    def jreVersion = getExpectedJreVersion(osName, dependenciesDir)
 
     String suffix = "${jreVersion}_$osName${arch == JvmArchitecture.x32 ? '_x86' : '_x64'}.tar.gz"
     String prefix = buildContext.productProperties.toolsJarRequired ? vendor.jreWithToolsJarNamePrefix : vendor.jreNamePrefix
@@ -139,22 +139,22 @@ class BundledJreManager {
     return jreArchive
   }
 
-  private String expectedJreVersion
-  private String getExpectedJreVersion(File dependenciesDir) {
-    if (expectedJreVersion == null) {
-      def dependenciesFile = new File(dependenciesDir, 'build/dependencies.properties')
+  private Properties dependencyVersions
+  private String getExpectedJreVersion(String osName, File dependenciesDir) {
+    if (dependencyVersions == null) {
       buildContext.gradle.run('Preparing dependencies file', 'dependenciesFile')
-      def properties = new Properties()
-      def stream = dependenciesFile.newInputStream()
+
+      def stream = new File(dependenciesDir, 'build/dependencies.properties').newInputStream()
       try {
+        Properties properties = new Properties()
         properties.load(stream)
-        expectedJreVersion = properties.get("jdkBuild", "")
+        dependencyVersions = properties
       }
       finally {
         stream.close()
       }
     }
-    return expectedJreVersion
+    return dependencyVersions.get("jreBuild_${osName}" as String, dependencyVersions.get("jdkBuild", ""))
   }
 
   private enum JreVendor {

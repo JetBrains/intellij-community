@@ -26,7 +26,7 @@ import static org.junit.Assert.assertTrue;
  */
 public class IPythonConsoleTest extends PyEnvTestCase {
   @Test
-  public void testQuestion() throws Exception {
+  public void testQuestion() {
     runPythonTest(new IPythonTask() {
       @Override
       public void testing() throws Exception {
@@ -39,7 +39,7 @@ public class IPythonConsoleTest extends PyEnvTestCase {
 
   @Test
   @Staging
-  public void testParsing() throws Exception {
+  public void testParsing() {
     runPythonTest(new IPythonTask() {
       @Override
       public void testing() throws Exception {
@@ -65,7 +65,7 @@ public class IPythonConsoleTest extends PyEnvTestCase {
   }
 
   @Test
-  public void testParsingNoIPython() throws Exception {
+  public void testParsingNoIPython() {
     runPythonTest(new IPythonTask() {
       @Override
       public void testing() throws Exception {

@@ -6,7 +6,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class EqualsCalledOnEnumConstantInspectionTest extends LightInspectionTestCase {
 
-  public void testEqualsCalled() throws Exception {
+  public void testEqualsCalled() {
     doTest();
   }
 

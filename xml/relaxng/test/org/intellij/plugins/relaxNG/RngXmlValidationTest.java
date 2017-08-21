@@ -22,59 +22,59 @@ import org.intellij.plugins.testUtil.CopyFile;
 
 public class RngXmlValidationTest extends HighlightingTestBase {
 
-  public void testValidDocument() throws Throwable {
+  public void testValidDocument() {
     doTest("xslt.rng");
   }
 
   @CopyFile("broken.rng")
-  public void testPartiallyBrokenRng() throws Throwable {
+  public void testPartiallyBrokenRng() {
     myTestFixture.testHighlighting("broken-rng.xml");
   }
 
   @CopyFile("broken.rnc")
-  public void testPartiallyBrokenRnc() throws Throwable {
+  public void testPartiallyBrokenRnc() {
     myTestFixture.testHighlighting("broken-rnc.xml");
   }
 
   @CopyFile("entity-included.xml")
-  public void testEntityRef1() throws Throwable {
+  public void testEntityRef1() {
     doTest("entity-test-1.xml");
   }
 
   @CopyFile("entity-included.xml")
-  public void testEntityRef2() throws Throwable {
+  public void testEntityRef2() {
     doTest("entity-test-2.xml");
   }
 
-  public void testEntityRef3() throws Throwable {
+  public void testEntityRef3() {
     doTest("entity-test-3.xml");
   }
 
-  public void testTextContent() throws Throwable {
+  public void testTextContent() {
     doTest("text-content.xml");
   }
 
-  public void testCDATA() throws Throwable {
+  public void testCDATA() {
     doTest("cdata-test.xml");
   }
 
-  public void testMissingElement() throws Throwable {
+  public void testMissingElement() {
     doTest("missing-element.xml");
   }
 
-  public void testInvalidElement() throws Throwable {
+  public void testInvalidElement() {
     doTest("invalid-element.xml");
   }
 
-  public void testInvalidElementRnc() throws Throwable {
+  public void testInvalidElementRnc() {
     doTest("invalid-element-rnc.xml");
   }
 
-  public void testMissingElementRnc() throws Throwable {
+  public void testMissingElementRnc() {
     doTest("missing-element-rnc.xml");
   }
 
-  private void doTest(String name) throws Throwable {
+  private void doTest(String name) {
     doExternalToolHighlighting(name);
   }
 

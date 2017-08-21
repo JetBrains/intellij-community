@@ -45,11 +45,12 @@ public class AnActionEvent implements PlaceProvider<String> {
   private boolean myWorksInInjected;
   @NonNls private static final String ourInjectedPrefix = "$injected$.";
   private static final Map<String, String> ourInjectedIds = new HashMap<>();
-  private boolean myIsToolbarAction;
+  private final boolean myIsContextMenuAction;
+  private final boolean myIsActionToolbar;
 
   /**
-   * @throws IllegalArgumentException if <code>dataContext</code> is <code>null</code> or
-   * <code>place</code> is <code>null</code> or <code>presentation</code> is <code>null</code>
+   * @throws IllegalArgumentException if {@code dataContext} is {@code null} or
+   * {@code place} is {@code null} or {@code presentation} is {@code null}
    *
    * @see ActionManager#getInstance()
    */
@@ -59,6 +60,23 @@ public class AnActionEvent implements PlaceProvider<String> {
                        @NotNull Presentation presentation,
                        @NotNull ActionManager actionManager,
                        @JdkConstants.InputEventMask int modifiers) {
+    this(inputEvent, dataContext, place, presentation, actionManager, modifiers, false, false);
+  }
+
+  /**
+   * @throws IllegalArgumentException if {@code dataContext} is {@code null} or
+   * {@code place} is {@code null} or {@code presentation} is {@code null}
+   *
+   * @see ActionManager#getInstance()
+   */
+  public AnActionEvent(InputEvent inputEvent,
+                       @NotNull DataContext dataContext,
+                       @NotNull @NonNls String place,
+                       @NotNull Presentation presentation,
+                       @NotNull ActionManager actionManager,
+                       @JdkConstants.InputEventMask int modifiers,
+                       boolean isContextMenuAction,
+                       boolean isActionToolbar) {
     // TODO[vova,anton] make this constructor package-private. No one is allowed to create AnActionEvents
     myInputEvent = inputEvent;
     myActionManager = actionManager;
@@ -66,7 +84,10 @@ public class AnActionEvent implements PlaceProvider<String> {
     myPlace = place;
     myPresentation = presentation;
     myModifiers = modifiers;
+    myIsContextMenuAction = isContextMenuAction;
+    myIsActionToolbar = isActionToolbar;
   }
+
 
   @Deprecated
   @NotNull
@@ -100,7 +121,7 @@ public class AnActionEvent implements PlaceProvider<String> {
                                                    @NotNull String place,
                                                    @NotNull Presentation presentation,
                                                    @NotNull DataContext dataContext) {
-    return createFromInputEvent(event, place, presentation, dataContext, false);
+    return createFromInputEvent(event, place, presentation, dataContext, false, false);
   }
 
   @NotNull
@@ -108,17 +129,16 @@ public class AnActionEvent implements PlaceProvider<String> {
                                                    @NotNull String place,
                                                    @NotNull Presentation presentation,
                                                    @NotNull DataContext dataContext,
+                                                   boolean isContextMenuAction,
                                                    boolean isToolbarAction) {
-    AnActionEvent e = new AnActionEvent(event, dataContext, place, presentation, ActionManager.getInstance(),
-                                             event == null ? 0 : event.getModifiers());
-    e.myIsToolbarAction = isToolbarAction;
-    return e;
+    return new AnActionEvent(event, dataContext, place, presentation, ActionManager.getInstance(),
+                             event == null ? 0 : event.getModifiers(), isContextMenuAction, isToolbarAction);
   }
 
   /**
-   * Returns the <code>InputEvent</code> which causes invocation of the action. It might be
-   * <code>KeyEvent</code>, <code>MouseEvent</code>.
-   * @return the <code>InputEvent</code> instance.
+   * Returns the {@code InputEvent} which causes invocation of the action. It might be
+   * {@code KeyEvent}, {@code MouseEvent}.
+   * @return the {@code InputEvent} instance.
    */
   public InputEvent getInputEvent() {
     return myInputEvent;
@@ -220,8 +240,12 @@ public class AnActionEvent implements PlaceProvider<String> {
     return myPlace;
   }
 
-  public boolean isToolbarAction() {
-    return myIsToolbarAction;
+  public boolean isFromActionToolbar() {
+    return myIsActionToolbar;
+  }
+
+  public boolean isFromContextMenu() {
+    return myIsContextMenuAction;
   }
 
   /**

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,9 @@
  */
 package com.siyeh.ig.bugs;
 
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiBinaryExpression;
+import com.intellij.psi.PsiExpression;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -51,9 +53,10 @@ public class NumberEqualityInspection extends BaseInspection {
     return new NumberEqualityVisitor();
   }
 
+  @NotNull
   @Override
-  public InspectionGadgetsFix buildFix(Object... infos) {
-    return new EqualityToEqualsFix();
+  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+    return EqualityToEqualsFix.buildEqualityFixes((PsiBinaryExpression)infos[0]);
   }
 
   private static class NumberEqualityVisitor extends BaseInspectionVisitor {
@@ -61,15 +64,18 @@ public class NumberEqualityInspection extends BaseInspection {
     @Override
     public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {
       super.visitBinaryExpression(expression);
+      if (!ComparisonUtils.isEqualityComparison(expression)) {
+        return;
+      }
       final PsiExpression rhs = expression.getROperand();
-      if (rhs == null || !ComparisonUtils.isEqualityComparison(expression)) {
+      if (!hasNumberType(rhs)) {
         return;
       }
       final PsiExpression lhs = expression.getLOperand();
-      if (!hasNumberType(lhs) || !hasNumberType(rhs)) {
+      if (!hasNumberType(lhs)) {
         return;
       }
-      registerError(expression.getOperationSign());
+      registerError(expression.getOperationSign(), expression);
     }
 
     private static boolean hasNumberType(PsiExpression expression) {

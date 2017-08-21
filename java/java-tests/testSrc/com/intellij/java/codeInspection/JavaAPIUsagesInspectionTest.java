@@ -34,27 +34,27 @@ public class JavaAPIUsagesInspectionTest extends InspectionTestCase {
     doTest("usage1.5/" + getTestName(true), new LocalInspectionToolWrapper(usageInspection), "java 1.5");
   }
 
-  public void testConstructor() throws Exception {
+  public void testConstructor() {
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_4, this::doTest);
   }
 
-  public void testIgnored() throws Exception {
+  public void testIgnored() {
     doTest();
   }
 
-  public void testAnnotation() throws Exception {
+  public void testAnnotation() {
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_6, this::doTest);
   }
 
-  public void testDefaultMethods() throws Exception {
+  public void testDefaultMethods() {
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_6, this::doTest);
   }
 
-  public void testOverrideAnnotation() throws Exception {
+  public void testOverrideAnnotation() {
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_6, this::doTest);
   }
 
-  public void testRawInheritFromNewlyGenerified() throws Exception {
+  public void testRawInheritFromNewlyGenerified() {
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_6, this::doTest);
   }
 

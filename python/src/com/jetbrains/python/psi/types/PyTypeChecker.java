@@ -81,15 +81,14 @@ public class PyTypeChecker {
       }
     }
     if (expected instanceof PyInstantiableType && actual instanceof PyInstantiableType
-        && !(expected instanceof PyGenericType && typeVarAcceptsBothClassAndInstanceTypes((PyGenericType)expected)) 
+        && !(expected instanceof PyGenericType && typeVarAcceptsBothClassAndInstanceTypes((PyGenericType)expected))
         && ((PyInstantiableType)expected).isDefinition() ^ ((PyInstantiableType)actual).isDefinition()) {
-      return false;
-    }
-    if (actualClassType != null && PyNames.BASESTRING.equals(actualClassType.getName())) {
-      final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(actualClassType.getPyClass());
-      if (actualClassType.equals(builtinCache.getObjectType(PyNames.BASESTRING))) {
-        return match(expected, builtinCache.getStrOrUnicodeType(), context, substitutions, recursive);
+      if (((PyInstantiableType)actual).isDefinition() && !((PyInstantiableType)expected).isDefinition()) {
+        if (actual instanceof PyClassLikeType && matchClassObjectAndMetaclass(expected, (PyClassLikeType)actual, context)) {
+          return true;
+        }
       }
+      return false;
     }
     if (expected instanceof PyGenericType && substitutions != null) {
       final PyGenericType generic = (PyGenericType)expected;
@@ -299,6 +298,17 @@ public class PyTypeChecker {
     return matchNumericTypes(expected, actual);
   }
 
+  private static boolean matchClassObjectAndMetaclass(@NotNull PyType expected,
+                                                      @NotNull PyClassLikeType actual,
+                                                      @NotNull TypeEvalContext context) {
+
+    if (!actual.isDefinition()) {
+      return false;
+    }
+    final PyClassLikeType metaClass = actual.getMetaClassType(context, true);
+    return metaClass != null && match(expected, metaClass, context);
+  }
+
   private static boolean typeVarAcceptsBothClassAndInstanceTypes(@NotNull PyGenericType typeVar) {
     return !typeVar.isDefinition() && typeVar.getBound() == null;
   }
@@ -470,7 +480,7 @@ public class PyTypeChecker {
             }
           }
         }
-        if (substitution instanceof PyGenericType && substitution != type) {
+        if (substitution instanceof PyGenericType && !typeVar.equals(substitution)) {
           final PyType recursive = substitute(substitution, substitutions, context);
           if (recursive != null) {
             return recursive;

@@ -5,6 +5,7 @@
   <li><code>optional.map(x -> true).orElse(false)</code> &rarr; <code>optional.isPresent()</code></li>
   <li><code>optional.map(x -> Optional.of(x.trim())).orElseGet(Optional::empty)</code> &rarr; <code>optional.map(String::trim)</code></li>
   <li><code>optional.map(x -> (String)x).orElse(null)</code> &rarr; <code>(String) optional.orElse(null)</code></li>
+  <li><code>Optional.ofNullable(optional.orElse(null))</code> &rarr; <code>optional</code></li>
 </ul>
 <!-- tooltip end -->
 <p><small>New in 2017.2</small></p>

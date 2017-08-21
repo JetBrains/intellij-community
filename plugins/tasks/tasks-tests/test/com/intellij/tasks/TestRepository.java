@@ -1,6 +1,5 @@
 package com.intellij.tasks;
 
-import com.intellij.openapi.util.Condition;
 import com.intellij.tasks.impl.BaseRepository;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +32,7 @@ public class TestRepository extends BaseRepository {
 
   @Nullable
   @Override
-  public Task findTask(@NotNull final String id) throws Exception {
+  public Task findTask(@NotNull final String id) {
     return ContainerUtil.find(myTasks, task -> id.equals(task.getId()));
   }
 

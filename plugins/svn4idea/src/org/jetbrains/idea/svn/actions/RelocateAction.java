@@ -16,6 +16,7 @@
 package org.jetbrains.idea.svn.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.Messages;
@@ -34,6 +35,9 @@ import java.io.File;
 import static com.intellij.util.WaitForProgressToShow.runOrInvokeLaterAboveProgress;
 
 public class RelocateAction extends BasicAction {
+
+  private static final Logger LOG = Logger.getInstance(RelocateAction.class);
+
   @NotNull
   @Override
   protected String getActionName() {
@@ -48,7 +52,11 @@ public class RelocateAction extends BasicAction {
   @Override
   protected void perform(@NotNull SvnVcs vcs, @NotNull VirtualFile file, @NotNull DataContext context) throws VcsException {
     Info info = vcs.getInfo(file);
-    assert info != null;
+    if (info == null) {
+      LOG.info("Could not get info for " + file);
+      return;
+    }
+
     RelocateDialog dlg = new RelocateDialog(vcs.getProject(), info.getURL());
     if (!dlg.showAndGet()) {
       return;

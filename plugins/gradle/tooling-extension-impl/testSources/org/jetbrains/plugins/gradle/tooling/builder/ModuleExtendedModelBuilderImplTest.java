@@ -43,7 +43,7 @@ public class ModuleExtendedModelBuilderImplTest extends AbstractModelBuilderTest
   }
 
   @Test
-  public void testGradleSourcesSetsInterpretation() throws Exception {
+  public void testGradleSourcesSetsInterpretation() {
     final int modulesSize = 9;
 
     DomainObjectSet<? extends IdeaModule> ideaModules = allModels.getIdeaProject().getModules();
@@ -136,7 +136,7 @@ public class ModuleExtendedModelBuilderImplTest extends AbstractModelBuilderTest
   }
 
   @Test
-  public void testJavaExtendedModel() throws Exception {
+  public void testJavaExtendedModel() {
     final Map<String, ModuleExtendedModel> modulesMap = getModulesMap(ModuleExtendedModel.class);
     assertEquals(3, modulesMap.size());
 

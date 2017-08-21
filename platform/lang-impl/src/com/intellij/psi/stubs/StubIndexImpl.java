@@ -365,8 +365,11 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
         FileBasedIndexImpl.enableUpToDateCheckForCurrentThread();
       }
     }
-    catch (StorageException | AssertionError e) {
+    catch (StorageException e) {
       forceRebuild(e);
+    } catch (AssertionError e) {
+      forceRebuild(e);
+      throw e;
     }
     catch (RuntimeException e) {
       final Throwable cause = FileBasedIndexImpl.getCauseToRebuildIndex(e);
@@ -383,7 +386,6 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
 
   @Override
   public void forceRebuild(@NotNull Throwable e) {
-    LOG.info(e);
     FileBasedIndex.getInstance().scheduleRebuild(StubUpdatingIndex.INDEX_ID, e);
   }
 
@@ -409,9 +411,9 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
     final MyIndex<K> index = (MyIndex<K>)getAsyncState().myIndices.get(indexKey); // wait for initialization to finish
     FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, scope.getProject(), scope);
 
-    myAccessValidator.checkAccessingIndexDuringOtherIndexProcessing(indexKey);
+    myAccessValidator.checkAccessingIndexDuringOtherIndexProcessing(StubUpdatingIndex.INDEX_ID);
     try {
-      myAccessValidator.startedProcessingActivityForIndex(indexKey);
+      myAccessValidator.startedProcessingActivityForIndex(StubUpdatingIndex.INDEX_ID);
       return index.processAllKeys(processor, scope, idFilter);
     }
     catch (StorageException e) {
@@ -424,7 +426,7 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
       }
       throw e;
     } finally {
-      myAccessValidator.stoppedProcessingActivityForIndex(indexKey);
+      myAccessValidator.stoppedProcessingActivityForIndex(StubUpdatingIndex.INDEX_ID);
     }
     return true;
   }
@@ -530,9 +532,9 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
     }
   }
 
-  private void dropUnregisteredIndices(AsyncState state) {
+  private boolean dropUnregisteredIndices(AsyncState state) {
     if (ApplicationManager.getApplication().isDisposed()) {
-      return;
+      return false;
     }
 
     final Set<String> indicesToDrop =
@@ -547,7 +549,9 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
       for (String s : indicesToDrop) {
         FileUtil.delete(IndexInfrastructure.getIndexRootDir(StubIndexKey.createIndexKey(s)));
       }
+      return true;
     }
+    return false;
   }
 
   @Override
@@ -649,12 +653,15 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
 
     @Override
     protected AsyncState finish() {
+      boolean someIndicesWereDropped = dropUnregisteredIndices(state);
+      if (someIndicesWereDropped) updated.append(" and some indices were dropped");
+
       if (updated.length() > 0) {
         final Throwable e = new Throwable(updated.toString());
         // avoid direct forceRebuild as it produces dependency cycle (IDEA-105485)
         ApplicationManager.getApplication().invokeLater(() -> forceRebuild(e), ModalityState.NON_MODAL);
       }
-      dropUnregisteredIndices(state);
+      
       myInitialized = true;
       return state;
     }

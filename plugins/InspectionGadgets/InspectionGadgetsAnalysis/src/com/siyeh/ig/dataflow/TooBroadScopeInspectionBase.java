@@ -319,7 +319,7 @@ public class TooBroadScopeInspectionBase extends BaseInspection {
       }
       if (insertionPoint != null && FileTypeUtils.isInServerPageFile(insertionPoint)) {
         PsiElement elementBefore = insertionPoint.getPrevSibling();
-        elementBefore = PsiTreeUtil.skipSiblingsBackward(elementBefore, PsiWhiteSpace.class);
+        elementBefore = PsiTreeUtil.skipWhitespacesBackward(elementBefore);
         if (elementBefore instanceof PsiDeclarationStatement) {
           final PsiElement variableParent = variable.getParent();
           if (elementBefore.equals(variableParent)) {

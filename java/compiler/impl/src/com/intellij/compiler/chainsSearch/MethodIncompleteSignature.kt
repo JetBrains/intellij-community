@@ -32,17 +32,17 @@ class MethodIncompleteSignature(val ref: LightRef.JavaLightMethodRef,
     val CONSTRUCTOR_METHOD_NAME = "<init>"
   }
 
-  val name: String by lazy {
+  val name: String by lazy(LazyThreadSafetyMode.NONE) {
     refService.getName(ref.name)
   }
 
   val ownerRef = ref.owner
 
-  val owner: String by lazy {
+  val owner: String by lazy(LazyThreadSafetyMode.NONE) {
     refService.getName(ref.owner.name)
   }
 
-  val rawReturnType: String by lazy {
+  val rawReturnType: String by lazy(LazyThreadSafetyMode.NONE) {
     refService.getName(signatureData.rawReturnType)
   }
 

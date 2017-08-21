@@ -50,6 +50,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.rt.execution.junit.RepeatCount;
 import com.intellij.ui.*;
+import com.intellij.ui.components.ExpandableTextField;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.UIUtil;
@@ -218,17 +219,9 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
 
     final JPanel panel = myPattern.getComponent();
     panel.setLayout(new BorderLayout());
-    myPatternTextField = new TextFieldWithBrowseButton();
+    myPatternTextField = new TextFieldWithBrowseButton(new ExpandableTextField());
     myPatternTextField.setButtonIcon(IconUtil.getAddIcon());
     panel.add(myPatternTextField, BorderLayout.CENTER);
-    final FixedSizeButton editBtn = new FixedSizeButton();
-    editBtn.setIcon(AllIcons.Actions.ShowViewer);
-    editBtn.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        Messages.showTextAreaDialog(myPatternTextField.getTextField(), "Configure suite tests", "EditParametersPopupWindow");
-      }
-    });
-    panel.add(editBtn, BorderLayout.EAST);
     myTestLocations[JUnitConfigurationModel.PATTERN] = myPattern;
 
     final FileChooserDescriptor dirFileChooser = FileChooserDescriptorFactory.createSingleFolderDescriptor();

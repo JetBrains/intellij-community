@@ -37,7 +37,6 @@ public class SliceForwardHandler extends SliceHandler {
   public SliceAnalysisParams askForParams(PsiElement element, boolean dataFlowToThis, SliceManager.StoredSettingsBean storedSettingsBean, String dialogTitle) {
     AnalysisScope analysisScope = new AnalysisScope(element.getContainingFile());
     Module module = ModuleUtilCore.findModuleForPsiElement(element);
-    String name = module == null ? null : module.getName();
 
     Project myProject = element.getProject();
     final SliceForwardForm form = new SliceForwardForm();
@@ -46,7 +45,7 @@ public class SliceForwardHandler extends SliceHandler {
     AnalysisUIOptions analysisUIOptions = new AnalysisUIOptions();
     analysisUIOptions.save(storedSettingsBean.analysisUIOptions);
 
-    BaseAnalysisActionDialog dialog = new BaseAnalysisActionDialog(dialogTitle, "Analyze scope", myProject, analysisScope, name, true,
+    BaseAnalysisActionDialog dialog = new BaseAnalysisActionDialog(dialogTitle, "Analyze scope", myProject, analysisScope, module, true,
                                                                    analysisUIOptions,
                                                                    element) {
       @Override

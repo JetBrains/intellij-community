@@ -53,7 +53,7 @@ public class SchemeImporterEP <S extends Scheme> extends AbstractExtensionPointB
   }
 
   /**
-   * Finds extensions supporting the given <code>schemeClass</code>
+   * Finds extensions supporting the given {@code schemeClass}
    * @param schemeClass The class of the scheme to search extensions for.
    * @return A collection of importers capable of importing schemes of the given class. An empty collection is returned if there are
    *         no matching importers.

@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.ui.tree.actions
 
+import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.settings.NodeRendererSettings
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
@@ -36,6 +37,11 @@ class ForceOnDemandRenderersAction : ToggleAction(), DumbAware {
   override fun setSelected(e: AnActionEvent, state: Boolean) {
     RENDERERS_ONDEMAND_FORCED.set(getSessionData(e), state)
     NodeRendererSettings.getInstance().fireRenderersChanged()
+  }
+
+  override fun update(e: AnActionEvent) {
+    super.update(e)
+    e.presentation.isEnabledAndVisible = DebuggerUtilsEx.isInJavaSession(e)
   }
 
   companion object {

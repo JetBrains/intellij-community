@@ -15,6 +15,7 @@
  */
 package com.intellij.vcs.log.history;
 
+import com.google.common.util.concurrent.SettableFuture;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
@@ -30,7 +31,9 @@ import com.intellij.openapi.vcs.vfs.VcsVirtualFolder;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.PairFunction;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.VcsLogFilterUi;
@@ -38,14 +41,19 @@ import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.index.IndexDataGetter;
 import com.intellij.vcs.log.impl.CommonUiProperties;
+import com.intellij.vcs.log.impl.VcsLogContentUtil;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
+import com.intellij.vcs.log.impl.VcsProjectLog;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
+import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.highlighters.CurrentBranchHighlighter;
 import com.intellij.vcs.log.ui.highlighters.MyCommitsHighlighter;
 import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory;
+import com.intellij.vcs.log.ui.table.GraphTableModel;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.visible.VisiblePackRefresher;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -143,6 +151,21 @@ public class FileHistoryUi extends AbstractVcsLogUi {
     return null;// file was deleted
   }
 
+  @Nullable
+  public FilePath getPreviousPath(@NotNull VcsFullCommitDetails details) {
+    if (myPath.isDirectory()) return myPath;
+
+    List<Change> changes = collectRelevantChanges(details);
+    for (Change change : changes) {
+      ContentRevision revision = change.getBeforeRevision();
+      if (revision != null) {
+        return revision.getFile();
+      }
+    }
+
+    return null;// file was created
+  }
+
   @NotNull
   public List<Change> collectRelevantChanges(@NotNull VcsFullCommitDetails details) {
     Set<FilePath> fileNames = getFileNames(details);
@@ -188,6 +211,37 @@ public class FileHistoryUi extends AbstractVcsLogUi {
     }
 
     return CommittedChangesTreeBrowser.zipChanges(changes);
+  }
+
+  @Override
+  protected <T> void handleCommitNotFound(@NotNull T commitId, @NotNull PairFunction<GraphTableModel, T, Integer> rowGetter) {
+    String mainText = "Commit " + commitId.toString() + " does not exist in history for " + myPath.getName();
+    if (getFilters().getBranchFilter() != null) {
+      showWarningWithLink(mainText + " in current branch.", "Show all branches and search again.", () -> {
+        myUiProperties.set(FileHistoryUiProperties.SHOW_ALL_BRANCHES, true);
+        invokeOnChange(() -> jumpTo(commitId, rowGetter, SettableFuture.create()));
+      });
+    }
+    else {
+      VcsLogUiImpl mainLogUi = VcsProjectLog.getInstance(myProject).getMainLogUi();
+      if (mainLogUi != null) {
+        showWarningWithLink(mainText + ".", "Search in Log.", () -> {
+          if (VcsLogContentUtil.selectLogUi(myProject, mainLogUi)) {
+            if (commitId instanceof Hash) {
+              mainLogUi.jumpToCommit((Hash)commitId,
+                                     notNull(VcsUtil.getVcsRootFor(myProject, myPath)),
+                                     SettableFuture.create());
+            }
+            else if (commitId instanceof String) {
+              mainLogUi.jumpToCommitByPartOfHash((String)commitId, SettableFuture.create());
+            }
+          }
+        });
+      }
+      else {
+        super.handleCommitNotFound(commitId, rowGetter);
+      }
+    }
   }
 
   @NotNull

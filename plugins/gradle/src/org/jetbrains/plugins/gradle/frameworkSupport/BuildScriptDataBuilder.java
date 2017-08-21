@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import java.util.Set;
 public class BuildScriptDataBuilder {
   @NotNull private final VirtualFile myBuildScriptFile;
   private final Set<String> plugins = ContainerUtil.newTreeSet();
+  private final Set<String> pluginsInGroup = ContainerUtil.newTreeSet();
   private final Set<String> repositories = ContainerUtil.newTreeSet();
   private final Set<String> dependencies = ContainerUtil.newTreeSet();
   private final Set<String> properties = ContainerUtil.newTreeSet();
@@ -48,11 +49,20 @@ public class BuildScriptDataBuilder {
     return myBuildScriptFile;
   }
 
-  public String build() {
+  public String buildConfigurationPart() {
     List<String> lines = ContainerUtil.newArrayList();
+    addBuildscriptLines(lines, BuildScriptDataBuilder::padding);
+    if (!pluginsInGroup.isEmpty()) {
+      lines.add("plugins {");
+      lines.addAll(ContainerUtil.map(pluginsInGroup, BuildScriptDataBuilder::padding));
+      lines.add("}");
+      lines.add("");
+    }
+    return StringUtil.join(lines, "\n");
+  }
 
-    final Function<String, String> padding = s -> StringUtil.isNotEmpty(s) ? "    " + s : "";
-    addBuildscriptLines(lines, padding);
+  public String buildMainPart() {
+    List<String> lines = ContainerUtil.newArrayList();
     if (!plugins.isEmpty()) {
       lines.addAll(plugins);
       lines.add("");
@@ -63,13 +73,13 @@ public class BuildScriptDataBuilder {
     }
     if (!repositories.isEmpty()) {
       lines.add("repositories {");
-      lines.addAll(ContainerUtil.map(repositories, padding));
+      lines.addAll(ContainerUtil.map(repositories, BuildScriptDataBuilder::padding));
       lines.add("}");
       lines.add("");
     }
     if (!dependencies.isEmpty()) {
       lines.add("dependencies {");
-      lines.addAll(ContainerUtil.map(dependencies, padding));
+      lines.addAll(ContainerUtil.map(dependencies, BuildScriptDataBuilder::padding));
       lines.add("}");
       lines.add("");
     }
@@ -118,6 +128,11 @@ public class BuildScriptDataBuilder {
     return this;
   }
 
+  public BuildScriptDataBuilder addPluginDefinitionInPluginsGroup(@NotNull String definition) {
+    pluginsInGroup.add(definition.trim());
+    return this;
+  }
+
   public BuildScriptDataBuilder addPluginDefinition(@NotNull String definition) {
     plugins.add(definition.trim());
     return this;
@@ -142,4 +157,6 @@ public class BuildScriptDataBuilder {
     other.add(definition.trim());
     return this;
   }
+
+  private static String padding(String s) {return StringUtil.isNotEmpty(s) ? "    " + s : "";}
 }

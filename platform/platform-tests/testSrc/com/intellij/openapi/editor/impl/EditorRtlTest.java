@@ -469,7 +469,7 @@ public class EditorRtlTest extends AbstractRtlTest {
     checkResult("R<selection>R</selection>");
   }
 
-  public void testUsingLexerForBidiLayout() throws Exception {
+  public void testUsingLexerForBidiLayout() {
     prepare("class Foo {\n  int<caret> R = 1;\n}", TestFileType.JAVA);
     right();
     right();
@@ -477,7 +477,7 @@ public class EditorRtlTest extends AbstractRtlTest {
     checkResult("class Foo {\n  int R<caret> = 1;\n}");
   }
   
-  public void testJavadocTokensAreMergedForBidiLayoutPurposes() throws Exception {
+  public void testJavadocTokensAreMergedForBidiLayoutPurposes() {
     prepare("<caret>/**R R*/ class Foo {}", TestFileType.JAVA);
     for (int i = 0; i < 4; i++) {
       right();
@@ -486,7 +486,7 @@ public class EditorRtlTest extends AbstractRtlTest {
     checkResult("/**R R<caret>*/ class Foo {}");
   }
   
-  public void testXmlTextIsLaidOutCorrectly() throws Exception {
+  public void testXmlTextIsLaidOutCorrectly() {
     prepare("<caret><L>R R</L>", TestFileType.XML);
     for (int i = 0; i < 4; i++) {
       right();
@@ -558,21 +558,21 @@ public class EditorRtlTest extends AbstractRtlTest {
     checkResult("R\tRR<caret>");
   }
   
-  public void testEscapedBackslashInStringLiteral() throws Exception {
+  public void testEscapedBackslashInStringLiteral() {
     prepare("class C {\n  String s = \"R\\<caret>\\R\";\n}", TestFileType.JAVA);
     right();
     right();
     checkResult("class C {\n  String s = \"<caret>R\\\\R\";\n}");
   }
 
-  public void testRtlLayoutPersistsAfterEditing() throws Exception {
+  public void testRtlLayoutPersistsAfterEditing() {
     prepare("<caret>\nRR", TestFileType.TEXT);
     delete();
     checkResult("<caret>RR");
     assertTrue(myEditor.getCaretModel().getPrimaryCaret().isAtBidiRunBoundary());
   }
 
-  public void testTokenOrderIsAlwaysLtr() throws Exception {
+  public void testTokenOrderIsAlwaysLtr() {
     BidiTextDirection savedValue = EditorSettingsExternalizable.getInstance().getBidiTextDirection();
     try {
       EditorSettingsExternalizable.getInstance().setBidiTextDirection(BidiTextDirection.RTL);
@@ -585,9 +585,13 @@ public class EditorRtlTest extends AbstractRtlTest {
     }
   }
 
-  public void testLineCommentLayout() throws Exception {
+  public void testLineCommentLayout() {
     prepare("<caret>// R", TestFileType.JAVA);
     right();
     checkResult("/<caret>/ R");
+  }
+
+  public void testIndentIsTreatedSeparately() {
+    checkBidiRunBoundaries(" |R", "txt");
   }
 }

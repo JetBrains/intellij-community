@@ -57,7 +57,7 @@ public final class HSpacer extends DesignSpacer{
   }
 
   /**
-   * Paints small spacer's haldle. <code>(x,y)</code> is a top
+   * Paints small spacer's haldle. {@code (x,y)} is a top
    * left point of a handle.
    */
   private static void drawHandle(final Graphics g,final int x,int y){

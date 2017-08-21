@@ -70,9 +70,12 @@ public abstract class StubTreeLoader {
 
   @NotNull
   public RuntimeException stubTreeAndIndexDoNotMatch(@NotNull String _message, @NotNull ObjectStubTree stubTree, @NotNull PsiFileWithStubSupport psiFile) {
+    StubTextInconsistencyException.checkStubTextConsistency(psiFile);
+    
     VirtualFile file = psiFile.getViewProvider().getVirtualFile();
     StubTree stubTreeFromIndex = (StubTree)readFromVFile(psiFile.getProject(), file);
-    Document document = FileDocumentManager.getInstance().getDocument(file);
+    boolean compiled = psiFile instanceof PsiCompiledElement;
+    Document document = compiled ? null : FileDocumentManager.getInstance().getDocument(file);
     IndexingStampInfo indexingStampInfo = getIndexingStampInfo(file);
     boolean upToDate = indexingStampInfo != null && indexingStampInfo.isUpToDate(document, file, psiFile);
 
@@ -86,7 +89,7 @@ public abstract class StubTreeLoader {
     msg += ", file.lang=" + psiFile.getLanguage();
     msg += ", modStamp=" + psiFile.getModificationStamp();
 
-    if (!(psiFile instanceof PsiCompiledElement)) {
+    if (!compiled) {
       String text = psiFile.getText();
       PsiFile fromText = PsiFileFactory.getInstance(psiFile.getProject()).createFileFromText(psiFile.getName(), psiFile.getFileType(), text);
       if (fromText.getLanguage().equals(psiFile.getLanguage())) {

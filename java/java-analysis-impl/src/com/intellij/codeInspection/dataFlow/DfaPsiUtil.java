@@ -70,6 +70,19 @@ public class DfaPsiUtil {
 
   @NotNull
   public static Nullness getElementNullability(@Nullable PsiType resultType, @Nullable PsiModifierListOwner owner) {
+    return getElementNullability(resultType, owner, false);
+  }
+
+  @NotNull
+  public static Nullness getElementNullabilityIgnoringParameterInference(@Nullable PsiType resultType,
+                                                                         @Nullable PsiModifierListOwner owner) {
+    return getElementNullability(resultType, owner, true);
+  }
+
+  @NotNull
+  private static Nullness getElementNullability(@Nullable PsiType resultType,
+                                        @Nullable PsiModifierListOwner owner,
+                                        boolean ignoreParameterNullabilityInference) {
     if (owner == null) return getTypeNullability(resultType);
 
     if (resultType instanceof PsiPrimitiveType) {
@@ -86,7 +99,7 @@ public class DfaPsiUtil {
     if (NullableNotNullManager.isNullable(owner)) {
       return Nullness.NULLABLE;
     }
-    if (isNotNullLocally(owner)) {
+    if (isNotNullLocally(owner, ignoreParameterNullabilityInference)) {
       return Nullness.NOT_NULL;
     }
 
@@ -117,8 +130,8 @@ public class DfaPsiUtil {
 
   @NotNull
   public static Nullness getTypeNullability(@Nullable PsiType type) {
-    if (type == null) return Nullness.UNKNOWN;
-    
+    if (type == null || type instanceof PsiPrimitiveType) return Nullness.UNKNOWN;
+
     Ref<Nullness> result = Ref.create(Nullness.UNKNOWN);
     InheritanceUtil.processSuperTypes(type, true, eachType -> {
       result.set(getTypeOwnNullability(result, eachType));
@@ -206,10 +219,13 @@ public class DfaPsiUtil {
     return Nullness.UNKNOWN;
   }
 
-  private static boolean isNotNullLocally(@NotNull PsiModifierListOwner owner) {
+  private static boolean isNotNullLocally(@NotNull PsiModifierListOwner owner, boolean ignoreParameterNullabilityInference) {
     NullableNotNullManager nnnm = NullableNotNullManager.getInstance(owner.getProject());
     PsiAnnotation notNullAnno = nnnm.getNotNullAnnotation(owner, true);
-    if (notNullAnno == null) return false;
+    if (notNullAnno == null ||
+        ignoreParameterNullabilityInference && owner instanceof PsiParameter && AnnotationUtil.isInferredAnnotation(notNullAnno)) {
+      return false;
+    }
 
     if (!(owner instanceof PsiParameter)) return true; // notnull on a super method requires all inheritors to return notnull as well
 

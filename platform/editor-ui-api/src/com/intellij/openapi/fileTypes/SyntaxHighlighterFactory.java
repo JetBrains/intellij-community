@@ -63,7 +63,7 @@ public abstract class SyntaxHighlighterFactory {
    *
    * @param project     might be necessary to gather various project settings from.
    * @param virtualFile might be necessary to collect file specific settings
-   * @return <code>SyntaxHighlighter</code> interface implementation for this particular language.
+   * @return {@code SyntaxHighlighter} interface implementation for this particular language.
    */
   @NotNull
   public abstract SyntaxHighlighter getSyntaxHighlighter(@Nullable Project project, @Nullable VirtualFile virtualFile);

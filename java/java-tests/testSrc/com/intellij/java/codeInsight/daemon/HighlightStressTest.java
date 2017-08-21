@@ -95,7 +95,7 @@ public class HighlightStressTest extends LightDaemonAnalyzerTestCase {
                                              "new java . util . HashMap ( 1 ) ; l77 . toString ( ) ; \n"
   + " } } ";
 
-  public void testAllTheseConcurrentThreadsDoNotCrashAnything() throws Exception {
+  public void testAllTheseConcurrentThreadsDoNotCrashAnything() {
     long time = System.currentTimeMillis();
     for (int i = 0; i < 20/*00000*/; i++) {
       //System.out.println("i = " + i);
@@ -110,7 +110,7 @@ public class HighlightStressTest extends LightDaemonAnalyzerTestCase {
     LOG.debug(System.currentTimeMillis() - time+"ms");
   }
 
-  public void _testHugeFile() throws Exception {
+  public void _testHugeFile() {
     @NonNls String filePath =  "/psi/resolve/Thinlet.java";
     configureByFile(filePath);
     doHighlighting();
@@ -141,7 +141,7 @@ public class HighlightStressTest extends LightDaemonAnalyzerTestCase {
     //System.out.println("Lengths: "+JobLauncher.lengths);
   }
 
-  public void testRandomEditingPerformance() throws Exception {
+  public void testRandomEditingPerformance() {
     configureFromFileText("Stress.java", text);
     List<HighlightInfo> oldWarnings = new ArrayList<>(doHighlighting());
     Comparator<HighlightInfo> infoComparator = (o1, o2) -> {
@@ -214,7 +214,7 @@ public class HighlightStressTest extends LightDaemonAnalyzerTestCase {
     return info.getText() + info.getDescription();
   }
 
-  public void testRandomEditingForUnused() throws Exception {
+  public void testRandomEditingForUnused() {
     configureFromFileText("Stress.java", "class X {<caret>}");
 
     PsiShortNamesCache cache = PsiShortNamesCache.getInstance(getProject());

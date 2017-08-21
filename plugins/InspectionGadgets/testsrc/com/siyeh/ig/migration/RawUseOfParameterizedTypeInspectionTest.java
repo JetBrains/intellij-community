@@ -4,7 +4,7 @@ import com.siyeh.ig.IGInspectionTestCase;
 
 public class RawUseOfParameterizedTypeInspectionTest extends IGInspectionTestCase {
 
-  public void test() throws Exception {
+  public void test() {
     final RawUseOfParameterizedTypeInspection tool = new RawUseOfParameterizedTypeInspection();
     tool.ignoreObjectConstruction = false;
     tool.ignoreUncompilable = true;

@@ -468,14 +468,14 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
     public GutterDraggableObject getDraggableObject() {
       return new GutterDraggableObject() {
         @Override
-        public boolean copy(int line, VirtualFile file) {
+        public boolean copy(int line, VirtualFile file, int actionId) {
           myBookmark.myTarget = new OpenFileDescriptor(myBookmark.myProject, file, line, -1, true);
           myBookmark.updateHighlighter();
           return true;
         }
 
         @Override
-        public Cursor getCursor(int line) {
+        public Cursor getCursor(int line, int actionId) {
           return DragSource.DefaultMoveDrop;
         }
       };

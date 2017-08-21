@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInspection.ui;
 
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.util.ui.JBUI;
@@ -40,7 +39,7 @@ public class InspectionViewNavigationPanel extends JPanel implements InspectionT
     myNode = node;
     myTree = tree;
     setLayout(new BorderLayout());
-    setBorder(IdeBorderFactory.createEmptyBorder(18, 12, 0, 0));
+    setBorder(JBUI.Borders.empty(18, 12, 0, 0));
     final String titleLabelText = getTitleText(true);
     add(new JBLabel(titleLabelText), BorderLayout.NORTH);
     myLinks = new JPanel();
@@ -78,7 +77,7 @@ public class InspectionViewNavigationPanel extends JPanel implements InspectionT
             TreeUtil.selectInTree((DefaultMutableTreeNode)child, true, myTree);
           }
         };
-        link.setBorder(IdeBorderFactory.createEmptyBorder(1, 17, 3, 1));
+        link.setBorder(JBUI.Borders.empty(1, 17, 3, 1));
         myLinks.add(link);
       }
       myShownChildrenCount = currentChildrenCount;

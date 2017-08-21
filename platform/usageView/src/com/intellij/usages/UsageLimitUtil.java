@@ -15,7 +15,6 @@
  */
 package com.intellij.usages;
 
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
@@ -26,16 +25,6 @@ import org.jetbrains.annotations.NotNull;
 
 public class UsageLimitUtil {
   public static final int USAGES_LIMIT = 1000;
-
-  public static void showAndCancelIfAborted(@NotNull Project project,
-                                            @NotNull String message,
-                                            @NotNull UsageViewPresentation usageViewPresentation) {
-    Result retCode = showTooManyUsagesWarning(project, message, usageViewPresentation);
-
-    if (retCode != Result.CONTINUE) {
-      throw new ProcessCanceledException();
-    }
-  }
 
   public enum Result {
     CONTINUE, ABORT

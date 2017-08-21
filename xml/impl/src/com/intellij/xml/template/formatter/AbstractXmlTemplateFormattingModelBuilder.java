@@ -200,7 +200,7 @@ public abstract class AbstractXmlTemplateFormattingModelBuilder extends SimpleTe
 
   /**
    * Creates an xml block. Override this method to create your own xml block if you want
-   * to control spacing etc. By default the method returns <code>TemplateXmlTagBlock</code> instance.
+   * to control spacing etc. By default the method returns {@code TemplateXmlTagBlock} instance.
    */
   protected XmlTagBlock createXmlTagBlock(ASTNode node,
                                           @Nullable Wrap wrap,
@@ -221,12 +221,12 @@ public abstract class AbstractXmlTemplateFormattingModelBuilder extends SimpleTe
 
   /**
    * Creates a synthetic block containing given sub-blocks. Override this method to create your own synthetic block if you want
-   * to control spacing etc. between child blocks. By default the method returns <code>TemplateSyntheticBlock</code> instance.
+   * to control spacing etc. between child blocks. By default the method returns {@code TemplateSyntheticBlock} instance.
    *
    * @param subBlocks   The sub-blocks which will be contained in the synthetic block.
    * @param parent      Synthetic block's parent.
    * @param indent      The sub-block default indent. Block merge algorithm may overwrite it if synthetic block is
-   *                    implementing <code>IndentInheritingBlock</code> interface.
+   *                    implementing {@code IndentInheritingBlock} interface.
    * @param policy      Xml formatting policy.
    * @param childIndent The indent to be used with child blocks.
    * @return A newly created template synthetic block.

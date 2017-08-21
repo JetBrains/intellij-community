@@ -169,5 +169,17 @@ class ReferenceIndexTest : ReferenceIndexTestBase() {
   fun testSignatureDataIndex() {
     assertIndexOnRebuild("Foo.java")
   }
+
+  fun testClassWithModifiers() {
+    assertIndexOnRebuild("Foo.java")
+  }
+
+  fun testParameterlessExplicitConstructor() {
+    assertIndexOnRebuild("Foo.java")
+  }
+
+  fun testDefaultConstructorUsage() {
+    assertIndexOnRebuild("Foo.java")
+  }
 }
 

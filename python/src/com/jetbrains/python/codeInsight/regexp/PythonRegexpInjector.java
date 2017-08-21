@@ -30,6 +30,7 @@ import com.jetbrains.python.codeInsight.PyInjectionUtil;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -89,7 +90,8 @@ public class PythonRegexpInjector implements MultiHostInjector {
 
     if (callee instanceof PyReferenceExpression && canBeRegexpCall(callee)) {
       final PyReferenceExpression referenceExpression = (PyReferenceExpression)callee;
-      return referenceExpression.getReference(PyResolveContext.noImplicits()).resolve();
+      final TypeEvalContext context = TypeEvalContext.codeAnalysis(call.getProject(), call.getContainingFile());
+      return referenceExpression.getReference(PyResolveContext.noImplicits().withTypeEvalContext(context)).resolve();
     }
 
     return null;

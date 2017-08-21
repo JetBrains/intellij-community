@@ -118,11 +118,7 @@ public final class HgErrorUtil {
     };
   }
 
-  public static boolean isUnknownEncodingError(@Nullable HgCommandResult result) {
-    if (result == null) {
-      return false;
-    }
-    List<String> errorLines = result.getErrorLines();
+  public static boolean isUnknownEncodingError(@NotNull List<String> errorLines) {
     if (errorLines.isEmpty()) {
       return false;
     }

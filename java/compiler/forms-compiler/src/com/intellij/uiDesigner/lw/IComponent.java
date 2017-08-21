@@ -27,7 +27,7 @@ public interface IComponent {
   void putClientProperty(Object key, Object value);
 
   /**
-   * @return name of the field (in bound class). Returns <code>null</code>
+   * @return name of the field (in bound class). Returns {@code null}
    * if the component is not bound to any field.
    */
   String getBinding();

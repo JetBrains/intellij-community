@@ -240,7 +240,7 @@ public class MavenTypingTest extends MavenDomTestCase {
     assertTypeResultInRegularFile(myProjectPom, c, createPomXml(xml));
   }
 
-  private void assertTypeResultInRegularFile(VirtualFile f, char c, String expected) throws IOException {
+  private void assertTypeResultInRegularFile(VirtualFile f, char c, String expected) {
     type(f, c);
     myFixture.checkResult(expected);
   }

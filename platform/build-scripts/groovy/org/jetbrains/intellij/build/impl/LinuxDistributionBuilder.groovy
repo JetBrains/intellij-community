@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.JvmArchitecture
@@ -65,15 +66,18 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
 
   @Override
   void buildArtifacts(String osSpecificDistPath) {
-    if (customizer.buildTarGzWithoutBundledJre) {
-      buildTarGz(null, osSpecificDistPath)
-    }
-    def jreDirectoryPath = buildContext.bundledJreManager.extractLinuxJre()
-    if (jreDirectoryPath != null) {
-      buildTarGz(jreDirectoryPath, osSpecificDistPath)
-    }
-    else {
-      buildContext.messages.info("Skipping building Linux distribution with bundled JRE because JRE archive is missing")
+    buildContext.executeStep("Build Linux .tar.gz", BuildOptions.LINUX_ARTIFACTS_STEP) {
+      if (customizer.buildTarGzWithoutBundledJre) {
+        buildTarGz(null, osSpecificDistPath)
+      }
+      def jreDirectoryPath = buildContext.bundledJreManager.extractLinuxJre()
+      if (jreDirectoryPath != null) {
+        buildTarGz(jreDirectoryPath, osSpecificDistPath)
+        buildSnapPackage(jreDirectoryPath, osSpecificDistPath)
+      }
+      else {
+        buildContext.messages.info("Skipping building Linux distribution with bundled JRE because JRE archive is missing")
+      }
     }
   }
 
@@ -89,7 +93,7 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
     }
 
     buildContext.ant.copy(todir: "${unixDistPath}/bin") {
-      fileset(dir: "$buildContext.paths.communityHome/bin/scripts/unix")
+      fileset(dir: "$buildContext.paths.communityHome/platform/build-scripts/resources/linux/scripts")
 
       filterset(begintoken: "@@", endtoken: "@@") {
         filter(token: "product_full", value: fullName)
@@ -103,10 +107,8 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
       }
     }
 
-    if (name != "idea.sh") {
-      //todo[nik] rename idea.sh in sources to something more generic
-      buildContext.ant.move(file: "${unixDistPath}/bin/idea.sh", tofile: "${unixDistPath}/bin/$name")
-    }
+    buildContext.ant.move(file: "${unixDistPath}/bin/executable-template.sh", tofile: "${unixDistPath}/bin/$name")
+
     String inspectScript = buildContext.productProperties.inspectCommandName
     if (inspectScript != "inspect") {
       String targetPath = "${unixDistPath}/bin/${inspectScript}.sh"
@@ -129,7 +131,7 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
 
   private void generateReadme(String unixDistPath) {
     String fullName = buildContext.applicationInfo.productName
-    BuildUtils.copyAndPatchFile("$buildContext.paths.communityHome/build/Install-Linux-tar.txt", "$unixDistPath/Install-Linux-tar.txt",
+    BuildUtils.copyAndPatchFile("$buildContext.paths.communityHome/platform/build-scripts/resources/linux/Install-Linux-tar.txt", "$unixDistPath/Install-Linux-tar.txt",
                      ["product_full"   : fullName,
                       "product"        : buildContext.productProperties.baseFileName,
                       "system_selector": buildContext.systemSelector], "@@")
@@ -181,5 +183,95 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
       buildContext.ant.delete(file: tarPath)
       buildContext.notifyArtifactBuilt(gzPath)
     }
+  }
+
+  private void buildSnapPackage(String jreDirectoryPath, String unixDistPath) {
+    if (!buildContext.options.buildUnixSnaps || customizer.snapName == null) return
+
+    if (StringUtil.isEmpty(customizer.iconPngPath)) buildContext.messages.error("'iconPngPath' not set")
+    if (StringUtil.isEmpty(customizer.snapDescription)) buildContext.messages.error("'snapDescription' not set")
+
+    String snapDir = "${buildContext.paths.buildOutputRoot}/dist.snap"
+
+    buildContext.messages.block("Build Linux .snap package") {
+      buildContext.messages.progress("Preparing files")
+
+      def desktopTemplate = "${buildContext.paths.communityHome}/platform/platform-resources/src/entry.desktop"
+      def productName = buildContext.applicationInfo.productNameWithEdition
+      buildContext.ant.copy(file: desktopTemplate, tofile: "${snapDir}/snap/gui/${customizer.snapName}.desktop") {
+        filterset(begintoken: '$', endtoken: '$') {
+          filter(token: "NAME", value: productName)
+          filter(token: "ICON", value: "/bin/${buildContext.productProperties.baseFileName}.png")
+          filter(token: "SCRIPT", value: "/bin/${buildContext.productProperties.baseFileName}.sh")
+          filter(token: "WM_CLASS", value: getFrameClass())
+        }
+      }
+
+      buildContext.ant.copy(file: customizer.iconPngPath, tofile: "${snapDir}/${customizer.snapName}.png")
+
+      def snapcraftTemplate = "${buildContext.paths.communityHome}/platform/build-scripts/resources/linux/snap/snapcraft-template.yaml"
+      def version = "${buildContext.applicationInfo.majorVersion}.${buildContext.applicationInfo.minorVersion}"
+      buildContext.ant.copy(file: snapcraftTemplate, tofile: "${snapDir}/snapcraft.yaml") {
+        filterset(begintoken: '$', endtoken: '$') {
+          filter(token: "NAME", value: customizer.snapName)
+          filter(token: "VERSION", value: version)
+          filter(token: "SUMMARY", value: productName)
+          filter(token: "DESCRIPTION", value: customizer.snapDescription)
+          filter(token: "SCRIPT", value: "bin/${buildContext.productProperties.baseFileName}.sh")
+        }
+      }
+
+      buildContext.ant.concat(destfile: "${unixDistPath}/bin/idea.properties", append: true) {
+        filelist(dir: "${buildContext.paths.communityHome}/platform/build-scripts/resources/linux/snap", files: "idea-snap.properties")
+      }
+
+      buildContext.ant.delete(quiet: true) {
+        fileset(dir: "${unixDistPath}/bin") {
+          include(name: "fsnotifier")
+          include(name: "fsnotifier-arm")
+          include(name: "libyjpagent-linux.so")
+        }
+      }
+
+      buildContext.ant.chmod(perm: "755") {
+        fileset(dir: unixDistPath) {
+          include(name: "bin/*.sh")
+          include(name: "bin/*.py")
+          include(name: "bin/fsnotifier*")
+          customizer.extraExecutables.each { include(name: it) }
+        }
+        fileset(dir: jreDirectoryPath) {
+          include(name: "jre64/bin/*")
+        }
+      }
+
+      buildContext.messages.progress("Building package")
+
+      buildContext.ant.exec(executable: "docker", dir: snapDir, failonerror: true) {
+        arg(value: "run")
+        arg(value: "--volume=${snapDir}:/build")
+        arg(value: "--volume=${buildContext.paths.distAll}:/build/dist.all:ro")
+        arg(value: "--volume=${unixDistPath}:/build/dist.unix:ro")
+        arg(value: "--volume=${jreDirectoryPath}:/build/jre:ro")
+        arg(value: "--workdir=/build")
+        arg(value: "--env=SNAPCRAFT_SETUP_CORE=1")
+        arg(value: "snapcore/snapcraft")
+        arg(value: "snapcraft")
+      }
+
+      def snapArtifact = "${customizer.snapName}_${version}_amd64.snap"
+      buildContext.ant.move(file: "${snapDir}/${snapArtifact}", todir: buildContext.paths.artifacts)
+      buildContext.notifyArtifactBuilt("${buildContext.paths.artifacts}/" + snapArtifact)
+    }
+  }
+
+  // keep in sync with AppUIUtil#getFrameClass
+  private String getFrameClass() {
+    String name = buildContext.applicationInfo.productNameWithEdition
+      .toLowerCase(Locale.US)
+      .replace(' ', '-')
+      .replace("intellij-idea", "idea").replace("android-studio", "studio")
+      .replace("-community-edition", "-ce").replace("-ultimate-edition", "").replace("-professional-edition", "")
+    "jetbrains-" + name
   }
 }

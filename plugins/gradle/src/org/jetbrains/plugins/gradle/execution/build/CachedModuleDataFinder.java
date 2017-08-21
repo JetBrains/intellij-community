@@ -37,31 +37,44 @@ import java.util.Map;
  * @since 5/14/2016
  */
 public class CachedModuleDataFinder {
-  private Map<String, DataNode<ModuleData>> cache = ContainerUtil.newHashMap();
+  private Map<String, DataNode<? extends ModuleData>> cache = ContainerUtil.newHashMap();
 
   @Nullable
-  public DataNode<ModuleData> findModuleData(final DataNode parentNode, final String projectPath) {
-    DataNode<ModuleData> node = cache.get(projectPath);
-    if (node != null) return node;
+  public DataNode<? extends ModuleData> findModuleData(final DataNode<ProjectData> projectNode, final String projectPath) {
+    DataNode<? extends ModuleData> cachedNode = cache.get(projectPath);
+    if (cachedNode != null) return cachedNode;
 
-    //noinspection unchecked
-    return (DataNode<ModuleData>)ExternalSystemApiUtil.findFirstRecursively(parentNode, node1 -> {
-      if ((ProjectKeys.MODULE.equals(node1.getKey()) ||
-           GradleSourceSetData.KEY.equals(node1.getKey())) && node1.getData() instanceof ModuleData) {
-        String externalProjectPath = ((ModuleData)node1.getData()).getLinkedExternalProjectPath();
-        //noinspection unchecked
-        DataNode<ModuleData> myNode = (DataNode<ModuleData>)node1;
-        cache.put(externalProjectPath, myNode);
-
-        return StringUtil.equals(projectPath, ((ModuleData)node1.getData()).getLinkedExternalProjectPath());
-      }
-
-      return false;
+    return ExternalSystemApiUtil.find(projectNode, ProjectKeys.MODULE, node -> {
+      String externalProjectPath = node.getData().getLinkedExternalProjectPath();
+      cache.put(externalProjectPath, node);
+      return StringUtil.equals(projectPath, node.getData().getLinkedExternalProjectPath());
     });
   }
 
   @Nullable
-  public DataNode<ModuleData> findModuleData(@NotNull Module module) {
+  public DataNode<? extends ModuleData> findModuleData(@NotNull Module module) {
+    DataNode<? extends ModuleData> mainModuleData = findMainModuleData(module);
+    if (mainModuleData == null) return null;
+
+    boolean isSourceSet = GradleConstants.GRADLE_SOURCE_SET_MODULE_TYPE_KEY.equals(ExternalSystemApiUtil.getExternalModuleType(module));
+    if (!isSourceSet) {
+      return mainModuleData;
+    }
+    else {
+      String projectId = ExternalSystemApiUtil.getExternalProjectId(module);
+      DataNode<? extends ModuleData> cachedNode = cache.get(projectId);
+      if (cachedNode != null) return cachedNode;
+
+      return ExternalSystemApiUtil.find(mainModuleData, GradleSourceSetData.KEY, node -> {
+        String id = node.getData().getId();
+        cache.put(id, node);
+        return StringUtil.equals(projectId, id);
+      });
+    }
+  }
+
+  @Nullable
+  public DataNode<? extends ModuleData> findMainModuleData(@NotNull Module module) {
     final String rootProjectPath = ExternalSystemApiUtil.getExternalRootProjectPath(module);
     if (rootProjectPath == null) return null;
 

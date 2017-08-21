@@ -47,7 +47,10 @@ class TestGitImpl : GitImpl() {
   @Volatile private var myRebaseShouldFail: (GitRepository) -> Boolean = { false }
   @Volatile private var myPushHandler: (GitRepository) -> GitCommandResult? = { null }
   @Volatile private var myBranchDeleteHandler: (GitRepository) -> GitCommandResult? = { null }
-  @Volatile private var myInteractiveRebaseEditor: ((String) -> String)? = null
+  @Volatile private var interactiveRebaseEditor: InteractiveRebaseEditor? = null
+
+  class InteractiveRebaseEditor(val entriesEditor: ((String) -> String)?,
+                                val plainTextEditor: ((String) -> String)?)
 
   override fun push(repository: GitRepository,
                     remote: GitRemote,
@@ -95,20 +98,29 @@ class TestGitImpl : GitImpl() {
 
   override fun createEditor(project: Project, root: VirtualFile, handler: GitLineHandler,
                             commitListAware: Boolean): GitInteractiveRebaseEditorHandler {
-    if (myInteractiveRebaseEditor == null) return super.createEditor(project, root, handler, commitListAware)
+    if (interactiveRebaseEditor == null) return super.createEditor(project, root, handler, commitListAware)
 
     val service = GitRebaseEditorService.getInstance()
     val editor = object: GitInteractiveRebaseEditorHandler(service, project, root) {
-      override fun editCommits(path: String): Int {
+      override fun handleUnstructuredEditor(path: String): Boolean {
+        val plainTextEditor = interactiveRebaseEditor!!.plainTextEditor
+        return if (plainTextEditor != null) handleEditor(path, plainTextEditor) else super.handleUnstructuredEditor(path)
+      }
+
+      override fun handleInteractiveEditor(path: String): Boolean {
+        val entriesEditor = interactiveRebaseEditor!!.entriesEditor
+        return if (entriesEditor != null) handleEditor(path, entriesEditor) else super.handleInteractiveEditor(path)
+      }
+
+      private fun handleEditor(path: String, editor: (String) -> String): Boolean {
         try {
           val file = File(path)
-          FileUtil.writeToFile(file, myInteractiveRebaseEditor!!(FileUtil.loadFile(file)))
+          FileUtil.writeToFile(file, editor(FileUtil.loadFile(file)))
         }
         catch(e: Exception) {
           LOG.error(e)
-          return 1
         }
-        return 0
+        return true
       }
     }
     service.configureHandler(handler, editor.handlerNo)
@@ -140,14 +152,14 @@ class TestGitImpl : GitImpl() {
     myBranchDeleteHandler = branchDeleteHandler
   }
 
-  fun setInteractiveRebaseEditor(editor: (String) -> String) {
-    myInteractiveRebaseEditor = editor
+  fun setInteractiveRebaseEditor(editor: InteractiveRebaseEditor) {
+    interactiveRebaseEditor = editor
   }
 
   fun reset() {
     myRebaseShouldFail = { false }
     myPushHandler = { null }
-    myInteractiveRebaseEditor = null
+    interactiveRebaseEditor = null
   }
 
   private fun failOrCall(repository: GitRepository, delegate: () -> GitCommandResult): GitCommandResult {

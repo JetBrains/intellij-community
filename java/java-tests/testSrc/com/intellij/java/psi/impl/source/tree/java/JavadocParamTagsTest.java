@@ -29,7 +29,7 @@ import com.intellij.util.IncorrectOperationException;
  *  @author dsl
  */
 public class JavadocParamTagsTest extends LightIdeaTestCase {
-  public void testDeleteTag1() throws Exception {
+  public void testDeleteTag1() {
     final PsiElementFactory factory = getFactory();
     final PsiMethod method = factory.createMethodFromText(
           "/**\n" +
@@ -50,7 +50,7 @@ public class JavadocParamTagsTest extends LightIdeaTestCase {
 
   }
 
-  public void testDeleteTag2() throws Exception {
+  public void testDeleteTag2() {
     final PsiElementFactory factory = getFactory();
     final PsiMethod method = factory.createMethodFromText(
           "/**\n" +
@@ -71,7 +71,7 @@ public class JavadocParamTagsTest extends LightIdeaTestCase {
 
   }
 
-  public void testDeleteTag3() throws Exception {
+  public void testDeleteTag3() {
     final PsiElementFactory factory = getFactory();
     final PsiMethod method = factory.createMethodFromText(
           "/**\n" +
@@ -93,13 +93,13 @@ public class JavadocParamTagsTest extends LightIdeaTestCase {
                  " */", docComment.getText());
   }
 
-  public void testTagCreation() throws Exception {
+  public void testTagCreation() {
     createAndTestTag("@param p1 Text", "p1", "Text");
     createAndTestTag("@param p2", "p2", "");
     createAndTestTag("@param p2 FirstLine\n * SecondLine", "p2", "FirstLine\nSecondLine");
   }
 
-  public void testAddTag1() throws Exception {
+  public void testAddTag1() {
     final PsiElementFactory factory = getFactory();
     final PsiMethod method = factory.createMethodFromText(
           "/**\n" +
@@ -120,7 +120,7 @@ public class JavadocParamTagsTest extends LightIdeaTestCase {
       " */", docComment.getText());
   }
 
-  public void testAddTag2() throws Exception {
+  public void testAddTag2() {
     final PsiElementFactory factory = getFactory();
     final PsiMethod method = factory.createMethodFromText(
           "/**\n" +
@@ -141,7 +141,7 @@ public class JavadocParamTagsTest extends LightIdeaTestCase {
       " */", docComment.getText());
   }
 
-  public void testAddTag3() throws Exception {
+  public void testAddTag3() {
     CommandProcessor.getInstance().executeCommand(getProject(), () -> ApplicationManager.getApplication().runWriteAction(() -> {
       final PsiElementFactory factory = getFactory();
       final PsiJavaFile psiFile;
@@ -172,7 +172,7 @@ public class JavadocParamTagsTest extends LightIdeaTestCase {
     }), "", null);
   }
 
-  public void testAddTag4() throws Exception {
+  public void testAddTag4() {
     final PsiElementFactory factory = getFactory();
     final PsiMethod method = factory.createMethodFromText(
           "/**\n" +

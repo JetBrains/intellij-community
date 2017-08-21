@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,9 +27,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.util.ui.AsyncProcessIcon;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -105,7 +105,10 @@ public class QuickFixPreviewPanelFactory {
       }
 
       if (hasComponents) {
-        setBorder(IdeBorderFactory.createEmptyBorder(hasFixes ? 2 : 9, (hasFixes || problemCount > 1) ? 8 : 5, hasFixes ? 0 : 8, 0));
+        int top = hasFixes ? 2 : 9;
+        int left = (hasFixes || problemCount > 1) ? 8 : 5;
+        int bottom = hasFixes ? 0 : 8;
+        setBorder(JBUI.Borders.empty(top, left, bottom, 0));
       }
       return !hasComponents;
     }
@@ -175,7 +178,7 @@ public class QuickFixPreviewPanelFactory {
     private LoadingInProgressPreview(InspectionResultsView view) {
       myView = view;
       setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
-      setBorder(IdeBorderFactory.createEmptyBorder(16, 9, 13, 0));
+      setBorder(JBUI.Borders.empty(16, 9, 13, 0));
       AsyncProcessIcon waitingIcon = new AsyncProcessIcon("Inspection preview panel updating...");
       Disposer.register(this, waitingIcon);
       myWaitingLabel = getLabel(myView.getTree().getSelectedProblemCount(false));
@@ -210,7 +213,7 @@ public class QuickFixPreviewPanelFactory {
   private static SimpleColoredComponent getLabel(int problemsCount) {
     SimpleColoredComponent label = new SimpleColoredComponent();
     appendTextToLabel(label, problemsCount);
-    label.setBorder(IdeBorderFactory.createEmptyBorder(0, 0, 0, 2));
+    label.setBorder(JBUI.Borders.empty(0, 0, 0, 2));
     return label;
   }
 

@@ -186,10 +186,12 @@ public abstract class SourceScope {
       return 0;
     }
 
+    @Override
     public boolean isSearchInModuleContent(@NotNull final Module aModule) {
       return myMainScope.isSearchInModuleContent(aModule);
     }
 
+    @Override
     public boolean isSearchInLibraries() {
       return true;
     }

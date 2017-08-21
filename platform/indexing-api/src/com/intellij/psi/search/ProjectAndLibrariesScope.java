@@ -29,6 +29,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * Scope for all things inside the project: files in the project content plus files in libraries/libraries sources
+ */
 public class ProjectAndLibrariesScope extends GlobalSearchScope {
   protected final ProjectFileIndex myProjectFileIndex;
   protected final boolean mySearchOutsideRootModel;
@@ -44,12 +47,14 @@ public class ProjectAndLibrariesScope extends GlobalSearchScope {
     mySearchOutsideRootModel = searchOutsideRootModel;
   }
 
+  @Override
   public boolean contains(@NotNull VirtualFile file) {
     return myProjectFileIndex.isInContent(file) ||
            myProjectFileIndex.isInLibraryClasses(file) ||
            myProjectFileIndex.isInLibrarySource(file);
   }
 
+  @Override
   public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
     List<OrderEntry> entries1 = myProjectFileIndex.getOrderEntriesForFile(file1);
     List<OrderEntry> entries2 = myProjectFileIndex.getOrderEntriesForFile(file2);
@@ -83,10 +88,12 @@ public class ProjectAndLibrariesScope extends GlobalSearchScope {
     return mySearchOutsideRootModel;
   }
 
+  @Override
   public boolean isSearchInModuleContent(@NotNull Module aModule) {
     return true;
   }
 
+  @Override
   public boolean isSearchInLibraries() {
     return true;
   }
@@ -97,6 +104,7 @@ public class ProjectAndLibrariesScope extends GlobalSearchScope {
     return project != null ? ModuleManager.getInstance(project).getUnloadedModuleDescriptions() : Collections.emptySet();
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return myDisplayName;
@@ -106,6 +114,7 @@ public class ProjectAndLibrariesScope extends GlobalSearchScope {
     myDisplayName = displayName;
   }
 
+  @Override
   @NotNull
   public GlobalSearchScope intersectWith(@NotNull final GlobalSearchScope scope) {
     if (scope.isSearchOutsideRootModel()) {
@@ -115,6 +124,7 @@ public class ProjectAndLibrariesScope extends GlobalSearchScope {
     return scope;
   }
 
+  @Override
   @NotNull
   public GlobalSearchScope uniteWith(@NotNull final GlobalSearchScope scope) {
     if (scope.isSearchOutsideRootModel()) {

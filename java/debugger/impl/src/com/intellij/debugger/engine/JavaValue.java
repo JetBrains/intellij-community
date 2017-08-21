@@ -32,6 +32,7 @@ import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.debugger.ui.tree.*;
 import com.intellij.debugger.ui.tree.render.*;
 import com.intellij.debugger.ui.tree.render.Renderer;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -47,6 +48,7 @@ import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.evaluation.XInstanceEvaluator;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.frame.presentation.XErrorValuePresentation;
+import com.intellij.xdebugger.frame.presentation.XRegularValuePresentation;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.evaluate.XValueCompactPresentation;
@@ -126,8 +128,21 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
     return myNodeManager;
   }
 
+  private boolean isOnDemand() {
+    return OnDemandRenderer.ON_DEMAND_CALCULATED.isIn(myValueDescriptor);
+  }
+
+  private boolean isCalculated() {
+    return OnDemandRenderer.isCalculated(myValueDescriptor);
+  }
+
   @Override
   public void computePresentation(@NotNull final XValueNode node, @NotNull XValuePlace place) {
+    if (isOnDemand() && !isCalculated()) {
+      node.setFullValueEvaluator(OnDemandRenderer.createFullValueEvaluator(DebuggerBundle.message("message.node.evaluate")));
+      node.setPresentation(AllIcons.Debugger.Watch, new XRegularValuePresentation("", null, ""), false);
+      return;
+    }
     myEvaluationContext.getManagerThread().schedule(new SuspendContextCommandImpl(myEvaluationContext.getSuspendContext()) {
       @Override
       public Priority getPriority() {
@@ -357,8 +372,8 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
       }
 
       @Override
-      public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
-        myValueDescriptor.getRenderer(myEvaluationContext.getDebugProcess())
+      public void contextAction(@NotNull SuspendContextImpl suspendContext) {
+        myValueDescriptor.getChildrenRenderer(myEvaluationContext.getDebugProcess())
           .buildChildren(myValueDescriptor.getValue(), new ChildrenBuilder() {
           @Override
           public NodeDescriptorFactory getDescriptorManager() {

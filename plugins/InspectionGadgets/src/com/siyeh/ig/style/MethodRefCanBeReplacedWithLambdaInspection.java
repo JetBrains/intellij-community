@@ -84,7 +84,7 @@ public class MethodRefCanBeReplacedWithLambdaInspection extends BaseInspection {
 
     private static FixFactory getFixFactory(boolean canConvert, boolean onTheFly) {
       if (canConvert) return MethodRefToLambdaFix::new;
-      if (onTheFly || ApplicationManager.getApplication().isUnitTestMode()) return SideEffectsMethodRefToLambdaFix::new;
+      if (onTheFly) return SideEffectsMethodRefToLambdaFix::new;
       return null;
     }
   }
@@ -111,6 +111,14 @@ public class MethodRefCanBeReplacedWithLambdaInspection extends BaseInspection {
   }
 
   private static class SideEffectsMethodRefToLambdaFix extends MethodRefToLambdaFix {
+    @Nls
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      String familyName = super.getFamilyName();
+      return ApplicationManager.getApplication().isUnitTestMode() ? (familyName + " (side effects)") :familyName;
+    }
+
     @Override
     public boolean startInWriteAction() {
       return false;

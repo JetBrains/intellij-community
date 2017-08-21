@@ -165,8 +165,14 @@ public abstract class ArchiveHandler {
   }
 
   public void dispose() {
-    myEntries.clear();
-    myChildrenEntries.clear();
+    clearCaches();
+  }
+
+  protected void clearCaches() {
+    synchronized (myLock) {
+      myEntries.clear();
+      myChildrenEntries.clear();
+    }
   }
 
   @Nullable

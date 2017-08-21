@@ -68,36 +68,36 @@ public class SmartType18CompletionTest extends LightFixtureCompletionTestCase {
     doTest();
   }
 
-  public void testInLambdaPosition() throws Exception {
+  public void testInLambdaPosition() {
     doTest();
   }
 
-  public void testInLambdaPositionSingleParam() throws Exception {
+  public void testInLambdaPositionSingleParam() {
     doTest();
   }
 
-  public void testInLambdaPositionNameSubstitution() throws Exception {
+  public void testInLambdaPositionNameSubstitution() {
     doTest();
   }
-  public void testInLambdaPositionSameNames() throws Exception {
+  public void testInLambdaPositionSameNames() {
     doTest();
   }
 
-  public void testConstructorRef() throws Exception {
+  public void testConstructorRef() {
     doTest(false);
   }
 
   public void testInnerArrayConstructorRef() { doTest(true); }
 
-  public void testNoConstraintsWildcard() throws Exception {
+  public void testNoConstraintsWildcard() {
     doTest();
   }
 
-  public void testDiamondCollapsedInsideAnonymous() throws Exception {
+  public void testDiamondCollapsedInsideAnonymous() {
     doTest();
   }
 
-  public void testDiamondCollapsedInFieldInitializerInsideAnonymous() throws Exception {
+  public void testDiamondCollapsedInFieldInitializerInsideAnonymous() {
     doTest();
   }
 
@@ -115,45 +115,45 @@ public class SmartType18CompletionTest extends LightFixtureCompletionTestCase {
     checkResultByFile("/" + getTestName(false) + "-out.java");
   }
 
-  public void testFilteredMethodReference() throws Exception {
+  public void testFilteredMethodReference() {
     doTest(false);
   }
 
-  public void testFilteredStaticMethods() throws Exception {
+  public void testFilteredStaticMethods() {
     doTest(false);
   }
 
-  public void testFilterWrongParamsMethods() throws Exception {
+  public void testFilterWrongParamsMethods() {
     doTest(false);
   }
 
-  public void testNoQualifier() throws Exception {
+  public void testNoQualifier() {
     doTest();
   }
 
-  public void testFilterAmbiguity() throws Exception {
+  public void testFilterAmbiguity() {
     configureByFile("/" + getTestName(false) + ".java");
     assertNotNull(myItems);
     assertTrue(myItems.length == 0);
   }
 
-  public void testNotAvailableInLambdaPositionAfterQualifier() throws Exception {
+  public void testNotAvailableInLambdaPositionAfterQualifier() {
     configureByFile("/" + getTestName(false) + ".java");
     assertNotNull(myItems);
     assertTrue(myItems.length == 0);
   }
 
-  public void testInferFromRawType() throws Exception {
+  public void testInferFromRawType() {
     configureByFile("/" + getTestName(false) + ".java");
     assertNotNull(myItems);
     assertTrue(myItems.length == 0);
   }
 
-  public void testDiamondsInsideMethodCall() throws Exception {
+  public void testDiamondsInsideMethodCall() {
     doTest(false);
   }
 
-  public void testSimpleMethodReference() throws Exception {
+  public void testSimpleMethodReference() {
     doTest(true);
   }
 
@@ -167,7 +167,7 @@ public class SmartType18CompletionTest extends LightFixtureCompletionTestCase {
 
   public void testMethodReferenceOnAncestor() { doTest(true); }
 
-  public void testNoLambdaSuggestionForGenericsFunctionalInterfaceMethod() throws Exception {
+  public void testNoLambdaSuggestionForGenericsFunctionalInterfaceMethod() {
     configureByFile("/" + getTestName(false) + ".java");
     assertEmpty(myItems);
   }
@@ -199,7 +199,7 @@ public void testConvertToObjectStream() {
     checkResultByFile("/" + getTestName(false) + "-out.java");
   }
 
-  public void testInsideNewExpressionWithDiamondAndOverloadConstructors() throws Exception {
+  public void testInsideNewExpressionWithDiamondAndOverloadConstructors() {
     configureByTestName();
     myFixture.complete(CompletionType.SMART, 1);
     myFixture.type('\n');
@@ -254,5 +254,8 @@ public void testConvertToObjectStream() {
     configureByTestName();
     myFixture.assertPreferredCompletionItems(0, "String.class", "tryCast");
   }
+
+  public void testNewHashMapTypeArguments() { doTest(false); }
+  public void testNewMapTypeArguments() { doTest(false); }
 
 }

@@ -210,7 +210,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
    * @param type    type which description will be calculated
    * @param context type evaluation context
    * @return more user-friendly description than result of {@link PythonDocumentationProvider#getTypeName(PyType, TypeEvalContext)}.
-   * <code>Any</code> is excluded from <code>Union[Any, ...]</code>-like types.
+   * {@code Any} is excluded from {@code Union[Any, ...]}-like types.
    */
   @NotNull
   public static String getTypeDescription(@Nullable PyType type, @NotNull TypeEvalContext context) {

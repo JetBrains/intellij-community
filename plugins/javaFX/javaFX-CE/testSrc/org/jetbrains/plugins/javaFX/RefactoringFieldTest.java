@@ -26,13 +26,13 @@ import org.jetbrains.plugins.javaFX.fxml.AbstractJavaFXTestCase;
 
 public class RefactoringFieldTest extends AbstractJavaFXTestCase {
 
-  public void testPropertyRename() throws Exception {
+  public void testPropertyRename() {
     myFixture.configureByFile(getTestName(false) + ".java");
     performRename("newName");
     myFixture.checkResultByFile(getTestName(false) + "_after.java");
   }
 
-  public void testPropertyDelete() throws Exception {
+  public void testPropertyDelete() {
     myFixture.configureByFile(getTestName(false) + ".java");
     performDelete();
     myFixture.checkResultByFile(getTestName(false) + "_after.java");

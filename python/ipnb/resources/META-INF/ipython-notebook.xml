@@ -10,7 +10,7 @@
 
     <projectConfigurable groupId="language"  instance="org.jetbrains.plugins.ipnb.configuration.IpnbConfigurable"
                          id="IpnbConfigurable" displayName="Jupyter Notebook"
-                         provider="org.jetbrains.plugins.ipnb.configuration.IpnbConfigurableProvider" nonDefaultProject="true"/>
+                         nonDefaultProject="true"/>
     <projectService serviceInterface="org.jetbrains.plugins.ipnb.configuration.IpnbSettings"
                     serviceImplementation="org.jetbrains.plugins.ipnb.configuration.IpnbSettings"/>
     <lang.parserDefinition language="IpnbPython" implementationClass="org.jetbrains.plugins.ipnb.psi.IpnbPyParserDefinition"/>

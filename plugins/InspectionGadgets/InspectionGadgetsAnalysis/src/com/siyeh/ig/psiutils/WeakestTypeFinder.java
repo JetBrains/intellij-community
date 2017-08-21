@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.psiutils;
 
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
@@ -100,6 +101,7 @@ public class WeakestTypeFinder {
     final Query<PsiReference> query = ReferencesSearch.search(variableOrMethod, variableOrMethod.getUseScope());
     boolean hasUsages = false;
     for (PsiReference reference : query) {
+      ProgressManager.checkCanceled();
       if (reference == null) {
         continue;
       }

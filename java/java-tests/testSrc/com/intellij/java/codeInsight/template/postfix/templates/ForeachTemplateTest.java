@@ -15,8 +15,8 @@
  */
 package com.intellij.java.codeInsight.template.postfix.templates;
 
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 
 public class ForeachTemplateTest extends PostfixTemplateTestCase {
@@ -43,7 +43,7 @@ public class ForeachTemplateTest extends PostfixTemplateTestCase {
   }
 
   public void testFinalLocals() {
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    JavaCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCustomSettings(JavaCodeStyleSettings.class);
     boolean oldGenerateFinalLocals = settings.GENERATE_FINAL_LOCALS;
     try {
       settings.GENERATE_FINAL_LOCALS = true;

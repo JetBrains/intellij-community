@@ -135,9 +135,11 @@ public class CheckBoxList<T> extends JBList<JCheckBox> {
         private void setPressed(MouseEvent e, boolean pressed) {
           Point point = e.getPoint();
           int index = locationToIndex(point);
-          JCheckBox cb = getModel().getElementAt(index);
-          cb.getModel().setPressed(pressed);
-          UIUtil.repaintViewport(CheckBoxList.this);
+          if (index >= 0 && index < getModel().getSize()) {
+            JCheckBox cb = getModel().getElementAt(index);
+            cb.getModel().setPressed(pressed);
+            UIUtil.repaintViewport(CheckBoxList.this);
+          }
         }
       });
     }

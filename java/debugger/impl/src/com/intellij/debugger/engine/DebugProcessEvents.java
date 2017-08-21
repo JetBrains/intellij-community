@@ -41,6 +41,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
+import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.sun.jdi.InternalException;
 import com.sun.jdi.ThreadReference;
 import com.sun.jdi.VMDisconnectedException;
@@ -442,7 +443,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
         final MethodFilter methodFilter = hint.getMethodFilter();
         if (methodFilter instanceof NamedMethodFilter && !hint.wasStepTargetMethodMatched()) {
           final String message = "Method <b>" + ((NamedMethodFilter)methodFilter).getMethodName() + "()</b> has not been called";
-          XDebugSessionImpl.NOTIFICATION_GROUP.createNotification(message, MessageType.INFO).notify(project);
+          XDebuggerManagerImpl.NOTIFICATION_GROUP.createNotification(message, MessageType.INFO).notify(project);
         }
         if (hint.wasStepTargetMethodMatched() && hint.isResetIgnoreFilters()) {
           checkPositionNotFiltered(suspendContext.getThread(), filters -> mySession.resetIgnoreStepFiltersFlag());
@@ -528,7 +529,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
 
   private void notifySkippedBreakpoints(LocatableEvent event) {
     if (event != null) {
-      XDebugSessionImpl.NOTIFICATION_GROUP
+      XDebuggerManagerImpl.NOTIFICATION_GROUP
         .createNotification(DebuggerBundle.message("message.breakpoint.skipped", event.location()), MessageType.INFO)
         .notify(getProject());
     }

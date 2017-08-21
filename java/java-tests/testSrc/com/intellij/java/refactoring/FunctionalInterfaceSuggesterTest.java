@@ -35,7 +35,7 @@ public class FunctionalInterfaceSuggesterTest extends LightCodeInsightFixtureTes
     return JAVA_8;
   }
 
-  public void testPrimitiveReturnTypes() throws Exception {
+  public void testPrimitiveReturnTypes() {
     PsiClass aClass = myFixture.addClass("class Foo {double foo(double d) {return d;}}");
     List<String> suggestedTypes = FunctionalInterfaceSuggester.suggestFunctionalInterfaces(aClass.getMethods()[0])
       .stream()
@@ -46,7 +46,7 @@ public class FunctionalInterfaceSuggesterTest extends LightCodeInsightFixtureTes
                                                         "java.util.function.DoubleUnaryOperator")));
   }
 
-  public void testSAMWithThrowable() throws Exception {
+  public void testSAMWithThrowable() {
     myFixture.addClass("@FunctionalInterface\n" +
                        "public interface MyThrowingConsumer<T> {\n" +
                        "    void accept(T t) throws Throwable;\n" +

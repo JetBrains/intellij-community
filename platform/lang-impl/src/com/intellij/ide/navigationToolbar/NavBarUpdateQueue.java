@@ -49,7 +49,7 @@ public class NavBarUpdateQueue extends MergingUpdateQueue {
   private NavBarPanel myPanel;
 
   public NavBarUpdateQueue(NavBarPanel panel) {
-    super("NavBar", Registry.intValue("navBar.updateMergeTime"), true, MergingUpdateQueue.ANY_COMPONENT, panel);
+    super("NavBar", Registry.intValue("navBar.updateMergeTime"), true, panel, panel);
     myPanel = panel;
     setTrackUiActivity(true);
     IdeEventQueue.getInstance().addActivityListener(() -> restartRebuild(), panel);

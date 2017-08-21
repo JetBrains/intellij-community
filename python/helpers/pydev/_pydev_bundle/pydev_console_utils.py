@@ -170,6 +170,14 @@ class BaseInterpreterInterface:
         self.interruptable = False
         self.exec_queue = _queue.Queue(0)
         self.buffer = None
+        self.banner_shown = False
+        self.default_banner = ''
+
+    def build_banner(self):
+        return 'print({})\n'.format(repr(self.get_greeting_msg()))
+
+    def get_greeting_msg(self):
+        return 'PyDev console: starting.\n'
 
     def need_more_for_code(self, source):
         # PyDev-502: PyDev 3.9 F2 doesn't support backslash continuations
@@ -348,9 +356,15 @@ class BaseInterpreterInterface:
             return False
 
     def execLine(self, line):
+        if not self.banner_shown:
+            line = self.build_banner() + line
+            self.banner_shown = True
         return self.do_exec_code(line, True)
 
     def execMultipleLines(self, lines):
+        if not self.banner_shown:
+            lines = self.build_banner() + lines
+            self.banner_shown = True
         if IS_JYTHON:
             for line in lines.split('\n'):
                 self.do_exec_code(line, True)

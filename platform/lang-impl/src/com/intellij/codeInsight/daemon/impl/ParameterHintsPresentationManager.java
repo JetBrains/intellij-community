@@ -23,12 +23,15 @@ import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorCustomElementRenderer;
 import com.intellij.openapi.editor.Inlay;
+import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.FontInfo;
+import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.ui.paint.EffectPainter;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.GraphicsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +46,6 @@ import java.util.Iterator;
 import java.util.Set;
 
 public class ParameterHintsPresentationManager implements Disposable {
-  private static final Key<Boolean> PINNED = Key.create("parameter.hint.pinned");
   private static final Key<MyFontMetrics> HINT_FONT_METRICS = Key.create("ParameterHintFontMetrics");
   private static final Key<AnimationStep> ANIMATION_STEP = Key.create("ParameterHintAnimationStep");
 
@@ -64,24 +66,15 @@ public class ParameterHintsPresentationManager implements Disposable {
     return inlay.getRenderer() instanceof MyRenderer;
   }
 
-  public boolean isPinned(@NotNull Inlay inlay) {
-    return Boolean.TRUE.equals(inlay.getUserData(PINNED));
-  }
-
-  public void unpin(@NotNull Inlay inlay) {
-    inlay.putUserData(PINNED, null);
-  }
-
   public String getHintText(@NotNull Inlay inlay) {
     EditorCustomElementRenderer renderer = inlay.getRenderer();
     return renderer instanceof MyRenderer ? ((MyRenderer)renderer).getText() : null;
   }
 
-  public Inlay addHint(@NotNull Editor editor, int offset, @NotNull String hintText, boolean useAnimation, boolean pinned) {
+  public Inlay addHint(@NotNull Editor editor, int offset, boolean relatesToPrecedingText, @NotNull String hintText, boolean useAnimation) {
     MyRenderer renderer = new MyRenderer(editor, hintText, useAnimation);
-    Inlay inlay = editor.getInlayModel().addInlineElement(offset, renderer);
+    Inlay inlay = editor.getInlayModel().addInlineElement(offset, relatesToPrecedingText, renderer);
     if (inlay != null) {
-      if (pinned) inlay.putUserData(PINNED, Boolean.TRUE);
       if (useAnimation) scheduleRendererUpdate(editor, inlay);
     }
     return inlay;
@@ -98,6 +91,22 @@ public class ParameterHintsPresentationManager implements Disposable {
 
   public void replaceHint(@NotNull Editor editor, @NotNull Inlay hint, @NotNull String newText) {
     updateRenderer(editor, hint, newText);
+  }
+
+  public void setHighlighted(@NotNull Inlay hint, boolean highlighted) {
+    if (!isParameterHint(hint)) throw new IllegalArgumentException("Not a parameter hint");
+    MyRenderer renderer = (MyRenderer)hint.getRenderer();
+    boolean oldValue = renderer.highlighted;
+    if (highlighted != oldValue) {
+      renderer.highlighted = highlighted;
+      hint.repaint();
+    }
+  }
+
+  public boolean isHighlighted(@NotNull Inlay hint) {
+    if (!isParameterHint(hint)) throw new IllegalArgumentException("Not a parameter hint");
+    MyRenderer renderer = (MyRenderer)hint.getRenderer();
+    return renderer.highlighted;
   }
 
   private void updateRenderer(@NotNull Editor editor, @NotNull Inlay hint, @Nullable String newText) {
@@ -176,6 +185,7 @@ public class ParameterHintsPresentationManager implements Disposable {
     private int startWidth;
     private int steps;
     private int step;
+    private boolean highlighted;
 
     private MyRenderer(Editor editor, String text, boolean animated) {
       updateState(editor, text, animated);
@@ -220,9 +230,14 @@ public class ParameterHintsPresentationManager implements Disposable {
     }
 
     @Override
-    public void paint(@NotNull Editor editor, @NotNull Graphics g, @NotNull Rectangle r) {
+    public void paint(@NotNull Editor editor, @NotNull Graphics g, @NotNull Rectangle r, @NotNull TextAttributes textAttributes) {
+      if (!(editor instanceof EditorImpl)) return;
+      int ascent = ((EditorImpl)editor).getAscent();
+      int descent = ((EditorImpl)editor).getDescent();
       if (myText != null && (step > steps || startWidth != 0)) {
-        TextAttributes attributes = editor.getColorsScheme().getAttributes(DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT);
+        TextAttributes attributes = 
+          editor.getColorsScheme().getAttributes(highlighted ? DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT_HIGHLIGHTED 
+                                                             : DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT);
         if (attributes != null) {
           MyFontMetrics fontMetrics = getFontMetrics(editor);
           Color backgroundColor = attributes.getBackgroundColor();
@@ -240,11 +255,35 @@ public class ParameterHintsPresentationManager implements Disposable {
             g.setFont(getFont(editor));
             Shape savedClip = g.getClip();
             g.clipRect(r.x + 3, r.y + 2, r.width - 6, r.height - 4);
-            int editorAscent = editor instanceof EditorImpl ? ((EditorImpl)editor).getAscent() : 0;
             FontMetrics metrics = fontMetrics.metrics;
-            g.drawString(myText, r.x + 7, r.y + Math.max(editorAscent, (r.height + metrics.getAscent() - metrics.getDescent()) / 2) - 1);
+            g.drawString(myText, r.x + 7, r.y + Math.max(ascent, (r.height + metrics.getAscent() - metrics.getDescent()) / 2) - 1);
             g.setClip(savedClip);
           }
+        }
+      }
+      Color effectColor = textAttributes.getEffectColor();
+      EffectType effectType = textAttributes.getEffectType();
+      if (effectColor != null) {
+        g.setColor(effectColor);
+        int xStart = r.x;
+        int xEnd = r.x + r.width;
+        int y = r.y + ascent;
+        Font font = editor.getColorsScheme().getFont(EditorFontType.PLAIN);
+        Graphics2D g2d = (Graphics2D)g;
+        if (effectType == EffectType.LINE_UNDERSCORE) {
+          EffectPainter.LINE_UNDERSCORE.paint(g2d, xStart, y, xEnd - xStart, descent, font);
+        }
+        else if (effectType == EffectType.BOLD_LINE_UNDERSCORE) {
+          EffectPainter.BOLD_LINE_UNDERSCORE.paint(g2d, xStart, y, xEnd - xStart, descent, font);
+        }
+        else if (effectType == EffectType.STRIKEOUT) {
+          EffectPainter.STRIKE_THROUGH.paint(g2d, xStart, y, xEnd - xStart, ((EditorImpl)editor).getCharHeight(), font);
+        }
+        else if (effectType == EffectType.WAVE_UNDERSCORE) {
+          EffectPainter.WAVE_UNDERSCORE.paint(g2d, xStart, y, xEnd - xStart, descent, font);
+        }
+        else if (effectType == EffectType.BOLD_DOTTED_LINE) {
+          EffectPainter.BOLD_DOTTED_UNDERSCORE.paint(g2d, xStart, y, xEnd - xStart, descent, font);
         }
       }
     }

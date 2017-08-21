@@ -72,10 +72,7 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.formatter.PyCodeStyleSettings;
 import com.jetbrains.python.magicLiteral.PyMagicLiteralTools;
-import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
-import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
+import com.jetbrains.python.psi.impl.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
@@ -580,7 +577,7 @@ public class PyUtil {
         return name;
       }
     }
-    return element.getNode().getText();
+    return element.getNode() != null ? element.getNode().getText() : element.getText();
   }
 
   public static boolean isOwnScopeComprehension(@NotNull PyComprehensionElement comprehension) {
@@ -923,22 +920,77 @@ public class PyUtil {
   }
 
   /**
-   * Retrieve the document from {@link PsiDocumentManager} using the anchor PSI element and pass it to the consumer function
-   * first releasing it from pending PSI modifications it with {@link PsiDocumentManager#doPostponedOperationsAndUnblockDocument(Document)}
-   * and then committing in try/finally block, so that subsequent operations over the PSI can be performed.
+   * Retrieves the document from {@link PsiDocumentManager} using the anchor PSI element and, if it's not null,
+   * passes it to the consumer function.
+   * <p>
+   * The document is first released from pending PSI operations and then committed after the function has been applied
+   * in a {@code try/finally} block, so that subsequent operations on PSI could be performed.
+   *
+   * @see PsiDocumentManager#doPostponedOperationsAndUnblockDocument(Document)
+   * @see PsiDocumentManager#commitDocument(Document)
+   * @see #updateDocumentUnblockedAndCommitted(PsiElement, Function)
    */
   public static void updateDocumentUnblockedAndCommitted(@NotNull PsiElement anchor, @NotNull Consumer<Document> consumer) {
+    updateDocumentUnblockedAndCommitted(anchor, document -> {
+      consumer.consume(document);
+      return null;
+    });
+  }
+
+  @Nullable
+  public static <T> T updateDocumentUnblockedAndCommitted(@NotNull PsiElement anchor, @NotNull Function<Document, T> func) {
     final PsiDocumentManager manager = PsiDocumentManager.getInstance(anchor.getProject());
     final Document document = manager.getDocument(anchor.getContainingFile());
     if (document != null) {
       manager.doPostponedOperationsAndUnblockDocument(document);
       try {
-        consumer.consume(document);
+        return func.fun(document);
       }
       finally {
         manager.commitDocument(document);
       }
     }
+    return null;
+  }
+
+  @Nullable
+  public static PyType getReturnTypeToAnalyzeAsCallType(@NotNull PyFunction function, @NotNull TypeEvalContext context) {
+    if (isInit(function)) {
+      final PyClass cls = function.getContainingClass();
+      if (cls != null) {
+        for (PyTypeProvider provider : Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
+          final PyType providedClassType = provider.getGenericType(cls, context);
+          if (providedClassType != null) {
+            return providedClassType;
+          }
+        }
+
+        final PyInstantiableType classType = as(context.getType(cls), PyInstantiableType.class);
+        if (classType != null) {
+          return classType.toInstance();
+        }
+      }
+    }
+
+    return context.getReturnType(function);
+  }
+
+  /**
+   * Create a new expressions fragment from the given text, setting the specified element as its context,
+   * and return the contained expression of the first expression statement in it.
+   *
+   * @param expressionText text of the expression
+   * @param context        context element used to resolve symbols in the expression
+   * @return instance of {@link PyExpression} as described
+   *
+   * @see PyExpressionCodeFragment
+   */
+  @Nullable
+  public static PyExpression createExpressionFromFragment(@NotNull String expressionText, @NotNull PsiElement context) {
+    final PyExpressionCodeFragmentImpl codeFragment = new PyExpressionCodeFragmentImpl(context.getProject(), "dummy.py", expressionText, false);
+    codeFragment.setContext(context);
+    final PyExpressionStatement statement = as(codeFragment.getFirstChild(), PyExpressionStatement.class);
+    return statement != null ? statement.getExpression() : null;
   }
 
   public static class KnownDecoratorProviderHolder {
@@ -1602,16 +1654,8 @@ public class PyUtil {
     if (hasKeywordContainer(parameters)) {
       n++;
     }
-    if (callable.asMethod() != null) {
+    if (isFirstParameterSpecial(callable, parameters)) {
       n++;
-    }
-    else {
-      if (parameters.size() > 0) {
-        final PyCallableParameter first = parameters.get(0);
-        if (PyNames.CANONICAL_SELF.equals(first.getName())) {
-          n++;
-        }
-      }
     }
     return n;
   }
@@ -1632,6 +1676,16 @@ public class PyUtil {
       }
     }
     return false;
+  }
+
+  private static boolean isFirstParameterSpecial(@NotNull PyCallable callable, @NotNull List<PyCallableParameter> parameters) {
+    final PyFunction method = callable.asMethod();
+    if (method != null) {
+      return PyNames.NEW.equals(method.getName()) || method.getModifier() != STATICMETHOD;
+    } else {
+      final PyCallableParameter first = ContainerUtil.getFirstItem(parameters);
+      return first != null && PyNames.CANONICAL_SELF.equals(first.getName());
+    }
   }
 
   public static boolean isInit(@NotNull final PyFunction function) {

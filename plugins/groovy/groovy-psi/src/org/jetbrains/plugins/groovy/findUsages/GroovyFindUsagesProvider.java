@@ -25,6 +25,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLabeledStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnnotationTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrInterfaceDefinition;
@@ -72,6 +74,7 @@ public class GroovyFindUsagesProvider implements FindUsagesProvider {
         if (element instanceof GrLabeledStatement) return "label";
         if (element instanceof PropertyForRename) return "property";
         if (element instanceof GrClosableBlock) return "closure";
+        if (element instanceof GrExpression) return "expression";
         return "";
     }
 
@@ -104,6 +107,8 @@ public class GroovyFindUsagesProvider implements FindUsagesProvider {
           return ((PropertyForRename)element).getPropertyName();
         } else if (element instanceof GrClosableBlock) {
           return "closure";
+        } else if (element instanceof GrLiteral) {
+            return element.getText();
         }
 
         return "";

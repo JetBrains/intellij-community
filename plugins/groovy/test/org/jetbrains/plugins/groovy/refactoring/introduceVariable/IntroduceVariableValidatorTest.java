@@ -34,7 +34,6 @@ import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase
 import org.jetbrains.plugins.groovy.refactoring.introduce.variable.GroovyVariableValidator;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
-import java.io.IOException;
 import java.util.List;
 
 /**
@@ -47,22 +46,22 @@ public class IntroduceVariableValidatorTest extends LightCodeInsightFixtureTestC
     return TestUtils.getTestDataPath() + "groovy/refactoring/introduceVariableValidator/";
   }
 
-  public void testAll1() throws Throwable { doTest(); }
-  public void testAll2() throws Throwable { doTest(); }
-  public void testClass1() throws Throwable { doTest(); }
-  public void testClass2() throws Throwable { doTest(); }
-  public void testE() throws Throwable { doTest(); }
-  public void testFile1() throws Throwable { doTest(); }
-  public void testFile2() throws Throwable { doTest(); }
-  public void testLoop1() throws Throwable { doTest(); }
-  public void testLoop2() throws Throwable { doTest(); }
-  public void testLoop3() throws Throwable { doTest(); }
-  public void testSimple() throws Throwable { doTest(); }
+  public void testAll1() { doTest(); }
+  public void testAll2() { doTest(); }
+  public void testClass1() { doTest(); }
+  public void testClass2() { doTest(); }
+  public void testE() { doTest(); }
+  public void testFile1() { doTest(); }
+  public void testFile2() { doTest(); }
+  public void testLoop1() { doTest(); }
+  public void testLoop2() { doTest(); }
+  public void testLoop3() { doTest(); }
+  public void testSimple() { doTest(); }
 
   protected static final String ALL_MARKER = "<all>";
   protected boolean replaceAllOccurences = false;
 
-  private String processFile(String fileText) throws IncorrectOperationException, InvalidDataException, IOException {
+  private String processFile(String fileText) throws IncorrectOperationException, InvalidDataException {
     String result = "";
     int startOffset = fileText.indexOf(TestUtils.BEGIN_MARKER);
     if (startOffset < 0) {
@@ -97,7 +96,7 @@ public class IntroduceVariableValidatorTest extends LightCodeInsightFixtureTestC
   }
 
 
-  public void doTest() throws Exception {
+  public void doTest() {
     final List<String> data = TestUtils.readInput(getTestDataPath() + getTestName(true) + ".test");
     assertEquals(StringUtil.trimEnd(data.get(1), "\n"), processFile(data.get(0)));
   }

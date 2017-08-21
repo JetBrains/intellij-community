@@ -29,7 +29,7 @@ public class JavaMoveLineTest extends LightCodeInsightTestCase {
     return LanguageLevel.JDK_1_7; // to enable folding of lambdas
   }
 
-  public void testMoveThroughFolding() throws Exception {
+  public void testMoveThroughFolding() {
     configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
     CodeFoldingManager.getInstance(ourProject).buildInitialFoldings(myEditor);
     FoldRegion lambdaStart = myEditor.getFoldingModel().getFoldRegion(140, 227);

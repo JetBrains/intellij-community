@@ -75,6 +75,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
 import com.intellij.usages.impl.UsageViewManagerImpl;
 import com.intellij.util.Alarm;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
@@ -450,7 +451,7 @@ public abstract class ChooseByNameBase {
       myToolArea = new JLabel(JBUI.scale(EmptyIcon.create(1, 24)));
     }
     else {
-      myToolArea.setBorder(IdeBorderFactory.createEmptyBorder(0, 6, 0, 0)); // space between checkbox and filter/show all in view buttons
+      myToolArea.setBorder(JBUI.Borders.emptyLeft(6)); // space between checkbox and filter/show all in view buttons
     }
     hBox.add(myToolArea);
     hBox.add(toolbarComponent);
@@ -655,6 +656,7 @@ public abstract class ChooseByNameBase {
 
     myListScrollPane = ScrollPaneFactory.createScrollPane(myList);
     myListScrollPane.setViewportBorder(JBUI.Borders.empty());
+    myListScrollPane.putClientProperty(UIUtil.KEEP_BORDER_SIDES, SideBorder.ALL);
 
     myTextFieldPanel.setBorder(JBUI.Borders.empty(5));
 
@@ -982,6 +984,9 @@ public abstract class ChooseByNameBase {
 
     Object[] oldElements = myListModel.getItems().toArray();
     Object[] newElements = elements.toArray();
+    if (ArrayUtil.contains(null, newElements)) {
+      LOG.error("Null after filtering elements by " + this);
+    }
     List<ModelDiff.Cmd> commands = ModelDiff.createDiffCmds(myListModel, oldElements, newElements);
 
     myTextField.setForeground(UIUtil.getTextFieldForeground());
@@ -1437,7 +1442,10 @@ public abstract class ChooseByNameBase {
     @Override
     public void onCanceled(@NotNull ProgressIndicator indicator) {
       LOG.assertTrue(myCalcElementsThread == this, myCalcElementsThread);
-      new CalcElementsThread(myPattern, myCheckboxState, myCallback, myModalityState).scheduleThread();
+
+      if (!myProject.isDisposed()) {
+        new CalcElementsThread(myPattern, myCheckboxState, myCallback, myModalityState).scheduleThread();
+      }
     }
 
     private void addElementsByPattern(@NotNull String pattern,
@@ -1450,6 +1458,10 @@ public abstract class ChooseByNameBase {
         indicator,
         o -> {
           if (indicator.isCanceled()) return false;
+          if (o == null) {
+            LOG.error("Null returned from " + myProvider + " with " + myModel + " in " + ChooseByNameBase.this);
+            return true;
+          }
           elements.add(o);
 
           if (isOverflow(elements)) {
@@ -1575,7 +1587,7 @@ public abstract class ChooseByNameBase {
                 tooManyUsagesStatus.pauseProcessingIfTooManyUsages();
                 if (elementsArray.size() > UsageLimitUtil.USAGES_LIMIT - myMaximumListSizeLimit && tooManyUsagesStatus.switchTooManyUsagesStatus()) {
                   int usageCount = elementsArray.size() + myMaximumListSizeLimit;
-                  UsageViewManagerImpl.showTooManyUsagesWarning(getProject(), tooManyUsagesStatus, indicator, presentation, usageCount, null);
+                  UsageViewManagerImpl.showTooManyUsagesWarningLater(getProject(), tooManyUsagesStatus, indicator, presentation, usageCount, null);
                 }
                 return false;
               }

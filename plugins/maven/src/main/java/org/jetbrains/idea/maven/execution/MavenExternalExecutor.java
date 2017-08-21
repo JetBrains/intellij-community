@@ -68,7 +68,7 @@ public class MavenExternalExecutor extends MavenExecutor {
       myProcessHandler =
         new OSProcessHandler(myJavaParameters.toCommandLine()) {
           @Override
-          public void notifyTextAvailable(String text, Key outputType) {
+          public void notifyTextAvailable(@NotNull String text, @NotNull Key outputType) {
             // todo move this logic to ConsoleAdapter class
             if (!myConsole.isSuppressed(text)) {
               super.notifyTextAvailable(text, outputType);

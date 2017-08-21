@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,9 +54,9 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.ui.HeaderlessTabbedPane;
 import com.intellij.ui.HyperlinkLabel;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import gnu.trove.THashSet;
@@ -273,7 +273,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     BackAction back = new BackAction();
     goBack.add(back);
     ActionToolbar backToolbar = ActionManager.getInstance().createActionToolbar("IdeErrorsBack", goBack, true);
-    backToolbar.getComponent().setBorder(IdeBorderFactory.createEmptyBorder());
+    backToolbar.getComponent().setBorder(JBUI.Borders.empty());
     backToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     myBackButtonPanel.add(backToolbar.getComponent(), BorderLayout.CENTER);
 
@@ -282,7 +282,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     goForward.add(forward);
     ActionToolbar forwardToolbar = ActionManager.getInstance().createActionToolbar("IdeErrorsForward", goForward, true);
     forwardToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
-    forwardToolbar.getComponent().setBorder(IdeBorderFactory.createEmptyBorder());
+    forwardToolbar.getComponent().setBorder(JBUI.Borders.empty());
     myNextButtonPanel.add(forwardToolbar.getComponent(), BorderLayout.CENTER);
 
     myTabs = new HeaderlessTabbedPane(getDisposable());

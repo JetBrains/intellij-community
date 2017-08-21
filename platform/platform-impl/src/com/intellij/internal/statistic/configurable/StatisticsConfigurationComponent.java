@@ -16,7 +16,7 @@
 package com.intellij.internal.statistic.configurable;
 
 import com.intellij.internal.statistic.StatisticsBundle;
-import com.intellij.internal.statistic.StatisticsUploadAssistant;
+import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.internal.statistic.connect.StatisticsService;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.openapi.application.ApplicationInfo;

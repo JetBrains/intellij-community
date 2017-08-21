@@ -1,0 +1,16 @@
+UFile (package = )
+    UClass (name = TestAnnotation)
+    UClass (name = Weekday)
+        UEnumConstant (name = MONDAY)
+            UAnnotation (fqName = TestAnnotation)
+            USimpleNameReferenceExpression (identifier = Weekday)
+        UEnumConstant (name = TUESDAY)
+            USimpleNameReferenceExpression (identifier = Weekday)
+        UMethod (name = foo)
+            UParameter (name = a)
+                UAnnotation (fqName = TestAnnotation)
+            UBlockExpression
+                UDeclarationsExpression
+                    ULocalVariable (name = b)
+                        UAnnotation (fqName = TestAnnotation)
+                        ULiteralExpression (value = 0)

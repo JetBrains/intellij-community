@@ -25,21 +25,19 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiModificationTracker;
 
-import java.io.IOException;
-
 public class OutOfCodeBlockModificationTest extends DefaultActionTestCase {
 
-  public void testInsideBlock() throws IOException {
+  public void testInsideBlock() {
     doTest("class a{ void f(){int i;<caret> int j;}}", true);
   }
-  public void testInsideBlock2() throws IOException {
+  public void testInsideBlock2() {
     doTest("class a{ void f(){ <caret>}}", true);
   }
-  public void testOutsideBlock() throws IOException {
+  public void testOutsideBlock() {
     doTest("class a{ <caret> void f(){}}", false);
   }
 
-  private void doTest(String fileText, boolean inside) throws IOException {
+  private void doTest(String fileText, boolean inside) {
     configureFromFileText("a.java",fileText);
     PsiFile file = getFile();
     PsiManager manager = file.getManager();

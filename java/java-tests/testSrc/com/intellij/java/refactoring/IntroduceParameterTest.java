@@ -81,7 +81,7 @@ public class IntroduceParameterTest extends LightRefactoringTestCase  {
            "Value for introduced parameter in that method call will be incorrect.");
   }
 
-  public void testRemoveOverrideFromDelegated() throws Exception {
+  public void testRemoveOverrideFromDelegated() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false, true);
   }
 
@@ -146,23 +146,23 @@ public class IntroduceParameterTest extends LightRefactoringTestCase  {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false, false);
   }
 
-  public void testCollapseToLambda() throws Exception {
+  public void testCollapseToLambda() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false, false);
   }
 
-  public void testExpandMethodReference() throws Exception {
+  public void testExpandMethodReference() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false, false);
   }
 
-  public void testBareRefToVararg() throws Exception {
+  public void testBareRefToVararg() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, true, false, false, false);
   }
 
-  public void testNewWithRefToVararg() throws Exception {
+  public void testNewWithRefToVararg() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, true, false, false, false);
   }
 
-  public void testMethodCallRefToVararg() throws Exception {
+  public void testMethodCallRefToVararg() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, true, false, false, false);
   }
 

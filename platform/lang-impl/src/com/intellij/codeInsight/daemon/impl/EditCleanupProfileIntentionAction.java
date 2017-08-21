@@ -27,8 +27,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-class EditCleanupProfileIntentionAction implements IntentionAction {
-  static final EditCleanupProfileIntentionAction INSTANCE = new EditCleanupProfileIntentionAction();
+public class EditCleanupProfileIntentionAction implements IntentionAction {
+  public static final EditCleanupProfileIntentionAction INSTANCE = new EditCleanupProfileIntentionAction();
   private EditCleanupProfileIntentionAction() {}
 
   @Override

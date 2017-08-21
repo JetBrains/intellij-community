@@ -20,47 +20,47 @@ package org.jetbrains.ether;
  * Date: 09.08.11
  */
 public class ClassPropertyTest extends IncrementalTestCase {
-  public ClassPropertyTest() throws Exception {
+  public ClassPropertyTest() {
     super("classProperties");
   }
 
-  public void testAddExtends() throws Exception {
+  public void testAddExtends() {
     doTest();
   }
 
-  public void testAddImplements() throws Exception {
+  public void testAddImplements() {
     doTest();
   }
 
-  public void testChangeExtends() throws Exception {
+  public void testChangeExtends() {
     doTest();
   }
 
-  public void testRemoveExtends() throws Exception {
+  public void testRemoveExtends() {
     doTest();
   }
 
-  public void testRemoveExtendsAffectsFieldAccess() throws Exception {
+  public void testRemoveExtendsAffectsFieldAccess() {
     doTest();
   }
 
-  public void testRemoveExtendsAffectsMethodAccess() throws Exception {
+  public void testRemoveExtendsAffectsMethodAccess() {
     doTest();
   }
 
-  public void testRemoveImplements() throws Exception {
+  public void testRemoveImplements() {
     doTest();
   }
 
-  public void testRemoveImplements2() throws Exception {
+  public void testRemoveImplements2() {
     doTest();
   }
 
-  public void testRemoveImplements3() throws Exception {
+  public void testRemoveImplements3() {
     doTest();
   }
 
-  public void testChangeExtends2() throws Exception {
+  public void testChangeExtends2() {
       doTest();
   }
 }

@@ -31,7 +31,6 @@ import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
-import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -1373,7 +1372,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                              final int start,
                              final int end,
                              @Nullable final Runnable eachRunnable,
-                             @Nullable final Runnable endRunnable) throws InvocationTargetException, InterruptedException {
+                             @Nullable final Runnable endRunnable) {
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       for (int i = start; i <= end; i++) {
         Node eachFile = node.addChild("File " + i);
@@ -1399,7 +1398,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
   private void runAndInterrupt(final Runnable action,
                                final String interruptAction,
                                final Object interruptElement,
-                               final Interruption interruption) throws Exception {
+                               final Interruption interruption) {
     myElementUpdate.clear();
 
     final boolean[] wasInterrupted = new boolean[]{false};
@@ -2390,47 +2389,47 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     }
 
     @Override
-    public void testSelectionGoesToParentWhenOnlyChildMoved2() throws Exception {
+    public void testSelectionGoesToParentWhenOnlyChildMoved2() {
       //todo
     }
 
     @Override
-    public void testQueryStructureWhenExpand() throws Exception {
+    public void testQueryStructureWhenExpand() {
       //todo
     }
 
     @Override
-    public void testMoveElementToAdjacentEmptyParentWithSmartExpandAndSerialUpdateSubtrees() throws Exception {
+    public void testMoveElementToAdjacentEmptyParentWithSmartExpandAndSerialUpdateSubtrees() {
       // doesn't make sense since pass-through mode is always serial, it doesn't queue for updates
     }
 
     @Override
-    public void testElementMove1() throws Exception {
+    public void testElementMove1() {
       //todo
     }
 
     @Override
-    public void testClear() throws Exception {
+    public void testClear() {
       //todo
     }
 
     @Override
-    public void testDoubleCancelUpdate() throws Exception {
+    public void testDoubleCancelUpdate() {
       // doesn't make sense in pass-through mode
     }
 
     @Override
-    public void testNoExtraJTreeModelUpdate() throws Exception {
+    public void testNoExtraJTreeModelUpdate() {
       // doesn't make sense in pass-through mode
     }
 
     @Override
-    public void testSelectWhenUpdatesArePending() throws Exception {
+    public void testSelectWhenUpdatesArePending() {
       // doesn't make sense in pass-through mode
     }
 
     @Override
-    public void testBigTreeUpdate() throws Exception {
+    public void testBigTreeUpdate() {
       // doesn't make sense in pass-through mode
     }
   }
@@ -2459,12 +2458,12 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     }
 
     @Override
-    public void testNoInfiniteSmartExpand() throws Exception {
+    public void testNoInfiniteSmartExpand() {
       //todo
     }
 
     @Override
-    public void testBigTreeUpdate() throws Exception {
+    public void testBigTreeUpdate() {
       //to slow, tested the same in VeryQuickBgLoadingTest
     }
   }
@@ -2480,12 +2479,12 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     }
 
     @Override
-    public void testNoInfiniteSmartExpand() throws Exception {
+    public void testNoInfiniteSmartExpand() {
       //todo
     }
 
     @Override
-    public void testBigTreeUpdate() throws Exception {
+    public void testBigTreeUpdate() {
       //to slow, tested the same in VeryQuickBgLoadingTest
     }
   }
@@ -2497,17 +2496,17 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     }
 
     @Override
-    public void testNoInfiniteSmartExpand() throws Exception {
+    public void testNoInfiniteSmartExpand() {
       // todo;
     }
 
     @Override
-    public void testReleaseBuilderDuringUpdate() throws Exception {
+    public void testReleaseBuilderDuringUpdate() {
       // todo
     }
 
     @Override
-    public void testReleaseBuilderDuringGetChildren() throws Exception {
+    public void testReleaseBuilderDuringGetChildren() {
       // todo
     }
   }

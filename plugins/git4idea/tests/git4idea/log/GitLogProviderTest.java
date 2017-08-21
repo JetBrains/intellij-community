@@ -32,7 +32,6 @@ import git4idea.test.GitSingleRepoTest;
 import git4idea.test.GitTestUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -284,7 +283,7 @@ public class GitLogProviderTest extends GitSingleRepoTest {
     tac("b.txt");
   }
 
-  private static void prepareLongHistory(int size) throws IOException {
+  private static void prepareLongHistory(int size) {
     for (int i = 0; i < size; i++) {
       String file = "a" + (i % 10) + ".txt";
       if (i < 10) {

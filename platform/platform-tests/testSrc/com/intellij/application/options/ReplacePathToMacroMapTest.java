@@ -18,12 +18,12 @@ public class ReplacePathToMacroMapTest {
   }
 
   @Test
-  public void testSubstitute_NoSubstitute() throws Exception {
+  public void testSubstitute_NoSubstitute() {
     assertEquals("/foo/bar", substitute("/foo/bar"));
   }
 
   @Test
-  public void testSubstitute_CompleteMatch() throws Exception {
+  public void testSubstitute_CompleteMatch() {
     assertEquals("$MODULE_DIR$", substitute("/tmp/foo"));
     assertEquals("jar:$MODULE_DIR$", substitute("jar:/tmp/foo"));
     assertEquals("jar:/$MODULE_DIR$", substitute("jar://tmp/foo"));
@@ -34,7 +34,7 @@ public class ReplacePathToMacroMapTest {
   }
 
   @Test
-  public void testSubstitute_PrefixMatch() throws Exception {
+  public void testSubstitute_PrefixMatch() {
     assertEquals("$MODULE_DIR$/bar", substitute("/tmp/foo/bar"));
     assertEquals("jar:$MODULE_DIR$/bar", substitute("jar:/tmp/foo/bar"));
     assertEquals("jar:/$MODULE_DIR$/bar", substitute("jar://tmp/foo/bar"));
@@ -45,7 +45,7 @@ public class ReplacePathToMacroMapTest {
   }
 
   @Test
-  public void testSubstitute_JarPrefixMatch() throws Exception {
+  public void testSubstitute_JarPrefixMatch() {
     assertEquals("$MODULE_DIR$!/bar", substitute("/tmp/foo!/bar"));
     assertEquals("jar:$MODULE_DIR$!/bar", substitute("jar:/tmp/foo!/bar"));
     assertEquals("jar:/$MODULE_DIR$!/bar", substitute("jar://tmp/foo!/bar"));
@@ -56,7 +56,7 @@ public class ReplacePathToMacroMapTest {
   }
 
   @Test
-  public void testSubstitute_WindowsRootSubstitution() throws Exception {
+  public void testSubstitute_WindowsRootSubstitution() {
     myMap.put("C:/", "../$MODULE_DIR$/");
 
     assertEquals("../$MODULE_DIR$/", substitute("C:/"));
@@ -64,22 +64,22 @@ public class ReplacePathToMacroMapTest {
   }
 
   @Test
-  public void testSubstitute_NoSubstituteInTheMiddleOccurs() throws Exception {
+  public void testSubstitute_NoSubstituteInTheMiddleOccurs() {
     assertEquals("/bar/tmp/foo/bar", substitute("/bar/tmp/foo/bar"));
   }
 
   @Test
-  public void testSubstitute_NoDoubleSubstitution() throws Exception {
+  public void testSubstitute_NoDoubleSubstitution() {
     assertEquals("$MODULE_DIR$/bar/tmp/foo", substitute("/tmp/foo/bar/tmp/foo"));
   }
 
   @Test
-  public void testSubstitute_NoPartialSubstituteIsPerformed() throws Exception {
+  public void testSubstitute_NoPartialSubstituteIsPerformed() {
     assertEquals("/tmp/foobar", substitute("/tmp/foobar"));
   }
 
   @Test
-  public void testSubstitute_ProperSubstitutionPriorityApplied() throws Exception {
+  public void testSubstitute_ProperSubstitutionPriorityApplied() {
     myMap.put("/root/project/module", "$MODULE_DIR$");
     myMap.put("/root/project", "../$MODULE_DIR$");
     myMap.put("/root", "$APPLICATION_HOME_DIR$");

@@ -62,7 +62,7 @@ public class XsltResolveTest extends TestBase {
         assertNotNull(template.getName());
     }
 
-    public void testResolveIncludedTemplateParam() throws Throwable {
+    public void testResolveIncludedTemplateParam() {
         final String name = getTestFileName();
         final PsiReference reference = myFixture.getReferenceAtCaretPositionWithAssertion(name + ".xsl", "included.xsl");
 
@@ -90,7 +90,7 @@ public class XsltResolveTest extends TestBase {
         return null;
     }
 
-    private XsltVariable doVariableResolveTest(boolean global) throws Throwable {
+    private XsltVariable doVariableResolveTest(boolean global) {
         final PsiReference reference = findInjectedReferenceAtCaret();
 
         final PsiElement element = reference.resolve();
@@ -103,7 +103,7 @@ public class XsltResolveTest extends TestBase {
         return var;
     }
 
-    private XsltFunction doFunctionResolveTest(String... files) throws Throwable {
+    private XsltFunction doFunctionResolveTest(String... files) {
         final PsiReference reference = findInjectedReferenceAtCaret(files);
 
         final PsiElement element = reference.resolve();
@@ -117,7 +117,7 @@ public class XsltResolveTest extends TestBase {
     }
 
     @NotNull
-    private PsiReference findInjectedReferenceAtCaret(String... moreFiles) throws Throwable {
+    private PsiReference findInjectedReferenceAtCaret(String... moreFiles) {
         configure(moreFiles);
 
         final PsiElement e = myFixture.getFile().findElementAt(myFixture.getEditor().getCaretModel().getOffset());
@@ -128,7 +128,7 @@ public class XsltResolveTest extends TestBase {
         return reference;
     }
 
-    private void configure(String... moreFiles) throws Throwable {
+    private void configure(String... moreFiles) {
       myFixture.configureByFiles(ArrayUtil.mergeArrays(new String[]{getTestFileName() + ".xsl"}, moreFiles));
     }
 

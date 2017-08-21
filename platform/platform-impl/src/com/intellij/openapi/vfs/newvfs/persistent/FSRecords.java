@@ -26,10 +26,7 @@ import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.impl.FileNameCache;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.BitUtil;
-import com.intellij.util.CompressionUtil;
-import com.intellij.util.SystemProperties;
+import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.IntArrayList;
@@ -528,9 +525,7 @@ public class FSRecords {
         }
       }
 
-      if (e instanceof Error) throw (Error)e;
-      if (e instanceof RuntimeException) throw (RuntimeException)e;
-      throw new RuntimeException(e);
+      ExceptionUtil.rethrow(e);
     }
 
     private static boolean canWriteWithoutDeadlock() {
@@ -569,6 +564,7 @@ public class FSRecords {
   }
 
   private static ResizeableMappedFile getRecords() {
+    assert DbConnection.myRecords != null:"Vfs should be initialized"; 
     return DbConnection.myRecords;
   }
 

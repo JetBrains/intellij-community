@@ -37,10 +37,12 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.testFramework.*;
@@ -48,6 +50,7 @@ import com.intellij.testFramework.builders.ModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.HeavyIdeaTestFixture;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
+import com.intellij.util.lang.CompoundRuntimeException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,9 +60,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.nio.file.Files;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Creates new project for each test.
@@ -109,12 +112,26 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
       .append(() -> InjectedLanguageManagerImpl.checkInjectorsAreDisposed(getProject()))
       .append(() -> myProject = null);
 
+    ((JarFileSystemImpl)JarFileSystem.getInstance()).cleanupForNextTest();
+    
     for (File fileToDelete : myFilesToDelete) {
       runAll = runAll.append(() -> {
-        if (!FileUtil.delete(fileToDelete)) {
-          throw new IOException("Can't delete " + fileToDelete);
-        }
-      });
+        List<Throwable> errors = Files.walk(fileToDelete.toPath())
+          .sorted(Comparator.reverseOrder())
+          .map(x -> {
+            try {
+              Files.delete(x);
+              return null;
+            }
+            catch (IOException e) {
+              return e;
+            }
+          })
+          .filter(Objects::nonNull)
+          .collect(Collectors.toList());
+
+        CompoundRuntimeException.throwIfNotEmpty(errors);
+     });
     }
 
     runAll

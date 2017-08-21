@@ -21,10 +21,8 @@ import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import hg4idea.test.HgPlatformTest;
 import org.zmlx.hg4idea.HgVcs;
-import org.zmlx.hg4idea.execution.HgCommandException;
 import org.zmlx.hg4idea.provider.HgRepositoryLocation;
 
-import java.text.ParseException;
 import java.util.List;
 
 import static com.intellij.openapi.vcs.Executor.cd;
@@ -59,7 +57,7 @@ public class HgBrowseChangesTest extends HgPlatformTest {
     dateAfter = ChangeBrowserSettings.DATE_FORMAT.format(now.getTime());
   }
 
-  public void testLogRevisionWithDataFilter() throws HgCommandException, ParseException, VcsException {
+  public void testLogRevisionWithDataFilter() throws VcsException {
     mySettings.USE_DATE_AFTER_FILTER = true;
     mySettings.USE_DATE_BEFORE_FILTER = true;
     mySettings.DATE_BEFORE = dateBefore;
@@ -67,32 +65,32 @@ public class HgBrowseChangesTest extends HgPlatformTest {
     doTest();
   }
 
-  public void testLogRevisionWithAfterDataFilter() throws HgCommandException, ParseException, VcsException {
+  public void testLogRevisionWithAfterDataFilter() throws VcsException {
     mySettings.USE_DATE_AFTER_FILTER = true;
     mySettings.DATE_AFTER = dateAfter;
     doTest();
   }
 
-  public void testLogRevisionWithBeforeDataFilter() throws HgCommandException, ParseException, VcsException {
+  public void testLogRevisionWithBeforeDataFilter() throws VcsException {
     mySettings.USE_DATE_BEFORE_FILTER = true;
     mySettings.DATE_BEFORE = dateBefore;
     doTest();
   }
 
-  public void testLogRevisionWithBeforeFilter() throws HgCommandException, ParseException, VcsException {
+  public void testLogRevisionWithBeforeFilter() throws VcsException {
 
     mySettings.USE_CHANGE_BEFORE_FILTER = true;
     mySettings.CHANGE_BEFORE = "1";
     doTest();
   }
 
-  public void testLogRevisionWithAfterFilter() throws HgCommandException, ParseException, VcsException {
+  public void testLogRevisionWithAfterFilter() throws VcsException {
     mySettings.USE_CHANGE_AFTER_FILTER = true;
     mySettings.CHANGE_AFTER = "0";
     doTest();
   }
 
-  public void testLogRevisionWithFilter() throws HgCommandException, ParseException, VcsException {
+  public void testLogRevisionWithFilter() throws VcsException {
 
     mySettings.USE_CHANGE_BEFORE_FILTER = true;
     mySettings.USE_CHANGE_AFTER_FILTER = true;
@@ -105,7 +103,7 @@ public class HgBrowseChangesTest extends HgPlatformTest {
     doTest();
   }
 
-  private void doTest() throws HgCommandException, VcsException {
+  private void doTest() throws VcsException {
     CommittedChangesProvider provider = myVcs.getCommittedChangesProvider();
     assert provider != null;
     //noinspection unchecked

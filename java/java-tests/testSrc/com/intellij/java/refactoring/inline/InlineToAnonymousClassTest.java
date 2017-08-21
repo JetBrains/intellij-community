@@ -42,349 +42,349 @@ public class InlineToAnonymousClassTest extends LightRefactoringTestCase {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
-  public void testSimple() throws Exception {
+  public void testSimple() {
     doTest(false, false);
   }
 
-  public void testChangeToSuperType() throws Exception {
+  public void testChangeToSuperType() {
     doTest(false, false);
   }
 
-  public void testImplementsInterface() throws Exception {
+  public void testImplementsInterface() {
     doTest(false, false);
   }
 
-  public void testConvertToLambdaJava8() throws Exception {
+  public void testConvertToLambdaJava8() {
     doTest(false, false);
   }
 
-  public void testClassInitializer() throws Exception {
+  public void testClassInitializer() {
     doTest(false, false);
   }
 
-  public void testConstructor() throws Exception {
+  public void testConstructor() {
     doTest(false, false);
   }
 
-  public void testConstructorWithArguments() throws Exception {
+  public void testConstructorWithArguments() {
     doTest(false, false);
   }
 
-  public void testUnrelatedParameters() throws Exception {
+  public void testUnrelatedParameters() {
     doTest(false, false);
   }
 
-  public void testConstructorWithArgumentsInExpression() throws Exception {
+  public void testConstructorWithArgumentsInExpression() {
     doTest(false, false);
   }
 
-  public void testMultipleConstructors() throws Exception {
+  public void testMultipleConstructors() {
     doTest(false, false);
   }
 
-  public void testMethodUsage() throws Exception {
+  public void testMethodUsage() {
     doTest(false, false);
   }
 
-  public void testConstructorArgumentToField() throws Exception {
+  public void testConstructorArgumentToField() {
     doTest(false, false);
   }
 
-  public void testField() throws Exception {
+  public void testField() {
     doTest(false, false);
   }
 
-  public void testStaticConstantField() throws Exception {
+  public void testStaticConstantField() {
     doTest(false, false);
   }
 
-  public void testWritableInitializedField() throws Exception {
+  public void testWritableInitializedField() {
     doTest(false, false);
   }
 
-  public void testNullInitializedField() throws Exception {
+  public void testNullInitializedField() {
     doTest(false, false);
   }
 
-  public void testInnerClass() throws Exception {
+  public void testInnerClass() {
     doTest(false, false);
   }
 
-  public void testConstructorToInstanceInitializer() throws Exception {
+  public void testConstructorToInstanceInitializer() {
     doTest(false, false);
   }
 
-  public void testNewExpressionContext() throws Exception {
+  public void testNewExpressionContext() {
     doTest(false, false);
   }
 
-  public void testWritableFieldInitializedWithParameter() throws Exception {
+  public void testWritableFieldInitializedWithParameter() {
     doTest(false, false);
   }
 
-  public void testFieldInitializedWithVar() throws Exception {
+  public void testFieldInitializedWithVar() {
     doTest(false, false);
   }
 
-  public void testFieldVsLocalConflict() throws Exception {
+  public void testFieldVsLocalConflict() {
     doTest(false, false);
   }
 
-  public void testFieldVsParameterConflict() throws Exception {
+  public void testFieldVsParameterConflict() {
     doTest(false, false);
   }
 
-  public void testGenerics() throws Exception {
+  public void testGenerics() {
     doTest(false, false);
   }
 
-  public void testGenericsSubstitute() throws Exception {
+  public void testGenericsSubstitute() {
     doTest(false, false);
   }
 
-  public void testGenericsFieldDeclaration() throws Exception {
+  public void testGenericsFieldDeclaration() {
     doTest(false, false);
   }
 
-  public void testGenericsRawType() throws Exception {
+  public void testGenericsRawType() {
     doTest(false, false);
   }
 
-  public void testGenericsInTypeParameter() throws Exception {
+  public void testGenericsInTypeParameter() {
     doTest(false, false);
   }
 
-  public void testQualifyInner() throws Exception {
+  public void testQualifyInner() {
     doTest(false, false);
   }
 
-  public void testQualifiedNew() throws Exception {
+  public void testQualifiedNew() {
     doTest(false, false);
   }
 
-  public void testChainedConstructors() throws Exception {
+  public void testChainedConstructors() {
     doTest(false, false);
   }
 
-  public void testChainedVarargConstructors() throws Exception {
+  public void testChainedVarargConstructors() {
     doTest(false, false);
   }
 
-  public void testInlineThisOnly() throws Exception {
+  public void testInlineThisOnly() {
     doTest(true, false);
   }
 
-  public void testArrayType() throws Exception {
+  public void testArrayType() {
     doTest(false, false);
   }
 
-  public void testArrayTypeWithGenerics() throws Exception {
+  public void testArrayTypeWithGenerics() {
     doTest(false, false);
   }
 
-  public void testArrayInitializer() throws Exception {
+  public void testArrayInitializer() {
     doTest(false, false);
   }
 
-  public void testVarargs() throws Exception {
+  public void testVarargs() {
     doTest(false, false);
   }
 
-  public void testSelfReference() throws Exception {
+  public void testSelfReference() {
     doTest(false, false);
   }
 
-  public void testOuterClassFieldAccess() throws Exception {
+  public void testOuterClassFieldAccess() {
     doTest(false, false);
   }
 
-  public void testPrivateFieldUsedFromInnerClass() throws Exception {
+  public void testPrivateFieldUsedFromInnerClass() {
     doTest(false, false);
   }
 
-  public void testOverwriteInitializer() throws Exception {
+  public void testOverwriteInitializer() {
     doTest(false, false);
   }
 
-  public void testMultipleInnerClasses() throws Exception {
+  public void testMultipleInnerClasses() {
     doTest(false, false);
   }
 
-  public void testConstructorArgumentInExpression() throws Exception {
+  public void testConstructorArgumentInExpression() {
     doTest(false, false);
   }
 
-  public void testMethodCallInNewExpression() throws Exception {
+  public void testMethodCallInNewExpression() {
     doTest(false, false);
   }
 
-  public void testMethodCallInNewExpressionWithParens() throws Exception {
+  public void testMethodCallInNewExpressionWithParens() {
     doTest(false, false);
   }
 
-  public void testRedundantImplementsInterface() throws Exception {
+  public void testRedundantImplementsInterface() {
     doTest(false, false);
   }
 
-  public void testStringInMethodCallFromConstructor() throws Exception {
+  public void testStringInMethodCallFromConstructor() {
     doTest(false, false);
   }
 
-  public void testMultipleGeneratedVars() throws Exception {
+  public void testMultipleGeneratedVars() {
     doTest(false, false);
   }
 
-  public void testFieldAsConstructorParameter() throws Exception {
+  public void testFieldAsConstructorParameter() {
     doTest(false, false);
   }
 
-  public void testQualifyParentStaticReferences() throws Exception {
+  public void testQualifyParentStaticReferences() {
     doTest(false, false);
   }
 
-  public void testLocalClass() throws Exception {
+  public void testLocalClass() {
     doTest(false, true);
   }
 
-  public void testMultipleAssignments() throws Exception {
+  public void testMultipleAssignments() {
     doTest(false, true);
   }
 
-  public void testParamTypeReplacement() throws Exception {
+  public void testParamTypeReplacement() {
     doTest(false, true);
   }
 
-  public void testBraces() throws Exception {
+  public void testBraces() {
     doTest(false, false);
   }
 
-  public void testAvailableInSupers() throws Exception {
+  public void testAvailableInSupers() {
     doTest(false, false);
   }
 
-  public void testNoFinalForJava8() throws Exception {
+  public void testNoFinalForJava8() {
     setLanguageLevel(LanguageLevel.HIGHEST);
     doTest(true, false);
   }
 
-  public void testNoInlineAbstract() throws Exception {
+  public void testNoInlineAbstract() {
     doTestNoInline("Abstract classes cannot be inlined");
   }
 
-  public void testNoInlineInterface() throws Exception {
+  public void testNoInlineInterface() {
     doTestNoInline("Interfaces cannot be inlined");
   }
 
-  public void testNoInlineEnum() throws Exception {
+  public void testNoInlineEnum() {
     doTestNoInline("Enums cannot be inlined");
   }
 
-  public void testNoInlineAnnotationType() throws Exception {
+  public void testNoInlineAnnotationType() {
     doTestNoInline("Annotation types cannot be inlined");
   }
 
-  public void testNoInlineMultipleInterfaces() throws Exception {
+  public void testNoInlineMultipleInterfaces() {
     doTestNoInline("Classes which implement multiple interfaces cannot be inlined");
   }
 
-  public void testNoInlineSuperclassInterface() throws Exception {
+  public void testNoInlineSuperclassInterface() {
     doTestNoInline("Classes which have a superclass and implement an interface cannot be inlined");
   }
 
-  public void testNoInlineMethodUsage() throws Exception {
+  public void testNoInlineMethodUsage() {
     doTestNoInline("Class cannot be inlined because there are usages of its methods not inherited from its superclass or interface");
   }
 
-  public void testNoInlineFieldUsage() throws Exception {
+  public void testNoInlineFieldUsage() {
     doTestNoInline("Class cannot be inlined because it has usages of fields not inherited from its superclass");
   }
 
-  public void testNoInlineNewWithInner() throws Exception {
+  public void testNoInlineNewWithInner() {
     doTestNoInline("Class cannot be inlined because it has usages of its inner classes");
   }
 
-  public void testNoInlineStaticField() throws Exception {
+  public void testNoInlineStaticField() {
     doTestNoInline("Class cannot be inlined because it has static fields with non-constant initializers");
   }
 
-  public void testNoInlineStaticNonFinalField() throws Exception {
+  public void testNoInlineStaticNonFinalField() {
     doTestNoInline("Class cannot be inlined because it has static non-final fields");
   }
 
-  public void testNoInlineStaticMethod() throws Exception {
+  public void testNoInlineStaticMethod() {
     doTestNoInline("Class cannot be inlined because it has static methods");
   }
 
-  public void testNoInlineStaticInitializer() throws Exception {
+  public void testNoInlineStaticInitializer() {
     doTestNoInline("Class cannot be inlined because it has static initializers");
   }
 
-  public void testNoInlineClassLiteral() throws Exception {
+  public void testNoInlineClassLiteral() {
     doTestPreprocessUsages("Class cannot be inlined because it has usages of its class literal");
   }
 
-  public void testNoInlineCatchClause() throws Exception {
+  public void testNoInlineCatchClause() {
     doTestPreprocessUsages("Class cannot be inlined because it is used in a 'catch' clause");
   }
 
-  public void testNoInlineThrowsClause() throws Exception {
+  public void testNoInlineThrowsClause() {
     doTestPreprocessUsages("Class cannot be inlined because it is used in a 'throws' clause");
   }
 
-  public void testNoInlineThisQualifier() throws Exception {
+  public void testNoInlineThisQualifier() {
     doTestPreprocessUsages("Class cannot be inlined because it is used as a 'this' qualifier");
   }
 
-  public void testNoInlineUnresolvedConstructor() throws Exception {
+  public void testNoInlineUnresolvedConstructor() {
     doTestPreprocessUsages("Class cannot be inlined because a call to its constructor is unresolved");
   }
 
-  public void testNoInlineUnresolvedConstructor2() throws Exception {
+  public void testNoInlineUnresolvedConstructor2() {
     doTestPreprocessUsages("Class cannot be inlined because a call to its constructor is unresolved");
   }
 
-  public void testNoInlineStaticInnerClass() throws Exception {
+  public void testNoInlineStaticInnerClass() {
     doTestNoInline("Class cannot be inlined because it has static inner classes");
   }
 
-  public void testNoInlineReturnInConstructor() throws Exception {
+  public void testNoInlineReturnInConstructor() {
     doTestNoInline("Class cannot be inlined because its constructor contains 'return' statements");
   }
 
-  public void testNoInlineUnresolvedSuperclass() throws Exception {
+  public void testNoInlineUnresolvedSuperclass() {
     doTestNoInline("Class cannot be inlined because its superclass cannot be resolved");
   }
 
-  public void testNoInlineUnresolvedInterface() throws Exception {
+  public void testNoInlineUnresolvedInterface() {
     doTestNoInline("Class cannot be inlined because an interface implemented by it cannot be resolved");
   }
 
-  public void testNoInlineLibraryClass() throws Exception {
+  public void testNoInlineLibraryClass() {
     doTestNoInline("Library classes cannot be inlined");
   }
 
-  public void testNoInlineTypeParameter() throws Exception {
+  public void testNoInlineTypeParameter() {
     doTestNoInline("Type parameters cannot be inlined");
   }
 
-  public void testNoInlineNoUsages() throws Exception {
+  public void testNoInlineNoUsages() {
     doTestPreprocessUsages("Class is never used");
   }
 
-  public void testNoInlineRecursiveAccess() throws Exception {
+  public void testNoInlineRecursiveAccess() {
     doTestConflict("Class cannot be inlined because a call to its member inside body", "Class cannot be inlined because a call to its member inside body");
   }
 
-  public void testConflictInaccessibleOuterField() throws Exception {
+  public void testConflictInaccessibleOuterField() {
     doTestConflict(
       "Field <b><code>C2.a</code></b> that is used in inlined method is not accessible from call site(s) in method <b><code>C2User.test()</code></b>");
   }
 
-  public void testGetClassConflict() throws Exception {
+  public void testGetClassConflict() {
     doTestConflict("Result of getClass() invocation would be changed", "Result of getClass() invocation would be changed");
   }
 
-  public void doTestConflict(final String... expected) throws Exception {
+  public void doTestConflict(final String... expected) {
     InlineToAnonymousClassProcessor processor = prepareProcessor();
     UsageInfo[] usages = processor.findUsages();
     MultiMap<PsiElement,String> conflicts = processor.getConflicts(usages);
@@ -396,7 +396,7 @@ public class InlineToAnonymousClassTest extends LightRefactoringTestCase {
     }
   }
 
-  private void doTestNoInline(final String expectedMessage) throws Exception {
+  private void doTestNoInline(final String expectedMessage) {
     String name = getTestName(false);
     @NonNls String fileName = "/refactoring/inlineToAnonymousClass/" + name + ".java";
     configureByFile(fileName);
@@ -408,7 +408,7 @@ public class InlineToAnonymousClassTest extends LightRefactoringTestCase {
     assertEquals(expectedMessage, message);
   }
 
-  private void doTest(final boolean inlineThisOnly, final boolean searchInNonJavaFiles) throws Exception {
+  private void doTest(final boolean inlineThisOnly, final boolean searchInNonJavaFiles) {
     String name = getTestName(false);
     @NonNls String fileName = "/refactoring/inlineToAnonymousClass/" + name + ".java";
     configureByFile(fileName);
@@ -416,7 +416,7 @@ public class InlineToAnonymousClassTest extends LightRefactoringTestCase {
     checkResultByFile(null, fileName + ".after", true);
   }
 
-  private void doTestPreprocessUsages(final String expectedMessage) throws Exception {
+  private void doTestPreprocessUsages(final String expectedMessage) {
     configureByFile("/refactoring/inlineToAnonymousClass/" + getTestName(false) + ".java");
     PsiElement element = TargetElementUtil.findTargetElement(myEditor, TargetElementUtil
                                                                          .ELEMENT_NAME_ACCEPTED |
@@ -426,7 +426,7 @@ public class InlineToAnonymousClassTest extends LightRefactoringTestCase {
     assertEquals(expectedMessage, InlineToAnonymousClassHandler.getCannotInlineMessage(psiClass));
   }
 
-  private InlineToAnonymousClassProcessor prepareProcessor() throws Exception {
+  private InlineToAnonymousClassProcessor prepareProcessor() {
     String name = getTestName(false);
     @NonNls String fileName = "/refactoring/inlineToAnonymousClass/" + name + ".java";
     configureByFile(fileName);
@@ -453,43 +453,43 @@ public class InlineToAnonymousClassTest extends LightRefactoringTestCase {
     processor.run();
   }
 
-  public void testCanBeInvokedOnReference() throws Exception {
+  public void testCanBeInvokedOnReference() {
     doTestCanBeInvokedOnReference(true);
   }
 
-  public void testCanBeInvokedOnReference1() throws Exception {
+  public void testCanBeInvokedOnReference1() {
     doTestCanBeInvokedOnReference(true);
   }
 
-  public void testCanBeInvokedOnReferenceSubstitution() throws Exception {
+  public void testCanBeInvokedOnReferenceSubstitution() {
     doTestCanBeInvokedOnReference(true);
   }
 
-  public void testCanBeInvokedOnReferenceSubstitution1() throws Exception {
+  public void testCanBeInvokedOnReferenceSubstitution1() {
     doTestCanBeInvokedOnReference(true);
   }
 
-  public void testCanBeInvokedOnReferenceVarargs() throws Exception {
+  public void testCanBeInvokedOnReferenceVarargs() {
     doTestCanBeInvokedOnReference(true);
   }
 
-  public void testCantBeInvokedOnReference() throws Exception {
+  public void testCantBeInvokedOnReference() {
     doTestCanBeInvokedOnReference(false);
   }
 
-  public void testCantBeInvokedOnReference1() throws Exception {
+  public void testCantBeInvokedOnReference1() {
     doTestCanBeInvokedOnReference(false);
   }
 
-  public void testCantBeInvokedOnReferenceReturnStatement() throws Exception {
+  public void testCantBeInvokedOnReferenceReturnStatement() {
     doTestCanBeInvokedOnReference(false);
   }
 
-  public void testCanBeInvokedOnReferenceSyncStatement() throws Exception {
+  public void testCanBeInvokedOnReferenceSyncStatement() {
     doTestCanBeInvokedOnReference(true);
   }
 
-  private void doTestCanBeInvokedOnReference(boolean canBeInvokedOnReference) throws Exception {
+  private void doTestCanBeInvokedOnReference(boolean canBeInvokedOnReference) {
     configureByFile("/refactoring/inlineToAnonymousClass/" + getTestName(false) + ".java");
     PsiElement element = TargetElementUtil
       .findTargetElement(myEditor, TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);

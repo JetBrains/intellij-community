@@ -85,7 +85,7 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
     super.tearDown();
   }
 
-  public void testGetCachedDocument_Cached() throws Exception {
+  public void testGetCachedDocument_Cached() {
     final Document cachedDocument = myDocumentManager.getCachedDocument(new MockVirtualFile("test.txt"));
     assertNull(cachedDocument);
   }
@@ -146,7 +146,7 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
     assertTrue(idCode != System.identityHashCode(document));
   }
 
-  public void testGetUnsavedDocuments_NoDocuments() throws Exception {
+  public void testGetUnsavedDocuments_NoDocuments() {
     final Document[] unsavedDocuments = myDocumentManager.getUnsavedDocuments();
     assertEquals(0, unsavedDocuments.length);
   }
@@ -307,7 +307,7 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
     assertSame(file, myDocumentManager.getFile(document));
   }
 
-  public void testConvertSeparators() throws Exception {
+  public void testConvertSeparators() {
     final VirtualFile file = new MockVirtualFile("test.txt", "test\rtest");
     Document document = myDocumentManager.getDocument(file);
     assertNotNull(file.toString(), document);
@@ -358,11 +358,11 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
     assertEquals("test\ntest", document.getText());
   }
 
-  public void testContentChanged_ignoreEventsFromSelfOnSave() throws Exception {
+  public void testContentChanged_ignoreEventsFromSelfOnSave() {
     final VirtualFile file = new MockVirtualFile("test.txt", "test\rtest") {
       @NotNull
       @Override
-      public OutputStream getOutputStream(final Object requestor, final long newModificationStamp, long newTimeStamp) throws IOException {
+      public OutputStream getOutputStream(final Object requestor, final long newModificationStamp, long newTimeStamp) {
         final VirtualFile self = this;
         return new ByteArrayOutputStream() {
           @Override
@@ -440,7 +440,7 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
   // this test requires changes in idea code to support MockFile as local file system file (FileDocumentManager.needsRefresh).
   // TODO: think how to test this functionality without hacking production code
   @SuppressWarnings("UnusedDeclaration")
-  public void _testContentChanged_reloadChangedDocumentOnSave() throws Exception {
+  public void _testContentChanged_reloadChangedDocumentOnSave() {
     final MockVirtualFile file = new MockVirtualFile("test.txt", "test\rtest") {
       @Override
       public void refresh(boolean asynchronous, boolean recursive, Runnable postRunnable) {
@@ -572,7 +572,7 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
     });
   }
 
-  public void testNoPSIModificationsDuringSave() throws IOException {
+  public void testNoPSIModificationsDuringSave() {
     File ioFile = IoTestUtil.createTestFile("test.txt", "<html>some text</html>");
     VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioFile);
     assertNotNull(ioFile.getPath(), virtualFile);

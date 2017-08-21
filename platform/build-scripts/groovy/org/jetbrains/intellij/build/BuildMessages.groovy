@@ -33,11 +33,15 @@ interface BuildMessages {
 
   void error(String message, Throwable cause)
 
+  void compilationError(String compilerName, String message)
+
   void progress(String message)
 
   def <V> V block(String blockName, Closure<V> body)
 
-  void artifactBuild(String relativeArtifactPath)
+  void artifactBuilt(String relativeArtifactPath)
+
+  void reportStatisticValue(String key, String value)
 
   BuildMessages forkForParallelTask(String taskName)
 

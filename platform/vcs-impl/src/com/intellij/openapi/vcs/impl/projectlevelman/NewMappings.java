@@ -186,6 +186,16 @@ public class NewMappings {
     myProject.getMessageBus().syncPublisher(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED).directoryMappingChanged();
     myFileStatusManager.fileStatusesChanged();
     myFileWatchRequestsManager.ping();
+
+    dumpMappingsToLog();
+  }
+
+  private void dumpMappingsToLog() {
+    for (VcsDirectoryMapping mapping : mySortedMappings) {
+      String path = mapping.isDefaultMapping() ? VcsDirectoryMapping.PROJECT_CONSTANT : mapping.getDirectory();
+      String vcs = mapping.getVcs();
+      LOG.info(String.format("VCS Root: [%s] - [%s]", vcs, path));
+    }
   }
 
   public void setDirectoryMappings(final List<VcsDirectoryMapping> items) {

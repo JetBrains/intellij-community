@@ -76,7 +76,10 @@ public class ClassPath {
     push(urls);
   }
 
-  /** @deprecated to be removed in IDEA 15 */
+  /**
+   * @deprecated Adding additional urls to classpath at runtime could lead to hard-to-debug errors
+   */
+  @Deprecated
   void addURL(URL url) {
     push(Collections.singletonList(url));
   }
@@ -267,10 +270,18 @@ public class ClassPath {
       List<Loader> loaders = null;
 
       if (myCanUseCache && myAllUrlsWereProcessed) {
-        loaders = new SmartList<Loader>();
-        myCache.iterateLoaders(name, ourLoaderCollector, loaders, this);
-        if (!name.endsWith("/")) {
-          myCache.iterateLoaders(name.concat("/"), ourLoaderCollector, loaders, this);
+        boolean nameIsDirectory = name.endsWith("/");
+        Collection<Loader> loadersSet = nameIsDirectory ? new SmartList<Loader>() : new LinkedHashSet<Loader>();
+        myCache.iterateLoaders(name, ourLoaderCollector, loadersSet, this);
+
+        if (!nameIsDirectory) {
+          myCache.iterateLoaders(name.concat("/"), ourLoaderCollector, loadersSet, this);
+        }
+
+        if (nameIsDirectory) {
+          loaders = (List<Loader>)loadersSet;
+        } else {
+          loaders = new ArrayList<Loader>(loadersSet);
         }
       }
 
@@ -341,9 +352,9 @@ public class ClassPath {
     }
   }
 
-  private static class LoaderCollector extends ClasspathCache.LoaderIterator<Object, List<Loader>, Object> {
+  private static class LoaderCollector extends ClasspathCache.LoaderIterator<Object, Collection<Loader>, Object> {
     @Override
-    Object process(Loader loader, List<Loader> parameter, Object parameter2) {
+    Object process(Loader loader, Collection<Loader> parameter, Object parameter2) {
       parameter.add(loader);
       return null;
     }

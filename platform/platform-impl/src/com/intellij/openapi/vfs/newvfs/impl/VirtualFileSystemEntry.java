@@ -19,7 +19,6 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.io.FileTooBigException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
@@ -34,7 +33,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.Charset;
 
@@ -362,21 +360,11 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     }
     else {
       try {
-        final byte[] content;
-        try {
-          content = VfsUtilCore.loadBytes(this);
-        }
-        catch (FileNotFoundException e) {
-          // file has already been deleted on disk
-          return super.getCharset();
-        }
+        final byte[] content = VfsUtilCore.loadBytes(this);
         charset = LoadTextUtil.detectCharsetAndSetBOM(this, content, getFileType());
       }
-      catch (FileTooBigException e) {
-        return super.getCharset();
-      }
       catch (IOException e) {
-        throw new RuntimeException(getPath(), e);
+        return super.getCharset();
       }
     }
     return charset;
@@ -384,7 +372,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @Override
   public String getPresentableName() {
-    if (UISettings.getInstance().getHdeKnownExtensionInTabs() && !isDirectory()) {
+    if (UISettings.getInstance().getHideKnownExtensionInTabs() && !isDirectory()) {
       final String nameWithoutExtension = getNameWithoutExtension();
       return nameWithoutExtension.isEmpty() ? getName() : nameWithoutExtension;
     }

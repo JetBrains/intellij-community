@@ -16,12 +16,12 @@
 package com.jetbrains.python.codeInsight.userSkeletons;
 
 import com.intellij.codeHighlighting.Pass;
-import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.LineMarkerProvider;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.util.PsiNavigateUtil;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyFunction;
@@ -30,7 +30,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.event.MouseEvent;
 import java.util.Collection;
 import java.util.List;
 
@@ -52,19 +51,19 @@ public class PyUserSkeletonsLineMarkerProvider implements LineMarkerProvider {
     for (PsiElement element : elements) {
       final PyElement skeleton = getUserSkeleton(element);
       if (skeleton != null) {
-        result.add(new LineMarkerInfo<PsiElement>(
-          element, element.getTextRange(), ICON, Pass.LINE_MARKERS,
-          e -> "Has user skeleton",
-          new GutterIconNavigationHandler<PsiElement>() {
-            @Override
-            public void navigate(MouseEvent e, PsiElement elt) {
-              final PyElement s = getUserSkeleton(elt);
+        PsiElement identifier = ((PsiNameIdentifierOwner)element).getNameIdentifier();
+        if (identifier != null) {
+          result.add(new LineMarkerInfo<>(
+            identifier, identifier.getTextRange(), ICON, Pass.LINE_MARKERS,
+            __ -> "Has user skeleton",
+            (__, elt) -> {
+              final PyElement s = getUserSkeleton(elt.getParent());
               if (s != null) {
                 PsiNavigateUtil.navigate(s);
               }
-            }
-          },
-          GutterIconRenderer.Alignment.RIGHT));
+            },
+            GutterIconRenderer.Alignment.RIGHT));
+        }
       }
     }
   }

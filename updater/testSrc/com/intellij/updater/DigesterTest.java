@@ -48,7 +48,7 @@ public class DigesterTest extends UpdaterTestCase {
   }
 
   @Test
-  public void testHelpers() throws Exception {
+  public void testHelpers() {
     assertTrue(Digester.isFile(CHECKSUMS.README_TXT));
     assertTrue(Digester.isFile(CHECKSUMS.ANNOTATIONS_JAR));
     assertFalse(Digester.isFile(Digester.INVALID));

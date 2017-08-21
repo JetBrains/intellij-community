@@ -31,9 +31,6 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author nik
  */
 public class SingleRemoteServerConfigurable extends NamedConfigurable<RemoteServer<?>> {
-  private static final String HELP_TOPIC_ID = "reference.settings.clouds";
-
-
   private final RemoteServerConfigurable myConfigurable;
   private final RemoteServer<?> myServer;
   private String myServerName;
@@ -184,6 +181,7 @@ public class SingleRemoteServerConfigurable extends NamedConfigurable<RemoteServ
     boolean uncheckedApply = myConfigurable.isModified();
     myConfigurable.apply();
     XmlSerializerUtil.copyBean(myInnerServer.getConfiguration(), myServer.getConfiguration());
+    myServer.setName(myServerName);
     myNew = false;
     myUncheckedApply = uncheckedApply;
     myInnerApplied = false;

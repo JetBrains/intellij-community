@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,13 @@
  */
 package com.jetbrains.python.inspections
 
+import com.google.common.collect.Iterables
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyPsiUtils
-import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.PyClassType
 
 class PyDunderSlotsInspection : PyInspection() {
@@ -40,12 +40,12 @@ class PyDunderSlotsInspection : PyInspection() {
 
         when (slots) {
           is PySequenceExpression -> slots
-              .elements
-              .asSequence()
-              .filterIsInstance<PyStringLiteralExpression>()
-              .forEach {
-                processSlot(node, it)
-              }
+            .elements
+            .asSequence()
+            .filterIsInstance<PyStringLiteralExpression>()
+            .forEach {
+              processSlot(node, it)
+            }
           is PyStringLiteralExpression -> processSlot(node, slots)
         }
       }
@@ -60,7 +60,7 @@ class PyDunderSlotsInspection : PyInspection() {
     }
 
     private fun findSlotsValue(pyClass: PyClass): PyExpression? {
-      val target = pyClass.findClassAttribute(PyNames.SLOTS, false, myTypeEvalContext) as? PyTargetExpression
+      val target = pyClass.findClassAttribute(PyNames.SLOTS, false, myTypeEvalContext)
       val value = target?.findAssignedValue()
 
       return PyPsiUtils.flattenParens(value)
@@ -84,45 +84,63 @@ class PyDunderSlotsInspection : PyInspection() {
 
       val qualifierType = myTypeEvalContext.getType(qualifier)
       if (qualifierType is PyClassType && !qualifierType.isDefinition) {
-        val reference = target.getReference(PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext))
         val qualifierClass = qualifierType.pyClass
 
-        val classWithReadOnlyAttr = PyUtil
-            .multiResolveTopPriority(reference)
-            .asSequence()
-            .filterIsInstance<PyTargetExpression>()
-            .map { declaration -> declaration.containingClass }
-            .filterNotNull()
-            .find { declaringClass -> !attributeIsWritable(qualifierClass, declaringClass, targetName) }
-
-        if (classWithReadOnlyAttr != null) {
+        if (!attributeIsWritable(qualifierClass, targetName)) {
           registerProblem(target, "'${qualifierClass.name}' object attribute '$targetName' is read-only")
         }
       }
     }
 
-    private fun attributeIsWritable(qualifierClass: PyClass, declaringClass: PyClass, targetName: String): Boolean {
-      return attributeIsWritableInClass(qualifierClass, declaringClass, targetName) ||
-          qualifierClass
-              .getAncestorClasses(myTypeEvalContext)
-              .asSequence()
-              .filter { ancestorClass -> !PyUtil.isObjectClass(ancestorClass) }
-              .any { ancestorClass -> attributeIsWritableInClass(ancestorClass, declaringClass, targetName) }
+    private fun attributeIsWritable(cls: PyClass, name: String): Boolean {
+      /*
+      The only difference between Py2 and Py3+ is that the following case is not highlighted in Py3+:
+
+      class A:
+          attr = "attr"
+          __slots__ = ("attr")
+
+      A().attr
+
+      Py3+ raises ValueError about conflict between __slots__ and class variable.
+      This case is handled above by com.jetbrains.python.inspections.PyDunderSlotsInspection.Visitor.processSlot method.
+      */
+      if (LanguageLevel.forElement(cls).isOlderThan(LanguageLevel.PYTHON30)) {
+        return attributeIsWritableInPy2(cls, name)
+      }
+      else {
+        return attributeIsWritableInPy3(cls, name)
+      }
     }
 
-    private fun attributeIsWritableInClass(cls: PyClass, declaringClass: PyClass, targetName: String): Boolean {
-      val ownSlots = cls.ownSlots
+    private fun attributeIsWritableInPy2(cls: PyClass, name: String): Boolean {
+      val slots = cls.getSlots(myTypeEvalContext)
+      return slots == null ||
+             slots.contains(PyNames.DICT) ||
+             slots.contains(name) && cls.findClassAttribute(name, true, myTypeEvalContext) == null
+    }
 
-      if (ownSlots == null || ownSlots.contains(PyNames.DICT)) {
-        return true
+    private fun attributeIsWritableInPy3(cls: PyClass, name: String): Boolean {
+      var classAttrIsFound = false
+      var slotIsFound = false
+
+      for (c in Iterables.concat(listOf(cls), cls.getAncestorClasses(myTypeEvalContext))) {
+        if (PyUtil.isObjectClass(c)) continue
+
+        val ownSlots = c.ownSlots
+
+        if (ownSlots == null || ownSlots.contains(PyNames.DICT)) return true
+
+        if (!classAttrIsFound) {
+          classAttrIsFound = c.findClassAttribute(name, false, myTypeEvalContext) != null
+          if (ownSlots.contains(name)) {
+            if (classAttrIsFound) return true
+            slotIsFound = true
+          }
+        }
       }
 
-      if (!cls.equals(declaringClass) || !ownSlots.contains(targetName)) {
-        return false
-      }
-
-      return LanguageLevel.forElement(declaringClass).isAtLeast(LanguageLevel.PYTHON30) ||
-          declaringClass.findClassAttribute(targetName, false, myTypeEvalContext) == null
+      return slotIsFound && !classAttrIsFound
     }
   }
 }

@@ -61,7 +61,7 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
     catch (BaseRefactoringProcessor.ConflictsInTestsException ignored) { }
   }
 
-  public void testDelegateWithoutChangesWarnAboutSameMethodInClass() throws Exception {
+  public void testDelegateWithoutChangesWarnAboutSameMethodInClass() {
     try {
       doTest(null, new ParameterInfoImpl[0], true);
       fail("Conflict expected");
@@ -69,7 +69,7 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
     catch (BaseRefactoringProcessor.ConflictsInTestsException ignored) { }
   }
 
-  public void testDuplicatedSignatureInInheritor() throws Exception {
+  public void testDuplicatedSignatureInInheritor() {
     try {
       doTest(null, new ParameterInfoImpl[] {new ParameterInfoImpl(-1, "i", PsiType.INT)}, true);
       fail("Conflict expected");
@@ -77,7 +77,7 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
     catch (BaseRefactoringProcessor.ConflictsInTestsException ignored) { }
   }
 
-  public void testConflictForUsedParametersInMethodBody() throws Exception {
+  public void testConflictForUsedParametersInMethodBody() {
     try {
       doTest(null, new ParameterInfoImpl[0], true);
       fail("Conflict expected");
@@ -185,7 +185,7 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
     }, false);
   }
 
-  public void testVarargMethodToNonVarag() throws Exception {
+  public void testVarargMethodToNonVarag() {
     doTest(null, new ParameterInfoImpl[]{
       new ParameterInfoImpl(0, "i", PsiType.INT),
       new ParameterInfoImpl(-1, "b", PsiType.BOOLEAN)
@@ -223,6 +223,14 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
     doTest(null, new ParameterInfoImpl[]{
       new ParameterInfoImpl(0, "a", PsiType.BOOLEAN),
       new ParameterInfoImpl(-1, "b", PsiType.BOOLEAN),
+    }, false);
+  }
+
+  public void testParamJavadocRenamedReordered() {
+    doTest(null, new ParameterInfoImpl[]{
+      new ParameterInfoImpl(0, "a", PsiType.BOOLEAN),
+      new ParameterInfoImpl(-1, "c", PsiType.BOOLEAN),
+      new ParameterInfoImpl(1, "b1", PsiType.BOOLEAN),
     }, false);
   }
 
@@ -373,7 +381,7 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
     }, false);
   }
 
-  public void testReplaceOldStyleArrayWithVarargs() throws Exception {
+  public void testReplaceOldStyleArrayWithVarargs() {
     doTest(null, new ParameterInfoImpl[] {new ParameterInfoImpl(0, "a", new PsiEllipsisType(PsiType.INT))}, false);
   }
 

@@ -3,9 +3,7 @@ java.lang.Object -> myPackage.A
 
 Backward References:
 java.lang.Deprecated in package-info occurrences = 1
-java.lang.Object.<init>(0) in package-info occurrences = 1
 myPackage.A in package-info occurrences = 1
-myPackage.A.<init>(0) in package-info occurrences = 1
 
 Class Definitions:
 myPackage.A in package-info

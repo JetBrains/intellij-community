@@ -16,7 +16,6 @@
 package com.intellij.execution.ui;
 
 import com.intellij.execution.*;
-import com.intellij.execution.dashboard.RunDashboardContributor;
 import com.intellij.execution.dashboard.RunDashboardManager;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
@@ -299,7 +298,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     if (processHandler != null) {
       final ProcessAdapter processAdapter = new ProcessAdapter() {
         @Override
-        public void startNotified(final ProcessEvent event) {
+        public void startNotified(@NotNull final ProcessEvent event) {
           UIUtil.invokeLaterIfNeeded(() -> {
             content.setIcon(ExecutionUtil.getLiveIndicator(descriptor.getIcon()));
             toolWindow.setIcon(ExecutionUtil.getLiveIndicator(myToolwindowIdToBaseIconMap.get(toolWindowId)));
@@ -307,7 +306,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
         }
 
         @Override
-        public void processTerminated(final ProcessEvent event) {
+        public void processTerminated(@NotNull final ProcessEvent event) {
           ApplicationManager.getApplication().invokeLater(() -> {
             boolean alive = false;
             ContentManager manager = myToolwindowIdToContentManagerMap.get(toolWindowId);
@@ -360,11 +359,9 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
       // mark the window as "last activated" windows and thus
       // some action like navigation up/down in stacktrace wont
       // work correctly
-      descriptor.getPreferredFocusComputable();
       window.activate(descriptor.getActivationCallback(), descriptor.isAutoFocusContent(), descriptor.isAutoFocusContent());
     }, myProject.getDisposed());
   }
-
 
   @Nullable
   @Override
@@ -567,9 +564,9 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
   @Nullable
   public String getContentDescriptorToolWindowId(@Nullable RunnerAndConfigurationSettings settings) {
     if (settings != null) {
-      RunDashboardContributor contributor = RunDashboardContributor.getContributor(settings.getType());
-      if (contributor != null && contributor.isShowInDashboard(settings.getConfiguration())) {
-        return RunDashboardManager.getInstance(myProject).getToolWindowId();
+      RunDashboardManager runDashboardManager = RunDashboardManager.getInstance(myProject);
+      if (runDashboardManager.isShowInDashboard(settings.getConfiguration())) {
+        return runDashboardManager.getToolWindowId();
       }
     }
     return null;
@@ -666,7 +663,8 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
       if (myContent == null) return true;
 
       final boolean canClose = closeQuery(true);
-      if (canClose) {
+      // Content could be removed during close query
+      if (canClose && myContent != null) {
         myContent.getManager().removeContent(myContent, true);
         myContent = null;
       }

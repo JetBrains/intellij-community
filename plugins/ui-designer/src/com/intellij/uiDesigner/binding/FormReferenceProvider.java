@@ -19,7 +19,7 @@ import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
@@ -35,6 +35,7 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.uiDesigner.GuiFormFileType;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.util.ProcessingContext;
@@ -50,6 +51,7 @@ import java.util.Map;
  * @author yole
  */
 public class FormReferenceProvider extends PsiReferenceProvider {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.binding.FormReferenceProvider");
   private static class CachedFormData {
     PsiReference[] myReferences;
     Map<String, Pair<PsiType, TextRange>> myFieldNameToTypeMap;
@@ -65,8 +67,8 @@ public class FormReferenceProvider extends PsiReferenceProvider {
   @NotNull
   public PsiReference[] getReferencesByElement(@NotNull final PsiElement element, @NotNull final ProcessingContext context) {
     if (element instanceof PsiPlainTextFile) {
-      final PsiPlainTextFile plainTextFile = (PsiPlainTextFile) element;
-      if (plainTextFile.getFileType().equals(StdFileTypes.GUI_DESIGNER_FORM)) {
+      PsiPlainTextFile plainTextFile = (PsiPlainTextFile) element;
+      if (plainTextFile.getFileType().equals(GuiFormFileType.INSTANCE)) {
         return getCachedData(plainTextFile).myReferences;
       }
     }

@@ -29,7 +29,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class InspectionLIfeCycleTest extends LightDaemonAnalyzerTestCase {
-  public void testInspectionFinishedCalledOnce() throws Exception {
+  public void testInspectionFinishedCalledOnce() {
     String text = "class LQF {\n" +
                   "    int f;\n" +
                   "    public void me() {\n" +

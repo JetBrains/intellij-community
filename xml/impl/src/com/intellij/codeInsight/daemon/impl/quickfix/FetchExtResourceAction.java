@@ -143,6 +143,11 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
   }
 
   @Override
+  public boolean startInWriteAction() {
+    return false;
+  }
+
+  @Override
   protected void doInvoke(@NotNull final PsiFile file, final int offset, @NotNull final String uri, final Editor editor)
     throws IncorrectOperationException {
     final String url = findUrl(file, offset, uri);

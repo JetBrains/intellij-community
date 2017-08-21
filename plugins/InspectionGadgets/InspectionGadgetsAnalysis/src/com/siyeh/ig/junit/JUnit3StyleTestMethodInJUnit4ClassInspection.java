@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.siyeh.ig.junit;
 
 import com.intellij.codeInspection.AnnotateMethodFix;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -50,12 +49,7 @@ public class JUnit3StyleTestMethodInJUnit4ClassInspection extends BaseInspection
   @Nullable
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new DelegatingFix(new AnnotateMethodFix("org.junit.Test"){
-      @Override
-      public int shouldAnnotateBaseMethod(PsiMethod method, PsiMethod superMethod, Project project) {
-        return 1;
-      }
-    });
+    return new DelegatingFix(new AnnotateMethodFix("org.junit.Test"));
   }
 
   @Override

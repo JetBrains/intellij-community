@@ -16,9 +16,6 @@
 package com.jetbrains.python.codeInsight.stdlib
 
 import com.intellij.psi.PsiElement
-import com.jetbrains.python.PyNames
-import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
-import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.impl.PyOverridingTypeProvider
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyTypeProviderBase
@@ -27,12 +24,6 @@ import com.jetbrains.python.psi.types.TypeEvalContext
 class PyStdlibOverridingTypeProvider : PyTypeProviderBase(), PyOverridingTypeProvider {
 
   override fun getReferenceType(referenceTarget: PsiElement, context: TypeEvalContext, anchor: PsiElement?): PyType? {
-    return if (isTypingNamedTupleInit(referenceTarget)) PyStdlibTypeProvider.getNamedTupleType(referenceTarget, context, anchor) else null
-  }
-
-  private fun isTypingNamedTupleInit(referenceTarget: PsiElement): Boolean {
-    return referenceTarget is PyFunction &&
-           PyNames.INIT == referenceTarget.name &&
-           PyTypingTypeProvider.NAMEDTUPLE == referenceTarget.containingClass?.qualifiedName
+    return PyStdlibTypeProvider.getNamedTupleTypeForResolvedCallee(referenceTarget, context, anchor)
   }
 }

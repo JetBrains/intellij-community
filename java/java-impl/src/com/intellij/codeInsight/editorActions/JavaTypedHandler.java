@@ -194,7 +194,7 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
     int caret = editor.getCaretModel().getOffset();
     if (mightBeInsideDefaultAnnotationAttribute(editor, caret - 2)) {
       PsiDocumentManager.getInstance(project).commitAllDocuments();
-      PsiAnnotation anno = PsiTreeUtil.findElementOfClassAtOffset(file, caret, PsiAnnotation.class, false);
+      PsiAnnotation anno = PsiTreeUtil.getParentOfType(file.findElementAt(caret), PsiAnnotation.class, false, PsiExpression.class, PsiComment.class);
       PsiNameValuePair attr = anno == null ? null : getTheOnlyDefaultAttribute(anno);
       if (attr != null && hasDefaultArrayMethod(anno) && !(attr.getValue() instanceof PsiArrayInitializerMemberValue)) {
         editor.getDocument().insertString(caret, "}");

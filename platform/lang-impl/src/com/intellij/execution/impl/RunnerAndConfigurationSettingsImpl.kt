@@ -84,13 +84,13 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
 
   override fun isTemporary() = level == RunConfigurationLevel.TEMPORARY
 
-  override fun isShared() = level == RunConfigurationLevel.PROJECT
-
   override fun setTemporary(value: Boolean) {
     level = if (value) RunConfigurationLevel.TEMPORARY else RunConfigurationLevel.WORKSPACE
   }
 
-  fun setShared(value: Boolean) {
+  override fun isShared() = level == RunConfigurationLevel.PROJECT
+
+  override fun setShared(value: Boolean) {
     if (value) {
       level = RunConfigurationLevel.PROJECT
     }
@@ -114,7 +114,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
   override fun getName(): String {
     val configuration = configuration
     if (isTemplate) {
-      return "<template> of ${configuration.factory.name}"
+      return "<template> of ${configuration.factory.id}"
     }
     return configuration.name
   }
@@ -240,7 +240,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
       }
 
       element.setAttribute(CONFIGURATION_TYPE_ATTRIBUTE, factory.type.id)
-      element.setAttribute(FACTORY_NAME_ATTRIBUTE, factory.name)
+      element.setAttribute(FACTORY_NAME_ATTRIBUTE, factory.id)
       if (folderName != null) {
         element.setAttribute(FOLDER_NAME, folderName!!)
       }
@@ -277,6 +277,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
         PathMacroManager.getInstance(it).collapsePathsRecursively(element)
       }
     }
+    PathMacroManager.getInstance(configuration.project).collapsePathsRecursively(element)
   }
 
   private fun serializeConfigurationInto(configuration: RunConfiguration, element: Element) {
@@ -427,20 +428,18 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
 
     private fun findRunner(runnerId: String): ProgramRunner<*>? {
       val runnersById = ProgramRunner.PROGRAM_RUNNER_EP.extensions.filter { runnerId == it.runnerId }
-      return if (runnersById.isEmpty()) {
-        null
-      }
-      else if (runnersById.size == 1) {
-        runnersById.firstOrNull()
-      }
-      else {
-        LOG.error("More than one runner found for ID: $runnerId")
-        for (executor in ExecutorRegistry.getInstance().registeredExecutors) {
-          runnersById.firstOrNull { it.canRun(executor.id, configuration)  }?.let {
-            return it
+      return when {
+        runnersById.isEmpty() -> null
+        runnersById.size == 1 -> runnersById.firstOrNull()
+        else -> {
+          LOG.error("More than one runner found for ID: $runnerId")
+          for (executor in ExecutorRegistry.getInstance().registeredExecutors) {
+            runnersById.firstOrNull { it.canRun(executor.id, configuration)  }?.let {
+              return it
+            }
           }
+          null
         }
-        null
       }
     }
 

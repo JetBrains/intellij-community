@@ -352,6 +352,18 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
     doTest(schemaText, inputText);
   }
 
+  public void testWithRootRefCycledSchema() throws Exception {
+    String schemaText = FileUtil.loadFile(new File(getTestDataPath() + "/cycledWithRootRefSchema.json"));
+    String inputText = FileUtil.loadFile(new File(getTestDataPath() + "/testCycledWithRootRefSchema.json"));
+    doTest(schemaText, inputText);
+  }
+
+  public void testCycledWithRootRefInNotSchema() throws Exception {
+    String schemaText = FileUtil.loadFile(new File(getTestDataPath() + "/cycledWithRootRefInNotSchema.json"));
+    String inputText = FileUtil.loadFile(new File(getTestDataPath() + "/testCycledWithRootRefInNotSchema.json"));
+    doTest(schemaText, inputText);
+  }
+
   public void testPatternPropertiesHighlighting() throws Exception {
     final String schema = "{\n" +
                           "  \"patternProperties\": {\n" +

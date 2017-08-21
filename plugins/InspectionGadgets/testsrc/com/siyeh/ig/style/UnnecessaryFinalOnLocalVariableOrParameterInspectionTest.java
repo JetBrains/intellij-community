@@ -29,7 +29,7 @@ public class UnnecessaryFinalOnLocalVariableOrParameterInspectionTest extends Li
     return JAVA_1_7;
   }
 
-  public void testUnnecessaryFinalOnLocalVariableOrParameter() throws Exception {
+  public void testUnnecessaryFinalOnLocalVariableOrParameter() {
     doTest();
   }
 

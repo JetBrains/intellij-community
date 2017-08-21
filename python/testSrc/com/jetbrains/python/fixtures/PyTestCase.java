@@ -62,14 +62,14 @@ import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.PythonTestUtil;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
+import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.formatter.PyCodeStyleSettings;
-import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
@@ -434,5 +434,19 @@ public abstract class PyTestCase extends UsefulTestCase {
     assertNotNull(file);
     return file.findElementAt(myFixture.getCaretOffset());
   }
+
+  public static void assertType(@NotNull String expectedType, @NotNull PyTypedElement element, @NotNull TypeEvalContext context) {
+    assertType("Failed in " + context + " context", expectedType, element, context);
+  }
+
+  public static void assertType(@NotNull String message,
+                                @NotNull String expectedType,
+                                @NotNull PyTypedElement element,
+                                @NotNull TypeEvalContext context) {
+    final PyType actual = context.getType(element);
+    final String actualType = PythonDocumentationProvider.getTypeName(actual, context);
+    assertEquals(message, expectedType, actualType);
+  }
+  
 }
 

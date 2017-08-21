@@ -22,7 +22,7 @@ import java.util.Iterator;
 
 /**
  * Actually this class represent two stacks.
- * 1. Stack of <code>id</code>s of active tool windows. This stack is used for reactivation of tool window
+ * 1. Stack of {@code id}s of active tool windows. This stack is used for reactivation of tool window
  * after the another tool window was closed. This stack is cleared every time you active the editor.
  * 2. Permanent stack. It is the same as the first one, but it's not cleared when editor is being
  * activated. It used to provide id of last active tool window.
@@ -31,7 +31,7 @@ import java.util.Iterator;
  */
 final class ActiveStack {
   /**
-   * Contains <code>id</code>s of tool window that were activated. This stack
+   * Contains {@code id}s of tool window that were activated. This stack
    * is cleared each time when editor is being activated.
    */
   private final Stack<String> myStack;
@@ -57,7 +57,7 @@ final class ActiveStack {
   }
 
   /**
-   * Return whether the stack of active (not persistent) <code>id</code>s is empty or not.
+   * Return whether the stack of active (not persistent) {@code id}s is empty or not.
    */
   boolean isEmpty() {
     return myStack.isEmpty();
@@ -111,7 +111,7 @@ final class ActiveStack {
   }
 
   /**
-   * Peeks element at the persistent stack. <code>0</code> means the top of the stack.
+   * Peeks element at the persistent stack. {@code 0} means the top of the stack.
    */
   @NotNull
   String peekPersistent(final int index) {
@@ -119,11 +119,11 @@ final class ActiveStack {
   }
 
   /**
-   * Removes specified <code>ID</code> from stack.
+   * Removes specified {@code ID} from stack.
    *
-   * @param id                   <code>ID</code> to be removed.
-   * @param removePersistentAlso if <code>true</code> then clears last active <code>ID</code>
-   *                             if it's the last active <code>ID</code>.
+   * @param id                   {@code ID} to be removed.
+   * @param removePersistentAlso if {@code true} then clears last active {@code ID}
+   *                             if it's the last active {@code ID}.
    */
   void remove(@NotNull String id, final boolean removePersistentAlso) {
     for (Iterator i = myStack.iterator(); i.hasNext();) {

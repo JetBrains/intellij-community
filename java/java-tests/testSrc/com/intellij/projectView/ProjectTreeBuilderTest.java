@@ -16,10 +16,8 @@ import com.intellij.testFramework.ProjectViewTestUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ui.tree.TreeUtil;
 
-import java.io.IOException;
-
 public class ProjectTreeBuilderTest extends BaseProjectViewTestCase {
-  public void testStandardProviders() throws Exception {
+  public void testStandardProviders() {
     getProjectTreeStructure().setProviders();
 
     final PsiClass aClass = JavaDirectoryService.getInstance().getClasses(getPackageDirectory())[0];
@@ -29,7 +27,7 @@ public class ProjectTreeBuilderTest extends BaseProjectViewTestCase {
     myStructure.checkNavigateFromSourceBehaviour(element, element.getVirtualFile(), myStructure.createPane());
   }
 
-  public void testShowClassMembers() throws IncorrectOperationException, IOException {
+  public void testShowClassMembers() throws IncorrectOperationException {
     myStructure.setShowMembers(true);
     useStandardProviders();
     final PsiClass[] classes = JavaDirectoryService.getInstance().getClasses(getPackageDirectory());

@@ -80,10 +80,6 @@ public final class CommanderSelectInTarget extends SelectInTargetPsiWrapper {
 
   }
 
-  protected boolean canWorkWithCustomObjects() {
-    return false;
-  }
-
   public String getToolWindowId() {
     return ToolWindowId.COMMANDER;
   }

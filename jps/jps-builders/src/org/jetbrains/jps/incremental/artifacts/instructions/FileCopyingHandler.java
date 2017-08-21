@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 
 /**
+ * @see ArtifactRootCopyingHandlerProvider
  * @author nik
  */
 public abstract class FileCopyingHandler {

@@ -19,7 +19,6 @@ import com.intellij.util.io.TestFileSystemItem;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.IOException;
 
 import static com.intellij.compiler.artifacts.ArtifactsTestCase.commitModel;
 
@@ -71,7 +70,7 @@ public abstract class ArtifactCompilerTestCase extends BaseCompilerTestCase {
     return make(getArtifactManager().getArtifacts());
   }
 
-  protected void changeFileInJar(String jarPath, String pathInJar) throws Exception {
+  protected void changeFileInJar(String jarPath, String pathInJar) {
     final VirtualFile jarFile = LocalFileSystem.getInstance().findFileByPath(jarPath);
     assertNotNull(jarFile);
     final VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(jarFile);
@@ -96,7 +95,7 @@ public abstract class ArtifactCompilerTestCase extends BaseCompilerTestCase {
     assertFalse(new File(FileUtil.toSystemDependentName(outputPath)).exists());
   }
 
-  public static void assertEmptyOutput(Artifact a1) throws IOException {
+  public static void assertEmptyOutput(Artifact a1) {
     assertOutput(a1, ArtifactCompilerTestCase.fs());
   }
 

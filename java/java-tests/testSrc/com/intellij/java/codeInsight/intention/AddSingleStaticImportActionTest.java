@@ -17,8 +17,8 @@ package com.intellij.java.codeInsight.intention;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 
 public class AddSingleStaticImportActionTest extends JavaCodeInsightFixtureTestCase {
@@ -42,6 +42,16 @@ public class AddSingleStaticImportActionTest extends JavaCodeInsightFixtureTestC
     myFixture.configureByFile(getTestName(false) + ".java");
 
     final IntentionAction intentionAction = myFixture.findSingleIntention("Add import for 'foo.Class1.Inner2'");
+    assertNotNull(intentionAction);
+    myFixture.launchAction(intentionAction);
+    myFixture.checkResultByFile(getTestName(false) + "_after.java");
+  }
+
+  public void testWrongCandidateAfterImport() {
+    myFixture.addClass("package foo; class Empty {}"); //to ensure package is in the project
+    myFixture.configureByFile(getTestName(false) + ".java");
+
+    final IntentionAction intentionAction = myFixture.findSingleIntention("Add static import for 'foo.Test.X.test'");
     assertNotNull(intentionAction);
     myFixture.launchAction(intentionAction);
     myFixture.checkResultByFile(getTestName(false) + "_after.java");
@@ -87,7 +97,7 @@ public class AddSingleStaticImportActionTest extends JavaCodeInsightFixtureTestC
     assertNull(intentionAction);
   }
 
-  public void testSkipSameNamedNonStaticReferences() throws Exception {
+  public void testSkipSameNamedNonStaticReferences() {
     myFixture.addClass("package foo;" +
                        "public class Clazz {" +
                        "   public void print(String s) {}" +
@@ -101,7 +111,7 @@ public class AddSingleStaticImportActionTest extends JavaCodeInsightFixtureTestC
     myFixture.checkResultByFile(getTestName(false) + "_after.java");
   }
 
-  public void testAllowSingleStaticImportWhenOnDemandImportOverloadedMethod() throws Exception {
+  public void testAllowSingleStaticImportWhenOnDemandImportOverloadedMethod() {
     myFixture.addClass("package foo; class Foo {public static void foo(int i){}}");
     myFixture.addClass("package foo; class Bar {public static void foo(String s){}}");
     myFixture.configureByFile(getTestName(false) + ".java");
@@ -112,12 +122,12 @@ public class AddSingleStaticImportActionTest extends JavaCodeInsightFixtureTestC
     myFixture.checkResultByFile(getTestName(false) + "_after.java");
   }
 
-  public void testSingleImportWhenConflictingWithOnDemand() throws Exception {
+  public void testSingleImportWhenConflictingWithOnDemand() {
     myFixture.addClass("package foo; class Foo {public static void foo(int i){}}");
     myFixture.addClass("package foo; class Bar {public static void foo(String s){}}");
     myFixture.configureByFile(getTestName(false) + ".java");
 
-    CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(getProject()).getCurrentSettings();
+    JavaCodeStyleSettings settings = CodeStyleSettingsManager.getInstance(getProject()).getCurrentSettings().getCustomSettings(JavaCodeStyleSettings.class);
     int old = settings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND;
     settings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND = 1;
     try {
@@ -131,14 +141,14 @@ public class AddSingleStaticImportActionTest extends JavaCodeInsightFixtureTestC
     }
   }
 
-  public void testConflictingNamesInScope() throws Exception {
+  public void testConflictingNamesInScope() {
     myFixture.addClass("package foo; public class Assert {public static void assertTrue(boolean b) {}}");
     myFixture.configureByFile(getTestName(false) + ".java");
     IntentionAction intention = myFixture.getAvailableIntention("Add static import for 'foo.Assert.assertTrue'");
     assertNull(intention);
   }
 
-  public void testProhibitWhenMethodWithIdenticalSignatureAlreadyImportedFromAnotherClass() throws Exception {
+  public void testProhibitWhenMethodWithIdenticalSignatureAlreadyImportedFromAnotherClass() {
     myFixture.addClass("package foo; class Foo {public static void foo(int i){}}");
     myFixture.addClass("package foo; class Bar {public static void foo(int i){}}");
     myFixture.configureByFile(getTestName(false) + ".java");

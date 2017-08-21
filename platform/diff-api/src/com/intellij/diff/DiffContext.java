@@ -22,26 +22,13 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class DiffContext implements UserDataHolder {
+public abstract class DiffContext implements UserDataHolder, FocusableContext {
   protected final UserDataHolderBase myUserDataHolder = new UserDataHolderBase();
 
   @Nullable
   public abstract Project getProject();
 
   public abstract boolean isWindowFocused();
-
-  /**
-   * @return whether diff panel holds focus
-   */
-  public abstract boolean isFocused();
-
-  /**
-   * Request focus on diff panel ({@link FrameDiffTool.DiffViewer#getPreferredFocusedComponent()} in current viewer)
-   * NB: focus requested via {@link java.awt.Component#requestFocusInWindow()}, ignoring {@link com.intellij.openapi.wm.IdeFocusManager}
-   * <p/>
-   * This method can be used in pair with {@link #isFocused()} to keep focus on modifications of component tree
-   */
-  public abstract void requestFocus();
 
   /**
    * @see com.intellij.diff.util.DiffUserDataKeys

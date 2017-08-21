@@ -16,7 +16,7 @@
 package com.intellij.java.codeInsight.daemon.quickFix;import com.intellij.codeInsight.daemon.LightIntentionActionTestCase;
 
 public class CreateCastExpressionFromInstanceofTest extends LightIntentionActionTestCase {
-  public void test() throws Exception { doAllTests(); }
+  public void test() { doAllTests(); }
 
   @Override
   protected String getBasePath() {

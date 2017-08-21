@@ -53,7 +53,7 @@ public class GitConfigTest extends GitPlatformTest {
   }
 
   //inspired by IDEA-135557
-  public void test_branch_with_hash_symbol() throws IOException {
+  public void test_branch_with_hash_symbol() {
     createRepository();
     addRemote("http://example.git");
     git("update-ref refs/remotes/origin/a#branch HEAD");
@@ -71,7 +71,7 @@ public class GitConfigTest extends GitPlatformTest {
   }
 
   // IDEA-143363 Check that remote.pushdefault (generic, without remote name) doesn't fail the config parsing procedure
-  public void test_remote_unspecified_section() throws Exception {
+  public void test_remote_unspecified_section() {
     createRepository();
     addRemote("git@github.com:foo/bar.git");
     git("config remote.pushdefault origin");
@@ -79,7 +79,7 @@ public class GitConfigTest extends GitPlatformTest {
     assertSingleRemoteInConfig();
   }
 
-  public void test_invalid_section_with_remote_prefix_is_ignored() throws Exception {
+  public void test_invalid_section_with_remote_prefix_is_ignored() {
     createRepository();
     addRemote("git@github.com:foo/bar.git");
     git("config remote-cfg.newkey newval");

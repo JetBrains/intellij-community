@@ -138,7 +138,7 @@ void caught() {
 }
 
 void uncaught() {
-  <error descr="Unhandled exception: java.lang.IllegalArgumentException">foo.Foo.libraryMethod();</error>
+  foo.Foo.<error descr="Unhandled exception: java.lang.IllegalArgumentException">libraryMethod();</error>
 }
 
 }

@@ -22,6 +22,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.ui.OnePixelDivider;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.ui.border.CustomLineBorder;
 import org.jetbrains.annotations.NotNull;
@@ -152,17 +153,18 @@ public class JavaDocFormattingPanel extends OptionTreeWithPreviewPanel {
 
   public void apply(CodeStyleSettings settings) {
     super.apply(settings);
-    settings.ENABLE_JAVADOC_FORMATTING = myEnableCheckBox.isSelected();
+    settings.getCustomSettings(JavaCodeStyleSettings.class).ENABLE_JAVADOC_FORMATTING = myEnableCheckBox.isSelected();
   }
 
   protected void resetImpl(final CodeStyleSettings settings) {
     super.resetImpl(settings);
-    myEnableCheckBox.setSelected(settings.ENABLE_JAVADOC_FORMATTING);
+    myEnableCheckBox.setSelected(settings.getCustomSettings(JavaCodeStyleSettings.class).ENABLE_JAVADOC_FORMATTING);
     update();
   }
 
   public boolean isModified(CodeStyleSettings settings) {
-    return super.isModified(settings) || myEnableCheckBox.isSelected() != settings.ENABLE_JAVADOC_FORMATTING;
+    return super.isModified(settings) ||
+           myEnableCheckBox.isSelected() != settings.getCustomSettings(JavaCodeStyleSettings.class).ENABLE_JAVADOC_FORMATTING;
   }
 
   @NotNull

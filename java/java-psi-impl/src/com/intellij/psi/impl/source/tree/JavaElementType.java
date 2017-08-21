@@ -180,24 +180,7 @@ public interface JavaElementType {
     @Override
     public int getErrorsCount(final CharSequence seq, Language fileLanguage, final Project project) {
       Lexer lexer = JavaParserDefinition.createLexer(LanguageLevel.HIGHEST);
-
-      lexer.start(seq);
-      if (lexer.getTokenType() != JavaTokenType.LBRACE) return IErrorCounterReparseableElementType.FATAL_ERROR;
-      lexer.advance();
-      int balance = 1;
-      while (true) {
-        IElementType type = lexer.getTokenType();
-        if (type == null) break;
-        if (balance == 0) return IErrorCounterReparseableElementType.FATAL_ERROR;
-        if (type == JavaTokenType.LBRACE) {
-          balance++;
-        }
-        else if (type == JavaTokenType.RBRACE) {
-          balance--;
-        }
-        lexer.advance();
-      }
-      return balance;
+      return PsiBuilderUtil.hasProperBraceBalance(seq, lexer, JavaTokenType.LBRACE, JavaTokenType.RBRACE) ? NO_ERRORS : FATAL_ERROR;
     }
   }
   ILazyParseableElementType CODE_BLOCK = new ICodeBlockElementType();

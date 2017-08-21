@@ -33,11 +33,11 @@ import java.util.*;
 public final class DesktopLayout {
   @NonNls static final String TAG = "layout";
   /**
-   * Map between <code>id</code>s and registered <code>WindowInfo</code>s.
+   * Map between {@code id}s and registered {@code WindowInfo}s.
    */
   private final Map<String, WindowInfoImpl> myRegisteredId2Info = new HashMap<>();
   /**
-   * Map between <code>id</code>s and unregistered <code>WindowInfo</code>s.
+   * Map between {@code id}s and unregistered {@code WindowInfo}s.
    */
   private final Map<String, WindowInfoImpl> myUnregisteredId2Info = new HashMap<>();
   /**
@@ -45,20 +45,20 @@ public final class DesktopLayout {
    */
   private static final MyWindowInfoComparator ourWindowInfoComparator = new MyWindowInfoComparator();
   /**
-   * Don't use this member directly. Get it only by <code>getInfos</code> method.
-   * It exists here only for optimization purposes. This member can be <code>null</code>
+   * Don't use this member directly. Get it only by {@code getInfos} method.
+   * It exists here only for optimization purposes. This member can be {@code null}
    * if the cached data is invalid.
    */
   private WindowInfoImpl[] myRegisteredInfos;
   /**
-   * Don't use this member directly. Get it only by <code>getUnregisteredInfos</code> method.
-   * It exists here only for optimization purposes. This member can be <code>null</code>
+   * Don't use this member directly. Get it only by {@code getUnregisteredInfos} method.
+   * It exists here only for optimization purposes. This member can be {@code null}
    * if the cached data is invalid.
    */
   private WindowInfoImpl[] myUnregisteredInfos;
   /**
-   * Don't use this member directly. Get it only by <code>getAllInfos</code> method.
-   * It exists here only for optimization purposes. This member can be <code>null</code>
+   * Don't use this member directly. Get it only by {@code getAllInfos} method.
+   * It exists here only for optimization purposes. This member can be {@code null}
    * if the cached data is invalid.
    */
   private WindowInfoImpl[] myAllInfos;
@@ -97,10 +97,10 @@ public final class DesktopLayout {
   }
 
   /**
-   * Creates or gets <code>WindowInfo</code> for the specified <code>id</code>. If tool
-   * window is being registered first time the method uses <code>anchor</code>.
+   * Creates or gets {@code WindowInfo} for the specified {@code id}. If tool
+   * window is being registered first time the method uses {@code anchor}.
    *
-   * @param id     <code>id</code> of tool window to be registered.
+   * @param id     {@code id} of tool window to be registered.
    * @param anchor the default tool window anchor.
    */
   final WindowInfoImpl register(@NotNull String id, @NotNull ToolWindowAnchor anchor, final boolean splitMode) {
@@ -132,9 +132,9 @@ public final class DesktopLayout {
   }
 
   /**
-   * @return <code>WindowInfo</code> for the window with specified <code>id</code>.
-   *         If <code>onlyRegistered</code> is <code>true</code> then returns not <code>null</code>
-   *         value if and only if window with <code>id</code> is registered one.
+   * @return {@code WindowInfo} for the window with specified {@code id}.
+   *         If {@code onlyRegistered} is {@code true} then returns not {@code null}
+   *         value if and only if window with {@code id} is registered one.
    */
   final WindowInfoImpl getInfo(String id, final boolean onlyRegistered) {
     final WindowInfoImpl info = myRegisteredId2Info.get(id);
@@ -156,7 +156,7 @@ public final class DesktopLayout {
   }
 
   /**
-   * @return <code>WindowInfo</code>s for all registered tool windows.
+   * @return {@code WindowInfo}s for all registered tool windows.
    */
   @NotNull
   final WindowInfoImpl[] getInfos() {
@@ -167,7 +167,7 @@ public final class DesktopLayout {
   }
 
   /**
-   * @return <code>WindowInfos</code>s for all windows that are currently unregistered.
+   * @return {@code WindowInfos}s for all windows that are currently unregistered.
    */
   @NotNull
   private WindowInfoImpl[] getUnregisteredInfos() {
@@ -178,7 +178,7 @@ public final class DesktopLayout {
   }
 
   /**
-   * @return <code>WindowInfo</code>s of all (registered and unregistered) tool windows.
+   * @return {@code WindowInfo}s of all (registered and unregistered) tool windows.
    */
   @NotNull
   private WindowInfoImpl[] getAllInfos() {
@@ -189,7 +189,7 @@ public final class DesktopLayout {
   }
 
   /**
-   * @return all (registered and not unregistered) <code>WindowInfos</code> for the specified <code>anchor</code>.
+   * @return all (registered and not unregistered) {@code WindowInfos} for the specified {@code anchor}.
    *         Returned infos are sorted by order.
    */
   @NotNull
@@ -208,7 +208,7 @@ public final class DesktopLayout {
 
   /**
    * Normalizes order of windows in the passed array. Note, that array should be
-   * sorted by order (by ascending). Order of first window will be <code>0</code>.
+   * sorted by order (by ascending). Order of first window will be {@code 0}.
    */
   private static void normalizeOrder(@NotNull WindowInfoImpl[] infos) {
     for (int i = 0; i < infos.length; i++) {
@@ -225,8 +225,8 @@ public final class DesktopLayout {
   }
 
   /**
-   * @return comparator which compares <code>StripeButtons</code> in the stripe with
-   *         specified <code>anchor</code>.
+   * @return comparator which compares {@code StripeButtons} in the stripe with
+   *         specified {@code anchor}.
    */
   @NotNull
   final Comparator<StripeButton> comparator(@NotNull ToolWindowAnchor anchor) {
@@ -235,7 +235,7 @@ public final class DesktopLayout {
 
   /**
    * @param anchor anchor of the stripe.
-   * @return maximum ordinal number in the specified stripe. Returns <code>-1</code>
+   * @return maximum ordinal number in the specified stripe. Returns {@code -1}
    *         if there is no any tool window with the specified anchor.
    */
   private int getMaxOrder(@NotNull ToolWindowAnchor anchor) {
@@ -250,7 +250,7 @@ public final class DesktopLayout {
   }
 
   /**
-   * Sets new <code>anchor</code> and <code>id</code> for the specified tool window.
+   * Sets new {@code anchor} and {@code id} for the specified tool window.
    * Also the method properly updates order of all other tool windows.
    *
    * @param newAnchor new anchor

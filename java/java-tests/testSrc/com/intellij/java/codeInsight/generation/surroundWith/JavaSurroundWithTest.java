@@ -31,7 +31,9 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -93,34 +95,34 @@ public class JavaSurroundWithTest extends LightCodeInsightTestCase {
     }
   }
 
-  public void testCommentAsFirstSurroundStatement() throws Exception {
+  public void testCommentAsFirstSurroundStatement() {
     String template = "CommentAsFirst%sSurroundStatement";
     for (SurroundType type : SurroundType.values()) {
       doTest(String.format(template, StringUtil.capitalize(type.toFileName())), type.getSurrounder());
     }
   }
 
-  public void testSurroundWithStatementWithoutSelection() throws Exception {
+  public void testSurroundWithStatementWithoutSelection() {
     doTest(new JavaWithIfSurrounder());
   }
 
-  public void testSurroundNonExpressionWithParenthesis() throws Exception {
+  public void testSurroundNonExpressionWithParenthesis() {
     doTest(new JavaWithParenthesesSurrounder());
   }
 
-  public void testSurroundNonExpressionWithCast() throws Exception {
+  public void testSurroundNonExpressionWithCast() {
     doTest(new JavaWithCastSurrounder());
   }
 
-  public void testSurroundExpressionWithCastEmptyLineAfter() throws Exception {
+  public void testSurroundExpressionWithCastEmptyLineAfter() {
     doTestWithTemplateFinish(getTestName(false), new JavaWithCastSurrounder(), "var");
   }
 
-  public void testSurroundExpressionWithCastEmptyLineAfter_2() throws Exception {
+  public void testSurroundExpressionWithCastEmptyLineAfter_2() {
     doTestWithTemplateFinish(getTestName(false), new JavaWithCastSurrounder(), null);
   }
 
-  public void testSurroundNonExpressionWithNot() throws Exception {
+  public void testSurroundNonExpressionWithNot() {
     doTest(new JavaWithNotSurrounder());
   }
 
@@ -257,5 +259,34 @@ public class JavaSurroundWithTest extends LightCodeInsightTestCase {
       String text = a.getTemplatePresentation().getText();
       return text != null && text.contains("while");
     }));
+  }
+
+  public void testExcludeVoidExpressions() {
+    configureFromFileText("a.java",
+                          "class Foo {\n" +
+                          " void bar() {\n" +
+                          "  <selection>System.out.println()</selection>;\n" +
+                          " }\n" +
+                          "}");
+    SelectionModel model = myEditor.getSelectionModel();
+    PsiExpression expr =
+      IntroduceVariableBase.getSelectedExpression(myFile.getProject(), myFile, model.getSelectionStart(), model.getSelectionEnd());
+    assertNotNull(expr);
+    assertFalse(new JavaWithParenthesesSurrounder().isApplicable(expr));
+    assertFalse(new JavaWithCastSurrounder().isApplicable(expr));
+  }
+
+  public void testExcludeNonVoidStatements() {
+    configureFromFileText("a.java",
+                          "class Foo {\n" +
+                          " int bar() {return 1;}\n" +
+                          " {" +
+                          "   <selection>bar();</selection>\n" +
+                          " }\n" +
+                          "}");
+    SelectionModel model = myEditor.getSelectionModel();
+    PsiElement[] elements =
+      new JavaExpressionSurroundDescriptor().getElementsToSurround(myFile, model.getSelectionStart(), model.getSelectionEnd());
+    assertEmpty(elements);
   }
 }

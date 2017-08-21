@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -129,9 +129,9 @@ public class PathUtil {
   }
 
   /**
-   * Ensures that the given argument doesn't contain <code>\</code> separators.
+   * Ensures that the given argument doesn't contain {@code \} separators.
    * <p>
-   * The violations are reported via the <code>LOG.error</code>.
+   * The violations are reported via the {@code LOG.error}.
    * <p>
    * TODO SystemIndependentInstrumentingBuilder now embeds assertions directly, so we can remove this method.
    *
@@ -139,8 +139,8 @@ public class PathUtil {
    * @param methodName    Method name
    * @param parameterName Parameter name
    * @param argument      Path
-   * @see SystemDependent
-   * @see SystemIndependent
+   * @see org.jetbrains.annotations.SystemDependent
+   * @see org.jetbrains.annotations.SystemIndependent
    */
   @Deprecated
   public static void assertArgumentIsSystemIndependent(String className, String methodName, String parameterName, String argument) {

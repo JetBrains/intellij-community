@@ -18,10 +18,8 @@ package com.intellij.codeInsight.editorActions;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 
-import java.io.IOException;
-
 public class IndentingBackspaceHandlerVirtualSpaceTest extends LightPlatformCodeInsightTestCase {
-  public void testAfterLargeIndent() throws IOException {
+  public void testAfterLargeIndent() {
     doTest("class Foo {\n" +
            "      \n" +
            "}",
@@ -32,7 +30,7 @@ public class IndentingBackspaceHandlerVirtualSpaceTest extends LightPlatformCode
            new LogicalPosition(1, 4));
   }
 
-  public void testAfterProperIndent() throws IOException {
+  public void testAfterProperIndent() {
     doTest("class Foo {\n" +
            "    \n" +
            "}",
@@ -43,7 +41,7 @@ public class IndentingBackspaceHandlerVirtualSpaceTest extends LightPlatformCode
            new LogicalPosition(1, 4));
   }
 
-  public void testAfterSmallIndent() throws IOException {
+  public void testAfterSmallIndent() {
     doTest("class Foo {\n" +
            "   \n" +
            "}",
@@ -54,7 +52,7 @@ public class IndentingBackspaceHandlerVirtualSpaceTest extends LightPlatformCode
            new LogicalPosition(1, 4));
   }
 
-  public void testAfterEmptyIndent() throws IOException {
+  public void testAfterEmptyIndent() {
     doTest("class Foo {\n" +
            "\n" +
            "}",
@@ -65,7 +63,7 @@ public class IndentingBackspaceHandlerVirtualSpaceTest extends LightPlatformCode
            new LogicalPosition(1, 4));
   }
 
-  public void testAtIndent() throws IOException {
+  public void testAtIndent() {
     doTest("class Foo {\n" +
            "   \n" +
            "}",
@@ -75,7 +73,7 @@ public class IndentingBackspaceHandlerVirtualSpaceTest extends LightPlatformCode
            new LogicalPosition(0, 11));
   }
 
-  public void testAtIndentOnEmptyLine() throws IOException {
+  public void testAtIndentOnEmptyLine() {
     doTest("class Foo {\n" +
            "\n" +
            "}",
@@ -85,7 +83,7 @@ public class IndentingBackspaceHandlerVirtualSpaceTest extends LightPlatformCode
            new LogicalPosition(0, 11));
   }
 
-  public void testBeforeIndent() throws IOException {
+  public void testBeforeIndent() {
     doTest("class Foo {\n" +
            "  \n" +
            "}",
@@ -95,7 +93,7 @@ public class IndentingBackspaceHandlerVirtualSpaceTest extends LightPlatformCode
            new LogicalPosition(0, 11));
   }
 
-  public void testDeleteLine() throws IOException {
+  public void testDeleteLine() {
     doTest("class Foo {\n" +
            "\n" +
            "\n" +
@@ -107,7 +105,7 @@ public class IndentingBackspaceHandlerVirtualSpaceTest extends LightPlatformCode
            new LogicalPosition(1, 4));
   }
 
-  private void doTest(String textBefore, LogicalPosition caretBefore, String textAfter, LogicalPosition caretAfter) throws IOException {
+  private void doTest(String textBefore, LogicalPosition caretBefore, String textAfter, LogicalPosition caretAfter) {
     configureFromFileText(getTestName(false) + ".java", textBefore);
     myEditor.getSettings().setVirtualSpace(true);
     myEditor.getCaretModel().moveToLogicalPosition(caretBefore);

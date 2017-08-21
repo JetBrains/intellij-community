@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
+import com.intellij.ui.components.JBScrollPane;
 import com.jetbrains.edu.coursecreator.CCUtils;
 import com.jetbrains.edu.coursecreator.actions.CCCreateLesson;
 import com.jetbrains.edu.coursecreator.actions.CCCreateTask;
@@ -65,7 +66,13 @@ class EduCCModuleBuilder extends EduCourseModuleBuilder {
     }
     getWizardInputField("cclang", "", "Language:", myLanguageComboBox, comboBox -> (String) comboBox.getSelectedItem())
       .addToSettings(settingsStep);
-    getWizardInputField("ccdescr", "", "Description:", myPanel.getDescriptionField(), JTextArea::getText).addToSettings(settingsStep);
+    JTextArea descriptionField = myPanel.getDescriptionField();
+    descriptionField.setRows(4);
+    descriptionField.setBorder(null);
+    descriptionField.invalidate();
+    JBScrollPane scrollPane = new JBScrollPane(descriptionField);
+    scrollPane.setMinimumSize(scrollPane.getUI().getPreferredSize(descriptionField));
+    getWizardInputField("ccdescr", "", "Description:", scrollPane, pane -> descriptionField.getText()).addToSettings(settingsStep);
     return javaSettingsStep;
   }
 

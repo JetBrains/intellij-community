@@ -84,7 +84,7 @@ public class LightAdvHighlightingJdk6Test extends LightDaemonAnalyzerTestCase {
     doTest(false, false);
   }
 
-  public void testEnumConstantWithoutInterfaceImplementation() throws Exception {
+  public void testEnumConstantWithoutInterfaceImplementation() {
     doTest(false, false);
   }
 
@@ -92,19 +92,19 @@ public class LightAdvHighlightingJdk6Test extends LightDaemonAnalyzerTestCase {
     doTest(false, false);
   }
 
-  public void testSpeculateOnUnhandledExceptionsOverResolvedConstructorOnly() throws Exception {
+  public void testSpeculateOnUnhandledExceptionsOverResolvedConstructorOnly() {
     doTest(false, false);
   }
 
-  public void testStaticOnDemandImportResolvesToClass() throws Exception {
+  public void testStaticOnDemandImportResolvesToClass() {
     doTest(false, false);
   }
 
-  public void testReachableWhileBodyDueToConstantStringComparison() throws Exception {
+  public void testReachableWhileBodyDueToConstantStringComparison() {
     doTest(false, false);
   }
 
-  public void testPrivateClassReferencedInAnnotationOnSibling() throws Exception {
+  public void testPrivateClassReferencedInAnnotationOnSibling() {
     doTest(false, false);
   }
 }

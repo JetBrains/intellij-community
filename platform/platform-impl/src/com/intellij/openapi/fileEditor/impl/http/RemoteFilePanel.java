@@ -17,7 +17,6 @@ package com.intellij.openapi.fileEditor.impl.http;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
@@ -179,7 +178,7 @@ public class RemoteFilePanel {
 
   public void dispose() {
     myVirtualFile.getFileInfo().removeDownloadingListener(myDownloadingListener);
-    myProgressUpdatesQueue.dispose();
+    Disposer.dispose(myProgressUpdatesQueue);
     if (myFileEditor != null) {
       Disposer.dispose(myFileEditor);
     }

@@ -55,6 +55,7 @@ public class StudyCheckAction extends StudyActionWithShortcut {
         .showTestResultPopUp("Checking is not available while indexing is in progress", MessageType.WARNING.getPopupBackground(), project);
       return;
     }
+    StudyCheckUtils.hideTestResultsToolWindow(project);
     FileDocumentManager.getInstance().saveAllDocuments();
     Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
     if (editor == null) {
@@ -92,7 +93,7 @@ public class StudyCheckAction extends StudyActionWithShortcut {
       if (studyEditor != null) {
         final Task task = studyEditor.getTaskFile().getTask();
         if (task instanceof TheoryTask) {
-          presentation.setText("Get Next Recommendation");
+          presentation.setText(task.getLesson().getCourse().isAdaptive() ? "Get Next Recommendation" : "Mark as read");
         }
         else {
           presentation.setText(TEXT);

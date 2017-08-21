@@ -56,12 +56,12 @@ public class ReimportingTest extends MavenImportingTestCase {
     importProject();
   }
 
-  public void testKeepingModuleGroups() throws Exception {
+  public void testKeepingModuleGroups() {
     final Module m = getModule("project");
 
     new WriteCommandAction.Simple(myProject) {
       @Override
-      protected void run() throws Throwable {
+      protected void run() {
         ModifiableModuleModel model = ModuleManager.getInstance(myProject).getModifiableModel();
         model.setModuleGroupPath(m, new String[]{"group"});
         model.commit();
@@ -143,7 +143,7 @@ public class ReimportingTest extends MavenImportingTestCase {
     assertEquals(1, counter.get());
   }
 
-  public void testDoesNotAskToRemoveManuallyAdderModules() throws Exception {
+  public void testDoesNotAskToRemoveManuallyAdderModules() {
     createModule("userModule");
     assertModules("project", "m1", "m2", "userModule");
 

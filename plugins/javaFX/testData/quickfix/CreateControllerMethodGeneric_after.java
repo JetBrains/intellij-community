@@ -9,6 +9,5 @@ public class CreateControllerMethodGeneric {
     TableView<Map<Integer, String>> table;
 
     public void onSort(SortEvent<TableView<Map<Integer, String>>> tableViewSortEvent) {
-
     }
 }

@@ -34,7 +34,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.project.ProjectKt;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -121,8 +120,10 @@ public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
 
     if (!(file.getFileSystem() instanceof LocalFileSystem)) return true; // do not block e.g., HttpFileSystem, LightFileSystem etc.
     if (file.getFileSystem() instanceof TempFileSystem) return true;
-    
-    if (ArrayUtil.contains(file, IdeDocumentHistory.getInstance(project).getChangedFiles())) return true;
+
+    IdeDocumentHistoryImpl documentHistory = (IdeDocumentHistoryImpl)IdeDocumentHistory.getInstance(project);
+
+    if (documentHistory.isRecentlyChanged(file)) return true;
     
     if (!getApp().isUnitTestMode()
         && FileUtil.isAncestor(new File(FileUtil.getTempDirectory()), VfsUtilCore.virtualToIoFile(file), true)) {
@@ -175,12 +176,18 @@ public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
 
   public static void disableChecksDuring(@NotNull Runnable runnable) {
     Application app = getApp();
-    ACCESS_ALLOWED.getValue(app).incrementAndGet();
-    try {
+    if (app.isUnitTestMode() && app.getUserData(ENABLE_IN_TESTS) == Boolean.TRUE) {
+      // reject disabling checks if checks in tests are enabled explicitly
       runnable.run();
     }
-    finally {
-      ACCESS_ALLOWED.getValue(app).decrementAndGet();
+    else {
+      ACCESS_ALLOWED.getValue(app).incrementAndGet();
+      try {
+        runnable.run();
+      }
+      finally {
+        ACCESS_ALLOWED.getValue(app).decrementAndGet();
+      }
     }
   }
 

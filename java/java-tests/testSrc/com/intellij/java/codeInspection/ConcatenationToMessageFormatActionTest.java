@@ -37,15 +37,19 @@ public class ConcatenationToMessageFormatActionTest extends LightIdeaTestCase {
     }
   }
   
-  public void test1() throws Exception{
+  public void test1() {
     doTest("\"aaa 'bbb' '\" + ((java.lang.String)ccc) + \"'\"", "aaa ''bbb'' ''{0}''", "ccc");
   }
   
-  public void test2() throws Exception {
+  public void test2() {
     doTest("1 + 2 + 3 + \"{}'\" + '\\n' + ((java.lang.String)ccc)", "{0}'{}'''\\n{1}", "1 + 2 + 3", "ccc");
   }
 
-  public void test3() throws Exception {
+  public void test3() {
     doTest("\"Test{A = \" + 1 + \", B = \" + 2 + \", C = \" + 3 + \"}\"", "Test'{'A = {0}, B = {1}, C = {2}'}'", "1", "2", "3");
+  }
+
+  public void testNullCast() {
+    doTest("\"abc\" + (String)()", "abc{0}", "(String)()");
   }
 }

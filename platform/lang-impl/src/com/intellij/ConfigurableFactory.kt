@@ -29,6 +29,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsProvider
 
 open class ConfigurableFactory : Disposable {
   companion object {
+    @JvmStatic
     fun getInstance(): ConfigurableFactory {
       return ServiceManager.getService(ConfigurableFactory::class.java)
     }
@@ -37,10 +38,13 @@ open class ConfigurableFactory : Disposable {
   override fun dispose() {
   }
 
-  open fun createCodeStyleConfigurable(provider: CodeStyleSettingsProvider, codeStyleSchemesModel: CodeStyleSchemesModel, owner: CodeStyleSchemesConfigurable): CodeStyleConfigurableWrapper {
+  open fun createCodeStyleConfigurable(provider: CodeStyleSettingsProvider,
+                                       codeStyleSchemesModel: CodeStyleSchemesModel,
+                                       owner: CodeStyleSchemesConfigurable): CodeStyleConfigurableWrapper {
     val codeStyleConfigurableWrapper = CodeStyleConfigurableWrapper(provider, object : CodeStyleSettingsPanelFactory() {
       override fun createPanel(scheme: CodeStyleScheme): NewCodeStyleSettingsPanel {
-        return NewCodeStyleSettingsPanel(provider.createSettingsPage(scheme.codeStyleSettings, codeStyleSchemesModel.getCloneSettings(scheme)), codeStyleSchemesModel)
+        return NewCodeStyleSettingsPanel(
+          provider.createSettingsPage(scheme.codeStyleSettings, codeStyleSchemesModel.getCloneSettings(scheme)), codeStyleSchemesModel)
       }
     }, owner)
     return codeStyleConfigurableWrapper

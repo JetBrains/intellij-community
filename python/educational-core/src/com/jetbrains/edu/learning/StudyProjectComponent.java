@@ -329,7 +329,9 @@ public class StudyProjectComponent implements ProjectComponent {
 
   @Override
   public void disposeComponent() {
-    myBusConnection.disconnect();
+    if (myBusConnection != null) {
+      myBusConnection.disconnect();
+    }
   }
 
   @NotNull

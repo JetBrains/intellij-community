@@ -160,4 +160,11 @@ public class StudyCheckUtils {
     }
     return testsOutput;
   }
+
+  public static void hideTestResultsToolWindow(@NotNull Project project) {
+    ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(StudyTestResultsToolWindowFactoryKt.ID);
+    if (toolWindow != null) {
+      toolWindow.hide(() -> {});
+    }
+  }
 }

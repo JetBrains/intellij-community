@@ -37,7 +37,7 @@ public class ShowImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
     moduleBuilder.setLanguageLevel(LanguageLevel.JDK_1_8);
   }
 
-  public void testMultipleImplsFromAbstractCall() throws Throwable {
+  public void testMultipleImplsFromAbstractCall() {
     PsiFile file = myFixture.addFileToProject("Foo.java", "public abstract class Hello {" +
                                                           "    {" +
                                                           "        Runnable r = () <caret>-> {};\n" +
@@ -53,7 +53,7 @@ public class ShowImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
     assertEquals(CommonClassNames.JAVA_LANG_RUNNABLE, qualifiedName);
   }
 
-  public void testFunctionExpressionsOnReference() throws Exception {
+  public void testFunctionExpressionsOnReference() {
     myFixture.addClass("public interface I {void m();}");
     myFixture.addClass("public class Usage {{I i = () -> {};}}");
     PsiFile file = myFixture.addFileToProject("Foo.java", "public abstract class Hello {" +
@@ -83,7 +83,7 @@ public class ShowImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
     return ref.get();
   }
 
-  public void testEnumValuesNavigation() throws Exception {
+  public void testEnumValuesNavigation() {
     final PsiFile file = myFixture.addFileToProject("Foo.java", "public class Foo {" +
                                                                 "  public enum E {;}" +
                                                                 "  void foo() {" +

@@ -55,7 +55,7 @@ public abstract class CodeFoldingManager {
 
   /**
    * For auto-generated regions (created by {@link com.intellij.lang.folding.FoldingBuilder}s), returns their 'collapsed by default'
-   * status, for other regions returns <code>null</code>.
+   * status, for other regions returns {@code null}.
    */
   @Nullable
   public abstract Boolean isCollapsedByDefault(@NotNull FoldRegion region);

@@ -23,9 +23,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
  *
  * @see ColorSettingsPage#getAttributeDescriptors()
  */
-public final class AttributesDescriptor {
-  private final TextAttributesKey myKey;
-  private final String myDisplayName;
+public final class AttributesDescriptor extends AbstractKeyDescriptor<TextAttributesKey> {
 
   /**
    * Creates an attribute descriptor with the specified name and text attributes key.
@@ -34,25 +32,16 @@ public final class AttributesDescriptor {
    * @param key         the attributes key for which the colors are specified.
    */
   public AttributesDescriptor(String displayName, TextAttributesKey key) {
-    myKey = key;
-    myDisplayName = displayName;
+    super(displayName, key);
   }
 
-  /**
-   * Returns the attributes key for which the colors are specified.
-   *
-   * @return the attributes key.
-   */
-  public TextAttributesKey getKey() {
-    return myKey;
-  }
-
-  /**
-   * Returns the name of the attribute shown in the colors list.
-   *
-   * @return the name of the attribute.
-   */
+  @Override
   public String getDisplayName() {
-    return myDisplayName;
+    return super.getDisplayName();
+  }
+
+  @Override
+  public TextAttributesKey getKey() {
+    return super.getKey();
   }
 }

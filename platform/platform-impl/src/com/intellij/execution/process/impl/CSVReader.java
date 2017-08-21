@@ -18,6 +18,8 @@
 
 package com.intellij.execution.process.impl;
 
+import com.intellij.util.ArrayUtil;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
@@ -231,7 +233,7 @@ class CSVReader {
             }
         } while (inQuotes);
         tokensOnThisLine.add(sb.toString());
-        return tokensOnThisLine.toArray(new String[0]);
+        return ArrayUtil.toStringArray(tokensOnThisLine);
 
     }
 

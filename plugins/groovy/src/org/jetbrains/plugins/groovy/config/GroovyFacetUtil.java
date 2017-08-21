@@ -34,6 +34,7 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 import java.io.File;
+import java.util.Arrays;
 
 public class GroovyFacetUtil {
   public static final String PLUGIN_MODULE_ID = "PLUGIN_MODULE";
@@ -72,7 +73,7 @@ public class GroovyFacetUtil {
 
   public static File getBundledGroovyJar() {
     final File[] groovyJars = LibrariesUtil.getFilesInDirectoryByPattern(getLibDirectory(), GroovyConfigUtils.GROOVY_ALL_JAR_PATTERN);
-    assert groovyJars.length == 1 : groovyJars;
+    assert groovyJars.length == 1 : Arrays.asList(groovyJars);
     return groovyJars[0];
   }
 

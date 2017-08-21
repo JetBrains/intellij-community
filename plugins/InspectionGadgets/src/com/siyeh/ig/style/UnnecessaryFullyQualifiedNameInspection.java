@@ -254,7 +254,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
       }
       final List<PsiJavaCodeReferenceElement> references = new SmartList<>();
       references.add(reference);
-      if (styleSettings.INSERT_INNER_CLASS_IMPORTS) {
+      if (styleSettings.getCustomSettings(JavaCodeStyleSettings.class).INSERT_INNER_CLASS_IMPORTS) {
         collectInnerClassNames(reference, references);
       }
       Collections.reverse(references);

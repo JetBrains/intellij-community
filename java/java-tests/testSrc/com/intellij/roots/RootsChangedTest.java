@@ -60,7 +60,7 @@ public class RootsChangedTest extends ModuleTestCase {
     super.tearDown();
   }
 
-  public void testEventsAfterFileModifications() throws Exception {
+  public void testEventsAfterFileModifications() {
     File root = new File(FileUtil.getTempDirectory());
 
     File dir1 = new File(root, "dir1");
@@ -106,22 +106,22 @@ public class RootsChangedTest extends ModuleTestCase {
     assertSameElements(ModuleRootManager.getInstance(moduleA).getContentRoots(), vDir2);
   }
 
-  public void testProjectLibraryChangeEvent() throws Exception {
+  public void testProjectLibraryChangeEvent() {
     final LibraryTable projectLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject);
     verifyLibraryTableEditing(projectLibraryTable);
   }
 
-  public void testGlobalLibraryChangeEvent() throws Exception {
+  public void testGlobalLibraryChangeEvent() {
     final LibraryTable globalLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable();
     verifyLibraryTableEditing(globalLibraryTable);
   }
 
-  public void testProjectLibraryEventsInUncommittedModel() throws Exception {
+  public void testProjectLibraryEventsInUncommittedModel() {
     final LibraryTable projectLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject);
     verifyLibraryTableEditingInUncommittedModel(projectLibraryTable);
   }
 
-  public void testGlobalLibraryEventsInUncommittedModel() throws Exception {
+  public void testGlobalLibraryEventsInUncommittedModel() {
     final LibraryTable globalLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable();
     verifyLibraryTableEditingInUncommittedModel(globalLibraryTable);
   }

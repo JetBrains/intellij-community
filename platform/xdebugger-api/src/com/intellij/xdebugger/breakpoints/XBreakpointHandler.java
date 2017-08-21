@@ -42,9 +42,9 @@ public abstract class XBreakpointHandler<B extends XBreakpoint<?>> {
   /**
    * Called when a breakpoint need to be unregistered from the debugging engine
    * @param breakpoint breakpoint to unregister
-   * @param temporary determines whether <code>breakpoint</code> is unregistered forever or it may be registered again. This parameter may
+   * @param temporary determines whether {@code breakpoint} is unregistered forever or it may be registered again. This parameter may
    * be used for performance purposes. For example the breakpoint may be disabled rather than removed in the debugging engine if
-   * <code>temporary</code> is <code>true</code>
+   * {@code temporary} is {@code true}
    */
   public abstract void unregisterBreakpoint(@NotNull B breakpoint, final boolean temporary);
 

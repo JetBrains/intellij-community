@@ -19,7 +19,6 @@ package com.intellij.psi.impl;
 import com.intellij.lang.PsiBuilderFactory;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
@@ -367,8 +366,16 @@ public class PsiManagerImpl extends PsiManagerEx {
       for (PsiTreeChangePreprocessor preprocessor : myTreeChangePreprocessors) {
         preprocessor.treeChanged(event);
       }
+      boolean enableOutOfCodeBlockTracking = myModificationTracker.getOutOfCodeBlockModificationTracker() != myModificationTracker;
       for (PsiTreeChangePreprocessor preprocessor : Extensions.getExtensions(PsiTreeChangePreprocessor.EP_NAME, myProject)) {
+        if (!enableOutOfCodeBlockTracking && preprocessor instanceof PsiTreeChangePreprocessorBase) continue;
         preprocessor.treeChanged(event);
+      }
+      if (!enableOutOfCodeBlockTracking) {
+        for (PsiTreeChangePreprocessor preprocessor : Extensions.getExtensions(PsiTreeChangePreprocessor.EP_NAME, myProject)) {
+          if (!(preprocessor instanceof PsiTreeChangePreprocessorBase)) continue;
+          ((PsiTreeChangePreprocessorBase)preprocessor).onOutOfCodeBlockModification(event);
+        }
       }
 
       for (PsiTreeChangeListener listener : myTreeChangeListeners) {

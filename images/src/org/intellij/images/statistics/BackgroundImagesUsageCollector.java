@@ -15,7 +15,7 @@
  */
 package org.intellij.images.statistics;
 
-import com.intellij.internal.statistic.AbstractApplicationUsagesCollector;
+import com.intellij.internal.statistic.AbstractProjectsUsagesCollector;
 import com.intellij.internal.statistic.CollectUsagesException;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
@@ -32,7 +32,7 @@ import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.*;
 /**
  * @author gregsh
  */
-public class BackgroundImagesUsageCollector extends AbstractApplicationUsagesCollector {
+public class BackgroundImagesUsageCollector extends AbstractProjectsUsagesCollector {
   @NotNull
   @Override
   public GroupDescriptor getGroupId() {
@@ -41,10 +41,10 @@ public class BackgroundImagesUsageCollector extends AbstractApplicationUsagesCol
 
   @NotNull
   @Override
-  public Set<UsageDescriptor> getUsages() throws CollectUsagesException {
+  protected Set<UsageDescriptor> mergeUsagesPostProcess(@NotNull Set<UsageDescriptor> usagesFromAllProjects) {
     // join usages from all projects
     HashMap<String, UsageDescriptor> map = ContainerUtil.newHashMap();
-    for (UsageDescriptor descriptor : super.getUsages()) {
+    for (UsageDescriptor descriptor : usagesFromAllProjects) {
       String key = descriptor.getKey();
       int idx = key.indexOf(' ');
       key = idx > 0 ? key.substring(0, idx) : key;

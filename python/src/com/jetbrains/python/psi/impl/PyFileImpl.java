@@ -465,9 +465,9 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   @NotNull
   public Iterable<PyElement> iterateNames() {
     final List<PyElement> result = new ArrayList<>();
-    VariantsProcessor processor = new VariantsProcessor(this) {
+    final VariantsProcessor processor = new VariantsProcessor(this) {
       @Override
-      protected void addElement(String name, PsiElement element) {
+      protected void addElement(@NotNull String name, @NotNull PsiElement element) {
         element = PyUtil.turnDirIntoInit(element);
         if (element instanceof PyElement) {
           result.add((PyElement)element);
@@ -729,8 +729,8 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   }
 
   @Override
-  public void subtreeChanged() {
-    super.subtreeChanged();
+  public void clearCaches() {
+    super.clearCaches();
     ControlFlowCache.clear(this);
     myDunderAllCalculated = false;
     myFutureFeatures.clear(); // probably no need to synchronize

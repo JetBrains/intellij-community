@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,25 +54,19 @@ class RegistryPropertiesAnnotator : Annotator {
     val descriptionProperty = propertiesFile.findPropertyByKey(propertyName + DESCRIPTION_SUFFIX)
     if (descriptionProperty == null) {
       holder.createWarningAnnotation(element.node, "Key '$propertyName' does not have description key")
-          .registerFix(AddDescriptionKeyIntention(propertyName))
+        .registerFix(AddDescriptionKeyIntention(propertyName))
     }
   }
 
   private class AddDescriptionKeyIntention(private val myPropertyName: String) : IntentionAction {
 
     @Nls
-    override fun getText(): String {
-      return "Add description key for '$myPropertyName'"
-    }
+    override fun getText(): String = "Add description key for '$myPropertyName'"
 
     @Nls
-    override fun getFamilyName(): String {
-      return "Add description key"
-    }
+    override fun getFamilyName(): String = "Add description key"
 
-    override fun isAvailable(project: Project, editor: Editor, file: PsiFile): Boolean {
-      return true
-    }
+    override fun isAvailable(project: Project, editor: Editor, file: PsiFile): Boolean = true
 
     @Throws(IncorrectOperationException::class)
     override fun invoke(project: Project, editor: Editor, file: PsiFile) {
@@ -85,28 +79,23 @@ class RegistryPropertiesAnnotator : Annotator {
       PsiNavigateUtil.navigate(valueNode.psi)
     }
 
-    override fun startInWriteAction(): Boolean {
-      return true
-    }
+    override fun startInWriteAction(): Boolean = true
   }
 
   companion object {
 
-    @NonNls
-    const val REGISTRY_PROPERTIES_FILENAME = "registry.properties"
+    @NonNls private const val REGISTRY_PROPERTIES_FILENAME = "registry.properties"
 
-    @NonNls
-    const val DESCRIPTION_SUFFIX = ".description"
+    @NonNls private const val DESCRIPTION_SUFFIX = ".description"
 
-    @NonNls
-    const val RESTART_REQUIRED_SUFFIX = ".restartRequired"
+    @NonNls private const val RESTART_REQUIRED_SUFFIX = ".restartRequired"
 
-    @JvmStatic fun isImplicitUsageKey(keyName: String): Boolean {
-      return StringUtil.endsWith(keyName, DESCRIPTION_SUFFIX) || StringUtil.endsWith(keyName, RESTART_REQUIRED_SUFFIX)
-    }
+    @JvmStatic
+    fun isImplicitUsageKey(keyName: String): Boolean =
+      StringUtil.endsWith(keyName, DESCRIPTION_SUFFIX) || StringUtil.endsWith(keyName, RESTART_REQUIRED_SUFFIX)
 
-    @JvmStatic fun isRegistryPropertiesFile(psiFile: PsiFile): Boolean {
-      return PsiUtil.isIdeaProject(psiFile.project) && psiFile.name == REGISTRY_PROPERTIES_FILENAME
-    }
+    @JvmStatic
+    fun isRegistryPropertiesFile(psiFile: PsiFile): Boolean =
+      PsiUtil.isIdeaProject(psiFile.project) && psiFile.name == REGISTRY_PROPERTIES_FILENAME
   }
 }

@@ -151,6 +151,12 @@ public abstract class JBIterator<E> implements Iterator<E> {
       if (myNext == Do.STOP) return;
       if (myNext == Do.SKIP) {
         o = myNext = Do.INIT;
+        if (op.impl == null) {
+          // rollback all prepended takeWhile conditions if nextImpl() votes SKIP
+          for (Op op2 = myFirstOp; op2.impl instanceof CountDown; op2 = op2.nextOp) {
+            ((CountDown)op2.impl).cur ++;
+          }
+        }
         op = null;
       }
     }

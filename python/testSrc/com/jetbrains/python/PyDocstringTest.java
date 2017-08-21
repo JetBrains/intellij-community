@@ -48,15 +48,15 @@ public class PyDocstringTest extends PyTestCase {
                 " ... #comm\n"+
                 " ...   pass", "Py:SPACE", "Py:IF_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:COLON", "Py:STATEMENT_BREAK", "Py:LINE_BREAK", "Py:END_OF_LINE_COMMENT", "Py:LINE_BREAK", "Py:INDENT", "Py:PASS_KEYWORD", "Py:STATEMENT_BREAK");
   }
-  public void testFunctionName() throws Throwable {
+  public void testFunctionName() {
     doCompletionTest();
   }
 
-  public void testClassName() throws Throwable {
+  public void testClassName() {
     doCompletionTest();
   }
 
-  public void doCompletionTest() throws Throwable {
+  public void doCompletionTest() {
     String inputDataFileName = getInputDataFileName(getTestName(true));
     String expectedResultFileName = getExpectedResultFileName(getTestName(true));
     myFixture.testCompletion(inputDataFileName, expectedResultFileName);

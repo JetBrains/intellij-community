@@ -25,12 +25,12 @@ import org.jetbrains.annotations.NotNull;
  * </p>
  * <p>
  * Usage example: CYGWIN Git has a bug - not understanding stash names without quotes:
- * <pre><code>
+ * <pre>{@code
  * String stashName = "stash@{0}";
  * if (GitVersionSpecialty.NEEDS_QUOTES_IN_STASH_NAME.existsIn(myVcs.getVersion()) {
  *   stashName = "\"stash@{0}\"";
  * }
- * </code></pre>
+ * }</pre>
  * </p>
  * @author Kirill Likhodedov
  */
@@ -66,7 +66,7 @@ public enum GitVersionSpecialty {
   },
 
   /**
-   * Git understands <code>'git status --porcelain'</code>.
+   * Git understands {@code 'git status --porcelain'}.
    * Since 1.7.0.
    */
   KNOWS_STATUS_PORCELAIN {

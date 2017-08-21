@@ -23,6 +23,7 @@ import com.intellij.execution.junit2.info.LocationUtil;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
+import com.siyeh.ig.junit.JUnitCommonClassNames;
 
 
 public abstract class AbstractAllInPackageConfigurationProducer extends JUnitConfigurationProducer {
@@ -38,7 +39,8 @@ public abstract class AbstractAllInPackageConfigurationProducer extends JUnitCon
     PsiPackage psiPackage = JavaRuntimeConfigurationProducerBase.checkPackage(context.getPsiLocation());
     if (psiPackage == null) return false;
     sourceElement.set(psiPackage);
-    if (!LocationUtil.isJarAttached(context.getLocation(), psiPackage, JUnitUtil.TESTCASE_CLASS, JUnitUtil.TEST5_ANNOTATION)) return false;
+    if (!LocationUtil.isJarAttached(context.getLocation(), psiPackage, JUnitUtil.TESTCASE_CLASS, JUnitUtil.TEST5_ANNOTATION,
+                                    JUnitCommonClassNames.ORG_JUNIT_PLATFORM_ENGINE_TEST_ENGINE)) return false;
     final JUnitConfiguration.Data data = configuration.getPersistentData();
     data.PACKAGE_NAME = psiPackage.getQualifiedName();
     data.TEST_OBJECT = JUnitConfiguration.TEST_PACKAGE;

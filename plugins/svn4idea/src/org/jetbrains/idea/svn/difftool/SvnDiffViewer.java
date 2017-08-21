@@ -205,16 +205,16 @@ public class SvnDiffViewer implements DiffViewer {
   //
 
   private void updatePropertiesPanel() {
-    boolean wasFocused = myContext.isFocused();
-    if (!mySettings.isHideProperties()) {
-      mySplitter.setSecondComponent(myPropertiesViewer.getComponent());
-      myNotificationPanel.setContent(null);
-    }
-    else {
-      mySplitter.setSecondComponent(null);
-      myNotificationPanel.setContent(createNotification());
-    }
-    if (wasFocused) myContext.requestFocus();
+    DiffUtil.runPreservingFocus(myContext, () -> {
+      if (!mySettings.isHideProperties()) {
+        mySplitter.setSecondComponent(myPropertiesViewer.getComponent());
+        myNotificationPanel.setContent(null);
+      }
+      else {
+        mySplitter.setSecondComponent(null);
+        myNotificationPanel.setContent(createNotification());
+      }
+    });
   }
 
   @NotNull

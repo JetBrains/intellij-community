@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 
-import static com.intellij.openapi.vcs.changes.ChangesUtil.getAllFiles;
+import static com.intellij.openapi.vcs.changes.ChangesUtil.getFiles;
 import static com.intellij.openapi.vcs.changes.ChangesUtil.getNavigatableArray;
 
 /**
@@ -71,7 +71,9 @@ public class RepositoryChangesBrowser extends ChangesBrowser implements DataProv
   protected void buildToolBar(final DefaultActionGroup toolBarGroup) {
     super.buildToolBar(toolBarGroup);
 
-    toolBarGroup.add(new ShowDiffWithLocalAction());
+    toolBarGroup.add(new ShowDiffWithLocalAction(true));
+    toolBarGroup.add(new ShowDiffWithLocalAction(false));
+
     myEditSourceAction = new MyEditSourceAction();
     myEditSourceAction.registerCustomShortcutSet(CommonShortcuts.getEditSource(), this);
     toolBarGroup.add(myEditSourceAction);
@@ -138,7 +140,7 @@ public class RepositoryChangesBrowser extends ChangesBrowser implements DataProv
 
     protected Navigatable[] getNavigatables(final DataContext dataContext) {
       Change[] changes = VcsDataKeys.SELECTED_CHANGES.getData(dataContext);
-      return changes != null ? getNavigatableArray(myProject, getAllFiles(Stream.of(changes))) : null;
+      return changes != null ? getNavigatableArray(myProject, getFiles(Stream.of(changes))) : null;
     }
   }
 }

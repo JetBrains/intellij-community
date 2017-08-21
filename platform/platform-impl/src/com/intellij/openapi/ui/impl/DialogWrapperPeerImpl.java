@@ -137,13 +137,13 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
   }
 
   /**
-   * Creates modal <code>DialogWrapper</code>. The currently active window will be the dialog's parent.
+   * Creates modal {@code DialogWrapper}. The currently active window will be the dialog's parent.
    *
    * @param project     parent window for the dialog will be calculated based on focused window for the
-   *                    specified <code>project</code>. This parameter can be <code>null</code>. In this case parent window
+   *                    specified {@code project}. This parameter can be {@code null}. In this case parent window
    *                    will be suggested based on current focused window.
    * @param canBeParent specifies whether the dialog can be parent for other windows. This parameter is used
-   *                    by <code>WindowManager</code>.
+   *                    by {@code WindowManager}.
    */
   protected DialogWrapperPeerImpl(@NotNull DialogWrapper wrapper, @Nullable Project project, boolean canBeParent) {
     this(wrapper, project, canBeParent, DialogWrapper.IdeModalityType.IDE);
@@ -172,7 +172,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
 
   /**
    * @param parent parent component which is used to calculate heavy weight window ancestor.
-   *               <code>parent</code> cannot be <code>null</code> and must be showing.
+   *               {@code parent} cannot be {@code null} and must be showing.
    */
   protected DialogWrapperPeerImpl(@NotNull DialogWrapper wrapper, @NotNull Component parent, final boolean canBeParent) {
     myWrapper = wrapper;
@@ -538,7 +538,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
     /**
      * Initial size of the dialog. When the dialog is being closed and
      * current size of the dialog is not equals to the initial size then the
-     * current (changed) size is stored in the <code>DimensionService</code>.
+     * current (changed) size is stored in the {@code DimensionService}.
      */
     private Dimension myInitialSize;
     private String myDimensionServiceKey;

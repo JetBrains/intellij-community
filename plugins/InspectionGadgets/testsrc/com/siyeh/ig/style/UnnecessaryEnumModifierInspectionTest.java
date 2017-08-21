@@ -19,7 +19,7 @@ import com.siyeh.ig.IGInspectionTestCase;
 
 public class UnnecessaryEnumModifierInspectionTest extends IGInspectionTestCase {
 
-  public void test() throws Exception {
+  public void test() {
     doTest("com/siyeh/igtest/style/unnecessary_enum_modifier", new UnnecessaryEnumModifierInspection());
   }
 }

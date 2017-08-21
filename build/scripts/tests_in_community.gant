@@ -24,6 +24,6 @@ import org.jetbrains.jps.idea.IdeaProjectLoader
 target("default": "Run tests") {
   String home = IdeaProjectLoader.guessHome(this)
   String outputDir = "$home/out/tests"
-  def context = CompilationContextImpl.create(home, home, outputDir, this)
+  def context = CompilationContextImpl.create(home, home, outputDir)
   TestingTasks.create(context).runTests([], "community-main", null)
 }

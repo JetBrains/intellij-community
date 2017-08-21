@@ -25,38 +25,38 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class TurnRefsToSuperTest extends MultiFileTestCase {
-  public void testSuperClass() throws Exception { doTest("AClass", "ASuper", true); }
-  public void testMethodFromSuper() throws Exception { doTest("AClass", "ASuper", true); }
-  public void testRemoveImport() throws Exception { doTest("pack1.AClass", "pack1.AnInterface", true); }
-  public void testToArray() throws Exception { doTest("A", "I", true); }
-  public void testArrayElementAssignment() throws Exception { doTest("C", "I", true); }
-  public void testReturnValue() throws Exception { doTest("A", "I", true); }
-  public void testReturnValue2() throws Exception { doTest("A", "I", true); }
-  public void testCast() throws Exception { doTest("A", "I", true); }
-  public void testUseAsArg() throws Exception { doTest("AClass", "I", true); }
-  public void testClassUsage() throws Exception { doTest("A", "I", true); }
-  public void testInstanceOf() throws Exception { doTest("A", "I", false); }
-  public void testFieldTest() throws Exception { doTest("Component1", "IDoSomething", false); }
-  public void testScr34000() throws Exception { doTest("SimpleModel", "Model", false); }
-  public void testScr34020() throws Exception { doTest(CommonClassNames.JAVA_UTIL_LIST, CommonClassNames.JAVA_UTIL_COLLECTION, false); }
-  public void testCommonInheritor() throws Exception { doTest("Client.V", "Client.L", false); }
-  public void testCommonInheritorFail() throws Exception { doTest("Client.V", "Client.L", false); }
-  public void testCommonInheritorResults() throws Exception { doTest("Client.V", "Client.L", false); }
-  public void testCommonInheritorResultsFail() throws Exception { doTest("Client.V", "Client.L", false); }
-  public void testCommonInheritorResultsFail2() throws Exception { doTest("Client.V", "Client.L", false); }
-  public void testIDEA6505() throws Exception { doTest("Impl", "IB", false); }
-  public void testIDEADEV5517() throws Exception { doTest("Xyz", "XInt", false); }
-  public void testIDEADEV5517NOOP() throws Exception { doTest("Xyz", "XInt", false); }
-  public void testIDEADEV6136() throws Exception { doTest("A", "B", false); }
-  public void testIDEADEV25669() throws Exception { doTest("p.A", "p.Base", false); }
-  public void testIDEADEV23807() throws Exception { doTest("B", "A", false); }
-  public void testTypeArgumentsRH() throws Exception { doTest("IImpl", "I", false); }
-  public void testTypeArgumentsRH1() throws Exception { doTest("IImpl", "I", false); }
-  public void testAnonymousWithTypeArguments() throws Exception { doTest("Clazz", "IntF", false); }
-  public void testTypeArgumentsParam() throws Exception { doTest("Clazz", "IntF", false); }
-  public void testTryWithResources1() throws Exception { doTest("Test.MyResourceImpl", "Test.MyResource", false); }
-  public void testTryWithResources2() throws Exception { doTest("Test.MyResourceImpl", "Test.MyResource", false); }
-  public void testDifferentNumberOfParams() throws Exception { doTest("Bar", "SuperBar", false); }
+  public void testSuperClass() { doTest("AClass", "ASuper", true); }
+  public void testMethodFromSuper() { doTest("AClass", "ASuper", true); }
+  public void testRemoveImport() { doTest("pack1.AClass", "pack1.AnInterface", true); }
+  public void testToArray() { doTest("A", "I", true); }
+  public void testArrayElementAssignment() { doTest("C", "I", true); }
+  public void testReturnValue() { doTest("A", "I", true); }
+  public void testReturnValue2() { doTest("A", "I", true); }
+  public void testCast() { doTest("A", "I", true); }
+  public void testUseAsArg() { doTest("AClass", "I", true); }
+  public void testClassUsage() { doTest("A", "I", true); }
+  public void testInstanceOf() { doTest("A", "I", false); }
+  public void testFieldTest() { doTest("Component1", "IDoSomething", false); }
+  public void testScr34000() { doTest("SimpleModel", "Model", false); }
+  public void testScr34020() { doTest(CommonClassNames.JAVA_UTIL_LIST, CommonClassNames.JAVA_UTIL_COLLECTION, false); }
+  public void testCommonInheritor() { doTest("Client.V", "Client.L", false); }
+  public void testCommonInheritorFail() { doTest("Client.V", "Client.L", false); }
+  public void testCommonInheritorResults() { doTest("Client.V", "Client.L", false); }
+  public void testCommonInheritorResultsFail() { doTest("Client.V", "Client.L", false); }
+  public void testCommonInheritorResultsFail2() { doTest("Client.V", "Client.L", false); }
+  public void testIDEA6505() { doTest("Impl", "IB", false); }
+  public void testIDEADEV5517() { doTest("Xyz", "XInt", false); }
+  public void testIDEADEV5517NOOP() { doTest("Xyz", "XInt", false); }
+  public void testIDEADEV6136() { doTest("A", "B", false); }
+  public void testIDEADEV25669() { doTest("p.A", "p.Base", false); }
+  public void testIDEADEV23807() { doTest("B", "A", false); }
+  public void testTypeArgumentsRH() { doTest("IImpl", "I", false); }
+  public void testTypeArgumentsRH1() { doTest("IImpl", "I", false); }
+  public void testAnonymousWithTypeArguments() { doTest("Clazz", "IntF", false); }
+  public void testTypeArgumentsParam() { doTest("Clazz", "IntF", false); }
+  public void testTryWithResources1() { doTest("Test.MyResourceImpl", "Test.MyResource", false); }
+  public void testTryWithResources2() { doTest("Test.MyResourceImpl", "Test.MyResource", false); }
+  public void testDifferentNumberOfParams() { doTest("Bar", "SuperBar", false); }
 
   //todo[ann] fix and uncomment
   //public void testStaticCallArguments() throws Exception { doTest("Impl", "Int", false); }
@@ -66,7 +66,7 @@ public class TurnRefsToSuperTest extends MultiFileTestCase {
   //public void testForEach1() throws Exception { doTest("Test.MyIterableImpl", "Test.MyIterable", false); }
   //public void testForEach2() throws Exception { doTest("Test.MyIterableImpl", "Test.MyIterable", false); }
 
-  private void doTest(@NonNls final String className, @NonNls final String superClassName, final boolean replaceInstanceOf) throws Exception {
+  private void doTest(@NonNls final String className, @NonNls final String superClassName, final boolean replaceInstanceOf) {
     doTest((rootDir, rootAfter) -> this.performAction(className, superClassName, replaceInstanceOf), true);
   }
 

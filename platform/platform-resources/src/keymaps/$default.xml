@@ -77,9 +77,6 @@
   <action id="EditorLookupUp"><keyboard-shortcut first-keystroke="control UP"/></action>
   <action id="EditorLookupDown"><keyboard-shortcut first-keystroke="control DOWN"/></action>
 
-  <action id="MethodOverloadSwitchUp"><keyboard-shortcut first-keystroke="control UP"/></action>
-  <action id="MethodOverloadSwitchDown"><keyboard-shortcut first-keystroke="control DOWN"/></action>
-
   <action id="ReformatCode">
     <keyboard-shortcut first-keystroke="control alt L"/>
   </action>
@@ -211,6 +208,10 @@
     <keyboard-shortcut first-keystroke="control UP"/>
   </action>
   <action id="ExpandAll">
+    <keyboard-shortcut first-keystroke="control ADD"/>
+    <keyboard-shortcut first-keystroke="control EQUALS"/>
+  </action>
+  <action id="ExpandExpandableComponent">
     <keyboard-shortcut first-keystroke="control ADD"/>
     <keyboard-shortcut first-keystroke="control EQUALS"/>
   </action>
@@ -439,6 +440,10 @@
     <keyboard-shortcut first-keystroke="control shift EQUALS"/>
   </action>
   <action id="CollapseAll">
+    <keyboard-shortcut first-keystroke="control SUBTRACT"/>
+    <keyboard-shortcut first-keystroke="control MINUS"/>
+  </action>
+  <action id="CollapseExpandableComponent">
     <keyboard-shortcut first-keystroke="control SUBTRACT"/>
     <keyboard-shortcut first-keystroke="control MINUS"/>
   </action>

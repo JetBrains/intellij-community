@@ -61,9 +61,9 @@ public class JsonSchemaResolver {
 
   private Collection<JsonSchemaObject> resolve(boolean skipLastExpand, boolean literalResolve, boolean acceptAdditionalPropertiesSchema) {
     final MatchResult result = detailedResolve(skipLastExpand, literalResolve, acceptAdditionalPropertiesSchema);
-    final Set<JsonSchemaObject> set = new HashSet<>(result.mySchemas);
-    set.addAll(result.myExcludingSchemas.stream().flatMap(Set::stream).collect(Collectors.toSet()));
-    return set;
+    final List<JsonSchemaObject> list = new ArrayList<>(result.mySchemas);
+    list.addAll(result.myExcludingSchemas.stream().flatMap(Set::stream).collect(Collectors.toSet()));
+    return list;
   }
 
   @Nullable

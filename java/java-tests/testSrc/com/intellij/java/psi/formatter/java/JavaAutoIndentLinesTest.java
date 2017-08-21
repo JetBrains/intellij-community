@@ -20,7 +20,7 @@ import com.intellij.openapi.editor.impl.AbstractEditorTest;
 import com.intellij.testFramework.TestFileType;
 
 public class JavaAutoIndentLinesTest extends AbstractEditorTest {
-  public void testSelection() throws Exception {
+  public void testSelection() {
     init("class C {\n" +
          "int <selection>a<caret></selection> = 1;\n" +
          "}",

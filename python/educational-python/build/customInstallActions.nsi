@@ -14,7 +14,7 @@ getPythonFileInfo:
   IfErrors cantOpenFile
   StrCmp $R0 ${PYTHON_VERSIONS} getPythonInfo
 cantOpenFile:
-  MessageBox MB_OK|MB_ICONEXCLAMATION "python.txt is not exist. Python will not be downloaded."
+  MessageBox MB_OK|MB_ICONEXCLAMATION "python.txt is not exist. Python will not be downloaded." /SD IDOK
 removePythonChoice:
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 6" "Flags" "DISABLED"
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 7" "Flags" "DISABLED"
@@ -47,7 +47,7 @@ Function customInstallActions
 ; info about 2 and 3 version of python
   StrCmp $R0 ${PYTHON_VERSIONS} getPythonInfo
 cantOpenFile:
-  MessageBox MB_OK|MB_ICONEXCLAMATION "python.txt is invalid. Python will not be downloaded."
+  MessageBox MB_OK|MB_ICONEXCLAMATION "python.txt is invalid. Python will not be downloaded." /SD IDOK
   goto skip_python_download
 getPythonInfo:  
   Call getPythonInfo
@@ -82,12 +82,20 @@ get_python:
   inetc::get "$R3" "$INSTDIR\python\python_$R8" /END
   Pop $0
   ${If} $0 == "OK"
-    ExecDos::exec '$R7"$INSTDIR\python\python_$R8" $R9'
+    ExecDos::exec /NOUNLOAD /ASYNC '$R7"$INSTDIR\python\python_$R8" $R9'
   ${Else}
-    MessageBox MB_OK|MB_ICONEXCLAMATION "The download is failed: $0"
+    MessageBox MB_OK|MB_ICONEXCLAMATION "The download is failed: $0" /SD IDOK
   ${EndIf}
 python_exists:
 skip_python_download:  
+FunctionEnd
+
+Function customPostInstallActions
+  DetailPrint "There are no custom post-install actions."
+FunctionEnd
+
+Function un.customUninstallActions
+  DetailPrint "There are no custom uninstall actions."
 FunctionEnd
 
 Function updatePythonControls
@@ -121,7 +129,7 @@ getPythonInfo:
   ${StrTok} $R1 $4 " " "2" "1"
   goto done
 cantOpenFile:
-  MessageBox MB_OK|MB_ICONEXCLAMATION "python.txt is not exist. Python will not be downloaded."
+  MessageBox MB_OK|MB_ICONEXCLAMATION "python.txt is not exist. Python will not be downloaded." /SD IDOK
   StrCpy $0 "Error"
 done:
 FunctionEnd

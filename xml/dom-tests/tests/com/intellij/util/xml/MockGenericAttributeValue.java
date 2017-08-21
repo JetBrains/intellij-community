@@ -18,6 +18,7 @@ package com.intellij.util.xml;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
@@ -55,6 +56,7 @@ public class MockGenericAttributeValue extends MockDomElement implements Generic
   }
 
   @Override
+  @Nullable
   public String getRawText() {
     throw new UnsupportedOperationException("Method getRawText is not yet implemented in " + getClass().getName());
   }

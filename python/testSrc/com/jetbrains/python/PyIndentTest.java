@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,20 +16,18 @@
 package com.jetbrains.python;
 
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.psi.LanguageLevel;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
 public class PyIndentTest extends PyTestCase {
-  private void doTest(final String before, String after) {
-    final String name = getTestName(false);
-
-    myFixture.configureByText(name + ".py", before);
+  private void doTest(@NotNull String before, @NotNull String after) {
+    myFixture.configureByText(getTestName(false) + ".py", before);
     pressButton(IdeActions.ACTION_EDITOR_ENTER);
-    String s = myFixture.getFile().getText();
     myFixture.checkResult(after);
   }
 
@@ -307,7 +305,7 @@ public class PyIndentTest extends PyTestCase {
   }
 
   public void testAlignInCall() {  // PY-6360
-    CodeStyleSettingsManager.getInstance().getSettings(myFixture.getProject()).ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
+    CodeStyleSettingsManager.getSettings(myFixture.getProject()).ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     doTest("list(a,<caret>)",
            "list(a,\n" +
            "     <caret>)");
@@ -354,5 +352,20 @@ public class PyIndentTest extends PyTestCase {
            "\n" +
            "def bar():\n" +
            "    print('hello')");
+  }
+
+  // PY-24432
+  public void testUnindentAfterEllipsis() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON30,
+      () ->
+        doTest("def foo():\n" +
+               "    if True:\n" +
+               "        ...<caret>",
+               "def foo():\n" +
+               "    if True:\n" +
+               "        ...\n" +
+               "    <caret>")
+    );
   }
 }

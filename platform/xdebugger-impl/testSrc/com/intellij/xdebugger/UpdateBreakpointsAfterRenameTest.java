@@ -28,7 +28,7 @@ import java.io.File;
  * @author nik
  */
 public class UpdateBreakpointsAfterRenameTest extends XBreakpointsTestCase {
-  public void testRenameFile() throws Exception {
+  public void testRenameFile() {
     final VirtualFile file = createFile("file.txt");
     XLineBreakpoint<?> b = putBreakpoint(file);
     rename(file, "file2.txt");
@@ -36,7 +36,7 @@ public class UpdateBreakpointsAfterRenameTest extends XBreakpointsTestCase {
     assertSame(b, getBreakpointManager().findBreakpointAtLine(XDebuggerTestCase.MY_LINE_BREAKPOINT_TYPE, file, 0));
   }
 
-  public void testMoveFile() throws Exception {
+  public void testMoveFile() {
     final VirtualFile file = createFile("dir/a.txt");
     final VirtualFile targetDir = createFile("dir2/b.txt").getParent();
     final XLineBreakpoint<?> b = putBreakpoint(file);
@@ -44,7 +44,7 @@ public class UpdateBreakpointsAfterRenameTest extends XBreakpointsTestCase {
     assertTrue(b.getFileUrl().endsWith("dir2/a.txt"));
   }
 
-  public void testRenameParentDir() throws Exception {
+  public void testRenameParentDir() {
     final VirtualFile file = createFile("dir/x.txt");
     final XLineBreakpoint<?> b = putBreakpoint(file);
     rename(file.getParent(), "dir2");

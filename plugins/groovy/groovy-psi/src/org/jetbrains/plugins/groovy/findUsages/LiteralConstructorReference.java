@@ -142,6 +142,7 @@ public class LiteralConstructorReference extends PsiReferenceBase.Poly<GrListOrM
   private static PsiClassType filterOutTrashTypes(PsiType type) {
     if (!(type instanceof PsiClassType)) return null;
     if (type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) return null;
+    if (TypesUtil.resolvesTo(type, CommonClassNames.JAVA_LANG_CLASS)) return null;
     if (TypesUtil.resolvesTo(type, CommonClassNames.JAVA_UTIL_MAP)) return null;
     if (TypesUtil.resolvesTo(type, CommonClassNames.JAVA_UTIL_HASH_MAP)) return null;
     if (TypesUtil.resolvesTo(type, CommonClassNames.JAVA_UTIL_LIST)) return null;

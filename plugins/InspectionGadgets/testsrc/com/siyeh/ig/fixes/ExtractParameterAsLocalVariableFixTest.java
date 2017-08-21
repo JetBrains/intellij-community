@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,8 +26,8 @@ import com.siyeh.ig.assignment.AssignmentToMethodParameterInspection;
 /**
  * @author Bas Leijdekkers
  */
+@SuppressWarnings("ALL")
 public class ExtractParameterAsLocalVariableFixTest extends IGQuickFixesTestCase {
-
 
   @Override
   protected BaseInspection[] getInspections() {
@@ -127,6 +127,7 @@ public class ExtractParameterAsLocalVariableFixTest extends IGQuickFixesTestCase
       "    }" +
       "  }" +
       "}",
+
       "class X {" +
       "  void m() {" +
       "    try (java.io.InputStream in = null) {" +
@@ -136,5 +137,31 @@ public class ExtractParameterAsLocalVariableFixTest extends IGQuickFixesTestCase
       "}\n" +
       "}}"
     );
+  }
+
+  public void testJavaDoccedParameter() {
+    doTest(InspectionGadgetsBundle.message("extract.parameter.as.local.variable.quickfix"),
+           "class Foo {\n" +
+           "    /**\n" +
+           "     * @param customEnumElement name of custom element of the enumeration (attribute or method) whose values should be used to match equivalent {@code String}s.\n" +
+           "     */\n" +
+           "    void foo(String customEnumElement) {\n" +
+           "        if (customEnumElement != null) {\n" +
+           "            /**/customEnumElement = customEnumElement.trim();\n" +
+           "        }\n" +
+           "    }\n" +
+           "}",
+
+           "class Foo {\n" +
+           "    /**\n" +
+           "     * @param customEnumElement name of custom element of the enumeration (attribute or method) whose values should be used to match equivalent {@code String}s.\n" +
+           "     */\n" +
+           "    void foo(String customEnumElement) {\n" +
+           "        String customEnumElement1 = customEnumElement;\n" +
+           "        if (customEnumElement1 != null) {\n" +
+           "            customEnumElement1 = customEnumElement1.trim();\n" +
+           "        }\n" +
+           "    }\n" +
+           "}");
   }
 }

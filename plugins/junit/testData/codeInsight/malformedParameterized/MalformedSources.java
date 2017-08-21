@@ -2,53 +2,22 @@
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.*;
 
-class ParameterizedTestsDemo {
-
-  <warning descr="No sources are provided, the suite would be empty">@ParameterizedTest</warning>
-  void testWithParamsNoSource(int i) { }
-
-  @ParameterizedTest
-  @MethodSource(names = {<warning descr="Method source 'a' must be static">"a"</warning>,
-    <warning descr="Method source 'b' should have no parameters">"b"</warning>,
-    <warning descr="Method source 'c' must have one of the following return type: Stream<?>, Iterator<?>, Iterable<?> or Object[]">"c"</warning>,
-    "d"})
-  void testWithParams(Object s) { }
-
-  String[] a() {
-    return new String[] {"a", "b"};
-  }
-
-  static String[] b(int i) {
-    return new String[] {"a", "b"};
-  }
-
-  static Object c() {
-    return new String[] {"a", "b"};
-  }
-
-  static Object[] d() {
-    return new String[] {"a", "b"};
-  }
-
-  @ParameterizedTest
-  @MethodSource(names = {<warning descr="Multiple parameters have to be wrapped in Arguments">"d"</warning>})
-  void testWithMultipleParams(Object s, int i) { }
-
-  @ParameterizedTest
-  @EnumSource(<warning descr="No implicit conversion found to convert object of type E to int">E.class</warning>)
-  void testWithEnumSource(int i) { }
-
-  @ParameterizedTest
-  @EnumSource(E.class)
-  void testWithEnumSourceCorrect(E e) { }
-
-  enum E {
-    A, B;
-  }
-
+class ValueSourcesTest {
   @ParameterizedTest
   @ValueSource(ints = {1})
-  void testWithValues(int i) { }
+  void testWithIntValues(int i) { }
+
+  @ParameterizedTest
+  @ValueSource(longs = {1L})
+  void testWithLongValues(long l) { }
+
+  @ParameterizedTest
+  @ValueSource(doubles = {0.5})
+  void testWithDoubleValues(double d) { }
+
+  @ParameterizedTest
+  @ValueSource(strings = {""})
+  void testWithStringValues(String s) { }
 
   @ParameterizedTest
   <warning descr="Exactly one type of input must be provided">@ValueSource(ints = {1},
@@ -72,4 +41,35 @@ class ParameterizedTestsDemo {
   <warning descr="Suspicious combination @Test and parameterized source">@org.junit.jupiter.api.Test</warning>
   void testWithTestAnnotationNoParameterized(int i) { }
 
+}
+
+class ParameterizedTestsDemo {
+
+  <warning descr="No sources are provided, the suite would be empty">@ParameterizedTest</warning>
+  void testWithParamsNoSource(int i) { }
+
+  @ParameterizedTest
+  @EnumSource(<warning descr="No implicit conversion found to convert object of type E to int">E.class</warning>)
+  void testWithEnumSource(int i) { }
+
+  @ParameterizedTest
+  @EnumSource(E.class)
+  void testWithEnumSourceCorrect(E e) { }
+
+  enum E {
+    A, B;
+  }
+
+  @ParameterizedTest
+  @CsvSource({"foo, 1"})
+  void testWithCsvSource(String first, int second) {}
+}
+
+@org.junit.jupiter.params.provider.ArgumentsSource()
+@interface CustomSource { }
+
+class CustomArgProviderTest {
+  @ParameterizedTest
+  @CustomSource
+  void jsonSourceTest(String param) { }
 }

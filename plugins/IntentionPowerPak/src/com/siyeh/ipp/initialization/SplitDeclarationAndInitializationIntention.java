@@ -82,7 +82,7 @@ public class SplitDeclarationAndInitializationIntention extends Intention {
     final Project project = manager.getProject();
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
     if (classInitializer == null) {
-      if (PsiUtil.isJavaToken(PsiTreeUtil.skipSiblingsForward(field, PsiWhiteSpace.class), JavaTokenType.COMMA)) {
+      if (PsiUtil.isJavaToken(PsiTreeUtil.skipWhitespacesForward(field), JavaTokenType.COMMA)) {
         field.normalizeDeclaration();
       }
       classInitializer = (PsiClassInitializer)containingClass.addAfter(elementFactory.createClassInitializer(), field);

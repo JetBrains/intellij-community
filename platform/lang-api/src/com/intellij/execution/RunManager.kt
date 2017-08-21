@@ -36,7 +36,7 @@ abstract class RunManager {
   companion object {
     @JvmStatic
     fun getInstance(project: Project): RunManager {
-      if (!(IS_RUN_MANAGER_INITIALIZED.get(project) ?: false)) {
+      if (IS_RUN_MANAGER_INITIALIZED.get(project) != true) {
         // https://gist.github.com/develar/5bcf39b3f0ec08f507ec112d73375f2b
         LOG.debug("Must be not called before project components initialized")
       }

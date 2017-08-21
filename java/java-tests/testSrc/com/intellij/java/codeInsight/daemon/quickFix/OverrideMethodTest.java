@@ -20,7 +20,7 @@ import com.intellij.pom.java.LanguageLevel;
 
 public class OverrideMethodTest extends LightQuickFixParameterizedTestCase {
 
-  public void test() throws Exception {
+  public void test() {
     doAllTests();
   }
 

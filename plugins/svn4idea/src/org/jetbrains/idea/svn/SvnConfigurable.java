@@ -49,14 +49,15 @@ public abstract class SvnConfigurable extends ConfigurableBase<ConfigurableUi<Sv
   protected SvnConfigurable(@NotNull Project project,
                             @NotNull String displayName,
                             @NotNull Supplier<? extends ConfigurableUi<SvnConfiguration>> uiSupplier) {
-    this(project, ID + "." + displayName, displayName, uiSupplier);
+    this(project, ID + "." + displayName, displayName, uiSupplier, HELP_ID + "." + displayName);
   }
 
   protected SvnConfigurable(@NotNull Project project,
                             @NotNull String id,
                             @NotNull String displayName,
-                            @NotNull Supplier<? extends ConfigurableUi<SvnConfiguration>> uiSupplier) {
-    super(id, displayName, HELP_ID);
+                            @NotNull Supplier<? extends ConfigurableUi<SvnConfiguration>> uiSupplier,
+                            @NotNull String helpId) {
+    super(id, displayName, helpId);
     myProject = project;
     myUiSupplier = uiSupplier;
   }
@@ -74,7 +75,7 @@ public abstract class SvnConfigurable extends ConfigurableBase<ConfigurableUi<Sv
 
   public static class General extends SvnConfigurable {
     public General(@NotNull Project project) {
-      super(project, ID, DISPLAY_NAME, () -> new GeneralSettingsPanel(project));
+      super(project, ID, DISPLAY_NAME, () -> new GeneralSettingsPanel(project), HELP_ID);
     }
   }
 

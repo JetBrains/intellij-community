@@ -36,6 +36,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -47,6 +48,7 @@ import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -62,6 +64,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupOwner;
 import com.intellij.util.Consumer;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -253,11 +256,16 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     return isNodePopupActive() && Arrays.asList(myNodePopup.getSelectedValues()).contains(object);
   }
 
-  static Object optimizeTarget(Object target) {
-    if (target instanceof PsiDirectory && ((PsiDirectory)target).getFiles().length == 0) {
-      final PsiDirectory[] subDir = ((PsiDirectory)target).getSubdirectories();
-      if (subDir.length == 1) {
-        return optimizeTarget(subDir[0]);
+  static Object expandDirsWithJustOneSubdir(Object target) {
+    if (target instanceof PsiElement && !((PsiElement)target).isValid()) return target;
+    if (target instanceof PsiDirectory) {
+      PsiDirectory directory = (PsiDirectory)target;
+      for (VirtualFile file = directory.getVirtualFile(), next; ; file = next) {
+        VirtualFile[] children = file.getChildren();
+        VirtualFile child = children.length == 1 ? children[0] : null;
+        //noinspection AssignmentToForLoopParameter
+        next = child != null && child.isDirectory() && !child.is(VFileProperty.SYMLINK) ? child : null;
+        if (next == null) return ObjectUtils.notNull(directory.getManager().findDirectory(file), directory);
       }
     }
     return target;
@@ -514,7 +522,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   }
 
   protected void navigateInsideBar(final Object object) {
-    final Object obj = optimizeTarget(object);
+    Object obj = expandDirsWithJustOneSubdir(object);
     myContextObject = null;
 
     myUpdateQueue.cancelAllUpdates();
@@ -586,6 +594,12 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   @Override
   @Nullable
   public Object getData(String dataId) {
+    // First of all try to obtain data from extension
+    for (NavBarModelExtension modelExtension : Extensions.getExtensions(NavBarModelExtension.EP_NAME)) {
+      Object data = modelExtension.getData(dataId, this);
+      if (data != null) return data;
+    }
+
     if (CommonDataKeys.PROJECT.is(dataId)) {
       return !myProject.isDisposed() ? myProject : null;
     }

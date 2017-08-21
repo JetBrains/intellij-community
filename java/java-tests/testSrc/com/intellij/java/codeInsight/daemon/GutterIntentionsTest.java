@@ -27,7 +27,7 @@ import java.util.List;
  * @author Dmitry Avdeev
  */
 public class GutterIntentionsTest extends LightCodeInsightFixtureTestCase {
-  public void testEmptyIntentions() throws Exception {
+  public void testEmptyIntentions() {
     myFixture.configureByText(JavaFileType.INSTANCE, "class Foo {\n" +
                                                      "  <caret>   private String test() {\n" +
                                                      "        return null;\n" +
@@ -38,7 +38,7 @@ public class GutterIntentionsTest extends LightCodeInsightFixtureTestCase {
     assertEmpty(intentions);
   }
 
-  public void testOptions() throws Exception {
+  public void testOptions() {
     myFixture.configureByText(JavaFileType.INSTANCE, "public class Foo {\n" +
                                                      "  public static void <caret>main(String[] args) {}" +
                                                      "}");

@@ -23,7 +23,6 @@ import com.intellij.util.NotNullProducer;
 import com.intellij.util.SystemProperties;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
-import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.oio.OioEventLoopGroup;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,6 +33,7 @@ import java.util.Random;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static com.intellij.util.io.NettyKt.MultiThreadEventLoopGroup;
 import static com.intellij.util.io.NettyKt.serverBootstrap;
 
 public class BuiltInServer implements Disposable {
@@ -84,7 +84,7 @@ public class BuiltInServer implements Disposable {
                                     int portsCount,
                                     boolean tryAnyPort,
                                     @Nullable NotNullProducer<ChannelHandler> handler) throws Exception {
-    return start(new NioEventLoopGroup(workerCount, new BuiltInServerThreadFactory()), true, firstPort, portsCount, tryAnyPort, handler);
+    return start(MultiThreadEventLoopGroup(workerCount, new BuiltInServerThreadFactory()), true, firstPort, portsCount, tryAnyPort, handler);
   }
 
   @NotNull
@@ -96,7 +96,7 @@ public class BuiltInServer implements Disposable {
     BuiltInServerThreadFactory threadFactory = new BuiltInServerThreadFactory();
     EventLoopGroup loopGroup;
     try {
-      loopGroup = new NioEventLoopGroup(workerCount, threadFactory);
+      loopGroup = MultiThreadEventLoopGroup(workerCount, threadFactory);
     }
     catch (IllegalStateException e) {
       Logger.getInstance(BuiltInServer.class).warn(e);

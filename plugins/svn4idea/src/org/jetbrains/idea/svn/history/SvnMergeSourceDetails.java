@@ -22,7 +22,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangeListRenderer;
 import com.intellij.openapi.vcs.changes.ui.ChangeListViewerDialog;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -50,6 +49,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static com.intellij.openapi.util.text.StringUtil.notNullize;
 
 public class SvnMergeSourceDetails extends MasterDetailsComponent {
   private final Project myProject;
@@ -137,12 +138,11 @@ public class SvnMergeSourceDetails extends MasterDetailsComponent {
       }
 
       final String revisonNumber = revision.getRevisionNumber().asString();
-      final Pair<String,Boolean> info = CommittedChangeListRenderer.getDescriptionOfChangeList(revision.getCommitMessage());
-      String description = info.getFirst();
+      String description = CommittedChangeListRenderer.getDescriptionOfChangeList(revision.getCommitMessage());
       int width = metrics.stringWidth(description);
       int dotsWidth = metrics.stringWidth(ourDots);
-      boolean descriptionTruncated = info.getSecond();
-      if ((descriptionTruncated && (ourMaxWidth - dotsWidth < width)) || (! descriptionTruncated) && (ourMaxWidth < width)) {
+      boolean descriptionTruncated = false;
+      if (ourMaxWidth < width) {
         description = CommittedChangeListRenderer.truncateDescription(description, metrics, ourMaxWidth - dotsWidth);
         descriptionTruncated = true;
       }
@@ -152,11 +152,9 @@ public class SvnMergeSourceDetails extends MasterDetailsComponent {
 
       final String date = CommittedChangeListRenderer.getDateOfChangeList(revision.getRevisionDate());
 
-      final String author = revision.getAuthor();
-
       append(revisonNumber + " ", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
       append(description + " ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
-      append(author, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+      append(notNullize(revision.getAuthor()), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
       append(", " + date, SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
   }

@@ -48,6 +48,10 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
     final PsiExpression condition = ifStatement.getCondition();
     if (condition == null) return false;
     if (ifStatement.getThenBranch() == null) return false;
+    if (SyntaxTraverser.psiTraverser(condition)
+          .filter(PsiPrefixExpression.class)
+          .filter(prefixExpr -> PsiUtil.skipParenthesizedExprDown(prefixExpr.getOperand()) == null)
+          .first() != null) return false;
     if (element instanceof PsiKeyword) {
       PsiKeyword keyword = (PsiKeyword) element;
       if ((keyword.getTokenType() == JavaTokenType.IF_KEYWORD || keyword.getTokenType() == JavaTokenType.ELSE_KEYWORD)

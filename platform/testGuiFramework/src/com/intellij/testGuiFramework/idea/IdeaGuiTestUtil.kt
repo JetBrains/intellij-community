@@ -26,9 +26,9 @@ import com.intellij.openapi.projectRoots.impl.JavaSdkImpl
 import com.intellij.openapi.util.io.FileUtil.pathsEqual
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testGuiFramework.framework.GuiTestUtil.*
-import junit.framework.Assert.fail
 import org.fest.swing.edt.GuiActionRunner.execute
 import org.fest.swing.edt.GuiTask
+import org.junit.Assert.fail
 import java.io.File
 
 /**

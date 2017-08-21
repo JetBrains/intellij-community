@@ -25,7 +25,7 @@ import com.intellij.testFramework.LightCodeInsightTestCase;
 import org.jetbrains.annotations.NotNull;
 
 public class ExpectedTypeInfoTest extends LightCodeInsightTestCase {
-  public void testIntersectStrictStrict1() throws Exception {
+  public void testIntersectStrictStrict1() {
     ExpectedTypeInfo info1 = createInfo("java.lang.Exception", ExpectedTypeInfo.TYPE_STRICTLY);
     ExpectedTypeInfo info2 = createInfo("java.lang.Exception", ExpectedTypeInfo.TYPE_STRICTLY);
 
@@ -35,7 +35,7 @@ public class ExpectedTypeInfoTest extends LightCodeInsightTestCase {
     assertTrue(result[0].getType().equalsToText("java.lang.Exception"));
   }
 
-  public void testIntersectStrictStrict2() throws Exception {
+  public void testIntersectStrictStrict2() {
     ExpectedTypeInfo info1 = createInfo("java.lang.Exception", ExpectedTypeInfo.TYPE_STRICTLY);
     ExpectedTypeInfo info2 = createInfo(CommonClassNames.JAVA_LANG_OBJECT, ExpectedTypeInfo.TYPE_STRICTLY);
 
@@ -43,7 +43,7 @@ public class ExpectedTypeInfoTest extends LightCodeInsightTestCase {
     assertEquals(result.length, 0);
   }
 
-  public void testIntersectSubtypeStrict1() throws Exception {
+  public void testIntersectSubtypeStrict1() {
     ExpectedTypeInfo info1 = createInfo("java.lang.Exception", ExpectedTypeInfo.TYPE_OR_SUBTYPE);
     ExpectedTypeInfo info2 = createInfo("java.io.IOException", ExpectedTypeInfo.TYPE_STRICTLY);
 
@@ -53,7 +53,7 @@ public class ExpectedTypeInfoTest extends LightCodeInsightTestCase {
     assertTrue(result[0].getType().equalsToText("java.io.IOException"));
   }
 
-  public void testIntersectSubtypeStrict2() throws Exception {
+  public void testIntersectSubtypeStrict2() {
     ExpectedTypeInfo info1 = createInfo("java.lang.Exception", ExpectedTypeInfo.TYPE_OR_SUBTYPE);
     ExpectedTypeInfo info2 = createInfo(CommonClassNames.JAVA_LANG_OBJECT, ExpectedTypeInfo.TYPE_STRICTLY);
 
@@ -61,7 +61,7 @@ public class ExpectedTypeInfoTest extends LightCodeInsightTestCase {
     assertEquals(result.length, 0);
   }
 
-  public void testIntersectSupertypeStrict1() throws Exception {
+  public void testIntersectSupertypeStrict1() {
     ExpectedTypeInfo info1 = createInfo("java.io.IOException", ExpectedTypeInfo.TYPE_OR_SUPERTYPE);
     ExpectedTypeInfo info2 = createInfo("java.lang.Exception", ExpectedTypeInfo.TYPE_STRICTLY);
 
@@ -71,7 +71,7 @@ public class ExpectedTypeInfoTest extends LightCodeInsightTestCase {
     assertTrue(result[0].getType().equalsToText("java.lang.Exception"));
   }
 
-  public void testIntersectSupertypeStrict2() throws Exception {
+  public void testIntersectSupertypeStrict2() {
     ExpectedTypeInfo info1 = createInfo("java.io.IOException", ExpectedTypeInfo.TYPE_OR_SUPERTYPE);
     ExpectedTypeInfo info2 = createInfo("java.io.EOFException", ExpectedTypeInfo.TYPE_STRICTLY);
 
@@ -79,7 +79,7 @@ public class ExpectedTypeInfoTest extends LightCodeInsightTestCase {
     assertEquals(result.length, 0);
   }
 
-  public void testIntersectStrictSubtype1() throws Exception {
+  public void testIntersectStrictSubtype1() {
     ExpectedTypeInfo info1 = createInfo("java.io.IOException", ExpectedTypeInfo.TYPE_STRICTLY);
     ExpectedTypeInfo info2 = createInfo("java.lang.Exception", ExpectedTypeInfo.TYPE_OR_SUBTYPE);
 
@@ -89,7 +89,7 @@ public class ExpectedTypeInfoTest extends LightCodeInsightTestCase {
     assertTrue(result[0].getType().equalsToText("java.io.IOException"));
   }
 
-  public void testIntersectStrictSubtype2() throws Exception {
+  public void testIntersectStrictSubtype2() {
     ExpectedTypeInfo info1 = createInfo(CommonClassNames.JAVA_LANG_OBJECT, ExpectedTypeInfo.TYPE_STRICTLY);
     ExpectedTypeInfo info2 = createInfo("java.lang.Exception", ExpectedTypeInfo.TYPE_OR_SUBTYPE);
 
@@ -97,7 +97,7 @@ public class ExpectedTypeInfoTest extends LightCodeInsightTestCase {
     assertEquals(result.length, 0);
   }
 
-  public void testIntersectStrictSupertype1() throws Exception {
+  public void testIntersectStrictSupertype1() {
     ExpectedTypeInfo info1 = createInfo("java.lang.Exception", ExpectedTypeInfo.TYPE_STRICTLY);
     ExpectedTypeInfo info2 = createInfo("java.io.IOException", ExpectedTypeInfo.TYPE_OR_SUPERTYPE);
 
@@ -107,7 +107,7 @@ public class ExpectedTypeInfoTest extends LightCodeInsightTestCase {
     assertTrue(result[0].getType().equalsToText("java.lang.Exception"));
   }
 
-  public void testIntersectStrictSupertype2() throws Exception {
+  public void testIntersectStrictSupertype2() {
     ExpectedTypeInfo info1 = createInfo("java.io.EOFException", ExpectedTypeInfo.TYPE_STRICTLY);
     ExpectedTypeInfo info2 = createInfo("java.io.IOException", ExpectedTypeInfo.TYPE_OR_SUPERTYPE);
 
@@ -115,7 +115,7 @@ public class ExpectedTypeInfoTest extends LightCodeInsightTestCase {
     assertEquals(result.length, 0);
   }
 
-  public void testIntersectSubtypeSubtype1() throws Exception {
+  public void testIntersectSubtypeSubtype1() {
     ExpectedTypeInfo info1 = createInfo("java.lang.Exception", ExpectedTypeInfo.TYPE_OR_SUBTYPE);
     ExpectedTypeInfo info2 = createInfo("java.io.IOException", ExpectedTypeInfo.TYPE_OR_SUBTYPE);
 
@@ -125,7 +125,7 @@ public class ExpectedTypeInfoTest extends LightCodeInsightTestCase {
     assertTrue(result[0].getType().equalsToText("java.io.IOException"));
   }
 
-  public void testIntersectSubtypeSubtype2() throws Exception {
+  public void testIntersectSubtypeSubtype2() {
     ExpectedTypeInfo info1 = createInfo("java.io.IOException", ExpectedTypeInfo.TYPE_OR_SUBTYPE);
     ExpectedTypeInfo info2 = createInfo("java.lang.Exception", ExpectedTypeInfo.TYPE_OR_SUBTYPE);
 
@@ -135,7 +135,7 @@ public class ExpectedTypeInfoTest extends LightCodeInsightTestCase {
     assertTrue(result[0].getType().equalsToText("java.io.IOException"));
   }
 
-  public void testIntersectSubtypeSubtype3() throws Exception {
+  public void testIntersectSubtypeSubtype3() {
     ExpectedTypeInfo info1 = createInfo("java.io.IOException", ExpectedTypeInfo.TYPE_OR_SUBTYPE);
     ExpectedTypeInfo info2 = createInfo("javax.swing.JButton", ExpectedTypeInfo.TYPE_OR_SUBTYPE);
 
@@ -143,7 +143,7 @@ public class ExpectedTypeInfoTest extends LightCodeInsightTestCase {
     assertEquals(result.length, 0);
   }
 
-  public void testIntersectSuperSuper1() throws Exception {
+  public void testIntersectSuperSuper1() {
     ExpectedTypeInfo info1 = createInfo("java.io.EOFException", ExpectedTypeInfo.TYPE_OR_SUPERTYPE);
     ExpectedTypeInfo info2 = createInfo("java.io.IOException", ExpectedTypeInfo.TYPE_OR_SUPERTYPE);
 
@@ -153,7 +153,7 @@ public class ExpectedTypeInfoTest extends LightCodeInsightTestCase {
     assertTrue(result[0].getType().equalsToText("java.io.IOException"));
   }
 
-  public void testIntersectSuperSuper2() throws Exception {
+  public void testIntersectSuperSuper2() {
     ExpectedTypeInfo info1 = createInfo("java.io.IOException", ExpectedTypeInfo.TYPE_OR_SUPERTYPE);
     ExpectedTypeInfo info2 = createInfo("java.io.EOFException", ExpectedTypeInfo.TYPE_OR_SUPERTYPE);
 
@@ -163,7 +163,7 @@ public class ExpectedTypeInfoTest extends LightCodeInsightTestCase {
     assertTrue(result[0].getType().equalsToText("java.io.IOException"));
   }
 
-  public void testIntersectSuperSuper3() throws Exception {
+  public void testIntersectSuperSuper3() {
     ExpectedTypeInfo info1 = createInfo("java.io.IOException", ExpectedTypeInfo.TYPE_OR_SUPERTYPE);
     ExpectedTypeInfo info2 = createInfo("javax.swing.JButton", ExpectedTypeInfo.TYPE_OR_SUPERTYPE);
 
@@ -171,7 +171,7 @@ public class ExpectedTypeInfoTest extends LightCodeInsightTestCase {
     assertEquals(result.length, 0);
   }
 
-  public void testIntersectSubSuper1() throws Exception {
+  public void testIntersectSubSuper1() {
     ExpectedTypeInfo info1 = createInfo("java.lang.Exception", ExpectedTypeInfo.TYPE_OR_SUBTYPE);
     ExpectedTypeInfo info2 = createInfo("java.io.EOFException", ExpectedTypeInfo.TYPE_OR_SUPERTYPE);
 
@@ -183,7 +183,7 @@ public class ExpectedTypeInfoTest extends LightCodeInsightTestCase {
   }
 
   @NotNull
-  private static ExpectedTypeInfo createInfo(String className, @ExpectedTypeInfo.Type int kind) throws Exception{
+  private static ExpectedTypeInfo createInfo(String className, @ExpectedTypeInfo.Type int kind) {
     PsiType type = getJavaFacade().getElementFactory().createTypeByFQClassName(className, GlobalSearchScope.allScope(getProject()));
     return ExpectedTypesProvider.createInfo(type, kind, type, TailType.NONE);
   }

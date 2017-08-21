@@ -276,4 +276,14 @@ public abstract class LanguageCodeStyleSettingsProvider {
       myCollectedFields.add(fieldName);
     }
   }
+
+  /**
+   * Returns code documentation comment settings for the PSI file.
+   * @param file The file to return current document settings for.
+   * @return Documentation comment settings.
+   */
+  @NotNull
+  public DocCommentSettings getDocCommentSettings(@NotNull PsiFile file) {
+    return DocCommentSettings.DEFAULTS;
+  }
 }

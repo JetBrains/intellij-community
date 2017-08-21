@@ -67,6 +67,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   public static final String STUB_PSI_MISMATCH = "stub-psi mismatch";
   private static final AtomicFieldUpdater<PsiFileImpl, FileTrees> ourTreeUpdater =
     AtomicFieldUpdater.forFieldOfType(PsiFileImpl.class, FileTrees.class);
+  private static final Key<PsiLock> PSI_LOCK_KEY = Key.create("PER_VIEW_PROVIDER_PSI_LOCK");
 
   private IElementType myElementType;
   protected IElementType myContentElementType;
@@ -81,7 +82,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   private final ThreadLocal<FileElement> myFileElementBeingLoaded = new ThreadLocal<>();
   protected final PsiManagerEx myManager;
   public static final Key<Boolean> BUILDING_STUB = new Key<>("Don't use stubs mark!");
-  private final PsiLock myPsiLock = new PsiLock();
+  private final PsiLock myPsiLock;
 
   protected PsiFileImpl(@NotNull IElementType elementType, IElementType contentElementType, @NotNull FileViewProvider provider) {
     this(provider);
@@ -92,6 +93,12 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     myManager = (PsiManagerEx)provider.getManager();
     myViewProvider = provider;
     myRefToPsi = new AstPathPsiMap(getProject());
+    myPsiLock = obtainPsiLock();
+  }
+
+  private PsiLock obtainPsiLock() {
+    PsiLock lock = myViewProvider.getUserData(PSI_LOCK_KEY);
+    return lock == null ? myViewProvider.putUserDataIfAbsent(PSI_LOCK_KEY, new PsiLock()) : lock;
   }
 
   public void setContentElementType(final IElementType contentElementType) {
@@ -361,6 +368,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     return treeElement;
   }
 
+  @Override
   public void clearCaches() {
     myModificationStamp ++;
   }
@@ -479,7 +487,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   }
 
   @Override
-  public void checkSetName(String name) throws IncorrectOperationException {
+  public void checkSetName(String name) {
     if (!getViewProvider().isEventSystemEnabled()) return;
     PsiFileImplUtil.checkSetName(this, name);
   }
@@ -535,6 +543,11 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   public void setOriginalFile(@NotNull final PsiFile originalFile) {
     myOriginalFile = originalFile.getOriginalFile();
+
+    FileViewProvider original = myOriginalFile.getViewProvider();
+    if (myViewProvider instanceof SingleRootFileViewProvider && original instanceof SingleRootFileViewProvider) {
+      ((SingleRootFileViewProvider)original).registerAsCopy((SingleRootFileViewProvider)myViewProvider);
+    }
   }
 
   @Override
@@ -782,6 +795,10 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     }
   }
 
+  FileTrees getFileTrees() {
+    return myTrees;
+  }
+
   private void bindStubsToCachedPsi(StubTree stubTree) {
     for (StubBasedPsiElementBase<?> psi : myRefToPsi.getAllCachedPsi()) {
       int index = psi.getStubIndex();
@@ -920,7 +937,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   }
 
   @Override
-  public final void checkAdd(@NotNull PsiElement element) throws IncorrectOperationException {
+  public final void checkAdd(@NotNull PsiElement element) {
     CheckUtil.checkWritable(this);
   }
 
@@ -1144,6 +1161,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   }
 
   public final void beforeAstChange() {
+    CheckUtil.checkWritable(this);
     if (!useStrongRefs()) {
       synchronized (myPsiLock) {
         for (PsiFile root : myViewProvider.getAllFiles()) {

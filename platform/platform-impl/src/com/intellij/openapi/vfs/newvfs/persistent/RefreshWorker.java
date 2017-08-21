@@ -240,7 +240,7 @@ public class RefreshWorker {
           String name = pair.first;
           FileAttributes childAttributes = pair.second;
           if (childAttributes != null) {
-            scheduleCreation(dir, name, childAttributes.isDirectory(), false);
+            scheduleCreation(dir, name, childAttributes.isDirectory());
           }
           else {
             LOG.warn("[+] fs=" + fs + " dir=" + dir + " name=" + name);
@@ -333,7 +333,7 @@ public class RefreshWorker {
           String name = pair.first;
           FileAttributes childAttributes = pair.second;
           if (childAttributes != null) {
-            scheduleCreation(dir, name, childAttributes.isDirectory(), false);
+            scheduleCreation(dir, name, childAttributes.isDirectory());
           }
         }
 
@@ -397,14 +397,14 @@ public class RefreshWorker {
 
     if (currentIsDirectory != upToDateIsDirectory || currentIsSymlink != upToDateIsSymlink || currentIsSpecial != upToDateIsSpecial) {
       scheduleDeletion(child);
-      scheduleCreation(parent, child.getName(), upToDateIsDirectory, true);
+      scheduleCreation(parent, child.getName(), upToDateIsDirectory);
       return true;
     }
 
     return false;
   }
 
-  private void scheduleAttributeChange(@NotNull VirtualFile file, @NotNull String property, Object current, Object upToDate) {
+  private void scheduleAttributeChange(@NotNull VirtualFile file, @VirtualFile.PropName @NotNull String property, Object current, Object upToDate) {
     if (LOG.isTraceEnabled()) LOG.trace("update '" + property + "' file=" + file);
     myEvents.add(new VFilePropertyChangeEvent(null, file, property, current, upToDate, true));
   }
@@ -414,9 +414,9 @@ public class RefreshWorker {
     myEvents.add(new VFileContentChangeEvent(null, file, file.getModificationStamp(), -1, true));
   }
 
-  private void scheduleCreation(@NotNull VirtualFile parent, @NotNull String childName, boolean isDirectory, boolean isReCreation) {
+  private void scheduleCreation(@NotNull VirtualFile parent, @NotNull String childName, boolean isDirectory) {
     if (LOG.isTraceEnabled()) LOG.trace("create parent=" + parent + " name=" + childName + " dir=" + isDirectory);
-    myEvents.add(new VFileCreateEvent(null, parent, childName, isDirectory, true, isReCreation));
+    myEvents.add(new VFileCreateEvent(null, parent, childName, isDirectory, true));
   }
 
   private void scheduleDeletion(@Nullable VirtualFile file) {

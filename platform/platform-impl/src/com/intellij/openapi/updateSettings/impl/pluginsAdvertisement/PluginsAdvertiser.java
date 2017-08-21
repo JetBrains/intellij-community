@@ -23,8 +23,10 @@ import com.google.gson.stream.JsonReader;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.plugins.*;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.idea.IdeaApplication;
 import com.intellij.notification.*;
 import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileTypes.FileTypeFactory;
@@ -63,7 +65,6 @@ import java.util.*;
 public class PluginsAdvertiser implements StartupActivity {
   @NonNls public static final String IGNORE_ULTIMATE_EDITION = "ignoreUltimateEdition";
   private static final Logger LOG = Logger.getInstance(PluginsAdvertiser.class);
-  private static final String FEATURE_IMPLEMENTATIONS_URL = "https://plugins.jetbrains.com/feature/getImplementations?";
   private static final String CASHED_EXTENSIONS = "extensions.xml";
 
   public static final String IDEA_ULTIMATE_EDITION = "IntelliJ IDEA Ultimate Edition";
@@ -79,11 +80,10 @@ public class PluginsAdvertiser implements StartupActivity {
     final String featureType = unknownFeature.getFeatureType();
     final String implementationName = unknownFeature.getImplementationName();
     final String buildNumber = ApplicationInfo.getInstance().getApiVersion();
-    return processUrl(FEATURE_IMPLEMENTATIONS_URL,
-                      ImmutableMap.of("featureType", featureType,
-                                      "implementationName", implementationName,
-                                      "build", buildNumber),
-                      new HttpRequests.RequestProcessor<List<Plugin>>() {
+    return processFeatureRequest(ImmutableMap.of("featureType", featureType,
+                                                 "implementationName", implementationName,
+                                                 "build", buildNumber),
+                                 new HttpRequests.RequestProcessor<List<Plugin>>() {
       @Override
       public List<Plugin> process(@NotNull HttpRequests.Request request) throws IOException {
         final JsonReader jsonReader = new JsonReader(request.getReader());
@@ -110,9 +110,8 @@ public class PluginsAdvertiser implements StartupActivity {
     for (IdeaPluginDescriptor plugin : allPlugins) {
       availableIds.put(plugin.getPluginId().getIdString(), plugin);
     }
-    return processUrl(FEATURE_IMPLEMENTATIONS_URL,
-                      ImmutableMap.of("featureType", FileTypeFactory.FILE_TYPE_FACTORY_EP.getName()),
-                      new HttpRequests.RequestProcessor<Map<String, Set<Plugin>>>() {
+    return processFeatureRequest(ImmutableMap.of("featureType", FileTypeFactory.FILE_TYPE_FACTORY_EP.getName()),
+                                 new HttpRequests.RequestProcessor<Map<String, Set<Plugin>>>() {
       @Override
       public Map<String, Set<Plugin>> process(@NotNull HttpRequests.Request request) throws IOException {
         final JsonReader jsonReader = new JsonReader(request.getReader());
@@ -154,13 +153,13 @@ public class PluginsAdvertiser implements StartupActivity {
     }, null, LOG);
   }
 
-  private static <K> K processUrl(String baseUrl,
-                                  Map<String, String> params,
-                                  HttpRequests.RequestProcessor<K> requestProcessor,
-                                  K errorValue,
-                                  Logger log) {
+  private static <K> K processFeatureRequest(Map<String, String> params,
+                                             HttpRequests.RequestProcessor<K> requestProcessor,
+                                             K errorValue,
+                                             Logger log) {
     URIBuilder uriBuilder;
 
+    String baseUrl = ApplicationInfoImpl.getShadowInstance().getPluginManagerUrl() + "/feature/getImplementations?";
     try {
       uriBuilder = new URIBuilder(baseUrl);
     }
@@ -170,7 +169,8 @@ public class PluginsAdvertiser implements StartupActivity {
     }
     params.forEach((key, value) -> uriBuilder.addParameter(key, value));
 
-    return HttpRequests.request(uriBuilder.toString()).connect(requestProcessor, errorValue, LOG);
+    boolean forceHttps = IdeaApplication.isLoaded() && UpdateSettings.getInstance().canUseSecureConnection();
+    return HttpRequests.request(uriBuilder.toString()).forceHttps(forceHttps).productNameAsUserAgent().connect(requestProcessor, errorValue, LOG);
   }
 
   public static void ensureDeleted() {

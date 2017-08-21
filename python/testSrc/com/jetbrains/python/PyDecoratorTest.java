@@ -29,12 +29,12 @@ import com.jetbrains.python.psi.PyFunction;
  * Date: Dec 28, 2008 3:50:23 AM
  */
 public class PyDecoratorTest extends PyTestCase {
-  private PsiElement find() throws Exception {
+  private PsiElement find() {
     PsiReference ref = myFixture.getReferenceAtCaretPosition("/resolve/decorators/" + getTestName(false) + ".py");
     return ref.getElement();
   }
 
-  public void testDecoCall() throws Exception {
+  public void testDecoCall() {
     PsiElement targetElement = find().getParent();
     assertTrue(targetElement instanceof PyDecorator);
     PyDecorator deco = (PyDecorator)targetElement;
@@ -45,7 +45,7 @@ public class PyDecoratorTest extends PyTestCase {
     assertFalse(deco.hasArgumentList());
   }
 
-  public void testDecoParamCall() throws Exception {
+  public void testDecoParamCall() {
     PsiElement targetElement = find().getParent();
     assertTrue(targetElement instanceof PyDecorator);
     PyDecorator deco = (PyDecorator)targetElement;

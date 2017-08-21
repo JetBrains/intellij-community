@@ -15,8 +15,6 @@
  */
 package com.intellij.find.impl;
 
-import com.google.common.collect.HashMultiset;
-import com.google.common.collect.Multiset;
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindModel;
 import com.intellij.find.findInProject.FindInProjectManager;
@@ -33,6 +31,7 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.TooManyUsagesStatus;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
@@ -63,13 +62,14 @@ import com.intellij.util.Processors;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexImpl;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 
 /**
  * @author peter
@@ -89,7 +89,6 @@ class FindInProjectTask {
   @Nullable private final Module myModule;
   private final Set<VirtualFile> myLargeFiles = Collections.synchronizedSet(ContainerUtil.newTroveSet());
   private final Set<VirtualFile> myFilesToScanInitially;
-  private final AtomicBoolean myWarningShown = new AtomicBoolean();
   private final AtomicLong myTotalFilesSize = new AtomicLong();
   private final String myStringToFindInIndices;
 
@@ -119,6 +118,7 @@ class FindInProjectTask {
     }
 
     myStringToFindInIndices = stringToFind;
+    TooManyUsagesStatus.createFor(myProgress);
   }
 
   public void findUsages(@NotNull Processor<UsageInfo> consumer, @NotNull FindUsagesProcessPresentation processPresentation) {
@@ -167,24 +167,18 @@ class FindInProjectTask {
   }
 
   private static void logStats(@NotNull Collection<VirtualFile> otherFiles, long time) {
+    Map<String, Long> extensionToCount = otherFiles.stream()
+      .collect(Collectors.groupingBy(file -> StringUtil.notNullize(file.getExtension()).toLowerCase(Locale.ENGLISH), Collectors.counting()));
+    String topExtensions = extensionToCount
+      .entrySet().stream()
+      .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
+      .map(entry -> entry.getKey() + "(" + entry.getValue() + ")")
+      .limit(10)
+      .collect(Collectors.joining(", "));
 
-    final Multiset<String> stats = HashMultiset.create();
-    for (VirtualFile file : otherFiles) {
-      //noinspection StringToUpperCaseOrToLowerCaseWithoutLocale
-      stats.add(StringUtil.notNullize(file.getExtension()).toLowerCase());
-    }
-
-    List<String> extensions = ContainerUtil.newArrayList(stats.elementSet());
-    Collections.sort(extensions, (o1, o2) -> stats.count(o2) - stats.count(o1));
-
-    String message = "Search in " + otherFiles.size() + " files with unknown types took " + time + "ms.\n" +
-                     "Mapping their extensions to an existing file type (e.g. Plain Text) might speed up the search.\n" +
-                     "Most frequent non-indexed file extensions: ";
-    for (int i = 0; i < Math.min(10, extensions.size()); i++) {
-      String extension = extensions.get(i);
-      message += extension + "(" + stats.count(extension) + ") ";
-    }
-    LOG.info(message);
+    LOG.info("Search in " + otherFiles.size() + " files with unknown types took " + time + "ms.\n" +
+             "Mapping their extensions to an existing file type (e.g. Plain Text) might speed up the search.\n" +
+             "Most frequent non-indexed file extensions: " + topExtensions);
   }
 
   private void searchInFiles(@NotNull Collection<VirtualFile> virtualFiles,
@@ -232,14 +226,31 @@ class FindInProjectTask {
         return true;
       }
 
-      occurrenceCount.addAndGet(countInFile);
+      long totalSize;
       if (countInFile > 0) {
-        if (myTotalFilesSize.addAndGet(fileLength) > FILES_SIZE_LIMIT && myWarningShown.compareAndSet(false, true)) {
-          String message = FindBundle.message("find.excessive.total.size.prompt",
-                                              UsageViewManagerImpl.presentableSize(myTotalFilesSize.longValue()),
-                                              ApplicationNamesInfo.getInstance().getProductName());
-          UsageLimitUtil.showAndCancelIfAborted(myProject, message, processPresentation.getUsageViewPresentation());
+        occurrenceCount.addAndGet(countInFile);
+        totalSize = myTotalFilesSize.addAndGet(fileLength);
+      }
+      else {
+        totalSize = myTotalFilesSize.get();
+      }
+
+      if (totalSize > FILES_SIZE_LIMIT) {
+        TooManyUsagesStatus tooManyUsagesStatus = TooManyUsagesStatus.getFrom(myProgress);
+        if (tooManyUsagesStatus.switchTooManyUsagesStatus()) {
+          UIUtil.invokeLaterIfNeeded(() -> {
+            String message = FindBundle.message("find.excessive.total.size.prompt",
+                                                UsageViewManagerImpl.presentableSize(myTotalFilesSize.longValue()),
+                                                ApplicationNamesInfo.getInstance().getProductName());
+            UsageLimitUtil.Result ret = UsageLimitUtil.showTooManyUsagesWarning(myProject, message, processPresentation.getUsageViewPresentation());
+            if (ret == UsageLimitUtil.Result.ABORT) {
+              myProgress.cancel();
+            }
+            tooManyUsagesStatus.userResponded();
+          });
         }
+        tooManyUsagesStatus.pauseProcessingIfTooManyUsages();
+        myProgress.checkCanceled();
       }
       return true;
     };
@@ -341,14 +352,13 @@ class FindInProjectTask {
     return iterator.getFiles();
   }
 
-  private static boolean iterateAll(@NotNull VirtualFile[] files, @NotNull final GlobalSearchScope searchScope, @NotNull final ContentIterator iterator) {
+  private static void iterateAll(@NotNull VirtualFile[] files, @NotNull final GlobalSearchScope searchScope, @NotNull final ContentIterator iterator) {
     final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     final VirtualFileFilter contentFilter = file -> file.isDirectory() ||
            !fileTypeManager.isFileIgnored(file) && !file.getFileType().isBinary() && searchScope.contains(file);
     for (VirtualFile file : files) {
-      if (!VfsUtilCore.iterateChildrenRecursively(file, contentFilter, iterator)) return false;
+      if (!VfsUtilCore.iterateChildrenRecursively(file, contentFilter, iterator)) break;
     }
-    return true;
   }
 
   private boolean canRelyOnIndices() {

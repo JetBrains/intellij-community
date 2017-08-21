@@ -59,6 +59,11 @@ public class JavaCodeBlockModificationListener extends PsiTreeChangePreprocessor
   }
 
   @Override
+  protected boolean containsStructuralElements(@NotNull PsiElement element) {
+    return hasClassesInside(element);
+  }
+
+  @Override
   protected void onTreeChanged(@NotNull PsiTreeChangeEventImpl event) {
     Set<PsiElement> changedChildren = getChangedChildren(event);
 

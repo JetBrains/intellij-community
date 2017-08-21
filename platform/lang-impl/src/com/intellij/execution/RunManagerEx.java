@@ -49,19 +49,8 @@ public abstract class RunManagerEx extends RunManager {
   @Deprecated
   public final void addConfiguration(RunnerAndConfigurationSettings settings, boolean isShared, List<BeforeRunTask> tasks, boolean addTemplateTasksIfAbsent) {
     ((RunnerAndConfigurationSettingsImpl)settings).setShared(isShared);
-    addConfiguration(settings, tasks, addTemplateTasksIfAbsent);
-  }
-
-  @Deprecated
-  public void addConfiguration(@NotNull RunnerAndConfigurationSettings settings, @NotNull List<BeforeRunTask> tasks, boolean addTemplateTasksIfAbsent) {
     setBeforeRunTasks(settings.getConfiguration(), tasks, addTemplateTasksIfAbsent);
     addConfiguration(settings);
-  }
-
-  @SuppressWarnings("MethodMayBeStatic")
-  @Deprecated
-  public final boolean isConfigurationShared(@NotNull RunnerAndConfigurationSettings settings) {
-    return settings.isShared();
   }
 
   @NotNull

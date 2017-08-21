@@ -22,7 +22,7 @@ import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCa
  */
 public class InsertMethodCallFixTest extends LightQuickFixParameterizedTestCase {
 
-  public void test() throws Exception {
+  public void test() {
     doAllTests();
   }
 

@@ -45,6 +45,8 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
   private RuntimeException myPostponedError;
   private final AuxiliaryMethodGenerator myAuxGenerator;
   private final Set<String> myNotNullAnnos = new HashSet<String>();
+  private boolean myStatic;
+  private boolean myInner;
 
   private NotNullVerifyingInstrumenter(final ClassVisitor classVisitor, ClassReader reader, String[] notNullAnnotations) {
     super(Opcodes.API_VERSION, classVisitor);
@@ -78,10 +80,8 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
         final Type[] args = Type.getArgumentTypes(desc);
         methodParamNames.put(methodName, names);
 
-        final boolean isStatic = (access & ACC_STATIC) != 0;
-
         final Map<Integer, Integer> paramSlots = new LinkedHashMap<Integer, Integer>(); // map: localVariableSlot -> methodParameterIndex
-        int slotIndex = isStatic? 0 : 1;
+        int slotIndex = isStatic(access) ? 0 : 1;
         for (int paramIndex = 0; paramIndex < args.length; paramIndex++) {
           final Type arg = args[paramIndex];
           paramSlots.put(slotIndex, paramIndex);
@@ -111,6 +111,12 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
   public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
     super.visit(version, access, name, signature, superName, interfaces);
     myClassName = name;
+    myStatic = isStatic(access);
+  }
+
+  @Override
+  public void visitOuterClass(String owner, String name, String desc) {
+    myInner = true;
   }
 
   private static class NotNullState {
@@ -152,8 +158,13 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
 
     final Type[] args = Type.getArgumentTypes(desc);
 
+    boolean hasOuterClassParameter = myInner && !myStatic && "<init>".equals(name);
+
     // see http://forge.ow2.org/tracker/?aid=307392&group_id=23&atid=100023&func=detail
-    final int syntheticCount = signature == null ? 0 : Math.max(0, args.length - getSignatureParameterCount(signature));
+    final int syntheticCount = signature == null ? 0 : hasOuterClassParameter ? 1 : Math.max(0, args.length - getSignatureParameterCount(signature));
+
+    // workaround for ASM's workaround for javac bug: http://forge.ow2.org/tracker/?func=detail&aid=317788&group_id=23&atid=100023
+    final int paramAnnotationOffset = hasOuterClassParameter ? 1 : 0;
 
     final Type returnType = Type.getReturnType(desc);
     final MethodVisitor v = cv.visitMethod(access, name, desc, signature, exceptions);
@@ -194,7 +205,10 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
       }
 
       public AnnotationVisitor visitParameterAnnotation(final int parameter, final String anno, final boolean visible) {
-        return checkNotNullParameter(parameter, anno, mv.visitParameterAnnotation(parameter, anno, visible));
+        AnnotationVisitor base = mv.visitParameterAnnotation(parameter, anno, visible);
+        if (parameter < paramAnnotationOffset) return base;
+
+        return checkNotNullParameter(parameter - paramAnnotationOffset, anno, base);
       }
 
       private AnnotationVisitor checkNotNullParameter(int parameter, String anno, AnnotationVisitor av) {
@@ -249,9 +263,8 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
 
       @Override
       public void visitLocalVariable(String name, String desc, String signature, Label start, Label end, int index) {
-        final boolean isStatic = (access & ACC_STATIC) != 0;
-        final boolean isParameterOrThisRef = isStatic ? index < args.length : index <= args.length;
-        final Label label = (isParameterOrThisRef && myStartGeneratedCodeLabel != null) ? myStartGeneratedCodeLabel : start;
+        boolean isParameterOrThisRef = isStatic(access) ? index < args.length : index <= args.length;
+        Label label = (isParameterOrThisRef && myStartGeneratedCodeLabel != null) ? myStartGeneratedCodeLabel : start;
         mv.visitLocalVariable(name, desc, signature, label, end, index);
       }
 
@@ -293,6 +306,10 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
     };
   }
 
+  private static boolean isStatic(int access) {
+    return (access & ACC_STATIC) != 0;
+  }
+
   private static int getSignatureParameterCount(String signature) {
     final int[] count = {0};
     new SignatureReader(signature).accept(new SignatureVisitor(Opcodes.ASM6) {
@@ -309,7 +326,7 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
     return type.getSort() == Type.OBJECT || type.getSort() == Type.ARRAY;
   }
 
-  private void registerError(String methodName, String operationName, Throwable e) {
+  private void registerError(String methodName, @SuppressWarnings("SameParameterValue") String operationName, Throwable e) {
     if (myPostponedError == null) {
       // throw the first error that occurred
       Throwable err = e.getCause();
@@ -342,4 +359,5 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
     }
   }
 }
+
 

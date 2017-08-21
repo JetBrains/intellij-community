@@ -154,12 +154,12 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
   public void loadState(final Element root) {
     final String hexEnabled = JDOMExternalizerUtil.readField(root, HEX_VIEW_ENABLED);
     if (hexEnabled != null) {
-      myHexRenderer.setEnabled("true".equalsIgnoreCase(hexEnabled));
+      myHexRenderer.setEnabled(Boolean.parseBoolean(hexEnabled));
     }
 
     final String alternativeEnabled = JDOMExternalizerUtil.readField(root, ALTERNATIVE_COLLECTION_VIEW_ENABLED);
     if (alternativeEnabled != null) {
-      setAlternateCollectionViewsEnabled("true".equalsIgnoreCase(alternativeEnabled));
+      setAlternateCollectionViewsEnabled(Boolean.parseBoolean(alternativeEnabled));
     }
 
     for (final Element elem : root.getChildren(RENDERER_TAG)) {
@@ -170,6 +170,10 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
       try {
         if (ToStringRenderer.UNIQUE_ID.equals(id)) {
           myToStringRenderer.readExternal(elem);
+          if (!myToStringRenderer.isEnabled()) {
+            myToStringRenderer.setEnabled(true);
+            myToStringRenderer.setOnDemand(true);
+          }
         }
         else if (ClassRenderer.UNIQUE_ID.equals(id)) {
           myClassRenderer.readExternal(elem);
@@ -355,12 +359,12 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
   }
 
   public static EnumerationChildrenRenderer createEnumerationChildrenRenderer(@NonNls String[][] expressions) {
-    final EnumerationChildrenRenderer childrenRenderer = new EnumerationChildrenRenderer();
+    EnumerationChildrenRenderer childrenRenderer = new EnumerationChildrenRenderer();
     if (expressions != null && expressions.length > 0) {
-      final ArrayList<Pair<String, TextWithImports>> childrenList = new ArrayList<>(expressions.length);
-      for (final String[] expression : expressions) {
-        childrenList.add(
-          new Pair<>(expression[0], new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, expression[1], "", StdFileTypes.JAVA)));
+      ArrayList<EnumerationChildrenRenderer.ChildInfo> childrenList = new ArrayList<>(expressions.length);
+      for (String[] expression : expressions) {
+        childrenList.add(new EnumerationChildrenRenderer.ChildInfo(
+          expression[0], new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, expression[1], "", StdFileTypes.JAVA), false));
       }
       childrenRenderer.setChildren(childrenList);
     }

@@ -30,7 +30,7 @@ import java.util.Arrays;
 import static org.junit.Assert.assertArrayEquals;
 
 public class EditorInlayTest extends AbstractEditorTest {
-  public void testCaretMovement() throws Exception {
+  public void testCaretMovement() {
     initText("ab");
     addInlay(1);
     right();
@@ -47,7 +47,7 @@ public class EditorInlayTest extends AbstractEditorTest {
     checkCaretPosition(0, 0, 0);
   }
 
-  public void testFoldedInlay() throws Exception {
+  public void testFoldedInlay() {
     initText("abc");
     addInlay(1);
     addCollapsedFoldRegion(1, 2, ".");
@@ -57,7 +57,7 @@ public class EditorInlayTest extends AbstractEditorTest {
     checkCaretPosition(2, 2, 2);
   }
 
-  public void testCaretMovementWithSelection() throws Exception {
+  public void testCaretMovementWithSelection() {
     initText("ab");
     addInlay(1);
     rightWithSelection();
@@ -80,7 +80,7 @@ public class EditorInlayTest extends AbstractEditorTest {
     checkCaretPositionAndSelection(2, 2, 3, 2, 2);
   }
 
-  public void testBackspace() throws Exception {
+  public void testBackspace() {
     initText("ab<caret>c");
     addInlay(1);
     backspace();
@@ -94,7 +94,7 @@ public class EditorInlayTest extends AbstractEditorTest {
     checkCaretPosition(0, 0, 0);
   }
 
-  public void testDelete() throws Exception {
+  public void testDelete() {
     initText("a<caret>bc");
     addInlay(2);
     delete();
@@ -108,7 +108,7 @@ public class EditorInlayTest extends AbstractEditorTest {
     checkCaretPosition(1, 1, 2);
   }
 
-  public void testMulticaretDelete() throws Exception {
+  public void testMulticaretDelete() {
     initText("<caret>ab <caret>ab");
     addInlay(1);
     addInlay(4);
@@ -119,7 +119,7 @@ public class EditorInlayTest extends AbstractEditorTest {
     checkResultByText("a<caret> a<caret>");
   }
 
-  public void testMulticaretTyping() throws Exception {
+  public void testMulticaretTyping() {
     initText("<caret>ab <caret>ab");
     addInlay(1);
     addInlay(4);
@@ -135,21 +135,21 @@ public class EditorInlayTest extends AbstractEditorTest {
                  ContainerUtil.map(myEditor.getCaretModel().getAllCarets(), Caret::getVisualPosition));
   }
 
-  public void testDocumentEditingWithSoftWraps() throws Exception {
+  public void testDocumentEditingWithSoftWraps() {
     initText("long line");
     configureSoftWraps(7);
     Inlay inlay = addInlay(1);
     assertNotNull(myEditor.getSoftWrapModel().getSoftWrap(5));
     new WriteCommandAction.Simple<Void>(ourProject) {
       @Override
-      protected void run() throws Throwable {
+      protected void run() {
         myEditor.getDocument().setText(" ");
       }
     }.execute();
     assertFalse(inlay.isValid());
   }
 
-  public void testInlayDoesntGetInsideSurrogatePair() throws Exception {
+  public void testInlayDoesntGetInsideSurrogatePair() {
     initText(""); // Cannot set up text with singular surrogate characters directly
     runWriteCommand(() -> myEditor.getDocument().setText(HIGH_SURROGATE + LOW_SURROGATE + LOW_SURROGATE));
     Inlay inlay = addInlay(2);
@@ -159,7 +159,7 @@ public class EditorInlayTest extends AbstractEditorTest {
     assertFalse(inlay.isValid() && DocumentUtil.isInsideSurrogatePair(myEditor.getDocument(), inlay.getOffset()));
   }
 
-  public void testTwoInlaysAtSameOffset() throws Exception {
+  public void testTwoInlaysAtSameOffset() {
     initText("ab");
     addInlay(1);
     addInlay(1);
@@ -181,7 +181,7 @@ public class EditorInlayTest extends AbstractEditorTest {
     checkCaretPosition(0, 0, 0);
   }
 
-  public void testTypingBetweenInlaysAtSameOffset() throws Exception {
+  public void testTypingBetweenInlaysAtSameOffset() {
     initText("ab");
     Inlay inlay1 = addInlay(1);
     Inlay inlay2 = addInlay(1);
@@ -196,14 +196,14 @@ public class EditorInlayTest extends AbstractEditorTest {
     assertEquals(2, inlay2.getOffset());
   }
 
-  public void testHasInlayAtVisualPosition() throws Exception {
+  public void testHasInlayAtVisualPosition() {
     initText("ab");
     addInlay(1);
     addInlay(1);
     assertTrue(myEditor.getInlayModel().hasInlineElementAt(new VisualPosition(0, 2)));
   }
 
-  public void testBackspaceWithTwoInlaysAtSameOffset() throws Exception {
+  public void testBackspaceWithTwoInlaysAtSameOffset() {
     initText("ab<caret>c");
     addInlay(1);
     addInlay(1);
@@ -221,7 +221,7 @@ public class EditorInlayTest extends AbstractEditorTest {
     checkCaretPosition(0, 0, 0);
   }
 
-  public void testDeleteWithTwoInlaysAtSameOffset() throws Exception {
+  public void testDeleteWithTwoInlaysAtSameOffset() {
     initText("a<caret>bc");
     addInlay(2);
     addInlay(2);
@@ -239,7 +239,7 @@ public class EditorInlayTest extends AbstractEditorTest {
     checkCaretPosition(1, 1, 3);
   }
 
-  public void testSelectionWithTwoInlaysAtSameOffset() throws Exception {
+  public void testSelectionWithTwoInlaysAtSameOffset() {
     initText("ab");
     addInlay(1);
     addInlay(1);
@@ -263,7 +263,7 @@ public class EditorInlayTest extends AbstractEditorTest {
     checkCaretPositionAndSelection(2, 2, 4, 2, 2);
   }
 
-  public void testDeleteBetweenInlays() throws Exception {
+  public void testDeleteBetweenInlays() {
     initText("abc");
     addInlay(1);
     addInlay(2);
@@ -275,7 +275,7 @@ public class EditorInlayTest extends AbstractEditorTest {
     assertInlaysPositions(1, 1);
   }
 
-  public void testCaretPositionAfterInlayDisposalToTheLeft() throws Exception {
+  public void testCaretPositionAfterInlayDisposalToTheLeft() {
     initText("ab");
     Inlay inlay = addInlay(1);
     addInlay(1);
@@ -285,7 +285,7 @@ public class EditorInlayTest extends AbstractEditorTest {
     checkCaretPosition(1, 1, 1);
   }
 
-  public void testCaretPositionAfterInlayDisposalToTheRight() throws Exception {
+  public void testCaretPositionAfterInlayDisposalToTheRight() {
     initText("ab");
     addInlay(1);
     Inlay inlay = addInlay(1);
@@ -295,7 +295,7 @@ public class EditorInlayTest extends AbstractEditorTest {
     checkCaretPosition(1, 1, 2);
   }
 
-  public void testPositionConversionForAdjacentInlays() throws Exception {
+  public void testPositionConversionForAdjacentInlays() {
     initText("ab");
     addInlay(1);
     addInlay(1);
@@ -304,7 +304,7 @@ public class EditorInlayTest extends AbstractEditorTest {
     assertFalse(lp.leansForward);
   }
 
-  public void testFoldingOperationDoesntMoveCaretFromBetweenInlays() throws Exception {
+  public void testFoldingOperationDoesntMoveCaretFromBetweenInlays() {
     initText("abc");
     addInlay(2);
     addInlay(2);
@@ -313,6 +313,18 @@ public class EditorInlayTest extends AbstractEditorTest {
     right();
     addCollapsedFoldRegion(0, 1, "...");
     checkCaretPosition(2, 2, 5);
+  }
+
+  public void testBehaviourOnTextInsertion() {
+    initText("abc");
+    Inlay i1 = addInlay(1, false);
+    Inlay i2 = addInlay(2, true);
+    WriteCommandAction.runWriteCommandAction(ourProject, () -> {
+      myEditor.getDocument().insertString(2, " ");
+      myEditor.getDocument().insertString(1, " ");
+    });
+    assertTrue(i1.isValid() && i1.getOffset() == 1);
+    assertTrue(i2.isValid() && i2.getOffset() == 4);
   }
 
   private static void checkCaretPositionAndSelection(int offset, int logicalColumn, int visualColumn,

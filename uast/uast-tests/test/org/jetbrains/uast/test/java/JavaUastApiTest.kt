@@ -52,4 +52,46 @@ class JavaUastApiTest : AbstractJavaUastTest() {
             UsefulTestCase.assertInstanceOf(literal.toUElement(), ULiteralExpression::class.java)
         }
     }
+
+    @Test fun testFunctionalInterfaceType() {
+        doTest("Simple/FunctionalInterfaceType.java") { name, file ->
+            val lambda = file.findElementByText<ULambdaExpression>("() -> { }")
+            assertEquals(
+                    lambda.functionalInterfaceType?.canonicalText,
+                    "java.lang.Runnable")
+        }
+    }
+
+    @Test fun testReceiverType() {
+        doTest("Simple/ReceiverType.java") { name, file ->
+            assertEquals("Test", file.findElementByText<UCallExpression>("foo(1)").receiverType?.canonicalText)
+            assertEquals("Test", file.findElementByText<UCallExpression>("fooBase(1)").receiverType?.canonicalText)
+            assertEquals("Test", file.findElementByText<UCallExpression>("this.barBase(1)").receiverType?.canonicalText)
+            assertEquals("Test", file.findElementByText<UCallExpression>("bazBaseBase(1)").receiverType?.canonicalText)
+            assertNull(file.findElementByText<UCallExpression>("staticMethod(1)").receiverType)
+
+            assertEquals("Test", file.findElementByText<UCallExpression>("foo(2)").receiverType?.canonicalText)
+            assertEquals("Test", file.findElementByText<UCallExpression>("fooBase(2)").receiverType?.canonicalText)
+            assertEquals("Test.InnerTest", file.findElementByText<UCallExpression>("bar(2)").receiverType?.canonicalText)
+            assertNull(file.findElementByText<UCallExpression>("staticMethod(2)").receiverType)
+
+            assertEquals("Test", file.findElementByText<UCallExpression>("foo(3)").receiverType?.canonicalText)
+            assertEquals("Test", file.findElementByText<UCallExpression>("fooBase(3)").receiverType?.canonicalText)
+            assertEquals("Test.InnerTest", file.findElementByText<UCallExpression>("bar(3)").receiverType?.canonicalText)
+            assertEquals("Test.InnerTest.InnerInnerTest", file.findElementByText<UCallExpression>("baz(3)").receiverType?.canonicalText)
+            assertNull(file.findElementByText<UCallExpression>("staticMethod(3)").receiverType)
+
+            assertEquals("Test", file.findElementByText<UCallExpression>("foo(4)").receiverType?.canonicalText)
+            assertEquals("Test.InnerTest2", file.findElementByText<UCallExpression>("fooBase(4)").receiverType?.canonicalText)
+
+            assertEquals("Test.StaticTest", file.findElementByText<UCallExpression>("bar(5)").receiverType?.canonicalText)
+            assertNull(file.findElementByText<UCallExpression>("staticMethod(5)").receiverType)
+
+            assertEquals("Test.StaticTest", file.findElementByText<UCallExpression>("bar(6)").receiverType?.canonicalText)
+
+            assertEquals("TestBase", file.findElementByText<UCallExpression>("bazBaseBase(7)").receiverType?.canonicalText)
+            assertEquals("Test.InnerTest", file.findElementByText<UCallExpression>("bar(7)").receiverType?.canonicalText)
+            assertEquals("TestBase", file.findElementByText<UCallExpression>("barBase(7)").receiverType?.canonicalText)
+        }
+    }
 }

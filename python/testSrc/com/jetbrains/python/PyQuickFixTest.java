@@ -27,6 +27,7 @@ import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.inspections.*;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
 import com.jetbrains.python.psi.LanguageLevel;
+import org.intellij.lang.regexp.inspection.RedundantEscapeInspection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -619,6 +620,7 @@ public class PyQuickFixTest extends PyTestCase {
 
   // PY-20452
   public void testRemoveRedundantEscapeInOnePartRegExp() {
+    myFixture.enableInspections(new RedundantEscapeInspection());
     myFixture.configureByText(PythonFileType.INSTANCE, "import re\nre.compile(\"(?P<foo>((\\/(?P<bar>.+))?))\")");
 
     final List<IntentionAction> quickFixes = myFixture.getAllQuickFixes();
@@ -633,6 +635,7 @@ public class PyQuickFixTest extends PyTestCase {
 
   // PY-20452
   public void testRemoveRedundantEscapeInMultiPartRegExp() {
+    myFixture.enableInspections(new RedundantEscapeInspection());
     myFixture.configureByText(PythonFileType.INSTANCE, "import re\n" +
                                                        "re.compile(\"(?P<foo>\"\n" +
                                                        "           \"((\\/(?P<bar>.+))?))\")");

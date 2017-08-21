@@ -877,9 +877,19 @@ public class ExprProcessor implements CodeConstants {
       castAlways ||
       (!leftType.isSuperset(rightType) && (rightType.equals(VarType.VARTYPE_OBJECT) || leftType.type != CodeConstants.TYPE_OBJECT)) ||
       (castNull && rightType.type == CodeConstants.TYPE_NULL && !UNDEFINED_TYPE_STRING.equals(getTypeName(leftType))) ||
-      (castNarrowing && isIntConstant(exprent) && VarType.VARTYPE_INT.isStrictSuperset(leftType));
+      (castNarrowing && isIntConstant(exprent) && isNarrowedIntType(leftType));
 
     boolean quote = cast && exprent.getPrecedence() >= FunctionExprent.getPrecedence(FunctionExprent.FUNCTION_CAST);
+
+    // cast instead to 'byte' / 'short' when int constant is used as a value for 'Byte' / 'Short'
+    if (castNarrowing && exprent.type == Exprent.EXPRENT_CONST) {
+      if (leftType.equals(VarType.VARTYPE_BYTE_OBJ)) {
+        leftType = VarType.VARTYPE_BYTE;
+      }
+      else if (leftType.equals(VarType.VARTYPE_SHORT_OBJ)) {
+        leftType = VarType.VARTYPE_SHORT;
+      }
+    }
 
     if (cast) buffer.append('(').append(getCastTypeName(leftType)).append(')');
 
@@ -909,5 +919,10 @@ public class ExprProcessor implements CodeConstants {
     }
 
     return false;
+  }
+
+  private static boolean isNarrowedIntType(VarType type) {
+    return VarType.VARTYPE_INT.isStrictSuperset(type) ||
+           type.equals(VarType.VARTYPE_BYTE_OBJ) || type.equals(VarType.VARTYPE_SHORT_OBJ);
   }
 }

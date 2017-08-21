@@ -16,20 +16,14 @@
 package com.jetbrains.python;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -957,6 +951,40 @@ public class PyTypingTest extends PyTestCase {
            "expr = f(True, 1, 'foo')\n");
   }
 
+  // PY-24260
+  public void testGenericClassParameterTakenFromGenericClassObject() {
+    doTest("MyClass[TypeVar('T')]",
+           "from typing import TypeVar, Generic, Type\n" +
+           "\n" +
+           "T = TypeVar(\"T\")\n" +
+           "\n" +
+           "class MyClass(Generic[T]):\n" +
+           "    def __init__(self, type: Type[T]):\n" +
+           "        pass\n" +
+           "\n" +
+           "def f(x: Type[T]):\n" +
+           "    expr = MyClass(x)\n");
+  }
+
+  // PY-18816
+  public void testLocalTypeAlias() {
+    doTest("int",
+           "def func(g):\n" +
+           "    Alias = int\n" +
+           "    expr: Alias = g()");
+  }
+
+  // TODO same test for variable type comments
+  // PY-18816
+  public void testLocalTypeAliasInFunctionTypeComment() {
+    doTest("int",
+           "def func():\n" +
+           "    Alias = int\n" +
+           "    def g(x):\n" +
+           "        # type: (Alias) -> None\n" +
+           "        expr = x\n");
+  }
+
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());
@@ -982,13 +1010,7 @@ public class PyTypingTest extends PyTestCase {
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
     final TypeEvalContext codeAnalysis = TypeEvalContext.codeAnalysis(expr.getProject(),expr.getContainingFile());
     final TypeEvalContext userInitiated = TypeEvalContext.userInitiated(expr.getProject(), expr.getContainingFile()).withTracing();
-    assertType(expectedType, expr, codeAnalysis, "code analysis");
-    assertType(expectedType, expr, userInitiated, "user initiated");
-  }
-
-  private static void assertType(String expectedType, PyExpression expr, TypeEvalContext context, String contextName) {
-    final PyType actual = context.getType(expr);
-    final String actualType = PythonDocumentationProvider.getTypeName(actual, context);
-    assertEquals("Failed in " + contextName + " context", expectedType, actualType);
+    assertType("Failed in code analysis context", expectedType, expr, codeAnalysis);
+    assertType("Failed in user initiated context", expectedType, expr, userInitiated);
   }
 }

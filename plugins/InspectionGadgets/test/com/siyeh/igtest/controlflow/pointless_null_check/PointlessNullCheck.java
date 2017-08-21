@@ -35,6 +35,9 @@ public class PointlessNullCheck {
         if(obj1 != null && <warning descr="Unnecessary 'null' check before 'check2' call">obj2 != null</warning> && check2(obj1, obj2)) {
             System.out.println("ok");
         }
+        if(obj != null && check1(obj, obj.toString())) {
+            System.out.println("ok");
+        }
     }
 
     private boolean check(Object obj) {

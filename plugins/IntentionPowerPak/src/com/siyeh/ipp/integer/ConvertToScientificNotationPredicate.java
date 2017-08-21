@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,19 +31,14 @@ class ConvertToScientificNotationPredicate implements PsiElementPredicate {
       return false;
     }
     final PsiLiteralExpression expression = (PsiLiteralExpression)element;
+    if (expression.getValue() == null) {
+      return false;
+    }
     final PsiType type = expression.getType();
     if (!PsiType.DOUBLE.equals(type) && !PsiType.FLOAT.equals(type)) {
       return false;
     }
-    String text = expression.getText();
-    if (text == null) {
-      return false;
-    }
-    text = text.toLowerCase();
-    text = StringUtil.trimStart(text, "-");
-    if (!text.contains(".") && text.startsWith("0")) {
-      return false; //Octal integer
-    }
+    final String text = StringUtil.trimStart(expression.getText(), "-");
     return !text.contains("e");
   }
 }

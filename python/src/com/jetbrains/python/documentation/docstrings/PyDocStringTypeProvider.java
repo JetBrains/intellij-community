@@ -87,12 +87,15 @@ public class PyDocStringTypeProvider extends PyTypeProviderBase {
   public PyType getGenericType(@NotNull PyClass cls, @NotNull TypeEvalContext context) {
     final PyFunction init = cls.findInitOrNew(true, context);
     if (init != null) {
-      final PyType initType = context.getType(init);
-      final PyCallableType callableType = PyUtil.as(initType, PyCallableType.class);
+      final PyCallableType callableType = PyUtil.as(context.getType(init), PyCallableType.class);
       if (callableType != null) {
-        return callableType.getReturnType(context);
+        final PyType returnType = PyUtil.as(callableType.getReturnType(context), PyCollectionType.class);
+        if (returnType != null) {
+          return returnType;
+        }
       }
     }
+
     return null;
   }
 }

@@ -29,6 +29,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,7 +46,7 @@ public class JavaGotoSuperTest extends LightDaemonAnalyzerTestCase {
     return "/codeInsight/gotosuper/";
   }
 
-  public void testLambda() throws Throwable {
+  public void testLambda() {
     doTest();
   }
 
@@ -56,32 +57,28 @@ public class JavaGotoSuperTest extends LightDaemonAnalyzerTestCase {
     checkResultByFile(getBasePath() + getTestName(false) + ".after.java");
   }
 
-  public void testLambdaMarker() throws Exception {
+  public void testLambdaMarker() {
     configureByFile(getBasePath() + getTestName(false) + ".java");
-    int offset = myEditor.getCaretModel().getOffset();
 
     doHighlighting();
-    Document document = getEditor().getDocument();
-    List<LineMarkerInfo> markers = DaemonCodeAnalyzerImpl.getLineMarkers(document, getProject());
-    for (LineMarkerInfo info : markers) {
-      if (info.endOffset >= offset && info.startOffset <= offset) {
-        Shortcut shortcut = ActionManager.getInstance().getAction(IdeActions.ACTION_GOTO_SUPER).getShortcutSet().getShortcuts()[0];
-        assertEquals(
-          "<html><body>Overrides method in <a href=\"#javaClass/I\">I</a><br><div style='margin-top: 5px'><font size='2'>Click or press " +
-          KeymapUtil.getShortcutText(shortcut) +
-          " to navigate</font></div></body></html>",
-          info.getLineMarkerTooltip());
-        return;
-      }
+    if (CodeInsightTestFixtureImpl.processGuttersAtCaret(getEditor(), getProject(), mark -> {
+      Shortcut shortcut = ActionManager.getInstance().getAction(IdeActions.ACTION_GOTO_SUPER).getShortcutSet().getShortcuts()[0];
+      assertEquals(
+        "<html><body>Overrides method in <a href=\"#javaClass/I\">I</a><br><div style='margin-top: 5px'><font size='2'>Click or press " +
+        KeymapUtil.getShortcutText(shortcut) +
+        " to navigate</font></div></body></html>",
+        mark.getTooltipText());
+      return false;
+    })) {
+      fail("Gutter expected");
     }
-    fail("Gutter expected");
   }
 
-  public void testSiblingInheritance() throws Throwable {
+  public void testSiblingInheritance() {
     doTest();
   }
 
-  public void testSiblingInheritanceLineMarkers() throws Throwable {
+  public void testSiblingInheritanceLineMarkers() {
     configureByFile(getBasePath() + "SiblingInheritance.java");
     PsiJavaFile file = (PsiJavaFile)getFile();
     PsiClass i = JavaPsiFacade.getInstance(getProject()).findClass("z.I", GlobalSearchScope.fileScope(file));
@@ -107,7 +104,7 @@ public class JavaGotoSuperTest extends LightDaemonAnalyzerTestCase {
     return marker;
   }
 
-  public void testSiblingInheritanceGoDown() throws Throwable {
+  public void testSiblingInheritanceGoDown() {
     configureByFile(getBasePath() + "SiblingInheritance.after.java");
     AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_GOTO_IMPLEMENTATION);
     AnActionEvent event = AnActionEvent.createFromAnAction(action, null, "", DataManager.getInstance().getDataContextFromFocus().getResultSync());
@@ -117,7 +114,7 @@ public class JavaGotoSuperTest extends LightDaemonAnalyzerTestCase {
     checkResultByFile(getBasePath() + "SiblingInheritance.java");
   }
 
-  public void testSiblingInheritanceAndGenerics() throws Throwable {
+  public void testSiblingInheritanceAndGenerics() {
     configureByFile(getBasePath() + "SiblingInheritanceAndGenerics.java");
     AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_GOTO_SUPER);
     AnActionEvent event = AnActionEvent.createFromAnAction(action, null, "", DataManager.getInstance().getDataContextFromFocus().getResultSync());
@@ -127,7 +124,7 @@ public class JavaGotoSuperTest extends LightDaemonAnalyzerTestCase {
     checkResultByFile(getBasePath() + "SiblingInheritanceAndGenerics.after.java");
   }
 
-  public void testDoNotShowSiblingInheritanceLineMarkerIfSubclassImplementsTheSameInterfaceAsTheCurrentClass() throws Throwable {
+  public void testDoNotShowSiblingInheritanceLineMarkerIfSubclassImplementsTheSameInterfaceAsTheCurrentClass() {
     configureByFile(getBasePath() + "DeceivingSiblingInheritance.java");
     PsiJavaFile file = (PsiJavaFile)getFile();
     PsiClass OCBaseLanguageFileType = JavaPsiFacade.getInstance(getProject()).findClass("z.OCBaseLanguageFileType", GlobalSearchScope.fileScope(file));

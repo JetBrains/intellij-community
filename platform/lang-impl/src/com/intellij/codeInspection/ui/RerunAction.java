@@ -21,16 +21,13 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 
-import javax.swing.*;
-
 class RerunAction extends AnAction {
   private final InspectionResultsView myView;
 
-  RerunAction(InspectionResultsView view, JComponent comp) {
-    super(InspectionsBundle.message("inspection.action.rerun"), InspectionsBundle.message("inspection.action.rerun"),
-          AllIcons.Actions.Rerun);
+  RerunAction(InspectionResultsView view) {
+    super(InspectionsBundle.message("inspection.action.rerun"), InspectionsBundle.message("inspection.action.rerun"), AllIcons.Actions.Rerun);
     myView = view;
-    registerCustomShortcutSet(CommonShortcuts.getRerun(), comp);
+    registerCustomShortcutSet(CommonShortcuts.getRerun(), myView);
   }
 
   @Override
@@ -40,10 +37,6 @@ class RerunAction extends AnAction {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    rerun();
-  }
-
-  private void rerun() {
     myView.rerun();
   }
 }

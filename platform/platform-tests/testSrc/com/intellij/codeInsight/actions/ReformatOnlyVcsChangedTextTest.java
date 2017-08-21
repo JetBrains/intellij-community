@@ -17,7 +17,8 @@ package com.intellij.codeInsight.actions;
 
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.lang.LanguageImportStatements;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
@@ -245,7 +246,7 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
     assertFormattedLines(NO_CHANGED_LINES, u1, u2);
   }
 
-  public void testNoChangesNoFormatting() throws IOException {
+  public void testNoChangesNoFormatting() {
     ChangedFilesStructure fs = new ChangedFilesStructure(myWorkingDirectory);
 
     PsiFile u1 = fs.createFile("Test1.java", COMMITTED, COMMITTED);
@@ -257,7 +258,7 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
   }
 
 
-  public void testReformatOnlyChanged() throws IOException {
+  public void testReformatOnlyChanged() {
     ChangedFilesStructure fs = new ChangedFilesStructure(myWorkingDirectory);
 
     PsiFile untouched1 = fs.createFile("Test1.java", COMMITTED, COMMITTED);
@@ -294,7 +295,7 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
     assertFormattedLines(NO_CHANGED_LINES, modified11, modified12);
   }
 
-  public void testOptimizeImportsInModule() throws IOException {
+  public void testOptimizeImportsInModule() {
     ChangedFilesStructure fs = new ChangedFilesStructure(myWorkingDirectory);
 
     String initialFile = "initial file";
@@ -348,7 +349,7 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
     container.registerComponentInstance(key, factory);
   }
 
-  private void doTest(@NotNull String committed, @NotNull String modified, @NotNull ChangedLines... lines) throws IOException {
+  private void doTest(@NotNull String committed, @NotNull String modified, @NotNull ChangedLines... lines) {
     ChangedFilesStructure fs = new ChangedFilesStructure(myWorkingDirectory);
     PsiFile file = fs.createFile("Test.java", committed, modified);
     reformatDirectory(myWorkingDirectory);
@@ -391,15 +392,14 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
       myFileStructure = new TestFileStructure(getModule(), directory);
     }
 
-    public void createDirectoryAndMakeItCurrent() throws IOException {
+    public void createDirectoryAndMakeItCurrent() {
       myFileStructure.createDirectoryAndMakeItCurrent("inner");
     }
 
     @NotNull
     public PsiFile createFile(@NotNull String fileName,
                               @NotNull String committedContent,
-                              @NotNull String actualContent) throws IOException
-    {
+                              @NotNull String actualContent) {
       PsiFile file = myFileStructure.addTestFile(fileName, actualContent);
       if (committedContent != actualContent) {
         registerCommittedRevision(committedContent, file);

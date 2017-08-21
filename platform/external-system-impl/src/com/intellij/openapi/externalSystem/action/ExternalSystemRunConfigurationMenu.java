@@ -82,7 +82,7 @@ public class ExternalSystemRunConfigurationMenu extends DefaultActionGroup imple
     @Override
     public void actionPerformed(@NotNull AnActionEvent event) {
       if (myEnabled) {
-        ProgramRunnerUtil.executeConfiguration(myProject, mySettings, myExecutor);
+        ProgramRunnerUtil.executeConfiguration(mySettings, myExecutor);
         RunManager.getInstance(myProject).setSelectedConfiguration(mySettings);
       }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jetbrains.idea.devkit.build;
 
 import com.intellij.compiler.ant.BuildTargetsFactory;
@@ -35,7 +34,6 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 
 public class GenerateAntTest extends IdeaTestCase {
-
   public void testP1() throws Exception {
     final VirtualFile parent = myModule.getModuleFile().getParent();
     assertNotNull(parent);
@@ -50,7 +48,7 @@ public class GenerateAntTest extends IdeaTestCase {
     dataOutput.flush();
     final String lowercased = StringUtil.toLowerCase(myModule.getName());
     final String expected = "<target name=\"plugin.build.jar."+
-                            lowercased + "\" depends=\"compile.module." + lowercased + 
+                            lowercased + "\" depends=\"compile.module." + lowercased +
                             "\" description=\"Build plugin archive for module &apos;" + myModule.getName() + "&apos;\">\n" +
                             "  <jar destfile=\"${"+ lowercased + ".plugin.path.jar}\" duplicate=\"preserve\">\n" +
                             "    <zipfileset dir=\"${module." + lowercased + ".basedir}/classes\"/>\n" +

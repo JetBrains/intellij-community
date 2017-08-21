@@ -37,7 +37,7 @@ public class XmlInspectionsTest extends LightPlatformCodeInsightFixtureTestCase 
                           "</schema>");
   }
 
-  public void testHtmlFromRncSchema() {
+  public void _testHtmlFromRncSchema() {
     myFixture.enableInspections(new XmlDefaultAttributeValueInspection());
     myFixture.configureByText(HtmlFileType.INSTANCE, "<!DOCTYPE html>\n" +
                                                      "<html lang=\"en\">\n" +
@@ -55,6 +55,12 @@ public class XmlInspectionsTest extends LightPlatformCodeInsightFixtureTestCase 
                                                      "</form>\n" +
                                                      "</body>\n" +
                                                      "</html>\n");
+    myFixture.checkHighlighting();
+  }
+
+  public void testDefaultAttributeInHtml() {
+    myFixture.enableInspections(new XmlDefaultAttributeValueInspection());
+    myFixture.configureByText(HtmlFileType.INSTANCE, "<input type=\"text\"/>");
     myFixture.checkHighlighting();
   }
 }

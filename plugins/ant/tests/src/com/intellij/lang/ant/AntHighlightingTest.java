@@ -105,7 +105,7 @@ public class AntHighlightingTest extends DaemonAnalyzerTestCase {
     doTest();
   }
 
-  public void testBigFilePerformance() throws Exception {
+  public void testBigFilePerformance() {
     try {
       myIgnoreInfos = true;
       PlatformTestUtil.startPerformanceTest("Big ant file highlighting", 15_000, () -> {

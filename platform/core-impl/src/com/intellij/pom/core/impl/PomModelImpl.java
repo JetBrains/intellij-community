@@ -163,7 +163,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
         throw e;
       }
       catch(Exception e){
-        LOG.error(e);
+        throwables.add(e);
         return;
       }
       finally{
@@ -345,7 +345,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     }
 
     boolean physical = changeScope.isPhysical();
-    if (physical && synchronizer.toProcessPsiEvent()) {
+    if (synchronizer.toProcessPsiEvent()) {
       // fail-fast to prevent any psi modifications that would cause psi/document text mismatch
       // PsiToDocumentSynchronizer assertions happen inside event processing and are logged by PsiManagerImpl.fireEvent instead of being rethrown
       // so it's important to throw something outside event processing
@@ -353,7 +353,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
         throw new IllegalStateException("Attempt to modify PSI for non-committed Document!");
       }
       CommandProcessor commandProcessor = CommandProcessor.getInstance();
-      if (!commandProcessor.isUndoTransparentActionInProgress() && commandProcessor.getCurrentCommand() == null) {
+      if (physical && !commandProcessor.isUndoTransparentActionInProgress() && commandProcessor.getCurrentCommand() == null) {
         throw new IncorrectOperationException("Must not change PSI outside command or undo-transparent action. See com.intellij.openapi.command.WriteCommandAction or com.intellij.openapi.command.CommandProcessor");
       }
     }

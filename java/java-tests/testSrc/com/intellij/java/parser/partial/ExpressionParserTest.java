@@ -105,6 +105,7 @@ public class ExpressionParserTest extends JavaParsingTestCase {
 
   public void testIncompleteCast() { doParserTest("f((ArrayList<String>) )"); }
   public void testShiftRight() { doParserTest("x >>= 2"); }
+  public void testCorruptAnnoInCast() { doParserTest("(@&"); }
 
   public void testIllegalWildcard() { doParserTest("this.<?>foo()"); }
   public void testIllegalBound() { doParserTest("C.<T extends S>foo()"); }

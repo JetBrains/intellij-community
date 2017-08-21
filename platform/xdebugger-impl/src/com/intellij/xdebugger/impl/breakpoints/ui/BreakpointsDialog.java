@@ -34,6 +34,7 @@ import com.intellij.ui.popup.util.MasterController;
 import com.intellij.util.SingleAlarm;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
@@ -339,12 +340,12 @@ public class BreakpointsDialog extends DialogWrapper {
         }
       }).
       setToolbarPosition(ActionToolbarPosition.TOP).
-      setToolbarBorder(IdeBorderFactory.createEmptyBorder());
+      setToolbarBorder(JBUI.Borders.empty());
 
     myToggleRuleActions.forEach(decorator::addExtraAction);
 
     JPanel decoratedTree = decorator.createPanel();
-    decoratedTree.setBorder(IdeBorderFactory.createEmptyBorder());
+    decoratedTree.setBorder(JBUI.Borders.empty());
 
     JScrollPane pane = UIUtil.getParentOfType(JScrollPane.class, tree);
     if (pane != null) pane.setBorder(IdeBorderFactory.createBorder());

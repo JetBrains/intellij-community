@@ -469,7 +469,7 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
   }
 
   // PY-14359, PY-14158
-  public void testInspectionSettingsSerializable() throws Exception {
+  public void testInspectionSettingsSerializable() {
     final PyUnresolvedReferencesInspection inspection = new PyUnresolvedReferencesInspection();
     inspection.ignoredIdentifiers.add("foo.Bar.*");
     final Element serialized = new Element("tmp");
@@ -603,9 +603,19 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-23540
+  public void testMemberFromMetaclassWhenSuperclassMetaclassIsABCMeta() {
+    runWithLanguageLevel(LanguageLevel.PYTHON30, this::doTest);
+  }
+
   // PY-23623
   public void testCachedOperatorInRecursivelyTypeInference() {
     doTest();
+  }
+
+  // PY-25118
+  public void testInnerClassAsNamedTupleDefinitionMember() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
   }
 
   @NotNull

@@ -29,10 +29,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.scope.processor.VariablesProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
@@ -947,8 +944,9 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
     RefactoringUtil.fixJavadocsForParams(method, newParameters, pair -> {
       final PsiParameter parameter = pair.first;
       final String oldParamName = pair.second;
-      final int idx = ArrayUtil.find(oldParameterNames, oldParamName);
-      return idx >= 0 && idx == method.getParameterList().getParameterIndex(parameter) && changeInfo.getNewParameters()[idx].getOldIndex() == idx;
+      final int oldIdx = ArrayUtil.find(oldParameterNames, oldParamName);
+      int newIndex = method.getParameterList().getParameterIndex(parameter);
+      return oldIdx >= 0 && newIndex >= 0 && changeInfo.getNewParameters()[newIndex].getOldIndex() == oldIdx;
     }, paramName -> ArrayUtil.find(oldParameterNames, paramName) >= 0);
   }
 
@@ -962,7 +960,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       type = psiSubstitutor.substitute(type);
     }
     PsiParameter parameter = factory.createParameter(newParm.getName(), type, list);
-    if (CodeStyleSettingsManager.getSettings(project).GENERATE_FINAL_PARAMETERS) {
+    if (CodeStyleSettingsManager.getSettings(project).getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_PARAMETERS) {
       PsiUtil.setModifierProperty(parameter, PsiModifier.FINAL, true);
     }
     return parameter;
@@ -1230,7 +1228,8 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
               JavaPsiFacade.getElementFactory(method.getProject()).createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, method);
           }
           PsiParameter param = factory.createParameter(info.getName(), parameterType, method);
-          if (CodeStyleSettingsManager.getSettings(manager.getProject()).GENERATE_FINAL_PARAMETERS) {
+          if (CodeStyleSettingsManager.getSettings(manager.getProject())
+            .getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_PARAMETERS) {
             PsiUtil.setModifierProperty(param, PsiModifier.FINAL, true);
           }
           prototype.getParameterList().add(param);

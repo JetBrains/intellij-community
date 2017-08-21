@@ -179,7 +179,7 @@ public class RemoteRepositoriesConfigurable extends BaseConfigurable implements 
   }
 
   public String getHelpTopic() {
-    return ""; // todo
+    return "reference.jar.repositories"; 
   }
 
   @NotNull

@@ -21,7 +21,7 @@ import com.intellij.pom.java.LanguageLevel;
 
 public class VariableAccessFromInnerClassTest extends LightQuickFixParameterizedTestCase {
 
-  public void test() throws Exception {
+  public void test() {
     doAllTests();
   }
   

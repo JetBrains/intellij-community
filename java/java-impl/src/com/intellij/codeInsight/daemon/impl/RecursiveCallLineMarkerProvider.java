@@ -26,6 +26,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.FunctionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,7 +58,7 @@ public class RecursiveCallLineMarkerProvider extends LineMarkerProviderDescripto
         final PsiStatement statement = PsiTreeUtil.getParentOfType(methodCall, PsiStatement.class, true, PsiMethod.class);
         if (!statements.contains(statement) && isRecursiveMethodCall(methodCall)) {
           statements.add(statement);
-          result.add(new RecursiveMethodCallMarkerInfo(methodCall));
+          ContainerUtil.addIfNotNull(result, RecursiveMethodCallMarkerInfo.create(methodCall));
         }
       }
     }
@@ -89,10 +90,18 @@ public class RecursiveCallLineMarkerProvider extends LineMarkerProviderDescripto
     return AllIcons.Gutter.RecursiveMethod;
   }
 
-  private static class RecursiveMethodCallMarkerInfo extends LineMarkerInfo<PsiMethodCallExpression> {
-    private RecursiveMethodCallMarkerInfo(@NotNull PsiMethodCallExpression methodCall) {
-      super(methodCall,
-            methodCall.getTextRange(),
+  private static class RecursiveMethodCallMarkerInfo extends LineMarkerInfo<PsiElement> {
+    private static RecursiveMethodCallMarkerInfo create(@NotNull PsiMethodCallExpression methodCall) {
+      PsiElement nameElement = methodCall.getMethodExpression().getReferenceNameElement();
+      if (nameElement != null) {
+        return new RecursiveMethodCallMarkerInfo(nameElement);
+      }
+      return null;
+    }
+
+    private RecursiveMethodCallMarkerInfo(@NotNull PsiElement name) {
+      super(name,
+            name.getTextRange(),
             AllIcons.Gutter.RecursiveMethod,
             Pass.LINE_MARKERS,
             FunctionUtil.constant("Recursive call"),
@@ -104,7 +113,7 @@ public class RecursiveCallLineMarkerProvider extends LineMarkerProviderDescripto
     @Override
     public GutterIconRenderer createGutterRenderer() {
       if (myIcon == null) return null;
-      return new LineMarkerGutterIconRenderer<PsiMethodCallExpression>(this){
+      return new LineMarkerGutterIconRenderer<PsiElement>(this){
         @Override
         public AnAction getClickAction() {
           return null; // to place breakpoint on mouse click

@@ -277,7 +277,9 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
           sourceSet.output.resourcesDir, sourceSet.output.classesDir, project.buildDir))
       }
 
-      def ideaOutDir = new File(project.projectDir, "out/" + (SourceSet.MAIN_SOURCE_SET_NAME == sourceSet.name ? "production" : GUtil.toLowerCamelCase(sourceSet.name)))
+      def ideaOutDir = new File(project.projectDir, "out/" + (SourceSet.MAIN_SOURCE_SET_NAME == sourceSet.name ||
+                                                              (!resolveSourceSetDependencies && SourceSet.TEST_SOURCE_SET_NAME !=
+                                                               sourceSet.name) ? "production" : GUtil.toLowerCamelCase(sourceSet.name)))
       resourcesDirectorySet.outputDir = new File(ideaOutDir, "resources")
       resourcesDirectorySet.inheritedCompilerOutput = inheritOutputDirs
 
@@ -336,15 +338,27 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
         }
       }
       else {
-        if (!inheritOutputDirs && SourceSet.MAIN_SOURCE_SET_NAME == sourceSet.name && ideaPluginOutDir != null) {
+        boolean isTestSourceSet = false
+        if (!inheritOutputDirs && resolveSourceSetDependencies && SourceSet.MAIN_SOURCE_SET_NAME != sourceSet.name
+          && ideaTestSourceDirs && (ideaTestSourceDirs as Collection).containsAll(javaDirectorySet.srcDirs)) {
+          javaDirectorySet.outputDir = ideaPluginTestOutDir ?: new File(project.projectDir, "out/test/classes")
+          resourcesDirectorySet.outputDir = ideaPluginTestOutDir ?: new File(project.projectDir, "out/test/resources")
+          sources.put(ExternalSystemSourceType.TEST, javaDirectorySet)
+          sources.put(ExternalSystemSourceType.TEST_RESOURCE, resourcesDirectorySet)
+          isTestSourceSet = true
+        }
+        else if (!inheritOutputDirs && ideaPluginOutDir != null) {
           javaDirectorySet.outputDir = ideaPluginOutDir
           resourcesDirectorySet.outputDir = ideaPluginOutDir
         }
+
         resourcesDirectorySet.excludes = resourcesExcludes + sourceSet.resources.excludes
         resourcesDirectorySet.includes = resourcesIncludes + sourceSet.resources.includes
         resourcesDirectorySet.filters = filterReaders
-        sources.put(ExternalSystemSourceType.SOURCE, javaDirectorySet)
-        sources.put(ExternalSystemSourceType.RESOURCE, resourcesDirectorySet)
+        if(!isTestSourceSet) {
+          sources.put(ExternalSystemSourceType.SOURCE, javaDirectorySet)
+          sources.put(ExternalSystemSourceType.RESOURCE, resourcesDirectorySet)
+        }
 
         if(!resolveSourceSetDependencies && ideaTestSourceDirs) {
           def testDirs = javaDirectorySet.srcDirs.intersect(ideaTestSourceDirs as Collection)
@@ -355,7 +369,7 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
             testDirectorySet.name = javaDirectorySet.name
             testDirectorySet.srcDirs = testDirs
             testDirectorySet.addGradleOutputDir(javaDirectorySet.outputDir)
-            testDirectorySet.outputDir = javaDirectorySet.outputDir
+            testDirectorySet.outputDir = ideaPluginTestOutDir ?: new File(project.projectDir, "out/test/classes")
             testDirectorySet.inheritedCompilerOutput = javaDirectorySet.isCompilerOutputPathInherited()
             sources.put(ExternalSystemSourceType.TEST, testDirectorySet)
           }
@@ -368,7 +382,7 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
             testResourcesDirectorySet.name = resourcesDirectorySet.name
             testResourcesDirectorySet.srcDirs = testResourcesDirs
             testResourcesDirectorySet.addGradleOutputDir(resourcesDirectorySet.outputDir)
-            testResourcesDirectorySet.outputDir = resourcesDirectorySet.outputDir
+            testResourcesDirectorySet.outputDir = ideaPluginTestOutDir ?: new File(project.projectDir, "out/test/resources")
             testResourcesDirectorySet.inheritedCompilerOutput = resourcesDirectorySet.isCompilerOutputPathInherited()
             sources.put(ExternalSystemSourceType.TEST_RESOURCE, testResourcesDirectorySet)
           }

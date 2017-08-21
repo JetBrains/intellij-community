@@ -45,14 +45,23 @@ public class MethodReturnAlwaysConstantInspection extends BaseGlobalInspection {
     if (!(refEntity instanceof RefMethod)) {
       return null;
     }
-    //don't warn on overriders
-    if (((RefMethod)refEntity).hasSuperMethods()) {
-      return null;
-    }
+
     final RefMethod refMethod = (RefMethod)refEntity;
-    if (!(refMethod.getElement() instanceof PsiMethod)) {
+
+    //don't warn on overriders
+    if (refMethod.hasSuperMethods()) {
       return null;
     }
+
+    PsiModifierListOwner element = refMethod.getElement();
+    if (!(element instanceof PsiMethod)) {
+      return null;
+    }
+
+    if (((PsiMethod)element).getBody() == null && refMethod.getDerivedMethods().isEmpty()) {
+      return null;
+    }
+
     final Set<RefMethod> allScopeInheritors = MethodInheritanceUtils.calculateSiblingMethods(refMethod);
     for (RefMethod siblingMethod : allScopeInheritors) {
       final PsiMethod siblingPsiMethod = (PsiMethod)siblingMethod.getElement();
@@ -72,7 +81,7 @@ public class MethodReturnAlwaysConstantInspection extends BaseGlobalInspection {
                                                 "method.return.always.constant.problem.descriptor"), false, null,
                                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
     }
-    return out.toArray(new ProblemDescriptor[out.size()]);
+    return out.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 
   private static boolean alwaysReturnsConstant(PsiMethod method) {

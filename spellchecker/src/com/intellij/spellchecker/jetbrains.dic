@@ -58,6 +58,7 @@ buffering
 buildable
 builtin
 bzip
+cacheables
 calc
 callee
 callouts
@@ -215,6 +216,8 @@ geometrycollection
 getters
 giud
 gists
+github
+gitlab
 globals
 google
 grapheme
@@ -315,6 +318,7 @@ labelers
 lcov
 lcovonly
 ldap
+lexing
 libxml
 lifecycle
 likec
@@ -457,6 +461,7 @@ online
 openid
 openjdk
 openssl
+opensymphony
 optnone
 osgi
 outfile
@@ -525,6 +530,7 @@ ptrdiff
 pycharm
 queryable
 radiobutton
+reactivestreams
 readme
 readonly
 readwrite
@@ -724,6 +730,7 @@ typedef
 typedefs
 typename
 typeof
+uast
 ubuntu
 unary
 unboxing

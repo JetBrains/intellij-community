@@ -64,6 +64,7 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -173,6 +174,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   @SuppressWarnings("StaticNonFinalField") public static int TEST_PROJECTS_CREATED;
   private static final boolean LOG_PROJECT_LEAKAGE_IN_TESTS = Boolean.parseBoolean(System.getProperty("idea.log.leaked.projects.in.tests", "true"));
   private static final int MAX_LEAKY_PROJECTS = 5;
+  private static final long LEAK_CHECK_INTERVAL = TimeUnit.MINUTES.toMillis(30);
+  private static long CHECK_START = System.currentTimeMillis();
   @SuppressWarnings("FieldCanBeLocal") private final Map<Project, String> myProjects = new WeakHashMap<>();
 
   @Override
@@ -238,8 +241,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       return;
     }
 
-    if (Math.random() >= 0.05) {
-      return; // Check for leaked projects ~ every 20 tests
+    long currentTime = System.currentTimeMillis();
+    if (currentTime - CHECK_START < LEAK_CHECK_INTERVAL) {
+      return; // check every N minutes
     }
 
     for (int i = 0; i < 3 && getLeakedProjects().count() >= MAX_LEAKY_PROJECTS; i++) {
@@ -247,6 +251,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     }
 
     System.gc();
+
+    //noinspection AssignmentToStaticFieldFromInstanceMethod
+    CHECK_START = currentTime;
 
     if (getLeakedProjects().count() >= MAX_LEAKY_PROJECTS) {
       List<Project> copy = getLeakedProjects().collect(Collectors.toCollection(UnsafeWeakList::new));
@@ -416,21 +423,31 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
         }
       }, ModalityState.NON_MODAL);
     };
-    ProgressIndicator indicator = myProgressManager.getProgressIndicator();
-    if (indicator != null) {
-      indicator.setText("Preparing workspace...");
-      process.run();
-      return true;
-    }
 
-    boolean ok = myProgressManager.runProcessWithProgressSynchronously(process, ProjectBundle.message("project.load.progress"), canCancelProjectLoading(), project);
-    if (!ok) {
+    if (!loadProjectUnderProgress(project, process)) {
       closeProject(project, false, false, false, true);
+      WriteAction.run(() -> Disposer.dispose(project));
       notifyProjectOpenFailed();
       return false;
     }
 
     return true;
+  }
+
+  private boolean loadProjectUnderProgress(@NotNull Project project, @NotNull Runnable performLoading) {
+    ProgressIndicator indicator = myProgressManager.getProgressIndicator();
+    if (indicator != null) {
+      indicator.setText("Preparing workspace...");
+      try {
+        performLoading.run();
+        return true;
+      }
+      catch (ProcessCanceledException e) {
+        return false;
+      }
+    }
+    
+    return myProgressManager.runProcessWithProgressSynchronously(performLoading, ProjectBundle.message("project.load.progress"), canCancelProjectLoading(), project);
   }
 
   private boolean addToOpened(@NotNull Project project) {
@@ -528,7 +545,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
   private boolean loadProjectWithProgress(ProjectImpl project) throws IOException {
     try {
-      if (myProgressManager.getProgressIndicator() != null) {
+      if (!ApplicationManager.getApplication().isDispatchThread() &&
+          myProgressManager.getProgressIndicator() != null) {
         initProject(project, null);
         return true;
       }

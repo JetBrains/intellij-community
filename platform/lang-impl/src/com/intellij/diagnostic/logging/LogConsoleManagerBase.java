@@ -48,7 +48,11 @@ public abstract class LogConsoleManagerBase implements LogConsoleManager, Dispos
   }
 
   @Override
-  public void addLogConsole(@NotNull final String name, @NotNull final String path, @NotNull Charset charset, final long skippedContent, @NotNull RunConfigurationBase runConfiguration) {
+  public void addLogConsole(@NotNull final String name,
+                            @NotNull final String path,
+                            @NotNull Charset charset,
+                            final long skippedContent,
+                            @NotNull RunConfigurationBase runConfiguration) {
     doAddLogConsole(new LogConsoleImpl(myProject, new File(path), charset, skippedContent, name, false, mySearchScope) {
       @Override
       public boolean isActive() {
@@ -57,7 +61,7 @@ public abstract class LogConsoleManagerBase implements LogConsoleManager, Dispos
     }, path, getDefaultIcon(), runConfiguration);
   }
 
-  private void doAddLogConsole(@NotNull final LogConsoleBase log, String id,  Icon icon, @Nullable RunProfile runProfile) {
+  private void doAddLogConsole(@NotNull final LogConsoleBase log, String id, Icon icon, @Nullable RunProfile runProfile) {
     if (runProfile instanceof RunConfigurationBase) {
       ((RunConfigurationBase)runProfile).customizeLogConsole(log);
     }
@@ -91,8 +95,16 @@ public abstract class LogConsoleManagerBase implements LogConsoleManager, Dispos
   }
 
   public Content addAdditionalTabComponent(@NotNull AdditionalTabComponent tabComponent, @NotNull String id, @Nullable Icon icon) {
+    return addAdditionalTabComponent(tabComponent, id, icon, true);
+  }
+
+  public Content addAdditionalTabComponent(@NotNull AdditionalTabComponent tabComponent,
+                                           @NotNull String id,
+                                           @Nullable Icon icon,
+                                           boolean closeable) {
     Content logContent = getUi().createContent(id, (ComponentWithActions)tabComponent, tabComponent.getTabTitle(), icon,
                                                tabComponent.getPreferredFocusableComponent());
+    logContent.setCloseable(closeable);
     myAdditionalContent.put(tabComponent, logContent);
     getUi().addContent(logContent);
     return logContent;

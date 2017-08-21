@@ -35,12 +35,12 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PlatformUtils
 import com.intellij.util.containers.computeIfAny
 
-internal data class SuitableRoot(val file: VirtualFile, val moduleQualifier: String?) 
+internal data class SuitableRoot(val file: VirtualFile, val moduleQualifier: String?)
 
 private class DefaultWebServerRootsProvider : WebServerRootsProvider() {
   override fun resolve(path: String, project: Project, pathQuery: PathQuery): PathInfo? {
     val pathToFileManager = WebServerPathToFileManager.getInstance(project)
-    
+
     var effectivePath = path
     if (PlatformUtils.isIntelliJ()) {
       val index = effectivePath.indexOf('/')
@@ -67,11 +67,11 @@ private class DefaultWebServerRootsProvider : WebServerRootsProvider() {
         // maybe it is top level directory? (in case of dart projects - web)
         oldestParent = path
       }
-      
+
       if (oldestParent != null) {
-        for (root in pathToFileManager.parentToSuitableRoot.get(oldestParent)) {
-          root.file.findFileByRelativePath(path)?.let { 
-            return PathInfo(null, it, root.file, root.moduleQualifier)
+        for ((file, moduleQualifier) in pathToFileManager.parentToSuitableRoot.get(oldestParent)) {
+          file.findFileByRelativePath(path)?.let {
+            return PathInfo(null, it, file, moduleQualifier)
           }
         }
       }
@@ -90,12 +90,12 @@ private class DefaultWebServerRootsProvider : WebServerRootsProvider() {
         }
       }
     }
-    
+
     if (!pathQuery.searchInLibs) {
       // yes, if !searchInLibs, config.json is also not checked
       return null
     }
-    
+
     fun findByConfigJson(): PathInfo? {
       // https://youtrack.jetbrains.com/issue/WEB-24283
       for (rootProvider in RootProvider.values()) {
@@ -116,7 +116,7 @@ private class DefaultWebServerRootsProvider : WebServerRootsProvider() {
       }
       return null
     }
-    
+
     val exists = pathToFileManager.pathToExistShortTermCache.getIfPresent("config.json")
     if (exists == null || exists) {
       val result = findByConfigJson()
@@ -128,7 +128,7 @@ private class DefaultWebServerRootsProvider : WebServerRootsProvider() {
 
     return findInLibraries(project, effectivePath, resolver, pathQuery)
   }
-  
+
   override fun getPathInfo(file: VirtualFile, project: Project): PathInfo? {
     return runReadAction {
       val directoryIndex = DirectoryIndex.getInstance(project)
@@ -147,9 +147,12 @@ private class DefaultWebServerRootsProvider : WebServerRootsProvider() {
           root = info.contentRoot
           if (root == null) {
             root = info.libraryClassRoot
-            isLibrary = true
+            if (root == null) {
+              // https://youtrack.jetbrains.com/issue/WEB-20598
+              return@runReadAction null
+            }
 
-            assert(root != null) { file.presentableUrl }
+            isLibrary = true
           }
           else {
             isLibrary = false
@@ -170,7 +173,7 @@ private class DefaultWebServerRootsProvider : WebServerRootsProvider() {
           }
         }
 
-        PathInfo(null, file, root!!, getModuleNameQualifier(project, module), isLibrary, isRootNameOptionalInPath = isRootNameOptionalInPath)
+        PathInfo(null, file, root, getModuleNameQualifier(project, module), isLibrary, isRootNameOptionalInPath = isRootNameOptionalInPath)
       }
     }
   }
@@ -199,11 +202,11 @@ private val ORDER_ROOT_TYPES by lazy {
 }
 
 private fun getJavadocOrderRootType(): OrderRootType? {
-  try {
-    return JavadocOrderRootType.getInstance()
+  return try {
+    JavadocOrderRootType.getInstance()
   }
   catch (e: Throwable) {
-    return null
+    null
   }
 }
 
@@ -216,7 +219,7 @@ private fun findInModuleLibraries(path: String, module: Module, resolver: FileRe
   val libraryFileName = path.substring(0, index)
   val relativePath = path.substring(index + 1)
   return ORDER_ROOT_TYPES.computeIfAny {
-    findInModuleLevelLibraries(module, it) { root, module ->
+    findInModuleLevelLibraries(module, it) { root, _ ->
       if (StringUtil.equalsIgnoreCase(root.nameSequence, libraryFileName)) resolver.resolve(relativePath, root, isLibrary = true, pathQuery = pathQuery) else null
     }
   }
@@ -230,7 +233,7 @@ private fun findInLibraries(project: Project, path: String, resolver: FileResolv
 
   val libraryFileName = path.substring(0, index)
   val relativePath = path.substring(index + 1)
-  return findInLibrariesAndSdk(project, ORDER_ROOT_TYPES) { root, module ->
+  return findInLibrariesAndSdk(project, ORDER_ROOT_TYPES) { root, _ ->
     if (StringUtil.equalsIgnoreCase(root.nameSequence, libraryFileName)) resolver.resolve(relativePath, root, isLibrary = true, pathQuery = pathQuery) else null
   }
 }

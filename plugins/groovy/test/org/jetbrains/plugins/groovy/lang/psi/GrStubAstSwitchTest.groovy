@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.util.InheritanceUtil
+import com.intellij.testFramework.fixtures.impl.JavaCodeInsightTestFixtureImpl
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition
@@ -282,5 +283,45 @@ class A {
     assert InheritanceUtil.isInheritor(definition, Runnable.name)
     assert psiFile.stub
     assert !psiFile.contentsLoaded
+  }
+
+  void 'test do not load contents in highlighting'() {
+    def file = fixture.tempDirFixture.createFile('classes.groovy', '''\
+class C {
+  static void staticVoidMethod(a, b = 1) {}
+}
+''')
+    ((JavaCodeInsightTestFixtureImpl)fixture).virtualFileFilter = { it == file }
+    fixture.configureByText '_.groovy', 'C.staticVoidMethod(1)'
+    fixture.checkHighlighting()
+  }
+
+  void 'test do not load AST when method has no comment'() {
+    def file = fixture.tempDirFixture.createFile('classes.groovy', '''\
+class C {
+  static void someMethod() {}
+  /**
+  *
+  */
+  static void someMethodWithDocs() {}
+}
+''')
+    def psiFile = psiManager.findFile(file) as GroovyFileImpl
+    assert !psiFile.contentsLoaded
+
+    def typeDefinition = psiFile.typeDefinitions.first()
+    assert !psiFile.contentsLoaded
+
+    def method = typeDefinition.findMethodsByName('someMethod', false).first()
+    assert !psiFile.contentsLoaded
+
+    assert method.docComment == null
+    assert !psiFile.contentsLoaded
+
+    def methodWithDocs = typeDefinition.findMethodsByName('someMethodWithDocs', false).first()
+    assert !psiFile.contentsLoaded
+
+    assert methodWithDocs.docComment != null
+    assert psiFile.contentsLoaded
   }
 }

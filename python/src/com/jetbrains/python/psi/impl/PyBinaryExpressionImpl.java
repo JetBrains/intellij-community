@@ -17,6 +17,7 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -24,6 +25,7 @@ import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.references.PyOperatorReference;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -157,31 +159,23 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
 
         boolean matched = true;
         for (Map.Entry<PyExpression, PyCallableParameter> entry : result.getMappedParameters().entrySet()) {
-          final PyExpression argument = entry.getKey();
-          final PyCallableParameter parameter = entry.getValue();
-          if (parameter.isPositionalContainer() || parameter.isKeywordContainer()) {
-            continue;
-          }
-          final Map<PyGenericType, PyType> substitutions = new HashMap<>();
-          final PyType parameterType = parameter.getType(context);
-          final PyType argumentType = context.getType(argument);
-          if (!PyTypeChecker.match(parameterType, argumentType, context, substitutions)) {
+          final PyType parameterType = entry.getValue().getArgumentType(context);
+          final PyType argumentType = context.getType(entry.getKey());
+          if (!PyTypeChecker.match(parameterType, argumentType, context, new HashMap<>())) {
             matched = false;
           }
         }
         final PyType type = markedCallee.getCallableType().getCallType(context, this);
-        if (!PyTypeChecker.isUnknown(type, context) && !(type instanceof PyNoneType)) {
-          types.add(type);
-          if (matched) {
-            matchedTypes.add(type);
-          }
+        types.add(type);
+        if (matched) {
+          matchedTypes.add(type);
         }
       }
-      if (!matchedTypes.isEmpty()) {
-        return PyUnionType.union(matchedTypes);
-      }
-      if (!types.isEmpty()) {
-        return PyUnionType.union(types);
+      final boolean bothOperandsAreKnown = operandIsKnown(getLeftExpression(), context) && operandIsKnown(getRightExpression(), context);
+      final List<PyType> resultTypes = !matchedTypes.isEmpty() ? matchedTypes : types;
+      if (!resultTypes.isEmpty()) {
+        final PyType result = PyUnionType.union(resultTypes);
+        return bothOperandsAreKnown ? result : PyUnionType.createWeakType(result);
       }
     }
     if (PyNames.COMPARISON_OPERATORS.contains(getReferencedName())) {
@@ -209,6 +203,9 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
   @Override
   public String getReferencedName() {
     final PyElementType t = getOperator();
+    if (t == PyTokenTypes.DIV && isTrueDivEnabled(this)) {
+      return PyNames.TRUEDIV;
+    }
     return t != null ? t.getSpecialMethodName() : null;
   }
 
@@ -216,5 +213,23 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
   public ASTNode getNameElement() {
     final PsiElement op = getPsiOperator();
     return op != null ? op.getNode() : null;
+  }
+
+  private static boolean operandIsKnown(@Nullable PyExpression operand, @NotNull TypeEvalContext context) {
+    if (operand == null) return false;
+
+    final PyType operandType = context.getType(operand);
+    if (operandType instanceof PyStructuralType || PyTypeChecker.isUnknown(operandType, context)) return false;
+
+    return true;
+  }
+
+  private static boolean isTrueDivEnabled(@NotNull PyElement anchor) {
+    final PsiFile file = anchor.getContainingFile();
+    if (file instanceof PyFile) {
+      final PyFile pyFile = (PyFile)file;
+      return FutureFeature.DIVISION.requiredAt(pyFile.getLanguageLevel()) || pyFile.hasImportFromFuture(FutureFeature.DIVISION);
+    }
+    return false;
   }
 }

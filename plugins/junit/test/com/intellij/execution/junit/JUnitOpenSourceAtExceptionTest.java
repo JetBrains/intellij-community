@@ -36,7 +36,7 @@ public class JUnitOpenSourceAtExceptionTest extends LightCodeInsightFixtureTestC
     myFixture.addClass("package junit.framework; public class TestCase {}");
   }
 
-  public void testStackTraceParseerAcceptsJavaStacktrace() throws Exception {
+  public void testStackTraceParseerAcceptsJavaStacktrace() {
     myFixture.addClass("abstract class ATest extends junit.framework.TestCase {" +
                        "  public void testMe() {\n" +
                        "    int i = 0;\n" +

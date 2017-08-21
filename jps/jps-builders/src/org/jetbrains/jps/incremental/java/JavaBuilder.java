@@ -24,6 +24,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -74,10 +75,7 @@ import java.io.FileFilter;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 /**
@@ -105,7 +103,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
   private static final List<ClassPostProcessor> ourClassProcessors = new ArrayList<>();
   private static final Set<JpsModuleType<?>> ourCompilableModuleTypes = new HashSet<>();
-  private static final @Nullable File ourDefaultRtJar;
+  @Nullable private static final File ourDefaultRtJar;
   static {
     for (JavaBuilderExtension extension : JpsServiceManager.getInstance().getExtensions(JavaBuilderExtension.class)) {
       ourCompilableModuleTypes.addAll(extension.getCompilableModuleTypes());
@@ -169,6 +167,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
   }
 
+  @Override
   public void buildFinished(CompileContext context) {
     final ConcurrentMap<String, Collection<String>> stats = COMPILER_USAGE_STATISTICS.get(context);
     if (stats.size() == 1) {
@@ -374,7 +373,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
                               OutputFileConsumer outputSink,
                               JavaCompilingTool compilingTool,
                               boolean hasModules) throws Exception {
-    final TasksCounter counter = new TasksCounter();
+    Semaphore counter = new Semaphore();
     COUNTER_KEY.set(context, counter);
 
     final JpsJavaExtensionService javaExt = JpsJavaExtensionService.getInstance();
@@ -489,7 +488,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
       return rc;
     }
     finally {
-      counter.await();
+      counter.waitFor();
     }
   }
 
@@ -641,11 +640,11 @@ public class JavaBuilder extends ModuleLevelBuilder {
   }
 
   private void submitAsyncTask(final CompileContext context, final Runnable taskRunnable) {
-    final TasksCounter counter = COUNTER_KEY.get(context);
+    Semaphore counter = COUNTER_KEY.get(context);
 
     assert counter != null;
 
-    counter.incTaskCount();
+    counter.down();
     myTaskRunner.execute(() -> {
       try {
         taskRunnable.run();
@@ -654,12 +653,13 @@ public class JavaBuilder extends ModuleLevelBuilder {
         context.processMessage(new CompilerMessage(BUILDER_NAME, e));
       }
       finally {
-        counter.decTaskCounter();
+        counter.up();
       }
     });
   }
 
-  private static synchronized ExternalJavacManager ensureJavacServerStarted(@NotNull CompileContext context) throws Exception {
+  @NotNull
+  private static synchronized ExternalJavacManager ensureJavacServerStarted(@NotNull CompileContext context) {
     ExternalJavacManager server = ExternalJavacManager.KEY.get(context);
     if (server != null) {
       return server;
@@ -758,10 +758,10 @@ public class JavaBuilder extends ModuleLevelBuilder {
     addCompilationOptions(getCompilerSdkVersion(context), options, context, chunk, profile);
   }
 
-  public static void addCompilationOptions(int compilerSdkVersion,
-                                           List<String> options,
-                                           CompileContext context, ModuleChunk chunk,
-                                           @Nullable ProcessorConfigProfile profile) {
+  private static void addCompilationOptions(int compilerSdkVersion,
+                                            List<String> options,
+                                            CompileContext context, ModuleChunk chunk,
+                                            @Nullable ProcessorConfigProfile profile) {
     if (!isEncodingSet(options)) {
       final CompilerEncodingConfiguration config = context.getProjectDescriptor().getEncodingConfiguration();
       final String encoding = config.getPreferredModuleChunkEncoding(chunk);
@@ -794,8 +794,6 @@ public class JavaBuilder extends ModuleLevelBuilder {
   }
 
   /**
-   * @param options
-   * @param profile
    * @return true if annotation processing is enabled and corresponding options were added, false if profile is null or disabled
    */
   public static boolean addAnnotationProcessingOptions(List<String> options, @Nullable AnnotationProcessingConfiguration profile) {
@@ -840,8 +838,12 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
     final int targetLanguageLevel = JpsJavaSdkType.parseVersion(langLevel);
     if (shouldUseReleaseOption(context, compilerSdkVersion, chunkSdkVersion, targetLanguageLevel)) {
-      options.add("--release");
-      options.add(String.valueOf(targetLanguageLevel));
+      if (compilerSdkVersion != targetLanguageLevel) {
+        // Only specify '--release' when cross-compilation is indeed really required.
+        // Otherwise '--release' may not be compatible with other compilation options, e.g. exporting a package from system module
+        options.add("--release");
+        options.add(String.valueOf(targetLanguageLevel));
+      }
       return;
     }
 
@@ -982,7 +984,6 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
   private static void loadCommonJavacOptions(@NotNull CompileContext context, @NotNull JavaCompilingTool compilingTool) {
     final List<String> options = new ArrayList<>();
-    final List<String> vmOptions = new ArrayList<>();
 
     final JpsProject project = context.getProjectDescriptor().getProject();
     final JpsJavaCompilerConfiguration compilerConfig = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project);
@@ -1003,6 +1004,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
       }
     }
     final String customArgs = compilerOptions.ADDITIONAL_OPTIONS_STRING;
+    final List<String> vmOptions = new ArrayList<>();
     if (customArgs != null) {
       boolean skip = false;
       boolean targetOptionFound = false;
@@ -1205,16 +1207,16 @@ public class JavaBuilder extends ModuleLevelBuilder {
       myContext.processMessage(compilerMsg);
     }
 
-    public int getErrorCount() {
+    int getErrorCount() {
       return myErrorCount;
     }
 
-    public int getWarningCount() {
+    int getWarningCount() {
       return myWarningCount;
     }
 
     @NotNull
-    public Collection<File> getFilesWithErrors() {
+    Collection<File> getFilesWithErrors() {
       return myFilesWithErrors;
     }
   }
@@ -1225,11 +1227,8 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
     private ClassProcessingConsumer(CompileContext context, OutputFileConsumer sink) {
       myContext = context;
-      myDelegateOutputFileSink = sink != null ? sink : new OutputFileConsumer() {
-        @Override
-        public void save(@NotNull OutputFileObject fileObject) {
-          throw new RuntimeException("Output sink for compiler was not specified");
-        }
+      myDelegateOutputFileSink = sink != null ? sink : fileObject -> {
+        throw new RuntimeException("Output sink for compiler was not specified");
       };
     }
 
@@ -1265,30 +1264,5 @@ public class JavaBuilder extends ModuleLevelBuilder {
   }
 
 
-  private static final Key<TasksCounter> COUNTER_KEY = Key.create("_async_task_counter_");
-
-  private static final class TasksCounter {
-    private int myCounter;
-
-    private synchronized void incTaskCount() {
-      myCounter++;
-    }
-
-    private synchronized void decTaskCounter() {
-      myCounter = Math.max(0, myCounter - 1);
-      if (myCounter == 0) {
-        notifyAll();
-      }
-    }
-
-    public synchronized void await() {
-      while (myCounter > 0) {
-        try {
-          wait();
-        }
-        catch (InterruptedException ignored) {
-        }
-      }
-    }
-  }
+  private static final Key<Semaphore> COUNTER_KEY = Key.create("_async_task_counter_");
 }

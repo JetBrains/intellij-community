@@ -35,7 +35,7 @@ public class PyStatementListTest extends PyTestCase {
 
     new WriteCommandAction.Simple(myFixture.getProject()) {
       @Override
-      protected void run() throws Throwable {
+      protected void run() {
         list1.add(list2.getStatements()[0]);
       }
     }.execute();

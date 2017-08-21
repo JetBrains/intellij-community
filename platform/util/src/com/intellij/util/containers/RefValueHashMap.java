@@ -31,11 +31,11 @@ abstract class RefValueHashMap<K,V> implements Map<K,V>{
     T get();
   }
 
-  public RefValueHashMap() {
+  RefValueHashMap() {
     myMap = new THashMap<K, MyReference<K,V>>();
   }
 
-  public RefValueHashMap(@NotNull TObjectHashingStrategy<K> strategy) {
+  RefValueHashMap(@NotNull TObjectHashingStrategy<K> strategy) {
     myMap = new THashMap<K, MyReference<K,V>>(strategy);
   }
 
@@ -94,7 +94,7 @@ abstract class RefValueHashMap<K,V> implements Map<K,V>{
 
   @Override
   public boolean isEmpty() {
-    return myMap.isEmpty(); //?
+    return myMap.isEmpty(); 
   }
 
   @Override

@@ -33,6 +33,7 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Function;
+import com.intellij.util.Functions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
@@ -48,9 +49,10 @@ public class JavaFxRelatedItemLineMarkerProvider extends RelatedItemLineMarkerPr
   private static final Logger LOG = Logger.getInstance(JavaFxRelatedItemLineMarkerProvider.class);
 
   @Override
-  protected void collectNavigationMarkers(@NotNull PsiElement element, final Collection<? super RelatedItemLineMarkerInfo> result) {
-    if (element instanceof PsiField) {
-      final PsiField field = (PsiField)element;
+  protected void collectNavigationMarkers(@NotNull PsiElement element, @NotNull final Collection<? super RelatedItemLineMarkerInfo> result) {
+    PsiElement f;
+    if (element instanceof PsiIdentifier && (f = element.getParent()) instanceof PsiField) {
+      final PsiField field = (PsiField)f;
       if (JavaFxPsiUtil.isVisibleInFxml(field) && !field.hasModifierProperty(PsiModifier.STATIC) && !field.hasModifierProperty(PsiModifier.FINAL)) {
         final PsiClass containingClass = field.getContainingClass();
         if (containingClass != null && containingClass.hasModifierProperty(PsiModifier.PUBLIC) && containingClass.getQualifiedName() != null) {
@@ -64,10 +66,10 @@ public class JavaFxRelatedItemLineMarkerProvider extends RelatedItemLineMarkerPr
           }
           if (!defaultConstructor) return;
           final ArrayList<GotoRelatedItem> targets = new ArrayList<>();
-          collectTargets(field, targets, element1 -> new GotoRelatedItem(element1), true);
+          collectTargets(field, targets, GotoRelatedItem::new, true);
           if (targets.isEmpty()) return;
 
-          result.add(new RelatedItemLineMarkerInfo<>(field, field.getNameIdentifier().getTextRange(),
+          result.add(new RelatedItemLineMarkerInfo<>((PsiIdentifier)element, element.getTextRange(),
                                                      AllIcons.FileTypes.Xml, Pass.LINE_MARKERS, null,
                                                      new JavaFXIdIconNavigationHandler(), GutterIconRenderer.Alignment.LEFT,
                                                      targets));
@@ -76,7 +78,7 @@ public class JavaFxRelatedItemLineMarkerProvider extends RelatedItemLineMarkerPr
     }
   }
 
-  private static <T> void collectTargets(PsiField field, final ArrayList<T> targets, final Function<PsiElement, T> fun, final boolean stopAtFirst) {
+  private static <T> void collectTargets(PsiField field, List<T> targets, final Function<PsiElement, T> fun, final boolean stopAtFirst) {
     final PsiClass containingClass = field.getContainingClass();
     LOG.assertTrue(containingClass != null);
     final String qualifiedName = containingClass.getQualifiedName();
@@ -100,17 +102,20 @@ public class JavaFxRelatedItemLineMarkerProvider extends RelatedItemLineMarkerPr
       });
   }
 
-  private static class JavaFXIdIconNavigationHandler implements GutterIconNavigationHandler<PsiField> {
+  private static class JavaFXIdIconNavigationHandler implements GutterIconNavigationHandler<PsiIdentifier> {
     @Override
-    public void navigate(MouseEvent e, PsiField field) {
-      final ArrayList<PsiElement> relatedItems = new ArrayList<>();
-      collectTargets(field, relatedItems, Function.ID, false);
+    public void navigate(MouseEvent e, PsiIdentifier fieldName) {
+      List<PsiElement> relatedItems = new ArrayList<>();
+      PsiElement f = fieldName.getParent();
+      if (f instanceof PsiField) {
+        collectTargets((PsiField)f, relatedItems, Functions.id(), false);
+      }
       if (relatedItems.size() == 1) {
         NavigationUtil.activateFileWithPsiElement(relatedItems.get(0));
         return;
       }
       final JBPopup popup = NavigationUtil
-        .getPsiElementPopup(relatedItems.toArray(new PsiElement[relatedItems.size()]), "<html>Choose component with fx:id <b>" + field.getName() + "<b></html>");
+        .getPsiElementPopup(relatedItems.toArray(new PsiElement[relatedItems.size()]), "<html>Choose component with fx:id <b>" + fieldName.getText() + "<b></html>");
       popup.show(new RelativePoint(e));
     }
   }

@@ -16,12 +16,13 @@
 package org.jetbrains.plugins.javaFX.fxml.refs;
 
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
-import com.intellij.codeInsight.daemon.impl.quickfix.CreateMethodQuickFix;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
+import com.intellij.lang.jvm.actions.JvmElementActionsFactory;
+import com.intellij.lang.jvm.actions.MemberRequest;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.xml.XmlAttribute;
@@ -34,6 +35,7 @@ import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class JavaFxEventHandlerReference extends PsiReferenceBase<XmlAttributeValue> {
@@ -59,8 +61,8 @@ public class JavaFxEventHandlerReference extends PsiReferenceBase<XmlAttributeVa
     final List<PsiMethod> availableHandlers = new ArrayList<>();
     for (PsiMethod psiMethod : myController.getAllMethods()) {
       if (isHandlerMethodSignature(psiMethod, myController) && JavaFxPsiUtil.isVisibleInFxml(psiMethod)) {
-         availableHandlers.add(psiMethod);
-       }
+        availableHandlers.add(psiMethod);
+      }
     }
     return availableHandlers.isEmpty() ? EMPTY_ARRAY : ArrayUtil.toObjectArray(availableHandlers);
   }
@@ -92,35 +94,63 @@ public class JavaFxEventHandlerReference extends PsiReferenceBase<XmlAttributeVa
     return new TextRange(range.getStartOffset() + 1, range.getEndOffset());
   }
 
-  public static class JavaFxUnresolvedReferenceHandlerQuickfixProvider extends UnresolvedReferenceQuickFixProvider<JavaFxEventHandlerReference> {
+  public static class JavaFxUnresolvedReferenceHandlerQuickfixProvider
+    extends UnresolvedReferenceQuickFixProvider<JavaFxEventHandlerReference> {
 
     @Override
     public void registerFixes(@NotNull final JavaFxEventHandlerReference ref, @NotNull final QuickFixActionRegistrar registrar) {
       if (ref.myController != null && ref.myEventHandler == null) {
-        final CreateMethodQuickFix quickFix = CreateMethodQuickFix.createFix(ref.myController, getHandlerSignature(ref), "");
-        if (quickFix != null) {
-          registrar.register(quickFix);
-        }
+        JvmElementActionsFactory intentionActionsFactory =
+          JvmElementActionsFactory.forLanguage(ref.myController.getLanguage());
+        if (intentionActionsFactory == null) return;
+
+        String javaSignature = getHandlerSignature(ref);
+        PsiMethod javaMethod = JavaPsiFacade.getElementFactory(ref.myController.getProject())
+          .createMethodFromText(javaSignature, ref.myController);
+
+        MemberRequest.Method method =
+          MemberRequest.simpleMethodRequest(javaMethod.getName(),
+                                            Arrays.asList(javaMethod.getAnnotations()),
+                                            Arrays.asList(javaMethod.getModifiers()),
+                                            javaMethod.getReturnType(),
+                                            Arrays.asList(javaMethod.getParameterList().getParameters()));
+        intentionActionsFactory.createAddMethodActions(ref.myController, method).forEach(registrar::register);
       }
     }
 
     private static String getHandlerSignature(JavaFxEventHandlerReference ref) {
       final XmlAttributeValue element = ref.getElement();
-      String canonicalText = JavaFxCommonNames.JAVAFX_EVENT;
+      PsiType eventType = getEventType(element);
+      final String modifiers = getModifiers(element.getProject());
+      return modifiers + " void " + element.getValue().substring(1) + "(" +
+             eventType.getCanonicalText() + " " + suggestParamName(element.getProject(), eventType) +
+             ")";
+    }
+
+    private static String suggestParamName(Project project, PsiType eventType) {
+      SuggestedNameInfo suggestedInfo = JavaCodeStyleManager.getInstance(project)
+        .suggestVariableName(VariableKind.PARAMETER, null, null, eventType);
+      if (suggestedInfo.names.length < 1) {
+        return "e";
+      }
+      return suggestedInfo.names[0];
+    }
+
+    @NotNull
+    private static PsiType getEventType(XmlAttributeValue element) {
       final PsiElement parent = element.getParent();
       if (parent instanceof XmlAttribute) {
         final PsiClassType eventType = JavaFxPsiUtil.getDeclaredEventType((XmlAttribute)parent);
         if (eventType != null) {
-          canonicalText = eventType.getCanonicalText();
+          return eventType;
         }
       }
-      final String modifiers = getModifiers(element.getProject());
-      return modifiers + " void " + element.getValue().substring(1) + "(" + canonicalText + " e)";
+      return PsiType.getTypeByName(JavaFxCommonNames.JAVAFX_EVENT, element.getProject(), element.getResolveScope());
     }
 
     @NotNull
     private static String getModifiers(@NotNull Project project) {
-      String visibility = CodeStyleSettingsManager.getSettings(project).VISIBILITY;
+      String visibility = CodeStyleSettingsManager.getSettings(project).getCustomSettings(JavaCodeStyleSettings.class).VISIBILITY;
       if (VisibilityUtil.ESCALATE_VISIBILITY.equals(visibility)) visibility = PsiModifier.PRIVATE;
       final boolean needAnnotation = !PsiModifier.PUBLIC.equals(visibility);
       final String modifier = !PsiModifier.PACKAGE_LOCAL.equals(visibility) ? visibility : "";

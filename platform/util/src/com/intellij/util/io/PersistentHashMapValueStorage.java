@@ -20,6 +20,7 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.ThreadLocalCachedByteArray;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.ByteSequence;
@@ -53,10 +54,12 @@ public class PersistentHashMapValueStorage {
     public static final ThreadLocal<Boolean> READONLY = new ThreadLocal<Boolean>();
     public static final ThreadLocal<Boolean> COMPACT_CHUNKS_WITH_VALUE_DESERIALIZATION = new ThreadLocal<Boolean>();
     
-    public static final ThreadLocal<Boolean> DO_COMPRESSION = new ThreadLocal<Boolean>();
-    static {
-      DO_COMPRESSION.set(COMPRESSION_ENABLED);
-    }
+    public static final ThreadLocal<Boolean> DO_COMPRESSION = new ThreadLocal<Boolean>() {
+      @Override
+      protected Boolean initialValue() {
+        return COMPRESSION_ENABLED;
+      }
+    };
   }
 
   public interface ExceptionalIOCancellationCallback {
@@ -203,8 +206,7 @@ public class PersistentHashMapValueStorage {
       infos.size(), new Comparator<PersistentHashMap.CompactionRecordInfo>() {
         @Override
         public int compare(PersistentHashMap.CompactionRecordInfo info, PersistentHashMap.CompactionRecordInfo info2) {
-          long i = info.valueAddress - info2.valueAddress;
-          return i > 0 ? -1 : i < 0 ? 1 : 0;
+          return Comparing.compare(info2.valueAddress,info.valueAddress );
         }
       }
     );

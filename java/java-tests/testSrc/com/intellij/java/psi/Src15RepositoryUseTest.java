@@ -33,7 +33,6 @@ import com.intellij.testFramework.PsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
@@ -61,7 +60,7 @@ public class Src15RepositoryUseTest extends PsiTestCase {
   }
 
 
-  public void testStaticImports() throws IOException {
+  public void testStaticImports() {
     setupLoadingFilter();
     final PsiClass aClass = findClass("staticImports.StaticImports");
     final PsiJavaFile javaFile = (PsiJavaFile)aClass.getContainingFile();
@@ -70,7 +69,7 @@ public class Src15RepositoryUseTest extends PsiTestCase {
     doTestStaticImports(javaFile, true);
   }
 
-  public void testDeprecatedAnnotation() throws IOException {
+  public void testDeprecatedAnnotation() {
     setupLoadingFilter();
 
     final PsiClass aClass = findClass("annotations.DeprecatedAnnotation");
@@ -139,7 +138,7 @@ public class Src15RepositoryUseTest extends PsiTestCase {
     return reference != null ? reference.getText() : "(null ref)";
   }
 
-  public void testEnum() throws Exception {
+  public void testEnum() {
     setupLoadingFilter();
     final PsiClass enumClass = findClass("enums.OurEnum");
     assertTrue(enumClass.isEnum());
@@ -161,7 +160,7 @@ public class Src15RepositoryUseTest extends PsiTestCase {
     tearDownLoadingFilter();
   }
 
-  public void testEnumWithConstants() throws Exception {
+  public void testEnumWithConstants() {
     setupLoadingFilter();
     PsiClass enumClass = findClass("enums.OurEnumWithConstants");
     assertTrue(enumClass.isEnum());
@@ -170,7 +169,7 @@ public class Src15RepositoryUseTest extends PsiTestCase {
     checkEnumWithConstants(enumClass, true);
   }
 
-  public void testEnumWithInitializedConstants() throws Exception {
+  public void testEnumWithInitializedConstants() {
     setupLoadingFilter();
     final GlobalSearchScope moduleScope = GlobalSearchScope.moduleScope(myModule);
 
@@ -253,7 +252,7 @@ public class Src15RepositoryUseTest extends PsiTestCase {
     assertTrue(field.hasModifierProperty(PsiModifier.STATIC));
   }
 
-  public void testEnumWithConstantsAndStaticFields() throws Exception {
+  public void testEnumWithConstantsAndStaticFields() {
     setupLoadingFilter();
     PsiClass enumClass = findClass("enums.OurEnumWithConstantsAndStaticFields");
     PsiField[] fields = enumClass.getFields();
@@ -267,7 +266,7 @@ public class Src15RepositoryUseTest extends PsiTestCase {
     assertEquals("public static final int A1 = 1;", fields[3].getText());
   }
 
-  public void testEnumWithConstantsAndStaticFields2() throws Exception {
+  public void testEnumWithConstantsAndStaticFields2() {
     setupLoadingFilter();
     PsiClass enumClass = findClass("enums.OurEnumWithConstantsAndStaticFields2");
     PsiField[] fields = enumClass.getFields();
@@ -287,14 +286,14 @@ public class Src15RepositoryUseTest extends PsiTestCase {
     enumClass.getText();
   }
 
-  public void testAnnotationType() throws Exception {
+  public void testAnnotationType() {
     setupLoadingFilter();
     final PsiClass annotationTypeClass = findClass("annotations.AnnotationType");
     assertTrue(annotationTypeClass.isAnnotationType());
     tearDownLoadingFilter();
   }
 
-  public void testAnnotationIndex() throws Exception {
+  public void testAnnotationIndex() {
     PsiManagerEx.getInstanceEx(getProject()).setAssertOnFileLoadingFilter(new VirtualFileFilter() {
       @Override
       public boolean accept(final VirtualFile file) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,7 +76,7 @@ public class IterateOverIterableIntention implements IntentionAction {
   public String getText() {
     return "Iterate";
   }
-  
+
   @Nullable
   private static PsiExpression getIterableExpression(Editor editor, PsiFile file) {
     final SelectionModel selectionModel = editor.getSelectionModel();
@@ -84,11 +84,11 @@ public class IterateOverIterableIntention implements IntentionAction {
       PsiElement elementAtStart = file.findElementAt(selectionModel.getSelectionStart());
       PsiElement elementAtEnd = file.findElementAt(selectionModel.getSelectionEnd() - 1);
       if (elementAtStart == null || elementAtStart instanceof PsiWhiteSpace || elementAtStart instanceof PsiComment) {
-        elementAtStart = PsiTreeUtil.skipSiblingsForward(elementAtStart, PsiWhiteSpace.class, PsiComment.class);
+        elementAtStart = PsiTreeUtil.skipWhitespacesAndCommentsForward(elementAtStart);
         if (elementAtStart == null) return null;
       }
       if (elementAtEnd == null || elementAtEnd instanceof PsiWhiteSpace || elementAtEnd instanceof PsiComment) {
-        elementAtEnd = PsiTreeUtil.skipSiblingsBackward(elementAtEnd, PsiWhiteSpace.class, PsiComment.class);
+        elementAtEnd = PsiTreeUtil.skipWhitespacesAndCommentsBackward(elementAtEnd);
         if (elementAtEnd == null) return null;
       }
       PsiElement parent = PsiTreeUtil.findCommonParent(elementAtStart, elementAtEnd);

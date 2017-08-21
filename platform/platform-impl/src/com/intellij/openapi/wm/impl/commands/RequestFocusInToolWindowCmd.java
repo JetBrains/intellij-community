@@ -199,7 +199,7 @@ public final class RequestFocusInToolWindowCmd extends FinalizableCommand {
   }
 
   /**
-   * @return first active window from hierarchy with specified roots. Returns <code>null</code>
+   * @return first active window from hierarchy with specified roots. Returns {@code null}
    *         if there is no active window in the hierarchy.
    */
   private static Window getActiveWindow(final Window[] windows) {

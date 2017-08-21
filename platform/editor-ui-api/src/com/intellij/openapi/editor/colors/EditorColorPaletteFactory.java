@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Builds an empty editor color palette. The constructed palette can be filled with <code>EditorColorPalette.with...()</code> methods.
+ * Builds an empty editor color palette. The constructed palette can be filled with {@code EditorColorPalette.with...()} methods.
  * @see EditorColorPalette#withBackgroundColors()
  * @see EditorColorPalette#withForegroundColors()
  */

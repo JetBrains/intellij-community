@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -152,7 +153,8 @@ public class StringBufferReplaceableByStringInspection extends StringBufferRepla
         if (statement == null) {
           return;
         }
-        final String modifier = CodeStyleSettingsManager.getSettings(project).GENERATE_FINAL_LOCALS ? "final " : "";
+        final String modifier =
+          CodeStyleSettingsManager.getSettings(project).getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_LOCALS ? "final " : "";
         final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
         final StringBuilder statementText =
           new StringBuilder(modifier).append(CommonClassNames.JAVA_LANG_STRING).append(' ').append(variableName).append("=");

@@ -70,16 +70,20 @@ public class GitPushOptionsPanel extends VcsPushOptionsPanel {
     myRunHooks.setSelected(true);
     myRunHooks.setVisible(showSkipHookOption);
 
-    myRunHooks.setBorder(JBUI.Borders.empty());
-    myPushTagsMode.setBorder(JBUI.Borders.empty());
-    myPushTags.setBorder(JBUI.Borders.empty());
-
     setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
     add(myPushTags);
-    add(Box.createHorizontalStrut(JBUI.scale(3)));
-    add(myPushTagsMode);
-    add(Box.createHorizontalStrut(JBUI.scale(37)));
-    add(myRunHooks);
+    if (myPushTagsMode.isVisible()) {
+      add(Box.createHorizontalStrut(calcStrutWidth(8, myPushTags, myPushTagsMode)));
+      add(myPushTagsMode);
+    }
+    if (myRunHooks.isVisible()) {
+      add(Box.createHorizontalStrut(calcStrutWidth(40, myPushTagsMode, myRunHooks)));
+      add(myRunHooks);
+    }
+  }
+
+  private static int calcStrutWidth(int plannedWidth, @NotNull JComponent leftComponent, @NotNull JComponent rightComponent) {
+    return JBUI.scale(plannedWidth) - JBUI.insets(rightComponent.getInsets()).left - JBUI.insets(leftComponent.getInsets()).right;
   }
 
   @Nullable

@@ -384,7 +384,8 @@ class EditorPainter implements TextDrawingCallback {
           Inlay inlay = fragment.getCurrentInlay();
           if (inlay != null) {
             inlay.getRenderer().paint(myEditor, g, 
-                                      new Rectangle((int) xStart, y - myView.getAscent(), inlay.getWidthInPixels(), lineHeight));
+                                      new Rectangle((int) xStart, y - myView.getAscent(), inlay.getWidthInPixels(), lineHeight),
+                                      attributes);
             return;
           }
           boolean allowBorder = fragment.getCurrentFoldRegion() != null;
@@ -768,7 +769,7 @@ class EditorPainter implements TextDrawingCallback {
 
     /**
      * Returns a list of pairs of x coordinates for visual ranges representing given logical range. If 
-     * <code>startOffset == endOffset</code>, a pair of equal numbers is returned, corresponding to target position. Target offsets are 
+     * {@code startOffset == endOffset}, a pair of equal numbers is returned, corresponding to target position. Target offsets are
      * supposed to be located on the same visual line.
      */
   private TFloatArrayList logicalRangeToVisualRanges(int startOffset, int endOffset) {
@@ -780,11 +781,15 @@ class EditorPainter implements TextDrawingCallback {
       result.add(minX);
     }
     else {
+      float lastX = -1;
       for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView, startOffset, false)) {
         int minOffset = fragment.getMinOffset();
         int maxOffset = fragment.getMaxOffset();
         if (startOffset == endOffset) {
-          if (startOffset >= minOffset && startOffset <= maxOffset) {
+          lastX = fragment.getEndX();
+          Inlay inlay = fragment.getCurrentInlay();
+          if (inlay != null && !inlay.isRelatedToPrecedingText()) continue;
+          if (startOffset >= minOffset && startOffset < maxOffset) {
             float x = fragment.offsetToX(startOffset);
             result.add(x);
             result.add(x);
@@ -807,6 +812,10 @@ class EditorPainter implements TextDrawingCallback {
             result.set(result.size() - 1, x2);
           }
         }
+      }
+      if (startOffset == endOffset && result.isEmpty() && lastX >= 0) {
+        result.add(lastX);
+        result.add(lastX);
       }
     }
     return result;

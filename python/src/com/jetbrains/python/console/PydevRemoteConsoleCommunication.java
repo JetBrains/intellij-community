@@ -34,4 +34,8 @@ public class PydevRemoteConsoleCommunication extends PydevConsoleCommunication {
     throws Exception {
     super(project, port, process, clientPort);
   }
+
+  public PydevRemoteConsoleCommunication(Project project, int port, Process process, int clientPort, String clientHost) throws Exception {
+    super(project, clientHost, port, process, clientPort);
+  }
 }

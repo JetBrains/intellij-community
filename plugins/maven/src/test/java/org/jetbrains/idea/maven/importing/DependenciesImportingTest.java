@@ -2372,7 +2372,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
 
     new WriteAction() {
       @Override
-      protected void run(@NotNull Result result) throws Throwable {
+      protected void run(@NotNull Result result) {
         ModifiableRootModel rootModel = ModuleRootManager.getInstance(getModule("m1")).getModifiableModel();
         OrderEntry[] orderEntries = rootModel.getOrderEntries().clone();
         assert orderEntries.length == 4;
@@ -2422,7 +2422,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
 
     new WriteAction() {
       @Override
-      protected void run(@NotNull Result result) throws Throwable {
+      protected void run(@NotNull Result result) {
         ModifiableRootModel rootModel = ModuleRootManager.getInstance(getModule("m1")).getModifiableModel();
         OrderEntry[] orderEntries = rootModel.getOrderEntries().clone();
         assert orderEntries.length == 4;

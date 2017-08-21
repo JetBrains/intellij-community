@@ -55,7 +55,22 @@ public interface VcsLogProvider {
    * <p/>
    * Reports commits to the consumer to avoid creation & even temporary storage of a too large commits collection.
    */
-  void readFullDetails(@NotNull VirtualFile root, @NotNull List<String> hashes, @NotNull Consumer<VcsFullCommitDetails> commitConsumer)
+  default void readFullDetails(@NotNull VirtualFile root,
+                               @NotNull List<String> hashes,
+                               @NotNull Consumer<VcsFullCommitDetails> commitConsumer)
+    throws VcsException {
+    readFullDetails(root, hashes, commitConsumer, false);
+  }
+
+  /**
+   * Reads full details for specified commits in the repository.
+   * Reports commits to the consumer to avoid creation & even temporary storage of a too large commits collection.
+   * Allows to skip full rename detection to make things faster. For git, for example, this would be adding diff.renameLimit=x to the command.
+   */
+  void readFullDetails(@NotNull VirtualFile root,
+                       @NotNull List<String> hashes,
+                       @NotNull Consumer<VcsFullCommitDetails> commitConsumer,
+                       boolean fast)
     throws VcsException;
 
   /**

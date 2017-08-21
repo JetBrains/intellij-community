@@ -436,7 +436,7 @@ public class PersistentMapTest extends PersistentMapTestBase {
     }
   }
 
-  private void closeMapSilently() throws IOException {
+  private void closeMapSilently() {
     try {
       myMap.close();
     } catch (IOException ignore) {}

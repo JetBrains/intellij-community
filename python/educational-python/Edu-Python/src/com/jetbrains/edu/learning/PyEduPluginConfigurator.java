@@ -22,9 +22,11 @@ import com.jetbrains.edu.learning.checker.PyStudyTaskChecker;
 import com.jetbrains.edu.learning.checker.StudyTaskChecker;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.Course;
+import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.courseFormat.tasks.PyCharmTask;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
+import com.jetbrains.edu.learning.courseGeneration.StudyGenerator;
 import com.jetbrains.edu.learning.newproject.EduCourseProjectGenerator;
 import com.jetbrains.python.PythonModuleTypeBase;
 import org.jetbrains.annotations.NonNls;
@@ -32,6 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
@@ -41,12 +44,19 @@ public class PyEduPluginConfigurator implements EduPluginConfigurator {
   private static final String TESTS_PY = "tests.py";
   private static final Logger LOG = Logger.getInstance(PyEduPluginConfigurator.class);
   private static final String COURSE_NAME = "Introduction to Python.zip";
+  private static final String TASK_PY = "task.py";
   private PyStudyDirectoryProjectGenerator myGenerator = new PyStudyDirectoryProjectGenerator();
 
   @NotNull
   @Override
   public String getTestFileName() {
     return TESTS_PY;
+  }
+
+  @NotNull
+  @Override
+  public String getStepikDefaultLanguage() {
+    return "python3";
   }
 
   @Override
@@ -59,17 +69,38 @@ public class PyEduPluginConfigurator implements EduPluginConfigurator {
     ApplicationManager.getApplication().runWriteAction(() -> {
       String taskDirName = EduNames.TASK + task.getIndex();
       taskDirectory.set(DirectoryUtil.createSubdirectories(taskDirName, parentDirectory, "\\/"));
-      if (taskDirectory.get() != null) {
+      if (taskDirectory.isNull()) return;
+
+      if (course.isAdaptive() && !task.getTaskFiles().isEmpty()) {
+        createTaskFilesFromText(task, taskDirectory.get());
+      }
+      else {
         createFilesFromTemplates(project, view, taskDirectory.get());
       }
     });
     return taskDirectory.get();
   }
 
+  private static void createTaskFilesFromText(@NotNull Task task, @Nullable PsiDirectory taskDirectory) {
+    if (taskDirectory == null) {
+      LOG.warn("Task directory is null. Cannot create task files");
+      return;
+    }
+
+    for (TaskFile file : task.getTaskFiles().values()) {
+      try {
+        StudyGenerator.createTaskFile(taskDirectory.getVirtualFile(), file);
+      }
+      catch (IOException e) {
+        LOG.warn(e.getMessage());
+      }
+    }
+  }
+
   private static void createFilesFromTemplates(@NotNull Project project,
                                                @Nullable IdeView view,
                                                @NotNull PsiDirectory taskDirectory) {
-    StudyUtils.createFromTemplate(project, taskDirectory, "task.py", view, false);
+    StudyUtils.createFromTemplate(project, taskDirectory, TASK_PY, view, false);
     StudyUtils.createFromTemplate(project, taskDirectory, TESTS_PY, view, false);
   }
 

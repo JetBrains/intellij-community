@@ -37,13 +37,6 @@ public class GroovyUnnecessaryContinueInspection extends BaseInspection {
   @Override
   @Nls
   @NotNull
-  public String getGroupDisplayName() {
-    return CONTROL_FLOW;
-  }
-
-  @Override
-  @Nls
-  @NotNull
   public String getDisplayName() {
     return "Unnecessary 'continue' statement";
   }

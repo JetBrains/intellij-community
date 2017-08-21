@@ -31,6 +31,7 @@ import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.Module;
@@ -105,8 +106,8 @@ public final class PythonSdkType extends SdkType {
   static final int MINUTE = 60 * 1000; // 60 seconds, used with script timeouts
   @NonNls public static final String SKELETONS_TOPIC = "Skeletons";
   private static final String[] DIRS_WITH_BINARY = new String[]{"", "bin", "Scripts"};
-  private static final String[] UNIX_BINARY_NAMES = new String[]{"jython", "pypy", "python"};
-  private static final String[] WIN_BINARY_NAMES = new String[]{"jython.bat", "ipy.exe", "pypy.exe", "python.exe"};
+  private static final String[] UNIX_BINARY_NAMES = new String[]{"jython", "pypy", "python", "python3"};
+  private static final String[] WIN_BINARY_NAMES = new String[]{"jython.bat", "ipy.exe", "pypy.exe", "python.exe", "python3.exe"};
 
   private static final Key<WeakReference<Component>> SDK_CREATOR_COMPONENT_KEY = Key.create("#com.jetbrains.python.sdk.creatorComponent");
   public static final Predicate<Sdk> REMOTE_SDK_PREDICATE = sdk -> isRemote(sdk);
@@ -603,7 +604,7 @@ public final class PythonSdkType extends SdkType {
   public static List<String> getSysPath(String bin_path) throws InvalidSdkException {
     String working_dir = new File(bin_path).getParent();
     Application application = ApplicationManager.getApplication();
-    if (application != null && !application.isUnitTestMode()) {
+    if (application != null && (!application.isUnitTestMode() || ApplicationInfoImpl.isInStressTest())) {
       return getSysPathsFromScript(bin_path);
     }
     else { // mock sdk

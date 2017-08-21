@@ -22,7 +22,8 @@ import com.intellij.lang.LanguageCommenters;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.DocCommentSettings;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -36,8 +37,23 @@ public class CodeDocumentationUtil {
   private CodeDocumentationUtil() {
   }
 
+  /**
+   * @deprecated  Use createDocCommentLine(lineData,file,commenter) instead.
+   */
+  @SuppressWarnings("unused")
+  @Deprecated
   public static String createDocCommentLine(String lineData, Project project, CodeDocumentationAwareCommenter commenter) {
-    if (!CodeStyleSettingsManager.getSettings(project).JD_LEADING_ASTERISKS_ARE_ENABLED) {
+    return createLine(lineData, commenter, DocCommentSettings.DEFAULTS);
+  }
+
+  public static String createDocCommentLine(String lineData, PsiFile file, CodeDocumentationAwareCommenter commenter) {
+    DocCommentSettings settings = CodeStyleManager.getInstance(file.getProject()).getDocCommentSettings(file);
+    return createLine(lineData, commenter, settings);
+  }
+
+  @NotNull
+  private static String createLine(String lineData, CodeDocumentationAwareCommenter commenter, DocCommentSettings settings) {
+    if (!settings.isLeadingAsteriskEnabled()) {
       return " " + lineData + " ";
     }
     else {

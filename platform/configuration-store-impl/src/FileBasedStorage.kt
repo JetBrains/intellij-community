@@ -192,7 +192,7 @@ fun writeFile(file: Path?, requestor: Any, virtualFile: VirtualFile?, element: E
   if ((LOG.isDebugEnabled || ApplicationManager.getApplication().isUnitTestMode) && !FileUtilRt.isTooLarge(result.length)) {
     val content = element.toBufferExposingByteArray(lineSeparator.separatorString)
     if (isEqualContent(result, lineSeparator, content, prependXmlProlog)) {
-      throw IllegalStateException("Content equals, but it must be handled not on this level: file ${result.name}, content\n${content.toByteArray().toString(StandardCharsets.UTF_8)}")
+      LOG.error("Content equals, but it must be handled not on this level: file ${result.name}, content\n${content.toByteArray().toString(StandardCharsets.UTF_8)}")
     }
     else if (DEBUG_LOG != null && ApplicationManager.getApplication().isUnitTestMode) {
       DEBUG_LOG = "${result.path}:\n$content\nOld Content:\n${LoadTextUtil.loadText(result)}"
@@ -203,7 +203,7 @@ fun writeFile(file: Path?, requestor: Any, virtualFile: VirtualFile?, element: E
   return result
 }
 
-private val XML_PROLOG = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>".toByteArray()
+private val XML_PROLOG = """<?xml version="1.0" encoding="UTF-8"?>""".toByteArray()
 
 private fun isEqualContent(result: VirtualFile, lineSeparator: LineSeparator, content: BufferExposingByteArrayOutputStream, prependXmlProlog: Boolean): Boolean {
   val headerLength = if (!prependXmlProlog) 0 else XML_PROLOG.size + lineSeparator.separatorBytes.size
@@ -217,7 +217,7 @@ private fun isEqualContent(result: VirtualFile, lineSeparator: LineSeparator, co
     return false
   }
 
-  return (headerLength..oldContent.size - 1).all { oldContent[it] == content.internalBuffer[it - headerLength] }
+  return (headerLength until oldContent.size).all { oldContent[it] == content.internalBuffer[it - headerLength] }
 }
 
 private fun doWrite(requestor: Any, file: VirtualFile, content: Any, lineSeparator: LineSeparator, prependXmlProlog: Boolean) {
@@ -245,7 +245,7 @@ private fun doWrite(requestor: Any, file: VirtualFile, content: Any, lineSeparat
   }
 }
 
-internal fun detectLineSeparators(chars: CharSequence, defaultSeparator: LineSeparator?): LineSeparator {
+internal fun detectLineSeparators(chars: CharSequence, defaultSeparator: LineSeparator? = null): LineSeparator {
   for (c in chars) {
     if (c == '\r') {
       return LineSeparator.CRLF

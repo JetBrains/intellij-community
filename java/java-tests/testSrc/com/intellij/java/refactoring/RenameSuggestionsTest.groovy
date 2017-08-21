@@ -23,9 +23,7 @@ import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler
 import com.intellij.testFramework.LightCodeInsightTestCase
-/**
- * User: anna
- */
+
 class RenameSuggestionsTest extends LightCodeInsightTestCase {
   void "test by parameter name"() {
     def text = """\
@@ -40,6 +38,23 @@ class RenameSuggestionsTest extends LightCodeInsightTestCase {
    """
 
     doTestSuggestionAvailable(text, "foo")
+  }
+  
+  void "test lambda parameter name"() {
+    def text = """\
+     import java.util.Map;
+
+class LambdaRename {
+    void q(Map<String, LambdaRename> map) {
+        map.forEach((k, <caret>v) -> {
+            System.out.println(k + v);
+        });
+    }
+}
+   }
+   """
+
+    doTestSuggestionAvailable(text, "lambdaRename", "rename", "v")
   }
 
   void "test foreach scope"() {
@@ -117,9 +132,11 @@ class Car {}
     assert suggestions == ["car", "carOptional", "optional", "o"]
   }
 
-  private doTestSuggestionAvailable(String text, String suggestion) {
+  private doTestSuggestionAvailable(String text, String... expectedSuggestions) {
     def suggestions = getNameSuggestions(text)
-    assert suggestion in suggestions
+    for (String suggestion : expectedSuggestions) {
+      assert suggestion in suggestions
+    }
     
   }
   

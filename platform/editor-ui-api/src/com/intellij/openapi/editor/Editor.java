@@ -224,7 +224,7 @@ public interface Editor extends UserDataHolder {
    * Maps an offset in the document to a logical position.
    * <p>
    * It's assumed that original position is associated with character immediately preceding given offset, so target logical position will 
-   * have {@link LogicalPosition#leansForward leansForward} value set to <code>false</code>.
+   * have {@link LogicalPosition#leansForward leansForward} value set to {@code false}.
    *
    * @param offset the offset in the document.
    * @return the corresponding logical position.
@@ -250,10 +250,10 @@ public interface Editor extends UserDataHolder {
    * Maps an offset in the document to a visual position.
    *
    * @param offset the offset in the document.
-   * @param leanForward if <code>true</code>, original position is associated with character after given offset, if <code>false</code> - 
+   * @param leanForward if {@code true}, original position is associated with character after given offset, if {@code false} -
    *                    with character before given offset. This can make a difference in bidirectional text (see {@link LogicalPosition},
    *                    {@link VisualPosition})
-   * @param beforeSoftWrap if <code>true</code>, visual position at line preceeding the wrap will be returned, otherwise - visual position
+   * @param beforeSoftWrap if {@code true}, visual position at line preceeding the wrap will be returned, otherwise - visual position
    *                       at line following the wrap.
    * @return the corresponding visual position.
    */
@@ -409,17 +409,17 @@ public interface Editor extends UserDataHolder {
    * Set up a header component for this text editor. Please note this is used for textual find feature so your component will most
    * probably will be reset once the user presses Ctrl+F.
    *
-   * @param header a component to setup as header for this text editor or <code>null</code> to remove one.
+   * @param header a component to setup as header for this text editor or {@code null} to remove one.
    */
   void setHeaderComponent(@Nullable JComponent header);
 
   /**
-   * @return <code>true</code> if this editor has active header component set up by {@link #setHeaderComponent(JComponent)}
+   * @return {@code true} if this editor has active header component set up by {@link #setHeaderComponent(JComponent)}
    */
   boolean hasHeaderComponent();
 
   /**
-   * @return a component set by {@link #setHeaderComponent(JComponent)} or <code>null</code> if no header currently installed.
+   * @return a component set by {@link #setHeaderComponent(JComponent)} or {@code null} if no header currently installed.
    */
   @Nullable
   JComponent getHeaderComponent();

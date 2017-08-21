@@ -31,7 +31,6 @@ public class TextAttributes implements Cloneable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.markup.TextAttributes");
 
   public static final TextAttributes ERASE_MARKER = new TextAttributes();
-  public static final TextAttributes USE_INHERITED_MARKER = new TextAttributes();
 
   @SuppressWarnings("NullableProblems")
   @NotNull
@@ -81,6 +80,15 @@ public class TextAttributes implements Cloneable {
     setAttributes(foregroundColor, backgroundColor, effectColor, null, effectType, fontType);
   }
 
+  public void copyFrom(@NotNull TextAttributes other) {
+    setAttributes(other.getForegroundColor(),
+                  other.getBackgroundColor(),
+                  other.getEffectColor(),
+                  other.getErrorStripeColor(),
+                  other.getEffectType(),
+                  other.getFontType());
+  }
+
   public void setAttributes(Color foregroundColor,
                             Color backgroundColor,
                             Color effectColor,
@@ -92,13 +100,6 @@ public class TextAttributes implements Cloneable {
 
   public boolean isEmpty(){
     return getForegroundColor() == null && getBackgroundColor() == null && getEffectColor() == null && getFontType() == Font.PLAIN;
-  }
-
-  public void reset() {
-    setForegroundColor(null);
-    setBackgroundColor(null);
-    setEffectColor(null);
-    setFontType(Font.PLAIN);
   }
 
   @NotNull
@@ -166,6 +167,7 @@ public class TextAttributes implements Cloneable {
     myAttrs = myAttrs.withFontType(type);
   }
 
+  /** @noinspection MethodDoesntCallSuperMethod*/
   @Override
   public TextAttributes clone() {
     return new TextAttributes(myAttrs);

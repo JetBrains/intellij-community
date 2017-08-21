@@ -25,13 +25,13 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
+import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.editor.markup.HighlighterLayer;
-import com.intellij.openapi.editor.markup.HighlighterTargetArea;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
@@ -40,6 +40,8 @@ import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.IconUtil;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
+import com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter;
+import com.intellij.xdebugger.ui.DebuggerColors;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -135,6 +137,10 @@ public abstract class AbstractValueHint {
       myCurrentHint.hide();
       myCurrentHint = null;
     }
+    disposeHighlighter();
+  }
+
+  void disposeHighlighter() {
     if (myHighlighter != null) {
       myHighlighter.dispose();
       myHighlighter = null;
@@ -154,13 +160,35 @@ public abstract class AbstractValueHint {
     }
 
     if (myType == ValueHintType.MOUSE_ALT_OVER_HINT) {
-      EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-      TextAttributes attributes = scheme.getAttributes(EditorColors.REFERENCE_HYPERLINK_COLOR);
-      attributes = NavigationUtil.patchAttributesColor(attributes, myCurrentRange, myEditor);
+      createHighlighter();
+    }
+    else {
+      evaluateAndShowHint();
+    }
+  }
 
-      myHighlighter = myEditor.getMarkupModel().addRangeHighlighter(myCurrentRange.getStartOffset(), myCurrentRange.getEndOffset(),
-                                                                    HighlighterLayer.HYPERLINK, attributes,
-                                                                    HighlighterTargetArea.EXACT_RANGE);
+  void createHighlighter() {
+    EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
+    TextAttributes attributes;
+    if (myType == ValueHintType.MOUSE_ALT_OVER_HINT) {
+      attributes = scheme.getAttributes(EditorColors.REFERENCE_HYPERLINK_COLOR);
+      attributes = NavigationUtil.patchAttributesColor(attributes, myCurrentRange, myEditor);
+    }
+    else {
+      TextAttributesKey attributesKey = DebuggerColors.EVALUATED_EXPRESSION_ATTRIBUTES;
+      MarkupModel model = DocumentMarkupModel.forDocument(myEditor.getDocument(), myProject, false);
+      if (model != null && !((MarkupModelEx)model).processRangeHighlightersOverlappingWith(
+        myCurrentRange.getStartOffset(), myCurrentRange.getEndOffset(),
+        h -> !ExecutionPointHighlighter.EXECUTION_POINT_HIGHLIGHTER_TOP_FRAME_KEY.get(h, false))) {
+        attributesKey = DebuggerColors.EVALUATED_EXPRESSION_EXECUTION_LINE_ATTRIBUTES;
+      }
+      attributes = scheme.getAttributes(attributesKey);
+    }
+
+    myHighlighter = myEditor.getMarkupModel().addRangeHighlighter(myCurrentRange.getStartOffset(), myCurrentRange.getEndOffset(),
+                                                                  HighlighterLayer.SELECTION, attributes,
+                                                                  HighlighterTargetArea.EXACT_RANGE);
+    if (myType == ValueHintType.MOUSE_ALT_OVER_HINT) {
       Component internalComponent = myEditor.getContentComponent();
       myStoredCursor = internalComponent.getCursor();
       internalComponent.addKeyListener(myEditorKeyListener);
@@ -168,9 +196,6 @@ public abstract class AbstractValueHint {
       if (LOG.isDebugEnabled()) {
         LOG.debug("internalComponent.setCursor(hintCursor())");
       }
-    }
-    else {
-      evaluateAndShowHint();
     }
   }
 
@@ -227,6 +252,7 @@ public abstract class AbstractValueHint {
       return false;
     }
 
+    AppUIUtil.targetToDevice(myCurrentHint.getComponent(), myEditor.getComponent());
     Point p = HintManagerImpl.getHintPosition(myCurrentHint, myEditor, myEditor.xyToLogicalPosition(myPoint), HintManager.UNDER);
     HintHint hint = HintManagerImpl.createHintHint(myEditor, p, myCurrentHint, HintManager.UNDER, true);
     hint.setShowImmediately(true);
@@ -235,12 +261,13 @@ public abstract class AbstractValueHint {
                                                      HintManager.HIDE_BY_TEXT_CHANGE |
                                                      HintManager.HIDE_BY_SCROLLING, 0, false,
                                                      hint);
+    createHighlighter();
     myInsideShow = false;
     return true;
   }
 
   protected void onHintHidden() {
-
+    disposeHighlighter();
   }
 
   protected boolean isHintHidden() {
@@ -301,7 +328,8 @@ public abstract class AbstractValueHint {
   }
 
   protected <D> void showTreePopup(@NotNull DebuggerTreeCreator<D> creator, @NotNull D descriptor) {
-    DebuggerTreeWithHistoryPopup.showTreePopup(creator, descriptor, getEditor(), myPoint, getProject(), myHideRunnable);
+    Point point = new Point(myPoint.x, myPoint.y + myEditor.getLineHeight());
+    DebuggerTreeWithHistoryPopup.showTreePopup(creator, descriptor, myEditor, point, getProject(), myHideRunnable);
   }
 
   @Override

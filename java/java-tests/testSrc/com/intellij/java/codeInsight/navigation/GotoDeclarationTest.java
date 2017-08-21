@@ -35,12 +35,12 @@ public class GotoDeclarationTest extends LightCodeInsightTestCase {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
-  public void testContinue() throws Exception { doTest(); }
-  public void testContinueLabel() throws Exception { doTest(); }
-  public void testBreak() throws Exception {  doTest(); }
-  public void testBreak1() throws Exception {  doTest(); }
-  public void testBreakLabel() throws Exception {  doTest(); }
-  public void testAnonymous() throws Exception {  doTest(); }
+  public void testContinue() { doTest(); }
+  public void testContinueLabel() { doTest(); }
+  public void testBreak() {  doTest(); }
+  public void testBreak1() {  doTest(); }
+  public void testBreakLabel() {  doTest(); }
+  public void testAnonymous() {  doTest(); }
 
   private static void performAction() {
     PsiElement element = GotoDeclarationAction.findTargetElement(getProject(), getEditor(), getEditor().getCaretModel().getOffset());
@@ -50,21 +50,21 @@ public class GotoDeclarationTest extends LightCodeInsightTestCase {
     getEditor().getSelectionModel().removeSelection();
   }
 
-  private void doTest() throws Exception {
+  private void doTest() {
     String name = getTestName(false);
     configureByFile("/codeInsight/gotoDeclaration/continueAndBreak/" + name + ".java");
     performAction();
     checkResultByFile("/codeInsight/gotoDeclaration/continueAndBreak/" + name + "_after.java");
   }
 
-  public void testGotoDirectory() throws Exception {
+  public void testGotoDirectory() {
     String name = getTestName(false);
     configureByFile("/codeInsight/gotoDeclaration/" + name + ".java");
     PsiDirectory element = (PsiDirectory)GotoDeclarationAction.findTargetElement(getProject(), getEditor(), getEditor().getCaretModel().getOffset());
     assertEquals("java.lang", JavaDirectoryService.getInstance().getPackage(element).getQualifiedName());
   }
 
-  public void testMultipleConstructors() throws Exception {
+  public void testMultipleConstructors() {
     String name = getTestName(false);
     configureByFile("/codeInsight/gotoDeclaration/" + name + ".java");
     final int offset = getEditor().getCaretModel().getOffset();
@@ -79,7 +79,7 @@ public class GotoDeclarationTest extends LightCodeInsightTestCase {
     assertEquals(candidates.toString(), 2, candidates.size());
   }
 
-  public void testMultipleConstructorsButArrayCreation() throws Exception {
+  public void testMultipleConstructorsButArrayCreation() {
     String name = getTestName(false);
     configureByFile("/codeInsight/gotoDeclaration/" + name + ".java");
     final int offset = getEditor().getCaretModel().getOffset();

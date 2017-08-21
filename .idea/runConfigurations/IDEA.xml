@@ -4,7 +4,7 @@
     <log_file path="$PROJECT_DIR$/system/log/build-log/build.log" checked="true" skipped="true" show_all="false" alias="build.log" />
     <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea" />
     <option name="MAIN_CLASS_NAME" value="com.intellij.idea.Main" />
-    <option name="VM_PARAMETERS" value="-Xmx512m -XX:ReservedCodeCacheSize=150m -XX:+UseConcMarkSweepGC -XX:SoftRefLRUPolicyMSPerMB=50 -XX:MaxJavaStackTraceDepth=10000 -ea -Xbootclasspath/a:../out/classes/production/boot -Dsun.io.useCanonCaches=false -Djava.net.preferIPv4Stack=true -Dapple.laf.useScreenMenuBar=true -Dsun.awt.disablegrab=true -Didea.jre.check=true -Didea.is.internal=true -Didea.debug.mode=true -Didea.config.path=../config -Didea.system.path=../system" />
+    <option name="VM_PARAMETERS" value="-Xmx512m -XX:ReservedCodeCacheSize=240m -XX:+UseConcMarkSweepGC -XX:SoftRefLRUPolicyMSPerMB=50 -XX:MaxJavaStackTraceDepth=10000 -ea -Xbootclasspath/a:../out/classes/production/boot -Dsun.io.useCanonCaches=false -Djava.net.preferIPv4Stack=true -Dapple.laf.useScreenMenuBar=true -Dsun.awt.disablegrab=true -Didea.jre.check=true -Didea.is.internal=true -Didea.debug.mode=true -Didea.config.path=../config -Didea.system.path=../system" />
     <option name="PROGRAM_PARAMETERS" value="" />
     <option name="WORKING_DIRECTORY" value="file://$PROJECT_DIR$/bin" />
     <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />

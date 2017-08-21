@@ -83,11 +83,11 @@ public class OptionsPanelImpl extends JPanel implements OptionsPanel {
       public void onHyperLinkClicked(HyperlinkEvent e) {
         if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
           Settings settings = Settings.KEY.getData(DataManager.getInstance().getDataContext(OptionsPanelImpl.this));
-          String attrName = e.getDescription();
+          String pageName = e.getDescription();
           Element element = e.getSourceElement();
-          String pageName;
+          String attrName;
           try {
-            pageName = element.getDocument().getText(element.getStartOffset(), element.getEndOffset() - element.getStartOffset());
+            attrName = element.getDocument().getText(element.getStartOffset(), element.getEndOffset() - element.getStartOffset());
           }
           catch (BadLocationException e1) {
             return;

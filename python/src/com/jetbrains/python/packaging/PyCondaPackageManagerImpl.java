@@ -40,38 +40,38 @@ import java.util.Set;
 
 public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
   public static final String PYTHON = "python";
+  public boolean useConda = true;
+
+  public boolean useConda() {
+    return useConda;
+  }
+
+  public void useConda(boolean conda) {
+    useConda = conda;
+  }
 
   PyCondaPackageManagerImpl(@NotNull final Sdk sdk) {
     super(sdk);
   }
 
   @Override
-  public void installManagement() throws ExecutionException {
-  }
-
-  @Override
-  public boolean hasManagement() throws ExecutionException {
-    final Sdk sdk = getSdk();
-    return isCondaVEnv(sdk);
-  }
-
-  @Override
-  protected void installManagement(@NotNull String name) throws ExecutionException {
-  }
-
-  @Override
   public void install(@NotNull List<PyRequirement> requirements, @NotNull List<String> extraArgs) throws ExecutionException {
-    final ArrayList<String> arguments = new ArrayList<>();
-    for (PyRequirement requirement : requirements) {
-      arguments.add(requirement.toString());
-    }
-    arguments.add("-y");
-    if (extraArgs.contains("-U")) {
-      getCondaOutput("update", arguments);
+    if (useConda) {
+      final ArrayList<String> arguments = new ArrayList<>();
+      for (PyRequirement requirement : requirements) {
+        arguments.add(requirement.toString());
+      }
+      arguments.add("-y");
+      if (extraArgs.contains("-U")) {
+        getCondaOutput("update", arguments);
+      }
+      else {
+        arguments.addAll(extraArgs);
+        getCondaOutput("install", arguments);
+      }
     }
     else {
-      arguments.addAll(extraArgs);
-      getCondaOutput("install", arguments);
+      super.install(requirements, extraArgs);
     }
   }
 
@@ -109,27 +109,45 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
 
   @Override
   public void install(@NotNull String requirementString) throws ExecutionException {
-    getCondaOutput("install", Lists.newArrayList(requirementString, "-y"));
+    if (useConda) {
+      super.install(requirementString);
+    }
+    else {
+      getCondaOutput("install", Lists.newArrayList(requirementString, "-y"));
+    }
   }
 
   @Override
   public void uninstall(@NotNull List<PyPackage> packages) throws ExecutionException {
-    final ArrayList<String> arguments = new ArrayList<>();
-    for (PyPackage aPackage : packages) {
-      arguments.add(aPackage.getName());
-    }
-    arguments.add("-y");
+    if (useConda) {
+      final ArrayList<String> arguments = new ArrayList<>();
+      for (PyPackage aPackage : packages) {
+        arguments.add(aPackage.getName());
+      }
+      arguments.add("-y");
 
-    getCondaOutput("remove", arguments);
+      getCondaOutput("remove", arguments);
+    }
+    else {
+      super.uninstall(packages);
+    }
   }
 
+  /**
+   * @return packages installed using 'conda' manager only.
+   * Use 'useConda' flag to retrieve 'pip' packages
+   */
   @NotNull
   @Override
   protected List<PyPackage> collectPackages() throws ExecutionException {
-    final ProcessOutput output = getCondaOutput("list", Lists.newArrayList("-e"));
-    final Set<PyPackage> packages = Sets.newConcurrentHashSet(parseCondaToolOutput(output.getStdout()));
-    packages.addAll(super.collectPackages());
-    return Lists.newArrayList(packages);
+    if (useConda) {
+      final ProcessOutput output = getCondaOutput("list", Lists.newArrayList("-e"));
+      final Set<PyPackage> packages = Sets.newConcurrentHashSet(parseCondaToolOutput(output.getStdout()));
+      return Lists.newArrayList(packages);
+    }
+    else {
+      return super.collectPackages();
+    }
   }
 
   @NotNull
@@ -162,7 +180,7 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
     final VirtualFile homeDirectory = sdk.getHomeDirectory();
     if (homeDirectory == null) return false;
     final VirtualFile condaMeta = SystemInfo.isWindows ? homeDirectory.getParent().findChild(condaName) :
-                                        homeDirectory.getParent().getParent().findChild(condaName);
+                                  homeDirectory.getParent().getParent().findChild(condaName);
     return condaMeta != null;
   }
 

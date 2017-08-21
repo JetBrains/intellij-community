@@ -30,13 +30,6 @@ public class GroovyLoopStatementThatDoesntLoopInspection extends BaseInspection 
   @Override
   @Nls
   @NotNull
-  public String getGroupDisplayName() {
-    return CONTROL_FLOW;
-  }
-
-  @Override
-  @Nls
-  @NotNull
   public String getDisplayName() {
     return "Loop statement that doesn't loop";
   }

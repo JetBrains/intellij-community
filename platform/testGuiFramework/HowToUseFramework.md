@@ -49,7 +49,7 @@ To run GUI test from context run configuration just right click on editor with o
 to run test by clicking icon on the gutter of opened editor. All test are running with IntelliJ IDEA Community from source code. If you need 
 to start with other IntelliJ-based IDE just add `@RunWithIde()` and specify IDE with [`IdeType`](src/com/intellij/testGuiFramework/launcher/ide/IdeType.kt) annotation before test class: 
 ```kotlin
-@RunWithIde(IdeType.WEBSTORM)
+@RunWithIde(WebStormIde::class)
 class SomeWebStormTest : GuiTestCase()
 ```  
 
@@ -57,7 +57,7 @@ JUnit framework starts GUI test. As all GUI tests are derived from from [`GuiTes
 JUnit uses custom runner: [`GuiTestLocalRunner`](src/com/intellij/testGuiFramework/framework/GuiTestLocalRunner.kt).
 1. `GuiTestLocalRunner` starts [`JUnitServer`](src/com/intellij/testGuiFramework/remote/server/JUnitServer.kt) to send tests and receive test states.
 2. `JUnitServer` open a port to accept connection from IDE.
-3. `GuiTestLocalRunner` runs IDE, which is described in GUI test class annotation: `@RunWithIde(IdeType.IDEA_ULTIMATE)`. 
+3. `GuiTestLocalRunner` runs IDE, which is described in GUI test class annotation: `@RunWithIde(CommunityIde::class)`. 
 4. [`GuiTestLocalLauncher`](src/com/intellij/testGuiFramework/launcher/GuiTestLocalLauncher.kt) composes classpath from the main module of 
 specified IDE, `testGuiFramework` module and test. Than starts IDE with additional arguments `guitest port={a port from JUnitServer}`. 
 5. IDE starts with [`JUnitClient`](src/com/intellij/testGuiFramework/remote/client/JUnitClient.kt) and connects to `JUnitServer`. `JUnitClient`
@@ -189,7 +189,7 @@ import com.intellij.testGuiFramework.launcher.ide.IdeType
  * the code directly or remotely. All tests are running with IntelliJ IDEA Community Edition by default. To change IDE test class should be
  * annotated with @com.intellij.testGuiFramework.framework.RunWithIde annotation. Check com.intellij.testGuiFramework.launcher.ide.IdeType
  */
-@RunWithIde(IdeType.WEBSTORM)
+@RunWithIde(WebStormIde::class)
 class SomeGuiTest: GuiTestCase() {
 
   @org.junit.Test           // test function should be annotated with @Test annotation

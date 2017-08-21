@@ -211,7 +211,7 @@ public class SMTestRunnerConnectionUtil {
 
     processHandler.addProcessListener(new ProcessAdapter() {
       @Override
-      public void processTerminated(final ProcessEvent event) {
+      public void processTerminated(@NotNull final ProcessEvent event) {
         outputConsumer.flushBufferBeforeTerminating();
         eventsProcessor.onFinishTesting();
 
@@ -220,13 +220,13 @@ public class SMTestRunnerConnectionUtil {
       }
 
       @Override
-      public void startNotified(final ProcessEvent event) {
+      public void startNotified(@NotNull final ProcessEvent event) {
         eventsProcessor.onStartTesting();
         outputConsumer.onStartTesting();
       }
 
       @Override
-      public void onTextAvailable(final ProcessEvent event, final Key outputType) {
+      public void onTextAvailable(@NotNull final ProcessEvent event, @NotNull final Key outputType) {
         outputConsumer.process(event.getText(), outputType);
       }
     });
@@ -242,11 +242,21 @@ public class SMTestRunnerConnectionUtil {
     @NotNull
     @Override
     public List<Location> getLocation(@NotNull String protocol, @NotNull String path, @NotNull Project project, @NotNull GlobalSearchScope scope) {
+      return getLocation(protocol, path, null, project, scope);
+    }
+
+    @NotNull
+    @Override
+    public List<Location> getLocation(@NotNull String protocol,
+                                      @NotNull String path,
+                                      @Nullable String metainfo,
+                                      @NotNull Project project,
+                                      @NotNull GlobalSearchScope scope) {
       if (URLUtil.FILE_PROTOCOL.equals(protocol)) {
         return FileUrlProvider.INSTANCE.getLocation(protocol, path, project, scope);
       }
       else if (!DumbService.isDumb(project) || DumbService.isDumbAware(myLocator) || Registry.is("dumb.aware.run.configurations")) {
-        return myLocator.getLocation(protocol, path, project, scope);
+        return myLocator.getLocation(protocol, path, metainfo, project, scope);
       }
       else {
         return Collections.emptyList();

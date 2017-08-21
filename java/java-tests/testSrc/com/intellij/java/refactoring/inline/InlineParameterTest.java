@@ -37,67 +37,67 @@ public class InlineParameterTest extends LightRefactoringTestCase {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
-  public void testSameValue() throws Exception {
+  public void testSameValue() {
     doTest(true);
   }
 
-  public void testNullValue() throws Exception {
+  public void testNullValue() {
     doTest(true);
   }
 
-  public void testConstructorCall() throws Exception {
+  public void testConstructorCall() {
     doTest(true);
   }
 
-  public void testStaticFinalField() throws Exception {
+  public void testStaticFinalField() {
     doTest(true);
   }
 
-  public void testRefIdentical() throws Exception {
+  public void testRefIdentical() {
      doTest(true);
    }
 
-  public void testRefIdenticalNoLocal() throws Exception {
+  public void testRefIdenticalNoLocal() {
      doTest(false);
    }
 
-  public void testRefLocalConstantInitializer() throws Exception {
+  public void testRefLocalConstantInitializer() {
      doTest(false);
   }
 
-  public void testRefLocalWithLocal() throws Exception {
+  public void testRefLocalWithLocal() {
      doTest(false);
   }
 
-  public void testRefMethod() throws Exception {
+  public void testRefMethod() {
      doTest(true);
   }
 
-  public void testRefMethodOnLocal() throws Exception {
+  public void testRefMethodOnLocal() {
      doTest(false);
   }
 
-  public void testRefFinalLocal() throws Exception {
+  public void testRefFinalLocal() {
      doTest(true);
   }
 
-  public void testRefStaticField() throws Exception {
+  public void testRefStaticField() {
      doTest(true);
   }
 
-  public void testRefFinalLocalInitializedWithMethod() throws Exception {
+  public void testRefFinalLocalInitializedWithMethod() {
     doTest(false);
   }
 
-  public void testRefSelfField() throws Exception {
+  public void testRefSelfField() {
     doTest(false);
   }
 
-  public void testRefStaticMethod() throws Exception {
+  public void testRefStaticMethod() {
     doTest(true);
   }
 
-  public void testRefOuterThis() throws Exception {
+  public void testRefOuterThis() {
     try {
       doTest(false);
     }
@@ -106,31 +106,31 @@ public class InlineParameterTest extends LightRefactoringTestCase {
     }
   }
 
-  public void testRefThis() throws Exception {
+  public void testRefThis() {
     doTest(false);
   }
 
-  public void testRefQualifiedThis() throws Exception {
+  public void testRefQualifiedThis() {
     doTest(false);
   }
 
-  public void testRefSameNonFinalField() throws Exception {
+  public void testRefSameNonFinalField() {
     doTest(false);
   }
 
-  public void testRefSameNonFinalFieldOtherObject() throws Exception {
+  public void testRefSameNonFinalFieldOtherObject() {
     doTestCannotFindInitializer();
   }
 
-  public void testRef2ConstantsWithTheSameValue() throws Exception {
+  public void testRef2ConstantsWithTheSameValue() {
     doTest(false);
   }
 
-  public void testRefConstantAndField() throws Exception {
+  public void testRefConstantAndField() {
     doTestCannotFindInitializer();
   }
 
-  public void testRefNewInner() throws Exception {
+  public void testRefNewInner() {
     try {
       doTest(false);
     }
@@ -139,31 +139,31 @@ public class InlineParameterTest extends LightRefactoringTestCase {
     }
   }
 
-  public void testRightSideAssignment() throws Exception {
+  public void testRightSideAssignment() {
     doTest(false);
   }
 
-  public void testRefNewInnerForMethod() throws Exception {
+  public void testRefNewInnerForMethod() {
     doTest(false);
   }
 
-  public void testRefNewInnerAvailable() throws Exception {
+  public void testRefNewInnerAvailable() {
     doTest(false);
   }
 
-  public void testLocalVarDeclarationInConstructor() throws Exception {
+  public void testLocalVarDeclarationInConstructor() {
     doTest(true);
   }
 
-  public void testFromClassInitializer() throws Exception {
+  public void testFromClassInitializer() {
     doTest(false);
   }
 
-  public void testPropagatedParams() throws Exception {
+  public void testPropagatedParams() {
     doTest(false);
   }
 
-  public void testParameterWithWriteAccess() throws Exception {
+  public void testParameterWithWriteAccess() {
     try {
       doTest(false);
     }
@@ -172,7 +172,7 @@ public class InlineParameterTest extends LightRefactoringTestCase {
     }
   }
 
-  public void testRefNewInnerFromMethod() throws Exception {
+  public void testRefNewInnerFromMethod() {
     try {
       doTest(false);
     }
@@ -181,15 +181,15 @@ public class InlineParameterTest extends LightRefactoringTestCase {
     }
   }
 
-  public void testRefNewInnerInHierarchyAvailable() throws Exception {
+  public void testRefNewInnerInHierarchyAvailable() {
     doTest(false);
   }
 
-  public void testRefNewTopLevel() throws Exception {
+  public void testRefNewTopLevel() {
     doTest(false);
   }
 
-  public void testRefNewLocal() throws Exception {
+  public void testRefNewLocal() {
     try {
       doTest(false);
     }
@@ -198,7 +198,7 @@ public class InlineParameterTest extends LightRefactoringTestCase {
     }
   }
 
-  public void testRefArrayAccess() throws Exception {
+  public void testRefArrayAccess() {
     try {
       doTest(false);
     }
@@ -207,7 +207,7 @@ public class InlineParameterTest extends LightRefactoringTestCase {
     }
   }
 
-  public void testRefCallerParameter() throws Exception {
+  public void testRefCallerParameter() {
     try {
       doTest(false);
     }
@@ -217,11 +217,11 @@ public class InlineParameterTest extends LightRefactoringTestCase {
   }
 
 
-  public void testHandleExceptions() throws Exception {
+  public void testHandleExceptions() {
     doTest(false);
   }
 
-  private void doTestCannotFindInitializer() throws Exception {
+  private void doTestCannotFindInitializer() {
     try {
       doTest(false);
     }
@@ -230,7 +230,7 @@ public class InlineParameterTest extends LightRefactoringTestCase {
     }
   }
 
-  public void testRefNonStatic() throws Exception {
+  public void testRefNonStatic() {
     try {
       doTest(false);
     }
@@ -239,7 +239,7 @@ public class InlineParameterTest extends LightRefactoringTestCase {
     }
   }
 
-  public void testRefNonStaticClass() throws Exception {
+  public void testRefNonStaticClass() {
     try {
       doTest(false);
     }
@@ -248,7 +248,7 @@ public class InlineParameterTest extends LightRefactoringTestCase {
     }
   }
 
-  public void testRefThisFromStatic() throws Exception {
+  public void testRefThisFromStatic() {
     try {
       doTest(false);
     }
@@ -257,7 +257,7 @@ public class InlineParameterTest extends LightRefactoringTestCase {
     }
   }
 
-  public void testVisibility() throws Exception {
+  public void testVisibility() {
     try {
       doTest(false);
     }
@@ -266,7 +266,7 @@ public class InlineParameterTest extends LightRefactoringTestCase {
     }
   }
 
-  public void testWriteAccess() throws Exception {
+  public void testWriteAccess() {
     try {
       doTest(false);
     }
@@ -275,7 +275,7 @@ public class InlineParameterTest extends LightRefactoringTestCase {
     }
   }
 
-  public void testRefCallerParameterInCallChain() throws Exception {
+  public void testRefCallerParameterInCallChain() {
     try {
       doTest(false);
     }
@@ -284,15 +284,15 @@ public class InlineParameterTest extends LightRefactoringTestCase {
     }
   }
 
-  public void testInlineLocalParamDef() throws Exception {
+  public void testInlineLocalParamDef() {
     doTest(false);
   }
 
-  public void testInlineRecursive() throws Exception {
+  public void testInlineRecursive() {
     doTest(false);
   }
 
-  public void testCantInlineRecursive() throws Exception {
+  public void testCantInlineRecursive() {
     try {
       doTest(false);
     }
@@ -303,7 +303,7 @@ public class InlineParameterTest extends LightRefactoringTestCase {
     fail("Initializer shoul not be found");
   }
 
-  public void testParameterDefWithWriteAccess()  throws Exception {
+  public void testParameterDefWithWriteAccess() {
     try {
       doTest(false);
     }
@@ -312,7 +312,7 @@ public class InlineParameterTest extends LightRefactoringTestCase {
     }
   }
 
-  public void testSameSignatureExistConflict() throws Exception {
+  public void testSameSignatureExistConflict() {
     try {
       doTest(false);
       fail();
@@ -322,7 +322,7 @@ public class InlineParameterTest extends LightRefactoringTestCase {
     }
   }
 
-  private void doTest(final boolean createLocal) throws Exception {
+  private void doTest(final boolean createLocal) {
     getProject().putUserData(InlineParameterExpressionProcessor.CREATE_LOCAL_FOR_TESTS, createLocal);
 
     String name = getTestName(false);

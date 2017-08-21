@@ -17,11 +17,10 @@ package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.JBColor;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -29,12 +28,9 @@ import com.intellij.vcs.log.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.io.DataInput;
 import java.io.DataOutput;
-import java.io.IOException;
 import java.util.*;
-import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -52,8 +48,8 @@ public class TestVcsLogProvider implements VcsLogProvider {
 
     @NotNull
     @Override
-    public Color getBackgroundColor() {
-      return JBColor.WHITE;
+    public ColorKey getBgColorKey() {
+      return VcsLogColors.REFS_BRANCH;
     }
   };
   private static final String SAMPLE_SUBJECT = "Sample subject";
@@ -88,7 +84,7 @@ public class TestVcsLogProvider implements VcsLogProvider {
 
   @NotNull
   @Override
-  public DetailedLogData readFirstBlock(@NotNull final VirtualFile root, @NotNull Requirements requirements) throws VcsException {
+  public DetailedLogData readFirstBlock(@NotNull final VirtualFile root, @NotNull Requirements requirements) {
     LOG.debug("readFirstBlock began");
     if (requirements instanceof VcsLogProviderRequirementsEx && ((VcsLogProviderRequirementsEx)requirements).isRefresh()) {
       try {
@@ -108,7 +104,7 @@ public class TestVcsLogProvider implements VcsLogProvider {
 
   @NotNull
   @Override
-  public LogData readAllHashes(@NotNull VirtualFile root, @NotNull Consumer<TimedVcsCommit> commitConsumer) throws VcsException {
+  public LogData readAllHashes(@NotNull VirtualFile root, @NotNull Consumer<TimedVcsCommit> commitConsumer) {
     LOG.debug("readAllHashes");
     try {
       myFullLogSemaphore.acquire();
@@ -125,14 +121,15 @@ public class TestVcsLogProvider implements VcsLogProvider {
   }
 
   @Override
-  public void readAllFullDetails(@NotNull VirtualFile root, @NotNull Consumer<VcsFullCommitDetails> commitConsumer) throws VcsException {
+  public void readAllFullDetails(@NotNull VirtualFile root, @NotNull Consumer<VcsFullCommitDetails> commitConsumer) {
     throw new UnsupportedOperationException();
   }
 
   @Override
   public void readFullDetails(@NotNull VirtualFile root,
-                              @Nullable List<String> hashes,
-                              @NotNull Consumer<VcsFullCommitDetails> commitConsumer) throws VcsException {
+                              @NotNull List<String> hashes,
+                              @NotNull Consumer<VcsFullCommitDetails> commitConsumer,
+                              boolean fast) {
     throw new UnsupportedOperationException();
   }
 
@@ -142,8 +139,7 @@ public class TestVcsLogProvider implements VcsLogProvider {
 
   @NotNull
   @Override
-  public List<? extends VcsShortCommitDetails> readShortDetails(@NotNull VirtualFile root, @NotNull List<String> hashes)
-    throws VcsException {
+  public List<? extends VcsShortCommitDetails> readShortDetails(@NotNull VirtualFile root, @NotNull List<String> hashes) {
     throw new UnsupportedOperationException();
   }
 
@@ -173,20 +169,20 @@ public class TestVcsLogProvider implements VcsLogProvider {
   @Override
   public List<TimedVcsCommit> getCommitsMatchingFilter(@NotNull VirtualFile root,
                                                        @NotNull VcsLogFilterCollection filterCollection,
-                                                       int maxCount) throws VcsException {
+                                                       int maxCount) {
     if (myFilteredCommitsProvider == null) throw new UnsupportedOperationException();
     return myFilteredCommitsProvider.fun(filterCollection);
   }
 
   @Nullable
   @Override
-  public VcsUser getCurrentUser(@NotNull VirtualFile root) throws VcsException {
+  public VcsUser getCurrentUser(@NotNull VirtualFile root) {
     return DEFAULT_USER;
   }
 
   @NotNull
   @Override
-  public Collection<String> getContainingBranches(@NotNull VirtualFile root, @NotNull Hash commitHash) throws VcsException {
+  public Collection<String> getContainingBranches(@NotNull VirtualFile root, @NotNull Hash commitHash) {
     throw new UnsupportedOperationException();
   }
 
@@ -206,7 +202,7 @@ public class TestVcsLogProvider implements VcsLogProvider {
     myRefreshSemaphore.unblock();
   }
 
-  public void blockFullLog() throws InterruptedException {
+  public void blockFullLog() {
     myFullLogSemaphore.block();
   }
 
@@ -263,12 +259,12 @@ public class TestVcsLogProvider implements VcsLogProvider {
     }
 
     @Override
-    public void serialize(@NotNull DataOutput out, @NotNull VcsRefType type) throws IOException {
+    public void serialize(@NotNull DataOutput out, @NotNull VcsRefType type) {
     }
 
     @NotNull
     @Override
-    public VcsRefType deserialize(@NotNull DataInput in) throws IOException {
+    public VcsRefType deserialize(@NotNull DataInput in) {
       throw new UnsupportedOperationException();
     }
 

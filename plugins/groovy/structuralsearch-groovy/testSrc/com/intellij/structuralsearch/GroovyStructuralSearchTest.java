@@ -23,7 +23,7 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
  */
 public class GroovyStructuralSearchTest extends StructuralSearchTestCase {
 
-  public void test1() throws Exception {
+  public void test1() {
     String s = "def int x = 0;\n" +
                "def y = 0;\n" +
                "int z = 10;\n" +
@@ -38,7 +38,7 @@ public class GroovyStructuralSearchTest extends StructuralSearchTestCase {
     doTest(s, "int $x$ = $value$", 2, 2);
   }
 
-  public void test2() throws Exception {
+  public void test2() {
     String s = "def void f(int x) {}\n" +
                "def f(int x) {\n" +
                "  System.out.println(\"hello\");\n" +
@@ -66,7 +66,7 @@ public class GroovyStructuralSearchTest extends StructuralSearchTestCase {
     doTest(s, "def '_T1('_T2*) {'_T3*}", 6, 1);
   }
 
-  public void test3() throws Exception {
+  public void test3() {
     String s = "public class C implements I1, I2 {\n" +
                "  void f() {\n" +
                "    def a = 1;\n" +
@@ -85,7 +85,7 @@ public class GroovyStructuralSearchTest extends StructuralSearchTestCase {
     doTest(s, "def a = 1\n def b = 2", 1, 0);
   }
 
-  public void test4() throws Exception {
+  public void test4() {
     String s = "for (a in list) {\n" +
                "  println(\"hello1\");\n" +
                "  println(\"hello2\");\n" +

@@ -6,7 +6,7 @@ import javax.swing.*;
 
 /**
  * NOTE THIS FILE IS AUTO-GENERATED
- * DO NOT EDIT IT BY HAND, run build/scripts/icons.gant instead
+ * DO NOT EDIT IT BY HAND, run "Generate icon classes" configuration instead
  */
 public class EducationalCoreIcons {
   private static Icon load(String path) {
@@ -26,6 +26,7 @@ public class EducationalCoreIcons {
   public static final Icon ShowHint = load("/icons/com/jetbrains/edu/learning/showHint.png"); // 16x16
   public static final Icon Stepik = load("/icons/com/jetbrains/edu/learning/Stepik.png"); // 16x16
   public static final Icon StepikOff = load("/icons/com/jetbrains/edu/learning/StepikOff.png"); // 16x16
+  public static final Icon StepikRefresh = load("/icons/com/jetbrains/edu/learning/StepikRefresh.png"); // 16x16
   public static final Icon Task = load("/icons/com/jetbrains/edu/learning/Task.png"); // 16x16
   public static final Icon TaskCompl = load("/icons/com/jetbrains/edu/learning/TaskCompl.png"); // 16x16
   public static final Icon TaskDescription = load("/icons/com/jetbrains/edu/learning/TaskDescription.png"); // 13x13

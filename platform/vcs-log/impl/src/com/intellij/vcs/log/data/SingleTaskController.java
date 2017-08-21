@@ -16,6 +16,8 @@
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -41,13 +43,15 @@ public abstract class SingleTaskController<Request, Result> {
 
   @NotNull private final Consumer<Result> myResultHandler;
   @NotNull private final Object LOCK = new Object();
+  private final boolean myCancelRunning;
 
   @NotNull private List<Request> myAwaitingRequests;
-  private boolean myActive;
+  @Nullable private ProgressIndicator myRunningTask;
 
-  public SingleTaskController(@NotNull Consumer<Result> handler) {
+  public SingleTaskController(@NotNull Consumer<Result> handler, boolean cancelRunning) {
     myResultHandler = handler;
-    myAwaitingRequests = ContainerUtil.newArrayList();
+    myAwaitingRequests = ContainerUtil.newLinkedList();
+    myCancelRunning = cancelRunning;
   }
 
   /**
@@ -59,11 +63,20 @@ public abstract class SingleTaskController<Request, Result> {
     synchronized (LOCK) {
       myAwaitingRequests.add(requests);
       LOG.debug("Added requests: " + requests);
-      if (!myActive) {
-        startNewBackgroundTask();
-        LOG.debug("Started a new bg task");
-        myActive = true;
+      if (myRunningTask != null && myCancelRunning) {
+        cancelTask(myRunningTask);
       }
+      if (myRunningTask == null) {
+        myRunningTask = startNewBackgroundTask();
+        LOG.debug("Started a new bg task " + myRunningTask);
+      }
+    }
+  }
+
+  private void cancelTask(@NotNull ProgressIndicator t) {
+    if (t.isRunning()) {
+      t.cancel();
+      LOG.debug("Canceled task " + myRunningTask);
     }
   }
 
@@ -71,7 +84,8 @@ public abstract class SingleTaskController<Request, Result> {
    * Starts new task on a background thread. <br/>
    * <b>NB:</b> Don't invoke StateController methods inside this method, otherwise a deadlock will happen.
    */
-  protected abstract void startNewBackgroundTask();
+  @NotNull
+  protected abstract ProgressIndicator startNewBackgroundTask();
 
   /**
    * Returns all awaiting requests and clears the queue. <br/>
@@ -81,9 +95,35 @@ public abstract class SingleTaskController<Request, Result> {
   public final List<Request> popRequests() {
     synchronized (LOCK) {
       List<Request> requests = myAwaitingRequests;
-      myAwaitingRequests = ContainerUtil.newArrayList();
+      myAwaitingRequests = ContainerUtil.newLinkedList();
       LOG.debug("Popped requests: " + requests);
       return requests;
+    }
+  }
+
+  @NotNull
+  public final List<Request> peekRequests() {
+    synchronized (LOCK) {
+      List<Request> requests = ContainerUtil.newArrayList(myAwaitingRequests);
+      LOG.debug("Peeked requests: " + requests);
+      return requests;
+    }
+  }
+
+  public final void removeRequests(@NotNull List<Request> requests) {
+    synchronized (LOCK) {
+      myAwaitingRequests.removeAll(requests);
+      LOG.debug("Removed requests: " + requests);
+    }
+  }
+
+  @Nullable
+  public final Request popRequest() {
+    synchronized (LOCK) {
+      if (myAwaitingRequests.isEmpty()) return null;
+      Request request = myAwaitingRequests.remove(0);
+      LOG.debug("Popped request: " + request);
+      return request;
     }
   }
 
@@ -91,6 +131,7 @@ public abstract class SingleTaskController<Request, Result> {
    * The underlying currently active task should use this method to inform that it has completed the execution. <br/>
    * If the result is not null, it is immediately passed to the result handler specified in the constructor.
    * Otherwise result handler is not called, the task just completes.
+   * After result handler is called, a new task is started if there are new requests awaiting in the queue.
    */
   public final void taskCompleted(@Nullable Result result) {
     if (result != null) {
@@ -99,12 +140,12 @@ public abstract class SingleTaskController<Request, Result> {
     }
     synchronized (LOCK) {
       if (myAwaitingRequests.isEmpty()) {
-        myActive = false;
+        myRunningTask = null;
         LOG.debug("No more requests");
       }
       else {
-        startNewBackgroundTask();
-        LOG.debug("Restarted a bg task");
+        myRunningTask = startNewBackgroundTask();
+        LOG.debug("Restarted a bg task " + myRunningTask);
       }
     }
   }

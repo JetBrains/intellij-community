@@ -16,7 +16,6 @@
 package com.intellij.ide.favoritesTreeView;
 
 import com.intellij.codeInsight.folding.impl.GenericElementSignatureProvider;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -32,8 +31,7 @@ import java.io.File;
 import java.io.IOException;
 
 public class UsageSerializable implements WorkingSetSerializable<UsageInfo, InvalidUsageNoteNode> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.favoritesTreeView.UsageSerializable");
-  private final static String separator = "<>";
+  private static final String separator = "<>";
 
   @Override
   public String getId() {
@@ -49,8 +47,11 @@ public class UsageSerializable implements WorkingSetSerializable<UsageInfo, Inva
   public void serializeMe(UsageInfo info, StringBuilder os) throws IOException {
     //final SmartPsiElementPointer<?> pointer = info.getSmartPointer();
     final GenericElementSignatureProvider provider = new GenericElementSignatureProvider();
-    final String signature = provider.getSignature(info.getElement());
-    append(os, info.getFile().getVirtualFile().getPath());
+    PsiElement element = info.getElement();
+    VirtualFile virtualFile = info.getVirtualFile();
+    if (element == null || virtualFile == null) throw new IOException(info + " is invalid");
+    final String signature = provider.getSignature(element);
+    append(os, virtualFile.getPath());
     os.append(separator);
     append(os, signature);
     os.append(separator);
@@ -76,7 +77,7 @@ public class UsageSerializable implements WorkingSetSerializable<UsageInfo, Inva
     os.append(separator);
   }
 
-  private void append(final StringBuilder sb, final String s) {
+  private static void append(final StringBuilder sb, final String s) {
     sb.append(StringUtil.escapeXml(s));
   }
 
@@ -90,7 +91,7 @@ public class UsageSerializable implements WorkingSetSerializable<UsageInfo, Inva
     private final String is;
 
     private Reader(String is) {
-      this.idx = 0;
+      idx = 0;
       this.is = is;
     }
 
@@ -120,21 +121,21 @@ public class UsageSerializable implements WorkingSetSerializable<UsageInfo, Inva
       if (element == null) return null;
       final String startStr = readNext(false);
       if (startStr == null) return null;
-      final int start = Integer.parseInt(startStr);
       final String endStr = readNext(false);
       if (endStr == null) return null;
-      final int end = Integer.parseInt(endStr);
       final String nonCodeUsageStr = readNext(false);
       if (nonCodeUsageStr == null) return null;
-      final boolean nonCodeUsage = Boolean.parseBoolean(nonCodeUsageStr);
       final String dynamicUsageStr = readNext(false);
       if (dynamicUsageStr == null) return null;
-      final boolean dynamicUsage = Boolean.parseBoolean(dynamicUsageStr);
 
       final String text = readNext(true);
       if (text == null) return null;
 
+      final boolean nonCodeUsage = Boolean.parseBoolean(nonCodeUsageStr);
+      final int start = Integer.parseInt(startStr);
+      final int end = Integer.parseInt(endStr);
       final UsageInfo info = new UsageInfo(element, start, end, nonCodeUsage);
+      final boolean dynamicUsage = Boolean.parseBoolean(dynamicUsageStr);
       info.setDynamicUsage(dynamicUsage);
 
       return info;

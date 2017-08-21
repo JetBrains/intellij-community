@@ -36,7 +36,6 @@ import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
@@ -48,7 +47,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.status.StatusBarUtil;
-import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -372,21 +370,6 @@ public class DvcsUtil {
     rootCandidate = vcsRoots[0];
     LOG.debug("Returning the best candidate: " + rootCandidate);
     return rootCandidate;
-  }
-
-  public static class Updater implements Consumer<Object> {
-    private final Repository myRepository;
-
-    public Updater(Repository repository) {
-      myRepository = repository;
-    }
-
-    @Override
-    public void consume(Object dummy) {
-      if (!Disposer.isDisposed(myRepository)) {
-        myRepository.update();
-      }
-    }
   }
 
   public static <T extends Repository> List<T> sortRepositories(@NotNull Collection<T> repositories) {

@@ -26,33 +26,33 @@ public class UnusedMethodParameterTest extends InspectionTestCase {
     return JavaTestUtil.getJavaTestDataPath() + "/inspection";
   }
 
-  private void doTest() throws Exception {
+  private void doTest() {
     UnusedDeclarationInspection declarationInspection = new UnusedDeclarationInspection();
     declarationInspection.getSharedLocalInspectionTool().LOCAL_VARIABLE = false;
     doTest("unusedMethodParameter/" + getTestName(true), declarationInspection);
   }
 
-  public void testFieldInAnonymousClass() throws Exception {
+  public void testFieldInAnonymousClass() {
     doTest();
   }
 
-  public void testUnusedParameter() throws Exception {
+  public void testUnusedParameter() {
     doTest();
   }
 
-  public void testUsedForReading() throws Exception {
+  public void testUsedForReading() {
     doTest();
   }
 
-  public void testSuppressedParameter() throws Exception {
+  public void testSuppressedParameter() {
     doTest();
   }
 
-  public void testEntryPointUnusedParameter() throws Exception {
+  public void testEntryPointUnusedParameter() {
     doTest("unusedMethodParameter/" + getTestName(true), new UnusedDeclarationInspection(), true, true);
   }
 
-  public void testAppMainUnusedParams() throws Exception {
+  public void testAppMainUnusedParams() {
     doTest();
   }
 }

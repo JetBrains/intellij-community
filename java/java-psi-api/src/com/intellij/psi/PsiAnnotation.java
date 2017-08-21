@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.psi;
 
+import com.intellij.lang.jvm.JvmAnnotation;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.NonNls;
@@ -26,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author ven
  */
-public interface PsiAnnotation extends PsiAnnotationMemberValue, PsiMetaOwner {
+public interface PsiAnnotation extends PsiAnnotationMemberValue, PsiMetaOwner, JvmAnnotation {
   /**
    * The empty array of PSI annotations which can be reused to avoid unnecessary allocations.
    */
@@ -110,4 +111,10 @@ public interface PsiAnnotation extends PsiAnnotationMemberValue, PsiMetaOwner {
    */
   @Nullable
   PsiAnnotationOwner getOwner();
+
+  @NotNull
+  @Override
+  default PsiElement getSourceElement() {
+    return this;
+  }
 }

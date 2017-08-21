@@ -28,6 +28,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+
 /**
  * @author konstantin.aleev
  */
@@ -70,9 +72,15 @@ public class FolderDashboardGroupingRule implements DashboardGroupingRule {
       RunnerAndConfigurationSettings configurationSettings = ((DashboardRunConfigurationNode)node).getConfigurationSettings();
       String folderName = configurationSettings.getFolderName();
       if (folderName != null) {
-        return new DashboardGroupImpl<>(folderName, folderName, AllIcons.Nodes.Folder);
+        return new FolderDashboardGroup(folderName, folderName, AllIcons.Nodes.Folder);
       }
     }
     return null;
+  }
+
+  public static class FolderDashboardGroup extends DashboardGroupImpl<String> {
+    public FolderDashboardGroup(String value, String name, Icon icon) {
+      super(value, name, icon);
+    }
   }
 }

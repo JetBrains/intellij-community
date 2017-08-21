@@ -29,7 +29,7 @@ public class MethodReferencesFindUsagesTest extends LightDaemonAnalyzerTestCase 
   
   
 
-  public void testConstructorUsages() throws Exception {
+  public void testConstructorUsages() {
     final String testName = getTestName(false);
     configureByFile(BASE_PATH + testName + ".java");
 

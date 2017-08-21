@@ -20,7 +20,7 @@ import com.intellij.testFramework.TestDataPath;
 
 @TestDataPath("$CONTENT_ROOT/testData/completionTestDataPath")
 public class TestDataPathCompletionTest extends TestDataPathTestCase {
-  public void testProjectRoot() throws Exception {
+  public void testProjectRoot() {
     doTest();
   }
 

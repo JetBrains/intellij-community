@@ -23,7 +23,7 @@ package com.intellij.java.psi.formatter.java;
  */
 public class JavaFormatterBlankLinesTest extends AbstractJavaFormatterTest {
 
-  public void testBlankLinesAroundClassInitializationBlock() throws Exception {
+  public void testBlankLinesAroundClassInitializationBlock() {
     getSettings().BLANK_LINES_AROUND_METHOD = 3;
     getJavaSettings().BLANK_LINES_AROUND_INITIALIZER = 3;
     doTextTest(
@@ -331,7 +331,7 @@ public class JavaFormatterBlankLinesTest extends AbstractJavaFormatterTest {
     );
   }
 
-  public void testAfterAnonymousClassWhereCodeBlockStartsWithComment() throws Exception {
+  public void testAfterAnonymousClassWhereCodeBlockStartsWithComment() {
     // Inspired by IDEA-66583
     getSettings().BLANK_LINES_AFTER_ANONYMOUS_CLASS_HEADER = 0;
     

@@ -325,7 +325,7 @@ public class JavaCompletionUtil {
 
     if (javaReference instanceof PsiJavaCodeReferenceElement) {
       PsiElement refQualifier = ((PsiJavaCodeReferenceElement)javaReference).getQualifier();
-      if (refQualifier == null) {
+      if (refQualifier == null && PsiTreeUtil.getParentOfType(element, PsiPackageStatement.class) == null) {
         final StaticMemberProcessor memberProcessor = new JavaStaticMemberProcessor(parameters);
         memberProcessor.processMembersOfRegisteredClasses(matcher, (member, psiClass) -> {
           if (!mentioned.contains(member) && processor.satisfies(member, ResolveState.initial())) {
@@ -602,14 +602,9 @@ public class JavaCompletionUtil {
 
     final Document document = FileDocumentManager.getInstance().getDocument(file.getViewProvider().getVirtualFile());
 
-    final PsiReference reference = file.findReferenceAt(startOffset);
-    if (reference != null) {
-      final PsiElement resolved = reference.resolve();
-      if (resolved instanceof PsiClass) {
-        if (((PsiClass)resolved).getQualifiedName() == null || manager.areElementsEquivalent(psiClass, resolved)) {
-          return endOffset;
-        }
-      }
+    PsiReference reference = file.findReferenceAt(startOffset);
+    if (reference != null && manager.areElementsEquivalent(psiClass, reference.resolve())) {
+      return endOffset;
     }
 
     String name = psiClass.getName();

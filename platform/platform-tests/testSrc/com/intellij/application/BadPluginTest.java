@@ -35,7 +35,7 @@ import java.util.List;
 public class BadPluginTest extends PlatformTestCase {
   private static final String COM_YOUR_COMPANY_UNIQUE_PLUGIN_ID = "com.your.company.unique.plugin.id";
 
-  public void testBadPlugin() throws Exception {
+  public void testBadPlugin() {
     IdeaPluginDescriptor plugin = PluginManager.getPlugin(PluginId.getId(COM_YOUR_COMPANY_UNIQUE_PLUGIN_ID));
     if (plugin == null) return;
     List<String> disabledPlugins = new ArrayList<>();

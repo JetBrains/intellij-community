@@ -193,7 +193,7 @@ final class JavacReferenceCollectorListener implements TaskListener {
           final MemberSelectTree classImport = (MemberSelectTree)qExpr;
           final Element ownerElement = incompletelyProcessedFile.getReferencedElement(classImport);
           final Name name = id.getIdentifier();
-          if (name != myNameTableCache.getAsterisk()) {
+          if (!myNameTableCache.isAsterisk(name)) {
             // member import
             for (Element memberElement : myElementUtility.getAllMembers((TypeElement)ownerElement)) {
               if (memberElement.getSimpleName() == name) {
@@ -274,6 +274,14 @@ final class JavacReferenceCollectorListener implements TaskListener {
       return myNameTableCache;
     }
 
+    long getStartOffset(Tree tree) {
+      return myTreeHelper.getStartOffset(tree);
+    }
+
+    long getEndOffset(Tree tree) {
+      return myTreeHelper.getEndOffset(tree);
+    }
+
     private int decrementRemainDeclarationsAndGet(Tree declarationToProcess) {
       return declarationToProcess == null ? myRemainDeclarations : --myRemainDeclarations;
     }
@@ -290,10 +298,20 @@ final class JavacReferenceCollectorListener implements TaskListener {
   private class JavacTreeHelper {
     private final TreePath myUnitPath;
     private final Trees myTreeUtil;
+    private final SourcePositions myPositions;
 
     private JavacTreeHelper(CompilationUnitTree unit, Trees treeUtil) {
       myUnitPath = new TreePath(unit);
       myTreeUtil = treeUtil;
+      myPositions = treeUtil.getSourcePositions();
+    }
+
+    private long getStartOffset(Tree tree) {
+      return myPositions.getStartPosition(myUnitPath.getCompilationUnit(), tree);
+    }
+
+    private long getEndOffset(Tree tree) {
+      return myPositions.getEndPosition(myUnitPath.getCompilationUnit(), tree);
     }
 
     private Element getReferencedElement(Tree tree) {
@@ -305,10 +323,9 @@ final class JavacReferenceCollectorListener implements TaskListener {
       }
     }
 
-    public TypeMirror getType(Tree tree) {
+    private TypeMirror getType(Tree tree) {
       return myTreeUtil.getTypeMirror(new TreePath(myUnitPath, tree));
     }
-
   }
 
   private static void incrementOrAdd(TObjectIntHashMap<JavacRef> map, JavacRef key) {

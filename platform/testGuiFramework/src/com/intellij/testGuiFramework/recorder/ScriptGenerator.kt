@@ -65,10 +65,14 @@ object ScriptGenerator {
     addToScript(code)
   }
 
-  fun processMainMenuActionEvent(action: AnAction) {
+  fun processMainMenuActionEvent(action: AnAction, event: AnActionEvent) {
+    val prohibitedPlaces = setOf("NavBarToolbar", "MainToolbar", "DebuggerToolbar")
     val actionId: String? = ActionManager.getInstance().getId(action)
-    if (actionId == null) {
-      addToScript("//called action (${action.templatePresentation.text}) from main menu with null actionId"); return
+    if (actionId == null) return
+    if (event.place != "MainMenu") {
+      if (prohibitedPlaces.contains(event.place)) return
+      addToScript("//invokeAction(\"$actionId\")")
+      return
     }
     addToScript(Templates.invokeMainMenuAction(actionId))
   }
@@ -100,7 +104,6 @@ private object Typer {
 
   fun flushBuffer() {
     if (strBuffer.isEmpty()) return
-    Writer.writeWithIndent("//typed:[${strBuffer.length},\"$strBuffer\"]")
     Writer.writeWithIndent(Templates.typeText(strBuffer.toString()))
     strBuffer.setLength(0)
   }

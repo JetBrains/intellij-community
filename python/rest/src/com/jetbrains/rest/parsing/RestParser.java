@@ -18,6 +18,7 @@ package com.jetbrains.rest.parsing;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiParser;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
 import com.jetbrains.rest.RestElementTypes;
 import com.jetbrains.rest.RestTokenTypes;
@@ -28,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class RestParser implements PsiParser {
   @NotNull
-  public ASTNode parse(IElementType root, PsiBuilder builder) {
+  public ASTNode parse(@NotNull IElementType root, @NotNull PsiBuilder builder) {
     final PsiBuilder.Marker rootMarker = builder.mark();
     while (!builder.eof()) {
       IElementType type = builder.getTokenType();
@@ -62,8 +63,9 @@ public class RestParser implements PsiParser {
       else if (type == RestTokenTypes.LINE) {
         parseLineText(builder, type);
       }
-      else
+      else {
         builder.advanceLexer();
+      }
     }
     rootMarker.done(root);
     return builder.getTreeBuilt();
@@ -77,10 +79,12 @@ public class RestParser implements PsiParser {
       type = builder.getTokenType();
       gotLine = true;
     }
-    if (gotLine)
+    if (gotLine) {
       marker.done(RestElementTypes.LINE_TEXT);
-    else
+    }
+    else {
       marker.drop();
+    }
     return gotLine;
   }
 
@@ -89,10 +93,12 @@ public class RestParser implements PsiParser {
     PsiBuilder.Marker marker = builder.mark();
     builder.advanceLexer();
     marker.done(RestTokenTypes.FIELD);
-    if (parseLineText(builder, builder.getTokenType()))
+    if (parseLineText(builder, builder.getTokenType())) {
       listMarker.done(RestElementTypes.FIELD_LIST);
-    else
+    }
+    else {
       listMarker.drop();
+    }
   }
 
   private static void parseMarkup(PsiBuilder builder) {
@@ -113,7 +119,9 @@ public class RestParser implements PsiParser {
         return;
       }
       skipBlankLines(builder);
-      if (builder.getTokenType() != RestTokenTypes.WHITESPACE || "\n".equals(builder.getTokenText())) {
+      final String tokenText = builder.getTokenText();
+      if (builder.getTokenType() != RestTokenTypes.WHITESPACE ||
+          (tokenText != null && StringUtil.getLineBreakCount(tokenText) == tokenText.length())) {
         marker.done(RestElementTypes.DIRECTIVE_BLOCK);
         return;
       }
@@ -132,14 +140,14 @@ public class RestParser implements PsiParser {
   }
 
   private static void gotoNextWhiteSpaces(PsiBuilder builder) {
-     while(!"\n".equals(builder.getTokenText()) && !(builder.getTokenType() == RestTokenTypes.TITLE) && !builder.eof() && (builder.getTokenType() != null)) {
-       builder.advanceLexer();
+    while (!StringUtil.isEmptyOrSpaces(builder.getTokenText()) && !builder.eof() && (builder.getTokenType() != null)) {
+      builder.advanceLexer();
     }
   }
 
   private static void skipBlankLines(PsiBuilder builder) {
-     while("\n".equals(builder.getTokenText()) && !builder.eof() && (builder.getTokenType() != null)) {
-       builder.advanceLexer();
+    while ("\n".equals(builder.getTokenText()) && !builder.eof() && (builder.getTokenType() != null)) {
+      builder.advanceLexer();
     }
   }
 

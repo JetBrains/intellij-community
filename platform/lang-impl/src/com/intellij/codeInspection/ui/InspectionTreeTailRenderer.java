@@ -24,7 +24,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.containers.SoftHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TObjectIntHashMap;
 
 import java.awt.*;
@@ -42,8 +42,8 @@ public abstract class InspectionTreeTailRenderer {
   private final static JBColor TREE_RED = new JBColor(new Color(184, 66, 55), new Color(204, 102, 102));
   private final static JBColor TREE_GRAY = new JBColor(Gray._153, Gray._117);
 
-  private final Map<HighlightSeverity, String> myPluralizedSeverityNames = new SoftHashMap<>();
-  private final Map<HighlightSeverity, String> myUnpluralizedSeverityNames = new SoftHashMap<>();
+  private final Map<HighlightSeverity, String> myPluralizedSeverityNames = ContainerUtil.createSoftMap();
+  private final Map<HighlightSeverity, String> myUnpluralizedSeverityNames = ContainerUtil.createSoftMap();
 
   private final TObjectIntHashMap<HighlightDisplayLevel> myItemCounter = new TObjectIntHashMap<>();
   private final SeverityRegistrar myRegistrar;

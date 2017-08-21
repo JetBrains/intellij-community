@@ -26,7 +26,7 @@ public class StringUtilPerformanceTest {
   private static final String TEST_STRING = "0123456789abcdefghijklmnopqrstuvwxyz";
 
   @Test
-  public void containsAnyChar() throws Exception {
+  public void containsAnyChar() {
     assertTrue(StringUtil.containsAnyChar(TEST_STRING, Integer.toString(new Random().nextInt())));
 
     PlatformTestUtil.startPerformanceTest("StringUtil.containsAnyChar()", 300, () -> {

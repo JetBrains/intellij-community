@@ -98,17 +98,17 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     }
   }
 
-  public void testGetCachedPsiFile_NoFile() throws Exception {
+  public void testGetCachedPsiFile_NoFile() {
     final PsiFile file = getPsiDocumentManager().getCachedPsiFile(new MockDocument());
     assertNull(file);
   }
 
-  public void testGetPsiFile_NotRegisteredDocument() throws Exception {
+  public void testGetPsiFile_NotRegisteredDocument() {
     final PsiFile file = getPsiDocumentManager().getPsiFile(new MockDocument());
     assertNull(file);
   }
 
-  public void testGetDocument_FirstGet() throws Exception {
+  public void testGetDocument_FirstGet() {
     VirtualFile vFile = createFile();
     final PsiFile file = new MockPsiFile(vFile, getPsiManager());
 
@@ -144,11 +144,11 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     return getPsiManager().findFile(vFile);
   }
 
-  public void testGetUncommittedDocuments_noDocuments() throws Exception {
+  public void testGetUncommittedDocuments_noDocuments() {
     assertEquals(0, getPsiDocumentManager().getUncommittedDocuments().length);
   }
 
-  public void testGetUncommittedDocuments_documentChanged_DontProcessEvents() throws Exception {
+  public void testGetUncommittedDocuments_documentChanged_DontProcessEvents() {
     final PsiFile file = findFile(createFile());
 
     final Document document = getDocument(file);
@@ -160,7 +160,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     assertEquals(0, getPsiDocumentManager().getUncommittedDocuments().length);
   }
 
-  public void testGetUncommittedDocuments_documentNotRegistered() throws Exception {
+  public void testGetUncommittedDocuments_documentNotRegistered() {
     final Document document = new MockDocument();
 
     WriteCommandAction.runWriteCommandAction(null, () -> changeDocument(document, getPsiDocumentManager()));
@@ -169,7 +169,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     assertEquals(0, getPsiDocumentManager().getUncommittedDocuments().length);
   }
 
-  public void testCommitDocument_RemovesFromUncommittedList() throws Exception {
+  public void testCommitDocument_RemovesFromUncommittedList() {
     PsiFile file = findFile(createFile());
 
     final Document document = getDocument(file);
@@ -190,7 +190,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     manager.documentChanged(event);
   }
 
-  public void testCommitAllDocument_RemovesFromUncommittedList() throws Exception {
+  public void testCommitAllDocument_RemovesFromUncommittedList() {
     PsiFile file = findFile(createFile());
 
     final Document document = getDocument(file);
@@ -307,7 +307,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     assertEquals(2, count.get());
   }
 
-  public void testDocumentCommittedInBackgroundEventuallyEvenDespiteTyping() throws InterruptedException, IOException {
+  public void testDocumentCommittedInBackgroundEventuallyEvenDespiteTyping() throws IOException {
     VirtualFile virtualFile = getVirtualFile(createTempFile("X.java", ""));
     PsiFile file = findFile(virtualFile);
     assertNotNull(file);

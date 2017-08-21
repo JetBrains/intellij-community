@@ -1,0 +1,8 @@
+class MyTest {
+
+  <caret>[] foo() {
+
+  }
+
+}
+

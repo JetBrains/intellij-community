@@ -20,7 +20,7 @@ import org.jetbrains.idea.maven.MavenTestCase;
 import org.jetbrains.idea.maven.utils.MavenSettings;
 
 public class MavenSettingsTest extends MavenTestCase {
-  public void testCloningGeneralSettingsWithoutListeners() throws Exception {
+  public void testCloningGeneralSettingsWithoutListeners() {
     final String[] log = new String[]{""};
 
     MavenGeneralSettings s = new MavenGeneralSettings();
@@ -38,7 +38,7 @@ public class MavenSettingsTest extends MavenTestCase {
     assertEquals("changed ", log[0]);
   }
 
-  public void testCloningImportingSettingsWithoutListeners() throws Exception {
+  public void testCloningImportingSettingsWithoutListeners() {
     final String[] log = new String[]{""};
 
     MavenImportingSettings s = new MavenImportingSettings();
@@ -64,14 +64,14 @@ public class MavenSettingsTest extends MavenTestCase {
     assertEquals("changed ", log[0]);
   }
 
-  public void testImportingSettings() throws Exception {
+  public void testImportingSettings() {
     assertTrue(new MavenImportingSettings().equals(new MavenImportingSettings()));
     MavenImportingConfigurable importingConfigurable = new MavenImportingConfigurable(myProject);
     importingConfigurable.reset();
     assertFalse(importingConfigurable.isModified());
   }
 
-  public void testNotModifiedAfterCreation() throws Exception {
+  public void testNotModifiedAfterCreation() {
     MavenSettings s = new MavenSettings(myProject);
     s.createComponent();
     s.reset();

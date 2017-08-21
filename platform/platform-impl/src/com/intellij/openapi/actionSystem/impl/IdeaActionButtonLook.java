@@ -27,7 +27,6 @@ import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
 
 /**
@@ -39,7 +38,6 @@ public class IdeaActionButtonLook extends ActionButtonLook {
   private static final Color ALPHA_20 = Gray._0.withAlpha(20);
   private static final Color ALPHA_30 = Gray._0.withAlpha(30);
   private static final Color ALPHA_40 = Gray._0.withAlpha(40);
-  private static final Color ALPHA_120 = Gray._0.withAlpha(120);
   private static final BasicStroke BASIC_STROKE = new BasicStroke();
 
   public void paintBackground(Graphics g, JComponent component, int state) {
@@ -51,7 +49,7 @@ public class IdeaActionButtonLook extends ActionButtonLook {
     }
   }
 
-  void paintBackground(Graphics g, Dimension size, Color background, int state) {
+  protected static void paintBackground(Graphics g, Dimension size, Color background, int state) {
     GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
     try {
       Color bg = background == null ? JBColor.background() : background;
@@ -82,9 +80,9 @@ public class IdeaActionButtonLook extends ActionButtonLook {
         }
       }
       else {
-        final boolean dark = UIUtil.isUnderDarcula();
-        final Color pushed = UIUtil.isUnderWin10LookAndFeel() ? Gray.xE6 : dark? ColorUtil.shift(bg,  1.428D) : Gray.xD0;
-        final Color dark_normal = Gray._255.withAlpha(40);
+        boolean dark = UIUtil.isUnderDarcula();
+        Color pushed = dark ? ColorUtil.shift(bg,  1.428D) : Gray.xD0;
+        Color dark_normal = Gray._255.withAlpha(40);
         g.setColor(state == ActionButtonComponent.PUSHED ? pushed : dark ? dark_normal : Gray.xD9);
         ((Graphics2D)g).fill(getShape(size));
       }
@@ -100,7 +98,7 @@ public class IdeaActionButtonLook extends ActionButtonLook {
     }
   }
 
-  protected void paintBorder(Graphics g, Dimension size, int state) {
+  protected static void paintBorder(Graphics g, Dimension size, int state) {
     GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
     try {
       if (UIUtil.isUnderAquaLookAndFeel()) {
@@ -108,20 +106,7 @@ public class IdeaActionButtonLook extends ActionButtonLook {
           g.setColor(JBColor.GRAY);
           ((Graphics2D)g).draw(getShape(size));
         }
-      }
-      else if (SystemInfo.isMac && UIUtil.isUnderIntelliJLaF()) {
-        //do nothing
-      }
-      else if (UIUtil.isUnderWin10LookAndFeel()) {
-        g.setColor(Gray.xC4);
-        g.drawRect(1, 1, size.width - 3, size.height - 3);
-        g.setColor(Gray.xD6);
-        g.drawLine(2, 2, size.width - 3, 2);
-        g.setColor(Gray.xD9);
-        g.drawLine(2, 3, 2, size.width - 3);
-        g.drawLine(size.width - 3, 3, size.width - 3, size.width - 3);
-      }
-      else {
+      } else if (!UIUtil.isUnderDefaultMacTheme()) {
         Color color = UIUtil.isUnderDarcula() ? ColorUtil.shift(UIUtil.getPanelBackground(), 2.04D) : Gray.xA1;
         g.setColor(color);
         ((Graphics2D)g).setStroke(BASIC_STROKE);
@@ -132,22 +117,8 @@ public class IdeaActionButtonLook extends ActionButtonLook {
       config.restore();
     }
   }
+
   private static Shape getShape(Dimension size) {
-    if (UIUtil.isUnderWin10LookAndFeel()) {
-      return new Rectangle2D.Double(1, 1, size.width - 3, size.height - 3);
-    }
     return new RoundRectangle2D.Double(1, 1, size.width - 3, size.height - 3, 4, 4);
-  }
-
-  public void paintIcon(Graphics g, ActionButtonComponent actionButton, Icon icon) {
-    final int width = icon.getIconWidth();
-    final int height = icon.getIconHeight();
-    final int x = (actionButton.getWidth() - width) / 2;
-    final int y = (actionButton.getHeight() - height) / 2;
-    paintIconAt(g, actionButton, icon, x, y);
-  }
-
-  public void paintIconAt(Graphics g, ActionButtonComponent button, Icon icon, int x, int y) {
-    icon.paintIcon(null, g, x, y);
   }
 }

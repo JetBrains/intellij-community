@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,25 +19,22 @@ import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.PersistentFSConstants;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.SingleRootFileViewProvider;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Dmitry Avdeev
- *         Date: 5/17/13
- */
 public class LargeFilesAnnotator implements Annotator {
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
     if (element instanceof PsiFile) {
-      int length = element.getTextLength();
-      int limit = PersistentFSConstants.getMaxIntellisenseFileSize();
-      if (length > limit) {
-        holder.createWarningAnnotation(element, "The file size (" + 
-                                                StringUtil.formatFileSize(length) + ") " +
-                                                "exceeds configured limit (" + 
-                                                StringUtil.formatFileSize(limit) + "). " +
+      VirtualFile file = ((PsiFile)element).getViewProvider().getVirtualFile();
+      if (SingleRootFileViewProvider.isTooLargeForIntelligence(file)) {
+        holder.createWarningAnnotation(element, "The file size (" +
+                                                StringUtil.formatFileSize(file.getLength()) + ") " +
+                                                "exceeds configured limit (" +
+                                                StringUtil.formatFileSize(PersistentFSConstants.getMaxIntellisenseFileSize()) + "). " +
                                                 "Code insight features are not available.").setFileLevelAnnotation(true);
       }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
@@ -65,22 +64,8 @@ public class GrUnusedIncDecInspection extends BaseInspection {
   @Override
   @Nls
   @NotNull
-  public String getGroupDisplayName() {
-    return GroovyInspectionBundle.message("groovy.dfa.issues");
-  }
-
-  @Override
-  @Nls
-  @NotNull
   public String getDisplayName() {
     return GroovyInspectionBundle.message("unused.inc.dec");
-  }
-
-  @Override
-  @NonNls
-  @NotNull
-  public String getShortName() {
-    return "GroovyUnusedIncOrDec";
   }
 
   private static class GrUnusedIncDecInspectionVisitor extends BaseInspectionVisitor {

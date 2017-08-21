@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitUtil;
@@ -93,7 +94,7 @@ public class GitRebaser {
       myProgressIndicator.setText(oldText);
       return result.success() ?
              GitUpdateResult.SUCCESS :
-             handleRebaseFailure(rebaseHandler, root, rebaseConflictDetector, untrackedFilesDetector, localChangesDetector);
+             handleRebaseFailure(rebaseHandler, root, result, rebaseConflictDetector, untrackedFilesDetector, localChangesDetector);
     }
     catch (ProcessCanceledException pce) {
       if (onCancel != null) {
@@ -323,6 +324,7 @@ public class GitRebaser {
   @NotNull
   public GitUpdateResult handleRebaseFailure(@NotNull GitLineHandler handler,
                                              @NotNull VirtualFile root,
+                                             @NotNull GitCommandResult result,
                                              @NotNull GitRebaseProblemDetector rebaseConflictDetector,
                                              @NotNull GitMessageWithFilesDetector untrackedWouldBeOverwrittenDetector,
                                              @NotNull GitLocalChangesWouldBeOverwrittenDetector localChangesDetector) {
@@ -343,7 +345,7 @@ public class GitRebaser {
     }
     else {
       LOG.info("handleRebaseFailure error " + handler.errors());
-      GitUIUtil.notifyImportantError(myProject, "Rebase error", GitUIUtil.stringifyErrors(handler.errors()));
+      VcsNotifier.getInstance(myProject).notifyError("Rebase error", result.getErrorOutputAsHtmlString());
       return GitUpdateResult.ERROR;
     }
   }

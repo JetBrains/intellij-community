@@ -291,7 +291,7 @@ public class ExtractMethodProcessor implements MatchProvider {
 
     myOutputVariable = myOutputVariables.length > 0 ? myOutputVariables[0] : null;
     if (myNotNullConditionalCheck) {
-      myReturnType = returnStatementType instanceof PsiPrimitiveType ? ((PsiPrimitiveType)returnStatementType).getBoxedType(myCodeFragmentMember) 
+      myReturnType = returnStatementType instanceof PsiPrimitiveType ? ((PsiPrimitiveType)returnStatementType).getBoxedType(myCodeFragmentMember)
                                                                      : returnStatementType;
     } else if (myHasReturnStatementOutput) {
       myReturnType = returnStatementType;
@@ -333,10 +333,10 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   private PsiType getExpectedReturnType() {
-    return myCodeFragmentMember instanceof PsiMethod 
+    return myCodeFragmentMember instanceof PsiMethod
                                         ? ((PsiMethod)myCodeFragmentMember).getReturnType()
-                                        : myCodeFragmentMember instanceof PsiLambdaExpression 
-                                          ? LambdaUtil.getFunctionalInterfaceReturnType((PsiLambdaExpression)myCodeFragmentMember) 
+                                        : myCodeFragmentMember instanceof PsiLambdaExpression
+                                          ? LambdaUtil.getFunctionalInterfaceReturnType((PsiLambdaExpression)myCodeFragmentMember)
                                           : null;
   }
 
@@ -665,8 +665,8 @@ public class ExtractMethodProcessor implements MatchProvider {
       return new PsiExpression[] {myExpression};
     }
     if (myOutputVariable != null) {
-      final PsiElement scope = myOutputVariable instanceof PsiLocalVariable 
-                               ? RefactoringUtil.getVariableScope((PsiLocalVariable)myOutputVariable) 
+      final PsiElement scope = myOutputVariable instanceof PsiLocalVariable
+                               ? RefactoringUtil.getVariableScope((PsiLocalVariable)myOutputVariable)
                                : PsiTreeUtil.findCommonParent(myElements);
       return CodeInsightUtil.findReferenceExpressions(scope, myOutputVariable);
     }
@@ -733,7 +733,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   private String getNameByComment() {
-    PsiElement prevSibling = PsiTreeUtil.skipSiblingsBackward(myElements[0], PsiWhiteSpace.class);
+    PsiElement prevSibling = PsiTreeUtil.skipWhitespacesBackward(myElements[0]);
     if (prevSibling instanceof PsiComment && ((PsiComment)prevSibling).getTokenType() == JavaTokenType.END_OF_LINE_COMMENT) {
       final String text = StringUtil.decapitalize(StringUtil.capitalizeWords(prevSibling.getText().trim().substring(2), true)).replaceAll(" ", "");
       if (PsiNameHelper.getInstance(myProject).isIdentifier(text) && text.length() < 20) {
@@ -929,7 +929,7 @@ public class ExtractMethodProcessor implements MatchProvider {
         else if (myGenerateConditionalExit) {
           if (myFirstExitStatementCopy instanceof PsiReturnStatement && ((PsiReturnStatement)myFirstExitStatementCopy).getReturnValue() != null) {
             ifStatement = (PsiIfStatement)myElementFactory.createStatementFromText("if (" + varName + "==null) return null;", null);
-          } 
+          }
           else {
             ifStatement = (PsiIfStatement)myElementFactory.createStatementFromText("if (" + varName + "==null) " + myFirstExitStatementCopy.getText(), null);
           }
@@ -1191,7 +1191,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     exc[0] = null;
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     if (parameters.length > 0) {
-      if (CodeStyleSettingsManager.getSettings(myProject).GENERATE_FINAL_PARAMETERS) {
+      if (CodeStyleSettingsManager.getSettings(myProject).getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_PARAMETERS) {
         method.accept(new JavaRecursiveElementVisitor() {
 
           @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
@@ -1374,7 +1374,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       newMethod = myElementFactory.createConstructor();
     }
     else {
-      newMethod = context != null ? myElementFactory.createMethod(methodName, myReturnType, context) 
+      newMethod = context != null ? myElementFactory.createMethod(methodName, myReturnType, context)
                                   : myElementFactory.createMethod(methodName, myReturnType);
       PsiUtil.setModifierProperty(newMethod, PsiModifier.STATIC, isStatic());
     }
@@ -1385,7 +1385,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     PsiCodeBlock body = newMethod.getBody();
     LOG.assertTrue(body != null);
 
-    boolean isFinal = CodeStyleSettingsManager.getSettings(myProject).GENERATE_FINAL_PARAMETERS;
+    boolean isFinal = CodeStyleSettingsManager.getSettings(myProject).getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_PARAMETERS;
     PsiParameterList list = newMethod.getParameterList();
     for (VariableData data : myVariableDatum) {
       if (data.passAsParameter) {
@@ -1472,41 +1472,46 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   @Nullable
-  private static Boolean isNotNullAt(@NotNull PsiVariable variable, PsiElement startElement) {
+  private static PsiElement getSurroundingMethodOrLambdaBody(@NotNull PsiVariable variable) {
     if (variable instanceof PsiLocalVariable || variable instanceof PsiParameter) {
       final PsiElement methodOrLambda = PsiTreeUtil.getParentOfType(variable, PsiMethod.class, PsiLambdaExpression.class);
-      PsiElement methodOrLambdaBody = null;
       if (methodOrLambda instanceof PsiMethod) {
-        methodOrLambdaBody = ((PsiMethod)methodOrLambda).getBody();
+        return ((PsiMethod)methodOrLambda).getBody();
       }
       else if (methodOrLambda instanceof PsiLambdaExpression) {
-        methodOrLambdaBody = ((PsiLambdaExpression)methodOrLambda).getBody();
-      }
-      if (methodOrLambdaBody instanceof PsiCodeBlock) {
-        final PsiReferenceExpression firstReadUsage = findFirstReadUsageAt(variable, startElement);
-        if (firstReadUsage != null) {
-          final Nullness nullness = DfaUtil.checkNullness(variable, firstReadUsage, methodOrLambdaBody);
-          return nullness == Nullness.NOT_NULL;
-        }
+        return ((PsiLambdaExpression)methodOrLambda).getBody();
       }
     }
     return null;
   }
 
   @Nullable
-  private static PsiReferenceExpression findFirstReadUsageAt(@NotNull PsiVariable variable, PsiElement startElement) {
+  private static Boolean isNotNullAt(@NotNull PsiVariable variable, PsiElement startElement) {
+    final PsiElement methodOrLambdaBody = getSurroundingMethodOrLambdaBody(variable);
+    if (methodOrLambdaBody instanceof PsiCodeBlock) {
+      final Set<PsiReferenceExpression> firstReadUsages = findFirstReadUsagesAt(variable, startElement);
+      return firstReadUsages != null &&
+             firstReadUsages.stream()
+               .map(firstReadUsage -> DfaUtil.checkNullness(variable, firstReadUsage, methodOrLambdaBody))
+               .allMatch(nullness -> nullness == Nullness.NOT_NULL);
+    }
+    return null;
+  }
+
+  @Nullable
+  private static Set<PsiReferenceExpression> findFirstReadUsagesAt(@NotNull PsiVariable variable, PsiElement startElement) {
     final PsiCodeBlock closestCodeBlock = PsiTreeUtil.getParentOfType(startElement, PsiCodeBlock.class);
     if (closestCodeBlock != null) {
       try {
         final ControlFlow controlFlow = ControlFlowFactory.getInstance(closestCodeBlock.getProject())
           .getControlFlow(closestCodeBlock, AllVariablesControlFlowPolicy.getInstance(), false, false);
 
-        final List<PsiReferenceExpression> readBeforeWrite = ControlFlowUtil.getReadBeforeWrite(controlFlow);
-        for (PsiReferenceExpression referenceExpression : readBeforeWrite) {
-          if (referenceExpression.isReferenceTo(variable)) {
-            return referenceExpression;
-          }
-        }
+        final int startOffset = controlFlow.getStartOffset(startElement);
+        final List<PsiReferenceExpression> readBeforeWrite = ControlFlowUtil.getReadBeforeWrite(controlFlow, startOffset);
+        final Set<PsiReferenceExpression> result = StreamEx.of(readBeforeWrite)
+          .filter(referenceExpression -> referenceExpression.isReferenceTo(variable))
+          .toSet();
+        return !result.isEmpty() ? result : null;
       }
       catch (AnalysisCanceledException e) {
         return null;
@@ -1958,7 +1963,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   public PsiVariable[] getOutputVariables() {
     return myOutputVariables;
   }
-  
+
   public void setMethodVisibility(String methodVisibility) {
     myMethodVisibility = methodVisibility;
   }

@@ -18,17 +18,22 @@ package com.intellij.openapi.progress.util;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PairConsumer;
+import com.intellij.util.messages.MessageBus;
+import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
@@ -202,6 +207,13 @@ public class BackgroundTaskUtil {
   }
 
 
+  /**
+   * An alternative to plain {@link Application#executeOnPooledThread(Runnable)} which wraps the task in a process with a
+   * {@link ProgressIndicator} which gets cancelled when the given disposable is disposed. <br/><br/>
+   *
+   * This allows to stop a lengthy background activity by calling {@link ProgressManager#checkCanceled()}
+   * and avoid Already Disposed exceptions (in particular, because checkCanceled() is called in {@link ServiceManager#getService(Class)}.
+   */
   @NotNull
   @CalledInAny
   public static ProgressIndicator executeOnPooledThread(@NotNull Runnable runnable, @NotNull Disposable parent) {
@@ -220,6 +232,14 @@ public class BackgroundTaskUtil {
   public static ProgressIndicator executeOnPooledThread(@NotNull Consumer<ProgressIndicator> task,
                                                         @NotNull Disposable parent,
                                                         @NotNull ModalityState modalityState) {
+    return runUnderDisposeAwareIndicator(task, parent, modalityState, true);
+  }
+
+  @CalledInAny
+  private static ProgressIndicator runUnderDisposeAwareIndicator(@NotNull Consumer<ProgressIndicator> task,
+                                                                 @NotNull Disposable parent,
+                                                                 @NotNull ModalityState modalityState,
+                                                                 boolean onPooledThread) {
     ProgressIndicator indicator = new EmptyProgressIndicator(modalityState);
 
     Disposable disposable = new Disposable() {
@@ -228,22 +248,51 @@ public class BackgroundTaskUtil {
         if (indicator.isRunning()) indicator.cancel();
       }
     };
-    Disposer.register(parent, disposable);
+
+    try {
+      Disposer.register(parent, disposable);
+    }
+    catch (IncorrectOperationException e) {
+      LOG.error(e);
+      indicator.cancel();
+      return indicator;
+    }
 
     indicator.start();
-    ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      ProgressManager.getInstance().executeProcessUnderProgress(() -> {
-        try {
-          task.consume(indicator);
-        }
-        finally {
-          indicator.stop();
-          Disposer.dispose(disposable);
-        }
-      }, indicator);
-    });
+
+    Runnable underProgress = () -> ProgressManager.getInstance().executeProcessUnderProgress(() -> {
+      try {
+        task.consume(indicator);
+      }
+      finally {
+        indicator.stop();
+        Disposer.dispose(disposable);
+      }
+    }, indicator);
+
+    if (onPooledThread) ApplicationManager.getApplication().executeOnPooledThread(underProgress);
+    else underProgress.run();
 
     return indicator;
+  }
+
+  @CalledInAny
+  public static void runUnderDisposeAwareIndicator(@NotNull Disposable parent, @NotNull Runnable task) {
+    runUnderDisposeAwareIndicator(indicator -> task.run(), parent, ModalityState.defaultModalityState(), false);
+  }
+
+  /**
+   * Wraps {@link MessageBus#syncPublisher(Topic)} in a dispose check,
+   * and throws a {@link ProcessCanceledException} if the project is disposed,
+   * instead of throwing an assertion which would happen otherwise.
+   */
+  @CalledInAny
+  @NotNull
+  public static <L> L syncPublisher(@NotNull Project project, @NotNull Topic<L> topic) throws ProcessCanceledException {
+    return ReadAction.compute(() -> {
+      if (project.isDisposed()) throw new ProcessCanceledException();
+      return project.getMessageBus().syncPublisher(topic);
+    });
   }
 
 

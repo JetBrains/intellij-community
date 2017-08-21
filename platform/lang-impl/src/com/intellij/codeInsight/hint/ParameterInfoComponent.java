@@ -36,6 +36,8 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class ParameterInfoComponent extends JPanel {
   private final Object[] myObjects;
@@ -79,7 +81,7 @@ public class ParameterInfoComponent extends JPanel {
     final ParameterInfoComponent infoComponent = new ParameterInfoComponent(objects, editor, handler);
     infoComponent.setCurrentParameterIndex(currentParameterIndex);
     infoComponent.setParameterOwner(parameterOwner);
-    return infoComponent.new MyParameterContext();
+    return infoComponent.new MyParameterContext(false);
   }
 
   ParameterInfoComponent(Object[] objects, Editor editor, @NotNull ParameterInfoHandler handler) {
@@ -136,6 +138,11 @@ public class ParameterInfoComponent extends JPanel {
     }
   }
 
+  @Override
+  public String toString() {
+    return Stream.of(myPanels).filter(Component::isVisible).map(Object::toString).collect(Collectors.joining("\n"));
+  }
+
   public Object getHighlighted() {
     return myHighlighted;
   }
@@ -145,8 +152,13 @@ public class ParameterInfoComponent extends JPanel {
   }
 
   class MyParameterContext implements ParameterInfoUIContextEx {
+    private final boolean mySingleParameterInfo;
     private int i;
     private Function<String, String> myEscapeFunction;
+    
+    public MyParameterContext(boolean singleParameterInfo) {
+      mySingleParameterInfo = singleParameterInfo;
+    }
 
     @Override
     public String setupUIComponentPresentation(String text,
@@ -199,22 +211,37 @@ public class ParameterInfoComponent extends JPanel {
     }
 
     @Override
+    public boolean isSingleParameterInfo() {
+      return mySingleParameterInfo;
+    }
+
+    private boolean isHighlighted() {
+      return myObjects[i].equals(myHighlighted);
+    }
+
+    @Override
     public Color getDefaultParameterColor() {
       Color color = HintUtil.getInformationColor();
-      return !myObjects[i].equals(myHighlighted) ? color :
+      return mySingleParameterInfo || !isHighlighted() ? color :
              ColorUtil.isDark(color) ? ColorUtil.brighter(color, 2) : ColorUtil.darker(color, 2);
     }
   }
 
-  public void update() {
-    MyParameterContext context = new MyParameterContext();
+  public void update(boolean singleParameterInfo) {
+    MyParameterContext context = new MyParameterContext(singleParameterInfo);
 
     for (int i = 0; i < myObjects.length; i++) {
       context.i = i;
       final Object o = myObjects[i];
 
-      //noinspection unchecked
-      myHandler.updateUI(o, context);
+      if (singleParameterInfo && myObjects.length > 1 && !context.isHighlighted()) {
+        setVisible(i, false);
+      }
+      else {
+        setVisible(i, true);
+        //noinspection unchecked
+        myHandler.updateUI(o, context);
+      }
     }
 
     invalidate();
@@ -228,6 +255,10 @@ public class ParameterInfoComponent extends JPanel {
 
   void setEnabled(int index, boolean enabled) {
     myPanels[index].setEnabled(enabled);
+  }
+
+  void setVisible(int index, boolean visible) {
+    myPanels[index].setVisible(visible);
   }
 
   boolean isEnabled(int index) {
@@ -260,6 +291,11 @@ public class ParameterInfoComponent extends JPanel {
     public OneElementComponent() {
       super(new GridBagLayout());
       myOneLineComponents = new OneLineComponent[0]; //TODO ???
+    }
+
+    @Override
+    public String toString() {
+      return Stream.of(myOneLineComponents).filter(Objects::nonNull).map(Object::toString).collect(Collectors.joining());
     }
 
     private String setup(String text,
@@ -384,6 +420,11 @@ public class ParameterInfoComponent extends JPanel {
 
       add(myLabel, new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.NONE,
                                           new Insets(0, 0, 0, 0), 0, 0));
+    }
+
+    @Override
+    public String toString() {
+      return myLabel.getText();
     }
 
     private String setup(String text,

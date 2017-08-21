@@ -29,7 +29,7 @@ class ModuleRenameTest : LightJava9ModulesCodeInsightFixtureTestCase() {
 
   fun testRename() {
     myFixture.configureByText("module-info.java", "module M { requires M2; }")
-    val module = JavaFileManager.SERVICE.getInstance(project).findModules("M2", GlobalSearchScope.allScope(project)).first()
+    val module = JavaFileManager.getInstance(project).findModules("M2", GlobalSearchScope.allScope(project)).first()
     RenameProcessor(project, module, "M2.bis", false, false).run()
     myFixture.checkResult("module M { requires M2.bis; }")
   }

@@ -16,7 +16,7 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.psi.*;
-import com.intellij.util.ObjectUtils;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
@@ -26,8 +26,8 @@ import org.jetbrains.annotations.NotNull;
  * @author Bas Leijdekkers
  * @author Tagir Valeev
  */
-abstract class BaseEqualsVisitor extends BaseInspectionVisitor
-{
+abstract class BaseEqualsVisitor extends BaseInspectionVisitor {
+
   private static final CallMatcher OBJECT_EQUALS =
     CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_OBJECT, "equals").parameterTypes(CommonClassNames.JAVA_LANG_OBJECT);
   private static final CallMatcher STATIC_EQUALS =
@@ -38,49 +38,52 @@ abstract class BaseEqualsVisitor extends BaseInspectionVisitor
   @Override
   public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
     super.visitMethodReferenceExpression(expression);
-    if (!OBJECT_EQUALS.methodReferenceMatches(expression) && !STATIC_EQUALS.methodReferenceMatches(expression)) return;
-    PsiMethod method = ObjectUtils.tryCast(expression.resolve(), PsiMethod.class);
-    if (method == null) return;
-    PsiType functionalInterfaceType = expression.getFunctionalInterfaceType();
-    if (functionalInterfaceType == null) return;
-    PsiType type1, type2;
-    PsiExpression qualifier = expression.getQualifierExpression();
-    type1 = LambdaUtil.getLambdaParameterFromType(functionalInterfaceType, 0);
-    if (qualifier == null ||
-        qualifier instanceof PsiReferenceExpression && ((PsiReferenceExpression)qualifier).isReferenceTo(method.getContainingClass())) {
-      type2 = LambdaUtil.getLambdaParameterFromType(functionalInterfaceType, 1);
+    if (!OBJECT_EQUALS.methodReferenceMatches(expression) && !STATIC_EQUALS.methodReferenceMatches(expression)) {
+      return;
+    }
+    final PsiType functionalInterfaceType = expression.getFunctionalInterfaceType();
+    final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
+    final PsiMethod method = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
+    if (method == null) {
+      return;
+    }
+    final PsiParameter[] parameters = method.getParameterList().getParameters();
+    final PsiSubstitutor substitutor = LambdaUtil.getSubstitutor(method, resolveResult);
+    final PsiType leftType, rightType;
+    if (parameters.length == 2) {
+      leftType = substitutor.substitute(parameters[0].getType());
+      rightType = substitutor.substitute(parameters[1].getType());
     }
     else {
-      type2 = qualifier.getType();
+      final PsiExpression qualifier = expression.getQualifierExpression();
+      assert qualifier != null;
+      leftType = qualifier.getType();
+      rightType = substitutor.substitute(parameters[0].getType());
     }
-    checkTypes(expression, type1, type2);
+    if (leftType != null && rightType != null) checkTypes(expression, leftType, rightType);
   }
 
   @Override
   public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
     super.visitMethodCallExpression(expression);
-    boolean staticEqualsCall;
+    final PsiExpression[] arguments = expression.getArgumentList().getExpressions();
+    final PsiExpression expression1;
+    final PsiExpression expression2;
     if (OBJECT_EQUALS.test(expression)) {
-      staticEqualsCall = false;
+      expression1 = ExpressionUtils.getQualifierOrThis(expression.getMethodExpression());
+      expression2 = arguments[0];
     }
     else if (STATIC_EQUALS.test(expression)) {
-      staticEqualsCall = true;
+      expression1 = arguments[0];
+      expression2 = arguments[1];
     }
     else {
       return;
     }
-    final PsiExpression[] arguments = expression.getArgumentList().getExpressions();
-    final PsiExpression expression1 = arguments[0];
-    final PsiExpression expression2;
-    if (staticEqualsCall) {
-      expression2 = arguments[1];
-    }
-    else {
-      expression2 = ExpressionUtils.getQualifierOrThis(expression.getMethodExpression());
-    }
-
-    checkTypes(expression.getMethodExpression(), expression1.getType(), expression2.getType());
+    final PsiType leftType = expression1.getType();
+    final PsiType rightType = expression2.getType();
+    if (leftType != null && rightType != null) checkTypes(expression.getMethodExpression(), leftType, rightType);
   }
 
-  abstract void checkTypes(PsiReferenceExpression expression, PsiType type1, PsiType type2);
+  abstract void checkTypes(@NotNull PsiReferenceExpression expression, @NotNull PsiType leftType, @NotNull PsiType rightType);
 }

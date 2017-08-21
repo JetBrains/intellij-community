@@ -52,7 +52,7 @@ public class UnusedDeclarationTest extends AbstractUnusedDeclarationTest {
     doTest();
   }
 
-  public void testDefaultConstructor() throws Exception {
+  public void testDefaultConstructor() {
     doTest();
   }
 
@@ -196,6 +196,10 @@ public class UnusedDeclarationTest extends AbstractUnusedDeclarationTest {
   }
 
   public void testReferenceFromReflection() {
+    doTest();
+  }
+
+  public void testReferenceFromGroovy() {
     doTest();
   }
 }

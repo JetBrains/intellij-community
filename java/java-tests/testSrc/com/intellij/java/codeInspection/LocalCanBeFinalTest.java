@@ -37,114 +37,114 @@ public class LocalCanBeFinalTest extends InspectionTestCase {
     myTool = new LocalCanBeFinal();
   }
 
-  private void doTest() throws Exception {
+  private void doTest() {
     doTest("localCanBeFinal/" + getTestName(false), myTool);
   }
 
-  public void testmultiWriteNoRead() throws Exception {
+  public void testmultiWriteNoRead() {
     myTool.REPORT_PARAMETERS = true;
     myTool.REPORT_VARIABLES = true;
     doTest();
   }
-  public void testif() throws Exception {
+  public void testif() {
     myTool.REPORT_PARAMETERS = true;
     myTool.REPORT_VARIABLES = true;
     doTest();
   }
-  public void testincompleteAssignment() throws Exception {
-    myTool.REPORT_PARAMETERS = true;
-    myTool.REPORT_VARIABLES = true;
-    doTest();
-  }
-
-  public void testparameters() throws Exception {
-    myTool.REPORT_PARAMETERS = true;
-    myTool.REPORT_VARIABLES = true;
-    doTest();
-  }
-  public void testSCR6744_1() throws Exception {
-    myTool.REPORT_PARAMETERS = true;
-    myTool.REPORT_VARIABLES = true;
-    doTest();
-  }
-  public void testSCR6744_2() throws Exception {
-    myTool.REPORT_PARAMETERS = true;
-    myTool.REPORT_VARIABLES = true;
-    doTest();
-  }
-  public void testSCR6744_3() throws Exception {
-    myTool.REPORT_PARAMETERS = true;
-    myTool.REPORT_VARIABLES = true;
-    doTest();
-  }
-  public void testSCR6744_4() throws Exception {
-    myTool.REPORT_PARAMETERS = true;
-    myTool.REPORT_VARIABLES = true;
-    doTest();
-  }
-  public void testSCR6744_5() throws Exception {
-    myTool.REPORT_PARAMETERS = true;
-    myTool.REPORT_VARIABLES = true;
-    doTest();
-  }
-  public void testSCR6744_6() throws Exception {
-    myTool.REPORT_PARAMETERS = true;
-    myTool.REPORT_VARIABLES = true;
-    doTest();
-  }
-  public void testSCR7601() throws Exception {
-    myTool.REPORT_PARAMETERS = true;
-    myTool.REPORT_VARIABLES = true;
-    doTest();
-  }
-  public void testSCR7428_1() throws Exception {
-    myTool.REPORT_PARAMETERS = true;
-    myTool.REPORT_VARIABLES = true;
-    doTest();
-  }
-  public void testSCR7428() throws Exception {
-    myTool.REPORT_PARAMETERS = true;
-    myTool.REPORT_VARIABLES = true;
-    doTest();
-  }
-  public void testSCR11757() throws Exception {
-    myTool.REPORT_PARAMETERS = true;
-    myTool.REPORT_VARIABLES = true;
-    doTest();
-  }
-  public void testforeach() throws Exception {
+  public void testincompleteAssignment() {
     myTool.REPORT_PARAMETERS = true;
     myTool.REPORT_VARIABLES = true;
     doTest();
   }
 
-  public void testLambdaBody() throws Exception {
+  public void testparameters() {
+    myTool.REPORT_PARAMETERS = true;
+    myTool.REPORT_VARIABLES = true;
+    doTest();
+  }
+  public void testSCR6744_1() {
+    myTool.REPORT_PARAMETERS = true;
+    myTool.REPORT_VARIABLES = true;
+    doTest();
+  }
+  public void testSCR6744_2() {
+    myTool.REPORT_PARAMETERS = true;
+    myTool.REPORT_VARIABLES = true;
+    doTest();
+  }
+  public void testSCR6744_3() {
+    myTool.REPORT_PARAMETERS = true;
+    myTool.REPORT_VARIABLES = true;
+    doTest();
+  }
+  public void testSCR6744_4() {
+    myTool.REPORT_PARAMETERS = true;
+    myTool.REPORT_VARIABLES = true;
+    doTest();
+  }
+  public void testSCR6744_5() {
+    myTool.REPORT_PARAMETERS = true;
+    myTool.REPORT_VARIABLES = true;
+    doTest();
+  }
+  public void testSCR6744_6() {
+    myTool.REPORT_PARAMETERS = true;
+    myTool.REPORT_VARIABLES = true;
+    doTest();
+  }
+  public void testSCR7601() {
+    myTool.REPORT_PARAMETERS = true;
+    myTool.REPORT_VARIABLES = true;
+    doTest();
+  }
+  public void testSCR7428_1() {
+    myTool.REPORT_PARAMETERS = true;
+    myTool.REPORT_VARIABLES = true;
+    doTest();
+  }
+  public void testSCR7428() {
+    myTool.REPORT_PARAMETERS = true;
+    myTool.REPORT_VARIABLES = true;
+    doTest();
+  }
+  public void testSCR11757() {
+    myTool.REPORT_PARAMETERS = true;
+    myTool.REPORT_VARIABLES = true;
+    doTest();
+  }
+  public void testforeach() {
     myTool.REPORT_PARAMETERS = true;
     myTool.REPORT_VARIABLES = true;
     doTest();
   }
 
-  public void testForeachNotReported() throws Exception {
+  public void testLambdaBody() {
+    myTool.REPORT_PARAMETERS = true;
+    myTool.REPORT_VARIABLES = true;
+    doTest();
+  }
+
+  public void testForeachNotReported() {
     myTool.REPORT_PARAMETERS = true;
     myTool.REPORT_VARIABLES = false;
     myTool.REPORT_FOREACH_PARAMETERS = false;
     doTest();
   }
 
-  public void testNestedForeach() throws Exception {
+  public void testNestedForeach() {
     myTool.REPORT_PARAMETERS = false;
     myTool.REPORT_VARIABLES = true;
     myTool.REPORT_FOREACH_PARAMETERS = true;
     doTest();
   }
 
-  public void testFor() throws Exception {
+  public void testFor() {
     myTool.REPORT_PARAMETERS = false;
     myTool.REPORT_VARIABLES = true;
     doTest();
   }
 
-  public void testCatchParameter() throws Exception {
+  public void testCatchParameter() {
     myTool.REPORT_PARAMETERS = false;
     myTool.REPORT_VARIABLES = true;
     doTest();

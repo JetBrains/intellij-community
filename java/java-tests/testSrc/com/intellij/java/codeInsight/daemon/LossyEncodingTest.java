@@ -78,7 +78,7 @@ public class LossyEncodingTest extends DaemonAnalyzerTestCase {
     doDoTest(true, false);
   }
 
-  public void testNativeConversion() throws Exception {
+  public void testNativeConversion() {
     configureByText(StdFileTypes.PROPERTIES, "a=<caret>v");
     EncodingProjectManager.getInstance(getProject()).setNative2AsciiForPropertiesFiles(null, true);
     UIUtil.dispatchAllInvocationEvents();  //reload files
@@ -153,7 +153,7 @@ public class LossyEncodingTest extends DaemonAnalyzerTestCase {
     assertEquals("File was loaded in the wrong encoding: 'UTF-8'", info.getDescription());
   }
 
-  public void testDetectWrongEncoding() throws Exception {
+  public void testDetectWrongEncoding() {
     VirtualFile virtualFile = getVirtualFile(BASE_PATH + "/" + "Win1251.txt");
     virtualFile.setCharset(CharsetToolkit.UTF8_CHARSET);
     configureByExistingFile(virtualFile);
@@ -168,7 +168,7 @@ public class LossyEncodingTest extends DaemonAnalyzerTestCase {
     assertEquals("File was loaded in the wrong encoding: 'UTF-8'", info.getDescription());
   }
 
-  public void testSurrogateUTF8() throws Exception {
+  public void testSurrogateUTF8() {
     VirtualFile virtualFile = getVirtualFile(BASE_PATH + "/" + "surrogate.txt");
     virtualFile.setCharset(CharsetToolkit.UTF8_CHARSET);
     configureByExistingFile(virtualFile);
@@ -180,7 +180,7 @@ public class LossyEncodingTest extends DaemonAnalyzerTestCase {
     assertEmpty(doHighlighting());
   }
 
-  public void testInconsistentLineSeparators() throws Exception {
+  public void testInconsistentLineSeparators() {
     VirtualFile virtualFile = getVirtualFile(BASE_PATH + "/" + getTestName(false) + ".txt");
     configureByExistingFile(virtualFile);
     FileDocumentManager.getInstance().saveAllDocuments();

@@ -21,7 +21,9 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.plaf.TextUI;
 import java.awt.*;
+import java.awt.event.MouseEvent;
 
 public class JBTextField extends JTextField implements ComponentWithEmptyText {
   private TextComponentEmptyText myEmptyText;
@@ -75,5 +77,12 @@ public class JBTextField extends JTextField implements ComponentWithEmptyText {
       g.setColor(getForeground());
     }
     myEmptyText.paintStatusText(g);
+  }
+
+  @Override
+  public String getToolTipText(MouseEvent event) {
+    TextUI ui = getUI();
+    String text = ui == null ? null : ui.getToolTipText(this, event.getPoint());
+    return text != null ? text : getToolTipText();
   }
 }

@@ -140,7 +140,7 @@ public class VisitingTest extends IntegrationTestCase {
     assertVisitorLog("begin create end finished ", visitor);
   }
 
-  private void assertVisitorLog(final String expected) throws Exception {
+  private void assertVisitorLog(final String expected) {
     TestVisitor visitor = new TestVisitor();
     assertVisitorLog(expected, visitor);
   }
@@ -159,7 +159,7 @@ public class VisitingTest extends IntegrationTestCase {
     }
 
     @Override
-    public void end(ChangeSet c) throws StopVisitingException {
+    public void end(ChangeSet c) {
       log += "end ";
     }
 
@@ -169,7 +169,7 @@ public class VisitingTest extends IntegrationTestCase {
     }
 
     @Override
-    public void visit(RenameChange c) throws StopVisitingException {
+    public void visit(RenameChange c) {
       log += "rename ";
     }
 

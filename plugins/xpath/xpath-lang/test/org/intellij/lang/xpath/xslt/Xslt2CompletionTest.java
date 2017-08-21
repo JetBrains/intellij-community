@@ -19,20 +19,20 @@ import org.intellij.lang.xpath.TestBase;
 
 public class Xslt2CompletionTest extends TestBase {
 
-    public void testCustomFunctions() throws Throwable {
+    public void testCustomFunctions() {
         doXsltCompletion();
     }
 
-    public void testTypeCompletion() throws Throwable {
+    public void testTypeCompletion() {
         doXsltCompletion();
     }
 
-    public void testSchemaTypeCompletion() throws Throwable {
+    public void testSchemaTypeCompletion() {
       final String name = getTestFileName();
       myFixture.testCompletionTyping(name + ".xsl", "\n", name + "_after.xsl");
     }
 
-    private void doXsltCompletion(String... moreFiles) throws Throwable {
+    private void doXsltCompletion(String... moreFiles) {
         final String name = getTestFileName();
         myFixture.testCompletion(name + ".xsl", name + "_after.xsl", moreFiles);
     }

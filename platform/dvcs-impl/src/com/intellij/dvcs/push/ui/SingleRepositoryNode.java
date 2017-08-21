@@ -51,4 +51,9 @@ public class SingleRepositoryNode extends RepositoryNode {
     PushTargetPanel pushTargetPanel = myRepositoryPanel.getTargetPanel();
     pushTargetPanel.render(renderer, renderer.getTree().isPathSelected(TreeUtil.getPathFromRoot(this)), true, null);
   }
+
+  @Override
+  public String toString() {
+    return getRepositoryPresentationDetails();
+  }
 }

@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.utils;
 
 import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -37,7 +38,11 @@ public class MavenJDOMUtil {
   public static Element read(final VirtualFile file, @Nullable final ErrorHandler handler) {
     String text;
 
-    AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
+    Application app = ApplicationManager.getApplication();
+    if (app == null || app.isDisposeInProgress() || app.isDisposed()) {
+      return null;
+    }
+    AccessToken accessToken = app.acquireReadActionLock();
     try {
       if (!file.isValid()) return null;
 

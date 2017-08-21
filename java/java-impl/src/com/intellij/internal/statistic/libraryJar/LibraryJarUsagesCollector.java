@@ -15,7 +15,7 @@
  */
 package com.intellij.internal.statistic.libraryJar;
 
-import com.intellij.internal.statistic.AbstractApplicationUsagesCollector;
+import com.intellij.internal.statistic.AbstractProjectsUsagesCollector;
 import com.intellij.internal.statistic.CollectUsagesException;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
@@ -41,7 +41,7 @@ import java.util.regex.Pattern;
 /**
  * @author Ivan Chirkov
  */
-public class LibraryJarUsagesCollector extends AbstractApplicationUsagesCollector {
+public class LibraryJarUsagesCollector extends AbstractProjectsUsagesCollector {
   private static final GroupDescriptor GROUP = GroupDescriptor.create("Libraries by jars", GroupDescriptor.LOWER_PRIORITY);
 
   private static final String DIGIT_VERSION_PATTERN_PART = "(\\d+.\\d+|\\d+)";

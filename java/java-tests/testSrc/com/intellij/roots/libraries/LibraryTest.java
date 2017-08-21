@@ -18,13 +18,12 @@ package com.intellij.roots.libraries;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.NativeLibraryOrderRootType;
-import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.ModuleRootManagerComponent;
+import com.intellij.openapi.roots.impl.OrderEntryUtil;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableBase;
+import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
@@ -46,7 +45,7 @@ import static com.intellij.testFramework.assertions.Assertions.assertThat;
  *  @author dsl
  */
 public class LibraryTest extends ModuleRootManagerTestCase {
-  public void testModification() throws Exception {
+  public void testModification() {
     final LibraryTable libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable();
     final Library library = WriteAction.compute(() -> libraryTable.createLibrary("NewLibrary"));
     final boolean[] listenerNotifiedOnChange = new boolean[1];
@@ -64,7 +63,19 @@ public class LibraryTest extends ModuleRootManagerTestCase {
     commit(model2);
     assertFalse(listenerNotifiedOnChange[0]);
 
+    assertTrue(LibraryTableImplUtil.isValidLibrary(library));
     ApplicationManager.getApplication().runWriteAction(() -> libraryTable.removeLibrary(library));
+    assertFalse(LibraryTableImplUtil.isValidLibrary(library));
+  }
+
+  public void testAddRemoveModuleLibrary() {
+    ModuleRootModificationUtil.addModuleLibrary(myModule, getJDomJar().getUrl());
+    Library library = assertOneElement(OrderEntryUtil.getModuleLibraries(ModuleRootManager.getInstance(myModule)));
+    assertTrue(LibraryTableImplUtil.isValidLibrary(library));
+    ModuleRootModificationUtil.updateModel(myModule, (model) -> {
+      model.getModuleLibraryTable().removeLibrary(library);
+    });
+    assertFalse(LibraryTableImplUtil.isValidLibrary(library));
   }
 
   public void testLibrarySerialization() {
@@ -183,7 +194,7 @@ public class LibraryTest extends ModuleRootManagerTestCase {
     LibraryTable table = getLibraryTable();
     Library library = new WriteAction<Library>() {
       @Override
-      protected void run(@NotNull Result<Library> result) throws Throwable {
+      protected void run(@NotNull Result<Library> result) {
         Library res = table.createLibrary("native");
         result.setResult(res);
       }

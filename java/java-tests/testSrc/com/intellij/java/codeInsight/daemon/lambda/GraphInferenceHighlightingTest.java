@@ -139,7 +139,7 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
   public void testPolyMethodCallOnLeftSideOfAssignment() { doTest(); }
   public void testTreatConditionalExpressionAsPolyIfNewExpressionWithDiamondsIsUsed() { doTest(); }
 
-  public void testVariableNamesOfNestedCalls() throws Exception {
+  public void testVariableNamesOfNestedCalls() {
     IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_8, getModule(), getTestRootDisposable());
     String filePath = BASE_PATH + getTestName(false) + ".java";
     configureByFile(filePath);
@@ -179,12 +179,13 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
   public void testFreshVariablesDuringApplicabilityCheck() { doTest(); }
 
   public void testPertinentToApplicabilityCheckForBlockLambda() { doTest(); }
+  public void testRestoreCapturedWildcardsInReturnTypesWhenNoAdditionalConstraintsDetected() { doTest(); }
 
-  public void testApplicabilityCheckFailsExpressionTypeCheckPasses() throws Exception {
+  public void testApplicabilityCheckFailsExpressionTypeCheckPasses() {
     doTest();
   }
 
-  public void testTopLevelParentNoParameters() throws Exception {
+  public void testTopLevelParentNoParameters() {
     doTest();
   }
 

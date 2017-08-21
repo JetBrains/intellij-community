@@ -4,11 +4,9 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.util.net.NetUtils
 import org.apache.xmlrpc.*
-
 import java.net.MalformedURLException
 import java.net.URL
-import java.util.Arrays
-import java.util.Vector
+import java.util.*
 import java.util.concurrent.TimeUnit
 
 /**
@@ -22,7 +20,7 @@ class PydevXmlRpcClient
  * Constructor (see fields description)
  */
 @Throws(MalformedURLException::class)
-constructor(private val process: Process, port: Int) : IPydevXmlRpcClient {
+constructor(private val process: Process, hostname: String?, port: Int) : IPydevXmlRpcClient {
 
 
   /**
@@ -33,9 +31,10 @@ constructor(private val process: Process, port: Int) : IPydevXmlRpcClient {
 
   init {
     XmlRpc.setDefaultInputEncoding("UTF8") //even though it uses UTF anyway
-    impl = XmlRpcClientLite(NetUtils.getLocalHostString(), port)
+    impl = XmlRpcClientLite(hostname ?: NetUtils.getLocalHostString(), port)
   }
 
+  constructor(process: Process, port: Int): this(process = process, hostname = null, port = port)
 
   override fun execute(command: String, args: Array<Any>): Any {
     return execute(command, args, TIME_LIMIT)

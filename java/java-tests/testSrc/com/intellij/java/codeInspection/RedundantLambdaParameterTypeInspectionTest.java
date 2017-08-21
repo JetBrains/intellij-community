@@ -26,7 +26,7 @@ import java.util.List;
 
 public class RedundantLambdaParameterTypeInspectionTest extends LightCodeInsightFixtureTestCase {
   private RedundantLambdaParameterTypeInspection myInspection = new RedundantLambdaParameterTypeInspection();
-  private final String myIntentionName = "Remove redundant parameter types";
+  private static final String ourIntentionName = "Remove redundant parameter types";
 
   @Override
   protected String getBasePath() {
@@ -91,20 +91,24 @@ public class RedundantLambdaParameterTypeInspectionTest extends LightCodeInsight
     assertIntentionNotAvailable();
   }
 
-  public void _testInChain() { // disabled till the functionality is available
+  public void testInChain() { // disabled till the functionality is available
     doTest();
+  }
+
+  public void testNotApplicableDueToChainedCall() {
+    assertIntentionNotAvailable();
   }
 
   private void doTest() {
     myFixture.configureByFiles(getTestName(false) + ".java");
-    final IntentionAction singleIntention = myFixture.findSingleIntention(myIntentionName);
+    final IntentionAction singleIntention = myFixture.findSingleIntention(ourIntentionName);
     myFixture.launchAction(singleIntention);
     myFixture.checkResultByFile(getTestName(false) + ".java", getTestName(false) + "_after.java", true);
   }
 
   private void assertIntentionNotAvailable() {
     myFixture.configureByFiles(getTestName(false) + ".java");
-    final List<IntentionAction> intentionActions = myFixture.filterAvailableIntentions(myIntentionName);
-    assertEmpty(myIntentionName + " is not expected", intentionActions);
+    final List<IntentionAction> intentionActions = myFixture.filterAvailableIntentions(ourIntentionName);
+    assertEmpty(ourIntentionName + " is not expected", intentionActions);
   }
 }

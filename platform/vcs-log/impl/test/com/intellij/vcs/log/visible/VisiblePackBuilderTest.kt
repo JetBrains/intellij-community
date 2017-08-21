@@ -216,12 +216,12 @@ class VisiblePackBuilderTest {
 
     operator fun GraphCommit<Int>.plus(name: String): GraphCommit<Int> {
       data[this] = Data(VcsUserImpl(name, name + "@example.com"))
-      return this;
+      return this
     }
 
     operator fun GraphCommit<Int>.plus(user: VcsUser?): GraphCommit<Int> {
       data[this] = Data(user)
-      return this;
+      return this
     }
 
     fun done() = Graph(commits, refs, data)

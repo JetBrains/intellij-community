@@ -27,7 +27,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Path2D;
 
-import static com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI.isSearchFieldWithHistoryPopup;
 import static com.intellij.ide.ui.laf.intellij.WinIntelliJTextFieldUI.HOVER_PROPERTY;
 import static com.intellij.ide.ui.laf.intellij.WinIntelliJTextFieldUI.adjustInWrapperRect;
 
@@ -37,19 +36,18 @@ import static com.intellij.ide.ui.laf.intellij.WinIntelliJTextFieldUI.adjustInWr
 public class WinIntelliJTextBorder extends DarculaTextBorder {
   @Override
   public Insets getBorderInsets(Component c) {
-    if (isSearchFieldWithHistoryPopup(c)) {
-      return JBUI.insets(4, 27, 4, 24).asUIResource();
-    } else if (TextFieldWithPopupHandlerUI.isSearchField(c)) {
-      return JBUI.insets(4, 21, 4, 24).asUIResource();
-    } else if (c instanceof JTextField && c.getParent() instanceof ColorPanel) {
+    if (c instanceof JTextField && c.getParent() instanceof ColorPanel) {
       return JBUI.insets(3, 3, 2, 2).asUIResource();
-    } else {
-      return JBUI.insets(4, 5).asUIResource();
     }
+    Insets insets = JBUI.insets(4, 5).asUIResource();
+    TextFieldWithPopupHandlerUI.updateBorderInsets(c, insets);
+    return insets;
   }
 
   @Override
   public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+    if (((JComponent)c).getClientProperty("JTextField.Search.noBorderRing") == Boolean.TRUE) return;
+
     Graphics2D g2 = (Graphics2D)g.create();
     try {
       Rectangle r = new Rectangle(x, y, width, height);

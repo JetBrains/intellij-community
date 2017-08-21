@@ -31,7 +31,7 @@ import java.util.List;
 import java.util.Random;
 
 public class EditorStressTest extends AbstractEditorTest {
-  private static final int ITERATIONS = 10000;
+  private static final int ITERATIONS = 10_000;
   private static final Long SEED_OVERRIDE = null; // set non-null value to run with a specific seed
 
   private static final List<? extends Action> ourActions = Arrays.asList(new AddText("a"),
@@ -64,7 +64,7 @@ public class EditorStressTest extends AbstractEditorTest {
       initText("");
       configureSoftWraps(10);
       EditorImpl editor = (EditorImpl)myEditor;
-      for (i = 1; i <= ITERATIONS; i++) {
+      for (i = 0; i < ITERATIONS; i++) {
         doRandomAction(editor);
         editor.validateState();
       }
@@ -99,7 +99,7 @@ public class EditorStressTest extends AbstractEditorTest {
       int offset = random.nextInt(document.getTextLength() + 1);
       new WriteCommandAction.Simple(getProject()) {
         @Override
-        protected void run() throws Throwable {
+        protected void run() {
           document.insertString(offset, myText);
         }
       }.execute().throwException();
@@ -115,7 +115,7 @@ public class EditorStressTest extends AbstractEditorTest {
       int offset = random.nextInt(textLength);
       new WriteCommandAction.Simple(getProject()) {
         @Override
-        protected void run() throws Throwable {
+        protected void run() {
           document.deleteString(offset, offset + 1);
         }
       }.execute().throwException();
@@ -133,7 +133,7 @@ public class EditorStressTest extends AbstractEditorTest {
       if (targetOffset < offset || targetOffset > offset + 1) {
         new WriteCommandAction.Simple(getProject()) {
           @Override
-          protected void run() throws Throwable {
+          protected void run() {
             ((DocumentEx)document).moveText(offset, offset + 1, targetOffset);
           }
         }.execute().throwException();

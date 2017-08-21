@@ -16,6 +16,7 @@
 package com.intellij.ide;
 
 import com.intellij.concurrency.JobScheduler;
+import com.intellij.diagnostic.VMOptions;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.util.PropertiesComponent;
@@ -74,9 +75,9 @@ public class SystemHealthMonitor implements ApplicationComponent {
   @Override
   public void initComponent() {
     checkRuntime();
+    checkReservedCodeCacheSize();
     checkIBus();
     checkSignalBlocking();
-    checkLauncherScript();
     startDiskSpaceMonitoring();
   }
 
@@ -121,6 +122,14 @@ public class SystemHealthMonitor implements ApplicationComponent {
     }
   }
 
+  private void checkReservedCodeCacheSize() {
+    int minReservedCodeCacheSize = 240;
+    int reservedCodeCacheSize = VMOptions.readOption(VMOptions.MemoryKind.CODE_CACHE, true);
+    if (reservedCodeCacheSize > 0 && reservedCodeCacheSize < minReservedCodeCacheSize) {
+      showNotification(new KeyHyperlinkAdapter("vmoptions.warn.message"), reservedCodeCacheSize, minReservedCodeCacheSize);
+    }
+  }
+
   private void checkIBus() {
     if (SystemInfo.isXWindow) {
       String xim = System.getenv("XMODIFIERS");
@@ -154,12 +163,6 @@ public class SystemHealthMonitor implements ApplicationComponent {
       catch (Throwable t) {
         LOG.warn(t);
       }
-    }
-  }
-
-  private void checkLauncherScript() {
-    if (SystemInfo.isXWindow && System.getProperty("jb.restart.code") != null) {
-      showNotification(new KeyHyperlinkAdapter("ide.launcher.script.outdated"));
     }
   }
 

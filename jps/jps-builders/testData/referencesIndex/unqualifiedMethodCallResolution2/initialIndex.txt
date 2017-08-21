@@ -4,11 +4,8 @@ java.lang.Object -> A A$B
 Backward References:
 A in Foo occurrences = 1
 A$B in Foo occurrences = 1
-A$B.<init>(0) in Foo occurrences = 1
 A$B.m(0) in Foo occurrences = 1
-A.<init>(0) in Foo occurrences = 1
 A.xxxx(0) in Foo occurrences = 2
-java.lang.Object.<init>(0) in Foo occurrences = 2
 
 Class Definitions:
 A in Foo

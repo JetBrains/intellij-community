@@ -51,10 +51,10 @@ import java.util.List;
  *   <p>2. Truncated strings in the combobox popup if column width is less than text value width
  *   <p>
  *   <b>How to use:</b>
- *   <p>1. In get <code>getTableCellEditorComponent</code> method create or use existent
- *   <code>JBComboBoxTableCellEditorComponent</code> instance<br/>
- *   <p>2. Init component by calling <code>setCell</code>, <code>setOptions</code>,
- *   <code>setDefaultValue</code> methods
+ *   <p>1. In get {@code getTableCellEditorComponent} method create or use existent
+ *   {@code JBComboBoxTableCellEditorComponent} instance<br/>
+ *   <p>2. Init component by calling {@code setCell}, {@code setOptions},
+ *   {@code setDefaultValue} methods
  *   <p>3. Return the instance
  *
  * @author Konstantin Bulenkov

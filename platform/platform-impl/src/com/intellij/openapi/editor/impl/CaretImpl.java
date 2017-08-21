@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.SelectionEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
@@ -1070,7 +1071,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
   public void setSelection(int startOffset, int endOffset, boolean updateSystemSelection) {
     doSetSelection(myEditor.offsetToVisualPosition(startOffset, true, false), startOffset,
                    myEditor.offsetToVisualPosition(endOffset, false, true), endOffset,
-                   false, updateSystemSelection);
+                   false, updateSystemSelection, true);
   }
 
   @Override
@@ -1095,15 +1096,16 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
                            boolean updateSystemSelection) {
     VisualPosition startPositionToUse = startPosition == null ? myEditor.offsetToVisualPosition(startOffset, true, false) : startPosition;
     VisualPosition endPositionToUse = endPosition == null ? myEditor.offsetToVisualPosition(endOffset, false, true) : endPosition;
-    doSetSelection(startPositionToUse, startOffset, endPositionToUse, endOffset, true, updateSystemSelection);
+    doSetSelection(startPositionToUse, startOffset, endPositionToUse, endOffset, true, updateSystemSelection, true);
   }
 
-  private void doSetSelection(@NotNull final VisualPosition startPosition,
-                              final int _startOffset,
-                              @NotNull final VisualPosition endPosition,
-                              final int _endOffset,
-                              final boolean visualPositionAware,
-                              final boolean updateSystemSelection)
+  void doSetSelection(@NotNull final VisualPosition startPosition,
+                      final int _startOffset,
+                      @NotNull final VisualPosition endPosition,
+                      final int _endOffset,
+                      final boolean visualPositionAware,
+                      final boolean updateSystemSelection,
+                      final boolean fireListeners)
   {
     myEditor.getCaretModel().doWithCaretMerging(() -> {
       int startOffset = DocumentUtil.alignToCodePointBoundary(myEditor.getDocument(), _startOffset);
@@ -1187,7 +1189,10 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
       }
       mySelectionMarker = marker;
 
-      myEditor.getSelectionModel().fireSelectionChanged(oldSelectionStart, oldSelectionEnd, startOffset, endOffset);
+      if (fireListeners) {
+        myEditor.getSelectionModel().fireSelectionChanged(new SelectionEvent(myEditor, 
+                                                                             oldSelectionStart, oldSelectionEnd, startOffset, endOffset));
+      }
 
       if (updateSystemSelection) {
         updateSystemSelection();
@@ -1219,7 +1224,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
         int startOffset = marker.getStartOffset();
         int endOffset = marker.getEndOffset();
         mySelectionMarker = null;
-        myEditor.getSelectionModel().fireSelectionChanged(startOffset, endOffset, caretOffset, caretOffset);
+        myEditor.getSelectionModel().fireSelectionChanged(new SelectionEvent(myEditor, startOffset, endOffset, caretOffset, caretOffset));
       }
     });
   }

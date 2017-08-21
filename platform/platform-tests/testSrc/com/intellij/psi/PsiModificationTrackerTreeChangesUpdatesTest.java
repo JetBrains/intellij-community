@@ -42,7 +42,7 @@ public class PsiModificationTrackerTreeChangesUpdatesTest extends PlatformTestCa
     super.tearDown();
   }
 
-  public void testMoveFile() throws Exception {
+  public void testMoveFile() {
     new WriteAction<Object>() {
       @Override
       protected void run(@NotNull Result<Object> result) throws Throwable {
@@ -61,7 +61,7 @@ public class PsiModificationTrackerTreeChangesUpdatesTest extends PlatformTestCa
     }.execute();
   }
 
-  public void testMoveDir() throws Exception {
+  public void testMoveDir() {
     new WriteAction<Object>() {
       @Override
       protected void run(@NotNull Result<Object> result) throws Throwable {

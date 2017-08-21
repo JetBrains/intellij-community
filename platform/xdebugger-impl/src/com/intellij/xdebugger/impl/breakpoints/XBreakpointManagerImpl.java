@@ -478,6 +478,35 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
     return myBreakpointsDefaults.computeIfAbsent(type, k -> createBreakpointDefaults(type));
   }
 
+  @Nullable
+  <T extends XBreakpointProperties> XLineBreakpoint<T> copyLineBreakpoint(@NotNull XLineBreakpoint<T> source,
+                                                                          @NotNull String fileUrl,
+                                                                          int line) {
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
+    if (!(source instanceof XLineBreakpointImpl<?>)) {
+      return null;
+    }
+    myDependentBreakpointManager.saveState();
+    final LineBreakpointState sourceState = ((XLineBreakpointImpl<?>)source).getState();
+
+    final LineBreakpointState newState =
+      XmlSerializer.deserialize(XmlSerializer.serialize(sourceState, SERIALIZATION_FILTER), LineBreakpointState.class);
+    newState.setLine(line);
+    newState.setFileUrl(fileUrl);
+
+    //noinspection unchecked
+    final XLineBreakpointImpl<T> breakpoint = (XLineBreakpointImpl<T>)createBreakpoint(newState);
+    if (breakpoint != null) {
+      addBreakpoint(breakpoint, false, true);
+      final XBreakpoint<?> masterBreakpoint = myDependentBreakpointManager.getMasterBreakpoint(source);
+      if (masterBreakpoint != null) {
+        myDependentBreakpointManager.setMasterBreakpoint(breakpoint, masterBreakpoint, sourceState.getDependencyState().isLeaveEnabled());
+      }
+    }
+
+    return breakpoint;
+  }
+
   @NotNull
   private static BreakpointState createBreakpointDefaults(@NotNull XBreakpointType type) {
     BreakpointState state = new BreakpointState();

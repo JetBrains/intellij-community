@@ -86,7 +86,7 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
 
       myProcessHandler.addProcessListener(new ProcessAdapter() {
         @Override
-        public void processTerminated(ProcessEvent event) {
+        public void processTerminated(@NotNull ProcessEvent event) {
           finishConsole();
         }
       });

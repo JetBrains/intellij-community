@@ -80,6 +80,7 @@ public class ObjectUtils {
   }
 
   @Contract("null, _ -> null")
+  @Nullable
   public static <T> T tryCast(@Nullable Object obj, @NotNull Class<T> clazz) {
     if (clazz.isInstance(obj)) {
       return clazz.cast(obj);

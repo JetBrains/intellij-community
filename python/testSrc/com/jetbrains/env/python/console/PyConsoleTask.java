@@ -37,7 +37,7 @@ import com.jetbrains.python.console.*;
 import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
 import com.jetbrains.python.debugger.PyDebugValue;
 import com.jetbrains.python.debugger.PyDebuggerException;
-import com.jetbrains.python.sdkTools.SdkCreationType;
+import com.jetbrains.python.tools.sdkTools.SdkCreationType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
@@ -92,7 +92,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
   }
 
   @Override
-  public void tearDown() throws Exception {
+  public void tearDown() {
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       try {
         if (myConsoleView != null) {
@@ -107,7 +107,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
     });
   }
 
-  private void disposeConsole() throws InterruptedException {
+  private void disposeConsole() {
     if (myCommunication != null) {
       UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
         try {
@@ -129,7 +129,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
     if (myConsoleView != null) {
       new WriteAction() {
         @Override
-        protected void run(@NotNull Result result) throws Throwable {
+        protected void run(@NotNull Result result) {
           Disposer.dispose(myConsoleView);
           myConsoleView = null;
         }
@@ -149,7 +149,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
       new PydevConsoleRunnerImpl(project, sdk, PyConsoleType.PYTHON, myFixture.getTempDirPath(), Maps.newHashMap(),
                                  PyConsoleOptions.getInstance(project).getPythonConsoleSettings(),
                                  (s) -> {
-                                 }) {
+                                 }, PydevConsoleRunnerImpl.CONSOLE_START_COMMAND) {
         protected void showContentDescriptor(RunContentDescriptor contentDescriptor) {
           myContentDescriptorRef.set(contentDescriptor);
           super.showContentDescriptor(contentDescriptor);
@@ -193,7 +193,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
 
     myProcessHandler.addProcessListener(new ProcessAdapter() {
       @Override
-      public void processTerminated(ProcessEvent event) {
+      public void processTerminated(@NotNull ProcessEvent event) {
         if (event.getExitCode() != 0 && !myProcessCanTerminate) {
           Assert.fail("Process terminated unexpectedly\n" + output());
         }
@@ -223,7 +223,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
     }
   }
 
-  private void disposeConsoleProcess() throws InterruptedException {
+  private void disposeConsoleProcess() {
     myProcessHandler.destroyProcess();
 
     waitFor(myProcessHandler);

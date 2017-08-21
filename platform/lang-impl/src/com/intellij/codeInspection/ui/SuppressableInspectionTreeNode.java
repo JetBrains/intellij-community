@@ -23,6 +23,7 @@ import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,8 +36,6 @@ import java.util.stream.Collectors;
 
 public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode {
   @NotNull
-  private final InspectionResultsView myView;
-  @NotNull
   private final InspectionToolPresentation myPresentation;
   private volatile Set<SuppressIntentionAction> myAvailableSuppressActions;
   private volatile String myPresentableName;
@@ -44,7 +43,6 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
 
   protected SuppressableInspectionTreeNode(Object userObject, @NotNull InspectionToolPresentation presentation) {
     super(userObject);
-    myView = presentation.getContext().getView();
     myPresentation = presentation;
   }
 
@@ -59,7 +57,13 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
 
   public final boolean isAlreadySuppressedFromView() {
     final Object usrObj = getUserObject();
-    return usrObj != null && myView.getSuppressedNodes(myPresentation.getToolWrapper().getShortName()).contains(usrObj);
+    if (usrObj != null) {
+      InspectionResultsView view = myPresentation.getContext().getView();
+      if (view != null && view.getSuppressedNodes(myPresentation.getToolWrapper().getShortName()).contains(usrObj)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public abstract boolean isQuickFixAppliedFromView();
@@ -135,12 +139,14 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
     final Pair<PsiElement, CommonProblemDescriptor> suppressContent = getSuppressContent();
     PsiElement element = suppressContent.getFirst();
     if (element == null) return Collections.emptySet();
-    InspectionViewSuppressActionHolder suppressActionHolder = myView.getSuppressActionHolder();
+    InspectionResultsView view = myPresentation.getContext().getView();
+    if (view == null) return Collections.emptySet();
+    InspectionViewSuppressActionHolder suppressActionHolder = view.getSuppressActionHolder();
     final SuppressIntentionAction[] actions = suppressActionHolder.getSuppressActions(myPresentation.getToolWrapper(), element);
     if (actions.length == 0) return Collections.emptySet();
     return suppressActionHolder.internSuppressActions(Arrays.stream(actions)
       .filter(action -> action.isAvailable(project, null, element))
-      .collect(Collectors.toCollection(() -> ContainerUtil.newConcurrentSet(ContainerUtil.identityStrategy()))));
+      .collect(Collectors.toCollection(() -> ConcurrentCollectionFactory.createConcurrentSet(ContainerUtil.identityStrategy()))));
   }
 
   protected abstract String calculatePresentableName();

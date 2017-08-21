@@ -60,7 +60,7 @@ public class GlobalInspectionContextTest extends CodeInsightTestCase {
     assertEquals(1, presentation.getProblemDescriptors().size());
   }
 
-  public void testRunInspectionContext() throws Exception {
+  public void testRunInspectionContext() {
     InspectionProfile profile = new InspectionProfileImpl("foo");
     InspectionToolWrapper[] tools = profile.getInspectionTools(null);
     PsiFile file = createDummyFile("xx.txt", "xxx");

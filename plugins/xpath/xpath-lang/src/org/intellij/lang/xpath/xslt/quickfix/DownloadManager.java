@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.io.HttpRequests;
 import org.jetbrains.annotations.NotNull;
 
@@ -97,13 +98,11 @@ public abstract class DownloadManager {
         Throwable e = err.getCause();
         if (e instanceof InvocationTargetException) {
           Throwable targetException = ((InvocationTargetException)e).getTargetException();
-          if (targetException instanceof RuntimeException) {
-            throw (RuntimeException)targetException;
-          }
-          else if (targetException instanceof IOException) {
+          ExceptionUtil.rethrowUnchecked(targetException);
+          if (targetException instanceof IOException) {
             throw (IOException)targetException;
           }
-          else if (!(targetException instanceof InterruptedException)) {
+          if (!(targetException instanceof InterruptedException)) {
             Logger.getInstance(getClass().getName()).error(e);
           }
         }

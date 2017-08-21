@@ -369,16 +369,16 @@ public class ConstExprent extends Exprent {
 
   public void adjustConstType(VarType expectedType) {
     // BYTECHAR and SHORTCHAR => CHAR in the CHAR context
-    if (expectedType.equals(VarType.VARTYPE_CHAR) &&
+    if ((expectedType.equals(VarType.VARTYPE_CHAR) || expectedType.equals(VarType.VARTYPE_CHARACTER)) &&
             (constType.equals(VarType.VARTYPE_BYTECHAR) || constType.equals(VarType.VARTYPE_SHORTCHAR))) {
       int intValue = getIntValue();
       if (isPrintableAscii(intValue) || CHAR_ESCAPES.containsKey(intValue)) {
         setConstType(VarType.VARTYPE_CHAR);
       }
     }
-    // CHAR => INT in the INT context
-    else if (expectedType.equals(VarType.VARTYPE_INT) &&
-            constType.equals(VarType.VARTYPE_CHAR)) {
+    // BYTE, BYTECHAR, SHORTCHAR, SHORT, CHAR => INT in the INT context
+    else if ((expectedType.equals(VarType.VARTYPE_INT) || expectedType.equals(VarType.VARTYPE_INTEGER)) &&
+            constType.typeFamily == CodeConstants.TYPE_FAMILY_INTEGER) {
       setConstType(VarType.VARTYPE_INT);
     }
   }

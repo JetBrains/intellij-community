@@ -162,6 +162,10 @@ final class Solver {
     resultUtil = new ResultUtil(lattice);
   }
 
+  Result getUnknownResult() {
+    return new Final(unstableValue);
+  }
+
   void addEquation(Equation equation) {
     EKey key = equation.key;
     CoreHKey coreKey = new CoreHKey(key.method, key.dirKey);
@@ -170,7 +174,7 @@ final class Solver {
     if (previousEquation == null) {
       equations.put(coreKey, equation);
     } else {
-      EKey joinKey = new EKey(coreKey.myMethod, coreKey.dirKey, equation.key.stable && previousEquation.key.stable, true);
+      EKey joinKey = new EKey(coreKey.myMethod, coreKey.dirKey, equation.key.stable && previousEquation.key.stable, false);
       Result joinResult = resultUtil.join(equation.result, previousEquation.result);
       Equation joinEquation = new Equation(joinKey, joinResult);
       equations.put(coreKey, joinEquation);

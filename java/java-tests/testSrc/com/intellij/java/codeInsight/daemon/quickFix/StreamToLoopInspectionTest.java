@@ -30,7 +30,7 @@ public class StreamToLoopInspectionTest extends LightQuickFixParameterizedTestCa
     return new LocalInspectionTool[]{inspection};
   }
 
-  public void test() throws Exception { doAllTests(); }
+  public void test() { doAllTests(); }
 
   @Override
   protected String getBasePath() {

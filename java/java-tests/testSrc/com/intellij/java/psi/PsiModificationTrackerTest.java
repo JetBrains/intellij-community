@@ -26,6 +26,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.pom.java.LanguageLevel;
@@ -36,6 +37,7 @@ import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.*;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
@@ -44,6 +46,7 @@ import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 
 /**
  * @author Dmitry Avdeev
@@ -57,37 +60,37 @@ public class PsiModificationTrackerTest extends CodeInsightTestCase {
     PsiTestUtil.addSourceContentToRoots(getModule(), getProject().getBaseDir());
   }
 
-  public void testAnnotationNotChanged() throws Exception {
+  public void testAnnotationNotChanged() {
     doReplaceTest("@SuppressWarnings(\"zz\")\n" +
                   "public class Foo { <selection></selection>}",
                   "hi");
   }
 
-  public void testAnnotationNameChanged() throws Exception {
+  public void testAnnotationNameChanged() {
     doReplaceTest("@Suppr<selection>ess</selection>Warnings(\"zz\")\n" +
                   "public class Foo { }",
                   "hi");
   }
 
-  public void testAnnotationParameterChanged() throws Exception {
+  public void testAnnotationParameterChanged() {
     doReplaceTest("@SuppressWarnings(\"<selection>zz</selection>\")\n" +
                   "public class Foo { }",
                   "hi");
   }
 
-  public void testAnnotationRemoved() throws Exception {
+  public void testAnnotationRemoved() {
     doReplaceTest("<selection>@SuppressWarnings(\"zz\")</selection>\n" +
                   "public class Foo { }",
                   "");
   }
 
-  public void testAnnotationWithClassRemoved() throws Exception {
+  public void testAnnotationWithClassRemoved() {
     doReplaceTest("<selection>@SuppressWarnings(\"zz\")\n" +
                   "public </selection> class Foo { }",
                   "");
   }
 
-  public void testRemoveAnnotatedMethod() throws Exception {
+  public void testRemoveAnnotatedMethod() {
     doReplaceTest("public class Foo {\n" +
                   "  <selection>  " +
                   "   @SuppressWarnings(\"\")\n" +
@@ -97,7 +100,7 @@ public class PsiModificationTrackerTest extends CodeInsightTestCase {
                   "");
   }
 
-  public void testRenameAnnotatedMethod() throws Exception {
+  public void testRenameAnnotatedMethod() {
     doReplaceTest("public class Foo {\n" +
                   "   @SuppressWarnings(\"\")\n" +
                   "    public void me<selection>th</selection>od() {}\n" +
@@ -105,7 +108,7 @@ public class PsiModificationTrackerTest extends CodeInsightTestCase {
                   "zzz");
   }
 
-  public void testRenameAnnotatedClass() throws Exception {
+  public void testRenameAnnotatedClass() {
     doReplaceTest("   @SuppressWarnings(\"\")\n" +
                   "public class F<selection>o</selection>o {\n" +
                   "    public void method() {}\n" +
@@ -113,13 +116,13 @@ public class PsiModificationTrackerTest extends CodeInsightTestCase {
                   "zzz");
   }
 
-  public void testRemoveAll() throws Exception {
+  public void testRemoveAll() {
     doReplaceTest("<selection>@SuppressWarnings(\"zz\")\n" +
                   "public  class Foo { }</selection>",
                   "");
   }
 
-  public void testRemoveFile() throws Exception {
+  public void testRemoveFile() {
     doTest("<selection>@SuppressWarnings(\"zz\")\n" +
            "public  class Foo { }</selection>",
            psiFile -> {
@@ -435,7 +438,7 @@ public class PsiModificationTrackerTest extends CodeInsightTestCase {
     assertTrue(ocb != tracker.getOutOfCodeBlockModificationCount());
   }
 
-  public void testNoIncrementOnWorkspaceFileChange() throws Exception {
+  public void testNoIncrementOnWorkspaceFileChange() {
     FixtureRuleKt.runInLoadComponentStateMode(myProject, () -> {
       ProjectKt.getStateStore(myProject).save(new SmartList<>());
 
@@ -496,4 +499,34 @@ public class PsiModificationTrackerTest extends CodeInsightTestCase {
 
     assertEquals(javaCount, tracker.getJavaStructureModificationCount());
     assertFalse(codeBlockCount == tracker.getOutOfCodeBlockModificationCount());
-  }}
+  }
+
+  public void testChangeBothInsideAnonymousAndOutsideShouldAdvanceJavaModStructureAndClearCaches() {
+    PsiFile file = configureByText(JavaFileType.INSTANCE, "class A{ void bar() {\n" +
+                                                          "int a = foo().goo();\n" +
+                                                          "Object r = new Object() {\n" +
+                                                          "  void foo() {}\n" +
+                                                          "};\n" +
+                                                          "}}");
+
+    PsiAnonymousClass anon = SyntaxTraverser.psiTraverser(file).filter(PsiAnonymousClass.class).first();
+    Arrays.stream(anon.getAllMethods()).forEach(PsiUtilCore::ensureValid);
+
+    PsiModificationTracker tracker = PsiManager.getInstance(getProject()).getModificationTracker();
+    long javaCount = tracker.getJavaStructureModificationCount();
+
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      TextRange methodRange = anon.getMethods()[0].getTextRange();
+      getEditor().getDocument().deleteString(methodRange.getStartOffset(), methodRange.getEndOffset());
+      
+      int gooIndex = file.getText().indexOf("goo");
+      getEditor().getDocument().deleteString(gooIndex, gooIndex + 3);
+      
+      PsiDocumentManager.getInstance(myProject).commitDocument(getEditor().getDocument());
+    });
+
+    Arrays.stream(anon.getAllMethods()).forEach(PsiUtilCore::ensureValid);
+    assertFalse(javaCount == tracker.getJavaStructureModificationCount());
+  }
+
+}

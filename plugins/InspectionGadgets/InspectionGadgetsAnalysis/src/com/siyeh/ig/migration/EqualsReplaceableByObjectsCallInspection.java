@@ -125,6 +125,9 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
       if (qualifierExpression instanceof PsiThisExpression || qualifierExpression instanceof PsiSuperExpression) {
         return;
       }
+      if (isNotNullExpressionOrConstant(qualifierExpression)) {
+        return;
+      }
       final PsiElement parentExpression =
         PsiTreeUtil.skipParentsOfType(expression, PsiParenthesizedExpression.class, PsiPrefixExpression.class);
       if (parentExpression instanceof PsiBinaryExpression) {
@@ -271,6 +274,33 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
       return EQUIVALENCE.expressionsAreEquivalent(leftOperand, part1) && EQUIVALENCE.expressionsAreEquivalent(rightOperand, part2) ||
              EQUIVALENCE.expressionsAreEquivalent(leftOperand, part2) && EQUIVALENCE.expressionsAreEquivalent(rightOperand, part1);
     }
+  }
+
+  private static boolean isNotNullExpressionOrConstant(PsiExpression expression) {
+    int preventEndlessLoop = 5;
+    expression = ParenthesesUtils.stripParentheses(expression);
+    while (expression instanceof PsiReferenceExpression) {
+      if (--preventEndlessLoop == 0) return false;
+      expression = findFinalVariableDefinition((PsiReferenceExpression)expression);
+    }
+    if (expression instanceof PsiNewExpression ||
+        expression instanceof PsiArrayInitializerExpression ||
+        expression instanceof PsiClassObjectAccessExpression) {
+      return true;
+    }
+    return PsiUtil.isConstantExpression(expression);
+  }
+
+  @Nullable
+  private static PsiExpression findFinalVariableDefinition(@NotNull PsiReferenceExpression expression) {
+    final PsiElement resolved = expression.resolve();
+    if (resolved instanceof PsiVariable) {
+      final PsiVariable variable = (PsiVariable)resolved;
+      if (variable.hasModifierProperty(PsiModifier.FINAL)) {
+        return ParenthesesUtils.stripParentheses(variable.getInitializer());
+      }
+    }
+    return null;
   }
 
   private static PsiExpression getArgumentExpression(PsiMethodCallExpression callExpression) {

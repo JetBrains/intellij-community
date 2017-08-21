@@ -29,7 +29,7 @@ import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
  */
 public class TaskUiTest extends CodeInsightFixtureTestCase {
 
-  public void testTaskComboVisible() throws Exception {
+  public void testTaskComboVisible() {
 
     SwitchTaskAction combo = null;
     ActionGroup group = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_MAIN_TOOLBAR);

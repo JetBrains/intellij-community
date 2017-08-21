@@ -34,12 +34,12 @@ public class UnderscoresInLiteralsTest extends JavaCodeInsightFixtureTestCase {
     return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/underscoresInLiterals/";
   }
 
-  public void testRemove() throws Exception {
+  public void testRemove() {
     final String removeIntention = CodeInsightBundle.message("intention.remove.literal.underscores");
     CodeInsightTestUtil.doIntentionTest(myFixture, removeIntention, "WithUnderscores.java", "WithoutUnderscores.java");
   }
 
-  public void testInsert() throws Exception {
+  public void testInsert() {
     final String insertIntention = CodeInsightBundle.message("intention.insert.literal.underscores");
     CodeInsightTestUtil.doIntentionTest(myFixture, insertIntention, "WithoutUnderscores.java", "WithUnderscores.java");
   }

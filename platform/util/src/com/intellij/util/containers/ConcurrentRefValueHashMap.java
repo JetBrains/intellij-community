@@ -17,7 +17,6 @@
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.text.StringUtil;
-import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.ReferenceQueue;
@@ -33,30 +32,10 @@ import java.util.concurrent.ConcurrentMap;
  * Null values are NOT allowed
  */
 abstract class ConcurrentRefValueHashMap<K, V> implements ConcurrentMap<K, V> {
-  private final ConcurrentMap<K, ValueReference<K, V>> myMap;
+  private final ConcurrentMap<K, ValueReference<K, V>> myMap = ContainerUtil.newConcurrentMap();
   protected final ReferenceQueue<V> myQueue = new ReferenceQueue<V>();
 
-  public ConcurrentRefValueHashMap(@NotNull Map<K, V> map) {
-    this();
-    putAll(map);
-  }
-
-  public ConcurrentRefValueHashMap() {
-    myMap = ContainerUtil.newConcurrentMap();
-  }
-
-  public ConcurrentRefValueHashMap(int initialCapacity, float loadFactor, int concurrencyLevel) {
-    myMap = ContainerUtil.newConcurrentMap(initialCapacity, loadFactor, concurrencyLevel);
-  }
-
-  public ConcurrentRefValueHashMap(int initialCapacity,
-                                   float loadFactor,
-                                   int concurrencyLevel,
-                                   @NotNull TObjectHashingStrategy<K> hashingStrategy) {
-    myMap = ContainerUtil.newConcurrentMap(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy);
-  }
-
-  protected interface ValueReference<K, V> {
+  interface ValueReference<K, V> {
     @NotNull
     K getKey();
 
@@ -92,7 +71,7 @@ abstract class ConcurrentRefValueHashMap<K, V> implements ConcurrentMap<K, V> {
   }
 
   @NotNull
-  protected abstract ValueReference<K, V> createValueReference(@NotNull K key, @NotNull V value);
+  abstract ValueReference<K, V> createValueReference(@NotNull K key, @NotNull V value);
 
   @Override
   public V putIfAbsent(@NotNull K key, @NotNull V value) {

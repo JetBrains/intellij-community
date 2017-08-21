@@ -19,7 +19,7 @@ import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
 
 @NonNls public class ErrorMessageTest extends TestCase {
-  public void test() throws Exception{
+  public void test() {
 
     doTest(1, 1, "One error and one warning found.");
     doTest(0, 1, "No errors and one warning found.");

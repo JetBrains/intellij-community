@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.changes.actions;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -24,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesBrowserUseCase;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,12 +34,17 @@ import java.util.List;
 
 import static com.intellij.openapi.vcs.changes.actions.diff.ShowDiffAction.showDiffForChange;
 
-/**
- * @author yole
- */
 public class ShowDiffWithLocalAction extends AnAction implements DumbAware {
+  private final boolean myUseBeforeVersion;
+
   public ShowDiffWithLocalAction() {
-    ActionUtil.copyFrom(this, "Vcs.ShowDiffWithLocal");
+    this(false);
+    getTemplatePresentation().setIcon(AllIcons.Actions.DiffWithCurrent);
+  }
+
+  public ShowDiffWithLocalAction(boolean useBeforeVersion) {
+    myUseBeforeVersion = useBeforeVersion;
+    ActionUtil.copyFrom(this, useBeforeVersion ? "Vcs.ShowDiffWithLocal.Before" : "Vcs.ShowDiffWithLocal");
   }
 
   public void actionPerformed(AnActionEvent e) {
@@ -49,9 +56,9 @@ public class ShowDiffWithLocalAction extends AnAction implements DumbAware {
     List<Change> changesToLocal = new ArrayList<>();
     for (int i = 0; i < selection.getChanges().size(); i++) {
       if (i == selection.getIndex()) index = changesToLocal.size();
-      ContentRevision afterRevision = selection.getChanges().get(i).getAfterRevision();
-      if (afterRevision != null && isValidAfterRevision(afterRevision)) {
-        changesToLocal.add(new Change(afterRevision, getCurrentRevision(afterRevision, e)));
+      Change change = getChangeWithLocal(selection.getChanges().get(i));
+      if (change != null) {
+        changesToLocal.add(change);
       }
     }
 
@@ -60,29 +67,30 @@ public class ShowDiffWithLocalAction extends AnAction implements DumbAware {
     }
   }
 
-  @NotNull
-  protected ContentRevision getCurrentRevision(@NotNull ContentRevision afterRevision, @NotNull AnActionEvent e) {
-    return CurrentContentRevision.create(afterRevision.getFile());
-  }
-
   public void update(final AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     ChangesSelection selection = e.getData(VcsDataKeys.CHANGES_SELECTION);
     boolean isInAir = CommittedChangesBrowserUseCase.IN_AIR.equals(CommittedChangesBrowserUseCase.DATA_KEY.getData(e.getDataContext()));
+    boolean isToolbar = "ChangesBrowser".equals(e.getPlace());
 
-    e.getPresentation().setEnabled(project != null && selection != null && !isInAir && anyHasAfterRevision(selection.getChanges()));
+    e.getPresentation().setEnabled(project != null && !isToolbar && selection != null && !isInAir && canShowDiff(selection.getChanges()));
+    e.getPresentation().setVisible(!isToolbar);
   }
 
-  private static boolean isValidAfterRevision(@Nullable final ContentRevision afterRevision) {
-    return afterRevision != null && !afterRevision.getFile().isNonLocal() && !afterRevision.getFile().isDirectory();
+  @Nullable
+  private Change getChangeWithLocal(@NotNull Change c) {
+    ContentRevision revision = myUseBeforeVersion ? c.getBeforeRevision() : c.getAfterRevision();
+    if (!isValidRevision(revision)) return null;
+
+    ContentRevision contentRevision = CurrentContentRevision.create(revision.getFile());
+    return new Change(revision, contentRevision);
   }
 
-  private static boolean anyHasAfterRevision(@NotNull final List<Change> changes) {
-    for (Change c : changes) {
-      if (isValidAfterRevision(c.getAfterRevision())) {
-        return true;
-      }
-    }
-    return false;
+  private boolean canShowDiff(@NotNull List<Change> changes) {
+    return ContainerUtil.exists(changes, c -> getChangeWithLocal(c) != null);
+  }
+
+  private static boolean isValidRevision(@Nullable ContentRevision revision) {
+    return revision != null && !revision.getFile().isNonLocal() && !revision.getFile().isDirectory();
   }
 }

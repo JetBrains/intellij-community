@@ -21,9 +21,11 @@ import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.RetrievableIcon;
-import com.intellij.util.*;
+import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.ImageLoader;
+import com.intellij.util.ReflectionUtil;
+import com.intellij.util.RetinaImage;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.WeakHashMap;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBImageIcon;
 import com.intellij.util.ui.JBUI;
@@ -52,9 +54,9 @@ public final class IconLoader {
   /**
    * This cache contains mapping between icons and disabled icons.
    */
-  private static final Map<Icon, Icon> ourIcon2DisabledIcon = new WeakHashMap<Icon, Icon>(200);
+  private static final Map<Icon, Icon> ourIcon2DisabledIcon = ContainerUtil.createWeakMap(200);
   @NonNls private static final List<IconPathPatcher> ourPatchers = new ArrayList<IconPathPatcher>(2);
-  public static boolean STRICT = false;
+  public static boolean STRICT;
 
   private static boolean USE_DARK_ICONS = UIUtil.isUnderDarcula();
 
@@ -71,7 +73,7 @@ public final class IconLoader {
     }
   };
 
-  private static boolean ourIsActivated = false;
+  private static boolean ourIsActivated;
 
   private IconLoader() { }
 
@@ -292,7 +294,7 @@ public final class IconLoader {
   /**
    * Gets (creates if necessary) disabled icon based on the passed one.
    *
-   * @return <code>ImageIcon</code> constructed from disabled image of passed icon.
+   * @return {@code ImageIcon} constructed from disabled image of passed icon.
    */
   @Nullable
   public static Icon getDisabledIcon(Icon icon) {

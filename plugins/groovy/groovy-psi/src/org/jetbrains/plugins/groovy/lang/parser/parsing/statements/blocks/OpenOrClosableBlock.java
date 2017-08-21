@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.blocks;
 
 import com.intellij.lang.PsiBuilder;
+import com.intellij.lang.PsiBuilderUtil;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -70,25 +71,7 @@ public class OpenOrClosableBlock {
   }
 
   public static void parseBlockShallow(PsiBuilder builder, IElementType blockType) {
-    final PsiBuilder.Marker blockStart = builder.mark();
-    int braceCount = 0;
-    while (true) {
-      final IElementType tokenType = builder.getTokenType();
-      if (tokenType == null) {
-        break;
-      }
-
-      if (tokenType == GroovyTokenTypes.mLCURLY) {
-        braceCount++;
-      } else if (tokenType == GroovyTokenTypes.mRCURLY) {
-        braceCount--;
-      }
-      builder.advanceLexer();
-      if (braceCount == 0) {
-        break;
-      }
-    }
-    blockStart.collapse(blockType);
+    PsiBuilderUtil.parseBlockLazy(builder, GroovyTokenTypes.mLCURLY, GroovyTokenTypes.mRCURLY, blockType);
   }
 
   public static void parseClosableBlockDeep(PsiBuilder builder, GroovyParser parser) {
@@ -108,5 +91,4 @@ public class OpenOrClosableBlock {
     ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
     ParserUtils.getToken(builder, GroovyTokenTypes.mCLOSABLE_BLOCK_OP);
   }
-
 }

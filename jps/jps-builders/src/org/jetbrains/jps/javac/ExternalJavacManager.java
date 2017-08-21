@@ -15,16 +15,15 @@
  */
 package org.jetbrains.jps.javac;
 
-import com.intellij.execution.process.BaseOSProcessHandler;
-import com.intellij.execution.process.ProcessAdapter;
-import com.intellij.execution.process.ProcessEvent;
-import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.process.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.containers.ContainerUtil;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
 import io.netty.channel.group.ChannelGroup;
@@ -44,9 +43,8 @@ import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.builders.java.JavaCompilingTool;
 import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.incremental.GlobalContextKey;
-import org.jetbrains.jps.service.SharedThreadPool;
 
-import javax.tools.Diagnostic;
+import javax.tools.*;
 import java.io.File;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -72,6 +70,7 @@ public class ExternalJavacManager {
   private final ChannelRegistrar myChannelRegistrar;
   private final Map<UUID, JavacProcessDescriptor> myMessageHandlers = new HashMap<>();
   private int myListenPort = DEFAULT_SERVER_PORT;
+  private final Set<ProcessHandler> myRunningHandlers = ContainerUtil.newConcurrentSet();
 
   public ExternalJavacManager(@NotNull final File workingDir) {
     myWorkingDir = workingDir;
@@ -81,7 +80,7 @@ public class ExternalJavacManager {
   public void start(int listenPort) {
     final ChannelHandler compilationRequestsHandler = new CompilationRequestsHandler();
     final ServerBootstrap bootstrap = new ServerBootstrap()
-      .group(new NioEventLoopGroup(1, SharedThreadPool.getInstance()))
+      .group(new NioEventLoopGroup(1, ConcurrencyUtil.newNamedThreadFactory("Javac server event loop")))
       .channel(NioServerSocketChannel.class)
       .childOption(ChannelOption.TCP_NODELAY, true)
       .childOption(ChannelOption.SO_KEEPALIVE, true)
@@ -132,8 +131,15 @@ public class ExternalJavacManager {
       final ExternalJavacProcessHandler processHandler = launchExternalJavacProcess(
         uuid, javaHome, heapSize, myListenPort, myWorkingDir, vmOptions, compilingTool
       );
+      myRunningHandlers.add(processHandler);
       processHandler.addProcessListener(new ProcessAdapter() {
-        public void onTextAvailable(ProcessEvent event, Key outputType) {
+        @Override
+        public void processTerminated(@NotNull ProcessEvent event) {
+          myRunningHandlers.remove(processHandler);
+        }
+
+        @Override
+        public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
           final String text = event.getText();
           if (!StringUtil.isEmptyOrSpaces(text)) {
             String prefix = null;
@@ -161,7 +167,7 @@ public class ExternalJavacManager {
           processDescriptor.cancelBuild();
         }
       }
-
+      System.out.println(processHandler.isProcessTerminated());
       return rh.isTerminatedSuccessfully();
     }
     catch (Throwable e) {
@@ -172,6 +178,16 @@ public class ExternalJavacManager {
       unregisterMessageHandler(uuid);
     }
     return false;
+  }
+
+  // returns true if all process handlers terminated
+  public boolean waitForAllProcessHandlers(long time, TimeUnit unit) {
+    for (ProcessHandler handler : myRunningHandlers) {
+      if (!handler.waitFor(unit.toMillis(time))) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private void unregisterMessageHandler(UUID uuid) {
@@ -296,12 +312,13 @@ public class ExternalJavacManager {
       super(process, commandLine, null);
       addProcessListener(new ProcessAdapter() {
         @Override
-        public void processTerminated(ProcessEvent event) {
+        public void processTerminated(@NotNull ProcessEvent event) {
           myExitCode = event.getExitCode();
         }
       });
     }
 
+    @Override
     @NotNull
     public Integer getExitCode() {
       return myExitCode;

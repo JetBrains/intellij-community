@@ -357,7 +357,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
     storageLock.write {
       try {
         virtualFileTracker?.let {
-          storages.forEachEntry { collapsedPath, storage ->
+          storages.forEachEntry { collapsedPath, _ ->
             it.remove(expandMacros(collapsedPath))
             true
           }
@@ -492,7 +492,7 @@ fun removeMacroIfStartsWith(path: String, macro: String) = if (path.startsWithMa
 
 @Suppress("DEPRECATION")
 internal val Storage.path: String
-  get() = if (value.isNullOrEmpty()) file else value
+  get() = if (value.isEmpty()) file else value
 
 
 private fun getEffectiveRoamingType(roamingType: RoamingType, collapsedPath: String): RoamingType {

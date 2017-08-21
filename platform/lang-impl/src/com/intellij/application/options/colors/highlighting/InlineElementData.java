@@ -16,6 +16,7 @@
 package com.intellij.application.options.colors.highlighting;
 
 import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager;
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorCustomElementRenderer;
 import com.intellij.openapi.editor.Inlay;
@@ -53,7 +54,10 @@ public class InlineElementData extends HighlightData {
   @Override
   public void addHighlToView(Editor view, EditorColorsScheme scheme, Map<TextAttributesKey, String> displayText) {
     int offset = getStartOffset();
-    ParameterHintsPresentationManager.getInstance().addHint(view, offset, myText, false, false);
+    ParameterHintsPresentationManager hintsPresentationManager = ParameterHintsPresentationManager.getInstance();
+    Inlay hint = hintsPresentationManager.addHint(view, offset, false, myText, false);
+    hintsPresentationManager.setHighlighted(hint, 
+                                            DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT_HIGHLIGHTED.equals(getHighlightKey()));
     List<Inlay> inlays = view.getInlayModel().getInlineElementsInRange(offset, offset);
     for (Inlay inlay : inlays) {
       EditorCustomElementRenderer renderer = inlay.getRenderer();
@@ -85,8 +89,8 @@ public class InlineElementData extends HighlightData {
     }
 
     @Override
-    public void paint(@NotNull Editor editor, @NotNull Graphics g, @NotNull Rectangle r) {
-      myDelegate.paint(editor, g, r);
+    public void paint(@NotNull Editor editor, @NotNull Graphics g, @NotNull Rectangle r, @NotNull TextAttributes textAttributes) {
+      myDelegate.paint(editor, g, r, textAttributes);
       if (drawBorder) {
         TextAttributes attributes = editor.getColorsScheme().getAttributes(BLINKING_HIGHLIGHTS_ATTRIBUTES);
         if (attributes != null && attributes.getEffectColor() != null) {

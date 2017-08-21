@@ -209,7 +209,9 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
 
     callStack.push(this);
     for (RefElement refCaller : getInReferences()) {
-      if (!((RefElementImpl)refCaller).isSuspicious() || !((RefJavaElementImpl)refCaller).isCalledOnlyFrom(refElement, callStack)) {
+      if (!((RefElementImpl)refCaller).isSuspicious() ||
+          !(refCaller instanceof RefJavaElementImpl) ||
+          !((RefJavaElementImpl)refCaller).isCalledOnlyFrom(refElement, callStack)) {
         callStack.pop();
         return false;
       }

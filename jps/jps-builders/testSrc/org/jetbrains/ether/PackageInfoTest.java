@@ -20,19 +20,19 @@ package org.jetbrains.ether;
  * Date: 04.10.11
  */
 public class PackageInfoTest extends IncrementalTestCase {
-  public PackageInfoTest() throws Exception {
+  public PackageInfoTest() {
     super("packageInfo");
   }
 
-  public void testPackageInfoNoRecompile() throws Exception {
+  public void testPackageInfoNoRecompile() {
     doTest();
   }
 
-  public void testPackageInfoNoRecompile2() throws Exception {
+  public void testPackageInfoNoRecompile2() {
     doTest();
   }
 
-  public void testPackageInfoRecompileOnConstantChange() throws Exception {
+  public void testPackageInfoRecompileOnConstantChange() {
     doTest();
   }
 }

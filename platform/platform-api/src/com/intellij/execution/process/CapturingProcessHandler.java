@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -99,6 +99,7 @@ public class CapturingProcessHandler extends OSProcessHandler {
    * @param destroyOnTimeout whether to kill the process after timeout passes
    */
   public ProcessOutput runProcess(int timeoutInMilliseconds, boolean destroyOnTimeout) {
+    // keep in sync with runProcessWithProgressIndicator
     if (timeoutInMilliseconds <= 0) {
       return runProcess();
     }
@@ -124,7 +125,7 @@ public class CapturingProcessHandler extends OSProcessHandler {
 
   @NotNull
   public ProcessOutput runProcessWithProgressIndicator(@NotNull ProgressIndicator indicator) {
-    return runProcessWithProgressIndicator(indicator, Integer.MAX_VALUE);
+    return runProcessWithProgressIndicator(indicator, -1);
   }
 
   @NotNull
@@ -134,6 +135,11 @@ public class CapturingProcessHandler extends OSProcessHandler {
 
   @NotNull
   public ProcessOutput runProcessWithProgressIndicator(@NotNull ProgressIndicator indicator, int timeoutInMilliseconds, boolean destroyOnTimeout) {
+    // keep in sync with runProcess
+    if (timeoutInMilliseconds <= 0) {
+      timeoutInMilliseconds = Integer.MAX_VALUE;
+    }
+
     final int WAIT_INTERVAL = 100;
     int waitingTime = 0;
     boolean setExitCode = true;

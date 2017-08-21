@@ -127,13 +127,13 @@ public class IpnbCommandLineState extends PythonCommandLineState {
 
     processHandler.addProcessListener(new ProcessAdapter() {
       @Override
-      public void onTextAvailable(ProcessEvent event, Key outputType) {
+      public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
         @NonNls final String text = event.getText();
         if (text.toLowerCase().contains("active kernels")) {
           serverStarted.set(true);
         }
         final String token = "?token=";
-        if (text.toLowerCase().contains(token)) {
+        if (text.toLowerCase().contains(token) && StringUtil.isEmpty(myConfiguration.getToken())) {
           myConfiguration.setToken(text.substring(text.indexOf(token) + token.length()).trim());
         }
       }

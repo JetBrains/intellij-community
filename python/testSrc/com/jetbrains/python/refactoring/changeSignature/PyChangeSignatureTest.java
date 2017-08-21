@@ -232,7 +232,7 @@ public class PyChangeSignatureTest extends PyTestCase {
   }
 
   // PY-14774
-  public void testAnnotationsForStarredParametersAreNotShownInDialog() throws Exception {
+  public void testAnnotationsForStarredParametersAreNotShownInDialog() {
     runWithLanguageLevel(LanguageLevel.PYTHON30, () -> {
       myFixture.configureByText(PythonFileType.INSTANCE, "def func(a, b:int, *args: tuple, c:list, d:str='foo', ** kwargs:dict):\n" +
                                                          "    pass");
@@ -244,28 +244,28 @@ public class PyChangeSignatureTest extends PyTestCase {
     });
   }
 
-  public void testDuplicateNamesOfStarredParameters() throws Exception {
+  public void testDuplicateNamesOfStarredParameters() {
     final PyParameterInfo firstParam = new PyParameterInfo(0, "*foo", null, false);
     firstParam.setName("*bar");
     doValidationTest(null, Arrays.asList(firstParam, new PyParameterInfo(1, "**bar", null, false)),
                      PyBundle.message("ANN.duplicate.param.name"));
   }
 
-  public void testMultipleSingleStarredParameters() throws Exception {
+  public void testMultipleSingleStarredParameters() {
     final PyParameterInfo firstParam = new PyParameterInfo(0, "foo", null, false);
     firstParam.setName("*foo");
     doValidationTest(null, Arrays.asList(firstParam, new PyParameterInfo(1, "*bar", null, false)),
                      PyBundle.message("refactoring.change.signature.dialog.validation.multiple.star"));
   }
 
-  public void testMultipleDoubleStarredParameters() throws Exception {
+  public void testMultipleDoubleStarredParameters() {
     final PyParameterInfo firstParam = new PyParameterInfo(0, "foo", null, false);
     firstParam.setName("**foo");
     doValidationTest(null, Arrays.asList(firstParam, new PyParameterInfo(1, "**bar", null, false)),
                      PyBundle.message("refactoring.change.signature.dialog.validation.multiple.double.star"));
   }
 
-  public void testParameterNameWithMoreThanTwoStars() throws Exception {
+  public void testParameterNameWithMoreThanTwoStars() {
     final PyParameterInfo firstParam = new PyParameterInfo(0, "**kwargs", null, false);
     firstParam.setName("***kwargs");
     doValidationTest(null, Arrays.asList(firstParam), PyBundle.message("refactoring.change.signature.dialog.validation.parameter.name"));

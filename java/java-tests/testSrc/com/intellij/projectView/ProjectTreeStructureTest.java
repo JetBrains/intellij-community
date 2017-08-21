@@ -190,7 +190,7 @@ public class ProjectTreeStructureTest extends BaseProjectViewTestCase {
                          " testContentRootUnderExcluded.iml\n");
   }
 
-  public void testQualifiedModuleNames() throws Exception {
+  public void testQualifiedModuleNames() {
     VirtualFile testDataRoot = ModuleRootManager.getInstance(myModule).getContentRoots()[0];
     Module a = createModule("a");
     PsiTestUtil.addContentRoot(a, testDataRoot.findFileByRelativePath("a"));

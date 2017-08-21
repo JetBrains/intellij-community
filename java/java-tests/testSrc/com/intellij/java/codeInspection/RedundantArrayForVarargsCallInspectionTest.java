@@ -36,11 +36,11 @@ public class RedundantArrayForVarargsCallInspectionTest extends LightInspectionT
     return new RedundantArrayForVarargsCallInspection();
   }
 
-  public void testIDEADEV15215() throws Exception { doTest(); }
-  public void testIDEADEV25923() throws Exception { doTest(); }
-  public void testNestedArray() throws Exception { doTest(); }
-  public void testCheckEnumConstant() throws Exception { doTest(); }
-  public void testGeneric() throws Exception { doTest(); }
-  public void testRawArray() throws Exception { doTest(); }
-  public void testPolymorphicSignature() throws Exception { doTest(); }
+  public void testIDEADEV15215() { doTest(); }
+  public void testIDEADEV25923() { doTest(); }
+  public void testNestedArray() { doTest(); }
+  public void testCheckEnumConstant() { doTest(); }
+  public void testGeneric() { doTest(); }
+  public void testRawArray() { doTest(); }
+  public void testPolymorphicSignature() { doTest(); }
 }

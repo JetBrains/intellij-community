@@ -21,11 +21,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import jetCheck.Generator;
+import jetCheck.PropertyChecker;
 import org.jdom.Verifier;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
-import slowCheck.Generator;
-import slowCheck.PropertyChecker;
 
 import java.nio.CharBuffer;
 import java.util.Arrays;
@@ -40,7 +40,7 @@ import static org.junit.Assert.*;
  */
 public class StringUtilTest {
   @Test
-  public void testTrimLeadingChar() throws Exception {
+  public void testTrimLeadingChar() {
     doTestTrimLeading("", "");
     doTestTrimLeading("", " ");
     doTestTrimLeading("", "    ");
@@ -49,7 +49,7 @@ public class StringUtilTest {
   }
 
   @Test
-  public void testTrimTrailingChar() throws Exception {
+  public void testTrimTrailingChar() {
     doTestTrimTrailing("", "");
     doTestTrimTrailing("", " ");
     doTestTrimTrailing("", "    ");
@@ -94,7 +94,7 @@ public class StringUtilTest {
   }
 
   @Test
-  public void testIsEmptyOrSpaces() throws Exception {
+  public void testIsEmptyOrSpaces() {
     assertTrue(StringUtil.isEmptyOrSpaces(null));
     assertTrue(StringUtil.isEmptyOrSpaces(""));
     assertTrue(StringUtil.isEmptyOrSpaces("                   "));
@@ -186,7 +186,7 @@ public class StringUtilTest {
 
   @Test
   public void testNaturalCompareTransitivityProperty() {
-    PropertyChecker.forAll(Generator.listsOf(Generator.stringsOf("ab01()_# ")), l -> {
+    PropertyChecker.forAll(Generator.listsOf(Generator.stringsOf("ab01()_# "))).shouldHold(l -> {
       List<String> sorted = ContainerUtil.sorted(l, StringUtil::naturalCompare);
       for (int i = 0; i < sorted.size(); i++) {
         for (int j = i + 1; j < sorted.size(); j++) {

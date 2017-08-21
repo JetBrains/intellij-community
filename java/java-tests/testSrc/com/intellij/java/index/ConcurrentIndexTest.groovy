@@ -19,10 +19,11 @@ import com.intellij.lang.FCTSBackedLighterAST
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.psi.JavaPsiFacade
-import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiJavaFile
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.impl.CoreProgressManager
+import com.intellij.psi.*
 import com.intellij.psi.impl.PsiDocumentManagerBase
 import com.intellij.psi.impl.search.JavaNullMethodArgumentUtil
 import com.intellij.psi.impl.source.PsiFileImpl
@@ -32,6 +33,8 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.SkipSlowTestLocally
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.util.ref.GCUtil
+import groovy.transform.CompileStatic
+import org.jetbrains.annotations.NotNull
 
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Future
@@ -39,6 +42,7 @@ import java.util.concurrent.Future
  * @author peter
  */
 @SkipSlowTestLocally
+@CompileStatic
 class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
   @Override
   protected void setUp() throws Exception {
@@ -48,14 +52,14 @@ class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
 
   void "test concurrent switching with checkCanceled"() {
     def N = Math.max(2, (int)(Runtime.runtime.availableProcessors()))
-    int halfN = N / 2
+    def halfN = N / 2
     for (iteration in 1..200) {
       def name = "Foo" + iteration
 //      if (iteration % 10 == 0) println "Finding $name"
 
       //noinspection GroovyUnusedAssignment
       PsiFile file = myFixture.addFileToProject("${name}.java", "class $name {}")
-      def futuresToWait = []
+      List<Future> futuresToWait = []
       def sameStartCondition = new CountDownLatch(N)
 
       for(i in 1.. halfN) {
@@ -86,8 +90,8 @@ class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
     }
   }
 
-  private void checkFindClass(name) {
-    def clazz = myFixture.findClass(name)
+  private void checkFindClass(String name) {
+    PsiClass clazz = myFixture.findClass(name)
     def node = clazz.node
     if (node == null) {
       assert false
@@ -96,7 +100,7 @@ class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
 
   void "test cancellable and non-cancellable progress"() {
     def N = Math.max(2, (int)(Runtime.runtime.availableProcessors()))
-    int halfN = N / 2
+    def halfN = N / 2
     PsiFileImpl file = (PsiFileImpl) myFixture.addFileToProject("Foo.java", "class Foo {" + ("public void foo() {}\n") * 1000 + "}")
     assert myFixture.findClass("Foo").node
 
@@ -108,7 +112,7 @@ class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
       PlatformTestUtil.tryGcSoftlyReachableObjects()
       assert !file.contentsLoaded
 
-      def futuresToWait = []
+      List<Future> futuresToWait = []
       def sameStartCondition = new CountDownLatch(N)
 
       for(j in 1..halfN) {
@@ -139,7 +143,7 @@ class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
 
   void "test forceUpdateAffectsReadOfDataForUnsavedDocuments"() {
     def N = Math.max(2, (int)(Runtime.runtime.availableProcessors()))
-    int halfN = N / 2
+    def halfN = N / 2
     PsiFileImpl file = (PsiFileImpl) myFixture.addFileToProject("Foo.java", "class Foo {" + ("public void foo() {}\n") * 1000 + "}")
     assert myFixture.findClass("Foo").node
 
@@ -153,7 +157,7 @@ class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
 
       myFixture.addFileToProject("Foo" + i + ".java", "class Foo" + i + " {" + ("public void foo() {}\n") * 1000 + "}")
 
-      def futuresToWait = []
+      List<Future> futuresToWait = []
       def sameStartCondition = new CountDownLatch(N)
 
       for(j in 1..halfN) {
@@ -201,14 +205,19 @@ class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
 
       assert file.node.lighterAST instanceof FCTSBackedLighterAST
       List<Future> futures = []
-      futures << ApplicationManager.application.executeOnPooledThread { ReadAction.run {
-        assert !JavaNullMethodArgumentUtil.hasNullArgument(clazz.methods[0], 0)
-      } }
-      futures << ApplicationManager.application.executeOnPooledThread { ReadAction.run {
-        assert JavaPsiFacade.getInstance(project).findClass('Foo', GlobalSearchScope.allScope(project))
-      } }
+      futures << ((CoreProgressManager)ProgressManager.instance).runProcessWithProgressAsynchronously(new Task.Backgroundable(myFixture.project, "hasNull") {
+        @Override
+        void run(@NotNull ProgressIndicator indicator) { ReadAction.run {
+          assert !JavaNullMethodArgumentUtil.hasNullArgument(clazz.methods[0], 0)
+        }}
+      })
+      futures << ((CoreProgressManager)ProgressManager.instance).runProcessWithProgressAsynchronously(new Task.Backgroundable(myFixture.project, "findClass") {
+        @Override
+        void run(@NotNull ProgressIndicator indicator) { ReadAction.run {
+          assert JavaPsiFacade.getInstance(project).findClass('Foo', GlobalSearchScope.allScope(project))
+        }}
+      })
       futures.each { it.get() }
     }
   }
-
 }

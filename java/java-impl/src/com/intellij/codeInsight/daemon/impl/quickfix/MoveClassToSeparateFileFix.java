@@ -17,6 +17,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -76,16 +77,18 @@ public class MoveClassToSeparateFileFix implements IntentionAction {
     String name = myClass.getName();
     JavaDirectoryService directoryService = JavaDirectoryService.getInstance();
     PsiClass placeHolder = myClass.isInterface() ? directoryService.createInterface(dir, name) : directoryService.createClass(dir, name);
-    PsiClass newClass = (PsiClass)placeHolder.replace(myClass);
-    myClass.delete();
+    WriteAction.run(() -> {
+      PsiClass newClass = (PsiClass)placeHolder.replace(myClass);
+      myClass.delete();
 
-    OpenFileDescriptor descriptor = new OpenFileDescriptor(project, newClass.getContainingFile().getVirtualFile(), newClass.getTextOffset());
-    FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
+      OpenFileDescriptor descriptor = new OpenFileDescriptor(project, newClass.getContainingFile().getVirtualFile(), newClass.getTextOffset());
+      FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
+    });
   }
 
   @Override
   public boolean startInWriteAction() {
-    return true;
+    return false;
   }
 
 }

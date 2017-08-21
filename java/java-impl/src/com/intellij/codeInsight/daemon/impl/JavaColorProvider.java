@@ -42,7 +42,26 @@ import java.util.List;
 public class JavaColorProvider implements ElementColorProvider {
   @Override
   public Color getColorFrom(@NotNull PsiElement element) {
-    return getJavaColorFromExpression(element);
+    if (element.getFirstChild() != null) return null;
+    PsiElement parent = element.getParent();
+    Color color = getJavaColorFromExpression(parent);
+    if (color == null) {
+      parent = parent == null ? null : parent.getParent();
+      color = getJavaColorFromExpression(parent);
+    }
+    UCallExpression newExpression = UastContextKt.toUElement(parent, UCallExpression.class);
+    if (newExpression != null) {
+      UReferenceExpression uRef = newExpression.getClassReference();
+      String resolvedName = uRef == null ? null : uRef.getResolvedName();
+      if (resolvedName != null && element.textMatches(resolvedName)) {
+        return color;
+      }
+    }
+
+    if (isIntLiteralInsideNewJBColorExpression(parent)) {
+      return color;
+    }
+    return null;
   }
 
   public static boolean isColorType(@Nullable PsiType type) {
@@ -64,7 +83,8 @@ public class JavaColorProvider implements ElementColorProvider {
     if (newExpression != null && newExpression.getKind() == UastCallKind.CONSTRUCTOR_CALL &&
         isColorType(newExpression.getReturnType())) {
       return getColor(newExpression.getValueArguments());
-    } else if (isIntLiteralInsideNewJBColorExpression(element)) {
+    }
+    if (isIntLiteralInsideNewJBColorExpression(element)) {
       final String text = element.getText();
       boolean hasAlpha = text != null && StringUtil.startsWithIgnoreCase(text, "0x") && text.length() > 8;
       return new Color(getInt(UastContextKt.toUElement(element, ULiteralExpression.class)), hasAlpha);

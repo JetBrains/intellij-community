@@ -85,25 +85,27 @@ class IdeaSuite extends Suite {
       }
     }
     if (!containsSuiteInside) return children;
-    final Set allNames = new HashSet();
-    for (Iterator iterator = children.iterator(); iterator.hasNext();) {
-      final Object child = iterator.next();
-      allNames.add(describeChild((Runner)child).getDisplayName());
-    }
-    for (Iterator iterator = children.iterator(); iterator.hasNext();) {
-      final Object child = iterator.next();
-      if (isSuite(child)) {
-        skipSuiteComponents(allNames, child);
+    try {
+      final Set allNames = new HashSet();
+      for (Iterator iterator = children.iterator(); iterator.hasNext();) {
+        final Object child = iterator.next();
+        allNames.add(describeChild((Runner)child).getDisplayName());
+      }
+      for (Iterator iterator = children.iterator(); iterator.hasNext();) {
+        final Object child = iterator.next();
+        if (isSuite(child)) {
+          skipSuiteComponents(allNames, child);
+        }
+      }
+
+      for (Iterator iterator = children.iterator(); iterator.hasNext(); ) {
+        Object child = iterator.next();
+        if (!isSuite(child) && !allNames.contains(describeChild((Runner)child).getDisplayName())) {
+          iterator.remove();
+        }
       }
     }
-
-    for (Iterator iterator = children.iterator(); iterator.hasNext(); ) {
-      Object child = iterator.next();
-      if (!isSuite(child) && !allNames.contains(describeChild((Runner)child).getDisplayName())) {
-        iterator.remove();
-      }
-    }
-
+    catch (Throwable e){ }
     return children;
   }
 

@@ -157,7 +157,9 @@ public class DfaVariableValue extends DfaValue {
   }
 
   public boolean isFlushableByCalls() {
-    if (myVariable instanceof PsiLocalVariable || myVariable instanceof PsiParameter) return false;
+    if (myVariable instanceof PsiLocalVariable || myVariable instanceof PsiParameter || CFGBuilder.isTempVariable(myVariable)) {
+      return false;
+    }
     boolean finalField = myVariable instanceof PsiVariable && myVariable.hasModifierProperty(PsiModifier.FINAL);
     boolean specialFinalField = myVariable instanceof PsiMethod &&
                            Arrays.stream(SpecialField.values()).anyMatch(sf -> sf.isFinal() && sf.isMyAccessor(myVariable));

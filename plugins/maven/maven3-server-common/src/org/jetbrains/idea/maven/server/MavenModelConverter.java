@@ -265,6 +265,7 @@ public class MavenModelConverter {
                            plugin.getArtifactId(),
                            plugin.getVersion(),
                            isDefault,
+                           "true".equals(plugin.getExtensions()),
                            convertConfiguration(plugin.getConfiguration()),
                            executions, deps);
   }

@@ -18,6 +18,7 @@ package com.jetbrains.python.console;
 import com.google.common.base.CharMatcher;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.execution.console.LanguageConsoleView;
+import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -25,15 +26,21 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.IJSwingUtilities;
 import com.jetbrains.python.console.parsing.PythonConsoleData;
+import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
 /**
@@ -109,7 +116,7 @@ public class PyConsoleUtil {
 
 
   public static boolean detectIPythonImported(@NotNull String text, final ConsoleViewContentType outputType) {
-    return text.contains("PyDev console: using IPython ") && outputType == ConsoleViewContentType.ERROR_OUTPUT;
+    return text.contains("PyDev console: using IPython ");
   }
 
   public static boolean detectSourcePrinting(@NotNull String text) {
@@ -191,6 +198,41 @@ public class PyConsoleUtil {
       .registerCustomShortcutSet(KeyEvent.VK_TAB, 0, consoleView.getConsoleEditor().getComponent());
     runCompletions.getTemplatePresentation().setVisible(false);
     return runCompletions;
+  }
+
+  public static AnAction createInterruptAction(PythonConsoleView consoleView) {
+    AnAction anAction = new AnAction() {
+      @Override
+      public void actionPerformed(final AnActionEvent e) {
+        ConsoleCommunication consoleCommunication = consoleView.getExecuteActionHandler().getConsoleCommunication();
+        if (consoleCommunication.isExecuting() || consoleCommunication.isWaitingForInput()) {
+          consoleView.print("^C", ProcessOutputTypes.SYSTEM);
+          consoleCommunication.interrupt();
+        }
+        else {
+          DocumentEx document = consoleView.getConsoleEditor().getDocument();
+          if (document.getTextLength() != 0) {
+            ApplicationManager.getApplication().runWriteAction(() ->
+                                                                 CommandProcessor
+                                                                   .getInstance()
+                                                                   .runUndoTransparentAction(() -> document.deleteString(0, document
+                                                                     .getLineEndOffset(document.getLineCount() - 1))));
+          }
+        }
+      }
+
+      @Override
+      public void update(final AnActionEvent e) {
+        EditorEx consoleEditor = consoleView.getConsoleEditor();
+        boolean enabled = IJSwingUtilities.hasFocus(consoleEditor.getComponent()) && !consoleEditor.getSelectionModel().hasSelection();
+        e.getPresentation().setEnabled(enabled);
+      }
+    };
+
+    anAction
+      .registerCustomShortcutSet(KeyEvent.VK_C, InputEvent.CTRL_MASK, consoleView.getConsoleEditor().getComponent());
+    anAction.getTemplatePresentation().setVisible(false);
+    return anAction;
   }
 }
 

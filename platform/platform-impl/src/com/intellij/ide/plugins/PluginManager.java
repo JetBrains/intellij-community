@@ -30,15 +30,18 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.extensions.impl.PicoPluginExtensionInitializationException;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,7 +53,9 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author mike
@@ -109,6 +114,20 @@ public class PluginManager extends PluginManagerCore {
 
   public static void processException(Throwable t) {
     if (!IdeaApplication.isLoaded()) {
+      String productName = ApplicationNamesInfo.getInstance().getFullProductName();
+      EssentialPluginMissingException exception = findCause(t, EssentialPluginMissingException.class);
+      Set<String> pluginIds = exception == null ? null : exception.pluginIds;
+      if (pluginIds != null) {
+        String[] strings = ArrayUtil.toStringArray(pluginIds);
+        Arrays.sort(strings);
+        Main.showMessage("Corrupted Installation",
+                         "Missing essential plugin" + (strings.length == 1 ? "" : "s") + ":\n\n" +
+                         "  " + StringUtil.join(strings, "\n  ") +
+                         "\n\n" +
+                         "Please reinstall " + productName + " from scratch.", true);
+        System.exit(Main.INSTALLATION_CORRUPTED);
+      }
+
       @SuppressWarnings("ThrowableResultOfMethodCallIgnored") StartupAbortedException se = findCause(t, StartupAbortedException.class);
       if (se == null) se = new StartupAbortedException(t);
       @SuppressWarnings("ThrowableResultOfMethodCallIgnored") PluginException pe = findCause(t, PluginException.class);
@@ -131,12 +150,12 @@ public class PluginManager extends PluginManagerCore {
         PluginConflictReporter.INSTANCE.reportConflictByClasses(conflictException.getConflictingClasses());
       }
 
-      if (pluginId != null && !CORE_PLUGIN_ID.equals(pluginId.getIdString())) {
+      if (pluginId != null && !ApplicationInfoImpl.getShadowInstance().isEssentialPlugin(pluginId.getIdString())) {
         disablePlugin(pluginId.getIdString());
 
         StringWriter message = new StringWriter();
         message.append("Plugin '").append(pluginId.getIdString()).append("' failed to initialize and will be disabled. ");
-        message.append(" Please restart ").append(ApplicationNamesInfo.getInstance().getFullProductName()).append('.');
+        message.append(" Please restart ").append(productName).append('.');
         message.append("\n\n");
         pe.getCause().printStackTrace(new PrintWriter(message));
 
@@ -230,9 +249,7 @@ public class PluginManager extends PluginManagerCore {
   public static void handleComponentError(Throwable t, @Nullable String componentClassName, @Nullable PluginId pluginId) {
     Application app = ApplicationManager.getApplication();
     if (app != null && app.isUnitTestMode()) {
-      if (t instanceof Error) throw (Error)t;
-      if (t instanceof RuntimeException) throw (RuntimeException)t;
-      throw new RuntimeException(t);
+      ExceptionUtil.rethrow(t);
     }
 
     if (t instanceof StartupAbortedException) {

@@ -15,6 +15,8 @@
  */
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.openapi.util.io.FileUtil
+import groovy.io.FileType
 import org.jetbrains.intellij.build.BuildContext
 /**
  * @author nik
@@ -55,7 +57,11 @@ class CrossPlatformDistributionBuilder {
         mapper(type: "glob", from: "*.jnilib", to: "*.dylib")
       }
 
-      String targetPath = "$buildContext.paths.artifacts/${buildContext.productProperties.baseFileName}${buildContext.fullBuildNumber}.zip"
+      Map<String, File> linuxFiles = collectFilesUnder(linuxDistPath)
+      Map<String, File> macFiles = collectFilesUnder(macDistPath)
+      def commonFiles = linuxFiles.keySet().intersect(macFiles.keySet() as Iterable<String>)
+
+      String targetPath = "$buildContext.paths.artifacts/${buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}.zip"
       buildContext.ant.zip(zipfile: targetPath, duplicate: "fail") {
         fileset(dir: buildContext.paths.distAll) {
           exclude(name: "bin/idea.properties")
@@ -97,6 +103,9 @@ class CrossPlatformDistributionBuilder {
           exclude(name: "bin/*.jnilib")
           exclude(name: "bin/idea.properties")
           exclude(name: "bin/*.vmoptions")
+          commonFiles.each {
+            exclude(name: it)
+          }
         }
         zipfileset(dir: "$macDistPath/bin", prefix: "bin", filemode: "775") {
           include(name: "restarter*")
@@ -107,5 +116,15 @@ class CrossPlatformDistributionBuilder {
       }
       buildContext.notifyArtifactBuilt(targetPath)
     }
+  }
+
+  private static Map<String, File> collectFilesUnder(String rootPath) {
+    def root = new File(rootPath)
+    Map<String, File> result = [:]
+    root.eachFileRecurse(FileType.FILES) {
+      def relativePath = FileUtil.toSystemIndependentName(FileUtil.getRelativePath(root, it))
+      result[relativePath] = it
+    }
+    return result
   }
 }

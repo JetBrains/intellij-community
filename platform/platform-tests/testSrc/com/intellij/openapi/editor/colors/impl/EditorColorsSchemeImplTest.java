@@ -33,7 +33,7 @@ import java.util.Arrays;
 import java.util.Collections;
 
 import static com.intellij.openapi.editor.colors.FontPreferencesTest.*;
-import static com.intellij.openapi.editor.markup.TextAttributes.USE_INHERITED_MARKER;
+import static com.intellij.openapi.editor.colors.impl.AbstractColorsScheme.INHERITED_ATTRS_MARKER;
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
 import static java.util.Collections.singletonList;
 
@@ -101,7 +101,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     assertEquals(FontPreferences.DEFAULT_FONT_SIZE, myScheme.getConsoleFontSize());
   }
 
-  public void testSetFontPreferences() throws Exception {
+  public void testSetFontPreferences() {
     String fontName1 = getExistingNonDefaultFontName();
     String fontName2 = getAnotherExistingNonDefaultFontName();
     myScheme.setEditorFontName(fontName1);
@@ -144,7 +144,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
 
   }
 
-  public void testSetName() throws Exception {
+  public void testSetName() {
     String fontName1 = getExistingNonDefaultFontName();
     String fontName2 = getAnotherExistingNonDefaultFontName();
     myScheme.setEditorFontName(fontName1);
@@ -167,7 +167,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     assertEquals(scaledSize, myScheme.getConsoleFontSize());
   }
 
-  public void testSetSize() throws Exception {
+  public void testSetSize() {
     myScheme.setEditorFontSize(25);
     myScheme.setConsoleFontSize(21);
 
@@ -187,7 +187,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     assertEquals(21, myScheme.getConsoleFontSize());
   }
 
-  public void testSetNameAndSize() throws Exception {
+  public void testSetNameAndSize() {
     String fontName1 = getExistingNonDefaultFontName();
     String fontName2 = getAnotherExistingNonDefaultFontName();
     myScheme.setEditorFontName(fontName1);
@@ -211,7 +211,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     assertEquals(21, myScheme.getConsoleFontSize());
   }
 
-  public void testSetSizeAndName() throws Exception {
+  public void testSetSizeAndName() {
     String fontName1 = getExistingNonDefaultFontName();
     String fontName2 = getAnotherExistingNonDefaultFontName();
     myScheme.setEditorFontSize(25);
@@ -265,8 +265,8 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
   }
 
 
-  public void testSaveInheritance() throws Exception {
-    Pair<EditorColorsScheme, TextAttributes> result = doTestWriteRead(DefaultLanguageHighlighterColors.STATIC_METHOD, USE_INHERITED_MARKER);
+  public void testSaveInheritance() {
+    Pair<EditorColorsScheme, TextAttributes> result = doTestWriteRead(DefaultLanguageHighlighterColors.STATIC_METHOD, INHERITED_ATTRS_MARKER);
     TextAttributes fallbackAttrs = result.first.getAttributes(DefaultLanguageHighlighterColors.STATIC_METHOD.getFallbackAttributeKey());
     assertSame(result.second, fallbackAttrs);
   }
@@ -279,12 +279,12 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     assertThat(result.second).isEqualTo(fallbackAttrs);
   }
 
-  public void testSaveInheritanceForEmptyAttrs() throws Exception {
-    Pair<EditorColorsScheme, TextAttributes> result = doTestWriteRead(DefaultLanguageHighlighterColors.INSTANCE_FIELD, USE_INHERITED_MARKER);
+  public void testSaveInheritanceForEmptyAttrs() {
+    Pair<EditorColorsScheme, TextAttributes> result = doTestWriteRead(DefaultLanguageHighlighterColors.INSTANCE_FIELD, INHERITED_ATTRS_MARKER);
     TextAttributes fallbackAttrs = result.first.getAttributes(DefaultLanguageHighlighterColors.INSTANCE_FIELD.getFallbackAttributeKey());
     TextAttributes directlyDefined =
       ((AbstractColorsScheme)result.first).getDirectlyDefinedAttributes(DefaultLanguageHighlighterColors.INSTANCE_FIELD);
-    assertTrue(directlyDefined != null && directlyDefined == USE_INHERITED_MARKER);
+    assertTrue(directlyDefined != null && directlyDefined == INHERITED_ATTRS_MARKER);
     assertSame(fallbackAttrs, result.second);
   }
 
@@ -343,7 +343,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     }
   }
 
-  public void testIdea152156() throws Exception {
+  public void testIdea152156() {
     EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME);
     EditorColorsScheme parentScheme = (EditorColorsScheme)defaultScheme.clone();
     parentScheme.setName("DefaultTest");
@@ -352,7 +352,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     TextAttributes defaultAttributes = new TextAttributes(null, null, Color.BLACK, EffectType.LINE_UNDERSCORE, Font.PLAIN);
     TextAttributesKey testKey = TextAttributesKey.createTextAttributesKey("TEST_KEY", DefaultLanguageHighlighterColors.PARAMETER);
     parentScheme.setAttributes(testKey, defaultAttributes);
-    editorColorsScheme.setAttributes(testKey, USE_INHERITED_MARKER);
+    editorColorsScheme.setAttributes(testKey, INHERITED_ATTRS_MARKER);
     try {
       Element root = new Element("scheme");
       ((AbstractColorsScheme)editorColorsScheme).writeExternal(root);
@@ -363,7 +363,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
         }
       }
       TextAttributes targetAttributes = ((AbstractColorsScheme)targetScheme).getDirectlyDefinedAttributes(testKey);
-      assertTrue(targetAttributes != null && targetAttributes == USE_INHERITED_MARKER);
+      assertTrue(targetAttributes != null && targetAttributes == INHERITED_ATTRS_MARKER);
     }
     finally {
       TextAttributesKey.removeTextAttributesKey(testKey.getExternalName());
@@ -432,10 +432,8 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
   }
 
   public void testReadFontPreferences() throws Exception {
-    String[] fontFamilyNames = GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames();
-    if (fontFamilyNames.length < 2) return;
-    String name1 = fontFamilyNames[0];
-    String name2 = fontFamilyNames[1];
+    String name1 = getExistingNonDefaultFontName();
+    String name2 = getAnotherExistingNonDefaultFontName();
     EditorColorsScheme scheme = loadScheme(
       "<scheme name=\"fira\" version=\"142\" parent_scheme=\"Default\">\n" +
       "  <option name=\"LINE_SPACING\" value=\"0.93\" />\n" +
@@ -456,5 +454,19 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     assertEquals(0.93f, scheme.getLineSpacing());
     assertTrue(scheme.getFontPreferences().useLigatures());
     assertFalse(scheme.getConsoleFontPreferences().useLigatures());
+  }
+
+  public void testReadFontPreferencesIdea176762() throws Exception {
+    String fontName = getExistingNonDefaultFontName();
+    EditorColorsScheme scheme = loadScheme(
+      "<scheme name=\"_@user_Default\" version=\"142\" parent_scheme=\"Default\">\n" +
+      "  <option name=\"FONT_SCALE\" value=\"1.5\" />\n" +
+      "  <option name=\"EDITOR_FONT_SIZE\" value=\"18\" />\n" +
+      "  <option name=\"EDITOR_LIGATURES\" value=\"true\" />\n" +
+      "  <option name=\"EDITOR_FONT_NAME\" value=\"" + fontName + "\" />\n" +
+      "</scheme>"
+    );
+    assertEquals(fontName, scheme.getEditorFontName());
+    assertTrue("Expected font ligatures on", scheme.getFontPreferences().useLigatures());
   }
 }

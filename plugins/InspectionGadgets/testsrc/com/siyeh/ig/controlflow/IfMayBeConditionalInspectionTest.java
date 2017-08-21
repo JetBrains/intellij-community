@@ -6,7 +6,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class IfMayBeConditionalInspectionTest extends LightInspectionTestCase {
 
-  public void testIfMayBeConditional() throws Exception {
+  public void testIfMayBeConditional() {
     doTest();
   }
 

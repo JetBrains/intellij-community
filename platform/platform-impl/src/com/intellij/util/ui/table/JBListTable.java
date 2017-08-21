@@ -301,6 +301,9 @@ public abstract class JBListTable {
                         currentRowHeight + (leftToAnimate < 0 ? -resizeAbs : resizeAbs);
         myTable.setRowHeight(myRow, newHeight);
         myLastUpdateTime = currentTime;
+
+        TableUtil.scrollSelectionToVisible(myTable);
+
         return myTargetHeight == newHeight;
       }
     }

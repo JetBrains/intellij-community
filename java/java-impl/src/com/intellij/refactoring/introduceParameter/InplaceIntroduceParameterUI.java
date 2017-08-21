@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,13 +22,13 @@ import com.intellij.psi.PsiLocalVariable;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.IntroduceParameterRefactoring;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduce.inplace.KeyboardComboSwitcher;
 import com.intellij.refactoring.ui.TypeSelectorManager;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -95,7 +95,7 @@ public abstract class InplaceIntroduceParameterUI extends IntroduceParameterSett
     component.setText(RefactoringBundle.message("replace.fields.used.in.expressions.with.their.getters"));
     component.getLabel().setDisplayedMnemonic('u');
     component.setLabelLocation(BorderLayout.NORTH);
-    component.setBorder(IdeBorderFactory.createEmptyBorder(3, 3, 2, 2));
+    component.setBorder(JBUI.Borders.empty(3, 3, 2, 2));
     return component;
   }
 
@@ -137,6 +137,8 @@ public abstract class InplaceIntroduceParameterUI extends IntroduceParameterSett
   public boolean hasFinalModifier() {
     if (myHasWriteAccess) return false;
     final Boolean createFinals = JavaRefactoringSettings.getInstance().INTRODUCE_PARAMETER_CREATE_FINALS;
-    return createFinals == null ? CodeStyleSettingsManager.getSettings(myProject).GENERATE_FINAL_PARAMETERS : createFinals.booleanValue();
+    return createFinals == null ?
+           CodeStyleSettingsManager.getSettings(myProject).getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_PARAMETERS :
+           createFinals.booleanValue();
   }
 }

@@ -13,7 +13,6 @@ import git4idea.test.GitSingleRepoTest;
 import git4idea.test.GitTestUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -24,7 +23,7 @@ import static git4idea.test.GitExecutor.git;
 public abstract class GitRefManagerTest extends GitSingleRepoTest {
 
   @NotNull
-  protected Collection<VcsRef> given(@NotNull String... refs) throws IOException {
+  protected Collection<VcsRef> given(@NotNull String... refs) {
     Collection<VcsRef> result = ContainerUtil.newArrayList();
     cd(myProjectRoot);
     Hash hash = HashImpl.build(git("rev-parse HEAD"));

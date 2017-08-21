@@ -149,6 +149,12 @@ public class JBViewport extends JViewport implements ZoomableViewport {
     return null;
   }
 
+  @Override
+  public void setView(Component view) {
+    super.setView(view);
+    updateBorder(view);
+  }
+
   /* True double buffering is needed to eliminate tearing on blit-accelerated scrolling and to restore
      frame buffer content without the usual repainting, even when the EDT is blocked.
 
@@ -379,7 +385,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
     viewport.setViewSize(viewSize);
   }
 
-  private static void updateBorder(Component view) {
+  private static void updateBorder(@Nullable Component view) {
     if (ScrollSettings.isNotSupportedYet(view)) return;
     if (view instanceof JComponent) {
       JComponent component = (JComponent)view;
@@ -473,7 +479,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
               if (viewport == pane.getColumnHeader()
                   ? (!opaque || ScrollSettings.isHeaderOverCorner(pane.getViewport()))
                   : (!opaque && viewport == pane.getViewport())) {
-                Alignment va = UIUtil.getClientProperty(vsb, Alignment.class);
+                Alignment va = Alignment.get(vsb);
                 if (va == Alignment.LEFT) {
                   insets.left += vsb.getWidth();
                 }
@@ -489,7 +495,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
               if (viewport == pane.getRowHeader()
                   ? (!opaque || ScrollSettings.isHeaderOverCorner(pane.getViewport()))
                   : (!opaque && viewport == pane.getViewport())) {
-                Alignment ha = UIUtil.getClientProperty(hsb, Alignment.class);
+                Alignment ha = Alignment.get(hsb);
                 if (ha == Alignment.TOP) {
                   insets.top += hsb.getHeight();
                 }

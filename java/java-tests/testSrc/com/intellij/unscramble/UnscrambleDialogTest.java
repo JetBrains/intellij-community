@@ -42,7 +42,7 @@ public class UnscrambleDialogTest extends JavaCodeInsightFixtureTestCase {
     }
   }
 
-  public void testStacktrace() throws Exception {
+  public void testStacktrace() {
     showText("");
     Icon icon = myContent.getIcon();
     String name = myContent.getDisplayName();
@@ -50,7 +50,7 @@ public class UnscrambleDialogTest extends JavaCodeInsightFixtureTestCase {
     assertEquals("<Stacktrace>", name);
   }
 
-  public void testException() throws Exception {
+  public void testException() {
     showText("java.lang.NullPointerException\n" +
              "\tat com.intellij.psi.css.resolve.impl.XhtmlFileInfo.findOneStyleSheet(XhtmlFileInfo.java:291)\n" +
              "\tat com.intellij.psi.css.resolve.impl.XhtmlFileInfo.getStylesheets(XhtmlFileInfo.java:174)\n" +

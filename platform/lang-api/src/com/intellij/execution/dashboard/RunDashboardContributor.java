@@ -21,10 +21,11 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.ColoredTreeCellRenderer;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 /**
  * In order to show run configurations of the specific configuration type in Run Dashboard tool window,
@@ -52,6 +53,12 @@ public abstract class RunDashboardContributor {
   }
 
   public void updatePresentation(@NotNull PresentationData presentation, @NotNull DashboardNode node) {
+  }
+
+  public boolean customizeCellRenderer(@NotNull ColoredTreeCellRenderer cellRenderer, @NotNull JLabel nodeLabel,
+                                       @NotNull DashboardNode node,
+                                       boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+    return false;
   }
 
   /**
@@ -87,19 +94,5 @@ public abstract class RunDashboardContributor {
 
   public boolean handleDoubleClick(@NotNull RunConfiguration runConfiguration) {
     return false;
-  }
-
-  @Nullable
-  public static RunDashboardContributor getContributor(@NotNull ConfigurationType type) {
-    if (!Registry.is("ide.run.dashboard")) {
-      return null;
-    }
-
-    for (RunDashboardContributor contributor : EP_NAME.getExtensions()) {
-      if (type.equals(contributor.getType())) {
-        return contributor;
-      }
-    }
-    return null;
   }
 }

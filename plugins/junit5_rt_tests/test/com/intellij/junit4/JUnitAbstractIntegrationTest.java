@@ -44,6 +44,7 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessage;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager;
 import org.jetbrains.idea.maven.aether.ProgressConsumer;
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor;
@@ -82,14 +83,14 @@ public abstract class JUnitAbstractIntegrationTest extends BaseConfigurationTest
     ProcessOutput processOutput = new ProcessOutput();
     process.addProcessListener(new ProcessAdapter() {
       @Override
-      public void startNotified(ProcessEvent event) {
+      public void startNotified(@NotNull ProcessEvent event) {
         if (searchForTestsTask != null) {
           searchForTestsTask.finish();
         }
       }
 
       @Override
-      public void onTextAvailable(ProcessEvent event, Key outputType) {
+      public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
         String text = event.getText();
         if (StringUtil.isEmptyOrSpaces(text)) return;
         try {

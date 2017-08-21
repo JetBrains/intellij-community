@@ -25,10 +25,7 @@ import com.intellij.vcs.log.graph.utils.impl.BitSetFlags;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.intellij.vcs.log.graph.impl.permanent.DuplicateParentFixer.fixDuplicateParentCommits;
 
@@ -155,7 +152,7 @@ public class PermanentLinearGraphBuilder<CommitId> {
 
   private void fixUnderdoneEdges(@NotNull NotNullFunction<CommitId, Integer> notLoadedCommitToId) {
     List<CommitId> commitIds = ContainerUtil.newArrayList(upAdjacentNodes.keySet());
-    ContainerUtil.sort(commitIds, (o1, o2) -> Collections.min(upAdjacentNodes.get(o1)) - Collections.min(upAdjacentNodes.get(o2)));
+    ContainerUtil.sort(commitIds, Comparator.comparingInt(o -> Collections.min(upAdjacentNodes.get(o))));
     for (CommitId notLoadCommit : commitIds) {
       int notLoadId = notLoadedCommitToId.fun(notLoadCommit);
       for (int upNodeIndex : upAdjacentNodes.get(notLoadCommit)) {

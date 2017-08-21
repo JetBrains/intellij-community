@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,14 +35,21 @@ public class CoreJavaPsiImplementationHelper extends JavaPsiImplementationHelper
     myProject = project;
   }
 
+  @NotNull
   @Override
-  public PsiClass getOriginalClass(PsiClass psiClass) {
+  public PsiClass getOriginalClass(@NotNull PsiClass psiClass) {
     return psiClass;
   }
 
   @NotNull
   @Override
-  public PsiElement getClsFileNavigationElement(PsiJavaFile clsFile) {
+  public PsiJavaModule getOriginalModule(@NotNull PsiJavaModule module) {
+    return module;
+  }
+
+  @NotNull
+  @Override
+  public PsiElement getClsFileNavigationElement(@NotNull PsiJavaFile clsFile) {
     return clsFile;
   }
 
@@ -53,7 +60,7 @@ public class CoreJavaPsiImplementationHelper extends JavaPsiImplementationHelper
   }
 
   @Override
-  public ASTNode getDefaultImportAnchor(PsiImportList list, PsiImportStatementBase statement) {
+  public ASTNode getDefaultImportAnchor(@NotNull PsiImportList list, @NotNull PsiImportStatementBase statement) {
     throw new UnsupportedOperationException("TODO");
   }
 

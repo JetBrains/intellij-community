@@ -203,7 +203,7 @@ class CommunityRepositoryModules {
       withModule("junit5_rt", "junit5-rt.jar")
       withProjectLibrary("junit5_rt")
       withProjectLibrary("opentest4j")
-      withModuleLibrary("junit-jupiter-api-5.0.0-M4.jar", "junit5_rt_tests", "")
+      withModuleLibrary("junit-jupiter-api-5.0.0-RC2.jar", "junit5_rt_tests", "")
     },
     plugin("ByteCodeViewer") {
       mainJarName = "byteCodeViewer.jar"
@@ -250,7 +250,7 @@ class CommunityRepositoryModules {
       withModule("designer", "android.jar")
       withModule("manifest-merger")
       withModule("repository")
-      withModule("common", "android-base-common.jar")
+      withModule("common", "android-common.jar")
       withModule("android-common", "android-common.jar", false)
       withModule("android-rt", "android-rt.jar", false)
       withModule("android-annotations", "androidAnnotations.jar")

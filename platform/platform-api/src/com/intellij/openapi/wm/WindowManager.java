@@ -25,31 +25,31 @@ import java.awt.*;
 
 public abstract class WindowManager {
   /**
-   * @return <code>true</code> is and only if current OS supports alpha mode for windows and
+   * @return {@code true} is and only if current OS supports alpha mode for windows and
    *         all native libraries were successfully loaded.
    */
   public abstract boolean isAlphaModeSupported();
 
   /**
-   * Sets alpha (transparency) ratio for the specified <code>window</code>.
+   * Sets alpha (transparency) ratio for the specified {@code window}.
    * If alpha mode isn't supported by underlying windowing system then the method does nothing.
-   * The method also does nothing if alpha mode isn't enabled for the specified <code>window</code>.
+   * The method also does nothing if alpha mode isn't enabled for the specified {@code window}.
    *
-   * @param window <code>window</code> which transparency should be changed.
-   * @param ratio  ratio of transparency. <code>0</code> means absolutely non transparent window.
-   *               <code>1</code> means absolutely transparent window.
-   * @throws IllegalArgumentException if <code>window</code> is not displayable or not showing,
-   *                                  or if <code>ration</code> isn't in <code>[0..1]</code> range.
+   * @param window {@code window} which transparency should be changed.
+   * @param ratio  ratio of transparency. {@code 0} means absolutely non transparent window.
+   *               {@code 1} means absolutely transparent window.
+   * @throws IllegalArgumentException if {@code window} is not displayable or not showing,
+   *                                  or if {@code ration} isn't in {@code [0..1]} range.
    */
   public abstract void setAlphaModeRatio(Window window, float ratio);
 
   /**
-   * @return <code>true</code> if specified <code>window</code> is currently is alpha mode.
+   * @return {@code true} if specified {@code window} is currently is alpha mode.
    */
   public abstract boolean isAlphaModeEnabled(Window window);
 
   /**
-   * Sets whether the alpha (transparent) mode is enabled for specified <code>window</code>.
+   * Sets whether the alpha (transparent) mode is enabled for specified {@code window}.
    * If alpha mode isn't supported by underlying windowing system then the method does nothing.
    *
    * @param window window which mode to be set.
@@ -67,7 +67,7 @@ public abstract class WindowManager {
    * Gets first window (starting from the active one) that can be parent for other windows.
    * Note, that this method returns only subclasses of dialog or frame.
    *
-   * @return <code>null</code> if there is no currently active window or there are any window
+   * @return {@code null} if there is no currently active window or there are any window
    *         that can be parent.
    */
   @Nullable
@@ -121,7 +121,7 @@ public abstract class WindowManager {
   public abstract void removeListener(WindowManagerListener listener);
 
   /**
-   * @return <code>true</code> if full screen mode is supported in current OS.
+   * @return {@code true} if full screen mode is supported in current OS.
    */
   public abstract boolean isFullScreenSupportedInCurrentOS();
 

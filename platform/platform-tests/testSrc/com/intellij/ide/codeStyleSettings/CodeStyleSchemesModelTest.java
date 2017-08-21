@@ -20,11 +20,10 @@ import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemeImpl;
-import com.intellij.testFramework.LightPlatformTestCase;
 
 import java.util.List;
 
-public class CodeStyleSchemesModelTest extends LightPlatformTestCase {
+public class CodeStyleSchemesModelTest extends CodeStyleTestCase {
   private CodeStyleSchemesModel myModel;
   private CodeStyleScheme myDefaultScheme;
 
@@ -57,7 +56,7 @@ public class CodeStyleSchemesModelTest extends LightPlatformTestCase {
     }
   }
 
-  public void testDefaults() throws Exception {
+  public void testDefaults() {
     CodeStyleScheme defaultScheme = myModel.getSelectedScheme();
     assertEquals(CodeStyleScheme.DEFAULT_SCHEME_NAME, defaultScheme.getName());
     assertEquals(new CodeStyleSettings(), defaultScheme.getCodeStyleSettings());
@@ -65,7 +64,7 @@ public class CodeStyleSchemesModelTest extends LightPlatformTestCase {
     assertFalse(myModel.isUsePerProjectSettings());
   }
 
-  public void testCopyToIde() throws Exception {
+  public void testCopyToIde() {
     CodeStyleScheme projectScheme = myModel.getProjectScheme();
     myModel.selectScheme(projectScheme, null);
     assertEquals(CodeStyleScheme.PROJECT_SCHEME_NAME, myModel.getSelectedScheme().getName());

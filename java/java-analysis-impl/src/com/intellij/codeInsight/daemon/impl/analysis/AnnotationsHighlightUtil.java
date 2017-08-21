@@ -661,7 +661,7 @@ public class AnnotationsHighlightUtil {
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(parameter.getIdentifier()).descriptionAndTooltip(text).create();
     }
 
-    PsiElement leftNeighbour = PsiTreeUtil.skipSiblingsBackward(parameter, PsiWhiteSpace.class);
+    PsiElement leftNeighbour = PsiTreeUtil.skipWhitespacesBackward(parameter);
     if (leftNeighbour != null && !PsiUtil.isJavaToken(leftNeighbour, JavaTokenType.LPARENTH)) {
       String text = JavaErrorMessages.message("receiver.wrong.position");
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(parameter.getIdentifier()).descriptionAndTooltip(text).create();
@@ -681,16 +681,19 @@ public class AnnotationsHighlightUtil {
       enclosingClass = enclosingClass.getContainingClass();
     }
 
-    if (enclosingClass != null && !enclosingClass.equals(PsiUtil.resolveClassInType(parameter.getType()))) {
-      PsiElement range = ObjectUtils.notNull(parameter.getTypeElement(), parameter);
-      String text = JavaErrorMessages.message("receiver.type.mismatch");
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range).descriptionAndTooltip(text).create();
-    }
+    if (enclosingClass != null) {
+      PsiClassType type = PsiElementFactory.SERVICE.getInstance(parameter.getProject()).createType(enclosingClass, PsiSubstitutor.EMPTY);
+      if (!type.equals(parameter.getType())) {
+        PsiElement range = ObjectUtils.notNull(parameter.getTypeElement(), parameter);
+        String text = JavaErrorMessages.message("receiver.type.mismatch");
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range).descriptionAndTooltip(text).create();
+      }
 
-    PsiThisExpression identifier = parameter.getIdentifier();
-    if (enclosingClass != null && !enclosingClass.equals(PsiUtil.resolveClassInType(identifier.getType()))) {
-      String text = JavaErrorMessages.message("receiver.name.mismatch");
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(identifier).descriptionAndTooltip(text).create();
+      PsiThisExpression identifier = parameter.getIdentifier();
+      if (!enclosingClass.equals(PsiUtil.resolveClassInType(identifier.getType()))) {
+        String text = JavaErrorMessages.message("receiver.name.mismatch");
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(identifier).descriptionAndTooltip(text).create();
+      }
     }
 
     return null;

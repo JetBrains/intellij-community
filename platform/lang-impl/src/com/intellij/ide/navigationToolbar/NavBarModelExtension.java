@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.navigationToolbar;
 
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -22,6 +23,7 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.Collection;
 
 /**
@@ -36,6 +38,9 @@ public interface NavBarModelExtension {
   ExtensionPointName<NavBarModelExtension> EP_NAME = ExtensionPointName.create("com.intellij.navbar");
 
   @Nullable
+  default Icon getIcon(Object object) { return null; }
+
+  @Nullable
   String getPresentableText(Object object);
 
   @Nullable
@@ -46,4 +51,8 @@ public interface NavBarModelExtension {
 
   @NotNull
   Collection<VirtualFile> additionalRoots(Project project);
+
+  @Nullable
+  @SuppressWarnings("unused")
+  default Object getData(String dataId, DataProvider provider) { return null; }
 }

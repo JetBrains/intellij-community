@@ -81,7 +81,7 @@ public class JavaOverridingMethodsSearcher implements QueryExecutor<PsiMethod, O
     return true;
   }
 
-  private static boolean isJavaOnlyScope(@NotNull VirtualFile[] files) {
+  static boolean isJavaOnlyScope(@NotNull VirtualFile[] files) {
     return Arrays.stream(files).allMatch(file -> file.getFileType() == JavaFileType.INSTANCE);
   }
 

@@ -36,7 +36,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.util.RadioUpDownListener;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.TitledSeparator;
@@ -74,6 +74,19 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
   private final AnalysisUIOptions myAnalysisOptions;
   @Nullable private final PsiElement myContext;
 
+  public BaseAnalysisActionDialog(@NotNull String title,
+                                  @NotNull String analysisNoon,
+                                  @NotNull Project project,
+                                  @NotNull final AnalysisScope scope,
+                                  @Nullable Module module,
+                                  final boolean rememberScope,
+                                  @NotNull AnalysisUIOptions analysisUIOptions,
+                                  @Nullable PsiElement context) {
+    //noinspection deprecation
+    this(title, analysisNoon, project, scope, module == null ? null : module.getName(), rememberScope, analysisUIOptions, context);
+  }
+
+  @Deprecated
   public BaseAnalysisActionDialog(@NotNull String title,
                                   @NotNull String analysisNoon,
                                   @NotNull Project project,
@@ -160,7 +173,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
       myFileButton.setVisible(false);
     }
 
-    VirtualFile file = PsiUtilBase.getVirtualFile(myContext);
+    VirtualFile file = PsiUtilCore.getVirtualFile(myContext);
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     boolean searchInLib = file != null && (fileIndex.isInLibraryClasses(file) || fileIndex.isInLibrarySource(file));
 
@@ -182,10 +195,12 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
     myScopeCombo.setCurrentSelection(false);
 
     //correct selection
-    myProjectButton.setSelected(myRememberScope && myAnalysisOptions.SCOPE_TYPE == AnalysisScope.PROJECT || myFileName == null);
     myFileButton.setSelected(myFileName != null &&
                              (!myRememberScope ||
                              myAnalysisOptions.SCOPE_TYPE != AnalysisScope.PROJECT && !useModuleScope && myAnalysisOptions.SCOPE_TYPE != AnalysisScope.CUSTOM && !useUncommitedFiles));
+    if (!myFileButton.isSelected()) {
+      myProjectButton.setSelected(myRememberScope && myAnalysisOptions.SCOPE_TYPE == AnalysisScope.PROJECT);
+    }
 
     myScopeCombo.setEnabled(myCustomScopeButton.isSelected());
 

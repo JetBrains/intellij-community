@@ -250,6 +250,12 @@ public class TreeTraverserTest extends TestCase {
     assertEquals(new Integer(11), it.first());
   }
 
+  public void testFlattenSkipTake() {
+    assertEquals(1, JBIterable.of(1).flatMap(o -> JBIterable.of(o)).take(1).take(1).take(1).size());
+    assertEquals((Integer)1, JBIterable.of(1).flatMap(o -> JBIterable.of(o, o + 1)).take(2).take(1).get(0));
+    assertEquals((Integer)2, JBIterable.of(1).flatMap(o -> JBIterable.of(o, o + 1)).skip(1).take(1).get(0));
+  }
+
   public void testRangeWithSkipAndTake() {
     Condition<Integer> cond = i -> Math.abs(i - 10) <= 5;
     JBIterable<Integer> it = JBIterable.generate(1, INCREMENT).skipWhile(not(cond)).takeWhile(cond);

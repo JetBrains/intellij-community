@@ -35,7 +35,10 @@ import com.intellij.openapi.editor.impl.EditorDocumentPriorities;
 import com.intellij.openapi.editor.impl.FrozenDocument;
 import com.intellij.openapi.editor.impl.event.RetargetRangeMarkers;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.*;
@@ -44,6 +47,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.impl.source.text.BlockSupportImpl;
+import com.intellij.psi.impl.source.text.DiffLog;
+import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.text.BlockSupport;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.*;
@@ -75,6 +81,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   private boolean myPerformBackgroundCommit = true;
 
   private volatile boolean myIsCommitInProgress;
+  private static volatile boolean ourIsFullReparseInProgress;
   private final PsiToDocumentSynchronizer mySynchronizer;
 
   private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -475,7 +482,11 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
   // true if the PSI is being modified and events being sent
   public boolean isCommitInProgress() {
-    return myIsCommitInProgress;
+    return myIsCommitInProgress || isFullReparseInProgress();
+  }
+
+  public static boolean isFullReparseInProgress() {
+    return ourIsFullReparseInProgress;
   }
 
   @Override
@@ -1017,6 +1028,28 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   @NotNull
   public PsiToDocumentSynchronizer getSynchronizer() {
     return mySynchronizer;
+  }
+
+  @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
+  public void reparseFileFromText(PsiFileImpl file) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    if (isCommitInProgress()) throw new IllegalStateException("Re-entrant commit is not allowed");
+    
+    FileElement node = file.calcTreeElement();
+    CharSequence text = node.getChars();
+    ourIsFullReparseInProgress = true;
+    try {
+      WriteAction.run(() -> {
+        ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
+        if (indicator == null) indicator = new EmptyProgressIndicator();
+        DiffLog log = BlockSupportImpl.makeFullParse(file, node, text, indicator, text);
+        DocumentCommitThread.doActualPsiChange(file, log);
+        file.getViewProvider().contentsSynchronized();
+      });
+    }
+    finally {
+      ourIsFullReparseInProgress = false;
+    }
   }
 
   private static class UncommittedInfo implements PrioritizedInternalDocumentListener, DocumentListener {

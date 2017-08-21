@@ -19,10 +19,8 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
 
-import java.io.IOException;
-
 public class EditorMultiCaretColumnModeTest extends AbstractEditorTest {
-  public void testUpDown() throws Exception {
+  public void testUpDown() {
     init("line1\n" +
          "li<caret>ne2\n" +
          "line3");
@@ -58,7 +56,7 @@ public class EditorMultiCaretColumnModeTest extends AbstractEditorTest {
                       "line3");
   }
 
-  public void testPageUpDown() throws Exception {
+  public void testPageUpDown() {
     init("line1\n" +
          "line2\n" +
          "line3\n" +
@@ -114,7 +112,7 @@ public class EditorMultiCaretColumnModeTest extends AbstractEditorTest {
                       "line7");
   }
 
-  public void testSelectionWithKeyboard() throws Exception {
+  public void testSelectionWithKeyboard() {
     init("line1\n" +
          "li<caret>ne2\n" +
          "line3");
@@ -170,7 +168,7 @@ public class EditorMultiCaretColumnModeTest extends AbstractEditorTest {
                       "line3");
   }
 
-  public void testSelectNextPrevWord() throws Exception {
+  public void testSelectNextPrevWord() {
     init("aaa aaa<caret>\n" +
          "bbbb bbbb");
     executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN_WITH_SELECTION);
@@ -182,7 +180,7 @@ public class EditorMultiCaretColumnModeTest extends AbstractEditorTest {
                       "bbbb bb<selection>bb<caret></selection>");
   }
 
-  public void testMoveToSelectionStart() throws Exception {
+  public void testMoveToSelectionStart() {
     init("a");
     mouse().pressAt(0, 2).dragTo(0, 4).release();
     verifyCaretsAndSelections(0, 4, 2, 4);
@@ -191,7 +189,7 @@ public class EditorMultiCaretColumnModeTest extends AbstractEditorTest {
     verifyCaretsAndSelections(0, 2, 2, 2);
   }
 
-  public void testMoveToSelectionEnd() throws Exception {
+  public void testMoveToSelectionEnd() {
     init("a");
     mouse().pressAt(0, 4).dragTo(0, 2).release();
     verifyCaretsAndSelections(0, 2, 2, 4);
@@ -200,7 +198,7 @@ public class EditorMultiCaretColumnModeTest extends AbstractEditorTest {
     verifyCaretsAndSelections(0, 4, 4, 4);
   }
 
-  public void testReverseBlockSelection() throws Exception {
+  public void testReverseBlockSelection() {
     init("a");
     mouse().pressAt(0, 4).dragTo(0, 3).release();
     verifyCaretsAndSelections(0, 3, 3, 4);
@@ -209,7 +207,7 @@ public class EditorMultiCaretColumnModeTest extends AbstractEditorTest {
     verifyCaretsAndSelections(0, 4, 4, 4);
   }
 
-  public void testSelectionWithKeyboardInEmptySpace() throws Exception {
+  public void testSelectionWithKeyboardInEmptySpace() {
     init("\n\n");
     mouse().clickAt(1, 1);
     verifyCaretsAndSelections(1, 1, 1, 1);
@@ -251,7 +249,7 @@ public class EditorMultiCaretColumnModeTest extends AbstractEditorTest {
     verifyCaretsAndSelections(1, 1, 1, 1);
   }
 
-  public void testBlockSelection() throws Exception {
+  public void testBlockSelection() {
     init("a\n" +
          "bbb\n" +
          "ccccc");
@@ -261,7 +259,7 @@ public class EditorMultiCaretColumnModeTest extends AbstractEditorTest {
                               2, 1, 1, 4);
   }
 
-  public void testTyping() throws Exception {
+  public void testTyping() {
     init("a\n" +
          "bbb\n" +
          "ccccc");
@@ -272,7 +270,7 @@ public class EditorMultiCaretColumnModeTest extends AbstractEditorTest {
                       "ccS<caret>cc");
   }
 
-  public void testCopyPasteOfShortLines() throws Exception {
+  public void testCopyPasteOfShortLines() {
     init("a\n" +
          "bbb\n" +
          "ccccc");
@@ -285,7 +283,7 @@ public class EditorMultiCaretColumnModeTest extends AbstractEditorTest {
                       "cc<caret>ccccc");
   }
 
-  public void testPasteOfBlockToASingleCaret() throws Exception {
+  public void testPasteOfBlockToASingleCaret() {
     init("a\n" +
          "bbb\n" +
          "ccccc");
@@ -298,7 +296,7 @@ public class EditorMultiCaretColumnModeTest extends AbstractEditorTest {
                       "ccccc");
   }
 
-  public void testPasteOfSeveralLinesCopiedFromIdeaToASingleCaret() throws Exception {
+  public void testPasteOfSeveralLinesCopiedFromIdeaToASingleCaret() {
     init("a\n" +
          "bbb\n" +
          "ccccc");
@@ -313,7 +311,7 @@ public class EditorMultiCaretColumnModeTest extends AbstractEditorTest {
                       "b<caret>ccccc");
   }
 
-  public void testSelectToDocumentStart() throws Exception {
+  public void testSelectToDocumentStart() {
     init("line1\n" +
          "line2\n" +
          "line3\n" +
@@ -326,7 +324,7 @@ public class EditorMultiCaretColumnModeTest extends AbstractEditorTest {
                       "line4");
   }
 
-  public void testSelectToDocumentEnd() throws Exception {
+  public void testSelectToDocumentEnd() {
     init("line1\n" +
          "line2\n" +
          "line3\n" +
@@ -339,7 +337,7 @@ public class EditorMultiCaretColumnModeTest extends AbstractEditorTest {
                       "l<selection>ine4<caret></selection>");
   }
 
-  public void testToggleCaseToLower() throws Exception {
+  public void testToggleCaseToLower() {
     init("a\n" +
          "BBB\n" +
          "ccccc");
@@ -352,7 +350,7 @@ public class EditorMultiCaretColumnModeTest extends AbstractEditorTest {
                               2, 4, 2, 4);
   }
 
-  public void testToggleCaseToUpper() throws Exception {
+  public void testToggleCaseToUpper() {
     init("a\n" +
          "BBb\n" +
          "ccccc");
@@ -365,7 +363,7 @@ public class EditorMultiCaretColumnModeTest extends AbstractEditorTest {
                               2, 4, 2, 4);
   }
   
-  public void testSeparatedCarets() throws Exception {
+  public void testSeparatedCarets() {
     init("\n" +
          "\n" +
          "<caret>\n" +
@@ -439,7 +437,7 @@ public class EditorMultiCaretColumnModeTest extends AbstractEditorTest {
                       "");
   }
 
-  public void testPageMovementsInteroperateWithLineMovements() throws Exception {
+  public void testPageMovementsInteroperateWithLineMovements() {
     init("abc\nabc\n<caret>abc\nabc\nabc");
     executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_PAGE_DOWN_WITH_SELECTION);
     checkResultByText("abc\nabc\n<caret>abc\n<caret>abc\n<caret>abc");
@@ -451,7 +449,7 @@ public class EditorMultiCaretColumnModeTest extends AbstractEditorTest {
     checkResultByText("abc\n<caret>abc\n<caret>abc\nabc\nabc");
   }
 
-  private void init(String text) throws IOException {
+  private void init(String text) {
     configureFromFileText(getTestName(false) + ".txt", text);
     setEditorVisibleSize(1000, 1000);
     ((EditorEx)myEditor).setColumnMode(true);

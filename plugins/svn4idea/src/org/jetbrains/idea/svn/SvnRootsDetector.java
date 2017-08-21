@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.InvokeAfterUpdateMode;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -29,13 +30,11 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static com.intellij.util.containers.ContainerUtil.map;
+import static java.util.stream.Collectors.toList;
 
 /**
 * @author Konstantin Kolosovsky.
@@ -121,6 +120,7 @@ public class SvnRootsDetector {
       }
 
       myResult.myTopRoots.addAll(nestedRoots);
+      putWcDbFilesToVfs(myResult.myTopRoots);
       myMapping.applyDetectionResult(myResult);
 
       callback.run();
@@ -129,6 +129,19 @@ public class SvnRootsDetector {
         vcsDirtyScopeManager.filesDirty(null, basicVfRoots);
       }
     }, null);
+  }
+
+  private static void putWcDbFilesToVfs(@NotNull Collection<RootUrlInfo> infos) {
+    if (!SvnVcs.ourListenToWcDb) return;
+
+    List<File> wcDbFiles = infos.stream()
+      .filter(info -> info.getFormat().isOrGreater(WorkingCopyFormat.ONE_DOT_SEVEN))
+      .filter(info -> !NestedCopyType.switched.equals(info.getType()))
+      .map(RootUrlInfo::getIoFile)
+      .map(SvnUtil::getWcDb)
+      .collect(toList());
+
+    LocalFileSystem.getInstance().refreshIoFiles(wcDbFiles);
   }
 
   private void registerRootUrlFromNestedPoint(@NotNull NestedCopyInfo info, @NotNull List<RootUrlInfo> nestedRoots) {

@@ -18,6 +18,7 @@ package com.intellij.java.propertyBased;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.history.Label;
 import com.intellij.history.LocalHistory;
+import com.intellij.history.LocalHistoryException;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
@@ -33,6 +34,7 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -42,20 +44,23 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.testFramework.CompilerTester;
-import com.intellij.testFramework.PlatformTestCase;
-import com.intellij.testFramework.TestDataProvider;
-import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.testFramework.*;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
-import slowCheck.Generator;
+import jetCheck.Generator;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public abstract class AbstractApplyAndRevertTestCase extends PlatformTestCase {
@@ -67,53 +72,14 @@ public abstract class AbstractApplyAndRevertTestCase extends PlatformTestCase {
     return myProject == null ? null : new TestDataProvider(myProject).getData(dataId);
   }
 
-  protected Generator<VirtualFile> javaFiles() {
+  private Generator<VirtualFile> javaFiles() {
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(myProject);
     List<VirtualFile> allFiles = new ArrayList<>(FilenameIndex.getAllFilesByExt(myProject, "java", projectScope));
     return Generator.sampledFrom(allFiles);
   }
 
-  protected static void restrictChangesToDocument(Document document, Runnable r) {
-    Disposable disposable = Disposer.newDisposable();
-    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new DocumentListener() {
-      @Override
-      public void beforeDocumentChange(DocumentEvent event) {
-        Document changed = event.getDocument();
-        if (changed != document) {
-          VirtualFile file = FileDocumentManager.getInstance().getFile(changed);
-          if (file != null && file.isInLocalFileSystem()) {
-            throw new AssertionError("Unexpected document change: " + changed);
-          }
-        }
-      }
-    }, disposable);
-    try {
-      r.run();
-    } finally {
-      Disposer.dispose(disposable);
-    }
-  }
-
-  protected void changeAndRevert(Runnable r) {
-    Label label = LocalHistory.getInstance().putUserLabel(myProject, "changeAndRevert");
-    try {
-      r.run();
-    }
-    finally {
-      WriteAction.run(() -> {
-        try {
-          PostprocessReformattingAspect.getInstance(myProject).doPostponedFormatting();
-          FileDocumentManager.getInstance().saveAllDocuments();
-          label.revert(myProject, myProject.getBaseDir());
-          PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-          assertEmpty(PsiDocumentManager.getInstance(myProject).getUncommittedDocuments());
-          assertEmpty(FileDocumentManager.getInstance().getUnsavedDocuments());
-        }
-        catch (Throwable e) {
-          e.printStackTrace();
-        }
-      });
-    }
+  protected Generator<PsiJavaFile> psiJavaFiles() {
+    return javaFiles().map(vf -> (PsiJavaFile)PsiManager.getInstance(myProject).findFile(vf));
   }
 
   @Override
@@ -189,5 +155,4 @@ public abstract class AbstractApplyAndRevertTestCase extends PlatformTestCase {
       .filter(message -> message.getCategory() == CompilerMessageCategory.ERROR)
       .collect(Collectors.toList());
   }
-
 }

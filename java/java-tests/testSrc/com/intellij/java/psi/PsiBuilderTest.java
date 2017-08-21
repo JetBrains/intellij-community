@@ -45,7 +45,7 @@ public class PsiBuilderTest extends LightIdeaTestCase {
     super.tearDown();
   }
 
-  public void testEmptyProgram() throws Exception {
+  public void testEmptyProgram() {
     myBuilder = createBuilder("");
     final PsiBuilder.Marker fileMarker = myBuilder.mark();
     fileMarker.done(JavaStubElementTypes.JAVA_FILE);
@@ -54,7 +54,7 @@ public class PsiBuilderTest extends LightIdeaTestCase {
     assertEquals("", fileNode.getText());
   }
 
-  public void testProgramWithSingleKeyword() throws Exception {
+  public void testProgramWithSingleKeyword() {
     myBuilder = createBuilder("package");
 
     final PsiBuilder.Marker fileMarker = myBuilder.mark();
@@ -92,7 +92,7 @@ public class PsiBuilderTest extends LightIdeaTestCase {
                               SharedImplUtil.findCharTableByTree(psiFile.getNode()), text, originalTree, null);
   }
 
-  public void testTrailingWhitespaces() throws Exception {
+  public void testTrailingWhitespaces() {
     myBuilder = createBuilder("foo\n\nx");
     final PsiBuilder.Marker marker = myBuilder.mark();
     while (!myBuilder.eof()) {
@@ -102,7 +102,7 @@ public class PsiBuilderTest extends LightIdeaTestCase {
     assertEquals("foo\n\nx", myBuilder.getTreeBuilt().getText());
   }
 
-  public void testRollback() throws Exception {
+  public void testRollback() {
     myBuilder = createBuilder("package");
 
     PsiBuilder.Marker fileMarker = myBuilder.mark();
@@ -138,7 +138,7 @@ public class PsiBuilderTest extends LightIdeaTestCase {
     assertEquals(JavaTokenType.PACKAGE_KEYWORD, leaf.getElementType());
   }
 
-  public void testDrop() throws Exception {
+  public void testDrop() {
     myBuilder = createBuilder("package");
 
     final PsiBuilder.Marker fileMarker = myBuilder.mark();
@@ -211,7 +211,7 @@ public class PsiBuilderTest extends LightIdeaTestCase {
     }
   }
 
-  public void testMergeWhenEmptyElementAfterWhitespaceIsLastChild() throws Throwable {
+  public void testMergeWhenEmptyElementAfterWhitespaceIsLastChild() {
     myBuilder = createBuilder(" foo bar");
     parseWhenEmptyElementAfterWhitespaceIsLastChild();
     final ASTNode tree = myBuilder.getTreeBuilt();

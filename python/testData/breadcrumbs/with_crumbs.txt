@@ -1,4 +1,4 @@
 Crumb:
-with open("file…
+with open("file.txt")
 Tooltip:
 with open("file.txt")

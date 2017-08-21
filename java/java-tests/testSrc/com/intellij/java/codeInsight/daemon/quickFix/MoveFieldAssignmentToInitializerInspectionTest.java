@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Tagir Valeev
  */
 public class MoveFieldAssignmentToInitializerInspectionTest extends LightQuickFixParameterizedTestCase {
-  public void test() throws Exception { doAllTests(); }
+  public void test() { doAllTests(); }
 
   @NotNull
   @Override

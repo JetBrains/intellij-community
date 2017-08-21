@@ -407,8 +407,9 @@ NSString *getOverridePropertiesPath() {
     NSMutableArray *args_array = [NSMutableArray array];
 
     [args_array addObject:classpathOption];
-
     [args_array addObjectsFromArray:parseVMOptions()];
+    NSString *bootJar = [[[NSBundle mainBundle] bundlePath] stringByAppendingString:@"/Contents/lib/boot.jar"];
+    [args_array addObject:[NSString stringWithFormat:@"-Xbootclasspath/a:%@", bootJar]];
 
     NSString *properties = getOverridePropertiesPath();
     if (properties != nil) {

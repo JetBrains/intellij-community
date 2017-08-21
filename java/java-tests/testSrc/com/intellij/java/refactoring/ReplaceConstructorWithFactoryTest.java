@@ -32,24 +32,24 @@ public class ReplaceConstructorWithFactoryTest extends LightRefactoringTestCase 
     return JavaTestUtil.getJavaTestDataPath();
   }
 
-  public void testEmptyConstructor() throws Exception { runTest("01", null); }
+  public void testEmptyConstructor() { runTest("01", null); }
 
-  public void testSubclass() throws Exception { runTest("02", null); }
+  public void testSubclass() { runTest("02", null); }
 
-  public void testDefaultConstructor() throws Exception { runTest("03", null); }
-  public void testDefaultConstructorWithTypeParams() throws Exception { runTest("TypeParams", null); }
+  public void testDefaultConstructor() { runTest("03", null); }
+  public void testDefaultConstructorWithTypeParams() { runTest("TypeParams", null); }
 
-  public void testInnerClass() throws Exception { runTest("04", "OuterClass"); }
+  public void testInnerClass() { runTest("04", "OuterClass"); }
 
-  public void testSubclassVisibility() throws Exception { runTest("05", null); }
+  public void testSubclassVisibility() { runTest("05", null); }
 
-  public void testImplicitConstructorUsages() throws Exception { runTest("06", null); }
+  public void testImplicitConstructorUsages() { runTest("06", null); }
 
-  public void testImplicitConstructorCreation() throws Exception { runTest("07", null); }
+  public void testImplicitConstructorCreation() { runTest("07", null); }
 
-  public void testConstructorTypeParameters() throws Exception { runTest("08", null); }
+  public void testConstructorTypeParameters() { runTest("08", null); }
 
-  private void runTest(final String testIndex, @NonNls String targetClassName) throws Exception {
+  private void runTest(final String testIndex, @NonNls String targetClassName) {
     configureByFile("/refactoring/replaceConstructorWithFactory/before" + testIndex + ".java");
     perform(targetClassName);
     checkResultByFile("/refactoring/replaceConstructorWithFactory/after" + testIndex + ".java");

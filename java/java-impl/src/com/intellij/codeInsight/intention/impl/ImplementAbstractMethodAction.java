@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,8 +66,7 @@ public class ImplementAbstractMethodAction extends BaseIntentionAction {
           }
         }
       }
-      ClassInheritorsSearch.search(containingClass, false).forEach(new PsiElementProcessorAdapter<>(
-        processor));
+      ClassInheritorsSearch.search(containingClass, false).forEach(new PsiElementProcessorAdapter<>(processor));
       return isAvailable(processor);
     }
 
@@ -91,7 +90,7 @@ public class ImplementAbstractMethodAction extends BaseIntentionAction {
       ;
   }
 
-  static class MyElementProcessor implements PsiElementProcessor {
+  static class MyElementProcessor implements PsiElementProcessor<PsiClass> {
     private boolean myHasMissingImplementations;
     private boolean myHasExistingImplementations;
     private final PsiMethod myMethod;
@@ -109,18 +108,15 @@ public class ImplementAbstractMethodAction extends BaseIntentionAction {
     }
 
     @Override
-    public boolean execute(@NotNull PsiElement element) {
-      if (element instanceof PsiClass) {
-        PsiClass aClass = (PsiClass) element;
-        final PsiMethod existingImplementation = findExistingImplementation(aClass, myMethod);
-        if (existingImplementation != null && !existingImplementation.hasModifierProperty(PsiModifier.ABSTRACT)) {
-          myHasExistingImplementations = true;
-        }
-        else if (existingImplementation == null) {
-          myHasMissingImplementations = true;
-        }
-        if (myHasMissingImplementations && myHasExistingImplementations) return false;
+    public boolean execute(@NotNull PsiClass element) {
+      final PsiMethod existingImplementation = findExistingImplementation(element, myMethod);
+      if (existingImplementation != null && !existingImplementation.hasModifierProperty(PsiModifier.ABSTRACT)) {
+        myHasExistingImplementations = true;
       }
+      else if (existingImplementation == null) {
+        myHasMissingImplementations = true;
+      }
+      if (myHasMissingImplementations && myHasExistingImplementations) return false;
       return true;
     }
   }

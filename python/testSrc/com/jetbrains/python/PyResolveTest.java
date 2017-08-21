@@ -771,6 +771,14 @@ public class PyResolveTest extends PyResolveTestCase {
     assertUnresolved();
   }
 
+  public void testImplicitQualifiedClassAttr() {
+    ResolveResult[] resolveResults = multiResolve();
+    assertEquals(1, resolveResults.length);
+    PyTargetExpression target = assertInstanceOf(resolveResults[0].getElement(), PyTargetExpression.class);
+    assertEquals("CLASS_ATTR", target.getName());
+    assertInstanceOf(ScopeUtil.getScopeOwner(target), PyClass.class);
+  }
+
   // PY-13734
   public void testImplicitDunderClassNewStyleClass() {
     assertUnresolved();

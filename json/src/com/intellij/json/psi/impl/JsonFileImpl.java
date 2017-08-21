@@ -5,7 +5,6 @@ import com.intellij.json.JsonLanguage;
 import com.intellij.json.psi.JsonFile;
 import com.intellij.json.psi.JsonValue;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +38,6 @@ public class JsonFileImpl extends PsiFileBase implements JsonFile {
 
   @Override
   public String toString() {
-    final VirtualFile virtualFile = getVirtualFile();
-    return "JsonFile: " + (virtualFile != null? virtualFile.getName() : "<unknown>");
+    return "JsonFile: " + getName();
   }
 }

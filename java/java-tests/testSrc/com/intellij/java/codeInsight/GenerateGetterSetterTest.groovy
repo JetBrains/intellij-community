@@ -21,6 +21,7 @@ import com.intellij.codeInsight.generation.GenerateSetterHandler
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.ui.UIUtil
 import com.siyeh.ig.style.UnqualifiedFieldAccessInspection
@@ -98,7 +99,7 @@ class Foo {
   }
 
   void "test strip field prefix"() {
-    def settings = CodeStyleSettingsManager.getInstance(getProject()).currentSettings
+    def settings = CodeStyleSettingsManager.getInstance(getProject()).currentSettings.getCustomSettings(JavaCodeStyleSettings.class)
     String oldPrefix = settings.FIELD_NAME_PREFIX
     try {
       settings.FIELD_NAME_PREFIX = "my"
@@ -219,7 +220,29 @@ class Foo {
 }
 '''
   }
-  
+
+  void "test invoke between comment and method"() {
+    myFixture.enableInspections(UnqualifiedFieldAccessInspection.class)
+    myFixture.configureByText 'a.java', '''
+class Foo {
+  int a;
+  //comment
+ <caret> void foo() {}
+}'''
+    generateGetter()
+    myFixture.checkResult '''
+class Foo {
+  int a;
+
+    public int getA() {
+        return this.a;
+    }
+
+    //comment
+  void foo() {}
+}'''
+  }
+
   private void generateSetter() {
     new GenerateSetterHandler() {
       @Override

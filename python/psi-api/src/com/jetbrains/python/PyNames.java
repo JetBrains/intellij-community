@@ -210,6 +210,7 @@ public class PyNames {
 
   public static final String NOSE_TEST = "nose";
   public static final String PY_TEST = "pytest";
+  public static final String TRIAL_TEST = "Twisted";
 
   public static final String TEST_CASE = "TestCase";
 
@@ -580,6 +581,41 @@ public class PyNames {
 
   public static boolean isRightOperatorName(@Nullable String name) {
     return name != null && (name.matches("__r[a-z]+__") || CONTAINS.equals(name));
+  }
+
+  public static boolean isRightOperatorName(@Nullable String referencedName, @Nullable String calleeName) {
+    if (isRightOperatorName(calleeName)) return true;
+
+    return referencedName != null && calleeName != null && calleeName.equals(leftToRightComparisonOperatorName(referencedName));
+  }
+
+  @Nullable
+  public static String leftToRightOperatorName(@Nullable String name) {
+    if (name == null) return null;
+
+    final String rightComparisonOperatorName = leftToRightComparisonOperatorName(name);
+    if (rightComparisonOperatorName != null) return rightComparisonOperatorName;
+
+    return name.replaceFirst("__([a-z]+)__", "__r$1__");
+  }
+
+  @Nullable
+  private static String leftToRightComparisonOperatorName(@NotNull String name) {
+    switch (name) {
+      case "__lt__":
+        return "__gt__";
+      case "__gt__":
+        return "__lt__";
+      case "__ge__":
+      return "__le__";
+      case "__le__":
+        return "__ge__";
+      case "__eq__":
+      case "__ne__":
+        return name;
+      default:
+        return null;
+    }
   }
 
   /**

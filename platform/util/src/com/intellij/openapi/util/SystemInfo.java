@@ -20,9 +20,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.List;
 
 @SuppressWarnings({"HardCodedStringLiteral", "UtilityClassWithoutPrivateConstructor", "UnusedDeclaration"})
@@ -52,8 +50,6 @@ public class SystemInfo extends SystemInfoRt {
   public static final boolean isSunJvm = vendorContains("Sun") && vendorContains("Microsystems");
   public static final boolean isIbmJvm = vendorContains("IBM");
   public static final boolean isJetBrainsJvm = vendorContains("JetBrains");
-  /** @deprecated use {@link #isJetBrainsJvm} (to be removed in IDEA 2018)*/
-  public static final boolean isJetbrainsJvm = isJetBrainsJvm;
   public static final boolean IS_AT_LEAST_JAVA9 = isJavaVersionAtLeast("9");
 
   public static boolean isOsVersionAtLeast(@NotNull String version) {
@@ -67,34 +63,6 @@ public class SystemInfo extends SystemInfoRt {
   public static final boolean isWin7OrNewer = isWindows && isOsVersionAtLeast("6.1");
   public static final boolean isWin8OrNewer = isWindows && isOsVersionAtLeast("6.2");
   public static final boolean isWin10OrNewer = isWindows && isOsVersionAtLeast("10.0");
-
-  /* https://msdn.microsoft.com/en-us/commandline/wsl/about */
-  private static final AtomicNullableLazyValue<File> ourWSLBashFile = new AtomicNullableLazyValue<File>() {
-    @Nullable
-    @Override
-    protected File compute() {
-      if (isWin10OrNewer) {
-        String windir = System.getenv().get("windir");
-        if (!StringUtil.isEmpty(windir)) {
-          File bashFile = new File(windir + "\\System32\\bash.exe");
-          if (bashFile.exists()) {
-            return bashFile;
-          }
-        }
-      }
-
-      return null;
-    }
-  };
-
-  @Nullable
-  public static File getWSLBashFile() {
-    return ourWSLBashFile.getValue();
-  }
-
-  public static boolean hasWSL() {
-    return getWSLBashFile() != null;
-  }
 
   public static final boolean isXWindow = isUnix && !isMac;
   public static final boolean isWayland = isXWindow && !StringUtil.isEmpty(System.getenv("WAYLAND_DISPLAY"));
@@ -131,6 +99,7 @@ public class SystemInfo extends SystemInfoRt {
   public static final boolean isMacOSYosemite = isMac && isOsVersionAtLeast("10.10");
   public static final boolean isMacOSElCapitan = isMac && isOsVersionAtLeast("10.11");
   public static final boolean isMacOSSierra = isMac && isOsVersionAtLeast("10.12");
+  public static final boolean isMacOSHighSierra = isMac && isOsVersionAtLeast("10.13");
 
   @NotNull
   public static String getMacOSMajorVersion() {
@@ -228,5 +197,8 @@ public class SystemInfo extends SystemInfoRt {
 
   /** @deprecated outdated (to be removed in IDEA 2018) */
   public static final boolean isOS2 = SystemInfoRt.isOS2;
+
+  /** @deprecated use {@link #isJetBrainsJvm} (to be removed in IDEA 2018)*/
+  public static final boolean isJetbrainsJvm = isJetBrainsJvm;
   //</editor-fold>
 }

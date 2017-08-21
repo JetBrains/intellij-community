@@ -70,6 +70,13 @@ class JdkUtilTest : BareTestFixtureTestCase() {
     doTest("-Xmx256m", "-Dan.option=1", "-classpath", "/classes/hello.jar", "-jar", "/classes/main.jar", "hello")
   }
 
+  @Test fun `do not use CommandLineWrapper for 'java -jar' command`() {
+    parameters.mainClass = null
+    parameters.classPath.clear()
+    parameters.jarPath = "/classes/main.jar"
+    doTest("-Xmx256m", "-Dan.option=1", "-jar", "/classes/main.jar", "hello")
+  }
+
   @Test fun dynamicClasspathWithJar() {
     parameters.isUseClasspathJar = true
     doTest("-Xmx256m", "-Dan.option=1", "-classpath", "#classpath.jar#", "hello.Main", "hello")
@@ -103,7 +110,11 @@ class JdkUtilTest : BareTestFixtureTestCase() {
     setModuleMode()
     parameters.setUseDynamicVMOptions(true)
     parameters.setUseDynamicParameters(true)
+    parameters.programParametersList.clearAll()
+    parameters.programParametersList.addAll("#1", "\"2\"", "line\n-", "C:\\", "D:\\work", "E:\\work space")
     doTest("#arg_file#")
+    val args = filesToDelete?.find { it.name.contains("idea_arg_file") }?.readLines()?.dropWhile { !it.contains("hello.Main") }
+    assertThat(args).containsExactly("hello/hello.Main", "\"#1\"", "\"\\\"2\\\"\"", "\"line\\n-\"", "\"C:\\\\\"", "D:\\work", "\"E:\\\\work space\"")
   }
 
   private fun doTest(vararg expected: String) {

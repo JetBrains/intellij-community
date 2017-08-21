@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -373,12 +373,10 @@ public class MarkerType {
 
   private static class SubclassUpdater extends ListBackgroundUpdaterTask {
     private final PsiClass myClass;
-    private final PsiElementListCellRenderer<NavigatablePsiElement> myRenderer;
 
     private SubclassUpdater(@NotNull PsiClass aClass, @NotNull PsiElementListCellRenderer<NavigatablePsiElement> renderer) {
-      super(aClass.getProject(), SEARCHING_FOR_OVERRIDDEN_METHODS);
+      super(aClass.getProject(), SEARCHING_FOR_OVERRIDDEN_METHODS, ((Comparator)renderer.getComparator()));
       myClass = aClass;
-      myRenderer = renderer;
     }
 
     @Override
@@ -410,10 +408,10 @@ public class MarkerType {
       }), true).forEach(new CommonProcessors.CollectProcessor<PsiClass>() {
         @Override
         public boolean process(final PsiClass o) {
-          if (!updateComponent(o, myRenderer.getComparator())) {
+          if (!updateComponent(o)) {
             indicator.cancel();
           }
-          indicator.checkCanceled();
+          ProgressManager.checkCanceled();
           return super.process(o);
         }
       });
@@ -421,10 +419,10 @@ public class MarkerType {
       FunctionalExpressionSearch.search(myClass).forEach(new CommonProcessors.CollectProcessor<PsiFunctionalExpression>() {
         @Override
         public boolean process(final PsiFunctionalExpression expr) {
-          if (!updateComponent(expr, myRenderer.getComparator())) {
+          if (!updateComponent(expr)) {
             indicator.cancel();
           }
-          indicator.checkCanceled();
+          ProgressManager.checkCanceled();
           return super.process(expr);
         }
       });
@@ -433,12 +431,10 @@ public class MarkerType {
 
   private static class OverridingMethodsUpdater extends ListBackgroundUpdaterTask {
     private final PsiMethod myMethod;
-    private final PsiElementListCellRenderer myRenderer;
 
     private OverridingMethodsUpdater(@NotNull PsiMethod method, @NotNull PsiElementListCellRenderer renderer) {
-      super(method.getProject(), SEARCHING_FOR_OVERRIDING_METHODS);
+      super(method.getProject(), SEARCHING_FOR_OVERRIDING_METHODS, renderer.getComparator());
       myMethod = method;
-      myRenderer = renderer;
     }
 
     @Override
@@ -466,10 +462,10 @@ public class MarkerType {
         new CommonProcessors.CollectProcessor<PsiMethod>() {
           @Override
           public boolean process(PsiMethod psiMethod) {
-            if (!updateComponent(psiMethod, myRenderer.getComparator())) {
+            if (!updateComponent(psiMethod)) {
               indicator.cancel();
             }
-            indicator.checkCanceled();
+            ProgressManager.checkCanceled();
             return super.process(psiMethod);
           }
         });
@@ -478,10 +474,10 @@ public class MarkerType {
         FunctionalExpressionSearch.search(psiClass).forEach(new CommonProcessors.CollectProcessor<PsiFunctionalExpression>() {
           @Override
           public boolean process(final PsiFunctionalExpression expr) {
-            if (!updateComponent(expr, myRenderer.getComparator())) {
+            if (!updateComponent(expr)) {
               indicator.cancel();
             }
-            indicator.checkCanceled();
+            ProgressManager.checkCanceled();
             return super.process(expr);
           }
         });

@@ -25,8 +25,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class LightQuickFixAvailabilityTestCase extends LightQuickFixParameterizedTestCase {
   @Override
-  protected void doAction(@NotNull final ActionHint actionHint, final String testFullPath, final String testName)
-    throws Exception {
+  protected void doAction(@NotNull final ActionHint actionHint, final String testFullPath, final String testName) {
     findActionAndCheck(actionHint, testFullPath);
   }
 }

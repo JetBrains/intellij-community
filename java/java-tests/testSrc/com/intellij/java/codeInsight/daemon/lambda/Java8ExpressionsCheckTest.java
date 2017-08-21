@@ -30,59 +30,75 @@ import java.util.Collection;
 public class Java8ExpressionsCheckTest extends LightDaemonAnalyzerTestCase {
   @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/expressions";
 
-  public void testSecondConflictResolutionOnSameMethodCall() throws Exception {
+  public void testSecondConflictResolutionOnSameMethodCall() {
     doTestAllMethodCallExpressions();
   }
 
-  public void testNestedLambdaAdditionalConstraints() throws Exception {
+  public void testNestedLambdaAdditionalConstraints() {
     doTestAllMethodCallExpressions();
   }
 
-  public void testAvoidClassRefCachingDuringInference() throws Exception {
+  public void testAvoidClassRefCachingDuringInference() {
     doTestAllMethodCallExpressions();
   }
 
-  public void testInfinitiveParameterBoundsCheck() throws Exception {
+  public void testInfinitiveParameterBoundsCheck() {
     doTestAllMethodCallExpressions();
   }
 
-  public void testProoveThatInferenceInsideLambdaBodyDontInfluenceOuterCallInference() throws Exception {
+  public void testProoveThatInferenceInsideLambdaBodyDontInfluenceOuterCallInference() {
     doTestAllMethodCallExpressions();
   }
 
-  public void testDontCollectUnhandledReferencesInsideLambdaBody() throws Exception {
+  public void testDontCollectUnhandledReferencesInsideLambdaBody() {
     doTestAllMethodCallExpressions();
   }
 
-  public void testCachedUnresolvedMethods() throws Exception {
+  public void testCachedUnresolvedMethods() {
     doTestCachedUnresolved();
   }
 
-  public void testCacheUnresolvedMethods2() throws Exception {
+  public void testCacheUnresolvedMethods2() {
     doTestCachedUnresolved();
   }
   
-  public void testCacheUnresolvedMethods3() throws Exception {
+  public void testCacheUnresolvedMethods3() {
     doTestCachedUnresolved();
   }
 
-  public void testCacheUnresolvedMethods4() throws Exception {
+  public void testCacheUnresolvedMethods4() {
     doTestCachedUnresolved();
   }
 
-  public void testCacheUnresolvedMethods5() throws Exception {
+  public void testCacheUnresolvedMethods5() {
     doTestCachedUnresolved();
   }
 
-  public void testMethodOverloadsInsideLambdaHierarchy() throws Exception {
+  public void testMethodOverloadsInsideLambdaHierarchy() {
     doTestAllMethodCallExpressions();
   }
 
-  public void testObjectOverloadsWithDiamondsOverMultipleConstructors() throws Exception {
+  public void testObjectOverloadsWithDiamondsOverMultipleConstructors() {
     doTestAllMethodCallExpressions();
   }
 
-  public void testCachingOfResultsDuringCandidatesIteration() throws Exception {
+  public void testLambdaParameterTypeSideEffects() {
+    configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
+    Collection<PsiParameter> parameters = PsiTreeUtil.findChildrenOfType(getFile(), PsiParameter.class);
+    for (PsiParameter parameter : parameters) {
+      if (parameter.getTypeElement() == null) { //lambda parameter
+        assertNotNull(parameter.getType());
+        Collection<PsiCallExpression> expressions = PsiTreeUtil.findChildrenOfType(getFile(), PsiCallExpression.class);
+        for (PsiCallExpression expression : expressions) {
+          assertNotNull(expression.getText(), expression.resolveMethod());
+        }
+
+        getPsiManager().dropResolveCaches();
+      }
+    }
+  }
+
+  public void testCachingOfResultsDuringCandidatesIteration() {
     configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
     final Collection<PsiMethodCallExpression> methodCallExpressions = PsiTreeUtil.findChildrenOfType(getFile(), PsiMethodCallExpression.class);
 
@@ -109,7 +125,7 @@ public class Java8ExpressionsCheckTest extends LightDaemonAnalyzerTestCase {
     }
   }
 
-  public void testNonCachingFolding() throws Exception {
+  public void testNonCachingFolding() {
     final String filePath = BASE_PATH + "/" + getTestName(false) + ".java";
     configureByFile(filePath);
     PsiNewExpression newWithAnonym =
@@ -120,7 +136,7 @@ public class Java8ExpressionsCheckTest extends LightDaemonAnalyzerTestCase {
     doTestConfiguredFile(false, false, filePath);
   }
 
-  public void testRejectCachedTopLevelSessionIfItCorrespondsToTheWrongOverload() throws Exception {
+  public void testRejectCachedTopLevelSessionIfItCorrespondsToTheWrongOverload() {
     final String filePath = BASE_PATH + "/" + getTestName(false) + ".java";
     configureByFile(filePath);
     PsiMethodCallExpression methodCall =
@@ -138,7 +154,7 @@ public class Java8ExpressionsCheckTest extends LightDaemonAnalyzerTestCase {
     doTestConfiguredFile(false, false, filePath);
   }
 
-  public void testCheckedExceptionConstraintToTopLevel() throws Exception {
+  public void testCheckedExceptionConstraintToTopLevel() {
     doTestCachedUnresolved();
   }
 
@@ -156,7 +172,7 @@ public class Java8ExpressionsCheckTest extends LightDaemonAnalyzerTestCase {
     }
   }
 
-  public void testIDEA140035() throws Exception {
+  public void testIDEA140035() {
     doTestAllMethodCallExpressions();
     final Collection<PsiParameter> parameterLists = PsiTreeUtil.findChildrenOfType(getFile(), PsiParameter.class);
     for (PsiParameter parameter : parameterLists) {
@@ -167,15 +183,15 @@ public class Java8ExpressionsCheckTest extends LightDaemonAnalyzerTestCase {
     }
   }
 
-  public void testAdditionalConstraintsBasedOnLambdaResolution() throws Exception {
+  public void testAdditionalConstraintsBasedOnLambdaResolution() {
     doTestAllMethodCallExpressions();
   }
   
-  public void testAdditionalConstraintsBasedOnLambdaResolutionForNestedLambdas() throws Exception {
+  public void testAdditionalConstraintsBasedOnLambdaResolutionForNestedLambdas() {
     doTestAllMethodCallExpressions();
   }
 
-  public void testOverloadResolutionInsideLambdaInsideNestedCall() throws Exception {
+  public void testOverloadResolutionInsideLambdaInsideNestedCall() {
     doTestAllMethodCallExpressions();
   }
 

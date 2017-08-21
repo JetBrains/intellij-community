@@ -21,7 +21,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 
 public class FilenameIndexTest extends JavaCodeInsightFixtureTestCase {
-  public void testCaseInsensitiveFilesByName() throws Exception {
+  public void testCaseInsensitiveFilesByName() {
     final VirtualFile vFile1 = myFixture.addFileToProject("dir1/foo.test", "Foo").getVirtualFile();
     final VirtualFile vFile2 = myFixture.addFileToProject("dir2/FOO.TEST", "Foo").getVirtualFile();
 

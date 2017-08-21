@@ -347,7 +347,7 @@ public final class FormEditingUtil {
   }
 
   /**
-   * @return all selected component inside the <code>editor</code>
+   * @return all selected component inside the {@code editor}
    */
   @NotNull
   public static ArrayList<RadComponent> getAllSelectedComponents(@NotNull final GuiEditor editor) {
@@ -581,7 +581,7 @@ public final class FormEditingUtil {
   }
 
   /**
-   * @return {@link com.intellij.uiDesigner.designSurface.GuiEditor} from the context. Can be <code>null</code>.
+   * @return {@link com.intellij.uiDesigner.designSurface.GuiEditor} from the context. Can be {@code null}.
    */
   @Nullable
   public static GuiEditor getEditorFromContext(@NotNull final DataContext context) {
@@ -889,9 +889,9 @@ public final class FormEditingUtil {
   }
 
   /**
-   * Finds component with the specified <code>id</code> starting from the
-   * <code>container</code>. The method goes recursively through the hierarchy
-   * of components. Note, that if <code>container</code> itself has <code>id</code>
+   * Finds component with the specified {@code id} starting from the
+   * {@code container}. The method goes recursively through the hierarchy
+   * of components. Note, that if {@code container} itself has {@code id}
    * then the method immediately retuns it.
    *
    * @return the found component.

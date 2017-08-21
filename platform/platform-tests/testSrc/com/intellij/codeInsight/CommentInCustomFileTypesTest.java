@@ -28,7 +28,7 @@ public class CommentInCustomFileTypesTest extends LightPlatformCodeInsightTestCa
     return PlatformTestUtil.getPlatformTestDataPath();
   }
 
-  public void testBlockComment() throws Exception {
+  public void testBlockComment() {
     configureByFile("/codeInsight/commentInCustomFileType/block1.cs");
     performBlockCommentAction();
     checkResultByFile("/codeInsight/commentInCustomFileType/block1_after.cs");
@@ -38,7 +38,7 @@ public class CommentInCustomFileTypesTest extends LightPlatformCodeInsightTestCa
     checkResultByFile("/codeInsight/commentInCustomFileType/block1_after2.cs");
   }
 
-  public void testLineComment() throws Exception {
+  public void testLineComment() {
     configureByFile("/codeInsight/commentInCustomFileType/line1.cs");
     performLineCommentAction();
     checkResultByFile("/codeInsight/commentInCustomFileType/line1_after.cs");

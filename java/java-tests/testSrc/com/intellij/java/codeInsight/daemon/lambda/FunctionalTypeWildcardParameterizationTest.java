@@ -23,23 +23,23 @@ import org.jetbrains.annotations.NonNls;
 public class FunctionalTypeWildcardParameterizationTest extends LightDaemonAnalyzerTestCase {
   @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/wildcardParametrization";
 
-  public void testNonWildcardParametrization() throws Exception {
+  public void testNonWildcardParametrization() {
     doTest();
   }
 
-  public void testLambdaFormalParamTypesParametrization() throws Exception {
+  public void testLambdaFormalParamTypesParametrization() {
     doTest();
   }
 
-  public void testPrimitiveParameterTypes() throws Exception {
+  public void testPrimitiveParameterTypes() {
     doTest();
   }
 
-  public void testNonWildcardParameterizationForInferredButStillWildcardParameterization() throws Exception {
+  public void testNonWildcardParameterizationForInferredButStillWildcardParameterization() {
     doTest();
   }
 
-  public void testNonWildcardParameterizationForNonBoundWildcardBound() throws Exception {
+  public void testNonWildcardParameterizationForNonBoundWildcardBound() {
     doTest();
   }
 

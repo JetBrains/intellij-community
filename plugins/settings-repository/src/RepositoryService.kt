@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 
 interface RepositoryService {
-  fun checkUrl(uriString: String, suggestToCreate: Boolean, project: Project? = null): Boolean {
+  fun checkUrl(uriString: String, project: Project? = null): Boolean {
     val uri = URIish(uriString)
     val isFile: Boolean
     if (uri.scheme == URLUtil.FILE_PROTOCOL) {
@@ -50,8 +50,7 @@ interface RepositoryService {
     val file = Paths.get(if (url.endsWith(suffix)) url.substring(0, url.length - suffix.length) else url)
     if (file.exists()) {
       if (!file.isDirectory()) {
-        //noinspection DialogTitleCapitalization
-        Messages.showErrorDialog(project, "Specified path is not a directory", "Specified Path is Invalid")
+        Messages.showErrorDialog(project, "Path is not a directory", "")
         return false
       }
       else if (isValidRepository(file)) {
@@ -68,13 +67,13 @@ interface RepositoryService {
         .yesText("Create")
         .project(project)
         .isYes) {
-      try {
+      return try {
         createBareRepository(file)
-        return true
+        true
       }
       catch (e: IOException) {
         Messages.showErrorDialog(project, icsMessage("init.failed.message", e.message), icsMessage("init.failed.title"))
-        return false
+        false
       }
     }
     else {

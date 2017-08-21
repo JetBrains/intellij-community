@@ -140,11 +140,17 @@ public class JavaConcatenationInjectorManager extends SimpleModificationTracker 
       else {
         data = anchor.getUserData(INJECTED_PSI_IN_CONCATENATION);
 
-        result = data == null ? doCompute(containingFile, project, anchor, operands) : data.getValue(context);
+        result = data == null ? null : data.getValue(context);
+        if (result == null || !result.isValid()) {
+          result = doCompute(containingFile, project, anchor, operands);
+        }
       }
       if (result != null && result.getResult() != null) {
         for (Pair<Place, PsiFile> p : result.getResult()) {
-          ((MultiHostRegistrarImpl)registrar).addToResults(p.first, p.second, result);
+          Place place = p.getFirst();
+          if (place.isValid()) {
+            ((MultiHostRegistrarImpl)registrar).addToResults(place, p.second, result);
+          }
         }
 
         if (data == null) {

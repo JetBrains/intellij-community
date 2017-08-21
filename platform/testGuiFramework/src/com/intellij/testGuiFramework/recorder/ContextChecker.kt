@@ -16,8 +16,10 @@
 
 package com.intellij.testGuiFramework.recorder
 
+import com.intellij.openapi.wm.impl.FocusManagerImpl
 import com.intellij.testGuiFramework.generators.*
 import java.awt.Component
+import java.awt.Point
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
@@ -134,11 +136,12 @@ private class ContextTree(val writeFun: (String) -> Unit) {
           is MouseEvent -> {
             val locationOnScreen = this.component.locationOnScreen
             val visibleRect = (this.component as JComponent).visibleRect
-            visibleRect.location = locationOnScreen
+            visibleRect.location = locationOnScreen + visibleRect.location
             return (visibleRect.contains(inputEvent.locationOnScreen))
           }
           is KeyEvent -> {
-            return this.component == inputEvent.component
+            val focusOwner = FocusManagerImpl.getGlobalInstance().focusOwner
+            return (this.component == focusOwner || this.component.hasAsChild(focusOwner))
           }
           else -> {
             return false;
@@ -147,6 +150,19 @@ private class ContextTree(val writeFun: (String) -> Unit) {
       }
       else -> throw UnsupportedOperationException("Error: Unidentified context generator type!")
     }
+  }
+
+  private operator fun Point.plus(point: Point): Point {
+    return Point(this.x + point.x, this.y + point.y)
+  }
+
+  private fun Component.hasAsChild(possibleChildComponent: Component): Boolean {
+    var parent: Component? = possibleChildComponent.parent
+    while (parent != null) {
+      if (parent == this) return true
+      parent = parent.parent
+    }
+    return false
   }
 }
 

@@ -53,7 +53,6 @@ import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -155,17 +154,13 @@ public class FindDialog extends DialogWrapper implements FindUI {
     setTitle(myHelper.getTitle());
     setOKButtonText(FindBundle.message("find.button"));
     init();
-    initByModel();
-    updateReplaceVisibility();
-    validateFindButton();
-
-    if (haveResultsPreview()) {
-      ApplicationManager.getApplication().invokeLater(() -> scheduleResultsUpdate(), ModalityState.any());
-    }
   }
 
   @Override
   public void showUI() {
+    if (haveResultsPreview()) {
+      ApplicationManager.getApplication().invokeLater(() -> scheduleResultsUpdate(), ModalityState.any());
+    }
     show();
   }
 
@@ -512,7 +507,7 @@ public class FindDialog extends DialogWrapper implements FindUI {
               if (isCancelled()) return;
               model.addRow(new Object[]{usage});
             }, state);
-            return resultsCount.incrementAndGet() < ShowUsagesAction.USAGES_PAGE_SIZE;
+            return resultsCount.incrementAndGet() < ShowUsagesAction.getUsagesPageSize();
           }, processPresentation, filesToScanInitially);
 
           boolean succeeded = !progressIndicatorWhenSearchStarted.isCanceled();
@@ -522,7 +517,7 @@ public class FindDialog extends DialogWrapper implements FindUI {
                 int occurrences = resultsCount.get();
                 int filesWithOccurrences = resultsFilesCount.get();
                 if (occurrences == 0) myResultsPreviewTable.getEmptyText().setText(UIBundle.message("message.nothingToShow"));
-                boolean foundAllUsages = occurrences < ShowUsagesAction.USAGES_PAGE_SIZE;
+                boolean foundAllUsages = occurrences < ShowUsagesAction.getUsagesPageSize();
 
                 myContent.setTitleAt(RESULTS_PREVIEW_TAB_INDEX,
                                      PREVIEW_TITLE +
@@ -562,18 +557,6 @@ public class FindDialog extends DialogWrapper implements FindUI {
     if (myResultsPreviewSearchProgress != null && !myResultsPreviewSearchProgress.isCanceled()) {
       myResultsPreviewSearchProgress.cancel();
     }
-  }
-
-  @Override
-  public void updateReplaceVisibility() {
-      boolean isReplaceState = myHelper.getModel().isReplaceState();
-      myReplacePrompt.setVisible(isReplaceState);
-      myReplaceComboBox.setVisible(isReplaceState);
-      if (myCbToSkipResultsWhenOneUsage != null) {
-        myCbToSkipResultsWhenOneUsage.setVisible(!isReplaceState);
-      }
-      myCbPreserveCase.setVisible(isReplaceState);
-    setTitle(myHelper.getTitle());
   }
 
   private void validateFindButton() {
@@ -1576,6 +1559,15 @@ public class FindDialog extends DialogWrapper implements FindUI {
       setStringsToComboBox(findInProjectSettings.getRecentReplaceStrings(), myReplaceComboBox, myModel.getStringToReplace());
     }
     updateControls();
+    boolean isReplaceState = myModel.isReplaceState();
+    myReplacePrompt.setVisible(isReplaceState);
+    myReplaceComboBox.setVisible(isReplaceState);
+    if (myCbToSkipResultsWhenOneUsage != null) {
+      myCbToSkipResultsWhenOneUsage.setVisible(!isReplaceState);
+    }
+    myCbPreserveCase.setVisible(isReplaceState);
+    setTitle(myHelper.getTitle());
+    validateFindButton();
   }
 
   private void navigateToSelectedUsage(JBTable source) {
@@ -1676,7 +1668,7 @@ public class FindDialog extends DialogWrapper implements FindUI {
       setLayout(new BorderLayout());
       add(myUsageRenderer, BorderLayout.CENTER);
       add(myFileAndLineNumber, BorderLayout.EAST);
-      setBorder(IdeBorderFactory.createEmptyBorder(MARGIN, MARGIN, MARGIN, 0));
+      setBorder(JBUI.Borders.empty(MARGIN, MARGIN, MARGIN, 0));
     }
 
     @Override

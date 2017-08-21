@@ -52,7 +52,7 @@ public class DetectedIndentNotificationTest extends LightPlatformCodeInsightFixt
     super.tearDown();
   }
 
-  public void testNotificationShownOnEnter_WhenIndentDetected() throws Exception {
+  public void testNotificationShownOnEnter_WhenIndentDetected() {
     myFixture.configureByText("Test.java",
                               "class Test {\n" +
                               "  public void main() {\n" +
@@ -69,7 +69,7 @@ public class DetectedIndentNotificationTest extends LightPlatformCodeInsightFixt
     assert isNotificationShown(vFile);
   }
 
-  public void test_DoNotNotify_IfIndentDetected_AndNotificationDisabled() throws Exception {
+  public void test_DoNotNotify_IfIndentDetected_AndNotificationDisabled() {
     boolean isShowNotificationBefore = FileIndentOptionsProvider.isShowNotification();
     try {
       FileIndentOptionsProvider.setShowNotification(false);
@@ -101,7 +101,7 @@ public class DetectedIndentNotificationTest extends LightPlatformCodeInsightFixt
     }
   }
 
-  public void testNoNotification_WhenNothingDetected() throws Exception {
+  public void testNoNotification_WhenNothingDetected() {
     myFixture.configureByText("Test.java",
                               "class Test {\n" +
                               "    public void main() {\n" +

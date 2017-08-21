@@ -28,26 +28,25 @@ import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.reference.SoftReference;
-import com.intellij.util.containers.WeakKeyWeakValueHashMap;
-import com.intellij.util.containers.WeakValueHashMap;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.NotNullList;
 import com.intellij.util.io.fs.FilePath;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 public class DocumentReferenceManagerImpl extends DocumentReferenceManager implements ApplicationComponent {
   private static final Key<List<VirtualFile>> DELETED_FILES = Key.create(DocumentReferenceManagerImpl.class.getName() + ".DELETED_FILES");
 
-  private final Map<Document, DocumentReference> myDocToRef = new WeakKeyWeakValueHashMap<>();
+  private final Map<Document, DocumentReference> myDocToRef = ContainerUtil.createWeakKeyWeakValueMap();
 
   private static final Key<Reference<DocumentReference>> FILE_TO_REF_KEY = Key.create("FILE_TO_REF_KEY");
   private static final Key<DocumentReference> FILE_TO_STRONG_REF_KEY = Key.create("FILE_TO_STRONG_REF_KEY");
-  private final Map<FilePath, DocumentReference> myDeletedFilePathToRef = new WeakValueHashMap<>();
+  private final Map<FilePath, DocumentReference> myDeletedFilePathToRef = ContainerUtil.createWeakValueMap();
 
   @Override
   public void initComponent() {
@@ -65,7 +64,7 @@ public class DocumentReferenceManagerImpl extends DocumentReferenceManager imple
       @Override
       public void beforeFileDeletion(@NotNull VirtualFileEvent event) {
         VirtualFile f = event.getFile();
-        f.putUserData(DELETED_FILES, collectDeletedFiles(f, new ArrayList<>()));
+        f.putUserData(DELETED_FILES, collectDeletedFiles(f, new NotNullList<>()));
       }
 
       @Override
@@ -86,7 +85,8 @@ public class DocumentReferenceManagerImpl extends DocumentReferenceManager imple
     });
   }
 
-  private static List<VirtualFile> collectDeletedFiles(VirtualFile f, List<VirtualFile> files) {
+  @NotNull
+  private static List<VirtualFile> collectDeletedFiles(@NotNull VirtualFile f, @NotNull List<VirtualFile> files) {
     if (!(f instanceof NewVirtualFile)) return files;
 
     if (!f.isDirectory()) {

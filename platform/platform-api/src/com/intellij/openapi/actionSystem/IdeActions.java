@@ -24,6 +24,7 @@ public interface IdeActions {
   @NonNls String ACTION_EDITOR_CUT = "EditorCut";
   @NonNls String ACTION_EDITOR_COPY = "EditorCopy";
   @NonNls String ACTION_EDITOR_PASTE = "EditorPaste";
+  @NonNls String ACTION_EDITOR_PASTE_SIMPLE = "EditorPasteSimple";
   @NonNls String ACTION_EDITOR_DELETE = "EditorDelete";
   @NonNls String ACTION_EDITOR_DELETE_TO_WORD_START = "EditorDeleteToWordStart";
   @NonNls String ACTION_EDITOR_DELETE_TO_WORD_END = "EditorDeleteToWordEnd";
@@ -76,6 +77,7 @@ public interface IdeActions {
   @NonNls String ACTION_EDITOR_TOGGLE_OVERWRITE_MODE= "EditorToggleInsertState";
   @NonNls String ACTION_EDITOR_TOGGLE_CASE= "EditorToggleCase";
 
+  @NonNls String ACTION_EDITOR_SHOW_PARAMETER_INFO = "ParameterInfo";
   @NonNls String ACTION_EDITOR_NEXT_PARAMETER = "NextParameter";
   @NonNls String ACTION_EDITOR_PREV_PARAMETER = "PrevParameter";
   @NonNls String ACTION_EDITOR_NEXT_TEMPLATE_VARIABLE = "NextTemplateVariable";

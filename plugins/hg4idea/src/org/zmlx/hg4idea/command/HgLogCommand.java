@@ -22,9 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgFileRevision;
 import org.zmlx.hg4idea.HgVcs;
-import org.zmlx.hg4idea.execution.HgCommandException;
-import org.zmlx.hg4idea.execution.HgCommandExecutor;
-import org.zmlx.hg4idea.execution.HgCommandResult;
+import org.zmlx.hg4idea.execution.*;
 import org.zmlx.hg4idea.log.HgBaseLogParser;
 import org.zmlx.hg4idea.log.HgFileRevisionLogParser;
 import org.zmlx.hg4idea.log.HgHistoryUtil;
@@ -96,13 +94,12 @@ public class HgLogCommand {
     HgFile originalHgFile = new HgFile(hgFile.getRepo(), originalFileName);
     HgCommandResult result = execute(hgFile.getRepo(), template, limit, originalHgFile, argsForCmd);
 
-    return  HgHistoryUtil.getCommitRecords(myProject, result,
-                                           new HgFileRevisionLogParser(myProject, originalHgFile, myVersion));
+    return HgHistoryUtil.getCommitRecords(myProject, result,
+                                          new HgFileRevisionLogParser(myProject, originalHgFile, myVersion));
   }
 
-  @Nullable
-  public HgCommandResult execute(@NotNull VirtualFile repo, @NotNull String template, int limit, @Nullable HgFile hgFile,
-                                 @Nullable List<String> argsForCmd) {
+  @NotNull
+  private List<String> createArguments(@NotNull String template, int limit, @Nullable HgFile hgFile, @Nullable List<String> argsForCmd) {
     List<String> arguments = new LinkedList<>();
     if (myIncludeRemoved) {
       // There is a bug in mercurial that causes --follow --removed <file> to cause
@@ -134,9 +131,22 @@ public class HgLogCommand {
     if (myLogFile && hgFile != null) {
       arguments.add(hgFile.getRelativePath());
     }
-    HgCommandExecutor commandExecutor = new HgCommandExecutor(myProject);
-    commandExecutor.setOutputAlwaysSuppressed(true);
-    return commandExecutor.executeInCurrentThread(repo, "log", arguments);
+    return arguments;
   }
 
+  @Nullable
+  public HgCommandResult execute(@NotNull VirtualFile repo, @NotNull String template, int limit, @Nullable HgFile hgFile,
+                                 @Nullable List<String> argsForCmd) {
+    ShellCommand.CommandResultCollector collector = new ShellCommand.CommandResultCollector(false);
+    boolean success = execute(repo, template, limit, hgFile, argsForCmd, collector);
+    return success ? collector.getResult() : null;
+  }
+
+  public boolean execute(@NotNull VirtualFile repo, @NotNull String template, int limit, @Nullable HgFile hgFile,
+                         @Nullable List<String> argsForCmd, @NotNull HgLineProcessListener listener) {
+    List<String> arguments = createArguments(template, limit, hgFile, argsForCmd);
+    HgCommandExecutor commandExecutor = new HgCommandExecutor(myProject);
+    commandExecutor.setOutputAlwaysSuppressed(true);
+    return commandExecutor.executeInCurrentThread(repo, "log", arguments, false, listener);
+  }
 }

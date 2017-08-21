@@ -40,11 +40,11 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
-import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.references.PyQualifiedReference;
@@ -57,11 +57,13 @@ import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.psi.stubs.PyFunctionStub;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
 import com.jetbrains.python.psi.types.*;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
@@ -239,28 +241,46 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
   }
 
   @Nullable
+  @Override
+  public String getAnnotationValue() {
+    return getAnnotationContentFromStubOrPsi(this);
+  }
+
+  @Nullable
   private static PyType getWithItemVariableType(TypeEvalContext context, PyWithItem item) {
     final PyExpression expression = item.getExpression();
     if (expression != null) {
       final PyType exprType = context.getType(expression);
       if (exprType instanceof PyClassType) {
-        final PyClass cls = ((PyClassType)exprType).getPyClass();
-        final PyFunction enter = cls.findMethodByName(PyNames.ENTER, true, null);
-        if (enter != null) {
-          final PyType enterType = enter.getCallType(expression, Collections.emptyMap(), context);
-          if (enterType != null) {
-            return enterType;
-          }
-          for (PyTypeProvider provider : Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
-            PyType typeFromProvider = provider.getContextManagerVariableType(cls, expression, context);
-            if (typeFromProvider != null) {
-              return typeFromProvider;
-            }
-          }
-          // Guess the return type of __enter__
-          return PyUnionType.createWeakType(exprType);
+        return getEnterTypeFromPyClass(context, expression, (PyClassType)exprType);
+      }
+      else if (exprType instanceof PyUnionType) {
+        List<PyType> collect = StreamEx.of(((PyUnionType)exprType).getMembers())
+          .select(PyClassType.class)
+          .map(t -> getEnterTypeFromPyClass(context, expression, t))
+          .toList();
+        return PyUnionType.union(collect);
+      }
+    }
+    return null;
+  }
+
+  private static PyType getEnterTypeFromPyClass(TypeEvalContext context, PyExpression expression, @NotNull PyClassType exprType) {
+    final PyClass cls = exprType.getPyClass();
+    final PyFunction enter = cls.findMethodByName(PyNames.ENTER, true, null);
+    if (enter != null) {
+      final PyType enterType = enter.getCallType(expression, Collections.emptyMap(), context);
+      if (enterType != null) {
+        return enterType;
+      }
+      for (PyTypeProvider provider : Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
+        PyType typeFromProvider = provider.getContextManagerVariableType(cls, expression, context);
+        if (typeFromProvider != null) {
+          return typeFromProvider;
         }
       }
+      // Guess the return type of __enter__
+      return PyUnionType.createWeakType(exprType);
     }
     return null;
   }
@@ -763,15 +783,6 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
   @Nullable
   @Override
   public String getTypeCommentAnnotation() {
-    final PyTargetExpressionStub stub = getStub();
-    if (stub != null) {
-      return stub.getTypeComment();
-    }
-
-    final PsiComment comment = getTypeComment();
-    if (comment != null) {
-      return PyTypingTypeProvider.getTypeCommentValue(comment.getText());
-    }
-    return null;
+    return getTypeCommentAnnotationFromStubOrPsi(this);
   }
 }

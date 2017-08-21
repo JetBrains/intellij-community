@@ -377,7 +377,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
     if (!myLookupUpdated) {
       if (myLookup.getAdvertisements().isEmpty() && !isAutopopupCompletion() && !DumbService.isDumb(getProject())) {
-        DefaultCompletionContributor.addDefaultAdvertisements(myParameters, myLookup, myHasPsiElements);
+        DefaultCompletionContributor.addDefaultAdvertisements(myLookup, myHasPsiElements);
       }
       myLookup.getAdvertiser().showRandomText();
     }
@@ -811,7 +811,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   void startCompletion(final CompletionInitializationContext initContext) {
     boolean sync = ApplicationManager.getApplication().isWriteAccessAllowed();
     myStrategy = sync ? new SyncCompletion() : new AsyncCompletion();
-    myStrategy.startThread(ProgressWrapper.wrap(this), this::scheduleAdvertising);
+    myStrategy.startThread(ProgressWrapper.wrap(this), ()-> AsyncCompletion.tryReadOrCancel(this, this::scheduleAdvertising));
     final WeighingDelegate weigher = myStrategy.delegateWeighing(this);
 
     class CalculateItems implements Runnable {
@@ -829,7 +829,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
         }
       }
     }
-    myStrategy.startThread(this, new CalculateItems());
+    myStrategy.startThread(this, ()->AsyncCompletion.tryReadOrCancel(this, new CalculateItems()));
   }
 
   private void calculateItems(CompletionInitializationContext initContext, WeighingDelegate weigher) {

@@ -19,7 +19,7 @@ import com.intellij.openapi.editor.impl.AbstractEditorTest;
 import com.intellij.testFramework.TestFileType;
 
 public class JavaEditingTest extends AbstractEditorTest {
-  public void testSmartHomeInJavadoc() throws Exception {
+  public void testSmartHomeInJavadoc() {
     init("/**\n" +
          " * some text<caret>\n" +
          " */\n" +

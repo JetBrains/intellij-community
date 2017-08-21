@@ -35,6 +35,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.SpeedSearchComparator;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFunctionBuilder;
@@ -43,7 +44,10 @@ import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Alexey.Ivanov
@@ -70,46 +74,54 @@ public class PyOverrideImplementUtil {
     return pyClass;
   }
 
-  public static void chooseAndOverrideMethods(final Project project, @NotNull final Editor editor, @NotNull final PyClass pyClass) {
-
-
+  public static void chooseAndOverrideMethods(@NotNull Project project,
+                                              @NotNull Editor editor,
+                                              @NotNull PyClass cls,
+                                              @NotNull TypeEvalContext context) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed(ProductivityFeatureNames.CODEASSISTS_OVERRIDE_IMPLEMENT);
-    chooseAndOverrideOrImplementMethods(project, editor, pyClass);
-  }
 
-
-  private static void chooseAndOverrideOrImplementMethods(final Project project,
-                                                          @NotNull final Editor editor,
-                                                          @NotNull final PyClass pyClass) {
-    PyPsiUtils.assertValid(pyClass);
+    PyPsiUtils.assertValid(cls);
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
-    final Set<PyFunction> result = new HashSet<>();
-    TypeEvalContext context = TypeEvalContext.codeCompletion(project, null);
-    final Collection<PyFunction> superFunctions = getAllSuperFunctions(pyClass, context);
-
-
-    result.addAll(superFunctions);
-    chooseAndOverrideOrImplementMethods(project, editor, pyClass, result, "Select Methods to Override", false);
+    chooseAndOverrideOrImplementMethods(project, editor, cls, getAllSuperMethods(cls, context), false);
   }
 
-  public static void chooseAndOverrideOrImplementMethods(@NotNull final Project project,
-                                                         @NotNull final Editor editor,
-                                                         @NotNull final PyClass pyClass,
-                                                         @NotNull final Collection<PyFunction> superFunctions,
-                                                         @NotNull final String title, final boolean implement) {
-    List<PyMethodMember> elements = new ArrayList<>();
-    for (PyFunction function : superFunctions) {
-      final String name = function.getName();
+  public static void chooseAndImplementMethods(@NotNull Project project,
+                                               @NotNull Editor editor,
+                                               @NotNull PyClass cls,
+                                               @NotNull TypeEvalContext context) {
+    chooseAndImplementMethods(project, editor, cls, getAllSuperAbstractMethods(cls, context));
+  }
+
+  public static void chooseAndImplementMethods(@NotNull Project project,
+                                               @NotNull Editor editor,
+                                               @NotNull PyClass cls,
+                                               @NotNull Collection<PyFunction> methods) {
+    FeatureUsageTracker.getInstance().triggerFeatureUsed(ProductivityFeatureNames.CODEASSISTS_OVERRIDE_IMPLEMENT);
+
+    PyPsiUtils.assertValid(cls);
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+
+    chooseAndOverrideOrImplementMethods(project, editor, cls, methods, true);
+  }
+
+  private static void chooseAndOverrideOrImplementMethods(@NotNull Project project,
+                                                          @NotNull Editor editor,
+                                                          @NotNull PyClass cls,
+                                                          @NotNull Collection<PyFunction> methods,
+                                                          boolean implement) {
+    final List<PyMethodMember> elements = new ArrayList<>();
+    for (PyFunction method : methods) {
+      final String name = method.getName();
       if (name == null || PyUtil.isClassPrivateName(name)) {
         continue;
       }
-      if (pyClass.findMethodByName(name, false, null) == null) {
-        final PyMethodMember member = new PyMethodMember(function);
+      if (cls.findMethodByName(name, false, null) == null) {
+        final PyMethodMember member = new PyMethodMember(method);
         elements.add(member);
       }
     }
-    if (elements.size() == 0) {
+    if (elements.isEmpty()) {
       return;
     }
 
@@ -126,14 +138,13 @@ public class PyOverrideImplementUtil {
           };
         }
       };
-    chooser.setTitle(title);
+    chooser.setTitle(implement ? "Select Methods to Implement" : "Select Methods to Override");
     chooser.setCopyJavadocVisible(false);
     chooser.show();
     if (chooser.getExitCode() != DialogWrapper.OK_EXIT_CODE) {
       return;
     }
-    List<PyMethodMember> membersToOverride = chooser.getSelectedElements();
-    overrideMethods(editor, pyClass, membersToOverride, implement);
+    overrideMethods(editor, cls, chooser.getSelectedElements(), implement);
   }
 
   public static void overrideMethods(final Editor editor, final PyClass pyClass, final List<PyMethodMember> membersToOverride,
@@ -326,11 +337,26 @@ public class PyOverrideImplementUtil {
     return toClass.getName();
   }
 
+  @NotNull
+  public static List<PyFunction> getAllSuperAbstractMethods(@NotNull PyClass cls, @NotNull TypeEvalContext context) {
+    return ContainerUtil.filter(getAllSuperMethods(cls, context), method -> isAbstractMethodForClass(method, cls, context));
+  }
+
+  private static boolean isAbstractMethodForClass(@NotNull PyFunction method, @NotNull PyClass cls, @NotNull TypeEvalContext context) {
+    final String methodName = method.getName();
+    if (methodName == null ||
+        cls.findMethodByName(methodName, false, context) != null ||
+        cls.findClassAttribute(methodName, false, context) != null) {
+      return false;
+    }
+    return PyUtil.isDecoratedAsAbstract(method) || raisesNotImplementedError(method);
+  }
+
   /**
    * Returns all super functions available through MRO.
    */
   @NotNull
-  public static List<PyFunction> getAllSuperFunctions(@NotNull PyClass pyClass, @NotNull TypeEvalContext context) {
+  public static List<PyFunction> getAllSuperMethods(@NotNull PyClass pyClass, @NotNull TypeEvalContext context) {
     final Map<String, PyFunction> functions = Maps.newLinkedHashMap();
     for (final PyClassLikeType type : pyClass.getAncestorTypes(context)) {
       if (type != null) {

@@ -83,6 +83,14 @@ public class PsiJavaModuleReference extends PsiReferenceBase.Poly<PsiJavaModuleR
     public ResolveResult[] resolve(@NotNull PsiJavaModuleReference reference, boolean incompleteCode) {
       PsiFile file = reference.getElement().getContainingFile();
       String moduleName = reference.getCanonicalText();
+
+      if (file instanceof PsiJavaFile) {
+        PsiJavaModule module = ((PsiJavaFile)file).getModuleDeclaration();
+        if (module != null && module.getName().equals(moduleName)) {
+          return new ResolveResult[]{new PsiElementResolveResult(module)};
+        }
+      }
+
       Collection<PsiJavaModule> modules = findModules(file, moduleName, incompleteCode);
       if (!modules.isEmpty()) {
         ResolveResult[] result = new ResolveResult[modules.size()];
@@ -98,7 +106,7 @@ public class PsiJavaModuleReference extends PsiReferenceBase.Poly<PsiJavaModuleR
     private static Collection<PsiJavaModule> findModules(PsiFile file, String moduleName, boolean incompleteCode) {
       Project project = file.getProject();
       GlobalSearchScope scope = incompleteCode ? GlobalSearchScope.allScope(project) : file.getResolveScope();
-      return JavaFileManager.SERVICE.getInstance(project).findModules(moduleName, scope);
+      return JavaFileManager.getInstance(project).findModules(moduleName, scope);
     }
   }
 

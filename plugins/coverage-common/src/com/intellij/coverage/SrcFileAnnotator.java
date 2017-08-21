@@ -282,6 +282,7 @@ public class SrcFileAnnotator implements Disposable {
     final Document document = myDocument;
     if (editor == null || psiFile == null || document == null) return;
     final VirtualFile file = getVirtualFile(psiFile);
+    if (file == null || !file.isValid()) return;
     final MyEditorBean editorBean = new MyEditorBean(editor, file, document);
     final MarkupModel markupModel = DocumentMarkupModel.forDocument(document, myProject, true);
     final List<RangeHighlighter> highlighters = new ArrayList<>();

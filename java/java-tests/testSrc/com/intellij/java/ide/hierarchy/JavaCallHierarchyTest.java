@@ -88,7 +88,7 @@ public class JavaCallHierarchyTest extends HierarchyViewTestBase {
     doJavaCallTypeHierarchyTest("A", "doIt", "A.java");
   }
 
-  public void testActionAvailableInXml() throws Exception {
+  public void testActionAvailableInXml() {
     configureByText(XmlFileType.INSTANCE, "<foo>java.lang.Str<caret>ing</foo>");
     BrowseTypeHierarchyAction action = new BrowseTypeHierarchyAction();
     TestActionEvent e = new TestActionEvent(action);

@@ -82,7 +82,7 @@ public class EclipseEmlTest extends IdeaTestCase {
     return module;
   }
 
-  protected static void checkModule(String path, Module module) throws WriteExternalException, IOException, JDOMException {
+  protected static void checkModule(String path, Module module) throws WriteExternalException {
     ModuleRootModel rootModel = ModuleRootManager.getInstance(module);
     final Element root = new Element("component");
     IdeaSpecificSettings.writeIdeaSpecificClasspath(root, rootModel);

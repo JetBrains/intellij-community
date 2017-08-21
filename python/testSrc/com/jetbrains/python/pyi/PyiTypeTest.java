@@ -24,11 +24,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
-import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyTypedElement;
-import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -76,12 +74,6 @@ public class PyiTypeTest extends PyTestCase {
     final PsiFile containingFile = element.getContainingFile();
     assertType(expectedType, typedElement, TypeEvalContext.codeAnalysis(project, containingFile));
     assertType(expectedType, typedElement, TypeEvalContext.userInitiated(project, containingFile));
-  }
-
-  private static void assertType(@NotNull String expectedType, @NotNull PyTypedElement element, @NotNull TypeEvalContext context) {
-    final PyType actual = context.getType(element);
-    final String actualType = PythonDocumentationProvider.getTypeName(actual, context);
-    assertEquals("Failed in " + context + " context", expectedType, actualType);
   }
 
   public void testFunctionParameter() {

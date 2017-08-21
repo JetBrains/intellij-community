@@ -264,7 +264,7 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
         }, myProject, null);
       if (file != null) {
         final CoverageRunner coverageRunner = getCoverageRunner(file);
-        LOG.assertTrue(coverageRunner != null);
+        LOG.assertTrue(coverageRunner != null, file.getExtension());
 
         final CoverageSuite coverageSuite = myCoverageManager
           .addExternalCoverageSuite(file.getName(), file.getTimeStamp(), coverageRunner,

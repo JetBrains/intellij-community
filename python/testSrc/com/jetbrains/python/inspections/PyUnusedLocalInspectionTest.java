@@ -91,6 +91,11 @@ public class PyUnusedLocalInspectionTest extends PyTestCase {
     doTest();
   }
 
+  // PY-20655
+  public void testCallingLocalsLeadsToUnusedParameter() {
+    doTest();
+  }
+
   private void doTest() {
     final String path = "inspections/PyUnusedLocalInspection/" + getTestName(true) + ".py";
 

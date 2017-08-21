@@ -66,21 +66,23 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
     }
   }
 
-  private static boolean processInheritors(@NotNull final ClassInheritorsSearch.SearchParameters parameters,
-                                           @NotNull final Processor<PsiClass> consumer) {
+  private static void processInheritors(@NotNull final ClassInheritorsSearch.SearchParameters parameters,
+                                        @NotNull final Processor<PsiClass> consumer) {
     @NotNull final PsiClass baseClass = parameters.getClassToProcess();
-    if (baseClass instanceof PsiAnonymousClass || isFinal(baseClass)) return true;
+    if (baseClass instanceof PsiAnonymousClass || isFinal(baseClass)) return;
 
     final SearchScope searchScope = parameters.getScope();
     Project project = PsiUtilCore.getProjectInReadAction(baseClass);
     if (isJavaLangObject(baseClass)) {
-      return AllClassesSearch.search(searchScope, project, parameters.getNameCondition()).forEach(aClass -> {
+      AllClassesSearch.search(searchScope, project, parameters.getNameCondition()).forEach(aClass -> {
         ProgressManager.checkCanceled();
         return isJavaLangObject(aClass) || consumer.process(aClass);
       });
+      return;
     }
-    if (searchScope instanceof LocalSearchScope) {
-      return processLocalScope(project, parameters, (LocalSearchScope)searchScope, baseClass, consumer);
+    if (searchScope instanceof LocalSearchScope && JavaOverridingMethodsSearcher.isJavaOnlyScope(((LocalSearchScope)searchScope).getVirtualFiles())) {
+      processLocalScope(project, parameters, (LocalSearchScope)searchScope, baseClass, consumer);
+      return;
     }
 
     Iterable<PsiClass> cached = getOrComputeSubClasses(project, baseClass, searchScope);
@@ -92,10 +94,9 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
       }
       if (ReadAction.compute(() ->
         checkCandidate(subClass, parameters) && !consumer.process(subClass))) {
-        return false;
+        return;
       }
     }
-    return true;
   }
 
   @NotNull
@@ -129,11 +130,11 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
     return cached;
   }
 
-  private static boolean processLocalScope(@NotNull final Project project,
-                                           @NotNull final ClassInheritorsSearch.SearchParameters parameters,
-                                           @NotNull LocalSearchScope searchScope,
-                                           @NotNull PsiClass baseClass,
-                                           @NotNull Processor<PsiClass> consumer) {
+  private static void processLocalScope(@NotNull final Project project,
+                                        @NotNull final ClassInheritorsSearch.SearchParameters parameters,
+                                        @NotNull LocalSearchScope searchScope,
+                                        @NotNull PsiClass baseClass,
+                                        @NotNull Processor<PsiClass> consumer) {
     // optimisation: in case of local scope it's considered cheaper to enumerate all scope files and check if there is an inheritor there,
     // instead of traversing the (potentially huge) class hierarchy and filter out almost everything by scope.
     VirtualFile[] virtualFiles = searchScope.getVirtualFiles();
@@ -164,7 +165,6 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
         }
       });
     }
-    return success[0];
   }
 
   private static boolean checkCandidate(@NotNull PsiClass candidate, @NotNull ClassInheritorsSearch.SearchParameters parameters) {

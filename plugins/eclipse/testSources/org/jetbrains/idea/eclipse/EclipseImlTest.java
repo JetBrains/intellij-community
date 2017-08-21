@@ -19,7 +19,6 @@ package org.jetbrains.idea.eclipse;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.module.Module;
@@ -35,10 +34,12 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.project.IntelliJProjectConfiguration;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.util.JdomKt;
+import com.intellij.util.PathUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.eclipse.conversion.EclipseClasspathReader;
 
 import java.io.File;
@@ -47,7 +48,6 @@ import java.nio.file.Paths;
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
 
 public class EclipseImlTest extends IdeaTestCase {
-  @NonNls private static final String JUNIT = "JUNIT";
 
   @Override
   protected void setUp() throws Exception {
@@ -74,8 +74,7 @@ public class EclipseImlTest extends IdeaTestCase {
     if (!SystemInfo.isWindows) {
       fileText = fileText.replaceAll(EclipseXml.FILE_PROTOCOL + "/", EclipseXml.FILE_PROTOCOL);
     }
-    String communityLib = FileUtil.toSystemIndependentName(PathManagerEx.findFileUnderCommunityHome("lib").getAbsolutePath());
-    fileText = fileText.replaceAll("\\$" + JUNIT + "\\$", communityLib);
+
     final Element classpathElement = JdomKt.loadElement(fileText);
     final Module module = WriteCommandAction.runWriteCommandAction(null, (Computable<Module>)() -> ModuleManager.getInstance(project)
       .newModule(new File(path) + File.separator + EclipseProjectFinder
@@ -89,10 +88,17 @@ public class EclipseImlTest extends IdeaTestCase {
     final Element actualImlElement = new Element("root");
     ((ModuleRootManagerImpl)ModuleRootManager.getInstance(module)).getState().writeExternal(actualImlElement);
 
-    PathMacros.getInstance().setMacro(JUNIT, communityLib);
+    String junit3PathMacro = "JUNIT3_PATH";
+    String junit4PathMacro = "JUNIT4_PATH";
+    String junit3Path = ContainerUtil.getFirstItem(IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("JUnit3"));
+    String junit4Path = ContainerUtil.find(IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("JUnit4"),
+                                           jarPath -> PathUtil.getFileName(jarPath).startsWith("junit"));
+    PathMacros.getInstance().setMacro(junit3PathMacro, junit3Path);
+    PathMacros.getInstance().setMacro(junit4PathMacro, junit4Path);
     PathMacroManager.getInstance(module).collapsePaths(actualImlElement);
     PathMacroManager.getInstance(project).collapsePaths(actualImlElement);
-    PathMacros.getInstance().removeMacro(JUNIT);
+    PathMacros.getInstance().removeMacro(junit3PathMacro);
+    PathMacros.getInstance().removeMacro(junit4PathMacro);
 
     assertThat(actualImlElement).isEqualTo(Paths.get(project.getBaseDir().getPath(), "expected", "expected.iml"));
   }

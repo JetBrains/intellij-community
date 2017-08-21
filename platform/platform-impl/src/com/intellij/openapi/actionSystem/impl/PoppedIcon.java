@@ -30,7 +30,6 @@ public class PoppedIcon implements Icon {
   private final Icon myIcon;
   private final int myWidth;
   private final int myHeight;
-  private IdeaActionButtonLook myLook = new IdeaActionButtonLook();
 
   public PoppedIcon(Icon icon, int width, int height) {
     myIcon = icon;
@@ -38,15 +37,11 @@ public class PoppedIcon implements Icon {
     myHeight = height;
   }
 
-  public PoppedIcon(Icon icon) {
-    this(icon, icon.getIconWidth(), icon.getIconHeight());
-  }
-
   @Override
   public void paintIcon(Component c, Graphics g, int x, int y) {
     final Dimension size = new Dimension(getIconWidth() + 2*x, getIconHeight() + 2*x);
-    myLook.paintBackground(g, size, Gray._235, ActionButtonComponent.POPPED);
-    myLook.paintBorder(g, size, ActionButtonComponent.POPPED);
+    IdeaActionButtonLook.paintBackground(g, size, Gray._235, ActionButtonComponent.POPPED);
+    IdeaActionButtonLook.paintBorder(g, size, ActionButtonComponent.POPPED);
     myIcon.paintIcon(c, g, x + (getIconWidth() - myIcon.getIconWidth())/2, y + (getIconHeight() - myIcon.getIconHeight())/2);
   }
 

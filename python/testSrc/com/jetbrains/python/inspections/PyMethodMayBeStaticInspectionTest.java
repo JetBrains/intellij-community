@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,6 +95,11 @@ public class PyMethodMayBeStaticInspectionTest extends PyTestCase {
     doTest();
   }
 
+  // PY-22091
+  public void testFString() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
+
   // PY-18866
   public void testSuperSamePy3() {
     runWithLanguageLevel(LanguageLevel.PYTHON30, () -> doTest());
@@ -103,6 +108,16 @@ public class PyMethodMayBeStaticInspectionTest extends PyTestCase {
   // PY-18866
   public void testSuperNotSamePy3() {
     runWithLanguageLevel(LanguageLevel.PYTHON30, () -> doTest());
+  }
+
+  // PY-24817
+  public void testDocumentedEmpty() {
+    doTest();
+  }
+
+  // PY-25076
+  public void testAttributeNamedSelf() {
+    doTest();
   }
 
   private void doTest() {

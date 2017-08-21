@@ -80,9 +80,10 @@ class ClassType: ...
 class UnboundMethodType:
     im_class = ...  # type: type
     im_func = ...  # type: FunctionType
-    im_self = ...  # type: Optional[object]
+    im_self = ...  # type: object
     __func__ = im_func
     __self__ = im_self
+    def __init__(self, func: Callable, obj: object) -> None: ...
     def __call__(self, *args: Any, **kwargs: Any) -> Any: ...
 
 class InstanceType:

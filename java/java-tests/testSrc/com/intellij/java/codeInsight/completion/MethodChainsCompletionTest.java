@@ -172,6 +172,11 @@ public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
     assertEmpty(doCompletion());
   }
 
+  public void testPreferGetterToMethodChain() {
+    compileAndComplete();
+    myFixture.assertPreferredCompletionItems(0, "getEditor", "getInstance().getEditor");
+  }
+
   public void testResultOrdering() {
     List<JavaRelevantChainLookupElement> lookupElements = doCompletion();
     assertSize(4, lookupElements);
@@ -230,6 +235,11 @@ public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
     doTestRendering();
   }
 
+  public void testDoNotSuggestUninitializedVariable() {
+    JavaRelevantChainLookupElement element = assertOneElement(doCompletion());
+    assertEquals("psiElement.getProject", element.getLookupString());
+  }
+
   public void assertAdvisorLookupElementEquals(String lookupText,
                                                int unreachableParametersCount,
                                                int chainSize,
@@ -267,8 +277,7 @@ public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
   }
 
   private List<JavaRelevantChainLookupElement> doCompletion() {
-    compileAndIndexData(TEST_INDEX_FILE_NAME);
-    LookupElement[] allLookupElements = runCompletion();
+    LookupElement[] allLookupElements = compileAndComplete();
     List<JavaRelevantChainLookupElement> targetLookupElements = new SmartList<>();
     for (LookupElement lookupElement : allLookupElements) {
       if (lookupElement instanceof JavaRelevantChainLookupElement) {
@@ -278,10 +287,10 @@ public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
     return targetLookupElements;
   }
 
-  private LookupElement[] runCompletion() {
+  private LookupElement[] compileAndComplete() {
+    compileAndIndexData(TEST_INDEX_FILE_NAME);
     myFixture.configureByFiles(getTestCompletionFilePath());
-    LookupElement[] lookupElements =
-      myFixture.complete(CompletionType.SMART);
+    LookupElement[] lookupElements = myFixture.complete(CompletionType.SMART);
     return lookupElements == null ? LookupElement.EMPTY_ARRAY : lookupElements;
   }
 

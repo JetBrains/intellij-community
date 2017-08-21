@@ -15,197 +15,145 @@
  */
 package com.jetbrains.python.testing;
 
-import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.util.containers.Stack;
-import com.jetbrains.python.psi.*;
+import com.intellij.util.ThreeState;
+import com.jetbrains.extensions.PyClassExtKt;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
-import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
-import java.util.regex.Pattern;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 
 /**
+ * Tools to check if some file, function or class could be test case.
+ * There are 2 strategies: "testCaseClassRequired" means only TesCase inheritors are considered as test cases.
+ * In opposite case any function named "test*" either top level or situated in class named Test* or *Test is test case.
+ * Providing null to "testCaseClassRequired" means "use default runner settings" and usually best value.
+ *
  * @author Leonid Shalupov
+ * @author Ilya.Kazakevich
  */
-public class PythonUnitTestUtil {
+public final class PythonUnitTestUtil {
   public static final String TESTCASE_SETUP_NAME = "setUp";
-  private static final HashSet<String> PYTHON_TEST_QUALIFIED_CLASSES = Sets.newHashSet("unittest.TestCase", "unittest.case.TestCase");
-  private static final Pattern TEST_MATCH_PATTERN = Pattern.compile("(?:^|[\b_\\.%s-])[Tt]est");
-  private static final String TESTCASE_METHOD_PREFIX = "test";
-
-
-  public static boolean isTestFunction(PyFunction pyFunction) {
-    String name = pyFunction.getName();
-    if (name != null && name.startsWith("test")) {
-      return true;
-    }
-    return false;
-  }
-
-  public static boolean isTestClass(final PyClass pyClass, @Nullable final TypeEvalContext context) {
-    final TypeEvalContext contextToUse = (context != null ? context : TypeEvalContext.codeInsightFallback(pyClass.getProject()));
-    for (PyClassLikeType type : pyClass.getAncestorTypes(contextToUse)) {
-      if (type != null && PYTHON_TEST_QUALIFIED_CLASSES.contains(type.getClassQName())) {
-        return true;
-      }
-    }
-    final String className = pyClass.getName();
-    if (className == null) return false;
-    final String name = className.toLowerCase();
-    if (name.startsWith("test")) {
-      for (PyFunction cls : pyClass.getMethods()) {
-        if (isTestFunction(cls)) {
-          return true;
-        }
-      }
-    }
-    return false;
-  }
+  public static final Set<String> PYTHON_TEST_QUALIFIED_CLASSES = Collections.unmodifiableSet(Sets.newHashSet("unittest.TestCase",
+                                                                                                              "unittest.case.TestCase"));
 
   private PythonUnitTestUtil() {
   }
 
-  public static boolean isUnitTestCaseFunction(PyFunction function) {
-    final String name = function.getName();
-    if (name == null || !name.startsWith(TESTCASE_METHOD_PREFIX)) {
+
+  public static boolean isTestFile(@NotNull final PyFile file,
+                                   @NotNull final ThreeState testCaseClassRequired,
+                                   @Nullable final TypeEvalContext context) {
+    if (file.getTopLevelClasses().stream().anyMatch(o -> isTestClass(o, testCaseClassRequired, context))) {
+      return true;
+    }
+
+    if (isTestCaseClassRequired(file, testCaseClassRequired)) {
+      return false;
+    }
+    return file.getTopLevelFunctions().stream().anyMatch(o -> isTestFunction(o, testCaseClassRequired, context));
+  }
+
+
+
+  public static boolean isTestClass(@NotNull final PyClass cls,
+                                    @NotNull final ThreeState testCaseClassRequired,
+                                    @Nullable TypeEvalContext context) {
+    final boolean testCaseOnly = isTestCaseClassRequired(cls, testCaseClassRequired);
+    if (context == null) {
+      context = TypeEvalContext.codeInsightFallback(cls.getProject());
+    }
+    final boolean inheritsTestCase = PyClassExtKt.inherits(cls, context, PYTHON_TEST_QUALIFIED_CLASSES);
+    if (inheritsTestCase) {
+      return true;
+    }
+
+    if (testCaseOnly) {
       return false;
     }
 
-    final PyClass containingClass = function.getContainingClass();
-    if (containingClass == null || !isUnitTestCaseClass(containingClass, PYTHON_TEST_QUALIFIED_CLASSES)) {
+    final String className = cls.getName();
+    if (className == null) {
       return false;
     }
 
-    return true;
-  }
+    if (!className.startsWith("Test") && !className.endsWith("Test")) {
+      return false;
+    }
 
-  public static boolean isUnitTestCaseClass(PyClass cls) {
-    return isUnitTestCaseClass(cls, PYTHON_TEST_QUALIFIED_CLASSES);
-  }
-
-  public static boolean isUnitTestFile(PyFile file) {
-    if (!file.getName().startsWith("test")) return false;
-    return true;
-  }
-
-  private static boolean isUnitTestCaseClass(PyClass cls, HashSet<String> testQualifiedNames) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      for (PyExpression expression : cls.getSuperClassExpressions()) {
-        if (expression.getText().equals("TestCase")) return true;
+    Ref<Boolean> result = new Ref<>(false);
+    cls.visitMethods(function -> {
+      final String name = function.getName();
+      if (name != null && name.startsWith("test")) {
+        result.set(true);
+        return false;
       }
-    }
-    for (PyClassLikeType type : cls.getAncestorTypes(TypeEvalContext.codeInsightFallback(cls.getProject()))) {
-      if (type != null && testQualifiedNames.contains(type.getClassQName())) {
-        return true;
-      }
-    }
-    return false;
+      return true;
+    }, true, context);
+    return result.get();
   }
 
-  public static List<PyStatement> getTestCaseClassesFromFile(PsiFile file, @Nullable final TypeEvalContext context) {
-    if (file instanceof PyFile) {
-      return getTestCaseClassesFromFile((PyFile)file, PYTHON_TEST_QUALIFIED_CLASSES, context);
-    }
-    return Collections.emptyList();
-  }
 
-  public static List<PyStatement> getTestCaseClassesFromFile(PyFile file, Set<String> testQualifiedNames, @Nullable final TypeEvalContext context) {
-    List<PyStatement> result = Lists.newArrayList();
-    for (PyClass cls : file.getTopLevelClasses()) {
-      if (isTestCaseClassWithContext(cls, testQualifiedNames, context)) {
-        result.add(cls);
-      }
-    }
-    for (PyFunction cls : file.getTopLevelFunctions()) {
-      if (isTestCaseFunction(cls, false)) {
-        result.add(cls);
-      }
-    }
-    return result;
-  }
-
-  public static boolean isTestCaseFunction(PyFunction function) {
-    return isTestCaseFunction(function, true);
-  }
-
-  public static boolean isTestCaseFunction(PyFunction function, boolean checkAssert) {
+  public static boolean isTestFunction(@NotNull final PyFunction function,
+                                       @NotNull final ThreeState testCaseClassRequired,
+                                       @Nullable final TypeEvalContext context) {
     final String name = function.getName();
-    if (name != null && TEST_MATCH_PATTERN.matcher(name).find()) {
+    if (name == null || !name.startsWith("test")) {
       // Since there are a lot of ways to launch assert in modern frameworks,
       // we assume any function with "test" word in name is test
+      return false;
+    }
+    // If testcase not required then any test function is test
+    final PyClass aClass = function.getContainingClass();
+    if (!isTestCaseClassRequired(function, testCaseClassRequired) && aClass == null) {
       return true;
     }
-    if (function.getContainingClass() != null) {
-      if (isTestCaseClass(function.getContainingClass(), null)) return true;
-    }
-    if (checkAssert) {
-      boolean hasAssert = hasAssertOrYield(function.getStatementList());
-      if (hasAssert) return true;
-    }
-    return false;
+    return aClass != null && isTestClass(aClass, testCaseClassRequired, context);
   }
 
-  private static boolean hasAssertOrYield(PyStatementList list) {
-    Stack<PsiElement> stack = new Stack<>();
-    if (list != null) {
-      for (PyStatement st : list.getStatements()) {
-        stack.push(st);
-        while (!stack.isEmpty()) {
-          PsiElement e = stack.pop();
-          if (e instanceof PyAssertStatement || e instanceof PyYieldExpression) return true;
-          for (PsiElement psiElement : e.getChildren()) {
-            stack.push(psiElement);
-          }
-        }
-      }
-    }
-    return false;
+
+  /**
+   * @deprecated Use {@link #isTestClass(PyClass, ThreeState, TypeEvalContext)} instead.
+   * Will be removed in 2018.
+   */
+  @Deprecated
+  public static boolean isUnitTestCaseClass(PyClass cls) {
+    return isTestClass(cls, ThreeState.YES, null);
   }
 
-  public static boolean isTestCaseClass(@NotNull PyClass cls, @Nullable final TypeEvalContext context) {
-    return isTestCaseClassWithContext(cls, PYTHON_TEST_QUALIFIED_CLASSES, context);
-  }
 
-  public static boolean isTestCaseClassWithContext(@NotNull PyClass cls,
-                                                   Set<String> testQualifiedNames,
-                                                   @Nullable TypeEvalContext context) {
-    final TypeEvalContext contextToUse = (context != null ? context : TypeEvalContext.codeInsightFallback(cls.getProject()));
-    for (PyClassLikeType type : cls.getAncestorTypes(contextToUse)) {
-      if (type != null) {
-        if (testQualifiedNames.contains(type.getClassQName())) {
-          return true;
-        }
-      }
+  private static boolean isTestCaseClassRequired(@NotNull final PsiElement anchor, @NotNull final ThreeState userProvidedValue) {
+    if (userProvidedValue != ThreeState.UNSURE) {
+      return userProvidedValue.toBoolean();
     }
-    String clsName = cls.getQualifiedName();
-    String[] names = new String[0];
-    if (clsName != null) {
-      names = clsName.split("\\.");
-    }
-    if (names.length == 0) return false;
-
-    clsName = names[names.length - 1];
-    if (TEST_MATCH_PATTERN.matcher(clsName).find()) {
+    final Module module = ModuleUtilCore.findModuleForPsiElement(anchor);
+    if (module == null) {
       return true;
     }
-    return false;
+    return PyTestsSharedKt.getRunnersThatRequireTestCaseClass().contains(TestRunnerService.getInstance(module).getProjectConfiguration());
   }
 
   public static List<Location> findLocations(@NotNull final Project project,

@@ -60,7 +60,7 @@ public abstract class ResolveTestCase extends PsiTestCase {
 
   protected PsiReference configureByFileText(String fileText, String fileName, @Nullable VirtualFile parentDir) throws Exception {
     int offset = fileText.indexOf(MARKER);
-    assertTrue(offset >= 0);
+    assertTrue(String.format("Expected to find %s marker in file but was none", MARKER), offset >= 0);
     fileText = fileText.substring(0, offset) + fileText.substring(offset + MARKER.length());
 
     if (parentDir == null) {

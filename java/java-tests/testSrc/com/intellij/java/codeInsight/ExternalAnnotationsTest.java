@@ -23,6 +23,7 @@ import com.intellij.openapi.roots.JavaModuleExternalPaths;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.*;
@@ -54,12 +55,12 @@ public class ExternalAnnotationsTest extends UsefulTestCase {
   
     myProject = myFixture.getProject();
 
-    CodeStyleSettingsManager.getSettings(myProject).USE_EXTERNAL_ANNOTATIONS = true;
+    CodeStyleSettingsManager.getSettings(myProject).getCustomSettings(JavaCodeStyleSettings.class).USE_EXTERNAL_ANNOTATIONS = true;
   }
 
   @Override
   protected void tearDown() throws Exception {
-    CodeStyleSettingsManager.getSettings(myProject).USE_EXTERNAL_ANNOTATIONS = false;
+    CodeStyleSettingsManager.getSettings(myProject).getCustomSettings(JavaCodeStyleSettings.class).USE_EXTERNAL_ANNOTATIONS = false;
     try {
       myFixture.tearDown();
     }
@@ -72,7 +73,7 @@ public class ExternalAnnotationsTest extends UsefulTestCase {
     }
   }
 
-  public void testRenameClassWithExternalAnnotations() throws Exception {
+  public void testRenameClassWithExternalAnnotations() {
     myFixture.configureByFiles("src/rename/Foo.java", "content/anno/rename/annotations.xml");
 
     myFixture.renameElementAtCaret("Bar");
@@ -82,7 +83,7 @@ public class ExternalAnnotationsTest extends UsefulTestCase {
                                 true);
   }
 
-  public void testBringToSrc() throws Exception {
+  public void testBringToSrc() {
     myFixture.configureByFiles("src/toSrc/Foo.java", "content/anno/toSrc/annotations.xml");
 
     IntentionAction action = myFixture.findSingleIntention("Insert '@Deprecated'");
@@ -96,7 +97,7 @@ public class ExternalAnnotationsTest extends UsefulTestCase {
                                 true);
   }
 
-  public void testFromSrcToExternal() throws Exception {
+  public void testFromSrcToExternal() {
     myFixture.configureByFiles("src/fromSrc/Foo.java", "content/anno/fromSrc/annotations.xml");
 
     IntentionAction action = myFixture.findSingleIntention("Annotate externally");

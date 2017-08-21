@@ -80,7 +80,7 @@ class FindFirstMigration extends BaseStreamApiMigration {
           (status != ControlFlowUtils.InitializerUsageStatus.AT_WANTED_PLACE || ExpressionUtils.isSimpleExpression(initializer))) {
         falseExpression = initializer;
       } else {
-        PsiElement maybeAssignment = PsiTreeUtil.skipSiblingsBackward(loopStatement, PsiWhiteSpace.class, PsiComment.class);
+        PsiElement maybeAssignment = PsiTreeUtil.skipWhitespacesAndCommentsBackward(loopStatement);
         PsiExpression prevRValue = ExpressionUtils.getAssignmentTo(maybeAssignment, var);
         if (prevRValue != null) {
           maybeAssignment.delete();

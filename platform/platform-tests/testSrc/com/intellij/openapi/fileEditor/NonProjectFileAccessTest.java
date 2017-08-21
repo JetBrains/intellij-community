@@ -122,7 +122,7 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
     typeAndCheck(nonProjectFile, false); // original is still locked 
   }
 
-  public void testAccessToProjectSystemFiles() throws Exception {
+  public void testAccessToProjectSystemFiles() {
     PlatformTestUtil.saveProject(getProject());
     VirtualFile fileUnderProjectDir = createFileExternally(new File(getProject().getBaseDir().getPath()));
     
@@ -133,7 +133,7 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
     typeAndCheck(fileUnderProjectDir, false);
   }
 
-  public void testAccessToModuleSystemFiles() throws Exception {
+  public void testAccessToModuleSystemFiles() {
     final Module moduleWithoutContentRoot = new WriteCommandAction<Module>(getProject()) {
       @Override
       protected void run(@NotNull Result<Module> result) throws Throwable {
@@ -276,7 +276,7 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
     typeAndCheck(nonProjectFile2, false);
   }
   
-  public void testCheckingExtensionsForNonWritableFiles() throws Exception {
+  public void testCheckingExtensionsForNonWritableFiles() {
     VirtualFile nonProjectFile1 = createProjectFile();
     VirtualFile nonProjectFile2 = createProjectFile();
 

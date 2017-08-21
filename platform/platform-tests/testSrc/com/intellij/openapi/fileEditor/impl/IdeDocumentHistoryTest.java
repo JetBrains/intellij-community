@@ -94,7 +94,7 @@ public class IdeDocumentHistoryTest extends PlatformTestCase {
     super.tearDown();
   }
 
-  public void testNoHistoryRecording() throws Throwable {
+  public void testNoHistoryRecording() {
     myHistory.onCommandStarted();
     myHistory.onCommandFinished(null);
 
@@ -102,7 +102,7 @@ public class IdeDocumentHistoryTest extends PlatformTestCase {
     assertFalse(myHistory.isForwardAvailable());
   }
 
-  public void testNavigationRecording() throws Throwable {
+  public void testNavigationRecording() {
     makeNavigationChange(myState2);
 
     assertTrue(myHistory.isBackAvailable());
@@ -111,7 +111,7 @@ public class IdeDocumentHistoryTest extends PlatformTestCase {
     assertEquals(1, myHistory.getBackPlaces().size());
   }
 
-  public void testMergingForwardPlaces() throws Throwable {
+  public void testMergingForwardPlaces() {
     myEditorState = new MyState(true, "state1");
     makeNavigationChange(new MyState(true, "state2"));
 
@@ -121,7 +121,7 @@ public class IdeDocumentHistoryTest extends PlatformTestCase {
     assertEquals(1, myHistory.getBackPlaces().size());
   }
 
-  public void testSimpleNavigation() throws Throwable {
+  public void testSimpleNavigation() {
     pushTwoStates();
 
     assertFalse(myHistory.isForwardAvailable());
@@ -148,7 +148,7 @@ public class IdeDocumentHistoryTest extends PlatformTestCase {
     assertSame(myState3, myEditorState);
   }
 
-  public void testQueueCutOff() throws Throwable {
+  public void testQueueCutOff() {
     pushTwoStates();
     myHistory.back();
 
@@ -168,7 +168,7 @@ public class IdeDocumentHistoryTest extends PlatformTestCase {
     assertFalse(myHistory.isBackAvailable());
   }
 
-  public void testRemoveInvalid() throws Throwable {
+  public void testRemoveInvalid() {
     pushTwoStates();
     assertTrue(myHistory.isBackAvailable());
 

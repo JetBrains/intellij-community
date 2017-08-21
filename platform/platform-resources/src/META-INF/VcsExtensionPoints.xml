@@ -63,7 +63,9 @@
                     interface="com.intellij.openapi.vcs.actions.VcsQuickListContentProvider"/>
     <extensionPoint name="patch.extension" interface="com.intellij.openapi.diff.impl.patch.PatchEP" area="IDEA_PROJECT"/>
     <extensionPoint name="vcsChangesViewRefresher" interface="com.intellij.openapi.vcs.changes.ChangesViewRefresher" area="IDEA_PROJECT"/>
-    <extensionPoint name="vcsAnnotationGutterActionProvider" interface="com.intellij.openapi.vcs.annotate.AnnotationGutterActionProvider"/>
+    <extensionPoint name="vcsAnnotationGutterActionProvider"
+                    interface="com.intellij.openapi.vcs.annotate.AnnotationGutterActionProvider"/>
+    <extensionPoint name="vcsColorsProvider" interface="com.intellij.vcs.VcsColorsProvider"/>
 
     <extensionPoint name="vcs.taskHandler" interface="com.intellij.openapi.vcs.VcsTaskHandler" area="IDEA_PROJECT"/>
 
@@ -78,7 +80,9 @@
     <extensionPoint qualifiedName="com.intellij.ignoredFileProvider"
                     interface="com.intellij.openapi.vcs.changes.IgnoredFileProvider"/>
 
-    <extensionPoint name="openapi.vcs.history.actions.ShowDiffWithLocalAction.ExtensionProvider"
+    <extensionPoint name="openapi.vcs.history.actions.ShowDiffBeforeWithLocalAction.ExtensionProvider"
+                    interface="com.intellij.openapi.actionSystem.AnActionExtensionProvider"/>
+    <extensionPoint name="openapi.vcs.history.actions.ShowDiffAfterWithLocalAction.ExtensionProvider"
                     interface="com.intellij.openapi.actionSystem.AnActionExtensionProvider"/>
     <extensionPoint name="openapi.vcs.changes.actions.CreatePatchFromChangesAction.Dialog.ExtensionProvider"
                     interface="com.intellij.openapi.actionSystem.AnActionExtensionProvider"/>

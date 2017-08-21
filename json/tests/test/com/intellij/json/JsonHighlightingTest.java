@@ -55,17 +55,17 @@ public class JsonHighlightingTest extends JsonTestCase {
 
   // Moved from JavaScript
 
-  public void testJSON_with_comment() throws Exception {
+  public void testJSON_with_comment() {
     enableStandardComplianceInspection(false, true);
     doTestHighlighting(false, true, true);
   }
 
-  public void testJSON() throws Exception {
+  public void testJSON() {
     enableStandardComplianceInspection(true, true);
     doTestHighlighting(false, true, true);
   }
 
-  public void testSemanticHighlighting() throws Exception {
+  public void testSemanticHighlighting() {
     // WEB-11239
     doTest();
   }

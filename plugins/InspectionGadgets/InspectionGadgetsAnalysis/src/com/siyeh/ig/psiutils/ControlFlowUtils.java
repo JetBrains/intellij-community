@@ -18,6 +18,7 @@ package com.siyeh.ig.psiutils;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
@@ -396,6 +397,16 @@ public class ControlFlowUtils {
     }
   }
 
+
+  @NotNull
+  public static PsiStatement[] unwrapBlock(@Nullable PsiStatement statement) {
+    PsiBlockStatement block = ObjectUtils.tryCast(statement, PsiBlockStatement.class);
+    if (block != null) {
+      return block.getCodeBlock().getStatements();
+    }
+    return statement == null ? PsiStatement.EMPTY_ARRAY : new PsiStatement[]{statement};
+  }
+
   public static boolean statementCompletesWithStatement(@NotNull PsiStatement containingStatement, @NotNull PsiStatement statement) {
     PsiElement statementToCheck = statement;
     while (true) {
@@ -605,7 +616,7 @@ public class ControlFlowUtils {
           } else break;
         } else break;
       }
-      PsiElement nextElement = PsiTreeUtil.skipSiblingsForward(cur, PsiComment.class, PsiWhiteSpace.class);
+      PsiElement nextElement = PsiTreeUtil.skipWhitespacesAndCommentsForward(cur);
       if(nextElement instanceof PsiReturnStatement) {
         return EquivalenceChecker.getCanonicalPsiEquivalence()
           .expressionsAreEquivalent(returnValue, ((PsiReturnStatement)nextElement).getReturnValue());
@@ -833,7 +844,7 @@ public class ControlFlowUtils {
     if(declaration instanceof PsiDeclarationStatement) {
       PsiElement[] elements = ((PsiDeclarationStatement)declaration).getDeclaredElements();
       if (ArrayUtil.getLastElement(elements) == var && nextStatement.equals(
-        PsiTreeUtil.skipSiblingsForward(declaration, PsiWhiteSpace.class, PsiComment.class))) {
+        PsiTreeUtil.skipWhitespacesAndCommentsForward(declaration))) {
         return true;
       }
     }
@@ -865,6 +876,49 @@ public class ControlFlowUtils {
       }
       return true;
     }
+    return false;
+  }
+
+  /**
+   * @param expression expression to check
+   * @return true if given expression can be converted to statement without semantics change
+   */
+  public static boolean canExtractStatement(PsiExpression expression) {
+    PsiElement cur = expression;
+    PsiElement parent = cur.getParent();
+    while(parent instanceof PsiExpression || parent instanceof PsiExpressionList) {
+      if(parent instanceof PsiLambdaExpression) {
+        return true;
+      }
+      if(parent instanceof PsiPolyadicExpression) {
+        PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)parent;
+        IElementType type = polyadicExpression.getOperationTokenType();
+        if ((type.equals(JavaTokenType.ANDAND) || type.equals(JavaTokenType.OROR)) && polyadicExpression.getOperands()[0] != cur) {
+          // not the first in the &&/|| chain: we cannot properly generate code which would short-circuit as well
+          return false;
+        }
+      }
+      if(parent instanceof PsiConditionalExpression && ((PsiConditionalExpression)parent).getCondition() != cur) {
+        return false;
+      }
+      if(parent instanceof PsiMethodCallExpression) {
+        PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)parent).getMethodExpression();
+        if(methodExpression.textMatches("this") || methodExpression.textMatches("super")) {
+          return false;
+        }
+      }
+      cur = parent;
+      parent = cur.getParent();
+    }
+    if(parent instanceof PsiReturnStatement || parent instanceof PsiExpressionStatement) return true;
+    if(parent instanceof PsiLocalVariable) {
+      PsiElement grandParent = parent.getParent();
+      if(grandParent instanceof PsiDeclarationStatement && ((PsiDeclarationStatement)grandParent).getDeclaredElements().length == 1) {
+        return true;
+      }
+    }
+    if(parent instanceof PsiForeachStatement && ((PsiForeachStatement)parent).getIteratedValue() == cur) return true;
+    if(parent instanceof PsiIfStatement && ((PsiIfStatement)parent).getCondition() == cur) return true;
     return false;
   }
 

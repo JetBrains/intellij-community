@@ -112,7 +112,7 @@ class Foo<T> {
 }
 '''
     myFixture.completeBasic()
-    myFixture.assertPreferredCompletionItems 0, 'finalize', 'fooT'
+    myFixture.assertPreferredCompletionItems 0, 'fooT', 'finalize'
   }
 
   void testDelegateToThrowable() throws Throwable {
@@ -170,7 +170,7 @@ class Foo<T> {
 public class MyCategory {
   public static void foo(String s) {}
 }""")
-    def foo = category.getMethods()[0]
+    def foo = TestUtils.getMethods(category)[0]
     addGdsl("""
     contributor([:]){category 'MyCategory'}""")
     myFixture.renameElement foo, "bar", false, false

@@ -19,7 +19,10 @@ package com.intellij.refactoring.replaceConstructorWithBuilder;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.options.ConfigurationException;
@@ -363,12 +366,7 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
 
     @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
-      if (columnIndex == PARAM) return false;
-      if (columnIndex == SKIP_SETTER) {
-        final ParameterData data = getParamData(rowIndex);
-        if (data.getDefaultValue() == null) return false;
-      }
-      return true;
+      return columnIndex != PARAM;
     }
 
     @Override

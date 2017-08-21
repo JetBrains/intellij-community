@@ -23,10 +23,7 @@ import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
-import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType;
-import com.intellij.openapi.externalSystem.model.project.ModuleData;
-import com.intellij.openapi.externalSystem.model.project.OrderAware;
-import com.intellij.openapi.externalSystem.model.project.ProjectData;
+import com.intellij.openapi.externalSystem.model.project.*;
 import com.intellij.openapi.externalSystem.service.project.IdeModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
@@ -36,6 +33,9 @@ import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Computable;
@@ -44,13 +44,13 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.ui.CheckBoxList;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -89,12 +89,17 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
     for (DataNode<E> node : toImport) {
       Module module = node.getUserData(MODULE_KEY);
       if (module != null) {
+        ProjectCoordinate publication = node.getData().getPublication();
+        if (publication != null){
+          modelsProvider.registerModulePublication(module, publication);
+        }
         String productionModuleId = node.getData().getProductionModuleId();
         modelsProvider.setTestModuleProperties(module, productionModuleId);
         setModuleOptions(module, node);
         ModifiableRootModel modifiableRootModel = modelsProvider.getModifiableRootModel(module);
         syncPaths(module, modifiableRootModel, node.getData());
         setLanguageLevel(modifiableRootModel, node.getData());
+        setSdk(modifiableRootModel, node.getData());
       }
     }
 
@@ -251,9 +256,9 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
         for (Module module : orphanModules) {
           orphanModulesList.setItemSelected(module, true);
         }
-        orphanModulesList.setBorder(IdeBorderFactory.createEmptyBorder(8));
+        orphanModulesList.setBorder(JBUI.Borders.empty(8));
         content.add(orphanModulesList, ExternalSystemUiUtil.getFillLineConstraints(0));
-        content.setBorder(IdeBorderFactory.createEmptyBorder(0, 0, 8, 0));
+        content.setBorder(JBUI.Borders.empty(0, 0, 8, 0));
 
         DialogWrapper dialog = new DialogWrapper(project) {
           {
@@ -395,6 +400,19 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
       }
       catch (IllegalArgumentException e) {
         LOG.debug(e);
+      }
+    }
+  }
+
+  private void setSdk(@NotNull ModifiableRootModel modifiableRootModel, E data) {
+    String skdName = data.getSdkName();
+    if (skdName != null) {
+      ProjectJdkTable projectJdkTable = ProjectJdkTable.getInstance();
+      Sdk sdk = projectJdkTable.findJdk(skdName);
+      if (sdk != null) {
+        modifiableRootModel.setSdk(sdk);
+      } else {
+        modifiableRootModel.setInvalidSdk(skdName, JavaSdk.getInstance().getName());
       }
     }
   }

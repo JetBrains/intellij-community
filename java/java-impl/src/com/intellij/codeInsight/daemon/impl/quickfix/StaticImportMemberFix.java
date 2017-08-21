@@ -38,6 +38,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public abstract class StaticImportMemberFix<T extends PsiMember> implements IntentionAction, HintAction {
+  // we keep max 2 candidates
   private List<T> candidates;
 
   @NotNull protected abstract String getBaseText();
@@ -71,11 +72,13 @@ public abstract class StaticImportMemberFix<T extends PsiMember> implements Inte
            && getQualifierExpression() == null
            && resolveRef() == null
            && file.getManager().isInProject(file)
-           && !(candidates == null ? candidates = getMembersToImport(false) : candidates).isEmpty()
+           && !(candidates == null ? candidates = getMembersToImport(false, StaticMembersProcessor.SearchMode.MAX_2_MEMBERS) : candidates).isEmpty()
       ;
   }
 
-  @NotNull protected abstract List<T> getMembersToImport(boolean applicableOnly);
+  @NotNull protected abstract List<T> getMembersToImport(boolean applicableOnly, @NotNull StaticMembersProcessor.SearchMode mode);
+
+  protected abstract boolean showMembersFromDefaultPackage();
 
   public static boolean isExcluded(PsiMember method) {
     String name = PsiUtil.getMemberQualifiedName(method);
@@ -92,7 +95,7 @@ public abstract class StaticImportMemberFix<T extends PsiMember> implements Inte
   public void invoke(@NotNull final Project project, final Editor editor, PsiFile file) {
     if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
     ApplicationManager.getApplication().runWriteAction(() -> {
-      final List<T> methodsToImport = getMembersToImport(false);
+      final List<T> methodsToImport = getMembersToImport(false, StaticMembersProcessor.SearchMode.MAX_100_MEMBERS);
       if (methodsToImport.isEmpty()) return;
       createQuestionAction(methodsToImport, project, editor).execute();
     });
@@ -102,7 +105,7 @@ public abstract class StaticImportMemberFix<T extends PsiMember> implements Inte
     if (!CodeInsightSettings.getInstance().ADD_MEMBER_IMPORTS_ON_THE_FLY) {
       return ImportClassFixBase.Result.POPUP_NOT_SHOWN;
     }
-    final List<T> candidates = getMembersToImport(true);
+    final List<T> candidates = getMembersToImport(true, StaticMembersProcessor.SearchMode.MAX_100_MEMBERS);
     if (candidates.isEmpty()) {
       return ImportClassFixBase.Result.POPUP_NOT_SHOWN;
     }
@@ -149,5 +152,4 @@ public abstract class StaticImportMemberFix<T extends PsiMember> implements Inte
     ImportClassFixBase.Result result = doFix(editor);
     return result == ImportClassFixBase.Result.POPUP_SHOWN || result == ImportClassFixBase.Result.CLASS_AUTO_IMPORTED;
   }
-
 }

@@ -95,7 +95,7 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
     assumeThat(gradleVersion, versionMatcherRule.getMatcher());
     new WriteAction() {
       @Override
-      protected void run(@NotNull Result result) throws Throwable {
+      protected void run(@NotNull Result result) {
         Sdk oldJdk = ProjectJdkTable.getInstance().findJdk(GRADLE_JDK_NAME);
         if (oldJdk != null) {
           ProjectJdkTable.getInstance().removeJdk(oldJdk);
@@ -122,7 +122,7 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
     try {
       new WriteAction() {
         @Override
-        protected void run(@NotNull Result result) throws Throwable {
+        protected void run(@NotNull Result result) {
           Sdk old = ProjectJdkTable.getInstance().findJdk(GRADLE_JDK_NAME);
           if (old != null) {
             SdkConfigurationUtil.removeSdk(old);
@@ -138,7 +138,7 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
   }
 
   @Override
-  protected void collectAllowedRoots(final List<String> roots) throws IOException {
+  protected void collectAllowedRoots(final List<String> roots) {
     roots.add(myJdkHome);
     roots.addAll(collectRootsInside(myJdkHome));
     roots.add(PathManager.getConfigPath());

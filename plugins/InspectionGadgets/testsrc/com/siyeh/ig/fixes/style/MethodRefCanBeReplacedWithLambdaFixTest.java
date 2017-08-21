@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,115 +35,119 @@ public class MethodRefCanBeReplacedWithLambdaFixTest extends IGQuickFixesTestCas
     return "style/methodRefs2lambda";
   }
 
-  public void testRedundantCast() throws Exception {
+  public void testRedundantCast() {
     doTest();
   }
 
-  public void testStaticMethodRef() throws Exception {
+  public void testStaticMethodRef() {
     doTest();
   }
 
-  public void testThisRefs() throws Exception {
+  public void testThisRefs() {
     doTest();
   }
 
-  public void testSuperRefs() throws Exception {
+  public void testSuperRefs() {
     doTest();
   }
 
-  public void testExprRefs() throws Exception {
+  public void testExprRefs() {
     doTest();
   }
 
-  public void testReceiver() throws Exception {
+  public void testReceiver() {
     doTest();
   }
 
-  public void testNewRefs() throws Exception {
+  public void testNewRefs() {
     doTest();
   } 
 
-  public void testNewRefsDefaultConstructor() throws Exception {
+  public void testNewRefsDefaultConstructor() {
     doTest();
   }
 
-  public void testNewRefsInnerClass() throws Exception {
+  public void testNewRefsInnerClass() {
     doTest();
   }
 
-  public void testNewRefsStaticInnerClass() throws Exception {
+  public void testNewRefsStaticInnerClass() {
     doTest();
   }
 
-  public void testNewRefsInference() throws Exception {
+  public void testNewRefsInference() {
+    doTest(myDefaultHint + " (side effects)");
+  }
+
+  public void testNewRefsInference1() {
     doTest();
   }
 
-  public void testNewRefsInference1() throws Exception {
+  public void testAmbiguity() {
     doTest();
   }
 
-  public void testAmbiguity() throws Exception {
+  public void testSubst() {
     doTest();
   }
 
-  public void testSubst() throws Exception {
+  public void testTypeElementOnTheLeft() {
     doTest();
   }
 
-  public void testTypeElementOnTheLeft() throws Exception {
+  public void testNewDefaultConstructor() {
     doTest();
   }
 
-  public void testNewDefaultConstructor() throws Exception {
+  public void testArrayConstructorRef() {
     doTest();
   }
 
-  public void testArrayConstructorRef() throws Exception {
+  public void testArrayConstructorRef2Dim() {
     doTest();
   }
 
-  public void testArrayConstructorRef2Dim() throws Exception {
+  public void testArrayMethodRef() {
+    doTest(myDefaultHint + " (side effects)");
+  }
+
+  public void testArrayConstructorRefUniqueParamName() {
     doTest();
   }
 
-  public void testArrayMethodRef() throws Exception {
+  public void testNameConflicts() {
     doTest();
   }
 
-  public void testArrayConstructorRefUniqueParamName() throws Exception {
+  public void testIntroduceVariableForSideEffectQualifier() {
+    doTest(myDefaultHint + " (side effects)");
+  }
+
+  public void testCollapseToExpressionLambdaWhenCast() {
     doTest();
   }
 
-  public void testNameConflicts() throws Exception {
+  public void testPreserveExpressionQualifier() {
     doTest();
   }
 
-  public void testIntroduceVariableForSideEffectQualifier() throws Exception {
+  public void testNoUnderscoreInLambdaParameterName() {
     doTest();
   }
 
-  public void testCollapseToExpressionLambdaWhenCast() throws Exception {
+  public void testNoCastWhereCaptureArgIsExpected() {
     doTest();
   }
 
-  public void testPreserveExpressionQualifier() throws Exception {
+  public void testSpecifyFormalParameterTypesWhenMethodReferenceWasExactAndTypeOfParameterIsUnknown() {
     doTest();
   }
 
-  public void testNoUnderscoreInLambdaParameterName() throws Exception {
+  public void testNewArrayMethodReferenceHasNoSideEffects() {
     doTest();
   }
 
-  public void testNoCastWhereCaptureArgIsExpected() throws Exception {
-    doTest();
-  }
-
-  public void testSpecifyFormalParameterTypesWhenMethodReferenceWasExactAndTypeOfParameterIsUnknown() throws Exception {
-    doTest();
-  }
-
-  public void testEnsureNoConversionIsSuggestedWhenLambdaWithoutCantBeInferredAndFormalParametersAreNotDenotable() throws Exception {
+  public void testEnsureNoConversionIsSuggestedWhenLambdaWithoutCantBeInferredAndFormalParametersAreNotDenotable() {
     assertQuickfixNotAvailable();
   }
 }

@@ -46,14 +46,21 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.*;
 import java.util.function.Function;
+import java.util.jar.Attributes;
+import java.util.jar.JarFile;
+import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.intellij.psi.PsiJavaModule.MODULE_INFO_FILE;
 
 public class ModuleHighlightUtil {
+  private static final Attributes.Name MULTI_RELEASE = new Attributes.Name("Multi-Release");
+
   @Nullable
   static PsiJavaModule getModuleDescriptor(@NotNull PsiFileSystemItem fsItem) {
     VirtualFile file = fsItem.getVirtualFile();
@@ -61,12 +68,15 @@ public class ModuleHighlightUtil {
 
     Project project = fsItem.getProject();
     ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(project);
-    if (index.isInLibraryClasses(file)) {
-      VirtualFile classRoot = index.getClassRootForFile(file);
-      if (classRoot != null) {
-        VirtualFile descriptorFile = classRoot.findChild(PsiJavaModule.MODULE_INFO_CLS_FILE);
+    if (index.isInLibrary(file)) {
+      VirtualFile root;
+      if ((root = index.getClassRootForFile(file)) != null) {
+        VirtualFile descriptorFile = root.findChild(PsiJavaModule.MODULE_INFO_CLS_FILE);
         if (descriptorFile == null) {
-          descriptorFile = classRoot.findFileByRelativePath("META-INF/versions/9/" + PsiJavaModule.MODULE_INFO_CLS_FILE);
+          VirtualFile alt = root.findFileByRelativePath("META-INF/versions/9/" + PsiJavaModule.MODULE_INFO_CLS_FILE);
+          if (alt != null && isMultiReleaseJar(root)) {
+            descriptorFile = alt;
+          }
         }
         if (descriptorFile != null) {
           PsiFile psiFile = PsiManager.getInstance(project).findFile(descriptorFile);
@@ -74,8 +84,17 @@ public class ModuleHighlightUtil {
             return ((PsiJavaFile)psiFile).getModuleDeclaration();
           }
         }
-        else if (classRoot.getFileSystem() instanceof JarFileSystem && "jar".equalsIgnoreCase(classRoot.getExtension())) {
-          return LightJavaModule.getModule(PsiManager.getInstance(project), classRoot);
+        else if (root.getFileSystem() instanceof JarFileSystem && "jar".equalsIgnoreCase(root.getExtension())) {
+          return LightJavaModule.getModule(PsiManager.getInstance(project), root);
+        }
+      }
+      else if ((root = index.getSourceRootForFile(file)) != null) {
+        VirtualFile descriptorFile = root.findChild(MODULE_INFO_FILE);
+        if (descriptorFile != null) {
+          PsiFile psiFile = PsiManager.getInstance(project).findFile(descriptorFile);
+          if (psiFile instanceof PsiJavaFile) {
+            return ((PsiJavaFile)psiFile).getModuleDeclaration();
+          }
         }
       }
     }
@@ -96,6 +115,20 @@ public class ModuleHighlightUtil {
     }
 
     return null;
+  }
+
+  private static boolean isMultiReleaseJar(VirtualFile root) {
+    if (root.getFileSystem() instanceof JarFileSystem) {
+      VirtualFile manifest = root.findFileByRelativePath(JarFile.MANIFEST_NAME);
+      if (manifest != null) {
+        try (InputStream stream = manifest.getInputStream()) {
+          return Boolean.valueOf(new Manifest(stream).getMainAttributes().getValue(MULTI_RELEASE));
+        }
+        catch (IOException ignored) { }
+      }
+    }
+
+    return false;
   }
 
   static HighlightInfo checkPackageStatement(@NotNull PsiPackageStatement statement, @NotNull PsiFile file, @Nullable PsiJavaModule module) {
@@ -175,13 +208,13 @@ public class ModuleHighlightUtil {
 
     checkDuplicateRefs(
       module.getUses(),
-      st -> Optional.ofNullable(st.getClassReference()).map(ModuleHighlightUtil::refText),
+      st -> Optional.ofNullable(st.getClassReference()).map(ModuleHighlightUtil::qName),
       "module.duplicate.uses",
       results);
 
     checkDuplicateRefs(
       module.getProvides(),
-      st -> Optional.ofNullable(st.getInterfaceReference()).map(ModuleHighlightUtil::refText),
+      st -> Optional.ofNullable(st.getInterfaceReference()).map(ModuleHighlightUtil::qName),
       "module.duplicate.provides",
       results);
 
@@ -210,18 +243,20 @@ public class ModuleHighlightUtil {
     List<HighlightInfo> results = ContainerUtil.newSmartList();
 
     Set<String> exports = JBIterable.from(module.getExports()).map(st -> refText(st.getPackageReference())).filter(Objects::nonNull).toSet();
-    Set<String> uses = JBIterable.from(module.getUses()).map(st -> refText(st.getClassReference())).filter(Objects::nonNull).toSet();
+    Set<String> uses = JBIterable.from(module.getUses()).map(st -> qName(st.getClassReference())).filter(Objects::nonNull).toSet();
 
     Module host = findModule(module);
-    for (PsiProvidesStatement statement : module.getProvides()) {
-      PsiJavaCodeReferenceElement ref = statement.getInterfaceReference();
-      if (ref != null) {
-        PsiElement target = ref.resolve();
-        if (target instanceof PsiClass && findModule(target) == host) {
-          String className = refText(ref), packageName = StringUtil.getPackageName(className);
-          if (!exports.contains(packageName) && !uses.contains(className)) {
-            String message = JavaErrorMessages.message("module.service.unused");
-            results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING).range(range(ref)).descriptionAndTooltip(message).create());
+    if (host != null) {
+      for (PsiProvidesStatement statement : module.getProvides()) {
+        PsiJavaCodeReferenceElement ref = statement.getInterfaceReference();
+        if (ref != null) {
+          PsiElement target = ref.resolve();
+          if (target instanceof PsiClass && findModule(target) == host) {
+            String className = qName(ref), packageName = StringUtil.getPackageName(className);
+            if (!exports.contains(packageName) && !uses.contains(className)) {
+              String message = JavaErrorMessages.message("module.service.unused");
+              results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING).range(range(ref)).descriptionAndTooltip(message).create());
+            }
           }
         }
       }
@@ -232,6 +267,10 @@ public class ModuleHighlightUtil {
 
   private static String refText(PsiJavaCodeReferenceElement ref) {
     return ref != null ? PsiNameHelper.getQualifiedClassName(ref.getText(), true) : null;
+  }
+
+  private static String qName(PsiJavaCodeReferenceElement ref) {
+    return ref != null ? ref.getQualifiedName() : null;
   }
 
   @Nullable
@@ -346,11 +385,11 @@ public class ModuleHighlightUtil {
   static HighlightInfo checkServiceReference(@Nullable PsiJavaCodeReferenceElement refElement) {
     if (refElement != null) {
       PsiElement target = refElement.resolve();
-      if (target == null) {
+      if (!(target instanceof PsiClass)) {
         String message = JavaErrorMessages.message("cannot.resolve.symbol", refElement.getReferenceName());
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(refElement)).descriptionAndTooltip(message).create();
       }
-      else if (target instanceof PsiClass && ((PsiClass)target).isEnum()) {
+      else if (((PsiClass)target).isEnum()) {
         String message = JavaErrorMessages.message("module.service.enum", ((PsiClass)target).getName());
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(refElement)).descriptionAndTooltip(message).create();
       }
@@ -370,7 +409,7 @@ public class ModuleHighlightUtil {
 
     Set<String> filter = ContainerUtil.newTroveSet();
     for (PsiJavaCodeReferenceElement implRef : implRefList.getReferenceElements()) {
-      String refText = refText(implRef);
+      String refText = implRef.getQualifiedName();
       if (!filter.add(refText)) {
         String message = JavaErrorMessages.message("module.duplicate.impl", refText);
         HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(implRef).descriptionAndTooltip(message).create();

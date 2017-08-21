@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,14 @@
  */
 package com.intellij.diff.util;
 
+import com.intellij.codeInsight.daemon.OutsidersPsiFileSupport;
 import com.intellij.codeStyle.CodeStyleFacade;
-import com.intellij.diff.DiffContext;
-import com.intellij.diff.DiffDialogHints;
-import com.intellij.diff.DiffTool;
-import com.intellij.diff.SuppressiveDiffTool;
+import com.intellij.diff.*;
 import com.intellij.diff.comparison.ByWord;
 import com.intellij.diff.comparison.ComparisonMergeUtil;
 import com.intellij.diff.comparison.ComparisonPolicy;
 import com.intellij.diff.comparison.ComparisonUtil;
 import com.intellij.diff.contents.DiffContent;
-import com.intellij.diff.contents.DiffPsiFileSupport;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.contents.EmptyContent;
 import com.intellij.diff.fragments.DiffFragment;
@@ -34,6 +31,7 @@ import com.intellij.diff.fragments.MergeLineFragment;
 import com.intellij.diff.fragments.MergeWordFragment;
 import com.intellij.diff.impl.DiffSettingsHolder.DiffSettings;
 import com.intellij.diff.requests.ContentDiffRequest;
+import com.intellij.diff.tools.util.DiffNotifications;
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings;
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.diff.tools.util.text.*;
@@ -84,7 +82,10 @@ import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.ui.*;
+import com.intellij.ui.ColorUtil;
+import com.intellij.ui.HyperlinkAdapter;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ArrayUtil;
@@ -248,7 +249,7 @@ public class DiffUtil {
   public static boolean canNavigateToFile(@Nullable Project project, @Nullable VirtualFile file) {
     if (project == null || project.isDefault()) return false;
     if (file == null || !file.isValid()) return false;
-    if (DiffPsiFileSupport.isDiffFile(file)) return false;
+    if (OutsidersPsiFileSupport.isDiffFile(file)) return false;
     if (file.getUserData(TEMP_FILE_KEY) == Boolean.TRUE) return false;
     return true;
   }
@@ -305,6 +306,13 @@ public class DiffUtil {
   @NotNull
   public static LogicalPosition getCaretPosition(@Nullable Editor editor) {
     return editor != null ? editor.getCaretModel().getLogicalPosition() : new LogicalPosition(0, 0);
+  }
+
+  public static void moveCaretToLineRangeIfNeeded(@NotNull Editor editor, int startLine, int endLine) {
+    int caretLine = editor.getCaretModel().getLogicalPosition().line;
+    if (!isSelectedByLine(caretLine, startLine, endLine)) {
+      editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(startLine, 0));
+    }
   }
 
   //
@@ -469,13 +477,22 @@ public class DiffUtil {
   @Nullable
   private static JComponent createTitleWithNotifications(@Nullable JComponent title,
                                                          @NotNull DiffContent content) {
-    List<JComponent> notifications = getCustomNotifications(content);
+    List<JComponent> notifications = new ArrayList<>();
+    notifications.addAll(getCustomNotifications(content));
+
+    if (content instanceof DocumentContent) {
+      Document document = ((DocumentContent)content).getDocument();
+      if (FileDocumentManager.getInstance().isPartialPreviewOfALargeFile(document)) {
+        notifications.add(DiffNotifications.createNotification("File is too large. Only preview is loaded."));
+      }
+    }
+
     if (notifications.isEmpty()) return title;
 
-    List<JComponent> components = new ArrayList<>();
-    if (title != null) components.add(title);
-    components.addAll(notifications);
-    return createStackedComponents(components, TITLE_GAP);
+    JPanel panel = new JPanel(new BorderLayout(0, TITLE_GAP));
+    if (title != null) panel.add(title, BorderLayout.NORTH);
+    panel.add(createStackedComponents(notifications, TITLE_GAP), BorderLayout.SOUTH);
+    return panel;
   }
 
   @Nullable
@@ -509,13 +526,13 @@ public class DiffUtil {
     if (readOnly) title += " " + DiffBundle.message("diff.content.read.only.content.title.suffix");
 
     JPanel panel = new JPanel(new BorderLayout());
-    panel.setBorder(IdeBorderFactory.createEmptyBorder(0, 4, 0, 4));
+    panel.setBorder(JBUI.Borders.empty(0, 4));
     panel.add(new JBLabel(title).setCopyable(true), BorderLayout.CENTER);
     if (charset != null && separator != null) {
       JPanel panel2 = new JPanel();
       panel2.setLayout(new BoxLayout(panel2, BoxLayout.X_AXIS));
       panel2.add(createCharsetPanel(charset, bom));
-      panel2.add(Box.createRigidArea(new Dimension(4, 0)));
+      panel2.add(Box.createRigidArea(JBUI.size(4, 0)));
       panel2.add(createSeparatorPanel(separator));
       panel.add(panel2, BorderLayout.EAST);
     }
@@ -602,12 +619,25 @@ public class DiffUtil {
 
   public static boolean isFocusedComponent(@Nullable Project project, @Nullable Component component) {
     if (component == null) return false;
-    return IdeFocusManager.getInstance(project).getFocusedDescendantFor(component) != null;
+    Component ideFocusOwner = IdeFocusManager.getInstance(project).getFocusOwner();
+    if (ideFocusOwner != null && SwingUtilities.isDescendingFrom(ideFocusOwner, component)) return true;
+
+    Component jdkFocusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+    if (jdkFocusOwner != null && SwingUtilities.isDescendingFrom(jdkFocusOwner, component)) return true;
+
+    return false;
   }
 
   public static void requestFocus(@Nullable Project project, @Nullable Component component) {
     if (component == null) return;
     IdeFocusManager.getInstance(project).requestFocus(component, true);
+  }
+
+  public static void runPreservingFocus(@NotNull FocusableContext context, @NotNull Runnable task) {
+    boolean hadFocus = context.isFocused();
+    if (hadFocus) KeyboardFocusManager.getCurrentKeyboardFocusManager().clearFocusOwner();
+    task.run();
+    if (hadFocus) context.requestFocus();
   }
 
   //

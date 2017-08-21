@@ -1145,7 +1145,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
     assertModuleLibDeps("project", "Maven: junit:junit:3.8.1");
   }
 
-  public void testProjectWithOldProfilesXmlFile() throws Exception {
+  public void testProjectWithOldProfilesXmlFile() {
     ignore(); // not supported by 2.2
   }
 

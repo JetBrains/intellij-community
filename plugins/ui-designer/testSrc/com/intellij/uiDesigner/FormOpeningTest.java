@@ -35,7 +35,7 @@ import java.awt.*;
  */
 public class FormOpeningTest extends FileEditorManagerTestCase {
 
-  public void testOpenInDumbMode() throws Exception {
+  public void testOpenInDumbMode() {
 
     FileEditorManagerEx editorManager = FileEditorManagerEx.getInstanceEx(getProject());
     VirtualFile file = myFixture.copyFileToProject("TestBorder.form");

@@ -37,6 +37,7 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.core.impl.PomModelImpl;
@@ -51,6 +52,7 @@ import com.intellij.psi.impl.source.text.BlockSupportImpl;
 import com.intellij.psi.impl.source.text.DiffLog;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.CachedValuesManagerImpl;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
@@ -60,6 +62,9 @@ import org.picocontainer.defaults.AbstractComponentAdapter;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Set;
 
 /** @noinspection JUnitTestCaseWithNonTrivialConstructors*/
@@ -271,7 +276,11 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
   }
 
   protected void checkResult(@NonNls @TestDataFile String targetDataName, final PsiFile file) throws IOException {
-    doCheckResult(myFullDataPath, file, checkAllPsiRoots(), targetDataName, skipSpaces(), includeRanges());
+    doCheckResult(myFullDataPath, file, checkAllPsiRoots(), targetDataName, skipSpaces(), includeRanges(), allTreesInSingleFile());
+  }
+
+  protected boolean allTreesInSingleFile() {
+    return false;
   }
 
   public static void doCheckResult(String testDataDir,
@@ -280,6 +289,16 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
                                    String targetDataName,
                                    boolean skipSpaces,
                                    boolean printRanges) throws IOException {
+    doCheckResult(testDataDir, file, checkAllPsiRoots, targetDataName, skipSpaces, printRanges, false);
+  }
+
+  public static void doCheckResult(String testDataDir,
+                                   PsiFile file,
+                                   boolean checkAllPsiRoots,
+                                   String targetDataName,
+                                   boolean skipSpaces,
+                                   boolean printRanges,
+                                   boolean allTreesInSingleFile) throws IOException {
     FileViewProvider provider = file.getViewProvider();
     Set<Language> languages = provider.getLanguages();
 
@@ -288,10 +307,24 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
       return;
     }
 
-    for (Language language : languages) {
-      PsiFile root = provider.getPsi(language);
-      String expectedName = targetDataName + "." + language.getID() + ".txt";
-      doCheckResult(testDataDir, expectedName, toParseTreeText(root, skipSpaces, printRanges).trim());
+    if (allTreesInSingleFile) {
+      String expectedName = targetDataName + ".txt";
+      StringBuilder sb = new StringBuilder();
+      List<Language> languagesList = new ArrayList<>(languages);
+      ContainerUtil.sort(languagesList, Comparator.comparing(Language::getID));
+      for (Language language : languagesList) {
+        sb.append("Subtree: ").append(language.getDisplayName()).append(" (").append(language.getID()).append(")").append("\n")
+          .append(toParseTreeText(provider.getPsi(language), skipSpaces, printRanges).trim())
+          .append("\n").append(StringUtil.repeat("-", 80)).append("\n");
+      }
+      doCheckResult(testDataDir, expectedName, sb.toString());
+    }
+    else {
+      for (Language language : languages) {
+        PsiFile root = provider.getPsi(language);
+        String expectedName = targetDataName + "." + language.getID() + ".txt";
+        doCheckResult(testDataDir, expectedName, toParseTreeText(root, skipSpaces, printRanges).trim());
+      }
     }
   }
 

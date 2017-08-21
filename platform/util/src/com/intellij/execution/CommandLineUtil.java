@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.execution;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
@@ -72,7 +73,7 @@ public class CommandLineUtil {
       }
     }
     else {
-      addToWindowsCommandLine(parameters, commandLine);
+      addToWindowsCommandLine(command, parameters, commandLine);
     }
 
     return commandLine;
@@ -209,21 +210,15 @@ public class CommandLineUtil {
    *
    *
    * Useful links:
-   *
-   *   * https://ss64.com/nt/syntax-esc.html  Syntax : Escape Characters, Delimiters and Quotes
-   *   * http://stackoverflow.com/a/4095133/545027  How does the Windows Command Interpreter (CMD.EXE) parse scripts?
-   *   * https://blogs.msdn.microsoft.com/twistylittlepassagesallalike/2011/04/23/everyone-quotes-command-line-arguments-the-wrong-way/
+   *   https://ss64.com/nt/syntax-esc.html  Syntax : Escape Characters, Delimiters and Quotes
+   *   http://stackoverflow.com/a/4095133/545027  How does the Windows Command Interpreter (CMD.EXE) parse scripts?
+   *   https://blogs.msdn.microsoft.com/twistylittlepassagesallalike/2011/04/23/everyone-quotes-command-line-arguments-the-wrong-way/
    */
-
-  private static void addToWindowsCommandLine(@NotNull List<String> parameters,
-                                              @NotNull List<String> commandLine) {
-    String command = commandLine.get(0);
-
+  private static void addToWindowsCommandLine(String command, List<String> parameters, List<String> commandLine) {
     boolean isCmdParam = isWinShell(command);
     int cmdInvocationDepth = isWinShellScript(command) ? 2 : isCmdParam ? 1 : 0;
 
-    QuoteFlag quoteFlag = new QuoteFlag(command);
-
+    QuoteFlag quoteFlag = new QuoteFlag(false);
     for (int i = 0; i < parameters.size(); i++) {
       String parameter = parameters.get(i);
 
@@ -251,7 +246,8 @@ public class CommandLineUtil {
         if (parameter.equalsIgnoreCase("echo")) {
           // no further quoting, only ^-escape and wrap the whole "echo ..." into double quotes
           String parametersJoin = join(ContainerUtil.subList(parameters, i), " ");
-          parameter = escapeParameter(parametersJoin, quoteFlag.toggle(), cmdInvocationDepth, false);
+          quoteFlag.toggle();
+          parameter = escapeParameter(parametersJoin, quoteFlag, cmdInvocationDepth, false);
           commandLine.add(parameter);  // prefix is already included
           break;
         }
@@ -271,30 +267,13 @@ public class CommandLineUtil {
         parameter = backslashEscapeQuotes(parameter);
       }
 
-      commandLine.add(parameterPrefix + parameter);
+      commandLine.add(parameterPrefix.isEmpty() ? parameter : parameterPrefix + parameter);
     }
   }
 
-  @NotNull
-  @Contract(pure = true)
-  public static String escapeParameterOnWindows(@NotNull String s, boolean isWinShell) {
-    boolean hadLineBreaks = !s.equals(s = convertLineSeparators(s, ""));
-    if (s.isEmpty()) return QQ;
-    String ret = isWinShell ? escapeParameter(s, new QuoteFlag(hadLineBreaks), 1, true) : backslashEscapeQuotes(s);
-    return hadLineBreaks ? quote(ret, Q) : ret;
-  }
-
-  @NotNull
-  @Contract(pure = true)
-  private static String escapeParameter(@NotNull String s,
-                                        @NotNull QuoteFlag quoteFlag,
-                                        int cmdInvocationDepth,
-                                        boolean escapeQuotingInside) {
-    final StringBuilder sb = new StringBuilder();
-    final String escapingCarets = repeatSymbol('^', (1 << cmdInvocationDepth) - 1);
-
-    return (escapeQuotingInside ? quoteEscape(sb, s, quoteFlag, escapingCarets)
-                                : caretEscape(sb, s, quoteFlag, escapingCarets)).toString();
+  private static String escapeParameter(String s, QuoteFlag quoteFlag, int cmdInvocationDepth, boolean escapeQuotingInside) {
+    String escapingCarets = repeatSymbol('^', (1 << cmdInvocationDepth) - 1);
+    return escapeQuotingInside ? quoteEscape(s, quoteFlag, escapingCarets) : caretEscape(s, quoteFlag, escapingCarets);
   }
 
   /**
@@ -302,55 +281,47 @@ public class CommandLineUtil {
    * but do not touch any double quotes or backslashes inside.
    *
    * @param escapingCarets 2^n-1 carets for escaping the special chars
-   * @return sb
    */
-  @NotNull
-  private static StringBuilder caretEscape(@NotNull StringBuilder sb,
-                                           @NotNull String s,
-                                           @NotNull QuoteFlag quoteFlag,
-                                           @NotNull String escapingCarets) {
+  private static String caretEscape(String s, QuoteFlag quoteFlag, String escapingCarets) {
+    StringBuilder sb = new StringBuilder().append(Q);
     quoteFlag.toggle();
-    sb.append(Q);
 
     int lastPos = 0;
-    final Matcher m = WIN_CARET_SPECIAL.matcher(s);
+    Matcher m = WIN_CARET_SPECIAL.matcher(s);
     while (m.find()) {
-      quoteFlag.consume(s, lastPos, m.start());
+      quoteFlag.update(s, lastPos, m.start());
       sb.append(s, lastPos, m.start());
 
-      if (!quoteFlag.isEnabled()) sb.append(escapingCarets);
+      if (!quoteFlag.enabled) sb.append(escapingCarets);
       sb.append(m.group());
 
       lastPos = m.end();
     }
-    quoteFlag.consume(s, lastPos, s.length());
+    quoteFlag.update(s, lastPos, s.length());
     sb.append(s, lastPos, s.length());
 
     quoteFlag.toggle();
-    return sb.append(Q);
+    return sb.append(Q).toString();
   }
 
   /**
    * Escape a parameter for passing it to Windows application through CMD.EXE, that is ^-escape + quote.
    *
    * @param escapingCarets 2^n-1 carets for escaping the special chars
-   * @return sb
    */
-  @NotNull
-  private static StringBuilder quoteEscape(@NotNull StringBuilder sb,
-                                           @NotNull String s,
-                                           @NotNull QuoteFlag quoteFlag,
-                                           @NotNull String escapingCarets) {
+  private static String quoteEscape(String s, QuoteFlag quoteFlag, String escapingCarets) {
+    StringBuilder sb = new StringBuilder();
+
     int lastPos = 0;
-    final Matcher m = WIN_CARET_SPECIAL.matcher(s);
+    Matcher m = WIN_CARET_SPECIAL.matcher(s);
     while (m.find()) {
-      quoteFlag.consume(s, lastPos, m.start());
+      quoteFlag.update(s, lastPos, m.start());
       appendQuoted(sb, s.substring(lastPos, m.start()));
 
       String specialText = m.group();
       boolean isCaret = specialText.equals("^");
       if (isCaret) specialText = escapingCarets + specialText;  // only a caret is escaped using carets
-      if (isCaret == quoteFlag.isEnabled()) {
+      if (isCaret == quoteFlag.enabled) {
         // a caret must be always outside quotes: close a quote temporarily, put a caret, reopen a quote
         // rest special chars are always inside: quote and append them as usual
         appendQuoted(sb, specialText);  // works for both cases
@@ -361,7 +332,7 @@ public class CommandLineUtil {
 
       lastPos = m.end();
     }
-    quoteFlag.consume(s, lastPos, s.length());
+    quoteFlag.update(s, lastPos, s.length());
     appendQuoted(sb, s.substring(lastPos));
 
     // JDK ProcessBuilder implementation on Windows checks each argument to contain whitespaces and encloses it in
@@ -379,17 +350,14 @@ public class CommandLineUtil {
       if (sb.charAt(sb.length() - 1) != Q) sb.append(QQ);
     }
 
-    return sb;
+    return sb.toString();
   }
 
-  /**
+  /*
    * Appends the string to the buffer, quoting the former if necessary.
-   *
-   * @return sb
    */
-  @SuppressWarnings("UnusedReturnValue")
-  private static StringBuilder appendQuoted(@NotNull StringBuilder sb, @NotNull String s) {
-    if (s.isEmpty()) return sb;
+  private static void appendQuoted(StringBuilder sb, String s) {
+    if (s.isEmpty()) return;
 
     s = backslashEscapeQuotes(s);
     if (WIN_CARET_SPECIAL.matcher(s).find()) s = quote(s, Q);
@@ -402,22 +370,21 @@ public class CommandLineUtil {
     int numTrailingBackslashes = removeClosingQuote(sb);
     if (numTrailingBackslashes < 0) {
       // sb was not quoted at its end
-      return sb.append(s);
+      sb.append(s);
     }
+    else {
+      s = unquoteString(s, Q);
 
-    s = unquoteString(s, Q);
+      if (WIN_BACKSLASHES_PRECEDING_QUOTE.matcher(s).matches()) {
+        // those trailing backslashes left in the buffer (if any) are going to precede a quote, double them
+        repeatSymbol(sb, '\\', numTrailingBackslashes);
+      }
 
-    if (WIN_BACKSLASHES_PRECEDING_QUOTE.matcher(s).matches()) {
-      // those trailing backslashes left in the buffer (if any) are going to precede a quote, double them
-      repeatSymbol(sb, '\\', numTrailingBackslashes);
+      sb.append(s).append(Q);
     }
-    return sb.append(s)
-      .append(Q);
   }
 
-  @NotNull
-  @Contract(pure = true)
-  private static String backslashEscapeQuotes(@NotNull String s) {
+  private static String backslashEscapeQuotes(String s) {
     assert !s.isEmpty();
 
     String result = WIN_BACKSLASHES_PRECEDING_QUOTE.matcher(s)
@@ -427,17 +394,16 @@ public class CommandLineUtil {
     if (!result.equals(s) || WIN_QUOTE_SPECIAL.matcher(s).find()) {
       result = quote(result, Q);
     }
+
     return result;
   }
 
   /**
    * If the buffer ends with a double-quoted token, "reopen" it by deleting the closing quote.
-   *
-   * @param sb the buffer being modified
-   * @return -1 if the buffer doesn't end with a quotation (in this case it's left unmodified),
-   * otherwise a number of trailing backslashes left in the buffer, if any
+   * Returns -1 if the buffer doesn't end with a quotation (in this case it's left unmodified),
+   * otherwise a number of trailing backslashes left in the buffer, if any.
    */
-  private static int removeClosingQuote(@NotNull StringBuilder sb) {
+  private static int removeClosingQuote(StringBuilder sb) {
     if (sb.length() < 2 || sb.charAt(sb.length() - 1) != Q) return -1;
 
     // Strip the closing quote and halve the number of trailing backslashes (if any):
@@ -456,29 +422,56 @@ public class CommandLineUtil {
     return numTrailingBackslashes / 2;
   }
 
-
-  private static boolean isWinShell(@NotNull String command) {
+  private static boolean isWinShell(String command) {
     return "cmd".equalsIgnoreCase(command) || "cmd.exe".equalsIgnoreCase(command);
   }
 
-  private static boolean isWinShellScript(@NotNull String command) {
+  private static boolean isWinShellScript(String command) {
     return endsWithIgnoreCase(command, ".cmd") || endsWithIgnoreCase(command, ".bat");
   }
 
-  private static boolean endsWithIgnoreCase(@NotNull String str, @NotNull String suffix) {
+  private static boolean endsWithIgnoreCase(String str, String suffix) {
     return str.regionMatches(true, str.length() - suffix.length(), suffix, 0, suffix.length());
   }
 
-  @NotNull
-  private static String quote(@NotNull String s, char ch) {
+  private static String quote(String s, char ch) {
     return !isQuoted(s, ch) ? ch + s + ch : s;
   }
 
-  private static boolean isQuoted(@NotNull CharSequence s, char ch) {
+  private static boolean isQuoted(CharSequence s, char ch) {
     return s.length() >= 2 && s.charAt(0) == ch && s.charAt(s.length() - 1) == ch;
   }
 
-  public static boolean VERBOSE_COMMAND_LINE_MODE;
+  /**
+   * Counts quote parity needed to ^-escape special chars on Windows properly.
+   */
+  private static class QuoteFlag {
+    private boolean enabled;
+
+    private QuoteFlag(boolean value) {
+      enabled = value;
+    }
+
+    public void toggle() {
+      enabled = !enabled;
+    }
+
+    public void update(CharSequence s, int start, int end) {
+      enabled ^= countChars(s, Q, start, end, false) % 2 != 0;  // count all, no matter whether backslash-escaped or not
+    }
+  }
+
+  @NotNull
+  @Contract(pure = true)
+  public static String escapeParameterOnWindows(@NotNull String parameter, boolean isWinShell) {
+    String s = convertLineSeparators(parameter, "");
+    if (s.isEmpty()) return QQ;
+    boolean hadLineBreaks = !s.equals(parameter);
+    String result = isWinShell ? escapeParameter(s, new QuoteFlag(hadLineBreaks), 1, true) : backslashEscapeQuotes(s);
+    if (hadLineBreaks) result = quote(result, Q);
+    return result;
+  }
+
   @NotNull
   public static String extractPresentableName(@NotNull String commandLine) {
     String executable = commandLine.trim();
@@ -495,50 +488,11 @@ public class CommandLineUtil {
       args = words.subList(1, words.size());
     }
 
-    if (VERBOSE_COMMAND_LINE_MODE) {
-      return shortenPathWithEllipsis(execName + " " + join(args, " "), 250);
-    }
-
-    return new File(unquoteString(execName)).getName();
+    boolean verbose = Logger.getInstance(CommandLineUtil.class).isDebugEnabled();
+    return verbose ? shortenPathWithEllipsis(execName + " " + join(args, " "), 250) : new File(unquoteString(execName)).getName();
   }
 
-  public static boolean hasWinShellSpecialChars(String parameter) {
+  public static boolean hasWinShellSpecialChars(@NotNull String parameter) {
     return WIN_CARET_SPECIAL.matcher(parameter).find();
-  }
-
-  /**
-   * Counts quote parity needed to ^-escape special chars on Windows properly.
-   */
-  private static class QuoteFlag {
-    private boolean myValue;
-
-    public QuoteFlag(boolean value) {
-      myValue = value;
-    }
-
-    private QuoteFlag(@NotNull CharSequence s) {
-      consume(s);
-    }
-
-    public boolean isEnabled() {
-      return myValue;
-    }
-
-    @NotNull
-    public QuoteFlag toggle() {
-      myValue = !myValue;
-      return this;
-    }
-
-    @NotNull
-    public QuoteFlag consume(@NotNull CharSequence s) {
-      return consume(s, 0, s.length());
-    }
-
-    @NotNull
-    public QuoteFlag consume(@NotNull CharSequence s, int start, int end) {
-      myValue ^= countChars(s, Q, start, end, false) % 2 != 0; // count all, no matter whether backslash-escaped or not
-      return this;
-    }
   }
 }

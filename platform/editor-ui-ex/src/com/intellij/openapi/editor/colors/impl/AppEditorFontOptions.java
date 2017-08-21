@@ -22,6 +22,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.editor.colors.EditorFontCache;
 import com.intellij.openapi.editor.colors.FontPreferences;
+import com.intellij.openapi.editor.colors.ModifiableFontPreferences;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,6 +65,10 @@ public class AppEditorFontOptions implements PersistentStateComponent<AppEditorF
         SECONDARY_FONT_FAMILY = fontFamilies.get(1);
       }
     }
+
+    private static PersistentFontPreferences getDefaultState() {
+      return new PersistentFontPreferences();
+    }
   }
 
 
@@ -79,15 +84,23 @@ public class AppEditorFontOptions implements PersistentStateComponent<AppEditorF
 
   @Override
   public void loadState(PersistentFontPreferences state) {
-    myFontPreferences.clear();
-    int fontSize = UISettings.restoreFontSize(state.FONT_SIZE, state.FONT_SCALE);
-    myFontPreferences.register(state.FONT_FAMILY, fontSize);
-    myFontPreferences.setLineSpacing(state.LINE_SPACING);
-    myFontPreferences.setUseLigatures(state.USE_LIGATURES);
-    if (state.SECONDARY_FONT_FAMILY != null) {
-      myFontPreferences.register(state.SECONDARY_FONT_FAMILY, fontSize);
-    }
+    copyState(state, myFontPreferences);
     myFontPreferences.setChangeListener(() -> EditorFontCache.getInstance().reset());
+  }
+
+  private static void copyState(PersistentFontPreferences state, @NotNull ModifiableFontPreferences fontPreferences) {
+    fontPreferences.clear();
+    int fontSize = UISettings.restoreFontSize(state.FONT_SIZE, state.FONT_SCALE);
+    fontPreferences.register(state.FONT_FAMILY, fontSize);
+    fontPreferences.setLineSpacing(state.LINE_SPACING);
+    fontPreferences.setUseLigatures(state.USE_LIGATURES);
+    if (state.SECONDARY_FONT_FAMILY != null) {
+      fontPreferences.register(state.SECONDARY_FONT_FAMILY, fontSize);
+    }
+  }
+
+  public static void initDefaults(@NotNull ModifiableFontPreferences fontPreferences) {
+    copyState(PersistentFontPreferences.getDefaultState(), fontPreferences);
   }
 
   @NotNull
