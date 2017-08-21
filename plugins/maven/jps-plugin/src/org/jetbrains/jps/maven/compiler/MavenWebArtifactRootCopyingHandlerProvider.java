@@ -80,7 +80,9 @@ public class MavenWebArtifactRootCopyingHandlerProvider extends ArtifactRootCopy
         relativeDirInWar = FileUtil.getRelativePath(new File(artifact.getOutputPath()), targetDirectory);
         if (relativeDirInWar == null) return null;
       }
-      return new MavenWebArtifactCopyingHandler(artifactResourceConfiguration, moduleResourceConfiguration, relativeDirInWar);
+      ResourceRootConfiguration warRootConfig = getWarRootConfig(artifactResourceConfiguration, moduleResourceConfiguration);
+      warRootConfig.directory = root.getPath();
+      return new MavenWebArtifactCopyingHandler(warRootConfig, moduleResourceConfiguration, relativeDirInWar);
     }
 
     MavenResourceFileProcessor fileProcessor = new MavenResourceFileProcessor(projectConfiguration, model.getProject(), moduleResourceConfiguration);
@@ -113,16 +115,6 @@ public class MavenWebArtifactRootCopyingHandlerProvider extends ArtifactRootCopy
       myModuleResourceConfig = moduleResourceConfig;
     }
 
-    private static ResourceRootConfiguration getWarRootConfig(@NotNull MavenWebArtifactConfiguration artifactConfig,
-                                                              @NotNull MavenModuleResourceConfiguration moduleResourceConfig) {
-      ResourceRootConfiguration rootConfig = new ResourceRootConfiguration();
-      rootConfig.directory = artifactConfig.warSourceDirectory;
-      rootConfig.targetPath = moduleResourceConfig.outputDirectory;
-      rootConfig.includes.addAll(artifactConfig.packagingIncludes);
-      rootConfig.excludes.addAll(artifactConfig.packagingExcludes);
-      return rootConfig;
-    }
-
     @Override
     public void writeConfiguration(@NotNull PrintWriter out) {
       out.print("maven hash:");
@@ -139,6 +131,16 @@ public class MavenWebArtifactRootCopyingHandlerProvider extends ArtifactRootCopy
     }
   }
 
+  private static ResourceRootConfiguration getWarRootConfig(@NotNull MavenWebArtifactConfiguration artifactConfig,
+                                                            @NotNull MavenModuleResourceConfiguration moduleResourceConfig) {
+    ResourceRootConfiguration rootConfig = new ResourceRootConfiguration();
+    rootConfig.directory = artifactConfig.warSourceDirectory;
+    rootConfig.targetPath = moduleResourceConfig.outputDirectory;
+    rootConfig.includes.addAll(artifactConfig.packagingIncludes);
+    rootConfig.excludes.addAll(artifactConfig.packagingExcludes);
+    return rootConfig;
+  }
+
   private static class MavenClassesCopyingHandler extends MavenWebArtifactCopyingHandler {
 
     private final File myTargetDir;
@@ -146,7 +148,7 @@ public class MavenWebArtifactRootCopyingHandlerProvider extends ArtifactRootCopy
     public MavenClassesCopyingHandler(@NotNull File targetDir,
                                       @NotNull MavenWebArtifactConfiguration artifactConfig,
                                       @NotNull MavenModuleResourceConfiguration moduleResourceConfig) {
-      this(targetDir, MavenWebArtifactCopyingHandler.getWarRootConfig(artifactConfig, moduleResourceConfig), moduleResourceConfig);
+      this(targetDir, getWarRootConfig(artifactConfig, moduleResourceConfig), moduleResourceConfig);
     }
 
     protected MavenClassesCopyingHandler(@NotNull File targetDir,
