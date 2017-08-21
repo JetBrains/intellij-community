@@ -37,7 +37,6 @@
        <include name="snappy-in-java-*.jar"/>
        <include name="cli-parser-*.jar"/>
        <include name="nanoxml-*.jar"/>
-       <include name="xml-apis.jar"/>
        <include name="aether-*-all.jar"/>
        <include name="maven-aether-provider-*-all.jar"/>
        <include name="httpclient-*.jar"/>
