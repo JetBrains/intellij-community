@@ -23,4 +23,8 @@ public class XmlSpellCheckerFixesTest extends AbstractSpellCheckerFixesTest {
   public void testSimpleWordChangeTo() {
     doChangeToTest();
   }
+
+  public void testInjectionChangeTo() {
+    doChangeToTest();
+  }
 }
