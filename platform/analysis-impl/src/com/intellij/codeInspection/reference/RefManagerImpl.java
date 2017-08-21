@@ -498,6 +498,20 @@ public class RefManagerImpl extends RefManager {
             }
           }
         }
+
+        for (PsiClass aClass : ((PsiClassOwner)containingFile).getClasses()) {
+          PsiClass superClass = aClass.getSuperClass();
+          if (superClass != null) {
+            RefElement superClassReference = getReference(superClass);
+            if (superClassReference != null) {
+              //in case of implicit inheritance, e.g. GroovyObject
+              //= no explicit reference is provided, dependency on groovy library could be treated as redundant though it is not
+              //inReference is not important in this case
+              ((RefElementImpl)refFile).addOutReference(superClassReference);
+            }
+          }
+        }
+
       }
       else if (element instanceof PsiFile) {
         VirtualFile virtualFile = PsiUtilCore.getVirtualFile(element);
