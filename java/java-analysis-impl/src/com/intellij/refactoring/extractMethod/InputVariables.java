@@ -343,9 +343,9 @@ public class InputVariables {
     }
   }
 
-  public void foldAdditionalParameter(@NotNull PsiVariable additionalParameter, @NotNull PsiExpression value) {
+  public void foldExtractedParameter(@NotNull PsiVariable extractedParameter, @NotNull PsiExpression value) {
     myFoldingAvailable = true;
-    myFolding.putCallArgument(additionalParameter, value);
+    myFolding.putCallArgument(extractedParameter, value);
   }
 
   public boolean isFoldingSelectedByDefault() {

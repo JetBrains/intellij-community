@@ -55,7 +55,7 @@ public final class Match {
   private Ref<PsiExpression> myInstanceExpression;
   final Map<PsiVariable, PsiType> myChangedParams = new HashMap<>();
   private final boolean myIgnoreParameterTypes;
-  private final List<AdditionalParameter> myAdditionalParameters = new ArrayList<>();
+  private final List<ExtractedParameter> myExtractedParameters = new ArrayList<>();
 
   Match(PsiElement start, PsiElement end, boolean ignoreParameterTypes) {
     LOG.assertTrue(start.getParent() == end.getParent());
@@ -425,10 +425,10 @@ public final class Match {
   }
 
   public boolean putAdditionalParameter(@NotNull PsiElement pattern, @NotNull PsiElement candidate) {
-    return AdditionalParameter.match(pattern, candidate, myAdditionalParameters);
+    return ExtractedParameter.match(pattern, candidate, myExtractedParameters);
   }
 
-  public List<AdditionalParameter> getAdditionalParameters() {
-    return myAdditionalParameters;
+  public List<ExtractedParameter> getExtractedParameters() {
+    return myExtractedParameters;
   }
 }

@@ -32,28 +32,26 @@ import java.util.Set;
 /**
  * @author Pavel.Dolgov
  */
-public class AdditionalParameter {
+public class ExtractedParameter {
   @NotNull public final List<PsiReferenceExpression> myPatternUsages = new ArrayList<>();
   @NotNull public final PsiVariable myPatternVariable;
-  @NotNull public final List<PsiReferenceExpression> myCandidateUsages = new ArrayList<>();
+  @NotNull public final PsiReferenceExpression myCandidateUsage;
   @NotNull public final PsiVariable myCandidateVariable;
   @NotNull public final PsiType myType;
 
-  AdditionalParameter(@NotNull PsiVariable patternVariable,
-                      @NotNull PsiVariable candidateVariable,
-                      @NotNull PsiType type) {
+  ExtractedParameter(@NotNull PsiVariable patternVariable,
+                     @NotNull PsiReferenceExpression patternUsage,
+                     @NotNull PsiVariable candidateVariable,
+                     @NotNull PsiReferenceExpression candidateUsage,
+                     @NotNull PsiType type) {
     myPatternVariable = patternVariable;
+    myPatternUsages.add(patternUsage);
     myCandidateVariable = candidateVariable;
+    myCandidateUsage = candidateUsage;
     myType = type;
   }
 
-  void addUsage(@NotNull PsiReferenceExpression patternUsage,
-                @NotNull PsiReferenceExpression candidateUsage) {
-    myPatternUsages.add(patternUsage);
-    myCandidateUsages.add(candidateUsage);
-  }
-
-  public static boolean match(PsiElement pattern, PsiElement candidate, @NotNull List<AdditionalParameter> additionalParameters) {
+  public static boolean match(PsiElement pattern, PsiElement candidate, @NotNull List<ExtractedParameter> parameters) {
     if (pattern instanceof PsiReferenceExpression && candidate instanceof PsiReferenceExpression) {
       PsiReferenceExpression patternUsage = (PsiReferenceExpression)pattern;
       PsiReferenceExpression candidateUsage = (PsiReferenceExpression)candidate;
@@ -64,11 +62,11 @@ public class AdditionalParameter {
         PsiVariable candidateVariable = (PsiVariable)resolvedCandidate;
         if (isStaticOrLocal(patternVariable) && isStaticOrLocal(candidateVariable)) {
 
-          for (AdditionalParameter additionalParameter : additionalParameters) {
-            boolean samePattern = resolvedPattern.equals(additionalParameter.myPatternVariable);
-            boolean sameCandidate = resolvedCandidate.equals(additionalParameter.myCandidateVariable);
+          for (ExtractedParameter parameter : parameters) {
+            boolean samePattern = resolvedPattern.equals(parameter.myPatternVariable);
+            boolean sameCandidate = resolvedCandidate.equals(parameter.myCandidateVariable);
             if (samePattern && sameCandidate) {
-              additionalParameter.addUsage(patternUsage, candidateUsage);
+              parameter.myPatternUsages.add(patternUsage);
               return true;
             }
             if (samePattern || sameCandidate) {
@@ -77,9 +75,7 @@ public class AdditionalParameter {
           }
           PsiType type = getParameterType(patternVariable, candidateVariable);
           if (type != null) {
-            AdditionalParameter additionalParameter = new AdditionalParameter(patternVariable, candidateVariable, type);
-            additionalParameters.add(additionalParameter);
-            additionalParameter.addUsage(patternUsage, candidateUsage);
+            parameters.add(new ExtractedParameter(patternVariable, patternUsage, candidateVariable, candidateUsage, type));
             return true;
           }
         }
@@ -93,7 +89,7 @@ public class AdditionalParameter {
     Set<PsiVariable> patternVariables = null;
     List<Match> result = new ArrayList<>();
     for (Match match : matches) {
-      List<AdditionalParameter> parameters = match.getAdditionalParameters();
+      List<ExtractedParameter> parameters = match.getExtractedParameters();
       if (patternVariables == null) {
         patternVariables = getPatternVariables(parameters);
         if (containsModifiedField(pattern, patternVariables)) {
@@ -127,7 +123,7 @@ public class AdditionalParameter {
   }
 
   @NotNull
-  static Set<PsiVariable> getPatternVariables(@Nullable List<AdditionalParameter> parameters) {
+  static Set<PsiVariable> getPatternVariables(@Nullable List<ExtractedParameter> parameters) {
     if (parameters != null) {
       return ContainerUtil.map2Set(parameters, parameter -> parameter.myPatternVariable);
     }
