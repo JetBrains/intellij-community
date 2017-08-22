@@ -33,9 +33,8 @@ public class AllArgsConstructorProcessor extends AbstractConstructorClassProcess
 
     final Collection<PsiField> allNotInitializedNotStaticFields = getAllFields(psiClass);
     final String staticConstructorName = getStaticConstructorName(psiAnnotation);
-    if (!validateIsConstructorDefined(psiClass, staticConstructorName, allNotInitializedNotStaticFields, builder)) {
-      result = false;
-    }
+    result &= validateIsConstructorNotDefined(psiClass, staticConstructorName, allNotInitializedNotStaticFields, builder);
+
     return result;
   }
 

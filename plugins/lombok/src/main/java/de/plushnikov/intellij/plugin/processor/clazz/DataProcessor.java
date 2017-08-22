@@ -23,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
@@ -55,6 +56,11 @@ public class DataProcessor extends AbstractClassProcessor {
       equalsAndHashCodeProcessor.validateCallSuperParamExtern(psiAnnotation, psiClass, builder);
     }
 
+    final String staticName = PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, "staticConstructor");
+    if (shouldGenerateRequiredArgsConstructor(psiClass, staticName)) {
+      requiredArgsConstructorProcessor.validateBaseClassConstructor(psiClass, builder);
+    }
+
     return validateAnnotationOnRightType(psiClass, builder);
   }
 
@@ -80,6 +86,15 @@ public class DataProcessor extends AbstractClassProcessor {
     if (PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, ToString.class)) {
       target.addAll(toStringProcessor.createToStringMethod(psiClass, psiAnnotation));
     }
+
+    final String staticName = PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, "staticConstructor");
+    if (shouldGenerateRequiredArgsConstructor(psiClass, staticName)) {
+      target.addAll(requiredArgsConstructorProcessor.createRequiredArgsConstructor(psiClass, PsiModifier.PUBLIC, psiAnnotation, staticName));
+    }
+  }
+
+  private boolean shouldGenerateRequiredArgsConstructor(@NotNull PsiClass psiClass, @Nullable String staticName) {
+    boolean result = false;
     // create required constructor only if there are no other constructor annotations
     if (PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, NoArgsConstructor.class, RequiredArgsConstructor.class, AllArgsConstructor.class,
       Builder.class, lombok.experimental.Builder.class)) {
@@ -88,15 +103,13 @@ public class DataProcessor extends AbstractClassProcessor {
 
       // and only if there are no any other constructors!
       if (definedConstructors.isEmpty()) {
-        final String staticName = PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, "staticConstructor");
         final Collection<PsiField> requiredFields = requiredArgsConstructorProcessor.getRequiredFields(psiClass);
 
-        if (requiredArgsConstructorProcessor.validateIsConstructorDefined(psiClass, staticName, requiredFields, ProblemEmptyBuilder.getInstance())) {
-          target.addAll(requiredArgsConstructorProcessor.createRequiredArgsConstructor(
-            psiClass, PsiModifier.PUBLIC, psiAnnotation, staticName));
-        }
+        result = requiredArgsConstructorProcessor.validateIsConstructorNotDefined(
+          psiClass, staticName, requiredFields, ProblemEmptyBuilder.getInstance());
       }
     }
+    return result;
   }
 
   @Override

@@ -34,9 +34,8 @@ public class RequiredArgsConstructorProcessor extends AbstractConstructorClassPr
 
     final Collection<PsiField> allReqFields = getRequiredFields(psiClass);
     final String staticConstructorName = getStaticConstructorName(psiAnnotation);
-    if (!validateIsConstructorDefined(psiClass, staticConstructorName, allReqFields, builder)) {
-      result = false;
-    }
+    result &= validateIsConstructorNotDefined(psiClass, staticConstructorName, allReqFields, builder);
+
     return result;
   }
 

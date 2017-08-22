@@ -29,4 +29,8 @@ public class DefaultConstructorInspectionTest extends LombokInspectionTest {
   public void testClassWithLombokDefaultConstructor() throws Exception {
     doTest();
   }
+
+  public void testDataWithParentClassWithoutDefaultConstructor() throws Exception {
+    doTest();
+  }
 }
