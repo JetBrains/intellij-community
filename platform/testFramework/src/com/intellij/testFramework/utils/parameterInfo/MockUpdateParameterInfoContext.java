@@ -90,6 +90,16 @@ public class MockUpdateParameterInfoContext implements UpdateParameterInfoContex
   }
 
   @Override
+  public boolean isPreservedOnHintHidden() {
+    return false;
+  }
+
+  @Override
+  public void setPreservedOnHintHidden(boolean value) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public boolean isInnermostContext() {
     return false;
   }

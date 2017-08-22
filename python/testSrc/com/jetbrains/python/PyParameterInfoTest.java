@@ -870,6 +870,16 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     }
 
     @Override
+    public boolean isPreservedOnHintHidden() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void setPreservedOnHintHidden(boolean value) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
     public boolean isInnermostContext() {
       return false;
     }

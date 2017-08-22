@@ -18,6 +18,7 @@ package com.intellij.openapi.externalSystem.test;
 import com.intellij.compiler.CompilerTestUtil;
 import com.intellij.compiler.artifacts.ArtifactsTestUtil;
 import com.intellij.compiler.impl.ModuleCompileScope;
+import com.intellij.compiler.server.BuildManager;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
@@ -50,6 +51,7 @@ import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.PathKt;
 import com.intellij.util.io.TestFileSystemItem;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -63,6 +65,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.List;
 import java.util.jar.Attributes;
@@ -562,6 +565,22 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
   protected boolean ignore() {
     printIgnoredMessage(null);
     return true;
+  }
+
+  public static void deleteBuildSystemDirectory() {
+    Path buildSystemDirectory = BuildManager.getInstance().getBuildSystemDirectory();
+    try {
+      PathKt.delete(buildSystemDirectory);
+      return;
+    }
+    catch (Exception ignore) {
+    }
+    try {
+      FileUtil.delete(buildSystemDirectory.toFile());
+    }
+    catch (Exception e) {
+      LOG.warn("Unable to remove build system directory.", e);
+    }
   }
 
   private void printIgnoredMessage(String message) {

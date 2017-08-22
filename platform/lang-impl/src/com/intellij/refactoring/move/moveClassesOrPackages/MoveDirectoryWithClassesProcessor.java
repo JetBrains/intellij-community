@@ -86,7 +86,7 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
     mySearchInNonJavaFiles = searchInNonJavaFiles;
     myMoveCallback = moveCallback;
     myFilesToMove = new HashMap<>();
-    myNestedDirsToMove = new HashMap<>();
+    myNestedDirsToMove = new LinkedHashMap<>();
     for (PsiDirectory dir : directories) {
       collectFiles2Move(myFilesToMove, myNestedDirsToMove, dir, includeSelf ? dir.getParentDirectory() : dir, getTargetDirectory(dir));
     }
@@ -195,17 +195,36 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
         helper.postProcessUsages(usages, dir -> getResultDirectory(dir).findOrCreateTargetDirectory());
       }
       for (PsiDirectory directory : myDirectories) {
-        final TargetDirectoryWrapper wrapper = myNestedDirsToMove.get(directory);
-        final PsiDirectory targetDirectory = wrapper.getTargetDirectory();
-        if (targetDirectory == null || !PsiTreeUtil.isAncestor(directory, targetDirectory, false)) {
+        if (!isUsedInTarget(directory)) {
           directory.delete();
         }
       }
+
+      for (PsiDirectory directory : myNestedDirsToMove.keySet()) {
+        if (directory.isValid() && directory.getChildren().length == 0) {
+          directory.delete();
+        }
+      }
+
     }
     catch (IncorrectOperationException e) {
       myNonCodeUsages = new NonCodeUsageInfo[0];
       RefactoringUIUtil.processIncorrectOperation(myProject, e);
     }
+  }
+
+  private boolean isUsedInTarget(PsiDirectory directory) {
+    PsiDirectory targetDirectory = myNestedDirsToMove.get(directory).getTargetDirectory();
+    //don't delete super directory if move was performed inside subpackage
+    if (targetDirectory != null && PsiTreeUtil.isAncestor(directory, targetDirectory, false)) {
+      return true;
+    }
+    //don't delete subdirectory: something could be moved in there
+    if (PsiTreeUtil.isAncestor(targetDirectory, directory, false)) {
+      return true;
+    }
+
+    return false;
   }
 
   @Nullable

@@ -26,25 +26,30 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- *  @author dsl
+ * @author dsl
  */
 public interface Library extends JDOMExternalizable, Disposable, ProjectModelElement {
   Library[] EMPTY_ARRAY = new Library[0];
 
-  @Nullable String getName();
+  @Nullable
+  String getName();
 
-  @NotNull String[] getUrls(@NotNull OrderRootType rootType);
+  @NotNull
+  String[] getUrls(@NotNull OrderRootType rootType);
 
-  @NotNull VirtualFile[] getFiles(@NotNull OrderRootType rootType);
+  @NotNull
+  VirtualFile[] getFiles(@NotNull OrderRootType rootType);
 
   /**
    * As soon as you obtaining modifiable model you will have to commit it or call Disposer.dispose(model)!
    */
-  @NotNull ModifiableModel getModifiableModel();
+  @NotNull
+  ModifiableModel getModifiableModel();
 
   LibraryTable getTable();
 
-  @NotNull RootProvider getRootProvider();
+  @NotNull
+  RootProvider getRootProvider();
 
   boolean isJarDirectory(@NotNull String url);
 
@@ -53,7 +58,8 @@ public interface Library extends JDOMExternalizable, Disposable, ProjectModelEle
   boolean isValid(@NotNull String url, @NotNull OrderRootType rootType);
 
   interface ModifiableModel extends Disposable {
-    @NotNull String[] getUrls(@NotNull OrderRootType rootType);
+    @NotNull
+    String[] getUrls(@NotNull OrderRootType rootType);
 
     void setName(String name);
 
@@ -79,7 +85,8 @@ public interface Library extends JDOMExternalizable, Disposable, ProjectModelEle
 
     void commit();
 
-    @NotNull VirtualFile[] getFiles(@NotNull OrderRootType rootType);
+    @NotNull
+    VirtualFile[] getFiles(@NotNull OrderRootType rootType);
 
     boolean isChanged();
 

@@ -230,7 +230,7 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
       if (block != null) {
         PsiType inferred = GroovyPsiManager.inferType(method, new MethodTypeInferencer(block));
         if (inferred != null) {
-          if (nominal == null || nominal.isAssignableFrom(inferred)) {
+          if (nominal == null || (nominal.isAssignableFrom(inferred) && !inferred.equals(PsiType.NULL))) {
             return inferred;
           }
         }

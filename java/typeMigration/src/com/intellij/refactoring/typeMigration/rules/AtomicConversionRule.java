@@ -206,36 +206,35 @@ public class AtomicConversionRule extends TypeConversionRule {
       final PsiJavaToken signToken = ((PsiAssignmentExpression)context).getOperationSign();
       final IElementType operationSign = signToken.getTokenType();
       final String sign = signToken.getText();
-      if (parent instanceof PsiExpressionStatement) {
-        if (operationSign == JavaTokenType.EQ) {
-          final PsiExpression lExpression = ((PsiAssignmentExpression)context).getLExpression();
-          if (lExpression instanceof PsiReferenceExpression) {
-            final PsiElement element = ((PsiReferenceExpression)lExpression).resolve();
-            if (element instanceof PsiVariable && ((PsiVariable)element).hasModifierProperty(PsiModifier.FINAL)) {
-              return wrapWithNewExpression(to, from, ((PsiAssignmentExpression)context).getRExpression(), element);
-            }
-          }
-          return new TypeConversionDescriptor("$qualifier$ = $val$", "$qualifier$.set($val$)");
-        }
-        else {
-          if (PsiUtil.isLanguageLevel8OrHigher(context)) {
-            final String name =
-              JavaCodeStyleManager.getInstance(context.getProject()).suggestUniqueVariableName("v", context, false);
-            return new TypeConversionDescriptor("$qualifier$" + sign + "$val$", "$qualifier$.updateAndGet("
-                                                                                + name + " -> " + getBoxedWrapper(from, to, name + " " + sign.charAt(0) + " $val$)")); }
-          else {
-            if (context.getParent() instanceof PsiStatement) {
-              return new TypeConversionDescriptor("$qualifier$" + sign + "$val$", "$qualifier$.set(" +
-                                                                                  getBoxedWrapper(from, to, "$qualifier$.get() " +
-                                                                                                            sign.charAt(0) +
-                                                                                                            " $val$") +
-                                                                                  ")");
-            } else {
-              return null;
-            }
+      boolean voidContext = parent instanceof PsiExpressionStatement ||
+                  (parent instanceof PsiLambdaExpression && PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType(
+                    (PsiFunctionalExpression)parent)));
+      if (operationSign == JavaTokenType.EQ) {
+        if (!voidContext) return null;
+        final PsiExpression lExpression = ((PsiAssignmentExpression)context).getLExpression();
+        if (lExpression instanceof PsiReferenceExpression) {
+          final PsiElement element = ((PsiReferenceExpression)lExpression).resolve();
+          if (element instanceof PsiVariable && ((PsiVariable)element).hasModifierProperty(PsiModifier.FINAL)) {
+            return wrapWithNewExpression(to, from, ((PsiAssignmentExpression)context).getRExpression(), element);
           }
         }
-      } //else should be a conflict
+        return new TypeConversionDescriptor("$qualifier$ = $val$", "$qualifier$.set($val$)");
+      }
+      if (PsiUtil.isLanguageLevel8OrHigher(context)) {
+        final String name =
+          JavaCodeStyleManager.getInstance(context.getProject()).suggestUniqueVariableName("v", context, false);
+        return new TypeConversionDescriptor("$qualifier$" + sign + "$val$",
+                                            "$qualifier$.updateAndGet(" +
+                                            name +
+                                            " -> " +
+                                            getBoxedWrapper(from, to, name + " " + sign.charAt(0) + " $val$)"));
+      }
+      if (voidContext) {
+        return new TypeConversionDescriptor("$qualifier$" + sign + "$val$",
+                                            "$qualifier$.set(" +
+                                            getBoxedWrapper(from, to, "$qualifier$.get() " + sign.charAt(0) + " $val$") +
+                                            ")");
+      }
     }
     else if (context instanceof PsiPostfixExpression) {
       final String sign = ((PsiPostfixExpression)context).getOperationSign().getText();

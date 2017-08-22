@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,12 @@
  */
 package com.intellij.debugger.engine.requests;
 
+import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
+import com.intellij.debugger.ui.overhead.OverheadProducer;
+import com.intellij.debugger.ui.overhead.OverheadTimings;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.registry.Registry;
@@ -38,7 +42,7 @@ import java.lang.reflect.InvocationTargetException;
  * @author Eugene Zhuravlev
  *         Date: Nov 23, 2006
  */
-public class MethodReturnValueWatcher  {
+public class MethodReturnValueWatcher implements OverheadProducer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.requests.MethodReturnValueWatcher");
   private @Nullable Method myLastExecutedMethod;
   private @Nullable Value myLastMethodReturnValue;
@@ -49,13 +53,13 @@ public class MethodReturnValueWatcher  {
   private @Nullable MethodExitRequest myExitRequest;
 
   private java.lang.reflect.Method myReturnValueMethod;
-  private volatile boolean myEnabled;
-  private boolean myFeatureEnabled;
+  private volatile boolean myTrackingEnabled;
   private final EventRequestManager myRequestManager;
+  private final DebugProcess myProcess;
 
-  public MethodReturnValueWatcher(EventRequestManager requestManager) {
+  public MethodReturnValueWatcher(EventRequestManager requestManager, DebugProcess process) {
     myRequestManager = requestManager;
-    myFeatureEnabled = DebuggerSettings.getInstance().WATCH_RETURN_VALUES;
+    myProcess = process;
   }
 
   private void processMethodExitEvent(MethodExitEvent event) {
@@ -133,17 +137,17 @@ public class MethodReturnValueWatcher  {
     return myLastMethodReturnValue;
   }
 
-  public boolean isFeatureEnabled() {
-    return myFeatureEnabled;
-  }
-
   public boolean isEnabled() {
-    return myEnabled;
+    return DebuggerSettings.getInstance().WATCH_RETURN_VALUES;
   }
 
-  public void setFeatureEnabled(final boolean featureEnabled) {
-    myFeatureEnabled = featureEnabled;
+  public void setEnabled(final boolean enabled) {
+    DebuggerSettings.getInstance().WATCH_RETURN_VALUES = enabled;
     clear();
+  }
+
+  public boolean isTrackingEnabled() {
+    return myTrackingEnabled;
   }
 
   public void enable(ThreadReference thread) {
@@ -155,8 +159,8 @@ public class MethodReturnValueWatcher  {
   }
   
   private void setTrackingEnabled(boolean trackingEnabled, final ThreadReference thread) {
-    myEnabled = trackingEnabled;
-    updateRequestState(trackingEnabled && myFeatureEnabled, thread);
+    myTrackingEnabled = trackingEnabled;
+    updateRequestState(trackingEnabled && isEnabled(), thread);
   }
 
   public void clear() {
@@ -177,6 +181,7 @@ public class MethodReturnValueWatcher  {
         myExitRequest = null;
       }
       if (enabled) {
+        OverheadTimings.add(myProcess, this, null);
         clear();
         myThread = thread;
 
@@ -236,5 +241,10 @@ public class MethodReturnValueWatcher  {
       processMethodExitEvent(((MethodExitEvent)event));
     }
     return true;
+  }
+
+  @Override
+  public String getDisplayName() {
+    return DebuggerBundle.message("action.watches.method.return.value.enable");
   }
 }

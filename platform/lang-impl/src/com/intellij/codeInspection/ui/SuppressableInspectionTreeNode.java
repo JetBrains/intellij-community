@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,18 +55,14 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
     return isLeaf();
   }
 
-  public final boolean isAlreadySuppressedFromView() {
-    final Object usrObj = getUserObject();
-    if (usrObj != null) {
-      InspectionResultsView view = myPresentation.getContext().getView();
-      if (view != null && view.getSuppressedNodes(myPresentation.getToolWrapper().getShortName()).contains(usrObj)) {
-        return true;
-      }
-    }
-    return false;
-  }
+  public abstract boolean isAlreadySuppressedFromView();
 
   public abstract boolean isQuickFixAppliedFromView();
+
+  @Override
+  public int getProblemCount(boolean allowSuppressed) {
+    return !isExcluded() && isValid() && !isQuickFixAppliedFromView() && (allowSuppressed || !isAlreadySuppressedFromView()) ? 1 : 0;
+  }
 
   @NotNull
   public Set<SuppressIntentionAction> getAvailableSuppressActions() {
@@ -115,10 +111,13 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
   @Nullable
   @Override
   public String getTailText() {
-    if (!isValid()) {
-      return "No longer valid";
+    if (isQuickFixAppliedFromView()) {
+      return null;
     }
-    return isAlreadySuppressedFromView() ? "Suppressed" : null;
+    if (isAlreadySuppressedFromView()) {
+      return "Suppressed";
+    }
+    return !isValid() ? "No longer valid" : null;
   }
 
   @NotNull
@@ -162,5 +161,9 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
         ((SuppressableInspectionTreeNode)child).dropCache(project);
       }
     }
+  }
+
+  protected boolean isExcluded() {
+    return getPresentation().getContext().getView().getExcludedManager().isExcluded(this);
   }
 }

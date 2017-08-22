@@ -220,4 +220,9 @@ public class Py3UnresolvedReferencesInspectionTest extends PyTestCase {
   public void testCallTypeGetAttributeAndSetAttrInInheritor() {
     doTest();
   }
+
+  // PY-8936
+  public void testDescriptorAttribute() {
+    doTest();
+  }
 }

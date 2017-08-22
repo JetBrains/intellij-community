@@ -20,6 +20,7 @@
  */
 package com.intellij.debugger.ui.impl.watch;
 
+import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
@@ -139,7 +140,7 @@ public class DebuggerTreeNodeImpl extends TreeBuilderNode implements DebuggerTre
 
       context.getDebugProcess().getManagerThread().invoke(new DebuggerContextCommandImpl(context) {
         @Override
-        public void threadAction() {
+        public void threadAction(@NotNull SuspendContextImpl suspendContext) {
           runnable.run();
         }
 

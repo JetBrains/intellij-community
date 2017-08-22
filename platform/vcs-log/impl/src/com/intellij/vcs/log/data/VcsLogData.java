@@ -86,7 +86,8 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
 
   public VcsLogData(@NotNull Project project,
                     @NotNull Map<VirtualFile, VcsLogProvider> logProviders,
-                    @NotNull FatalErrorHandler fatalErrorsConsumer) {
+                    @NotNull FatalErrorHandler fatalErrorsConsumer,
+                    @NotNull Disposable parentDisposable) {
     myProject = project;
     myLogProviders = logProviders;
     myUserRegistry = (VcsUserRegistryImpl)ServiceManager.getService(project, VcsUserRegistry.class);
@@ -125,6 +126,8 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
                                           this::fireDataPackChangeEvent, FAILING_EXCEPTION_HANDLER, RECENT_COMMITS_COUNT);
 
     myContainingBranchesGetter = new ContainingBranchesGetter(this, this);
+
+    Disposer.register(parentDisposable, this);
   }
 
   @NotNull

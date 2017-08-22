@@ -37,30 +37,25 @@ public class InheritedJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implem
   private final MyJdkTableListener myJdkTableListener = new MyJdkTableListener();
   private final MyProjectJdkListener myListener = new MyProjectJdkListener();
 
-  InheritedJdkOrderEntryImpl(RootModelImpl rootModel, ProjectRootManagerImpl projectRootManager) {
+  InheritedJdkOrderEntryImpl(@NotNull RootModelImpl rootModel, @NotNull ProjectRootManagerImpl projectRootManager) {
     super(rootModel, projectRootManager);
     myProjectRootManagerImpl.addProjectJdkListener(myListener);
     myProjectRootManagerImpl.addJdkTableListener(myJdkTableListener);
     init();
   }
 
-  /**
-   * @param element
-   * @param rootModel
-   * @param projectRootManager
-   * @throws InvalidDataException
-   */
-  InheritedJdkOrderEntryImpl(Element element, RootModelImpl rootModel, ProjectRootManagerImpl projectRootManager) throws InvalidDataException {
+  InheritedJdkOrderEntryImpl(@NotNull Element element, @NotNull RootModelImpl rootModel, @NotNull ProjectRootManagerImpl projectRootManager) throws InvalidDataException {
     this(rootModel, projectRootManager);
     if (!element.getName().equals(OrderEntryFactory.ORDER_ENTRY_ELEMENT_NAME)) {
       throw new InvalidDataException(element.getName());
     }
   }
 
+  @NotNull
   @Override
-  public OrderEntry cloneEntry(RootModelImpl rootModel,
-                               ProjectRootManagerImpl projectRootManager,
-                               VirtualFilePointerManager filePointerManager) {
+  public OrderEntry cloneEntry(@NotNull RootModelImpl rootModel,
+                               @NotNull ProjectRootManagerImpl projectRootManager,
+                               @NotNull VirtualFilePointerManager filePointerManager) {
     return new InheritedJdkOrderEntryImpl(rootModel, projectRootManager);
   }
 
@@ -75,7 +70,7 @@ public class InheritedJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implem
   }
 
   @Override
-  public <R> R accept(RootPolicy<R> policy, R initialValue) {
+  public <R> R accept(@NotNull RootPolicy<R> policy, R initialValue) {
     return policy.visitInheritedJdkOrderEntry(this, initialValue);
   }
 

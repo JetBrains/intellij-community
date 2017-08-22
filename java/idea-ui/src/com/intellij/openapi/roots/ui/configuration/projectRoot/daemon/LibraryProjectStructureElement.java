@@ -78,7 +78,7 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
   }
 
   private void reportInvalidRoots(ProjectStructureProblemsHolder problemsHolder, LibraryEx library,
-                                  final OrderRootType type, String rootName, final ProjectStructureProblemType problemType) {
+                                  @NotNull OrderRootType type, String rootName, final ProjectStructureProblemType problemType) {
     final List<String> invalidUrls = library.getInvalidRootUrls(type);
     if (!invalidUrls.isEmpty()) {
       final String description = createInvalidRootsDescription(invalidUrls, rootName, library.getName());

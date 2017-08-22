@@ -324,4 +324,20 @@ public class FileUtilHeavyTest {
     String path = myFindTestFirstFile.getPath();
     assertEquals(SystemInfo.isFileSystemCaseSensitive, FileUtil.isFileSystemCaseSensitive(path));
   }
+
+  @Test
+  public void testFileRelativePath() {
+    String relativePath = FileUtil.toSystemDependentName("relative/path.file");
+
+    File existingDir = myTempDirectory;
+    assertEquals(relativePath, FileUtil.getRelativePath(existingDir, new File(existingDir, relativePath)));
+
+    File notExistingDirOrFile = new File("not/existing/path");
+    assertEquals(relativePath, FileUtil.getRelativePath(notExistingDirOrFile, new File(notExistingDirOrFile, relativePath)));
+
+    // FileUtil.getRelativePath(File, File) should have the same behavior then FileUtil.getRelativePath(String, String, char)
+    File existingFile = IoTestUtil.createTestFile(existingDir, "foo.file");
+    assertEquals(".." + File.separatorChar + relativePath,
+                 FileUtil.getRelativePath(existingFile, new File(existingFile.getParent(), relativePath)));
+  }
 }

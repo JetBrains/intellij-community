@@ -72,7 +72,7 @@ public interface ModuleRootModel {
    *
    * @return true if the SDK is inherited, false otherwise
    * @see ProjectRootManager#getProjectSdk()
-   * @see ProjectRootManager#setProjectSdk(com.intellij.openapi.projectRoots.Sdk)
+   * @see ProjectRootManager#setProjectSdk(Sdk)
    */
   boolean isSdkInherited();
 
@@ -200,7 +200,7 @@ public interface ModuleRootModel {
   @NotNull
   String[] getDependencyModuleNames();
 
-  <T> T getModuleExtension(Class<T> klass);
+  <T> T getModuleExtension(@NotNull Class<T> klass);
 
   @NotNull
   Module[] getModuleDependencies();

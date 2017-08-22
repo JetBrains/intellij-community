@@ -18,6 +18,9 @@
 
     <applicationService serviceImplementation="com.intellij.configurationStore.DefaultProjectExportableAndSaveTrigger"/>
 
+    <applicationService serviceInterface="com.intellij.openapi.wm.impl.FrameTitleBuilder"
+                        serviceImplementation="com.intellij.openapi.wm.impl.PlatformFrameTitleBuilder"/>
+
     <applicationService serviceImplementation="com.intellij.ide.GeneralSettings"/>
     <applicationService serviceInterface="com.intellij.ide.util.PropertiesComponent"
                         serviceImplementation="com.intellij.ide.util.AppPropertiesComponentImpl"/>
@@ -26,7 +29,7 @@
 
     <applicationService serviceInterface="com.intellij.openapi.actionSystem.JBAwtEventQueue"
                         serviceImplementation="com.intellij.openapi.actionSystem.impl.JBAwtEventQueueImpl"/>
-    
+
     <applicationService serviceInterface="com.intellij.openapi.options.ShowSettingsUtil"
                         serviceImplementation="com.intellij.ide.actions.ShowSettingsUtilImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.help.HelpManager"
@@ -357,9 +360,9 @@
     <fileEditorProvider implementation="com.intellij.openapi.fileEditor.impl.http.HttpFileEditorProvider"/>
     <editorActionHandler action="EditorEscape" implementationClass="com.intellij.codeInsight.hint.EscapeHandler" id="hide-hints"/>
 
-    <editorActionHandler action="EditorDelete" implementationClass="com.intellij.openapi.editor.actions.DeleteSelectionHandler" 
+    <editorActionHandler action="EditorDelete" implementationClass="com.intellij.openapi.editor.actions.DeleteSelectionHandler"
                          id="delete.for.selection"/>
-    <editorActionHandler action="EditorBackSpace" implementationClass="com.intellij.openapi.editor.actions.DeleteSelectionHandler" 
+    <editorActionHandler action="EditorBackSpace" implementationClass="com.intellij.openapi.editor.actions.DeleteSelectionHandler"
                          id="backspace.for.selection" order="after backspace.lookup"/>
 
     <projectConfigurable groupId="language" groupWeight="110" instance="com.intellij.javaee.ExternalResourceConfigurable" key="display.name.edit.external.resource"

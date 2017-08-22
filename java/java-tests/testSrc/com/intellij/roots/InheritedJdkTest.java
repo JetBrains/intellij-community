@@ -26,6 +26,7 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.ModuleTestCase;
 import junit.framework.Assert;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author dsl
@@ -84,7 +85,7 @@ public class InheritedJdkTest extends ModuleTestCase {
     Assert.assertEquals("Correct non-existing JDK inherited", "jdk1",
                         rootManager.orderEntries().process(new RootPolicy<String>() {
                           @Override
-                          public String visitInheritedJdkOrderEntry(InheritedJdkOrderEntry inheritedJdkOrderEntry, String s) {
+                          public String visitInheritedJdkOrderEntry(@NotNull InheritedJdkOrderEntry inheritedJdkOrderEntry, String s) {
                             return inheritedJdkOrderEntry.getJdkName();
                           }
                         }, null));

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,6 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.util.PathUtilRt
 import org.apache.tools.ant.BuildException
-import org.apache.tools.ant.types.Path
-import org.apache.tools.ant.util.SplitClassLoader
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.MacDistributionCustomizer
 import org.jetbrains.intellij.build.MacHostProperties
@@ -43,8 +41,7 @@ class MacDmgBuilder {
     this.remoteDir = remoteDir
   }
 
-  static void signBinaryFiles(BuildContext buildContext, MacDistributionCustomizer customizer, MacHostProperties macHostProperties,
-                                     String macDistPath) {
+  static void signBinaryFiles(BuildContext buildContext, MacDistributionCustomizer customizer, MacHostProperties macHostProperties, String macDistPath) {
     def dmgBuilder = createInstance(buildContext, customizer, macHostProperties)
     dmgBuilder.doSignBinaryFiles(macDistPath)
   }
@@ -56,7 +53,7 @@ class MacDmgBuilder {
       dmgBuilder.doSignAndBuildDmg(macZipPath, jreArchivePath)
     }
     else {
-      buildContext.messages.info("Skipping building Mac OS distribution with bundled JRE because JRE archive is missing")
+      buildContext.messages.info("Skipping building macOS distribution with bundled JRE because JRE archive is missing")
     }
     if (buildContext.options.buildDmgWithoutBundledJre) {
       dmgBuilder.doSignAndBuildDmg(macZipPath, null)
@@ -64,7 +61,8 @@ class MacDmgBuilder {
   }
 
   private static MacDmgBuilder createInstance(BuildContext buildContext, MacDistributionCustomizer customizer, MacHostProperties macHostProperties) {
-    defineTasks(buildContext.ant, "${buildContext.paths.communityHome}/lib")
+    BuildUtils.defineFtpTask(buildContext.ant, "${buildContext.paths.communityHome}/lib")
+    BuildUtils.defineSshTask(buildContext.ant, "${buildContext.paths.communityHome}/lib")
 
     String currentDateTimeString = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME).replace(':', '-')
     int randomSeed = new Random().nextInt(Integer.MAX_VALUE)
@@ -199,33 +197,6 @@ class MacDmgBuilder {
     if (!new File(sitFilePath).exists()) {
       buildContext.messages.error("Failed to build .sit file")
     }
-  }
-
-  static boolean tasksDefined
-  static private def defineTasks(AntBuilder ant, String communityLib) {
-    if (tasksDefined) return
-    tasksDefined = true
-
-    /*
-      We need this to ensure that FTP task class isn't loaded by the main Ant classloader, otherwise Ant will try to load FTPClient class
-      by the main Ant classloader as well and fail because 'commons-net-*.jar' isn't included to Ant classpath.
-      Probably we could call FTPClient directly to avoid this hack.
-     */
-    def ftpTaskLoaderRef = "FTP_TASK_CLASS_LOADER"
-    Path ftpPath = new Path(ant.project)
-    ftpPath.createPathElement().setLocation(new File("$communityLib/commons-net-3.3.jar"))
-    ftpPath.createPathElement().setLocation(new File("$communityLib/ant/lib/ant-commons-net.jar"))
-    ant.project.addReference(ftpTaskLoaderRef, new SplitClassLoader(ant.project.getClass().getClassLoader(), ftpPath, ant.project,
-                                                                    ["FTP", "FTPTaskConfig"] as String[]))
-    ant.taskdef(name: "ftp", classname: "org.apache.tools.ant.taskdefs.optional.net.FTP", loaderRef: ftpTaskLoaderRef)
-
-    def sshTaskLoaderRef = "SSH_TASK_CLASS_LOADER"
-    Path pathSsh = new Path(ant.project)
-    pathSsh.createPathElement().setLocation(new File("$communityLib/jsch-0.1.54.jar"))
-    pathSsh.createPathElement().setLocation(new File("$communityLib/ant/lib/ant-jsch.jar"))
-    ant.project.addReference(sshTaskLoaderRef, new SplitClassLoader(ant.project.getClass().getClassLoader(), pathSsh, ant.project,
-                                                                    ["SSHExec", "SSHBase", "LogListener", "SSHUserInfo"] as String[]))
-    ant.taskdef(name: "sshexec", classname: "org.apache.tools.ant.taskdefs.optional.ssh.SSHExec", loaderRef: sshTaskLoaderRef)
   }
 
   private void sshExec(String command, String logFileName) {

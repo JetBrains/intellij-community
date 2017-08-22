@@ -92,9 +92,10 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     right();
     right();
     right();
+    right();
 
     waitForAllAsyncStuff();
-    checkResultWithInlays("class C { void m() { System.setProperty(\"a\", \"b\") <caret>} }");
+    checkResultWithInlays("class C { void m() { System.setProperty(\"a\", \"b\") }<caret> }");
   }
 
   public void testBasicScenarioWithHintsEnabledForMethod() throws Exception {
@@ -415,10 +416,19 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     complete("setProperty");
     waitForAllAsyncStuff();
     checkResultWithInlays("class C { void m() { System.setProperty(<HINT text=\"key:\"/><caret>, <hint text=\"value:\"/>) } }");
-    myFixture.getEditor().getCaretModel().moveToOffset(0);
+    home();
     type(' ');
     waitForAllAsyncStuff();
     checkResultWithInlays(" <caret>class C { void m() { System.setProperty(<hint text=\"key:\"/>, <hint text=\"value:\"/>) } }");
+  }
+
+  public void testHintsDontDisappearOnUnfinishedInputForMethodWithOneParameter() throws Exception {
+    configureJava("class C { void m() { System.clear<caret> } }");
+    complete();
+    checkResultWithInlays("class C { void m() { System.clearProperty(<HINT text=\"key:\"/><caret>) } }");
+    home();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("<caret>class C { void m() { System.clearProperty(<hint text=\"key:\"/>) } }");
   }
 
   public void testSeveralParametersCompletion() throws Exception {
@@ -616,6 +626,10 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
 
   private void down() {
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN);
+  }
+
+  private void home() {
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_LINE_START);
   }
 
   private void delete() {

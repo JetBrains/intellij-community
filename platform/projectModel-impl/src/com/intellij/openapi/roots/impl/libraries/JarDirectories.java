@@ -22,6 +22,7 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.util.containers.MultiMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -42,29 +43,29 @@ public class JarDirectories implements JDOMExternalizable {
   @NonNls private static final String ROOT_TYPE_ATTR = "type";
   public static final OrderRootType DEFAULT_JAR_DIRECTORY_TYPE = OrderRootType.CLASSES;
 
-  public void copyFrom(JarDirectories other) {
+  public void copyFrom(@NotNull JarDirectories other) {
     myDirectories.clear();
     myDirectories.putAllValues(other.myDirectories);
     myRecursivelyIncluded.clear();
     myRecursivelyIncluded.putAllValues(other.myRecursivelyIncluded);
   }
 
-  public boolean contains(OrderRootType rootType, String url) {
+  public boolean contains(@NotNull OrderRootType rootType, @NotNull String url) {
     return myDirectories.get(rootType).contains(url);
   }
 
-  public boolean isRecursive(OrderRootType rootType, String url) {
+  public boolean isRecursive(@NotNull OrderRootType rootType, @NotNull String url) {
     return myRecursivelyIncluded.get(rootType).contains(url);
   }
 
-  public void add(OrderRootType rootType, String url, boolean recursively) {
+  public void add(@NotNull OrderRootType rootType, @NotNull String url, boolean recursively) {
     myDirectories.putValue(rootType, url);
     if (recursively) {
       myRecursivelyIncluded.putValue(rootType, url);
     }
   }
 
-  public void remove(OrderRootType rootType, String url) {
+  public void remove(@NotNull OrderRootType rootType, @NotNull String url) {
     myDirectories.remove(rootType, url);
     myRecursivelyIncluded.remove(rootType, url);
   }
@@ -74,14 +75,17 @@ public class JarDirectories implements JDOMExternalizable {
     myRecursivelyIncluded.clear();
   }
 
+  @NotNull
   public Collection<OrderRootType> getRootTypes() {
     return myDirectories.keySet();
   }
 
-  public Collection<String> getDirectories(OrderRootType rootType) {
+  @NotNull
+  public Collection<String> getDirectories(@NotNull OrderRootType rootType) {
     return myDirectories.get(rootType);
   }
 
+  @NotNull
   public Collection<? extends String> getAllDirectories() {
     return myDirectories.values();
   }

@@ -44,7 +44,7 @@ public abstract class ArchiveFileSystem extends NewVirtualFileSystem {
    */
   @Nullable
   public VirtualFile getRootByLocal(@NotNull VirtualFile file) {
-    return findFileByPath(getRootPathByLocal(file));
+    return isCorrectFileType(file) ? findFileByPath(getRootPathByLocal(file)) : null;
   }
 
   @NotNull

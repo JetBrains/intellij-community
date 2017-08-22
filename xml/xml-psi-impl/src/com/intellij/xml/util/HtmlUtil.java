@@ -42,7 +42,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.XmlRecursiveElementWalkingVisitor;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.html.HtmlDocumentImpl;
-import com.intellij.psi.impl.source.html.dtd.HtmlAttributeDescriptorImpl;
 import com.intellij.psi.impl.source.parsing.xml.HtmlBuilderDriver;
 import com.intellij.psi.impl.source.parsing.xml.XmlBuilder;
 import com.intellij.psi.impl.source.tree.CompositeElement;
@@ -250,7 +249,7 @@ public class HtmlUtil {
   }
 
   public static boolean isBooleanAttribute(@NotNull XmlAttributeDescriptor descriptor, @Nullable PsiElement context) {
-    if (descriptor instanceof HtmlAttributeDescriptorImpl && descriptor.isEnumerated()) {
+    if (descriptor.isEnumerated()) {
       final String[] values = descriptor.getEnumeratedValues();
       if (values == null) {
         return false;

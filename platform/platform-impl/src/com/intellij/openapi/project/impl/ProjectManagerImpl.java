@@ -66,7 +66,6 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   private static final Logger LOG = Logger.getInstance(ProjectManagerImpl.class);
@@ -237,7 +236,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
   @TestOnly
   private void checkProjectLeaksInTests() {
-    if (!LOG_PROJECT_LEAKAGE_IN_TESTS || getLeakedProjects().count() < MAX_LEAKY_PROJECTS) {
+    if (!LOG_PROJECT_LEAKAGE_IN_TESTS || getLeakedProjectsCount() < MAX_LEAKY_PROJECTS) {
       return;
     }
 
@@ -246,17 +245,16 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       return; // check every N minutes
     }
 
-    for (int i = 0; i < 3 && getLeakedProjects().count() >= MAX_LEAKY_PROJECTS; i++) {
+    for (int i = 0; i < 3 && getLeakedProjectsCount() >= MAX_LEAKY_PROJECTS; i++) {
       GCUtil.tryGcSoftlyReachableObjects();
     }
-
-    System.gc();
 
     //noinspection AssignmentToStaticFieldFromInstanceMethod
     CHECK_START = currentTime;
 
-    if (getLeakedProjects().count() >= MAX_LEAKY_PROJECTS) {
-      List<Project> copy = getLeakedProjects().collect(Collectors.toCollection(UnsafeWeakList::new));
+    if (getLeakedProjectsCount() >= MAX_LEAKY_PROJECTS) {
+      System.gc();
+      List<Project> copy = getLeakedProjects();
       myProjects.clear();
       if (ContainerUtil.collect(copy.iterator()).size() >= MAX_LEAKY_PROJECTS) {
         throw new TooManyProjectLeakedException(copy);
@@ -265,8 +263,14 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   }
 
   @TestOnly
-  private Stream<Project> getLeakedProjects() {
-    return myProjects.keySet().stream().filter(project -> project.isDisposed() && !((ProjectImpl)project).isTemporarilyDisposed());
+  private List<Project> getLeakedProjects() {
+    myProjects.remove(getDefaultProject()); // process queue
+    return myProjects.keySet().stream().filter(project -> project.isDisposed() && !((ProjectImpl)project).isTemporarilyDisposed()).collect(Collectors.toCollection(UnsafeWeakList::new));
+  }
+  @TestOnly
+  private int getLeakedProjectsCount() {
+    myProjects.remove(getDefaultProject()); // process queue
+    return (int)myProjects.keySet().stream().filter(project -> project.isDisposed() && !((ProjectImpl)project).isTemporarilyDisposed()).count();
   }
 
   private void initProject(@NotNull ProjectImpl project, @Nullable Project template) {

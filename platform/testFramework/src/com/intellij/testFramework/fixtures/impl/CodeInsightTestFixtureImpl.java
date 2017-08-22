@@ -199,7 +199,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
                                                       @NotNull Editor editor,
                                                       @NotNull int[] toIgnore,
                                                       boolean canChangeDocument) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     Project project = file.getProject();
     ensureIndexesUpToDate(project);
     DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project);
@@ -212,8 +211,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       int oldDelay = settings.AUTOREPARSE_DELAY;
       try {
         settings.AUTOREPARSE_DELAY = 0;
-        List<HighlightInfo> infos =
-          codeAnalyzer.runPasses(file, editor.getDocument(), Collections.singletonList(textEditor), toIgnore, canChangeDocument, null);
+        List<HighlightInfo> infos = new ArrayList<>();
+        EdtTestUtil.runInEdtAndWait(() -> infos.addAll( codeAnalyzer.runPasses(file, editor.getDocument(), Collections.singletonList(textEditor), toIgnore, canChangeDocument, null)));
         infos.addAll(DaemonCodeAnalyzerEx.getInstanceEx(project).getFileLevelHighlights(project, file));
         return infos;
       }
@@ -237,8 +236,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   public static void ensureIndexesUpToDate(@NotNull Project project) {
     if (!DumbService.isDumb(project)) {
-      FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, project, null);
-      FileBasedIndex.getInstance().ensureUpToDate(TodoIndex.NAME, project, null);
+      ReadAction.run(() -> {
+        FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, project, null);
+        FileBasedIndex.getInstance().ensureUpToDate(TodoIndex.NAME, project, null);
+      });
     }
   }
 
@@ -1443,7 +1444,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   private long collectAndCheckHighlighting(@NotNull ExpectedHighlightingData data) {
     final Project project = getProject();
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
+    EdtTestUtil.runInEdtAndWait(() -> PsiDocumentManager.getInstance(project).commitAllDocuments());
 
     PsiFileImpl file = (PsiFileImpl)getHostFile();
     FileElement hardRefToFileElement = file.calcTreeElement();//to load text
@@ -1491,7 +1492,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @NotNull
   public List<HighlightInfo> doHighlighting() {
     final Project project = getProject();
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
+    EdtTestUtil.runInEdtAndWait(() -> PsiDocumentManager.getInstance(project).commitAllDocuments());
 
     PsiFile file = getFile();
     Editor editor = getEditor();

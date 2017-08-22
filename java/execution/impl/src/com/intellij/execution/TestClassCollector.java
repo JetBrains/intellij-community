@@ -59,6 +59,10 @@ public class TestClassCollector {
       Predicate<Class<?>> classPredicate = predicateProducer.apply(classLoader);
       while (resources.hasMoreElements()) {
         URL url = resources.nextElement();
+
+        //don't search for tests in jars
+        if ("jar".equals(url.getProtocol())) continue;
+
         Path baseDir = Paths.get(url.toURI());
 
         //collect tests under single module test output only

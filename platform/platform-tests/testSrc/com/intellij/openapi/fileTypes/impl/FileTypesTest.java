@@ -341,9 +341,9 @@ public class FileTypesTest extends PlatformTestCase {
     myFileTypeManager.drainReDetectQueue();
     log("T: ensureRedetected: drain. re-detect queue: "+myFileTypeManager.dumpReDetectQueue());
     UIUtil.dispatchAllInvocationEvents();
-    log("T: ensureRedetected: dispatch");
+    log("T: ensureRedetected: dispatch. re-detect queue: "+myFileTypeManager.dumpReDetectQueue());
     FileType type = vFile.getFileType();
-    log("T: ensureRedetected: getFileType ("+type.getName()+")");
+    log("T: ensureRedetected: getFileType ("+type.getName()+") re-detect queue: "+myFileTypeManager.dumpReDetectQueue());
     assertTrue(detectorCalled.contains(vFile));
     detectorCalled.clear();
     log("T: ensureRedetected: clear");

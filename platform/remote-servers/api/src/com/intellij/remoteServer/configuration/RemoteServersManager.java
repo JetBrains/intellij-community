@@ -22,7 +22,14 @@ public abstract class RemoteServersManager {
   @Nullable
   public abstract <C extends ServerConfiguration> RemoteServer<C> findByName(@NotNull String name, @NotNull ServerType<C> type);
 
+  @NotNull
   public abstract <C extends ServerConfiguration> RemoteServer<C> createServer(@NotNull ServerType<C> type, @NotNull String name);
+
+  /**
+   * Creates new server with unique name derived from {@link ServerType#getPresentableName()}
+   */
+  @NotNull
+  public abstract <C extends ServerConfiguration> RemoteServer<C> createServer(@NotNull ServerType<C> type);
 
   public abstract void addServer(RemoteServer<?> server);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,9 +39,9 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
-import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -95,7 +95,7 @@ public abstract class ChangeLibraryLevelActionBase extends AnAction {
       for (OrderRootType type : OrderRootType.getAllTypes()) {
         for (VirtualFile root : library.getFiles(type)) {
           if (root.isInLocalFileSystem() || root.getFileSystem() instanceof ArchiveFileSystem) {
-            fileToCopy.add(VfsUtil.virtualToIoFile(PathUtil.getLocalFile(root)));
+            fileToCopy.add(VfsUtilCore.virtualToIoFile(VfsUtil.getLocalFile(root)));
           }
         }
       }

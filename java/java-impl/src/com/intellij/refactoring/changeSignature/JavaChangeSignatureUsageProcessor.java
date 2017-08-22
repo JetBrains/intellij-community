@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -266,7 +266,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
                                   JavaChangeInfo changeInfo,
                                   boolean toChangeArguments,
                                   boolean toCatchExceptions,
-                                  PsiMethod callee, PsiSubstitutor subsitutor, final UsageInfo[] usages) throws IncorrectOperationException {
+                                  PsiMethod callee, PsiSubstitutor substitutor, final UsageInfo[] usages) throws IncorrectOperationException {
     if (changeInfo.isNameChanged()) {
       if (ref instanceof PsiJavaCodeReferenceElement) {
         PsiElement last = ((PsiJavaCodeReferenceElement)ref).getReferenceNameElement();
@@ -288,7 +288,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
         }
       }
 
-      fixActualArgumentsList(list, changeInfo, toInsertDefaultValue, subsitutor);
+      fixActualArgumentsList(list, changeInfo, toInsertDefaultValue, substitutor);
     }
 
     if (toCatchExceptions) {

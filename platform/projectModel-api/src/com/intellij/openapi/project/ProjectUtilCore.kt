@@ -20,45 +20,38 @@ import com.intellij.configurationStore.IS_EXTERNAL_STORAGE_ENABLED
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.roots.JdkOrderEntry
 import com.intellij.openapi.roots.libraries.LibraryUtil
-import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileProvider
 import com.intellij.openapi.vfs.VirtualFile
 
-fun displayUrlRelativeToProject(file: VirtualFile, url: String, project: Project, includeFilePath: Boolean, keepModuleAlwaysOnTheLeft: Boolean): String {
+fun displayUrlRelativeToProject(file: VirtualFile, url: String, project: Project, includeFilePath: Boolean, moduleOnTheLeft: Boolean): String {
   var result = url
-  val baseDir = project.baseDir
-  if (baseDir != null && includeFilePath) {
-    val projectHomeUrl = baseDir.presentableUrl
-    if (result.startsWith(projectHomeUrl)) {
-      result = "...${result.substring(projectHomeUrl.length)}"
+
+  if (includeFilePath) {
+    val projectHomeUrl = project.baseDir?.presentableUrl
+    result = when {
+      projectHomeUrl != null && result.startsWith(projectHomeUrl) -> "...${result.substring(projectHomeUrl.length)}"
+      else -> FileUtil.getLocationRelativeToUserHome(file.presentableUrl)
     }
   }
 
-  if (SystemInfo.isMac && file.fileSystem is LocalFileProvider) {
-    val fileForJar = (file.fileSystem as LocalFileProvider).getLocalVirtualFileFor(file)
-    if (fileForJar != null) {
+  if (file.fileSystem is LocalFileProvider) {
+    @Suppress("DEPRECATION") val localFile = (file.fileSystem as LocalFileProvider).getLocalVirtualFileFor(file)
+    if (localFile != null) {
       val libraryEntry = LibraryUtil.findLibraryEntry(file, project)
-      if (libraryEntry != null) {
-        if (libraryEntry is JdkOrderEntry) {
-          result = "$result - [${libraryEntry.jdkName}]"
-        }
-        else {
-          result = "$result - [${libraryEntry.presentableName}]"
-        }
-      }
-      else {
-        result = "$result - [${fileForJar.name}]"
+      when {
+        libraryEntry is JdkOrderEntry -> return "$result [${libraryEntry.jdkName}]"
+        libraryEntry != null -> return "$result [${libraryEntry.presentableName}]"
       }
     }
   }
 
-  val module = ModuleUtilCore.findModuleForFile(file, project) ?: return result
-  return if (!keepModuleAlwaysOnTheLeft && SystemInfo.isMac) {
-    "$result - [${module.name}]"
-  }
-  else {
-    "[${module.name}] - $result"
+  val module = ModuleUtilCore.findModuleForFile(file, project)
+  return when {
+    module == null -> result
+    moduleOnTheLeft -> "[${module.name}] $result"
+    else -> "$result [${module.name}]"
   }
 }
 
@@ -68,6 +61,7 @@ interface ProjectFileStoreOptionManager {
 
 val Project.isExternalStorageEnabled: Boolean
   get() {
-    val manager = picoContainer.getComponentInstance("com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager") as? ProjectFileStoreOptionManager ?: return false
+    val key = "com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager"
+    val manager = picoContainer.getComponentInstance(key) as? ProjectFileStoreOptionManager ?: return false
     return manager.isStoredExternally || Registry.`is`("store.imported.project.elements.separately", false) || IS_EXTERNAL_STORAGE_ENABLED
   }

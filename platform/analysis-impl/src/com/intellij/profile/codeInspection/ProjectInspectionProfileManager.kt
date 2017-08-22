@@ -125,7 +125,7 @@ class ProjectInspectionProfileManager(val project: Project,
         adapter.profileActivated(oldScheme, newScheme)
       }
     }
-  }, isUseOldFileNameSanitize = true, streamProvider = schemeManagerIprProvider)
+  }, schemeNameToFileName = OLD_NAME_CONVERTER, streamProvider = schemeManagerIprProvider)
 
   private data class State(@field:OptionTag("PROJECT_PROFILE") var projectProfile: String? = PROJECT_DEFAULT_PROFILE_NAME,
                            @field:OptionTag("USE_PROJECT_PROFILE") var useProjectProfile: Boolean = true)

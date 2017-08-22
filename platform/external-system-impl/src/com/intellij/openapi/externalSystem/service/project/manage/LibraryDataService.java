@@ -225,7 +225,7 @@ public class LibraryDataService extends AbstractProjectDataService<LibraryData, 
                                                 @NotNull final IdeModifiableModelsProvider modelsProvider) {
     RootPolicy<Boolean> visitor = new RootPolicy<Boolean>() {
       @Override
-      public Boolean visitLibraryOrderEntry(LibraryOrderEntry ideDependency, Boolean value) {
+      public Boolean visitLibraryOrderEntry(@NotNull LibraryOrderEntry ideDependency, Boolean value) {
         return !ideDependency.isModuleLevel() &&
                (library == ideDependency.getLibrary() ||
                 (ideDependency.getLibrary() == null && StringUtil.equals(library.getName(), ideDependency.getLibraryName())));

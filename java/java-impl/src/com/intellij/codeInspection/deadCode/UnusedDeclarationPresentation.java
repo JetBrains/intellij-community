@@ -78,7 +78,7 @@ import java.util.stream.Collectors;
 
 public class UnusedDeclarationPresentation extends DefaultInspectionToolPresentation {
 
-  private final Set<RefEntity> myIgnoreElements = ConcurrentCollectionFactory.createConcurrentSet(ContainerUtil.identityStrategy());
+  private final Set<RefEntity> myResolvedElements = ConcurrentCollectionFactory.createConcurrentSet(ContainerUtil.identityStrategy());
   private final Map<RefEntity, UnusedDeclarationHint> myFixedElements =
     ConcurrentCollectionFactory.createMap(ContainerUtil.identityStrategy());
 
@@ -155,7 +155,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
                             @NotNull Predicate<CommonProblemDescriptor> excludedDescriptions) {
     if (!(refEntity instanceof RefJavaElement)) return;
     final RefFilter filter = getFilter();
-    if (!getIgnoredRefElements().contains(refEntity) && filter.accepts((RefJavaElement)refEntity)) {
+    if (!myResolvedElements.contains(refEntity) && filter.accepts((RefJavaElement)refEntity)) {
       refEntity = getRefManager().getRefinedElement(refEntity);
       if (!refEntity.isValid()) return;
       RefJavaElement refElement = (RefJavaElement)refEntity;
@@ -199,7 +199,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
   public QuickFixAction[] getQuickFixes(@NotNull final RefEntity[] refElements, @Nullable InspectionTree tree) {
     boolean showFixes = false;
     for (RefEntity element : refElements) {
-      if (!getIgnoredRefElements().contains(element) && element.isValid()) {
+      if (!myResolvedElements.contains(element) && element.isValid()) {
         showFixes = true;
         break;
       }
@@ -458,6 +458,15 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     };
   }
 
+  public void resolveElement(@NotNull RefEntity entity) {
+    myProblemElements.remove(entity);
+    myResolvedElements.add(entity);
+  }
+
+  public boolean isProblemResolved(@Nullable RefEntity entity) {
+    return myResolvedElements.contains(entity);
+  }
+
   @Override
   public void updateContent() {
     getTool().checkForReachableRefs(getContext());
@@ -468,7 +477,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
         if (!(refEntity instanceof RefJavaElement)) return;//dead code doesn't work with refModule | refPackage
         RefJavaElement refElement = (RefJavaElement)refEntity;
         if (!compareVisibilities(refElement, localInspectionTool)) return;
-        if (!(getContext().getUIOptions().FILTER_RESOLVED_ITEMS && getIgnoredRefElements().contains(refElement)) && refElement.isValid() && getFilter().accepts(refElement)) {
+        if (!(getContext().getUIOptions().FILTER_RESOLVED_ITEMS && myResolvedElements.contains(refElement)) && refElement.isValid() && getFilter().accepts(refElement)) {
           if (skipEntryPoints(refElement)) return;
           registerContentEntry(refEntity, RefJavaUtil.getInstance().getPackageName(refEntity));
         }
@@ -539,11 +548,6 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
   }
 
   @Override
-  public void ignoreCurrentElement(@NotNull RefEntity refEntity) {
-    myIgnoreElements.add(refEntity);
-  }
-
-  @Override
   public void ignoreElement(@NotNull RefEntity refEntity) {
     if (refEntity instanceof RefElement) {
       final CommonProblemDescriptor[] descriptors = getProblemElements().get(refEntity);
@@ -563,18 +567,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
   @Override
   public void cleanup() {
     super.cleanup();
-    myIgnoreElements.clear();
-  }
-
-  @Override
-  public boolean isElementIgnored(@NotNull RefEntity element) {
-    return myIgnoreElements.contains(element);
-  }
-
-  @Override
-  @NotNull
-  public Set<RefEntity> getIgnoredRefElements() {
-    return myIgnoreElements;
+    myResolvedElements.clear();
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,12 +24,12 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.project.IntelliJProjectConfiguration;
 import com.intellij.testFramework.VfsTestUtil;
-import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -88,7 +88,7 @@ public abstract class PackagingElementsTestCase extends ArtifactsTestCase {
   }
 
   protected static String getLocalJarPath(VirtualFile jarEntry) {
-    return PathUtil.getLocalFile(jarEntry).getPath();
+    return VfsUtil.getLocalFile(jarEntry).getPath();
   }
 
   protected Library addProjectLibrary(final @Nullable Module module, final String name, final VirtualFile... jars) {

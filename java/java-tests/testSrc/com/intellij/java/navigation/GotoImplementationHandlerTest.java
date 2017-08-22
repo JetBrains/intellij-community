@@ -17,7 +17,6 @@ package com.intellij.java.navigation;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.navigation.GotoTargetHandler;
-import com.intellij.idea.Bombed;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
@@ -31,7 +30,6 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.util.containers.ContainerUtil;
 
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.List;
 
 public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCase {
@@ -312,7 +310,6 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
     assertSize(2, getTargets(file));
   }
 
-  @Bombed(month = Calendar.SEPTEMBER, user = "Maxim.Mossienko", day = 15)
   public void testAnonymousAndLocalClassesInLibrary() {
     ModuleRootModificationUtil.addModuleLibrary(
       myModule, 
@@ -344,7 +341,6 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
     assertContainsElements(names, "MyLocalClassImplementationInInner");
     assertContainsElements(names, "MyInterfaceImplementation");
 
-    /* // todo
     implementation = myFixture.getJavaFacade().findClass("MyLocalClassImplementation");
     assertNull(implementation);
     implementation = myFixture.getJavaFacade().findClass("MyLocalClassImplementationInInner");
@@ -355,7 +351,6 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
 
     implementation = myFixture.getJavaFacade().findClass("2");
     assertNull(implementation);
-    */
   }
 
   private PsiElement[] getTargets(PsiFile file) {

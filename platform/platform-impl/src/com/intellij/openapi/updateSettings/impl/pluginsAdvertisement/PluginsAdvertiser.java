@@ -55,7 +55,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import java.io.File;
 import java.io.IOException;
@@ -287,30 +286,30 @@ public class PluginsAdvertiser implements StartupActivity {
     if (!UpdateSettings.getInstance().isCheckNeeded()) {
       return;
     }
-    final UnknownFeaturesCollector collectorSuggester = UnknownFeaturesCollector.getInstance(project);
-    final Set<UnknownFeature> unknownFeatures = collectorSuggester.getUnknownFeatures();
-    final KnownExtensions extensions = loadExtensions();
-    if (extensions != null && unknownFeatures.isEmpty()) {
-      return;
-    }
 
     final Application application = ApplicationManager.getApplication();
     if (application.isUnitTestMode() || application.isHeadlessEnvironment()) {
       return;
     }
 
-    //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(() -> application.executeOnPooledThread(new Runnable() {
+    application.executeOnPooledThread(new Runnable() {
       private final Set<PluginDownloader> myPlugins = new HashSet<>();
       private List<IdeaPluginDescriptor> myAllPlugins;
 
       private final Map<Plugin, IdeaPluginDescriptor> myDisabledPlugins = new HashMap<>();
       private List<String> myBundledPlugin;
       private final MultiMap<String, UnknownFeature> myFeatures = new MultiMap<>();
+      private Set<UnknownFeature> unknownFeatures;
 
       @Override
       public void run() {
         if (project.isDisposed()) {
+          return;
+        }
+
+        unknownFeatures = UnknownFeaturesCollector.getInstance(project).getUnknownFeatures();
+        final KnownExtensions extensions = loadExtensions();
+        if (extensions != null && unknownFeatures.isEmpty()) {
           return;
         }
 
@@ -414,7 +413,7 @@ public class PluginsAdvertiser implements StartupActivity {
         return StringUtil.pluralize("Plugin", pluginsNumber) + " supporting " + StringUtil.pluralize("feature", addressedFeaturesNumber) +
                " (" + addressedFeaturesPresentation + ") " + (pluginsNumber == 1 ? "is" : "are") + " currently " + (myPlugins.isEmpty() ? "disabled" : "not installed") + ".<br>";
       }
-    }));
+    });
   }
 
   @Tag("exts")

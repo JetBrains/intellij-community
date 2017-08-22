@@ -27,7 +27,6 @@ public class ComboBoxWithWidePopup<E> extends JComboBox<E> {
   private int myMinLength = 20;
 
   public ComboBoxWithWidePopup() {
-    super();
     init();
   }
 
@@ -96,29 +95,28 @@ public class ComboBoxWithWidePopup<E> extends JComboBox<E> {
     private final ListCellRenderer<? super E> myOldRenderer;
     private final ComboBoxWithWidePopup myComboBox;
 
-    public AdjustingListCellRenderer(ComboBoxWithWidePopup<E> comboBox, ListCellRenderer<? super E> oldRenderer) {
+    AdjustingListCellRenderer(ComboBoxWithWidePopup<E> comboBox, ListCellRenderer<? super E> oldRenderer) {
       myComboBox = comboBox;
       myOldRenderer = oldRenderer;
     }
 
     @Override
     public Component getListCellRendererComponent(JList<? extends E> list, E value, int index, boolean isSelected, boolean cellHasFocus) {
-      E _value = value;
-      if (index == -1 && _value instanceof String && !myComboBox.isValid()) {
+      if (index == -1 && value instanceof String && !myComboBox.isValid()) {
         int minLength = getMinLength();
 
         Dimension size = myComboBox._getSuperSize();
-        String stringValue = (String)_value;
+        String stringValue = (String)value;
 
         if (size.width == 0) {
           if (stringValue.length() > minLength) {
             @SuppressWarnings("unchecked") E e = (E)stringValue.substring(0, minLength);
-            _value = e;
+            value = e;
           }
         }
       }
 
-      return myOldRenderer.getListCellRendererComponent(list, _value, index, isSelected, cellHasFocus);
+      return myOldRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
     }
   }
 }

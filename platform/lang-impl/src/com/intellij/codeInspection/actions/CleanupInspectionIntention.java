@@ -25,6 +25,8 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.PerformFixesModalTask;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -34,7 +36,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.SequentialModalProgressTask;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -97,17 +98,15 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
                                                           @NotNull String presentationText,
                                                           @NotNull List<ProblemDescriptor> descriptions,
                                                           @Nullable Class quickfixClass) {
-    final SequentialModalProgressTask progressTask =
-      new SequentialModalProgressTask(project, presentationText, true);
+
     final boolean isBatch = quickfixClass != null && BatchQuickFix.class.isAssignableFrom(quickfixClass);
     final AbstractPerformFixesTask fixesTask = isBatch ?
-                                               new PerformBatchFixesTask(project, descriptions.toArray(ProblemDescriptor.EMPTY_ARRAY), progressTask, quickfixClass) :
-                                               new PerformFixesTask(project, descriptions.toArray(ProblemDescriptor.EMPTY_ARRAY), progressTask, quickfixClass);
+                                               new PerformBatchFixesTask(project, descriptions.toArray(ProblemDescriptor.EMPTY_ARRAY), quickfixClass) :
+                                               new PerformFixesTask(project, descriptions.toArray(ProblemDescriptor.EMPTY_ARRAY), quickfixClass);
     CommandProcessor.getInstance().executeCommand(project, () -> {
       CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
-      progressTask.setMinIterationTime(200);
-      progressTask.setTask(fixesTask);
-      ProgressManager.getInstance().run(progressTask);
+      ((ApplicationImpl)ApplicationManager.getApplication())
+        .runWriteActionWithProgressInDispatchThread(presentationText, project, null, null, fixesTask::doRun);
     }, presentationText, null);
     return fixesTask;
   }
@@ -134,9 +133,8 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
 
     public AbstractPerformFixesTask(@NotNull Project project,
                                     @NotNull CommonProblemDescriptor[] descriptors,
-                                    @NotNull SequentialModalProgressTask task,
                                     @Nullable Class quickfixClass) {
-      super(project, descriptors, task);
+      super(project, descriptors);
       myQuickfixClass = quickfixClass;
     }
 
@@ -171,9 +169,8 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
 
     public PerformBatchFixesTask(@NotNull Project project,
                                  @NotNull CommonProblemDescriptor[] descriptors,
-                                 @NotNull SequentialModalProgressTask task,
                                  @NotNull Class quickfixClass) {
-      super(project, descriptors, task, quickfixClass);
+      super(project, descriptors, quickfixClass);
     }
 
     @Override
@@ -209,9 +206,8 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
   private static class PerformFixesTask extends AbstractPerformFixesTask {
     public PerformFixesTask(@NotNull Project project,
                             @NotNull CommonProblemDescriptor[] descriptors,
-                            @NotNull SequentialModalProgressTask task,
                             @Nullable Class quickFixClass) {
-      super(project, descriptors, task, quickFixClass);
+      super(project, descriptors, quickFixClass);
     }
 
     @Override

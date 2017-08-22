@@ -16,6 +16,7 @@
 package com.intellij.execution.impl
 
 import com.intellij.ProjectTopics
+import com.intellij.configurationStore.OLD_NAME_CONVERTER
 import com.intellij.configurationStore.SchemeManagerIprProvider
 import com.intellij.configurationStore.save
 import com.intellij.execution.*
@@ -129,7 +130,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
   private val workspaceSchemeManager = SchemeManagerFactory.getInstance(project).create("workspace", RunConfigurationSchemeManager(this, false), streamProvider = workspaceSchemeManagerProvider, autoSave = false)
 
   @Suppress("LeakingThis")
-  private var projectSchemeManager = SchemeManagerFactory.getInstance(project).create("runConfigurations", RunConfigurationSchemeManager(this, true), isUseOldFileNameSanitize = true)
+  private var projectSchemeManager = SchemeManagerFactory.getInstance(project).create("runConfigurations", RunConfigurationSchemeManager(this, true), schemeNameToFileName = OLD_NAME_CONVERTER)
 
   private val isFirstLoadState = AtomicBoolean(true)
 

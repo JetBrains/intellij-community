@@ -22,7 +22,6 @@
     <orderEntry type="module" module-name="util-tests" scope="TEST" />
     <orderEntry type="module" module-name="settings-repository" />
     <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
-    <orderEntry type="library" scope="TEST" name="memoryfilesystem" level="project" />
     <orderEntry type="module" module-name="credential-store" scope="TEST" />
     <orderEntry type="module" module-name="testExtensions" scope="TEST" />
   </component>

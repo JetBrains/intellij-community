@@ -15,9 +15,11 @@
  */
 package com.intellij.remoteServer.impl.configuration.deployment;
 
+import com.intellij.execution.configurations.RuntimeConfigurationError;
+import com.intellij.execution.configurations.RuntimeConfigurationException;
+import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Comparing;
@@ -30,8 +32,12 @@ import com.intellij.remoteServer.configuration.deployment.DeploymentConfiguratio
 import com.intellij.remoteServer.configuration.deployment.DeploymentConfigurator;
 import com.intellij.remoteServer.configuration.deployment.DeploymentSource;
 import com.intellij.remoteServer.configuration.deployment.DeploymentSourceType;
-import com.intellij.remoteServer.impl.configuration.RemoteServerListConfigurable;
-import com.intellij.ui.*;
+import com.intellij.remoteServer.impl.configuration.RemoteServerConnectionTester;
+import com.intellij.remoteServer.util.CloudBundle;
+import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.SortedComboBoxModel;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -39,19 +45,19 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author nik
  */
-public class DeployToServerSettingsEditor<S extends ServerConfiguration, D extends DeploymentConfiguration> extends SettingsEditor<DeployToServerRunConfiguration<S, D>> {
-  private final ServerType<S> myServerType;
+public class DeployToServerSettingsEditor<S extends ServerConfiguration, D extends DeploymentConfiguration>
+  extends SettingsEditor<DeployToServerRunConfiguration<S, D>> {
+
   private final DeploymentConfigurator<D, S> myDeploymentConfigurator;
   private final Project myProject;
-  private final ComboboxWithBrowseButton myServerComboBox;
+  private final WithAutoDetectCombo<S> myServerCombo;
   private final ComboBox<DeploymentSource> mySourceComboBox;
-  private final SortedComboBoxModel<String> myServerListModel;
   private final SortedComboBoxModel<DeploymentSource> mySourceListModel;
   private final JPanel myDeploymentSettingsComponent;
   private SettingsEditor<D> myDeploymentSettingsEditor;
@@ -59,42 +65,13 @@ public class DeployToServerSettingsEditor<S extends ServerConfiguration, D exten
   private RemoteServer<S> myLastSelectedServer;
 
   public DeployToServerSettingsEditor(final ServerType<S> type, DeploymentConfigurator<D, S> deploymentConfigurator, Project project) {
-    myServerType = type;
     myDeploymentConfigurator = deploymentConfigurator;
     myProject = project;
 
-    myServerListModel = new SortedComboBoxModel<>(String.CASE_INSENSITIVE_ORDER);
-    myServerComboBox = new ComboboxWithBrowseButton(new ComboBox<>(myServerListModel));
-    fillApplicationServersList(null);
-    myServerComboBox.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        String preSelection = myLastSelectedServer != null ? myLastSelectedServer.getName() : null;
-        RemoteServerListConfigurable configurable = RemoteServerListConfigurable.createConfigurable(type, preSelection);
-        if (ShowSettingsUtil.getInstance().editConfigurable(myServerComboBox, configurable)) {
-          fillApplicationServersList(configurable.getLastSelectedServer());
-        }
-      }
-    });
-    myServerComboBox.getComboBox().addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        updateDeploymentSettingsEditor();
-      }
-    });
-    myServerComboBox.getComboBox().setRenderer(new ColoredListCellRenderer<String>() {
-      @Override
-      protected void customizeCellRenderer(@NotNull JList<? extends String> list, String value, int index, boolean selected, boolean hasFocus) {
-        if (value == null) return;
-        RemoteServer<S> server = RemoteServersManager.getInstance().findByName(value, type);
-        SimpleTextAttributes attributes = server == null ? SimpleTextAttributes.ERROR_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES;
-        setIcon(server != null ? server.getType().getIcon() : null);
-        append(value, attributes);
-      }
-    });
+    myServerCombo = new WithAutoDetectCombo<>(type);
+    myServerCombo.addChangeListener(e -> updateDeploymentSettingsEditor());
 
-    mySourceListModel = new SortedComboBoxModel<>(
-      (o1, o2) -> o1.getPresentableName().compareToIgnoreCase(o2.getPresentableName()));
+    mySourceListModel = new SortedComboBoxModel<>((o1, o2) -> o1.getPresentableName().compareToIgnoreCase(o2.getPresentableName()));
     mySourceListModel.addAll(deploymentConfigurator.getAvailableDeploymentSources());
     mySourceComboBox = new ComboBox<>(mySourceListModel);
     mySourceComboBox.setRenderer(new ListCellRendererWrapper<DeploymentSource>() {
@@ -107,26 +84,11 @@ public class DeployToServerSettingsEditor<S extends ServerConfiguration, D exten
     });
 
     myDeploymentSettingsComponent = new JPanel(new BorderLayout());
-    mySourceComboBox.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        updateDeploymentSettingsEditor();
-      }
-    });
-  }
-
-  private void fillApplicationServersList(@Nullable RemoteServer<?> newSelection) {
-    String oldSelection = myServerListModel.getSelectedItem();
-    myServerListModel.clear();
-    for (RemoteServer<?> server : RemoteServersManager.getInstance().getServers(myServerType)) {
-      myServerListModel.add(server.getName());
-    }
-    myServerComboBox.getComboBox().setSelectedItem(newSelection != null ? newSelection.getName() : oldSelection);
+    mySourceComboBox.addActionListener(e -> updateDeploymentSettingsEditor());
   }
 
   private void updateDeploymentSettingsEditor() {
-    String serverName = myServerListModel.getSelectedItem();
-    RemoteServer<S> selectedServer = serverName != null ? RemoteServersManager.getInstance().findByName(serverName, myServerType) : null;
+    RemoteServer<S> selectedServer = myServerCombo.getSelectedServer();
     DeploymentSource selectedSource = mySourceListModel.getSelectedItem();
     if (Comparing.equal(selectedSource, myLastSelectedSource) && Comparing.equal(selectedServer, myLastSelectedServer)) {
       return;
@@ -151,17 +113,13 @@ public class DeployToServerSettingsEditor<S extends ServerConfiguration, D exten
   private void updateBeforeRunOptions(@Nullable DeploymentSource source, boolean selected) {
     if (source != null) {
       DeploymentSourceType type = source.getType();
-      type.updateBuildBeforeRunOption(myServerComboBox, myProject, source, selected);
+      type.updateBuildBeforeRunOption(myServerCombo, myProject, source, selected);
     }
   }
 
   @Override
-  protected void resetEditorFrom(@NotNull DeployToServerRunConfiguration<S,D> configuration) {
-    String serverName = configuration.getServerName();
-    if (serverName != null && !myServerListModel.getItems().contains(serverName)) {
-      myServerListModel.add(serverName);
-    }
-    myServerComboBox.getComboBox().setSelectedItem(serverName);
+  protected void resetEditorFrom(@NotNull DeployToServerRunConfiguration<S, D> configuration) {
+    myServerCombo.selectServerInCombo(configuration.getServerName());
     mySourceComboBox.setSelectedItem(configuration.getDeploymentSource());
     D deploymentConfiguration = configuration.getDeploymentConfiguration();
     updateDeploymentSettingsEditor();
@@ -171,10 +129,12 @@ public class DeployToServerSettingsEditor<S extends ServerConfiguration, D exten
   }
 
   @Override
-  protected void applyEditorTo(@NotNull DeployToServerRunConfiguration<S,D> configuration) throws ConfigurationException {
+  protected void applyEditorTo(@NotNull DeployToServerRunConfiguration<S, D> configuration) throws ConfigurationException {
     updateDeploymentSettingsEditor();
 
-    configuration.setServerName(myServerListModel.getSelectedItem());
+    myServerCombo.validateAutoDetectedItem();
+
+    configuration.setServerName(Optional.ofNullable(myServerCombo.getSelectedServer()).map(RemoteServer::getName).orElse(null));
     DeploymentSource deploymentSource = mySourceListModel.getSelectedItem();
     configuration.setDeploymentSource(deploymentSource);
 
@@ -197,9 +157,161 @@ public class DeployToServerSettingsEditor<S extends ServerConfiguration, D exten
   @Override
   protected JComponent createEditor() {
     return FormBuilder.createFormBuilder()
-      .addLabeledComponent("Server:", myServerComboBox)
+      .addLabeledComponent("Server:", myServerCombo)
       .addLabeledComponent("Deployment:", mySourceComboBox)
       .addComponentFillVertically(myDeploymentSettingsComponent, UIUtil.DEFAULT_VGAP)
       .getPanel();
+  }
+
+  private static class WithAutoDetectCombo<S extends ServerConfiguration> extends RemoteServerCombo<S> {
+    private AutoDetectedItem myAutoDetectedItem;
+
+    public WithAutoDetectCombo(@NotNull ServerType<S> serverType) {
+      super(serverType);
+    }
+
+    @NotNull
+    @Override
+    protected ServerItem getNoServersItem() {
+      return getServerType().canAutoDetectConfiguration() ? findOrCreateAutoDetectedItem() : super.getNoServersItem();
+    }
+
+    protected AutoDetectedItem findOrCreateAutoDetectedItem() {
+      if (myAutoDetectedItem == null) {
+        myAutoDetectedItem = new AutoDetectedItem();
+      }
+      return myAutoDetectedItem;
+    }
+
+    public void validateAutoDetectedItem() throws RuntimeConfigurationException {
+      if (myAutoDetectedItem != null && myAutoDetectedItem == getSelectedItem()) {
+        myAutoDetectedItem.validateConnection();
+      }
+    }
+
+    private enum TestConnectionState {
+      INITIAL {
+        @Override
+        public void validateConnection() throws RuntimeConfigurationException {
+          //
+        }
+      },
+      IN_PROGRESS {
+        @Override
+        public void validateConnection() throws RuntimeConfigurationException {
+          throw new RuntimeConfigurationWarning(CloudBundle.getText("remote.server.combo.message.test.connection.in.progress"));
+        }
+      },
+      SUCCESSFUL {
+        @Override
+        public void validateConnection() throws RuntimeConfigurationException {
+          //
+        }
+      },
+      FAILED {
+        @Override
+        public void validateConnection() throws RuntimeConfigurationException {
+          throw new RuntimeConfigurationError(
+            CloudBundle.getText("remote.server.combo.message.test.connection.failed")/*, () -> createAndEditNewServer()*/);
+        }
+      };
+
+      public abstract void validateConnection() throws RuntimeConfigurationException;
+    }
+
+    private class AutoDetectedItem extends RemoteServerCombo.ServerItemImpl {
+      private final AtomicReference<TestConnectionState> myTestConnectionStateA = new AtomicReference<>(TestConnectionState.INITIAL);
+      private volatile RemoteServer<S> myServerInstance;
+      private volatile long myLastStartedTestConnectionMillis = -1;
+
+      public AutoDetectedItem() {
+        super(null);
+      }
+
+      @Override
+      public void render(@NotNull SimpleColoredComponent ui) {
+        ui.setIcon(getServerType().getIcon());
+
+        boolean failed = myTestConnectionStateA.get() == TestConnectionState.FAILED;
+        ui.append(CloudBundle.getText("remote.server.combo.auto.detected.server"),
+                  failed ? SimpleTextAttributes.ERROR_ATTRIBUTES : SimpleTextAttributes.REGULAR_ITALIC_ATTRIBUTES);
+      }
+
+      public void validateConnection() throws RuntimeConfigurationException {
+        myTestConnectionStateA.get().validateConnection();
+      }
+
+      @Override
+      public void onBrowseAction() {
+        createAndEditNewServer();
+      }
+
+      @Override
+      public void onItemChosen() {
+        if (myServerInstance == null) {
+          myServerInstance = RemoteServersManager.getInstance().createServer(
+            getServerType(), CloudBundle.getText("remote.server.combo.auto.detected.server"));
+          RemoteServerConnectionTester tester = new RemoteServerConnectionTester(myServerInstance);
+          setTestConnectionState(TestConnectionState.IN_PROGRESS);
+          myLastStartedTestConnectionMillis = System.currentTimeMillis();
+          tester.testConnection(this::connectionTested);
+        }
+      }
+
+      @Nullable
+      @Override
+      public String getServerName() {
+        return null;
+      }
+
+      @Nullable
+      @Override
+      public RemoteServer<S> findRemoteServer() {
+        return myServerInstance;
+      }
+
+      private void setTestConnectionState(@NotNull TestConnectionState state) {
+        boolean changed = myTestConnectionStateA.getAndSet(state) != state;
+        if (changed) {
+          UIUtil.invokeLaterIfNeeded(WithAutoDetectCombo.this::fireStateChanged);
+        }
+      }
+
+      private void connectionTested(boolean wasConnected, String errorStatus) {
+        assert myLastStartedTestConnectionMillis > 0;
+        waitABit(2000);
+
+        final RemoteServer testedServer = myServerInstance;
+        myServerInstance = null;
+
+        if (wasConnected) {
+          setTestConnectionState(TestConnectionState.SUCCESSFUL);
+          UIUtil.invokeLaterIfNeeded(() -> {
+            RemoteServersManager.getInstance().addServer(testedServer);
+            refillModel(testedServer);
+          });
+        }
+        else {
+          setTestConnectionState(TestConnectionState.FAILED);
+        }
+      }
+
+      /**
+       * Too quick validation just flickers the screen, so we will ensure that validation message is shown for at least some time
+       */
+      private void waitABit(@SuppressWarnings("SameParameterValue") long maxTotalDelayMillis) {
+        final long THRESHOLD_MS = 50;
+        long naturalDelay = System.currentTimeMillis() - myLastStartedTestConnectionMillis;
+        if (naturalDelay > 0 && naturalDelay + THRESHOLD_MS < maxTotalDelayMillis) {
+          try {
+            Thread.sleep(maxTotalDelayMillis - naturalDelay - THRESHOLD_MS);
+          }
+          catch (InterruptedException ignored) {
+            //
+          }
+        }
+        myLastStartedTestConnectionMillis = -1;
+      }
+    }
   }
 }

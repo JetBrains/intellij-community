@@ -84,7 +84,7 @@ public class GitXmlRpcSshService extends GitXmlRpcHandlerService<GitSSHGUIHandle
     }
 
     /**
-     * Adjust null value ({@code "-"} if null, {@code "+"+s) if non-null)
+     * Adjust null value ({@code "-"} if null, {@code "+"+s} if non-null)
      *
      * @param s a value to adjust
      * @return adjusted string

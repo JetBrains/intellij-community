@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.JavaStackFrame;
 import com.intellij.debugger.engine.JavaValue;
+import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
@@ -67,7 +68,7 @@ public class ForceEarlyReturnAction extends DebuggerAction {
 
     debugProcess.getManagerThread().schedule(new DebuggerContextCommandImpl(debuggerContext, thread) {
       @Override
-      public void threadAction() {
+      public void threadAction(@NotNull SuspendContextImpl suspendContext) {
         Method method;
         try {
           method = proxy.location().method();

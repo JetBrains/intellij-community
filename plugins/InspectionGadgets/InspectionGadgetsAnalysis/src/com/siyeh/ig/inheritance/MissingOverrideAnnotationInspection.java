@@ -35,6 +35,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.JavaOverridingMethodUtil;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Arrays;
@@ -131,8 +132,10 @@ public class MissingOverrideAnnotationInspection extends BaseJavaBatchLocalInspe
         Project project = method.getProject();
         LanguageLevel minimal = Objects.requireNonNull(method.getContainingClass()).isInterface() ? LanguageLevel.JDK_1_6 : LanguageLevel.JDK_1_5;
 
+        GlobalSearchScope scope = getLanguageLevelScope(minimal, project);
+        if (scope == null) return;
         Stream<PsiMethod> overridingMethods = JavaOverridingMethodUtil
-          .getOverridingMethodsIfCheapEnough(method, getLanguageLevelScope(minimal, project), m -> {
+          .getOverridingMethodsIfCheapEnough(method, scope, m -> {
           for (PsiAnnotation annotation : m.getModifierList().getAnnotations()) {
             PsiJavaCodeReferenceElement ref = annotation.getNameReferenceElement();
             if (ref != null && OVERRIDE_SHORT_NAME.equals(ref.getReferenceName())) {
@@ -218,11 +221,13 @@ public class MissingOverrideAnnotationInspection extends BaseJavaBatchLocalInspe
     private ThreeState hierarchyAnnotated = ThreeState.UNSURE;
   }
 
+  @Nullable
   private static GlobalSearchScope getLanguageLevelScope(@NotNull LanguageLevel minimal, @NotNull Project project) {
-    return GlobalSearchScope.union(Arrays
-                                     .stream(ModuleManager.getInstance(project).getModules())
-                                     .filter(m -> EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(m).isAtLeast(minimal))
-                                     .map(Module::getModuleScope)
-                                     .toArray(GlobalSearchScope[]::new));
+    GlobalSearchScope[] scopes = Arrays
+      .stream(ModuleManager.getInstance(project).getModules())
+      .filter(m -> EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(m).isAtLeast(minimal))
+      .map(Module::getModuleScope)
+      .toArray(GlobalSearchScope[]::new);
+    return scopes.length == 0 ? null : GlobalSearchScope.union(scopes);
   }
 }

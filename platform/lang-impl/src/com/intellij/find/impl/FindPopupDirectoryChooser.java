@@ -40,19 +40,18 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.List;
 
-public class FindPopupDirectoryChooser extends JPanel {
+class FindPopupDirectoryChooser extends JPanel {
   @NotNull private final FindUIHelper myHelper;
   @NotNull private final Project myProject;
   @NotNull private final FindPopupPanel myFindPopupPanel;
   @NotNull private final ComboBox<String> myDirectoryComboBox;
 
-  public FindPopupDirectoryChooser(@NotNull FindPopupPanel panel) {
+  FindPopupDirectoryChooser(@NotNull FindPopupPanel panel) {
     super(new BorderLayout());
 
     myHelper = panel.getHelper();
@@ -75,33 +74,30 @@ public class FindPopupDirectoryChooser extends JPanel {
     TextFieldWithBrowseButton.MyDoClickAction.addTo(mySelectDirectoryButton, myDirectoryComboBox);
     mySelectDirectoryButton.setMargin(JBUI.emptyInsets());
 
-    mySelectDirectoryButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-        descriptor.setForcedToUseIdeaFileChooser(true);
-        myFindPopupPanel.getCanClose().set(false);
-        FileChooser.chooseFiles(descriptor, myProject, myFindPopupPanel, null,
-                                new FileChooser.FileChooserConsumer() {
-          @Override
-          public void consume(List<VirtualFile> files) {
-            ApplicationManager.getApplication().invokeLater(() -> {
-              myFindPopupPanel.getCanClose().set(true);
-              IdeFocusManager.getInstance(myProject).requestFocus(myDirectoryComboBox.getEditor().getEditorComponent(), true);
-              myHelper.getModel().setDirectoryName(files.get(0).getPresentableUrl());
-              myDirectoryComboBox.getEditor().setItem(files.get(0).getPresentableUrl());
-            });
-          }
+    mySelectDirectoryButton.addActionListener(__ -> {
+      FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
+      descriptor.setForcedToUseIdeaFileChooser(true);
+      myFindPopupPanel.getCanClose().set(false);
+      FileChooser.chooseFiles(descriptor, myProject, myFindPopupPanel, null,
+                              new FileChooser.FileChooserConsumer() {
+        @Override
+        public void consume(List<VirtualFile> files) {
+          ApplicationManager.getApplication().invokeLater(() -> {
+            myFindPopupPanel.getCanClose().set(true);
+            IdeFocusManager.getInstance(myProject).requestFocus(myDirectoryComboBox.getEditor().getEditorComponent(), true);
+            myHelper.getModel().setDirectoryName(files.get(0).getPresentableUrl());
+            myDirectoryComboBox.getEditor().setItem(files.get(0).getPresentableUrl());
+          });
+        }
 
-          @Override
-          public void cancelled() {
-            ApplicationManager.getApplication().invokeLater(() -> {
-              myFindPopupPanel.getCanClose().set(true);
-              IdeFocusManager.getInstance(myProject).requestFocus(myDirectoryComboBox.getEditor().getEditorComponent(), true);
-            });
-          }
-        });
-      }
+        @Override
+        public void cancelled() {
+          ApplicationManager.getApplication().invokeLater(() -> {
+            myFindPopupPanel.getCanClose().set(true);
+            IdeFocusManager.getInstance(myProject).requestFocus(myDirectoryComboBox.getEditor().getEditorComponent(), true);
+          });
+        }
+      });
     });
 
     MyRecursiveDirectoryAction recursiveDirectoryAction = new MyRecursiveDirectoryAction();
@@ -115,7 +111,7 @@ public class FindPopupDirectoryChooser extends JPanel {
     add(buttonsPanel, BorderLayout.EAST);
   }
 
-  public void initByModel(@NotNull FindModel findModel) {
+  void initByModel(@NotNull FindModel findModel) {
     final String directoryName = findModel.getDirectoryName();
     java.util.List<String> strings = FindInProjectSettings.getInstance(myProject).getRecentDirectories();
 

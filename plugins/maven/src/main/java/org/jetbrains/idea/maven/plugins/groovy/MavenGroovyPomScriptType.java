@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
-import com.intellij.openapi.vfs.StandardFileSystems;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -41,6 +41,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
 import javax.swing.*;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -91,8 +92,14 @@ public class MavenGroovyPomScriptType extends GroovyRunnableScriptType {
   }
 
   public static List<VirtualFile> additionalScopeFiles() {
-    VirtualFile virtualFile = VfsUtil.findFileByIoFile(GroovyFacetUtil.getBundledGroovyJar(), false);
-    return virtualFile == null ? ContainerUtil.emptyList() : ContainerUtil.list(StandardFileSystems.getJarRootForLocalFile(virtualFile));
+    VirtualFile jarFile = VfsUtil.findFileByIoFile(GroovyFacetUtil.getBundledGroovyJar(), false);
+    if (jarFile != null) {
+      VirtualFile jarRoot = JarFileSystem.getInstance().getRootByLocal(jarFile);
+      if (jarRoot != null) {
+        return Collections.singletonList(jarRoot);
+      }
+    }
+    return ContainerUtil.emptyList();
   }
 
   private static boolean hasModuleWithGroovyLibrary(@NotNull Project project) {

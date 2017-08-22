@@ -33,17 +33,18 @@ import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsLogRefresher;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VcsLogStorage;
-import com.intellij.vcs.log.ui.*;
+import com.intellij.vcs.log.ui.AbstractVcsLogUi;
+import com.intellij.vcs.log.ui.VcsLogColorManager;
+import com.intellij.vcs.log.ui.VcsLogColorManagerImpl;
+import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.visible.VcsLogFilterer;
 import com.intellij.vcs.log.visible.VisiblePackRefresherImpl;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.Collection;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class VcsLogManager implements Disposable {
@@ -73,9 +74,9 @@ public class VcsLogManager implements Disposable {
     myRecreateMainLogHandler = recreateHandler;
 
     Map<VirtualFile, VcsLogProvider> logProviders = findLogProviders(roots, myProject);
-    myLogData = new VcsLogData(myProject, logProviders, new MyFatalErrorsHandler());
+    myLogData = new VcsLogData(myProject, logProviders, new MyFatalErrorsHandler(), this);
     myPostponableRefresher = new PostponableLogRefresher(myLogData);
-    myTabsLogRefresher = new VcsLogTabsWatcher(myProject, myPostponableRefresher, myLogData);
+    myTabsLogRefresher = new VcsLogTabsWatcher(myProject, myPostponableRefresher);
 
     refreshLogOnVcsEvents(logProviders, myPostponableRefresher, myLogData);
 
@@ -84,8 +85,6 @@ public class VcsLogManager implements Disposable {
     if (scheduleRefreshImmediately) {
       scheduleInitialization();
     }
-
-    Disposer.register(project, this);
   }
 
   @CalledInAwt
@@ -104,12 +103,6 @@ public class VcsLogManager implements Disposable {
   @NotNull
   public VcsLogData getDataManager() {
     return myLogData;
-  }
-
-  @NotNull
-  public JComponent createLogPanel(@NotNull String logId, @Nullable String contentTabName) {
-    AbstractVcsLogUi ui = createLogUi(logId, contentTabName);
-    return new VcsLogPanel(this, ui);
   }
 
   @NotNull
@@ -174,14 +167,21 @@ public class VcsLogManager implements Disposable {
     return logProviders;
   }
 
-  @Override
-  public void dispose() {
-    Disposer.dispose(myLogData);
+  public void dispose(@Nullable Runnable callback) {
+    LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
+    
+    myTabsLogRefresher.closeLogTabs();
+    Disposer.dispose(myTabsLogRefresher);
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      Disposer.dispose(this);
+      if (callback != null) {
+        callback.run();
+      }
+    });
   }
 
-  @NotNull
-  public Set<String> getTabNames() {
-    return myTabsLogRefresher.getTabNames();
+  @Override
+  public void dispose() {
   }
 
   private class MyFatalErrorsHandler implements FatalErrorHandler {

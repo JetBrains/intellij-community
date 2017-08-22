@@ -67,8 +67,8 @@ import java.util.Set;
 public class ProjectRootManagerComponent extends ProjectRootManagerImpl implements ProjectComponent, Disposable {
   private static final Logger LOG = Logger.getInstance(ProjectRootManagerComponent.class);
 
-  private boolean myPointerChangesDetected = false;
-  private int myInsideRefresh = 0;
+  private boolean myPointerChangesDetected;
+  private int myInsideRefresh;
   private final BatchUpdateListener myHandler;
   private final MessageBusConnection myConnection;
 
@@ -168,7 +168,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     }
   }
 
-  private boolean affectsRoots(VirtualFilePointer[] pointers) {
+  private boolean affectsRoots(@NotNull VirtualFilePointer[] pointers) {
     Pair<Set<String>, Set<String>> roots = getAllRoots(true);
     if (roots == null) return false;
 

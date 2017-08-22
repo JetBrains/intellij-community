@@ -42,7 +42,9 @@ import java.io.IOException;
 import java.lang.reflect.Array;
 import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static com.intellij.openapi.util.Pair.pair;
 import static com.intellij.util.BitUtil.isSet;
@@ -73,8 +75,15 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
   private String myInternalName;
   private PsiClassStub myResult;
   private PsiModifierListStub myModList;
-
+  private final boolean myAnonymousInner;
+  private final boolean myLocalClassInner;
+  
   public StubBuildingVisitor(T classSource, InnerClassSourceStrategy<T> innersStrategy, StubElement parent, int access, String shortName) {
+    this(classSource, innersStrategy, parent, access, shortName, false, false);
+  }
+  
+  public StubBuildingVisitor(T classSource, InnerClassSourceStrategy<T> innersStrategy, StubElement parent, int access, String shortName, 
+                             boolean anonymousInner, boolean localClassInner) {
     super(ASM_API);
     mySource = classSource;
     myInnersStrategy = innersStrategy;
@@ -82,6 +91,8 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     myAccess = access;
     myShortName = shortName;
     myMapping = createMapping(classSource);
+    myAnonymousInner = anonymousInner;
+    myLocalClassInner = localClassInner;
   }
 
   public PsiClassStub<?> getResult() {
@@ -94,15 +105,16 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     String parentName = myParent instanceof PsiClassStub ? ((PsiClassStub)myParent).getQualifiedName() :
                         myParent instanceof PsiJavaFileStub ? ((PsiJavaFileStub)myParent).getPackageName() :
                         null;
-    String fqn = getFqn(name, myShortName, parentName);
-    String shortName = myShortName != null && name.endsWith(myShortName) ? myShortName : PsiNameHelper.getShortClassName(fqn);
+    String fqn = myAnonymousInner || myLocalClassInner ? null : getFqn(name, myShortName, parentName);
+    String shortName = myShortName != null && name.endsWith(myShortName) ? myShortName : fqn != null ? PsiNameHelper.getShortClassName(fqn) : myShortName;
 
     int flags = myAccess | access;
     boolean isDeprecated = isSet(flags, Opcodes.ACC_DEPRECATED);
     boolean isInterface = isSet(flags, Opcodes.ACC_INTERFACE);
     boolean isEnum = isSet(flags, Opcodes.ACC_ENUM);
     boolean isAnnotationType = isSet(flags, Opcodes.ACC_ANNOTATION);
-    byte stubFlags = PsiClassStubImpl.packFlags(isDeprecated, isInterface, isEnum, false, false, isAnnotationType, false, false);
+    short stubFlags = PsiClassStubImpl.packFlags(isDeprecated, isInterface, isEnum, false, false, 
+                                                 isAnnotationType, false, false, myAnonymousInner, myLocalClassInner);
     myResult = new PsiClassStubImpl(JavaStubElementTypes.CLASS, myParent, fqn, shortName, null, stubFlags);
 
     myModList = new PsiModifierListStubImpl(myResult, packClassFlags(flags));
@@ -243,16 +255,39 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
   @Override
   public void visitInnerClass(String name, String outerName, String innerName, int access) {
     if (isSet(access, Opcodes.ACC_SYNTHETIC)) return;
-    if (innerName == null || outerName == null) return;
+    String jvmClassName = innerName;
 
+    boolean isAnonymousInner = innerName == null;
+    boolean isLocalClassInner = !isAnonymousInner && outerName == null;
+    
+    if (innerName == null || outerName == null) {
+      if(myInternalName.equals(name)) {
+        return;
+      }
+      int $index = name.lastIndexOf('$');
+      if ($index == -1) {
+        return;
+      } else {
+        if (isAnonymousInner) {
+          jvmClassName = name.substring($index + 1);
+          innerName = jvmClassName;
+          outerName = name.substring(0, $index);
+        }
+        else { // isLocalClassInner
+          outerName = name.substring(0, $index);
+          jvmClassName = name.substring($index + 1);
+        }
+      }
+    }
+    
     if (myParent instanceof PsiFileStub && myInternalName.equals(name)) {
       throw new OutOfOrderInnerClassException();  // our result is inner class
     }
 
     if (myInternalName.equals(outerName)) {
-      T innerClass = myInnersStrategy.findInnerClass(innerName, mySource);
+      T innerClass = myInnersStrategy.findInnerClass(jvmClassName, mySource);
       if (innerClass != null) {
-        myInnersStrategy.accept(innerClass, new StubBuildingVisitor<>(innerClass, myInnersStrategy, myResult, access, innerName));
+        myInnersStrategy.accept(innerClass, new StubBuildingVisitor<>(innerClass, myInnersStrategy, myResult, access, innerName, isAnonymousInner, isLocalClassInner));
       }
     }
   }

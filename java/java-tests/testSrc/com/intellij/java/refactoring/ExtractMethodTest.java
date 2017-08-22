@@ -963,6 +963,46 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testNotNullArgumentLambdaBare() throws Exception {
+    doTest();
+  }
+
+  public void testNotNullArgumentLambdaInIf() throws Exception {
+    doTest();
+  }
+
+  public void testNotNullArgumentLambdaInIfNoBlock() throws Exception {
+    doTest();
+  }
+
+  public void testNotNullArgumentLambdaInWhileNoBlock() throws Exception {
+    doTest();
+  }
+
+  public void testNotNullArgumentLambdaInsideBody() throws Exception {
+    doTest();
+  }
+
+  public void testNotNullArgumentLambdaInIfInsideBody() throws Exception {
+    doTest();
+  }
+
+  public void testNotNullArgumentAnonymousClassBare() throws Exception {
+    doTest();
+  }
+
+  public void testNotNullArgumentAnonymousClassInIf() throws Exception {
+    doTest();
+  }
+
+  public void testNotNullArgumentAnonymousClassInIfNoBlock() throws Exception {
+    doTest();
+  }
+
+  public void testNotNullArgumentLambdaInForInitializer() throws Exception {
+    doTest();
+  }
+
   public void testQualifyWhenConflictingNamePresent() throws Exception {
     final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
     settings.ELSE_ON_NEW_LINE = true;

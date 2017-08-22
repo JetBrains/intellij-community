@@ -328,6 +328,7 @@ public class CompositePrintable implements Printable, Disposable {
             while (reader.available() > 0 && !wasPrintableChanged(printer)) {
               if (lineNum == CompositePrintable.this.getExceptionMark() && lineNum > 0) printer.mark();
               final String line = IOUtil.readString(reader);
+              if (line == null) break;
               boolean printed = false;
               for (ConsoleViewContentType contentType : ConsoleViewContentType.getRegisteredTypes()) {
                 final String prefix = contentType.toString();

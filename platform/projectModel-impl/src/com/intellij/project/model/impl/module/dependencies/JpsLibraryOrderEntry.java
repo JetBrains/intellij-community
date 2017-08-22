@@ -22,7 +22,6 @@ import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.project.model.JpsModelManager;
 import com.intellij.project.model.impl.module.JpsRootModel;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +30,6 @@ import org.jetbrains.jps.model.JpsCompositeElement;
 import org.jetbrains.jps.model.JpsElementReference;
 import org.jetbrains.jps.model.JpsGlobal;
 import org.jetbrains.jps.model.JpsProject;
-import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.module.JpsLibraryDependency;
 import org.jetbrains.jps.model.module.JpsModule;
 
@@ -45,12 +43,11 @@ public class JpsLibraryOrderEntry extends JpsExportableOrderEntry<JpsLibraryDepe
 
   @Override
   public Library getLibrary() {
-    final JpsLibrary library = myDependencyElement.getLibrary();
-    if (library != null) return null;
-    return JpsModelManager.getInstance(myRootModel.getProject()).getLibraryManager().getLibrary(library);
+    return null;
   }
 
   @Override
+  @NotNull
   public String getLibraryName() {
     return myDependencyElement.getLibraryReference().getLibraryName();
   }
@@ -63,13 +60,13 @@ public class JpsLibraryOrderEntry extends JpsExportableOrderEntry<JpsLibraryDepe
 
   @NotNull
   @Override
-  public VirtualFile[] getFiles(OrderRootType type) {
+  public VirtualFile[] getFiles(@NotNull OrderRootType type) {
     return getRootFiles(type);
   }
 
   @NotNull
   @Override
-  public String[] getUrls(OrderRootType rootType) {
+  public String[] getUrls(@NotNull OrderRootType rootType) {
     return getRootUrls(rootType);
   }
 
@@ -103,7 +100,7 @@ public class JpsLibraryOrderEntry extends JpsExportableOrderEntry<JpsLibraryDepe
   }
 
   @Override
-  public <R> R accept(RootPolicy<R> policy, @Nullable R initialValue) {
+  public <R> R accept(@NotNull RootPolicy<R> policy, @Nullable R initialValue) {
     return policy.visitLibraryOrderEntry(this, initialValue);
   }
 }

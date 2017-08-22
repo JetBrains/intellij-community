@@ -18,7 +18,9 @@ package git4idea;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationAction;
+import com.intellij.notification.NotificationType;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -72,7 +74,6 @@ import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.event.HyperlinkEvent;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
@@ -83,6 +84,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
 
+import static com.intellij.openapi.vcs.VcsNotifier.STANDARD_NOTIFICATION;
 import static java.util.Comparator.comparing;
 
 /**
@@ -395,26 +397,22 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
       myVersion = GitVersion.identifyVersion(executable);
       LOG.info("Git version: " + myVersion);
       if (!myVersion.isSupported()) {
-        final String SETTINGS_LINK = "settings";
-        final String UPDATE_LINK = "update";
-        String message = String.format("The <a href='" + SETTINGS_LINK + "'>configured</a> version of Git is not supported: %s.<br/> " +
-                                       "The minimal supported version is %s. Please <a href='" + UPDATE_LINK + "'>update</a>.",
-                                       myVersion.getPresentation(), GitVersion.MIN.getPresentation());
-        VcsNotifier.getInstance(myProject).notifyError("Unsupported Git version", message,
-                                                       new NotificationListener.Adapter() {
-                                                         @Override
-                                                         protected void hyperlinkActivated(@NotNull Notification notification,
-                                                                                           @NotNull HyperlinkEvent e) {
-                                                           if (SETTINGS_LINK.equals(e.getDescription())) {
-                                                             ShowSettingsUtil.getInstance()
-                                                               .showSettingsDialog(myProject, getConfigurable().getDisplayName());
-                                                           }
-                                                           else if (UPDATE_LINK.equals(e.getDescription())) {
-                                                             BrowserUtil.browse("http://git-scm.com");
-                                                           }
-                                                         }
-                                                       }
-        );
+        String title = String.format("Git %s Is Not Supported", myVersion.getPresentation());
+        String message = String.format("At least %s is required.",GitVersion.MIN.getPresentation());
+        Notification notification = STANDARD_NOTIFICATION.createNotification(title, message, NotificationType.ERROR, null);
+        notification.addAction(new NotificationAction("Download...") {
+          @Override
+          public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+            BrowserUtil.browse("http://git-scm.com/download");
+            }
+        });
+        notification.addAction(new NotificationAction("Configure...") {
+          @Override
+          public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+            ShowSettingsUtil.getInstance().showSettingsDialog(myProject, getConfigurable().getDisplayName());
+          }
+        });
+        VcsNotifier.getInstance(myProject).notify(notification);
       }
     }
     catch (Exception e) {

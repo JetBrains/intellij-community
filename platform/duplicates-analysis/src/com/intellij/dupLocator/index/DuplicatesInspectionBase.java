@@ -17,9 +17,9 @@ package com.intellij.dupLocator.index;
 
 import com.intellij.codeInspection.*;
 import com.intellij.dupLocator.DuplicatesProfile;
+import com.intellij.dupLocator.DuplocateVisitor;
 import com.intellij.dupLocator.DuplocatorState;
 import com.intellij.dupLocator.LightDuplicateProfile;
-import com.intellij.dupLocator.treeHash.FragmentsCollector;
 import com.intellij.dupLocator.util.PsiFragment;
 import com.intellij.lang.FileASTNode;
 import com.intellij.lang.LighterAST;
@@ -66,162 +66,190 @@ public class DuplicatesInspectionBase extends LocalInspectionTool {
     final DuplicatesProfile profile = DuplicatesIndex.findDuplicatesProfile(psiFile.getFileType());
     if (profile == null) return ProblemDescriptor.EMPTY_ARRAY;
 
-    final Ref<DuplicatedCodeProcessor> myProcessorRef = new Ref<>();
 
     final FileASTNode node = psiFile.getNode();
     boolean usingLightProfile = profile instanceof LightDuplicateProfile &&
                                 node.getElementType() instanceof ILightStubFileElementType &&
                                 DuplicatesIndex.ourEnabledLightProfiles;
+    final Project project = psiFile.getProject();
+    DuplicatedCodeProcessor<?> processor;
     if (usingLightProfile) {
-      LighterAST ast = node.getLighterAST();
-      ((LightDuplicateProfile)profile).process(ast, new LightDuplicateProfile.Callback() {
-        DuplicatedCodeProcessor<LighterASTNode> myProcessor;
-        @Override
-        public void process(int hash, int hash2, @NotNull final LighterAST ast, @NotNull final LighterASTNode... nodes) {
-          class LightDuplicatedCodeProcessor extends DuplicatedCodeProcessor<LighterASTNode> {
-
-            private LightDuplicatedCodeProcessor(VirtualFile file, Project project) {
-              super(file, project, myFilterOutGeneratedCode);
-            }
-
-            @Override
-            protected TextRange getRangeInElement(LighterASTNode node) {
-              return null;
-            }
-
-            @Override
-            protected PsiElement getPsi(LighterASTNode node) {
-              return ((TreeBackedLighterAST)ast).unwrap(node).getPsi();
-            }
-
-            @Override
-            protected int getStartOffset(LighterASTNode node) {
-              return node.getStartOffset();
-            }
-
-            @Override
-            protected int getEndOffset(LighterASTNode node) {
-              return node.getEndOffset();
-            }
-
-            @Override
-            protected boolean isLightProfile() {
-              return true;
-            }
-          }
-          if (myProcessor == null) {
-            myProcessor = new LightDuplicatedCodeProcessor(virtualFile, psiFile.getProject());
-            myProcessorRef.set(myProcessor);
-          }
-          myProcessor.process(hash, hash2, nodes[0]);
-        }
-      });
-    } else {
-      final DuplocatorState state = profile.getDuplocatorState(psiFile.getLanguage());
-      profile.createVisitor(new FragmentsCollector() {
-        DuplicatedCodeProcessor<PsiFragment> myProcessor;
-        @Override
-        public void add(int hash, final int cost, @Nullable final PsiFragment frag) {
-          if (!DuplicatesIndex.isIndexedFragment(frag, cost, profile, state)) {
-            return;
-          }
-
-          class OldDuplicatedCodeProcessor extends DuplicatedCodeProcessor<PsiFragment> {
-
-            private OldDuplicatedCodeProcessor(VirtualFile file, Project project) {
-              super(file, project, myFilterOutGeneratedCode);
-            }
-
-            @Override
-            protected TextRange getRangeInElement(PsiFragment node) {
-              PsiElement[] elements = node.getElements();
-              TextRange rangeInElement = null;
-              if (elements.length > 1) {
-
-                PsiElement lastElement = elements[elements.length - 1];
-                rangeInElement = new TextRange(
-                  elements[0].getStartOffsetInParent(),
-                  lastElement.getStartOffsetInParent() + lastElement.getTextLength()
-                );
-              }
-              return rangeInElement;
-            }
-
-            @Override
-            protected PsiElement getPsi(PsiFragment node) {
-              PsiElement[] elements = node.getElements();
-
-              return elements.length > 1 ? elements[0].getParent() : elements[0];
-            }
-
-            @Override
-            protected int getStartOffset(PsiFragment node) {
-              return node.getStartOffset();
-            }
-
-            @Override
-            protected int getEndOffset(PsiFragment node) {
-              return node.getEndOffset();
-            }
-
-            @Override
-            protected boolean isLightProfile() {
-              return false;
-            }
-          }
-          if (myProcessor == null) {
-            myProcessor = new OldDuplicatedCodeProcessor(virtualFile, psiFile.getProject());
-            myProcessorRef.set(myProcessor);
-          }
-          myProcessor.process(hash, 0, frag);
-        }
-      }, true).visitNode(psiFile);
+      processor = processLightDuplicates(node, virtualFile, (LightDuplicateProfile)profile, project);
     }
-
-    DuplicatedCodeProcessor<?> processor = myProcessorRef.get();
+    else {
+      processor = processPsiDuplicates(psiFile, virtualFile, profile, project);
+    }
+    if (processor == null) return null;
 
     final SmartList<ProblemDescriptor> descriptors = new SmartList<>();
+    final VirtualFile baseDir = project.getBaseDir();
+    for (Map.Entry<Integer, TextRange> entry : processor.reportedRanges.entrySet()) {
+      final Integer offset = entry.getKey();
+      if (!usingLightProfile && processor.fragmentSize.get(offset) < MIN_FRAGMENT_SIZE) continue;
+      final VirtualFile file = processor.reportedFiles.get(offset);
+      String path = null;
 
-    if (processor != null) {
-      final VirtualFile baseDir = psiFile.getProject().getBaseDir();
-      for(Map.Entry<Integer, TextRange> entry:processor.reportedRanges.entrySet()) {
-        final Integer offset = entry.getKey();
-        if (!usingLightProfile && processor.fragmentSize.get(offset) < MIN_FRAGMENT_SIZE) continue;
-        final VirtualFile file = processor.reportedFiles.get(offset);
-        String path = null;
-
-        if (file.equals(virtualFile)) path = "this file";
-        else if (baseDir != null) {
-          path = VfsUtilCore.getRelativePath(file, baseDir);
-        }
-        if (path == null) {
-          path = file.getPath();
-        }
-        String message = "Found duplicated code in " + path;
-
-        PsiElement targetElement = processor.reportedPsi.get(offset);
-        TextRange rangeInElement = entry.getValue();
-        final int offsetInOtherFile = processor.reportedOffsetInOtherFiles.get(offset);
-
-        LocalQuickFix fix = createNavigateToDupeFix(file, offsetInOtherFile);
-        long hash = processor.fragmentHash.get(offset);
-
-        LocalQuickFix viewAllDupesFix = hash != 0 ? createShowOtherDupesFix(virtualFile, offset, (int)hash, (int)(hash >> 32), psiFile.getProject()) : null;
-
-        ProblemDescriptor descriptor = manager
-          .createProblemDescriptor(targetElement, rangeInElement, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly, fix, viewAllDupesFix);
-        descriptors.add(descriptor);
+      if (file.equals(virtualFile)) {
+        path = "this file";
       }
+      else if (baseDir != null) {
+        path = VfsUtilCore.getRelativePath(file, baseDir);
+      }
+      if (path == null) {
+        path = file.getPath();
+      }
+      String message = "Found duplicated code in " + path;
+
+      PsiElement targetElement = processor.reportedPsi.get(offset);
+      TextRange rangeInElement = entry.getValue();
+      final int offsetInOtherFile = processor.reportedOffsetInOtherFiles.get(offset);
+
+      LocalQuickFix fix = isOnTheFly ? createNavigateToDupeFix(file, offsetInOtherFile) : null;
+      long hash = processor.fragmentHash.get(offset);
+
+      int hash2 = (int)(hash >> 32);
+      LocalQuickFix viewAllDupesFix = isOnTheFly && hash != 0 ? createShowOtherDupesFix(virtualFile, offset, (int)hash, hash2) : null;
+      LocalQuickFix extractMethodFix =
+        isOnTheFly && hash != 0 ? createExtractMethodFix(targetElement, rangeInElement, (int)hash, hash2) : null;
+
+      ProblemDescriptor descriptor = manager
+        .createProblemDescriptor(targetElement, rangeInElement, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly, fix,
+                                 viewAllDupesFix, extractMethodFix);
+      descriptors.add(descriptor);
     }
 
-    return descriptors.isEmpty() ? null : descriptors.toArray(new ProblemDescriptor[descriptors.size()]);
+    return descriptors.isEmpty() ? null : descriptors.toArray(ProblemDescriptor.EMPTY_ARRAY);
+  }
+
+  private DuplicatedCodeProcessor<?> processLightDuplicates(FileASTNode node,
+                                                            VirtualFile virtualFile,
+                                                            LightDuplicateProfile profile,
+                                                            Project project) {
+    final Ref<DuplicatedCodeProcessor<LighterASTNode>> processorRef = new Ref<>();
+    LighterAST lighterAST = node.getLighterAST();
+
+    profile.process(lighterAST, (hash, hash2, ast, nodes) -> {
+      DuplicatedCodeProcessor<LighterASTNode> processor = processorRef.get();
+      if (processor == null) {
+        processorRef.set(processor = new LightDuplicatedCodeProcessor((TreeBackedLighterAST)ast, virtualFile, project));
+      }
+      processor.process(hash, hash2, nodes[0]);
+    });
+    return processorRef.get();
+  }
+
+  private DuplicatedCodeProcessor<?> processPsiDuplicates(PsiFile psiFile,
+                                                          VirtualFile virtualFile,
+                                                          DuplicatesProfile profile,
+                                                          Project project) {
+    final DuplocatorState state = profile.getDuplocatorState(psiFile.getLanguage());
+    final Ref<DuplicatedCodeProcessor<PsiFragment>> processorRef = new Ref<>();
+
+    DuplocateVisitor visitor = profile.createVisitor((hash, cost, frag) -> {
+      if (!DuplicatesIndex.isIndexedFragment(frag, cost, profile, state)) {
+        return;
+      }
+      DuplicatedCodeProcessor<PsiFragment> processor = processorRef.get();
+      if (processor == null) {
+        processorRef.set(processor = new OldDuplicatedCodeProcessor(virtualFile, project));
+      }
+      processor.process(hash, 0, frag);
+    }, true);
+
+    visitor.visitNode(psiFile);
+    return processorRef.get();
   }
 
   protected LocalQuickFix createNavigateToDupeFix(@NotNull VirtualFile file, int offsetInOtherFile) {
     return null;
   }
-  protected LocalQuickFix createShowOtherDupesFix(VirtualFile file, int offset, int hash, int hash2, Project project) {
+
+  protected LocalQuickFix createShowOtherDupesFix(VirtualFile file, int offset, int hash, int hash2) {
     return null;
+  }
+
+  protected LocalQuickFix createExtractMethodFix(@NotNull PsiElement targetElement,
+                                                 @Nullable TextRange rangeInElement,
+                                                 int hash,
+                                                 int hash2) {
+    return null;
+  }
+
+  private class LightDuplicatedCodeProcessor extends DuplicatedCodeProcessor<LighterASTNode> {
+    private TreeBackedLighterAST myAst;
+
+    private LightDuplicatedCodeProcessor(@NotNull TreeBackedLighterAST ast, VirtualFile file, Project project) {
+      super(file, project, myFilterOutGeneratedCode);
+      myAst = ast;
+    }
+
+    @Override
+    protected TextRange getRangeInElement(LighterASTNode node) {
+      return null;
+    }
+
+    @Override
+    protected PsiElement getPsi(LighterASTNode node) {
+      return myAst.unwrap(node).getPsi();
+    }
+
+    @Override
+    protected int getStartOffset(LighterASTNode node) {
+      return node.getStartOffset();
+    }
+
+    @Override
+    protected int getEndOffset(LighterASTNode node) {
+      return node.getEndOffset();
+    }
+
+    @Override
+    protected boolean isLightProfile() {
+      return true;
+    }
+  }
+
+  class OldDuplicatedCodeProcessor extends DuplicatedCodeProcessor<PsiFragment> {
+    private OldDuplicatedCodeProcessor(VirtualFile file, Project project) {
+      super(file, project, myFilterOutGeneratedCode);
+    }
+
+    @Override
+    protected TextRange getRangeInElement(PsiFragment node) {
+      PsiElement[] elements = node.getElements();
+      TextRange rangeInElement = null;
+      if (elements.length > 1) {
+
+        PsiElement lastElement = elements[elements.length - 1];
+        rangeInElement = new TextRange(
+          elements[0].getStartOffsetInParent(),
+          lastElement.getStartOffsetInParent() + lastElement.getTextLength()
+        );
+      }
+      return rangeInElement;
+    }
+
+    @Override
+    protected PsiElement getPsi(PsiFragment node) {
+      PsiElement[] elements = node.getElements();
+
+      return elements.length > 1 ? elements[0].getParent() : elements[0];
+    }
+
+    @Override
+    protected int getStartOffset(PsiFragment node) {
+      return node.getStartOffset();
+    }
+
+    @Override
+    protected int getEndOffset(PsiFragment node) {
+      return node.getEndOffset();
+    }
+
+    @Override
+    protected boolean isLightProfile() {
+      return false;
+    }
   }
 
   abstract static class DuplicatedCodeProcessor<T> implements FileBasedIndex.ValueProcessor<TIntArrayList> {

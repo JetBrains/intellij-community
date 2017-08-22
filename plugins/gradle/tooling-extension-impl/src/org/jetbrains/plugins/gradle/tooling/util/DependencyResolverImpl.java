@@ -1180,14 +1180,14 @@ public class DependencyResolverImpl implements DependencyResolver {
 
                     ComponentArtifactsResult artifactsResult = componentResultsMap.get(componentIdentifier);
                     if (artifactsResult != null) {
-                      ArtifactResult sourcesResult = findMatchingArtifact(artifact, artifactsResult, SourcesArtifact.class);
-                      if (sourcesResult instanceof ResolvedArtifactResult) {
-                        ((DefaultExternalLibraryDependency)dependency).setSource(((ResolvedArtifactResult)sourcesResult).getFile());
+                      ResolvedArtifactResult sourcesResult = findMatchingArtifact(artifact, artifactsResult, SourcesArtifact.class);
+                      if (sourcesResult != null) {
+                        ((DefaultExternalLibraryDependency)dependency).setSource(sourcesResult.getFile());
                       }
 
-                      ArtifactResult javadocResult = findMatchingArtifact(artifact, artifactsResult, JavadocArtifact.class);
-                      if (javadocResult instanceof ResolvedArtifactResult) {
-                        ((DefaultExternalLibraryDependency)dependency).setJavadoc(((ResolvedArtifactResult)javadocResult).getFile());
+                      ResolvedArtifactResult javadocResult = findMatchingArtifact(artifact, artifactsResult, JavadocArtifact.class);
+                      if (javadocResult != null) {
+                        ((DefaultExternalLibraryDependency)dependency).setJavadoc(javadocResult.getFile());
                       }
                     }
                   }
@@ -1227,19 +1227,21 @@ public class DependencyResolverImpl implements DependencyResolver {
     }
   }
 
-  private static ArtifactResult findMatchingArtifact(ResolvedArtifact artifact,
-                                                     ComponentArtifactsResult componentArtifacts,
-                                                     Class<? extends Artifact> artifactType) {
+  @Nullable
+  private static ResolvedArtifactResult findMatchingArtifact(ResolvedArtifact artifact,
+                                                             ComponentArtifactsResult componentArtifacts,
+                                                             Class<? extends Artifact> artifactType) {
     String baseName = Files.getNameWithoutExtension(artifact.getFile().getName());
     Set<ArtifactResult> artifactResults = componentArtifacts.getArtifacts(artifactType);
 
     if (artifactResults.size() == 1) {
-      return artifactResults.iterator().next();
+      ArtifactResult artifactResult = artifactResults.iterator().next();
+      return artifactResult instanceof ResolvedArtifactResult ? (ResolvedArtifactResult)artifactResult : null;
     }
 
     for (ArtifactResult result : artifactResults) {
       if (result instanceof ResolvedArtifactResult && ((ResolvedArtifactResult)result).getFile().getName().startsWith(baseName)) {
-        return result;
+        return (ResolvedArtifactResult)result;
       }
     }
     return null;

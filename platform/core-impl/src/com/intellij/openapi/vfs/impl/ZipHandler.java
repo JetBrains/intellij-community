@@ -219,19 +219,15 @@ public class ZipHandler extends ArchiveHandler {
         if (FileUtilRt.isTooLarge(length)) {
           throw new FileTooBigException(getFile() + "!/" + relativePath);
         }
-        InputStream stream = zip.getInputStream(entry);
-        if (stream != null) {
-          // ZipFile.c#Java_java_util_zip_ZipFile_read reads data in 8K (stack allocated) blocks - no sense to create BufferedInputStream
-          try {
+        try (InputStream stream = zip.getInputStream(entry)) {
+          if (stream != null) {
+            // ZipFile.c#Java_java_util_zip_ZipFile_read reads data in 8K (stack allocated) blocks - no sense to create BufferedInputStream
             return FileUtil.loadBytes(stream, (int)length);
-          }
-          finally {
-            stream.close();
           }
         }
       }
     }
-    
+
     throw new FileNotFoundException(getFile() + "!/" + relativePath);
   }
 
@@ -274,7 +270,7 @@ public class ZipHandler extends ArchiveHandler {
     return getCachedZipFileHandle(true);
   }
 
-  private class InputStreamWrapper extends InputStream {
+  private static class InputStreamWrapper extends InputStream {
     private final InputStream myStream;
     private final ResourceHandle<ZipFile> myZipRef;
     private final AtomicBoolean closed = new AtomicBoolean(false);

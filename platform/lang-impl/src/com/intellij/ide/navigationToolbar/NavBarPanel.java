@@ -30,7 +30,6 @@ import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
-import com.intellij.ide.ui.customization.CustomizationUtil;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -117,7 +116,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     myPresentation = new NavBarPresentation(myProject);
     myUpdateQueue = new NavBarUpdateQueue(this);
 
-    CustomizationUtil.installPopupHandler(this, IdeActions.GROUP_NAVBAR_POPUP, ActionPlaces.NAVIGATION_BAR_POPUP);
+    installPopupHandler(this);
     setOpaque(false);
     if (!docked && UIUtil.isUnderDarcula()) {
       setBorder(new LineBorder(Gray._120, 1));
@@ -169,11 +168,11 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   public List<NavBarItem> getItems() {
     return Collections.unmodifiableList(myList);
   }
-  
+
   public void addItem(NavBarItem item) {
     myList.add(item);
   }
-  
+
   public void clearItems() {
     final NavBarItem[] toDispose = myList.toArray(new NavBarItem[myList.size()]);
     myList.clear();
@@ -182,7 +181,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
         Disposer.dispose(item);
       }
     });
-    
+
     getNavBarUI().clearItems();
   }
 
@@ -389,10 +388,28 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     return !isShowing() ? null : (Window)UIUtil.findUltimateParent(this);
   }
 
+  private void installPopupHandler(@NotNull JComponent component) {
+    ActionManager actionManager = ActionManager.getInstance();
+    PopupHandler.installPopupHandler(component, new ActionGroup() {
+      @NotNull
+      @Override
+      public AnAction[] getChildren(@Nullable AnActionEvent e) {
+        if (e == null) return EMPTY_ARRAY;
+        String popupGroup = null;
+        for (NavBarModelExtension modelExtension : Extensions.getExtensions(NavBarModelExtension.EP_NAME)) {
+          popupGroup = modelExtension.getPopupMenuGroup(NavBarPanel.this);
+          if (popupGroup != null) break;
+        }
+        if (popupGroup == null) popupGroup = IdeActions.GROUP_NAVBAR_POPUP;
+        return ((ActionGroup)actionManager.getAction(popupGroup)).getChildren(e);
+      }
+    }, ActionPlaces.NAVIGATION_BAR_POPUP, actionManager);
+  }
+
   public void installActions(final int index, final NavBarItem component) {
     //suppress it for a while
     //installDnD(index, component);
-
+    installPopupHandler(component);
     ListenerUtil.addMouseListener(component, new MouseAdapter() {
       @Override
       public void mouseReleased(final MouseEvent e) {
@@ -410,25 +427,18 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
 
       private void click(final MouseEvent e) {
         if (e.isConsumed()) return;
+        if (e.isPopupTrigger()) return;
 
-        if (e.isPopupTrigger()) {
+        if (e.getClickCount() == 1) {
+          ctrlClick(index);
           myModel.setSelectedIndex(index);
-          IdeFocusManager.getInstance(myProject).requestFocus(NavBarPanel.this, true);
-          rightClick(index);
           e.consume();
         }
-        else if (!e.isPopupTrigger()) {
-          if (e.getClickCount() == 1) {
-            ctrlClick(index);
-            myModel.setSelectedIndex(index);
-            e.consume();
-          }
-          else if (e.getClickCount() == 2 && e.getButton() == MouseEvent.BUTTON1) {
-            myModel.setSelectedIndex(index);
-            IdeFocusManager.getInstance(myProject).requestFocus(NavBarPanel.this, true);
-            doubleClick(index);
-            e.consume();
-          }
+        else if (e.getClickCount() == 2 && e.getButton() == MouseEvent.BUTTON1) {
+          myModel.setSelectedIndex(index);
+          IdeFocusManager.getInstance(myProject).requestFocus(NavBarPanel.this, true);
+          doubleClick(index);
+          e.consume();
         }
       }
     });
@@ -594,12 +604,14 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   @Override
   @Nullable
   public Object getData(String dataId) {
-    // First of all try to obtain data from extension
     for (NavBarModelExtension modelExtension : Extensions.getExtensions(NavBarModelExtension.EP_NAME)) {
-      Object data = modelExtension.getData(dataId, this);
+      Object data = modelExtension.getData(dataId, this::getDataInner);
       if (data != null) return data;
     }
+    return getDataInner(dataId);
+  }
 
+  private Object getDataInner(String dataId) {
     if (CommonDataKeys.PROJECT.is(dataId)) {
       return !myProject.isDisposed() ? myProject : null;
     }
@@ -648,7 +660,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
       }
       return !files.isEmpty() ? VfsUtilCore.toVirtualFileArray(files) : null;
     }
-    
+
     if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
       final List<Navigatable> elements = getSelectedElements(Navigatable.class);
       return elements == null || elements.isEmpty() ? null : elements.toArray(new Navigatable[elements.size()]);
@@ -845,7 +857,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
       }
     }
     info.put("navBar", result.toString());
-    
+
     if (isNodePopupShowing()) {
       StringBuilder popupText = new StringBuilder();
       JBList list = myNodePopup.getList();

@@ -42,7 +42,7 @@ import java.util.List;
 /**
  * @author dsl
  */
-public class VirtualFilePointerContainerImpl extends TraceableDisposable implements VirtualFilePointerContainer, Disposable {
+class VirtualFilePointerContainerImpl extends TraceableDisposable implements VirtualFilePointerContainer, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer");
   @NotNull private final List<VirtualFilePointer> myList = ContainerUtil.createLockFreeCopyOnWriteList();
   @NotNull private final VirtualFilePointerManager myVirtualFilePointerManager;

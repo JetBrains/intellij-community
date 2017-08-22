@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.internal.statistic.libraryJar;
 
 import com.intellij.internal.statistic.AbstractProjectsUsagesCollector;
-import com.intellij.internal.statistic.CollectUsagesException;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
@@ -49,9 +48,9 @@ public class LibraryJarUsagesCollector extends AbstractProjectsUsagesCollector {
 
   @NotNull
   @Override
-  public Set<UsageDescriptor> getProjectUsages(@NotNull final Project project) throws CollectUsagesException {
-    final LibraryJarDescriptor[] descriptors = LibraryJarStatisticsService.getInstance().getTechnologyDescriptors();
-    final Set<UsageDescriptor> result = new HashSet<>(descriptors.length);
+  public Set<UsageDescriptor> getProjectUsages(@NotNull Project project) {
+    LibraryJarDescriptor[] descriptors = LibraryJarStatisticsService.getInstance().getTechnologyDescriptors();
+    Set<UsageDescriptor> result = new HashSet<>(descriptors.length);
 
     ApplicationManager.getApplication().runReadAction(() -> {
       for (LibraryJarDescriptor descriptor : descriptors) {
@@ -60,25 +59,20 @@ public class LibraryJarUsagesCollector extends AbstractProjectsUsagesCollector {
 
         PsiClass[] psiClasses = JavaPsiFacade.getInstance(project).findClasses(className, ProjectScope.getLibrariesScope(project));
         for (PsiClass psiClass : psiClasses) {
-          if (psiClass == null) continue;
-
-          VirtualFile jarFile = JarFileSystem.getInstance().getLocalVirtualFileFor(psiClass.getContainingFile().getVirtualFile());
-          if (jarFile == null) continue;
-
-          String version = getVersionByJarManifest(jarFile);
-          if (version == null) {
-            version = getVersionByJarFileName(jarFile.getName());
+          VirtualFile jarFile = JarFileSystem.getInstance().getVirtualFileForJar(psiClass.getContainingFile().getVirtualFile());
+          if (jarFile != null) {
+            String version = getVersionByJarManifest(jarFile);
+            if (version == null) {
+              version = getVersionByJarFileName(jarFile.getName());
+            }
+            if (version != null && StringUtil.containsChar(version, '.')) {
+              result.add(new UsageDescriptor(descriptor.myName + "_" + version, 1));
+            }
           }
-
-          if (version == null ||
-              !StringUtil.containsChar(version, '.')) {
-            continue;
-          }
-
-          result.add(new UsageDescriptor(descriptor.myName + "_" + version, 1));
         }
       }
     });
+
     return result;
   }
 
