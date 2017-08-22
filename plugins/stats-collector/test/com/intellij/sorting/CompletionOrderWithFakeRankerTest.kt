@@ -13,7 +13,7 @@ import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.psi.WeigherExtensionPoint
 import com.intellij.stats.completion.RequestService
 import com.intellij.stats.completion.ResponseData
-import com.intellij.stats.completion.experiment.StatusInfoProvider
+import com.intellij.stats.completion.experiment.WebServiceStatusProvider
 import com.intellij.stats.completion.experiment.WebServiceStatus
 import com.jetbrains.completion.ranker.features.FeatureUtils
 import com.nhaarman.mockito_kotlin.any
@@ -43,7 +43,7 @@ object WebServiceMock {
         return mock<RequestService> {
             on { get(anyString()) }.thenAnswer {
                 val url = it.arguments.first() as String
-                if (url == StatusInfoProvider.STATUS_URL) response else throw NOT_SUPPOSED_TO_BE_CALLED
+                if (url == WebServiceStatusProvider.STATUS_URL) response else throw NOT_SUPPOSED_TO_BE_CALLED
             }
             on { post(anyString(), anyMap()) }.thenThrow(NOT_SUPPOSED_TO_BE_CALLED)
             on { postZipped(anyString(), any()) }.thenThrow(NOT_SUPPOSED_TO_BE_CALLED)

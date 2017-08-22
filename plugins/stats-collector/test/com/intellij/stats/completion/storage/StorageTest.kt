@@ -1,8 +1,23 @@
+/*
+ * Copyright 2000-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.stats.completion.storage
 
-import com.intellij.stats.completion.AsciiMessageCharStorage
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.stats.completion.LineStorage
 import com.intellij.stats.completion.LogFileManager
-import com.intellij.stats.completion.LogFileManagerImpl
 import com.intellij.stats.completion.UniqueFilesProvider
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.After
@@ -13,13 +28,11 @@ import java.io.File
 
 class FilesProviderTest {
     
-    var root = File(".")
-    
     lateinit var provider: UniqueFilesProvider
 
     @Before
     fun setUp() {
-        provider = UniqueFilesProvider("chunk", root)
+        provider = UniqueFilesProvider("chunk", ".")
         provider.getStatsDataDirectory().deleteRecursively()
     }
 
@@ -43,12 +56,12 @@ class FilesProviderTest {
 
 class AsciiMessageStorageTest {
     
-    lateinit var storage: AsciiMessageCharStorage
+    lateinit var storage: LineStorage
     lateinit var tmpFile: File
 
     @Before
     fun setUp() {
-        storage = AsciiMessageCharStorage()
+        storage = LineStorage()
         tmpFile = File("tmp_test")
         tmpFile.delete()
     }
@@ -60,18 +73,22 @@ class AsciiMessageStorageTest {
 
     @Test
     fun test_size_with_new_lines() {
-        storage.appendLine("text")
-        assertThat(storage.sizeWithNewLine("")).isEqualTo(6)
+        val line = "text"
+        storage.appendLine(line)
+        assertThat(storage.sizeWithNewLine("")).isEqualTo(line.length + 2 * System.lineSeparator().length)
     }
     
     @Test
     fun test_size_is_same_as_file_size() {
-        storage.appendLine("text")
-        storage.appendLine("text")
-        assertThat(storage.size).isEqualTo(10)
+        val line = "text"
+        storage.appendLine(line)
+        storage.appendLine(line)
+
+        val expectedSize = 2 * (line.length + System.lineSeparator().length)
+        assertThat(storage.size).isEqualTo(expectedSize)
 
         storage.dump(tmpFile)
-        assertThat(tmpFile.length()).isEqualTo(10)
+        assertThat(tmpFile.length()).isEqualTo(expectedSize.toLong())
     }
     
     
@@ -86,8 +103,10 @@ class FileLoggerTest {
 
     @Before
     fun setUp() {
-        filesProvider = UniqueFilesProvider("chunk", File("."))
-        fileLogger = LogFileManagerImpl(filesProvider)
+        filesProvider = UniqueFilesProvider("chunk", ".")
+        val dir = filesProvider.getStatsDataDirectory()
+        dir.deleteRecursively()
+        fileLogger = LogFileManager(filesProvider)
     }
 
     @After
@@ -98,10 +117,10 @@ class FileLoggerTest {
 
     @Test
     fun test_chunk_is_around_256Kb() {
-        val bytesToWrite = 1024 * 256
-        (0..bytesToWrite).forEach {
-            fileLogger.println("")
-        }
+        val bytesToWrite = 1024 * 200
+        val text = StringUtil.repeat("c", bytesToWrite)
+        fileLogger.println(text)
+        fileLogger.dispose()
 
         val chunks = filesProvider.getDataFiles()
         assertThat(chunks).hasSize(1)
@@ -113,12 +132,12 @@ class FileLoggerTest {
     
     @Test
     fun test_multiple_chunks() {
-        writeKb(256)
-        writeKb(256)
+        writeKb(1024)
 
         val files = filesProvider.getDataFiles()
-        assertThat(files).hasSize(2)
-        assertThat(files[0].name.substringAfter('_').toInt()).isLessThan(files[1].name.substringAfter('_').toInt())
+        val fileIndexes = files.map { it.name.substringAfter('_').toInt() }
+        assertThat(files.isNotEmpty())
+        assertThat(fileIndexes).isEqualTo((0..files.size - 1).toList())
     }
 
 
@@ -127,30 +146,37 @@ class FileLoggerTest {
         writeKb(4096)
 
         var files = filesProvider.getDataFiles()
-        assertThat(files).hasSize(4096 / 250)
-        
-        val firstBefore = files.map { it.name.substringAfter('_').toInt() }
-                .sorted()
-                .first()
+
+        val totalSize = files.fold(0L, { total, file -> total + file.length() })
+        assertThat(totalSize > 2 * 1024 * 1024)
+
+        val firstBefore = files
+          .map { it.name.substringAfter('_').toInt() }
+          .sorted()
+          .first()
         
         assertThat(firstBefore).isEqualTo(0)
         
         filesProvider.cleanupOldFiles()
         files = filesProvider.getDataFiles()
-        assertThat(files).hasSize(2048 / 250)
+
+        val totalSizeAfterCleanup = files.fold(0L, { total, file -> total + file.length() })
+        assertThat(totalSizeAfterCleanup < 2 * 1024 * 1024)
+
+        val firstAfter = files
+          .map { it.name.substringAfter('_').toInt() }
+          .sorted()
+          .first()
         
-        val firstAfter = files.map { it.name.substringAfter('_').toInt() }
-                .sorted()
-                .first()
-        
-        assertThat(firstAfter).isEqualTo(8)
+        assertThat(firstAfter).isGreaterThan(0)
     }
 
     private fun writeKb(kb: Int) {
-        val bytesToWrite = 1024 * kb
-        (0..bytesToWrite).forEach {
+        val lineLength = System.lineSeparator().length
+        (0..kb * 1024 / lineLength).forEach {
             fileLogger.println("")
         }
+        fileLogger.dispose()
     }
 
 }

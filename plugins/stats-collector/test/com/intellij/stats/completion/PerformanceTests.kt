@@ -1,13 +1,28 @@
+/*
+ * Copyright 2000-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.stats.completion
 
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.testFramework.UsefulTestCase
-import com.nhaarman.mockito_kotlin.mock
-import com.nhaarman.mockito_kotlin.any
-import org.mockito.ArgumentMatchers.anyMap
+import org.mockito.Matchers
+import org.mockito.Mockito.*
 import org.picocontainer.MutablePicoContainer
 import java.io.File
+import java.util.concurrent.atomic.AtomicBoolean
 
 
 class PerformanceTests : LightFixtureCompletionTestCase() {
@@ -29,52 +44,60 @@ class Test {
         super.setUp()
         val container = ApplicationManager.getApplication().picoContainer as MutablePicoContainer
         pathProvider = container.getComponentInstance(FilePathProvider::class.java.name) as FilePathProvider
+        CompletionTrackerInitializer.isEnabledInTests = true
     }
 
     override fun tearDown() {
+        CompletionTrackerInitializer.isEnabledInTests = false
         try {
             super.tearDown()
         } finally {
             CompletionLoggerProvider.getInstance().dispose()
-        val statsDir = pathProvider.getStatsDataDirectory()
+            val statsDir = pathProvider.getStatsDataDirectory()
             statsDir.deleteRecursively()
         }
     }
 
-    fun `test do not block EDT on logging`() {
+    fun `test do not block EDT on data send`() {
         myFixture.configureByText("Test.java", text)
         myFixture.addClass(runnable)
-        
-        val requestService = mock<RequestService> {
-            on { postZipped(any<String>(), any<File>()) }.then { 
-                Thread.sleep(5000)
-                ResponseData(200)
-            }
-            
-            on { post(any<String>(), anyMap<String, String>()) }.then { 
-                Thread.sleep(5000)
-                ResponseData(200)
-            }
-        }
+
+        val requestService = slowRequestService()
 
         val file = pathProvider.getUniqueFile()
         file.writeText("Some existing data to send")
         
-        val sender = StatisticSender(requestService, pathProvider)
-        
-        ApplicationManager.getApplication().executeOnPooledThread { 
+        val sender = StatisticSenderImpl(requestService, pathProvider)
+
+        val isSendFinished = AtomicBoolean(false)
+
+        val lock = Object()
+        ApplicationManager.getApplication().executeOnPooledThread {
+            synchronized(lock, { lock.notify() })
             sender.sendStatsData("")
+            isSendFinished.set(true)
         }
-        Thread.sleep(300)
-        
-        val start = System.currentTimeMillis()
+        synchronized(lock, { lock.wait() })
+
         myFixture.type('.')
         myFixture.completeBasic()
-        myFixture.type("xxxx")
-        val end = System.currentTimeMillis()
+        myFixture.type("xx")
 
-        val delta = end - start
-        UsefulTestCase.assertTrue("Time on typing: $delta", delta < 2000)
+        UsefulTestCase.assertFalse(isSendFinished.get())
+    }
+
+    private fun slowRequestService(): RequestService {
+        return mock(RequestService::class.java).apply {
+            `when`(postZipped(anyString(), any() ?: File("."))).then {
+                Thread.sleep(1000)
+                ResponseData(200)
+            }
+
+            `when`(post(Matchers.anyString(), anyMapOf(String::class.java, String::class.java))).then {
+                Thread.sleep(1000)
+                ResponseData(200)
+            }
+        }
     }
 
 }

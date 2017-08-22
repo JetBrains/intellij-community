@@ -1,6 +1,7 @@
-package com.intellij.stats.completion.events
+package com.intellij.stats.events.completion
 
-import com.intellij.testFramework.UsefulTestCase
+import junit.framework.Assert.assertEquals
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 import java.util.*
 
@@ -12,9 +13,9 @@ object Fixtures {
     val relevance = mapOf(Pair("sort", 1.0.toString()), Pair("proximity", 2.0.toString()))
     
     val lookupList = listOf(
-            LookupEntryInfo(0, 5, relevance), 
-            LookupEntryInfo(1, 9, relevance),
-            LookupEntryInfo(2, 7, relevance)
+      LookupEntryInfo(0, 5, relevance),
+      LookupEntryInfo(1, 9, relevance),
+      LookupEntryInfo(2, 7, relevance)
     )
     
 }
@@ -23,8 +24,8 @@ class EventSerializeDeserializeTest {
 
     private fun serializeDeserializeAndCheck(event: LogEvent) {
         val logLine = LogEventSerializer.toString(event)
-        val eventFromString = LogEventSerializer.fromString(logLine)
-        UsefulTestCase.assertEquals(logLine, LogEventSerializer.toString(eventFromString!!))
+        val eventFromString = LogEventSerializer.fromString(logLine).event!!
+        assertEquals(logLine, LogEventSerializer.toString(eventFromString))
     }
 
     @Test
@@ -65,7 +66,7 @@ class EventSerializeDeserializeTest {
     
     @Test
     fun `explicit select event`() {
-        var event: LogEvent = ExplicitSelectEvent(Fixtures.userId, "xx", listOf(1,2,3), Fixtures.lookupList, 2, 2)
+        var event: LogEvent = ExplicitSelectEvent(Fixtures.userId, "xx", listOf(1, 2, 3), Fixtures.lookupList, 2, 2)
         serializeDeserializeAndCheck(event)
         
         event = ExplicitSelectEvent(Fixtures.userId, "xx", emptyList(), emptyList(), 2, 2)
@@ -84,5 +85,32 @@ class EventSerializeDeserializeTest {
         val event = TypeEvent(Fixtures.userId, "xx", listOf(1,2,3), Fixtures.lookupList, 1)
         serializeDeserializeAndCheck(event)
     }
+
+    @Test
+    fun `deserialization with info`() {
+        val json = JsonSerializer.toJson(First())
+        val obj: DeserializationResult<Second> = JsonSerializer.fromJson(json, Second::class.java)
+
+        assertThat(obj.absentFields).hasSize(2)
+        assertThat(obj.absentFields).contains("absent_field0")
+        assertThat(obj.absentFields).contains("absent_field1")
+
+        assertThat(obj.unknownFields).hasSize(1)
+        assertThat(obj.unknownFields).contains("unknown_field")
+    }
     
 }
+
+
+private class First {
+    val just_field: String = ""
+    val unknown_field: Int = 0
+}
+
+
+class Second {
+    val just_field: String = ""
+    val absent_field0: Double = 1.0
+    val absent_field1: Double = 1.0
+}
+

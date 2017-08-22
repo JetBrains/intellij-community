@@ -1,87 +1,120 @@
-package com.intellij.stats.completion.validator
+/*
+ * Copyright 2000-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.intellij.stats.events.completion
 
-import com.intellij.stats.completion.events.*
-import java.io.*
 
-data class EventLine(val event: LogEvent, val line: String)
+data class EventLine(val event: LogEvent?,
+                     val unknownLogEventFields: Set<String>,
+                     val absentLogEventFields: Set<String>,
+                     val originalLine: String) {
 
-open class SessionsInputSeparator(input: InputStream,
-                                  output: OutputStream,
-                                  error: OutputStream) {
-    
-    private val inputReader = BufferedReader(InputStreamReader(input))
-    private val outputWriter = BufferedWriter(OutputStreamWriter(output))
-    private val errorWriter = BufferedWriter(OutputStreamWriter(error))
+    constructor(event: DeserializedLogEvent, originalLine: String): this(event.event, event.unknownEventFields, event.absentEventFields, originalLine)
 
-    var session = mutableListOf<EventLine>()
-    var currentSessionUid = ""
+    val sessionUid: String?
+        get() = event?.sessionUid
 
-    fun processInput() {
-        var line: String? = inputReader.readLine()
-        
-        while (line != null) {
-            val event: LogEvent? = LogEventSerializer.fromString(line)
-            if (event == null) {
-                handleNullEvent(line)
-                continue
-            }
-
-            if (currentSessionUid != event.sessionUid) {
-                processCompletionSession(session)
-                reset()
-                currentSessionUid = event.sessionUid
-            }
-            
-            session.add(EventLine(event, line))
-            line = inputReader.readLine()
-        }
-        
-        processCompletionSession(session)
-        
-        outputWriter.flush()
-        errorWriter.flush()
-    }
-
-    private fun processCompletionSession(session: List<EventLine>) {
-        if (session.isEmpty()) return
-
-        var isValidSession = false
-        
-        val initial = session.first()
-        if (initial.event is CompletionStartedEvent) {
-            val state = CompletionState(initial.event)
-            session.drop(1).forEach { state.accept(it.event) }
-            isValidSession = state.isFinished && state.isValid
-        }
-
-        onSessionProcessingFinished(session, isValidSession)
-    }
-
-    open protected fun onSessionProcessingFinished(session: List<EventLine>, isValidSession: Boolean) {
-        val writer = if (isValidSession) outputWriter else errorWriter
-        session.forEach {
-            writer.write(it.line)
-            writer.newLine()
-        }
-    }
-
-    private fun handleNullEvent(line: String?) {
-        processCompletionSession(session)
-        reset()
-        
-        errorWriter.write(line)
-        errorWriter.newLine()
-    }
-
-    private fun reset() {
-        session.clear()
-        currentSessionUid = ""
-    }
-    
+    val isOk: Boolean
+        get() = event != null && unknownLogEventFields.isEmpty() && absentLogEventFields.isEmpty()
 }
 
 
-class CompletionState(event: CompletionStartedEvent) : LogEventVisitor() {
+interface SessionValidationResult {
+    fun addErrorSession(errorSession: List<EventLine>)
+    fun addValidSession(validSession: List<EventLine>)
+}
+
+
+open class SimpleSessionValidationResult: SessionValidationResult {
+    private val error = mutableListOf<String>()
+    private val valid = mutableListOf<String>()
+
+    val errorLines: List<String>
+        get() = error
+
+    val validLines: List<String>
+        get() = valid
+
+    override fun addErrorSession(errorSession: List<EventLine>) {
+        error.addAll(errorSession.map { it.originalLine })
+    }
+
+    override fun addValidSession(validSession: List<EventLine>) {
+        valid.addAll(validSession.map { it.originalLine })
+    }
+}
+
+
+class InputSessionValidator(private val sessionValidationResult: SessionValidationResult) {
+
+    fun filter(input: Iterable<String>) {
+        var currentSessionUid: String? = null
+        val session = mutableListOf<EventLine>()
+
+        for (line in input) {
+            if (line.trim().isEmpty()) continue
+
+            val event = LogEventSerializer.fromString(line)
+            val eventLine = EventLine(event, line)
+
+            if (eventLine.sessionUid == currentSessionUid) {
+                session.add(eventLine)
+            }
+            else {
+                processCompletionSession(session)
+                session.clear()
+                currentSessionUid = eventLine.sessionUid
+                session.add(eventLine)
+            }
+        }
+
+        processCompletionSession(session)
+    }
+
+
+    private fun processCompletionSession(session: List<EventLine>) {
+        if (session.isEmpty()) return
+        if (session.any { !it.isOk }) {
+            dumpSession(session, isValidSession = false)
+            return
+        }
+
+        var isValidSession = false
+        val initial = session.first()
+        if (initial.event is CompletionStartedEvent) {
+            val state = CompletionValidationState(initial.event)
+            session.drop(1).forEach { state.accept(it.event!!) }
+            isValidSession = state.isFinished && state.isValid
+        }
+
+        dumpSession(session, isValidSession)
+    }
+
+    private fun dumpSession(session: List<EventLine>, isValidSession: Boolean) {
+        if (isValidSession) {
+            sessionValidationResult.addValidSession(session)
+        }
+        else {
+            sessionValidationResult.addErrorSession(session)
+        }
+    }
+
+}
+
+
+class CompletionValidationState(event: CompletionStartedEvent) : LogEventVisitor() {
     val allCompletionItemIds: MutableList<Int> = event.newCompletionListItems.map { it.id }.toMutableList()
     
     var currentPosition    = event.currentPosition
@@ -103,7 +136,7 @@ class CompletionState(event: CompletionStartedEvent) : LogEventVisitor() {
     private fun getSafeCurrentId(completionList: List<Int>, position: Int): Int {
         if (completionList.isEmpty()) {
             return -1
-        }        
+        }
         else if (position < completionList.size && position >= 0) {
             return completionList[position]
         }
@@ -168,22 +201,8 @@ class CompletionState(event: CompletionStartedEvent) : LogEventVisitor() {
 
     override fun visit(event: TypedSelectEvent) {
         val id = event.selectedId
-        updateValid(completionList[0] == id)
+        updateValid(completionList[currentPosition] == id)
         isFinished = true
     }
     
 }
-
-
-//fun main(args: Array<String>) {
-//    val inputStream = FileInputStream("bad_one.txt")
-    
-//    val good = FileOutputStream("good.txt")
-//    val bad = FileOutputStream("bad.txt")
-    
-//    val good = System.out
-//    val bad = System.err
-    
-//    val separator = SessionsInputSeparator(inputStream, good, bad)
-//    separator.processInput()
-//}

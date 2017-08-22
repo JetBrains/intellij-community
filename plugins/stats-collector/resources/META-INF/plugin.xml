@@ -33,17 +33,14 @@
                         testServiceImplementation="com.intellij.mocks.TestFilePathProvider">
     </applicationService>
     
-    <applicationService serviceInterface="com.intellij.stats.completion.LogFileManager" 
-                        serviceImplementation="com.intellij.stats.completion.LogFileManagerImpl">
-    </applicationService>
-    
-    <applicationService serviceInterface="com.intellij.stats.completion.StatsDataSender"
-                        serviceImplementation="com.intellij.stats.completion.StatisticSender"
+
+    <applicationService serviceInterface="com.intellij.stats.completion.StatisticSender"
+                        serviceImplementation="com.intellij.stats.completion.StatisticSenderImpl"
                         testServiceImplementation="com.intellij.mocks.TestStatisticSender">
     </applicationService>
     
     <applicationService serviceInterface="com.intellij.stats.completion.experiment.WebServiceStatus"
-                        serviceImplementation="com.intellij.stats.completion.experiment.StatusInfoProvider">
+                        serviceImplementation="com.intellij.stats.completion.experiment.WebServiceStatusProvider">
     </applicationService>
 
     <applicationService serviceInterface="com.intellij.stats.completion.RequestService"
@@ -67,7 +64,13 @@
     <applicationService serviceImplementation="com.intellij.sorting.SortingTimeStatistics"/>
     
     <postStartupActivity implementation="com.intellij.plugin.NotificationManager"/>
+
+    <applicationService serviceInterface="com.intellij.completion.tracker.LookupElementTracking"
+                        serviceImplementation="com.intellij.completion.tracker.UserDataLookupElementTracking"/>
+
     <applicationConfigurable provider="com.intellij.plugin.PluginSettingsConfigurableProvider"/>
+
+    <reporting.sendPermission implementation="com.intellij.reporting.DataSendAllowed"/>
 
   </extensions>
 
@@ -75,22 +78,22 @@
     <action class="com.intellij.plugin.ToggleManualMlSorting" id="ToggleManualMlSorting" internal="true"/>
   </actions>
 
-  <project-components>
-    <component>
-      <implementation-class>com.intellij.stats.completion.CompletionTrackerInitializer</implementation-class>
-      <skipForDefaultProject/>
-    </component>
-  </project-components>
-  
   <application-components>
     <component>
       <implementation-class>com.intellij.stats.completion.SenderComponent</implementation-class>
     </component>
-    
+
+    <component>
+      <implementation-class>com.intellij.stats.completion.CompletionTrackerInitializer</implementation-class>
+    </component>
+
+    <component>
+      <implementation-class>com.intellij.completion.tracker.ShownTimesTrackerInitializer</implementation-class>
+    </component>
+
     <component>
       <implementation-class>com.intellij.sorting.FeatureTransformerProvider</implementation-class>
     </component>
-    
   </application-components>
 
 </idea-plugin>

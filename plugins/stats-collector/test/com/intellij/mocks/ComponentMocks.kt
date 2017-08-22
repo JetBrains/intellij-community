@@ -1,7 +1,7 @@
 package com.intellij.mocks
 
 import com.intellij.stats.completion.RequestService
-import com.intellij.stats.completion.StatsDataSender
+import com.intellij.stats.completion.StatisticSender
 import com.intellij.stats.completion.UniqueFilesProvider
 import com.intellij.stats.completion.experiment.ExperimentDecision
 import com.nhaarman.mockito_kotlin.mock
@@ -30,7 +30,7 @@ internal class TestRequestService : RequestService() {
 }
 
 
-internal class TestStatisticSender : StatsDataSender {
+internal class TestStatisticSender : StatisticSender {
     companion object {
         var sendAction: (String) -> Unit = { Unit }
     }
@@ -40,7 +40,7 @@ internal class TestStatisticSender : StatsDataSender {
 }
 
 
-class TestFilePathProvider: UniqueFilesProvider("chunk", File(".")) {
+class TestFilePathProvider: UniqueFilesProvider("chunk", ".") {
     override fun cleanupOldFiles() {
         super.cleanupOldFiles()
     }

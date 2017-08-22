@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.stats.completion
 
 import com.intellij.codeInsight.lookup.LookupAdapter
@@ -8,50 +23,66 @@ import com.intellij.codeInsight.lookup.impl.PrefixChangeListener
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.AbstractProjectComponent
+import com.intellij.openapi.components.ApplicationComponent
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.ProjectManagerListener
+import com.intellij.reporting.isSendAllowed
+import com.intellij.reporting.isUnitTestMode
 import com.intellij.stats.completion.experiment.WebServiceStatus
 import java.beans.PropertyChangeListener
 
 
-class CompletionTrackerInitializer(project: Project, serviceStatus: WebServiceStatus): AbstractProjectComponent(project) {
-    private val lookupActionsTracker = LookupActionsListener()
+class CompletionTrackerInitializer(experimentHelper: WebServiceStatus): ApplicationComponent {
+    companion object {
+        var isEnabledInTests = false
+    }
+
+    private val actionListener = LookupActionsListener()
     
     private val lookupTrackerInitializer = PropertyChangeListener {
         val lookup = it.newValue
         if (lookup == null) {
-            lookupActionsTracker.listener = CompletionPopupListener.Adapter()
+            actionListener.listener = CompletionPopupListener.Adapter()
         }
         else if (lookup is LookupImpl) {
+            if (isUnitTestMode() && !isEnabledInTests) return@PropertyChangeListener
+
             val logger = CompletionLoggerProvider.getInstance().newCompletionLogger()
-            val tracker = CompletionActionsTracker(lookup, logger, serviceStatus)
-            lookupActionsTracker.listener = tracker
+            val tracker = CompletionActionsTracker(lookup, logger, experimentHelper)
+            actionListener.listener = tracker
             lookup.addLookupListener(tracker)
             lookup.setPrefixChangeListener(tracker)
         }
     }
 
+    private fun shouldInitialize() = isSendAllowed() || isUnitTestMode()
+
     override fun initComponent() {
-        ActionManager.getInstance().addAnActionListener(lookupActionsTracker)
+        if (!shouldInitialize()) return
+
+        ActionManager.getInstance().addAnActionListener(actionListener)
+        ApplicationManager.getApplication().messageBus.connect().subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
+            override fun projectOpened(project: Project) {
+                val lookupManager = LookupManager.getInstance(project)
+                lookupManager.addPropertyChangeListener(lookupTrackerInitializer)
+            }
+
+            override fun projectClosed(project: Project) {
+                val lookupManager = LookupManager.getInstance(project)
+                lookupManager.removePropertyChangeListener(lookupTrackerInitializer)
+            }
+        })
     }
 
     override fun disposeComponent() {
-        ActionManager.getInstance().removeAnActionListener(lookupActionsTracker)
-        CompletionLoggerProvider.getInstance().dispose()
+        if (!shouldInitialize()) return
+
+        ActionManager.getInstance().removeAnActionListener(actionListener)
     }
 
-    override fun projectOpened() {
-        val manager = LookupManager.getInstance(myProject)
-        manager.addPropertyChangeListener(lookupTrackerInitializer)
-    }
-    
-    override fun projectClosed() {
-        val manager = LookupManager.getInstance(myProject)
-        manager.removePropertyChangeListener(lookupTrackerInitializer)
-    }
-    
 }
 
 
@@ -127,21 +158,43 @@ class LookupActionsListener : AnActionListener.Adapter() {
     }
 }
 
-class CompletionActionsTracker(private val lookup: LookupImpl,
-                               private val logger: CompletionLogger,
-                               private val serviceStatus: WebServiceStatus)
-      : CompletionPopupListener, 
-        PrefixChangeListener, 
-        LookupAdapter() {
-    
+
+
+class DeferredLog {
+
     companion object {
         private val DO_NOTHING: () -> Unit = { }
     }
-    
+
+    private var lastAction: () -> Unit = DO_NOTHING
+
+    fun clear() {
+        lastAction = DO_NOTHING
+    }
+
+    fun defer(action: () -> Unit) {
+        lastAction = action
+    }
+
+    fun log() {
+        lastAction()
+        clear()
+    }
+
+}
+
+
+class CompletionActionsTracker(private val lookup: LookupImpl,
+                               private val logger: CompletionLogger,
+                               private val experimentHelper: WebServiceStatus)
+      : CompletionPopupListener, 
+        PrefixChangeListener, 
+        LookupAdapter() {
+
     private var completionStarted = false
     private var selectedByDotTyping = false
 
-    private var lastAction: () -> Unit = DO_NOTHING
+    private val deferredLog = DeferredLog()
     
     private fun isCompletionActive(): Boolean {
         return completionStarted && !lookup.isLookupDisposed
@@ -153,7 +206,7 @@ class CompletionActionsTracker(private val lookup: LookupImpl,
 
         val items = lookup.items
         if (lookup.currentItem == null) {
-            lastAction = DO_NOTHING
+            deferredLog.clear()
             logger.completionCancelled()
             return
         }
@@ -161,33 +214,24 @@ class CompletionActionsTracker(private val lookup: LookupImpl,
         val prefix = lookup.itemPattern(lookup.currentItem!!)
         val wasTyped = items.firstOrNull()?.lookupString?.equals(prefix) ?: false
         if (wasTyped || selectedByDotTyping) {
-            logLastAction()
+            deferredLog.log()
             logger.itemSelectedByTyping(lookup)
         }
         else {
-            lastAction = DO_NOTHING
+            deferredLog.clear()
             logger.completionCancelled()
         }
     }
 
-    fun logLastAction() {
-        lastAction()
-        lastAction = DO_NOTHING
-    }
-
-    fun setLastAction(block: () -> Unit) {
-        lastAction = block
-    }
-    
     override fun currentItemChanged(event: LookupEvent) {
         if (completionStarted) {
             return
         }
 
         completionStarted = true
-        lastAction = {
-            val isPerformExperiment = serviceStatus.isExperimentOnCurrentIDE()
-            val experimentVersion = serviceStatus.experimentVersion()
+        deferredLog.defer {
+            val isPerformExperiment = experimentHelper.isExperimentOnCurrentIDE()
+            val experimentVersion = experimentHelper.experimentVersion()
             logger.completionStarted(lookup, isPerformExperiment, experimentVersion)
         }
     }
@@ -195,46 +239,46 @@ class CompletionActionsTracker(private val lookup: LookupImpl,
     override fun itemSelected(event: LookupEvent) {
         if (!completionStarted) return
         
-        logLastAction()
+        deferredLog.log()
         logger.itemSelectedCompletionFinished(lookup)
     }
 
     override fun beforeDownPressed() {
-        logLastAction()
+        deferredLog.log()
     }
 
     override fun downPressed() {
         if (!isCompletionActive()) return
 
-        logLastAction()
-        setLastAction {
+        deferredLog.log()
+        deferredLog.defer {
             logger.downPressed(lookup)
         }
     }
 
     override fun beforeUpPressed() {
-        logLastAction()
+        deferredLog.log()
     }
 
     override fun upPressed() {
         if (!isCompletionActive()) return
 
-        logLastAction()
-        setLastAction {
+        deferredLog.log()
+        deferredLog.defer {
             logger.upPressed(lookup)
         }
     }
 
     override fun beforeBackspacePressed() {
         if (!isCompletionActive()) return
-        logLastAction()
+        deferredLog.log()
     }
 
     override fun afterBackspacePressed() {
         if (!isCompletionActive()) return
 
-        logLastAction()
-        setLastAction {
+        deferredLog.log()
+        deferredLog.defer {
             logger.afterBackspacePressed(lookup)
         }
     }
@@ -242,8 +286,8 @@ class CompletionActionsTracker(private val lookup: LookupImpl,
     override fun beforeCharTyped(c: Char) {
         if (!isCompletionActive()) return
 
-        logLastAction()
-        
+        deferredLog.log()
+
         if (c == '.') {
             val item = lookup.currentItem
             if (item == null) {
@@ -261,9 +305,16 @@ class CompletionActionsTracker(private val lookup: LookupImpl,
     override fun afterAppend(c: Char) {
         if (!isCompletionActive()) return
 
-        logLastAction()
-        setLastAction {
+        deferredLog.log()
+        deferredLog.defer {
             logger.afterCharTyped(c, lookup)
         }
     }
+}
+
+
+fun LookupImpl.prefixLength(): Int {
+    val lookupOriginalStart = this.lookupOriginalStart
+    val caretOffset = this.editor.caretModel.offset
+    return if (lookupOriginalStart < 0) 0 else caretOffset - lookupOriginalStart + 1
 }

@@ -2,10 +2,7 @@ package com.intellij.components
 
 import com.intellij.mocks.TestRequestService
 import com.intellij.sorting.WebServiceMock
-import com.intellij.stats.completion.FilePathProvider
-import com.intellij.stats.completion.RequestService
-import com.intellij.stats.completion.SenderComponent
-import com.intellij.stats.completion.StatisticSender
+import com.intellij.stats.completion.*
 import com.intellij.stats.completion.experiment.WebServiceStatus
 import com.intellij.testFramework.LightPlatformTestCase
 import com.nhaarman.mockito_kotlin.mock
@@ -18,7 +15,7 @@ import org.assertj.core.api.Assertions.assertThat
 class StatusUpdateHappensTest: LightPlatformTestCase() {
 
     fun `test sender component updates status`() {
-        val statsSender = StatisticSender(mock<RequestService>(), mock<FilePathProvider>())
+        val statsSender = StatisticSenderImpl(mock(), mock())
         val statusHelper = mock<WebServiceStatus>()
         val senderComponent = SenderComponent(statsSender, statusHelper)
 

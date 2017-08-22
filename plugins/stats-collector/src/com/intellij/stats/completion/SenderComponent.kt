@@ -1,11 +1,27 @@
+/*
+ * Copyright 2000-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.stats.completion
 
 import com.google.common.net.HttpHeaders
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ApplicationComponent
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.stats.completion.experiment.WebServiceStatus
+import com.intellij.stats.completion.experiment.WebServiceStatusProvider
 import com.intellij.util.Alarm
 import com.intellij.util.Time
 import org.apache.commons.codec.binary.Base64OutputStream
@@ -26,16 +42,15 @@ fun assertNotEDT() {
     assert(!SwingUtilities.isEventDispatchThread() || isInTestMode)
 }
 
-class SenderComponent(val sender: StatsDataSender,
-                      val statusHelper: WebServiceStatus
-) : ApplicationComponent.Adapter() {
-
-    private val LOG = Logger.getInstance(SenderComponent::class.java)
+class SenderComponent(val sender: StatisticSender, val statusHelper: WebServiceStatus) : ApplicationComponent {
+    private val LOG = logger<SenderComponent>()
     private val disposable = Disposer.newDisposable()
     private val alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, disposable)
     private val sendInterval = 5 * Time.MINUTE
 
     private fun send() {
+        if (ApplicationManager.getApplication().isUnitTestMode) return
+
         try {
             ApplicationManager.getApplication().executeOnPooledThread {
                 statusHelper.updateStatus()
@@ -62,12 +77,11 @@ class SenderComponent(val sender: StatsDataSender,
     }
 }
 
-interface StatsDataSender {
+interface StatisticSender {
     fun sendStatsData(url: String)
 }
 
-
-class StatisticSender(val requestService: RequestService, val filePathProvider: FilePathProvider): StatsDataSender {
+class StatisticSenderImpl(val requestService: RequestService, val filePathProvider: FilePathProvider): StatisticSender {
 
     override fun sendStatsData(url: String) {
         assertNotEDT()
@@ -105,7 +119,7 @@ abstract class RequestService {
 }
 
 class SimpleRequestService: RequestService() {
-    private val LOG = Logger.getInstance(SimpleRequestService::class.java)
+    private val LOG = logger<SimpleRequestService>()
 
     override fun post(url: String, params: Map<String, String>): ResponseData? {
         val form = Form.form()

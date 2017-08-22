@@ -37,7 +37,7 @@ interface WebServiceStatus {
 }
 
 
-class StatusInfoProvider(
+class WebServiceStatusProvider(
         private val requestSender: RequestService,
         private val experimentDecision: ExperimentDecision
 ): WebServiceStatus {
