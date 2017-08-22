@@ -152,7 +152,7 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
       public void onChanged(Boolean value) {
         final AbstractTestTreeBuilder builder = model.getTreeBuilder();
         if (builder != null) {
-          builder.setTestsComparator(model.getProperties());
+          builder.setTestsComparator(model);
         }
       }
     }, model, true); 
@@ -161,7 +161,7 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
       public void onChanged(Boolean value) {
         final AbstractTestTreeBuilder builder = model.getTreeBuilder();
         if (builder != null) {
-          builder.setTestsComparator(model.getProperties());
+          builder.setTestsComparator(model);
         }
       }
     }, model, true);
