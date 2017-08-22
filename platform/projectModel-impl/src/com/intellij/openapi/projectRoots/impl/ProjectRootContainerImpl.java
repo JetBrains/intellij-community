@@ -254,7 +254,7 @@ public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRoot
     if (children.size() != 1) {
       LOG.error(children);
     }
-    CompositeProjectRoot root = (CompositeProjectRoot)ProjectRootUtil.read(children.get(0));
+    CompositeProjectRoot root = (CompositeProjectRoot)CompositeProjectRoot.read(children.get(0));
     myRoots.put(type, root);
   }
 
@@ -263,7 +263,7 @@ public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRoot
     if (sdkRootName != null) {
       Element e = new Element(sdkRootName);
       roots.addContent(e);
-      final Element root = ProjectRootUtil.write(myRoots.get(type));
+      final Element root = CompositeProjectRoot.write(myRoots.get(type));
       e.addContent(root);
     }
   }

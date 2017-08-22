@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -32,6 +33,10 @@ import java.util.List;
  * @author mike
  */
 class CompositeProjectRoot implements ProjectRoot {
+  @NonNls private static final String SIMPLE_ROOT = "simple";
+  @NonNls private static final String COMPOSITE_ROOT = "composite";
+  @NonNls private static final String ATTRIBUTE_TYPE = "type";
+  @NonNls private static final String ELEMENT_ROOT = "root";
   private final List<ProjectRoot> myRoots = new ArrayList<>();
 
   @NotNull 
@@ -104,13 +109,13 @@ class CompositeProjectRoot implements ProjectRoot {
 
   public void readExternal(Element element) {
     for (Element child : element.getChildren()) {
-      myRoots.add(ProjectRootUtil.read(child));
+      myRoots.add(read(child));
     }
   }
 
   public void writeExternal(Element element) {
     for (ProjectRoot root : myRoots) {
-      Element e = ProjectRootUtil.write(root);
+      Element e = write(root);
       element.addContent(e);
     }
   }
@@ -120,5 +125,38 @@ class CompositeProjectRoot implements ProjectRoot {
     for (ProjectRoot root : myRoots) {
       root.update();
     }
+  }
+
+  @NotNull
+  static ProjectRoot read(Element element)  {
+    final String type = element.getAttributeValue(ATTRIBUTE_TYPE);
+
+    if (type.equals(SIMPLE_ROOT)) {
+      return new SimpleProjectRoot(element);
+    }
+    if (type.equals(COMPOSITE_ROOT)) {
+      CompositeProjectRoot root = new CompositeProjectRoot();
+      root.readExternal(element);
+      return root;
+    }
+    throw new IllegalArgumentException("Wrong type: " + type);
+  }
+
+  @NotNull
+  static Element write(ProjectRoot projectRoot)  {
+    Element element = new Element(ELEMENT_ROOT);
+    if (projectRoot instanceof SimpleProjectRoot) {
+      element.setAttribute(ATTRIBUTE_TYPE, SIMPLE_ROOT);
+      ((SimpleProjectRoot)projectRoot).writeExternal(element);
+    }
+    else if (projectRoot instanceof CompositeProjectRoot) {
+      element.setAttribute(ATTRIBUTE_TYPE, COMPOSITE_ROOT);
+      ((CompositeProjectRoot)projectRoot).writeExternal(element);
+    }
+    else {
+      throw new IllegalArgumentException("Wrong root: " + projectRoot);
+    }
+
+    return element;
   }
 }
