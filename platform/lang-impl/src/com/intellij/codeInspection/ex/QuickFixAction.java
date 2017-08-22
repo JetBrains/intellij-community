@@ -33,6 +33,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -48,7 +49,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.ClickListener;
-import com.intellij.util.SequentialModalProgressTask;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
@@ -124,7 +124,7 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
       Ref<CommonProblemDescriptor[]> descriptors = Ref.create();
       Set<VirtualFile> readOnlyFiles = new THashSet<>();
       //TODO revise when jdk9 arrives. Until then this redundant cast is a workaround to compile under jdk9 b169
-      if (!ProgressManager.getInstance().runProcessWithProgressSynchronously((Runnable)() -> ReadAction.run(() -> {
+      if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ReadAction.run(() -> {
         final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
         indicator.setText("Checking problem descriptors...");
         descriptors.set(tree.getSelectedDescriptors(true, readOnlyFiles, false, false));
@@ -178,11 +178,9 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
     assert templatePresentationText != null;
     CommandProcessor.getInstance().executeCommand(project, () -> {
       CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
-      final SequentialModalProgressTask progressTask =
-        new SequentialModalProgressTask(project, templatePresentationText, true);
-      progressTask.setMinIterationTime(200);
-      progressTask.setTask(new PerformFixesTask(project, descriptors, ignoredElements, progressTask, context));
-      ProgressManager.getInstance().run(progressTask);
+      PerformFixesTask performFixesTask = new PerformFixesTask(project, descriptors, ignoredElements, context);
+      ((ApplicationImpl)ApplicationManager.getApplication())
+        .runWriteActionWithProgressInDispatchThread(templatePresentationText, project, null, null, performFixesTask::doRun);
     }, templatePresentationText, null);
   }
 
@@ -248,13 +246,7 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
         if (containingFile1 == containingFile2) {
           int i1 = element1.getTextOffset();
           int i2 = element2.getTextOffset();
-          if (i1 < i2) {
-            return 1;
-          }
-          if (i1 > i2){
-            return -1;
-          }
-          return 0;
+          return Integer.compare(i2, i1);
         }
         return containingFile1.getName().compareTo(containingFile2.getName());
       }
@@ -341,9 +333,8 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
     PerformFixesTask(@NotNull Project project,
                      @NotNull CommonProblemDescriptor[] descriptors,
                      @NotNull Set<PsiElement> ignoredElements,
-                     @NotNull SequentialModalProgressTask task,
                      @NotNull GlobalInspectionContextImpl context) {
-      super(project, descriptors, task);
+      super(project, descriptors);
       myContext = context;
       myIgnoredElements = ignoredElements;
     }
