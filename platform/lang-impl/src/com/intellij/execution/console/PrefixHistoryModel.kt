@@ -173,7 +173,7 @@ private class MasterModel : ConsoleHistoryModel, EntriesWithPositionHolder() {
 
 
   override fun resetEntries(ent: MutableList<String>) {
-    updateAtomically { state ->
+    updateAtomically {
       val newEntries = ent.toImmutableList()
       return@updateAtomically State(newEntries, newEntries.size)
     }
@@ -183,14 +183,13 @@ private class MasterModel : ConsoleHistoryModel, EntriesWithPositionHolder() {
   override fun addToHistory(statement: String?) {
     val stmt = statement ?: return
 
-    updateAtomically { state ->
+    updateAtomically { (entries) ->
       val maxHistorySize = maxHistorySize
-      val entries = myState.entries
       var newEntries = entries - stmt
       if (newEntries.size >= maxHistorySize) {
         newEntries = newEntries.removeAt(0)
       }
-      newEntries = newEntries + stmt
+      newEntries += stmt
 
       return@updateAtomically State(newEntries, newEntries.size)
     }
@@ -222,8 +221,7 @@ private class MasterModel : ConsoleHistoryModel, EntriesWithPositionHolder() {
   override fun getHistorySize(): Int = myState.entries.size
 
   override fun getHistoryNext(): TextWithOffset? {
-    return updateAtomically { state ->
-      val (entries, index) = state
+    return updateAtomically { (entries, index) ->
       return@updateAtomically if (index >= 0) {
         State(entries, index - 1)
       }
@@ -234,8 +232,7 @@ private class MasterModel : ConsoleHistoryModel, EntriesWithPositionHolder() {
   }
 
   override fun getHistoryPrev(): TextWithOffset? {
-    return updateAtomically { state ->
-      val (entries, index) = state
+    return updateAtomically { (entries, index) ->
       return@updateAtomically if (index <= entries.size - 1) {
         State(entries, index + 1)
       }
