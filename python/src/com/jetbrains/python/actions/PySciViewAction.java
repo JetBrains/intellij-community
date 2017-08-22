@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.options.FontSize;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -36,6 +37,7 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 
 import static com.intellij.codeInsight.documentation.DocumentationComponent.COLOR_KEY;
+import static com.intellij.codeInsight.documentation.DocumentationComponent.QUICK_DOC_FONT_SIZE_PROPERTY;
 import static com.jetbrains.python.debugger.containerview.PyDataView.DATA_VIEWER_ID;
 
 public class PySciViewAction extends ToggleAction implements DumbAware {
@@ -103,6 +105,8 @@ public class PySciViewAction extends ToggleAction implements DumbAware {
     if (element != null) {
       DocumentationManager.getInstance(project).showJavaDocInfo(element, element);
     }
+    setDocFontSize();
+
     final ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.DOCUMENTATION);
     if (window != null) {
       window.setAnchor(ToolWindowAnchor.RIGHT, null);
@@ -111,6 +115,21 @@ public class PySciViewAction extends ToggleAction implements DumbAware {
       window.setType(ToolWindowType.DOCKED, null);
       window.setAutoHide(false);
     }
+  }
+
+  private static void setDocFontSize() {
+    EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
+    final int editorFontSize = scheme.getEditorFontSize();
+    final FontSize[] values = FontSize.values();
+    FontSize fontSize = FontSize.MEDIUM;
+    for (FontSize value : values) {
+      if (value.getSize() > editorFontSize) {
+        break;
+      }
+      fontSize = value;
+    }
+
+    PropertiesComponent.getInstance().setValue(QUICK_DOC_FONT_SIZE_PROPERTY, String.valueOf(fontSize.toString()));
   }
 
   private void restoreDocumentationPopup(Project project) {
