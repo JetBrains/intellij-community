@@ -263,8 +263,8 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
    *         not suitable for import.
    */
   @NotNull
-  private static List<PsiFileSystemItem> getSubmodulesList(final PsiDirectory directory, @Nullable PsiElement anchor) {
-    List<PsiFileSystemItem> result = new ArrayList<>();
+  private static List<PsiFileSystemItem> getSubmodulesList(@Nullable PsiDirectory directory, @Nullable PsiElement anchor) {
+    final List<PsiFileSystemItem> result = new ArrayList<>();
 
     if (directory != null) { // just in case
       // file modules
@@ -435,13 +435,14 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
     return result;
   }
 
-  public static List<LookupElement> getSubModuleVariants(final PsiDirectory directory,
-                                                         PsiElement location,
-                                                         Set<String> namesAlready) {
-    List<LookupElement> result = new ArrayList<>();
+  @NotNull
+  public static List<LookupElement> getSubModuleVariants(@Nullable PsiDirectory directory,
+                                                         @NotNull PsiElement location,
+                                                         @Nullable Set<String> namesAlready) {
+    final List<LookupElement> result = new ArrayList<>();
     for (PsiFileSystemItem item : getSubmodulesList(directory, location)) {
       if (item != location.getContainingFile().getOriginalFile()) {
-        LookupElement lookupElement = buildFileLookupElement(item, namesAlready);
+        final LookupElement lookupElement = buildFileLookupElement(item, namesAlready);
         if (lookupElement != null) {
           result.add(lookupElement);
         }

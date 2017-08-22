@@ -1186,6 +1186,16 @@ public class PythonCompletionTest extends PyTestCase {
     doTest();
   }
 
+  // PY-15365
+  public void testModulesAndPackagesInDunderAll() {
+    myFixture.copyDirectoryToProject(getTestName(true), "");
+    myFixture.configureByFile("a.py");
+    myFixture.completeBasic();
+    final List<String> suggested = myFixture.getLookupElementStrings();
+    assertNotNull(suggested);
+    assertSameElements(suggested, "m1", "m2", "m3", "m4");
+  }
+
   @Override
   protected String getTestDataPath() {
     return super.getTestDataPath() + "/completion";
