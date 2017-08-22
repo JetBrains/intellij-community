@@ -26,6 +26,7 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.components.BorderLayoutPanel;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -62,7 +63,7 @@ public class OverheadView extends BorderLayoutPanel {
     myTable = new JBTable(myModel);
     addToCenter(ScrollPaneFactory.createScrollPane(myTable));
     TableUtil.setupCheckboxColumn(myTable.getColumnModel().getColumn(0));
-    OverheadTimings.addListener(o -> {
+    OverheadTimings.addListener(o -> DebuggerUIUtil.invokeLater(() -> {
       int idx = 0;
       for (BreakpointOverheadItem item : myModel.getItems()) {
         if (item.myBreakpoint == o) {
@@ -74,7 +75,7 @@ public class OverheadView extends BorderLayoutPanel {
       myModel
         .setItems(StreamEx.of(OverheadTimings.getProducers(process)).select(Breakpoint.class).map(BreakpointOverheadItem::new).toList());
       myModel.fireTableDataChanged();
-    }, process);
+    }), process);
 
     new DumbAwareAction("Toggle") {
       @Override
