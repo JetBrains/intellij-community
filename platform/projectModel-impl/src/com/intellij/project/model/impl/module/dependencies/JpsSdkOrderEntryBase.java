@@ -43,13 +43,13 @@ public abstract class JpsSdkOrderEntryBase extends JpsOrderEntry<JpsSdkDependenc
 
   @NotNull
   @Override
-  public VirtualFile[] getFiles(OrderRootType type) {
+  public VirtualFile[] getFiles(@NotNull OrderRootType type) {
     return getRootFiles(type);
   }
 
   @NotNull
   @Override
-  public String[] getUrls(OrderRootType rootType) {
+  public String[] getUrls(@NotNull OrderRootType rootType) {
     return getRootUrls(rootType);
   }
 
