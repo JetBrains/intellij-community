@@ -28,7 +28,6 @@ import com.intellij.openapi.options.*
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.WriteExternalException
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -67,8 +66,10 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
                                                         private val ioDirectory: Path,
                                                         val roamingType: RoamingType = RoamingType.DEFAULT,
                                                         val presentableName: String? = null,
-                                                        private val isUseOldFileNameSanitize: Boolean = false,
+                                                        private val schemeNameToFileName: SchemeNameToFileName = CURRENT_NAME_CONVERTER,
                                                         private val messageBus: MessageBus? = null) : SchemesManager<T>(), SafeWriteRequestor {
+  private val isOldShemeNaming = schemeNameToFileName == OLD_NAME_CONVERTER
+
   private val isLoadingSchemes = AtomicBoolean()
 
   private val schemesRef = AtomicReference(ContainerUtil.createLockFreeCopyOnWriteList<T>() as ConcurrentList<T>)
@@ -197,7 +198,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
 
       catchAndLog(fileName) {
         val bytes = file.contentsToByteArray()
-        lazyPreloadScheme(bytes, isUseOldFileNameSanitize) { name, parser ->
+        lazyPreloadScheme(bytes, isOldShemeNaming) { name, parser ->
           val attributeProvider = Function<String, String?> { parser.getAttributeValue(null, it) }
           val schemeName = name ?: processor.getName(attributeProvider, FileUtilRt.getNameWithoutExtension(fileName))
           val dataHolder = SchemeDataHolderImpl(bytes, externalInfo)
@@ -271,7 +272,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
       }
 
       val bytes = URLUtil.openStream(url).readBytes()
-      lazyPreloadScheme(bytes, isUseOldFileNameSanitize) { name, parser ->
+      lazyPreloadScheme(bytes, isOldShemeNaming) { name, parser ->
         val attributeProvider = Function<String, String?> { parser.getAttributeValue(null, it) }
         val fileName = PathUtilRt.getFileName(url.path)
         val extension = getFileExtension(fileName, true)
@@ -485,7 +486,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
     var scheme: MUTABLE_SCHEME? = null
     if (processor is LazySchemeProcessor) {
       val bytes = input.readBytes()
-      lazyPreloadScheme(bytes, isUseOldFileNameSanitize) { name, parser ->
+      lazyPreloadScheme(bytes, isOldShemeNaming) { name, parser ->
         val attributeProvider = Function<String, String?> { parser.getAttributeValue(null, it) }
         val schemeName = name ?: processor.getName(attributeProvider, fileNameWithoutExtension)
         if (!checkExisting(schemeName)) {
@@ -631,7 +632,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
 
     var fileNameWithoutExtension = currentFileNameWithoutExtension
     if (fileNameWithoutExtension == null || isRenamed(scheme)) {
-      fileNameWithoutExtension = nameGenerator.generateUniqueName(FileUtil.sanitizeFileName(scheme.name, isUseOldFileNameSanitize))
+      fileNameWithoutExtension = nameGenerator.generateUniqueName(schemeNameToFileName.schemeNameToFileName(scheme.name))
     }
 
     val newDigest = element!!.digest()

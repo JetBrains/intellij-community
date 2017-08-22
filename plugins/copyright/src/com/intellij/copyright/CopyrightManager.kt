@@ -85,7 +85,7 @@ class CopyrightManager(private val project: Project, schemeManagerFactory: Schem
 
   private val schemeManagerIprProvider = if (project.isDirectoryBased) null else SchemeManagerIprProvider("copyright")
 
-  val schemeManager = schemeManagerFactory.create("copyright", object : LazySchemeProcessor<SchemeWrapper<CopyrightProfile>, SchemeWrapper<CopyrightProfile>>("myName") {
+  private val schemeManager = schemeManagerFactory.create("copyright", object : LazySchemeProcessor<SchemeWrapper<CopyrightProfile>, SchemeWrapper<CopyrightProfile>>("myName") {
     override fun createScheme(dataHolder: SchemeDataHolder<SchemeWrapper<CopyrightProfile>>,
                               name: String,
                               attributeProvider: Function<String, String?>,
@@ -94,7 +94,7 @@ class CopyrightManager(private val project: Project, schemeManagerFactory: Schem
     }
 
     override fun isSchemeFile(name: CharSequence) = !StringUtil.equals(name, "profiles_settings.xml")
-  }, isUseOldFileNameSanitize = true, streamProvider = schemeManagerIprProvider)
+  }, schemeNameToFileName = OLD_NAME_CONVERTER, streamProvider = schemeManagerIprProvider)
 
   init {
     val app = ApplicationManager.getApplication()
@@ -161,7 +161,7 @@ class CopyrightManager(private val project: Project, schemeManagerFactory: Schem
     }
   }
 
-  fun addCopyright(profile: CopyrightProfile) {
+  private fun addCopyright(profile: CopyrightProfile) {
     schemeManager.addScheme(InitializedSchemeWrapper(profile, schemeWriter))
   }
 

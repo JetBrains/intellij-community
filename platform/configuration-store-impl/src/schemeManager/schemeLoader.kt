@@ -12,13 +12,13 @@ import java.io.IOException
 import java.nio.file.Path
 import java.util.*
 
-internal inline fun lazyPreloadScheme(bytes: ByteArray, isUseOldFileNameSanitize: Boolean, consumer: (name: String?, parser: XmlPullParser) -> Unit) {
+internal inline fun lazyPreloadScheme(bytes: ByteArray, isOldSchemeNaming: Boolean, consumer: (name: String?, parser: XmlPullParser) -> Unit) {
   val parser = MXParser()
   parser.setInput(bytes.inputStream().reader())
-  consumer(preload(isUseOldFileNameSanitize, parser), parser)
+  consumer(preload(isOldSchemeNaming, parser), parser)
 }
 
-private fun preload(isUseOldFileNameSanitize: Boolean, parser: MXParser): String? {
+private fun preload(isOldSchemeNaming: Boolean, parser: MXParser): String? {
   var eventType = parser.eventType
 
   fun findName(): String? {
@@ -40,8 +40,8 @@ private fun preload(isUseOldFileNameSanitize: Boolean, parser: MXParser): String
   do {
     when (eventType) {
       XmlPullParser.START_TAG -> {
-        if (!isUseOldFileNameSanitize || parser.name != "component") {
-          if (parser.name == "profile" || (isUseOldFileNameSanitize && parser.name == "copyright")) {
+        if (!isOldSchemeNaming || parser.name != "component") {
+          if (parser.name == "profile" || (isOldSchemeNaming && parser.name == "copyright")) {
             return findName()
           }
           else if (parser.name == "inspections") {

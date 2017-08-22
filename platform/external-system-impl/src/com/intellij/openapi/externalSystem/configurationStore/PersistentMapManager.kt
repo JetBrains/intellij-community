@@ -19,7 +19,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsDataStorage
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.io.*
 import com.intellij.util.loadElement
 import com.intellij.util.write
@@ -44,14 +43,13 @@ internal interface ExternalSystemStorage {
 
 internal class ModuleFileSystemExternalSystemStorage(project: Project) : FileSystemExternalSystemStorage("modules", project) {
   companion object {
-    private fun nameToFilename(name: String) = "${FileUtil.sanitizeFileName(name, false)}.xml"
+    private fun nameToFilename(name: String) = "${sanitizeFileName(name)}.xml"
   }
 
   override fun nameToPath(name: String) = super.nameToPath(nameToFilename(name))
 }
 
-internal class ProjectFileSystemExternalSystemStorage(project: Project) : FileSystemExternalSystemStorage("project", project) {
-}
+internal class ProjectFileSystemExternalSystemStorage(project: Project) : FileSystemExternalSystemStorage("project", project)
 
 internal abstract class FileSystemExternalSystemStorage(dirName: String, project: Project) : ExternalSystemStorage {
   override val isDirty = false
@@ -62,17 +60,17 @@ internal abstract class FileSystemExternalSystemStorage(dirName: String, project
 
   init {
     val fileAttributes = dir.basicAttributesIfExists()
-    if (fileAttributes == null) {
-      hasSomeData = false
-    }
-    else if (fileAttributes.isRegularFile) {
-      // old binary format
-      dir.parent.deleteChildrenStartingWith(dir.fileName.toString())
-      hasSomeData = false
-    }
-    else {
-      LOG.assertTrue(fileAttributes.isDirectory)
-      hasSomeData = true
+    when {
+      fileAttributes == null -> hasSomeData = false
+      fileAttributes.isRegularFile -> {
+        // old binary format
+        dir.parent.deleteChildrenStartingWith(dir.fileName.toString())
+        hasSomeData = false
+      }
+      else -> {
+        LOG.assertTrue(fileAttributes.isDirectory)
+        hasSomeData = true
+      }
     }
   }
 

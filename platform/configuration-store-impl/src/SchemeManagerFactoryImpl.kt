@@ -44,7 +44,7 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
                                                        processor: SchemeProcessor<T, MutableT>,
                                                        presentableName: String?,
                                                        roamingType: RoamingType,
-                                                       isUseOldFileNameSanitize: Boolean,
+                                                       schemeNameToFileName: SchemeNameToFileName,
                                                        streamProvider: StreamProvider?,
                                                        directoryPath: Path?,
                                                        autoSave: Boolean): SchemeManager<T> {
@@ -55,7 +55,7 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
                                     directoryPath ?: pathToFile(path),
                                     roamingType,
                                     presentableName,
-                                    isUseOldFileNameSanitize,
+                                    schemeNameToFileName,
                                     componentManager?.messageBus)
     if (autoSave) {
       @Suppress("UNCHECKED_CAST")

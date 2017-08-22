@@ -17,7 +17,6 @@ package com.intellij.openapi.util.io;
 
 import com.intellij.CommonBundle;
 import com.intellij.Patches;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;

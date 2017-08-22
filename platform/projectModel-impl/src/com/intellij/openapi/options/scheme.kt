@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.options
 
+import com.intellij.configurationStore.CURRENT_NAME_CONVERTER
+import com.intellij.configurationStore.SchemeNameToFileName
 import com.intellij.configurationStore.StreamProvider
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.ServiceManager
@@ -50,7 +52,7 @@ abstract class SchemeManagerFactory {
                                                                  processor: SchemeProcessor<SCHEME, MUTABLE_SCHEME>,
                                                                  presentableName: String? = null,
                                                                  roamingType: RoamingType = RoamingType.DEFAULT,
-                                                                 isUseOldFileNameSanitize: Boolean = false,
+                                                                 schemeNameToFileName: SchemeNameToFileName = CURRENT_NAME_CONVERTER,
                                                                  streamProvider: StreamProvider? = null,
                                                                  directoryPath: Path? = null,
                                                                  autoSave: Boolean = true): SchemeManager<SCHEME>

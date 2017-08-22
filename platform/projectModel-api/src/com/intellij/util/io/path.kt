@@ -230,3 +230,42 @@ inline fun <R> Path.directoryStreamIfExists(noinline filter: ((path: Path) -> Bo
 }
 
 private val LOG = Logger.getInstance("#com.intellij.openapi.util.io.FileUtil")
+
+private val illegalChars = setOf('/', '\\', '?', '<', '>', ':', '*', '|', '"', ':')
+
+// https://github.com/parshap/node-sanitize-filename/blob/master/index.js
+fun sanitizeFileName(name: String, replacement: String? = null, isTruncate: Boolean = true): String {
+  var result: StringBuilder? = null
+  var last = 0
+  val length = name.length
+  for (i in 0 until length) {
+    val c = name.get(i)
+    if (!illegalChars.contains(c) && !c.isISOControl()) {
+      continue
+    }
+
+    if (result == null) {
+      result = StringBuilder()
+    }
+    if (last < i) {
+      result.append(name, last, i)
+    }
+
+    if (replacement != null) {
+      result.append(replacement)
+    }
+    last = i + 1
+  }
+
+  fun String.truncateFileName() = if (isTruncate) substring(0, Math.min(length, 255)) else this
+
+  if (result == null) {
+    return name.truncateFileName()
+  }
+
+  if (last < length) {
+    result.append(name, last, length)
+  }
+
+  return result.toString().truncateFileName()
+}

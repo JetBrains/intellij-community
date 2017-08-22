@@ -36,6 +36,7 @@ import com.intellij.openapi.vfs.VirtualFilePathWrapper
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.util.PathUtilRt
 import com.intellij.util.io.exists
+import com.intellij.util.io.sanitizeFileName
 import com.intellij.util.text.trimMiddle
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
@@ -151,7 +152,7 @@ private fun Project.getProjectCacheFileName(forceNameUse: Boolean, hashSeparator
     PathUtilRt.getFileName(presentableUrl).toLowerCase(Locale.US).removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION)
   }
 
-  name = FileUtil.sanitizeFileName(name, false)
+  name = sanitizeFileName(name, isTruncate = false)
 
   // do not use project.locationHash to avoid prefix for IPR projects (not required in our case because name in any case is prepended).
   val locationHash = Integer.toHexString((presentableUrl ?: name).hashCode())

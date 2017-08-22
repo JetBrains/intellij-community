@@ -15,6 +15,7 @@
  */
 package com.intellij.testFramework
 
+import com.intellij.configurationStore.SchemeNameToFileName
 import com.intellij.configurationStore.StreamProvider
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.options.*
@@ -27,7 +28,7 @@ class MockSchemeManagerFactory : SchemeManagerFactory() {
                                                                  processor: SchemeProcessor<SCHEME, MUTABLE_SCHEME>,
                                                                  presentableName: String?,
                                                                  roamingType: RoamingType,
-                                                                 isUseOldFileNameSanitize: Boolean,
+                                                                 schemeNameToFileName: SchemeNameToFileName,
                                                                  streamProvider: StreamProvider?,
                                                                  directoryPath: Path?,
                                                                  autoSave: Boolean): SchemeManager<SCHEME> {

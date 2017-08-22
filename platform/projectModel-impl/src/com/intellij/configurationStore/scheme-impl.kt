@@ -18,8 +18,10 @@ package com.intellij.configurationStore
 import com.intellij.openapi.extensions.AbstractExtensionPointBean
 import com.intellij.openapi.options.*
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.project.isDirectoryBased
 import com.intellij.util.SmartList
+import com.intellij.util.io.sanitizeFileName
 import com.intellij.util.isEmpty
 import com.intellij.util.lang.CompoundRuntimeException
 import com.intellij.util.xmlb.annotations.Attribute
@@ -28,6 +30,20 @@ import java.io.OutputStream
 import java.security.MessageDigest
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Function
+
+interface SchemeNameToFileName {
+  fun schemeNameToFileName(name: String): String
+}
+
+val OLD_NAME_CONVERTER = object : SchemeNameToFileName {
+  override fun schemeNameToFileName(name: String) = FileUtil.sanitizeFileName(name, true)
+}
+val CURRENT_NAME_CONVERTER = object : SchemeNameToFileName {
+  override fun schemeNameToFileName(name: String) = FileUtil.sanitizeFileName(name, false)
+}
+val MODERN_NAME_CONVERTER = object : SchemeNameToFileName {
+  override fun schemeNameToFileName(name: String) = sanitizeFileName(name)
+}
 
 interface SchemeDataHolder<in T : Scheme> {
   /**
