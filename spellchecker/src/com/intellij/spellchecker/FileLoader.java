@@ -16,12 +16,16 @@
 package com.intellij.spellchecker;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.spellchecker.dictionary.Loader;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.io.FileInputStream;
+import java.io.InputStream;
+import java.nio.charset.Charset;
+
+import static com.intellij.openapi.vfs.VfsUtil.findFileByIoFile;
 
 @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
 public class FileLoader implements Loader {
@@ -46,9 +50,13 @@ public class FileLoader implements Loader {
 
   @Override
   public void load(@NotNull Consumer<String> consumer) {
-    File file = new File(url);
-    try (FileInputStream stream = new FileInputStream(file)) {
-      StreamLoader.doLoad(stream, consumer);
+    final VirtualFile file = findFileByIoFile(new File(url), true);
+    if (file == null) {
+      return;
+    }
+    final Charset charset = file.getCharset();
+    try (InputStream stream = file.getInputStream()) {
+      StreamLoader.doLoad(stream, consumer, charset);
     }
     catch (Exception e) {
       LOG.error(e);
