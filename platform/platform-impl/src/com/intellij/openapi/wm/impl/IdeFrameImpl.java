@@ -252,18 +252,11 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
 
       frame.getRootPane().putClientProperty("Window.documentFile", currentFile);
 
-      final String applicationName = ((ApplicationInfoEx)ApplicationInfo.getInstance()).getFullApplicationName();
-      final Builder builder = new Builder();
-      if (SystemInfo.isMac) {
-        boolean addAppName = StringUtil.isEmpty(title) ||
-                             ProjectManager.getInstance().getOpenProjects().length == 0 ||
-                             ((ApplicationInfoEx)ApplicationInfo.getInstance()).isEAP() && !applicationName.endsWith("SNAPSHOT");
-        builder.append(fileTitle).append(title).append(addAppName ? applicationName : null);
-      } else {
-        builder.append(title).append(fileTitle).append(applicationName);
+      Builder builder = new Builder().append(title).append(fileTitle);
+      if (!SystemInfo.isMac || builder.isEmpty()) {
+        builder = builder.append(((ApplicationInfoEx)ApplicationInfo.getInstance()).getFullApplicationName());
       }
-
-      frame.setTitle(builder.sb.toString());
+      frame.setTitle(builder.toString());
     }
     finally {
       myUpdatingTitle = false;
@@ -282,13 +275,23 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
   }
 
   private static final class Builder {
-    public StringBuilder sb = new StringBuilder();
+    private final StringBuilder sb = new StringBuilder();
 
-    public Builder append(@Nullable final String s) {
-      if (s == null || s.isEmpty()) return this;
-      if (sb.length() > 0) sb.append(" - ");
-      sb.append(s);
+    public Builder append(@Nullable String s) {
+      if (!StringUtil.isEmptyOrSpaces(s)) {
+        if (sb.length() > 0) sb.append(" - ");
+        sb.append(s);
+      }
       return this;
+    }
+
+    public boolean isEmpty() {
+      return sb.length() == 0;
+    }
+
+    @Override
+    public String toString() {
+      return sb.toString();
     }
   }
 
