@@ -31,7 +31,6 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.util.Consumer;
-import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -139,7 +138,7 @@ public class GotoImplementationHandler extends GotoTargetHandler {
     private final PsiReference myReference;
 
     ImplementationsUpdaterTask(@NotNull GotoData gotoData, @NotNull Editor editor, int offset, final PsiReference reference) {
-      super(gotoData.source.getProject(), ImplementationSearcher.SEARCHING_FOR_IMPLEMENTATIONS, createComparator(new HashMap<>(), gotoData));
+      super(gotoData.source.getProject(), ImplementationSearcher.SEARCHING_FOR_IMPLEMENTATIONS, createComparator(gotoData));
       myEditor = editor;
       myOffset = offset;
       myGotoData = gotoData;
