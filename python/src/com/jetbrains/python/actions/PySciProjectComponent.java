@@ -29,6 +29,8 @@ import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -36,6 +38,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
+import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.packaging.PyPackage;
 import com.jetbrains.python.packaging.PyPackageUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -44,6 +47,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+import static com.intellij.codeInsight.documentation.DocumentationComponent.COLOR_KEY;
 import static com.jetbrains.python.actions.PySciViewAction.ACTION_ID;
 
 @State(name = "PySciProjectComponent", storages = @Storage("other.xml"))
@@ -73,6 +77,9 @@ public class PySciProjectComponent extends AbstractProjectComponent implements P
   public void projectOpened() {
     if (myState.PY_SCI_VIEW) {
       StartupManager.getInstance(myProject).runWhenProjectIsInitialized(() -> {
+        EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
+        scheme.setColor(COLOR_KEY, UIUtil.getEditorPaneBackground());
+
         final PsiDirectory directory = PsiManager.getInstance(myProject).findDirectory(myProject.getBaseDir());
         if (directory != null) {
           DocumentationManager.getInstance(myProject).showJavaDocInfo(directory, directory);

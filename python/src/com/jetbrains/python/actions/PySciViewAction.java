@@ -21,15 +21,21 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.wm.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
+import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.console.PythonConsoleToolWindow;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.*;
+
+import static com.intellij.codeInsight.documentation.DocumentationComponent.COLOR_KEY;
 import static com.jetbrains.python.debugger.containerview.PyDataView.DATA_VIEWER_ID;
 
 public class PySciViewAction extends ToggleAction implements DumbAware {
@@ -41,6 +47,7 @@ public class PySciViewAction extends ToggleAction implements DumbAware {
 
   public static final String ACTION_ID = "PySciView";
   private ToolWindowType myDataViewType = ToolWindowType.FLOATING;
+  private Color myDocumentationBackgroundColor;
 
   public PySciViewAction() {
     super(TEXT_SCI_VIEW);
@@ -86,6 +93,10 @@ public class PySciViewAction extends ToggleAction implements DumbAware {
   private void showDocumentationToolwindow(Project project, PsiElement element) {
     final String showInToolWindowProperty = DocumentationManager.getInstance(project).getShowInToolWindowProperty();
 
+    EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
+    myDocumentationBackgroundColor = scheme.getColor(COLOR_KEY);
+    scheme.setColor(COLOR_KEY, UIUtil.getEditorPaneBackground());
+
     PropertiesComponent.getInstance().setValue(showInToolWindowProperty, true);
     PropertiesComponent.getInstance().setValue(DocumentationManager.getInstance(project).getAutoUpdateEnabledProperty(), true);
 
@@ -104,6 +115,8 @@ public class PySciViewAction extends ToggleAction implements DumbAware {
 
   private void restoreDocumentationPopup(Project project) {
     PropertiesComponent.getInstance().setValue(DocumentationManager.getInstance(project).getAutoUpdateEnabledProperty(), false);
+    EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
+    scheme.setColor(COLOR_KEY, myDocumentationBackgroundColor);
 
     final ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.DOCUMENTATION);
     if (window != null) {
