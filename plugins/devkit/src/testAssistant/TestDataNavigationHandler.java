@@ -20,20 +20,26 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,10 +50,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
-* @author yole
-*/
 public class TestDataNavigationHandler implements GutterIconNavigationHandler<PsiMethod> {
+  private static final String CREATE_MISSING_FILES_OPTION = "Create Missing Files";
+
   public void navigate(MouseEvent e, final PsiMethod elt) {
     List<String> fileNames = getFileNames(elt);
 
@@ -72,7 +77,7 @@ public class TestDataNavigationHandler implements GutterIconNavigationHandler<Ps
   }
 
   public static void navigate(@NotNull final RelativePoint point,
-                              @NotNull List<String> testDataFiles, 
+                              @NotNull List<String> testDataFiles,
                               final Project project) {
     if (testDataFiles.size() == 1) {
       openFileByIndex(project, testDataFiles, 0);
@@ -108,38 +113,99 @@ public class TestDataNavigationHandler implements GutterIconNavigationHandler<Ps
     return null;
   }
 
-  private static void showNavigationPopup(final Project project, final List<String> fileNames, final RelativePoint point) {
-    List<String> listPaths = new ArrayList<>(fileNames);
-    final String CREATE_MISSING_OPTION = "Create Missing Files";
-    if (fileNames.size() == 2) {
-      VirtualFile file1 = LocalFileSystem.getInstance().refreshAndFindFileByPath(fileNames.get(0));
-      VirtualFile file2 = LocalFileSystem.getInstance().refreshAndFindFileByPath(fileNames.get(1));
+  /**
+   * Shows navigation popup with list of testdata files and (optionally) "Create missing files" option.
+   * @param project project.
+   * @param filePaths paths of testdata files with "/" path separator. This List can be changed.
+   * @param point point where the popup will be shown.
+   */
+  private static void showNavigationPopup(Project project, List<String> filePaths, RelativePoint point) {
+    ContainerUtil.removeDuplicates(filePaths);
+    filePaths.sort((path1, path2) -> PathUtil.getFileName(path1).compareToIgnoreCase(PathUtil.getFileName(path2)));
+    List<String> pathsToDisplay = new ArrayList<>(filePaths);
+
+    if (filePaths.size() == 2) {
+      VirtualFile file1 = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePaths.get(0));
+      VirtualFile file2 = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePaths.get(1));
       if (file1 == null || file2 == null) {
-        listPaths.add(CREATE_MISSING_OPTION);
+        pathsToDisplay.add(CREATE_MISSING_FILES_OPTION);
       }
     }
-    final JList list = new JBList(ArrayUtil.toStringArray(listPaths));
-    list.setCellRenderer(new ColoredListCellRenderer() {
+
+    JList<String> list = new JBList<>(ArrayUtil.toStringArray(pathsToDisplay));
+    list.setCellRenderer(new ColoredListCellRenderer<String>() {
       @Override
-      protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
-        String path = (String)value;
-        String fileName = PathUtil.getFileName(path);
-        if (!fileName.equals(CREATE_MISSING_OPTION)) {
-          final FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(fileName);
-          setIcon(fileType.getIcon());
+      protected void customizeCellRenderer(@NotNull JList list, String path, int index, boolean selected, boolean hasFocus) {
+        if (path.equals(CREATE_MISSING_FILES_OPTION)) {
+          append(path);
+          return;
         }
-        append(String.format("%s (%s)", fileName, PathUtil.getParentPath(path)));
+
+        VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
+        if (file == null) {
+          // concurrently deleted? it'll be handled on click, also no icon to indicate something's wrong
+          append(String.format("%s (%s)", PathUtil.getFileName(path), PathUtil.getParentPath(path)));
+          return;
+        }
+
+        FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(file);
+        setIcon(fileType.getIcon());
+
+        String fileName = file.getName();
+        Pair<String, String> relativePath = getModuleOrProjectRelativeParentPath(file);
+        if (relativePath == null) {
+          // cannot calculate module/project relative path, use absolute path
+          append(String.format("%s (%s)", fileName, PathUtil.getParentPath(path) + "/"));
+        }
+        else {
+          append(fileName + " (");
+          append(relativePath.getFirst(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+          append("/" + relativePath.getSecond() + "/)");
+        }
+      }
+
+      private Pair<String, String> getModuleOrProjectRelativeParentPath(VirtualFile file) {
+        VirtualFile parent = file.getParent();
+        if (parent == null) {
+          // shouldn't happen
+          return null;
+        }
+
+        Module module = ModuleUtilCore.findModuleForFile(parent, project);
+        if (module != null) {
+          VirtualFile moduleFile = module.getModuleFile();
+          if (moduleFile != null) {
+            VirtualFile moduleFileDir = moduleFile.getParent();
+            if (moduleFileDir != null) {
+              String moduleRelativePath = VfsUtilCore.getRelativePath(parent, moduleFileDir);
+              if (moduleRelativePath != null) {
+                return new Pair<>(module.getName(), moduleRelativePath);
+              }
+            }
+          }
+        }
+
+        VirtualFile projectDir = project.getBaseDir();
+        if (projectDir != null) {
+          String projectRelativePath = VfsUtilCore.getRelativePath(parent, projectDir);
+          if (projectRelativePath != null) {
+            return new Pair<>(project.getName(), projectRelativePath);
+          }
+        }
+
+        return null;
       }
     });
+
     PopupChooserBuilder builder = new PopupChooserBuilder(list);
     builder.setItemChoosenCallback(() -> {
       final int[] indices = list.getSelectedIndices();
-      if (ArrayUtil.indexOf(indices, fileNames.size()) >= 0) {
-        createMissingFiles(project, fileNames);
+      if (ArrayUtil.indexOf(indices, filePaths.size()) >= 0) {
+        createMissingFiles(project, filePaths);
       }
       else {
         for (int index : indices) {
-          openFileByIndex(project, fileNames, index);
+          openFileByIndex(project, filePaths, index);
         }
       }
     }).createPopup().show(point);
