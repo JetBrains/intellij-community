@@ -51,7 +51,7 @@ class PluginModuleCompilationTest : BaseCompilerTestCase() {
       val modificator = pluginSdk!!.sdkModificator
       modificator.sdkAdditionalData = Sandbox(getSandboxPath(), testProjectJdk, pluginSdk)
       val rootPath = FileUtil.toSystemIndependentName(PathManager.getJarPathForClass(FileUtilRt::class.java)!!)
-      modificator.addRoot(LocalFileSystem.getInstance().refreshAndFindFileByPath(rootPath), OrderRootType.CLASSES)
+      modificator.addRoot(LocalFileSystem.getInstance().refreshAndFindFileByPath(rootPath)!!, OrderRootType.CLASSES)
       modificator.commitChanges()
       table.addJdk(pluginSdk!!)
     }
