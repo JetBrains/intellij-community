@@ -25,6 +25,7 @@ import com.intellij.codeInsight.completion.JavaMethodCallElement;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager;
 import com.intellij.codeInsight.hints.ParameterHintsPass;
+import com.intellij.codeInsight.hints.ParameterHintsPassFactory;
 import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.parameterInfo.*;
@@ -131,6 +132,11 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
 
   @Override
   public PsiExpressionList findElementForUpdatingParameterInfo(@NotNull final UpdateParameterInfoContext context) {
+    if (context.isPreservedOnHintHidden() && isOutsideOfCompletedInvocation(context)) {
+      ParameterHintsPassFactory.forceHintsUpdateOnNextPass(context.getEditor());
+      context.setPreservedOnHintHidden(false);
+      return null;
+    }
     PsiExpressionList expressionList = findArgumentList(context.getFile(), context.getOffset(), context.getParameterListStart());
     if (expressionList != null) {
       Object[] candidates = context.getObjectsToView();
@@ -184,6 +190,35 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     }
     highlightHints(context.getEditor(), null, -1);
     return null;
+  }
+
+  private static boolean isOutsideOfCompletedInvocation(UpdateParameterInfoContext context) {
+    PsiElement owner = context.getParameterOwner();
+    if (owner != null && owner.isValid()) {
+      TextRange ownerTextRange = owner.getTextRange();
+      int caretOffset = context.getOffset();
+      if (ownerTextRange != null) {
+        if (caretOffset >= ownerTextRange.getStartOffset() && caretOffset <= ownerTextRange.getEndOffset()) {
+          return false;
+        }
+        else {
+          for (PsiElement element : owner.getChildren()) {
+            if (element instanceof PsiErrorElement) return false;
+          }
+          if (owner instanceof PsiExpressionList && ((PsiExpressionList)owner).getExpressions().length == 0) {
+            PsiElement parent = owner.getParent();
+            if (parent instanceof PsiCall) {
+              PsiMethod chosenMethod = CompletionMemory.getChosenMethod((PsiCall)parent);
+              if (chosenMethod != null) {
+                int parametersCount = chosenMethod.getParameterList().getParametersCount();
+                if (parametersCount == 1 || parametersCount == 2 && chosenMethod.isVarArgs()) return false;
+              }
+            }
+          }
+        }
+      }
+    }
+    return true;
   }
 
   private static boolean isIncompatibleParameterCount(@NotNull PsiMethod method, int numberOfParameters) {

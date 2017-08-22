@@ -54,12 +54,10 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
   protected boolean myPaintingNow;
 
   public ComboBox() {
-    super();
     init(-1);
   }
 
   public ComboBox(int width) {
-    super();
     init(width);
   }
 
@@ -260,11 +258,6 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
     }
 
     return new Dimension(width, UIUtil.fixComboBoxHeight(preferredSize.height));
-  }
-
-  @Override
-  protected Dimension getOriginalPreferredSize() {
-    return super.getPreferredSize();
   }
 
   @Override

@@ -260,4 +260,12 @@ public class Py3TypeCheckerInspectionTest extends PyTestCase {
   public void testUnionOfIntAndFloatShouldBeConsideredAsDividable() {
     doTest();
   }
+
+  // PY-23289
+  // PY-23391
+  // PY-24194
+  // PY-24789
+  public void testTypingSupports() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+  }
 }

@@ -1257,7 +1257,8 @@ public class DiffUtil {
   @CalledInAwt
   public static boolean makeWritable(@Nullable Project project, @NotNull Document document) {
     VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-    if (file == null || !file.isValid()) return document.isWritable();
+    if (file == null) return document.isWritable();
+    if (!file.isValid()) return false;
     return makeWritable(project, file) && document.isWritable();
   }
 

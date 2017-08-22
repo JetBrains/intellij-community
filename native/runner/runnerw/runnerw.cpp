@@ -5,10 +5,12 @@
 #include <string>
 
 void PrintUsage() {
-	printf("Usage: runnerw.exe <app> <args>\n");
-	printf("where <app> is an executable file and <args> are its arguments.\n");
+	printf("Usage: runnerw.exe [/C] app [args]\n");
+	printf("app [args]	Specifies executable file, arguments.\n");
+	printf("/C	Creates a child process with new visible console.\n");
 	printf("\n");
-	printf("Creates a child process with inherited input, output, and error streams.\n");
+	printf("If '/C' option is specified, creates a child with a new visible console and attaches to this console.\n");
+	printf("Otherwise, creates a child process with inherited input, output, and error streams.\n");
 	printf("The input stream is scanned for the presence of the 2-char control sequences:\n");
 	printf("  ENQ(5) and ETX(3) => a CTRL+BREAK signal is sent to the child process;\n");
 	printf("  ENQ(5) and ENQ(5) => a CTRL+C signal is sent to the child process.\n");
@@ -151,11 +153,6 @@ BOOL attachChildConsole(PROCESS_INFORMATION const &childProcessInfo) {
 		if (AttachConsole(childProcessInfo.dwProcessId)) {
 			return TRUE;
 		}
-		// ERROR_GEN_FAILURE means "the specified process does not exist"
-		// Seems it also means that the console hasn't been fully initialized.
-		if (GetLastError() != ERROR_GEN_FAILURE) {
-			break;
-		}
 	}
 	ErrorMessage("AttachConsole");
 	return FALSE;
@@ -166,11 +163,23 @@ int main(int argc, char * argv[]) {
 		PrintUsage();
 	}
 
-	std::string app(argv[1]);
+	std::string app("");
 	std::string args("");
-
+	BOOL createConsoleFlag = FALSE;
 	for (int i = 1; i < argc; i++) {
-                if (i>1) {
+		if (i == 1) {
+			std::string flag(argv[1]);
+			if (flag == "/C" || flag == "/c") {
+				createConsoleFlag = TRUE;
+				if (argc < 3) {
+					PrintUsage();
+				}
+				app = argv[2];
+				continue;
+			}
+			app = argv[1];
+		}
+		if (args.length() > 0) {
 			args += " ";
 		}
 		if (strchr(argv[i], ' ')) {
@@ -195,7 +204,9 @@ int main(int argc, char * argv[]) {
 	sa.lpSecurityDescriptor = NULL;
 
 	sa.nLength = sizeof(SECURITY_ATTRIBUTES);
-	sa.bInheritHandle = true;
+
+	BOOL inheritHandles = !createConsoleFlag;
+	sa.bInheritHandle = inheritHandles;
 
 	if (!CreatePipe(&newstdin, &write_stdin, &sa, 0)) {
 		ErrorMessage("CreatePipe");
@@ -204,11 +215,24 @@ int main(int argc, char * argv[]) {
 
 	GetStartupInfo(&si);
 
-	si.dwFlags = STARTF_USESTDHANDLES;
-	si.wShowWindow = SW_HIDE;
-	si.hStdOutput = GetStdHandle(STD_OUTPUT_HANDLE);
-	si.hStdError = GetStdHandle(STD_ERROR_HANDLE);
-	si.hStdInput = newstdin;
+	DWORD processFlag = CREATE_DEFAULT_ERROR_MODE;
+	BOOL hasConsoleWindow = GetConsoleWindow() != NULL;
+	if (hasConsoleWindow && !createConsoleFlag) {
+		processFlag |= CREATE_NO_WINDOW;
+	}
+
+	if (createConsoleFlag)
+	{
+		processFlag |= CREATE_NEW_CONSOLE;
+	}
+
+	if (inheritHandles) {
+		si.dwFlags = STARTF_USESTDHANDLES;
+		si.wShowWindow = SW_HIDE;
+		si.hStdOutput = GetStdHandle(STD_OUTPUT_HANDLE);
+		si.hStdError = GetStdHandle(STD_ERROR_HANDLE);
+		si.hStdInput = newstdin;
+	}
 
 	if (hasEnding(app, std::string(".bat"))) {
 //              in MSDN it is said to do so, but actually that doesn't work
@@ -230,10 +254,9 @@ int main(int argc, char * argv[]) {
 	char* c_args = new char[args.size() + 1];
 	strcpy(c_args, args.c_str());
 
-	DWORD processFlag = CREATE_DEFAULT_ERROR_MODE;
-	BOOL hasConsoleWindow = GetConsoleWindow() != NULL;
-	if (hasConsoleWindow) {
-		processFlag |= CREATE_NO_WINDOW;
+	if (createConsoleFlag)
+	{
+		si.lpTitle = c_args;
 	}
 
 	if (!SetConsoleCtrlHandler(NULL, FALSE)) {
@@ -244,7 +267,7 @@ int main(int argc, char * argv[]) {
 			c_args,
 			NULL,
 			NULL,
-			TRUE,
+			inheritHandles,
 			processFlag,
 			NULL,
 			NULL,
@@ -255,7 +278,7 @@ int main(int argc, char * argv[]) {
 		CloseHandle(write_stdin);
 		exit(0);
 	}
-	if (hasConsoleWindow) {
+	if (hasConsoleWindow || createConsoleFlag) {
 		attachChildConsole(pi);
 	}
 	if (!SetConsoleCtrlHandler((PHANDLER_ROUTINE)CtrlHandler, TRUE)) {

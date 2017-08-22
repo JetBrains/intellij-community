@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,15 +24,14 @@ import java.util.Collection;
 import java.util.Collections;
 
 public class ClsElementWritingAccessProvider extends WritingAccessProvider {
-
   @NotNull
   @Override
-  public Collection<VirtualFile> requestWriting(final VirtualFile... files) {
+  public Collection<VirtualFile> requestWriting(VirtualFile... files) {
     return Collections.emptyList();
   }
 
   @Override
-  public boolean isPotentiallyWritable(@NotNull final VirtualFile file) {
-    return JarFileSystem.getInstance().getLocalVirtualFileFor(file) == null;
+  public boolean isPotentiallyWritable(@NotNull VirtualFile file) {
+    return JarFileSystem.getInstance().getLocalByEntry(file) == null;
   }
 }

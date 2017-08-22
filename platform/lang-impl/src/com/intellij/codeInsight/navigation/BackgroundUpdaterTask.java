@@ -59,7 +59,7 @@ public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
   
   public BackgroundUpdaterTask(@Nullable Project project, @NotNull String title, @Nullable Comparator<PsiElement> comparator) {
     super(project, title);
-    myData = new TreeSet<>(comparator);
+    myData = comparator == null ? ContainerUtil.newSmartList() : new TreeSet<>(comparator);
   }
 
   public void init(@NotNull AbstractPopup popup, @NotNull T component, @NotNull Ref<UsageView> usageView) {

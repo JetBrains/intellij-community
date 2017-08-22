@@ -34,5 +34,7 @@ public interface UpdateParameterInfoContext extends ParameterInfoContext {
 
   Object[] getObjectsToView();
   
+  boolean isPreservedOnHintHidden();
+  void setPreservedOnHintHidden(boolean value);
   boolean isInnermostContext();
 }

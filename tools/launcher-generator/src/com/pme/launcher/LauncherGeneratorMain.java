@@ -25,7 +25,6 @@ import org.jdom.input.SAXBuilder;
 
 import java.awt.image.BufferedImage;
 import java.io.*;
-import java.nio.charset.Charset;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -128,7 +127,7 @@ public class LauncherGeneratorMain {
     String companyName = getChild(appInfoRoot, "company").getAttributeValue("name");
     Element names = getChild(appInfoRoot, "names");
     String productShortName = names.getAttributeValue("product");
-    String productFullName = names.getAttributeValue("fullname");
+    String productFullName = names.getAttributeValue("fullname", productShortName);
     Element versionElement = getChild(appInfoRoot, "version");
     int majorVersion = Integer.parseInt(versionElement.getAttributeValue("major"));
     String minorVersionString = versionElement.getAttributeValue("minor");

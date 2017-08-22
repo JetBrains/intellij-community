@@ -489,7 +489,7 @@ public class MavenResourceCompilerConfigurationGenerator {
             List<ResourceRootConfiguration> resourcesList = folder.isTestSource() ? configuration.testResources : configuration.resources;
 
             final ResourceRootConfiguration cfg = new ResourceRootConfiguration();
-            cfg.directory = FileUtil.toSystemIndependentName(FileUtil.toSystemIndependentName(file.getPath()));
+            cfg.directory = FileUtil.toSystemIndependentName(file.getPath());
 
             CompilerModuleExtension compilerModuleExtension = CompilerModuleExtension.getInstance(module);
             if (compilerModuleExtension == null) continue;

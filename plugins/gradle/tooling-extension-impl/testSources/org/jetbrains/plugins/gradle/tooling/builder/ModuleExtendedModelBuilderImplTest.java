@@ -182,7 +182,7 @@ public class ModuleExtendedModelBuilderImplTest extends AbstractModelBuilderTest
       String path =
         FileUtil.toCanonicalPath(FileUtil.getRelativePath(new File(testDir, moduleName), sourceDirectory.getDirectory()));
       Assert.assertNotNull(path);
-      return path.substring(path.indexOf("/") + 1);
+      return path;
     });
     Collections.sort(list);
     return list;

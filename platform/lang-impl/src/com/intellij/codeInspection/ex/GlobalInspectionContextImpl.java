@@ -292,13 +292,17 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     }
   }
 
-  public void ignoreElement(@NotNull InspectionProfileEntry tool, @NotNull PsiElement element) {
+  public void resolveElement(@NotNull InspectionProfileEntry tool, @NotNull PsiElement element) {
     final RefElement refElement = getRefManager().getReference(element);
+    if (refElement == null) return;
     final Tools tools = getTools().get(tool.getShortName());
     if (tools != null){
       for (ScopeToolState state : tools.getTools()) {
         InspectionToolWrapper toolWrapper = state.getTool();
-        ignoreElementRecursively(toolWrapper, refElement);
+        InspectionToolPresentation presentation = getPresentationOrNull(toolWrapper);
+        if (presentation != null) {
+          resolveElementRecursively(presentation, refElement);
+        }
       }
     }
   }
@@ -311,14 +315,11 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     return myOutputPath;
   }
 
-  private void ignoreElementRecursively(@NotNull InspectionToolWrapper toolWrapper, final RefEntity refElement) {
-    if (refElement != null) {
-      InspectionToolPresentation presentation = getPresentation(toolWrapper);
-      presentation.ignoreCurrentElement(refElement);
-      final List<RefEntity> children = refElement.getChildren();
-      for (RefEntity child : children) {
-        ignoreElementRecursively(toolWrapper, child);
-      }
+  private static void resolveElementRecursively(@NotNull InspectionToolPresentation presentation, @NotNull RefEntity refElement) {
+    presentation.suppressProblem(refElement);
+    final List<RefEntity> children = refElement.getChildren();
+    for (RefEntity child : children) {
+      resolveElementRecursively(presentation, child);
     }
   }
 
@@ -864,12 +865,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     myViewClosed = true;
     myView = null;
     ((InspectionManagerEx)InspectionManager.getInstance(getProject())).closeRunningContext(this);
-    for (Tools tools : getTools().values()) {
-      for (ScopeToolState state : tools.getTools()) {
-        InspectionToolWrapper toolWrapper = state.getTool();
-        getPresentation(toolWrapper).cleanup();
-      }
-    }
+    myPresentationMap.clear();
     super.close(noSuspiciousCodeFound);
   }
 
@@ -890,6 +886,11 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
   }
 
   private final ConcurrentMap<InspectionToolWrapper, InspectionToolPresentation> myPresentationMap = ContainerUtil.newConcurrentMap();
+
+  @Nullable
+  public InspectionToolPresentation getPresentationOrNull(@NotNull InspectionToolWrapper toolWrapper) {
+    return myPresentationMap.get(toolWrapper);
+  }
   @NotNull
   public InspectionToolPresentation getPresentation(@NotNull InspectionToolWrapper toolWrapper) {
     InspectionToolPresentation presentation = myPresentationMap.get(toolWrapper);

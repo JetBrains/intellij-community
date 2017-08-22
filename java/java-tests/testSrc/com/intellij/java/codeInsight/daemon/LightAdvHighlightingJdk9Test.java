@@ -17,6 +17,7 @@ package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
+import com.intellij.codeInspection.java15api.Java15APIUsageInspection;
 import com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection;
 import com.intellij.codeInspection.redundantCast.RedundantCastInspection;
 import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
@@ -31,7 +32,11 @@ public class LightAdvHighlightingJdk9Test extends LightDaemonAnalyzerTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    enableInspectionTools(new UnusedDeclarationInspection(), new UncheckedWarningLocalInspection(), new RedundantCastInspection(), new JavaDocReferenceInspection());
+    enableInspectionTools(new UnusedDeclarationInspection(),
+                          new UncheckedWarningLocalInspection(),
+                          new RedundantCastInspection(),
+                          new JavaDocReferenceInspection(),
+                          new Java15APIUsageInspection());
     setLanguageLevel(LanguageLevel.JDK_1_9);
     IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_9, getModule(), getTestRootDisposable());
   }
@@ -52,7 +57,11 @@ public class LightAdvHighlightingJdk9Test extends LightDaemonAnalyzerTestCase {
   public void testDiamondsWithAnonymousRejectIntersectionType() { doTest(false, false);}
   public void testDiamondsWithAnonymousInsideCallToInfer() { doTest(false, false);}
   public void testDiamondsWithAnonymousDiamond() { doTest(false, false);}
-  
+
+  public void testHighlightApiUsages() {
+    setLanguageLevel(LanguageLevel.JDK_1_8);
+    doTest(false, false);}
+
   public void testValueTypes() { setLanguageLevel(LanguageLevel.JDK_X); doTest(false, false); }
 
   public void testModuleInfoSuppression() {

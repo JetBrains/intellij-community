@@ -15,12 +15,10 @@
  */
 package git4idea.crlf;
 
-import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -68,14 +66,13 @@ public class GitCrlfDialog extends DialogWrapper {
   protected JComponent createCenterPanel() {
     JLabel description = new JBLabel(
       "<html>You are about to commit CRLF line separators to the Git repository.<br/>" +
-      "It is recommended to set core.autocrlf Git attribute to <code>" + RECOMMENDED_VALUE +
+      "It is recommended to set the <code>core.autocrlf</code> Git attribute to <code>" + RECOMMENDED_VALUE +
       "</code> to avoid line separator issues.</html>");
 
     JLabel additionalDescription = new JBLabel(
-      "<html>Fix and Commit: <code>git config --global core.autocrlf " + RECOMMENDED_VALUE + "</code> will be called,<br/>" +
-      "Commit as Is: the config value won't be set.</html>", UIUtil.ComponentStyle.SMALL);
+      "<html>If you choose <b>Fix and Commit</b>, <code>git config --global core.autocrlf " + RECOMMENDED_VALUE + "</code> will be executed.<br/>" +
+      "If you choose <b>Commit as Is</b>, the config value won't be changed.</html>");
 
-    JLabel readMore = LinkLabel.create("Read more", () -> BrowserUtil.browse("https://help.github.com/articles/dealing-with-line-endings"));
 
     JLabel icon = new JLabel(UIUtil.getWarningIcon(), SwingConstants.LEFT);
     myDontWarn = new JBCheckBox("Don't warn again");
@@ -89,7 +86,6 @@ public class GitCrlfDialog extends DialogWrapper {
 
     rootPanel.add(icon, g.nextLine().next().coverColumn(4));
     rootPanel.add(description, g.next());
-    rootPanel.add(readMore, g.nextLine().next().next());
     rootPanel.add(additionalDescription, g.nextLine().next().next().pady(DEFAULT_HGAP));
     rootPanel.add(myDontWarn,  g.nextLine().next().next().insets(0, 0, 0, 0));
 

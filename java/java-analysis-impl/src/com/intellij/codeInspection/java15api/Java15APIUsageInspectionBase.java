@@ -40,6 +40,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.reference.SoftReference;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashSet;
 import gnu.trove.THashSet;
@@ -226,6 +227,25 @@ public class Java15APIUsageInspectionBase extends BaseJavaBatchLocalInspectionTo
       visitReferenceElement(expression);
     }
 
+    @Override
+    public void visitNameValuePair(PsiNameValuePair pair) {
+      super.visitNameValuePair(pair);
+      PsiReference reference = pair.getReference();
+      if (reference != null) {
+        PsiElement resolve = reference.resolve();
+        if (resolve instanceof PsiCompiledElement && resolve instanceof PsiAnnotationMethod) {
+          final Module module = ModuleUtilCore.findModuleForPsiElement(pair);
+          if (module != null) {
+            final LanguageLevel languageLevel = getEffectiveLanguageLevel(module);
+            LanguageLevel sinceLanguageLevel = getLastIncompatibleLanguageLevel((PsiMember)resolve, languageLevel);
+            if (sinceLanguageLevel != null) {
+              registerError(ObjectUtils.notNull(pair.getNameIdentifier(), pair), sinceLanguageLevel);
+            }
+          }
+        }
+      }
+    }
+
     @Override public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
       super.visitReferenceElement(reference);
       final PsiElement resolved = reference.resolve();
@@ -339,7 +359,7 @@ public class Java15APIUsageInspectionBase extends BaseJavaBatchLocalInspectionTo
       return EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(module);
     }
 
-    private void registerError(PsiJavaCodeReferenceElement reference, LanguageLevel api) {
+    private void registerError(PsiElement reference, LanguageLevel api) {
       if (reference != null && isInProject(reference)) {
         //noinspection DialogTitleCapitalization
         myHolder.registerProblem(reference,

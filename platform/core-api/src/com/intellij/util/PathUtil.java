@@ -24,6 +24,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileProvider;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
@@ -51,20 +52,6 @@ public class PathUtil {
   @NotNull
   public static String getLocalPath(@NotNull String path) {
     return FileUtil.toSystemDependentName(StringUtil.trimEnd(path, URLUtil.JAR_SEPARATOR));
-  }
-
-  @NotNull
-  public static VirtualFile getLocalFile(@NotNull VirtualFile file) {
-    if (!file.isValid()) {
-      return file;
-    }
-    if (file.getFileSystem() instanceof LocalFileProvider) {
-      final VirtualFile localFile = ((LocalFileProvider)file.getFileSystem()).getLocalVirtualFileFor(file);
-      if (localFile != null) {
-        return localFile;
-      }
-    }
-    return file;
   }
 
   @NotNull
@@ -173,4 +160,22 @@ public class PathUtil {
   public static String makeFileName(@NotNull String name, @Nullable String extension) {
     return StringUtil.isEmpty(extension) ? name : name + '.' + extension;
   }
+
+  //<editor-fold desc="Deprecated stuff.">
+  /** @deprecated use {@code VfsUtil.getLocalFile(file)} instead (to be removed in IDEA 2019) */
+  @NotNull
+  public static VirtualFile getLocalFile(@NotNull VirtualFile file) {
+    if (file.isValid()) {
+      VirtualFileSystem fileSystem = file.getFileSystem();
+      if (fileSystem instanceof LocalFileProvider) {
+        VirtualFile localFile = ((LocalFileProvider)fileSystem).getLocalVirtualFileFor(file);
+        if (localFile != null) {
+          return localFile;
+        }
+      }
+    }
+
+    return file;
+  }
+  //</editor-fold>
 }

@@ -67,12 +67,10 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -124,7 +122,6 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
   private InspectionTreeLoadingProgressAware myLoadingProgressPreview;
   private final ExcludedInspectionTreeNodesManager myExcludedInspectionTreeNodesManager;
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
-  private final Map<String, Set<Object>> mySuppressedNodes = FactoryMap.createMap(key -> new THashSet<>());
   private final InspectionViewSuppressActionHolder mySuppressActionHolder = new InspectionViewSuppressActionHolder();
 
   private final Object myTreeStructureUpdateLock = new Object();
@@ -664,10 +661,6 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     return mySuppressActionHolder;
   }
 
-  public Set<Object> getSuppressedNodes(String toolId) {
-    return mySuppressedNodes.get(toolId);
-  }
-
   @NotNull
   public ExcludedInspectionTreeNodesManager getExcludedManager() {
     return myExcludedInspectionTreeNodesManager;
@@ -697,7 +690,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
           }
           final InspectionNode toolNode = presentation.getToolNode();
           LOG.assertTrue(toolNode != null);
-          final Map<RefEntity, CommonProblemDescriptor[]> problems = new HashMap<>();
+          final Map<RefEntity, CommonProblemDescriptor[]> problems = new HashMap<>(1);
           problems.put(refElement, descriptors);
           final Map<String, Set<RefEntity>> contents = new HashMap<>();
           final String groupName = refElement.getRefManager().getGroupName((RefElement)refElement);
@@ -710,7 +703,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
                                               uiOptions.SHOW_STRUCTURE,
                                               true,
                                               contents,
-                                              problems);
+                                              problems::get);
         }
       }
     }));

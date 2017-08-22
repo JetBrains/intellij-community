@@ -115,7 +115,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   protected InputVariables myInputVariables; // input variables
   protected PsiVariable[] myOutputVariables; // output variables
   protected PsiVariable myOutputVariable; // the only output variable
-  private   PsiVariable myArtificialOutputVariable;
+  protected PsiVariable myArtificialOutputVariable;
   private Collection<PsiStatement> myExitStatements;
 
   private boolean myHasReturnStatement; // there is a return statement
@@ -128,7 +128,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   protected boolean myCanBeChainedConstructor;
   protected boolean myIsChainedConstructor;
   private List<Match> myDuplicates;
-  @PsiModifier.ModifierConstant private String myMethodVisibility = PsiModifier.PRIVATE;
+  @PsiModifier.ModifierConstant protected String myMethodVisibility = PsiModifier.PRIVATE;
   protected boolean myGenerateConditionalExit;
   protected PsiStatement myFirstExitStatementCopy;
   private PsiMethod myExtractedMethod;
@@ -341,7 +341,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   @Nullable
-  private PsiVariable getArtificialOutputVariable() {
+  protected PsiVariable getArtificialOutputVariable() {
     if (myOutputVariables.length == 0 && myExitStatements.isEmpty()) {
       if (myCanBeChainedConstructor) {
         final Set<PsiField> fields = new HashSet<>();
@@ -1794,7 +1794,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     return true;
   }
 
-  private void chooseAnchor() {
+  protected void chooseAnchor() {
     myAnchor = myCodeFragmentMember;
     while (!myAnchor.getParent().equals(myTargetClass)) {
       myAnchor = myAnchor.getParent();

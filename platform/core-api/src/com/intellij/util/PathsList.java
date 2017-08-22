@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.util;
 
 import com.intellij.ide.highlighter.ArchiveFileType;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
@@ -25,6 +24,7 @@ import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.JBIterable;
+import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -41,14 +41,12 @@ public class PathsList  {
   private static final Function<VirtualFile, String> LOCAL_PATH = file -> PathUtil.getLocalPath(file);
 
   private static final Function<String, VirtualFile> PATH_TO_DIR = (NullableFunction<String, VirtualFile>)s -> {
-    final FileType fileType = FileTypeRegistry.getInstance().getFileTypeByFileName(s);
-    final VirtualFile localFile = PATH_TO_LOCAL_VFILE.fun(s);
-    if (localFile == null) return null;
-
-    if (ArchiveFileType.INSTANCE.equals(fileType) && !localFile.isDirectory()) {
-      return StandardFileSystems.getJarRootForLocalFile(localFile);
+    VirtualFile file = PATH_TO_LOCAL_VFILE.fun(s);
+    if (file == null) return null;
+    if (!file.isDirectory() && FileTypeRegistry.getInstance().getFileTypeByFileName(file.getName()) == ArchiveFileType.INSTANCE) {
+      return StandardFileSystems.jar().findFileByPath(file.getPath() + URLUtil.JAR_SEPARATOR);
     }
-    return localFile;
+    return file;
   };
 
   public boolean isEmpty() {

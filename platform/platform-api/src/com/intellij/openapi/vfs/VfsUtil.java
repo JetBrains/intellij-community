@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -555,6 +556,20 @@ public class VfsUtil extends VfsUtilCore {
       VirtualFile parent = file.getParent();
       if (parent == null) break;
       file = parent;
+    }
+    return file;
+  }
+
+  @NotNull
+  public static VirtualFile getLocalFile(@NotNull VirtualFile file) {
+    if (file.isValid()) {
+      VirtualFileSystem fileSystem = file.getFileSystem();
+      if (fileSystem instanceof ArchiveFileSystem) {
+        VirtualFile localFile = ((ArchiveFileSystem)fileSystem).getLocalByEntry(file);
+        if (localFile != null) {
+          return localFile;
+        }
+      }
     }
     return file;
   }

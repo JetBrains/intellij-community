@@ -48,6 +48,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.jetbrains.python.psi.PyUtil.as;
+
 /**
  * Implements reference expression PSI.
  *
@@ -252,11 +254,33 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       if (qualified && typeFromTargets instanceof PyNoneType) {
         return null;
       }
+      final Ref<PyType> descriptorType = getDescriptorType(typeFromTargets, context);
+      if (descriptorType != null) {
+        return descriptorType.get();
+      }
       return typeFromTargets;
     }
     finally {
       TypeEvalStack.evaluated(this);
     }
+  }
+
+  @Nullable
+  private Ref<PyType> getDescriptorType(@Nullable PyType typeFromTargets, @NotNull TypeEvalContext context) {
+    if (!isQualified()) return null;
+    final PyClassLikeType targetType = as(typeFromTargets, PyClassLikeType.class);
+    if (targetType == null) return null;
+    final PyResolveContext resolveContext = PyResolveContext.noProperties().withTypeEvalContext(context);
+    final List<? extends RatedResolveResult> members = targetType.resolveMember(PyNames.GET, this, AccessDirection.READ,
+                                                                                resolveContext);
+    if (members == null || members.isEmpty()) return null;
+    final List<PyType> types = StreamEx.of(members)
+      .map((result) -> result.getElement())
+      .select(PyCallable.class)
+      .map((callable) -> context.getReturnType(callable))
+      .toList();
+    final PyType type = PyUnionType.union(types);
+    return Ref.create(type);
   }
 
   @Nullable

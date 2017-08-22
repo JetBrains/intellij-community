@@ -69,6 +69,6 @@ class ApplicationInfoProperties {
 
   //copy of ApplicationInfoImpl.shortenCompanyName
   private static String shortenCompanyName(String name) {
-    return StringUtil.trimEnd(StringUtil.trimEnd(name, " s.r.o."), " Inc.");
+    return StringUtil.trimEnd(StringUtil.trimEnd(name, " s.r.o."), " Inc.")
   }
 }

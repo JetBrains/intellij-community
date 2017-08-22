@@ -32,7 +32,6 @@ public class AbstractMethodOverridesAbstractMethodInspectionTest extends LightIn
   @Override
   protected InspectionProfileEntry getInspection() {
     final AbstractMethodOverridesAbstractMethodInspection inspection = new AbstractMethodOverridesAbstractMethodInspection();
-    inspection.ignoreAnnotations = true;
     inspection.ignoreJavaDoc = true;
     return inspection;
   }
