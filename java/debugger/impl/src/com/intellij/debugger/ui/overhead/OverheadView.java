@@ -16,7 +16,6 @@
 package com.intellij.debugger.ui.overhead;
 
 import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -34,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.KeyEvent;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.function.Function;
 
@@ -47,7 +47,7 @@ public class OverheadView extends BorderLayoutPanel {
   static final NameColumnInfo NAME_COLUMN = new NameColumnInfo();
 
   final JBTable myTable;
-  final ListTableModel<BreakpointOverheadItem> myModel;
+  final ListTableModel<OverheadProducer> myModel;
 
   public OverheadView(@NotNull DebugProcessImpl process) {
     myProcess = process;
@@ -55,26 +55,21 @@ public class OverheadView extends BorderLayoutPanel {
     myModel = new ListTableModel<>(new ColumnInfo[]{
       ENABLED_COLUMN,
       NAME_COLUMN,
-      new TimingColumnInfo("hits", s -> OverheadTimings.getHits(myProcess, s.myBreakpoint)),
-      new TimingColumnInfo("time", s -> OverheadTimings.getTime(myProcess, s.myBreakpoint))},
-                                   StreamEx.of(OverheadTimings.getProducers(process)).select(Breakpoint.class).map(BreakpointOverheadItem::new).toList(),
+      new TimingColumnInfo("hits", s -> OverheadTimings.getHits(myProcess, s)),
+      new TimingColumnInfo("time", s -> OverheadTimings.getTime(myProcess, s))},
+                                   new ArrayList<>(OverheadTimings.getProducers(process)),
                                    3, SortOrder.DESCENDING);
     myModel.setSortable(true);
     myTable = new JBTable(myModel);
     addToCenter(ScrollPaneFactory.createScrollPane(myTable));
     TableUtil.setupCheckboxColumn(myTable.getColumnModel().getColumn(0));
     OverheadTimings.addListener(o -> DebuggerUIUtil.invokeLater(() -> {
-      int idx = 0;
-      for (BreakpointOverheadItem item : myModel.getItems()) {
-        if (item.myBreakpoint == o) {
-          myModel.fireTableRowsUpdated(idx, idx);
-          return;
-        }
-        idx++;
+      int idx = myModel.indexOf(o);
+      if (idx != -1) {
+        myModel.fireTableRowsUpdated(idx, idx);
+        return;
       }
-      myModel
-        .setItems(StreamEx.of(OverheadTimings.getProducers(process)).select(Breakpoint.class).map(BreakpointOverheadItem::new).toList());
-      myModel.fireTableDataChanged();
+      myModel.setItems(new ArrayList<>(OverheadTimings.getProducers(process)));
     }), process);
 
     new DumbAwareAction("Toggle") {
@@ -91,11 +86,11 @@ public class OverheadView extends BorderLayoutPanel {
     }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0)), myTable);
   }
 
-  private StreamEx<OverheadItem> getSelected() {
+  private StreamEx<OverheadProducer> getSelected() {
     return IntStreamEx.of(myTable.getSelectedRows()).map(myTable::convertRowIndexToModel).mapToObj(myModel::getItem);
   }
 
-  private static class EnabledColumnInfo extends ColumnInfo<OverheadItem, Boolean> {
+  private static class EnabledColumnInfo extends ColumnInfo<OverheadProducer, Boolean> {
     public EnabledColumnInfo() {
       super("");
     }
@@ -107,43 +102,43 @@ public class OverheadView extends BorderLayoutPanel {
 
     @Nullable
     @Override
-    public Boolean valueOf(OverheadItem item) {
+    public Boolean valueOf(OverheadProducer item) {
       return item.isEnabled();
     }
 
     @Override
-    public boolean isCellEditable(OverheadItem item) {
+    public boolean isCellEditable(OverheadProducer item) {
       return true;
     }
 
     @Override
-    public void setValue(OverheadItem item, Boolean value) {
+    public void setValue(OverheadProducer item, Boolean value) {
       item.setEnabled(value);
     }
   }
 
-  private static class NameColumnInfo extends ColumnInfo<BreakpointOverheadItem, String> {
+  private static class NameColumnInfo extends ColumnInfo<OverheadProducer, String> {
     public NameColumnInfo() {
       super("name");
     }
 
     @Nullable
     @Override
-    public String valueOf(BreakpointOverheadItem aspects) {
-      return aspects.getName();
+    public String valueOf(OverheadProducer aspects) {
+      return aspects.getDisplayName();
     }
 
     @Nullable
     @Override
-    public Comparator<BreakpointOverheadItem> getComparator() {
+    public Comparator<OverheadProducer> getComparator() {
       return Comparator.comparing(i -> valueOf(i));
     }
   }
 
-  private static class TimingColumnInfo extends ColumnInfo<BreakpointOverheadItem, Long> {
-    private final Function<BreakpointOverheadItem, Long> myGetter;
+  private static class TimingColumnInfo extends ColumnInfo<OverheadProducer, Long> {
+    private final Function<OverheadProducer, Long> myGetter;
 
-    public TimingColumnInfo(@NotNull String name, Function<BreakpointOverheadItem, Long> getter) {
+    public TimingColumnInfo(@NotNull String name, Function<OverheadProducer, Long> getter) {
       super(name);
       myGetter = getter;
     }
@@ -155,45 +150,17 @@ public class OverheadView extends BorderLayoutPanel {
 
     @Nullable
     @Override
-    public Long valueOf(BreakpointOverheadItem aspects) {
+    public Long valueOf(OverheadProducer aspects) {
       return myGetter.apply(aspects);
     }
 
     @Nullable
     @Override
-    public Comparator<BreakpointOverheadItem> getComparator() {
-      return Comparator.comparingLong(i -> valueOf(i));
-    }
-  }
-
-  interface OverheadItem {
-    boolean isEnabled();
-
-    void setEnabled(boolean enabled);
-
-    String getName();
-  }
-
-  static class BreakpointOverheadItem implements OverheadItem {
-    private final Breakpoint myBreakpoint;
-
-    public BreakpointOverheadItem(Breakpoint breakpoint) {
-      myBreakpoint = breakpoint;
-    }
-
-    @Override
-    public String getName() {
-      return myBreakpoint.getDisplayName();
-    }
-
-    @Override
-    public boolean isEnabled() {
-      return myBreakpoint.isEnabled();
-    }
-
-    @Override
-    public void setEnabled(boolean enabled) {
-      myBreakpoint.setEnabled(enabled);
+    public Comparator<OverheadProducer> getComparator() {
+      return Comparator.comparing(c -> {
+        Long value = valueOf(c);
+        return value != null ? value : Long.MAX_VALUE;
+      });
     }
   }
 }

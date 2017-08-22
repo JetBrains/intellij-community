@@ -466,13 +466,11 @@ public class JavaDebugProcess extends XDebugProcess {
   }
 
   private static class WatchLastMethodReturnValueAction extends ToggleAction {
-    private volatile boolean myWatchesReturnValues;
     private final String myText;
     private final String myTextUnavailable;
 
     public WatchLastMethodReturnValueAction() {
       super("", DebuggerBundle.message("action.watch.method.return.value.description"), null);
-      myWatchesReturnValues = DebuggerSettings.getInstance().WATCH_RETURN_VALUES;
       myText = DebuggerBundle.message("action.watches.method.return.value.enable");
       myTextUnavailable = DebuggerBundle.message("action.watches.method.return.value.unavailable.reason");
     }
@@ -494,12 +492,11 @@ public class JavaDebugProcess extends XDebugProcess {
 
     @Override
     public boolean isSelected(AnActionEvent e) {
-      return myWatchesReturnValues;
+      return DebuggerSettings.getInstance().WATCH_RETURN_VALUES;
     }
 
     @Override
     public void setSelected(AnActionEvent e, boolean watch) {
-      myWatchesReturnValues = watch;
       DebuggerSettings.getInstance().WATCH_RETURN_VALUES = watch;
       DebugProcessImpl process = getCurrentDebugProcess(e.getProject());
       if (process != null) {

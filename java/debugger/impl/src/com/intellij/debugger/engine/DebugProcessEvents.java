@@ -158,7 +158,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
               protected void action() throws Exception {
                 int processed = 0;
                 for (Event event : eventSet) {
-                  if (myReturnValueWatcher != null && myReturnValueWatcher.isEnabled()) {
+                  if (myReturnValueWatcher != null && myReturnValueWatcher.isTrackingEnabled()) {
                     if (myReturnValueWatcher.processEvent(event)) {
                       processed++;
                       continue;
@@ -321,7 +321,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
       final EventRequestManager requestManager = machineProxy.eventRequestManager();
 
       if (machineProxy.canGetMethodReturnValues()) {
-        myReturnValueWatcher = new MethodReturnValueWatcher(requestManager);
+        myReturnValueWatcher = new MethodReturnValueWatcher(requestManager, this);
       }
 
       final ThreadStartRequest threadStartRequest = requestManager.createThreadStartRequest();

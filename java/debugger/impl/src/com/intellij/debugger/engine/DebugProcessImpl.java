@@ -203,13 +203,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   public void setWatchMethodReturnValuesEnabled(boolean enabled) {
     final MethodReturnValueWatcher watcher = myReturnValueWatcher;
     if (watcher != null) {
-      watcher.setFeatureEnabled(enabled);
+      watcher.setEnabled(enabled);
     }
-  }
-
-  public boolean isWatchMethodReturnValuesEnabled() {
-    final MethodReturnValueWatcher watcher = myReturnValueWatcher;
-    return watcher != null && watcher.isFeatureEnabled();
   }
 
   public boolean canGetMethodReturnValue() {
