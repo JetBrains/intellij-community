@@ -45,9 +45,9 @@ import static com.intellij.util.ObjectUtils.tryCast;
 /**
  * This inspection finds instances of null checks followed by an instanceof check
  * on the same variable. For instance:
- * {@code
+ * <pre>{@code
  * if (x != null && x instanceof String) { ... }
- * }
+ * }</pre>
  * The instanceof operator returns false when passed a null, so the null check is pointless.
  *
  * @author Lars Fischer
