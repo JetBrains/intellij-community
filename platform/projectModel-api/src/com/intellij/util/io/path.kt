@@ -234,7 +234,7 @@ private val LOG = Logger.getInstance("#com.intellij.openapi.util.io.FileUtil")
 private val illegalChars = setOf('/', '\\', '?', '<', '>', ':', '*', '|', '"', ':')
 
 // https://github.com/parshap/node-sanitize-filename/blob/master/index.js
-fun sanitizeFileName(name: String, replacement: String? = null, isTruncate: Boolean = true): String {
+fun sanitizeFileName(name: String, replacement: String? = "_", isTruncate: Boolean = true): String {
   var result: StringBuilder? = null
   var last = 0
   val length = name.length
