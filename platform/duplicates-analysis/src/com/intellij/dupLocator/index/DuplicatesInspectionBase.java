@@ -33,6 +33,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.TestSourcesFilter;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
@@ -109,8 +110,14 @@ public class DuplicatesInspectionBase extends LocalInspectionTool {
 
       int hash2 = (int)(hash >> 32);
       LocalQuickFix viewAllDupesFix = isOnTheFly && hash != 0 ? createShowOtherDupesFix(virtualFile, offset, (int)hash, hash2) : null;
+
+      boolean onlyExtractable = Registry.is("duplicates.inspection.only.extractable");
       LocalQuickFix extractMethodFix =
-        isOnTheFly && hash != 0 ? createExtractMethodFix(targetElement, rangeInElement, (int)hash, hash2) : null;
+        (isOnTheFly || onlyExtractable) && hash != 0 ? createExtractMethodFix(targetElement, rangeInElement, (int)hash, hash2) : null;
+      if (onlyExtractable) {
+        if (extractMethodFix == null) return null;
+        if (!isOnTheFly) extractMethodFix = null;
+      }
 
       ProblemDescriptor descriptor = manager
         .createProblemDescriptor(targetElement, rangeInElement, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly, fix,
