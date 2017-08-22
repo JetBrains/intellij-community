@@ -24,12 +24,13 @@ import com.intellij.psi.PsiReferenceBase;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.util.ArrayUtil;
-import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.psi.PyImportElement;
-import com.jetbrains.python.psi.PyStringLiteralExpression;
-import com.jetbrains.python.psi.PyUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.PyNames;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.LightNamedElement;
 import com.jetbrains.python.psi.types.PyModuleType;
+import com.jetbrains.python.psi.resolve.RatedResolveResult;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -53,8 +54,21 @@ public class PyDunderAllReference extends PsiReferenceBase<PyStringLiteralExpres
   public PsiElement resolve() {
     final PyStringLiteralExpression element = getElement();
     final String name = element.getStringValue();
-    PyFile containingFile = (PyFile) element.getContainingFile();
-    return containingFile.getElementNamed(name);
+    final PyFile file = (PyFile)element.getContainingFile();
+
+    final List<RatedResolveResult> resolveResults = PyUtil.filterTopPriorityResults(file.multiResolveName(name));
+
+    final boolean onlyDunderAlls = StreamEx
+      .of(resolveResults)
+      .map(RatedResolveResult::getElement)
+      .allMatch(resolvedElement -> resolvedElement instanceof PyTargetExpression &&
+                                   PyNames.ALL.equals(((PyTargetExpression)resolvedElement).getName()));
+
+    if (onlyDunderAlls) return null;
+
+    final RatedResolveResult resolveResult = ContainerUtil.getFirstItem(resolveResults);
+    if (resolveResult == null) return null;
+    return resolveResult.getElement();
   }
 
   @NotNull
