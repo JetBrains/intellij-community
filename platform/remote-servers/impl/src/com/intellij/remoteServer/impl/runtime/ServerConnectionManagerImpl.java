@@ -1,12 +1,10 @@
 package com.intellij.remoteServer.impl.runtime;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.ServerConfiguration;
 import com.intellij.remoteServer.runtime.ServerConnection;
 import com.intellij.remoteServer.runtime.ServerConnectionManager;
-import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,7 +43,7 @@ public class ServerConnectionManagerImpl extends ServerConnectionManager {
   private <C extends ServerConfiguration> ServerConnection doCreateConnection(@NotNull RemoteServer<C> server,
                                                                               ServerConnectionManagerImpl manager) {
     ServerTaskExecutorImpl executor = new ServerTaskExecutorImpl();
-    return new ServerConnectionImpl(server, server.getType().createConnector(server, executor), manager, getEventDispatcher());
+    return new ServerConnectionImpl<>(server, server.getType().createConnector(server, executor), manager, getEventDispatcher());
   }
 
   @Nullable
