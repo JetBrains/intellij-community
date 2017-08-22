@@ -19,7 +19,6 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
-import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,11 +31,11 @@ import java.util.ArrayList;
 public class ShowShortenNames extends ActionGroup {
   private final AnAction[] myChildren;
 
-  public ShowShortenNames(final EditorGutterComponentEx gutter) {
+  public ShowShortenNames() {
     super("Names", true);
     final ArrayList<AnAction> kids = new ArrayList<>(ShortNameType.values().length);
     for (ShortNameType type : ShortNameType.values()) {
-      kids.add(new SetShortNameTypeAction(type, gutter));
+      kids.add(new SetShortNameTypeAction(type));
     }
     myChildren = kids.toArray(new AnAction[kids.size()]);
   }
@@ -56,14 +55,12 @@ public class ShowShortenNames extends ActionGroup {
     return ShortNameType.LASTNAME;
   }
 
-  public static class SetShortNameTypeAction extends ToggleAction implements DumbAware {
+  private static class SetShortNameTypeAction extends ToggleAction implements DumbAware {
     private final ShortNameType myType;
-    private final EditorGutterComponentEx myGutter;
 
-    public SetShortNameTypeAction(ShortNameType type, EditorGutterComponentEx gutter) {
+    public SetShortNameTypeAction(ShortNameType type) {
       super(type.getDescription());
       myType = type;
-      myGutter = gutter;
     }
 
     @Override
@@ -76,7 +73,8 @@ public class ShowShortenNames extends ActionGroup {
       if (enabled) {
         myType.set();
       }
-      myGutter.revalidateMarkup();
+
+      AnnotateActionGroup.revalidateMarkupInAllEditors();
     }
   }
 }

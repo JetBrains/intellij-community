@@ -16,7 +16,6 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
-import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,12 +28,12 @@ import java.util.ArrayList;
 public class ShowAnnotationColorsAction extends ActionGroup {
   private final AnAction[] myChildren;
 
-  public ShowAnnotationColorsAction(EditorGutterComponentEx gutter) {
+  public ShowAnnotationColorsAction() {
     super("Colors", true);
 
     final ArrayList<AnAction> kids = new ArrayList<>(ShortNameType.values().length);
     for (ColorMode type : ColorMode.values()) {
-      kids.add(new SetColorModeAction(type, gutter));
+      kids.add(new SetColorModeAction(type));
     }
     myChildren = kids.toArray(new AnAction[kids.size()]);
   }
@@ -54,14 +53,12 @@ public class ShowAnnotationColorsAction extends ActionGroup {
     return ColorMode.ORDER;
   }
 
-  public static class SetColorModeAction extends ToggleAction implements DumbAware {
+  private static class SetColorModeAction extends ToggleAction implements DumbAware {
     private final ColorMode myType;
-    private final EditorGutterComponentEx myGutter;
 
-    public SetColorModeAction(ColorMode type, EditorGutterComponentEx gutter) {
+    public SetColorModeAction(ColorMode type) {
       super(type.getDescription());
       myType = type;
-      myGutter = gutter;
     }
 
     @Override
@@ -74,7 +71,8 @@ public class ShowAnnotationColorsAction extends ActionGroup {
       if (enabled) {
         myType.set();
       }
-      myGutter.revalidateMarkup();
+
+      AnnotateActionGroup.revalidateMarkupInAllEditors();
     }
   }
 }
