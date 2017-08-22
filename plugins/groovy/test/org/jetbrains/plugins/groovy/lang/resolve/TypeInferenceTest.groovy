@@ -100,7 +100,7 @@ class TypeInferenceTest extends TypeInferenceTestBase {
 
   void testClosure2() {
     GrReferenceExpression ref = (GrReferenceExpression)configureByFile("closure2/A.groovy").element
-    assertTrue(ref.type.equalsToText("java.lang.Integer"))
+    assertTrue(ref.type.equalsToText("int"))
   }
 
   void testGrvy1209() {
@@ -140,7 +140,7 @@ class TypeInferenceTest extends TypeInferenceTestBase {
 
   void testParameterWithBuiltinType() {
     GrReferenceExpression refExpr = (GrReferenceExpression)configureByFile("parameterWithBuiltinType/A.groovy")
-    assertEquals("java.lang.Integer", refExpr.type.canonicalText)
+    assertEquals("int", refExpr.type.canonicalText)
   }
 
   void testRawTypeInReturnExpression() {

@@ -45,7 +45,6 @@ import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.ReachingDefin
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.ReachingDefinitionsSemilattice;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.InferenceContext;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -261,7 +260,7 @@ public class TypeInferenceHelper {
       final PsiElement element = instruction.getElement();
       if (element != null && instruction.isWrite()) {
         updateVariableType(state, instruction, instruction.getVariableName(),
-                           () -> DFAType.create(TypesUtil.boxPrimitiveType(getInitializerType(element), myScope.getManager(), myScope.getResolveScope())));
+                           () -> DFAType.create(getInitializerType(element)));
       }
     }
 
