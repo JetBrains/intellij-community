@@ -61,8 +61,8 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
   final ModuleRootManagerImpl myModuleRootManager;
   private boolean myWritable;
   private final VirtualFilePointerManager myFilePointerManager;
-  private boolean myDisposed = false;
-  private final Set<ModuleExtension> myExtensions = new TreeSet<>((o1, o2) -> Comparing.compare(o1.getClass().getName(), 
+  private boolean myDisposed;
+  private final Set<ModuleExtension> myExtensions = new TreeSet<>((o1, o2) -> Comparing.compare(o1.getClass().getName(),
                                                                                                 o2.getClass().getName()));
   @Nullable
   private final Map<ModuleExtension, byte[]> myExtensionToStateDigest;
@@ -74,8 +74,8 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
   private final CompositeDisposable myDisposable = new CompositeDisposable();
 
   RootModelImpl(@NotNull ModuleRootManagerImpl moduleRootManager,
-                ProjectRootManagerImpl projectRootManager,
-                VirtualFilePointerManager filePointerManager) {
+                @NotNull ProjectRootManagerImpl projectRootManager,
+                @NotNull VirtualFilePointerManager filePointerManager) {
     myModuleRootManager = moduleRootManager;
     myProjectRootManager = projectRootManager;
     myFilePointerManager = filePointerManager;
@@ -100,8 +100,8 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
 
   RootModelImpl(@NotNull Element element,
                 @NotNull ModuleRootManagerImpl moduleRootManager,
-                ProjectRootManagerImpl projectRootManager,
-                VirtualFilePointerManager filePointerManager, boolean writable) throws InvalidDataException {
+                @NotNull ProjectRootManagerImpl projectRootManager,
+                @NotNull VirtualFilePointerManager filePointerManager, boolean writable) throws InvalidDataException {
     myProjectRootManager = projectRootManager;
     myFilePointerManager = filePointerManager;
     myModuleRootManager = moduleRootManager;
@@ -152,17 +152,18 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
     return myWritable;
   }
 
-  public RootConfigurationAccessor getConfigurationAccessor() {
+  @NotNull
+  RootConfigurationAccessor getConfigurationAccessor() {
     return myConfigurationAccessor;
   }
 
   //creates modifiable model
   RootModelImpl(@NotNull RootModelImpl rootModel,
-                ModuleRootManagerImpl moduleRootManager,
+                @NotNull ModuleRootManagerImpl moduleRootManager,
                 final boolean writable,
-                final RootConfigurationAccessor rootConfigurationAccessor,
+                @NotNull RootConfigurationAccessor rootConfigurationAccessor,
                 @NotNull VirtualFilePointerManager filePointerManager,
-                ProjectRootManagerImpl projectRootManager) {
+                @NotNull ProjectRootManagerImpl projectRootManager) {
     myFilePointerManager = filePointerManager;
     myModuleRootManager = moduleRootManager;
     myProjectRootManager = projectRootManager;
@@ -228,6 +229,7 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
     return cachedOrderEntries;
   }
 
+  @NotNull
   Iterator<OrderEntry> getOrderIterator() {
     return Collections.unmodifiableList(myOrderEntries).iterator();
   }
@@ -315,7 +317,7 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
     removeOrderEntryInternal(entry);
   }
 
-  private void removeOrderEntryInternal(OrderEntry entry) {
+  private void removeOrderEntryInternal(@NotNull OrderEntry entry) {
     LOG.assertTrue(myOrderEntries.contains(entry));
     Disposer.dispose((OrderEntryBaseImpl)entry);
     myOrderEntries.remove(entry);
@@ -377,7 +379,7 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
     myWritable = false;
   }
 
-  public void docommit() {
+  void docommit() {
     assert isWritable();
 
     if (areOrderEntriesChanged()) {
@@ -405,6 +407,7 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
     return myModuleLibraryTable;
   }
 
+  @NotNull
   @Override
   public Project getProject() {
     return myProjectRootManager.getProject();
@@ -438,7 +441,7 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
     return e;
   }
 
-  public long getStateModificationCount() {
+  long getStateModificationCount() {
     long result = 0;
     for (ModuleExtension extension : myExtensions) {
       if (extension instanceof PersistentStateComponentWithModificationTracker) {
@@ -478,13 +481,7 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
   @Override
   public void setSdk(@Nullable Sdk jdk) {
     assertWritable();
-    final JdkOrderEntry jdkLibraryEntry;
-    if (jdk != null) {
-      jdkLibraryEntry = new ModuleJdkOrderEntryImpl(jdk, this, myProjectRootManager);
-    }
-    else {
-      jdkLibraryEntry = null;
-    }
+    JdkOrderEntry jdkLibraryEntry = jdk == null ? null : new ModuleJdkOrderEntryImpl(jdk, this, myProjectRootManager);
     replaceEntryOfType(JdkOrderEntry.class, jdkLibraryEntry);
   }
 
@@ -530,11 +527,11 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
     return null;
   }
 
-  public void assertWritable() {
+  void assertWritable() {
     LOG.assertTrue(myWritable);
   }
 
-  public boolean isDependsOn(final Module module) {
+  boolean isDependsOn(final Module module) {
     for (OrderEntry entry : getOrderEntries()) {
       if (entry instanceof ModuleOrderEntry) {
         final Module module1 = ((ModuleOrderEntry)entry).getModule();
@@ -546,7 +543,7 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
     return false;
   }
 
-  public boolean isOrderEntryDisposed() {
+  boolean isOrderEntryDisposed() {
     for (OrderEntry entry : myOrderEntries) {
       if (entry instanceof RootModelComponentBase && ((RootModelComponentBase)entry).isDisposed()) return true;
     }
@@ -621,10 +618,10 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
       }
     }
     if (orderEntry1 instanceof ExportableOrderEntry) {
-      if (!(((ExportableOrderEntry)orderEntry1).isExported() == ((ExportableOrderEntry)orderEntry2).isExported())) {
+      if (((ExportableOrderEntry)orderEntry1).isExported() != ((ExportableOrderEntry)orderEntry2).isExported()) {
         return false;
       }
-      if (!(((ExportableOrderEntry)orderEntry1).getScope() == ((ExportableOrderEntry)orderEntry2).getScope())) {
+      if (((ExportableOrderEntry)orderEntry1).getScope() != ((ExportableOrderEntry)orderEntry2).getScope()) {
         return false;
       }
     }
