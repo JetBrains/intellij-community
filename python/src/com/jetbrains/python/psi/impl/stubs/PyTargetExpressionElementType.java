@@ -32,7 +32,9 @@ import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyTargetExpressionImpl;
-import com.jetbrains.python.psi.stubs.*;
+import com.jetbrains.python.psi.stubs.PyFileStub;
+import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
+import com.jetbrains.python.psi.stubs.PyVariableNameIndex;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -158,6 +160,11 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
       assert parameterList != null;
       final ASTNode[] children = parameterList.getChildren(PyElementTypes.FORMAL_PARAMETER_SET);
       if (children.length > 0 && children[0].getText().equals(qualifierNode.getText())) {
+        return true;
+      }
+    } else if (functionNode != null){
+      ASTNode parent = node.getTreeParent();
+      if (parent != null && parent.getElementType() == PyElementTypes.IMPORT_ELEMENT){
         return true;
       }
     }

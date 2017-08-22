@@ -39,6 +39,7 @@ import com.jetbrains.python.psi.stubs.*;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.toolbox.Maybe;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -870,5 +871,34 @@ public class PyStubsTest extends PyTestCase {
       assertType("Tuple[int, None, str]", instance, TypeEvalContext.codeAnalysis(myFixture.getProject(), originFile));
       assertNotParsed(libFile);
     });
+  }
+
+  //PY-25491
+  public void testImportElementInsideFunction(){
+    runWithLanguageLevel(LanguageLevel.PYTHON26 , () -> {
+      final PyFile file = getTestFile();
+      PyFunction fun = file.findTopLevelFunction("fun");
+      PyFunctionStub stub = fun.getStub();
+      assertNotNull(stub);
+      PyFromImportStatement[] fromImps = stub.getChildrenByType(PyElementTypes.FROM_IMPORT_STATEMENT, new PyFromImportStatement[0]);
+      assertNotEmpty(Arrays.asList(fromImps));
+      StreamEx.of(fromImps).forEach((i)->{
+        checkHasNamedElement(i.getImportElements());
+      });
+
+      PyImportStatement[] imports = stub.getChildrenByType(PyElementTypes.IMPORT_STATEMENT, new PyImportStatement[0]);
+      assertNotEmpty(Arrays.asList(imports));
+      StreamEx.of(imports).forEach((i)->{
+        checkHasNamedElement(i.getImportElements());
+      });
+    });
+  }
+
+  private static void checkHasNamedElement(PyImportElement[] elements) {
+    assertNotEmpty(Arrays.asList(elements));
+    StreamEx.of(elements).forEach((i)->
+                                  {
+                                    assertNotNull(i.getAsNameElement());
+                                  });
   }
 }
