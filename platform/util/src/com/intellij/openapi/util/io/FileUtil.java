@@ -78,6 +78,15 @@ public class FileUtil extends FileUtilRt {
     return StringUtil.join(parts, File.separator);
   }
 
+  /**
+   * Gets the relative path from the {@code base} to the {@code file} regardless existence or the type of the {@code base}.
+   * <p>
+   * NOTE: if the file(not directory) passed as the {@code base} the result can not be used as a relative path from the {@code base} parent directory to the {@code file}
+   *
+   * @param base the base
+   * @param file the file
+   * @return the relative path from the {@code base} to the {@code file} or {@code null}
+   */
   @Nullable
   public static String getRelativePath(File base, File file) {
     return FileUtilRt.getRelativePath(base, file);
