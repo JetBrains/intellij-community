@@ -28,6 +28,8 @@ import com.intellij.debugger.requests.Requestor;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint;
+import com.intellij.debugger.ui.overhead.OverheadProducer;
+import com.intellij.debugger.ui.overhead.OverheadTimings;
 import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -476,6 +478,10 @@ public class DebugProcessEvents extends DebugProcessImpl {
 
         boolean resumePreferred = requestor != null && DebuggerSettings.SUSPEND_NONE.equals(requestor.getSuspendPolicy());
         boolean requestHit;
+        long start = 0;
+        if (requestor instanceof OverheadProducer) {
+          start = System.currentTimeMillis();
+        }
         try {
           requestHit = (requestor != null) && requestor.processLocatableEvent(this, event);
         }
@@ -491,6 +497,11 @@ public class DebugProcessEvents extends DebugProcessImpl {
           }, ModalityState.NON_MODAL);
           requestHit = considerRequestHit[0];
           resumePreferred = !requestHit;
+        }
+        finally {
+          if (requestor instanceof OverheadProducer) {
+            OverheadTimings.add(DebugProcessEvents.this, (OverheadProducer)requestor, System.currentTimeMillis() - start);
+          }
         }
 
         if (requestHit && requestor instanceof Breakpoint) {

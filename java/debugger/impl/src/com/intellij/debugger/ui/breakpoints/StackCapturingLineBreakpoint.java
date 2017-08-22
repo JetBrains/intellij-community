@@ -180,6 +180,22 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
     }
   }
 
+  @Override
+  public String getDisplayName() {
+    return "Capture point at " + myCapturePoint.myClassName + "." + myCapturePoint.myMethodName;
+  }
+
+  @Override
+  public boolean isEnabled() {
+    return myCapturePoint.myEnabled;
+  }
+
+  @Override
+  public void setEnabled(boolean enabled) {
+    myCapturePoint.myEnabled = enabled;
+    DebuggerSettings.getInstance().setCapturePoints(DebuggerSettings.getInstance().getCapturePoints()); // to fire change event
+  }
+
   private static void track(DebugProcessImpl debugProcess, CapturePoint capturePoint) {
     StackCapturingLineBreakpoint breakpoint = new StackCapturingLineBreakpoint(debugProcess.getProject(), capturePoint);
     breakpoint.createRequest(debugProcess);

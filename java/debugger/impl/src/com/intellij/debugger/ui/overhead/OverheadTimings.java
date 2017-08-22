@@ -15,10 +15,11 @@
  */
 package com.intellij.debugger.ui.overhead;
 
-import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.EventListener;
 import java.util.Map;
@@ -32,30 +33,36 @@ public class OverheadTimings {
   public static final Key<OverheadTimings> KEY = Key.create("OVERHEAD_TIMINGS");
 
   private final EventDispatcher<OverheadTimingsListener> myEventDispatcher = EventDispatcher.create(OverheadTimingsListener.class);
-  private final Map<Object, Timings> myMap = new ConcurrentHashMap<>();
+  private final Map<OverheadProducer, Timings> myMap = new ConcurrentHashMap<>();
 
-  public static long getTime(DebugProcessImpl process, Object producer) {
+  public static Long getTime(DebugProcess process, OverheadProducer producer) {
     Timings timings = getTimings(process).myMap.get(producer);
-    return timings != null ? timings.myTime : 0;
+    return timings != null ? timings.myTime : null;
   }
 
-  public static long getHits(DebugProcessImpl process, Object producer) {
+  public static long getHits(DebugProcess process, OverheadProducer producer) {
     Timings timings = getTimings(process).myMap.get(producer);
     return timings != null ? timings.myHits : 0;
   }
 
-  public static Set<Object> getProducers(DebugProcessImpl process) {
+  public static Set<OverheadProducer> getProducers(DebugProcess process) {
     return getTimings(process).myMap.keySet();
   }
 
-  public static void add(DebugProcessImpl process, Object producer, long overhead) {
+  public static void add(DebugProcess process, OverheadProducer producer, @Nullable Long overhead) {
     OverheadTimings timings = getTimings(process);
-    timings.myMap.merge(producer, new Timings(1, overhead), (old, value) -> new Timings(old.myHits + 1, old.myTime + overhead));
+    timings.myMap.merge(producer, new Timings(1, overhead), (old, value) -> {
+      Long newTime = old.myTime;
+      if (value.myTime != null) {
+        newTime += value.myTime;
+      }
+      return new Timings(old.myHits + 1, newTime);
+    });
     timings.myEventDispatcher.getMulticaster().timingAdded(producer);
   }
 
   @NotNull
-  private static OverheadTimings getTimings(DebugProcessImpl process) {
+  private static OverheadTimings getTimings(DebugProcess process) {
     OverheadTimings data = process.getUserData(KEY);
     if (data == null) {
       data = new OverheadTimings();
@@ -66,19 +73,19 @@ public class OverheadTimings {
 
   private static class Timings {
     final long myHits;
-    final long myTime;
+    final Long myTime;
 
-    public Timings(long hits, long time) {
+    public Timings(long hits, Long time) {
       myHits = hits;
       myTime = time;
     }
   }
 
-  static void addListener(OverheadTimingsListener listener, DebugProcessImpl process) {
+  static void addListener(OverheadTimingsListener listener, DebugProcess process) {
     getTimings(process).myEventDispatcher.addListener(listener);
   }
 
   public interface OverheadTimingsListener extends EventListener {
-    void timingAdded(Object producer);
+    void timingAdded(OverheadProducer producer);
   }
 }
