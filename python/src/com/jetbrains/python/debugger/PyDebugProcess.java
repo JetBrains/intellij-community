@@ -18,11 +18,9 @@ package com.jetbrains.python.debugger;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.intellij.execution.RunnerRegistry;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessListener;
-import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ExecutionConsole;
@@ -43,7 +41,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -86,8 +83,6 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-
-import static javax.swing.SwingUtilities.invokeLater;
 
 /**
  * @author yole
@@ -877,6 +872,10 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     }
   }
 
+  public void removeTemporaryBreakpoint(@NotNull String file, int line) {
+    myDebugger.removeTempBreakpoint(file, line);
+  }
+
   public void removeBreakpoint(final PySourcePosition position) {
     XLineBreakpoint breakpoint = myRegisteredBreakpoints.get(position);
     if (breakpoint != null) {
@@ -919,7 +918,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
           final PySourcePosition position = frames.get(0).getPosition();
           breakpoint = myRegisteredBreakpoints.get(position);
           if (breakpoint == null) {
-            myDebugger.removeTempBreakpoint(position.getFile(), position.getLine());
+            removeTemporaryBreakpoint(position.getFile(), position.getLine());
           }
         }
         else if (threadInfo.isExceptionBreak()) {
