@@ -71,8 +71,19 @@ class InlayHintsChecker(private val myFixture: CodeInsightTestFixture) {
     val expected = expectedInlaysAndCaret.inlays
 
     if (expectedInlaysAndCaret.inlays.size != actual.size || actual.zip(expected).any { it.first != it.second }) {
+      val entries: MutableList<Pair<Int, String>> = mutableListOf()
+      actual.forEach { entries.add(Pair(it.first, "<${if(it.third) "HINT" else "hint"} text=\"${it.second}\" />")) }
+      if (expectedInlaysAndCaret.caretOffset != null) {
+        val actualCaretOffset = myFixture.editor.caretModel.offset
+        val actualInlaysBeforeCaret = myFixture.editor.caretModel.visualPosition.column - 
+                                      myFixture.editor.offsetToVisualPosition(actualCaretOffset).column
+        val first = entries.indexOfFirst { it.first == actualCaretOffset }
+        val insertIndex = if (first == -1) -entries.binarySearch { it.first - actualCaretOffset } - 1 
+                              else first + actualInlaysBeforeCaret;
+        entries.add(insertIndex, Pair(actualCaretOffset, "<caret>"))
+      }
       val proposedText = StringBuilder(document.text)
-      actual.asReversed().forEach { proposedText.insert(it.first, "<${if(it.third) "HINT" else "hint"} text=\"${it.second}\" />") }
+      entries.asReversed().forEach { proposedText.insert(it.first, it.second) }
 
       VfsTestUtil.TEST_DATA_FILE_PATH.get(file.virtualFile)?.let { originalPath ->
         throw FileComparisonFailure("Hints differ", originalText, proposedText.toString(), originalPath)
