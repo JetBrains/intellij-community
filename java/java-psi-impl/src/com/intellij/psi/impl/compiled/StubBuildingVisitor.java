@@ -42,7 +42,9 @@ import java.io.IOException;
 import java.lang.reflect.Array;
 import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static com.intellij.openapi.util.Pair.pair;
 import static com.intellij.util.BitUtil.isSet;
@@ -259,15 +261,22 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     boolean isLocalClassInner = !isAnonymousInner && outerName == null;
     
     if (innerName == null || outerName == null) {
+      if(myInternalName.equals(name)) {
+        return;
+      }
       int $index = name.lastIndexOf('$');
-      
-      if (isAnonymousInner) {
-        jvmClassName = name.substring($index + 1);
-        innerName = jvmClassName;
-        outerName = name.substring(0, $index);
-      } else { // isLocalClassInner
-        outerName = name.substring(0, $index);
-        jvmClassName = name.substring($index + 1);
+      if ($index == -1) {
+        return;
+      } else {
+        if (isAnonymousInner) {
+          jvmClassName = name.substring($index + 1);
+          innerName = jvmClassName;
+          outerName = name.substring(0, $index);
+        }
+        else { // isLocalClassInner
+          outerName = name.substring(0, $index);
+          jvmClassName = name.substring($index + 1);
+        }
       }
     }
     
