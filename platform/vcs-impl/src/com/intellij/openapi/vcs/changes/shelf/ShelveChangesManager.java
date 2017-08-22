@@ -57,7 +57,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.text.CharArrayCharSequence;
-import com.intellij.util.text.UniqueNameGenerator;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.FilesProgress;
 import com.intellij.vcsUtil.VcsUtil;
@@ -77,8 +76,9 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import static com.intellij.openapi.util.io.FileUtil.toSystemIndependentName;
-import static com.intellij.openapi.vcs.changes.ChangeListUtil.getPredefinedChangeList;
+import static com.intellij.openapi.util.text.StringUtil.notNullize;
 import static com.intellij.openapi.vcs.changes.ChangeListUtil.getChangeListNameForUnshelve;
+import static com.intellij.openapi.vcs.changes.ChangeListUtil.getPredefinedChangeList;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
 
 public class ShelveChangesManager extends AbstractProjectComponent implements JDOMExternalizable {
@@ -577,9 +577,8 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
   @NotNull
   private File generateUniqueSchemePatchDir(@Nullable final String defaultName, boolean createResourceDirectory) {
     ignoreShelfDirectoryIfFirstShelf();
-    String uniqueName = UniqueNameGenerator
-      .generateUniqueName(shortenAndSanitize(defaultName), mySchemeManager.getAllSchemeNames());
-    File dir = new File(getShelfResourcesDirectory(), uniqueName);
+    File shelfResourcesDirectory = getShelfResourcesDirectory();
+    File dir = suggestPatchName(myProject, defaultName, shelfResourcesDirectory, "");
     if (createResourceDirectory && !dir.exists()) {
       //noinspection ResultOfMethodCallIgnored
       dir.mkdirs();
@@ -614,7 +613,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
 
   @NotNull
   private static String shortenAndSanitize(@Nullable String commitMessage) {
-    @NonNls String defaultPath = FileUtil.sanitizeFileName(StringUtil.notNullize(commitMessage));
+    @NonNls String defaultPath = PathUtil.suggestFileName(notNullize(commitMessage));
     if (defaultPath.isEmpty()) {
       defaultPath = "unnamed";
     }
