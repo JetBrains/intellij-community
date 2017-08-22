@@ -24,6 +24,7 @@ import org.mockito.Matchers
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
 import java.io.File
+import java.util.*
 
 
 class FileLoggerTest : PlatformTestCase() {
@@ -58,8 +59,11 @@ class FileLoggerTest : PlatformTestCase() {
     @Test
     fun testLogging() {
         val fileLengthBefore = logFile.length()
-        
-        val loggerProvider = CompletionFileLoggerProvider(pathProvider)
+        val uidProvider = mock(InstallationIdProvider::class.java).apply {
+            `when`(installationId()).thenReturn(UUID.randomUUID().toString())
+        }
+
+        val loggerProvider = CompletionFileLoggerProvider(pathProvider, uidProvider)
         loggerProvider.initComponent()
 
         val logger = loggerProvider.newCompletionLogger()

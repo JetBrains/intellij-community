@@ -57,7 +57,11 @@
                         serviceImplementation="com.intellij.sorting.MLRanker">
     </applicationService>
     
-    <applicationService serviceInterface="com.intellij.codeInsight.completion.CompletionFinalSorter$Factory" 
+    <applicationService serviceInterface="com.intellij.stats.completion.InstallationIdProvider"
+                        serviceImplementation="com.intellij.stats.completion.PermanentInstallationIdProvider">
+    </applicationService>
+
+    <applicationService serviceInterface="com.intellij.codeInsight.completion.CompletionFinalSorter$Factory"
                         serviceImplementation="com.intellij.sorting.MLSorterFactory">
     </applicationService>
     

@@ -40,7 +40,7 @@ object WebServiceMock {
 
     fun mockRequestService(performExperiment: Boolean): RequestService {
         val response = ResponseData(200, status(performExperiment))
-        return mock<RequestService> {
+        return mock {
             on { get(anyString()) }.thenAnswer {
                 val url = it.arguments.first() as String
                 if (url == WebServiceStatusProvider.STATUS_URL) response else throw NOT_SUPPOSED_TO_BE_CALLED

@@ -21,8 +21,19 @@ import com.intellij.stats.events.completion.LogEvent
 import com.intellij.stats.events.completion.LogEventSerializer
 import java.util.*
 
+interface InstallationIdProvider {
+  fun installationId(): String
+}
 
-class CompletionFileLoggerProvider(filePathProvider: FilePathProvider) : ApplicationComponent, CompletionLoggerProvider() {
+class PermanentInstallationIdProvider: InstallationIdProvider {
+  override fun installationId() = PermanentInstallationID.get()
+}
+
+class CompletionFileLoggerProvider(
+        filePathProvider: FilePathProvider,
+        private val installationIdProvider: InstallationIdProvider
+) : ApplicationComponent, CompletionLoggerProvider() {
+
   private val logFileManager = LogFileManager(filePathProvider)
 
   override fun disposeComponent() {
@@ -38,7 +49,7 @@ class CompletionFileLoggerProvider(filePathProvider: FilePathProvider) : Applica
   }
 
   override fun newCompletionLogger(): CompletionLogger {
-    val installationUID = PermanentInstallationID.get()
+    val installationUID = installationIdProvider.installationId()
     val completionUID = UUID.randomUUID().toString()
     val eventLogger = FileEventLogger(logFileManager)
     return CompletionFileLogger(installationUID.shortedUUID(), completionUID.shortedUUID(), eventLogger)

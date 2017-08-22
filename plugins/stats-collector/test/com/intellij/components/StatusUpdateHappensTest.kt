@@ -14,20 +14,6 @@ import org.assertj.core.api.Assertions.assertThat
 
 class StatusUpdateHappensTest: LightPlatformTestCase() {
 
-    fun `test sender component updates status`() {
-        val statsSender = StatisticSenderImpl(mock(), mock())
-        val statusHelper = mock<WebServiceStatus>()
-        val senderComponent = SenderComponent(statsSender, statusHelper)
-
-        senderComponent.initComponent()
-        Thread.sleep(100)
-
-        verify(statusHelper, times(1)).updateStatus()
-        verify(statusHelper, never()).isExperimentOnCurrentIDE()
-
-        senderComponent.disposeComponent()
-    }
-
     fun `test model turning on performExperiment`() {
         val status = WebServiceStatus.getInstance()
 
