@@ -618,6 +618,11 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
   }
 
+  // PY-15071
+  public void testImportedPrivateNameListedInDunderAll() {
+    doMultiFileTest();
+  }
+
   // PY-25695
   public void testDynamicDunderAll() {
     doMultiFileTest();

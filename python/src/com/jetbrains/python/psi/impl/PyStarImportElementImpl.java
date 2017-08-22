@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.*;
@@ -49,6 +50,7 @@ public class PyStarImportElementImpl extends PyBaseElementImpl<PyStarImportEleme
     super(stub, PyElementTypes.STAR_IMPORT_ELEMENT);
   }
 
+  @Override
   @NotNull
   public Iterable<PyElement> iterateNames() {
     if (getParent() instanceof PyFromImportStatement) {
@@ -75,6 +77,7 @@ public class PyStarImportElementImpl extends PyBaseElementImpl<PyStarImportEleme
     });
   }
 
+  @Override
   @NotNull
   public List<RatedResolveResult> multiResolveName(@NotNull String name) {
     return PyUtil.getParameterizedCachedValue(this, name, this::calculateMultiResolveName);
@@ -82,12 +85,9 @@ public class PyStarImportElementImpl extends PyBaseElementImpl<PyStarImportEleme
 
   @NotNull
   private List<RatedResolveResult> calculateMultiResolveName(@NotNull String name) {
-    if (PyUtil.isClassPrivateName(name)) {
-      return Collections.emptyList();
-    }
     final PsiElement parent = getParentByStub();
     if (parent instanceof PyFromImportStatement) {
-      PyFromImportStatement fromImportStatement = (PyFromImportStatement)parent;
+      final PyFromImportStatement fromImportStatement = (PyFromImportStatement)parent;
       final List<PsiElement> importedFiles = fromImportStatement.resolveImportSourceCandidates();
       for (PsiElement importedFile : new HashSet<>(importedFiles)) { // resolver gives lots of duplicates
         final PyFile sourceFile = as(PyUtil.turnDirIntoInit(importedFile), PyFile.class);
@@ -95,7 +95,7 @@ public class PyStarImportElementImpl extends PyBaseElementImpl<PyStarImportEleme
           final PyModuleType moduleType = new PyModuleType(sourceFile);
           final List<? extends RatedResolveResult> results = moduleType.resolveMember(name, null, AccessDirection.READ,
                                                                                       PyResolveContext.defaultContext());
-          if (results != null && !results.isEmpty()) {
+          if (!ContainerUtil.isEmpty(results)) {
             return Lists.newArrayList(results);
           }
         }
@@ -119,14 +119,17 @@ public class PyStarImportElementImpl extends PyBaseElementImpl<PyStarImportEleme
         return "<?>";
       }
 
+      @Override
       public String getPresentableText() {
         return getName();
       }
 
+      @Override
       public String getLocationString() {
         return "| " + "from " + getName() + " import *";
       }
 
+      @Override
       public Icon getIcon(final boolean open) {
         return null;
       }
