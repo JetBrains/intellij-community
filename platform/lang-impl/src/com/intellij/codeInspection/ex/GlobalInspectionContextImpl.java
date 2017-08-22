@@ -81,7 +81,6 @@ import com.intellij.util.TripleFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
-import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -355,30 +354,29 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
   @Override
   protected void notifyInspectionsFinished(@NotNull final AnalysisScope scope) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
-    UIUtil.invokeLaterIfNeeded(() -> {
-      long elapsed = System.currentTimeMillis() - myInspectionStartedTimestamp;
-      LOG.info("Code inspection finished. Took "+elapsed+"ms");
-      if (getProject().isDisposed()) return;
+    LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
+    long elapsed = System.currentTimeMillis() - myInspectionStartedTimestamp;
+    LOG.info("Code inspection finished. Took " + elapsed + "ms");
+    if (getProject().isDisposed()) return;
 
-      InspectionResultsView view = myView == null ? new InspectionResultsView(this, createContentProvider()) : null;
-      if (!(myView == null ? view : myView).hasProblems()) {
-        NOTIFICATION_GROUP.createNotification(InspectionsBundle.message("inspection.no.problems.message",
-                                                                        scope.getFileCount(),
-                                                                        scope.getShortenName()),
-                                              MessageType.INFO).notify(getProject());
-        close(true);
-        if (view != null) {
-          Disposer.dispose(view);
-        }
+    InspectionResultsView view = myView == null ? new InspectionResultsView(this, createContentProvider()) : null;
+    if (!(myView == null ? view : myView).hasProblems()) {
+      NOTIFICATION_GROUP.createNotification(InspectionsBundle.message("inspection.no.problems.message",
+                                                                      scope.getFileCount(),
+                                                                      scope.getShortenName()),
+                                            MessageType.INFO).notify(getProject());
+      close(true);
+      if (view != null) {
+        Disposer.dispose(view);
       }
-      else if (view != null && !view.isDisposed() && getCurrentScope() != null) {
-        addView(view);
-        view.update();
-      }
-      if (myView != null) {
-        myView.setUpdating(false);
-      }
-    });
+    }
+    else if (view != null && !view.isDisposed() && getCurrentScope() != null) {
+      addView(view);
+      view.update();
+    }
+    if (myView != null) {
+      myView.setUpdating(false);
+    }
   }
 
   @Override
