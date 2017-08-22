@@ -16,6 +16,9 @@
 package com.jetbrains.python.actions;
 
 import com.intellij.codeInsight.documentation.DocumentationManager;
+import com.intellij.execution.RunManager;
+import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -32,6 +35,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.console.PythonConsoleToolWindow;
+import com.jetbrains.python.run.PythonConfigurationType;
+import com.jetbrains.python.run.PythonRunConfiguration;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -72,11 +77,22 @@ public class PySciViewAction extends ToggleAction implements DumbAware {
       showConsoleToolwindow(project);
       showDocumentationToolwindow(project, element);
       showDataViewAsToolwindow(project);
+      showCommandLineInRunConfiguration(project, true);
     }
     else {
       hideConsoleToolwindow(project);
       restoreDocumentationPopup(project);
       hideDataViewer(project);
+      showCommandLineInRunConfiguration(project, false);
+    }
+  }
+
+  private static void showCommandLineInRunConfiguration(Project project, boolean show) {
+    final RunnerAndConfigurationSettings template =
+      RunManager.getInstance(project).getConfigurationTemplate(PythonConfigurationType.getInstance().getFactory());
+    final RunConfiguration configuration = template.getConfiguration();
+    if (configuration instanceof PythonRunConfiguration) {
+      ((PythonRunConfiguration)configuration).setShowCommandLineAfterwards(show);
     }
   }
 
