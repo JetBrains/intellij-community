@@ -148,7 +148,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
       }
 
       @Override
-      public void threadAction() {
+      public void threadAction(@NotNull SuspendContextImpl suspendContext) {
         if (node.isObsolete()) return;
         if (myInsertCapturePoint != null) {
           node.setMessage("Async stacktrace from " +
