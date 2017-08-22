@@ -321,6 +321,7 @@ public class ProjectJdkImpl extends UserDataHolderBase implements Sdk, SdkModifi
     myAdditionalData = data;
   }
 
+  @NotNull
   @Override
   public VirtualFile[] getRoots(OrderRootType rootType) {
     final ProjectRoot[] roots = myRootContainer.getRoots(rootType); // use getRoots() cause the data is most up-to-date there
@@ -332,17 +333,17 @@ public class ProjectJdkImpl extends UserDataHolderBase implements Sdk, SdkModifi
   }
 
   @Override
-  public void addRoot(VirtualFile root, OrderRootType rootType) {
+  public void addRoot(@NotNull VirtualFile root, @NotNull OrderRootType rootType) {
     myRootContainer.addRoot(root, rootType);
   }
 
   @Override
-  public void removeRoot(VirtualFile root, OrderRootType rootType) {
+  public void removeRoot(@NotNull VirtualFile root, @NotNull OrderRootType rootType) {
     myRootContainer.removeRoot(root, rootType);
   }
 
   @Override
-  public void removeRoots(OrderRootType rootType) {
+  public void removeRoots(@NotNull OrderRootType rootType) {
     myRootContainer.removeAllRoots(rootType);
   }
 

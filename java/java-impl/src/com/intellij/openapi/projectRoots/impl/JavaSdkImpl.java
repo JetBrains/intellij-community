@@ -388,15 +388,16 @@ public class JavaSdkImpl extends JavaSdk {
       @Override public void setVersionString(String versionString) { throw new UnsupportedOperationException(); }
       @Override public SdkAdditionalData getSdkAdditionalData() { throw new UnsupportedOperationException(); }
       @Override public void setSdkAdditionalData(SdkAdditionalData data) { throw new UnsupportedOperationException(); }
+      @NotNull
       @Override public VirtualFile[] getRoots(OrderRootType rootType) { throw new UnsupportedOperationException(); }
-      @Override public void removeRoot(VirtualFile root, OrderRootType rootType) { throw new UnsupportedOperationException(); }
-      @Override public void removeRoots(OrderRootType rootType) { throw new UnsupportedOperationException(); }
+      @Override public void removeRoot(@NotNull VirtualFile root, @NotNull OrderRootType rootType) { throw new UnsupportedOperationException(); }
+      @Override public void removeRoots(@NotNull OrderRootType rootType) { throw new UnsupportedOperationException(); }
       @Override public void removeAllRoots() { throw new UnsupportedOperationException(); }
       @Override public void commitChanges() { throw new UnsupportedOperationException(); }
       @Override public boolean isWritable() { throw new UnsupportedOperationException(); }
 
       @Override
-      public void addRoot(VirtualFile root, OrderRootType rootType) {
+      public void addRoot(@NotNull VirtualFile root, @NotNull OrderRootType rootType) {
         rootContainer.addRoot(root, rootType);
       }
     };
@@ -435,17 +436,17 @@ public class JavaSdkImpl extends JavaSdk {
       }
 
       @Override
-      public void addRoot(VirtualFile root, OrderRootType rootType) {
+      public void addRoot(@NotNull VirtualFile root, @NotNull OrderRootType rootType) {
         throwReadOnly();
       }
 
       @Override
-      public void removeRoot(VirtualFile root, OrderRootType rootType) {
+      public void removeRoot(@NotNull VirtualFile root, @NotNull OrderRootType rootType) {
         throwReadOnly();
       }
 
       @Override
-      public void removeRoots(OrderRootType rootType) {
+      public void removeRoots(@NotNull OrderRootType rootType) {
         throwReadOnly();
       }
 
@@ -464,6 +465,7 @@ public class JavaSdkImpl extends JavaSdk {
         throwReadOnly();
       }
 
+      @NotNull
       @Override
       public VirtualFile[] getRoots(OrderRootType rootType) {
         return rootContainer.getRootFiles(rootType);

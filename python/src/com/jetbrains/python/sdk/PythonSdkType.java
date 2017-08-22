@@ -46,7 +46,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.CharFilter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -83,7 +82,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -101,16 +99,16 @@ import java.util.stream.Collectors;
 public final class PythonSdkType extends SdkType {
   public static final String REMOTE_SOURCES_DIR_NAME = "remote_sources";
   private static final Logger LOG = Logger.getInstance(PythonSdkType.class);
-  private static final String[] WINDOWS_EXECUTABLE_SUFFIXES = new String[]{"cmd", "exe", "bat", "com"};
+  private static final String[] WINDOWS_EXECUTABLE_SUFFIXES = {"cmd", "exe", "bat", "com"};
 
-  static final int MINUTE = 60 * 1000; // 60 seconds, used with script timeouts
-  @NonNls public static final String SKELETONS_TOPIC = "Skeletons";
-  private static final String[] DIRS_WITH_BINARY = new String[]{"", "bin", "Scripts"};
-  private static final String[] UNIX_BINARY_NAMES = new String[]{"jython", "pypy", "python", "python3"};
-  private static final String[] WIN_BINARY_NAMES = new String[]{"jython.bat", "ipy.exe", "pypy.exe", "python.exe", "python3.exe"};
+  private static final int MINUTE = 60 * 1000; // 60 seconds, used with script timeouts
+  @NonNls private static final String SKELETONS_TOPIC = "Skeletons";
+  private static final String[] DIRS_WITH_BINARY = {"", "bin", "Scripts"};
+  private static final String[] UNIX_BINARY_NAMES = {"jython", "pypy", "python", "python3"};
+  private static final String[] WIN_BINARY_NAMES = {"jython.bat", "ipy.exe", "pypy.exe", "python.exe", "python3.exe"};
 
   private static final Key<WeakReference<Component>> SDK_CREATOR_COMPONENT_KEY = Key.create("#com.jetbrains.python.sdk.creatorComponent");
-  public static final Predicate<Sdk> REMOTE_SDK_PREDICATE = sdk -> isRemote(sdk);
+  private static final Predicate<Sdk> REMOTE_SDK_PREDICATE = PythonSdkType::isRemote;
 
   public static PythonSdkType getInstance() {
     return SdkType.findInstance(PythonSdkType.class);
@@ -120,6 +118,7 @@ public final class PythonSdkType extends SdkType {
     super("Python SDK");
   }
 
+  @Override
   public Icon getIcon() {
     return PythonIcons.Python.Python;
   }
@@ -130,6 +129,7 @@ public final class PythonSdkType extends SdkType {
     return "reference.project.structure.sdk.python";
   }
 
+  @Override
   @NotNull
   public Icon getIconForAddAction() {
     return PythonFileType.INSTANCE.getIcon();
@@ -150,6 +150,7 @@ public final class PythonSdkType extends SdkType {
     return level.isOlderThan(LanguageLevel.PYTHON30) ? PyBuiltinCache.BUILTIN_FILE : PyBuiltinCache.BUILTIN_FILE_3K;
   }
 
+  @Override
   @NonNls
   @Nullable
   public String suggestHomePath() {
@@ -201,11 +202,7 @@ public final class PythonSdkType extends SdkType {
   }
 
   private static String findDigits(String s) {
-    int pos = StringUtil.findFirst(s, new CharFilter() {
-      public boolean accept(char ch) {
-        return Character.isDigit(ch);
-      }
-    });
+    int pos = StringUtil.findFirst(s, Character::isDigit);
     if (pos >= 0) {
       return s.substring(pos);
     }
@@ -221,6 +218,7 @@ public final class PythonSdkType extends SdkType {
     return false;
   }
 
+  @Override
   public boolean isValidSdkHome(@Nullable final String path) {
     return PythonSdkFlavor.getFlavor(path) != null;
   }
@@ -285,10 +283,12 @@ public final class PythonSdkType extends SdkType {
     }.withTitle(PyBundle.message("sdk.select.path")).withShowHiddenFiles(SystemInfo.isUnix);
   }
 
+  @Override
   public boolean supportsCustomCreateUI() {
     return true;
   }
 
+  @Override
   public void showCustomCreateUI(@NotNull SdkModel sdkModel,
                                  @NotNull final JComponent parentComponent,
                                  @NotNull final Consumer<Sdk> sdkCreatedCallback) {
@@ -424,6 +424,7 @@ public final class PythonSdkType extends SdkType {
     }
   }
 
+  @Override
   public String suggestSdkName(final String currentSdkName, final String sdkHome) {
     String name = getVersionString(sdkHome);
     return suggestSdkNameFromVersion(sdkHome, name);
@@ -447,6 +448,7 @@ public final class PythonSdkType extends SdkType {
     return version;
   }
 
+  @Override
   @Nullable
   public AdditionalDataConfigurable createAdditionalDataConfigurable(@NotNull final SdkModel sdkModel,
                                                                      @NotNull final SdkModificator sdkModificator) {
@@ -475,6 +477,7 @@ public final class PythonSdkType extends SdkType {
     return path.contains(SKELETON_DIR_NAME);
   }
 
+  @Override
   @NotNull
   @NonNls
   public String getPresentableName() {
@@ -494,6 +497,7 @@ public final class PythonSdkType extends SdkType {
     return FileUtil.toSystemDependentName(path);
   }
 
+  @Override
   public void setupSdkPaths(@NotNull Sdk sdk) {
     final Project project;
     final WeakReference<Component> ownerComponentRef = sdk.getUserData(SDK_CREATOR_COMPONENT_KEY);
@@ -517,22 +521,19 @@ public final class PythonSdkType extends SdkType {
     String notificationMessage;
     if (e.getCause() instanceof VagrantNotStartedException) {
       notificationListener =
-        new NotificationListener() {
-          @Override
-          public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-            final PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
-            if (manager != null) {
-              try {
-                VagrantNotStartedException cause = (VagrantNotStartedException)e.getCause();
-                manager.runVagrant(cause.getVagrantFolder(), cause.getMachineName());
-              }
-              catch (ExecutionException e1) {
-                throw new RuntimeException(e1);
-              }
+        (notification, event) -> {
+          final PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
+          if (manager != null) {
+            try {
+              VagrantNotStartedException cause = (VagrantNotStartedException)e.getCause();
+              manager.runVagrant(cause.getVagrantFolder(), cause.getMachineName());
             }
-            if (restartAction != null) {
-              restartAction.run();
+            catch (ExecutionException e1) {
+              throw new RuntimeException(e1);
             }
+          }
+          if (restartAction != null) {
+            restartAction.run();
           }
         };
       notificationMessage = e.getMessage() + "\n<a href=\"#\">Launch vagrant and refresh skeletons</a>";
@@ -541,13 +542,10 @@ public final class PythonSdkType extends SdkType {
       //noinspection ThrowableResultOfMethodCallIgnored
       final ExceptionFix fix = ExceptionUtil.findCause(e, ExceptionFix.class);
       notificationListener =
-        new NotificationListener() {
-          @Override
-          public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-            fix.apply();
-            if (restartAction != null) {
-              restartAction.run();
-            }
+        (notification, event) -> {
+          fix.apply();
+          if (restartAction != null) {
+            restartAction.run();
           }
         };
       notificationMessage = fix.getNotificationMessage(e.getMessage());
@@ -578,7 +576,7 @@ public final class PythonSdkType extends SdkType {
     if (suffix != null) {
       suffix = suffix.toLowerCase(); // Why on earth empty suffix is null and not ""?
     }
-    if ((!path.isDirectory()) && ("zip".equals(suffix) || "egg".equals(suffix))) {
+    if (!path.isDirectory() && ("zip".equals(suffix) || "egg".equals(suffix))) {
       // a .zip / .egg file must have its root extracted first
       final VirtualFile jar = JarFileSystem.getInstance().getJarRootForLocalFile(path);
       if (jar != null) {
@@ -669,6 +667,7 @@ public final class PythonSdkType extends SdkType {
     }
   }
 
+  @Override
   @Nullable
   public String getVersionString(final String sdkHome) {
     final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(sdkHome);
@@ -730,10 +729,12 @@ public final class PythonSdkType extends SdkType {
     return LanguageLevel.getDefault();
   }
 
+  @Override
   public boolean isRootTypeApplicable(@NotNull final OrderRootType type) {
     return type == OrderRootType.CLASSES;
   }
 
+  @Override
   public boolean sdkHasValidPath(@NotNull Sdk sdk) {
     if (PySdkUtil.isRemote(sdk)) {
       return true;
