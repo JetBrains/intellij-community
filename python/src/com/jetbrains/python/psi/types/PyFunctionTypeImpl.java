@@ -172,6 +172,7 @@ public class PyFunctionTypeImpl implements PyFunctionType {
     return myCallable;
   }
 
+  @NotNull
   public PyFunctionType dropSelf(@NotNull TypeEvalContext context) {
     final List<PyCallableParameter> parameters = getParameters(context);
 
