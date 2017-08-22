@@ -22,7 +22,6 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.reference.RefDirectory;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.openapi.vcs.FileStatus;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,6 +42,11 @@ public class RefElementNode extends SuppressableInspectionTreeNode {
     init(presentation.getContext().getProject());
     final RefEntity refEntity = getElement();
     myIcon = refEntity == null ? null : refEntity.getIcon(false);
+  }
+
+  @Override
+  public final boolean isAlreadySuppressedFromView() {
+    return getElement() != null && getPresentation().isSuppressed(getElement());
   }
 
   public boolean hasDescriptorsUnder() {
@@ -76,16 +80,6 @@ public class RefElementNode extends SuppressableInspectionTreeNode {
   }
 
   @Override
-  public void excludeElement(ExcludedInspectionTreeNodesManager excludedManager) {
-    super.excludeElement(excludedManager);
-  }
-
-  @Override
-  public void amnestyElement(ExcludedInspectionTreeNodesManager excludedManager) {
-    super.amnestyElement(excludedManager);
-  }
-
-  @Override
   public void add(MutableTreeNode newChild) {
     checkHasDescriptorUnder(newChild);
     super.add(newChild);
@@ -116,13 +110,8 @@ public class RefElementNode extends SuppressableInspectionTreeNode {
   }
 
   @Override
-  public int getProblemCount(boolean allowSuppressed) {
-    return isLeaf() ? getPresentation().getIgnoredRefElements().contains(getElement()) && !(allowSuppressed && isAlreadySuppressedFromView() && isValid()) ? 0 : 1 : super.getProblemCount(allowSuppressed);
-  }
-
-  @Override
   public void visitProblemSeverities(TObjectIntHashMap<HighlightDisplayLevel> counter) {
-    if (isLeaf() && !getPresentation().isElementIgnored(getElement())) {
+    if (!isExcluded() && isLeaf() && !getPresentation().isProblemResolved(getElement()) && !getPresentation().isSuppressed(getElement())) {
       counter.put(HighlightDisplayLevel.WARNING, counter.get(HighlightDisplayLevel.WARNING) + 1);
       return;
     }
@@ -131,7 +120,7 @@ public class RefElementNode extends SuppressableInspectionTreeNode {
 
   @Override
   public boolean isQuickFixAppliedFromView() {
-    return false;
+    return isLeaf() && getPresentation().isProblemResolved(getElement());
   }
 
   @Nullable

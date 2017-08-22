@@ -69,6 +69,11 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
     myLineNumber = myDescriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)myDescriptor).getLineNumber() : (lineNumberCounter == null ? -1 : lineNumberCounter.getAsInt());
   }
 
+  @Override
+  public final boolean isAlreadySuppressedFromView() {
+    return myDescriptor != null && getPresentation().isSuppressed(myDescriptor);
+  }
+
   public int getLineNumber() {
     return myLineNumber;
   }
@@ -94,13 +99,8 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
   }
 
   @Override
-  public int getProblemCount(boolean allowSuppressed) {
-    return getPresentation().isProblemResolved(getElement(), myDescriptor) && !(allowSuppressed && isAlreadySuppressedFromView() && isValid())? 0 : 1;
-  }
-
-  @Override
   public void visitProblemSeverities(TObjectIntHashMap<HighlightDisplayLevel> counter) {
-    if (!getPresentation().isProblemResolved(getElement(), myDescriptor)) {
+    if (!isExcluded() && !isQuickFixAppliedFromView() && !isAlreadySuppressedFromView()) {
       counter.put(myLevel, counter.get(myLevel) + 1);
     }
   }
@@ -114,22 +114,6 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
       return psiElement != null && psiElement.isValid();
     }
     return true;
-  }
-
-  @Override
-  public void excludeElement(ExcludedInspectionTreeNodesManager manager) {
-    InspectionToolPresentation presentation = getPresentation();
-    presentation.ignoreCurrentElementProblem(getElement(), getDescriptor());
-    super.excludeElement(manager);
-  }
-
-  @Override
-  public void amnestyElement(ExcludedInspectionTreeNodesManager manager) {
-    if (!isAlreadySuppressedFromView()) {
-      InspectionToolPresentation presentation = getPresentation();
-      presentation.amnesty(getElement(), getDescriptor());
-    }
-    super.amnestyElement(manager);
   }
 
   @Override
@@ -151,7 +135,7 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
 
   @Override
   public boolean isQuickFixAppliedFromView() {
-    return (myDescriptor != null && getPresentation().isProblemResolved(getElement(), myDescriptor)) && !isAlreadySuppressedFromView();
+    return (myDescriptor != null && getPresentation().isProblemResolved(myDescriptor)) && !isAlreadySuppressedFromView();
   }
 
   @Nullable

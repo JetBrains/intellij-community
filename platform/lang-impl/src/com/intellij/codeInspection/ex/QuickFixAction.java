@@ -160,10 +160,10 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
     refManager.inspectionReadActionFinished();
 
     try {
-      final Set<PsiElement> ignoredElements = new HashSet<>();
-      performFixesInBatch(project, descriptors, context, ignoredElements);
+      final Set<PsiElement> resolvedElements = new HashSet<>();
+      performFixesInBatch(project, descriptors, context, resolvedElements);
 
-      refreshViews(project, ignoredElements, myToolWrapper);
+      refreshViews(project, resolvedElements, myToolWrapper);
     }
     finally { //to make offline view lazy
       if (initial) refManager.inspectionReadActionStarted();
@@ -270,20 +270,20 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
     return selection.toArray(new RefEntity[selection.size()]);
   }
 
-  private static void refreshViews(@NotNull Project project, @NotNull Set<PsiElement> selectedElements, @NotNull InspectionToolWrapper toolWrapper) {
+  private static void refreshViews(@NotNull Project project, @NotNull Set<PsiElement> resolvedElements, @NotNull InspectionToolWrapper toolWrapper) {
     InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManager.getInstance(project);
     final Set<GlobalInspectionContextImpl> runningContexts = managerEx.getRunningContexts();
     for (GlobalInspectionContextImpl context : runningContexts) {
-      for (PsiElement element : selectedElements) {
-        context.ignoreElement(toolWrapper.getTool(), element);
+      for (PsiElement element : resolvedElements) {
+        context.resolveElement(toolWrapper.getTool(), element);
       }
       context.refreshViews();
     }
   }
 
-  protected static void refreshViews(@NotNull Project project, @NotNull RefEntity[] refElements, @NotNull InspectionToolWrapper toolWrapper) {
+  protected static void refreshViews(@NotNull Project project, @NotNull RefEntity[] resolvedElements, @NotNull InspectionToolWrapper toolWrapper) {
     final Set<PsiElement> ignoredElements = new HashSet<>();
-    for (RefEntity element : refElements) {
+    for (RefEntity element : resolvedElements) {
       final PsiElement psiElement = element instanceof RefElement ? ((RefElement)element).getElement() : null;
       if (psiElement != null && psiElement.isValid()) {
         ignoredElements.add(psiElement);

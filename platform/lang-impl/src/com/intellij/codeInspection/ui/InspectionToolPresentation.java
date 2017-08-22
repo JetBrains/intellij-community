@@ -18,11 +18,11 @@ package com.intellij.codeInspection.ui;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.ProblemDescriptionsProcessor;
-import com.intellij.codeInspection.QuickFix;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefModule;
+import com.intellij.codeInspection.ui.util.SynchronizedBidiMultiMap;
 import com.intellij.lang.annotation.HighlightSeverity;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -32,15 +32,13 @@ import javax.swing.*;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 public interface InspectionToolPresentation extends ProblemDescriptionsProcessor {
 
   @NotNull
   InspectionToolWrapper getToolWrapper();
-
-  @NotNull
-  Map<RefEntity, CommonProblemDescriptor[]> getIgnoredElements();
 
   void createToolNode(@NotNull GlobalInspectionContextImpl globalInspectionContext,
                       @NotNull InspectionNode node,
@@ -64,12 +62,26 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
   @NotNull
   Map<String, Set<RefEntity>> getContent();
 
-  void ignoreCurrentElement(@NotNull RefEntity refEntity);
-  void amnesty(@NotNull RefEntity refEntity, @NotNull CommonProblemDescriptor descriptor);
-  void cleanup();
-  boolean isElementIgnored(@NotNull RefEntity element);
+  void resolveElement(@NotNull RefEntity entity);
+
+  void resolveProblem(@NotNull CommonProblemDescriptor descriptor);
+
+  boolean isProblemResolved(@Nullable CommonProblemDescriptor descriptor);
+
+  boolean isProblemResolved(@Nullable RefEntity entity);
+
   @NotNull
-  Set<RefEntity> getIgnoredRefElements();
+  Collection<RefEntity> getResolvedElements();
+
+  void suppressProblem(@NotNull CommonProblemDescriptor descriptor);
+
+  void suppressProblem(@NotNull RefEntity entity);
+
+  boolean isSuppressed(RefEntity element);
+
+  boolean isSuppressed(CommonProblemDescriptor descriptor);
+
+  void cleanup();
   @Nullable
   IntentionAction findQuickFixes(@NotNull CommonProblemDescriptor descriptor, final String hint);
   @NotNull
@@ -80,19 +92,16 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
   @NotNull
   QuickFixAction[] getQuickFixes(@NotNull final RefEntity[] refElements, @Nullable InspectionTree tree);
   @NotNull
-  Map<RefEntity, CommonProblemDescriptor[]> getProblemElements();
+  SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> getProblemElements();
   @NotNull
   Collection<CommonProblemDescriptor> getProblemDescriptors();
-  boolean isProblemResolved(@Nullable RefEntity refEntity, @Nullable CommonProblemDescriptor descriptor);
-  void ignoreCurrentElementProblem(@Nullable RefEntity refEntity, @Nullable CommonProblemDescriptor descriptor);
   void addProblemElement(@Nullable RefEntity refElement, boolean filterSuppressed, @NotNull CommonProblemDescriptor... descriptions);
-  void ignoreProblem(@NotNull CommonProblemDescriptor descriptor, @NotNull QuickFix fix);
 
   @NotNull
   GlobalInspectionContextImpl getContext();
   @NotNull
   QuickFixAction[] extractActiveFixes(@NotNull RefEntity[] refElements,
-                                      @NotNull Map<RefEntity, CommonProblemDescriptor[]> descriptorMap,
+                                      @NotNull Function<RefEntity, CommonProblemDescriptor[]> descriptorMap,
                                       @Nullable CommonProblemDescriptor[] allowedDescriptors);
   void exportResults(@NotNull Element parentNode,
                      @NotNull Predicate<RefEntity> isEntityExcluded,
@@ -117,4 +126,5 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
 
   @Nullable
   HighlightSeverity getSeverity(@NotNull RefElement element);
+
 }
