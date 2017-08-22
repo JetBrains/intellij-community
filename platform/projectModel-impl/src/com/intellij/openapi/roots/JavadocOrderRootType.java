@@ -16,6 +16,7 @@
 package com.intellij.openapi.roots;
 
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -29,28 +30,34 @@ public class JavadocOrderRootType extends PersistentOrderRootType {
     super("JAVADOC", "javadocPath", "javadoc-paths", "javadocPathEntry");
   }
 
+  @NotNull
   public static OrderRootType getInstance() {
     return getOrderRootType(JavadocOrderRootType.class);
   }
 
-  public static String[] getUrls(OrderEntry entry) {
+  @NotNull
+  public static String[] getUrls(@NotNull OrderEntry entry) {
+    return ((JavadocOrderRootType)getInstance()).doGetUrls(entry);
+  }
+
+  @NotNull
+  private String[] doGetUrls(@NotNull OrderEntry entry) {
     List<String> result = new ArrayList<>();
     RootPolicy<List<String>> policy = new RootPolicy<List<String>>() {
       @Override
-      public List<String> visitLibraryOrderEntry(final LibraryOrderEntry orderEntry, final List<String> value) {
-        Collections.addAll(value, orderEntry.getRootUrls(getInstance()));
+      public List<String> visitLibraryOrderEntry(@NotNull final LibraryOrderEntry orderEntry, final List<String> value) {
+        Collections.addAll(value, orderEntry.getRootUrls(JavadocOrderRootType.this));
         return value;
       }
 
       @Override
-      public List<String> visitJdkOrderEntry(final JdkOrderEntry orderEntry, final List<String> value) {
-        Collections.addAll(value, orderEntry.getRootUrls(getInstance()));
+      public List<String> visitJdkOrderEntry(@NotNull final JdkOrderEntry orderEntry, final List<String> value) {
+        Collections.addAll(value, orderEntry.getRootUrls(JavadocOrderRootType.this));
         return value;
       }
 
       @Override
-      public List<String> visitModuleSourceOrderEntry(final ModuleSourceOrderEntry orderEntry,
-                                                           final List<String> value) {
+      public List<String> visitModuleSourceOrderEntry(@NotNull final ModuleSourceOrderEntry orderEntry, final List<String> value) {
         Collections.addAll(value, orderEntry.getRootModel().getModuleExtension(JavaModuleExternalPaths.class).getJavadocUrls());
         return value;
       }
