@@ -860,12 +860,22 @@
       <add-to-group group-id="DebugMainMenu" relative-to-action="StepInto" anchor="after"/>
       <add-to-group group-id="XDebugger.ToolWindow.TopToolbar" relative-to-action="StepInto" anchor="after"/>
     </action>
+
+    <action id="PySciView" class="com.jetbrains.python.actions.PySciViewAction">
+      <add-to-group group-id="ViewMenu" anchor="before" relative-to-action="ToggleFullScreenGroup"/>
+    </action>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij.spellchecker">
     <support language="Python" implementationClass="com.jetbrains.python.spellchecker.PythonSpellcheckerStrategy"/>
     <bundledDictionaryProvider implementation="com.jetbrains.python.spellchecker.PythonBundledDictionaryProvider"/>
   </extensions>
+
+  <project-components>
+    <component>
+      <implementation-class>com.jetbrains.python.actions.PySciProjectComponent</implementation-class>
+    </component>
+  </project-components>
 
   <application-components>
     <component>
