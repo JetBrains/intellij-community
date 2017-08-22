@@ -1013,16 +1013,24 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   public void visitArrayInitializerExpression(PsiArrayInitializerExpression expression) {
     startElement(expression);
     PsiType type = expression.getType();
+    PsiType componentType = type instanceof PsiArrayType ? ((PsiArrayType)type).getComponentType() : null;
+    processArrayInitializers(expression, componentType);
+    pushUnknown();
+    finishElement(expression);
+  }
+
+  private void processArrayInitializers(@NotNull PsiArrayInitializerExpression expression, PsiType componentType) {
     PsiExpression[] initializers = expression.getInitializers();
     for (PsiExpression initializer : initializers) {
       initializer.accept(this);
-      if (type instanceof PsiArrayType) {
-        generateBoxingUnboxingInstructionFor(initializer, ((PsiArrayType)type).getComponentType());
+      if (componentType != null) {
+        generateBoxingUnboxingInstructionFor(initializer, componentType);
+        if (DfaPsiUtil.getTypeNullability(componentType) == Nullness.NOT_NULL) {
+          addInstruction(new CheckNotNullInstruction(initializer, NullabilityProblem.assigningToNotNull));
+        }
       }
       addInstruction(new PopInstruction());
     }
-    pushUnknown();
-    finishElement(expression);
   }
 
   @Override
@@ -1517,7 +1525,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
     pushUnknown();
 
-    if (expression.getType() instanceof PsiArrayType) {
+    PsiType type = expression.getType();
+    if (type instanceof PsiArrayType) {
       final PsiExpression[] dimensions = expression.getArrayDimensions();
       for (final PsiExpression dimension : dimensions) {
         dimension.accept(this);
@@ -1527,10 +1536,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       }
       final PsiArrayInitializerExpression arrayInitializer = expression.getArrayInitializer();
       if (arrayInitializer != null) {
-        for (final PsiExpression initializer : arrayInitializer.getInitializers()) {
-          initializer.accept(this);
-          addInstruction(new PopInstruction());
-        }
+        processArrayInitializers(arrayInitializer, ((PsiArrayType)type).getComponentType());
       }
       addConditionalRuntimeThrow();
       addInstruction(new MethodCallInstruction(expression, null, Collections.emptyList()));
