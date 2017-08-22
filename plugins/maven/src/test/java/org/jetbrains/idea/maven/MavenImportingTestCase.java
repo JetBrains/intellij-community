@@ -15,10 +15,10 @@
  */
 package org.jetbrains.idea.maven;
 
-import com.intellij.compiler.server.BuildManager;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.externalSystem.test.ExternalSystemTestCase;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -38,7 +38,6 @@ import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.PathUtil;
-import com.intellij.util.io.PathKt;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -54,7 +53,6 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -79,28 +77,12 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     try {
       Messages.setTestDialog(TestDialog.DEFAULT);
       removeFromLocalRepository("test");
-      deleteBuildSystemDirectory();
+      ExternalSystemTestCase.deleteBuildSystemDirectory();
     }
     finally {
       myProjectsManager = null;
       myProjectsTree = null;
       super.tearDown();
-    }
-  }
-
-  private static void deleteBuildSystemDirectory() {
-    Path buildSystemDirectory = BuildManager.getInstance().getBuildSystemDirectory();
-    try {
-      PathKt.delete(buildSystemDirectory);
-      return;
-    }
-    catch (Exception ignore) {
-    }
-    try {
-      FileUtil.delete(buildSystemDirectory.toFile());
-    }
-    catch (Exception e) {
-      LOG.warn("Unable to remove build system directory.", e);
     }
   }
 

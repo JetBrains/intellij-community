@@ -130,7 +130,7 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
         }
       }.execute();
       Messages.setTestDialog(TestDialog.DEFAULT);
-      PathKt.delete(BuildManager.getInstance().getBuildSystemDirectory());
+      deleteBuildSystemDirectory();
     }
     finally {
       super.tearDown();
