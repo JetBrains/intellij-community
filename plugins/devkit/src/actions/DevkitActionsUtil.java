@@ -17,6 +17,7 @@ package org.jetbrains.idea.devkit.actions;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.actions.CreateFileAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -40,6 +41,8 @@ import java.io.File;
 import java.util.*;
 
 public final class DevkitActionsUtil {
+  private static final Logger LOG = Logger.getInstance(DevkitActionsUtil.class);
+
   private DevkitActionsUtil() {
   }
 
@@ -141,8 +144,18 @@ public final class DevkitActionsUtil {
 
       VirtualFile virtualFile = pluginXml.getVirtualFile();
       VirtualFile projectPath = item.getProject().getBaseDir();
-      assert virtualFile != null;
-      assert projectPath != null;
+
+      boolean shouldReturnNull = false;
+      if (virtualFile == null) {
+        LOG.warn("Unexpected null plugin.xml VirtualFile for module: " + item);
+        shouldReturnNull = true;
+      }
+      if (projectPath == null) {
+        LOG.warn("Unexpected null project basedir VirtualFile for module: " + item);
+        shouldReturnNull = true;
+      }
+      if (shouldReturnNull) return null;
+
 
       if (VfsUtilCore.isAncestor(projectPath, virtualFile, false)) {
         return VfsUtilCore.getRelativePath(virtualFile, projectPath, File.separatorChar);
