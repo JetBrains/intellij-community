@@ -19,7 +19,6 @@ package com.intellij.codeInsight.hint;
 import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager;
-import com.intellij.codeInsight.hints.ParameterHintsPassFactory;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.ide.IdeTooltip;
@@ -48,7 +47,10 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.HintHint;
@@ -80,7 +82,7 @@ public class ParameterInfoController implements Disposable {
   private final RangeMarker myLbraceMarker;
   private final LightweightHint myHint;
   private final ParameterInfoComponent myComponent;
-  private final boolean myKeepOnHintHidden;
+  private boolean myKeepOnHintHidden;
 
   private final CaretListener myEditorCaretListener;
   @NotNull private final ParameterInfoHandler<Object, Object> myHandler;
@@ -289,34 +291,7 @@ public class ParameterInfoController implements Disposable {
   }
 
   public void updateComponent(){
-    if (myKeepOnHintHidden) {
-      boolean removeHints = true;
-      PsiElement owner = myComponent.getParameterOwner();
-      if (owner != null && owner.isValid()) {
-        int caretOffset = myEditor.getCaretModel().getOffset();
-        TextRange ownerTextRange = owner.getTextRange();
-        if (ownerTextRange != null) {
-          if (caretOffset >= ownerTextRange.getStartOffset() && caretOffset <= ownerTextRange.getEndOffset()) {
-            removeHints = false;
-          }
-          else {
-            for (PsiElement element : owner.getChildren()) {
-              if (element instanceof PsiErrorElement) {
-                removeHints = false;
-                break;
-              }
-            }
-          }
-        }
-      }
-      if (removeHints) {
-        ParameterHintsPassFactory.forceHintsUpdateOnNextPass(myEditor);
-        Disposer.dispose(this);
-        return;
-      }
-    }
-
-    if (!myHint.isVisible() && !myKeepOnHintHidden) {
+    if (!myKeepOnHintHidden && !myHint.isVisible()) {
       Disposer.dispose(this);
       return;
     }
@@ -648,6 +623,16 @@ public class ParameterInfoController implements Disposable {
     @Override
     public Object[] getObjectsToView() {
       return myComponent.getObjects();
+    }
+
+    @Override
+    public boolean isPreservedOnHintHidden() {
+      return myKeepOnHintHidden;
+    }
+
+    @Override
+    public void setPreservedOnHintHidden(boolean value) {
+      myKeepOnHintHidden = value;
     }
 
     @Override
