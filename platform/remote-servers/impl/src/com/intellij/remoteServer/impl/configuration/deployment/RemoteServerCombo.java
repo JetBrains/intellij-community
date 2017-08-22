@@ -28,7 +28,6 @@ public class RemoteServerCombo<S extends ServerConfiguration> extends ComboboxWi
     Comparator.comparing(RemoteServer::getName, String.CASE_INSENSITIVE_ORDER);
 
   private final ServerType<S> myServerType;
-  //  private final List<ActionListener> myActionListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final List<ChangeListener> myChangeListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final CollectionComboBoxModel<ServerItem> myServerListModel;
   private String myServerNameReminder;
@@ -233,8 +232,11 @@ public class RemoteServerCombo<S extends ServerConfiguration> extends ComboboxWi
     RemoteServer<?> findRemoteServer();
   }
 
+  /**
+   * marker for action items which always temporary and switch selection themselves after being chosen by user
+   */
   public interface TransientItem extends ServerItem {
-    //marker for action items which always temporary and switch selection themselves after being chosen by user
+    //
   }
 
   private class CreateNewServerItem implements TransientItem {

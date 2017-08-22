@@ -196,14 +196,15 @@ public class SingleRemoteServerConfigurable extends NamedConfigurable<RemoteServ
     return myServer.getType().getIcon();
   }
 
-  private class ConnectionTester extends RemoteServerConnectionTester {
+  private class ConnectionTester {
+    private final RemoteServerConnectionTester myTester;
 
     public ConnectionTester() {
-      super(myInnerServer);
+      myTester = new RemoteServerConnectionTester(myInnerServer);
     }
 
     public void testConnection() {
-      testConnection(this::testFinished);
+      myTester.testConnection(this::testFinished);
     }
 
     public void testFinished(boolean connected, @NotNull String connectionStatus) {

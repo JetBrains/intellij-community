@@ -46,6 +46,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author nik
@@ -189,7 +190,7 @@ public class DeployToServerSettingsEditor<S extends ServerConfiguration, D exten
     }
 
     private enum TestConnectionState {
-      SUCCESSFUL {
+      INITIAL {
         @Override
         public void validateConnection() throws RuntimeConfigurationException {
           //
@@ -199,6 +200,12 @@ public class DeployToServerSettingsEditor<S extends ServerConfiguration, D exten
         @Override
         public void validateConnection() throws RuntimeConfigurationException {
           throw new RuntimeConfigurationWarning(CloudBundle.getText("remote.server.combo.message.test.connection.in.progress"));
+        }
+      },
+      SUCCESSFUL {
+        @Override
+        public void validateConnection() throws RuntimeConfigurationException {
+          //
         }
       },
       FAILED {
@@ -213,10 +220,9 @@ public class DeployToServerSettingsEditor<S extends ServerConfiguration, D exten
     }
 
     private class AutoDetectedItem extends RemoteServerCombo.ServerItemImpl {
-      private final Object myStateLock = new Object();
-      private volatile TestConnectionState myTestConnectionState;
-      private RemoteServer<S> myServerInstance;
-      private long myLastStartedTestConnectionMillis = -1;
+      private final AtomicReference<TestConnectionState> myTestConnectionStateA = new AtomicReference<>(TestConnectionState.INITIAL);
+      private volatile RemoteServer<S> myServerInstance;
+      private volatile long myLastStartedTestConnectionMillis = -1;
 
       public AutoDetectedItem() {
         super(null);
@@ -226,18 +232,13 @@ public class DeployToServerSettingsEditor<S extends ServerConfiguration, D exten
       public void render(@NotNull SimpleColoredComponent ui) {
         ui.setIcon(getServerType().getIcon());
 
-        boolean failed;
-        synchronized (myStateLock) {
-          failed = myTestConnectionState == TestConnectionState.FAILED;
-        }
+        boolean failed = myTestConnectionStateA.get() == TestConnectionState.FAILED;
         ui.append(CloudBundle.getText("remote.server.combo.auto.detected.server"),
                   failed ? SimpleTextAttributes.ERROR_ATTRIBUTES : SimpleTextAttributes.REGULAR_ITALIC_ATTRIBUTES);
       }
 
       public void validateConnection() throws RuntimeConfigurationException {
-        if (myTestConnectionState != null) {
-          myTestConnectionState.validateConnection();
-        }
+        myTestConnectionStateA.get().validateConnection();
       }
 
       @Override
@@ -252,8 +253,8 @@ public class DeployToServerSettingsEditor<S extends ServerConfiguration, D exten
             getServerType(), CloudBundle.getText("remote.server.combo.auto.detected.server"));
           RemoteServerConnectionTester tester = new RemoteServerConnectionTester(myServerInstance);
           setTestConnectionState(TestConnectionState.IN_PROGRESS);
-          tester.testConnection(this::connectionTested);
           myLastStartedTestConnectionMillis = System.currentTimeMillis();
+          tester.testConnection(this::connectionTested);
         }
       }
 
@@ -270,19 +271,14 @@ public class DeployToServerSettingsEditor<S extends ServerConfiguration, D exten
       }
 
       private void setTestConnectionState(@NotNull TestConnectionState state) {
-        boolean changed = false;
-        synchronized (myStateLock) {
-          if (!state.equals(myTestConnectionState)) {
-            changed = true;
-            myTestConnectionState = state;
-          }
-        }
+        boolean changed = myTestConnectionStateA.getAndSet(state) != state;
         if (changed) {
           UIUtil.invokeLaterIfNeeded(WithAutoDetectCombo.this::fireStateChanged);
         }
       }
 
       private void connectionTested(boolean wasConnected, String errorStatus) {
+        assert myLastStartedTestConnectionMillis > 0;
         waitABit(2000);
 
         final RemoteServer testedServer = myServerInstance;
@@ -310,7 +306,7 @@ public class DeployToServerSettingsEditor<S extends ServerConfiguration, D exten
           try {
             Thread.sleep(maxTotalDelayMillis - naturalDelay - THRESHOLD_MS);
           }
-          catch (InterruptedException e) {
+          catch (InterruptedException ignored) {
             //
           }
         }
