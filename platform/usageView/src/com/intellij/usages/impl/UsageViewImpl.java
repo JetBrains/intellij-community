@@ -226,6 +226,8 @@ public class UsageViewImpl implements UsageView {
               return expandingAll ? EmptyEnumeration.getInstance() : super.getExpandedDescendants(parent);
             }
           };
+          // Android Studio: Set tree name so UI tests can easily identify this usage tree component
+          myTree.setName("UsageViewTree");
 
           myRootPanel = new MyPanel(myTree);
           Disposer.register(this, myRootPanel);
