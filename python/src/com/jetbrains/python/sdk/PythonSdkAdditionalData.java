@@ -15,26 +15,28 @@
  */
 package com.jetbrains.python.sdk;
 
-import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
-import com.intellij.openapi.projectRoots.impl.SimpleProjectRoot;
+import com.intellij.openapi.util.JDOMExternalizer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-
-import static com.intellij.openapi.util.JDOMExternalizer.loadStringsList;
 
 /**
  * @author traff
@@ -46,9 +48,8 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
   @NonNls private static final String PATH_REMOVED_BY_USER = "PATH_REMOVED_BY_USER";
   @NonNls private static final String ASSOCIATED_PROJECT_PATH = "ASSOCIATED_PROJECT_PATH";
 
-
-  private Set<SimpleProjectRoot> myAddedPaths = Sets.newHashSet();
-  private Set<SimpleProjectRoot> myExcludedPaths = Sets.newHashSet();
+  private final VirtualFilePointerContainer myAddedPaths;
+  private final VirtualFilePointerContainer myExcludedPaths;
 
   private final PythonSdkFlavor myFlavor;
   private String myAssociatedProjectPath;
@@ -56,44 +57,32 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
 
   public PythonSdkAdditionalData(@Nullable PythonSdkFlavor flavor) {
     myFlavor = flavor;
+    myAddedPaths = VirtualFilePointerManager.getInstance().createContainer(ApplicationManager.getApplication());
+    myExcludedPaths = VirtualFilePointerManager.getInstance().createContainer(ApplicationManager.getApplication());
+  }
+  public PythonSdkAdditionalData(PythonSdkAdditionalData from) {
+    myFlavor = from.getFlavor();
+    myAddedPaths = from.myAddedPaths.clone(ApplicationManager.getApplication());
+    myExcludedPaths = from.myExcludedPaths.clone(ApplicationManager.getApplication());
   }
 
-  public Object clone() throws CloneNotSupportedException {
-    final PythonSdkAdditionalData copy = new PythonSdkAdditionalData(myFlavor);
-    copy.setAddedPaths(getAddedPaths());
-    copy.setExcludedPaths(getExcludedPaths());
-    copy.setAssociatedProjectPath(getAssociatedProjectPath());
-    return copy;
+  @Override
+  public Object clone() {
+    return new PythonSdkAdditionalData(this);
   }
 
-  public Set<SimpleProjectRoot> getAddedPaths() {
-    return myAddedPaths;
-  }
-
-  public void setAddedPaths(Set<SimpleProjectRoot> addedPaths) {
-    myAddedPaths = Sets.newHashSet(addedPaths);
-  }
-
-  public void setAddedPathsFromVirtualFiles(Set<VirtualFile> addedPaths) {
-    myAddedPaths = Sets.newHashSet();
+  public void setAddedPathsFromVirtualFiles(@NotNull Set<VirtualFile> addedPaths) {
+    myAddedPaths.killAll();
     for (VirtualFile file : addedPaths) {
-      myAddedPaths.add(new SimpleProjectRoot(file));
+      myAddedPaths.add(file);
     }
   }
 
-  public void setExcludedPathsFromVirtualFiles(Set<VirtualFile> addedPaths) {
-    myExcludedPaths = Sets.newHashSet();
+  public void setExcludedPathsFromVirtualFiles(@NotNull Set<VirtualFile> addedPaths) {
+    myExcludedPaths.killAll();
     for (VirtualFile file : addedPaths) {
-      myExcludedPaths.add(new SimpleProjectRoot(file));
+      myExcludedPaths.add(file);
     }
-  }
-
-  public Set<SimpleProjectRoot> getExcludedPaths() {
-    return myExcludedPaths;
-  }
-
-  public void setExcludedPaths(Set<SimpleProjectRoot> excludedPaths) {
-    myExcludedPaths = Sets.newHashSet(excludedPaths);
   }
 
   public String getAssociatedProjectPath() {
@@ -132,10 +121,10 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
     }
   }
 
-  private static void savePaths(Element rootElement, Set<SimpleProjectRoot> paths, String root, String element) {
-    for (SimpleProjectRoot addedPath : paths) {
+  private static void savePaths(Element rootElement, VirtualFilePointerContainer paths, String root, String element) {
+    for (String addedPath : paths.getUrls()) {
       final Element child = new Element(root);
-      child.setAttribute(element, addedPath.getUrl());
+      child.setAttribute(element, addedPath);
       rootElement.addContent(child);
     }
   }
@@ -149,34 +138,24 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
   public static PythonSdkAdditionalData load(Sdk sdk, @Nullable Element element) {
     final PythonSdkAdditionalData data = new PythonSdkAdditionalData(PythonSdkFlavor.getFlavor(sdk.getHomePath()));
 
-    load(element, data);
+    data.load(element, data);
 
     return data;
   }
 
-  protected static void load(@Nullable Element element, @NotNull PythonSdkAdditionalData data) {
-    data.setAddedPaths(collectPaths(loadStringsList(element, PATHS_ADDED_BY_USER_ROOT, PATH_ADDED_BY_USER)));
-    data.setExcludedPaths(collectPaths(loadStringsList(element, PATHS_REMOVED_BY_USER_ROOT, PATH_REMOVED_BY_USER)));
+  protected void load(@Nullable Element element, @NotNull PythonSdkAdditionalData data) {
+    collectPaths(JDOMExternalizer.loadStringsList(element, PATHS_ADDED_BY_USER_ROOT, PATH_ADDED_BY_USER),myAddedPaths);
+    collectPaths(JDOMExternalizer.loadStringsList(element, PATHS_REMOVED_BY_USER_ROOT, PATH_REMOVED_BY_USER),myExcludedPaths);
     if (element != null) {
       data.setAssociatedProjectPath(element.getAttributeValue(ASSOCIATED_PROJECT_PATH));
     }
   }
 
-  protected static Set<SimpleProjectRoot> collectPaths(@NotNull List<String> paths) {
-    final Set<SimpleProjectRoot> files = Sets.newHashSet();
+  private static void collectPaths(@NotNull List<String> paths, VirtualFilePointerContainer container) {
     for (String path : paths) {
       if (StringUtil.isEmpty(path)) continue;
-      VirtualFile file = LocalFileSystem.getInstance().findFileByPath(path);
-      SimpleProjectRoot root;
-      if (file != null) {
-        root = new SimpleProjectRoot(file);
-      }
-      else {
-        root = new SimpleProjectRoot(path);
-      }
-      files.add(root);
+      container.add(VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, path));
     }
-    return files;
   }
 
 
@@ -188,11 +167,9 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
     return getPathsAsVirtualFiles(myExcludedPaths);
   }
 
-  private static Set<VirtualFile> getPathsAsVirtualFiles(Set<SimpleProjectRoot> paths) {
+  private static Set<VirtualFile> getPathsAsVirtualFiles(VirtualFilePointerContainer paths) {
     Set<VirtualFile> ret = Sets.newHashSet();
-    for (SimpleProjectRoot root : paths) {
-      ret.addAll(Lists.newArrayList(root.getVirtualFiles()));
-    }
+    Collections.addAll(ret, paths.getFiles());
     return ret;
   }
 }
