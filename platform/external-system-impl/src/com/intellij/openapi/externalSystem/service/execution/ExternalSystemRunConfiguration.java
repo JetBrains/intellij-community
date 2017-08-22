@@ -369,7 +369,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
     }
 
     @Override
-    public void notifyTextAvailable(final String text, final Key outputType) {
+    public void notifyTextAvailable(@NotNull final String text, @NotNull final Key outputType) {
       myAnsiEscapeDecoder.escapeText(text, outputType, this);
     }
 

@@ -46,7 +46,7 @@ public class ClassNameCompletionTest extends LightFixtureCompletionTestCase {
     return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/className/";
   }
 
-  public void testImportAfterNew() throws Exception {
+  public void testImportAfterNew() {
     createClass("package pack; public class AAClass {}");
     createClass("package pack; public class WithInnerAClass{\n" +
                 "  public static class Inner{}\n" +
@@ -62,7 +62,7 @@ public class ClassNameCompletionTest extends LightFixtureCompletionTestCase {
     checkResultByFile(path + "/after2.java");
   }
 
-  public void testDocAfterNew() throws Exception {
+  public void testDocAfterNew() {
     createClass("public class Time { Time() {} Time(long time) {} }");
 
     String path = "/docAfterNew";
@@ -79,7 +79,7 @@ public class ClassNameCompletionTest extends LightFixtureCompletionTestCase {
                  "&nbsp;<a href=\"psi_element://Time#Time(long)\">Time(long time)</a><br></html>");
   }
 
-  public void testTypeParametersTemplate() throws Exception {
+  public void testTypeParametersTemplate() {
     createClass("package pack; public interface Foo<T> {void foo(T t};");
 
     String path = "/template";
@@ -108,7 +108,7 @@ public class ClassNameCompletionTest extends LightFixtureCompletionTestCase {
     myFixture.addClass(text);
   }
 
-  public void testAfterNewThrowable1() throws Exception {
+  public void testAfterNewThrowable1() {
     addClassesForAfterNewThrowable();
     String path = "/afterNewThrowable";
 
@@ -117,7 +117,7 @@ public class ClassNameCompletionTest extends LightFixtureCompletionTestCase {
     checkResultByFile(path + "/after1.java");
   }
 
-  private void addClassesForAfterNewThrowable() throws IOException {
+  private void addClassesForAfterNewThrowable() {
     createClass("public class OurException extends Throwable{}");
     createClass("public class OurNotException {\n" +
                 "  public static class InnerException extends Throwable{}\n" +
@@ -125,7 +125,7 @@ public class ClassNameCompletionTest extends LightFixtureCompletionTestCase {
                 "}");
   }
 
-  public void testAfterNewThrowable2() throws Exception {
+  public void testAfterNewThrowable2() {
     addClassesForAfterNewThrowable();
     String path = "/afterNewThrowable";
 
@@ -134,48 +134,48 @@ public class ClassNameCompletionTest extends LightFixtureCompletionTestCase {
     checkResultByFile(path + "/after2.java");
   }
 
-  public void testExcessParensAfterNew() throws Exception { doTest(); }
+  public void testExcessParensAfterNew() { doTest(); }
 
-  public void testReuseParensAfterNew() throws Exception { doTest(); }
+  public void testReuseParensAfterNew() { doTest(); }
 
-  public void testBracesAfterNew() throws Exception { doTest(); }
+  public void testBracesAfterNew() { doTest(); }
 
-  public void testInPlainTextFile() throws Exception {
+  public void testInPlainTextFile() {
     configureByFile(getTestName(false) + ".txt");
     checkResultByFile(getTestName(false) + "_after.txt");
   }
 
-  public void testInPropertiesFile() throws Exception {
+  public void testInPropertiesFile() {
     myFixture.configureByText("a.properties", "abc = StrinBui<caret>");
     complete();
     myFixture.checkResult("abc = java.lang.StringBuilder<caret>");
   }
 
-  public void testDoubleStringBuffer() throws Exception {
+  public void testDoubleStringBuffer() {
     createClass("package java.lang; public class StringBuffer {}");
     doTest();
     assertNull(myItems);
   }
 
-  public void testReplaceReferenceExpressionWithTypeElement() throws Exception {
+  public void testReplaceReferenceExpressionWithTypeElement() {
     createClass("package foo.bar; public class ABCDEF {}");
     doTest();
   }
 
-  public void testCamelHumpPrefix() throws Exception {
+  public void testCamelHumpPrefix() {
     String path = "/java/";
     configureByFile(path + getTestName(false) + ".java");
     complete();
     assertEquals(2, myItems.length);
   }
 
-  private void doTest() throws Exception {
+  private void doTest() {
     String path = "/java/";
     configureByFile(path + getTestName(false) + ".java");
     checkResultByFile(path + getTestName(false) + "_after.java");
   }
 
-  public void testNameCompletionJava() throws Exception {
+  public void testNameCompletionJava() {
     String path = "/nameCompletion/java";
     configureByFile(path + "/test1-source.java");
     performAction();
@@ -185,14 +185,14 @@ public class ClassNameCompletionTest extends LightFixtureCompletionTestCase {
     checkResultByFile(path + "/test2-result.java");
   }
 
-  public void testImplementsFiltering1() throws Exception {
+  public void testImplementsFiltering1() {
     final String path = "/nameCompletion/java";
     configureByFile(path + "/test4-source.java");
     performAction();
     checkResultByFile(path + "/test4-result.java");
   }
 
-  public void testImplementsFiltering2() throws Exception {
+  public void testImplementsFiltering2() {
     final String path = "/nameCompletion/java";
     configureByFile(path + "/test3-source.java");
     performAction();
@@ -207,7 +207,7 @@ public class ClassNameCompletionTest extends LightFixtureCompletionTestCase {
     checkResultByFile(path + "/implements3-result.java");
   }
 
-  public void testAnnotationFiltering() throws Exception {
+  public void testAnnotationFiltering() {
     createClass("@interface MyObjectType {}");
 
     final String path = "/nameCompletion/java";
@@ -267,36 +267,36 @@ public class ClassNameCompletionTest extends LightFixtureCompletionTestCase {
     });
   }
 
-  public void testInMethodCall() throws Exception {
+  public void testInMethodCall() {
     final String path = "/nameCompletion/java";
     configureByFile(path + "/methodCall-source.java");
     performAction();
     checkResultByFile(path + "/methodCall-result.java");
   }
 
-  public void testInMethodCallQualifier() throws Exception {
+  public void testInMethodCallQualifier() {
     final String path = "/nameCompletion/java";
     configureByFile(path + "/methodCall1-source.java");
     performAction();
     checkResultByFile(path + "/methodCall1-result.java");
   }
 
-  public void testInVariableDeclarationType() throws Exception {
+  public void testInVariableDeclarationType() {
     final String path = "/nameCompletion/java";
     configureByFile(path + "/varType-source.java");
     performAction();
     checkResultByFile(path + "/varType-result.java");
   }
 
-  public void testExtraSpace() throws Exception { doJavaTest(); }
+  public void testExtraSpace() { doJavaTest(); }
 
-  public void testAnnotation() throws Exception { doJavaTest(); }
+  public void testAnnotation() { doJavaTest(); }
 
-  public void testInStaticImport() throws Exception { doJavaTest(); }
+  public void testInStaticImport() { doJavaTest(); }
 
-  public void testInCommentWithPackagePrefix() throws Exception { doJavaTest(); }
+  public void testInCommentWithPackagePrefix() { doJavaTest(); }
 
-  private void doJavaTest() throws Exception {
+  private void doJavaTest() {
     final String path = "/nameCompletion/java";
     myFixture.configureByFile(path + "/" + getTestName(false) + "-source.java");
     performAction();

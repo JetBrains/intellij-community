@@ -1,4 +1,3 @@
-
 import org.gradle.api.internal.project.ProjectInternal
 import org.gradle.tooling.provider.model.ToolingModelBuilderRegistry
 import org.jetbrains.plugins.gradle.tooling.internal.ExtraModelBuilder

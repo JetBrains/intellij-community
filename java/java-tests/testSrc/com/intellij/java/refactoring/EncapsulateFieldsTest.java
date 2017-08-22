@@ -33,43 +33,43 @@ import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
 
 public class EncapsulateFieldsTest extends MultiFileTestCase {
-  public void testAlreadyExist() throws Exception {
+  public void testAlreadyExist() {
     doTest("i" , null);
   }
 
-  public void testDiffWithReturnTypeOnly() throws Exception {
+  public void testDiffWithReturnTypeOnly() {
     doTest("i", "There is already method <b><code>Test setI(int)</code></b> which differs from setter <b><code>setI</code></b> by return type only");
   }
 
-   public void testDiffWithReturnTypeOnlyInHierarchy() throws Exception {
+   public void testDiffWithReturnTypeOnlyInHierarchy() {
     doTest("i", "There is already method <b><code>Super setI(int)</code></b> which differs from setter <b><code>setI</code></b> by return type only");
   }
 
-  public void testPostfixExpressionUsedInAssignment() throws Exception {
+  public void testPostfixExpressionUsedInAssignment() {
     doTest("i", "Unable to proceed with postfix/prefix expression when it's result type is used");
   }
 
-  public void testHideOverriderMethod() throws Exception {
+  public void testHideOverriderMethod() {
     doTest("i", "A", "There is already a method <b><code>B.getI()</code></b> which would hide generated getter for a.i");
   }
 
-  public void testJavadocRefs() throws Exception {
+  public void testJavadocRefs() {
     doTest("i", "A", null);
   }
   
-  public void testJavadocRefs1() throws Exception {
+  public void testJavadocRefs1() {
     doTest("i", "B.A", null);
   }
 
-  public void testHideOuterclassMethod() throws Exception {
+  public void testHideOuterclassMethod() {
     doTest("i", "A.B", "There is already a method <b><code>A.getI()</code></b> which would be hidden by generated getter");
   }
 
-  public void testCommentsInside() throws Exception {
+  public void testCommentsInside() {
     doTest("i", "A", null);
   }
 
-  public void testMoveJavadocToGetter() throws Exception {
+  public void testMoveJavadocToGetter() {
     doTest((rootDir, rootAfter) -> {
       final PsiClass aClass = myJavaFacade.findClass("A", GlobalSearchScope.projectScope(myProject));
       assertNotNull("Tested class not found", aClass);
@@ -79,7 +79,7 @@ public class EncapsulateFieldsTest extends MultiFileTestCase {
     });
   }
 
-  public void testFilterEnumConstants() throws Exception {
+  public void testFilterEnumConstants() {
     doTest((rootDir, rootAfter) -> {
       final PsiClass aClass = myJavaFacade.findClass("A", GlobalSearchScope.projectScope(myProject));
       assertNotNull("Tested class not found", aClass);
@@ -99,11 +99,11 @@ public class EncapsulateFieldsTest extends MultiFileTestCase {
   }
 
 
-  private void doTest(final String fieldName, final String conflicts) throws Exception {
+  private void doTest(final String fieldName, final String conflicts) {
     doTest(fieldName, "Test", conflicts);
   }
 
-  private void doTest(final String fieldName, final String className, final String conflicts) throws Exception {
+  private void doTest(final String fieldName, final String className, final String conflicts) {
     doTest((rootDir, rootAfter) -> {
       PsiClass aClass = myJavaFacade.findClass(className, GlobalSearchScope.projectScope(myProject));
 

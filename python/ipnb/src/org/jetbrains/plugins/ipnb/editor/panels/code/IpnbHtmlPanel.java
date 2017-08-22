@@ -19,6 +19,6 @@ public class IpnbHtmlPanel extends IpnbCodeOutputPanel<IpnbHtmlOutputCell> {
   @Override
   protected JComponent createViewPanel() {
     final int width = myParent.getWidth();
-    return IpnbUtils.createLatexPane(StringUtil.join(myCell.getHtmls(), ""), width);
+    return IpnbUtils.createLatexPane(StringUtil.join(myCell.getHtmls(), ""), myParent.getProject(), width);
   }
 }

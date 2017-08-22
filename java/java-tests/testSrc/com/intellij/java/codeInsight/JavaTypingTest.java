@@ -114,6 +114,8 @@ public class JavaTypingTest extends LightPlatformCodeInsightFixtureTestCase {
     doTest(',');
   }
 
+  public void testCommaInDefaultAnnotationStringArgumentWhenArrayIsExpected() { doTest(','); }
+
   private void doTest(char c) {
     myFixture.configureByFile(getTestName(true) + "_before.java");
     myFixture.type(c);

@@ -73,31 +73,31 @@ public class PushDownTest extends LightRefactoringTestCase {
 
   public void testInterfaceMethodToClass() { doTest();}
 
-  public void testInsertOverrideWhenKeepAbstract() throws Exception {
+  public void testInsertOverrideWhenKeepAbstract() {
     doTestImplements(true);
   }
 
-  public void testErasureIfInheritsWithRawSubstitution() throws Exception {
+  public void testErasureIfInheritsWithRawSubstitution() {
     doTest();
   }
 
-  public void testAlreadyContainsMethodWithTheSignatureForGenericsSuperclass() throws Exception {
+  public void testAlreadyContainsMethodWithTheSignatureForGenericsSuperclass() {
     doTest(true);
   }
 
-  public void testJavadocWhenKeepAsAbstractInterface() throws Exception {
+  public void testJavadocWhenKeepAsAbstractInterface() {
     doTestImplements(true);
   }
 
-  public void testJavadocWhenKeepAsAbstractClass() throws Exception {
+  public void testJavadocWhenKeepAsAbstractClass() {
     doTestImplements(true);
   }
 
-  public void testPreserveOverrideAnnotationAfterConflict() throws Exception {
+  public void testPreserveOverrideAnnotationAfterConflict() {
     doTestImplements(true, true);
   }
 
-  public void testInterfaceVisibilityInClass() throws Exception {
+  public void testInterfaceVisibilityInClass() {
     doTest();
   }
 

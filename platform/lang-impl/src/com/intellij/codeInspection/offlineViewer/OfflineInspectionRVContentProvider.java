@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.util.*;
+import java.util.function.Function;
 
 public class OfflineInspectionRVContentProvider extends InspectionRVContentProvider {
   private final Map<String, Map<String, Set<OfflineProblemDescriptor>>> myContent;
@@ -95,7 +96,7 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
 
     GlobalInspectionContextImpl context = tree.getContext();
     InspectionToolPresentation presentation = context.getPresentation(toolWrapper);
-    return presentation.extractActiveFixes(selectedRefElements, actions, tree.getSelectedDescriptors());
+    return presentation.extractActiveFixes(selectedRefElements, actions::get, tree.getSelectedDescriptors());
   }
 
   @Override
@@ -105,11 +106,11 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
 
   @Override
   public InspectionNode appendToolNodeContent(@NotNull GlobalInspectionContextImpl context,
-                                              @NotNull final InspectionNode toolNode,
-                                              @NotNull final InspectionTreeNode parentNode,
-                                              final boolean showStructure,
+                                              @NotNull InspectionNode toolNode,
+                                              @NotNull InspectionTreeNode parentNode,
+                                              boolean showStructure,
                                               boolean groupBySeverity, @NotNull final Map<String, Set<RefEntity>> contents,
-                                              @NotNull final Map<RefEntity, CommonProblemDescriptor[]> problems) {
+                                              @NotNull Function<RefEntity, CommonProblemDescriptor[]> problems) {
     InspectionToolWrapper toolWrapper = toolNode.getToolWrapper();
     final Map<String, Set<OfflineProblemDescriptor>> filteredContent = getFilteredContent(context, toolWrapper);
     if (filteredContent != null && !filteredContent.values().isEmpty()) {
@@ -143,7 +144,7 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
       final Map<String, Set<OfflineProblemDescriptor>> current = new HashMap<>(content);
       content = null; //GC it
       InspectionToolPresentation presentation = context.getPresentation(toolWrapper);
-      for (RefEntity refEntity : presentation.getIgnoredRefElements()) {
+      for (RefEntity refEntity : presentation.getResolvedElements()) {
         if (refEntity instanceof RefElement) {
           excludeProblem(refEntity.getExternalName(), current);
         }
@@ -182,7 +183,7 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
     for (OfflineProblemDescriptor descriptor : ((RefEntityContainer<OfflineProblemDescriptor>)container).getDescriptors()) {
       final OfflineDescriptorResolveResult resolveResult = myResolvedDescriptor.get(toolWrapper.getShortName())
         .computeIfAbsent(descriptor, d -> OfflineDescriptorResolveResult.resolve(d, toolWrapper, presentation));
-      elemNode.insertByOrder(ReadAction.compute(() -> OfflineProblemDescriptorNode.create(descriptor, resolveResult, toolWrapper, presentation)), true);
+      elemNode.insertByOrder(ReadAction.compute(() -> OfflineProblemDescriptorNode.create(descriptor, resolveResult, presentation)), true);
     }
   }
 }

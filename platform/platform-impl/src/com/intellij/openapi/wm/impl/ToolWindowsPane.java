@@ -203,7 +203,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
 
   /**
    * Creates command which adds button into the specified tool stripe.
-   * Command uses copy of passed <code>info</code> object.
+   * Command uses copy of passed {@code info} object.
    *
    * @param button         button which should be added.
    * @param info           window info for the corresponded tool window.
@@ -223,9 +223,9 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
 
   /**
    * Creates command which shows tool window with specified set of parameters.
-   * Command uses cloned copy of passed <code>info</code> object.
+   * Command uses cloned copy of passed {@code info} object.
    *
-   * @param dirtyMode if <code>true</code> then JRootPane will not be validated and repainted after adding
+   * @param dirtyMode if {@code true} then JRootPane will not be validated and repainted after adding
    *                  the decorator. Moreover in this (dirty) mode animation doesn't work.
    */
   @NotNull
@@ -259,7 +259,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   /**
    * Creates command which removes tool button from tool stripe.
    *
-   * @param id <code>ID</code> of the button to be removed.
+   * @param id {@code ID} of the button to be removed.
    */
   @NotNull
   final FinalizableCommand createRemoveButtonCmd(@NotNull String id, @NotNull Runnable finishCallBack) {
@@ -274,7 +274,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   /**
    * Creates command which hides tool window with specified set of parameters.
    *
-   * @param dirtyMode if <code>true</code> then JRootPane will not be validated and repainted after removing
+   * @param dirtyMode if {@code true} then JRootPane will not be validated and repainted after removing
    *                  the decorator. Moreover in this (dirty) mode animation doesn't work.
    */
   @NotNull
@@ -333,16 +333,16 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   }
 
   /**
-   * @param id <code>ID</code> of tool stripe butoon.
-   * @return <code>WindowInfo</code> associated with specified tool stripe button.
+   * @param id {@code ID} of tool stripe butoon.
+   * @return {@code WindowInfo} associated with specified tool stripe button.
    */
   private WindowInfoImpl getButtonInfoById(final String id) {
     return myButton2Info.get(myId2Button.get(id));
   }
 
   /**
-   * @param id <code>ID</code> of decorator.
-   * @return <code>WindowInfo</code> associated with specified window decorator.
+   * @param id {@code ID} of decorator.
+   * @return {@code WindowInfo} associated with specified window decorator.
    */
   private WindowInfoImpl getDecoratorInfoById(final String id) {
     return myDecorator2Info.get(myId2Decorator.get(id));

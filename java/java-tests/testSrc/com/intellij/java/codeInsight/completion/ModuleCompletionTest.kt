@@ -22,42 +22,57 @@ import org.assertj.core.api.Assertions.assertThat
 class ModuleCompletionTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   override fun setUp() {
     super.setUp()
+    addFile("pkg/empty/package-info.java", "package pkg.empty;")
+    addFile("pkg/main/MyAnno.java", "package pkg.main;\npublic @interface MyAnno { }")
+    addFile("pkg/main/MySvc.java", "package pkg.main;\npublic class MySvc { }")
+    addFile("pkg/other/MySvcImpl.groovy", "package pkg.other\nclass MySvcImpl extends pkg.main.MySvc { }")
     addFile("module-info.java", "module M2 { }", M2)
   }
 
-  fun testFileHeader1() = variants("<caret>", "module", "open")
-  fun testFileHeader2() = complete("open <caret>", "open module <caret>")
-  fun testModuleName() = variants("module M<caret>")
-  fun testStatements1() = variants("module M { <caret> }", "requires", "exports", "opens", "uses", "provides")
-  fun testStatements2() = complete("module M { requires X; ex<caret> }", "module M { requires X; exports <caret> }")
+  fun testFileHeader() = variants("<caret>", "module", "open")
+  fun testFileHeaderAfterComment() = variants("/** a comment */\n<caret>", "module", "open")
+  fun testFileHeaderAfterImport() = variants("import java.lang.Deprecated;\n<caret>", "module", "open")
+  fun testFileHeaderAfterAnnotation() = variants("@Deprecated <caret>", "module", "open")
+  fun testFileHeaderAfterOpen() = complete("open <caret>", "open module <caret>")
+  fun testFileHeaderAfterModule() = variants("module M { }\n<caret>")
+  fun testAnnotation() = complete("@Dep<caret>", "@Deprecated<caret>")
+  fun testAnnotationBeforeModule() = complete("@Dep<caret> module M { }", "@Deprecated<caret> module M { }")
+  fun testNoCompletionInModuleName() = variants("module M<caret>")
 
-  fun testRequires() {
-    variants("module M { requires <caret>", "transitive", "static", "M2", "java.base", "lib.multi.release", "lib.named")
-    complete("module M { requires t<caret> }", "module M { requires transitive <caret> }")
-    complete("module M { requires M<caret> }", "module M { requires M2;<caret> }")
-  }
+  fun testStatementsInEmptyModule() = variants("module M { <caret> }", "requires", "exports", "opens", "uses", "provides")
+  fun testStatementsAfterComment() = variants("module M { /*requires X;*/ <caret> }", "requires", "exports", "opens", "uses", "provides")
+  fun testStatementsAfterStatement() = variants("module M { requires X; <caret> }", "requires", "exports", "opens", "uses", "provides")
+  fun testStatementsUnambiguous() = complete("module M { requires X; ex<caret> }", "module M { requires X; exports <caret> }")
 
-  fun testExports() {
-    addFile("pkg/empty/package-info.java", "package pkg.empty;")
-    addFile("pkg/main/C.java", "package pkg.main;\nclass C { }")
-    addFile("pkg/other/C.groovy", "package pkg.other\nclass C { }")
-    variants("module M { exports pkg.<caret> }", "main", "other")
-    complete("module M { exports pkg.o<caret> }", "module M { exports pkg.other;<caret> }")
-  }
+  fun testRequiresBare() = variants("module M { requires <caret>", "transitive", "static", "M2", "java.base", "lib.multi.release", "lib.named")
+  fun testRequiresTransitive() = complete("module M { requires tr<caret> }", "module M { requires transitive <caret> }")
+  fun testRequiresSimpleName() = complete("module M { requires M<caret> }", "module M { requires M2;<caret> }")
+  fun testRequiresQualifiedName() = complete("module M { requires lib.m<caret> }", "module M { requires lib.multi.release;<caret> }")
 
-  fun testUses() {
-    addFile("pkg/main/MySvc.java", "package pkg.main;\npublic class MySvc { }")
-    addFile("pkg/main/MySvcImpl.java", "package pkg.main;\nclass MySvcImpl extends MySvc { }")
-    complete("module M { uses MyS<caret> }", "module M { uses pkg.main.MySvc;<caret> }")
-  }
+  fun testExportsBare() = variants("module M { exports <caret> }", "pkg")
+  fun testExportsPrefixed() = complete("module M { exports p<caret> }", "module M { exports pkg.<caret> }")
+  fun testExportsQualified() = variants("module M { exports pkg.<caret> }", "main", "other", "empty")
+  fun testExportsQualifiedUnambiguous() = complete("module M { exports pkg.o<caret> }", "module M { exports pkg.other.<caret> }")
+  fun testExportsTo() = complete("module M { exports pkg.other <caret> }", "module M { exports pkg.other to <caret> }")
+  fun testExportsToList() = variants("module M { exports pkg.other to <caret> }", "M2", "java.base", "lib.multi.release", "lib.named")
+  fun testExportsToUnambiguous() = complete("module M { exports pkg.other to M<caret> }", "module M { exports pkg.other to M2<caret> }")
 
-  fun testProvides() {
-    addFile("pkg/main/MySvc.java", "package pkg.main;\npublic class MySvc { }")
-    addFile("pkg/main/MySvcImpl.java", "package pkg.main;\nclass MySvcImpl extends MySvc { }")
-    complete("module M { provides MyS<caret> }", "module M { provides pkg.main.MySvc <caret> }")
-    complete("module M { provides pkg.main.MySvc <caret> }", "module M { provides pkg.main.MySvc with <caret> }")
-    complete("module M { provides pkg.main.MySvc with MSI<caret> }", "module M { provides pkg.main.MySvc with pkg.main.MySvcImpl;<caret> }")
-  }
+  fun testUsesPrefixed() = complete("module M { uses p<caret> }", "module M { uses pkg.<caret> }")
+  fun testUsesQualified1() = variants("module M { uses pkg.<caret> }", "main", "other", "empty")
+  fun testUsesQualified2() = variants("module M { uses pkg.main.<caret> }", "MyAnno", "MySvc")
+  fun testUsesUnambiguous() = complete("module M { uses pkg.main.MS<caret> }", "module M { uses pkg.main.MySvc<caret> }")
+
+  fun testProvidesPrefixed() = complete("module M { provides p<caret> }", "module M { provides pkg.<caret> }")
+  fun testProvidesQualified1() = variants("module M { provides pkg.<caret> }", "main", "other", "empty")
+  fun testProvidesQualified2() = variants("module M { provides pkg.main.<caret> }", "MyAnno", "MySvc")
+  fun testProvidesUnambiguous() = complete("module M { provides pkg.main.MS<caret> }", "module M { provides pkg.main.MySvc<caret> }")
+  fun testProvidesWith() = complete("module M { provides pkg.main.MySvc <caret> }", "module M { provides pkg.main.MySvc with <caret> }")
+  fun testProvidesWithPrefixed() =
+    complete("module M { provides pkg.main.MySvc with p<caret> }", "module M { provides pkg.main.MySvc with pkg.<caret> }")
+  fun testProvidesWithQualified() =
+    complete("module M { provides pkg.main.MySvc with pkg.o<caret> }", "module M { provides pkg.main.MySvc with pkg.other.<caret> }")
+  fun testProvidesWithUnambiguous() =
+    complete("module M { provides pkg.main.MySvc with pkg.other.M<caret> }", "module M { provides pkg.main.MySvc with pkg.other.MySvcImpl<caret> }")
 
   fun testImports() {
     addFile("module-info.java", "module M { requires M2; }")
@@ -66,7 +81,7 @@ class ModuleCompletionTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     addFile("pkg/m2/impl/C2Impl.java", "package pkg.m2.impl;\npublic class C2Impl { }", M2)
     myFixture.configureByText("test.java", "import pkg.m2.<caret>")
     myFixture.completeBasic()
-    assertOrderedEquals(myFixture.lookupElementStrings!!, "*", "C2") // no 'impl'
+    assertThat(myFixture.lookupElementStrings).containsExactly("*", "C2")  // no 'C2Impl'
   }
 
   //<editor-fold desc="Helpers.">
@@ -78,8 +93,8 @@ class ModuleCompletionTest : LightJava9ModulesCodeInsightFixtureTestCase() {
 
   private fun variants(text: String, vararg variants: String) {
     myFixture.configureByText("module-info.java", text)
-    val result = myFixture.completeBasic()?.map { it.lookupString }
-    assertThat(result).containsExactlyInAnyOrder(*variants)
+    myFixture.completeBasic()
+    assertThat(myFixture.lookupElementStrings).containsExactlyInAnyOrder(*variants)
   }
   //</editor-fold>
 }

@@ -31,64 +31,64 @@ public class JavaReflectionCompletionTest extends LightFixtureCompletionTestCase
     return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/reflection/";
   }
 
-  public void testField() throws Exception {
+  public void testField() {
     doTest(1, "num", "num2", "num3");
   }
 
-  public void testDeclaredField() throws Exception {
+  public void testDeclaredField() {
     doTest(2, "num", "num1", "num2", "num0");
   }
 
-  public void testDeclaredMethod() throws Exception {
+  public void testDeclaredMethod() {
     doTest(3, "method", "method0", "method1", "method2");
   }
 
-  public void testDeclaredMethod2() throws Exception {
+  public void testDeclaredMethod2() {
     doTest(1, "method", "method1", "method2");
   }
 
-  public void testMethod() throws Exception {
+  public void testMethod() {
     doTestFirst(1, "method", "method2", "method3");
   }
 
-  public void testForNameDeclaredMethod() throws Exception {
+  public void testForNameDeclaredMethod() {
     doTest(2, "method", "method1", "method2");
   }
 
-  public void testForNameMethod() throws Exception {
+  public void testForNameMethod() {
     doTestFirst(1, "method", "method2", "method3");
   }
 
-  public void testForNameField() throws Exception {
+  public void testForNameField() {
     doTest(1, "num", "num2", "num3");
   }
 
-  public void testForNameDeclaredField() throws Exception {
+  public void testForNameDeclaredField() {
     doTest(1, "num", "num1", "num2");
   }
 
-  public void testVarargMethod() throws Exception {
+  public void testVarargMethod() {
     doTest(0, "vararg", "vararg2");
   }
 
-  public void testGenerics() throws Exception {
+  public void testGenerics() {
     myFixture.addFileToProject("a.properties", "foo=bar"); // check that property variants don't override reflection ones
     doTestFirst(0, "foo");
   }
 
-  public void testInheritedMethod() throws Exception {
+  public void testInheritedMethod() {
     doTestFirst(1, "method", "method2", "method3", "method5");
   }
 
-  public void testInheritedDeclaredMethod() throws Exception {
+  public void testInheritedDeclaredMethod() {
     doTest(1, "method", "method3", "method5");
   }
 
-  public void testInheritedField() throws Exception {
+  public void testInheritedField() {
     doTest(1, "num", "num2", "num3", "num5");
   }
 
-  public void testInheritedDeclaredField() throws Exception {
+  public void testInheritedDeclaredField() {
     doTest(1, "num", "num3", "num5");
   }
 
@@ -100,55 +100,55 @@ public class JavaReflectionCompletionTest extends LightFixtureCompletionTestCase
     doTest(0, "shadowed");
   }
 
-  public void testInitRaw() throws Exception {
+  public void testInitRaw() {
     doTestFirst(1, "method", "method2");
   }
 
-  public void testInitWithType() throws Exception {
+  public void testInitWithType() {
     doTestFirst(1, "method", "method2");
   }
 
-  public void testInitChain() throws Exception {
+  public void testInitChain() {
     doTest(1, "num", "num2");
   }
 
-  public void testAssignChain() throws Exception {
+  public void testAssignChain() {
     doTest(1, "num", "num2");
   }
 
-  public void testAssignCycle() throws Exception {
+  public void testAssignCycle() {
     doTest(-1); // check that the recursion guard breaks the cycle
   }
 
-  public void testCallChain() throws Exception {
+  public void testCallChain() {
     doTest(0, "num");
   }
 
-  public void testJdk14() throws Exception {
+  public void testJdk14() {
     IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_1_4, () -> doTestFirst(0, "method"));
   }
 
-  public void testWildcard() throws Exception {
+  public void testWildcard() {
     doTestFirst(0, "method");
   }
 
-  public void testConstantMethod() throws Exception {
+  public void testConstantMethod() {
     doTestFirst(0, "method", "method2");
   }
 
-  public void testDistantDefinition() throws Exception {
+  public void testDistantDefinition() {
     doTest(1, "method", "method2");
   }
 
-  public void testVariableGetClassField() throws Exception {
+  public void testVariableGetClassField() {
     doTest(1, "num", "num2", "num3");
   }
 
-  public void testConstantGetClassField() throws Exception {
+  public void testConstantGetClassField() {
     doTest(2, "num", "num3", "num2");
   }
 
-  public void testExpressionGetClassField() throws Exception {
+  public void testExpressionGetClassField() {
     doTest(1, "num", "num2", "num3");
   }
 

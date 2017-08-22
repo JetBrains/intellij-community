@@ -94,7 +94,7 @@ public final class IntEnumEditor extends PropertyEditor<Integer> {
   public static final class Pair {
     public final int myValue;
     /**
-     * Textual description of the <code>myValue</code>. This field is never <code>null</code>
+     * Textual description of the {@code myValue}. This field is never {@code null}
      */
     public final String myText;
 

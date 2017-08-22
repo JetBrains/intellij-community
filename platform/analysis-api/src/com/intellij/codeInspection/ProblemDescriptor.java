@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,9 @@ public interface ProblemDescriptor extends CommonProblemDescriptor{
   PsiElement getStartElement();
   PsiElement getEndElement();
   TextRange getTextRangeInElement();
+  /**
+   * @return 0-based line number of the problem
+   */
   int getLineNumber();
   @NotNull
   ProblemHighlightType getHighlightType();

@@ -16,8 +16,9 @@
 
 package com.intellij.codeInsight.hint;
 
+import com.intellij.codeInsight.AutoPopupController;
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager;
-import com.intellij.codeInsight.hints.ParameterHintsPassFactory;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.ide.IdeTooltip;
@@ -46,7 +47,10 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.HintHint;
@@ -78,7 +82,7 @@ public class ParameterInfoController implements Disposable {
   private final RangeMarker myLbraceMarker;
   private final LightweightHint myHint;
   private final ParameterInfoComponent myComponent;
-  private final boolean myKeepOnHintHidden;
+  private boolean myKeepOnHintHidden;
 
   private final CaretListener myEditorCaretListener;
   @NotNull private final ParameterInfoHandler<Object, Object> myHandler;
@@ -87,6 +91,7 @@ public class ParameterInfoController implements Disposable {
   private final Alarm myAlarm = new Alarm();
   private static final int DELAY = 200;
 
+  private boolean mySingleParameterInfo;
   private boolean myDisposed;
 
   /**
@@ -122,9 +127,18 @@ public class ParameterInfoController implements Disposable {
     return !getAllControllers(editor).isEmpty();
   }
 
-  public static boolean isAlreadyShown(Editor editor, int lbraceOffset) {
-    ParameterInfoController controller = findControllerAtOffset(editor, lbraceOffset);
-    return controller != null && controller.myHint.isVisible();
+  public static boolean existsWithVisibleHintForEditor(@NotNull Editor editor, boolean anyHintType) {
+    return getAllControllers(editor).stream().anyMatch(c -> c.isHintShown(anyHintType));
+  }
+
+  public static void hideAllHints(@NotNull Editor editor) {
+    getAllControllers(editor).forEach(c -> { 
+      if (c.myHint.isVisible()) c.myHint.hide(); 
+    });
+  }
+
+  public boolean isHintShown(boolean anyType) {
+    return myHint.isVisible() && (!mySingleParameterInfo || anyType);
   }
 
   public ParameterInfoController(@NotNull Project project,
@@ -144,6 +158,7 @@ public class ParameterInfoController implements Disposable {
     myComponent = new ParameterInfoComponent(descriptors, editor, handler, requestFocus);
     myHint = new LightweightHint(myComponent);
     myKeepOnHintHidden = !showHint;
+    mySingleParameterInfo = !showHint;
 
     myHint.setSelectingHint(true);
     myComponent.setParameterOwner(parameterOwner);
@@ -155,8 +170,7 @@ public class ParameterInfoController implements Disposable {
     myEditorCaretListener = new CaretListener(){
       @Override
       public void caretPositionChanged(CaretEvent e) {
-        myAlarm.cancelAllRequests();
-        addAlarmRequest();
+        rescheduleUpdate();
       }
     };
     myEditor.getCaretModel().addCaretListener(myEditorCaretListener);
@@ -164,16 +178,14 @@ public class ParameterInfoController implements Disposable {
     myEditor.getDocument().addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(DocumentEvent e) {
-        myAlarm.cancelAllRequests();
-        addAlarmRequest();
+        rescheduleUpdate();
       }
     }, this);
 
     MessageBusConnection connection = project.getMessageBus().connect(this);
     connection.subscribe(ExternalParameterInfoChangesProvider.TOPIC, (e, offset) -> {
       if (e != myEditor || myLbraceMarker.getStartOffset() != offset) return;
-      myAlarm.cancelAllRequests();
-      addAlarmRequest();
+      rescheduleUpdate();
     });
 
     PropertyChangeListener lookupListener = new PropertyChangeListener() {
@@ -192,9 +204,9 @@ public class ParameterInfoController implements Disposable {
       Disposer.register(((EditorImpl)myEditor).getDisposable(), this);
     }
 
-    myComponent.update(); // to have correct preferred size
+    myComponent.update(mySingleParameterInfo); // to have correct preferred size
     if (showHint) {
-      showHint(requestFocus);
+      showHint(requestFocus, mySingleParameterInfo);
     }
     updateComponent();
   }
@@ -204,12 +216,15 @@ public class ParameterInfoController implements Disposable {
     if (myDisposed) return;
     myDisposed = true;
     myHint.hide();
+    myHandler.dispose();
     List<ParameterInfoController> allControllers = getAllControllers(myEditor);
     allControllers.remove(this);
     myEditor.getCaretModel().removeCaretListener(myEditorCaretListener);
   }
 
-  public void showHint(boolean requestFocus) {
+  public void showHint(boolean requestFocus, boolean singleParameterInfo) {
+    mySingleParameterInfo = singleParameterInfo;
+    
     Pair<Point, Short> pos = myProvider.getBestPointPosition(myHint, myComponent.getParameterOwner(), myLbraceMarker.getStartOffset(), true, HintManager.UNDER);
     HintHint hintHint = HintManagerImpl.createHintHint(myEditor, pos.getFirst(), myHint, pos.getSecond());
     hintHint.setExplicitClose(true);
@@ -257,7 +272,8 @@ public class ParameterInfoController implements Disposable {
     }
   }
 
-  private void addAlarmRequest(){
+  private void rescheduleUpdate(){
+    myAlarm.cancelAllRequests();
     Runnable request = () -> {
       if (!myDisposed && !myProject.isDisposed()) {
         PsiDocumentManager.getInstance(myProject).performLaterWhenAllCommitted(() -> {
@@ -275,34 +291,7 @@ public class ParameterInfoController implements Disposable {
   }
 
   public void updateComponent(){
-    if (myKeepOnHintHidden) {
-      boolean removeHints = true;
-      PsiElement owner = myComponent.getParameterOwner();
-      if (owner != null && owner.isValid()) {
-        int caretOffset = myEditor.getCaretModel().getOffset();
-        TextRange ownerTextRange = owner.getTextRange();
-        if (ownerTextRange != null) {
-          if (caretOffset >= ownerTextRange.getStartOffset() && caretOffset <= ownerTextRange.getEndOffset()) {
-            removeHints = false;
-          }
-          else {
-            for (PsiElement element : owner.getChildren()) {
-              if (element instanceof PsiErrorElement) {
-                removeHints = false;
-                break;
-              }
-            }
-          }
-        }
-      }
-      if (removeHints) {
-        ParameterHintsPassFactory.forceHintsUpdateOnNextPass(myEditor);
-        Disposer.dispose(this);
-        return;
-      }
-    }
-
-    if (!myHint.isVisible() && !myKeepOnHintHidden && !ApplicationManager.getApplication().isUnitTestMode()) {
+    if (!myKeepOnHintHidden && !myHint.isVisible()) {
       Disposer.dispose(this);
       return;
     }
@@ -321,8 +310,8 @@ public class ParameterInfoController implements Disposable {
     if (elementForUpdating != null) {
       myHandler.updateParameterInfo(elementForUpdating, context);
       if (!myDisposed && myHint.isVisible() && !myEditor.isDisposed() &&
-          myEditor.getComponent().getRootPane() != null) {
-        myComponent.update();
+          (myEditor.getComponent().getRootPane() != null || ApplicationManager.getApplication().isUnitTestMode())) {
+        myComponent.update(mySingleParameterInfo);
         IdeTooltip tooltip = myHint.getCurrentIdeTooltip();
         short position = tooltip != null
                          ? toShort(tooltip.getPreferredPosition())
@@ -371,11 +360,16 @@ public class ParameterInfoController implements Disposable {
   private void moveToParameterAtOffset(int offset) {
     PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
     PsiElement argsList = findArgumentList(file, offset, -1);
-    if (argsList == null && !areParametersHintsEnabledOnCompletion()) return;
+    if (argsList == null && !CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION) return;
 
+    if (!myHint.isVisible()) AutoPopupController.getInstance(myProject).autoPopupParameterInfo(myEditor, null);
+    
     offset = adjustOffsetToInlay(offset);
-
-    myEditor.getCaretModel().moveToLogicalPosition(myEditor.offsetToLogicalPosition(offset).leanForward(true));
+    VisualPosition visualPosition = myEditor.offsetToVisualPosition(offset);
+    if (myEditor.getInlayModel().hasInlineElementAt(visualPosition)) {
+      visualPosition = new VisualPosition(visualPosition.line, visualPosition.column + 1);
+    }
+    myEditor.getCaretModel().moveToVisualPosition(visualPosition);
     myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     myEditor.getSelectionModel().removeSelection();
     if (argsList != null) {
@@ -411,7 +405,7 @@ public class ParameterInfoController implements Disposable {
     int currentParameterIndex =
       noDelimiter ? JBIterable.of(parameters).indexOf((o) -> o.getTextRange().containsOffset(offset)) :
       ParameterInfoUtils.getCurrentParameterIndex(argList.getNode(), offset, handler.getActualParameterDelimiterType());
-    if (areParametersHintsEnabledOnCompletion()) {
+    if (CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION) {
       if (currentParameterIndex < 0 || currentParameterIndex >= parameters.length) return -1;
       if (offset >= argList.getTextRange().getEndOffset()) currentParameterIndex = isNext ? -1 : parameters.length;
       int prevOrNextParameterIndex = currentParameterIndex + (isNext ? 1 : -1);
@@ -547,18 +541,7 @@ public class ParameterInfoController implements Disposable {
   }
 
   public static boolean areParameterTemplatesEnabledOnCompletion() {
-    return Registry.is("java.completion.argument.live.template") && !areParametersHintsEnabledInternallyOnCompletion();
-  }
-
-  public static boolean areParametersHintsEnabledOnCompletion() {
-    return Registry.is("java.completion.argument.hints") && !Registry.is("java.completion.argument.live.template") || 
-           areParametersHintsEnabledInternallyOnCompletion();
-  }
-
-  private static boolean areParametersHintsEnabledInternallyOnCompletion() {
-    return Registry.is("java.completion.argument.hints.internal") && 
-           ApplicationManager.getApplication().isInternal() && 
-           !ApplicationManager.getApplication().isUnitTestMode();
+    return Registry.is("java.completion.argument.live.template") && !CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION;
   }
 
   public class MyUpdateParameterInfoContext implements UpdateParameterInfoContext {
@@ -599,7 +582,7 @@ public class ParameterInfoController implements Disposable {
     @Override
     public void removeHint() {
       myHint.hide();
-      Disposer.dispose(ParameterInfoController.this);
+      if (!myKeepOnHintHidden) Disposer.dispose(ParameterInfoController.this);
     }
 
     @Override
@@ -642,6 +625,34 @@ public class ParameterInfoController implements Disposable {
       return myComponent.getObjects();
     }
 
+    @Override
+    public boolean isPreservedOnHintHidden() {
+      return myKeepOnHintHidden;
+    }
+
+    @Override
+    public void setPreservedOnHintHidden(boolean value) {
+      myKeepOnHintHidden = value;
+    }
+
+    @Override
+    public boolean isInnermostContext() {
+      PsiElement ourOwner = myComponent.getParameterOwner();
+      if (ourOwner == null || !ourOwner.isValid()) return false;
+      TextRange ourRange = ourOwner.getTextRange();
+      if (ourRange == null) return false;
+      List<ParameterInfoController> allControllers = getAllControllers(myEditor);
+      for (ParameterInfoController controller : allControllers) {
+        if (controller != ParameterInfoController.this) {
+          PsiElement parameterOwner = controller.myComponent.getParameterOwner();
+          if (parameterOwner != null && parameterOwner.isValid()) {
+            TextRange range = parameterOwner.getTextRange();
+            if (range != null && range.contains(myOffset) && ourRange.contains(range)) return false;
+          }
+        }
+      }
+      return true;
+    }
   }
 
   private static class MyBestLocationPointProvider  {

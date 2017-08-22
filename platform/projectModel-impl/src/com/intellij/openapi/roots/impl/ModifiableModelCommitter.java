@@ -111,7 +111,7 @@ public class ModifiableModelCommitter {
         OrderEnumerator entries = rootModel.orderEntries().withoutSdk().withoutLibraries().withoutModuleSourceEntries();
         List<String> namesList = entries.process(new RootPolicy<List<String>>() {
           @Override
-          public List<String> visitModuleOrderEntry(ModuleOrderEntry moduleOrderEntry, List<String> strings) {
+          public List<String> visitModuleOrderEntry(@NotNull ModuleOrderEntry moduleOrderEntry, List<String> strings) {
             Module module = moduleOrderEntry.getModule();
             if (module != null && !module.isDisposed()) {
               strings.add(module.getName());

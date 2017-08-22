@@ -31,7 +31,7 @@ public class RegExpClassImpl extends RegExpElementImpl implements RegExpClass {
 
     @Override
     public boolean isNegated() {
-        final ASTNode node = getNode().getFirstChildNode();
+        final ASTNode node = getNode().getFirstChildNode().getTreeNext();
         return node != null && node.getElementType() == RegExpTT.CARET;
     }
 

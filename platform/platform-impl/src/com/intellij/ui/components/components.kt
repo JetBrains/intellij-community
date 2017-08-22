@@ -141,7 +141,7 @@ fun dialog(title: String,
            parent: Component? = null,
            errorText: String? = null,
            modality: IdeModalityType = IdeModalityType.IDE,
-           ok: (() -> Unit)? = null): DialogWrapper {
+           ok: (() -> Boolean)? = null): DialogWrapper {
   return object: DialogWrapper(project, parent, true, modality) {
     init {
       setTitle(title)
@@ -161,12 +161,9 @@ fun dialog(title: String,
     override fun getPreferredFocusedComponent() = focusedComponent
 
     override fun doOKAction() {
-      ok?.let {
-        if (okAction.isEnabled) {
-          it()
-        }
+      if (okAction.isEnabled && (ok == null || ok())) {
+        super.doOKAction()
       }
-      super.doOKAction()
     }
   }
 }

@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -84,14 +85,19 @@ public class SVGLoader {
     }
 
     public static ViewBox fromString(String s) {
-      final List<String> values = StringUtil.split(s, " ");
+      List<String> values = new ArrayList<String>(4);
+      for (String token : StringUtil.tokenize(s, ", ")) {
+        values.add(token);
+      }
+
       if (values.size() == 4) {
         return new ViewBox(Float.parseFloat(values.get(0)),
                            Float.parseFloat(values.get(1)),
                            Float.parseFloat(values.get(2)),
                            Float.parseFloat(values.get(3)));
       }
-      throw new IllegalArgumentException("String should be formatted like 'x y width height'");
+
+      throw new IllegalArgumentException("String should be formatted like 'x y width height' or 'x, y, width, height'");
     }
   }
 

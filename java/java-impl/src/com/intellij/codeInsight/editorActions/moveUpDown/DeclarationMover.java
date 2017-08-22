@@ -124,7 +124,7 @@ class DeclarationMover extends LineMover {
         return info.prohibitMove();
       }
       if (tokenType == JavaTokenType.COMMA || tokenType == JavaTokenType.SEMICOLON) {
-        endElement = PsiTreeUtil.skipSiblingsBackward(endElement, PsiWhiteSpace.class);
+        endElement = PsiTreeUtil.skipWhitespacesBackward(endElement);
       }
     }
     final PsiMember lastMember = PsiTreeUtil.getParentOfType(endElement, PsiMember.class, false);
@@ -153,9 +153,9 @@ class DeclarationMover extends LineMover {
     }
     Document document = editor.getDocument();
 
-    PsiElement sibling = (down ? range.endLine >= document.getLineCount() : range.startLine == 0) ? null : 
-                         firstNonWhiteElement(down ? document.getLineStartOffset(range.endLine) 
-                                                   : document.getLineEndOffset(range.startLine - 1), 
+    PsiElement sibling = (down ? range.endLine >= document.getLineCount() : range.startLine == 0) ? null :
+                         firstNonWhiteElement(down ? document.getLineStartOffset(range.endLine)
+                                                   : document.getLineEndOffset(range.startLine - 1),
                                               file, down);
     if (range.lastElement instanceof PsiEnumConstant && sibling instanceof PsiJavaToken) {
       final PsiJavaToken token = (PsiJavaToken)sibling;
@@ -165,18 +165,18 @@ class DeclarationMover extends LineMover {
       }
       if (tokenType == JavaTokenType.COMMA) {
         sibling = down ?
-                  PsiTreeUtil.skipSiblingsForward(sibling, PsiWhiteSpace.class) :
-                  PsiTreeUtil.skipSiblingsBackward(sibling, PsiWhiteSpace.class);
+                  PsiTreeUtil.skipWhitespacesForward(sibling) :
+                  PsiTreeUtil.skipWhitespacesBackward(sibling);
       }
     }
     final boolean areWeMovingClass = range.firstElement instanceof PsiClass;
     info.toMove = range;
-    
+
     int neibourghLine = down ? range.endLine : range.startLine - 1;
-    if (neibourghLine >= 0 && neibourghLine < document.getLineCount() && 
-        CharArrayUtil.containsOnlyWhiteSpaces(document.getImmutableCharSequence().subSequence(document.getLineStartOffset(neibourghLine), 
+    if (neibourghLine >= 0 && neibourghLine < document.getLineCount() &&
+        CharArrayUtil.containsOnlyWhiteSpaces(document.getImmutableCharSequence().subSequence(document.getLineStartOffset(neibourghLine),
                                                                                               document.getLineEndOffset(neibourghLine))) &&
-      emptyLineCanBeDeletedAccordingToCodeStyle(file, document, document.getLineEndOffset(neibourghLine))) {      
+      emptyLineCanBeDeletedAccordingToCodeStyle(file, document, document.getLineEndOffset(neibourghLine))) {
       info.toMove2 = new LineRange(neibourghLine, neibourghLine + 1);
     }
     else {
@@ -216,7 +216,7 @@ class DeclarationMover extends LineMover {
     if (editor.getDocument().getTextLength() < textRange.getEndOffset()) return null;
     int startLine = editor.offsetToLogicalPosition(textRange.getStartOffset()).line;
     int endLine = editor.offsetToLogicalPosition(textRange.getEndOffset()).line+1;
-    
+
     // if member includes a comment (non-javadoc) and it wasn't selected by user, don't move it with member
     Couple<LineRange> splitRanges = extractCommentRange(member);
     if (lineRange.startLine >= splitRanges.first.endLine) startLine = splitRanges.second.startLine;
@@ -227,7 +227,7 @@ class DeclarationMover extends LineMover {
     return new LineRange(startLine, endLine);
   }
 
-  
+
   private static Couple<LineRange> extractCommentRange(@NotNull PsiElement member) {
     PsiElement firstChild = member.getFirstChild();
     if (firstChild instanceof PsiComment && !(firstChild instanceof PsiDocComment)) {
@@ -239,7 +239,7 @@ class DeclarationMover extends LineMover {
     LineRange wholeRange = new LineRange(member);
     return Couple.of(new LineRange(wholeRange.startLine, wholeRange.startLine), wholeRange);
   }
-  
+
   private static boolean isInsideDeclaration(@NotNull final PsiElement member,
                                              final int startLine,
                                              final int endLine,

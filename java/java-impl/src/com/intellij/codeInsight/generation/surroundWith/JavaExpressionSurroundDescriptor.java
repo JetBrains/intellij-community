@@ -50,7 +50,7 @@ public class JavaExpressionSurroundDescriptor implements SurroundDescriptor {
     PsiExpression expr = CodeInsightUtil.findExpressionInRange(file, startOffset, endOffset);
     if (expr == null) {
       expr = IntroduceVariableBase.getSelectedExpression(file.getProject(), file, startOffset, endOffset);
-      if (expr == null) {
+      if (expr == null || expr.isPhysical()) {
         return PsiElement.EMPTY_ARRAY;
       }
     }

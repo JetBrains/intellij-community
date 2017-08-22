@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,10 +51,10 @@ public class EqualsBetweenInconvertibleTypesInspection extends BaseInspection {
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new BaseEqualsVisitor() {
-      void checkTypes(PsiReferenceExpression expression, PsiType type1, PsiType type2) {
-        if (type1 != null && type2 != null && !TypeUtils.areConvertible(type1, type2)) {
+      void checkTypes(@NotNull PsiReferenceExpression expression, @NotNull PsiType leftType, @NotNull PsiType rightType) {
+        if (!TypeUtils.areConvertible(leftType, rightType)) {
           PsiElement name = expression.getReferenceNameElement();
-          registerError(name == null ? expression : name, type1, type2);
+          registerError(name == null ? expression : name, leftType, rightType);
         }
       }
     };

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -116,12 +117,25 @@ public class SelectionModelImpl implements SelectionModel {
     myEditor.getCaretModel().getCurrentCaret().setSelection(startPosition, startOffset, endPosition, endOffset);
   }
 
-  void fireSelectionChanged(int oldSelectionStart, int oldSelectionEnd, int startOffset, int endOffset) {
-    repaintBySelectionChange(oldSelectionStart, startOffset, oldSelectionEnd, endOffset);
-
-    SelectionEvent event = new SelectionEvent(myEditor,
-                                              oldSelectionStart, oldSelectionEnd,
-                                              startOffset, endOffset);
+  void fireSelectionChanged(SelectionEvent event) {
+    TextRange[] oldRanges = event.getOldRanges();
+    TextRange[] newRanges = event.getNewRanges();
+    int count = Math.min(oldRanges.length, newRanges.length);
+    for (int i = 0; i < count; i++) {
+      TextRange oldRange = oldRanges[i];
+      TextRange newRange = newRanges[i];
+      int oldSelectionStart = oldRange.getStartOffset();
+      int startOffset = newRange.getStartOffset();
+      int oldSelectionEnd = oldRange.getEndOffset();
+      int endOffset = newRange.getEndOffset();
+      myEditor.repaint(Math.min(oldSelectionStart, startOffset), Math.max(oldSelectionStart, startOffset), false);
+      myEditor.repaint(Math.min(oldSelectionEnd, endOffset), Math.max(oldSelectionEnd, endOffset), false);
+    }
+    TextRange[] remaining = oldRanges.length < newRanges.length ? newRanges : oldRanges;
+    for (int i = count; i < remaining.length; i++) {
+      TextRange range = remaining[i];
+      myEditor.repaint(range.getStartOffset(), range.getEndOffset(), false);
+    }
 
     broadcastSelectionEvent(event);
   }
@@ -135,11 +149,6 @@ public class SelectionModelImpl implements SelectionModel {
         LOG.error(e);
       }
     }
-  }
-
-  private void repaintBySelectionChange(int oldSelectionStart, int startOffset, int oldSelectionEnd, int endOffset) {
-    myEditor.repaint(Math.min(oldSelectionStart, startOffset), Math.max(oldSelectionStart, startOffset), false);
-    myEditor.repaint(Math.min(oldSelectionEnd, endOffset), Math.max(oldSelectionEnd, endOffset), false);
   }
 
   @Override
@@ -217,7 +226,7 @@ public class SelectionModelImpl implements SelectionModel {
 
   @Override
   public String getSelectedText(boolean allCarets) {
-    validateContext(false);
+    ApplicationManager.getApplication().assertReadAccessAllowed();
 
     if (myEditor.getCaretModel().supportsMultipleCarets() && allCarets) {
       final StringBuilder buf = new StringBuilder();
@@ -298,14 +307,5 @@ public class SelectionModelImpl implements SelectionModel {
 
   public void reinitSettings() {
     myTextAttributes = null;
-  }
-
-  private static void validateContext(boolean isWrite) {
-    if (isWrite) {
-      ApplicationManager.getApplication().assertIsDispatchThread();
-    }
-    else {
-      ApplicationManager.getApplication().assertReadAccessAllowed();
-    }
   }
 }

@@ -4,6 +4,7 @@
     <exclude-output />
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/testSrc" isTestSource="true" />
+      <excludeFolder url="file://$MODULE_DIR$/testSrc/com/intellij/java/codeInspection/bytecodeAnalysis/classConflict" />
     </content>
     <content url="file://$MODULE_DIR$/../../plugins/InspectionGadgets/testsrc">
       <sourceFolder url="file://$MODULE_DIR$/../../plugins/InspectionGadgets/testsrc" isTestSource="true" />
@@ -53,9 +54,7 @@
     <orderEntry type="module" module-name="xml-psi-impl" />
     <orderEntry type="library" scope="TEST" name="KotlinTest" level="project" />
     <orderEntry type="module" module-name="built-in-server-api" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="memoryfilesystem" level="project" />
     <orderEntry type="module" module-name="testExtensions" scope="TEST" />
     <orderEntry type="module" module-name="configuration-store-impl" scope="TEST" />
-    <orderEntry type="module" module-name="slowCheck" scope="TEST" />
   </component>
 </module>

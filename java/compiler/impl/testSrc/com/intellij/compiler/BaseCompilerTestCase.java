@@ -344,7 +344,7 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
     PlatformTestCase.myFilesToDelete.add(moduleFile);
     return new WriteAction<Module>() {
       @Override
-      protected void run(@NotNull Result<Module> result) throws Throwable {
+      protected void run(@NotNull Result<Module> result) {
         Module module = ModuleManager.getInstance(myProject)
           .newModule(FileUtil.toSystemIndependentName(moduleFile.getAbsolutePath()), getModuleType().getId());
         module.getModuleFile();
@@ -353,6 +353,9 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
     }.execute().getResultObject();
   }
 
+  protected CompilationLog buildAllModules() {
+    return make(getCompilerManager().createProjectCompileScope(myProject), CompilerFilter.ALL);
+  }
 
   protected static void assertOutput(Module module, TestFileSystemBuilder item) {
     assertOutput(module, item, false);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.FoldRegion;
-import com.intellij.openapi.util.Segment;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Consumer;
@@ -32,16 +32,10 @@ abstract class FoldRegionsTree {
   private final RangeMarkerTree<FoldRegionImpl> myMarkerTree;
   @NotNull private volatile CachedData myCachedData = new CachedData();
 
-  private static final Comparator<FoldRegion> BY_END_OFFSET = (r1, r2) -> {
-    int end1 = r1.getEndOffset();
-    int end2 = r2.getEndOffset();
-    if (end1 < end2) return -1;
-    if (end1 > end2) return 1;
-    return 0;
-  };
+  private static final Comparator<FoldRegion> BY_END_OFFSET = Comparator.comparingInt(RangeMarker::getEndOffset);
   private static final Comparator<? super FoldRegion> BY_END_OFFSET_REVERSE = Collections.reverseOrder(BY_END_OFFSET);
 
-  private static final TObjectHashingStrategy<FoldRegion> OFFSET_BASED_HASHING_STRATEGY = new TObjectHashingStrategy<FoldRegion>() {
+  static final TObjectHashingStrategy<FoldRegion> OFFSET_BASED_HASHING_STRATEGY = new TObjectHashingStrategy<FoldRegion>() {
     @Override
     public int computeHashCode(FoldRegion o) {
       return o.getStartOffset() * 31 + o.getEndOffset();
@@ -70,48 +64,55 @@ abstract class FoldRegionsTree {
 
   CachedData rebuild() {
     List<FoldRegion> visible = new ArrayList<>(myMarkerTree.size());
+    List<FoldRegionImpl> duplicatesToKill = new ArrayList<>();
 
-    List<FoldRegion> duplicatesToKill = new ArrayList<>();
-    SweepProcessor.Generator<FoldRegion> generator = processor -> myMarkerTree.processOverlappingWith(0, Integer.MAX_VALUE, processor);
-    SweepProcessor.sweep(generator, new SweepProcessor<FoldRegion>() {
-      int outerCollapsedCount;
+    SweepProcessor.Generator<FoldRegionImpl> generator = processor -> myMarkerTree.processOverlappingWith(0, Integer.MAX_VALUE, processor);
+    SweepProcessor.sweep(generator, new SweepProcessor<FoldRegionImpl>() {
+      FoldRegionImpl lastRegion;
+      FoldRegionImpl lastCollapsedRegion;
+
       @Override
-      public boolean process(int offset, @NotNull FoldRegion region, boolean atStart, @NotNull Collection<FoldRegion> overlapping) {
-        if (!atStart) {
-          if (!region.isExpanded()) {
-            outerCollapsedCount--;
-          }
-          if (!visible.isEmpty()) {
-            FoldRegion lastVisible = visible.get(visible.size() - 1);
-            if (lastVisible != region && Segment.BY_START_OFFSET_THEN_END_OFFSET.compare(lastVisible, region) == 0) {
-              // there can be multiple regions with the same offsets, collapsed and expanded.
-              // in that case dispose the expanded and preserve collapsed (to reduce flickering)
-              if (region.isExpanded() == lastVisible.isExpanded() || region.isExpanded()) {
-                duplicatesToKill.add(region);
-              }
-              else {
-                // dispose last visible and replace it with region
-                duplicatesToKill.add(lastVisible);
-                visible.set(visible.size() - 1, region);
-              }
+      public boolean process(int offset, @NotNull FoldRegionImpl region, boolean atStart, @NotNull Collection<FoldRegionImpl> overlapping) {
+        if (atStart) {
+          if (sameRange(region, lastRegion)) {
+            if (region.isExpanded()) {
+              duplicatesToKill.add(region);
+              return true;
+            }
+            else {
+              duplicatesToKill.add(lastRegion);
+              if (!visible.isEmpty() && lastRegion == visible.get(visible.size() - 1)) visible.remove(visible.size() - 1);
+              if (lastRegion == lastCollapsedRegion) lastCollapsedRegion = null;
             }
           }
-
-          return true;
-        }
-        if (outerCollapsedCount == 0) {
-          visible.add(region);
-        }
-
-        if (!region.isExpanded()) {
-          outerCollapsedCount++;
+          lastRegion = region;
+          
+          if (lastCollapsedRegion == null || region.getEndOffset() > lastCollapsedRegion.getEndOffset()) {
+            if (!region.isExpanded()) {
+              hideContainedRegions(region);
+              lastCollapsedRegion = region;
+            }
+            visible.add(region);
+          }
         }
         return true;
       }
+
+      private void hideContainedRegions(FoldRegion region) {
+        for (int i = visible.size() - 1; i >= 0; i--) {
+          if (region.getStartOffset() == visible.get(i).getStartOffset()) visible.remove(i);
+          else break;
+        }
+      }
+
+      private boolean sameRange(@NotNull FoldRegion region, @Nullable FoldRegion otherRegion) {
+        return otherRegion != null && 
+               region.getStartOffset() == otherRegion.getStartOffset() && region.getEndOffset() == otherRegion.getEndOffset();
+      }
     });
 
-    for (FoldRegion region : duplicatesToKill) {
-      region.dispose();
+    for (FoldRegionImpl region : duplicatesToKill) {
+      myMarkerTree.removeInterval(region);
     }
 
     FoldRegion[] visibleRegions = toFoldArray(visible);

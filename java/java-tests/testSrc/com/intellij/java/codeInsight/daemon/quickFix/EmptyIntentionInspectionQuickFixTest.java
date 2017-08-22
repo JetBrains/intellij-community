@@ -81,7 +81,7 @@ public class EmptyIntentionInspectionQuickFixTest extends LightQuickFixTestCase 
     }};
   }
 
-  public void testX() throws Exception {
+  public void testX() {
     configureByFile(getBasePath()+"/X.java");
     List<IntentionAction> emptyActions = getAvailableActions();
     for (int i = emptyActions.size()-1; i>=0; i--) {
@@ -92,7 +92,7 @@ public class EmptyIntentionInspectionQuickFixTest extends LightQuickFixTestCase 
     assertEquals(emptyActions.toString(), 1, emptyActions.size());
   }
 
-  public void testLowPriority() throws Exception {
+  public void testLowPriority() {
     configureByFile(getBasePath() + "/LowPriority.java");
     List<IntentionAction> emptyActions = getAvailableActions();
     int i = 0;

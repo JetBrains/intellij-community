@@ -22,7 +22,6 @@ import com.intellij.concurrency.JobScheduler;
 import com.intellij.diagnostic.LogEventException;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.diagnostic.ThreadDumper;
-import com.intellij.execution.CommandLineUtil;
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.ide.*;
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -43,7 +42,6 @@ import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.progress.util.PotemkinProgress;
@@ -177,7 +175,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     myCommandLineMode = isCommandLine;
 
     myDoNotSave = isUnitTestMode || isHeadless;
-    CommandLineUtil.VERBOSE_COMMAND_LINE_MODE = isUnitTestMode;
 
     if (!isUnitTestMode && !isHeadless) {
       Disposer.register(this, Disposer.newDisposable(), "ui");
@@ -682,7 +679,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     }
 
     if (holdsReadLock()) {
-      LOG.error("Calling invokeAndWait from read-action leads to possible deadlock.");
+      throw new IllegalStateException("Calling invokeAndWait from read-action leads to possible deadlock.");
     }
 
     LaterInvocator.invokeAndWait(myTransactionGuard.wrapLaterInvocation(runnable, modalityState), modalityState);
@@ -1206,16 +1203,22 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       ActivityTracker.getInstance().inc();
       fireBeforeWriteActionStart(clazz);
 
-      if (!myLock.isWriteLocked()) {
-        if (!myLock.tryWriteLock()) {
-          Future<?> reportSlowWrite = ourDumpThreadsOnLongWriteActionWaiting <= 0 ? null :
-              JobScheduler.getScheduler().scheduleWithFixedDelay(() -> PerformanceWatcher.getInstance().dumpThreads("waiting", true),
-                                                                 ourDumpThreadsOnLongWriteActionWaiting,
-                                                                 ourDumpThreadsOnLongWriteActionWaiting, TimeUnit.MILLISECONDS);
-          myLock.writeLock();
-          if (reportSlowWrite != null) {
-            reportSlowWrite.cancel(false);
+      if (!myLock.isWriteLocked() && !myLock.tryWriteLock()) {
+        Future<?> reportSlowWrite = ourDumpThreadsOnLongWriteActionWaiting <= 0 ? null :
+                                    JobScheduler.getScheduler()
+                                      .scheduleWithFixedDelay(() -> PerformanceWatcher.getInstance().dumpThreads("waiting", true),
+                                                              ourDumpThreadsOnLongWriteActionWaiting,
+                                                              ourDumpThreadsOnLongWriteActionWaiting, TimeUnit.MILLISECONDS);
+        long t = LOG.isDebugEnabled() ? System.currentTimeMillis() : 0;
+        myLock.writeLock();
+        if (LOG.isDebugEnabled()) {
+          long elapsed = System.currentTimeMillis() - t;
+          if (elapsed != 0) {
+            LOG.debug("Write action wait time: " + elapsed);
           }
+        }
+        if (reportSlowWrite != null) {
+          reportSlowWrite.cancel(false);
         }
       }
     }
@@ -1430,19 +1433,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   public void saveAll() {
     if (myDoNotSave) return;
 
-    FileDocumentManager.getInstance().saveAllDocuments();
-
-    ProjectManager projectManager = ProjectManager.getInstance();
-    if (projectManager instanceof ProjectManagerEx) {
-      ((ProjectManagerEx)projectManager).flushChangedProjectFileAlarm();
-    }
-
-    Project[] openProjects = projectManager.getOpenProjects();
-    for (Project openProject : openProjects) {
-      openProject.save();
-    }
-
-    saveSettings();
+    StoreUtil.saveDocumentsAndProjectsAndApp();
   }
 
   @Override

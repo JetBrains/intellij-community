@@ -43,37 +43,37 @@ public class GroovyCodeStyleSettingsFacadeImpl extends GroovyCodeStyleSettingsFa
 
   @Override
   public int staticFieldsOrderWeight() {
-    return CodeStyleSettingsManager.getInstance(myProject).getCurrentSettings().STATIC_FIELDS_ORDER_WEIGHT;
+    return getSettings().STATIC_FIELDS_ORDER_WEIGHT;
   }
 
   @Override
   public int fieldsOrderWeight() {
-    return CodeStyleSettingsManager.getInstance(myProject).getCurrentSettings().FIELDS_ORDER_WEIGHT;
+    return getSettings().FIELDS_ORDER_WEIGHT;
   }
 
   @Override
   public int staticMethodsOrderWeight() {
-    return CodeStyleSettingsManager.getInstance(myProject).getCurrentSettings().STATIC_METHODS_ORDER_WEIGHT;
+    return getSettings().STATIC_METHODS_ORDER_WEIGHT;
   }
 
   @Override
   public int methodsOrderWeight() {
-    return CodeStyleSettingsManager.getInstance(myProject).getCurrentSettings().METHODS_ORDER_WEIGHT;
+    return getSettings().METHODS_ORDER_WEIGHT;
   }
 
   @Override
   public int staticInnerClassesOrderWeight() {
-    return CodeStyleSettingsManager.getInstance(myProject).getCurrentSettings().STATIC_INNER_CLASSES_ORDER_WEIGHT;
+    return getSettings().STATIC_INNER_CLASSES_ORDER_WEIGHT;
   }
 
   @Override
   public int innerClassesOrderWeight() {
-    return CodeStyleSettingsManager.getInstance(myProject).getCurrentSettings().INNER_CLASSES_ORDER_WEIGHT;
+    return getSettings().INNER_CLASSES_ORDER_WEIGHT;
   }
 
   @Override
   public int constructorsOrderWeight() {
-    return CodeStyleSettingsManager.getInstance(myProject).getCurrentSettings().CONSTRUCTORS_ORDER_WEIGHT;
+    return getSettings().CONSTRUCTORS_ORDER_WEIGHT;
   }
 
   @Override

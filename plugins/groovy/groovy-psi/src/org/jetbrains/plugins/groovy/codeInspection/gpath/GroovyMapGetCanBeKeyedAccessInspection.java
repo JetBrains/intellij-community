@@ -41,13 +41,6 @@ public class GroovyMapGetCanBeKeyedAccessInspection extends BaseInspection {
   @Override
   @Nls
   @NotNull
-  public String getGroupDisplayName() {
-    return GPATH;
-  }
-
-  @Override
-  @Nls
-  @NotNull
   public String getDisplayName() {
     return "Call to Map.get can be keyed access";
   }

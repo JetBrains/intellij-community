@@ -16,6 +16,7 @@
 package com.intellij.ide.diff;
 
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PatternUtil;
 import org.jetbrains.annotations.NotNull;
@@ -30,6 +31,8 @@ import java.util.regex.Pattern;
  * @author Konstantin Bulenkov
  */
 public class DirDiffSettings {
+  public static final Key<DirDiffSettings> KEY = Key.create("Diff.DirDiffSettings");
+
   public boolean showSize = true;
   public boolean showDate = true;
 
@@ -69,6 +72,7 @@ public class DirDiffSettings {
 
   public enum CompareMode {
     CONTENT("Content"), // the most honest, the slowest. Compares size, if equal compares contents. Ignores timestamps
+    CONTENT_IGNORE_SEPARATORS("Content Ignoring Line Separators"),
     SIZE("Size"), // Compares size only
     TIMESTAMP("Size and Timestamp"); // Compares size, if equal compares timestamps
 

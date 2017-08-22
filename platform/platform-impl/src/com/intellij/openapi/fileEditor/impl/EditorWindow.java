@@ -1087,15 +1087,18 @@ public class EditorWindow {
   private void doTrimSize(int limit, @Nullable VirtualFile fileToIgnore, boolean closeNonModifiedFilesFirst, boolean transferFocus) {
     LinkedHashSet<VirtualFile> closingOrder = getTabClosingOrder(closeNonModifiedFilesFirst);
     VirtualFile selectedFile = getSelectedFile();
+    if (shouldCloseSelected(fileToIgnore)) {
+      defaultCloseFile(selectedFile, transferFocus);
+      closingOrder.remove(selectedFile);
+    }
 
     for (VirtualFile file : closingOrder) {
       if (myTabbedPane.getTabCount() <= limit || myTabbedPane.getTabCount() == 0 || areAllTabsPinned(fileToIgnore)) {
         return;
       }
-      if (file.equals(selectedFile) && !shouldCloseSelected()) continue;
-      if (!fileCanBeClosed(file, fileToIgnore)) continue;
-
-      defaultCloseFile(file, transferFocus);
+      if (fileCanBeClosed(file, fileToIgnore)) {
+        defaultCloseFile(file, transferFocus);
+      }
     }
   }
 
@@ -1147,7 +1150,7 @@ public class EditorWindow {
     return closingOrder;
   }
 
-  private boolean shouldCloseSelected() {
+  private boolean shouldCloseSelected(VirtualFile fileToIgnore) {
     if (!UISettings.getInstance().getReuseNotModifiedTabs() || !myOwner.getManager().getProject().isInitialized()) {
       return false;
     }
@@ -1156,10 +1159,16 @@ public class EditorWindow {
     if (file == null || !isFileOpen(file) || isFilePinned(file)) {
       return false;
     }
+
+    if (file.equals(fileToIgnore)) return false;
+
     EditorWithProviderComposite composite = findFileComposite(file);
     if (composite == null) return false;
-    Component owner = IdeFocusManager.getInstance(myOwner.getManager().getProject()).getFocusOwner();
-    if (owner == null || !SwingUtilities.isDescendingFrom(owner, composite.getSelectedEditor().getComponent())) return false;
+    //Don't check focus in unit test mode
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      Component owner = IdeFocusManager.getInstance(myOwner.getManager().getProject()).getFocusOwner();
+      if (owner == null || !SwingUtilities.isDescendingFrom(owner, composite.getSelectedEditor().getComponent())) return false;
+    }
     return !myOwner.getManager().isChanged(composite);
   }
 
@@ -1185,8 +1194,16 @@ public class EditorWindow {
   }
 
   public void clear() {
+    FileEditorManagerImpl manager = getManager();
+    FileEditorManagerListener.Before beforePublisher = 
+      manager.getProject().getMessageBus().syncPublisher(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER);
+    FileEditorManagerListener afterPublisher = 
+      manager.getProject().getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER);
     for (EditorWithProviderComposite composite : getEditors()) {
-      Disposer.dispose(composite);
+      VirtualFile file = composite.getFile();
+      beforePublisher.beforeFileClosed(manager, file);
+      manager.disposeComposite(composite);
+      afterPublisher.fileClosed(manager, file);
     }
     if (myTabbedPane == null) {
       myPanel.removeAll();

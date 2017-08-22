@@ -18,7 +18,6 @@ package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.completion.PlainPrefixMatcher;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.lookup.*;
@@ -36,7 +35,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -94,6 +93,7 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
 
     Map<TemplateImpl, String> matchingTemplates = new TreeMap<>(TemplateListPanel.TEMPLATE_COMPARATOR);
     for (TemplateImpl template : templates) {
+      ProgressManager.checkCanceled();
       String templateKey = template.getKey();
       if (fullMatch) {
         int startOffset = documentText.length() - templateKey.length();
@@ -106,6 +106,7 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
       }
       else {
         for (int i = templateKey.length(); i > 0; i--) {
+          ProgressManager.checkCanceled();
           String prefix = templateKey.substring(0, i);
           int startOffset = documentText.length() - i;
           if (startOffset > 0 && Character.isJavaIdentifierPart(documentText.charAt(startOffset - 1))) {
@@ -218,6 +219,7 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
     CharSequence chars = document.getCharsSequence();
     int start = offset;
     while (true) {
+      ProgressManager.checkCanceled();
       if (start == 0) break;
       char c = chars.charAt(start - 1);
       if (!(Character.isJavaIdentifierPart(c))) break;

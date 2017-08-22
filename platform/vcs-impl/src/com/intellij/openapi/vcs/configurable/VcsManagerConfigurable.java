@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.configurable;
 
+import com.intellij.application.options.colors.fileStatus.FileStatusColorsConfigurable;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableEP;
 import com.intellij.openapi.options.ConfigurationException;
@@ -125,6 +126,8 @@ public class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstra
     for (VcsConfigurableProvider provider : VcsConfigurableProvider.EP_NAME.getExtensions()) {
       addIfNotNull(result, provider.getConfigurable(myProject));
     }
+
+    result.add(new FileStatusColorsConfigurable());
 
     Set<String> projectConfigurableIds = map2Set(myProject.getExtensions(Configurable.PROJECT_CONFIGURABLE), ep -> ep.id);
     for (VcsDescriptor descriptor : ProjectLevelVcsManager.getInstance(myProject).getAllVcss()) {

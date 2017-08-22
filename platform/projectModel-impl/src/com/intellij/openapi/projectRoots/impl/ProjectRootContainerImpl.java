@@ -189,6 +189,11 @@ public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRoot
     });
 
     for (OrderRootType type : OrderRootType.getAllTypes()) {
+      if (myRoots.get(type) == null) {
+        LOG.error(type + " wasn't serialized");
+        myRoots.put(type, new CompositeProjectRoot());
+      }
+
       final VirtualFile[] newRoots = getRootFiles(type);
       final VirtualFile[] oldRoots = VirtualFile.EMPTY_ARRAY;
       if (!Comparing.equal(oldRoots, newRoots)) {

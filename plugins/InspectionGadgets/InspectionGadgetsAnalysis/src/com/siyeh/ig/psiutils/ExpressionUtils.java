@@ -226,7 +226,7 @@ public class ExpressionUtils {
 
   @Contract("null -> false")
   public static boolean isNullLiteral(@Nullable PsiExpression expression) {
-    expression = ParenthesesUtils.stripParentheses(expression);
+    expression = PsiUtil.deparenthesizeExpression(expression);
     return expression != null && PsiType.NULL.equals(expression.getType());
   }
 
@@ -762,6 +762,7 @@ public class ExpressionUtils {
    * @return extracted assignment or null if assignment is not found or assignment is compound
    */
   @Contract("null -> null")
+  @Nullable
   public static PsiAssignmentExpression getAssignment(PsiElement element) {
     if(element instanceof PsiExpressionStatement) {
       element = ((PsiExpressionStatement)element).getExpression();
@@ -1001,5 +1002,30 @@ public class ExpressionUtils {
       }
     }
     return expression;
+  }
+
+  @Contract(value = "null -> null")
+  @Nullable
+  public static PsiLocalVariable resolveLocalVariable(@Nullable PsiExpression expression) {
+    PsiReferenceExpression referenceExpression = ObjectUtils.tryCast(expression, PsiReferenceExpression.class);
+    if(referenceExpression == null) return null;
+    return ObjectUtils.tryCast(referenceExpression.resolve(), PsiLocalVariable.class);
+  }
+
+  public static boolean isOctalLiteral(PsiLiteralExpression literal) {
+    final PsiType type = literal.getType();
+    if (!PsiType.INT.equals(type) && !PsiType.LONG.equals(type)) {
+      return false;
+    }
+    if (literal.getValue() == null) {
+      // red code
+      return false;
+    }
+    @NonNls final String text = literal.getText();
+    if (text.charAt(0) != '0' || text.length() < 2) {
+      return false;
+    }
+    final char c1 = text.charAt(1);
+    return c1 == '_' || (c1 >= '0' && c1 <= '7');
   }
 }

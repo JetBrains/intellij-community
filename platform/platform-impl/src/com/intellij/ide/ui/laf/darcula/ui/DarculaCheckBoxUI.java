@@ -104,18 +104,18 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
       final boolean armed = b.getModel().isArmed();
 
       final int R = JBUI.scale(4);
+      boolean overrideBg = isIndeterminate(b) && fillBackgroundForIndeterminateSameAsForSelected();
       if (c.hasFocus()) {
-        g.setPaint(UIUtil.getGradientPaint(w/2, 1, getFocusedBackgroundColor1(armed, selected), w/2, h, getFocusedBackgroundColor2(armed, selected)));
+        g.setPaint(UIUtil.getGradientPaint(w/2, 1, getFocusedBackgroundColor1(armed, selected || overrideBg), w/2, h, getFocusedBackgroundColor2(armed, selected || overrideBg)));
         g.fillRoundRect(0, 0, w, h, R, R);
 
         DarculaUIUtil.paintFocusRing(g, new Rectangle(1, 1, w - 2, h - 2));
       } else {
-        g.setPaint(UIUtil.getGradientPaint(w / 2, 1, getBackgroundColor1(enabled, selected), w / 2, h, getBackgroundColor2(enabled,
-                                                                                                                           selected)));
+        g.setPaint(UIUtil.getGradientPaint(w / 2, 1, getBackgroundColor1(enabled, selected || overrideBg), w / 2, h, getBackgroundColor2(enabled, selected || overrideBg)));
         g.fillRoundRect(0, 0, w, h , R, R);
 
-        final Color borderColor1 = getBorderColor1(enabled, selected);
-        final Color borderColor2 = getBorderColor2(enabled, selected);
+        final Color borderColor1 = getBorderColor1(enabled, selected || overrideBg);
+        final Color borderColor2 = getBorderColor2(enabled, selected || overrideBg);
         g.setPaint(UIUtil.getGradientPaint(w / 2, 1, borderColor1, w / 2, h, borderColor2));
         g.drawRoundRect(0, (UIUtil.isUnderDarcula() ? 1 : 0), w, h - 1, R, R);
 
@@ -123,12 +123,29 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
         g.drawRoundRect(0, 0, w, h - 1, R, R);
       }
 
-      if (b.getModel().isSelected()) {
+      if (isIndeterminate(b)) {
+        paintIndeterminateSign(g, enabled, w, h);
+      } else if (b.getModel().isSelected()) {
         paintCheckSign(g, enabled, w, h);
       }
       g.translate(-x, -y);
       config.restore();
     }
+  }
+
+  protected void paintIndeterminateSign(Graphics2D g, boolean enabled, int w, int h) {
+    g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
+    g.setStroke(new BasicStroke(1 * JBUI.scale(2.0f), BasicStroke.CAP_ROUND,BasicStroke.JOIN_ROUND));
+
+    int off = JBUI.scale(4);
+    int x1 = off;
+    int y1 = h / 2;
+    g.setColor(getShadowColor(enabled, true));
+    GraphicsConfig c = new GraphicsConfig(g).paintWithAlpha(.8f);
+    g.drawLine(x1, y1 + JBUI.scale(1), w - off + JBUI.scale(1), y1 + JBUI.scale(1));
+    c.restore();
+    g.setColor(getCheckSignColor(enabled, true));
+    g.drawLine(x1, y1, w - off + JBUI.scale(1), y1);
   }
 
   protected void drawText(JComponent c, Graphics2D g, JCheckBox b, FontMetrics fm, Rectangle textRect, String text) {
@@ -146,6 +163,10 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
                                                   textRect.y + fm.getAscent());
       }
     }
+  }
+
+  protected boolean fillBackgroundForIndeterminateSameAsForSelected() {
+    return false;
   }
 
   protected void paintCheckSign(Graphics2D g, boolean enabled, int w, int h) {
@@ -228,5 +249,9 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
   @Override
   public Icon getDefaultIcon() {
     return EmptyIcon.create(JBUI.scale(20)).asUIResource();
+  }
+
+  protected boolean isIndeterminate(JCheckBox checkBox) {
+    return "indeterminate".equals(checkBox.getClientProperty("JButton.selectedState"));
   }
 }

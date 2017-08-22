@@ -32,18 +32,21 @@ public class PyTargetExpressionStubImpl extends StubBase<PyTargetExpression> imp
   private final QualifiedName myInitializer;
   private final boolean myQualified;
   private final String myTypeComment;
-
+  private final String myAnnotation;
+  
   @Nullable private final String myDocString;
   private final CustomTargetExpressionStub myCustomStub;
 
   public PyTargetExpressionStubImpl(String name,
                                     @Nullable String docString,
-                                    @Nullable String typeComment, 
+                                    @Nullable String typeComment,
+                                    @Nullable String annotation, 
                                     CustomTargetExpressionStub customStub,
                                     StubElement parent) {
     super(parent, PyElementTypes.TARGET_EXPRESSION);
     myName = name;
     myTypeComment = typeComment;
+    myAnnotation = annotation;
     myInitializerType = InitializerType.Custom;
     myInitializer = null;
     myQualified = false;
@@ -51,16 +54,18 @@ public class PyTargetExpressionStubImpl extends StubBase<PyTargetExpression> imp
     myDocString = docString;
   }
   
-  public PyTargetExpressionStubImpl(final String name, 
+  public PyTargetExpressionStubImpl(final String name,
                                     @Nullable String docString,
                                     final InitializerType initializerType,
                                     final QualifiedName initializer,
                                     final boolean qualified,
                                     @Nullable String typeComment, 
+                                    String annotation,
                                     final StubElement parentStub) {
     super(parentStub, PyElementTypes.TARGET_EXPRESSION);
     myName = name;
     myTypeComment = typeComment;
+    myAnnotation = annotation;
     assert initializerType != InitializerType.Custom;
     myInitializerType = initializerType;
     myInitializer = initializer;
@@ -105,6 +110,12 @@ public class PyTargetExpressionStubImpl extends StubBase<PyTargetExpression> imp
   @Override
   public String getTypeComment() {
     return myTypeComment;
+  }
+
+  @Nullable
+  @Override
+  public String getAnnotation() {
+    return myAnnotation;
   }
 
   @Override

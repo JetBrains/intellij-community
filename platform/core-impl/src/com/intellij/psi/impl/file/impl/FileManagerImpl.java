@@ -116,27 +116,35 @@ public class FileManagerImpl implements FileManager {
     }
     ApplicationManager.getApplication().assertWriteAccessAllowed();
 
-    setViewProvider(vFile, null);
-
     VirtualFile dir = vFile.getParent();
     PsiDirectory parentDir = dir == null ? null : getCachedDirectory(dir);
     PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(myManager);
-    if (parentDir != null) {
+    if (parentDir == null) {
+      setUpPropertyChangedForUnloadedPsi(event, vFile);
+
+      myManager.beforePropertyChange(event);
+      setViewProvider(vFile, null);
+      myManager.propertyChanged(event);
+    } else {
       event.setParent(parentDir);
+
+      myManager.beforeChildrenChange(event);
+      setViewProvider(vFile, null);
       myManager.childrenChanged(event);
-    }
-    else {
-      firePropertyChangedForUnloadedPsi(event, vFile);
     }
   }
 
   void firePropertyChangedForUnloadedPsi(@NotNull PsiTreeChangeEventImpl event, @NotNull VirtualFile vFile) {
-    event.setPropertyName(PsiTreeChangeEvent.PROP_UNLOADED_PSI);
-    event.setOldValue(vFile);
-    event.setNewValue(vFile);
+    setUpPropertyChangedForUnloadedPsi(event, vFile);
 
     myManager.beforePropertyChange(event);
     myManager.propertyChanged(event);
+  }
+
+  private static void setUpPropertyChangedForUnloadedPsi(@NotNull PsiTreeChangeEventImpl event, @NotNull VirtualFile vFile) {
+    event.setPropertyName(PsiTreeChangeEvent.PROP_UNLOADED_PSI);
+    event.setOldValue(vFile);
+    event.setNewValue(vFile);
   }
 
   @Override

@@ -136,7 +136,7 @@ public class DirectoryEntry extends Entry {
   }
 
   @Override
-  public void collectDifferencesWith(Entry right, List<Difference> result) {
+  public void collectDifferencesWith(@NotNull Entry right, @NotNull List<Difference> result) {
     DirectoryEntry e = (DirectoryEntry)right;
 
     if (!getPath().equals(e.getPath())) {
@@ -228,7 +228,7 @@ public class DirectoryEntry extends Entry {
   }
 
   @Override
-  protected void collectCreatedDifferences(List<Difference> result) {
+  protected void collectCreatedDifferences(@NotNull List<Difference> result) {
     result.add(new Difference(false, null, this));
 
     for (Entry child : myChildren) {
@@ -237,7 +237,7 @@ public class DirectoryEntry extends Entry {
   }
 
   @Override
-  protected void collectDeletedDifferences(List<Difference> result) {
+  protected void collectDeletedDifferences(@NotNull List<Difference> result) {
     result.add(new Difference(false, this, null));
 
     for (Entry child : myChildren) {

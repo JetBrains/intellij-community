@@ -28,7 +28,7 @@ public class LambdaCanBeMethodCallInspectionTest extends LightQuickFixParameteri
     return new LocalInspectionTool[]{new LambdaCanBeMethodCallInspection()};
   }
 
-  public void test() throws Exception { doAllTests(); }
+  public void test() { doAllTests(); }
 
   @Override
   protected String getBasePath() {

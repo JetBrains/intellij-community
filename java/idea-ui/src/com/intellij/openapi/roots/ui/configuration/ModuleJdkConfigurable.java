@@ -29,10 +29,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ModuleProjectStructureElement;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Condition;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -103,11 +100,11 @@ public abstract class ModuleJdkConfigurable implements Disposable {
       }
     });
     myJdkPanel.add(new JLabel(ProjectBundle.message("module.libraries.target.jdk.module.radio")),
-                   new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
-                                          JBUI.insets(12, 6, 12, 0), 0, 0));
+                   new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
+                                          JBUI.insetsRight(6), 0, 0));
     myJdkPanel.add(myCbModuleJdk, new GridBagConstraints(1, 0, 1, 1, 0, 1.0,
-                                                         GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
-                                                         JBUI.insets(6, 6, 12, 0), 0, 0));
+                                                         GridBagConstraints.CENTER, GridBagConstraints.NONE,
+                                                         JBUI.insetsRight(4), 0, 0));
     final Project project = getRootModel().getModule().getProject();
     final JButton setUpButton = new JButton(ApplicationBundle.message("button.new"));
     myCbModuleJdk
@@ -127,13 +124,15 @@ public abstract class ModuleJdkConfigurable implements Disposable {
         return false;
       }, true);
     myJdkPanel.add(setUpButton, new GridBagConstraints(2, 0, 1, 1, 0, 0,
-                                                       GridBagConstraints.WEST, GridBagConstraints.NONE,
-                                                       JBUI.insets(0, 4, 7, 0), 0, 0));
+                                                       GridBagConstraints.CENTER, GridBagConstraints.NONE,
+                                                       JBUI.insetsRight(4), 0, 0));
     final JButton editButton = new JButton(ApplicationBundle.message("button.edit"));
     myCbModuleJdk.setEditButton(editButton, getRootModel().getModule().getProject(), () -> getRootModel().getSdk());
     myJdkPanel.add(editButton,
                    new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 1.0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE,
-                                          JBUI.insets(0, 4, 7, 0), 0, 0));
+                                          JBUI.emptyInsets(), 0, 0));
+
+    myJdkPanel.setBorder(JBUI.Borders.empty(6));
   }
 
   private void clearCaches() {

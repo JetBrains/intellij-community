@@ -15,40 +15,27 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementVisitor;
 
 public abstract class BaseInspection extends GroovySuppressableInspectionTool {
-  private final String m_shortName = InspectionProfileEntry.getShortName(getClass().getSimpleName());
 
-  public static final String ASSIGNMENT_ISSUES = "Assignment issues";
-  public static final String CONFUSING_CODE_CONSTRUCTS = "Potentially confusing code constructs";
-  public static final String CONTROL_FLOW = "Control Flow";
-  public static final String PROBABLE_BUGS = "Probable bugs";
-  public static final String ERROR_HANDLING = "Error handling";
-  public static final String GPATH = "GPath inspections";
-  public static final String METHOD_METRICS = "Method Metrics";
-  public static final String THREADING_ISSUES = "Threading issues";
-  public static final String VALIDITY_ISSUES = "Validity issues";
-  public static final String ANNOTATIONS_ISSUES = "Annotations verifying";
-
-  @NotNull
-  @Override
-  public String[] getGroupPath() {
-    return new String[]{"Groovy", getGroupDisplayName()};
-  }
-
-  @Override
-  @NotNull
-  public String getShortName() {
-    return m_shortName;
-  }
+  @Deprecated public static final String ASSIGNMENT_ISSUES = GroovyBundle.message("inspection.assignments");
+  @Deprecated public static final String CONFUSING_CODE_CONSTRUCTS = GroovyBundle.message("inspection.confusing");
+  @Deprecated public static final String CONTROL_FLOW = GroovyBundle.message("inspection.control.flow");
+  @Deprecated public static final String PROBABLE_BUGS = GroovyBundle.message("inspection.bugs");
+  @Deprecated public static final String ERROR_HANDLING = GroovyBundle.message("inspection.error.handling");
+  @Deprecated public static final String GPATH = GroovyBundle.message("inspection.gpath");
+  @Deprecated public static final String METHOD_METRICS = GroovyBundle.message("inspection.method.metrics");
+  @Deprecated public static final String THREADING_ISSUES = GroovyBundle.message("inspection.threading");
+  @Deprecated public static final String VALIDITY_ISSUES = GroovyBundle.message("inspection.validity");
+  @Deprecated public static final String ANNOTATIONS_ISSUES = GroovyBundle.message("inspection.annotations");
 
   @Nullable
   protected String buildErrorString(Object... args) {

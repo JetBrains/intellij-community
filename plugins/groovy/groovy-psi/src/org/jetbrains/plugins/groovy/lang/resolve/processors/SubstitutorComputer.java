@@ -20,7 +20,10 @@ import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.VolatileNotNullLazyValue;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.util.*;
+import com.intellij.psi.PsiClassType.ClassResolveResult;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
@@ -41,7 +44,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
-import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureToSamConverter;
 import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -50,6 +52,8 @@ import java.util.Collection;
 
 import static com.intellij.util.containers.ContainerUtil.emptyList;
 import static com.intellij.util.containers.ContainerUtil.newHashSet;
+import static org.jetbrains.plugins.groovy.lang.sam.SamConversionKt.findSingleAbstractMethod;
+import static org.jetbrains.plugins.groovy.lang.sam.SamConversionKt.isSamConversionAllowed;
 
 /**
  * @author Max Medvedev
@@ -214,7 +218,7 @@ public class SubstitutorComputer {
   @Nullable
   private PsiType handleConversion(@Nullable PsiType paramType, @Nullable PsiType argType) {
     if (argType instanceof PsiClassType &&
-        ClosureToSamConverter.isSamConversionAllowed(myPlace) &&
+        isSamConversionAllowed(myPlace) &&
         InheritanceUtil.isInheritor(argType, GroovyCommonClassNames.GROOVY_LANG_CLOSURE) &&
         !TypesUtil.isClassType(paramType, GroovyCommonClassNames.GROOVY_LANG_CLOSURE)) {
       PsiType converted = handleConversionOfSAMType(paramType, (PsiClassType)argType);
@@ -225,44 +229,42 @@ public class SubstitutorComputer {
       return argType;
     }
 
-    if (!TypesUtil.isAssignable( TypeConversionUtil.erasure(paramType), argType, myPlace)) {
-      if (TypesUtil.isAssignableByMethodCallConversion(paramType, argType, myPlace)) {
-        return paramType;
-      }
-      return null;
+    if (!TypesUtil.isAssignable(TypeConversionUtil.erasure(paramType), argType, myPlace) &&
+        TypesUtil.isAssignableByMethodCallConversion(paramType, argType, myPlace)) {
+      return paramType;
     }
     return argType;
   }
 
   @Nullable
-  private PsiType handleConversionOfSAMType(@Nullable PsiType samType, @NotNull PsiClassType closure) {
-    if (samType instanceof PsiClassType) {
-      PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)samType).resolveGenerics();
-      PsiClass samClass = resolveResult.getElement();
+  private PsiType handleConversionOfSAMType(@Nullable PsiType targetType, @NotNull PsiClassType closure) {
+    if (!(targetType instanceof PsiClassType)) return null;
 
-      if (samClass != null && samClass.getTypeParameters().length != 0) {
-        MethodSignature samSignature = ClosureToSamConverter.findSingleAbstractMethod(samClass, PsiSubstitutor.EMPTY);
-        if (samSignature != null) {
+    ClassResolveResult resolveResult = ((PsiClassType)targetType).resolveGenerics();
 
-          PsiMethod samMethod = MethodSignatureUtil.findMethodBySignature(samClass, samSignature, true);
-          if (samMethod != null) {
-            PsiType[] closureArgs = closure.getParameters();
-            if (closureArgs.length == 1 && samMethod.getReturnType() != null) {
-              PsiSubstitutor substitutor = myHelper.inferTypeArguments(samClass.getTypeParameters(),
-                                                                       new PsiType[]{samMethod.getReturnType()},
-                                                                       closureArgs,
-                                                                       LanguageLevel.JDK_1_7);
+    PsiClass samClass = resolveResult.getElement();
+    if (samClass == null) return null;
 
-              if (!substitutor.getSubstitutionMap().isEmpty()) {
-                return JavaPsiFacade.getElementFactory(myPlace.getProject()).createType(samClass, substitutor);
-              }
-            }
-          }
-        }
-      }
-    }
+    PsiTypeParameter[] samClassTypeParameters = samClass.getTypeParameters();
+    if (samClassTypeParameters.length == 0) return null;
 
-    return null;
+    PsiMethod sam = findSingleAbstractMethod(samClass);
+    if (sam == null) return null;
+
+    // at this point we know that target type is actually a SAM type
+
+    PsiType samReturnType = sam.getReturnType();
+    if (samReturnType == null) return null;
+
+    PsiType[] closureParameters = closure.getParameters();
+    if (closureParameters.length != 1) return null;
+
+    PsiSubstitutor substitutor = myHelper.inferTypeArguments(
+      samClassTypeParameters, new PsiType[]{samReturnType}, closureParameters, LanguageLevel.JDK_1_8
+    );
+    if (substitutor.getSubstitutionMap().isEmpty()) return null;
+
+    return JavaPsiFacade.getElementFactory(myPlace.getProject()).createType(samClass, substitutor);
   }
 
 

@@ -175,7 +175,7 @@ public class BlockSupportImpl extends BlockSupport {
   }
 
   @NotNull
-  private static DiffLog makeFullParse(@NotNull PsiFileImpl fileImpl,
+  public static DiffLog makeFullParse(@NotNull PsiFileImpl fileImpl,
                                        @NotNull FileASTNode oldFileNode,
                                        @NotNull CharSequence newFileText,
                                        @NotNull ProgressIndicator indicator,

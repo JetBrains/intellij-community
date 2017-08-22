@@ -13,6 +13,7 @@
     <orderEntry type="module" module-name="relaxng" />
     <orderEntry type="module" module-name="github" />
     <orderEntry type="module" module-name="rest" />
+    <orderEntry type="module" module-name="python-rest" />
     <orderEntry type="module" module-name="python-helpers" />
     <orderEntry type="module" module-name="terminal" />
     <orderEntry type="module" module-name="python-community-ide" />

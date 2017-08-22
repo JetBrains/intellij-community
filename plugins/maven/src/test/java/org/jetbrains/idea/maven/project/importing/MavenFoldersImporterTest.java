@@ -262,7 +262,7 @@ public class MavenFoldersImporterTest extends MavenImportingTestCase {
     assertGeneratedSources("project", "target/generated-sources/xxx");
   }
 
-  public void testCustomPomFileName() throws Exception {
+  public void testCustomPomFileNameDefaultContentRoots() throws Exception {
     createProjectSubFile("m1/customName.xml", createPomXml(
                   "<artifactId>m1</artifactId>" +
                   "<version>1</version>" +
@@ -280,7 +280,6 @@ public class MavenFoldersImporterTest extends MavenImportingTestCase {
 
     new File(myProjectRoot.getPath(), "m1/sources").mkdirs();
     new File(myProjectRoot.getPath(), "m1/tests").mkdirs();
-    new File(myProjectRoot.getPath(), "target/generated-sources/xxx/z").mkdirs();
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -291,8 +290,53 @@ public class MavenFoldersImporterTest extends MavenImportingTestCase {
                   "  <module>m1/customName.xml</module>" +
                   "</modules>");
 
-    assertContentRoots("m1", getProjectPath() + "/m1/sources", getProjectPath() + "/m1/tests");
-    assertGeneratedSources("project", "target/generated-sources/xxx");
+    assertContentRoots("m1", getProjectPath() + "/m1");
+  }
+
+  public void testCustomPomFileNameCustomContentRoots() throws Exception {
+    createProjectSubFile("m1/pom.xml", createPomXml(
+                  "<artifactId>m1-pom</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<parent>" +
+                  "  <groupId>test</groupId>" +
+                  "  <artifactId>project</artifactId>" +
+                  "  <version>1</version>" +
+                  "</parent>"));
+
+    createProjectSubFile("m1/custom.xml", createPomXml(
+                  "<artifactId>m1-custom</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<parent>" +
+                  "  <groupId>test</groupId>" +
+                  "  <artifactId>project</artifactId>" +
+                  "  <version>1</version>" +
+                  "</parent>" +
+
+                  "<build>" +
+                  "  <resources><resource><directory>sources/resources</directory></resource></resources>" +
+                  "  <sourceDirectory>sources</sourceDirectory>" +
+                  "  <testSourceDirectory>tests</testSourceDirectory>" +
+                  "</build>"));
+
+    new File(myProjectRoot.getPath(), "m1/sources/resources").mkdirs();
+    new File(myProjectRoot.getPath(), "m1/tests").mkdirs();
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<packaging>pom</packaging>" +
+                  "<version>1</version>" +
+
+                  "<modules>" +
+                  "  <module>m1</module>" +
+                  "  <module>m1/custom.xml</module>" +
+                  "</modules>");
+
+    assertModules("project", "m1-pom", "m1-custom");
+
+    assertContentRoots("m1-pom", getProjectPath() + "/m1");
+    assertContentRoots("m1-custom", getProjectPath() + "/m1/sources", getProjectPath() + "/m1/tests");
   }
 
   private void updateProjectFolders() {

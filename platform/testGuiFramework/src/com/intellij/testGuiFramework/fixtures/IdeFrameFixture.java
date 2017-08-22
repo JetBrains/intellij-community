@@ -82,6 +82,8 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
   @NotNull private final File myProjectPath;
 
   private EditorFixture myEditor;
+  private MainToolbarFixture myToolbar;
+  private NavigationBarFixture myNavBar;
 
   @NotNull
   public static IdeFrameFixture find(@NotNull final Robot robot, @Nullable final File projectPath, @Nullable final String projectName) {
@@ -210,6 +212,23 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
     return myEditor;
   }
 
+  @NotNull
+  public MainToolbarFixture getToolbar() {
+    if (myToolbar == null) {
+      myToolbar = MainToolbarFixture.Companion.createMainToolbarFixture(robot(), this);
+    }
+
+    return myToolbar;
+  }
+
+  @NotNull
+  public NavigationBarFixture getNavigationBar() {
+    if (myNavBar == null) {
+      myNavBar = NavigationBarFixture.Companion.createNavigationBarFixture(robot(), this);
+    }
+
+    return myNavBar;
+  }
 
   //@NotNull
   //public GradleInvocationResult invokeProjectMake() {

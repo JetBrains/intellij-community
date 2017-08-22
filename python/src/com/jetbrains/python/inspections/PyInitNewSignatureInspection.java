@@ -16,6 +16,7 @@
 package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiElementVisitor;
@@ -25,10 +26,14 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.inspections.quickfix.PyChangeSignatureQuickFix;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyParameterList;
 import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Detect and report incompatibilities between __new__ and __init__ signatures.
@@ -64,34 +69,52 @@ public class PyInitNewSignatureInspection extends PyInspection {
       final PyClass cls = node.getContainingClass();
       if (cls == null || !cls.isNewStyleClass(myTypeEvalContext)) return;
 
-      final PyFunction complementaryMethod = findComplementaryMethod(cls, node);
-      if (complementaryMethod == null) return;
+      final List<PyFunction> complementaryMethods = findComplementaryMethods(cls, node);
 
-      if (!PyUtil.isSignatureCompatibleTo(complementaryMethod, node, myTypeEvalContext) &&
-          !PyUtil.isSignatureCompatibleTo(node, complementaryMethod, myTypeEvalContext) &&
-          node.getContainingFile() == cls.getContainingFile()) {
-        registerProblem(node.getParameterList(), PyBundle.message(PyNames.NEW.equals(node.getName()) ? "INSP.new.incompatible.to.init"
-                                                                                                     : "INSP.init.incompatible.to.new"),
-                        PyChangeSignatureQuickFix.forMismatchingMethods(node, complementaryMethod));
+      for (PyFunction complementaryMethod : complementaryMethods) {
+        if (PyUtil.isSignatureCompatibleTo(complementaryMethod, node, myTypeEvalContext) ||
+            PyUtil.isSignatureCompatibleTo(node, complementaryMethod, myTypeEvalContext)) {
+          return;
+        }
+      }
+
+      if (complementaryMethods.size() == 1) {
+        registerIncompatibilityProblem(node, PyChangeSignatureQuickFix.forMismatchingMethods(node, complementaryMethods.get(0)));
+      }
+      else if (!complementaryMethods.isEmpty()) {
+        registerIncompatibilityProblem(node, null);
       }
     }
 
-    @Nullable
-    private PyFunction findComplementaryMethod(@NotNull PyClass cls, @NotNull PyFunction original) {
+    @NotNull
+    private List<PyFunction> findComplementaryMethods(@NotNull PyClass cls, @NotNull PyFunction original) {
       final String complementaryName = PyNames.NEW.equals(original.getName()) ? PyNames.INIT : PyNames.NEW;
-      final PyFunction complementaryMethod = cls.findMethodByName(complementaryName, true, myTypeEvalContext);
+      final List<PyFunction> complementaryMethods = cls.multiFindMethodByName(complementaryName, true, myTypeEvalContext);
 
-      if (complementaryMethod == null) return null;
+      for (PyFunction complementaryMethod : complementaryMethods) {
+        final PyClass complementaryMethodClass = complementaryMethod.getContainingClass();
 
-      final PyClass complementaryMethodClass = complementaryMethod.getContainingClass();
-      if (complementaryMethodClass == null ||
-          PyUtil.isObjectClass(complementaryMethodClass) ||
-          ContainerUtil.exists(Extensions.getExtensions(PyInspectionExtension.EP_NAME),
-                               extension -> extension.ignoreInitNewSignatures(original, complementaryMethod))) {
-        return null;
+        if (complementaryMethodClass == null ||
+            PyUtil.isObjectClass(complementaryMethodClass) ||
+            ContainerUtil.exists(Extensions.getExtensions(PyInspectionExtension.EP_NAME),
+                                 extension -> extension.ignoreInitNewSignatures(original, complementaryMethod))) {
+          return Collections.emptyList();
+        }
       }
 
-      return complementaryMethod;
+      return complementaryMethods;
+    }
+
+    private void registerIncompatibilityProblem(@NotNull PyFunction function, @Nullable LocalQuickFix quickFix) {
+      final PyParameterList parameterList = function.getParameterList();
+      final String message = PyBundle.message(PyNames.NEW.equals(function.getName()) ? "INSP.new.incompatible.to.init"
+                                                                                     : "INSP.init.incompatible.to.new");
+      if (quickFix != null) {
+        registerProblem(parameterList, message, quickFix);
+      }
+      else {
+        registerProblem(parameterList, message);
+      }
     }
   }
 }

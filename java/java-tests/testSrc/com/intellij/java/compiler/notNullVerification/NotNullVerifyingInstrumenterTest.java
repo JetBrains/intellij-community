@@ -207,6 +207,15 @@ public class NotNullVerifyingInstrumenterTest extends UsefulTestCase {
     verifyCallThrowsException("Argument 0 for @NotNull parameter of MalformedBytecode$NullTest2.handle must not be null", null, testClass.getMethod("main"));
   }
 
+  public void testLocalClassImplicitParameters() throws Exception {
+    Class<?> test = prepareTest(true, "NotNull");
+    Object instance = test.newInstance();
+    assertEquals(42, test.getMethod("ok").invoke(instance));
+    verifyCallThrowsException("Argument for @NotNull parameter 'test' of LocalClassImplicitParameters$1Test.<init> must not be null", instance, test.getMethod("failLocal"));
+    verifyCallThrowsException("Argument for @NotNull parameter 'test' of LocalClassImplicitParameters$1.method must not be null", instance, test.getMethod("failAnonymous"));
+    verifyCallThrowsException("Argument for @NotNull parameter 'param' of LocalClassImplicitParameters$Inner.<init> must not be null", instance, test.getMethod("failInner"));
+  }
+
   private static void verifyCallThrowsException(String expectedError, @Nullable Object instance, Member member, Object... args) throws Exception {
     String exceptionText = null;
     try {
@@ -226,11 +235,11 @@ public class NotNullVerifyingInstrumenterTest extends UsefulTestCase {
     assertEquals(expectedError, exceptionText);
   }
 
-  private Class prepareTest() throws IOException {
+  private Class<?> prepareTest() throws IOException {
     return prepareTest(false, AnnotationUtil.NOT_NULL);
   }
   
-  private Class prepareTest(boolean withDebugInfo, String... notNullAnnos) throws IOException {
+  private Class<?> prepareTest(boolean withDebugInfo, String... notNullAnnos) throws IOException {
     String base = JavaTestUtil.getJavaTestDataPath() + "/compiler/notNullVerification/";
     final String baseClassName = getTestName(false);
     String path = base + baseClassName;

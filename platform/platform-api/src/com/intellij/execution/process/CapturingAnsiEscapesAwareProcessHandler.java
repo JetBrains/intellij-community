@@ -61,7 +61,7 @@ public class CapturingAnsiEscapesAwareProcessHandler extends CapturingProcessHan
     }
 
     @Override
-    public void onTextAvailable(ProcessEvent event, Key outputType) {
+    public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
       myAnsiEscapeDecoder.escapeText(event.getText(), outputType, this);
     }
 

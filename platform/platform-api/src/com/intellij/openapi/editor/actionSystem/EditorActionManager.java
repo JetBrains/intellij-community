@@ -39,7 +39,7 @@ public abstract class EditorActionManager {
    *
    * @param actionId the ID of the action for which the handler is requested. Possible
    *                 IDs are defined in the {@link com.intellij.openapi.actionSystem.IdeActions} class
-   *                 by constants starting with <code>ACTION_EDITOR_</code>.
+   *                 by constants starting with {@code ACTION_EDITOR_}.
    * @return the handler currently defined for the action.
    */
   public abstract EditorActionHandler getActionHandler(@NonNls @NotNull String actionId);
@@ -49,7 +49,7 @@ public abstract class EditorActionManager {
    *
    * @param actionId the ID of the action for which the handler is set. Possible
    *                 IDs are defined in the {@link com.intellij.openapi.actionSystem.IdeActions} class
-   *                 by constants starting with <code>ACTION_EDITOR_</code>.
+   *                 by constants starting with {@code ACTION_EDITOR_}.
    * @return the handler previously defined for the action.
    */
   public abstract EditorActionHandler setActionHandler(@NonNls @NotNull String actionId, @NotNull EditorActionHandler handler);

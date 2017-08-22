@@ -48,9 +48,8 @@ import java.util.*;
 import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
 
 /**
- * It doesn't make sense to have this class in the common jps-standalone-builder module, it should be moved to platform-build-scripts module.
- *
- * @author nik
+ * @deprecated use {@link org.jetbrains.intellij.build.CompilationTasks} from platform-build-scripts module for building IDEs based
+ * on IntelliJ Platform. If you need to build another project use {@link Standalone} directly.
  */
 public class JpsGantProjectBuilder {
   private final Project myProject;
@@ -59,7 +58,6 @@ public class JpsGantProjectBuilder {
   private boolean myBuildIncrementally;
   private File myDataStorageRoot;
   private JpsModelLoader myModelLoader;
-  private boolean myDryRun;
   private BuildInfoPrinter myBuildInfoPrinter = new DefaultBuildInfoPrinter();
   private Set<String> myCompiledModules = new HashSet<>();
   private Set<String> myCompiledModuleTests = new HashSet<>();
@@ -75,10 +73,6 @@ public class JpsGantProjectBuilder {
         return myModel;
       }
     };
-  }
-
-  public void setDryRun(boolean dryRun) {
-    myDryRun = dryRun;
   }
 
   public void setTargetFolder(String targetFolder) {
@@ -105,14 +99,6 @@ public class JpsGantProjectBuilder {
 
   public void setBuildInfoPrinter(BuildInfoPrinter printer) {
     myBuildInfoPrinter = printer;
-  }
-
-  public void setUseInProcessJavac(boolean value) {
-    warning("projectBuilder.useInProcessJavac option is ignored because it doesn't make sense for new JPS builders");
-  }
-
-  public void setArrangeModuleCyclesOutputs(boolean value) {
-    warning("projectBuilder.arrangeModuleCyclesOutputs option is ignored because it doesn't make sense for new JPS builders");
   }
 
   public void error(String message) {
@@ -152,41 +138,6 @@ public class JpsGantProjectBuilder {
     catch (Throwable t) {
       myProject.log("Cannot setup additional logging to " + buildLogFile.getAbsolutePath() + ": " + t.getMessage(), t, Project.MSG_WARN);
     }
-  }
-
-  public void cleanOutput() {
-    if (myDryRun) {
-      info("Cleaning skipped as we're running dry");
-      return;
-    }
-    if (myBuildIncrementally) {
-      info("Cleaning skipped for incremental build");
-      return;
-    }
-
-    long cleanOutputStart = System.currentTimeMillis();
-
-    for (JpsModule module : myModel.getProject().getModules()) {
-      for (boolean test : new boolean[]{false, true}) {
-        File output = JpsJavaExtensionService.getInstance().getOutputDirectory(module, test);
-        if (output != null) {
-          FileUtil.delete(output);
-        }
-      }
-    }
-    if (myDataStorageRoot != null) {
-      FileUtil.delete(myDataStorageRoot);
-    }
-
-    myBuildInfoPrinter.printStatisticsMessage(this, "Cleaning output time, ms",
-                                              String.valueOf(System.currentTimeMillis() - cleanOutputStart));
-
-    myCompiledModules.clear();
-    myCompiledModuleTests.clear();
-  }
-
-  public void makeModule(JpsModule module) {
-    runBuild(getModuleDependencies(module, false), false, false);
   }
 
   public void buildModules(List<JpsModule> modules) {
@@ -239,62 +190,57 @@ public class JpsGantProjectBuilder {
   }
 
   private void runBuild(final Set<String> modulesSet, final boolean allModules, boolean includeTests) {
-    if (!myDryRun) {
-      System.setProperty(GlobalOptions.USE_DEFAULT_FILE_LOGGING_OPTION, "false");
-      final AntMessageHandler messageHandler = new AntMessageHandler();
-      //noinspection AssignmentToStaticFieldFromInstanceMethod
-      AntLoggerFactory.ourMessageHandler = new AntMessageHandler();
-      AntLoggerFactory.ourFileLoggerFactory = myFileLoggerFactory;
-      Logger.setFactory(AntLoggerFactory.class);
-      boolean forceBuild = !myBuildIncrementally;
+    System.setProperty(GlobalOptions.USE_DEFAULT_FILE_LOGGING_OPTION, "false");
+    final AntMessageHandler messageHandler = new AntMessageHandler();
+    //noinspection AssignmentToStaticFieldFromInstanceMethod
+    AntLoggerFactory.ourMessageHandler = new AntMessageHandler();
+    AntLoggerFactory.ourFileLoggerFactory = myFileLoggerFactory;
+    Logger.setFactory(AntLoggerFactory.class);
+    boolean forceBuild = !myBuildIncrementally;
 
-      List<TargetTypeBuildScope> scopes = new ArrayList<>();
-      for (JavaModuleBuildTargetType type : JavaModuleBuildTargetType.ALL_TYPES) {
-        if (includeTests || !type.isTests()) {
-          List<String> namesToCompile = new ArrayList<>(allModules ? getAllModules() : modulesSet);
-          if (type.isTests()) {
-            namesToCompile.removeAll(myCompiledModuleTests);
-            myCompiledModuleTests.addAll(namesToCompile);
-          }
-          else {
-            namesToCompile.removeAll(myCompiledModules);
-            myCompiledModules.addAll(namesToCompile);
-          }
-          if (namesToCompile.isEmpty()) continue;
+    List<TargetTypeBuildScope> scopes = new ArrayList<>();
+    for (JavaModuleBuildTargetType type : JavaModuleBuildTargetType.ALL_TYPES) {
+      if (includeTests || !type.isTests()) {
+        List<String> namesToCompile = new ArrayList<>(allModules ? getAllModules() : modulesSet);
+        if (type.isTests()) {
+          namesToCompile.removeAll(myCompiledModuleTests);
+          myCompiledModuleTests.addAll(namesToCompile);
+        }
+        else {
+          namesToCompile.removeAll(myCompiledModules);
+          myCompiledModules.addAll(namesToCompile);
+        }
+        if (namesToCompile.isEmpty()) continue;
 
-          TargetTypeBuildScope.Builder builder = TargetTypeBuildScope.newBuilder().setTypeId(type.getTypeId()).setForceBuild(forceBuild);
-          if (allModules) {
-            scopes.add(builder.setAllTargets(true).build());
-          }
-          else if (!modulesSet.isEmpty()) {
-            scopes.add(builder.addAllTargetId(modulesSet).build());
-          }
+        TargetTypeBuildScope.Builder builder = TargetTypeBuildScope.newBuilder().setTypeId(type.getTypeId()).setForceBuild(forceBuild);
+        if (allModules) {
+          scopes.add(builder.setAllTargets(true).build());
+        }
+        else if (!modulesSet.isEmpty()) {
+          scopes.add(builder.addAllTargetId(modulesSet).build());
         }
       }
-
-      info("Starting build; incremental: " + myBuildIncrementally + ", cache directory: " + myDataStorageRoot.getAbsolutePath());
-      info("Build scope: " + (allModules ? "all" : modulesSet.size()) + " modules, " + (includeTests ? "including tests" : "production only"));
-      long compilationStart = System.currentTimeMillis();
-      try {
-        myBuildInfoPrinter.printBlockOpenedMessage(this, "Compilation");
-        Standalone.runBuild(myModelLoader, myDataStorageRoot, messageHandler, scopes, false);
-      }
-      catch (Throwable e) {
-        error(e);
-      }
-      finally {
-        myBuildInfoPrinter.printBlockClosedMessage(this, "Compilation");
-      }
-      if (messageHandler.myFailed) {
-        error("Compilation failed");
-      }
-      else if (!myStatisticsReported) {
-        myBuildInfoPrinter.printStatisticsMessage(this, "Compilation time, ms", String.valueOf(System.currentTimeMillis() - compilationStart));
-        myStatisticsReported = true;
-      }
     }
-    else {
-      info("Building skipped as we're running dry");
+
+    info("Starting build; incremental: " + myBuildIncrementally + ", cache directory: " + myDataStorageRoot.getAbsolutePath());
+    info("Build scope: " + (allModules ? "all" : modulesSet.size()) + " modules, " + (includeTests ? "including tests" : "production only"));
+    long compilationStart = System.currentTimeMillis();
+    try {
+      myBuildInfoPrinter.printBlockOpenedMessage(this, "Compilation");
+      Standalone.runBuild(myModelLoader, myDataStorageRoot, messageHandler, scopes, false);
+    }
+    catch (Throwable e) {
+      error(e);
+    }
+    finally {
+      myBuildInfoPrinter.printBlockClosedMessage(this, "Compilation");
+    }
+    if (messageHandler.myFailed) {
+      error("Compilation failed");
+    }
+    else if (!myStatisticsReported) {
+      myBuildInfoPrinter.printStatisticsMessage(this, "Compilation time, ms", String.valueOf(System.currentTimeMillis() - compilationStart));
+      myStatisticsReported = true;
     }
   }
 

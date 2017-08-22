@@ -219,6 +219,7 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
     putFor(object, key, location, true, size, true, false, false, false, false);
   }
 
+  @SuppressWarnings("unchecked")
   private <T> T getFor(Object object, @NotNull String key, @NotNull Class<T> type) {
     GraphicsDevice screen = getScreen(object);
     float scale = getSysScale(screen);
@@ -228,26 +229,10 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
       if (state == null) return null;
       state = state.copy().scaleDown(scale);
       if (isVisible(state)) {
-        if (type == WindowState.class) {
-          @SuppressWarnings("unchecked")
-          T value = (T)state;
-          return value;
-        }
-        if (type == Point.class) {
-          @SuppressWarnings("unchecked")
-          T value = (T)state.getLocation();
-          return value;
-        }
-        if (type == Dimension.class) {
-          @SuppressWarnings("unchecked")
-          T value = (T)state.getSize();
-          return value;
-        }
-        if (type == Rectangle.class) {
-          @SuppressWarnings("unchecked")
-          T value = (T)state.getBounds();
-          return value;
-        }
+        if (type == WindowState.class) return (T)state;
+        if (type == Point.class) return (T)state.getLocation();
+        if (type == Dimension.class) return (T)state.getSize();
+        if (type == Rectangle.class) return (T)state.getBounds();
       }
       return null;
     };

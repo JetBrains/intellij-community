@@ -22,6 +22,9 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import org.jetbrains.annotations.NotNull;
 
+import static com.intellij.xml.util.HtmlUtil.hasHtml;
+import static com.intellij.xml.util.HtmlUtil.supportsXmlTypedHandlers;
+
 public class XmlEditUtil {
   /**
    * Calculates quote style to use in a particular file depends on user's settings and injections
@@ -38,5 +41,9 @@ public class XmlEditUtil {
   @NotNull
   public static String getAttributeQuote(boolean html) {
     return html ? CodeStyleSchemes.getInstance().getCurrentScheme().getCodeStyleSettings().HTML_QUOTE_STYLE.quote : "\"";
+  }
+
+  public static String getAttributeQuote(@NotNull PsiFile file) {
+    return getAttributeQuote(hasHtml(file) || supportsXmlTypedHandlers(file));
   }
 }

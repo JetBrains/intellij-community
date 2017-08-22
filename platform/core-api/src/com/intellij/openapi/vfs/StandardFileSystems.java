@@ -59,12 +59,8 @@ public class StandardFileSystems {
     return ourJar.getValue();
   }
 
-  @Nullable
-  public static VirtualFile getJarRootForLocalFile(@NotNull VirtualFile virtualFile) {
-    return jar().findFileByPath(virtualFile.getPath() + URLUtil.JAR_SEPARATOR);
-  }
-
-  @Nullable
+  //<editor-fold desc="Deprecated stuff.">
+  /** @deprecated use ArchiveFileSystem#getLocalByEntry(VirtualFile) (to remove in IDEA 2018) */
   public static VirtualFile getVirtualFileForJar(@Nullable VirtualFile entryVFile) {
     if (entryVFile == null) return null;
     final String path = entryVFile.getPath();
@@ -74,4 +70,10 @@ public class StandardFileSystems {
     String localPath = path.substring(0, separatorIndex);
     return local().findFileByPath(localPath);
   }
+
+  /** @deprecated use ArchiveFileSystem#getRootByLocal(VirtualFile) (to remove in IDEA 2018) */
+  public static VirtualFile getJarRootForLocalFile(@NotNull VirtualFile local) {
+    return jar().findFileByPath(local.getPath() + URLUtil.JAR_SEPARATOR);
+  }
+  //</editor-fold>
 }

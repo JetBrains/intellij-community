@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,15 +18,10 @@ package com.intellij.openapi.vfs;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * To be used for those non-LocalFileSystems which can provide corresponding
- * LocalFileSystem file for their element
- */
-public interface LocalFileProvider{
-
-  @Nullable
+public interface LocalFileProvider {
+  /** @deprecated use {@code ArchiveFileSystem.getLocalByEntry(entryVFile)} instead (to be removed in IDEA 2019) */
   VirtualFile getLocalVirtualFileFor(@Nullable VirtualFile entryVFile);
 
-  @Nullable
+  /** @deprecated use {@code ArchiveFileSystem.findFileByBath(path)} instead (to be removed in IDEA 2019) */
   VirtualFile findLocalVirtualFileByPath(@NotNull String path);
 }

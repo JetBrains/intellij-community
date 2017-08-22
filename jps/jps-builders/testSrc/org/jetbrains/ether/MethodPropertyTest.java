@@ -22,19 +22,19 @@ import com.intellij.openapi.util.SystemInfo;
  * Date: 05.10.11
  */
 public class MethodPropertyTest extends IncrementalTestCase {
-  public MethodPropertyTest() throws Exception {
+  public MethodPropertyTest() {
     super("methodProperties");
   }
 
-  public void testAddThrows() throws Exception {
+  public void testAddThrows() {
     doTest();
   }
 
-  public void testChangeReturnType() throws Exception {
+  public void testChangeReturnType() {
     doTest();
   }
 
-  public void testChangeMethodRefReturnType() throws Exception {
+  public void testChangeMethodRefReturnType() {
     if (SystemInfo.isJavaVersionAtLeast("1.8")) {
       doTest();
     }
@@ -43,7 +43,7 @@ public class MethodPropertyTest extends IncrementalTestCase {
     }
   }
 
-  public void testChangeLambdaTargetReturnType() throws Exception {
+  public void testChangeLambdaTargetReturnType() {
     if (SystemInfo.isJavaVersionAtLeast("1.8")) {
       doTest();
     }
@@ -52,7 +52,7 @@ public class MethodPropertyTest extends IncrementalTestCase {
     }
   }
 
-  public void testChangeSAMMethodSignature() throws Exception {
+  public void testChangeSAMMethodSignature() {
     if (SystemInfo.isJavaVersionAtLeast("1.8")) {
       doTest();
     }
@@ -61,7 +61,7 @@ public class MethodPropertyTest extends IncrementalTestCase {
     }
   }
 
-  public void testChangeLambdaSAMMethodSignature() throws Exception {
+  public void testChangeLambdaSAMMethodSignature() {
     if (SystemInfo.isJavaVersionAtLeast("1.8")) {
       doTest();
     }
@@ -70,15 +70,15 @@ public class MethodPropertyTest extends IncrementalTestCase {
     }
   }
 
-  public void testChangeReturnType1() throws Exception {
+  public void testChangeReturnType1() {
     doTest();
   }
 
-  public void testChangeSignature() throws Exception {
+  public void testChangeSignature() {
     doTest();
   }
 
-  public void testChangeSignature1() throws Exception {
+  public void testChangeSignature1() {
     doTest();
   }
 }

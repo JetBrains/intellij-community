@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -40,15 +41,16 @@ public class JavaMethodParameterUnwrapper extends JavaUnwrapper {
     return element;
   }
 
+  @NotNull
   @Override
-  public String getDescription(PsiElement e) {
+  public String getDescription(@NotNull PsiElement e) {
     String text = adjustElementToTheLeft(e).getText();
     if (text.length() > 20) text = text.substring(0, 17) + "...";
     return CodeInsightBundle.message("unwrap.with.placeholder", text);
   }
 
   @Override
-  public boolean isApplicableTo(PsiElement e) {
+  public boolean isApplicableTo(@NotNull PsiElement e) {
     e = adjustElementToTheLeft(e);
     final PsiElement parent = e.getParent();
     if (e instanceof PsiExpression){
@@ -73,7 +75,7 @@ public class JavaMethodParameterUnwrapper extends JavaUnwrapper {
   }
 
   @Override
-  public PsiElement collectAffectedElements(PsiElement e, List<PsiElement> toExtract) {
+  public PsiElement collectAffectedElements(@NotNull PsiElement e, @NotNull List<PsiElement> toExtract) {
     e = adjustElementToTheLeft(e);
     super.collectAffectedElements(e, toExtract);
     return isTopLevelCall(e) ? e.getParent() : e.getParent().getParent();

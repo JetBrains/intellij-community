@@ -333,7 +333,7 @@ public class MessagesToolWindowFixture extends ToolWindowFixture {
         execute(new GuiTask() {
           @Override
           protected void executeInEDT() {
-            ((Runnable)() -> doClick()).run();
+            doClick();
           }
         });
       }

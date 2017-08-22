@@ -16,6 +16,9 @@
 package org.jetbrains.jps.incremental.artifacts.instructions;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.io.File;
 
 /**
  * @author nik
@@ -53,5 +56,11 @@ public class CopyToDirectoryInstructionCreator extends ArtifactCompilerInstructi
       return new SkipAllInstructionCreator(myInstructionsBuilder);
     }
     return new PackIntoArchiveInstructionCreator(myInstructionsBuilder, jarInfo, "", destination);
+  }
+
+  @Nullable
+  @Override
+  public File getTargetDirectory() {
+    return new File(myOutputPath);
   }
 }

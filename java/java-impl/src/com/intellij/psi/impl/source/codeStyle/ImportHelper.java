@@ -25,10 +25,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.PackageEntry;
-import com.intellij.psi.codeStyle.PackageEntryTable;
+import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.jsp.jspJava.JspxImportStatement;
@@ -48,6 +45,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.containers.NotNullList;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectIntHashMap;
@@ -64,11 +62,11 @@ import static java.util.stream.Collectors.toSet;
 public class ImportHelper{
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.codeStyle.ImportHelper");
 
-  private final CodeStyleSettings mySettings;
+  private final JavaCodeStyleSettings mySettings;
   @NonNls private static final String JAVA_LANG_PACKAGE = "java.lang";
 
   public ImportHelper(@NotNull CodeStyleSettings settings){
-    mySettings = settings;
+    mySettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
   }
 
   @Nullable("null means no need to replace the import list because they are the same")
@@ -81,7 +79,7 @@ public class ImportHelper{
     //     /* comment */
     //     import b;
     // We want to preserve those comments then.
-    List<PsiElement> nonImports = new ArrayList<>();
+    List<PsiElement> nonImports = new NotNullList<>();
     // Note: this array may contain "<packageOrClassName>.*" for unresolved imports!
     List<Pair<String, Boolean>> names = new ArrayList<>(collectNamesToImport(file, nonImports));
     Collections.sort(names, Comparator.comparing(o -> o.getFirst()));
@@ -148,7 +146,7 @@ public class ImportHelper{
   }
 
   public static void collectOnDemandImports(@NotNull List<Pair<String, Boolean>> resultList,
-                                            @NotNull CodeStyleSettings settings,
+                                            @NotNull JavaCodeStyleSettings settings,
                                             @NotNull Map<String, Boolean> outClassesOrPackagesToImportOnDemand) {
     TObjectIntHashMap<String> packageToCountMap = new TObjectIntHashMap<>();
     TObjectIntHashMap<String> classToCountMap = new TObjectIntHashMap<>();
@@ -188,7 +186,7 @@ public class ImportHelper{
     packageToCountMap.forEachEntry(new MyVisitorProcedure(true));
   }
 
-  public static List<Pair<String, Boolean>> sortItemsAccordingToSettings(List<Pair<String, Boolean>> names, final CodeStyleSettings settings) {
+  public static List<Pair<String, Boolean>> sortItemsAccordingToSettings(List<Pair<String, Boolean>> names, final JavaCodeStyleSettings settings) {
     int[] entryForName = ArrayUtil.newIntArray(names.size());
     PackageEntry[] entries = settings.IMPORT_LAYOUT_TABLE.getEntries();
     for(int i = 0; i < names.size(); i++){
@@ -731,7 +729,7 @@ public class ImportHelper{
   private static boolean isToUseImportOnDemand(@NotNull String packageName,
                                                int classCount,
                                                boolean isStaticImportNeeded,
-                                               @NotNull CodeStyleSettings settings){
+                                               @NotNull JavaCodeStyleSettings settings){
     if (!settings.USE_SINGLE_CLASS_IMPORTS) return true;
     int limitCount = isStaticImportNeeded ? settings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND :
                      settings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND;

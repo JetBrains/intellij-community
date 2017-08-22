@@ -317,7 +317,7 @@ public class Java8MapApiInspection extends BaseJavaBatchLocalInspectionTool {
       PsiExpression value = ExpressionUtils.getValueComparedWithNull((PsiBinaryExpression)condition);
       if(value instanceof PsiReferenceExpression && statement != null) {
         valueReference = (PsiReferenceExpression)value;
-        PsiElement previous = PsiTreeUtil.skipSiblingsBackward(statement, PsiWhiteSpace.class, PsiComment.class);
+        PsiElement previous = PsiTreeUtil.skipWhitespacesAndCommentsBackward(statement);
         call = tryExtractMapGetCall(valueReference, previous);
       } else {
         call = extractMapMethodCall(value, "get");

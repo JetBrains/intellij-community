@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,24 +48,36 @@ class BuildOptions {
    * Pass comma-separated names of build steps (see below) to 'intellij.build.skip.build.steps' system property to skip them when building locally.
    */
   Set<String> buildStepsToSkip = System.getProperty("intellij.build.skip.build.steps", "").split(",") as Set<String>
-  /** generate actual searchableOptions.xml file. If it is skipped the version of this file located in sources will be used, it may be outdated. */
+  /** Build actual searchableOptions.xml file. If skipped; the (possibly outdated) source version of the file will be used. */
   static final SEARCHABLE_OPTIONS_INDEX_STEP = "search_index"
+  static final PROVIDED_MODULES_LIST_STEP = "provided_modules_list"
   static final SOURCES_ARCHIVE_STEP = "sources_archive"
-  /** product DMG file for Mac OS X. If it is skipped only sit archive will be produced. */
-  static final MAC_DMG_STEP = "mac_dmg"
-  /** sign additional binary files in Mac OS X distribution */
-  static final MAC_SIGN_STEP = "mac_sign"
-  /** create *.exe installer for Windows distribution. If it is skipped only zip archive will be produced. */
-  static final WINDOWS_EXE_INSTALLER_STEP = "windows_exe_installer"
-  static final CROSS_PLATFORM_DISTRIBUTION_STEP = "cross_platform_dist"
   static final SCRAMBLING_STEP = "scramble"
   static final NON_BUNDLED_PLUGINS_STEP = "non_bundled_plugins"
+  /** Build macOS artifacts. */
+  static final MAC_ARTIFACTS_STEP = "mac_artifacts"
+  /** Build .dmg file for macOS. If skipped; only .sit archive will be produced. */
+  static final MAC_DMG_STEP = "mac_dmg"
+  /** Sign additional binary files in macOS distribution. */
+  static final MAC_SIGN_STEP = "mac_sign"
+  /** Build Linux artifacts. */
+  static final LINUX_ARTIFACTS_STEP = "linux_artifacts"
+  /** Build *.exe installer for Windows distribution. If skipped, only .zip archive will be produced. */
+  static final WINDOWS_EXE_INSTALLER_STEP = "windows_exe_installer"
+  /** Build Frankenstein artifacts. */
+  static final CROSS_PLATFORM_DISTRIBUTION_STEP = "cross_platform_dist"
 
   /**
-   * Pass 'true' to this system property to produce an additional dmg archive for Mac OS without bundled JRE
+   * Pass 'true' to this system property to produce an additional .dmg archive for macOS without bundled JRE.
    */
   public static final String BUILD_DMG_WITHOUT_BUNDLED_JRE = "intellij.build.dmg.without.bundled.jre"
   boolean buildDmgWithoutBundledJre = SystemProperties.getBooleanProperty(BUILD_DMG_WITHOUT_BUNDLED_JRE, SystemProperties.getBooleanProperty("artifact.mac.no.jdk", false))
+
+  /**
+   * Pass 'true' to this system property to produce .snap packages.
+   * A build configuration should have "docker.version >= 17" in requirements.
+   */
+  boolean buildUnixSnaps = SystemProperties.getBooleanProperty("intellij.build.unix.snaps", false)
 
   /**
    * Path to a zip file containing 'production' and 'test' directories with compiled classes of the project modules inside.

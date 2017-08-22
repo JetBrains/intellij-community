@@ -24,7 +24,7 @@ import com.intellij.openapi.editor.InlayModel;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
+import com.intellij.openapi.editor.ex.PrioritizedInternalDocumentListener;
 import com.intellij.openapi.util.Getter;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.EventDispatcher;
@@ -46,8 +46,11 @@ public class InlayModelImpl implements InlayModel, Disposable {
 
   private final EditorImpl myEditor;
   private final EventDispatcher<Listener> myDispatcher = EventDispatcher.create(Listener.class);
+  
+  final List<InlayImpl> myInlaysInvalidatedOnMove = new ArrayList<>();
   final RangeMarkerTree<InlayImpl> myInlayTree;
-
+  
+  boolean myMoveInProgress;
   private List<Inlay> myInlaysToTheRightOfCaret;
 
   InlayModelImpl(@NotNull EditorImpl editor) {
@@ -68,11 +71,18 @@ public class InlayModelImpl implements InlayModel, Disposable {
       @Override
       void fireBeforeRemoved(@NotNull InlayImpl markerEx, @NotNull @NonNls Object reason) {
         if (markerEx.myOffsetBeforeDisposal == -1) {
-          notifyRemoved(markerEx);
+          if (myMoveInProgress) {
+            // delay notification about invalidated inlay - folding model is not consistent at this point
+            // (FoldingModelImpl.moveTextHappened hasn't been called yet at this point)
+            myInlaysInvalidatedOnMove.add(markerEx);
+          }
+          else {
+            notifyRemoved(markerEx);
+          }
         }
       }
     };
-    myEditor.getDocument().addDocumentListener(new PrioritizedDocumentListener() {
+    myEditor.getDocument().addDocumentListener(new PrioritizedInternalDocumentListener() {
       @Override
       public int getPriority() {
         return EditorDocumentPriorities.INLAY_MODEL;
@@ -108,6 +118,14 @@ public class InlayModelImpl implements InlayModel, Disposable {
           myInlaysToTheRightOfCaret = null;
         }
       }
+
+      @Override
+      public void moveTextHappened(int start, int end, int base) {
+        for (InlayImpl inlay : myInlaysInvalidatedOnMove) {
+          notifyRemoved(inlay);
+        }
+        myInlaysInvalidatedOnMove.clear();
+      }
     }, this);
   }
 
@@ -125,12 +143,12 @@ public class InlayModelImpl implements InlayModel, Disposable {
 
   @Nullable
   @Override
-  public Inlay addInlineElement(int offset, @NotNull EditorCustomElementRenderer renderer) {
+  public Inlay addInlineElement(int offset, boolean relatesToPrecedingText, @NotNull EditorCustomElementRenderer renderer) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     DocumentEx document = myEditor.getDocument();
     if (DocumentUtil.isInsideSurrogatePair(document, offset)) return null;
     offset = Math.max(0, Math.min(document.getTextLength(), offset));
-    InlayImpl inlay = new InlayImpl(myEditor, offset, renderer);
+    InlayImpl inlay = new InlayImpl(myEditor, offset, relatesToPrecedingText, renderer);
     notifyAdded(inlay);
     return inlay;
   }

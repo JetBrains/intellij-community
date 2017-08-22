@@ -69,8 +69,8 @@ public interface SelectionModel {
   String getSelectedText();
 
   /**
-   * If <code>allCarets</code> is <code>true</code>, returns the concatenation of selections for all carets, or <code>null</code> if there
-   * are no selections. If <code>allCarets</code> is <code>false</code>, works just like {@link #getSelectedText}.
+   * If {@code allCarets} is {@code true}, returns the concatenation of selections for all carets, or {@code null} if there
+   * are no selections. If {@code allCarets} is {@code false}, works just like {@link #getSelectedText}.
    */
   @Nullable
   String getSelectedText(boolean allCarets);
@@ -99,8 +99,8 @@ public interface SelectionModel {
   boolean hasSelection();
 
   /**
-   * Checks if a range of text is currently selected. If <code>anyCaret</code> is <code>true</code>, check all existing carets in
-   * the document, and returns <code>true</code> if any of them has selection, otherwise checks only the current caret.
+   * Checks if a range of text is currently selected. If {@code anyCaret} is {@code true}, check all existing carets in
+   * the document, and returns {@code true} if any of them has selection, otherwise checks only the current caret.
    *
    * @return true if a range of text is selected, false otherwise.
    */
@@ -120,7 +120,7 @@ public interface SelectionModel {
    * That is the case for soft wraps-aware processing where the whole soft wraps virtual space is matched to the same offset.
    *
    * @param startOffset     start selection offset
-   * @param endPosition     end visual position of the text range to select (<code>null</code> argument means that
+   * @param endPosition     end visual position of the text range to select ({@code null} argument means that
    *                        no specific visual position should be used)
    * @param endOffset       end selection offset
    */
@@ -131,9 +131,9 @@ public interface SelectionModel {
    * <p/>
    * That is the case for soft wraps-aware processing where the whole soft wraps virtual space is matched to the same offset.
    *
-   * @param startPosition   start visual position of the text range to select (<code>null</code> argument means that
+   * @param startPosition   start visual position of the text range to select ({@code null} argument means that
    *                        no specific visual position should be used)
-   * @param endPosition     end visual position of the text range to select (<code>null</code> argument means that
+   * @param endPosition     end visual position of the text range to select ({@code null} argument means that
    *                        no specific visual position should be used)
    * @param startOffset     start selection offset
    * @param endOffset       end selection offset
@@ -146,7 +146,7 @@ public interface SelectionModel {
   void removeSelection();
 
   /**
-   * Removes the selection in the editor. If <code>allCarets</code> is <code>true</code>, removes selections from all carets in the
+   * Removes the selection in the editor. If {@code allCarets} is {@code true}, removes selections from all carets in the
    * editor, otherwise, does this just for the current caret.
    */
   void removeSelection(boolean allCarets);

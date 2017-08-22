@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,8 +45,14 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.Alarm;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
+
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.locks.LockSupport;
 
 public class AutoPopupController implements Disposable {
   /**
@@ -70,7 +76,7 @@ public class AutoPopupController implements Disposable {
 
 
   private final Project myProject;
-  private final Alarm myAlarm = new Alarm();
+  private final Alarm myAlarm;
 
   public static AutoPopupController getInstance(Project project){
     return ServiceManager.getService(project, AutoPopupController.class);
@@ -78,6 +84,7 @@ public class AutoPopupController implements Disposable {
 
   public AutoPopupController(Project project) {
     myProject = project;
+    myAlarm = new Alarm(this);
     setupListeners();
   }
 
@@ -154,7 +161,9 @@ public class AutoPopupController implements Disposable {
   }
 
   private void addRequest(final Runnable request, final int delay) {
-    Runnable runnable = () -> myAlarm.addRequest(request, delay);
+    Runnable runnable = () -> {
+      if (!myAlarm.isDisposed()) myAlarm.addRequest(request, delay);
+    };
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       runnable.run();
     } else {
@@ -167,7 +176,6 @@ public class AutoPopupController implements Disposable {
   }
 
   public void autoPopupParameterInfo(@NotNull final Editor editor, @Nullable final PsiElement highlightedMethod){
-    if (ApplicationManager.getApplication().isUnitTestMode()) return;
     if (DumbService.isDumb(myProject)) return;
     if (PowerSaveMode.isEnabled()) return;
 
@@ -184,11 +192,12 @@ public class AutoPopupController implements Disposable {
       }
 
       Runnable request = () -> {
-        if (!myProject.isDisposed() && !DumbService.isDumb(myProject) && !editor.isDisposed() && editor.getComponent().isShowing()) {
+        if (!myProject.isDisposed() && !DumbService.isDumb(myProject) && !editor.isDisposed() && 
+            (ApplicationManager.getApplication().isUnitTestMode() || editor.getComponent().isShowing())) {
           int lbraceOffset = editor.getCaretModel().getOffset() - 1;
           try {
             PsiFile file1 = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
-            ShowParameterInfoHandler.invoke(myProject, editor, file1, lbraceOffset, highlightedMethod, false);
+            ShowParameterInfoHandler.invoke(myProject, editor, file1, lbraceOffset, highlightedMethod, false, true);
           }
           catch (IndexNotReadyException ignored) { //anything can happen on alarm
           }
@@ -216,5 +225,16 @@ public class AutoPopupController implements Disposable {
         runnable.run();
       }
     }));
+  }
+
+  @TestOnly
+  public void waitForDelayedActions(long timeout, @NotNull TimeUnit unit) throws TimeoutException {
+    long deadline = System.currentTimeMillis() + unit.toMillis(timeout);
+    while (System.currentTimeMillis() < deadline) {
+      if (myAlarm.isEmpty()) return;
+      LockSupport.parkNanos(10_000_000);
+      UIUtil.dispatchAllInvocationEvents();
+    }
+    throw new TimeoutException();
   }
 }

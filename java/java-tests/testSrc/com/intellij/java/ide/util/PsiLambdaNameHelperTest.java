@@ -24,7 +24,7 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import java.util.Collection;
 
 public class PsiLambdaNameHelperTest extends LightCodeInsightFixtureTestCase {
-  public void testNames() throws Exception {
+  public void testNames() {
     final PsiClass aClass = myFixture.addClass("class Test {\n" +
                                                "    Runnable r = () -> {\n" +
                                                "    };\n" +

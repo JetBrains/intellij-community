@@ -227,7 +227,7 @@ public class Java9CollectionFactoryInspection extends BaseLocalInspectionTool {
         List<PsiElement> elementsToRemove = new ArrayList<>();
         elementsToRemove.add(initializer);
         while (true) {
-          cur = tryCast(PsiTreeUtil.skipSiblingsForward(cur, PsiComment.class, PsiWhiteSpace.class), PsiStatement.class);
+          cur = tryCast(PsiTreeUtil.skipWhitespacesAndCommentsForward(cur), PsiStatement.class);
           if (PsiTreeUtil.isAncestor(cur, expression, false)) break;
           if (!(cur instanceof PsiExpressionStatement)) return null;
           PsiMethodCallExpression call = tryCast(((PsiExpressionStatement)cur).getExpression(), PsiMethodCallExpression.class);

@@ -27,7 +27,7 @@ import org.junit.Assert;
 import java.util.Arrays;
 
 public class NameSuggestionsByExpressionTest extends LightCodeInsightFixtureTestCase {
-  public void testNameSuggestionFromLiteralArgument() throws Exception {
+  public void testNameSuggestionFromLiteralArgument() {
     PsiFile file = myFixture.configureByText("A.java", "class A {{new Str<caret>ing(\"string with spaces\")}}");
     PsiExpression expression = PsiTreeUtil.getParentOfType(file.findElementAt(getEditor().getCaretModel().getOffset()), PsiExpression.class);
     SuggestedNameInfo nameInfo = JavaCodeStyleManager.getInstance(getProject())
@@ -37,7 +37,7 @@ public class NameSuggestionsByExpressionTest extends LightCodeInsightFixtureTest
                              nameInfo.names);
   }
 
-  public void testWordByPreposition() throws Exception {
+  public void testWordByPreposition() {
     PsiFile file = myFixture.configureByText("A.java", "class A {{getParent<caret>OfType()} String getParentOfType() {return null;}}");
     PsiExpression expression = PsiTreeUtil.getParentOfType(file.findElementAt(getEditor().getCaretModel().getOffset()), PsiExpression.class);
     SuggestedNameInfo nameInfo = JavaCodeStyleManager.getInstance(getProject())
@@ -47,7 +47,7 @@ public class NameSuggestionsByExpressionTest extends LightCodeInsightFixtureTest
                              nameInfo.names);
   }
 
-  public void testNameByAssignmentContext() throws Exception {
+  public void testNameByAssignmentContext() {
     PsiFile file = myFixture.configureByText("A.java", "class A {{String bar = \"<caret>\";}}");
     PsiExpression expression = PsiTreeUtil.getParentOfType(file.findElementAt(getEditor().getCaretModel().getOffset()), PsiExpression.class);
     SuggestedNameInfo nameInfo = JavaCodeStyleManager.getInstance(getProject())

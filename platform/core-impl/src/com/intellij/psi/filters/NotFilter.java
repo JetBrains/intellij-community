@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.psi.filters;
 
 import com.intellij.psi.PsiElement;
@@ -21,23 +20,22 @@ import com.intellij.psi.PsiElement;
 public class NotFilter implements ElementFilter {
   private final ElementFilter myFilter;
 
-  public NotFilter(ElementFilter filter){
+  public NotFilter(ElementFilter filter) {
     myFilter = filter;
   }
 
   @Override
-  public boolean isClassAcceptable(Class hintClass){
+  public boolean isClassAcceptable(Class hintClass) {
     return myFilter.isClassAcceptable(hintClass);
   }
 
   @Override
-  public boolean isAcceptable(Object element, PsiElement context){
+  public boolean isAcceptable(Object element, PsiElement context) {
     return !myFilter.isAcceptable(element, context);
   }
 
-
-  public String toString(){
+  @Override
+  public String toString() {
     return "!" + myFilter;
   }
-
 }

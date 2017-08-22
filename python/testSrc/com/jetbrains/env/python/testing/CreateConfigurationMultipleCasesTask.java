@@ -20,8 +20,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.testing.ConfigurationTarget;
 import com.jetbrains.python.testing.PyAbstractTestConfiguration;
+import com.jetbrains.python.testing.TestTargetType;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
@@ -34,7 +36,7 @@ import java.util.List;
  * Creates configurations for many different cases: packages, classes, files and folders. It checks then that configuration is ok.
  * @author Ilya.Kazakevich
  */
-final class CreateConfigurationMultipleCasesTask<T extends PyAbstractTestConfiguration> extends CreateConfigurationTestTask<T> {
+class CreateConfigurationMultipleCasesTask<T extends PyAbstractTestConfiguration> extends CreateConfigurationTestTask<T> {
 
   CreateConfigurationMultipleCasesTask(@NotNull final String testRunnerName,
                                        @NotNull final Class<T> expectedConfigurationType) {
@@ -55,6 +57,10 @@ final class CreateConfigurationMultipleCasesTask<T extends PyAbstractTestConfigu
     result.add(getDir("tests_folder"));
     result.add(getFile("tests_folder", "test_lonely.py"));
     result.add(getFile("tests_folder", "test_lonely.py").findTopLevelClass("TestLonely"));
+    result.add(getFile("tests_folder", "test_functions.py").findTopLevelFunction("test_test"));
+    result.add(getFile("tests_folder", "test_functions.py").findTopLevelFunction("foo"));
+
+    result.add(getFile("tests_folder/test-test", "test-foo.py").findTopLevelClass("TestDash"));
 
 
     return result;
@@ -77,7 +83,11 @@ final class CreateConfigurationMultipleCasesTask<T extends PyAbstractTestConfigu
     final String elementName = ((PsiNamedElement)element).getName();
     assert elementName != null;
 
-    if (element instanceof PsiDirectory && elementName.endsWith("package_test")) {
+    if (element instanceof PyClass && elementName.endsWith("TestDash")) {
+      Assert.assertThat("Bad target", configuration.getTarget().getTarget(), Matchers.endsWith("test-foo.TestDash"));
+      Assert.assertThat("Bad directory", configuration.getWorkingDirectorySafe(), Matchers.endsWith("test-test"));
+    }
+    else if (element instanceof PsiDirectory && elementName.endsWith("package_test")) {
       Assert.assertEquals("Working directory for folder should be same as folder", target.asVirtualFile(), workingDirectory);
       Assert.assertThat("Bad target", configuration.getTarget().getTarget(), Matchers.endsWith("package_test"));
     }
@@ -106,6 +116,12 @@ final class CreateConfigurationMultipleCasesTask<T extends PyAbstractTestConfigu
       Assert.assertEquals("Bad working directory for no package class", element.getContainingFile().getVirtualFile().getParent(),
                           workingDirectory);
       Assert.assertEquals("Bad configuration for class no package", "test_lonely.TestLonely", target.getTarget());
+    }
+    else if (element instanceof PyFunction && elementName.endsWith("test_test")) {
+      Assert.assertEquals("Bad configuration target", "test_functions.test_test", target.getTarget());
+    }
+    else if (element instanceof PyFunction && elementName.endsWith("foo")) {
+      Assert.assertEquals("non-test function should lead to level-based test", TestTargetType.PATH, target.getTargetType());
     }
     else {
       throw new AssertionError("Unexpected configuration " + configuration);

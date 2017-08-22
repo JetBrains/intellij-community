@@ -425,4 +425,6 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testUncheckedWarningWhenCastingFromCapturedWildcard() { doTest8Incompatibility(true); }
   public void testEnclosingRefInTopLevelClassExtendingInnerWhichExtendsItsOuter() { doTest8Incompatibility(true); }
   public void testGenericThrowTypes() { doTest5(false); }
+  public void testRecursiveParamBoundsWhenSuperSubstitution() { doTest6(false); }
+  public void testCaptureForBoundCheck() { doTest6(false); }
 }

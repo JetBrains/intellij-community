@@ -23,9 +23,9 @@ public class RestTitleAnnotator extends RestAnnotator {
   public void visitTitle(final RestTitle node) {
     final String name = node.getName();
     if (name == null) return;
-    int nameLen = name.length();
     final String underline = node.getUnderline();
-    if (underline != null && nameLen != underline.length()) {
+    final String overline = node.getOverline();
+    if (underline != null && overline != null && overline.length() != underline.length()) {
       getHolder().createWarningAnnotation(node, RestBundle.message("ANN.title.length"));
     }
   }

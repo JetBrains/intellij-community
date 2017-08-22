@@ -44,6 +44,7 @@ import com.intellij.ui.GuiUtils;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -182,7 +183,7 @@ public abstract class HgUtil {
    * Finds the nearest parent directory which is an hg root.
    * @param dir Directory which parent will be checked.
    * @return Directory which is the nearest hg root being a parent of this directory,
-   * or <code>null</code> if this directory is not under hg.
+   * or {@code null} if this directory is not under hg.
    * @see com.intellij.openapi.vcs.AbstractVcs#isVersionedDirectory(VirtualFile)
    */
   @Nullable
@@ -590,9 +591,7 @@ public abstract class HgUtil {
   }
 
   public static List<String> getSortedNamesWithoutHashes(Collection<HgNameWithHashInfo> namesWithHashes) {
-    List<String> names = getNamesWithoutHashes(namesWithHashes);
-    Collections.sort(names);
-    return names;
+    return StreamEx.of(getNamesWithoutHashes(namesWithHashes)).sorted(StringUtil::naturalCompare).toList();
   }
 
   @NotNull

@@ -26,7 +26,10 @@ class SliceLeafValueClassNode extends SliceLeafValueRootNode {
   private final String myClassName;
 
   SliceLeafValueClassNode(@NotNull Project project, @NotNull SliceNode root, @NotNull String className) {
-    super(project, root.getValue().getElement(), root, new ArrayList<>(), root.getValue().params);
+    super(project,
+          root,
+          JavaSliceUsage.createRootUsage(root.getValue().getElement(), root.getValue().params),
+          new ArrayList<>());
     myClassName = className;
   }
 

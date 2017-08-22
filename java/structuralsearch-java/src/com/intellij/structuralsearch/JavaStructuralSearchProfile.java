@@ -480,6 +480,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     private PsiElement myCurrent;
 
     @Override public void visitAnnotation(PsiAnnotation annotation) {
+      super.visitAnnotation(annotation);
       final PsiJavaCodeReferenceElement nameReferenceElement = annotation.getNameReferenceElement();
 
       if (nameReferenceElement == null ||
@@ -623,7 +624,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
           if (previous != null) {
             final PsiElement parent = currentElement.getParent();
             if (parent instanceof PsiVariable) {
-              final PsiElement prevSibling = PsiTreeUtil.skipSiblingsBackward(parent, PsiWhiteSpace.class);
+              final PsiElement prevSibling = PsiTreeUtil.skipWhitespacesBackward(parent);
               if (PsiUtil.isJavaToken(prevSibling, JavaTokenType.COMMA)) {
                 buf.append(',');
               }
@@ -643,7 +644,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
               buf.append(',');
             }
             else if (parent instanceof PsiClass) {
-              final PsiElement prevSibling = PsiTreeUtil.skipSiblingsBackward(currentElement, PsiWhiteSpace.class);
+              final PsiElement prevSibling = PsiTreeUtil.skipWhitespacesBackward(currentElement);
               if (PsiUtil.isJavaToken(prevSibling, JavaTokenType.COMMA)) {
                 buf.append(',');
               }
@@ -694,17 +695,23 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
   @Override
   public int handleNoSubstitution(ParameterInfo info, int offset, StringBuilder result) {
     final PsiElement element = info.getElement();
-    final PsiElement prevSibling = PsiTreeUtil.skipSiblingsBackward(element, PsiWhiteSpace.class);
+    final PsiElement prevSibling = PsiTreeUtil.skipWhitespacesBackward(element);
     if (prevSibling instanceof PsiJavaToken && isRemovableToken(prevSibling)) {
       final int start = info.getBeforeDelimiterPos() + offset - (prevSibling.getTextLength() - 1);
       final int end = info.getStartIndex() + offset;
       result.delete(start, end);
       return offset - (end - start);
     }
-    final PsiElement nextSibling = PsiTreeUtil.skipSiblingsForward(element, PsiWhiteSpace.class);
-    if (nextSibling instanceof PsiJavaToken && isRemovableToken(nextSibling)) {
+    final PsiElement nextSibling = PsiTreeUtil.skipWhitespacesForward(element);
+    if (isRemovableToken(nextSibling)) {
       final int start = info.getStartIndex() + offset;
       final int end = info.getAfterDelimiterPos() + nextSibling.getTextLength() + offset;
+      result.delete(start, end);
+      return offset - 1;
+    }
+    else if (element instanceof PsiTypeElement && nextSibling instanceof PsiIdentifier) {
+      final int start = info.getStartIndex() + offset;
+      final int end = info.getAfterDelimiterPos() + offset;
       result.delete(start, end);
       return offset - 1;
     }
@@ -715,6 +722,9 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
   }
 
   private static boolean isRemovableToken(PsiElement element) {
+    if (!(element instanceof PsiJavaToken)) {
+      return false;
+    }
     final PsiElement parent = element.getParent();
     if (!(parent instanceof PsiAnnotationParameterList || // ',' between annotation parameters
           parent instanceof PsiAssertStatement || // ':' before assertion message
@@ -725,7 +735,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
           parent instanceof PsiReferenceParameterList || // ','
           parent instanceof PsiResourceList || // ';'
           parent instanceof PsiTypeParameterList || // ','
-          parent instanceof PsiVariable)) { // '=' before initializer
+          parent instanceof PsiLocalVariable || parent instanceof PsiField)) { // '=' before initializer
       return false;
     }
     final String text = element.getText();

@@ -43,6 +43,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ClassUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.rt.execution.junit.RepeatCount;
 import org.jdom.Element;
@@ -318,6 +319,11 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
     PsiDirectory testDir = element instanceof PsiDirectory ? (PsiDirectory)element : null;
 
     return getTestObject().isConfiguredByElement(this, testClass, testMethod, testPackage, testDir);
+  }
+
+  @Override
+  public TestSearchScope getTestSearchScope() {
+    return getPersistentData().getScope();
   }
 
   public void beFromSourcePosition(PsiLocation<PsiMethod> sourceLocation) {
@@ -625,8 +631,11 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
 
     public static String getMethodPresentation(PsiMethod method) {
       if (method.getParameterList().getParametersCount() > 0 && MetaAnnotationUtil.isMetaAnnotated(method, JUnitUtil.TEST5_ANNOTATIONS)) {
-        return method.getName() + "(" + StringUtil.join(method.getParameterList().getParameters(), 
-                                                        param -> param.getType().accept(createSignatureVisitor()),
+        return method.getName() + "(" + StringUtil.join(method.getParameterList().getParameters(),
+                                                        param -> {
+                                                          PsiType type = TypeConversionUtil.erasure(param.getType());
+                                                          return type != null ? type.accept(createSignatureVisitor()) : "";
+                                                        },
                                                         ",") + ")";
       }
       else {

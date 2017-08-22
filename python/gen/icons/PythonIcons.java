@@ -21,7 +21,7 @@ import javax.swing.*;
 
 /**
  * NOTE THIS FILE IS AUTO-GENERATED
- * DO NOT EDIT IT BY HAND, run build/scripts/icons.gant instead
+ * DO NOT EDIT IT BY HAND, run "Generate icon classes" configuration instead
  */
 public class PythonIcons {
   private static Icon load(String path) {
@@ -36,6 +36,7 @@ public class PythonIcons {
   }
   
   public static class Python {
+    public static final Icon Anaconda = load("/icons/com/jetbrains/python/anaconda.png"); // 16x16
     
     public static class Buildout {
       public static final Icon Buildout = load("/icons/com/jetbrains/python/buildout/buildout.png"); // 16x16

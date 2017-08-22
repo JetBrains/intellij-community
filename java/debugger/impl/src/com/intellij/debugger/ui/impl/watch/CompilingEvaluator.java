@@ -107,11 +107,16 @@ public abstract class CompilingEvaluator implements ExpressionEvaluator {
                                   EvaluationContext context,
                                   DebugProcess process,
                                   ClassLoaderReference classLoader) throws EvaluateException {
+    JavaSdkVersion targetVersion = JavaSdkVersion.fromVersionString(((VirtualMachineProxyImpl)process.getVirtualMachineProxy()).version());
+    boolean useMagicAccessorImpl = targetVersion != null && !targetVersion.isAtLeast(JavaSdkVersion.JDK_1_9);
+
     for (ClassObject cls : classes) {
       if (cls.getPath().contains(GEN_CLASS_NAME)) {
-        final byte[] content = cls.getContent();
-        if (content != null) {
-          final byte[] bytes = changeSuperToMagicAccessor(content);
+        byte[] bytes = cls.getContent();
+        if (bytes != null) {
+          if (useMagicAccessorImpl) {
+            bytes = changeSuperToMagicAccessor(bytes);
+          }
           ClassLoadingUtils.defineClass(cls.getClassName(), bytes, context, process, classLoader);
         }
       }

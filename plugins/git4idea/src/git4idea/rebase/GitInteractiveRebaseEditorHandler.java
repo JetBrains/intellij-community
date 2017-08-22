@@ -23,7 +23,9 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.DialogManager;
+import git4idea.GitUtil;
 import git4idea.config.GitConfigUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,6 +38,7 @@ import java.util.UUID;
 import static com.intellij.CommonBundle.getCancelButtonText;
 import static com.intellij.CommonBundle.getOkButtonText;
 import static com.intellij.openapi.ui.Messages.getQuestionIcon;
+import static com.intellij.openapi.util.text.StringUtil.splitByLinesKeepSeparators;
 import static git4idea.DialogManager.showOkCancelDialog;
 import static git4idea.rebase.GitRebaseEditorMain.ERROR_EXIT_CODE;
 
@@ -92,10 +95,10 @@ public class GitInteractiveRebaseEditorHandler implements Closeable, GitRebaseEd
     }
   }
 
-  private boolean handleUnstructuredEditor(@NotNull String path) throws IOException {
+  protected boolean handleUnstructuredEditor(@NotNull String path) throws IOException {
     String encoding = GitConfigUtil.getCommitEncoding(myProject, myRoot);
     File file = new File(path);
-    String initialText = FileUtil.loadFile(file, encoding);
+    String initialText = ignoreComments(FileUtil.loadFile(file, encoding));
 
     String newText = showUnstructuredEditor(initialText);
     if (newText == null) {
@@ -105,6 +108,14 @@ public class GitInteractiveRebaseEditorHandler implements Closeable, GitRebaseEd
       FileUtil.writeToFile(file, newText.getBytes(encoding));
       return true;
     }
+  }
+
+  @NotNull
+  private static String ignoreComments(@NotNull String text) {
+    String[] lines = splitByLinesKeepSeparators(text);
+    return StreamEx.of(lines)
+      .filter(line -> !line.startsWith(GitUtil.COMMENT_CHAR))
+      .joining();
   }
 
   @Nullable
@@ -120,7 +131,7 @@ public class GitInteractiveRebaseEditorHandler implements Closeable, GitRebaseEd
     return newText.get();
   }
 
-  private boolean handleInteractiveEditor(@NotNull String path) throws IOException {
+  protected boolean handleInteractiveEditor(@NotNull String path) throws IOException {
     GitInteractiveRebaseFile rebaseFile = new GitInteractiveRebaseFile(myProject, myRoot, path);
     try {
       List<GitRebaseEntry> entries = rebaseFile.load();

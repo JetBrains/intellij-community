@@ -41,7 +41,6 @@ public class UnnecessaryModuleDependencyInspection extends GlobalInspectionTool 
     if (refEntity instanceof RefModule){
       final RefModule refModule = (RefModule)refEntity;
       final Module module = refModule.getModule();
-      if (module.isDisposed() || !scope.containsModule(module)) return CommonProblemDescriptor.EMPTY_ARRAY;
       final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
       final OrderEntry[] declaredDependencies = moduleRootManager.getOrderEntries();
       final Module[] declaredModuleDependencies = moduleRootManager.getDependencies();

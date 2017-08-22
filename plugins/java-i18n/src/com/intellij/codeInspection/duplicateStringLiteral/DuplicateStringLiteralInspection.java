@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.codeInspection.i18n.JavaI18nUtil;
+import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
@@ -35,6 +36,8 @@ import com.intellij.refactoring.util.occurrences.BaseOccurrenceManager;
 import com.intellij.refactoring.util.occurrences.OccurrenceFilter;
 import com.intellij.refactoring.util.occurrences.OccurrenceManager;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.usageView.UsageInfo;
+import com.intellij.usages.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
@@ -45,6 +48,7 @@ import com.intellij.util.text.StringSearcher;
 import com.siyeh.ig.style.UnnecessarilyQualifiedStaticUsageInspection;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,10 +58,11 @@ import javax.swing.event.DocumentEvent;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.*;
+import java.util.stream.Stream;
 
 public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
   @SuppressWarnings({"WeakerAccess"}) public int MIN_STRING_LENGTH = 5;
-  @SuppressWarnings({"WeakerAccess"}) public boolean IGNORE_PROPERTY_KEYS = false;
+  @SuppressWarnings({"WeakerAccess"}) public boolean IGNORE_PROPERTY_KEYS;
   @NonNls private static final String BR = "<br>";
 
   @Override
@@ -149,12 +154,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
   private void checkStringLiteralExpression(@NotNull final PsiLiteralExpression originalExpression,
                                             @NotNull ProblemsHolder holder,
                                             final boolean isOnTheFly) {
-    Object value = originalExpression.getValue();
-    if (!(value instanceof String)) return;
-    if (!shouldCheck(originalExpression)) return;
-    final String stringToFind = (String)value;
-    if (stringToFind.length() == 0) return;
-    List<PsiLiteralExpression> foundExpr = getDuplicateLiterals(stringToFind, originalExpression);
+    List<PsiLiteralExpression> foundExpr = getDuplicateLiterals(originalExpression);
     if (foundExpr.isEmpty()) return;
     Set<PsiClass> classes = new THashSet<>();
     for (PsiElement aClass : foundExpr) {
@@ -195,8 +195,8 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
 
     Collection<LocalQuickFix> fixes = new SmartList<>();
     if (isOnTheFly) {
-      final LocalQuickFix introduceConstFix = createIntroduceConstFix(foundExpr, originalExpression);
-      fixes.add(introduceConstFix);
+      fixes.add(createIntroduceConstFix(foundExpr, originalExpression));
+      fixes.add(new NavigateToOccurrencesFix(originalExpression));
     }
     createReplaceFixes(foundExpr, originalExpression, fixes);
     LocalQuickFix[] array = fixes.toArray(new LocalQuickFix[fixes.size()]);
@@ -204,12 +204,17 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
   }
 
   @NotNull
-  private List<PsiLiteralExpression> getDuplicateLiterals(String stringToFind, PsiLiteralExpression place) {
+  private List<PsiLiteralExpression> getDuplicateLiterals(PsiLiteralExpression place) {
+    Object value = place.getValue();
+    if (!(value instanceof String)) return Collections.emptyList();
+    if (!shouldCheck(place)) return Collections.emptyList();
+    String stringToFind = (String)value;
+    if (stringToFind.length() == 0) return Collections.emptyList();
     Project project = place.getProject();
     Map<String, List<PsiLiteralExpression>> map = CachedValuesManager.getManager(project).getCachedValue(project, () -> {
-      Map<String, List<PsiLiteralExpression>> value = ConcurrentFactoryMap.createMap(
+      Map<String, List<PsiLiteralExpression>> duplicates = ConcurrentFactoryMap.createMap(
         s -> Collections.unmodifiableList(findDuplicateLiterals(s, project)));
-      return CachedValueProvider.Result.create(value, PsiModificationTracker.MODIFICATION_COUNT);
+      return CachedValueProvider.Result.create(duplicates, PsiModificationTracker.MODIFICATION_COUNT);
     });
     return ContainerUtil.filter(map.get(stringToFind), literal -> literal != place);
   }
@@ -247,7 +252,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
   }
 
   private static LocalQuickFix createIntroduceConstFix(List<PsiLiteralExpression> foundExpr, PsiLiteralExpression originalExpression) {
-    final PsiExpression[] expressions = foundExpr.toArray(new PsiExpression[foundExpr.size() + 1]);
+    final PsiLiteralExpression[] expressions = foundExpr.toArray(new PsiLiteralExpression[foundExpr.size() + 1]);
     expressions[foundExpr.size()] = originalExpression;
 
     return new IntroduceLiteralConstantFix(expressions);
@@ -304,7 +309,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
   private static class IntroduceLiteralConstantFix implements LocalQuickFix {
     private final SmartPsiElementPointer[] myExpressions;
 
-    public IntroduceLiteralConstantFix(final PsiExpression[] expressions) {
+    public IntroduceLiteralConstantFix(final PsiLiteralExpression[] expressions) {
       myExpressions = new SmartPsiElementPointer[expressions.length];
       for(int i=0; i<expressions.length; i++) {
         PsiExpression expression = expressions[i];
@@ -325,6 +330,10 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
 
     @Override
     public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
+      applyFix(project);
+    }
+
+    private void applyFix(@NotNull Project project) {
       final List<PsiExpression> expressions = new ArrayList<>();
       for(SmartPsiElementPointer ptr: myExpressions) {
         final PsiElement element = ptr.getElement();
@@ -411,6 +420,59 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
     @NotNull
     public String getFamilyName() {
       return InspectionsBundle.message("inspection.duplicates.replace.family.quickfix");
+    }
+  }
+
+  private class NavigateToOccurrencesFix extends LocalQuickFixOnPsiElement {
+    NavigateToOccurrencesFix(PsiLiteralExpression representative) {
+      super(representative);
+    }
+
+    @Override
+    public boolean startInWriteAction() {
+      return false;
+    }
+
+    @Override
+    public void invoke(@NotNull Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
+      if (!(startElement instanceof PsiLiteralExpression)) return;
+
+      PsiLiteralExpression literal = (PsiLiteralExpression)startElement;
+      PsiLiteralExpression[] literalExpressions = Stream.concat(getDuplicateLiterals(literal).stream(), Stream.of(literal)).toArray(PsiLiteralExpression[]::new);
+      Usage[] usages = Stream.of(literalExpressions)
+        .map(UsageInfo::new)
+        .map(UsageInfo2UsageAdapter::new)
+        .toArray(Usage[]::new);
+
+      UsageViewPresentation presentation = new UsageViewPresentation();
+      String title = InspectionsBundle.message("inspection.duplicates.occurrences.view.title", literal.getValue());
+      presentation.setUsagesString(title);
+      presentation.setTabName(title);
+      presentation.setTabText(title);
+      presentation.setShowCancelButton(true);
+      UsageView view = UsageViewManager.getInstance(project).showUsages(new UsageTarget[]{new PsiElement2UsageTargetAdapter(literal) {
+        @Override
+        public String getPresentableText() {
+          return "String literal: \'" + literal.getValue() + "\'";
+        }
+      }}, usages, presentation);
+      view.addButtonToLowerPane(() -> {
+        new IntroduceLiteralConstantFix(literalExpressions).applyFix(project);
+        view.close();
+      }, InspectionsBundle.message("introduce.constant.across.the.project"));
+    }
+
+    @NotNull
+    @Override
+    public String getText() {
+      return getFamilyName();
+    }
+
+    @Nls
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return InspectionsBundle.message("inspection.duplicates.navigate.to.occurrences");
     }
   }
 }

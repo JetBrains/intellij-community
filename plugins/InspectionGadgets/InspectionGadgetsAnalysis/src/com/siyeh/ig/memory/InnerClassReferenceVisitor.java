@@ -18,7 +18,6 @@ package com.siyeh.ig.memory;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class InnerClassReferenceVisitor extends JavaRecursiveElementWalkingVisitor {
@@ -41,6 +40,10 @@ public class InnerClassReferenceVisitor extends JavaRecursiveElementWalkingVisit
   private boolean isClassStaticallyAccessible(@NotNull PsiClass aClass) {
     if (PsiTreeUtil.isAncestor(innerClass, aClass, false) || aClass.hasModifierProperty(PsiModifier.STATIC)) {
       return true;
+    }
+    if (aClass instanceof PsiTypeParameter) {
+      PsiTypeParameterListOwner owner = ((PsiTypeParameter)aClass).getOwner();
+      return owner != null && PsiTreeUtil.isAncestor(innerClass, owner, false);
     }
     final PsiClass containingClass = aClass.getContainingClass();
     return containingClass == null || InheritanceUtil.isInheritorOrSelf(innerClass, containingClass, true);
@@ -74,13 +77,13 @@ public class InnerClassReferenceVisitor extends JavaRecursiveElementWalkingVisit
   }
 
   @Override
-  public void visitReferenceExpression(PsiReferenceExpression expression) {
+  public void visitReferenceElement(PsiJavaCodeReferenceElement expression) {
     if (!referencesStaticallyAccessible) {
       return;
     }
-    super.visitReferenceExpression(expression);
-    final PsiExpression qualifierExpression = ParenthesesUtils.stripParentheses(expression.getQualifierExpression());
-    if (qualifierExpression != null) {
+
+    super.visitReferenceElement(expression);
+    if (expression.isQualified()) {
       return;
     }
     final PsiElement target = expression.resolve();
@@ -106,6 +109,9 @@ public class InnerClassReferenceVisitor extends JavaRecursiveElementWalkingVisit
           parentClass = PsiTreeUtil.getParentOfType(parentClass, PsiClass.class, true);
         }
       }
+      referencesStaticallyAccessible = false;
+    }
+    else if (target instanceof PsiClass && !isClassStaticallyAccessible((PsiClass)target)) {
       referencesStaticallyAccessible = false;
     }
   }

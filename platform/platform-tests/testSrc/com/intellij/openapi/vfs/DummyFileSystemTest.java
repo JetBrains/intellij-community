@@ -32,7 +32,7 @@ import static org.junit.Assert.assertNotNull;
 
 public class DummyFileSystemTest extends BareTestFixtureTestCase {
   @Test
-  public void testDeletionEvents() throws Exception {
+  public void testDeletionEvents() {
     DummyFileSystem fs = new DummyFileSystem();
 
     Pair<VirtualFile, VirtualFile> pair = new WriteAction<Pair<VirtualFile, VirtualFile>>() {

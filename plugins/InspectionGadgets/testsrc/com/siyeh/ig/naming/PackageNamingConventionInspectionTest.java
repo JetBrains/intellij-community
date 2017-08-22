@@ -28,6 +28,11 @@ public class PackageNamingConventionInspectionTest extends LightInspectionTestCa
            "class X {}");
   }
 
+  public void testNoAssertion() {
+    doTest("package /*Package name 'a' is too short*/a/**/./*!Identifier expected*/;/*!*/" +
+           "class X {}");
+  }
+
   @Override
   protected InspectionProfileEntry getInspection() {
     return new PackageNamingConventionInspection();

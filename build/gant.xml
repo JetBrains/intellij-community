@@ -10,42 +10,64 @@
     </not>
   </condition>
 
-  <path id="gant.classpath">
-    <fileset dir="${gant.home}/lib">
-      <include name="*.jar"/>
-    </fileset>
-    <fileset dir="${project.home}/build/lib/jps">
-      <include name="*.jar"/>
-    </fileset>
-    <pathelement path="${project.home}/platform/build-scripts/groovy"/>
-    <pathelement path="${project.home}/build/groovy"/>
-    <fileset file="${project.home}/jps/lib/optimizedFileManager.jar"/>
-    <fileset dir="${idea.lib}">
-       <include name="jdom.jar"/>
-       <include name="log4j.jar"/>
-       <include name="trove4j.jar"/>
-       <include name="groovy-all-*.jar"/>
-       <include name="protobuf*.jar"/>
-       <include name="netty*.jar"/>
-       <include name="asm-all.jar"/>
-       <include name="jgoodies-forms.jar"/>
-       <include name="guava*.jar"/>
-       <include name="picocontainer.jar"/>
-       <include name="jna.jar"/>
-       <include name="jna-platform.jar"/>
-       <include name="oromatcher.jar"/>
-       <include name="snappy-in-java-*.jar"/>
-       <include name="cli-parser-*.jar"/>
-       <include name="nanoxml-*.jar"/>
-       <include name="xml-apis.jar"/>
-    </fileset>
-  </path>
+  <target name="init">
+    <condition property="gradle.executable" value="${project.home}/build/dependencies/gradlew.bat"
+               else="${project.home}/build/dependencies/gradlew">
+      <os family="windows"/>
+    </condition>
+    <exec executable="${gradle.executable}" dir="${project.home}/build/dependencies" failonerror="true">
+      <arg value="--no-daemon"/>
+      <arg value="setupBuildScriptsDeps"/>
+    </exec>
+  </target>
 
-  <taskdef name="gant" classname="org.jetbrains.jps.gant.GantWithClasspathTask">
-    <classpath refid="gant.classpath"/>
-  </taskdef>
+  <target name="doGant" depends="init">
+    <path id="gant.classpath">
+      <fileset dir="${gant.home}/lib">
+        <include name="*.jar"/>
+      </fileset>
+      <fileset dir="${project.home}/build/lib/jps">
+        <include name="*.jar"/>
+      </fileset>
+      <pathelement path="${project.home}/platform/build-scripts/groovy"/>
+      <pathelement path="${project.home}/build/groovy"/>
+      <fileset file="${project.home}/jps/lib/optimizedFileManager.jar"/>
+      <fileset dir="${project.home}/build/dependencies/build/build-scripts-deps" erroronmissingdir="false">
+        <include name="*.jar"/>
+      </fileset>
+      <fileset dir="${idea.lib}">
+        <include name="jdom.jar"/>
+        <include name="log4j.jar"/>
+        <include name="trove4j.jar"/>
+        <include name="groovy-all-*.jar"/>
+        <include name="protobuf*.jar"/>
+        <include name="netty*.jar"/>
+        <include name="asm-all.jar"/>
+        <include name="jgoodies-forms.jar"/>
+        <include name="guava*.jar"/>
+        <include name="picocontainer.jar"/>
+        <include name="jna.jar"/>
+        <include name="jna-platform.jar"/>
+        <include name="oromatcher.jar"/>
+        <include name="snappy-in-java-*.jar"/>
+        <include name="cli-parser-*.jar"/>
+        <include name="nanoxml-*.jar"/>
+        <include name="aether-*-all.jar"/>
+        <include name="maven-aether-provider-*-all.jar"/>
+        <include name="httpclient-*.jar"/>
+        <include name="httpcore-*.jar"/>
+        <include name="httpmime-*.jar"/>
+        <include name="commons-codec-*.jar"/>
+        <include name="commons-logging-*.jar"/>
+        <include name="slf4j-api-*.jar"/>
+        <include name="slf4j-log4j12-*.jar"/>
+      </fileset>
+    </path>
 
-  <target name="doGant">
+    <taskdef name="gant" classname="org.jetbrains.jps.gant.GantWithClasspathTask">
+      <classpath refid="gant.classpath"/>
+    </taskdef>
+
     <gant file="${gant.script}" target="${gant.target}"/>
   </target>
 </project>

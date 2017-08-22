@@ -269,7 +269,7 @@ public abstract class AbstractFileProcessor {
   }
 
   private void execute(final Runnable readAction, final Runnable writeAction) {
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> readAction.run()), title, true, myProject);
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(readAction), title, true, myProject);
     new WriteCommandAction(myProject, title) {
       @Override
       protected void run(@NotNull Result result) throws Throwable {

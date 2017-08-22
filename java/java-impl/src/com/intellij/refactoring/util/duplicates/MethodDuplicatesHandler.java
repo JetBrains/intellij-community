@@ -82,7 +82,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler, Contex
     final BaseAnalysisActionDialog dlg =
       new BaseAnalysisActionDialog(RefactoringBundle.message("replace.method.duplicates.scope.chooser.title", REFACTORING_NAME),
                                    RefactoringBundle.message("replace.method.duplicates.scope.chooser.message"),
-                                   project, scope, module != null ? module.getName() : null, false,
+                                   project, scope, module, false,
                                    AnalysisUIOptions.getInstance(project), element);
     if (dlg.showAndGet()) {
       AnalysisScope selectedScope = dlg.getScope(AnalysisUIOptions.getInstance(project), scope, project, module);

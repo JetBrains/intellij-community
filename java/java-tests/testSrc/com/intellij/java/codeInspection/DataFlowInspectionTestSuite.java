@@ -39,6 +39,7 @@ public class DataFlowInspectionTestSuite {
     suite.addTestSuite(NullityInferenceFromSourceTestCase.DfaInferenceTest.class);
     suite.addTestSuite(NullityInferenceFromSourceTestCase.LightInferenceTest.class);
     suite.addTestSuite(PurityInferenceFromSourceTest.class);
+    suite.addTestSuite(ParameterNullityInferenceFromSourceTest.class);
 
     suite.addTestSuite(SliceTreeTest.class);
     suite.addTestSuite(SliceBackwardTest.class);
@@ -57,6 +58,7 @@ public class DataFlowInspectionTestSuite {
     suite.addTestSuite(ReplaceFromOfNullableFixTest.class);
     suite.addTestSuite(ReplaceWithTrivialLambdaFixTest.class);
     suite.addTestSuite(UnwrapIfStatementFixTest.class);
+    suite.addTestSuite(StreamFilterNotNullFixTest.class);
     return suite;
   }
 }

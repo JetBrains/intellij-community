@@ -198,7 +198,7 @@ public abstract class AbstractModelBuilderTest {
   }
 
   @After
-  public void tearDown() throws Exception {
+  public void tearDown() {
     if (testDir != null) {
       FileUtil.delete(testDir);
     }

@@ -326,7 +326,7 @@ public class NewExprent extends Exprent {
           boolean firstParam = true;
           for (int i = start; i < lstParameters.size(); i++) {
             if (sigFields == null || sigFields.get(i) == null) {
-              Exprent expr = lstParameters.get(i);
+              Exprent expr = InvocationExprent.unboxIfNeeded(lstParameters.get(i));
               VarType leftType = constructor.getDescriptor().params[i];
 
               if (i == lstParameters.size() - 1 && expr.getExprType() == VarType.VARTYPE_NULL) {

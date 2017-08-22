@@ -17,6 +17,7 @@ package org.jetbrains.idea.maven.importing;
 
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
@@ -112,7 +113,11 @@ public class MavenRootModelAdapter {
       }
       if (e instanceof ModuleOrderEntry) {
         Module m = ((ModuleOrderEntry)e).getModule();
-        if (m != null && !MavenProjectsManager.getInstance(myRootModel.getProject()).isMavenizedModule(m)) continue;
+        if (m != null &&
+            !MavenProjectsManager.getInstance(myRootModel.getProject()).isMavenizedModule(m) &&
+            ExternalSystemModulePropertyManager.getInstance(m).getExternalSystemId() == null) {
+          continue;
+        }
       }
 
       if (!jdkProcessed) {
@@ -327,7 +332,7 @@ public class MavenRootModelAdapter {
     }
   }
 
-  public void addLibraryDependency(MavenArtifact artifact,
+  public LibraryOrderEntry addLibraryDependency(MavenArtifact artifact,
                                    DependencyScope scope,
                                    IdeModifiableModelsProvider provider,
                                    MavenProject project) {
@@ -351,6 +356,8 @@ public class MavenRootModelAdapter {
     if (myOrderEntriesBeforeJdk.contains(libraryName)) {
       moveLastOrderEntryBeforeJdk();
     }
+
+    return e;
   }
 
   private void moveLastOrderEntryBeforeJdk() {

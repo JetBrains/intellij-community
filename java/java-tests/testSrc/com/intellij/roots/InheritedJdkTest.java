@@ -26,6 +26,7 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.ModuleTestCase;
 import junit.framework.Assert;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author dsl
@@ -35,7 +36,7 @@ public class InheritedJdkTest extends ModuleTestCase {
   protected void setUpJdk() {
   }
 
-  public void test1() throws Exception {
+  public void test1() {
     final Sdk jdk = IdeaTestUtil.getMockJdk17("java 1.4");
     ApplicationManager.getApplication().runWriteAction(() -> ProjectJdkTable.getInstance().addJdk(jdk));
     final ModuleRootManager rootManager = ModuleRootManager.getInstance(myModule);
@@ -62,7 +63,7 @@ public class InheritedJdkTest extends ModuleTestCase {
     assertEquals("jdk1 is assigned", jdk1, rootManager.getSdk());
   }
 
-  public void test2() throws Exception {
+  public void test2() {
     final ModuleRootManager rootManager = ModuleRootManager.getInstance(myModule);
     ModuleRootModificationUtil.setSdkInherited(myModule);
 
@@ -84,7 +85,7 @@ public class InheritedJdkTest extends ModuleTestCase {
     Assert.assertEquals("Correct non-existing JDK inherited", "jdk1",
                         rootManager.orderEntries().process(new RootPolicy<String>() {
                           @Override
-                          public String visitInheritedJdkOrderEntry(InheritedJdkOrderEntry inheritedJdkOrderEntry, String s) {
+                          public String visitInheritedJdkOrderEntry(@NotNull InheritedJdkOrderEntry inheritedJdkOrderEntry, String s) {
                             return inheritedJdkOrderEntry.getJdkName();
                           }
                         }, null));

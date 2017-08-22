@@ -58,13 +58,18 @@ public class InlineFieldDialog extends InlineOptionsWithSearchSettingsDialog {
   }
 
   protected String getInlineAllText() {
-    return RefactoringBundle.message("all.references.and.remove.the.field");
+    return RefactoringBundle.message(myField.isWritable() ?"all.references.and.remove.the.field" : "all.invocations.in.project");
   }
 
   @Override
   protected String getKeepTheDeclarationText() {
     if (myField.isWritable()) return RefactoringBundle.message("all.references.keep.field");
     return super.getKeepTheDeclarationText();
+  }
+
+  @Override
+  protected boolean allowInlineAll() {
+    return true;
   }
 
   protected boolean isInlineThis() {

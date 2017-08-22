@@ -20,7 +20,6 @@ import com.intellij.util.lang.UrlClassLoader;
 import org.junit.Test;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -98,7 +97,7 @@ public class PluginDescriptorTest {
       }
 
       @Override
-      public Enumeration<URL> getResources(String name) throws IOException {
+      public Enumeration<URL> getResources(String name) {
         return new SingleUrlEnumeration(myUrl);
       }
     }

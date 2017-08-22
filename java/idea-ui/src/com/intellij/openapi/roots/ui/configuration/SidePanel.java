@@ -183,7 +183,12 @@ public class SidePanel extends JPanel {
   }
 
   public void select(final Place place) {
-    myList.setSelectedValue(place, true);
+    for (int i = 0; i < myModel.getSize(); i++) {
+      SidePanelItem item = myModel.getElementAt(i);
+      if (place.equals(item.myPlace)) {
+        myList.setSelectedValue(item, true);
+      }
+    }
   }
 
   private static class SidePanelItem {

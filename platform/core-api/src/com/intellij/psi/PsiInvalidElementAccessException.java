@@ -107,7 +107,12 @@ public class PsiInvalidElementAccessException extends RuntimeException implement
   @Nullable
   private static Object getPsiInvalidationTrace(@NotNull PsiElement element) {
     Object trace = getInvalidationTrace(element);
-    return trace != null || element instanceof PsiFile ? trace : findInvalidationTrace(element.getNode());
+    if (trace != null) return trace;
+    
+    if (element instanceof PsiFile) {
+      return getInvalidationTrace(((PsiFile)element).getOriginalFile());
+    }
+    return findInvalidationTrace(element.getNode());
   }
 
   private static String getMessageWithReason(@NotNull PsiElement element,
@@ -120,7 +125,7 @@ public class PsiInvalidElementAccessException extends RuntimeException implement
                          trace != null ? "see attachment" :
                          "no info";
       try {
-        reason += " because: " + reason(element);
+        reason += " because: " + findOutInvalidationReason(element);
       }
       catch (PsiInvalidElementAccessException ignore) {
       }
@@ -161,7 +166,7 @@ public class PsiInvalidElementAccessException extends RuntimeException implement
 
   @NonNls
   @NotNull
-  private static String reason(@NotNull PsiElement root) {
+  public static String findOutInvalidationReason(@NotNull PsiElement root) {
     if (root == PsiUtilCore.NULL_PSI_ELEMENT) return "NULL_PSI_ELEMENT";
 
     PsiElement element = root instanceof PsiFile ? root : root.getParent();
@@ -170,6 +175,7 @@ public class PsiInvalidElementAccessException extends RuntimeException implement
       if (root instanceof StubBasedPsiElement) {
         StubElement stub = ((StubBasedPsiElement)root).getStub();
         while (stub != null) {
+          //noinspection StringConcatenationInLoop
           m += "\n  each stub=" + stub;
           if (stub instanceof PsiFileStub) {
             m += "; fileStub.psi=" + stub.getPsi() + "; reason=" + ((PsiFileStub)stub).getInvalidationReason();
@@ -190,8 +196,13 @@ public class PsiInvalidElementAccessException extends RuntimeException implement
     if (!provider.isPhysical()) {
       PsiElement context = file.getContext();
       if (context != null && !context.isValid()) {
-        return "invalid context: " + reason(context);
+        return "invalid context: " + findOutInvalidationReason(context);
       }
+    }
+
+    PsiFile original = file.getOriginalFile();
+    if (original != file && !original.isValid()) {
+      return "invalid original: " + findOutInvalidationReason(original);
     }
 
     PsiManager manager = file.getManager();

@@ -20,15 +20,10 @@ import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.psi.PsiAnnotationMethod
-import com.intellij.psi.PsiClassType
-import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiJavaFile
-import com.intellij.psi.PsiReferenceExpression
-import com.intellij.psi.SyntaxTraverser
+import com.intellij.openapi.editor.Document
+import com.intellij.psi.*
 import com.intellij.psi.impl.source.PsiClassImpl
 import com.intellij.psi.impl.source.PsiFileImpl
-import com.intellij.psi.impl.source.tree.TreeUtil
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.searches.AnnotatedElementsSearch
 import com.intellij.psi.search.searches.ClassInheritorsSearch
@@ -190,6 +185,14 @@ import java.lang.annotation.*;
     PsiTestUtil.checkStubsMatchText(file)
   }
 
+  void "test removing import in broken code does not cause stub AST mismatch"() {
+    def file = myFixture.addFileToProject("a.java", "import foo..module.SomeClass; class Foo {}") as PsiJavaFile
+    WriteCommandAction.runWriteCommandAction(project) { 
+      file.importList.importStatements[0].delete()
+    }
+    PsiTestUtil.checkStubsMatchText(file)
+  }
+  
   void "test adding type before method call does not cause stub AST mismatch"() {
     def file = myFixture.addFileToProject("a.java", """
 class Foo {
@@ -201,7 +204,65 @@ class Foo {
 """) as PsiJavaFile
     WriteCommandAction.runWriteCommandAction(project) { 
       file.viewProvider.document.insertString(file.text.indexOf('call'), 'char ')
+      PsiDocumentManager.getInstance(project).commitAllDocuments()
       PsiTestUtil.checkStubsMatchText(file)
     }
   }
+
+  void "test inserting class keyword"() {
+    String text = "class Foo { void foo() { return; } }"
+    PsiFile psiFile = myFixture.addFileToProject("a.java", text)
+    Document document = psiFile.getViewProvider().getDocument()
+
+    WriteCommandAction.runWriteCommandAction(project) { 
+      document.insertString(text.indexOf("return"), "class ") 
+    }
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments()
+    PsiTestUtil.checkStubsMatchText(psiFile)
+  }
+
+  void "test inserting enum keyword"() {
+    String text = "class Foo { void foo() { return; } }"
+    PsiFile psiFile = myFixture.addFileToProject("a.java", text)
+    Document document = psiFile.getViewProvider().getDocument()
+
+    WriteCommandAction.runWriteCommandAction(project) {
+      document.insertString(text.indexOf("return"), "enum Foo")
+    }
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments()
+    PsiTestUtil.checkStubsMatchText(psiFile)
+  }
+
+  void "test type arguments without type in a method"() {
+    String text = "class Foo { { final Collection<String> contexts; f instanceof -> } }"
+    PsiFile psiFile = myFixture.addFileToProject("a.java", text)
+
+    WriteCommandAction.runWriteCommandAction(project) { deleteString(psiFile, "Collection") }
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments()
+    PsiTestUtil.checkStubsMatchText(psiFile)
+  }
+
+  private static void deleteString(PsiFile file, String fragment) {
+    def document = file.viewProvider.document
+    def index = document.text.indexOf(fragment)
+    document.deleteString(index, index + fragment.size())
+  }
+
+  void "test remove class literal qualifier"() {
+    String text = "class Foo { { foo(String.class); } }"
+    PsiFile psiFile = myFixture.addFileToProject("a.java", text)
+    WriteCommandAction.runWriteCommandAction(project) {
+      psiFile.viewProvider.document.insertString(text.indexOf(');'), ' x')
+      WriteCommandAction.runWriteCommandAction(project) { deleteString(psiFile, "String") }
+    }
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments()
+    PsiTestUtil.checkStubsMatchText(psiFile)
+  }
+
+  void "test annotation stub without reference"() {
+    PsiFile psiFile = myFixture.addFileToProject("a.java", "@() class Foo { } }")
+    assert ((PsiJavaFile) psiFile).classes[0].modifierList.annotations[0].nameReferenceElement == null
+    assert !((PsiFileImpl) psiFile).contentsLoaded
+  }
+
 }

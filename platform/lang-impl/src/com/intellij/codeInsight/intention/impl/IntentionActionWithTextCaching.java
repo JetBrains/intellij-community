@@ -178,13 +178,9 @@ public class IntentionActionWithTextCaching implements Comparable<IntentionActio
 
     @Override
     public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-      try {
-        myAction.invoke(project, editor, file);
-      }
-      finally {
-        if (myMarkInvoked != null) {
-          myMarkInvoked.accept(IntentionActionWithTextCaching.this, myAction);
-        }
+      myAction.invoke(project, editor, file);
+      if (myMarkInvoked != null) {
+        myMarkInvoked.accept(IntentionActionWithTextCaching.this, myAction);
       }
     }
 

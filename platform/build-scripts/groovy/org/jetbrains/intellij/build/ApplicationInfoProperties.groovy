@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ class ApplicationInfoProperties {
    */
   final String minorVersionMainPart
   final String productName
+  final String edition
   final String companyName
   final String shortCompanyName
   final boolean isEAP
@@ -48,7 +49,8 @@ class ApplicationInfoProperties {
     patchVersion = root.version.first().@patch ?: "0"
     fullVersionFormat = root.version.first().@full ?: "{0}.{1}"
     shortProductName = root.names.first().@product
-    productName = root.names.first().@fullname
+    productName = root.names.first().@fullname ?: shortProductName
+    edition = root.names.first().@edition
     companyName = root.company.first().@name
     minorVersionMainPart = minorVersion.takeWhile { it != '.' }
     isEAP = Boolean.parseBoolean(root.version.first().@eap)
@@ -61,8 +63,12 @@ class ApplicationInfoProperties {
     MessageFormat.format(fullVersionFormat, majorVersion, minorVersion, microVersion, patchVersion)
   }
 
+  String getProductNameWithEdition() {
+    edition != null ? productName + ' ' + edition : productName
+  }
+
   //copy of ApplicationInfoImpl.shortenCompanyName
   private static String shortenCompanyName(String name) {
-    return StringUtil.trimEnd(StringUtil.trimEnd(name, " s.r.o."), " Inc.");
+    return StringUtil.trimEnd(StringUtil.trimEnd(name, " s.r.o."), " Inc.")
   }
 }

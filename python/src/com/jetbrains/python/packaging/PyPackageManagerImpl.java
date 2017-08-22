@@ -41,7 +41,6 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.HttpConfigurable;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.run.CommandLinePatcher;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
@@ -361,7 +360,8 @@ public class PyPackageManagerImpl extends PyPackageManager {
       if (binaryFile != null) {
         final ProjectJdkImpl tmpSdk = new ProjectJdkImpl("", PythonSdkType.getInstance());
         tmpSdk.setHomePath(path);
-        final PyPackageManager manager = PyPackageManager.getInstance(tmpSdk);
+        // Don't save such one-shot SDK with empty name in the cache of PyPackageManagers
+        final PyPackageManager manager = new PyPackageManagerImpl(tmpSdk);
         manager.installManagement();
       }
     }
@@ -491,7 +491,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
       if (showProgress && indicator != null) {
         handler.addProcessListener(new ProcessAdapter() {
           @Override
-          public void onTextAvailable(ProcessEvent event, Key outputType) {
+          public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
             if (outputType == ProcessOutputTypes.STDOUT || outputType == ProcessOutputTypes.STDERR) {
               for (String line : StringUtil.splitByLines(event.getText())) {
                 final String trimmed = line.trim();

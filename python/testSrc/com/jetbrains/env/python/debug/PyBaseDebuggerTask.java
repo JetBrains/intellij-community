@@ -44,7 +44,6 @@ import org.jetbrains.annotations.TestOnly;
 import org.junit.Assert;
 
 import java.io.PrintWriter;
-import java.lang.reflect.InvocationTargetException;
 import java.util.Set;
 import java.util.concurrent.Semaphore;
 
@@ -66,23 +65,24 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
     super(relativeTestDataPath);
   }
 
-  protected void waitForPause() throws InterruptedException, InvocationTargetException {
+  protected void waitForPause() throws InterruptedException {
     Assert.assertTrue("Debugger didn't stopped within timeout\nOutput:" + output(), waitFor(myPausedSemaphore));
 
     XDebuggerTestUtil.waitForSwing();
   }
 
-  abstract PyDebugProcess getPyDebugProcess();
+  protected PyDebugProcess getPyDebugProcess() {
+    return (PyDebugProcess) myDebugProcess;
+  }
 
-
-  protected void waitForTerminate() throws InterruptedException, InvocationTargetException {
+  protected void waitForTerminate() throws InterruptedException {
     setProcessCanTerminate(true);
 
     Assert.assertTrue("Debugger didn't terminated within timeout\nOutput:" + output(), waitFor(myTerminateSemaphore));
     XDebuggerTestUtil.waitForSwing();
   }
 
-  protected void runToLine(int line) throws InvocationTargetException, InterruptedException {
+  protected void runToLine(int line) throws InterruptedException {
     XDebugSession currentSession = XDebuggerManager.getInstance(getProject()).getCurrentSession();
     XSourcePosition position = currentSession.getCurrentPosition();
 
@@ -225,7 +225,7 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
         if (lineBreakpoint.getLine() == line) {
           new WriteAction() {
             @Override
-            protected void run(@NotNull Result result) throws Throwable {
+            protected void run(@NotNull Result result) {
               lineBreakpoint.setSuspendPolicy(policy);
             }
           }.execute();
@@ -277,7 +277,7 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
     return new Variable(var);
   }
 
-  protected void setVal(String name, String value) throws InterruptedException, PyDebuggerException {
+  protected void setVal(String name, String value) throws PyDebuggerException {
     XValue var = XDebuggerTestUtil.evaluate(mySession, name).first;
     getPyDebugProcess().changeVariable((PyDebugValue)var, value);
   }
@@ -329,12 +329,12 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
     });
   }
 
-  protected void finishSession() throws InterruptedException {
+  protected void finishSession() {
     disposeDebugProcess();
 
     if (mySession != null) {
       new WriteAction() {
-        protected void run(@NotNull Result result) throws Throwable {
+        protected void run(@NotNull Result result) {
           mySession.stop();
         }
       }.execute();
@@ -356,7 +356,7 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
     }
   }
 
-  protected abstract void disposeDebugProcess() throws InterruptedException;
+  protected abstract void disposeDebugProcess();
 
   protected void doTest(@Nullable OutputPrinter myOutputPrinter) throws InterruptedException {
     try {
@@ -405,7 +405,7 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
   protected static class Variable {
     private final XTestValueNode myValueNode;
 
-    public Variable(XValue value) throws InterruptedException {
+    public Variable(XValue value) {
       myValueNode = XDebuggerTestUtil.computePresentation(value);
     }
 

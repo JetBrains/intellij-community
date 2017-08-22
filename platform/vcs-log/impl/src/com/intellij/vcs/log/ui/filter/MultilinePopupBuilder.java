@@ -41,7 +41,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
 import java.awt.*;
-import java.util.*;
+import java.util.Collection;
 import java.util.List;
 
 class MultilinePopupBuilder {
@@ -107,9 +107,19 @@ class MultilinePopupBuilder {
   }
 
   private static class MyCompletionProvider extends ValuesCompletionProviderDumbAware<String> {
+    private final boolean mySupportsNegativeValues;
+
     MyCompletionProvider(@NotNull Collection<String> values, boolean supportsNegativeValues) {
-      super(new DefaultTextCompletionValueDescriptor.StringValueDescriptor(),
-            supportsNegativeValues ? ContainerUtil.append(Chars.asList(SEPARATORS), '-') : Chars.asList(SEPARATORS), values, false);
+      super(new DefaultTextCompletionValueDescriptor.StringValueDescriptor(), Chars.asList(SEPARATORS), values, false);
+      mySupportsNegativeValues = supportsNegativeValues;
+    }
+
+    @Nullable
+    @Override
+    public String getPrefix(@NotNull String text, int offset) {
+      String prefix = super.getPrefix(text, offset);
+      if (mySupportsNegativeValues && prefix != null) return StringUtil.trimLeading(prefix, '-');
+      return prefix;
     }
 
     @Nullable

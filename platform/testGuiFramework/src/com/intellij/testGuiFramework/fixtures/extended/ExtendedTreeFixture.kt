@@ -58,6 +58,13 @@ class ExtendedTreeFixture(val robot: Robot, val tree: JTree) : JTreeFixture(robo
   fun clickPath(pathStrings: List<String>, button: MouseButton = MouseButton.LEFT_BUTTON, times: Int = 1)
     = myDriver.clickPath(tree, pathStrings, button, times)
 
+  fun clickXPath(vararg xPathStrings: String)
+    = myDriver.clickXPath(tree, xPathStrings.toList())
+
+  fun clickXPath(xPathStrings: List<String>) {
+    myDriver.clickXPath(tree, xPathStrings, MouseButton.LEFT_BUTTON, 1)
+  }
+
   fun clickPath(vararg pathStrings: String, button: MouseButton = MouseButton.LEFT_BUTTON, times: Int = 1)
     = myDriver.clickPath(tree, pathStrings.toList(), button, times)
 

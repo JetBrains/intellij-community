@@ -22,6 +22,7 @@ import com.intellij.vcs.log.VcsLogFilterUi;
 import com.intellij.vcs.log.data.VcsLogBranchFilterImpl;
 import com.intellij.vcs.log.data.VcsLogStructureFilterImpl;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 
@@ -46,7 +47,7 @@ public class FileHistoryFilterUi implements VcsLogFilterUi {
   }
 
   @Override
-  public void setFilter(@NotNull VcsLogFilter filter) {
+  public void setFilter(@Nullable VcsLogFilter filter) {
     throw new UnsupportedOperationException();
   }
 }

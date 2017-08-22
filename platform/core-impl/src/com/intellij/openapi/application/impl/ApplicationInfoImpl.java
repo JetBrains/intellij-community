@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
@@ -255,10 +254,14 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
 
   @Override
   public String getApiVersion() {
+    BuildNumber build = getBuild();
     if (myApiVersion != null) {
-      return BuildNumber.fromString(myApiVersion, getBuild().getProductCode()).asString();
+      BuildNumber api = BuildNumber.fromString(myApiVersion, build.getProductCode());
+      if (api != null) {
+        return api.asString();
+      }
     }
-    return getBuild().asString();
+    return build.asString();
   }
 
   @Override
@@ -283,27 +286,15 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
 
   @Override
   public String getFullVersion() {
-    String result = doGetFullVersion();
+    String result;
+    if (myFullVersionFormat != null) {
+      result = MessageFormat.format(myFullVersionFormat, myMajorVersion, myMinorVersion, myMicroVersion, myPatchVersion);
+    }
+    else {
+      result = StringUtil.notNullize(myMajorVersion, "0") + '.' + StringUtil.notNullize(myMinorVersion, "0");
+    }
     if (isEAP()) result += " EAP";
     return result;
-  }
-
-  private String doGetFullVersion() {
-    if (myFullVersionFormat == null) {
-      if (!StringUtil.isEmptyOrSpaces(myMajorVersion)) {
-        if (!StringUtil.isEmptyOrSpaces(myMinorVersion)) {
-          return myMajorVersion + "." + myMinorVersion;
-        }
-        else {
-          return myMajorVersion + ".0";
-        }
-      }
-      else {
-        return getVersionName();
-      }
-    } else {
-      return MessageFormat.format(myFullVersionFormat, myMajorVersion, myMinorVersion, myMicroVersion, myPatchVersion);
-    }
   }
 
   @Override
@@ -313,10 +304,8 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
 
   @Override
   public String getVersionName() {
-    final String fullName = ApplicationNamesInfo.getInstance().getFullProductName();
-    if (myEAP && !StringUtil.isEmptyOrSpaces(myCodeName)) {
-      return fullName + " (" + myCodeName + ")";
-    }
+    String fullName = ApplicationNamesInfo.getInstance().getFullProductName();
+    if (myEAP && !StringUtil.isEmptyOrSpaces(myCodeName)) fullName += " (" + myCodeName + ")";
     return fullName;
   }
 
@@ -991,6 +980,10 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   @Override
   public boolean isEssentialPlugin(@NotNull String pluginId) {
     return PluginManagerCore.CORE_PLUGIN_ID.equals(pluginId) || ArrayUtil.contains(pluginId, myEssentialPluginsIds);
+  }
+
+  public List<String> getEssentialPluginsIds() {
+    return Collections.unmodifiableList(Arrays.asList(myEssentialPluginsIds));
   }
 
   private static class UpdateUrlsImpl implements UpdateUrls {

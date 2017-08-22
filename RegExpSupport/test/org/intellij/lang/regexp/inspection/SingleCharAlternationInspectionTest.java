@@ -40,7 +40,12 @@ public class SingleCharAlternationInspectionTest extends RegExpInspectionTestCas
   }
 
   public void testRemoveEscaping() {
-    quickfixTest("<warning descr=\"Single character alternation in RegExp\">\\^|<weak_warning descr=\"Redundant character escape\">\\å</weak_warning>|\\{|\\\\|\\[</warning>", "[\\^å{\\\\\\[]", "Replace with '[\\^å{\\\\\\[]'");
+    quickfixTest("<warning descr=\"Single character alternation in RegExp\">\\^|\\å|\\{|\\\\|\\[</warning>", "[\\^å{\\\\\\[]", "Replace with '[\\^å{\\\\\\[]'");
+  }
+
+  public void testEscapes() {
+    quickfixTest("(<warning descr=\"Single character alternation in RegExp\">\\.|<caret>\\[|]|\\(|\\)|\\{|}|\\^|\\?|\\*|\\||\\+|-|\\$</warning>)ab",
+                 "([.\\[\\](){}^?*|+\\-$])ab", "Replace with '[.\\[\\](){}^?*|+\\-$]'");
   }
 
   @NotNull

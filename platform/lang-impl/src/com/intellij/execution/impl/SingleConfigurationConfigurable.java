@@ -30,6 +30,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.JBCheckBox;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -44,7 +45,7 @@ import java.awt.event.ActionListener;
 
 public final class SingleConfigurationConfigurable<Config extends RunConfiguration>
     extends BaseRCSettingsConfigurable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.impl.SingleConfigurationConfigurable");
+  private static final Logger LOG = Logger.getInstance(SingleConfigurationConfigurable.class);
   private final PlainDocument myNameDocument = new PlainDocument();
   @Nullable private Executor myExecutor;
 
@@ -59,9 +60,9 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   private String myFolderName;
   private boolean myChangingNameFromCode;
 
-
-  private SingleConfigurationConfigurable(RunnerAndConfigurationSettings settings, @Nullable Executor executor) {
+  private SingleConfigurationConfigurable(@NotNull RunnerAndConfigurationSettings settings, @Nullable Executor executor) {
     super(new ConfigurationSettingsEditorWrapper(settings), settings);
+
     myExecutor = executor;
 
     final Config configuration = getConfiguration();
@@ -93,8 +94,8 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     });
   }
 
-  public static <Config extends RunConfiguration> SingleConfigurationConfigurable<Config> editSettings(RunnerAndConfigurationSettings settings,
-                                                                                                       @Nullable Executor executor) {
+  @NotNull
+  public static <Config extends RunConfiguration> SingleConfigurationConfigurable<Config> editSettings(@NotNull RunnerAndConfigurationSettings settings, @Nullable Executor executor) {
     SingleConfigurationConfigurable<Config> configurable = new SingleConfigurationConfigurable<>(settings, executor);
     configurable.reset();
     return configurable;
@@ -118,14 +119,17 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   @Override
   public void apply() throws ConfigurationException {
     RunnerAndConfigurationSettings settings = getSettings();
-    if (settings == null) return;
+    if (settings == null) {
+      return;
+    }
+
     RunConfiguration runConfiguration = settings.getConfiguration();
-    final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(runConfiguration.getProject());
     settings.setName(getNameText());
     settings.setSingleton(mySingleton);
     settings.setFolderName(myFolderName);
+    settings.setShared(myStoreProjectConfiguration);
     super.apply();
-    runManager.addConfiguration(settings, myStoreProjectConfiguration);
+    RunManagerImpl.getInstanceImpl(runConfiguration.getProject()).addConfiguration(settings);
   }
 
   @Override
@@ -282,7 +286,9 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     return myHelpTopic;
   }
 
+  @NotNull
   public Config getConfiguration() {
+    //noinspection unchecked
     return (Config)getSettings().getConfiguration();
   }
 

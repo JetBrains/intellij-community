@@ -178,7 +178,7 @@ public class JdkUtil {
         setArgFileParams(commandLine, javaParameters, vmParameters, dynamicVMOptions, dynamicParameters);
         dynamicMainClass = dynamicParameters;
       }
-      else if (!explicitClassPath(vmParameters) && (commandLineWrapper = getCommandLineWrapperClass()) != null) {
+      else if (!explicitClassPath(vmParameters) && javaParameters.getJarPath() == null && (commandLineWrapper = getCommandLineWrapperClass()) != null) {
         if (canUseClasspathJar(javaParameters)) {
           setClasspathJarParams(commandLine, javaParameters, vmParameters, commandLineWrapper, dynamicVMOptions, dynamicParameters);
         }
@@ -228,7 +228,8 @@ public class JdkUtil {
       try (PrintWriter writer = new PrintWriter(argFile)) {
         if (dynamicVMOptions) {
           for (String param : vmParameters.getList()) {
-            writer.println(param);
+            writer.print(quoteArg(param));
+            writer.print('\n');
           }
         }
         else {
@@ -237,22 +238,26 @@ public class JdkUtil {
 
         PathsList classPath = javaParameters.getClassPath();
         if (!classPath.isEmpty() && !explicitClassPath(vmParameters)) {
-          writer.println("-classpath");
-          writer.println(classPath.getPathsString());
+          writer.print("-classpath\n");
+          writer.print(quoteArg(classPath.getPathsString()));
+          writer.print('\n');
         }
 
         PathsList modulePath = javaParameters.getModulePath();
         if (!modulePath.isEmpty() && !explicitModulePath(vmParameters)) {
-          writer.println("-p");
-          writer.println(modulePath.getPathsString());
+          writer.print("-p\n");
+          writer.print(quoteArg(modulePath.getPathsString()));
+          writer.print('\n');
         }
 
         if (dynamicParameters) {
           for (String parameter : getMainClassParams(javaParameters)) {
-            writer.println(parameter);
+            writer.print(quoteArg(parameter));
+            writer.print('\n');
           }
           for (String parameter : javaParameters.getProgramParametersList().getList()) {
-            writer.println(parameter);
+            writer.print(quoteArg(parameter));
+            writer.print('\n');
           }
         }
       }
@@ -266,6 +271,32 @@ public class JdkUtil {
     catch (IOException e) {
       throwUnableToCreateTempFile(e);
     }
+  }
+
+  /* https://docs.oracle.com/javase/9/tools/java.htm, "java Command-Line Argument Files" */
+  private static String quoteArg(String arg) {
+    if (StringUtil.containsAnyChar(arg, " \"\n\r\t\f") || arg.endsWith("\\") || arg.startsWith("#")) {
+      StringBuilder sb = new StringBuilder(arg.length() * 2);
+      sb.append('"');
+
+      for (int i = 0; i < arg.length(); i++) {
+        char c = arg.charAt(i);
+        switch (c) {
+          case '\n': sb.append("\\n"); break;
+          case '\r': sb.append("\\r"); break;
+          case '\t': sb.append("\\t"); break;
+          case '\f': sb.append("\\f"); break;
+          case '\"': sb.append("\\\""); break;
+          case '\\': sb.append("\\\\"); break;
+          default:   sb.append(c);
+        }
+      }
+
+      sb.append('"');
+      return sb.toString();
+    }
+
+    return arg;
   }
 
   private static void setCommandLineWrapperParams(GeneralCommandLine commandLine,

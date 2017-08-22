@@ -42,7 +42,7 @@ public interface FileIndex {
    * Same as {@link #iterateContent(ContentIterator)} but allows to pass {@code filter} to
    * provide filtering in condition for directories.
    * <p>
-   * If <code>filter</code> returns false on a directory, the directory won't be processed, but iteration will go on.
+   * If {@code filter} returns false on a directory, the directory won't be processed, but iteration will go on.
    * <p>
    * {@code null} filter means that all directories should be processed.
    *
@@ -51,16 +51,16 @@ public interface FileIndex {
   boolean iterateContent(@NotNull ContentIterator processor, @Nullable VirtualFileFilter filter);
 
   /**
-   * Processes all files and directories in the content under directory <code>dir</code> (including the directory itself) skipping excluded
-   * and ignored files and directories. Does nothing if <code>dir</code> is not in the content.
+   * Processes all files and directories in the content under directory {@code dir} (including the directory itself) skipping excluded
+   * and ignored files and directories. Does nothing if {@code dir} is not in the content.
    *
    * @return false if files processing was stopped ({@link ContentIterator#processFile(VirtualFile)} returned false)
    */
   boolean iterateContentUnderDirectory(@NotNull VirtualFile dir, @NotNull ContentIterator processor);
 
   /**
-   * Same as {@link #iterateContentUnderDirectory(VirtualFile, ContentIterator)} but allows to pass additional <code>customFilter</code> to
-   * the iterator, in case you need to skip some file system branches using your own logic. If <code>customFilter</code> returns false on
+   * Same as {@link #iterateContentUnderDirectory(VirtualFile, ContentIterator)} but allows to pass additional {@code customFilter} to
+   * the iterator, in case you need to skip some file system branches using your own logic. If {@code customFilter} returns false on
    * a directory, it won't be processed, but iteration will go on.
    * <p>
    * {@code null} filter means that all directories should be processed.

@@ -105,7 +105,7 @@ public class UnnecessaryBlockStatementInspection extends BaseInspection implemen
     public void visitBlockStatement(PsiBlockStatement blockStatement) {
       super.visitBlockStatement(blockStatement);
       if (ignoreSwitchBranches) {
-        final PsiElement prevStatement = PsiTreeUtil.skipSiblingsBackward(blockStatement, PsiWhiteSpace.class);
+        final PsiElement prevStatement = PsiTreeUtil.skipWhitespacesBackward(blockStatement);
         if (prevStatement instanceof PsiSwitchLabelStatement) {
           return;
         }

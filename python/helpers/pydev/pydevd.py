@@ -10,7 +10,7 @@ import os
 import sys
 import traceback
 
-from _pydevd_bundle.pydevd_constants import IS_JYTH_LESS25, IS_PY3K, IS_PY34_OLDER, get_thread_id, dict_keys, dict_contains, \
+from _pydevd_bundle.pydevd_constants import IS_JYTH_LESS25, IS_PY3K, IS_PY34_OR_GREATER, get_thread_id, dict_keys, dict_contains, \
     dict_iter_items, DebugInfoHolder, PYTHON_SUSPEND, STATE_SUSPEND, STATE_RUN, get_frame, xrange, \
     clear_cached_thread_id, INTERACTIVE_MODE_AVAILABLE
 from _pydev_bundle import fix_getpass
@@ -609,6 +609,8 @@ class PyDB:
     def add_break_on_exception(
             self,
             exception,
+            condition,
+            expression,
             notify_always,
             notify_on_terminate,
             notify_on_first_raise_only,
@@ -617,6 +619,8 @@ class PyDB:
         try:
             eb = ExceptionBreakpoint(
                     exception,
+                    condition,
+                    expression,
                     notify_always,
                     notify_on_terminate,
                     notify_on_first_raise_only,
@@ -725,7 +729,7 @@ class PyDB:
         self.writer.add_command(cmd)
 
 
-    def do_wait_suspend(self, thread, frame, event, arg): #@UnusedVariable
+    def do_wait_suspend(self, thread, frame, event, arg, suspend_type="trace"): #@UnusedVariable
         """ busy waits until the thread state changes to RUN
         it expects thread's state as attributes of the thread.
         Upon running, processes any outstanding Stepping commands.
@@ -734,7 +738,7 @@ class PyDB:
 
         message = thread.additional_info.pydev_message
 
-        cmd = self.cmd_factory.make_thread_suspend_message(get_thread_id(thread), frame, thread.stop_reason, message)
+        cmd = self.cmd_factory.make_thread_suspend_message(get_thread_id(thread), frame, thread.stop_reason, message, suspend_type)
         self.writer.add_command(cmd)
 
         CustomFramesContainer.custom_frames_lock.acquire()  # @UndefinedVariable
@@ -745,7 +749,7 @@ class PyDB:
                 if custom_frame.thread_id == thread.ident:
                     # print >> sys.stderr, 'Frame created: ', frame_id
                     self.writer.add_command(self.cmd_factory.make_custom_frame_created_message(frame_id, custom_frame.name))
-                    self.writer.add_command(self.cmd_factory.make_thread_suspend_message(frame_id, custom_frame.frame, CMD_THREAD_SUSPEND, ""))
+                    self.writer.add_command(self.cmd_factory.make_thread_suspend_message(frame_id, custom_frame.frame, CMD_THREAD_SUSPEND, "", suspend_type))
 
                 from_this_thread.append(frame_id)
 
@@ -807,7 +811,7 @@ class PyDB:
                         stop = True
                 if stop:
                     info.pydev_state = STATE_SUSPEND
-                    self.do_wait_suspend(thread, frame, event, arg)
+                    self.do_wait_suspend(thread, frame, event, arg, "trace")
                     return
 
 
@@ -857,7 +861,7 @@ class PyDB:
             try:
                 add_exception_to_frame(frame, exception)
                 self.set_suspend(thread, CMD_ADD_EXCEPTION_BREAK)
-                self.do_wait_suspend(thread, frame, 'exception', None)
+                self.do_wait_suspend(thread, frame, 'exception', None, "trace")
             except:
                 pydev_log.error("We've got an error while stopping in post-mortem: %s\n"%sys.exc_info()[0])
         finally:
@@ -896,15 +900,18 @@ class PyDB:
 
     def prepare_to_run(self):
         ''' Shared code to prepare debugging by installing traces and registering threads '''
+        if self.signature_factory is not None or self.thread_analyser is not None:
+            # we need all data to be sent to IDE even after program finishes
+            CheckOutputThread(self).start()
+            # turn off frame evaluation for concurrency visualization
+            self.frame_eval_func = None
+
         self.patch_threads()
         pydevd_tracing.SetTrace(self.trace_dispatch, self.frame_eval_func, self.dummy_trace_dispatch)
         # There is no need to set tracing function if frame evaluation is available. Moreover, there is no need to patch thread
         # functions, because frame evaluation function is set to all threads by default.
 
         PyDBCommandThread(self).start()
-        if self.signature_factory is not None or self.thread_analyser is not None:
-            # we need all data to be sent to IDE even after program finishes
-            CheckOutputThread(self).start()
 
         if show_tracing_warning or show_frame_eval_warning:
             cmd = self.cmd_factory.make_show_cython_warning_message()
@@ -1579,7 +1586,7 @@ if __name__ == '__main__':
         if setup['save-threading']:
             debugger.thread_analyser = ThreadingLogger()
         if setup['save-asyncio']:
-            if IS_PY34_OLDER:
+            if IS_PY34_OR_GREATER:
                 debugger.asyncio_analyser = AsyncioLogger()
 
         apply_debugger_options(setup)

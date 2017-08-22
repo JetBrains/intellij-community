@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -117,6 +117,12 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
   }
 
   @Override
+  public boolean hasBlock() {
+    GrMethodStub stub = getStub();
+    return stub != null ? stub.hasBlock() : GrMethod.super.hasBlock();
+  }
+
+  @Override
   public void setBlock(GrCodeBlock newBlock) {
     ASTNode newNode = newBlock.getNode().copyElement();
     final GrOpenBlock oldBlock = getBlock();
@@ -224,7 +230,7 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
       if (block != null) {
         PsiType inferred = GroovyPsiManager.inferType(method, new MethodTypeInferencer(block));
         if (inferred != null) {
-          if (nominal == null || nominal.isAssignableFrom(inferred)) {
+          if (nominal == null || (nominal.isAssignableFrom(inferred) && !inferred.equals(PsiType.NULL))) {
             return inferred;
           }
         }
@@ -498,6 +504,8 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
   @Override
   @Nullable
   public GrDocComment getDocComment() {
+    final GrMethodStub stub = getStub();
+    if (stub != null && !stub.hasComment()) return null;
     return GrDocCommentUtil.findDocComment(this);
   }
 

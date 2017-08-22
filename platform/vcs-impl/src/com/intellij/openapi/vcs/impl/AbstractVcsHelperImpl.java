@@ -52,7 +52,10 @@ import com.intellij.openapi.vcs.changes.CommitResultHandler;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.committed.*;
 import com.intellij.openapi.vcs.changes.ui.*;
-import com.intellij.openapi.vcs.history.*;
+import com.intellij.openapi.vcs.history.FileHistoryRefresher;
+import com.intellij.openapi.vcs.history.FileHistoryRefresherI;
+import com.intellij.openapi.vcs.history.VcsHistoryProvider;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.merge.MultipleFileMergeDialog;
@@ -244,7 +247,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     }
   }
 
-  private static String[] getExceptionMessages(VcsException exception) {
+  private static String[] getExceptionMessages(@NotNull VcsException exception) {
     String[] messages = exception.getMessages();
     if (messages.length == 0) messages = new String[]{VcsBundle.message("exception.text.unknown.error")};
     final List<String> list = new ArrayList<>();
@@ -590,10 +593,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     if (provider == null) return;
     if (isNonLocal && provider.getForNonLocal(virtualFile) == null) return;
 
-    final String title = VcsBundle.message("paths.affected.in.revision",
-                                           revision instanceof ShortVcsRevisionNumber
-                                           ? ((ShortVcsRevisionNumber)revision).toShortString()
-                                           : revision.asString());
+    final String title = VcsBundle.message("paths.affected.in.revision", VcsUtil.getShortRevisionString(revision));
     final CommittedChangeList[] list = new CommittedChangeList[1];
     final FilePath[] targetPath = new FilePath[1];
     final VcsException[] exc = new VcsException[1];

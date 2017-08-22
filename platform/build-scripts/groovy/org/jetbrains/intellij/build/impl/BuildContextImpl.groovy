@@ -22,6 +22,7 @@ import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.*
 import org.jetbrains.jps.gant.JpsGantProjectBuilder
 import org.jetbrains.jps.model.JpsGlobal
+import org.jetbrains.jps.model.JpsModel
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.jps.model.java.JavaSourceRootProperties
@@ -36,14 +37,13 @@ class BuildContextImpl extends BuildContext {
   private final JpsGlobal global
   private final CompilationContextImpl compilationContext
 
-  static BuildContextImpl create(AntBuilder ant, JpsGantProjectBuilder projectBuilder, JpsProject project, JpsGlobal global,
-                                 String communityHome, String projectHome, ProductProperties productProperties,
+  static BuildContextImpl create(String communityHome, String projectHome, ProductProperties productProperties,
                                  ProprietaryBuildTools proprietaryBuildTools, BuildOptions options) {
     WindowsDistributionCustomizer windowsDistributionCustomizer = productProperties.createWindowsCustomizer(projectHome)
     LinuxDistributionCustomizer linuxDistributionCustomizer = productProperties.createLinuxCustomizer(projectHome)
     MacDistributionCustomizer macDistributionCustomizer = productProperties.createMacCustomizer(projectHome)
 
-    def compilationContext = CompilationContextImpl.create(ant, projectBuilder, project, global, communityHome, projectHome,
+    def compilationContext = CompilationContextImpl.create(communityHome, projectHome,
                                                            createBuildOutputRootEvaluator(projectHome, productProperties), options)
     def context = new BuildContextImpl(compilationContext, productProperties,
                                        windowsDistributionCustomizer, linuxDistributionCustomizer, macDistributionCustomizer,
@@ -136,8 +136,18 @@ class BuildContextImpl extends BuildContext {
   }
 
   @Override
+  JpsModel getProjectModel() {
+    compilationContext.projectModel
+  }
+
+  @Override
   JpsGantProjectBuilder getProjectBuilder() {
     compilationContext.projectBuilder
+  }
+
+  @Override
+  JpsCompilationData getCompilationData() {
+    compilationContext.compilationData
   }
 
   @Override
@@ -150,6 +160,21 @@ class BuildContextImpl extends BuildContext {
   }
 
   @Override
+  String getModuleOutputPath(JpsModule module) {
+    return compilationContext.getModuleOutputPath(module)
+  }
+
+  @Override
+  String getModuleTestsOutputPath(JpsModule module) {
+    return compilationContext.getModuleTestsOutputPath(module)
+  }
+
+  @Override
+  List<String> getModuleRuntimeClasspath(JpsModule module, boolean forTests) {
+    return compilationContext.getModuleRuntimeClasspath(module, forTests)
+  }
+
+  @Override
   void notifyArtifactBuilt(String artifactPath) {
     compilationContext.notifyArtifactBuilt(artifactPath)
   }
@@ -157,7 +182,7 @@ class BuildContextImpl extends BuildContext {
   @Override
   File findFileInModuleSources(String moduleName, String relativePath) {
     getSourceRootsWithPrefixes(findRequiredModule(moduleName)).collect {
-      new File(it.first, "${StringUtil.trimStart(relativePath, it.second)}")
+      new File(it.first, StringUtil.trimStart(relativePath, it.second))
     }.find {it.exists()}
   }
 

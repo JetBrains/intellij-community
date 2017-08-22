@@ -156,7 +156,7 @@ public class ExtractSuperClassTest extends RefactoringTestCase {
     }
     new WriteCommandAction.Simple(myProject) {
       @Override
-      protected void run() throws Throwable {
+      protected void run() {
         ExtractSuperClassUtil
           .extractSuperClass(myProject, psiClass.getContainingFile().getContainingDirectory(), "TestSubclass", anonymousClass,
                              infos.toArray(new MemberInfo[infos.size()]), new DocCommentPolicy(DocCommentPolicy.ASIS));

@@ -20,6 +20,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.EventDispatcher
 import com.intellij.util.SmartList
 import com.intellij.util.Url
+import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.util.containers.ContainerUtil
 import gnu.trove.TObjectHashingStrategy
 import org.jetbrains.concurrency.*
@@ -28,7 +29,7 @@ import java.util.concurrent.ConcurrentMap
 abstract class BreakpointManagerBase<T : BreakpointBase<*>> : BreakpointManager {
   override val breakpoints = ContainerUtil.newConcurrentSet<T>()
 
-  protected val breakpointDuplicationByTarget: ConcurrentMap<T, T> = ContainerUtil.newConcurrentMap<T, T>(object : TObjectHashingStrategy<T> {
+  protected val breakpointDuplicationByTarget: ConcurrentMap<T, T> = ConcurrentCollectionFactory.createMap<T, T>(object : TObjectHashingStrategy<T> {
     override fun computeHashCode(b: T): Int {
       var result = b.line
       result *= 31 + b.column

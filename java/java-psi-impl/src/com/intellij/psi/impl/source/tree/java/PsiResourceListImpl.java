@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Iterator;
 import java.util.List;
 
+import static com.intellij.psi.SyntaxTraverser.psiTraverser;
+
 public class PsiResourceListImpl extends CompositePsiElement implements PsiResourceList {
   public PsiResourceListImpl() {
     super(JavaElementType.RESOURCE_LIST);
@@ -50,7 +52,7 @@ public class PsiResourceListImpl extends CompositePsiElement implements PsiResou
   @NotNull
   @Override
   public Iterator<PsiResourceListElement> iterator() {
-    return PsiTreeUtil.childIterator(this, PsiResourceListElement.class);
+    return psiTraverser().children(this).filter(PsiResourceListElement.class).iterator();
   }
 
   @Override

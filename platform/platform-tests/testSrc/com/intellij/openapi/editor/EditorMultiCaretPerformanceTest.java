@@ -20,7 +20,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 
 public class EditorMultiCaretPerformanceTest extends AbstractEditorTest {
-  public void testTyping() throws Exception {
+  public void testTyping() {
     int caretCount = 1000;
     int charactersToType = 100;
     String initialText = StringUtil.repeat("<caret>\n", caretCount);

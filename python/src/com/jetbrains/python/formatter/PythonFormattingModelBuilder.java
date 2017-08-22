@@ -77,13 +77,12 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilderEx, C
 
     final CommonCodeStyleSettings commonSettings = settings.getCommonSettings(PythonLanguage.getInstance());
     return new SpacingBuilder(commonSettings)
-      .between(CLASS_DECLARATION, STATEMENT_OR_DECLARATION).blankLines(commonSettings.BLANK_LINES_AROUND_CLASS)
-      .between(STATEMENT_OR_DECLARATION, CLASS_DECLARATION).blankLines(commonSettings.BLANK_LINES_AROUND_CLASS)
-      .between(FUNCTION_DECLARATION, STATEMENT_OR_DECLARATION).blankLines(commonSettings.BLANK_LINES_AROUND_METHOD)
-      .between(STATEMENT_OR_DECLARATION, FUNCTION_DECLARATION).blankLines(commonSettings.BLANK_LINES_AROUND_METHOD)
-      .after(FUNCTION_DECLARATION).blankLines(commonSettings.BLANK_LINES_AROUND_METHOD)
-      .after(CLASS_DECLARATION).blankLines(commonSettings.BLANK_LINES_AROUND_CLASS)
-      // Remove excess blank lines between imports (at most one is allowed). 
+      .before(END_OF_LINE_COMMENT).spacing(2, 0, 0, commonSettings.KEEP_LINE_BREAKS, commonSettings.KEEP_BLANK_LINES_IN_CODE)
+      .after(END_OF_LINE_COMMENT).spacing(0, 0, 1, commonSettings.KEEP_LINE_BREAKS, commonSettings.KEEP_BLANK_LINES_IN_CODE)
+      // Top-level definitions are supposed to be handled in PyBlock#getSpacing
+      .around(CLASS_DECLARATION).blankLines(commonSettings.BLANK_LINES_AROUND_CLASS)
+      .around(FUNCTION_DECLARATION).blankLines(commonSettings.BLANK_LINES_AROUND_METHOD)
+      // Remove excess blank lines between imports (at most one is allowed).
       // Note that ImportOptimizer gets rid of them anyway.
       // Empty lines between import groups are handles in PyBlock#getSpacing
       .between(IMPORT_STATEMENTS, IMPORT_STATEMENTS).spacing(0, Integer.MAX_VALUE, 1, false, 1)
@@ -116,12 +115,12 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilderEx, C
 
       .before(COLON).spaceIf(pySettings.SPACE_BEFORE_PY_COLON)
       .afterInside(LPAR, FROM_IMPORT_STATEMENT).spaces(0, pySettings.FROM_IMPORT_NEW_LINE_AFTER_LEFT_PARENTHESIS)
-      .betweenInside(COMMA, RPAR, FROM_IMPORT_STATEMENT).spaceIf(commonSettings.SPACE_AFTER_COMMA, 
+      .betweenInside(COMMA, RPAR, FROM_IMPORT_STATEMENT).spaceIf(commonSettings.SPACE_AFTER_COMMA,
                                                                  pySettings.FROM_IMPORT_NEW_LINE_BEFORE_RIGHT_PARENTHESIS)
       .beforeInside(RPAR, FROM_IMPORT_STATEMENT).spaces(0, pySettings.FROM_IMPORT_NEW_LINE_BEFORE_RIGHT_PARENTHESIS)
       .after(COMMA).spaceIf(commonSettings.SPACE_AFTER_COMMA)
       .before(COMMA).spaceIf(commonSettings.SPACE_BEFORE_COMMA)
-      .between(FROM_KEYWORD, DOT).spaces(1)
+      .after(FROM_KEYWORD).spaces(1)
       .between(DOT, IMPORT_KEYWORD).spaces(1)
       .around(DOT).spaces(0)
       .aroundInside(AT, DECORATOR_CALL).none()
@@ -157,9 +156,10 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilderEx, C
 
   // should be all keywords?
   private static final TokenSet SINGLE_SPACE_KEYWORDS = TokenSet.create(IN_KEYWORD, AND_KEYWORD, OR_KEYWORD, IS_KEYWORD,
-                                                                        IF_KEYWORD, ELIF_KEYWORD, FOR_KEYWORD, RETURN_KEYWORD, RAISE_KEYWORD,
+                                                                        IF_KEYWORD, ELIF_KEYWORD, ELSE_KEYWORD,
+                                                                        FOR_KEYWORD, RETURN_KEYWORD, RAISE_KEYWORD,
                                                                         ASSERT_KEYWORD, CLASS_KEYWORD, DEF_KEYWORD, DEL_KEYWORD,
-                                                                        EXEC_KEYWORD, GLOBAL_KEYWORD, IMPORT_KEYWORD, LAMBDA_KEYWORD,
+                                                                        EXEC_KEYWORD, GLOBAL_KEYWORD, NONLOCAL_KEYWORD, IMPORT_KEYWORD, LAMBDA_KEYWORD,
                                                                         NOT_KEYWORD, WHILE_KEYWORD, YIELD_KEYWORD);
 
   private static TokenSet allButLambda() {

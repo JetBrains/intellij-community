@@ -16,7 +16,7 @@ public class UnnecessaryFullyQualifiedNameInspectionTest extends IGInspectionTes
     return IdeaTestUtil.getMockJdk17();
   }
 
-  public void testFqnInJavadoc_Unnecessary_WhenFullyQualifyIfNotImported() throws Exception {
+  public void testFqnInJavadoc_Unnecessary_WhenFullyQualifyIfNotImported() {
     doTestWithFqnInJavadocSetting(BASE_DIR + "unnecessary_fqn_javadoc_fully_qualify_if_not_imported", JavaCodeStyleSettings.FULLY_QUALIFY_NAMES_IF_NOT_IMPORTED);
   }
 

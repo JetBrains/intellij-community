@@ -41,7 +41,7 @@ public class StructureViewUpdatingTest extends TestSourceBasedTestCase {
     return "structureView";
   }
 
-  public void testJavaClassStructure() throws Exception {
+  public void testJavaClassStructure() {
     final PsiClass psiClass = JavaDirectoryService.getInstance().getClasses(getPackageDirectory("com/package1"))[0];
     final VirtualFile virtualFile = psiClass.getContainingFile().getVirtualFile();
     final FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
@@ -72,7 +72,7 @@ public class StructureViewUpdatingTest extends TestSourceBasedTestCase {
 
       new WriteCommandAction.Simple(getProject()) {
         @Override
-        protected void run() throws Throwable {
+        protected void run() {
           final int offset = document.getLineStartOffset(5);
           document.insertString(offset, "    boolean myNewField = false;\n");
         }
@@ -110,7 +110,7 @@ public class StructureViewUpdatingTest extends TestSourceBasedTestCase {
     }
   }
 
-  public void testShowClassMembers() throws Exception {
+  public void testShowClassMembers() {
     final PsiClass psiClass = JavaDirectoryService.getInstance().getClasses(getPackageDirectory("com/package1"))[0];
     final VirtualFile virtualFile = psiClass.getContainingFile().getVirtualFile();
     final FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
@@ -174,7 +174,7 @@ public class StructureViewUpdatingTest extends TestSourceBasedTestCase {
     }
   }
 
-  public void testExpandElementWithExitingName() throws InterruptedException {
+  public void testExpandElementWithExitingName() {
 
     final VirtualFile xmlVirtualFile = getContentRoot().findFileByRelativePath("test.xml");
     final FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);

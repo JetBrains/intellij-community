@@ -181,5 +181,10 @@ public class DependsOnGroupsInspection extends BaseJavaLocalInspectionTool {
       }
       */
     }
+
+    @Override
+    public boolean startInWriteAction() {
+      return false;
+    }
   }
 }

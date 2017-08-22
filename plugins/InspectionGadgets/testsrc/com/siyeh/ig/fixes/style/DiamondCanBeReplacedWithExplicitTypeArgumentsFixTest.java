@@ -43,7 +43,7 @@ public class DiamondCanBeReplacedWithExplicitTypeArgumentsFixTest extends IGQuic
     doTest();
   }
 
-  public void testFailedInference() throws Exception {
+  public void testFailedInference() {
     assertQuickfixNotAvailable();
   }
 

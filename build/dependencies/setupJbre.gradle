@@ -1,11 +1,13 @@
 task setupJbre {}
 
 def jdkRepo = inJetBrainsNetwork ? 'http://repo.labs.intellij.net/intellij-jdk' : 'https://dl.bintray.com/jetbrains/intellij-jdk'
+def targetOs = "${System.getProperty("intellij.build.target.os", "all")}"
 
 jrePlatformsToDownload(targetOs).each { platform ->
   archToDownload(platform).each { arch ->
-    def jbrexArtifactName = "jbrex8${jdkBuild}_${platform}_$arch"
-    def jbreArtifactName = "jbre8${jdkBuild}_${platform}_$arch"
+    def jreBuild = project.ext.has("jreBuild_$platform") ? project.ext["jreBuild_$platform"] : jdkBuild
+    def jbrexArtifactName = "jbrex8${jreBuild}_${platform}_$arch"
+    def jbreArtifactName = "jbre8${jreBuild}_${platform}_$arch"
 
     task("downloadJbrex_${platform}_$arch") {
       def outputDir = "$project.buildDir/jbre"

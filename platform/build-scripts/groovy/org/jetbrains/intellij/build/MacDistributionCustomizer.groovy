@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import groovy.transform.CompileStatic
 @CompileStatic
 abstract class MacDistributionCustomizer {
   /**
-   * Path to icns file containing product icon bundle for Mac OS distribution
+   * Path to icns file containing product icon bundle for macOS distribution
    * For full description of icns files see <a href="https://en.wikipedia.org/wiki/Apple_Icon_Image_format">Apple Icon Image Format</a>
    */
   String icnsPath
@@ -43,9 +43,9 @@ abstract class MacDistributionCustomizer {
    * Path to an image which will be injected into .dmg file
    */
   String dmgImagePath
-  
+
   /**
-   * The minimum version of Mac OS where the product is allowed to be installed
+   * The minimum version of macOS where the product is allowed to be installed
    */
   String minOSXVersion = "10.8"
 
@@ -85,18 +85,18 @@ abstract class MacDistributionCustomizer {
   boolean associateIpr = false
 
   /**
-   * If {@code true} YourKit agent will be automatically attached when an EAP build of the product starts under Mac OS. This property is
+   * If {@code true} YourKit agent will be automatically attached when an EAP build of the product starts under macOS. This property is
    * taken into account only if {@link ProductProperties#enableYourkitAgentInEAP} is {@code true}.
    */
   boolean enableYourkitAgentInEAP = true
 
   /**
-   * Relative paths to files in Mac OS distribution which should take 'executable' permissions
+   * Relative paths to files in macOS distribution which should take 'executable' permissions
    */
   List<String> extraExecutables = []
 
   /**
-   * Relative paths to files in Mac OS distribution which should be signed
+   * Relative paths to files in macOS distribution which should be signed
    */
   List<String> binariesToSign = []
 
@@ -130,7 +130,7 @@ abstract class MacDistributionCustomizer {
   String helpId = null
 
   /**
-   * Override this method if you need to bundle help with Mac OS distribution of the product.
+   * Override this method if you need to bundle help with macOS distribution of the product.
    * @return path to zip archive containing directory "{@link #helpId}.help" with bundled help files inside.
    */
   String getPathToHelpZip(BuildContext context) {

@@ -39,12 +39,6 @@ class ConsoleBuildMessageLogger extends BuildMessageLogger {
   @Override
   void processMessage(LogMessage message) {
     switch (message.kind) {
-      case LogMessage.Kind.ERROR:
-      case LogMessage.Kind.WARNING:
-      case LogMessage.Kind.INFO:
-      case LogMessage.Kind.PROGRESS:
-        printMessage(message.text)
-        break
       case LogMessage.Kind.BLOCK_STARTED:
         printMessage(message.text)
         indent++
@@ -54,6 +48,9 @@ class ConsoleBuildMessageLogger extends BuildMessageLogger {
         break
       case LogMessage.Kind.ARTIFACT_BUILT:
         printMessage("Artifact built: $message.text")
+        break
+      default:
+        printMessage(message.text)
         break
     }
   }

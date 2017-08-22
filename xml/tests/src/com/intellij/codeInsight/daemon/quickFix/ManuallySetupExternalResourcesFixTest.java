@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 
 public class ManuallySetupExternalResourcesFixTest extends LightQuickFixParameterizedTestCase {
-  public void test() throws Exception { doAllTests(); }
+  public void test() { doAllTests(); }
 
   @Override
   protected String getBasePath() {
@@ -30,7 +30,7 @@ public class ManuallySetupExternalResourcesFixTest extends LightQuickFixParamete
 
   // just check for action availability
   @Override
-  protected void doAction(@NotNull ActionHint actionHint, String testFullPath, String testName) throws Exception {
+  protected void doAction(@NotNull ActionHint actionHint, String testFullPath, String testName) {
     findActionAndCheck(actionHint, testFullPath);
   }
 

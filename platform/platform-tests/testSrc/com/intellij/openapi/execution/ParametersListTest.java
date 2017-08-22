@@ -209,7 +209,7 @@ public class ParametersListTest {
   }
 
   @Test
-  public void testParameterListUtil() throws Exception {
+  public void testParameterListUtil() {
     final List<String> expected = Arrays.asList(
       "cmd",
       "-a",

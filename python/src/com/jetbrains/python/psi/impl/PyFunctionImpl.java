@@ -20,7 +20,6 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
@@ -45,7 +44,6 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.psi.stubs.PyFunctionStub;
@@ -265,7 +263,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
   public PyType getCallType(@Nullable PyExpression receiver,
                             @NotNull Map<PyExpression, PyCallableParameter> parameters,
                             @NotNull TypeEvalContext context) {
-    return analyzeCallType(context.getReturnType(this), receiver, parameters, context);
+    return analyzeCallType(PyUtil.getReturnTypeToAnalyzeAsCallType(this, context), receiver, parameters, context);
   }
 
   @Nullable
@@ -380,12 +378,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       elementType = Ref.create(PyUnionType.union(types));
     }
     if (elementType != null) {
-      final PyClass generator = as(PyResolveImportUtil.resolveTopLevelMember(QualifiedName.fromDottedString(PyTypingTypeProvider.GENERATOR),
-                                                                             PyResolveImportUtil.fromFoothold(this)), PyClass.class);
-      if (generator != null) {
-        final List<PyType> parameters = Arrays.asList(elementType.get(), null, getReturnStatementType(context));
-        return Ref.create(new PyCollectionTypeImpl(generator, false, parameters));
-      }
+      return Ref.create(PyTypingTypeProvider.wrapInGeneratorType(elementType.get(), getReturnStatementType(context), this));
     }
     if (!types.isEmpty()) {
       return Ref.create(null);
@@ -414,17 +407,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       final PyClassLikeType classType = as(returnType, PyClassLikeType.class);
       if (classType != null) {
         if (PyTypingTypeProvider.GENERATOR.equals(classType.getClassQName())) {
-          final QualifiedName asyncGeneratorName = QualifiedName.fromDottedString(PyTypingTypeProvider.ASYNC_GENERATOR);
-          final PsiElement resolvedGenerator = PyResolveImportUtil.resolveTopLevelMember(asyncGeneratorName,
-                                                                                         PyResolveImportUtil.fromFoothold(this));
-          final PyClass asyncGenerator = as(resolvedGenerator, PyClass.class);
-          if (asyncGenerator != null) {
-            return new PyCollectionTypeImpl(asyncGenerator, false,
-                                            Arrays.asList(((PyCollectionType)returnType).getIteratedItemType(), null));
-          }
-          else {
-            return null;
-          }
+          return PyTypingTypeProvider.wrapInAsyncGeneratorType(((PyCollectionType)returnType).getIteratedItemType(), this);
         }
       }
     }
@@ -441,13 +424,6 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
     else {
       return null;
     }
-  }
-
-  @Nullable
-  @Override
-  public PyType getReturnTypeFromDocString() {
-    final String typeName = extractReturnType();
-    return typeName != null ? PyTypeParser.getTypeByName(this, typeName) : null;
   }
 
   @Nullable
@@ -524,30 +500,6 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       }
     }
     return false;
-  }
-
-  @Nullable
-  private String extractReturnType() {
-    final String ARROW = "->";
-    final StructuredDocString structuredDocString = getStructuredDocString();
-    if (structuredDocString != null) {
-      return structuredDocString.getReturnType();
-    }
-    final String docString = getDocStringValue();
-    if (docString != null && docString.contains(ARROW)) {
-      final List<String> lines = StringUtil.split(docString, "\n");
-      while (lines.size() > 0 && lines.get(0).trim().length() == 0) {
-        lines.remove(0);
-      }
-      if (lines.size() > 1 && lines.get(1).trim().length() == 0) {
-        String firstLine = lines.get(0);
-        int pos = firstLine.lastIndexOf(ARROW);
-        if (pos >= 0) {
-          return firstLine.substring(pos + 2).trim();
-        }
-      }
-    }
-    return null;
   }
 
   private static class ReturnVisitor extends PyRecursiveElementVisitor {
@@ -635,6 +587,12 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
 
   @Nullable
   @Override
+  public String getAnnotationValue() {
+    return getAnnotationContentFromStubOrPsi(this);
+  }
+
+  @Nullable
+  @Override
   public PsiComment getTypeComment() {
     final PsiComment inlineComment = PyUtil.getCommentOnHeaderLine(this);
     if (inlineComment != null && PyTypingTypeProvider.getTypeCommentValue(inlineComment.getText()) != null) {
@@ -654,15 +612,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
   @Nullable
   @Override
   public String getTypeCommentAnnotation() {
-    final PyFunctionStub stub = getStub();
-    if (stub != null) {
-      return stub.getTypeComment();
-    }
-    final PsiComment comment = getTypeComment();
-    if (comment != null) {
-      return PyTypingTypeProvider.getTypeCommentValue(comment.getText());
-    }
-    return null;
+    return getTypeCommentAnnotationFromStubOrPsi(this);
   }
 
   @NotNull
@@ -691,10 +641,17 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       return STATICMETHOD;
     }
 
+    final String funcName = getName();
+
     // implicit staticmethod __new__
     final PyClass cls = getContainingClass();
-    if (cls != null && PyNames.NEW.equals(getName()) && cls.isNewStyleClass(null)) {
+    if (cls != null && PyNames.NEW.equals(funcName) && cls.isNewStyleClass(null)) {
       return STATICMETHOD;
+    }
+
+    // implicit classmethod __init_subclass__
+    if (cls != null && PyNames.INIT_SUBCLASS.equals(funcName) && LanguageLevel.forElement(this).isAtLeast(LanguageLevel.PYTHON36)) {
+      return CLASSMETHOD;
     }
 
     final PyFunctionStub stub = getStub();
@@ -702,7 +659,6 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       return getModifierFromStub(stub);
     }
 
-    final String funcName = getName();
     if (funcName != null) {
       PyAssignmentStatement currentAssignment = PsiTreeUtil.getNextSiblingOfType(this, PyAssignmentStatement.class);
       while (currentAssignment != null) {
@@ -786,7 +742,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
   private static Modifier getModifierFromStub(@NotNull PyFunctionStub stub) {
     return JBIterable
       .of(stub.getParentStub())
-      .flatMap(StubElement::getChildrenStubs)
+      .flatMap((StubElement element) -> (List<StubElement>)element.getChildrenStubs())
       .skipWhile(siblingStub -> !stub.equals(siblingStub))
       .transform(nextSiblingStub -> as(nextSiblingStub, PyTargetExpressionStub.class))
       .filter(Objects::nonNull)

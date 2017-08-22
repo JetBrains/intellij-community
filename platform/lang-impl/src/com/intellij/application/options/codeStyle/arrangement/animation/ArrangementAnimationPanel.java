@@ -115,7 +115,7 @@ public class ArrangementAnimationPanel extends JPanel {
   /**
    * Asks current panel to switch to the next drawing iteration
    * 
-   * @return    <code>true</code> if there are more iterations
+   * @return    {@code true} if there are more iterations
    */
   public boolean nextIteration() {
     int widthToUse = getImageWidthToUse();

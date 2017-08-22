@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ class ProprietaryBuildTools {
   ScrambleTool scrambleTool
 
   /**
-   * Describes address and credentials of Mac machine which is used to sign and build *.dmg installer for Mac OS. If {@code null} only *.sit
+   * Describes address and credentials of Mac machine which is used to sign and build *.dmg installer for macOS. If {@code null} only *.sit
    * archive will be built.
    */
   MacHostProperties macHostProperties

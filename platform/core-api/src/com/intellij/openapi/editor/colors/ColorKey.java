@@ -16,37 +16,34 @@
 package com.intellij.openapi.editor.colors;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.ui.Gray;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.ColorUtil;
+import com.intellij.util.containers.ConcurrentFactoryMap;
+import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.HashMap;
 import java.util.Map;
 
 public final class ColorKey implements Comparable<ColorKey> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.colors.ColorKey");
-  private static final Color NULL_COLOR = Gray._0;
+  private static final Color NULL_COLOR = ColorUtil.marker("NULL_COLOR");
+
+  private static final Map<String, ColorKey> ourRegistry = ConcurrentFactoryMap.createMap(ColorKey::new);
 
   private final String myExternalName;
   private Color myDefaultColor = NULL_COLOR;
-  private static final Map<String, ColorKey> ourRegistry = new HashMap<>();
+  private ColorKey myFallbackColorKey;
 
   private ColorKey(@NotNull String externalName) {
     myExternalName = externalName;
-    if (ourRegistry.containsKey(myExternalName)) {
-      LOG.error("Key " + myExternalName + " already registered.");
-    }
-    else {
-      ourRegistry.put(myExternalName, this);
-    }
   }
 
   @NotNull
   public static ColorKey find(@NotNull String externalName) {
-    ColorKey key = ourRegistry.get(externalName);
-    return key == null ? new ColorKey(externalName) : key;
+    return ourRegistry.get(externalName);
   }
 
   public String toString() {
@@ -66,20 +63,37 @@ public final class ColorKey implements Comparable<ColorKey> {
   public Color getDefaultColor() {
     if (myDefaultColor == NULL_COLOR) {
       myDefaultColor = null;
-      /*
-      EditorColorsManager manager = EditorColorsManager.getInstance();
-      if (manager != null) { // Can be null in test mode
-        myDefaultColor = manager.getGlobalScheme().getColor(this);
-      }
-      */
     }
 
     return myDefaultColor;
   }
 
+  @Nullable
+  public ColorKey getFallbackColorKey() {
+    return myFallbackColorKey;
+  }
+
+  public void setFallbackColorKey(@Nullable ColorKey fallbackColorKey) {
+    myFallbackColorKey = fallbackColorKey;
+    if (fallbackColorKey != null) {
+      JBIterable<ColorKey> it = JBIterable.generate(fallbackColorKey, o -> o == this ? null : o.myFallbackColorKey);
+      if (it.find(o -> o == this) == this) {
+        String cycle = StringUtil.join(it.map(ColorKey::getExternalName), "->");
+        LOG.error("Cycle detected: " + cycle);
+      }
+    }
+  }
+
   @NotNull
   public static ColorKey createColorKey(@NonNls @NotNull String externalName) {
     return find(externalName);
+  }
+
+  @NotNull
+  public static ColorKey createColorKey(@NonNls @NotNull String externalName, @Nullable ColorKey fallbackColorKey) {
+    ColorKey key = createColorKey(externalName);
+    key.setFallbackColorKey(fallbackColorKey);
+    return key;
   }
 
   @NotNull

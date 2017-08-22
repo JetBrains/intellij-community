@@ -35,7 +35,6 @@ import junit.framework.Assert;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Arrays;
 
 /**
@@ -80,7 +79,7 @@ public class DirectoryMappingListTest extends PlatformTestCase {
     super.tearDown();
   }
 
-  public void testMappingsFilter() throws Exception {
+  public void testMappingsFilter() {
     final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
     ((MockAbstractVcs) vcsManager.findVcsByName("mock")).setAllowNestedRoots(true);
 
@@ -113,7 +112,7 @@ public class DirectoryMappingListTest extends PlatformTestCase {
     assertEquals(5, filePaths.length);
   }
 
-  public void testSamePrefix() throws Exception {
+  public void testSamePrefix() {
     myMappings.setMapping(myRootPath + "/a", "CVS");
     myMappings.setMapping(myRootPath + "/a-b", "mock2");
     assertEquals(3, myMappings.getDirectoryMappings().size());
@@ -123,12 +122,12 @@ public class DirectoryMappingListTest extends PlatformTestCase {
     assertEquals("CVS", myMappings.getVcsFor(myProjectRoot.findChild("a")));
   }
 
-  public void testSamePrefixEmpty() throws Exception {
+  public void testSamePrefixEmpty() {
     myMappings.setMapping(myRootPath + "/a", "CVS");
     assertEquals("", myMappings.getVcsFor(myProjectRoot.findChild("a-b")));
   }
 
-  public void testSame() throws Exception {
+  public void testSame() {
     myMappings.removeDirectoryMapping(new VcsDirectoryMapping("", ""));
     myMappings.setMapping(myRootPath + "/parent/path", "CVS");
 
@@ -149,7 +148,7 @@ public class DirectoryMappingListTest extends PlatformTestCase {
     }
   }
 
-  public void testHierarchy() throws Exception {
+  public void testHierarchy() {
     myMappings.removeDirectoryMapping(new VcsDirectoryMapping("", ""));
     myMappings.setMapping(myRootPath + "/parent", "CVS");
 
@@ -165,7 +164,7 @@ public class DirectoryMappingListTest extends PlatformTestCase {
     }
   }
 
-  public void testNestedInnerCopy() throws Exception {
+  public void testNestedInnerCopy() {
     myMappings.removeDirectoryMapping(new VcsDirectoryMapping("", ""));
     myMappings.setMapping(myRootPath + "/parent", "CVS");
     myMappings.setMapping(myRootPath + "/parent/child", "mock");
@@ -188,7 +187,7 @@ public class DirectoryMappingListTest extends PlatformTestCase {
     }
   }
 
-  private static void createFiles(final String[] paths) throws IOException {
+  private static void createFiles(final String[] paths) {
     for (String path : paths) {
       final File file = new File(FileUtil.toSystemDependentName(path));
       assert file.mkdirs() || file.isDirectory() : file;

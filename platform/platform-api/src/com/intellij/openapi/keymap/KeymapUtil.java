@@ -251,11 +251,11 @@ public class KeymapUtil {
   }
 
   /**
-   * Factory method. It parses passed string and creates <code>MouseShortcut</code>.
+   * Factory method. It parses passed string and creates {@code MouseShortcut}.
    *
    * @param keystrokeString       target keystroke
    * @return                      shortcut for the given keystroke
-   * @throws InvalidDataException if <code>keystrokeString</code> doesn't represent valid <code>MouseShortcut</code>.
+   * @throws InvalidDataException if {@code keystrokeString} doesn't represent valid {@code MouseShortcut}.
    */
   public static MouseShortcut parseMouseShortcut(String keystrokeString) throws InvalidDataException {
     if (Registry.is("ide.mac.forceTouch") && keystrokeString.startsWith("Force touch")) {
@@ -302,7 +302,7 @@ public class KeymapUtil {
 
   /**
    * @return string representation of passed mouse shortcut. This method should
-   *         be used only for serializing of the <code>MouseShortcut</code>
+   *         be used only for serializing of the {@code MouseShortcut}
    */
   public static String getMouseShortcutString(MouseShortcut shortcut) {
     if (Registry.is("ide.mac.forceTouch") && shortcut instanceof PressureShortcut) {
@@ -440,6 +440,12 @@ public class KeymapUtil {
   }
 
   @NotNull
+  public static String createTooltipText(@NotNull String name, @NotNull String actionId) {
+    String text = getFirstKeyboardShortcutText(actionId);
+    return text.isEmpty() ? name : name + " (" + text + ")";
+  }
+
+  @NotNull
   public static String createTooltipText(@Nullable String name, @NotNull AnAction action) {
     String toolTipText = name == null ? "" : name;
     while (StringUtil.endsWithChar(toolTipText, '.')) {
@@ -491,7 +497,7 @@ public class KeymapUtil {
   /**
    * @param component    target component to reassign previously mapped action (if any)
    * @param oldKeyStroke previously mapped keystroke (e.g. standard one that you want to use in some different way)
-   * @param newKeyStroke new keystroke to be assigned. <code>null</code> value means 'just unregister previously mapped action'
+   * @param newKeyStroke new keystroke to be assigned. {@code null} value means 'just unregister previously mapped action'
    * @param condition    one of
    *                     <ul>
    *                     <li>JComponent.WHEN_FOCUSED,</li>
@@ -499,7 +505,7 @@ public class KeymapUtil {
    *                     <li>JComponent.WHEN_IN_FOCUSED_WINDOW</li>
    *                     <li>JComponent.UNDEFINED_CONDITION</li>
    *                     </ul>
-   * @return <code>true</code> if the action is reassigned successfully
+   * @return {@code true} if the action is reassigned successfully
    */
   public static boolean reassignAction(@NotNull JComponent component,
                                        @NotNull KeyStroke oldKeyStroke,
@@ -510,7 +516,7 @@ public class KeymapUtil {
   /**
    * @param component    target component to reassign previously mapped action (if any)
    * @param oldKeyStroke previously mapped keystroke (e.g. standard one that you want to use in some different way)
-   * @param newKeyStroke new keystroke to be assigned. <code>null</code> value means 'just unregister previously mapped action'
+   * @param newKeyStroke new keystroke to be assigned. {@code null} value means 'just unregister previously mapped action'
    * @param condition    one of
    *                     <ul>
    *                     <li>JComponent.WHEN_FOCUSED,</li>
@@ -518,8 +524,8 @@ public class KeymapUtil {
    *                     <li>JComponent.WHEN_IN_FOCUSED_WINDOW</li>
    *                     <li>JComponent.UNDEFINED_CONDITION</li>
    *                     </ul>
-   * @param muteOldKeystroke if <code>true</code> old keystroke wouldn't work anymore
-   * @return <code>true</code> if the action is reassigned successfully
+   * @param muteOldKeystroke if {@code true} old keystroke wouldn't work anymore
+   * @return {@code true} if the action is reassigned successfully
    */
   public static boolean reassignAction(@NotNull JComponent component,
                                        @NotNull KeyStroke oldKeyStroke,

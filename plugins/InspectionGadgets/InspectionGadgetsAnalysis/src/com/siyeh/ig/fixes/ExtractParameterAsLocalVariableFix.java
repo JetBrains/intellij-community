@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2014 Bas Leijdekkers
+ * Copyright 2008-2017 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.Query;
@@ -29,8 +29,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class ExtractParameterAsLocalVariableFix
-  extends InspectionGadgetsFix {
+public class ExtractParameterAsLocalVariableFix extends InspectionGadgetsFix {
 
   @Override
   @NotNull
@@ -62,17 +61,14 @@ public class ExtractParameterAsLocalVariableFix
       body = method.getBody();
     }
     else if (declarationScope instanceof PsiCatchSection) {
-      final PsiCatchSection catchSection =
-        (PsiCatchSection)declarationScope;
+      final PsiCatchSection catchSection = (PsiCatchSection)declarationScope;
       body = catchSection.getCatchBlock();
     }
     else if (declarationScope instanceof PsiLoopStatement) {
-      final PsiLoopStatement forStatement =
-        (PsiLoopStatement)declarationScope;
+      final PsiLoopStatement forStatement = (PsiLoopStatement)declarationScope;
       final PsiStatement forBody = forStatement.getBody();
       if (forBody instanceof PsiBlockStatement) {
-        final PsiBlockStatement blockStatement =
-          (PsiBlockStatement)forBody;
+        final PsiBlockStatement blockStatement = (PsiBlockStatement)forBody;
         body = blockStatement.getCodeBlock();
       }
       else {
@@ -89,17 +85,10 @@ public class ExtractParameterAsLocalVariableFix
     if (body == null) {
       return;
     }
-    final CodeStyleManager codeStyleManager =
-      CodeStyleManager.getInstance(project);
     final String parameterName = parameterReference.getText();
-    final JavaCodeStyleManager javaCodeStyleManager =
-      JavaCodeStyleManager.getInstance(project);
-    final String variableName =
-      javaCodeStyleManager.suggestUniqueVariableName(
-        parameterName, parameterReference, true);
-    final SearchScope scope = parameter.getUseScope();
-    final Query<PsiReference> search =
-      ReferencesSearch.search(parameter, scope);
+    final JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(project);
+    final String variableName = javaCodeStyleManager.suggestUniqueVariableName(parameterName, parameterReference, true);
+    final Query<PsiReference> search = ReferencesSearch.search(parameter, new LocalSearchScope(body));
     final PsiReference reference = search.findFirst();
     if (reference == null) {
       return;
@@ -108,8 +97,7 @@ public class ExtractParameterAsLocalVariableFix
     if (!(referenceElement instanceof PsiReferenceExpression)) {
       return;
     }
-    final PsiReferenceExpression firstReference =
-      (PsiReferenceExpression)referenceElement;
+    final PsiReferenceExpression firstReference = (PsiReferenceExpression)referenceElement;
     final PsiElement[] children = body.getChildren();
     final int startIndex;
     final int endIndex;
@@ -125,9 +113,7 @@ public class ExtractParameterAsLocalVariableFix
     final StringBuilder buffer = new StringBuilder();
     for (int i = startIndex; i < endIndex; i++) {
       final PsiElement child = children[i];
-      newDeclarationCreated |=
-        replaceVariableName(child, firstReference,
-                            variableName, parameterName, buffer);
+      newDeclarationCreated |= replaceVariableName(child, firstReference, variableName, parameterName, buffer);
     }
     if (body instanceof PsiExpression) { // expression lambda
       buffer.insert(0, "return ");
@@ -140,15 +126,11 @@ public class ExtractParameterAsLocalVariableFix
     else {
       final PsiType type = parameter.getType();
       final String className = type.getCanonicalText();
-      replacementText = '{' + className + ' ' + variableName + " = " +
-                        parameterName + ';' + buffer + '}';
+      replacementText = '{' + className + ' ' + variableName + " = " + parameterName + ';' + buffer + '}';
     }
-    final PsiElementFactory elementFactory =
-      JavaPsiFacade.getInstance(project).getElementFactory();
-    final PsiCodeBlock block =
-      elementFactory.createCodeBlockFromText(replacementText, declarationScope);
+    final PsiCodeBlock block = JavaPsiFacade.getElementFactory(project).createCodeBlockFromText(replacementText, declarationScope);
     body.replace(block);
-    codeStyleManager.reformat(declarationScope);
+    CodeStyleManager.getInstance(project).reformat(declarationScope);
   }
 
   /**

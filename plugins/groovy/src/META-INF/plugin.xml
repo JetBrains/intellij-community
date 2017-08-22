@@ -27,6 +27,8 @@
   <depends optional="true" config-file="groovy-byte-code-viewer.xml">ByteCodeViewer</depends>
   <depends optional="true" config-file="duplicates-groovy.xml">com.intellij.modules.ultimate</depends>
 
+  <resource-bundle>org.jetbrains.plugins.groovy.GroovyBundle</resource-bundle>
+
   <extensionPoints>
     <extensionPoint name="methodComparator" interface="org.jetbrains.plugins.groovy.lang.resolve.GrMethodComparator"/>
     <extensionPoint name="membersContributor" interface="org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor"/>
@@ -235,7 +237,7 @@
 
     <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrEnumConverter"/>
     <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrContainerTypeConverter"/>
-    <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureToSamConverter"/>
+    <typeConverter implementation="org.jetbrains.plugins.groovy.lang.sam.ClosureToSamConverter"/>
     <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrContainerConverter"/>
 
     <typeConverter implementation="org.jetbrains.plugins.groovy.gpp.GppTypeConverter"/>
@@ -335,6 +337,8 @@
     <codeInsight.parameterNameHints
         language="Groovy" implementationClass="org.jetbrains.plugins.groovy.codeInsight.hint.GroovyInlayParameterHintsProvider"
     />
+    <lang.jvm.actions.jvmElementActionsFactory language="Groovy"
+                                               implementationClass="com.intellij.codeInsight.intention.impl.JavaElementActionsFactoryImpl"/>
 
     <fileTypeFactory implementation="org.jetbrains.plugins.groovy.GroovyFileTypeLoader"/>
     <fileTypeFactory implementation="org.jetbrains.plugins.groovy.dgm.DGMFileTypeFactory"/>
@@ -546,6 +550,8 @@
 
     <typeDeclarationProvider implementation="org.jetbrains.plugins.groovy.editor.GroovyTypeDeclarationProvider" order="first"/>
 
+    <lang.sliceProvider language="Groovy" implementationClass="org.jetbrains.plugins.groovy.slicer.GroovySliceProvider"/>
+
     <!--Run/debug-->
     <configurationType implementation="org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfigurationType"/>
     <configurationProducer implementation="org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfigurationProducer"/>
@@ -678,28 +684,33 @@
 
     <localInspection shortName="GroovyUnusedDeclaration" displayName="Unused declaration"
                      groupPath="Groovy"
-                     groupName="Declaration redundancy" enabledByDefault="true" level="WARNING"
+                     groupKey="inspection.redundancy" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.GroovyUnusedDeclarationInspection" unfair="true"/>
 
     <localInspection language="Groovy" groupPath="Groovy" shortName="SecondUnsafeCall"
                      bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
-                     key="second.unsafe.call" groupName="Probable bugs" enabledByDefault="true" level="WARNING"
+                     groupBundle="org.jetbrains.plugins.groovy.GroovyBundle"
+                     key="second.unsafe.call" groupKey="inspection.bugs" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.secondUnsafeCall.SecondUnsafeCallInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyUnusedAssignment"
                      bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
-                     key="unused.assignment" groupKey="groovy.dfa.issues" enabledByDefault="true" level="WARNING"
+                     groupBundle="org.jetbrains.plugins.groovy.GroovyBundle"
+                     key="unused.assignment" groupKey="inspection.data.flow" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.unusedDef.UnusedDefInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyUnusedIncOrDec"
                      bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
-                     key="unused.inc.dec" groupKey="groovy.dfa.issues" enabledByDefault="true" level="WARNING"
+                     groupBundle="org.jetbrains.plugins.groovy.GroovyBundle"
+                     key="unused.inc.dec" groupKey="inspection.data.flow" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.GrUnusedIncDecInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyVariableNotAssigned"
                      bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
-                     key="unassigned.access" groupKey="groovy.dfa.issues" enabledByDefault="true" level="WARNING"
+                     groupBundle="org.jetbrains.plugins.groovy.GroovyBundle"
+                     key="unassigned.access" groupKey="inspection.data.flow" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.unassignedVariable.UnassignedVariableAccessInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyMissingReturnStatement"
                      bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
-                     key="no.return.display.name" groupKey="groovy.dfa.issues" enabledByDefault="true" level="WARNING"
+                     groupBundle="org.jetbrains.plugins.groovy.GroovyBundle"
+                     key="no.return.display.name" groupKey="inspection.data.flow" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.noReturnMethod.MissingReturnInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="TypeCustomizer"
                      displayName="Type customizer inspection"
@@ -711,477 +722,487 @@
                      groupPath="Groovy"
                      shortName="GroovyAssignabilityCheck"
                      displayName="Incompatible type assignments"
-                     groupName="Assignment issues"
+                     groupKey="inspection.assignments"
                      enabledByDefault="true"
                      level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection"/>
 
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyResultOfAssignmentUsed" displayName="Result of assignment used"
-                     groupName="Assignment issues"
+                     groupKey="inspection.assignments"
                      enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyResultOfAssignmentUsedInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyAssignmentCanBeOperatorAssignment"
                      displayName="Assignment replaceable with operator assignment"
-                     groupName="Assignment issues" enabledByDefault="false" level="WARNING"
+                     groupKey="inspection.assignments" enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignmentCanBeOperatorAssignmentInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyAssignmentToForLoopParameter"
                      displayName="Assignment to for-loop parameter"
-                     groupName="Assignment issues" enabledByDefault="false" level="WARNING"
+                     groupKey="inspection.assignments" enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignmentToForLoopParameterInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyAssignmentToMethodParameter"
                      displayName="Assignment to method parameter"
-                     groupName="Assignment issues" enabledByDefault="false" level="WARNING"
+                     groupKey="inspection.assignments" enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignmentToMethodParameterInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyNestedAssignment" displayName="Nested assignment"
-                     groupName="Assignment issues"
+                     groupKey="inspection.assignments"
                      enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyNestedAssignmentInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovySillyAssignment" displayName="Silly assignment"
-                     groupName="Assignment issues" enabledByDefault="true"
+                     groupKey="inspection.assignments" enabledByDefault="true"
                      level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.assignment.GroovySillyAssignmentInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyUncheckedAssignmentOfMemberOfRawType"
                      displayName="Unchecked assignment from members of raw type"
-                     groupName="Assignment issues" enabledByDefault="true" level="WARNING"
+                     groupKey="inspection.assignments" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyUncheckedAssignmentOfMemberOfRawTypeInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyContinueOrBreakFromFinallyBlock"
                      displayName="'continue' or 'break' inside 'finally' block"
-                     groupName="Error handling" enabledByDefault="false" level="WARNING"
+                     groupKey="inspection.error.handling" enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.exception.GroovyContinueOrBreakFromFinallyBlockInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GrMethodMayBeStatic"
                      displayName="Method may be static"
                      groupName="Declaration" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.declaration.GrMethodMayBeStaticInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyReturnFromFinallyBlock"
-                     displayName="'return' inside 'finally' block" groupName="Error handling"
+                     displayName="'return' inside 'finally' block" groupKey="inspection.error.handling"
                      enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.exception.GroovyReturnFromFinallyBlockInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyThrowFromFinallyBlock"
-                     displayName="'throw' inside 'finally' block" groupName="Error handling"
+                     displayName="'throw' inside 'finally' block" groupKey="inspection.error.handling"
                      enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.exception.GroovyThrowFromFinallyBlockInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyEmptyCatchBlock" displayName="Empty 'catch' block"
-                     groupName="Error handling" enabledByDefault="false"
+                     groupKey="inspection.error.handling" enabledByDefault="false"
                      level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.exception.GroovyEmptyCatchBlockInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyEmptyFinallyBlock" displayName="Empty 'finally' block"
-                     groupName="Error handling"
+                     groupKey="inspection.error.handling"
                      enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.exception.GroovyEmptyFinallyBlockInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyEmptyTryBlock" displayName="Empty 'try' block"
-                     groupName="Error handling" enabledByDefault="false"
+                     groupKey="inspection.error.handling" enabledByDefault="false"
                      level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.exception.GroovyEmptyTryBlockInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyUnusedCatchParameter" displayName="Unused catch parameter"
-                     groupName="Error handling"
+                     groupKey="inspection.error.handling"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.exception.GroovyUnusedCatchParameterInspection"/>
-    <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyBreak" displayName="Break statement" groupName="Control Flow"
+    <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyBreak" displayName="Break statement"
+                     groupKey="inspection.control.flow"
                      enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.control.GroovyBreakInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyContinue" displayName="Continue statement"
-                     groupName="Control Flow" enabledByDefault="false"
+                     groupKey="inspection.control.flow" enabledByDefault="false"
                      level="WARNING" implementationClass="org.jetbrains.plugins.groovy.codeInspection.control.GroovyContinueInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyUnreachableStatement" displayName="Unreachable Statement"
-                     groupName="Validity issues"
+                     groupKey="inspection.validity"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.validity.GroovyUnreachableStatementInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyLoopStatementThatDoesntLoop"
-                     displayName="Loop statement that doesn't loop" groupName="Control Flow"
+                     displayName="Loop statement that doesn't loop" groupKey="inspection.control.flow"
                      enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.control.GroovyLoopStatementThatDoesntLoopInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyConditionalWithIdenticalBranches"
                      displayName="Conditional expression with identical branches"
-                     groupName="Control Flow" enabledByDefault="true" level="WARNING"
+                     groupKey="inspection.control.flow" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.control.GroovyConditionalWithIdenticalBranchesInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyConditionalCanBeElvis"
-                     displayName="Conditional expression can be elvis" groupName="Control Flow"
+                     displayName="Conditional expression can be elvis" groupKey="inspection.control.flow"
                      enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.control.GroovyConditionalCanBeElvisInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyConditionalCanBeConditionalCall"
                      displayName="Conditional expression can be conditional call"
-                     groupName="Control Flow" enabledByDefault="false" level="WARNING"
+                     groupKey="inspection.control.flow" enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.control.GroovyConditionalCanBeConditionalCallInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyIfStatementWithIdenticalBranches"
                      displayName="If statement with identical branches"
-                     groupName="Control Flow" enabledByDefault="true" level="WARNING"
+                     groupKey="inspection.control.flow" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.control.GroovyIfStatementWithIdenticalBranchesInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyIfStatementWithTooManyBranches"
                      displayName="If statement with too many branches"
-                     groupName="Control Flow" enabledByDefault="false" level="WARNING"
+                     groupKey="inspection.control.flow" enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.control.GroovyIfStatementWithTooManyBranchesInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyFallthrough" displayName="Fallthrough in switch statement"
-                     groupName="Control Flow"
+                     groupKey="inspection.control.flow"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.control.GroovyFallthroughInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyUnnecessaryContinue"
-                     displayName="Unnecessary 'continue' statement" groupName="Control Flow"
+                     displayName="Unnecessary 'continue' statement" groupKey="inspection.control.flow"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.control.GroovyUnnecessaryContinueInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyUnnecessaryReturn" displayName="Unnecessary 'return' statement"
-                     groupName="Control Flow"
+                     groupKey="inspection.control.flow"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.control.GroovyUnnecessaryReturnInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GrFinalVariableAccess" displayName="Final variable access"
-                     groupName="Control Flow"
+                     groupKey="inspection.control.flow"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.control.finalVar.GrFinalVariableAccessInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovySwitchStatementWithNoDefault"
                      displayName="Switch statement with no default case"
-                     groupName="Control Flow" enabledByDefault="false" level="WARNING"
+                     groupKey="inspection.control.flow" enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.control.GroovySwitchStatementWithNoDefaultInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyReturnFromClosureCanBeImplicit"
                      displayName="'return' statement can be implicit"
-                     groupName="Control Flow" enabledByDefault="false" level="WARNING"
+                     groupKey="inspection.control.flow" enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.control.GroovyReturnFromClosureCanBeImplicitInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyTrivialConditional"
-                     displayName="Redundant conditional expression" groupName="Control Flow"
+                     displayName="Redundant conditional expression" groupKey="inspection.control.flow"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.control.GroovyTrivialConditionalInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyConstantConditional"
-                     displayName="Constant conditional expression" groupName="Control Flow"
+                     displayName="Constant conditional expression" groupKey="inspection.control.flow"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.control.GroovyConstantConditionalInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyConstantIfStatement" displayName="Constant if statement"
-                     groupName="Control Flow"
+                     groupKey="inspection.control.flow"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.control.GroovyConstantIfStatementInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyTrivialIf" displayName="Redundant 'if' statement"
-                     groupName="Control Flow" enabledByDefault="true"
+                     groupKey="inspection.control.flow" enabledByDefault="true"
                      level="WARNING" implementationClass="org.jetbrains.plugins.groovy.codeInspection.control.GroovyTrivialIfInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="JavaStylePropertiesInvocation"
                      displayName="Java-style property access"
-                     groupName="Style" enabledByDefault="false" level="WARNING"
+                     groupKey="inspection.style" enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.style.JavaStylePropertiesInvocationInspection"/>
-    <localInspection language="Groovy" groupPath="Groovy" groupName="Style"
+    <localInspection language="Groovy" groupPath="Groovy" groupKey="inspection.style"
                      displayName="Unnecessary 'def'" cleanupTool="true" enabledByDefault="true"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.style.GrUnnecessaryDefModifierInspection"/>
-    <localInspection language="Groovy" groupPath="Groovy" groupName="Style"
+    <localInspection language="Groovy" groupPath="Groovy" groupKey="inspection.style"
                      displayName="Unnecessary 'public'" cleanupTool="true" enabledByDefault="true"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.style.GrUnnecessaryPublicModifierInspection"/>
-    <localInspection language="Groovy" groupPath="Groovy" groupName="Style"
+    <localInspection language="Groovy" groupPath="Groovy" groupKey="inspection.style"
                      displayName="Unnecessary semicolon" cleanupTool="true" enabledByDefault="true"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.style.GrUnnecessarySemicolonInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="ChangeToOperator"
                      displayName="Change to operator"
-                     groupName="Style" enabledByDefault="true" level="WEAK WARNING"
+                     groupKey="inspection.style" enabledByDefault="true" level="WEAK WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.changeToOperator.ChangeToOperatorInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="ChangeToMethod"
                      displayName="Change to method"
-                     groupName="Style" enabledByDefault="true" level="INFORMATION"
+                     groupKey="inspection.style" enabledByDefault="true" level="INFORMATION"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.changeToMethod.ChangeToMethodInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyAccessToStaticFieldLockedOnInstance"
                      displayName="Access to static field locked on instance data"
-                     groupName="Threading issues" enabledByDefault="true" level="WARNING"
+                     groupKey="inspection.threading" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.threading.GroovyAccessToStaticFieldLockedOnInstanceInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyDoubleCheckedLocking" displayName="Double-checked locking"
-                     groupName="Threading issues"
+                     groupKey="inspection.threading"
                      enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.threading.GroovyDoubleCheckedLockingInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyUnconditionalWait" displayName="Unconditional 'wait' call"
-                     groupName="Threading issues"
+                     groupKey="inspection.threading"
                      enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.threading.GroovyUnconditionalWaitInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyPublicFieldAccessedInSynchronizedContext"
-                     displayName="Non-private field accessed in synchronized context" groupName="Threading issues" enabledByDefault="false"
+                     displayName="Non-private field accessed in synchronized context" groupKey="inspection.threading"
+                     enabledByDefault="false"
                      level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.threading.GroovyPublicFieldAccessedInSynchronizedContextInspection"/>
-    <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyBusyWait" displayName="Busy wait" groupName="Threading issues"
+    <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyBusyWait" displayName="Busy wait" groupKey="inspection.threading"
                      enabledByDefault="false"
                      level="WARNING" implementationClass="org.jetbrains.plugins.groovy.codeInspection.threading.GroovyBusyWaitInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyEmptySyncBlock" displayName="Empty 'synchronized' block"
-                     groupName="Threading issues"
+                     groupKey="inspection.threading"
                      enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.threading.GroovyEmptySyncBlockInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovySynchronizationOnThis" displayName="Synchronization on 'this'"
-                     groupName="Threading issues"
+                     groupKey="inspection.threading"
                      enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.threading.GroovySynchronizationOnThisInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovySynchronizedMethod" displayName="Synchronized method"
-                     groupName="Threading issues"
+                     groupKey="inspection.threading"
                      enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.threading.GroovySynchronizedMethodInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyNestedSynchronizedStatement"
                      displayName="Nested 'synchronized' statement"
-                     groupName="Threading issues" enabledByDefault="false" level="WARNING"
+                     groupKey="inspection.threading" enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.threading.GroovyNestedSynchronizedStatementInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyThreadStopSuspendResume"
                      displayName="Call to Thread.stop(), Thread.suspend(), or Thread.resume()"
-                     groupName="Threading issues" enabledByDefault="false" level="WARNING"
+                     groupKey="inspection.threading" enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.threading.GroovyThreadStopSuspendResumeInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovySystemRunFinalizersOnExit"
                      displayName="Call to System.runFinalizersOnExit()"
-                     groupName="Threading issues" enabledByDefault="false" level="WARNING"
+                     groupKey="inspection.threading" enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.threading.GroovySystemRunFinalizersOnExitInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyNotifyWhileNotSynchronized"
                      displayName="'notify()' or 'notifyAll()' while not synced"
-                     groupName="Threading issues" enabledByDefault="false" level="WARNING"
+                     groupKey="inspection.threading" enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.threading.GroovyNotifyWhileNotSynchronizedInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyWaitCallNotInLoop" displayName="'wait()' not in loop"
-                     groupName="Threading issues"
+                     groupKey="inspection.threading"
                      enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.threading.GroovyWaitCallNotInLoopInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyWaitWhileNotSynchronized" displayName="'wait()' while not synced"
-                     groupName="Threading issues"
+                     groupKey="inspection.threading"
                      enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.threading.GroovyWaitWhileNotSynchronizedInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovySynchronizationOnNonFinalField"
                      displayName="Synchronization on non-final field"
-                     groupName="Threading issues" enabledByDefault="true" level="WARNING"
+                     groupKey="inspection.threading" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.threading.GroovySynchronizationOnNonFinalFieldInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovySynchronizationOnVariableInitializedWithLiteral"
-                     displayName="Synchronization on variable initialized with literal" groupName="Threading issues"
+                     displayName="Synchronization on variable initialized with literal" groupKey="inspection.threading"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.threading.GroovySynchronizationOnVariableInitializedWithLiteralInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyUnsynchronizedMethodOverridesSynchronizedMethod"
-                     displayName="Unsynchronized method overrides synchronized method" groupName="Threading issues" enabledByDefault="true"
+                     displayName="Unsynchronized method overrides synchronized method" groupKey="inspection.threading"
+                     enabledByDefault="true"
                      level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.threading.GroovyUnsynchronizedMethodOverridesSynchronizedMethodInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyWhileLoopSpinsOnField" displayName="While loop spins on field"
-                     groupName="Threading issues"
+                     groupKey="inspection.threading"
                      enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.threading.GroovyWhileLoopSpinsOnFieldInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyMethodParameterCount"
-                     displayName="Method with too many parameters" groupName="Method Metrics"
+                     displayName="Method with too many parameters" groupKey="inspection.method.metrics"
                      enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.metrics.GroovyMethodParameterCountInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyOverlyComplexMethod" displayName="Overly complex method"
-                     groupName="Method Metrics"
+                     groupKey="inspection.method.metrics"
                      enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.metrics.GroovyOverlyComplexMethodInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyOverlyLongMethod" displayName="Overly long method"
-                     groupName="Method Metrics" enabledByDefault="false"
+                     groupKey="inspection.method.metrics" enabledByDefault="false"
                      level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.metrics.GroovyOverlyLongMethodInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyOverlyNestedMethod" displayName="Overly nested method"
-                     groupName="Method Metrics"
+                     groupKey="inspection.method.metrics"
                      enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.metrics.GroovyOverlyNestedMethodInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyMethodWithMoreThanThreeNegations"
                      displayName="Method with more than three negations"
-                     groupName="Method Metrics" enabledByDefault="false" level="WARNING"
+                     groupKey="inspection.method.metrics" enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.metrics.GroovyMethodWithMoreThanThreeNegationsInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyMultipleReturnPointsPerMethod"
                      displayName="Method with multiple return points"
-                     groupName="Method Metrics" enabledByDefault="false" level="WARNING"
+                     groupKey="inspection.method.metrics" enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.metrics.GroovyMultipleReturnPointsPerMethodInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyNestedSwitch" displayName="Nested switch statement"
-                     groupName="Potentially confusing code constructs"
+                     groupKey="inspection.confusing"
                      enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyNestedSwitchInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyConditional" displayName="Conditional expression"
-                     groupName="Potentially confusing code constructs"
+                     groupKey="inspection.confusing"
                      enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyConditionalInspection"/>
-    <localInspection language="Groovy" groupPath="Groovy" shortName="GrFieldAlreadyDefined"
-                     bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
-                     key="field.already.defined" groupName="Potentially confusing code constructs" enabledByDefault="false" level="WARNING"
-                     implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.GrFieldAlreadyDefinedInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="ClashingGetters"
                      bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
-                     key="clashing.getters" groupName="Potentially confusing code constructs" enabledByDefault="false" level="WARNING"
+                     groupBundle="org.jetbrains.plugins.groovy.GroovyBundle"
+                     key="clashing.getters" groupKey="inspection.confusing" enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.ClashingGettersInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GrPackage"
                      bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
-                     key="gr.package" groupName="Potentially confusing code constructs" enabledByDefault="true" level="WARNING"
+                     groupBundle="org.jetbrains.plugins.groovy.GroovyBundle"
+                     key="gr.package" groupKey="inspection.confusing" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.GrPackageInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GrDeprecatedAPIUsage"
                      bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
-                     key="gr.deprecated.api.usage" groupName="Potentially confusing code constructs" enabledByDefault="true" level="WARNING"
+                     groupBundle="org.jetbrains.plugins.groovy.GroovyBundle"
+                     key="gr.deprecated.api.usage" groupKey="inspection.confusing" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.GrDeprecatedAPIUsageInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyNestedConditional" displayName="Nested conditional expression"
-                     groupName="Potentially confusing code constructs" enabledByDefault="false" level="WARNING"
+                     groupKey="inspection.confusing" enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyNestedConditionalInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyNegatedConditional" displayName="Negated conditional expression"
-                     groupName="Potentially confusing code constructs" enabledByDefault="false" level="WARNING"
+                     groupKey="inspection.confusing" enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyNegatedConditionalInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyInArgumentCheck" displayName="Incompatible 'in' argument types"
-                     enabledByDefault="true" groupName="Probable bugs" level="WARNING"
+                     enabledByDefault="true" groupKey="inspection.bugs" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyInArgumentCheckInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyNegatedIf" displayName="Negated if condition expression"
-                     groupName="Potentially confusing code constructs" enabledByDefault="false" level="WARNING"
+                     groupKey="inspection.confusing" enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyNegatedIfInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyResultOfIncrementOrDecrementUsed"
                      displayName="Result of increment or decrement used"
-                     groupName="Potentially confusing code constructs" enabledByDefault="false" level="WARNING"
+                     groupKey="inspection.confusing" enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyResultOfIncrementOrDecrementUsedInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" enabledByDefault="true" level="WARNING"
                      shortName="GrReassignedInClosureLocalVar"
                      displayName="Local variable is reassigned in closure or anonymous class"
-                     groupName="Potentially confusing code constructs"
+                     groupKey="inspection.confusing"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.GrReassignedInClosureLocalVarInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="UnnecessaryQualifiedReference"
                      bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
-                     key="unnecessary.qualified.reference" groupName="Potentially confusing code constructs" enabledByDefault="true"
+                     groupBundle="org.jetbrains.plugins.groovy.GroovyBundle"
+                     key="unnecessary.qualified.reference" groupKey="inspection.confusing" enabledByDefault="true"
                      level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.UnnecessaryQualifiedReferenceInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyEmptyStatementBody" displayName="Statement with empty body"
-                     groupName="Potentially confusing code constructs" enabledByDefault="true" level="WARNING"
+                     groupKey="inspection.confusing" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyEmptyStatementBodyInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyPointlessBoolean"
                      bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
-                     key="pointless.boolean.display.name" groupName="Potentially confusing code constructs" enabledByDefault="true"
+                     groupBundle="org.jetbrains.plugins.groovy.GroovyBundle"
+                     key="pointless.boolean.display.name" groupKey="inspection.confusing" enabledByDefault="true"
                      level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyPointlessBooleanInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyPointlessArithmetic"
                      displayName="Pointless arithmetic expression"
-                     groupName="Potentially confusing code constructs" enabledByDefault="false" level="WARNING"
+                     groupKey="inspection.confusing" enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyPointlessArithmeticInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyDoubleNegation" displayName="Double negation"
-                     groupName="Potentially confusing code constructs"
+                     groupKey="inspection.confusing"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyDoubleNegationInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyOverlyComplexArithmeticExpression"
                      displayName="Overly complex arithmetic expression"
-                     groupName="Potentially confusing code constructs" enabledByDefault="false" level="WARNING"
+                     groupKey="inspection.confusing" enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyOverlyComplexArithmeticExpressionInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="ClashingTraitMethods"
                      displayName="Clashing trait methods"
-                     groupName="Potentially confusing code constructs" enabledByDefault="true" level="WARNING"
+                     groupKey="inspection.confusing" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.ClashingTraitMethodsInspection"/>
 
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyOverlyComplexBooleanExpression"
                      displayName="Overly complex boolean expression"
-                     groupName="Potentially confusing code constructs" enabledByDefault="false" level="WARNING"
+                     groupKey="inspection.confusing" enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyOverlyComplexBooleanExpressionInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyOctalInteger" displayName="Octal integer"
-                     groupName="Potentially confusing code constructs"
+                     groupKey="inspection.confusing"
                      enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyOctalIntegerInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyGStringKey" displayName="GString map key"
-                     groupName="Potentially confusing code constructs"
+                     groupKey="inspection.confusing"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyGStringKeyInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyDuplicateSwitchBranch" displayName="Duplicate switch case"
-                     groupName="Validity issues"
+                     groupKey="inspection.validity"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.validity.GroovyDuplicateSwitchBranchInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyNonShortCircuitBoolean" displayName="Non short-circuit boolean"
-                     groupName="Probable bugs"
+                     groupKey="inspection.bugs"
                      enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyNonShortCircuitBooleanInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyInfiniteLoopStatement" displayName="Infinite loop statement"
-                     groupName="Probable bugs"
+                     groupKey="inspection.bugs"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyInfiniteLoopStatementInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyInfiniteRecursion" displayName="Infinite recursion"
-                     groupName="Probable bugs" enabledByDefault="true"
+                     groupKey="inspection.bugs" enabledByDefault="true"
                      level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyInfiniteRecursionInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyDivideByZero" displayName="Divide by zero"
-                     groupName="Probable bugs" enabledByDefault="true"
+                     groupKey="inspection.bugs" enabledByDefault="true"
                      level="WARNING" implementationClass="org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyDivideByZeroInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyResultOfObjectAllocationIgnored"
                      displayName="Result of object allocation ignored"
-                     groupName="Probable bugs" enabledByDefault="true" level="WARNING"
+                     groupKey="inspection.bugs" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyResultOfObjectAllocationIgnoredInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyAccessibility"
                      bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
-                     key="access.to.inaccessible.element" groupName="Probable bugs" enabledByDefault="true" level="WARNING"
+                     groupBundle="org.jetbrains.plugins.groovy.GroovyBundle"
+                     key="access.to.inaccessible.element" groupKey="inspection.bugs" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyAccessibilityInspection" unfair="true"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyConstructorNamedArguments"
-                     displayName="Named arguments of constructor call" groupName="Probable bugs"
+                     displayName="Named arguments of constructor call" groupKey="inspection.bugs"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyConstructorNamedArgumentsInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyDocCheck" displayName="GroovyDoc issues"
-                     groupName="Probable bugs"
+                     groupKey="inspection.bugs"
                      enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyDocCheckInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyRangeTypeCheck"
                      bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
-                     key="incorrect.range.argument" groupName="Probable bugs" enabledByDefault="false" level="WARNING"
+                     groupBundle="org.jetbrains.plugins.groovy.GroovyBundle"
+                     key="incorrect.range.argument" groupKey="inspection.bugs" enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyRangeTypeCheckInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="NewInstanceOfSingleton"
                      bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
-                     key="new.instance.of.singleton" groupName="Potentially confusing code constructs" enabledByDefault="true"
+                     groupBundle="org.jetbrains.plugins.groovy.GroovyBundle"
+                     key="new.instance.of.singleton" groupKey="inspection.confusing" enabledByDefault="true"
                      level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.bugs.NewInstanceOfSingletonInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyLabeledStatement"
                      bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
-                     key="check.labeled.statement" groupName="Probable bugs" enabledByDefault="true" level="WARNING"
+                     groupBundle="org.jetbrains.plugins.groovy.GroovyBundle"
+                     key="check.labeled.statement" groupKey="inspection.bugs" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyLabeledStatementInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyClassNamingConvention" displayName="Class naming convention"
-                     groupName="Naming Conventions"
+                     groupKey="inspection.naming"
                      enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.naming.GroovyClassNamingConventionInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyInterfaceNamingConvention"
-                     displayName="Interface naming convention" groupName="Naming Conventions"
+                     displayName="Interface naming convention" groupKey="inspection.naming"
                      enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.naming.GroovyInterfaceNamingConventionInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyAnnotationNamingConvention"
-                     displayName="Annotation naming convention" groupName="Naming Conventions"
+                     displayName="Annotation naming convention" groupKey="inspection.naming"
                      enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.naming.GroovyAnnotationNamingConventionInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyEnumerationNamingConvention"
                      displayName="Enumeration naming convention"
-                     groupName="Naming Conventions" enabledByDefault="false" level="WARNING"
+                     groupKey="inspection.naming" enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.naming.GroovyEnumerationNamingConventionInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyLocalVariableNamingConvention"
                      displayName="Local variable naming convention"
-                     groupName="Naming Conventions" enabledByDefault="false" level="WARNING"
+                     groupKey="inspection.naming" enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.naming.GroovyLocalVariableNamingConventionInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyStaticMethodNamingConvention"
                      displayName="Static method naming convention"
-                     groupName="Naming Conventions" enabledByDefault="false" level="WARNING"
+                     groupKey="inspection.naming" enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.naming.GroovyStaticMethodNamingConventionInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyStaticVariableNamingConvention"
                      displayName="Static variable naming convention"
-                     groupName="Naming Conventions" enabledByDefault="false" level="WARNING"
+                     groupKey="inspection.naming" enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.naming.GroovyStaticVariableNamingConventionInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyInstanceMethodNamingConvention"
                      displayName="Instance method naming convention"
-                     groupName="Naming Conventions" enabledByDefault="false" level="WARNING"
+                     groupKey="inspection.naming" enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.naming.GroovyInstanceMethodNamingConventionInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyInstanceVariableNamingConvention"
                      displayName="Instance variable naming convention"
-                     groupName="Naming Conventions" enabledByDefault="false" level="WARNING"
+                     groupKey="inspection.naming" enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.naming.GroovyInstanceVariableNamingConventionInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyConstantNamingConvention"
-                     displayName="Constant naming convention" groupName="Naming Conventions"
+                     displayName="Constant naming convention" groupKey="inspection.naming"
                      enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.naming.GroovyConstantNamingConventionInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyParameterNamingConvention"
                      displayName="Method parameter naming convention"
-                     groupName="Naming Conventions" enabledByDefault="false" level="WARNING"
+                     groupKey="inspection.naming" enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.naming.GroovyParameterNamingConventionInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyMapGetCanBeKeyedAccess"
                      displayName="Call to Map.get can be keyed access"
-                     groupName="GPath inspections" enabledByDefault="false" level="WARNING"
+                     groupKey="inspection.gpath" enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.gpath.GroovyMapGetCanBeKeyedAccessInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyMapPutCanBeKeyedAccess"
                      displayName="Call to Map.put can be keyed access"
-                     groupName="GPath inspections" enabledByDefault="false" level="WARNING"
+                     groupKey="inspection.gpath" enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.gpath.GroovyMapPutCanBeKeyedAccessInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyListGetCanBeKeyedAccess"
                      displayName="Call to List.get can be keyed access"
-                     groupName="GPath inspections" enabledByDefault="false" level="WARNING"
+                     groupKey="inspection.gpath" enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.gpath.GroovyListGetCanBeKeyedAccessInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyListSetCanBeKeyedAccess"
                      displayName="Call to List.set can be keyed access"
-                     groupName="GPath inspections" enabledByDefault="false" level="WARNING"
+                     groupKey="inspection.gpath" enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.gpath.GroovyListSetCanBeKeyedAccessInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyUntypedAccess" displayName="Access to untyped expression"
-                     groupName="Probable bugs"
+                     groupKey="inspection.bugs"
                      enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GroovyUntypedAccessInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GrUnresolvedAccess" displayName="Access to unresolved expression" unfair="true"
-                     groupName="Probable bugs"
+                     groupKey="inspection.bugs"
                      enabledByDefault="true" level="WEAK WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection"/>
 
-    <localInspection language="Groovy" groupPath="Groovy" groupName="Annotations verifying"
+    <localInspection language="Groovy" groupPath="Groovy" groupKey="inspection.annotations"
                      bundle="org.jetbrains.plugins.groovy.transformations.GroovyTransformationsBundle"
+                     groupBundle="org.jetbrains.plugins.groovy.GroovyBundle"
                      key="singleton.constructor.inspection" enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.plugins.groovy.transformations.singleton.SingletonConstructorInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="DelegatesTo" displayName="@DelegatesTo inspection"
-                     groupName="Annotations verifying" enabledByDefault="true" level="WARNING"
+                     groupKey="inspection.annotations" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.DelegatesToInspection"/>
 
     <localInspection language="Groovy"
                      shortName="GroovyVariableCanBeFinal"
                      bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
+                     groupBundle="org.jetbrains.plugins.groovy.GroovyBundle"
                      groupPath="Groovy"
-                     groupKey="groovy.dfa.issues"
+                     groupKey="inspection.data.flow"
                      key="variable.can.be.final"
                      enabledByDefault="false"
                      level="WARNING"
@@ -1689,6 +1710,14 @@
             class="org.jetbrains.plugins.groovy.actions.ConvertToJavaAction"
             text="Convert to Java"
             description="Convert Groovy files to Java">
+      <add-to-group group-id="RefactoringMenu"/>
+    </action>
+
+    <action id="ConvertToCompileStatic"
+            class="org.jetbrains.plugins.groovy.actions.ConvertToStaticAction"
+            text="Convert to @CompileStatic"
+            description="Convert Groovy files to @CompileStatic"
+            internal="true">
       <add-to-group group-id="RefactoringMenu"/>
     </action>
 

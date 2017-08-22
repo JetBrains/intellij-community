@@ -61,7 +61,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
       }
 
       @Override
-      public void configureFiles() throws Exception {
+      public void configureFiles() {
         configureByFiles(null, "/completion.json", "/baseSchema.json", "/inheritedSchema.json");
       }
 
@@ -112,7 +112,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
       }
 
       @Override
-      public void configureFiles() throws Exception {
+      public void configureFiles() {
         configureByFiles(null, "/baseCompletion.json", "/basePropertiesSchema.json");
       }
 
@@ -147,7 +147,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
       }
 
       @Override
-      public void configureFiles() throws Exception {
+      public void configureFiles() {
         configureByFiles(null, "/completion.json", "/baseSchema.json", "/inheritedSchema.json");
       }
 
@@ -208,7 +208,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
       }
 
       @Override
-      public void configureFiles() throws Exception {
+      public void configureFiles() {
         configureByFiles(null, "/referencingSchema.json", "/localRefSchema.json");
       }
 
@@ -250,7 +250,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
       }
 
       @Override
-      public void configureFiles() throws Exception {
+      public void configureFiles() {
         configureByFiles(null, "/referencingGlobalSchema.json");
       }
 
@@ -281,7 +281,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
       }
 
       @Override
-      public void configureFiles() throws Exception {
+      public void configureFiles() {
         configureByFiles(null, "/testFileForBaseProperties.json", "/basePropertiesSchema.json");
       }
 
@@ -320,7 +320,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
       }
 
       @Override
-      public void configureFiles() throws Exception {
+      public void configureFiles() {
         configureByFiles(null, "/refToDefinitionInFileSchema.json", "/definitionsSchema.json");
       }
 
@@ -351,7 +351,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
       }
 
       @Override
-      public void configureFiles() throws Exception {
+      public void configureFiles() {
         configureByFiles(null, "/refToOtherFileSchema.json", "/definitionsSchema.json");
       }
 
@@ -378,7 +378,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
       }
 
       @Override
-      public void configureFiles() throws Exception {
+      public void configureFiles() {
         configureByFiles(null, "/package.json", "/packageJsonSchema.json");
       }
 
@@ -408,7 +408,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
       }
 
       @Override
-      public void configureFiles() throws Exception {
+      public void configureFiles() {
         configureByFiles(null, "/testNestedDefinitionsNavigation.json", "/nestedDefinitionsSchema.json");
       }
 
@@ -438,7 +438,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
       }
 
       @Override
-      public void configureFiles() throws Exception {
+      public void configureFiles() {
         configureByFiles(null, "/testNestedAllOfOneOfDefinitions.json", "/nestedAllOfOneOfDefinitionsSchema.json");
       }
 
@@ -468,7 +468,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
       }
 
       @Override
-      public void configureFiles() throws Exception {
+      public void configureFiles() {
         configureByFiles(null, prefix + "testNavigation.json", prefix + "baseSchema.json", prefix + "referentSchema.json");
       }
 
@@ -498,7 +498,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
       }
 
       @Override
-      public void configureFiles() throws Exception {
+      public void configureFiles() {
         configureByFiles(null, prefix + "testCompletion.json", prefix + "baseSchema.json", prefix + "referentSchema.json");
       }
 
@@ -522,7 +522,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
       }
 
       @Override
-      public void configureFiles() throws Exception {
+      public void configureFiles() {
         configureByFiles(null, prefix + "testHighlighting.json", prefix + "baseSchema.json", prefix + "referentSchema.json");
       }
 
@@ -544,7 +544,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
       }
 
       @Override
-      public void configureFiles() throws Exception {
+      public void configureFiles() {
         configureByFiles(null, "withReferenceToDefinitionSchema.json");
       }
 
@@ -578,7 +578,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
       }
 
       @Override
-      public void configureFiles() throws Exception {
+      public void configureFiles() {
         configureByFiles(null, "completionInsideSchemaDefinition.json");
       }
 
@@ -603,7 +603,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
       }
 
       @Override
-      public void configureFiles() throws Exception {
+      public void configureFiles() {
         configureByFiles(null, "navigateFromSchemaDefinitionToMainSchema.json");
       }
 
@@ -622,7 +622,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
     });
   }
 
-  public void testNavigateToRefInsideMainSchema() throws Exception {
+  public void testNavigateToRefInsideMainSchema() {
     final JsonSchemaService service = JsonSchemaService.Impl.get(myProject);
     final List<JsonSchemaFileProvider> providers = new JsonSchemaProjectSelfProviderFactory().getProviders(myProject);
     Assert.assertEquals(1, providers.size());
@@ -667,7 +667,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
       }
 
       @Override
-      public void configureFiles() throws Exception {
+      public void configureFiles() {
         configureByFiles(null, "withIncorrectReferenceSchema.json");
       }
 
@@ -710,7 +710,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
       }
 
       @Override
-      public void configureFiles() throws Exception {
+      public void configureFiles() {
         configureByFiles(null, "insideCycledSchemaNavigationSchema.json");
       }
 
@@ -732,7 +732,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
       }
 
       @Override
-      public void configureFiles() throws Exception {
+      public void configureFiles() {
         configureByFiles(null, "testNavigationIntoCycled.json", "cycledSchema.json");
       }
 
@@ -754,7 +754,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
       }
 
       @Override
-      public void configureFiles() throws Exception {
+      public void configureFiles() {
         configureByFiles(null, "navigationWithCompositeDefinitionsObjectSchema.json");
       }
 
@@ -780,7 +780,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
       }
 
       @Override
-      public void configureFiles() throws Exception {
+      public void configureFiles() {
         configureByFiles(null, "navigationIntoWithCompositeDefinitionsObjectSchema.json",
                          "navigationWithCompositeDefinitionsObjectSchema.json");
       }
@@ -788,6 +788,29 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
       @Override
       public void doCheck() {
         checkNavigationTo("id", JsonSchemaObject.PROPERTIES);
+      }
+    });
+  }
+
+  public void testCompletionWithRootRef() throws Exception {
+    skeleton(new Callback() {
+      @Override
+      public void registerSchemes() {
+        final String moduleDir = getModuleDir(getProject());
+        final List<UserDefinedJsonSchemaConfiguration.Item> patterns = Collections.singletonList(
+          new UserDefinedJsonSchemaConfiguration.Item("*.json", true, false));
+        addSchema(new UserDefinedJsonSchemaConfiguration("one", moduleDir + "/cycledWithRootRefSchema.json", false, patterns));
+      }
+
+      @Override
+      public void configureFiles() {
+        configureByFiles(null, "completionWithRootRef.json", "cycledWithRootRefSchema.json");
+        complete();
+      }
+
+      @Override
+      public void doCheck() {
+        checkCompletion("\"id\"", "\"testProp\"");
       }
     });
   }

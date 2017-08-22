@@ -105,13 +105,7 @@ class EDTGuard implements InvocationHandler {
       return convert(method.invoke(myTarget, args));
     } catch (InvocationTargetException e) {
       final Throwable t = e.getTargetException();
-      if (t instanceof RuntimeException) {
-        throw (RuntimeException)t;
-      } else if (t instanceof Error) {
-        throw (Error)t;
-      } else {
-        throw t;
-      }
+      throw t;
     }
   }
 
@@ -190,14 +184,14 @@ class EDTGuard implements InvocationHandler {
     };
     process.addProcessListener(new ProcessAdapter() {
       @Override
-      public void processTerminated(ProcessEvent event) {
+      public void processTerminated(@NotNull ProcessEvent event) {
         synchronized (d) {
           Disposer.dispose(d);
         }
       }
 
       @Override
-      public void processWillTerminate(ProcessEvent event, boolean willBeDestroyed) {
+      public void processWillTerminate(@NotNull ProcessEvent event, boolean willBeDestroyed) {
         if (!willBeDestroyed) {
           synchronized (d) {
             Disposer.dispose(d);

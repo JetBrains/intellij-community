@@ -46,6 +46,8 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.Collection;
 
+import static com.intellij.openapi.util.text.StringUtil.isJavaIdentifier;
+
 
 /**
  * @author Maxim.Medvedev
@@ -151,8 +153,10 @@ public class ConvertMethodToClosureIntention extends Intention {
         if (((GrMethod)parent).getNameIdentifierGroovy() != element) return false;
         method = (GrMethod)parent;
       }
-      return method.getBlock() != null && method.getParent() instanceof GrTypeDefinitionBody;
-//      return element instanceof GrMethod && ((GrMethod)element).getBlock() != null && element.getParent() instanceof GrTypeDefinitionBody;
+      return !method.isConstructor() &&
+             isJavaIdentifier(method.getName()) &&
+             method.hasBlock() &&
+             method.getParent() instanceof GrTypeDefinitionBody;
     }
   }
 }

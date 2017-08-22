@@ -33,6 +33,7 @@ public class SingleStatementInBlockFixTest extends IGQuickFixesTestCase {
   public void testWhile() { doTest("while"); }
   public void testForEach() { doTest("for"); }
   public void testForIndex() { doTest("for"); }
+  public void testForMalformed() { assertQuickfixNotAvailable(getMessage("for"));}
   public void testDoWhile() { doTest("do"); }
   public void testIfWithLoop() { doTest("if"); }
   public void testElseWithLoop() { doTest("else"); }

@@ -299,7 +299,8 @@ public class XmlTagNameSynchronizer implements NamedComponent, CommandListener {
           final RangeMarker leader = couple.first;
           final RangeMarker support = couple.second;
           final String name = document.getText(new TextRange(leader.getStartOffset(), leader.getEndOffset()));
-          if (!name.equals(document.getText(new TextRange(support.getStartOffset(), support.getEndOffset())))) {
+          if (document.getTextLength() >= support.getEndOffset() &&
+              !name.equals(document.getText(new TextRange(support.getStartOffset(), support.getEndOffset())))) {
             document.replaceString(support.getStartOffset(), support.getEndOffset(), name);
           }
         }

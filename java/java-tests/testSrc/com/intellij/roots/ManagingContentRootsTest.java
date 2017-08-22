@@ -49,7 +49,7 @@ public class ManagingContentRootsTest extends IdeaTestCase {
     });
   }
 
-  public void testCreationOfContentRootWithFile() throws IOException {
+  public void testCreationOfContentRootWithFile() {
     VirtualFile root = createChildDirectory(dir, "root");
     String url = root.getUrl();
 
@@ -65,7 +65,7 @@ public class ManagingContentRootsTest extends IdeaTestCase {
     assertEquals(root, findContentEntry(url).getFile());
   }
 
-  public void testCreationOfContentRootWithUrl() throws IOException {
+  public void testCreationOfContentRootWithUrl() {
     VirtualFile root = createChildDirectory(dir, "root");
     String url = root.getUrl();
     String path = root.getPath();
@@ -79,7 +79,7 @@ public class ManagingContentRootsTest extends IdeaTestCase {
     assertEquals(root, findContentEntry(url).getFile());
   }
 
-  public void testCreationOfContentRootWithUrlWhenFileExists() throws IOException {
+  public void testCreationOfContentRootWithUrlWhenFileExists() {
     VirtualFile root = createChildDirectory(dir, "root");
     addContentRoot(root.getPath());
     assertEquals(root, findContentEntry(root.getUrl()).getFile());

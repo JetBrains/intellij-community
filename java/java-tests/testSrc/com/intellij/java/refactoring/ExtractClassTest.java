@@ -48,21 +48,21 @@ public class ExtractClassTest extends MultiFileTestCase {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
-  private void doTestMethod() throws Exception {
+  private void doTestMethod() {
     doTestMethod(null);
   }
 
-  private void doTestMethod(String conflicts) throws Exception {
+  private void doTestMethod(String conflicts) {
     doTestMethod("foo", conflicts);
   }
 
-  private void doTestMethod(final String methodName, final String conflicts) throws Exception {
+  private void doTestMethod(final String methodName, final String conflicts) {
     doTestMethod(methodName, conflicts, "Test");
   }
 
   private void doTestMethod(final String methodName,
                             final String conflicts,
-                            final String qualifiedName) throws Exception {
+                            final String qualifiedName) {
     doTest((rootDir, rootAfter) -> {
       PsiClass aClass = myJavaFacade.findClass(qualifiedName, GlobalSearchScope.projectScope(myProject));
 
@@ -75,19 +75,19 @@ public class ExtractClassTest extends MultiFileTestCase {
     });
   }
 
-  public void testStatic() throws Exception {
+  public void testStatic() {
     doTestMethod();
   }
 
-  public void testStaticImport() throws Exception {
+  public void testStaticImport() {
     doTestMethod();
   }
 
-  public void testFieldReference() throws Exception {
+  public void testFieldReference() {
     doTestMethod("foo", "Field 'myField' needs getter");
   }
   
-  public void testIncrement() throws Exception {
+  public void testIncrement() {
     try {
       BaseRefactoringProcessor.ConflictsInTestsException.setTestIgnore(true);
       doTestField(null, false);
@@ -97,71 +97,71 @@ public class ExtractClassTest extends MultiFileTestCase {
     }
   }
 
-  public void testVarargs() throws Exception {
+  public void testVarargs() {
     doTestMethod();
   }
 
-  public void testNoDelegation() throws Exception {
+  public void testNoDelegation() {
     doTestMethod();
   }
 
-  public void testNoFieldDelegation() throws Exception {
+  public void testNoFieldDelegation() {
     doTestFieldAndMethod();
   }
 
-  public void testFieldInitializers() throws Exception {
+  public void testFieldInitializers() {
     doTestField(null);
   }
 
-  public void testNonNormalizedFields() throws Exception {
+  public void testNonNormalizedFields() {
     doTestField(null);
   }
 
-  public void testDependantFieldInitializers() throws Exception {
+  public void testDependantFieldInitializers() {
     doTestField(null);
   }
 
-  public void testDependantNonStaticFieldInitializers() throws Exception {
+  public void testDependantNonStaticFieldInitializers() {
     doTestField(null, true);
   }
 
-  public void testInheritanceDelegation() throws Exception {
+  public void testInheritanceDelegation() {
     doTestMethod();
   }
 
-  public void testEnumSwitch() throws Exception {
+  public void testEnumSwitch() {
     doTestMethod();
   }
 
-  public void testImplicitReferenceTypeParameters() throws Exception {
+  public void testImplicitReferenceTypeParameters() {
     doTestMethod();
   }
 
-  public void testStaticImports() throws Exception {
+  public void testStaticImports() {
     doTestMethod("foo", null, "foo.Test");
   }
 
-  public void testNoConstructorParams() throws Exception {
+  public void testNoConstructorParams() {
     doTestFieldAndMethod();
   }
 
-  public void testConstructorParams() throws Exception {
+  public void testConstructorParams() {
     doTestFieldAndMethod();
   }
 
-  private void doTestFieldAndMethod() throws Exception {
+  private void doTestFieldAndMethod() {
     doTestFieldAndMethod("bar");
   }
 
-  public void testInnerClassRefs() throws Exception {
+  public void testInnerClassRefs() {
     doTestInnerClass();
   }
 
-  public void testEnsurePreservedQualifier() throws Exception {
+  public void testEnsurePreservedQualifier() {
     doTestMethod();
   }
 
-  private void doTestFieldAndMethod(final String methodName) throws Exception {
+  private void doTestFieldAndMethod(final String methodName) {
     doTest((rootDir, rootAfter) -> {
       PsiClass aClass = myJavaFacade.findClass("Test", GlobalSearchScope.projectScope(myProject));
 
@@ -177,11 +177,11 @@ public class ExtractClassTest extends MultiFileTestCase {
     });
   }
 
-  private void doTestField(final String conflicts) throws Exception {
+  private void doTestField(final String conflicts) {
     doTestField(conflicts, false);
   }
 
-  private void doTestField(final String conflicts, final boolean generateGettersSetters) throws Exception {
+  private void doTestField(final String conflicts, final boolean generateGettersSetters) {
     doTest((rootDir, rootAfter) -> {
       PsiClass aClass = myJavaFacade.findClass("Test", GlobalSearchScope.projectScope(myProject));
 
@@ -196,7 +196,7 @@ public class ExtractClassTest extends MultiFileTestCase {
     });
   }
 
-  public void testInnerClass() throws Exception {
+  public void testInnerClass() {
     doTest((rootDir, rootAfter) -> {
       PsiClass aClass = myJavaFacade.findClass("Test", GlobalSearchScope.projectScope(myProject));
 
@@ -246,24 +246,24 @@ public class ExtractClassTest extends MultiFileTestCase {
     }
   }
 
-  public void testGenerateGetters() throws Exception {
+  public void testGenerateGetters() {
     doTestField(null, true);
   }
 
-  public void testIncrementDecrement() throws Exception {
+  public void testIncrementDecrement() {
     doTestField(null, true);
   }
 
 
-  public void testGetters() throws Exception {
+  public void testGetters() {
     doTestFieldAndMethod("getMyT");
   }
 
-  public void testHierarchy() throws Exception {
+  public void testHierarchy() {
     doTestFieldAndMethod();
   }
 
-  public void testPublicFieldDelegation() throws Exception {
+  public void testPublicFieldDelegation() {
     doTest((rootDir, rootAfter) -> {
       PsiClass aClass = myJavaFacade.findClass("Test", GlobalSearchScope.projectScope(myProject));
 
@@ -279,7 +279,7 @@ public class ExtractClassTest extends MultiFileTestCase {
     });
   }
 
-  private void doTestInnerClass() throws Exception {
+  private void doTestInnerClass() {
     doTest((rootDir, rootAfter) -> {
       PsiClass aClass = myJavaFacade.findClass("Test", GlobalSearchScope.projectScope(myProject));
 
@@ -294,39 +294,39 @@ public class ExtractClassTest extends MultiFileTestCase {
     });
   }
 
-  public void testInner() throws Exception {
+  public void testInner() {
     doTestInnerClass();
   }
 
-  public void testMultipleGetters() throws Exception {
+  public void testMultipleGetters() {
     doTestField("Field 'myT' needs getter");
   }
 
-  public void testMultipleGetters1() throws Exception {
+  public void testMultipleGetters1() {
     doTestMethod("getMyT", "Field 'myT' needs getter");
   }
 
-  public void testUsedInInitializer() throws Exception {
+  public void testUsedInInitializer() {
     doTestField("Field 'myT' needs setter\n" +
                 "Field 'myT' needs getter\n" +
                 "Class initializer requires moved members");
   }
 
-  public void testUsedInConstructor() throws Exception {
+  public void testUsedInConstructor() {
     doTestField("Field 'myT' needs getter\n" +
                 "Field 'myT' needs setter\n" +
                 "Constructor requires moved members");
   }
 
-  public void testRefInJavadoc() throws Exception {
+  public void testRefInJavadoc() {
     doTestField(null);
   }
 
-  public void testMethodTypeParameters() throws Exception {
+  public void testMethodTypeParameters() {
     doTestMethod();
   }
 
-  public void testPublicVisibility() throws Exception {
+  public void testPublicVisibility() {
     doTest((rootDir, rootAfter) -> {
       PsiClass aClass = myJavaFacade.findClass("Test", GlobalSearchScope.projectScope(myProject));
 

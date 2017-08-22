@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -201,9 +201,10 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
       final PsiType returnType = ((PsiMethod)method).getReturnType();
       final PsiType valueType = myTypeEvaluator.evaluateType(value);
       if (returnType != null && valueType != null) {
-        if (!myLabeler.addMigrationRoot(method, valueType, myStatement, TypeConversionUtil.isAssignable(returnType, valueType) && !isGetter(value, method), true, true)
-            && TypeMigrationLabeler.typeContainsTypeParameters(returnType, Collections.emptySet())) {
-          value.accept(this);
+        if ((isGetter(value, method) || !TypeConversionUtil.isAssignable(returnType, valueType))
+            && returnType.equals(myTypeEvaluator.getType(method))
+            && !myLabeler.addMigrationRoot(method, valueType, myStatement, false, true)) {
+          myLabeler.convertExpression(value, valueType, returnType, false);
         }
       }
     }

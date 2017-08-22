@@ -101,6 +101,12 @@ class JavacTreeRefScanner extends TreeScanner<Tree, JavacReferenceCollectorListe
   @Override
   public Tree visitMethod(MethodTree node, JavacReferenceCollectorListener.ReferenceCollector refCollector) {
     final Element element = refCollector.getReferencedElement(node);
+
+    if (refCollector.getNameTable().isInit(node.getName()) &&
+        myCurrentEnclosingElementOffset.peek() == refCollector.getStartOffset(node)) {
+      return null;
+    }
+
     if (element != null) {
       final JavacRef.JavacElementRefBase ref = refCollector.asJavacRef(element);
       if (ref != null) {
@@ -156,38 +162,47 @@ class JavacTreeRefScanner extends TreeScanner<Tree, JavacReferenceCollectorListe
     return super.visitMethodInvocation(node, collector);
   }
 
-  final Stack<TypeElement> myCurrentEnclosingElement = new Stack<TypeElement>(1);
+  private final Stack<TypeElement> myCurrentEnclosingElement = new Stack<TypeElement>(1);
+  private final Stack<Long> myCurrentEnclosingElementOffset = new Stack<Long>(1);
+
   @Override
   public Tree visitClass(ClassTree node, JavacReferenceCollectorListener.ReferenceCollector refCollector) {
     TypeElement element = (TypeElement)refCollector.getReferencedElement(node);
     if (element == null) return null;
     myCurrentEnclosingElement.add(element);
+    ModifiersTree modifiers = node.getModifiers();
+    long modifiersEndOffset = refCollector.getEndOffset(modifiers);
+    long startOffset = modifiersEndOffset == -1 ? refCollector.getStartOffset(node) : (modifiersEndOffset + 1);
+    myCurrentEnclosingElementOffset.add(startOffset);
+    try {
+      final TypeMirror superclass = element.getSuperclass();
+      final List<? extends TypeMirror> interfaces = element.getInterfaces();
+      final JavacRef[] supers;
+      if (superclass != refCollector.getTypeUtility().getNoType(TypeKind.NONE)) {
+        supers = new JavacRef[interfaces.size() + 1];
+        final JavacRef.JavacElementRefBase ref = refCollector.asJavacRef(superclass);
+        if (ref == null) return null;
+        supers[interfaces.size()] = ref;
+      }
+      else {
+        supers = interfaces.isEmpty() ? JavacRef.EMPTY_ARRAY : new JavacRef[interfaces.size()];
+      }
 
-    final TypeMirror superclass = element.getSuperclass();
-    final List<? extends TypeMirror> interfaces = element.getInterfaces();
-    final JavacRef[] supers;
-    if (superclass != refCollector.getTypeUtility().getNoType(TypeKind.NONE)) {
-      supers = new JavacRef[interfaces.size() + 1];
-      final JavacRef.JavacElementRefBase ref = refCollector.asJavacRef(superclass);
-      if (ref == null) return null;
-      supers[interfaces.size()] = ref;
-
-    } else {
-      supers = interfaces.isEmpty() ? JavacRef.EMPTY_ARRAY : new JavacRef[interfaces.size()];
+      int i = 0;
+      for (TypeMirror anInterface : interfaces) {
+        final JavacRef.JavacElementRefBase ref = refCollector.asJavacRef(anInterface);
+        if (ref == null) return null;
+        supers[i++] = ref;
+      }
+      final JavacRef.JavacElementRefBase aClass = refCollector.asJavacRef(element);
+      if (aClass == null) return null;
+      refCollector.sinkReference(aClass);
+      refCollector.sinkDeclaration(new JavacDef.JavacClassDef(aClass, supers));
+      super.visitClass(node, refCollector);
+    } finally {
+      myCurrentEnclosingElement.pop();
+      myCurrentEnclosingElementOffset.pop();
     }
-
-    int i = 0;
-    for (TypeMirror anInterface : interfaces) {
-      final JavacRef.JavacElementRefBase ref = refCollector.asJavacRef(anInterface);
-      if (ref == null) return null;
-      supers[i++] = ref;
-    }
-    final JavacRef.JavacElementRefBase aClass = refCollector.asJavacRef(element);
-    if (aClass == null) return null;
-    refCollector.sinkReference(aClass);
-    refCollector.sinkDeclaration(new JavacDef.JavacClassDef(aClass, supers));
-    super.visitClass(node, refCollector);
-    myCurrentEnclosingElement.pop();
     return null;
   }
 

@@ -258,12 +258,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     return panel;
   }
 
-  private static Gradient getGradientColors() {
-    return new Gradient(
-      new JBColor(0x6593f2, 0x40505e),
-      new JBColor(0x2e6fcd, 0x354157));
-  }
-
   private void updateComponents() {
     myList = new JBList(new SearchListModel()) {
       int lastKnownHeight = JBUI.scale(30);
@@ -275,7 +269,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         } else {
           lastKnownHeight = size.height;
         }
-        return new Dimension(Math.max(myBalloon.getSize().width, Math.min(size.width - 2, getPopupMaxWidth())), myList.isEmpty() ? JBUI.scale(30) : size.height);
+        int width = myBalloon != null ? myBalloon.getSize().width : 0;
+        return new Dimension(Math.max(width, Math.min(size.width - 2, getPopupMaxWidth())), myList.isEmpty() ? JBUI.scale(30) : size.height);
       }
 
       @Override
@@ -302,8 +297,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         if (i != -1) {
           mySkipFocusGain = true;
           getGlobalInstance().doWhenFocusSettlesDown(() -> getGlobalInstance().requestFocus(getField(), true));
-          //noinspection SSBasedInspection
-          SwingUtilities.invokeLater(() -> {
+          ApplicationManager.getApplication().invokeLater(() -> {
             myList.setSelectedIndex(i);
             doNavigate(i);
           });
@@ -663,28 +657,41 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     });
     initSearchField(myPopupField);
     myPopupField.setOpaque(false);
-    final JTextField editor = myPopupField.getTextEditor();
+
+    JTextField editor = myPopupField.getTextEditor();
     editor.setColumns(SEARCH_FIELD_COLUMNS);
-    final JPanel panel = new JPanel(new BorderLayout()) {
-      @Override
-      protected void paintComponent(Graphics g) {
-        final Gradient gradient = getGradientColors();
-        ((Graphics2D)g).setPaint(new GradientPaint(0, 0, gradient.getStartColor(), 0, getHeight(), gradient.getEndColor()));
-        g.fillRect(0, 0, getWidth(), getHeight());
-      }
-    };
-    final JLabel title = new JLabel(" Search Everywhere:       ");
-    final JPanel topPanel = new NonOpaquePanel(new BorderLayout());
-    title.setForeground(new JBColor(Gray._240, Gray._200));
+    JPanel panel = UIUtil.isUnderWin10LookAndFeel() ?
+      new JPanel(new BorderLayout()) {
+        @Override protected void paintComponent(Graphics g) {
+          g.setColor(UIManager.getColor("SearchEverywhere.background"));
+          g.fillRect(0, 0, getWidth(), getHeight());
+        }
+      } :
+      new JPanel(new BorderLayout()) {
+        @Override protected void paintComponent(Graphics g) {
+          Gradient gradient = new Gradient(new JBColor(0x6593f2, 0x40505e), new JBColor(0x2e6fcd, 0x354157));
+          ((Graphics2D)g).setPaint(new GradientPaint(0, 0, gradient.getStartColor(), 0, getHeight(), gradient.getEndColor()));
+          g.fillRect(0, 0, getWidth(), getHeight());
+        }
+      };
+
+    JLabel title = new JLabel(" Search Everywhere:       ");
+    JPanel topPanel = new NonOpaquePanel(new BorderLayout());
+    Color foregroundColor = UIUtil.isUnderWin10LookAndFeel() ?
+                            UIManager.getColor("SearchEverywhere.foreground") :
+                            new JBColor(Gray._240, Gray._200);
+
+    title.setForeground(foregroundColor);
     if (SystemInfo.isMac) {
       title.setFont(title.getFont().deriveFont(Font.BOLD, title.getFont().getSize() - 1f));
     } else {
       title.setFont(title.getFont().deriveFont(Font.BOLD));
     }
     topPanel.add(title, BorderLayout.WEST);
-    final JPanel controls = new JPanel(new BorderLayout());
+    JPanel controls = new JPanel(new BorderLayout());
     controls.setOpaque(false);
-    final JLabel settings = new JLabel(AllIcons.General.SearchEverywhereGear);
+
+    JLabel settings = new JLabel(AllIcons.General.SearchEverywhereGear);
     new ClickListener(){
       @Override
       public boolean onClick(@NotNull MouseEvent event, int clickCount) {
@@ -692,16 +699,32 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         return true;
       }
     }.installOn(settings);
+
+    settings.setBorder(UIUtil.isUnderWin10LookAndFeel() ? JBUI.Borders.emptyLeft(6) : JBUI.Borders.empty());
+
     controls.add(settings, BorderLayout.EAST);
-    myNonProjectCheckBox.setForeground(new JBColor(Gray._240, Gray._200));
-    myNonProjectCheckBox.setText("<html>Include non-project items <b>" + getShortcut() + "</b>  </html>");
     if (!NonProjectScopeDisablerEP.isSearchInNonProjectDisabled()) {
+      myNonProjectCheckBox.setForeground(foregroundColor);
+
+      Color shortcutColor = UIUtil.isUnderWin10LookAndFeel() ?
+                            UIManager.getColor("SearchEverywhere.shortcutForeground") : foregroundColor;
+
+      StringBuilder cbText = new StringBuilder("<html>Include non-project items ");
+      if (!UIUtil.isUnderWin10LookAndFeel()) cbText.append("<b>");
+      cbText.append("<font color=#").append(ColorUtil.toHex(shortcutColor)).append(">").append(getShortcut()).append("</font>");
+      if (!UIUtil.isUnderWin10LookAndFeel()) cbText.append("</b>");
+      cbText.append("</html>");
+
+      myNonProjectCheckBox.setText(cbText.toString());
       controls.add(myNonProjectCheckBox, BorderLayout.WEST);
     }
+
+    controls.setBorder(UIUtil.isUnderWin10LookAndFeel() ? JBUI.Borders.emptyTop(1) : JBUI.Borders.empty());
+
     topPanel.add(controls, BorderLayout.EAST);
     panel.add(myPopupField, BorderLayout.CENTER);
     panel.add(topPanel, BorderLayout.NORTH);
-    panel.setBorder(IdeBorderFactory.createEmptyBorder(3, 5, 4, 5));
+    panel.setBorder(JBUI.Borders.empty(3, 5, 4, 5));
     DataManager.registerDataProvider(panel, this);
     final ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, editor);
     myBalloon = builder
@@ -959,13 +982,13 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
   private static class MySearchTextField extends SearchTextField implements DataProvider, Disposable {
     public MySearchTextField() {
-      super(false);
+      super(false, "SearchEveryWhereHistory");
       JTextField editor = getTextEditor();
       editor.setOpaque(false);
-      if (SystemInfo.isMac && UIUtil.isUnderIntelliJLaF()) {
+      if (UIUtil.isUnderDefaultMacTheme()) {
         editor.setUI((MacIntelliJTextFieldUI)MacIntelliJTextFieldUI.createUI(editor));
         editor.setBorder(new MacIntelliJTextBorder());
-      } else {
+      } else if (!UIUtil.isUnderWin10LookAndFeel()){
         editor.setUI((DarculaTextFieldUI)DarculaTextFieldUI.createUI(editor));
         editor.setBorder(new DarculaTextBorder());
       }

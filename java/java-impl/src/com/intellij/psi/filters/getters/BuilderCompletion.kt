@@ -44,10 +44,11 @@ internal class BuilderCompletion(private val expectedType: PsiClassType, private
   }
 
   private fun methodsReturning(containingClass: PsiClass, returnedClass: PsiClass, isStatic: Boolean): Collection<List<PsiMethod>> {
-    return containingClass.methods
-      .filter { it.hasModifierProperty(PsiModifier.STATIC) == isStatic &&
-                returnedClass == PsiUtil.resolveClassInClassTypeOnly(it.returnType) &&
-                PsiUtil.isAccessible(it, place, null) }
+    return containingClass.allMethodsAndTheirSubstitutors
+      .filter { it.first.hasModifierProperty(PsiModifier.STATIC) == isStatic &&
+                returnedClass == PsiUtil.resolveClassInClassTypeOnly(it.second.substitute(it.first.returnType)) &&
+                PsiUtil.isAccessible(it.first, place, null) }
+      .map { it.first }
       .groupBy { it.name }
       .values
   }

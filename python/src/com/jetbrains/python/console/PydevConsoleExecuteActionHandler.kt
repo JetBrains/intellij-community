@@ -43,7 +43,7 @@ open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageC
 
   private val project = myConsoleView.project
   private val myEnterHandler = PyConsoleEnterHandler()
-  private var myIpythonInputPromptCount = 1
+  private var myIpythonInputPromptCount = 2
 
   override var isEnabled = false
     set(value) {
@@ -87,7 +87,7 @@ open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageC
     consoleComm.execInterpreter(code) {}
   }
 
-  private fun updateConsoleState() {
+  override fun updateConsoleState() {
     if (!isEnabled) {
       executingPrompt()
     }

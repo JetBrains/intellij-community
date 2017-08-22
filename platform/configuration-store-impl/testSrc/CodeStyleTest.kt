@@ -26,7 +26,7 @@ class CodeStyleTest {
   @Test fun `do not remove unknown`() {
     val settings = CodeStyleSettings()
     val loaded = """
-    <code_scheme name="testSchemeName">
+    <code_scheme name="testSchemeName" version="${CodeStyleSettings.CURR_VERSION}">
       <UnknownDoNotRemoveMe>
         <option name="ALIGN_OBJECT_PROPERTIES" value="2" />
       </UnknownDoNotRemoveMe>
@@ -105,7 +105,7 @@ class CodeStyleTest {
       val settings = CodeStyleSettings()
       val text : (param: String) -> String = { param -> 
         """
-      <code_scheme name="testSchemeName">
+      <code_scheme name="testSchemeName" version="${CodeStyleSettings.CURR_VERSION}">
         <NewComponent>
           <option name="MAIN" value="${param}" />
         </NewComponent>
@@ -135,5 +135,25 @@ class CodeStyleTest {
     finally {
       Disposer.dispose(disposable)
     }
+  }
+
+  @Test fun `reset deprecations`() {
+    val settings = CodeStyleSettings()
+    val initial = """
+    <code_scheme name="testSchemeName">
+      <option name="RIGHT_MARGIN" value="64" />
+      <option name="USE_FQ_CLASS_NAMES_IN_JAVADOC" value="false" />
+    </code_scheme>""".trimIndent()
+    val expected = """
+    <code_scheme name="testSchemeName" version="${CodeStyleSettings.CURR_VERSION}">
+      <option name="RIGHT_MARGIN" value="64" />
+    </code_scheme>""".trimIndent();
+
+    settings.readExternal(loadElement(initial))
+    settings.resetDeprecatedFields()
+
+    val serialized = Element("code_scheme").setAttribute("name", "testSchemeName")
+    settings.writeExternal(serialized)
+    assertThat(JDOMUtil.writeElement(serialized)).isEqualTo(expected)
   }
 }

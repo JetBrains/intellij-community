@@ -47,7 +47,6 @@ public class DeploymentConfigurationManagerImpl extends DeploymentConfigurationM
     return RunManager.getInstance(myProject).getConfigurationSettingsList(configurationType);
   }
 
-
   @Override
   public void createAndRunConfiguration(@NotNull ServerType<?> serverType, @Nullable RemoteServer<?> remoteServer) {
     DeployToServerConfigurationType configurationType = DeployToServerConfigurationTypesRegistrar.getDeployConfigurationType(serverType);
@@ -63,7 +62,7 @@ public class DeploymentConfigurationManagerImpl extends DeploymentConfigurationM
                                     DefaultRunExecutor.getRunExecutorInstance())) {
       runManager.addConfiguration(settings, settings.isShared());
       runManager.setSelectedConfiguration(settings);
-      ProgramRunnerUtil.executeConfiguration(myProject, settings, DefaultRunExecutor.getRunExecutorInstance());
+      ProgramRunnerUtil.executeConfiguration(settings, DefaultRunExecutor.getRunExecutorInstance());
     }
   }
 }

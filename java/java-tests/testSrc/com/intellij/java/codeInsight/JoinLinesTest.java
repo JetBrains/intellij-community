@@ -37,12 +37,12 @@ public class JoinLinesTest extends LightCodeInsightTestCase {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
-  public void testNormal() throws Exception { doTest(); }
+  public void testNormal() { doTest(); }
 
-  public void testStringLiteral() throws Exception { doTest(); }
-  public void testLiteralSCR4989() throws Exception { doTest(); }
+  public void testStringLiteral() { doTest(); }
+  public void testLiteralSCR4989() { doTest(); }
 
-  public void testSCR3493() throws Exception {
+  public void testSCR3493() {
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
     boolean use_tab_character = settings.useTabCharacter(null);
     boolean smart_tabs = settings.isSmartTabs(null);
@@ -55,7 +55,7 @@ public class JoinLinesTest extends LightCodeInsightTestCase {
       settings.getIndentOptions(StdFileTypes.JAVA).SMART_TABS = smart_tabs;
     }
   }
-  public void testSCR3493a() throws Exception {
+  public void testSCR3493a() {
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
     boolean use_tab_character = settings.useTabCharacter(null);
     boolean smart_tabs = settings.isSmartTabs(null);
@@ -68,7 +68,7 @@ public class JoinLinesTest extends LightCodeInsightTestCase {
       settings.getIndentOptions(StdFileTypes.JAVA).SMART_TABS = smart_tabs;
     }
   }
-  public void testSCR3493b() throws Exception {
+  public void testSCR3493b() {
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
     boolean use_tab_character = settings.useTabCharacter(null);
     boolean smart_tabs = settings.isSmartTabs(null);
@@ -81,7 +81,7 @@ public class JoinLinesTest extends LightCodeInsightTestCase {
       settings.getIndentOptions(StdFileTypes.JAVA).SMART_TABS = smart_tabs;
     }
   }
-  public void testSCR3493c() throws Exception {
+  public void testSCR3493c() {
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
     boolean use_tab_character = settings.useTabCharacter(null);
     boolean smart_tabs = settings.isSmartTabs(null);
@@ -94,7 +94,7 @@ public class JoinLinesTest extends LightCodeInsightTestCase {
       settings.getIndentOptions(StdFileTypes.JAVA).SMART_TABS = smart_tabs;
     }
   }
-  public void testSCR3493d() throws Exception {
+  public void testSCR3493d() {
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
     boolean use_tab_character = settings.useTabCharacter(null);
     boolean smart_tabs = settings.isSmartTabs(null);
@@ -107,7 +107,7 @@ public class JoinLinesTest extends LightCodeInsightTestCase {
       settings.getIndentOptions(StdFileTypes.JAVA).SMART_TABS = smart_tabs;
     }
   }
-  public void testSCR3493e() throws Exception {
+  public void testSCR3493e() {
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
     boolean use_tab_character = settings.useTabCharacter(null);
     boolean smart_tabs = settings.isSmartTabs(null);
@@ -120,24 +120,24 @@ public class JoinLinesTest extends LightCodeInsightTestCase {
       settings.getIndentOptions(StdFileTypes.JAVA).SMART_TABS = smart_tabs;
     }
   }
-  public void testSCR5959() throws Exception {
+  public void testSCR5959() {
     doTest();
   }
-  public void testSCR6299() throws Exception {
+  public void testSCR6299() {
     doTest();
   }
 
-  public void testLocalVar() throws Exception { doTest(); }
+  public void testLocalVar() { doTest(); }
 
-  public void testSlashComment() throws Exception { doTest(); }
-  public void testDocComment() throws Exception { doTest(); }
+  public void testSlashComment() { doTest(); }
+  public void testDocComment() { doTest(); }
 
-  public void testOnEmptyLine() throws Exception { doTest(); }
-  public void testCollapseClass() throws Exception { doTest(); }
-  public void testSCR10386() throws Exception { doTest(); }
-  public void testDeclarationWithInitializer() throws Exception {doTest(); }
+  public void testOnEmptyLine() { doTest(); }
+  public void testCollapseClass() { doTest(); }
+  public void testSCR10386() { doTest(); }
+  public void testDeclarationWithInitializer() {doTest(); }
 
-  public void testUnwrapCodeBlock1() throws Exception {
+  public void testUnwrapCodeBlock1() {
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
     boolean use_tab_character = settings.useTabCharacter(null);
     boolean smart_tabs = settings.isSmartTabs(null);
@@ -154,7 +154,7 @@ public class JoinLinesTest extends LightCodeInsightTestCase {
     }
   }
 
-  public void testUnwrapCodeBlock2() throws Exception {
+  public void testUnwrapCodeBlock2() {
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
     boolean use_tab_character = settings.useTabCharacter(null);
     boolean smart_tabs = settings.isSmartTabs(null);
@@ -171,10 +171,10 @@ public class JoinLinesTest extends LightCodeInsightTestCase {
     }
   }
 
-  public void testAssignmentExpression() throws Exception {
+  public void testAssignmentExpression() {
     doTest();
   }
-  public void testReformatInsertsNewlines() throws Exception {
+  public void testReformatInsertsNewlines() {
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
     final Element root = new Element("fake");
     settings.writeExternal(root);
@@ -189,7 +189,7 @@ public class JoinLinesTest extends LightCodeInsightTestCase {
     }
   }
   
-  public void testForceBrace() throws Exception {
+  public void testForceBrace() {
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
     int old = settings.IF_BRACE_FORCE;
     try {
@@ -200,7 +200,7 @@ public class JoinLinesTest extends LightCodeInsightTestCase {
     }
   }
 
-  public void testWrongWrapping() throws Exception{
+  public void testWrongWrapping() {
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
     settings.setDefaultRightMargin(80);
     settings.CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
@@ -208,7 +208,7 @@ public class JoinLinesTest extends LightCodeInsightTestCase {
     doTest();
   }
 
-  public void testSubsequentJoiningAndUnexpectedTextRemoval() throws Exception {
+  public void testSubsequentJoiningAndUnexpectedTextRemoval() {
     // Inspired by IDEA-65342
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
     settings.setDefaultRightMargin(50);
@@ -216,32 +216,32 @@ public class JoinLinesTest extends LightCodeInsightTestCase {
     doTest(2);
   }
   
-  public void testLeaveTrailingComment() throws Exception { doTest(); }
+  public void testLeaveTrailingComment() { doTest(); }
 
-  public void testConvertComment() throws Exception {
+  public void testConvertComment() {
     doTest();
   }
 
-  public void testJoiningMethodCallWhenItDoesntFit() throws Exception {
+  public void testJoiningMethodCallWhenItDoesntFit() {
     CommonCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
     settings.METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
     settings.RIGHT_MARGIN = 20;
     doTest();
   }
 
-  private void doTest() throws Exception {
+  private void doTest() {
     doTest(".java");
   }
   
-  private void doTest(int times) throws Exception {
+  private void doTest(int times) {
     doTest(".java", times);
   }
 
-  private void doTest(@NonNls final String ext) throws Exception {
+  private void doTest(@NonNls final String ext) {
     doTest(ext, 1);
   }
   
-  private void doTest(@NonNls final String ext, int times) throws Exception {
+  private void doTest(@NonNls final String ext, int times) {
     @NonNls String path = "/codeInsight/joinLines/";
 
     configureByFile(path + getTestName(false) + ext);

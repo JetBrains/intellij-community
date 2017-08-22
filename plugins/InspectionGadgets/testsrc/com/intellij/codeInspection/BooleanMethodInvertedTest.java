@@ -1,66 +1,65 @@
 package com.intellij.codeInspection;
 
-import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
+import com.intellij.codeInspection.booleanIsAlwaysInverted.BooleanMethodIsAlwaysInvertedInspection;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.siyeh.ig.IGInspectionTestCase;
-import com.intellij.codeInspection.booleanIsAlwaysInverted.BooleanMethodIsAlwaysInvertedInspection;
 
 public class BooleanMethodInvertedTest extends IGInspectionTestCase {
 
-  public void testUnusedMethod() throws Exception {
+  public void testUnusedMethod() {
     doTest();
   }
 
-  public void testNotAlwaysInverted() throws Exception {
+  public void testNotAlwaysInverted() {
     doTest();
   }
 
-  public void testAlwaysInverted() throws Exception {
+  public void testAlwaysInverted() {
     doTest();
   }
 
-  public void testAlwaysInvertedDelegation() throws Exception {
+  public void testAlwaysInvertedDelegation() {
     doTest();
   }
 
-  public void testAlwaysInvertedOneUsage() throws Exception {
+  public void testAlwaysInvertedOneUsage() {
     doTest();
   }
 
-  public void testAlwaysInvertedByRange() throws Exception {
+  public void testAlwaysInvertedByRange() {
     doTest(true);
   }
 
-  public void testFromExpression() throws Exception {
+  public void testFromExpression() {
     doTest();
   }
 
-  public void testAlwaysInvertedInScope() throws Exception {
+  public void testAlwaysInvertedInScope() {
     doTest();
   }
 
-  public void testHierarchyNotAlwaysInverted() throws Exception {
+  public void testHierarchyNotAlwaysInverted() {
     doTest();
   }
 
-  public void testDeepHierarchyNotAlwaysInverted() throws Exception {
+  public void testDeepHierarchyNotAlwaysInverted() {
     doTest();
   }
 
-  public void testDeepHierarchyNotAlwaysInvertedInScope() throws Exception {
+  public void testDeepHierarchyNotAlwaysInvertedInScope() {
     doTest();
   }
 
-  public void testDeepHierarchyAlwaysInverted() throws Exception {
+  public void testDeepHierarchyAlwaysInverted() {
     doTest();
   }
 
-  public void testOverrideLibrary() throws Exception {
+  public void testOverrideLibrary() {
     doTest();
   }
 
-  public void testMethodReferenceIgnored() throws Exception {
+  public void testMethodReferenceIgnored() {
     final LanguageLevelProjectExtension projectExtension = LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject());
     final LanguageLevel oldLevel = projectExtension.getLanguageLevel();
     try {
@@ -72,11 +71,11 @@ public class BooleanMethodInvertedTest extends IGInspectionTestCase {
     }
   }
 
-  private void doTest() throws Exception {
+  private void doTest() {
     doTest(false);
   }
 
-  private void doTest(boolean checkRange) throws Exception {
+  private void doTest(boolean checkRange) {
     doTest("invertedBoolean/" + getTestName(true), new BooleanMethodIsAlwaysInvertedInspection(), checkRange);
   }
 }

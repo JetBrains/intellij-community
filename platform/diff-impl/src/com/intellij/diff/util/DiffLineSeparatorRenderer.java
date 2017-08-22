@@ -131,6 +131,7 @@ public class DiffLineSeparatorRenderer implements LineMarkerRendererEx, LineSepa
     draw(g, shiftX, y, lineHeight, myEditor.getColorsScheme());
   }
 
+  @NotNull
   @Override
   public LineMarkerRendererEx.Position getPosition() {
     return LineMarkerRendererEx.Position.CUSTOM;

@@ -125,12 +125,17 @@ public class ExecutionTargetManagerImpl extends ExecutionTargetManager implement
         }
       }
       toNotify =
-        doSetActiveTarget(index >= 0 ? suitable.get(index) : ContainerUtil.getFirstItem(suitable, DefaultExecutionTarget.INSTANCE));
+        doSetActiveTarget(index >= 0 ? suitable.get(index) : getDefaultTarget(suitable));
     }
 
     if (toNotify != null) {
       myProject.getMessageBus().syncPublisher(TOPIC).activeTargetChanged(toNotify);
     }
+  }
+
+  private static ExecutionTarget getDefaultTarget(List<ExecutionTarget> suitable){
+    ExecutionTarget result = ContainerUtil.find(suitable, ExecutionTarget::isReady);
+    return  result != null ? result : DefaultExecutionTarget.INSTANCE;
   }
 
   @Nullable

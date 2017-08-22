@@ -127,7 +127,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
 
   public void addConsoleFolding(boolean isDebugConsole) {
     try {
-      if (isDebugConsole && myExecuteActionHandler != null) {
+      if (isDebugConsole && myExecuteActionHandler != null && getEditor() != null) {
         PyConsoleStartFolding folding = createConsoleFolding();
         // in debug console we should add folding from the place where the folding was turned on
         folding.setStartLineOffset(getEditor().getDocument().getTextLength());
@@ -181,37 +181,42 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   }
 
   @Override
-  public void executeCode(final @NotNull String code, @Nullable final Editor editor) {
+  public void executeCode(final @Nullable String code, @Nullable final Editor editor) {
     myInitialized.doWhenDone(
-      () ->
-        ProgressManager.getInstance().run(new Task.Backgroundable(null, "Executing Code in Console...", false) {
-          @Override
-          public void run(@NotNull final ProgressIndicator indicator) {
-            long time = System.currentTimeMillis();
-            while (!myExecuteActionHandler.isEnabled() || !myExecuteActionHandler.canExecuteNow()) {
-              if (indicator.isCanceled()) {
-                break;
-              }
-              if (System.currentTimeMillis() - time > 1000) {
-                if (editor != null) {
-                  UIUtil.invokeLaterIfNeeded(
-                    () -> HintManager.getInstance()
-                      .showErrorHint(editor, myExecuteActionHandler.getCantExecuteMessage()));
+      () -> {
+        if (code != null) {
+          ProgressManager.getInstance().run(new Task.Backgroundable(null, "Executing Code in Console...", false) {
+            @Override
+            public void run(@NotNull final ProgressIndicator indicator) {
+              long time = System.currentTimeMillis();
+              while (!myExecuteActionHandler.isEnabled() || !myExecuteActionHandler.canExecuteNow()) {
+                if (indicator.isCanceled()) {
+                  break;
                 }
-                return;
+                if (System.currentTimeMillis() - time > 1000) {
+                  if (editor != null) {
+                    UIUtil.invokeLaterIfNeeded(
+                      () -> HintManager.getInstance()
+                        .showErrorHint(editor, myExecuteActionHandler.getCantExecuteMessage()));
+                  }
+                  return;
+                }
+                TimeoutUtil.sleep(300);
               }
-              TimeoutUtil.sleep(300);
+              if (!indicator.isCanceled()) {
+                executeInConsole(code);
+              }
             }
-            if (!indicator.isCanceled()) {
-              executeInConsole(code);
-            }
-          }
-        })
+          });
+        } else {
+          requestFocus();
+        }
+      }
     );
   }
 
 
-  public void executeInConsole(final String code) {
+  public void executeInConsole(@NotNull final String code) {
     TransactionGuard.submitTransaction(this, () -> {
       final String codeToExecute = code.endsWith("\n") || myExecuteActionHandler.checkSingleLine(code) ? code : code + "\n";
       DocumentEx document = getConsoleEditor().getDocument();
@@ -290,6 +295,10 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     VirtualFile file = getVirtualFile();
     if (PyConsoleUtil.detectIPythonImported(text, outputType)) {
       PyConsoleUtil.markIPython(file);
+      PythonConsoleExecuteActionHandler handler = getExecuteActionHandler();
+      if (handler != null) {
+        handler.updateConsoleState();
+      }
     }
     if (PyConsoleUtil.detectIPythonAutomagicOn(text)) {
       PyConsoleUtil.setIPythonAutomagic(file, true);

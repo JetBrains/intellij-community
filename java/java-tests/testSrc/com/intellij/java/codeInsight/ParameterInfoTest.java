@@ -36,8 +36,6 @@ import com.intellij.testFramework.utils.parameterInfo.MockParameterInfoUIContext
 import com.intellij.testFramework.utils.parameterInfo.MockUpdateParameterInfoContext;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
-
 public class ParameterInfoTest extends LightCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
@@ -63,7 +61,7 @@ public class ParameterInfoTest extends LightCodeInsightFixtureTestCase {
     assertEquals(paramsList, joined);
   }
 
-  public void testParameterInfoDoesNotShowInternalJetbrainsAnnotations() throws IOException {
+  public void testParameterInfoDoesNotShowInternalJetbrainsAnnotations() {
     myFixture.configureByText("x.java", "class X { void f(@org.intellij.lang.annotations.Flow int i) { f(<caret>0); }}");
 
     CreateParameterInfoContext context = new MockCreateParameterInfoContext(getEditor(), getFile());
@@ -96,7 +94,7 @@ public class ParameterInfoTest extends LightCodeInsightFixtureTestCase {
     doTest2CandidatesWithPreselection();
   }
 
-  public void testSuperConstructorCalls() throws Exception {
+  public void testSuperConstructorCalls() {
     myFixture.configureByText("x.java",
                               "class A {\n" +
                               "       public A(String s, int... p) {}\n" +

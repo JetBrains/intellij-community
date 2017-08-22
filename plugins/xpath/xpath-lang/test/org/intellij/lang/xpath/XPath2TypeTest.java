@@ -17,172 +17,172 @@ package org.intellij.lang.xpath;
 
 public class XPath2TypeTest extends XPath2HighlightingTestBase {
 
-  public void testQNameToQName() throws Throwable {
+  public void testQNameToQName() {
     doXPathHighlighting();
   }
 
-  public void testQNameToBoolean() throws Throwable {
+  public void testQNameToBoolean() {
     doXPathHighlighting();
   }
 
-  public void testStringToQName() throws Throwable {
+  public void testStringToQName() {
     doXPathHighlighting();
   }
 
-  public void testStringToBoolean() throws Throwable {
+  public void testStringToBoolean() {
     doXPathHighlighting();
   }
 
-  public void testUriToBoolean() throws Throwable {
+  public void testUriToBoolean() {
     doXPathHighlighting();
   }
 
-  public void testUriToStringSequence() throws Throwable {
+  public void testUriToStringSequence() {
     doXPathHighlighting();
   }
 
-  public void testNumberToNode() throws Throwable {
+  public void testNumberToNode() {
     doXPathHighlighting();
   }
 
-  public void testNodeToNode() throws Throwable {
+  public void testNodeToNode() {
     doXPathHighlighting();
   }
 
-  public void testNodeToDouble() throws Throwable {
+  public void testNodeToDouble() {
     doXPathHighlighting();
   }
 
-  public void testAnyToString() throws Throwable {
+  public void testAnyToString() {
     doXPathHighlighting();
   }
 
-  public void testStringToAny() throws Throwable {
+  public void testStringToAny() {
     doXPathHighlighting();
   }
 
-  public void testIntegerToString() throws Throwable {
+  public void testIntegerToString() {
     doXPathHighlighting();
   }
 
-  public void testIntSeqToAnySeq() throws Throwable {
+  public void testIntSeqToAnySeq() {
     doXPathHighlighting();
   }
 
-  public void testIntSeqToStringSeq() throws Throwable {
+  public void testIntSeqToStringSeq() {
     doXPathHighlighting();
   }
 
-  public void testDynamicContext1() throws Throwable {
+  public void testDynamicContext1() {
     doXPathHighlighting();
   }
 
-  public void testDynamicContext2() throws Throwable {
+  public void testDynamicContext2() {
     doXPathHighlighting();
   }
 
-  public void testDynamicContext3() throws Throwable {
+  public void testDynamicContext3() {
     doXPathHighlighting();
   }
 
-  public void testStringFunctionOnPath() throws Throwable {
+  public void testStringFunctionOnPath() {
     doXPathHighlighting();
   }
 
-  public void testInvalidPath() throws Throwable {
+  public void testInvalidPath() {
     doXPathHighlighting();
   }
 
-  public void testToNumericIDEA67335() throws Throwable {
+  public void testToNumericIDEA67335() {
     doXPathHighlighting();
   }
 
-  public void testBooleanComparisonIDEA67348() throws Throwable {
+  public void testBooleanComparisonIDEA67348() {
     doXPathHighlighting();
   }
 
-  public void testDurationPlusDurationPlusDateIDEA69517() throws Throwable {
+  public void testDurationPlusDurationPlusDateIDEA69517() {
     doXPathHighlighting();
   }
 
-  public void testNumberPlusString() throws Throwable {
+  public void testNumberPlusString() {
     doXPathHighlighting();
   }
 
-  public void testUnaryExpressionType() throws Throwable {
+  public void testUnaryExpressionType() {
     doXPathHighlighting();
   }
 
-  public void testDatePlusDuration() throws Throwable {
+  public void testDatePlusDuration() {
     TestNamespaceContext.install(myFixture.getTestRootDisposable());
     doXPathHighlighting();
   }
 
-  public void testDatePlusDate() throws Throwable {
+  public void testDatePlusDate() {
     TestNamespaceContext.install(myFixture.getTestRootDisposable());
     doXPathHighlighting();
   }
 
-  public void testDateMinusDate() throws Throwable {
+  public void testDateMinusDate() {
     doXPathHighlighting();
   }
 
-  public void testTimeMinusTime() throws Throwable {
+  public void testTimeMinusTime() {
     doXPathHighlighting();
   }
 
-  public void testDateTimeMinusDateTime() throws Throwable {
+  public void testDateTimeMinusDateTime() {
     doXPathHighlighting();
   }
 
-  public void testTimeMinusDate() throws Throwable {
+  public void testTimeMinusDate() {
     doXPathHighlighting();
   }
 
-  public void testDateMinusDuration() throws Throwable {
+  public void testDateMinusDuration() {
     TestNamespaceContext.install(myFixture.getTestRootDisposable());
     doXPathHighlighting();
   }
 
-  public void testDateMinusDuration2() throws Throwable {
+  public void testDateMinusDuration2() {
     TestNamespaceContext.install(myFixture.getTestRootDisposable());
     doXPathHighlighting();
   }
 
-  public void testDurationMinusDate() throws Throwable {
+  public void testDurationMinusDate() {
     TestNamespaceContext.install(myFixture.getTestRootDisposable());
     doXPathHighlighting();
   }
 
-  public void testNumericDivDuration() throws Throwable {
+  public void testNumericDivDuration() {
     TestNamespaceContext.install(myFixture.getTestRootDisposable());
     doXPathHighlighting();
   }
 
-  public void testNumericIDivDuration() throws Throwable {
+  public void testNumericIDivDuration() {
     TestNamespaceContext.install(myFixture.getTestRootDisposable());
     doXPathHighlighting();
   }
 
-  public void testDurationDivNumeric() throws Throwable {
+  public void testDurationDivNumeric() {
     TestNamespaceContext.install(myFixture.getTestRootDisposable());
     doXPathHighlighting();
   }
 
-  public void testDurationIDivNumeric() throws Throwable {
+  public void testDurationIDivNumeric() {
     TestNamespaceContext.install(myFixture.getTestRootDisposable());
     doXPathHighlighting();
   }
 
-  public void testNumericMultString() throws Throwable {
+  public void testNumericMultString() {
     doXPathHighlighting();
   }
 
-  public void testQuantifiedExprCondition() throws Throwable {
+  public void testQuantifiedExprCondition() {
     doXPathHighlighting();
   }
 
-  public void testRedundantTypeConversion() throws Throwable {
+  public void testRedundantTypeConversion() {
     TestNamespaceContext.install(myFixture.getTestRootDisposable());
     doXPathHighlighting();
   }

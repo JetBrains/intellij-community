@@ -28,13 +28,13 @@ public class CompositeFilterTest {
   protected CompositeFilter myCompositeFilter;
 
   @Before
-  public void setUp() throws Exception {
+  public void setUp() {
     myCompositeFilter = new CompositeFilter(new MockDumbService(null));
     myCompositeFilter.setForceUseAllFilters(false);
   }
 
   @Test
-  public void testApplyNextFilter() throws Exception {
+  public void testApplyNextFilter() {
     Assert.assertNull(applyFilter());
 
     myCompositeFilter.addFilter(returnNullFilter());
@@ -62,7 +62,7 @@ public class CompositeFilterTest {
   }
 
   @Test
-  public void testApplyBadFilter() throws Exception {
+  public void testApplyBadFilter() {
     myCompositeFilter.addFilter(throwSOEFilter());
     try {
       Assert.assertNull(applyFilter());

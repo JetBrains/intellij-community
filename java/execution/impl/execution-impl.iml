@@ -17,7 +17,9 @@
     <orderEntry type="module" module-name="java-impl" />
     <orderEntry type="module" module-name="java-indexing-api" />
     <orderEntry type="module" module-name="smRunner" />
+    <orderEntry type="module" module-name="jshell-protocol" />
     <orderEntry type="library" name="Coverage" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="precompiled_jshell-frontend" level="project" />
   </component>
   <component name="copyright">
     <Base>

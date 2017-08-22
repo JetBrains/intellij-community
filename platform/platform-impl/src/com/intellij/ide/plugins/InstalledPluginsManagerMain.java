@@ -20,12 +20,15 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
+import com.intellij.ide.dnd.FileCopyPasteUtil;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.ide.ui.search.ActionFromOptionDescriptorProvider;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
+import com.intellij.openapi.editor.CustomFileDropHandler;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -33,21 +36,23 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Consumer;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.TextTransferable;
 import org.jetbrains.annotations.NotNull;
@@ -55,6 +60,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.datatransfer.Transferable;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
@@ -127,43 +133,51 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
     FileChooser.chooseFile(descriptor, null, parent, toSelect, virtualFile -> {
       File file = VfsUtilCore.virtualToIoFile(virtualFile);
       PropertiesComponent.getInstance().setValue(PLUGINS_PRESELECTION_PATH, FileUtil.toSystemIndependentName(file.getParent()));
-
-      try {
-        IdeaPluginDescriptorImpl pluginDescriptor = PluginDownloader.loadDescriptionFromJar(file);
-        if (pluginDescriptor == null) {
-          MessagesEx.showErrorDialog(parent, "Fail to load plugin descriptor from file " + file.getName(), CommonBundle.getErrorTitle());
-          return;
-        }
-
-        if (ourState.wasInstalled(pluginDescriptor.getPluginId())) {
-          String message = "Plugin '" + pluginDescriptor.getName() + "' was already installed";
-          MessagesEx.showWarningDialog(parent, message, CommonBundle.getWarningTitle());
-          return;
-        }
-
-        if (PluginManagerCore.isIncompatible(pluginDescriptor)) {
-          String message = "Plugin '" + pluginDescriptor.getName() + "' is incompatible with this installation";
-          MessagesEx.showErrorDialog(parent, message, CommonBundle.getErrorTitle());
-          return;
-        }
-
-        IdeaPluginDescriptor installedPlugin = PluginManager.getPlugin(pluginDescriptor.getPluginId());
-        if (installedPlugin != null && !installedPlugin.isBundled()) {
-          File oldFile = installedPlugin.getPath();
-          if (oldFile != null) {
-            StartupActionScriptManager.addActionCommand(new StartupActionScriptManager.DeleteCommand(oldFile));
-          }
-        }
-
-        PluginInstaller.install(file, file.getName(), false, pluginDescriptor);
-        ourState.onPluginInstall(pluginDescriptor);
-        checkInstalledPluginDependencies(model, pluginDescriptor, parent);
-        callback.consume(pair(file, pluginDescriptor));
-      }
-      catch (IOException ex) {
-        MessagesEx.showErrorDialog(parent, ex.getMessage(), CommonBundle.getErrorTitle());
-      }
+      install(model, file, callback, parent);
     });
+  }
+
+  private static boolean install(@NotNull InstalledPluginsTableModel model,
+                                 @NotNull File file,
+                                 @NotNull Consumer<Pair<File, IdeaPluginDescriptor>> callback,
+                                 @Nullable Component parent) {
+    try {
+      IdeaPluginDescriptorImpl pluginDescriptor = PluginDownloader.loadDescriptionFromJar(file);
+      if (pluginDescriptor == null) {
+        MessagesEx.showErrorDialog(parent, "Fail to load plugin descriptor from file " + file.getName(), CommonBundle.getErrorTitle());
+        return false;
+      }
+
+      if (ourState.wasInstalled(pluginDescriptor.getPluginId())) {
+        String message = "Plugin '" + pluginDescriptor.getName() + "' was already installed";
+        MessagesEx.showWarningDialog(parent, message, CommonBundle.getWarningTitle());
+        return false;
+      }
+
+      if (PluginManagerCore.isIncompatible(pluginDescriptor)) {
+        String message = "Plugin '" + pluginDescriptor.getName() + "' is incompatible with this installation";
+        MessagesEx.showErrorDialog(parent, message, CommonBundle.getErrorTitle());
+        return false;
+      }
+
+      IdeaPluginDescriptor installedPlugin = PluginManager.getPlugin(pluginDescriptor.getPluginId());
+      if (installedPlugin != null && !installedPlugin.isBundled()) {
+        File oldFile = installedPlugin.getPath();
+        if (oldFile != null) {
+          StartupActionScriptManager.addActionCommand(new StartupActionScriptManager.DeleteCommand(oldFile));
+        }
+      }
+
+      PluginInstaller.install(file, file.getName(), false, pluginDescriptor);
+      ourState.onPluginInstall(pluginDescriptor);
+      checkInstalledPluginDependencies(model, pluginDescriptor, parent);
+      callback.consume(pair(file, pluginDescriptor));
+      return true;
+    }
+    catch (IOException ex) {
+      MessagesEx.showErrorDialog(parent, ex.getMessage(), CommonBundle.getErrorTitle());
+    }
+    return false;
   }
 
   private static void checkInstalledPluginDependencies(@NotNull InstalledPluginsTableModel model,
@@ -459,7 +473,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
       comp.setVerticalTextPosition(SwingConstants.CENTER);
       comp.setAlignmentX(Component.RIGHT_ALIGNMENT);
       panel.add(comp, BorderLayout.WEST);
-      panel.setBorder(IdeBorderFactory.createEmptyBorder(0, 2, 0, 0));
+      panel.setBorder(JBUI.Borders.emptyLeft(2));
       return panel;
     }
   }
@@ -506,6 +520,31 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
     @Override
     public void actionPerformed(AnActionEvent e) {
       chooseAndInstall(new InstalledPluginsTableModel(), pair -> PluginManagerConfigurable.shutdownOrRestartApp(), null);
+    }
+  }
+  
+  public static class PluginDropHandler extends CustomFileDropHandler {
+    @Override
+    public boolean canHandle(@NotNull Transferable t, @Nullable Editor editor) {
+      File file = getFile(t);
+      if (file == null) return false;
+      String path = file.getPath();
+      return FileUtilRt.extensionEquals(path, "jar") ||
+             FileUtilRt.extensionEquals(path, "zip");
+    }
+
+    @Override
+    public boolean handleDrop(@NotNull Transferable t, @Nullable Editor editor, Project project) {
+      File file = getFile(t);
+      if (file == null) return false;
+      return install(new InstalledPluginsTableModel(), file,
+                     pair -> PluginManagerConfigurable.shutdownOrRestartApp(), null);
+    }
+
+    @Nullable
+    private static File getFile(@NotNull Transferable t) {
+      List<File> list = FileCopyPasteUtil.getFileList(t);
+      return list == null || list.size() != 1 ? null : list.get(0);
     }
   }
 

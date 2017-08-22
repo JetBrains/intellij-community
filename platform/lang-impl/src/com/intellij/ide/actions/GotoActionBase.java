@@ -28,6 +28,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -35,6 +36,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.SearchTextField;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -43,8 +45,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
 import java.util.List;
 import java.util.Map;
 
@@ -232,9 +232,9 @@ public abstract class GotoActionBase extends AnAction {
 
     if (historyEnabled() && popup.getAdText() == null) {
       popup.setAdText("Press " +
-                      KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke(KeyEvent.VK_UP, InputEvent.CTRL_MASK)) + " or " +
-                      KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, InputEvent.CTRL_MASK)) +
-                      " to navigate through the history");
+                      KeymapUtil.getKeystrokeText(SearchTextField.ALT_SHOW_HISTORY_KEYSTROKE) + " or " +
+                      KeymapUtil.getKeystrokeText(SearchTextField.SHOW_HISTORY_KEYSTROKE) +
+                      " to navigate through the search history");
     }
 
     popup.invoke(new ChooseByNamePopupComponent.Callback() {
@@ -285,9 +285,13 @@ public abstract class GotoActionBase extends AnAction {
       }
 
       void setText(@NotNull List<String> strings) {
+        String text = strings.get(myHistoryIndex);
+        if (Comparing.equal(text, editor.getText())) {//don't rebuild popup list, it blinks
+          return;
+        }
         javax.swing.text.Document document = editor.getDocument();
         document.removeDocumentListener(historyResetListener);
-        editor.setText(strings.get(myHistoryIndex));
+        editor.setText(text);
         document.addDocumentListener(historyResetListener);
         editor.selectAll();
       }
@@ -303,7 +307,7 @@ public abstract class GotoActionBase extends AnAction {
         myHistoryIndex = myHistoryIndex >= strings.size() - 1 ? 0 : myHistoryIndex + 1;
       }
 
-    }.registerCustomShortcutSet(CustomShortcutSet.fromString("ctrl UP"), editor);
+    }.registerCustomShortcutSet(SearchTextField.ALT_SHOW_HISTORY_SHORTCUT, editor);
 
     new HistoryAction() {
       @Override
@@ -312,7 +316,7 @@ public abstract class GotoActionBase extends AnAction {
         setText(strings);
         myHistoryIndex = myHistoryIndex <= 0 ? strings.size() - 1 : myHistoryIndex - 1;
       }
-    }.registerCustomShortcutSet(CustomShortcutSet.fromString("ctrl DOWN"), editor);
+    }.registerCustomShortcutSet(SearchTextField.SHOW_HISTORY_SHORTCUT, editor);
   }
 
   private static boolean historyEnabled() {

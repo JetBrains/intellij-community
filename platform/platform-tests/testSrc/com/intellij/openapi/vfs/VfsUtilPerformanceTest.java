@@ -152,7 +152,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
           }
 
           @Override
-          public void run() throws Throwable {
+          public void run() {
             for (int i = 0; i < 5_000_000; i++) {
               checkRootsEqual();
             }
@@ -300,7 +300,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
       })
       .assertTiming();
 
-      PlatformTestUtil.startPerformanceTest("many files deletions", 10000, () -> {
+      PlatformTestUtil.startPerformanceTest("many files deletions", 11000, () -> {
         assertEquals(N, events.size());
         processEvents(events);
         assertEquals(0, temp.getCachedChildren().size());

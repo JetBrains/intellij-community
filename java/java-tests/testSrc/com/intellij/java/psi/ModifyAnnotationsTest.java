@@ -41,7 +41,7 @@ public class ModifyAnnotationsTest extends PsiTestCase {
     PsiTestUtil.createTestProjectStructure(myProject, myModule, root, myFilesToDelete);
   }
 
-  public void testReplaceAnnotation() throws Exception {
+  public void testReplaceAnnotation() {
     //be sure not to load tree
     PsiManagerEx.getInstanceEx(getProject()).setAssertOnFileLoadingFilter(VirtualFileFilter.ALL, getTestRootDisposable());
     PsiClass aClass = myJavaFacade.findClass("Test", GlobalSearchScope.allScope(myProject));

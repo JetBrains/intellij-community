@@ -15,7 +15,9 @@
  */
 package com.jetbrains.python.documentation;
 
+import com.google.common.collect.Lists;
 import com.intellij.codeInsight.documentation.DocumentationManagerProtocol;
+import com.intellij.openapi.util.Pair;
 import com.intellij.xml.util.XmlStringUtil;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyUtil;
@@ -32,6 +34,7 @@ class DocumentationBuilderKit {
   static final TagWrapper TagItalic = new TagWrapper("i");
   static final TagWrapper TagSmall = new TagWrapper("small");
   static final TagWrapper TagCode = new TagWrapper("code");
+  static final TagWrapper TagSpan = new TagWrapper("span");
 
   static final FP.Lambda1<String, String> LCombUp = new FP.Lambda1<String, String>() {
     public String apply(String argname) {
@@ -62,6 +65,19 @@ class DocumentationBuilderKit {
     return new ChainIterable<>("<" + tag + ">").add(content).addItem("</" + tag + ">");
   }
 
+  static ChainIterable<String> wrapInTag(String tag, List<Pair<String, String>> attributes, Iterable<String> content) {
+    if (attributes.size() == 0) {
+      return wrapInTag(tag, content);
+    } else {
+      StringBuilder s = new StringBuilder("<" + tag);
+      for (Pair<String, String> attr: attributes) {
+        s.append(" ").append(attr.first).append("=\"").append(attr.second).append("\"");
+      }
+      s.append(">");
+      return new ChainIterable<>(s.toString()).add(content).addItem("</" + tag + ">");
+    }
+  }
+
   @NonNls
   static String combUp(@NonNls String what) {
     return XmlStringUtil.escapeString(what).replace("\n", BR).replace(" ", "&nbsp;");
@@ -85,13 +101,21 @@ class DocumentationBuilderKit {
   // make a first-order curried objects out of wrapInTag()
   static class TagWrapper implements FP.Lambda1<Iterable<String>, Iterable<String>> {
     private final String myTag;
+    private List<Pair<String, String>> myAttributes = Lists.newArrayList();
 
     TagWrapper(String tag) {
       myTag = tag;
     }
 
+    public TagWrapper withAttribute(String name, String value) {
+      TagWrapper result = new TagWrapper(myTag);
+      result.myAttributes.addAll(myAttributes);
+      result.myAttributes.add(Pair.create(name, value));
+      return result;
+    }
+
     public Iterable<String> apply(Iterable<String> contents) {
-      return wrapInTag(myTag, contents);
+      return wrapInTag(myTag, myAttributes, contents);
     }
 
   }

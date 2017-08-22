@@ -74,6 +74,7 @@ class CompoundRendererConfigurable extends JPanel {
   @NonNls private static final String DATA_PANEL_ID = "DATA";
   private static final int NAME_TABLE_COLUMN = 0;
   private static final int EXPRESSION_TABLE_COLUMN = 1;
+  private static final int ONDEMAND_TABLE_COLUMN = 2;
 
   public CompoundRendererConfigurable(@NotNull Disposable parentDisposable) {
     super(new CardLayout());
@@ -366,6 +367,7 @@ class CompoundRendererConfigurable extends JPanel {
     if (myRenderer.isBaseRenderer(labelRenderer)) {
       myLabelEditor.setExpression(TextWithImportsImpl.toXExpression(emptyExpressionFragment));
       myRbDefaultLabel.setSelected(true);
+      myOnDemandCheckBox.setSelected(false);
     }
     else {
       myRbExpressionLabel.setSelected(true);
@@ -407,22 +409,22 @@ class CompoundRendererConfigurable extends JPanel {
   }
 
   private static final class MyTableModel extends AbstractTableModel {
-    private final List<Row> myData = new ArrayList<>();
+    private final List<EnumerationChildrenRenderer.ChildInfo> myData = new ArrayList<>();
 
     public MyTableModel() {
     }
 
-    public void init(List<Pair<String, TextWithImports>> data) {
+    public void init(List<EnumerationChildrenRenderer.ChildInfo> data) {
       myData.clear();
-      for (final Pair<String, TextWithImports> pair : data) {
-        myData.add(new Row(pair.getFirst(), pair.getSecond()));
+      for (EnumerationChildrenRenderer.ChildInfo childInfo : data) {
+        myData.add(new EnumerationChildrenRenderer.ChildInfo(childInfo.myName, childInfo.myExpression, childInfo.myOnDemand));
       }
       fireTableDataChanged();
     }
 
     @Override
     public int getColumnCount() {
-      return 2;
+      return 3;
     }
 
     @Override
@@ -443,6 +445,8 @@ class CompoundRendererConfigurable extends JPanel {
           return String.class;
         case EXPRESSION_TABLE_COLUMN:
           return TextWithImports.class;
+        case ONDEMAND_TABLE_COLUMN:
+          return Boolean.class;
         default:
           return super.getColumnClass(columnIndex);
       }
@@ -453,12 +457,14 @@ class CompoundRendererConfigurable extends JPanel {
       if (rowIndex >= getRowCount()) {
         return null;
       }
-      final Row row = myData.get(rowIndex);
+      final EnumerationChildrenRenderer.ChildInfo row = myData.get(rowIndex);
       switch (columnIndex) {
         case NAME_TABLE_COLUMN:
-          return row.name;
+          return row.myName;
         case EXPRESSION_TABLE_COLUMN:
-          return row.value;
+          return row.myExpression;
+        case ONDEMAND_TABLE_COLUMN:
+          return row.myOnDemand;
         default:
           return null;
       }
@@ -469,13 +475,16 @@ class CompoundRendererConfigurable extends JPanel {
       if (rowIndex >= getRowCount()) {
         return;
       }
-      final Row row = myData.get(rowIndex);
+      final EnumerationChildrenRenderer.ChildInfo row = myData.get(rowIndex);
       switch (columnIndex) {
         case NAME_TABLE_COLUMN:
-          row.name = (String)aValue;
+          row.myName = (String)aValue;
           break;
         case EXPRESSION_TABLE_COLUMN:
-          row.value = (TextWithImports)aValue;
+          row.myExpression = (TextWithImports)aValue;
+          break;
+        case ONDEMAND_TABLE_COLUMN:
+          row.myOnDemand = (Boolean)aValue;
           break;
       }
     }
@@ -488,13 +497,15 @@ class CompoundRendererConfigurable extends JPanel {
           return DebuggerBundle.message("label.compound.renderer.configurable.table.header.name");
         case EXPRESSION_TABLE_COLUMN:
           return DebuggerBundle.message("label.compound.renderer.configurable.table.header.expression");
+        case ONDEMAND_TABLE_COLUMN:
+          return DebuggerBundle.message("label.compound.renderer.configurable.table.header.ondemand");
         default:
           return "";
       }
     }
 
     public void addRow(final String name, final TextWithImports expressionWithImports) {
-      myData.add(new Row(name, expressionWithImports));
+      myData.add(new EnumerationChildrenRenderer.ChildInfo(name, expressionWithImports, false));
       final int lastRow = myData.size() - 1;
       fireTableRowsInserted(lastRow, lastRow);
     }
@@ -511,12 +522,8 @@ class CompoundRendererConfigurable extends JPanel {
       fireTableDataChanged();
     }
 
-    public List<Pair<String, TextWithImports>> getExpressions() {
-      final ArrayList<Pair<String, TextWithImports>> pairs = new ArrayList<>(myData.size());
-      for (final Row row : myData) {
-        pairs.add(Pair.create(row.name, row.value));
-      }
-      return pairs;
+    public List<EnumerationChildrenRenderer.ChildInfo> getExpressions() {
+      return myData;
     }
 
     private static final class Row {

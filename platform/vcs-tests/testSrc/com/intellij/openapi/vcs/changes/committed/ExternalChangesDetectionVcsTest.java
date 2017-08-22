@@ -19,7 +19,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -53,7 +52,7 @@ public class ExternalChangesDetectionVcsTest extends AbstractJunitVcsTestCase  {
   private File myClientRoot;
 
   @Before
-  public void setUp() throws Exception {
+  public void setUp() {
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       try {
         final IdeaTestFixtureFactory fixtureFactory = IdeaTestFixtureFactory.getFixtureFactory();
@@ -82,7 +81,7 @@ public class ExternalChangesDetectionVcsTest extends AbstractJunitVcsTestCase  {
   }
 
   @After
-  public void tearDown() throws Exception {
+  public void tearDown() {
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       try {
         myVcsManager.unregisterVcs(myVcs);
@@ -189,7 +188,7 @@ public class ExternalChangesDetectionVcsTest extends AbstractJunitVcsTestCase  {
     public void getChanges(@NotNull VcsDirtyScope dirtyScope,
                            @NotNull final ChangelistBuilder builder,
                            @NotNull ProgressIndicator progress,
-                           @NotNull ChangeListManagerGate addGate) throws VcsException {
+                           @NotNull ChangeListManagerGate addGate) {
       for (FilePath path : dirtyScope.getDirtyFiles()) {
         builder.processUnversionedFile(path.getVirtualFile());
       }

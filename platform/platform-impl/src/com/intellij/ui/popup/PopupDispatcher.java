@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.ui.popup.IdePopupEventDispatcher;
 import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -111,7 +112,7 @@ public class PopupDispatcher implements AWTEventListener, KeyEventDispatcher, Id
   public static boolean disposeActiveWizard() {
     if (ourActiveWizardRoot != null) {
       ourActiveWizardRoot.disposeChildren();
-      ourActiveWizardRoot.dispose();
+      Disposer.dispose(ourActiveWizardRoot);
       return true;
     }
 

@@ -22,6 +22,9 @@ import java.awt.event.*;
  * @author Sergey.Malenkov
  */
 public abstract class MouseEventHandler extends MouseAdapter implements MouseInputListener {
+  /**
+   * The event shouldn't be just delegated to JComponent.processMouseEvent() or processMouseMotionEvent(), check its ID first
+   */
   protected abstract void handle(MouseEvent event);
 
   @Override

@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.ExternalizableScheme;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,8 +31,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 import java.util.function.Function;
-
-import static com.intellij.openapi.editor.markup.TextAttributes.USE_INHERITED_MARKER;
+import java.util.function.Predicate;
 
 public class EditorColorsSchemeImpl extends AbstractColorsScheme implements ExternalizableScheme {
   private final Map<TextAttributesKey, TextAttributes> myAttributesTempMap = ContainerUtil.newConcurrentMap();
@@ -51,7 +51,7 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
     if (TextAttributesKey.isTemp(key)) {
       myAttributesTempMap.put(key, attributes);
     }
-    else if (attributes == USE_INHERITED_MARKER || attributes != getAttributes(key)) {
+    else if (attributes == INHERITED_ATTRS_MARKER || !Comparing.equal(attributes, getAttributes(key))) {
       myAttributesMap.put(key, attributes);
       myAttributesTempMap.clear();
     }
@@ -59,8 +59,8 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
 
   @Override
   public void setColor(ColorKey key, Color color) {
-    if (!Comparing.equal(color, getColor(key))) {
-      myColorsMap.put(key, color);
+    if (color == INHERITED_COLOR_MARKER || !Comparing.equal(color, getColor(key))) {
+      myColorsMap.put(key, ObjectUtils.notNull(color, NULL_COLOR_MARKER));
     }
   }
 
@@ -72,7 +72,7 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
       }
       
       TextAttributes attributes = getDirectlyDefinedAttributes(key);
-      if (attributes != null && attributes != USE_INHERITED_MARKER) {
+      if (attributes != null && attributes != INHERITED_ATTRS_MARKER) {
         return attributes;
       }
 
@@ -90,12 +90,24 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
   @Nullable
   @Override
   public Color getColor(ColorKey key) {
-    if (myColorsMap.containsKey(key)) {
-      return myColorsMap.get(key);
+    if (key != null) {
+      Color color = getDirectlyDefinedColor(key);
+      if (color == NULL_COLOR_MARKER) {
+        return null;
+      }
+      if (color != null && color != INHERITED_COLOR_MARKER) {
+        return color;
+      }
+
+      ColorKey fallbackKey = key.getFallbackColorKey();
+      if (fallbackKey != null) {
+        color = getFallbackColor(fallbackKey);
+        if (color != null) {
+          return color;
+        }
+      }
     }
-    else {
-      return myParentScheme.getColor(key);
-    }
+    return myParentScheme.getColor(key);
   }
 
   @Override
@@ -113,8 +125,12 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
   }
 
   @Override
-  protected boolean colorsEqual(AbstractColorsScheme otherScheme) {
-    return compareColors(otherScheme, new ArrayList<>());
+  protected boolean colorsEqual(AbstractColorsScheme otherScheme, @Nullable Predicate<ColorKey> colorKeyFilter) {
+    Collection<Predicate<ColorKey>> filters = new ArrayList<>();
+    if (colorKeyFilter != null) {
+      filters.add(colorKeyFilter);
+    }
+    return compareColors(otherScheme, filters);
   }
 
   private boolean compareAttributes(@NotNull AbstractColorsScheme otherScheme,
@@ -141,18 +157,15 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
   }
   
   private boolean compareColors(@NotNull AbstractColorsScheme otherScheme,
-                                    @NotNull Collection<Function<ColorKey, Boolean>> filters) {
+                                @NotNull Collection<Predicate<ColorKey>> filters) {
     for (ColorKey key : myColorsMap.keySet()) {
       Color thisColor = getColor(key);
       Color otherColor = otherScheme.getColor(key);
-      if (thisColor == null) {
-        if (otherColor != null) return false;
-      }
-      else if (!isColorKeyIgnored(filters, key) && !thisColor.equals(otherColor)) {
+      if (isColorKeyAccepted(filters, key) && !Comparing.equal(thisColor, otherColor)) {
         return false;
       }
     }
-    filters.add(key -> myColorsMap.containsKey(key));
+    filters.add(key -> !myColorsMap.containsKey(key));
     if (myParentScheme instanceof EditorColorsSchemeImpl &&
         !((EditorColorsSchemeImpl)myParentScheme).compareColors(otherScheme, filters)) {
       return false;
@@ -160,10 +173,10 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
     return true;
   }
 
-  private static boolean isColorKeyIgnored(@NotNull Collection<Function<ColorKey, Boolean>> filters, ColorKey key) {
-    for (Function<ColorKey,Boolean> filter : filters) {
-      if (filter.apply(key)) return true;
+  private static boolean isColorKeyAccepted(@NotNull Collection<Predicate<ColorKey>> filters, @NotNull ColorKey key) {
+    for (Predicate<ColorKey> filter : filters) {
+      if (!filter.test(key)) return false;
     }
-    return false;
+    return true;
   }
 }

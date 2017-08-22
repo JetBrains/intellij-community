@@ -75,7 +75,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
     }
   }
 
-  public void testTypeText() throws Exception {
+  public void testTypeText() {
     ConsoleViewImpl console = myConsole;
     console.print("Initial", ConsoleViewContentType.NORMAL_OUTPUT);
     console.flushDeferredText();
@@ -104,7 +104,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
     assertEquals("Test", console.getText());
   }
 
-  public void testConsolePrintsSomethingAfterClearPrintScroll() throws Exception {
+  public void testConsolePrintsSomethingAfterClearPrintScroll() {
     ConsoleViewImpl console = myConsole;
     Alarm alarm = new Alarm(getTestRootDisposable());
     for (int i=0; i<1000/*000*/; i++) {
@@ -149,7 +149,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
     }
   }
 
-  public void testTypeInEmptyConsole() throws Exception {
+  public void testTypeInEmptyConsole() {
     ConsoleViewImpl console = myConsole;
     console.clear();
     EditorActionManager actionManager = EditorActionManager.getInstance();
@@ -159,7 +159,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
     assertEquals(1, console.getContentSize());
   }
 
-  public void testTypingAfterMultipleCR() throws Exception {
+  public void testTypingAfterMultipleCR() {
     final EditorActionManager actionManager = EditorActionManager.getInstance();
     final TypedAction typedAction = actionManager.getTypedAction();
     final TestDataProvider dataContext = new TestDataProvider(getProject());
@@ -176,7 +176,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
     assertEquals("System output\n12", editor.getDocument().getText());
   }
 
-  public void testCRLF() throws Exception {
+  public void testCRLF() {
     ConsoleViewImpl console = myConsole;
     console.clear();
     console.print("Hello\r", ConsoleViewContentType.NORMAL_OUTPUT);
@@ -185,20 +185,20 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
     assertEquals("Hello\nWorld", console.getText());
   }
 
-  public void testCRTypeCR() throws Exception {
+  public void testCRTypeCR() {
     myConsole.print("\rHi\rMr\rSmith", ConsoleViewContentType.NORMAL_OUTPUT);
     myConsole.flushDeferredText();
     assertEquals("Smith", myConsole.getText());
   }
 
-  public void testCRTypeTearCR() throws Exception {
+  public void testCRTypeTearCR() {
     myConsole.print("Hi", ConsoleViewContentType.NORMAL_OUTPUT);
 
     myConsole.print("\rMr\rSmith", ConsoleViewContentType.NORMAL_OUTPUT);
     myConsole.flushDeferredText();
     assertEquals("Smith", myConsole.getText());
   }
-  public void testCRTypeFlushCR() throws Exception {
+  public void testCRTypeFlushCR() {
     myConsole.print("Hi", ConsoleViewContentType.NORMAL_OUTPUT);
     myConsole.flushDeferredText();
     assertEquals("Hi", myConsole.getText());
@@ -226,7 +226,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
     return console;
   }
 
-  public void testPerformance() throws Exception {
+  public void testPerformance() {
     withCycleConsole(100, console ->
       PlatformTestUtil.startPerformanceTest("console print", 15000, () -> {
         console.clear();
@@ -240,7 +240,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
       }).assertTiming());
   }
 
-  public void testLargeConsolePerformance() throws Exception {
+  public void testLargeConsolePerformance() {
     withCycleConsole(UISettings.getInstance().getConsoleCycleBufferSizeKb(), console ->
       PlatformTestUtil.startPerformanceTest("console print", 9000, () -> {
         console.clear();
@@ -252,9 +252,9 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
       }).assertTiming());
   }
 
-  public void testPerformanceOfMergeableTokens() throws Exception {
+  public void testPerformanceOfMergeableTokens() {
     withCycleConsole(1000, console ->
-      PlatformTestUtil.startPerformanceTest("console print", 3500, () -> {
+      PlatformTestUtil.startPerformanceTest("console print with mergeable tokens", 3500, () -> {
         console.clear();
         for (int i=0; i<10_000_000; i++) {
           console.print("xxx\n", ConsoleViewContentType.NORMAL_OUTPUT);
@@ -354,7 +354,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
     action.actionPerformed(editor, c, dataContext);
   }
 
-  public void testBackspaceDoesDeleteTheLastTypedChar() throws Exception {
+  public void testBackspaceDoesDeleteTheLastTypedChar() {
     final ConsoleViewImpl console = myConsole;
     final Editor editor = console.getEditor();
     console.print("xxxx", ConsoleViewContentType.NORMAL_OUTPUT);

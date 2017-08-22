@@ -58,7 +58,7 @@ abstract class BaseIdeaProperties extends ProductProperties {
     "testFramework",
     "tests_bootstrap",
     "ui-designer-core",
-    "uast-java",
+    "uast-java"
   ]
   protected static final List<String> BUNDLED_PLUGIN_MODULES = [
     "copyright", "properties", "terminal", "editorconfig", "settings-repository", "yaml",
@@ -79,6 +79,7 @@ abstract class BaseIdeaProperties extends ProductProperties {
     productLayout.additionalPlatformJars.put("jps-builders.jar", "jps-builders")
     productLayout.additionalPlatformJars.put("jps-builders-6.jar", "jps-builders-6")
     productLayout.additionalPlatformJars.put("aether-dependency-resolver.jar", "aether-dependency-resolver")
+    productLayout.additionalPlatformJars.put("jshell-protocol.jar", "jshell-protocol")
     productLayout.additionalPlatformJars.putAll("jps-model.jar", ["jps-model-impl", "jps-model-serialization"])
     productLayout.additionalPlatformJars.putAll("resources.jar", ["resources", "resources-en"])
     productLayout.additionalPlatformJars.

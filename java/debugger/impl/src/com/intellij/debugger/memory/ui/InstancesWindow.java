@@ -188,7 +188,6 @@ public class InstancesWindow extends DialogWrapper {
       myFilterConditionEditor = new ExpressionEditorWithHistory(myProject, myClassName,
                                                                 editorsProvider, InstancesWindow.this.myDisposable);
 
-      myFilterButton.setBorder(BorderFactory.createEmptyBorder());
       final Dimension filteringButtonSize = myFilterConditionEditor.getEditorComponent().getPreferredSize();
       filteringButtonSize.width = JBUI.scale(FILTERING_BUTTON_ADDITIONAL_WIDTH) +
                                   myFilterButton.getPreferredSize().width;
@@ -196,7 +195,7 @@ public class InstancesWindow extends DialogWrapper {
 
       final JBPanel filteringPane = new JBPanel(new BorderLayout(JBUI.scale(BORDER_LAYOUT_DEFAULT_GAP), 0));
       final JBLabel sideEffectsWarning = new JBLabel("Warning: filtering may have side effects", SwingConstants.RIGHT);
-      sideEffectsWarning.setBorder(JBUI.Borders.empty(1, 0, 0, 0));
+      sideEffectsWarning.setBorder(JBUI.Borders.emptyTop(1));
       sideEffectsWarning.setComponentStyle(UIUtil.ComponentStyle.SMALL);
       sideEffectsWarning.setFontColor(UIUtil.FontColor.BRIGHTER);
 

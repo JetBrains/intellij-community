@@ -27,7 +27,7 @@ public class RemoveUnusedParameterTest extends LightQuickFixParameterizedTestCas
     enableInspectionTool(new UnusedDeclarationInspection());
   }
 
-  public void test() throws Exception { doAllTests(); }
+  public void test() { doAllTests(); }
 
   @Override
   protected String getBasePath() {

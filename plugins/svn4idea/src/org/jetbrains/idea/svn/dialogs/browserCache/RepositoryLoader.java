@@ -27,16 +27,16 @@ import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.auth.SvnAuthenticationProvider;
 import org.jetbrains.idea.svn.browse.DirectoryEntry;
-import org.jetbrains.idea.svn.browse.DirectoryEntryConsumer;
 import org.jetbrains.idea.svn.dialogs.RepositoryTreeNode;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import javax.swing.*;
-import java.util.Collection;
 import java.util.List;
 import java.util.Queue;
-import java.util.TreeSet;
+
+import static com.intellij.util.containers.ContainerUtil.newArrayList;
+import static com.intellij.util.containers.ContainerUtil.sorted;
 
 class RepositoryLoader extends Loader {
   // may be several requests if: several same-level nodes are expanded simultaneosly; or browser can be opening into some expanded state
@@ -108,15 +108,14 @@ class RepositoryLoader extends Loader {
     }
 
     public void run() {
-      final Collection<DirectoryEntry> entries = new TreeSet<>();
+      List<DirectoryEntry> entries = newArrayList();
       final RepositoryTreeNode node = myData.first;
       final SvnVcs vcs = node.getVcs();
       SvnAuthenticationProvider.forceInteractive();
 
-      DirectoryEntryConsumer handler = entry -> entries.add(entry);
       try {
         SvnTarget target = SvnTarget.fromURL(node.getURL());
-        vcs.getFactoryFromSettings().createBrowseClient().list(target, SVNRevision.HEAD, Depth.IMMEDIATES, handler);
+        vcs.getFactoryFromSettings().createBrowseClient().list(target, SVNRevision.HEAD, Depth.IMMEDIATES, entries::add);
       }
       catch (final VcsException e) {
         SwingUtilities.invokeLater(() -> {
@@ -129,7 +128,7 @@ class RepositoryLoader extends Loader {
       }
 
       SwingUtilities.invokeLater(() -> {
-        setResults(myData, ContainerUtil.newArrayList(entries));
+        setResults(myData, sorted(entries, DirectoryEntry.CASE_INSENSITIVE_ORDER));
         startNext();
       });
     }

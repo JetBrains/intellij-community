@@ -30,6 +30,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -86,8 +87,12 @@ public class CompletionUtil {
     return null;
   }
 
-  public static boolean shouldShowFeature(final CompletionParameters parameters, @NonNls final String id) {
-    if (FeatureUsageTracker.getInstance().isToBeAdvertisedInLookup(id, parameters.getPosition().getProject())) {
+  public static boolean shouldShowFeature(CompletionParameters parameters, @NonNls final String id) {
+    return shouldShowFeature(parameters.getPosition().getProject(), id);
+  }
+
+  public static boolean shouldShowFeature(Project project, @NonNls String id) {
+    if (FeatureUsageTracker.getInstance().isToBeAdvertisedInLookup(id, project)) {
       FeatureUsageTracker.getInstance().triggerFeatureShown(id);
       return true;
     }
@@ -116,7 +121,20 @@ public class CompletionUtil {
     if(insertedElement == null) return "";
     final String text = insertedElement.getText();
 
-    final int offsetInElement = offset - insertedElement.getTextRange().getStartOffset();
+    int startOffset = insertedElement.getTextRange().getStartOffset();
+    return findInText(offset, startOffset, idPart, idStart, text);
+  }
+
+
+  public static String findIdentifierPrefix(@NotNull Document document, int offset, ElementPattern<Character> idPart,
+                                            ElementPattern<Character> idStart) {
+    final String text = document.getText();
+    return findInText(offset, 0, idPart, idStart, text);
+  }
+
+  @NotNull
+  private static String findInText(int offset, int startOffset, ElementPattern<Character> idPart, ElementPattern<Character> idStart, String text) {
+    final int offsetInElement = offset - startOffset;
     int start = offsetInElement - 1;
     while (start >=0 ) {
       if (!idPart.accepts(text.charAt(start))) break;

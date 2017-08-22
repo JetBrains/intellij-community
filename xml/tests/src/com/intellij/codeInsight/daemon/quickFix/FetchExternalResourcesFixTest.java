@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 
 public class FetchExternalResourcesFixTest extends LightQuickFixParameterizedTestCase {
-  public void test() throws Exception { doAllTests(); }
+  public void test() { doAllTests(); }
 
   @Override
   protected String getBasePath() {
@@ -32,7 +32,7 @@ public class FetchExternalResourcesFixTest extends LightQuickFixParameterizedTes
 
   // just check for action availability
   @Override
-  protected void doAction(@NotNull ActionHint actionHint, String testFullPath, String testName) throws Exception {
+  protected void doAction(@NotNull ActionHint actionHint, String testFullPath, String testName) {
     IntentionAction action = findActionAndCheck(actionHint, testFullPath);
     if (action != null && testName.equals("5.xml")) {
       final String uri = FetchExtResourceAction.findUri(myFile, myEditor.getCaretModel().getOffset());

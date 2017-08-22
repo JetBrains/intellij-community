@@ -1,4 +1,4 @@
 Crumb:
-for i in range(…
+for i in range(10)
 Tooltip:
 for i in range(10)

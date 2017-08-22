@@ -1,13 +1,36 @@
+/*
+ * Copyright 2000-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.siyeh.ig.bugs;
 
-import com.siyeh.ig.IGInspectionTestCase;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.Nullable;
 
-public class ObjectEqualityInspectionTest extends IGInspectionTestCase {
+public class ObjectEqualityInspectionTest extends LightInspectionTestCase {
 
-  public void test() throws Exception {
-    final ObjectEqualityInspection tool = new ObjectEqualityInspection();
-    tool.m_ignoreClassObjects = true;
-    tool.m_ignorePrivateConstructors = true;
-    doTest("com/siyeh/igtest/bugs/object_equality", tool);
+  public void testObjectEquality() {
+    doTest();
+  }
+
+  @Nullable
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    final ObjectEqualityInspection inspection = new ObjectEqualityInspection();
+    inspection.m_ignoreClassObjects = true;
+    inspection.m_ignorePrivateConstructors = true;
+    return inspection;
   }
 }

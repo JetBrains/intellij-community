@@ -1,6 +1,7 @@
 package com.intellij.refactoring.typeMigration.intentions;
 
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.lang.java.JavaLanguage;
@@ -12,11 +13,14 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.impl.AllowedApiFilterExtension;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.typeMigration.TypeMigrationVariableTypeFixProvider;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -86,6 +90,18 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
       if (parent instanceof PsiLocalVariable || parent instanceof PsiField) {
         return (PsiVariable)parent;
       }
+      if (parent instanceof PsiReferenceExpression) {
+        // Display "Convert to atomic" on the illegal reference to non-effectively final local variable
+        // as this could be a desired fix in such case
+        PsiLocalVariable variable = ObjectUtils.tryCast(((PsiReferenceExpression)parent).resolve(), PsiLocalVariable.class);
+        if (variable == null) return null;
+        PsiElement scope = PsiTreeUtil.getParentOfType(variable, PsiMember.class, PsiLambdaExpression.class);
+        if (scope != null &&
+            scope != PsiTreeUtil.getParentOfType(parent, PsiMember.class, PsiLambdaExpression.class) &&
+            !HighlightControlFlowUtil.isEffectivelyFinal(variable, scope, null)) {
+          return variable;
+        }
+      }
     }
     return null;
   }
@@ -134,7 +150,7 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
   static void postProcessVariable(@NotNull PsiVariable var, @NotNull String toType) {
 
     Project project = var.getProject();
-    if (var instanceof PsiField || CodeStyleSettingsManager.getSettings(project).GENERATE_FINAL_LOCALS) {
+    if (var instanceof PsiField || CodeStyleSettingsManager.getSettings(project).getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_LOCALS) {
       PsiModifierList modifierList = assertNotNull(var.getModifierList());
       WriteAction.run(() -> {
         if (var.getInitializer() == null) {

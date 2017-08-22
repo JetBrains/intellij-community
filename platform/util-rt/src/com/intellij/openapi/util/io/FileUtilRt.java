@@ -238,7 +238,7 @@ public class FileUtilRt {
   public static String getRelativePath(File base, File file) {
     if (base == null || file == null) return null;
 
-    if (!base.isDirectory()) {
+    if (base.exists() && !base.isDirectory()) {
       base = base.getParentFile();
       if (base == null) return null;
     }
@@ -877,29 +877,25 @@ public class FileUtilRt {
 
 
   public static int getUserFileSizeLimit() {
-    try {
-      return Integer.parseInt(System.getProperty("idea.max.intellisense.filesize")) * KILOBYTE;
-    }
-    catch (NumberFormatException e) {
-      return DEFAULT_INTELLISENSE_LIMIT;
-    }
+    return parseKilobyteProperty("idea.max.intellisense.filesize", DEFAULT_INTELLISENSE_LIMIT);
   }
 
   public static int getUserContentLoadLimit() {
-    try {
-      return Integer.parseInt(System.getProperty("idea.max.content.load.filesize")) * KILOBYTE;
-    }
-    catch (NumberFormatException e) {
-      return 20 * MEGABYTE;
-    }
+    return parseKilobyteProperty("idea.max.content.load.filesize", 20 * MEGABYTE);
   }
 
   private static int getLargeFilePreviewSize() {
+    return parseKilobyteProperty("idea.max.content.load.large.preview.size", DEFAULT_INTELLISENSE_LIMIT);
+  }
+
+  private static int parseKilobyteProperty(String key, int defaultValue) {
     try {
-      return Integer.parseInt(System.getProperty("idea.max.content.load.large.preview.size")) * KILOBYTE;
+      long i = Integer.parseInt(System.getProperty(key));
+      if (i < 0) return Integer.MAX_VALUE;
+      return (int) Math.min(i * KILOBYTE, Integer.MAX_VALUE);
     }
     catch (NumberFormatException e) {
-      return DEFAULT_INTELLISENSE_LIMIT;
+      return defaultValue;
     }
   }
 

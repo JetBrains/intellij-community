@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class IntentionSettingsConfigurable extends BaseConfigurable implements SearchableConfigurable, MasterDetails {
+public class IntentionSettingsConfigurable extends BaseConfigurable implements SearchableConfigurable, MasterDetails, IntentionsConfigurable {
   private IntentionSettingsPanel myPanel;
   @NonNls public static final String HELP_ID = "preferences.intentionPowerPack";
   public static final String DISPLAY_NAME = CodeInsightBundle.message("intention.settings");
@@ -115,6 +115,7 @@ public class IntentionSettingsConfigurable extends BaseConfigurable implements S
     return HELP_ID;
   }
 
+  @Override
   public void selectIntention(String familyName) {
     myPanel.selectIntention(familyName);
   }

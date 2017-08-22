@@ -551,7 +551,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
           cache.processUpdatedFiles(myUpdatedFiles, incomingChangeLists -> tree.setChangeLists(incomingChangeLists));
 
           Notification notification = prepareNotification(tree, someSessionWasCancelled);
-          notification.addAction(new ViewUpdateInfoNotification(myProject, tree, "View"));
+          notification.addAction(new ViewUpdateInfoNotification(myProject, tree, "View", notification));
           VcsNotifier.getInstance(myProject).notify(notification);
         }
 

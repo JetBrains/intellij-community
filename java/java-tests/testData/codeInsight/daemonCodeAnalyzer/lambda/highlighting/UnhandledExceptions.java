@@ -4,7 +4,7 @@ public class ExTest {
     }
 
     {
-        Block<String> b = (t) -> <error descr="Unhandled exception: ExTest.Ex">ExTest.maybeThrow(t)</error>;
+        Block<String> b = (t) -> ExTest.<error descr="Unhandled exception: ExTest.Ex">maybeThrow(t)</error>;
     }
 
 

@@ -57,7 +57,7 @@ public class FindUsagesTest extends PsiTestCase{
     PsiTestUtil.createTestProjectStructure(myProject, myModule, root, myFilesToDelete);
   }
 
-  public void testOverloadConstructors() throws Exception {
+  public void testOverloadConstructors() {
     PsiClass aClass = myJavaFacade.findClass("B", GlobalSearchScope.allScope(myProject));
     PsiMethod constructor = aClass.findMethodsByName("B", false)[0];
     PsiMethodCallExpression superCall = (PsiMethodCallExpression) constructor.getBody().getStatements()[0].getFirstChild();
@@ -76,14 +76,14 @@ public class FindUsagesTest extends PsiTestCase{
     checkResult(fileNames, filesList, starts, startsList, ends, endsList);
   }
 
-  public void testSiblingImplement() throws Exception {
+  public void testSiblingImplement() {
     PsiClass anInterface = myJavaFacade.findClass("A.I", GlobalSearchScope.allScope(myProject));
     PsiMethod method = anInterface.getMethods()[0];
     final Collection<PsiMethod> overriders = OverridingMethodsSearch.search(method).findAll();
     assertEquals(1, overriders.size());
   }
 
-  public void testProtectedMethodInPackageLocalClass() throws Throwable {
+  public void testProtectedMethodInPackageLocalClass() {
     PsiMethod method = myJavaFacade.findClass("foo.PackageLocal", GlobalSearchScope.allScope(myProject)).getMethods()[0];
     assertEquals(1, OverridingMethodsSearch.search(method).findAll().size());
     assertEquals(1, ReferencesSearch.search(method).findAll().size());
@@ -95,7 +95,7 @@ public class FindUsagesTest extends PsiTestCase{
     assertEquals(2, ReferencesSearch.search(decompiled, GlobalSearchScope.projectScope(myProject)).findAll().size());
   }
 
-  public void testImplicitConstructorUsage() throws Throwable {
+  public void testImplicitConstructorUsage() {
     PsiMethod[] ctrs = myJavaFacade.findClass("Foo", GlobalSearchScope.allScope(myProject)).getConstructors();
     PsiMethod method = ctrs[0];
     assertEquals(0, method.getParameterList().getParametersCount());
@@ -106,7 +106,7 @@ public class FindUsagesTest extends PsiTestCase{
     assertEquals(1, ReferencesSearch.search(usedMethod).findAll().size());
   }
 
-  public void testImplicitVarArgsConstructorsUsage() throws Throwable {
+  public void testImplicitVarArgsConstructorsUsage() {
     PsiMethod[] ctrs = myJavaFacade.findClass("A1", GlobalSearchScope.allScope(myProject)).getConstructors();
     PsiMethod usedCtr = ctrs[0];
     assertEquals("java.lang.String", ((PsiEllipsisType)usedCtr.getParameterList().getParameters()[0].getType()).getComponentType().getCanonicalText());
@@ -126,13 +126,13 @@ public class FindUsagesTest extends PsiTestCase{
     endsList.add(range.getStartOffset() + rangeInElement.getEndOffset());
   }
 
-  public void testFieldInJavadoc() throws Exception{
+  public void testFieldInJavadoc() {
     PsiClass aClass = myJavaFacade.findClass("A", GlobalSearchScope.allScope(myProject));
     PsiField field = aClass.findFieldByName("FIELD", false);
     doTest(field, new String[]{"A.java"}, new int[]{}, new int[]{});
   }
 
-  public void testXml() throws Exception{
+  public void testXml() {
     PsiClass aClass = myJavaFacade.findClass("com.Foo", GlobalSearchScope.allScope(myProject));
     doTest(aClass, new String[]{"Test.xml"}, new int[]{32}, new int[]{35});
 
@@ -192,7 +192,7 @@ public class FindUsagesTest extends PsiTestCase{
     }
   }
 
-  public static void doTest(PsiElement element, String[] fileNames, int[] starts, int[] ends) throws Exception {
+  public static void doTest(PsiElement element, String[] fileNames, int[] starts, int[] ends) {
     final ArrayList<PsiFile> filesList = new ArrayList<>();
     final IntArrayList startsList = new IntArrayList();
     final IntArrayList endsList = new IntArrayList();

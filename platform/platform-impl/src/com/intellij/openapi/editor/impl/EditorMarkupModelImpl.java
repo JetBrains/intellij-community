@@ -1342,6 +1342,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
             }
           }
         };
+        editorFragmentPreviewPanel.putClientProperty(BalloonImpl.FORCED_NO_SHADOW, Boolean.TRUE);
         myEditorPreviewHint = new LightweightHint(editorFragmentPreviewPanel) {
 
           @Override

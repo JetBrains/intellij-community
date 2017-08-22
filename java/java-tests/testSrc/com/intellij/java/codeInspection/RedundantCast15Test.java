@@ -39,58 +39,58 @@ public class RedundantCast15Test extends InspectionTestCase {
     return IdeaTestUtil.getMockJdk17();
   }
 
-  private void doTest() throws Exception {
+  private void doTest() {
     final LocalInspectionToolWrapper toolWrapper = new LocalInspectionToolWrapper(new RedundantCastInspection());
     doTest("redundantCast/generics/" + getTestName(false), toolWrapper, "java 1.5");
   }
 
-  public void testBoxingInRef() throws Exception { doTest(); }
+  public void testBoxingInRef() { doTest(); }
 
-  public void testBoxingInConditional() throws Exception { doTest(); }
+  public void testBoxingInConditional() { doTest(); }
 
-  public void testInference1() throws Exception { doTest(); }
+  public void testInference1() { doTest(); }
 
-  public void testInference2() throws Exception { doTest(); }
+  public void testInference2() { doTest(); }
 
-  public void testInference3() throws Exception { doTest(); }
+  public void testInference3() { doTest(); }
 
-  public void testNullInVarargsParameter() throws Exception { doTest(); }
+  public void testNullInVarargsParameter() { doTest(); }
 
-  public void testWrapperToPrimitiveCast() throws Exception { doTest(); }
+  public void testWrapperToPrimitiveCast() { doTest(); }
 
-  public void testEnumConstant() throws Exception { doTest(); }
+  public void testEnumConstant() { doTest(); }
 
-  public void testRawCast() throws Exception { doTest();}
-  public void testCastToUnboundWildcard() throws Exception { doTest();}
+  public void testRawCast() { doTest();}
+  public void testCastToUnboundWildcard() { doTest();}
 
-  public void testRawCastsToAvoidIncompatibility() throws Exception { doTest();}
+  public void testRawCastsToAvoidIncompatibility() { doTest();}
 
-  public void testIDEA22899() throws Exception { doTest();}
-  public void testRawCast1() throws Exception { doTest();}
-  public void testInferenceFromCast() throws Exception { doTest();}
-  public void testGetClassProcessing() throws Exception { doTest();}
-  public void testInstanceOfChecks() throws Exception { doTest();}
-  public void testForEachValue() throws Exception { doTest();}
-  public void testForEachValueIDEA126166() throws Exception { doTest();}
-  public void testCaseThrowable() throws Exception { doTest();}
-  public void testSafeTempVarName() throws Exception { doTest();}
+  public void testIDEA22899() { doTest();}
+  public void testRawCast1() { doTest();}
+  public void testInferenceFromCast() { doTest();}
+  public void testGetClassProcessing() { doTest();}
+  public void testInstanceOfChecks() { doTest();}
+  public void testForEachValue() { doTest();}
+  public void testForEachValueIDEA126166() { doTest();}
+  public void testCaseThrowable() { doTest();}
+  public void testSafeTempVarName() { doTest();}
 
-  public void testTypeParameterAccessChecksJava7() throws Exception {
+  public void testTypeParameterAccessChecksJava7() {
     IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_7, getModule(), getTestRootDisposable());
     doTest();
   }
 
-  public void testBoxingTopCast() throws Exception {
+  public void testBoxingTopCast() {
     IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_7, getModule(), getTestRootDisposable());
     doTest();
   }
 
-  public void testIgnore() throws Exception {
+  public void testIgnore() {
     final RedundantCastInspection castInspection = new RedundantCastInspection();
     castInspection.IGNORE_ANNOTATED_METHODS = true;
     castInspection.IGNORE_SUSPICIOUS_METHOD_CALLS = true;
     final LocalInspectionToolWrapper tool = new LocalInspectionToolWrapper(castInspection);
     doTest("redundantCast/generics/" + getTestName(false), tool, "java 1.5");
   }
-  public void testDifferentNullness() throws Exception { doTest();}
+  public void testDifferentNullness() { doTest();}
 }

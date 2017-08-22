@@ -39,8 +39,8 @@ import java.util.List;
  *     }
  *   }
  * </pre>
- * Here <code>'subprojects'</code> should be resolved at context of a global script; <code>'repositories'</code> in a context of
- * <code>'subprojects'</code> and <code>'mavenCentral'</code> in a context of <code>'repositories'</code>. Every such context
+ * Here {@code 'subprojects'} should be resolved at context of a global script; {@code 'repositories'} in a context of
+ * {@code 'subprojects'} and {@code 'mavenCentral'} in a context of {@code 'repositories'}. Every such context
  * is expected to be backed by corresponding implementation of the current interface.
  *
  * @author Denis Zhdanov

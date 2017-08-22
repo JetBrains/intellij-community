@@ -99,6 +99,14 @@ public class JBTabsDemo {
     });
     south.add(v);
 
+    final JCheckBox before = new JCheckBox("Before", true);
+    before.addItemListener(new ItemListener() {
+      public void itemStateChanged(final ItemEvent e) {
+        tabs.setSideComponentBefore(before.isSelected());
+      }
+    });
+    south.add(before);
+
     final JCheckBox row = new JCheckBox("Single row", true);
     row.addItemListener(new ItemListener() {
       public void itemStateChanged(final ItemEvent e) {

@@ -30,12 +30,12 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.*;
 
 import java.io.File;
-import java.io.IOException;
 
 public class SuppressExternalTest extends UsefulTestCase {
   protected CodeInsightTestFixture myFixture;
@@ -77,7 +77,7 @@ public class SuppressExternalTest extends UsefulTestCase {
   }
 
 
-  private void addAnnotationsModuleRoot() throws IOException {
+  private void addAnnotationsModuleRoot() {
     myFixture.copyDirectoryToProject("content/anno/suppressed", "content/anno/suppressed");
     ApplicationManager.getApplication().runWriteAction(() -> {
       final Module module = myFixture.getModule();
@@ -89,31 +89,32 @@ public class SuppressExternalTest extends UsefulTestCase {
   }
 
 
-  private void doTest(String testName) throws Exception {
+  private void doTest(String testName) {
     final IntentionAction action = myFixture.getAvailableIntention("Suppress for method", "src/suppressed/" + testName + ".java");
     assertNotNull(action);
     Project project = myFixture.getProject();
-    boolean oldUseExternalAnnotations = CodeStyleSettingsManager.getSettings(project).USE_EXTERNAL_ANNOTATIONS;
+    JavaCodeStyleSettings javaSettings = CodeStyleSettingsManager.getSettings(project).getCustomSettings(JavaCodeStyleSettings.class);
+    boolean oldUseExternalAnnotations = javaSettings.USE_EXTERNAL_ANNOTATIONS;
     try {
-      CodeStyleSettingsManager.getSettings(project).USE_EXTERNAL_ANNOTATIONS = true;
+      javaSettings.USE_EXTERNAL_ANNOTATIONS = true;
       myFixture.launchAction(action);
     }
     finally {
-      CodeStyleSettingsManager.getSettings(project).USE_EXTERNAL_ANNOTATIONS = oldUseExternalAnnotations;
+      javaSettings.USE_EXTERNAL_ANNOTATIONS = oldUseExternalAnnotations;
     }
     myFixture.checkResultByFile("content/anno/suppressed/annotations.xml", "content/anno/suppressed/annotations" + testName + "_after.xml", true);
   }
 
 
-  public void testNewSuppress() throws Throwable {
+  public void testNewSuppress() {
     doTest("NewSuppress");
   }
 
-  public void testExistingExternalName() throws Exception {
+  public void testExistingExternalName() {
     doTest("ExistingExternalName");
   }
 
-  public void testSecondSuppression() throws Exception {
+  public void testSecondSuppression() {
     doTest("SecondSuppression");
   }
 

@@ -29,10 +29,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
-import com.intellij.ui.tabs.JBTabs;
-import com.intellij.ui.tabs.TabInfo;
-import com.intellij.ui.tabs.TabsListener;
-import com.intellij.ui.tabs.UiDecorator;
+import com.intellij.ui.tabs.*;
 import com.intellij.ui.tabs.impl.JBEditorTabs;
 import com.intellij.ui.tabs.impl.TabLabel;
 import com.intellij.ui.tabs.impl.singleRow.ScrollableSingleRowLayout;
@@ -338,6 +335,10 @@ public class GridCellImpl implements GridCell {
 
   public void setToolbarHorizontal(final boolean horizontal) {
     myTabs.getPresentation().setSideComponentVertical(!horizontal);
+  }
+
+  public void setToolbarBefore(final boolean before) {
+    myTabs.getPresentation().setSideComponentBefore(before);
   }
 
   public ActionCallback restoreLastUiState() {

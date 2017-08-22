@@ -158,11 +158,11 @@ public class GitConfig {
     String rebaseName = branchConfig.getBean().getRebase();
 
     if (StringUtil.isEmptyOrSpaces(mergeName) && StringUtil.isEmptyOrSpaces(rebaseName)) {
-      LOG.info("No branch." + branchName + ".merge/rebase item in the .git/config");
+      LOG.debug("No branch." + branchName + ".merge/rebase item in the .git/config");
       return null;
     }
     if (StringUtil.isEmptyOrSpaces(remoteName)) {
-      LOG.info("No branch." + branchName + ".remote item in the .git/config");
+      LOG.debug("No branch." + branchName + ".remote item in the .git/config");
       return null;
     }
 

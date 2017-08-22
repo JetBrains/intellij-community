@@ -22,9 +22,8 @@ import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
+import com.jetbrains.python.PyNames
 import com.jetbrains.python.PythonHelper
-import com.jetbrains.python.testing.PythonTestConfigurationsModel
-import com.jetbrains.python.testing.VFSTestFrameworkListener
 
 /**
  * Nose runner
@@ -41,7 +40,8 @@ class PyNoseTestExecutionEnvironment(configuration: PyNoseTestConfiguration, env
 }
 
 
-class PyNoseTestConfiguration(project: Project, factory: PyNoseTestFactory) : PyAbstractTestConfiguration(project, factory) {
+class PyNoseTestConfiguration(project: Project, factory: PyNoseTestFactory) :
+  PyAbstractTestConfiguration(project, factory, PyTestFrameworkService.getSdkReadableNameByFramework(PyNames.NOSE_TEST)) {
   @ConfigField
   var regexPattern = ""
 
@@ -57,12 +57,12 @@ class PyNoseTestConfiguration(project: Project, factory: PyNoseTestFactory) : Py
       else -> "-m $regexPattern"
     }
 
-  override fun isFrameworkInstalled() = VFSTestFrameworkListener.getInstance().isNoseTestInstalled(sdk)
+  override fun isFrameworkInstalled() = VFSTestFrameworkListener.getInstance().isTestFrameworkInstalled(sdk, PyNames.NOSE_TEST)
 
 }
 
 object PyNoseTestFactory : PyAbstractTestFactory<PyNoseTestConfiguration>() {
   override fun createTemplateConfiguration(project: Project) = PyNoseTestConfiguration(project, this)
 
-  override fun getName(): String = PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME
+  override fun getName(): String = PyTestFrameworkService.getSdkReadableNameByFramework(PyNames.NOSE_TEST)
 }

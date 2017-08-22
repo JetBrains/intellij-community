@@ -18,8 +18,8 @@ package com.intellij.java.codeInsight.daemon.quickFix;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.codeInspection.LambdaCanBeMethodReferenceInspection;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 
 
@@ -27,14 +27,16 @@ public class Lambda2MethodReferenceInspectionTest extends LightQuickFixParameter
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
-    settings.REPLACE_CAST = settings.REPLACE_INSTANCEOF = true;
+    JavaCodeStyleSettings javaSettings =
+      CodeStyleSettingsManager.getSettings(getProject()).getCustomSettings(JavaCodeStyleSettings.class);
+    javaSettings.REPLACE_CAST = javaSettings.REPLACE_INSTANCEOF = true;
   }
 
   @Override
   protected void tearDown() throws Exception {
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
-    settings.REPLACE_CAST = settings.REPLACE_INSTANCEOF = false;
+    JavaCodeStyleSettings javaSettings =
+      CodeStyleSettingsManager.getSettings(getProject()).getCustomSettings(JavaCodeStyleSettings.class);
+    javaSettings.REPLACE_CAST = javaSettings.REPLACE_INSTANCEOF = false;
     super.tearDown();
   }
 
@@ -44,7 +46,7 @@ public class Lambda2MethodReferenceInspectionTest extends LightQuickFixParameter
     return new LocalInspectionTool[]{new LambdaCanBeMethodReferenceInspection()};
   }
 
-  public void test() throws Exception { doAllTests(); }
+  public void test() { doAllTests(); }
 
   @Override
   protected String getBasePath() {

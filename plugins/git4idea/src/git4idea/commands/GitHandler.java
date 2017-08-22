@@ -36,7 +36,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.Processor;
+import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.net.HttpConfigurable;
@@ -91,7 +91,7 @@ public abstract class GitHandler {
   // the flag indicating that environment has been cleaned up, by default is true because there is nothing to clean
   private boolean myEnvironmentCleanedUp = true;
   private UUID myHttpHandler;
-  @Nullable private Processor<OutputStream> myInputProcessor; // The processor for stdin
+  @Nullable private ThrowableConsumer<OutputStream, IOException> myInputProcessor; // The processor for stdin
 
   // if true process might be cancelled
   // note that access is safe because it accessed in unsynchronized block only after process is started, and it does not change after that
@@ -145,6 +145,7 @@ public abstract class GitHandler {
     myCommandLine.setWorkDirectory(myWorkingDirectory);
     if (GitVersionSpecialty.CAN_OVERRIDE_GIT_CONFIG_FOR_COMMAND.existsIn(myVcs.getVersion())) {
       myCommandLine.addParameters("-c", "core.quotepath=false");
+      myCommandLine.addParameters("-c", "log.showSignature=false");
       for (String configParameter : configParameters) {
         myCommandLine.addParameters("-c", configParameter);
       }
@@ -470,7 +471,7 @@ public abstract class GitHandler {
   }
 
   private void unsetGitTrace() {
-    myEnv.put("GIT_TRACE", "0");
+    myEnv.putAll(getCommonEnvironment());
   }
 
   private void setupHttpAuthenticator() throws IOException {
@@ -631,8 +632,11 @@ public abstract class GitHandler {
     checkStarted();
     try {
       if (myInputProcessor != null && myProcess != null) {
-        myInputProcessor.process(myProcess.getOutputStream());
+        myInputProcessor.consume(myProcess.getOutputStream());
       }
+    }
+    catch (IOException e) {
+      addError(new VcsException(e));
     }
     finally {
       waitForProcess();
@@ -801,7 +805,18 @@ public abstract class GitHandler {
      *
      * @param inputProcessor the processor
      */
-    public void setInputProcessor(@Nullable Processor<OutputStream> inputProcessor) {
+    public void setInputProcessor(@Nullable ThrowableConsumer<OutputStream, IOException> inputProcessor) {
       myInputProcessor = inputProcessor;
     }
+
+  @NotNull
+  public static Map<String, String> getCommonEnvironment() {
+    Map<String,String> commonEnv = new HashMap<>();
+    commonEnv.put("GIT_TRACE","0");
+    commonEnv.put("GIT_TRACE_PACK_ACCESS","0");
+    commonEnv.put("GIT_TRACE_PACKET","0");
+    commonEnv.put("GIT_TRACE_PERFORMANCE","0");
+    commonEnv.put("GIT_TRACE_SETUP","0");
+    return commonEnv;
+  }
 }

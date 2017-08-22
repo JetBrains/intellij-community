@@ -36,7 +36,7 @@ public class StaticPseudoFunctionalStyleMethodTest extends JavaCodeInsightFixtur
   }
 
   @Override
-  protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
+  protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
     moduleBuilder.setLanguageLevel(LanguageLevel.JDK_1_8);
     moduleBuilder.addLibraryJars("guava-21.0.jar", PathManager.getHomePath().replace(File.separatorChar, '/') + "/community/lib/",
                                  "guava-21.0.jar");
@@ -102,6 +102,10 @@ public class StaticPseudoFunctionalStyleMethodTest extends JavaCodeInsightFixtur
   }
 
   public void testLambdaIsVariable() {
+    doTest();
+  }
+
+  public void testListsTransform() {
     doTest();
   }
 

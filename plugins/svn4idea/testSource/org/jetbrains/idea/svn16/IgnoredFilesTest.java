@@ -51,7 +51,7 @@ public class IgnoredFilesTest extends Svn16TestCase {
   private VcsDirtyScopeManager myVcsDirtyScopeManager;
 
   @Before
-  public void setUp() throws Exception {
+  public void setUp() {
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       try {
         final IdeaTestFixtureFactory fixtureFactory = IdeaTestFixtureFactory.getFixtureFactory();
@@ -81,7 +81,7 @@ public class IgnoredFilesTest extends Svn16TestCase {
   }
 
   @After
-  public void tearDown() throws Exception {
+  public void tearDown() {
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       try {
         myVcsManager.unregisterVcs(myVcs);

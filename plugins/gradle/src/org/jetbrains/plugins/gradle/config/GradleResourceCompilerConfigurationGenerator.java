@@ -31,7 +31,6 @@ import com.intellij.openapi.project.ProjectType;
 import com.intellij.openapi.project.ProjectTypeService;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -55,10 +54,8 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * @author Vladislav.Soroka
@@ -87,7 +84,9 @@ public class GradleResourceCompilerConfigurationGenerator {
       }
 
       @Override
-      public void modulesRenamed(@NotNull Project project, @NotNull List<Module> modules, @NotNull Function<Module, String> oldNameProvider) {
+      public void modulesRenamed(@NotNull Project project,
+                                 @NotNull List<Module> modules,
+                                 @NotNull Function<Module, String> oldNameProvider) {
         for (Module module : modules) {
           moduleRemoved(project, module);
         }
@@ -124,9 +123,7 @@ public class GradleResourceCompilerConfigurationGenerator {
       affectedConfigurationHash.put(entry.getKey(), moduleCurrentConfigurationHash);
     }
 
-    final GradleProjectConfiguration projectConfig = loadLastConfiguration(gradleConfigFile);
-
-    // update with newly generated configuration
+    final GradleProjectConfiguration projectConfig = new GradleProjectConfiguration();
     projectConfig.moduleConfigurations.putAll(affectedGradleModuleConfigurations);
 
     final Element element = new Element("gradle-project-configuration");
@@ -145,31 +142,6 @@ public class GradleResourceCompilerConfigurationGenerator {
         throw new RuntimeException(e);
       }
     });
-  }
-
-  @NotNull
-  private GradleProjectConfiguration loadLastConfiguration(@NotNull File gradleConfigFile) {
-    final GradleProjectConfiguration projectConfig = new GradleProjectConfiguration();
-    if (gradleConfigFile.exists()) {
-      try {
-        XmlSerializer.deserializeInto(projectConfig, JDOMUtil.load(gradleConfigFile));
-
-        // filter orphan modules
-        final Set<String> actualModules = myModulesConfigurationHash.keySet();
-        for (Iterator<Map.Entry<String, GradleModuleResourceConfiguration>> iterator =
-               projectConfig.moduleConfigurations.entrySet().iterator(); iterator.hasNext(); ) {
-          Map.Entry<String, GradleModuleResourceConfiguration> configurationEntry = iterator.next();
-          if (!actualModules.contains(configurationEntry.getKey())) {
-            iterator.remove();
-          }
-        }
-      }
-      catch (Exception e) {
-        LOG.info(e);
-      }
-    }
-
-    return projectConfig;
   }
 
   @NotNull
@@ -280,7 +252,7 @@ public class GradleResourceCompilerConfigurationGenerator {
       for (String exclude : directorySet.getExcludes()) {
         rootConfiguration.excludes.add(exclude.trim());
       }
-      if(sourcesDirectorySet != null && sourcesDirectorySet.getSrcDirs().contains(file)) {
+      if (sourcesDirectorySet != null && sourcesDirectorySet.getSrcDirs().contains(file)) {
         rootConfiguration.excludes.add("**/*.java");
         rootConfiguration.excludes.add("**/*.scala");
         rootConfiguration.excludes.add("**/*.groovy");

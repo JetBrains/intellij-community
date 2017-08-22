@@ -32,7 +32,7 @@ public class InplaceIntroduceParameterTest extends AbstractJavaInplaceIntroduceT
 
   private static final String BASE_PATH = "/refactoring/inplaceIntroduceParameter/";
 
-  public void testReplaceAll() throws Exception {
+  public void testReplaceAll() {
     doTest(new Pass<AbstractInplaceIntroducer>() {
       @Override
       public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
@@ -41,7 +41,7 @@ public class InplaceIntroduceParameterTest extends AbstractJavaInplaceIntroduceT
     });
   }
 
-  public void testChainMethodCall() throws Exception {
+  public void testChainMethodCall() {
     doTest(new Pass<AbstractInplaceIntroducer>() {
       @Override
       public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
@@ -51,7 +51,7 @@ public class InplaceIntroduceParameterTest extends AbstractJavaInplaceIntroduceT
   }
 
 
-  public void testReplaceAll1() throws Exception {
+  public void testReplaceAll1() {
     doTest(new Pass<AbstractInplaceIntroducer>() {
       @Override
       public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
@@ -60,7 +60,7 @@ public class InplaceIntroduceParameterTest extends AbstractJavaInplaceIntroduceT
     });
   }
 
-  public void testReplaceOneLeaveParamToDelete() throws Exception {
+  public void testReplaceOneLeaveParamToDelete() {
     doTest(new Pass<AbstractInplaceIntroducer>() {
       @Override
       public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
@@ -68,7 +68,7 @@ public class InplaceIntroduceParameterTest extends AbstractJavaInplaceIntroduceT
     });
   }
 
-  public void testReplaceAllBrokenIdentifier() throws Exception {
+  public void testReplaceAllBrokenIdentifier() {
     doTest(new Pass<AbstractInplaceIntroducer>() {
       @Override
       public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
@@ -78,7 +78,7 @@ public class InplaceIntroduceParameterTest extends AbstractJavaInplaceIntroduceT
     });
   }
 
-  public void testReplaceAll2() throws Exception {
+  public void testReplaceAll2() {
     doTest(new Pass<AbstractInplaceIntroducer>() {
       @Override
       public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
@@ -87,7 +87,7 @@ public class InplaceIntroduceParameterTest extends AbstractJavaInplaceIntroduceT
     });
   }
 
-  public void testReplaceAll3() throws Exception {
+  public void testReplaceAll3() {
     doTest(new Pass<AbstractInplaceIntroducer>() {
       @Override
       public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
@@ -96,7 +96,7 @@ public class InplaceIntroduceParameterTest extends AbstractJavaInplaceIntroduceT
     });
   }
 
-  public void testReplaceAllMethodCalls() throws Exception {
+  public void testReplaceAllMethodCalls() {
     doTest(new Pass<AbstractInplaceIntroducer>() {
       @Override
       public void pass(AbstractInplaceIntroducer inplaceIntroducePopup) {
@@ -106,7 +106,7 @@ public class InplaceIntroduceParameterTest extends AbstractJavaInplaceIntroduceT
     });
   }
 
-  public void testParamNameEqMethodName() throws Exception {
+  public void testParamNameEqMethodName() {
     doTest(new Pass<AbstractInplaceIntroducer>() {
       @Override
       public void pass(AbstractInplaceIntroducer inplaceIntroducePopup) {
@@ -114,7 +114,7 @@ public class InplaceIntroduceParameterTest extends AbstractJavaInplaceIntroduceT
     });
   }
 
-  public void testLocalInsideAnonymous() throws Exception {
+  public void testLocalInsideAnonymous() {
     doTest(new Pass<AbstractInplaceIntroducer>() {
       @Override
       public void pass(AbstractInplaceIntroducer inplaceIntroducePopup) {
@@ -122,7 +122,7 @@ public class InplaceIntroduceParameterTest extends AbstractJavaInplaceIntroduceT
     });
   }
 
-  public void testNoConflictingVariableDueToReparse() throws Exception {
+  public void testNoConflictingVariableDueToReparse() {
     doTest(new Pass<AbstractInplaceIntroducer>() {
       @Override
       public void pass(AbstractInplaceIntroducer inplaceIntroducePopup) {
@@ -130,7 +130,7 @@ public class InplaceIntroduceParameterTest extends AbstractJavaInplaceIntroduceT
     });
   }
 
-  public void testLocalInsideAnonymous1() throws Exception {
+  public void testLocalInsideAnonymous1() {
     final Pass<AbstractInplaceIntroducer> pass = new Pass<AbstractInplaceIntroducer>() {
       @Override
       public void pass(AbstractInplaceIntroducer inplaceIntroducePopup) {
@@ -168,15 +168,15 @@ public class InplaceIntroduceParameterTest extends AbstractJavaInplaceIntroduceT
     return new MyIntroduceParameterHandler();
   }
 
-  public void testEscapePosition() throws Exception {
+  public void testEscapePosition() {
     doTestEscape();
   }
 
-  public void testEscapePositionOnLocal() throws Exception {
+  public void testEscapePositionOnLocal() {
     doTestEscape();
   }
 
-  public void testExtractParamOverLocal() throws Exception {
+  public void testExtractParamOverLocal() {
     doTest(new Pass<AbstractInplaceIntroducer>() {
       @Override
       public void pass(AbstractInplaceIntroducer abstractInplaceIntroducer) {
@@ -184,7 +184,7 @@ public class InplaceIntroduceParameterTest extends AbstractJavaInplaceIntroduceT
     });
   }
 
-  public void testExtractConflictingParamOverLocal() throws Exception {
+  public void testExtractConflictingParamOverLocal() {
     try {
       doTest(new Pass<AbstractInplaceIntroducer>() {
         @Override

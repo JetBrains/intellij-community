@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,11 +32,15 @@ import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.issueLinks.TableLinkMouseListener;
 import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.*;
+import com.intellij.ui.AnActionButton;
+import com.intellij.ui.ColoredTableCellRenderer;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.util.Consumer;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.ui.ColumnInfo;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -64,6 +68,8 @@ import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+
+import static org.jetbrains.idea.svn.SvnUtil.getRelativeUrl;
 
 public class SvnHistoryProvider
   implements VcsHistoryProvider, VcsCacheableHistorySessionFactory<Boolean, SvnHistorySession> {
@@ -155,7 +161,7 @@ public class SvnHistoryProvider
       }.initPosition()
         .addExtraAction(AnActionButton.fromAction(sourceAction))
         .createPanel();
-      fieldPanel.setBorder(IdeBorderFactory.createEmptyBorder());
+      fieldPanel.setBorder(JBUI.Borders.empty());
       addComp = fieldPanel;
     }
     else {
@@ -330,13 +336,9 @@ public class SvnHistoryProvider
 
     @Override
     protected void load() {
-      String relativeUrl = myUrl;
-      final SVNURL repoRootURL = myInfo.getRepositoryRootURL();
-
-      final String root = repoRootURL.toString();
-      if (myUrl != null && myUrl.startsWith(root)) {
-        relativeUrl = myUrl.substring(root.length());
-      }
+      SVNURL repoRootURL = myInfo.getRepositoryRootURL();
+      String relativeUrl = getRelativeUrl(repoRootURL.toDecodedString(), myUrl);
+      
       if (myPI != null) {
         myPI.setText2(SvnBundle.message("progress.text2.changes.establishing.connection", myUrl));
       }
@@ -411,11 +413,7 @@ public class SvnHistoryProvider
         if (rootURL == null) {
           throw new VcsException("Could not find repository root for URL: " + myUrl);
         }
-        final String root = rootURL.toString();
-        String relativeUrl = myUrl;
-        if (myUrl.startsWith(root)) {
-          relativeUrl = myUrl.substring(root.length());
-        }
+        String relativeUrl = getRelativeUrl(rootURL.toDecodedString(), myUrl);
         SvnTarget target = SvnTarget.fromURL(svnurl, myPeg == null ? myFrom : myPeg);
         RepositoryLogEntryHandler handler =
           new RepositoryLogEntryHandler(myVcs, myUrl, SVNRevision.UNDEFINED, relativeUrl, createConsumerAdapter(myConsumer), rootURL);
@@ -439,13 +437,12 @@ public class SvnHistoryProvider
       // this method is called when svnurl does not exist in latest repository revision - thus concrete old revision is used for "info"
       // command to get repository url
       Info info = myVcs.getInfo(svnurl, myPeg, myPeg);
-      final SVNURL rootURL = info != null ? info.getRepositoryRootURL() : null;
-      final String root = rootURL != null ? rootURL.toString() : "";
-      String relativeUrl = myUrl;
-      if (myUrl.startsWith(root)) {
-        relativeUrl = myUrl.substring(root.length());
+      if (info == null || info.getRepositoryRootURL() == null) {
+        throw new VcsException("Could not find repository root for URL: " + svnurl + " in revision " + myPeg);
       }
 
+      SVNURL rootURL = info.getRepositoryRootURL();
+      String relativeUrl = getRelativeUrl(rootURL.toDecodedString(), myUrl);
       final RepositoryLogEntryHandler repositoryLogEntryHandler =
         new RepositoryLogEntryHandler(myVcs, myUrl, SVNRevision.UNDEFINED, relativeUrl, revision -> myConsumer.consume(revision), rootURL);
       repositoryLogEntryHandler.setThrowCancelOnMeetPathCreation(true);

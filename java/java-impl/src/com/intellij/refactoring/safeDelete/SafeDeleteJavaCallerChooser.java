@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,13 +27,13 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.changeSignature.MethodNodeBase;
+import com.intellij.refactoring.changeSignature.MemberNodeBase;
 import com.intellij.refactoring.changeSignature.inCallers.JavaCallerChooser;
 import com.intellij.refactoring.changeSignature.inCallers.JavaMethodNode;
 import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteParameterCallHierarchyUsageInfo;
 import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteReferenceJavaDeleteUsageInfo;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.util.Consumer;
+import com.intellij.util.EmptyConsumer;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 
@@ -48,7 +48,7 @@ abstract class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
   private final ArrayList<UsageInfo> myResult;
 
   public SafeDeleteJavaCallerChooser(PsiMethod method, Project project, ArrayList<UsageInfo> result) {
-    super(method, project, "Select Methods To Propagate Parameter Deletion", null, Consumer.EMPTY_CONSUMER);
+    super(method, project, "Select Methods To Propagate Parameter Deletion", null, EmptyConsumer.getInstance());
     myMethod = method;
     myProject = project;
     myResult = result;
@@ -58,12 +58,12 @@ abstract class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
   protected abstract int getParameterIdx();
 
   @Override
-  protected JavaMethodNode createTreeNode(PsiMethod nodeMethod,
-                                          com.intellij.util.containers.HashSet<PsiMethod> called,
-                                          Runnable cancelCallback) {
+  protected JavaMethodNode createTreeNodeFor(PsiMethod nodeMethod,
+                                             com.intellij.util.containers.HashSet<PsiMethod> called,
+                                             Runnable cancelCallback) {
     final SafeDeleteJavaMethodNode node = new SafeDeleteJavaMethodNode(nodeMethod, called, cancelCallback, getParameterIdx(),
                                                                        nodeMethod != null ? nodeMethod.getProject() : myProject);
-    if (getTopMethod().equals(nodeMethod)) {
+    if (getTopMember().equals(nodeMethod)) {
       node.setEnabled(false);
       node.setChecked(true);
     }
@@ -74,10 +74,10 @@ abstract class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
   protected void doOKAction() {
     final List<UsageInfo> foreignMethodUsages = new ArrayList<>();
     final Runnable runnable = () -> {
-      final Set<MethodNodeBase<PsiMethod>> nodes = getSelectedNodes();
-      for (MethodNodeBase<PsiMethod> node : nodes) {
+      final Set<MemberNodeBase<PsiMethod>> nodes = getSelectedNodes();
+      for (MemberNodeBase<PsiMethod> node : nodes) {
         final SafeDeleteJavaMethodNode methodNode = (SafeDeleteJavaMethodNode)node;
-        final PsiMethod nodeMethod = methodNode.getMethod();
+        final PsiMethod nodeMethod = methodNode.getMember();
         if (nodeMethod.equals(myMethod)) continue;
         final PsiParameter parameter = nodeMethod.getParameterList().getParameters()[methodNode.myParameterIdx];
         foreignMethodUsages.add(new SafeDeleteParameterCallHierarchyUsageInfo(nodeMethod, parameter, nodeMethod, parameter));
@@ -232,18 +232,18 @@ abstract class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
     }
 
     @Override
-    protected MethodNodeBase<PsiMethod> createNode(PsiMethod caller, HashSet<PsiMethod> called) {
+    protected MemberNodeBase<PsiMethod> createNode(PsiMethod caller, HashSet<PsiMethod> called) {
       return new SafeDeleteJavaMethodNode(caller, called, myCancelCallback, getCallerParameterIndex(myMethod, myParameterIdx, caller), myProject);
     }
 
     @Override
     protected List<PsiMethod> computeCallers() {
-      if (getTopMethod().equals(getMethod())) {
+      if (getTopMember().equals(getMember())) {
         final ArrayList<SafeDeleteParameterCallHierarchyUsageInfo> items = getTopLevelItems();
         return ContainerUtil.map(items, info -> info.getCallerMethod());
       }
       final List<PsiMethod> methods = super.computeCallers();
-      methods.remove(getTopMethod());
+      methods.remove(getTopMember());
       return methods;
     }
 

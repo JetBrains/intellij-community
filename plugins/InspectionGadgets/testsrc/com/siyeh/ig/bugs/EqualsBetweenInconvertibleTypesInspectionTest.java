@@ -30,14 +30,14 @@ public class EqualsBetweenInconvertibleTypesInspectionTest extends LightInspecti
     doMemberTest("public void foo() {\n" +
                  "    final Integer foo = new Integer(3);\n" +
                  "    final Double bar = new Double(3);\n" +
-                 "    foo./*'equals()' between objects of inconvertible types 'Double' and 'Integer'*/equals/**/(bar);\n" +
+                 "    foo./*'equals()' between objects of inconvertible types 'Integer' and 'Double'*/equals/**/(bar);\n" +
                  "}\n");
   }
 
   public void testWithoutQualifier() {
     doTest("class Clazz {\n" +
            "    void foo() {\n" +
-           "        boolean bar = /*'equals()' between objects of inconvertible types 'String' and 'Clazz'*/equals/**/(\"differentClass\");\n" +
+           "        boolean bar = /*'equals()' between objects of inconvertible types 'Clazz' and 'String'*/equals/**/(\"differentClass\");\n" +
            "    }\n" +
            "}");
   }
@@ -61,7 +61,7 @@ public class EqualsBetweenInconvertibleTypesInspectionTest extends LightInspecti
       "  }" +
       "" +
       "  boolean n(Collection<Integer> c1, Collection<String> c2) {" +
-      "     return c1./*'equals()' between objects of inconvertible types 'Collection<String>' and 'Collection<Integer>'*/equals/**/(c2);" +
+      "     return c1./*'equals()' between objects of inconvertible types 'Collection<Integer>' and 'Collection<String>'*/equals/**/(c2);" +
       "  }" +
       "}");
   }
@@ -82,7 +82,7 @@ public class EqualsBetweenInconvertibleTypesInspectionTest extends LightInspecti
            "import java.util.function.*;\n" +
            "\n" +
            "class Test {\n" +
-           "  Predicate<Integer> p = \"123\"::/*'equals()' between objects of inconvertible types 'Integer' and 'String'*/equals/**/;\n" +
+           "  Predicate<Integer> p = \"123\"::/*'equals()' between objects of inconvertible types 'String' and 'Integer'*/equals/**/;\n" +
            "  Predicate<CharSequence> pOk = \"456\"::equals;\n" +
            "  BiPredicate<String, Integer> bp = Objects::/*'equals()' between objects of inconvertible types 'String' and 'Integer'*/equals/**/;\n" +
            "  BiPredicate<Long, Double> bp2 = Object::/*'equals()' between objects of inconvertible types 'Long' and 'Double'*/equals/**/;\n" +

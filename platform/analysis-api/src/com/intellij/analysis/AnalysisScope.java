@@ -197,14 +197,9 @@ public class AnalysisScope {
 
   @NotNull
   private FileIndex getFileIndex() {
-    final FileIndex fileIndex;
-    if (myModule != null) {
-      fileIndex = ModuleRootManager.getInstance(myModule).getFileIndex();
-    }
-    else {
-      fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
-    }
-    return fileIndex;
+    return myModule == null ?
+           ProjectRootManager.getInstance(myProject).getFileIndex() :
+           ModuleRootManager.getInstance(myModule).getFileIndex();
   }
 
   private static String displayProjectRelativePath(@NotNull PsiFileSystemItem item) {
@@ -359,12 +354,11 @@ public class AnalysisScope {
                                      @NotNull final PsiManager psiManager,
                                      final boolean needReadAction, 
                                      final boolean clearResolveCache) {
-    final Runnable runnable = () -> doProcessFile(visitor, psiManager, vFile, clearResolveCache);
     if (needReadAction && !ApplicationManager.getApplication().isDispatchThread()) {
-      commitAndRunInSmartMode(runnable, psiManager.getProject());
+      commitAndRunInSmartMode(() -> doProcessFile(visitor, psiManager, vFile, clearResolveCache), psiManager.getProject());
     }
     else {
-      runnable.run();
+      doProcessFile(visitor, psiManager, vFile, clearResolveCache);
     }
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     return indicator == null || !indicator.isCanceled();
@@ -397,6 +391,11 @@ public class AnalysisScope {
         return myModule == module;
       case MODULES:
         return myModules.contains(module);
+      case CUSTOM:
+        for (VirtualFile file : ModuleRootManager.getInstance(module).getSourceRoots()) {
+          if (myScope.contains(file)) return true;
+        }
+        return false;
       default:
         return false;
     }
@@ -404,11 +403,11 @@ public class AnalysisScope {
 
   private static void doProcessFile(@NotNull PsiElementVisitor visitor, @NotNull PsiManager psiManager, @NotNull VirtualFile vFile,
                                     boolean clearResolveCache) {
+    ProgressManager.checkCanceled();
     if (!vFile.isValid()) return;
 
     PsiFile psiFile = psiManager.findFile(vFile);
     if (psiFile == null || !shouldHighlightFile(psiFile)) return;
-
     psiFile.accept(visitor);
     if (clearResolveCache) {
       psiManager.dropResolveCaches();

@@ -17,15 +17,26 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.NullableNotNullDialog;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.dataFlow.fix.SurroundWithRequireNonNullFix;
 import com.intellij.codeInspection.nullable.NullableStuffInspection;
+import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.siyeh.ig.fixes.IntroduceVariableFix;
+import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.SideEffectChecker;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -34,12 +45,6 @@ import static com.intellij.xml.util.XmlStringUtil.wrapInHtml;
 import static javax.swing.SwingConstants.TOP;
 
 public class DataFlowInspection extends DataFlowInspectionBase {
-  @Override
-  protected void addSurroundWithIfFix(PsiExpression qualifier, List<LocalQuickFix> fixes, boolean onTheFly) {
-    if (onTheFly && SurroundWithIfFix.isAvailable(qualifier)) {
-      fixes.add(new SurroundWithIfFix(qualifier));
-    }
-  }
 
   @Override
   protected LocalQuickFix[] createConditionalAssignmentFixes(boolean evaluatesToTrue, PsiAssignmentExpression assignment, final boolean onTheFly) {
@@ -57,11 +62,6 @@ public class DataFlowInspection extends DataFlowInspectionBase {
   }
 
   @Override
-  protected AddAssertStatementFix createAssertFix(PsiBinaryExpression binary, PsiExpression expression) {
-    return RefactoringUtil.getParentStatement(expression, false) == null ? null : new AddAssertStatementFix(binary);
-  }
-
-  @Override
   protected LocalQuickFix createReplaceWithTrivialLambdaFix(Object value) {
     return new ReplaceWithTrivialLambdaFix(value);
   }
@@ -69,6 +69,64 @@ public class DataFlowInspection extends DataFlowInspectionBase {
   @Override
   protected LocalQuickFix createIntroduceVariableFix(final PsiExpression expression) {
     return new IntroduceVariableFix(true);
+  }
+
+  private static boolean isVolatileFieldReference(PsiExpression qualifier) {
+    PsiElement target = qualifier instanceof PsiReferenceExpression ? ((PsiReferenceExpression)qualifier).resolve() : null;
+    return target instanceof PsiField && ((PsiField)target).hasModifierProperty(PsiModifier.VOLATILE);
+  }
+
+  @NotNull
+  @Override
+  protected List<LocalQuickFix> createMethodReferenceNPEFixes(PsiMethodReferenceExpression methodRef) {
+    List<LocalQuickFix> fixes = new ArrayList<>();
+    ContainerUtil.addIfNotNull(fixes, StreamFilterNotNullFix.makeFix(methodRef));
+    fixes.add(new ReplaceWithTernaryOperatorFix(null));
+    return fixes;
+  }
+
+  @NotNull
+  protected List<LocalQuickFix> createNPEFixes(PsiExpression qualifier, PsiExpression expression, boolean onTheFly) {
+    qualifier = PsiUtil.deparenthesizeExpression(qualifier);
+
+    final List<LocalQuickFix> fixes = new SmartList<>();
+    if (qualifier == null || expression == null) return fixes;
+
+    try {
+      ContainerUtil.addIfNotNull(fixes, StreamFilterNotNullFix.makeFix(qualifier));
+      if (isVolatileFieldReference(qualifier)) {
+        ContainerUtil.addIfNotNull(fixes, createIntroduceVariableFix(qualifier));
+      }
+      else if (!ExpressionUtils.isNullLiteral(qualifier) && !SideEffectChecker.mayHaveSideEffects(qualifier))  {
+        if (PsiUtil.getLanguageLevel(qualifier).isAtLeast(LanguageLevel.JDK_1_4)) {
+          final Project project = qualifier.getProject();
+          final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
+          final PsiBinaryExpression binary = (PsiBinaryExpression)elementFactory.createExpressionFromText("a != null", null);
+          binary.getLOperand().replace(qualifier);
+          if (RefactoringUtil.getParentStatement(expression, false) != null) {
+            fixes.add(new AddAssertStatementFix(binary));
+          }
+        }
+
+        if (onTheFly && SurroundWithIfFix.isAvailable(qualifier)) {
+          fixes.add(new SurroundWithIfFix(qualifier));
+        }
+
+        if (ReplaceWithTernaryOperatorFix.isAvailable(qualifier, expression)) {
+          fixes.add(new ReplaceWithTernaryOperatorFix(qualifier));
+        }
+      }
+
+      if (!ExpressionUtils.isNullLiteral(qualifier) && PsiUtil.isLanguageLevel7OrHigher(qualifier)) {
+        fixes.add(new SurroundWithRequireNonNullFix(qualifier));
+      }
+
+      ContainerUtil.addIfNotNull(fixes, DfaOptionalSupport.registerReplaceOptionalOfWithOfNullableFix(qualifier));
+    }
+    catch (IncorrectOperationException e) {
+      LOG.error(e);
+    }
+    return fixes;
   }
 
   @Override

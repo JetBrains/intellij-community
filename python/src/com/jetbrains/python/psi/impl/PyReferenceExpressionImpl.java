@@ -22,6 +22,7 @@ import com.intellij.openapi.extensions.ExtensionException;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.ContainerUtil;
@@ -46,6 +47,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+
+import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
  * Implements reference expression PSI.
@@ -251,11 +254,33 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       if (qualified && typeFromTargets instanceof PyNoneType) {
         return null;
       }
+      final Ref<PyType> descriptorType = getDescriptorType(typeFromTargets, context);
+      if (descriptorType != null) {
+        return descriptorType.get();
+      }
       return typeFromTargets;
     }
     finally {
       TypeEvalStack.evaluated(this);
     }
+  }
+
+  @Nullable
+  private Ref<PyType> getDescriptorType(@Nullable PyType typeFromTargets, @NotNull TypeEvalContext context) {
+    if (!isQualified()) return null;
+    final PyClassLikeType targetType = as(typeFromTargets, PyClassLikeType.class);
+    if (targetType == null) return null;
+    final PyResolveContext resolveContext = PyResolveContext.noProperties().withTypeEvalContext(context);
+    final List<? extends RatedResolveResult> members = targetType.resolveMember(PyNames.GET, this, AccessDirection.READ,
+                                                                                resolveContext);
+    if (members == null || members.isEmpty()) return null;
+    final List<PyType> types = StreamEx.of(members)
+      .map((result) -> result.getElement())
+      .select(PyCallable.class)
+      .map((callable) -> context.getReturnType(callable))
+      .toList();
+    final PyType type = PyUnionType.union(types);
+    return Ref.create(type);
   }
 
   @Nullable
@@ -285,16 +310,19 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
     final List<PyType> members = new ArrayList<>();
 
-    for (PsiElement target : PyUtil.multiResolveTopPriority(getReference(resolveContext))) {
-      if (target == this || target == null) {
-        continue;
-      }
+    final PsiFile realFile = FileContextUtil.getContextFile(this);
+    if (!(getContainingFile() instanceof PyExpressionCodeFragment) || (realFile != null && context.maySwitchToAST(realFile))) {
+      for (PsiElement target : PyUtil.multiResolveTopPriority(getReference(resolveContext))) {
+        if (target == this || target == null) {
+          continue;
+        }
 
-      if (!target.isValid()) {
-        throw new PsiInvalidElementAccessException(this);
-      }
+        if (!target.isValid()) {
+          throw new PsiInvalidElementAccessException(this);
+        }
 
-      members.add(getTypeFromTarget(target, context, this));
+        members.add(getTypeFromTarget(target, context, this));
+      }
     }
 
     return PyUnionType.union(members);
@@ -500,15 +528,23 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     final PyElement element = augAssignment != null ? augAssignment : anchor;
     try {
       final List<Instruction> defs = PyDefUseUtil.getLatestDefs(scopeOwner, name, element, true, false);
-      if (!defs.isEmpty()) {
-        final ReadWriteInstruction firstInstruction = PyUtil.as(defs.get(0), ReadWriteInstruction.class);
-        PyType type = firstInstruction != null ? firstInstruction.getType(context, anchor) : null;
-        for (int i = 1; i < defs.size(); i++) {
-          final ReadWriteInstruction instruction = PyUtil.as(defs.get(i), ReadWriteInstruction.class);
-          type = PyUnionType.union(type, instruction != null ? instruction.getType(context, anchor) : null);
-        }
-        return type;
-      }
+      // null means empty set of possible types, Ref(null) means Any
+      final @Nullable Ref<PyType> combinedType = StreamEx.of(defs)
+        .select(ReadWriteInstruction.class)
+        .map(instr -> instr.getType(context, anchor))
+        // don't use foldLeft(BiFunction) here, as it doesn't support null results
+        .foldLeft(null, (accType, defType) -> {
+          if (defType == null) {
+            return accType;
+          }
+          else if (accType == null) {
+            return defType;
+          }
+          else {
+            return Ref.create(PyUnionType.union(accType.get(), defType.get()));
+          }
+        });
+      return Ref.deref(combinedType);
     }
     catch (PyDefUseUtil.InstructionNotFoundException ignored) {
     }

@@ -27,7 +27,7 @@ public class ReplaceImplementsWithStaticImportTest extends LightQuickFixParamete
     return JavaTestUtil.getJavaTestDataPath();
   }
 
-  public void test() throws Exception {
+  public void test() {
     doAllTests();
   }
 

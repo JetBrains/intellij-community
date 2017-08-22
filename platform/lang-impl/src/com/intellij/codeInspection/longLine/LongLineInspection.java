@@ -16,10 +16,8 @@
 package com.intellij.codeInspection.longLine;
 
 import com.intellij.application.options.CodeStyleSchemesConfigurable;
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.ide.DataManager;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -28,16 +26,14 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.options.ex.Settings;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.HyperlinkLabel;
 import com.intellij.util.Consumer;
-import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,11 +41,7 @@ import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
-import java.util.List;
 
-/**
- * @author Dmitry Batkovich
- */
 public class LongLineInspection extends LocalInspectionTool {
   @Nullable
   @Override
@@ -78,48 +70,53 @@ public class LongLineInspection extends LocalInspectionTool {
     return panel;
   }
 
-  @Nullable
+  @NotNull
   @Override
-  public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    final Project project = manager.getProject();
-    final int codeStyleRightMargin = CodeStyleSettingsManager.getSettings(project).getRightMargin(file.getLanguage());
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+    PsiFile file = holder.getFile();
+    final int codeStyleRightMargin = CodeStyleSettingsManager.getSettings(holder.getProject()).getRightMargin(file.getLanguage());
+
     final VirtualFile vFile = file.getVirtualFile();
     if (vFile instanceof VirtualFileWindow) {
-      return null;
+      return PsiElementVisitor.EMPTY_VISITOR;
     }
     final Document document = FileDocumentManager.getInstance().getDocument(vFile);
     if (document == null) {
-      return null;
+      return PsiElementVisitor.EMPTY_VISITOR;
     }
-    final List<ProblemDescriptor> descriptors = new SmartList<>();
-    for (int idx = 0; idx < document.getLineCount(); idx++) {
-      TextRange exceedingRange = getExceedingRange(document, idx, codeStyleRightMargin);
-      if (!exceedingRange.isEmpty() && !ignoreFor(findElementInRange(file, exceedingRange.shiftRight(-1)))) {
-        descriptors.add(
-          manager.createProblemDescriptor(file, exceedingRange,
-                                          String.format("Line is longer than allowed by code style (> %s columns)", codeStyleRightMargin),
-                                          ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                          isOnTheFly));
+
+    return new PsiElementVisitor() {
+      @Override
+      public void visitElement(PsiElement element) {
+        int length = element.getTextLength();
+        if (element.getTextLength() != 0 && element.getFirstChild() == null && !ignoreFor(element)) {
+          int offset = element.getTextOffset();
+          int endOffset = offset + length;
+
+          int startLine = document.getLineNumber(offset);
+          if (offset > document.getLineStartOffset(startLine) + codeStyleRightMargin) {
+            startLine++;
+          }
+
+          int endLine = document.getLineNumber(endOffset - 1);
+
+          for (int l = startLine; l <= endLine; l++) {
+            int lineEndOffset = document.getLineEndOffset(l);
+            int lineMarginOffset = document.getLineStartOffset(l) + codeStyleRightMargin;
+            if (lineEndOffset > lineMarginOffset) {
+              int highlightingStartOffset = lineMarginOffset - offset;
+              int highlightingEndOffset = Math.min(endOffset, lineEndOffset) - offset;
+              if (highlightingStartOffset < highlightingEndOffset) {
+                TextRange exceedingRange = new TextRange(highlightingStartOffset, highlightingEndOffset);
+                holder.registerProblem(element,
+                                       exceedingRange,
+                                       String.format("Line is longer than allowed by code style (> %s columns)", codeStyleRightMargin));
+              }
+            }
+          }
+        }
       }
-    }
-    return descriptors.isEmpty() ? null : descriptors.toArray(new ProblemDescriptor[descriptors.size()]);
-  }
-
-  @NotNull
-  public static TextRange getExceedingRange(@NotNull Document document, int line, int rightMargin) {
-    int start = document.getLineStartOffset(line);
-    int end = document.getLineEndOffset(line);
-
-    return end > start + rightMargin ? new TextRange(start + rightMargin, end) : TextRange.EMPTY_RANGE;
-  }
-
-  @Nullable
-  private static PsiElement findElementInRange(@NotNull PsiFile file, @NotNull TextRange range) {
-    PsiElement leftElement = file.findElementAt(range.getStartOffset());
-    if (leftElement == null) return null;
-    PsiElement rightElement = file.findElementAt(range.getEndOffset());
-    if (rightElement == null) return null;
-    return PsiTreeUtil.findCommonParent(leftElement, rightElement);
+    };
   }
 
   private static boolean ignoreFor(@Nullable PsiElement element) {

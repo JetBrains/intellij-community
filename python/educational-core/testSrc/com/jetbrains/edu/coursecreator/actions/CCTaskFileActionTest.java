@@ -45,7 +45,7 @@ public class CCTaskFileActionTest extends CCTestCase {
   @NotNull
   private TestActionEvent getActionEvent(VirtualFile virtualFile, AnAction action) {
     MapDataContext context = new MapDataContext();
-    context.put(CommonDataKeys.VIRTUAL_FILE, virtualFile);
+    context.put(CommonDataKeys.VIRTUAL_FILE_ARRAY, new VirtualFile[]{virtualFile});
     context.put(CommonDataKeys.PROJECT, getProject());
     return new TestActionEvent(context, action);
   }

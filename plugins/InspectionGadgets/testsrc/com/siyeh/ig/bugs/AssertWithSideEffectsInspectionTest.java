@@ -11,7 +11,7 @@ public class AssertWithSideEffectsInspectionTest extends IGInspectionTestCase {
     return IdeaTestUtil.getMockJdk17();
   }
 
-  public void test() throws Exception {
+  public void test() {
     doTest("com/siyeh/igtest/bugs/assert_with_side_effects",
            new AssertWithSideEffectsInspection());
   }

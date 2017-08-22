@@ -567,10 +567,10 @@ public class PyCallExpressionHelper {
 
         return Ref.create(new PyClassTypeImpl(cls, false));
       }
-      if (t != null && !(t instanceof PyNoneType)) {
+      if (t != null) {
         return Ref.create(t);
       }
-      if (cls != null && t == null) {
+      if (cls != null) {
         final PyFunction newMethod = cls.findMethodByName(PyNames.NEW, true, null);
         if (newMethod != null && !PyBuiltinCache.getInstance(call).isBuiltin(newMethod)) {
           return Ref.create(PyUnionType.createWeakType(new PyClassTypeImpl(cls, false)));
@@ -584,9 +584,33 @@ public class PyCallExpressionHelper {
     if (providedType instanceof PyCallableType) {
       return Ref.create(((PyCallableType)providedType).getCallType(context, call));
     }
+    final Ref<PyType> propertyCallType = getPropertyCallType(call, target, context);
+    if (propertyCallType != null) {
+      return propertyCallType;
+    }
     if (target instanceof PyCallable) {
       final PyCallable callable = (PyCallable)target;
       return Ref.create(callable.getCallType(context, call));
+    }
+    return null;
+  }
+
+  @Nullable
+  private static Ref<PyType> getPropertyCallType(@NotNull PyCallExpression call,
+                                                 @NotNull PsiElement target,
+                                                 @NotNull TypeEvalContext context) {
+    if (target instanceof PyCallable && target instanceof PyPossibleClassMember) {
+      final PyClass containingClass = ((PyPossibleClassMember)target).getContainingClass();
+      if (containingClass != null) {
+        final PyCallable callable = (PyCallable)target;
+        final Property property = containingClass.findPropertyByCallable(callable);
+        if (property != null) {
+          final PyType propertyType = property.getType(call.getReceiver(callable), context);
+          if (propertyType instanceof PyCallableType) {
+            return Ref.create(((PyCallableType)propertyType).getCallType(context, call));
+          }
+        }
+      }
     }
     return null;
   }
@@ -897,6 +921,7 @@ public class PyCallExpressionHelper {
           }
           else {
             parametersMappedToVariadicKeywordArguments.add(parameter);
+            mappedVariadicArgumentsToParameters = true;
           }
         }
         else {

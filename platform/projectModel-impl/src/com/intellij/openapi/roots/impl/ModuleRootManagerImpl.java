@@ -50,21 +50,21 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements Disposab
   private final ProjectRootManagerImpl myProjectRootManager;
   private final VirtualFilePointerManager myFilePointerManager;
   protected RootModelImpl myRootModel;
-  private boolean myIsDisposed = false;
-  private boolean myLoaded = false;
+  private boolean myIsDisposed;
+  private boolean myLoaded;
   private final OrderRootsCache myOrderRootsCache;
   private final Map<RootModelImpl, Throwable> myModelCreations = new THashMap<>();
 
   protected volatile long myModificationCount;
 
-  public ModuleRootManagerImpl(Module module,
-                               ProjectRootManagerImpl projectRootManager,
-                               VirtualFilePointerManager filePointerManager) {
+  public ModuleRootManagerImpl(@NotNull Module module,
+                               @NotNull ProjectRootManagerImpl projectRootManager,
+                               @NotNull VirtualFilePointerManager filePointerManager) {
     myModule = module;
     myProjectRootManager = projectRootManager;
     myFilePointerManager = filePointerManager;
 
-    myRootModel = new RootModelImpl(this, myProjectRootManager, myFilePointerManager);
+    myRootModel = new RootModelImpl(this, projectRootManager, filePointerManager);
     myOrderRootsCache = new OrderRootsCache(module);
   }
 
@@ -108,7 +108,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements Disposab
   }
 
   @NotNull
-  public ModifiableRootModel getModifiableModel(final RootConfigurationAccessor accessor) {
+  public ModifiableRootModel getModifiableModel(@NotNull RootConfigurationAccessor accessor) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     final RootModelImpl model = new RootModelImpl(myRootModel, this, true, accessor, myFilePointerManager, myProjectRootManager) {
       @Override
@@ -226,7 +226,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements Disposab
   }
 
   @Override
-  public <T> T getModuleExtension(final Class<T> klass) {
+  public <T> T getModuleExtension(@NotNull final Class<T> klass) {
     return myRootModel.getModuleExtension(klass);
   }
 
@@ -242,12 +242,12 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements Disposab
     return new ModuleOrderEnumerator(myRootModel, myOrderRootsCache);
   }
 
-  public static OrderRootsEnumerator getCachingEnumeratorForType(OrderRootType type, Module module) {
+  public static OrderRootsEnumerator getCachingEnumeratorForType(@NotNull OrderRootType type, @NotNull Module module) {
     return getEnumeratorForType(type, module).usingCache();
   }
 
   @NotNull
-  private static OrderRootsEnumerator getEnumeratorForType(OrderRootType type, Module module) {
+  private static OrderRootsEnumerator getEnumeratorForType(@NotNull OrderRootType type, @NotNull Module module) {
     OrderEnumerator base = OrderEnumerator.orderEntries(module);
     if (type == OrderRootType.CLASSES) {
       return base.exportedOnly().withoutModuleSourceEntries().recursively().classes();

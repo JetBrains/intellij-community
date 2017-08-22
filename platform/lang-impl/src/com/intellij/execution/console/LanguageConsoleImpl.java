@@ -140,7 +140,6 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
     myHistoryViewer = (EditorEx)editorFactory.createViewer(historyDocument, getProject(), EditorKind.CONSOLE);
     myHistoryViewer.getDocument().addDocumentListener(myDocumentAdapter);
 
-    myScrollBar.setOpaque(false);
     myScrollBar.setModel(new MyModel(myScrollBar, myHistoryViewer, myConsoleEditor));
     myScrollBar.putClientProperty(Alignment.class, Alignment.BOTTOM);
 

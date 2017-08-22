@@ -71,7 +71,7 @@ public class TestConverterData {
   }
 
   @TestAnnotation
-  public TestConverterData[] test02(@TestAnnotation TestConverterData[] tests) throws Exception {
+  public TestConverterData[] test02(@TestAnnotation TestConverterData[] tests) {
     return tests;
   }
 

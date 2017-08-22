@@ -70,7 +70,7 @@ public class TokenSetTest {
   }
 
   @Test
-  public void getTypes() throws Exception {
+  public void getTypes() {
     assertArrayEquals(IElementType.EMPTY_ARRAY, TokenSet.EMPTY.getTypes());
     assertArrayEquals(new IElementType[]{T1, T2}, S12.getTypes());
     assertArrayEquals(new IElementType[]{T3, T4}, S34.getTypes());
@@ -92,7 +92,7 @@ public class TokenSetTest {
   }
 
   @Test
-  public void andNot() throws Exception {
+  public void andNot() {
     final TokenSet S123 = TokenSet.orSet(S12, S3);
     check(TokenSet.andNot(S123, S12), T3);
     check(TokenSet.andNot(S123, S5), T1, T2, T3);
@@ -118,7 +118,7 @@ public class TokenSetTest {
 
 
   @Test
-  public void performance() throws Exception {
+  public void performance() {
     final IElementType[] elementTypes = IElementType.enumerate(IElementType.TRUE);
     final TokenSet set = TokenSet.create();
     final int shift = new Random().nextInt(500000);

@@ -28,10 +28,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.ProjectIconsAccessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.uast.UCallExpression;
-import org.jetbrains.uast.UExpression;
-import org.jetbrains.uast.UastContextKt;
-import org.jetbrains.uast.UastUtils;
+import org.jetbrains.uast.*;
 import org.jetbrains.uast.evaluation.UEvaluationContextKt;
 import org.jetbrains.uast.values.*;
 
@@ -77,7 +74,10 @@ public class IconLineMarkerProvider extends LineMarkerProviderDescriptor {
           .collect(Collectors.toList());
         List<PsiElement> psiElements = UastUtils.toPsiElements(constants);
         if (psiElements.size() > 0) {
-          return createIconLineMarker(psiElements.get(0), element);
+          UIdentifier identifier = expression.getMethodIdentifier();
+          if (identifier != null) {
+            return createIconLineMarker(psiElements.get(0), identifier.getPsi());
+          }
         }
       }
     }

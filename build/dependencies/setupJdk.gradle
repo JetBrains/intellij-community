@@ -22,7 +22,6 @@ def checkoutDir = intellijProjectDir()
 def jdkDir = "$checkoutDir/build/jdk"
 
 project.ext.jdk18OutputDir = "${System.getProperty("intellij.jdk18.output.dir", "") ?: "$jdkDir/1.8"}"
-project.ext.targetOs = "${System.getProperty("intellij.build.target.os", "all")}"
 
 task downloadJdk18 {
   def arch = jdk18Arch()

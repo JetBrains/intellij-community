@@ -19,7 +19,7 @@ import com.intellij.openapi.util.SystemInfo;
 import junit.framework.TestCase;
 
 public class SystemInfoTest extends TestCase {
-  public void testMacOsVersions() throws Exception {
+  public void testMacOsVersions() {
     // see http://developer.apple.com/library/mac/#documentation/Carbon/Reference/Gestalt_Manager/Reference/reference.html#//apple_ref/doc/uid/TP30000036-CH1g-F01632
     // System Version Selectors
 
@@ -31,7 +31,7 @@ public class SystemInfoTest extends TestCase {
     assertEquals("1.2", SystemInfo.getMacOSMajorVersion("1.2.3.4"));
   }
 
-  public void testMacOsVersionCode() throws Exception {
+  public void testMacOsVersionCode() {
     // see http://developer.apple.com/library/mac/#documentation/Carbon/Reference/Gestalt_Manager/Reference/reference.html#//apple_ref/doc/uid/TP30000036-CH1g-F01632
     // System Version Selectors
 

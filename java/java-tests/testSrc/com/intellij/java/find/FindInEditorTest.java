@@ -64,7 +64,7 @@ public class FindInEditorTest extends LightCodeInsightTestCase {
     myLivePreviewController.on();
   }
 
-  public void testBasicFind() throws Exception {
+  public void testBasicFind() {
     configureFromText("ab");
     initFind();
     myFindModel.setStringToFind("a");
@@ -73,7 +73,7 @@ public class FindInEditorTest extends LightCodeInsightTestCase {
     assertTrue(!myEditor.getSelectionModel().hasSelection());
   }
 
-  public void testEmacsLikeFallback() throws Exception {
+  public void testEmacsLikeFallback() {
     configureFromText("a\nab");
     initFind();
     myFindModel.setStringToFind("a");
@@ -82,7 +82,7 @@ public class FindInEditorTest extends LightCodeInsightTestCase {
     checkResults();
   }
 
-  public void testReplacementWithEmptyString() throws Exception {
+  public void testReplacementWithEmptyString() {
     configureFromText("a");
     initFind();
 
@@ -95,7 +95,7 @@ public class FindInEditorTest extends LightCodeInsightTestCase {
     checkResults();
   }
   
-  public void testSecondFind() throws Exception {
+  public void testSecondFind() {
     configureFromText("<selection>a<caret></selection> b b a");
     invokeFind();
     new EditorMouseFixture((EditorImpl)myEditor).doubleClickAt(0, 3);
@@ -103,7 +103,7 @@ public class FindInEditorTest extends LightCodeInsightTestCase {
     checkResultByText("a <selection>b<caret></selection> b a");
   }
 
-  public void testSecondRegexReplaceShowsPopup() throws Exception {
+  public void testSecondRegexReplaceShowsPopup() {
     configureFromText("<caret> aba");
     initFind();
     myFindModel.setRegularExpressions(true);

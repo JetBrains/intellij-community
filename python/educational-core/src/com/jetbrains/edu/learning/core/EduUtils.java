@@ -16,7 +16,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiDirectory;
@@ -141,11 +140,11 @@ public class EduUtils {
         return taskFile;
       }
       Document document = FileDocumentManager.getInstance().getDocument(answerFile);
-      if (document != null) {
-        FileDocumentManager.getInstance().saveDocument(document);
+      if (document == null) {
+        return null;
       }
-      final LightVirtualFile studentFile = new LightVirtualFile("student_task", PlainTextFileType.INSTANCE,
-                                                                VfsUtilCore.loadText(answerFile));
+      FileDocumentManager.getInstance().saveDocument(document);
+      final LightVirtualFile studentFile = new LightVirtualFile("student_task", PlainTextFileType.INSTANCE, document.getText());
       Document studentDocument = FileDocumentManager.getInstance().getDocument(studentFile);
       if (studentDocument == null) {
         return null;

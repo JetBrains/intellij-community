@@ -73,7 +73,7 @@ public class BaseRemoteProcessHandler<T extends RemoteProcess> extends AbstractR
 
     addProcessListener(new ProcessAdapter() {
       @Override
-      public void startNotified(final ProcessEvent event) {
+      public void startNotified(@NotNull final ProcessEvent event) {
         try {
           final RemoteOutputReader stdoutReader = new RemoteOutputReader(myProcess.getInputStream(), getCharset(), myProcess, myCommandLine) {
             @Override

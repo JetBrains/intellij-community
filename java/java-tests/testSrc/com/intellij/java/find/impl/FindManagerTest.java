@@ -23,6 +23,8 @@ import com.intellij.find.impl.FindResultImpl;
 import com.intellij.find.replaceInProject.ReplaceInProjectManager;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.ex.PathManagerEx;
@@ -31,10 +33,13 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.DumbServiceImpl;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.ProperTextRange;
@@ -49,14 +54,12 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.psi.search.scope.packageSet.PackageSetFactory;
 import com.intellij.psi.search.scope.packageSet.ParsingException;
-import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl;
@@ -510,7 +513,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     });
   }
 
-  public void testReplaceAll() throws FindManager.MalformedReplacementStringException {
+  public void testReplaceAll() {
     final FindModel findModel = new FindModel();
     String toFind = "xxx";
     @SuppressWarnings("SpellCheckingInspection") String toReplace = "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX";
@@ -596,10 +599,10 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
       ThrowableRunnable test = () -> assertSize(lineCount, findUsages(findModel));
 
       findModel.setCustomScope(GlobalSearchScope.fileScope(psiFile));
-      PlatformTestUtil.startPerformanceTest("find usages in global", 70, test).attempts(2).usesAllCPUCores().assertTiming();
+      PlatformTestUtil.startPerformanceTest("find usages in global", 400, test).attempts(2).usesAllCPUCores().assertTiming();
 
       findModel.setCustomScope(new LocalSearchScope(psiFile));
-      PlatformTestUtil.startPerformanceTest("find usages in local", 70, test).attempts(2).usesAllCPUCores().assertTiming();
+      PlatformTestUtil.startPerformanceTest("find usages in local", 120, test).attempts(2).usesAllCPUCores().assertTiming();
     }
     finally {
       fixture.tearDown();
@@ -915,7 +918,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     assertTrue(condition.value("makefile"));
   }
 
-  public void testRegExpSOEWhenMatch() throws InterruptedException {
+  public void testRegExpSOEWhenMatch() {
     String text = "package com.intellij.demo;\n" +
                   "\n";
     for(int i = 0; i < 10; ++i) text += text;
@@ -927,7 +930,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     assertTrue(!findResult.isStringFound());
   }
 
-  public void testRegExpSOEWhenMatch2() throws InterruptedException {
+  public void testRegExpSOEWhenMatch2() {
     String text = "package com.intellij.demo;\n" +
                   "\n";
     for(int i = 0; i < 10; ++i) text += text;
@@ -965,7 +968,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     assertTrue(usages.get(0).isValid());
   }
 
-  public void testRegExpMatchReplacement() throws InterruptedException, FindManager.MalformedReplacementStringException {
+  public void testRegExpMatchReplacement() throws FindManager.MalformedReplacementStringException {
     String text = "final override val\n" +
                   "      d1PrimitiveType by lazyThreadSafeIdempotentGenerator { D1PrimitiveType( typeManager = this ) }";
     String pattern = "final override val\n" +
@@ -999,7 +1002,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     assertSize(2, findUsages(findModel));
   }
 
-  public void testProperHandlingOfEmptyLinesWhenReplacingWithRegExp() throws Exception {
+  public void testProperHandlingOfEmptyLinesWhenReplacingWithRegExp() {
     doTestRegexpReplace(
       "foo\n\n\n",
       "^",
@@ -1040,5 +1043,42 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     model.setPromptOnReplace(false);
     assertTrue(FindUtil.replace(myProject, myEditor, 0, model));
     assertEquals(expectedResult, myEditor.getDocument().getText());
+  }
+
+  public void testDataContextProcessing() {
+    initProject("findInPath", "src");
+    VirtualFile directory = mySourceDirs[0].findFileByRelativePath("x");
+    VirtualFile file = directory.findChild("dd.properties");
+    assertNotNull(file);
+    SearchScope scope = GlobalSearchScope.filesScope(myProject, ContainerUtil.list(directory));
+    Module module = ModuleManager.getInstance(myProject).getModules()[0];
+    String moduleName = module.getName();
+    String dirName = directory.getPresentableUrl();
+
+    FindModel model = new FindModel();
+    model.setDirectoryName("initialDirectoryName");
+    model.setModuleName("initialModuleName");
+    model.setProjectScope(false);
+    model.setCustomScopeName("initialScopeName");
+
+    checkContext(model, myProject, directory, module, false, null, moduleName, false);
+    checkContext(model, myProject, directory, null, false, dirName, moduleName, false);//prev module state
+    checkContext(model, myProject, null, null, true, dirName, moduleName, false);//prev module and dir state
+    model.setCustomScope(scope);
+    model.setCustomScope(true);
+    checkContext(model, myProject, null, null, false, dirName, moduleName, true);//prev module and dir state
+  }
+
+  private static void checkContext(FindModel model, Project project, VirtualFile directory, Module module,
+                                   boolean shouldBeProjectScope, String expectedDirectoryName, String expectedModuleName, boolean shouldBeCustomScope) {
+    MapDataContext dataContext = new MapDataContext();
+    dataContext.put(CommonDataKeys.PROJECT, project);
+    dataContext.put(CommonDataKeys.VIRTUAL_FILE, directory);
+    dataContext.put(LangDataKeys.MODULE_CONTEXT, module);
+    FindInProjectUtil.setDirectoryName(model, dataContext);
+    assertEquals(shouldBeProjectScope, model.isProjectScope());
+    assertEquals(expectedDirectoryName, model.getDirectoryName());
+    assertEquals(expectedModuleName, model.getModuleName());
+    assertEquals(shouldBeCustomScope, model.isCustomScope());
   }
 }

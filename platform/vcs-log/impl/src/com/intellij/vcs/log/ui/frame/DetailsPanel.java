@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import com.intellij.openapi.ui.OnePixelDivider;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.history.VcsHistoryUtil;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SeparatorComponent;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBLoadingPanel;
@@ -125,8 +124,8 @@ public class DetailsPanel extends JPanel implements EditorColorsListener {
 
     myMainContentPanel.setOpaque(false);
     myScrollPane.setViewportView(myMainContentPanel);
-    myScrollPane.setBorder(IdeBorderFactory.createEmptyBorder());
-    myScrollPane.setViewportBorder(IdeBorderFactory.createEmptyBorder());
+    myScrollPane.setBorder(JBUI.Borders.empty());
+    myScrollPane.setViewportBorder(JBUI.Borders.empty());
 
     myLoadingPanel = new JBLoadingPanel(new BorderLayout(), parent, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS) {
       @Override

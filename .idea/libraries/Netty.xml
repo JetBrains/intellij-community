@@ -4,11 +4,11 @@
       <root url="file://$PROJECT_DIR$/lib/annotations/netty"/>
     </ANNOTATIONS>
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/lib/netty-all-4.1.10.Final.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/netty-all-4.1.13.Final.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/lib/src/netty-all-4.1.10.Final-sources.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/src/netty-all-4.1.13.Final-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

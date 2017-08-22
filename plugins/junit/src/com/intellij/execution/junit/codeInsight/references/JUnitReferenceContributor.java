@@ -23,7 +23,9 @@ import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.position.FilterPattern;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ProcessingContext;
+import com.siyeh.ig.junit.JUnitCommonClassNames;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,13 +35,13 @@ public class JUnitReferenceContributor extends PsiReferenceContributor {
   }
 
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
-    registrar.registerReferenceProvider(getElementPattern("org.junit.jupiter.params.provider.MethodSource", "names"), new PsiReferenceProvider() {
+    registrar.registerReferenceProvider(getElementPattern(JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PROVIDER_METHOD_SOURCE, "value"), new PsiReferenceProvider() {
       @NotNull
       public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
         return new MethodSourceReference[]{new MethodSourceReference((PsiLiteral)element)};
       }
     });
-    registrar.registerReferenceProvider(getElementPattern("org.junit.jupiter.params.provider.CsvFileSource", "resources"), new PsiReferenceProvider() {
+    registrar.registerReferenceProvider(getElementPattern(JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PROVIDER_CSV_FILE_SOURCE, "resources"), new PsiReferenceProvider() {
       @NotNull
       public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
         return FileReferenceSet.createSet(element, false, false, false).getAllReferences();
@@ -60,7 +62,8 @@ public class JUnitReferenceContributor extends PsiReferenceContributor {
     public boolean isAcceptable(Object element, PsiElement context) {
       PsiNameValuePair pair = PsiTreeUtil.getParentOfType(context, PsiNameValuePair.class, false, PsiMember.class, PsiStatement.class);
       if (pair == null) return false;
-      if (!myParameterName.equals(pair.getName())) return false;
+      String name = ObjectUtils.notNull(pair.getName(), PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
+      if (!myParameterName.equals(name)) return false;
       PsiAnnotation annotation = PsiTreeUtil.getParentOfType(pair, PsiAnnotation.class);
       if (annotation == null) return false;
       return myAnnotation.equals(annotation.getQualifiedName());

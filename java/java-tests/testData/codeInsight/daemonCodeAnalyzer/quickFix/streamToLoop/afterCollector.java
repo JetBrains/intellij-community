@@ -113,6 +113,15 @@ public class Main {
       return integers;
   }
 
+  // Unresolved reference
+  void f(Collection<? extends Foo> c) {
+      R treeSet = new TreeSet();
+      for (Foo foo : c) {
+          treeSet.add(foo);
+      }
+      Set<Foo> uniqueDescriptors = treeSet;
+  }
+
   public static void main(String[] args) {
     new Main().testAveragingDouble("a", "bbb", null, "cc", "dd", "eedasfasdfs");
     new Main().testAveragingInt("a", "bbb", null, "cc", "dd", "eedasfasdfs");

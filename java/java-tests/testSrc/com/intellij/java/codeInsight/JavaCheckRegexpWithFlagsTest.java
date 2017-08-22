@@ -45,7 +45,7 @@ public class JavaCheckRegexpWithFlagsTest extends CodeInsightTestCase {
            "}\n";
   }
 
-  private void defaultTest(@NotNull String regExp, int flags, @NotNull String[] matching, @NotNull String[] nonMatching) throws Exception {
+  private void defaultTest(@NotNull String regExp, int flags, @NotNull String[] matching, @NotNull String[] nonMatching) {
     LanguageParserDefinitions.INSTANCE.addExplicitExtension(RegExpLanguage.INSTANCE,
                                                             new RegExpParserDefinition());
 
@@ -90,15 +90,15 @@ public class JavaCheckRegexpWithFlagsTest extends CodeInsightTestCase {
     return regexpFile;
   }
 
-  public void testSimple() throws Exception {
+  public void testSimple() {
     defaultTest("abc|def|xy.", 0, new String[]{"abc", "def", "xyz"}, new String[]{"", "abcd", "Abc", "xy\n"});
   }
 
-  public void testEnsureFlagsParameterIsUsed() throws Exception {
+  public void testEnsureFlagsParameterIsUsed() {
     defaultTest("abc|def|xy.", Pattern.DOTALL, new String[]{"xyz", "xy\n"}, ArrayUtil.EMPTY_STRING_ARRAY);
   }
 
-  public void testEnsureJavaNotRubyModeIsEnabled() throws Exception {
+  public void testEnsureJavaNotRubyModeIsEnabled() {
     defaultTest("(?ms:^abc$.*)|(?m:xy.)", 0, new String[]{"abc", "abc\na", "xyz"}, new String[]{"xy\n"});
   }
 }

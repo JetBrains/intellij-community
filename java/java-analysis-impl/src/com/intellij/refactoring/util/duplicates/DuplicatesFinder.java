@@ -49,18 +49,20 @@ public class DuplicatesFinder {
   private final List<PsiElement> myPatternAsList;
   private boolean myMultipleExitPoints;
   @Nullable private final ReturnValue myReturnValue;
+  private final boolean myWithAdditionalParameters;
 
   public DuplicatesFinder(@NotNull PsiElement[] pattern,
                           InputVariables parameters,
                           @Nullable ReturnValue returnValue,
-                          @NotNull List<? extends PsiVariable> outputParameters
-  ) {
+                          @NotNull List<? extends PsiVariable> outputParameters,
+                          boolean withAdditionalParameters) {
     myReturnValue = returnValue;
     LOG.assertTrue(pattern.length > 0);
     myPattern = pattern;
     myPatternAsList = Arrays.asList(myPattern);
     myParameters = parameters;
     myOutputParameters = outputParameters;
+    myWithAdditionalParameters = withAdditionalParameters;
 
     final PsiElement codeFragment = ControlFlowUtil.findCodeFragment(pattern[0]);
     try {
@@ -89,6 +91,13 @@ public class DuplicatesFinder {
     }
     catch (AnalysisCanceledException e) {
     }
+  }
+
+  public DuplicatesFinder(@NotNull PsiElement[] pattern,
+                          InputVariables parameters,
+                          @Nullable ReturnValue returnValue,
+                          @NotNull List<? extends PsiVariable> outputParameters) {
+    this(pattern, parameters, returnValue, outputParameters, false);
   }
 
   public DuplicatesFinder(final PsiElement[] pattern,
@@ -366,6 +375,9 @@ public class DuplicatesFinder {
       }
       final PsiElement qualifier2 = ((PsiJavaCodeReferenceElement)candidate).getQualifier();
       if (!equivalentResolve(resolveResult1, resolveResult2, qualifier2)) {
+        if (myWithAdditionalParameters) {
+          return match.putAdditionalParameter(pattern, candidate);
+        }
         return false;
       }
       PsiElement qualifier1 = ((PsiJavaCodeReferenceElement)pattern).getQualifier();

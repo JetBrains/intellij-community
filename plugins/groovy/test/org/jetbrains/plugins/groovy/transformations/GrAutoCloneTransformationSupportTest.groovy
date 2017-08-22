@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,7 +51,7 @@ class Pogo {}
       configureByText 'Main.java', '''\
 class Main {
   void foo() {
-    <error descr="Unhandled exception: java.lang.CloneNotSupportedException">new Pogo().clone();</error>;
+    new Pogo().<error descr="Unhandled exception: java.lang.CloneNotSupportedException">clone();</error>;
     try {
        Pogo pogo = new Pogo().clone();
     } catch (java.lang.CloneNotSupportedException e) {}

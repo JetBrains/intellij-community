@@ -441,7 +441,7 @@ public class WrapperTest extends JavaFormatterTestCase {
     doTest("SCR27373", "SCR27373_after");
   }
 
-  public void testDoNotWrapCallChainIfParametersWrapped() throws Exception{
+  public void testDoNotWrapCallChainIfParametersWrapped() {
     getSettings(JavaLanguage.INSTANCE).RIGHT_MARGIN = 140;
     getSettings(JavaLanguage.INSTANCE).CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
     getSettings(JavaLanguage.INSTANCE).METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
@@ -505,7 +505,7 @@ public class WrapperTest extends JavaFormatterTestCase {
     settings.RIGHT_MARGIN = 120;
   }
 
-  public void testThrowsListWrapping() throws Exception{
+  public void testThrowsListWrapping() {
     getSettings(JavaLanguage.INSTANCE).RIGHT_MARGIN = 20;
 
     getSettings(JavaLanguage.INSTANCE).THROWS_KEYWORD_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;

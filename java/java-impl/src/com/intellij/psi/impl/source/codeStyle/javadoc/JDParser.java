@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.javadoc.PsiDocComment;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,10 +44,10 @@ public class JDParser {
 
   private static final char lineSeparator = '\n';
 
-  private final CodeStyleSettings mySettings;
+  private final JavaCodeStyleSettings mySettings;
 
   public JDParser(@NotNull CodeStyleSettings settings) {
-    mySettings = settings;
+    mySettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
   }
 
   public void formatCommentText(@NotNull PsiElement element, @NotNull CommentFormatter formatter) {
@@ -441,7 +442,7 @@ public class JDParser {
       boolean parse(String tag, String line, JDComment c) {
         boolean isMyTag = JDTag.SINCE.tagEqual(tag);
         if (isMyTag) {
-          c.setSince(line);
+          c.addSince(line);
         }
         return isMyTag;
       }
@@ -565,7 +566,7 @@ public class JDParser {
                                                  @NotNull CharSequence firstLinePrefix,
                                                  @NotNull CharSequence continuationPrefix)
   {
-    final int rightMargin = mySettings.getRightMargin(JavaLanguage.INSTANCE);
+    final int rightMargin = mySettings.getContainer().getRightMargin(JavaLanguage.INSTANCE);
     final int maxCommentLength = rightMargin - continuationPrefix.length();
     final int firstLinePrefixLength = firstLinePrefix.length();
     final boolean firstLineShorter = firstLinePrefixLength > continuationPrefix.length();
@@ -576,7 +577,7 @@ public class JDParser {
     boolean canWrap = !mySettings.JD_PRESERVE_LINE_FEEDS || hasLineLongerThan(str, maxCommentLength);
 
     //If wrap comments selected, comments should be wrapped by the right margin
-    if (mySettings.WRAP_COMMENTS && canWrap) {
+    if (mySettings.getContainer().WRAP_COMMENTS && canWrap) {
       list = toArrayWrapping(str, maxCommentLength);
 
       if (firstLineShorter

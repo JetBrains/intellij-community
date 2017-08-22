@@ -165,7 +165,10 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       Insets margins = getMargin();
       setMargin(JBUI.insets(margins.top, 2, margins.bottom, 2));
       if (isSmallVariant()) {
-        setBorder(JBUI.Borders.empty(0, 2));
+        if (!UIUtil.isUnderWin10LookAndFeel()) {
+          setBorder(JBUI.Borders.empty(0, 2));
+        }
+
         if (!UIUtil.isUnderGTKLookAndFeel()) {
           setFont(JBUI.Fonts.label(11));
         }
@@ -390,7 +393,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
         }
       }
 
-      int height = UIUtil.isUnderWin10LookAndFeel() ? JBUI.scale(22) : JBUI.scale(19);
+      int height = UIUtil.isUnderWin10LookAndFeel() ? JBUI.scale(24) : JBUI.scale(19);
       return new Dimension(width, isSmallVariant() ? height : super.getPreferredSize().height);
     }
 
@@ -485,7 +488,8 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
         x /= 2;
       } else {
         if (UIUtil.isUnderWin10LookAndFeel()) {
-          x -= JBUI.scale(5);
+          x -= JBUI.scale(6);
+          x -= JBUI.scale(UIUtil.getParentOfType(ActionToolbar.class, this) != null ? 2 : 0);
         } else {
           x -= insets.right;
 

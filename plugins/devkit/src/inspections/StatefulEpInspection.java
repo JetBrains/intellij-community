@@ -29,7 +29,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.devkit.util.ExtensionPointLocator;
+import org.jetbrains.idea.devkit.util.ExtensionLocator;
 import org.jetbrains.uast.UClass;
 
 import java.util.List;
@@ -42,7 +42,7 @@ public class StatefulEpInspection extends DevKitUastInspectionBase {
     if (fields.length == 0) return super.checkClass(psiClass, manager, isOnTheFly);
 
     final boolean isQuickFix = InheritanceUtil.isInheritor(psiClass, LocalQuickFix.class.getCanonicalName());
-    if (isQuickFix || ExtensionPointLocator.isRegisteredExtension(psiClass)) {
+    if (isQuickFix || ExtensionLocator.isRegisteredExtension(psiClass)) {
       final boolean isProjectComponent = InheritanceUtil.isInheritor(psiClass, ProjectComponent.class.getCanonicalName());
 
       List<ProblemDescriptor> result = ContainerUtil.newArrayList();

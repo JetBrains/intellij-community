@@ -91,7 +91,7 @@ public class IpnbRunConfiguration extends AbstractPythonRunConfiguration<IpnbRun
       throw new RuntimeConfigurationError("Please select valid port");
     }
     final Sdk sdk = getSdk();
-    assert sdk != null;
+    if (sdk == null) return;
     if (RemoteSdkCredentialsHolder.isRemoteSdk(sdk.getHomePath())) {
       throw new RuntimeConfigurationError("Please select local python interpreter");
     }

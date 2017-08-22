@@ -40,6 +40,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.util.containers.UtilKt.getIfSingle;
 import static git4idea.GitUtil.getRootsFromRepositories;
+import static git4idea.branch.GitSmartOperationDialog.Choice.FORCE;
+import static git4idea.branch.GitSmartOperationDialog.Choice.SMART;
 import static git4idea.config.GitVcsSettings.UpdateChangesPolicy.STASH;
 import static git4idea.util.GitUIUtil.code;
 import static java.util.Arrays.stream;
@@ -159,9 +161,9 @@ class GitCheckoutOperation extends GitBranchOperation {
     List<Change> affectedChanges = conflictingRepositoriesAndAffectedChanges.getSecond();
 
     Collection<String> absolutePaths = GitUtil.toAbsolute(repository.getRoot(), localChangesOverwrittenByCheckout.getRelativeFilePaths());
-    int smartCheckoutDecision = myUiHandler.showSmartOperationDialog(myProject, affectedChanges, absolutePaths, "checkout",
-                                                                     "&Force Checkout");
-    if (smartCheckoutDecision == GitSmartOperationDialog.SMART_EXIT_CODE) {
+    GitSmartOperationDialog.Choice decision = myUiHandler.showSmartOperationDialog(myProject, affectedChanges, absolutePaths, "checkout",
+                                                                                   "&Force Checkout");
+    if (decision == SMART) {
       boolean smartCheckedOutSuccessfully = smartCheckout(allConflictingRepositories, myStartPointReference, myNewBranch, getIndicator());
       if (smartCheckedOutSuccessfully) {
         for (GitRepository conflictingRepository : allConflictingRepositories) {
@@ -175,7 +177,7 @@ class GitCheckoutOperation extends GitBranchOperation {
         return false;
       }
     }
-    else if (smartCheckoutDecision == GitSmartOperationDialog.FORCE_EXIT_CODE) {
+    else if (decision == FORCE) {
       boolean forceCheckoutSucceeded = checkoutOrNotify(allConflictingRepositories, myStartPointReference, myNewBranch, true);
       if (forceCheckoutSucceeded) {
         markSuccessful(ArrayUtil.toObjectArray(allConflictingRepositories, GitRepository.class));

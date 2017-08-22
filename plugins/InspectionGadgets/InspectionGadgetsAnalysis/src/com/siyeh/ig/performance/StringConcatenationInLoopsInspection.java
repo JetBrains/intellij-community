@@ -46,6 +46,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
 public class StringConcatenationInLoopsInspection extends BaseInspection {
@@ -335,12 +336,20 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
                     PsiVariable builderVariable,
                     PsiElement scope,
                     CommentTracker ct) {
+      replaceAll(variable, builderVariable, scope, ct, ref -> false);
+    }
+
+    void replaceAll(PsiVariable variable,
+                    PsiVariable builderVariable,
+                    PsiElement scope,
+                    CommentTracker ct,
+                    Predicate<PsiReferenceExpression> skip) {
       Query<PsiReference> query =
         scope == null ? ReferencesSearch.search(variable) : ReferencesSearch.search(variable, new LocalSearchScope(scope));
       Collection<PsiReference> refs = query.findAll();
       for(PsiReference ref : refs) {
         PsiElement target = ref.getElement();
-        if(target instanceof PsiReferenceExpression && target.isValid()) {
+        if(target instanceof PsiReferenceExpression && target.isValid() && !skip.test((PsiReferenceExpression)target)) {
           replace(variable, builderVariable, (PsiReferenceExpression)target, ct);
         }
       }
@@ -461,6 +470,7 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
                                      PsiAssignmentExpression assignment,
                                      CommentTracker ct) {
       PsiExpression rValue = PsiUtil.skipParenthesizedExprDown(assignment.getRExpression());
+      String builderName = Objects.requireNonNull(builderVariable.getName());
       if(assignment.getOperationTokenType().equals(JavaTokenType.EQ)) {
         if (rValue instanceof PsiPolyadicExpression &&
             ((PsiPolyadicExpression)rValue).getOperationTokenType().equals(JavaTokenType.PLUS)) {
@@ -470,13 +480,20 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
             // s = s + ...;
             if (ExpressionUtils.isReferenceTo(operands[0], variable)) {
               StreamEx.iterate(operands[1], Objects::nonNull, PsiElement::getNextSibling).forEach(ct::markUnchanged);
-              String text = rValue.getText().substring(operands[1].getStartOffsetInParent());
-              PsiExpression added = JavaPsiFacade.getElementFactory(variable.getProject()).createExpressionFromText(text, assignment);
-              replaceAll(variable, builderVariable, added, ct);
+              replaceAll(variable, builderVariable, rValue, ct, operands[0]::equals);
               StringBuilder replacement =
-                ChangeToAppendUtil.buildAppendExpression(added, false, new StringBuilder(builderVariable.getName()));
+                ChangeToAppendUtil.buildAppendExpression(rValue, false, new StringBuilder(builderName));
               if (replacement != null) {
-                ct.replace(assignment, replacement.toString());
+                PsiMethodCallExpression append = (PsiMethodCallExpression)ct.replace(assignment, replacement.toString());
+                while(true) {
+                  PsiMethodCallExpression qualifierCall = MethodCallUtils.getQualifierMethodCall(append);
+                  if (qualifierCall == null) break;
+                  append = qualifierCall;
+                }
+                PsiExpression qualifier = append.getMethodExpression().getQualifierExpression();
+                if (qualifier != null) {
+                  append.replace(qualifier);
+                }
               }
               return;
             }
@@ -485,7 +502,7 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
             if (ExpressionUtils.isReferenceTo(lastOp, variable)) {
               ct.delete(concat.getTokenBeforeOperand(lastOp), lastOp);
               replaceAll(variable, builderVariable, rValue, ct);
-              ct.replace(assignment, builderVariable.getName() + ".insert(0," + ct.text(rValue) + ")");
+              ct.replace(assignment, builderName + ".insert(0," + ct.text(rValue) + ")");
               return;
             }
           }
@@ -500,14 +517,14 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
         String replacement = "";
         if (rValue != null) {
           StringBuilder sb =
-            ChangeToAppendUtil.buildAppendExpression(ct.markUnchanged(rValue), false, new StringBuilder(builderVariable.getName()));
+            ChangeToAppendUtil.buildAppendExpression(ct.markUnchanged(rValue), false, new StringBuilder(builderName));
           if (sb != null) {
             replacement = sb.toString();
           }
         }
         ct.replace(assignment, replacement);
       } else if(assignment.getOperationTokenType().equals(JavaTokenType.EQ)) {
-        ct.replace(assignment, builderVariable.getName() + "=" + generateNewStringBuilder(rValue, ct));
+        ct.replace(assignment, builderName + "=" + generateNewStringBuilder(rValue, ct));
       }
     }
   }
@@ -570,7 +587,7 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
           }
           break;
         case UNKNOWN:
-          PsiElement prevStatement = PsiTreeUtil.skipSiblingsBackward(declaration, PsiWhiteSpace.class, PsiComment.class);
+          PsiElement prevStatement = PsiTreeUtil.skipWhitespacesAndCommentsBackward(declaration);
           PsiExpression prevAssignment = ExpressionUtils.getAssignmentTo(prevStatement, variable);
           if (prevAssignment != null) {
             ct.replace(builderInitializer, generateNewStringBuilder(prevAssignment, ct));

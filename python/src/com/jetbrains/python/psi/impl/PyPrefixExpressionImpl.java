@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,11 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.QualifiedName;
-import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
@@ -143,13 +143,11 @@ public class PyPrefixExpressionImpl extends PyElementImpl implements PyPrefixExp
   @Nullable
   private static PyType getGeneratorReturnType(@Nullable PyType type, @NotNull TypeEvalContext context) {
     if (type instanceof PyClassLikeType && type instanceof PyCollectionType) {
-      final String classQName = ((PyClassLikeType)type).getClassQName();
-      final PyCollectionType collectionType = (PyCollectionType)type;
-      if (PyTypingTypeProvider.GENERATOR.equals(classQName) || PyTypingTypeProvider.COROUTINE.equals(classQName)) {
-        return ContainerUtil.getOrElse(collectionType.getElementTypes(context), 2, null);
+      if (type instanceof PyClassType && PyNames.AWAITABLE.equals(((PyClassType)type).getPyClass().getName())) {
+        return ((PyCollectionType)type).getIteratedItemType();
       }
-      else if (type instanceof PyClassType && PyNames.AWAITABLE.equals(((PyClassType)type).getPyClass().getName())) {
-        return collectionType.getIteratedItemType();
+      else {
+        return Ref.deref(PyTypingTypeProvider.coroutineOrGeneratorElementType(type, context));
       }
     }
     else if (type instanceof PyUnionType) {

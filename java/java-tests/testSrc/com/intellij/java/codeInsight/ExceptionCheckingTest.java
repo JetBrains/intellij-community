@@ -28,90 +28,90 @@ import java.util.List;
  * @author mike
  */
 public class ExceptionCheckingTest extends LightCodeInsightTestCase {
-  public void testNoExceptions() throws Exception {
+  public void testNoExceptions() {
     PsiMethodCallExpression methodCall = createCall("void foo() { System.out.println(); }");
     List<PsiClassType> exceptions = ExceptionUtil.getUnhandledExceptions(methodCall, null);
     assertTrue(exceptions.isEmpty());
   }
 
-  public void testCheckedUnhandledException() throws Exception {
+  public void testCheckedUnhandledException() {
     PsiMethodCallExpression methodCall = createCall("void foo() { throwsIOException(); }");
     List<PsiClassType> exceptions = ExceptionUtil.getUnhandledExceptions(methodCall, null);
     assertEquals(1, exceptions.size());
     assertEquals("java.io.IOException", exceptions.get(0).getCanonicalText());
   }
 
-  public void testCheckedDeclaredException() throws Exception {
+  public void testCheckedDeclaredException() {
     PsiMethodCallExpression methodCall = createCall("void foo() throws java.io.IOException { throwsIOException(); }");
     List<PsiClassType> exceptions = ExceptionUtil.getUnhandledExceptions(methodCall, null);
     assertTrue(exceptions.isEmpty());
   }
 
-  public void testCheckedDeclaredAncestorException() throws Exception {
+  public void testCheckedDeclaredAncestorException() {
     PsiMethodCallExpression methodCall = createCall("void foo() throws Exception { throwsIOException(); }");
     List<PsiClassType> exceptions = ExceptionUtil.getUnhandledExceptions(methodCall, null);
     assertTrue(exceptions.isEmpty());
   }
 
-  public void testCheckedDeclaredAnotherException() throws Exception {
+  public void testCheckedDeclaredAnotherException() {
     PsiMethodCallExpression methodCall = createCall("void foo() throws IllegalAccessException { throwsIOException(); }");
     List<PsiClassType> exceptions = ExceptionUtil.getUnhandledExceptions(methodCall, null);
     assertEquals(1, exceptions.size());
     assertEquals("java.io.IOException", exceptions.get(0).getCanonicalText());
   }
 
-  public void testCheckedCatchedException() throws Exception {
+  public void testCheckedCatchedException() {
     PsiMethodCallExpression methodCall = createCall("void foo() { try { throwsIOException(); } catch (java.io.IOException e) {} }");
     List<PsiClassType> exceptions = ExceptionUtil.getUnhandledExceptions(methodCall, null);
     assertTrue(exceptions.isEmpty());
   }
 
-  public void testCheckedLikeCatchedException() throws Exception {
+  public void testCheckedLikeCatchedException() {
     PsiMethodCallExpression methodCall = createCall("void foo() { try { } catch (java.io.IOException e) {throwsIOException();} }");
     List<PsiClassType> exceptions = ExceptionUtil.getUnhandledExceptions(methodCall, null);
     assertEquals(1, exceptions.size());
     assertEquals("java.io.IOException", exceptions.get(0).getCanonicalText());
   }
 
-  public void testCheckedCatchedAncestorException() throws Exception {
+  public void testCheckedCatchedAncestorException() {
     PsiMethodCallExpression methodCall = createCall("void foo() { try { throwsIOException(); } catch (Exception e) {} }");
     List<PsiClassType> exceptions = ExceptionUtil.getUnhandledExceptions(methodCall, null);
     assertTrue(exceptions.isEmpty());
   }
 
-  public void testCheckedCatchedAnotherException() throws Exception {
+  public void testCheckedCatchedAnotherException() {
     PsiMethodCallExpression methodCall = createCall("void foo() { try { throwsIOException(); } catch (IllegalAccessException e) {} }");
     List<PsiClassType> exceptions = ExceptionUtil.getUnhandledExceptions(methodCall, null);
     assertEquals(1, exceptions.size());
     assertEquals("java.io.IOException", exceptions.get(0).getCanonicalText());
   }
 
-  public void testRuntimeException() throws Exception {
+  public void testRuntimeException() {
     PsiMethodCallExpression methodCall = createCall("void foo() { throwsRuntimeException(); }");
     List<PsiClassType> exceptions = ExceptionUtil.getUnhandledExceptions(methodCall, null);
     assertTrue(exceptions.isEmpty());
   }
 
-  public void testError() throws Exception {
+  public void testError() {
     PsiMethodCallExpression methodCall = createCall("void foo() { throwsError(); }");
     List<PsiClassType> exceptions = ExceptionUtil.getUnhandledExceptions(methodCall, null);
     assertTrue(exceptions.isEmpty());
   }
 
-  public void testArray() throws Exception {
+  public void testArray() {
     PsiMethodCallExpression methodCall = createCall("void foo() { int[] arr; arr.clone(); }");
     List<PsiClassType> exceptions = ExceptionUtil.getUnhandledExceptions(methodCall, null);
     assertTrue(exceptions.isEmpty());
   }
 
-  public void testConstructor1() throws Exception {
+  public void testConstructor1() {
     final PsiNewExpression newExpression = createNewExpression("void foo() { new ClassIOException(); }");
     List<PsiClassType> exceptions = ExceptionUtil.getUnhandledExceptions(newExpression, null);
     assertEquals(1, exceptions.size());
     assertEquals("java.io.IOException", exceptions.get(0).getCanonicalText());
   }
 
-  public void testCollectExceptionsInTryCatch() throws Exception {
+  public void testCollectExceptionsInTryCatch() {
     PsiMethodCallExpression methodCall = createCall("void foo() { try { throwsIOException(); } catch (java.io.Exception e) {} }");
     PsiTryStatement statement = PsiTreeUtil.getParentOfType(methodCall, PsiTryStatement.class);
     final Collection<PsiClassType> exceptions = ExceptionUtil.collectUnhandledExceptions(statement.getTryBlock(), statement.getTryBlock());
@@ -120,7 +120,7 @@ public class ExceptionCheckingTest extends LightCodeInsightTestCase {
   }
 
 
-  private static PsiMethodCallExpression createCall(@NonNls final String body) throws Exception {
+  private static PsiMethodCallExpression createCall(@NonNls final String body) {
     final PsiFile file = createFile("test.java", "class Test { " + body +
       "void throwsIOException() throws java.io.IOException {}" +
       "void throwsRuntimeException() throws RuntimeException {}" +
@@ -131,7 +131,7 @@ public class ExceptionCheckingTest extends LightCodeInsightTestCase {
     return methodCall;
   }
 
-  private static PsiNewExpression createNewExpression(@NonNls final String body) throws Exception {
+  private static PsiNewExpression createNewExpression(@NonNls final String body) {
     final PsiFile file = createFile("test.java", "class Test { " + body +
       "class ClassIOException { ClassIOException() throws java.io.IOException {} }" +
       "class ClassError { ClassError() throws Error {} }" +

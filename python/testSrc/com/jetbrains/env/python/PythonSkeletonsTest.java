@@ -29,24 +29,23 @@ import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.PyExecutionFixtureTestTask;
 import com.jetbrains.env.PyTestTask;
 import com.jetbrains.python.PythonFileType;
-import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.resolve.PythonSdkPathCache;
-import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
 import com.jetbrains.python.sdk.skeletons.SkeletonVersionChecker;
-import com.jetbrains.python.sdkTools.SdkCreationType;
 import com.jetbrains.python.toolbox.Maybe;
+import com.jetbrains.python.tools.sdkTools.SdkCreationType;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
 import java.io.File;
 import java.util.Set;
 
+import static com.jetbrains.python.fixtures.PyTestCase.assertType;
 import static org.junit.Assert.*;
 
 /**
@@ -145,10 +144,7 @@ public class PythonSkeletonsTest extends PyEnvTestCase {
         ApplicationManager.getApplication().runReadAction(() -> {
           final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
           final PsiFile file = myFixture.getFile();
-          final TypeEvalContext context = TypeEvalContext.codeAnalysis(file.getProject(), file);
-          final PyType type = context.getType(expr);
-          final String actualType = PythonDocumentationProvider.getTypeName(type, context);
-          assertEquals("int", actualType);
+          assertType("int", expr, TypeEvalContext.codeAnalysis(file.getProject(), file));
         });
       }
     });

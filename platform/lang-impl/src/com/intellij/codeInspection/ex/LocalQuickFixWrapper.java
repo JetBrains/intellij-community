@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,7 +87,7 @@ public class LocalQuickFixWrapper extends QuickFixAction {
       final Runnable refreshViews = () -> {
         DaemonCodeAnalyzer.getInstance(project).restart();
         for (CommonProblemDescriptor descriptor : descriptors) {
-          ignore(ignoredElements, descriptor, getWorkingQuickFix(descriptor.getFixes()), context);
+          ignore(ignoredElements, descriptor, getWorkingQuickFix(descriptor.getFixes()) != null, context);
         }
 
         final RefManager refManager = context.getRefManager();
@@ -113,7 +113,7 @@ public class LocalQuickFixWrapper extends QuickFixAction {
           //CCE here means QuickFix was incorrectly inherited, is there a way to signal (plugin) it is wrong?
           fix.applyFix(project, descriptor);
           restart = true;
-          ignore(ignoredElements, descriptor, fix, context);
+          ignore(ignoredElements, descriptor, true, context);
         }
       }
     }
@@ -137,11 +137,11 @@ public class LocalQuickFixWrapper extends QuickFixAction {
 
   private void ignore(@NotNull Collection<PsiElement> ignoredElements,
                       @NotNull CommonProblemDescriptor descriptor,
-                      @Nullable QuickFix fix,
+                      boolean hasFix,
                       @NotNull GlobalInspectionContextImpl context) {
-    if (fix != null) {
+    if (hasFix) {
       InspectionToolPresentation presentation = context.getPresentation(myToolWrapper);
-      presentation.ignoreProblem(descriptor, fix);
+      presentation.resolveProblem(descriptor);
     }
     if (descriptor instanceof ProblemDescriptor) {
       PsiElement element = ((ProblemDescriptor)descriptor).getPsiElement();

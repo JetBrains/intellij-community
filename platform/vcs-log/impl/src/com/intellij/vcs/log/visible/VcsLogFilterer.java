@@ -61,10 +61,10 @@ public class VcsLogFilterer {
   }
 
   @NotNull
-  Pair<VisiblePack, CommitCountStage> filter(@NotNull DataPack dataPack,
-                                             @NotNull PermanentGraph.SortType sortType,
-                                             @NotNull VcsLogFilterCollection filters,
-                                             @NotNull CommitCountStage commitCount) {
+  protected Pair<VisiblePack, CommitCountStage> filter(@NotNull DataPack dataPack,
+                                                       @NotNull PermanentGraph.SortType sortType,
+                                                       @NotNull VcsLogFilterCollection filters,
+                                                       @NotNull CommitCountStage commitCount) {
     long start = System.currentTimeMillis();
 
     VcsLogHashFilter hashFilter = filters.getHashFilter();
@@ -77,21 +77,11 @@ public class VcsLogFilterer {
     Set<Integer> matchingHeads = getMatchingHeads(dataPack.getRefsModel(), visibleRoots, filters);
     FilterByDetailsResult filterResult = filterByDetails(dataPack, filters, commitCount, visibleRoots, matchingHeads);
 
-    VisiblePack visiblePack =
-      createVisiblePack(dataPack, sortType, filters, matchingHeads, filterResult);
+    VisibleGraph<Integer> visibleGraph = createVisibleGraph(dataPack, sortType, matchingHeads, filterResult.matchingCommits);
+    VisiblePack visiblePack = new VisiblePack(dataPack, visibleGraph, filterResult.canRequestMore, filters);
 
     LOG.debug(StopWatch.formatTime(System.currentTimeMillis() - start) + " for filtering by " + filters);
     return Pair.create(visiblePack, filterResult.commitCount);
-  }
-
-  @NotNull
-  protected VisiblePack createVisiblePack(@NotNull DataPack dataPack,
-                                          @NotNull PermanentGraph.SortType sortType,
-                                          @NotNull VcsLogFilterCollection filters,
-                                          @Nullable Set<Integer> matchingHeads,
-                                          @NotNull FilterByDetailsResult filterResult) {
-    VisibleGraph<Integer> visibleGraph = createVisibleGraph(dataPack, sortType, matchingHeads, filterResult.matchingCommits);
-    return new VisiblePack(dataPack, visibleGraph, filterResult.canRequestMore, filters);
   }
 
   @NotNull
@@ -110,11 +100,11 @@ public class VcsLogFilterer {
   }
 
   @NotNull
-  protected FilterByDetailsResult filterByDetails(@NotNull DataPack dataPack,
-                                                  @NotNull VcsLogFilterCollection filters,
-                                                  @NotNull CommitCountStage commitCount,
-                                                  @NotNull Collection<VirtualFile> visibleRoots,
-                                                  @Nullable Set<Integer> matchingHeads) {
+  private FilterByDetailsResult filterByDetails(@NotNull DataPack dataPack,
+                                                @NotNull VcsLogFilterCollection filters,
+                                                @NotNull CommitCountStage commitCount,
+                                                @NotNull Collection<VirtualFile> visibleRoots,
+                                                @Nullable Set<Integer> matchingHeads) {
     List<VcsLogDetailsFilter> detailsFilters = filters.getDetailsFilters();
     if (detailsFilters.isEmpty()) return new FilterByDetailsResult(null, false, commitCount);
 
@@ -129,7 +119,8 @@ public class VcsLogFilterer {
       }
     }
 
-    FilterByDetailsResult filteredWithVcs = filterWithVcs(dataPack.getPermanentGraph(), filters, detailsFilters, matchingHeads, commitCount);
+    FilterByDetailsResult filteredWithVcs =
+      filterWithVcs(dataPack.getPermanentGraph(), filters, detailsFilters, matchingHeads, commitCount);
 
     Set<Integer> filteredCommits;
     if (filteredWidthIndex == null) {
@@ -190,9 +181,9 @@ public class VcsLogFilterer {
   }
 
   @Nullable
-  private Set<Integer> getMatchingHeads(@NotNull VcsLogRefs refs,
-                                        @NotNull Collection<VirtualFile> roots,
-                                        @NotNull VcsLogFilterCollection filters) {
+  protected Set<Integer> getMatchingHeads(@NotNull VcsLogRefs refs,
+                                          @NotNull Collection<VirtualFile> roots,
+                                          @NotNull VcsLogFilterCollection filters) {
     VcsLogBranchFilter branchFilter = filters.getBranchFilter();
     VcsLogRootFilter rootFilter = filters.getRootFilter();
     VcsLogStructureFilter structureFilter = filters.getStructureFilter();

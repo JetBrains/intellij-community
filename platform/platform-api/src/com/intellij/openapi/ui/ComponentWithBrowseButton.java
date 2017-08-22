@@ -122,7 +122,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
   }
 
   /**
-   * Adds specified <code>listener</code> to the browse button.
+   * Adds specified {@code listener} to the browse button.
    */
   public void addActionListener(ActionListener listener){
     myBrowseButton.addActionListener(listener);

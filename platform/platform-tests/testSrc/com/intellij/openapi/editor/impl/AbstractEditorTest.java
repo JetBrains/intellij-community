@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -72,11 +71,11 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
     }
   }
 
-  protected void initText(@NotNull @NonNls String fileText) throws IOException {
+  protected void initText(@NotNull @NonNls String fileText) {
     init(fileText, TestFileType.TEXT);
   }
   
-  protected void init(@NotNull @NonNls String fileText, @NotNull TestFileType type) throws IOException {
+  protected void init(@NotNull @NonNls String fileText, @NotNull TestFileType type) {
     configureFromFileText(getFileName(type), fileText);
   }
 
@@ -176,7 +175,11 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
   }
 
   public static Inlay addInlay(int offset) {
-    return EditorTestUtil.addInlay(myEditor, offset);
+    return addInlay(offset, false);
+  }
+
+  public static Inlay addInlay(int offset, boolean relatesToPrecedingText) {
+    return EditorTestUtil.addInlay(myEditor, offset, relatesToPrecedingText);
   }
 
   protected static void runWriteCommand(ThrowableRunnable r) {

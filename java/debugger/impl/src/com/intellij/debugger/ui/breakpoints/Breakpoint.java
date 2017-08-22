@@ -33,8 +33,8 @@ import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.debugger.requests.Requestor;
 import com.intellij.debugger.settings.DebuggerSettings;
-import com.intellij.debugger.ui.OverheadTimings;
 import com.intellij.debugger.ui.impl.watch.CompilingEvaluatorImpl;
+import com.intellij.debugger.ui.overhead.OverheadProducer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
@@ -73,7 +73,7 @@ import java.util.Arrays;
 import java.util.Objects;
 import java.util.function.Function;
 
-public abstract class Breakpoint<P extends JavaBreakpointProperties> implements FilteredRequestor, ClassPrepareRequestor {
+public abstract class Breakpoint<P extends JavaBreakpointProperties> implements FilteredRequestor, ClassPrepareRequestor, OverheadProducer {
   public static final Key<Breakpoint> DATA_KEY = Key.create("JavaBreakpoint");
   private static final Key<Long> HIT_COUNTER = Key.create("HIT_COUNTER");
 
@@ -223,47 +223,40 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
 
   @Override
   public boolean processLocatableEvent(SuspendContextCommandImpl action, LocatableEvent event) throws EventProcessingException {
-    long start = System.currentTimeMillis();
-
     SuspendContextImpl context = action.getSuspendContext();
     if (!isValid()) {
       context.getDebugProcess().getRequestsManager().deleteRequest(this);
       return false;
     }
 
+    String title = DebuggerBundle.message("title.error.evaluating.breakpoint.condition");
+
     try {
-      String title = DebuggerBundle.message("title.error.evaluating.breakpoint.condition");
-
-      try {
-        StackFrameProxyImpl frameProxy = context.getThread().frame(0);
-        if (frameProxy == null) {
-          // might be if the thread has been collected
-          return false;
-        }
-
-        EvaluationContextImpl evaluationContext = new EvaluationContextImpl(context, frameProxy, () -> getThisObject(context, event));
-
-        if (!evaluateCondition(evaluationContext, event)) {
-          return false;
-        }
-
-        title = DebuggerBundle.message("title.error.evaluating.breakpoint.action");
-        runAction(evaluationContext, event);
-      }
-      catch (final EvaluateException ex) {
-        if (ApplicationManager.getApplication().isUnitTestMode()) {
-          System.out.println(ex.getMessage());
-          return false;
-        }
-
-        throw new EventProcessingException(title, ex.getMessage(), ex);
+      StackFrameProxyImpl frameProxy = context.getThread().frame(0);
+      if (frameProxy == null) {
+        // might be if the thread has been collected
+        return false;
       }
 
-      return true;
+      EvaluationContextImpl evaluationContext = new EvaluationContextImpl(context, frameProxy, () -> getThisObject(context, event));
+
+      if (!evaluateCondition(evaluationContext, event)) {
+        return false;
+      }
+
+      title = DebuggerBundle.message("title.error.evaluating.breakpoint.action");
+      runAction(evaluationContext, event);
     }
-    finally {
-      OverheadTimings.add(context.getDebugProcess(), this, System.currentTimeMillis() - start);
+    catch (final EvaluateException ex) {
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        System.out.println(ex.getMessage());
+        return false;
+      }
+
+      throw new EventProcessingException(title, ex.getMessage(), ex);
     }
+
+    return true;
   }
 
   private void runAction(EvaluationContextImpl context, LocatableEvent event) {

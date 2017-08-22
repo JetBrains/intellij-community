@@ -18,6 +18,7 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 import com.intellij.codeInsight.ContainerProvider;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.JavaModuleSystemEx;
+import com.intellij.codeInsight.JavaModuleSystemEx.ErrorWithFixes;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
@@ -77,8 +78,6 @@ import org.jetbrains.annotations.PropertyKey;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import static com.intellij.openapi.util.Pair.pair;
 
 /**
  * @author cdr
@@ -1386,7 +1385,8 @@ public class HighlightUtil extends HighlightUtilBase {
       if (ExceptionUtil.isGeneralExceptionType(catchType)) continue;
 
       // collect exceptions which are caught by this type
-      Collection<PsiClassType> caught = ContainerUtil.findAll(thrownTypes, catchType::isAssignableFrom);
+      final Collection<PsiClassType> caught =
+        ContainerUtil.findAll(thrownTypes, type -> catchType.isAssignableFrom(type) || type.isAssignableFrom(catchType));
       if (caught.isEmpty()) continue;
       final Collection<PsiClassType> caughtCopy = ContainerUtil.newHashSet(caught);
 
@@ -1716,71 +1716,70 @@ public class HighlightUtil extends HighlightUtilBase {
   }
 
   @NotNull
-  static String buildProblemWithAccessDescription(@NotNull PsiElement reference, @NotNull JavaResolveResult result) {
-    return buildProblemWithAccessDescription(reference, result, ObjectUtils.notNull(result.getElement())).first;
+  static String buildProblemWithAccessDescription(@NotNull PsiElement ref, @NotNull PsiElement resolved, @NotNull JavaResolveResult result) {
+    return accessProblemTextAndFixes(ref, resolved, result).first;
   }
 
-  private static Pair<String, List<IntentionAction>> buildProblemWithAccessDescription(PsiElement reference,
-                                                                                       JavaResolveResult result,
-                                                                                       PsiElement resolved) {
+  @NotNull
+  private static Pair<String, List<IntentionAction>> accessProblemTextAndFixes(@NotNull PsiElement reference,
+                                                                               @NotNull PsiElement resolved,
+                                                                               @NotNull JavaResolveResult result) {
     assert resolved instanceof PsiModifierListOwner : resolved;
     PsiModifierListOwner refElement = (PsiModifierListOwner)resolved;
     String symbolName = HighlightMessageUtil.getSymbolName(refElement, result.getSubstitutor());
 
     if (refElement.hasModifierProperty(PsiModifier.PRIVATE)) {
       String containerName = getContainerName(refElement, result.getSubstitutor());
-      return pair(JavaErrorMessages.message("private.symbol", symbolName, containerName), null);
+      return Pair.create(JavaErrorMessages.message("private.symbol", symbolName, containerName), null);
     }
-    else if (refElement.hasModifierProperty(PsiModifier.PROTECTED)) {
+    if (refElement.hasModifierProperty(PsiModifier.PROTECTED)) {
       String containerName = getContainerName(refElement, result.getSubstitutor());
-      return pair(JavaErrorMessages.message("protected.symbol", symbolName, containerName), null);
+      return Pair.create(JavaErrorMessages.message("protected.symbol", symbolName, containerName), null);
+    }
+    PsiClass packageLocalClass = getPackageLocalClassInTheMiddle(reference);
+    if (packageLocalClass != null) {
+      refElement = packageLocalClass;
+      symbolName = HighlightMessageUtil.getSymbolName(refElement, result.getSubstitutor());
+    }
+    if (refElement.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) || packageLocalClass != null) {
+      String containerName = getContainerName(refElement, result.getSubstitutor());
+      return Pair.create(JavaErrorMessages.message("package.local.symbol", symbolName, containerName), null);
     }
     else {
-      PsiClass packageLocalClass = getPackageLocalClassInTheMiddle(reference);
-      if (packageLocalClass != null) {
-        refElement = packageLocalClass;
-        symbolName = HighlightMessageUtil.getSymbolName(refElement, result.getSubstitutor());
-      }
-      if (refElement.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) || packageLocalClass != null) {
-        String containerName = getContainerName(refElement, result.getSubstitutor());
-        return pair(JavaErrorMessages.message("package.local.symbol", symbolName, containerName), null);
-      }
-      else {
-        String containerName = getContainerName(refElement, result.getSubstitutor());
-        Pair<String, List<IntentionAction>> problem = checkModuleAccess(resolved, reference, symbolName, containerName);
-        if (problem != null) return problem;
-        return pair(JavaErrorMessages.message("visibility.access.problem", symbolName, containerName), null);
-      }
+      String containerName = getContainerName(refElement, result.getSubstitutor());
+      ErrorWithFixes problem = checkModuleAccess(resolved, reference, symbolName, containerName);
+      if (problem != null) return Pair.create(problem.message, problem.fixes);
+      return Pair.create(JavaErrorMessages.message("visibility.access.problem", symbolName, containerName), null);
     }
   }
 
-  private static Pair<String, List<IntentionAction>> checkModuleAccess(PsiElement target, PsiElement place, String symbolName, String containerName) {
+  private static ErrorWithFixes checkModuleAccess(PsiElement target, PsiElement place, String symbolName, String containerName) {
+    ErrorWithFixes error = null;
     for (JavaModuleSystem moduleSystem : JavaModuleSystem.EP_NAME.getExtensions()) {
-      Pair<String, List<IntentionAction>> problem = null;
       if (moduleSystem instanceof JavaModuleSystemEx) {
-        problem = checkAccess((JavaModuleSystemEx)moduleSystem, target, place);
+        error = checkAccess((JavaModuleSystemEx)moduleSystem, target, place);
       }
       else if (!isAccessible(moduleSystem, target, place)) {
         String message = JavaErrorMessages.message("visibility.module.access.problem", symbolName, containerName, moduleSystem.getName());
-        problem = pair(message, Collections.emptyList());
+        error = new ErrorWithFixes(message);
       }
-      if (problem != null) {
-        return problem;
+      if (error != null) {
+        return error;
       }
     }
 
     return null;
   }
 
-  private static Pair<String, List<IntentionAction>> checkAccess(JavaModuleSystemEx system, PsiElement target, PsiElement place) {
-    if (target instanceof PsiPackage) return system.checkAccess(((PsiPackage)target), place);
-    if (target instanceof PsiClass) return system.checkAccess(((PsiClass)target), place);
+  private static ErrorWithFixes checkAccess(JavaModuleSystemEx system, PsiElement target, PsiElement place) {
+    if (target instanceof PsiClass) return system.checkAccess((PsiClass)target, place);
+    if (target instanceof PsiPackage) return system.checkAccess((PsiPackage)target, place);
     return null;
   }
 
   private static boolean isAccessible(JavaModuleSystem system, PsiElement target, PsiElement place) {
-    if (target instanceof PsiPackage) return system.isAccessible(((PsiPackage)target), place);
-    if (target instanceof PsiClass) return system.isAccessible(((PsiClass)target), place);
+    if (target instanceof PsiClass) return system.isAccessible((PsiClass)target, place);
+    if (target instanceof PsiPackage) return system.isAccessible((PsiPackage)target, place);
     return true;
   }
 
@@ -2015,7 +2014,7 @@ public class HighlightUtil extends HighlightUtilBase {
     while (lastChild instanceof PsiComment || lastChild instanceof PsiWhiteSpace) {
       lastChild = lastChild.getPrevSibling();
     }
-    if (!(PsiUtil.isJavaToken(lastChild, JavaTokenType.COLON))) {
+    if (!PsiUtil.isJavaToken(lastChild, JavaTokenType.COLON)) {
       int start = statement.getTextRange().getEndOffset();
       int end = statement.getTextRange().getEndOffset() + 1;
       String description = JavaErrorMessages.message("switch.colon.expected.after.case.label");
@@ -2533,7 +2532,7 @@ public class HighlightUtil extends HighlightUtilBase {
   static HighlightInfo checkStatementPrependedWithCaseInsideSwitch(@NotNull PsiSwitchStatement statement) {
     PsiCodeBlock body = statement.getBody();
     if (body != null) {
-      PsiElement first = PsiTreeUtil.skipSiblingsForward(body.getLBrace(), PsiWhiteSpace.class, PsiComment.class);
+      PsiElement first = PsiTreeUtil.skipWhitespacesAndCommentsForward(body.getLBrace());
       if (first != null && !(first instanceof PsiSwitchLabelStatement) && !PsiUtil.isJavaToken(first, JavaTokenType.RBRACE)) {
         String description = JavaErrorMessages.message("statement.must.be.prepended.with.case.label");
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(first).descriptionAndTooltip(description).create();
@@ -2793,7 +2792,7 @@ public class HighlightUtil extends HighlightUtilBase {
       resolved instanceof PsiPackage && ref.getParent() instanceof PsiJavaCodeReferenceElement;
     if (!skipValidityChecks && !result.isValidResult()) {
       if (!result.isAccessible()) {
-        Pair<String, List<IntentionAction>> problem = buildProblemWithAccessDescription(ref, result, resolved);
+        Pair<String, List<IntentionAction>> problem = accessProblemTextAndFixes(ref, resolved, result);
         boolean moduleAccessProblem = problem.second != null;
         PsiElement range = moduleAccessProblem ? findPackagePrefix(ref) : refName;
         HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(range).descriptionAndTooltip(problem.first).create();

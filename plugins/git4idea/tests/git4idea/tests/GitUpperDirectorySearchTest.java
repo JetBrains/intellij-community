@@ -46,7 +46,7 @@ public class GitUpperDirectorySearchTest {
   }
 
   @After
-  public void tearDown() throws Exception {
+  public void tearDown() {
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       try {
         myProjectFixture.tearDown();

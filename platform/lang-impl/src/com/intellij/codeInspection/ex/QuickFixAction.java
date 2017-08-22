@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,8 +48,8 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.ClickListener;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.SequentialModalProgressTask;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -160,10 +160,10 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
     refManager.inspectionReadActionFinished();
 
     try {
-      final Set<PsiElement> ignoredElements = new HashSet<>();
-      performFixesInBatch(project, descriptors, context, ignoredElements);
+      final Set<PsiElement> resolvedElements = new HashSet<>();
+      performFixesInBatch(project, descriptors, context, resolvedElements);
 
-      refreshViews(project, ignoredElements, myToolWrapper);
+      refreshViews(project, resolvedElements, myToolWrapper);
     }
     finally { //to make offline view lazy
       if (initial) refManager.inspectionReadActionStarted();
@@ -270,20 +270,20 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
     return selection.toArray(new RefEntity[selection.size()]);
   }
 
-  private static void refreshViews(@NotNull Project project, @NotNull Set<PsiElement> selectedElements, @NotNull InspectionToolWrapper toolWrapper) {
+  private static void refreshViews(@NotNull Project project, @NotNull Set<PsiElement> resolvedElements, @NotNull InspectionToolWrapper toolWrapper) {
     InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManager.getInstance(project);
     final Set<GlobalInspectionContextImpl> runningContexts = managerEx.getRunningContexts();
     for (GlobalInspectionContextImpl context : runningContexts) {
-      for (PsiElement element : selectedElements) {
-        context.ignoreElement(toolWrapper.getTool(), element);
+      for (PsiElement element : resolvedElements) {
+        context.resolveElement(toolWrapper.getTool(), element);
       }
       context.refreshViews();
     }
   }
 
-  protected static void refreshViews(@NotNull Project project, @NotNull RefEntity[] refElements, @NotNull InspectionToolWrapper toolWrapper) {
+  protected static void refreshViews(@NotNull Project project, @NotNull RefEntity[] resolvedElements, @NotNull InspectionToolWrapper toolWrapper) {
     final Set<PsiElement> ignoredElements = new HashSet<>();
-    for (RefEntity element : refElements) {
+    for (RefEntity element : resolvedElements) {
       final PsiElement psiElement = element instanceof RefElement ? ((RefElement)element).getElement() : null;
       if (psiElement != null && psiElement.isValid()) {
         ignoredElements.add(psiElement);
@@ -328,7 +328,7 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
     }.installOn(button);
     JPanel panel = new JPanel();
     panel.setLayout(new BoxLayout(panel, BoxLayout.LINE_AXIS));
-    panel.setBorder(IdeBorderFactory.createEmptyBorder(7, 0, 8, 0));
+    panel.setBorder(JBUI.Borders.empty(7, 0, 8, 0));
     panel.add(button);
     return panel;
   }

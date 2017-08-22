@@ -30,7 +30,10 @@ import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.TempFiles;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.PrintStream;
 import java.util.Collection;
 
 public class TestSources {
@@ -76,7 +79,7 @@ public class TestSources {
     return JavaPsiFacade.getInstance(myProject).findClass(className, GlobalSearchScope.allScope(myProject));
   }
 
-  public void initModule() throws IOException {
+  public void initModule() {
     if (myModule != null) disposeModule(myModule);
     mySrc = myTempFiles.createTempDir();
     myModule = BaseConfigurationTestCase.createTempModule(myTempFiles, myProject);

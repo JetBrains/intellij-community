@@ -89,7 +89,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     return new InspectionProfileImpl(PROFILE, InspectionToolRegistrar.getInstance(), base);
   }
 
-  public void testSameNameSharedProfile() throws Exception {
+  public void testSameNameSharedProfile() {
     BaseInspectionProfileManager profileManager = getApplicationProfileManager();
     InspectionProfileImpl localProfile = createProfile();
     updateProfile(profileManager, localProfile);
@@ -486,7 +486,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     assertEquals(initialText, serialize(profile));
   }
 
-  public void testLockProfile() throws Exception {
+  public void testLockProfile() {
     final List<InspectionToolWrapper> list = new ArrayList<>();
     list.add(createTool("foo", true));
 
@@ -544,7 +544,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     return new InspectionProfileImpl("Foo", toolSupplier, base);
   }
 
-  public void testGlobalInspectionContext() throws Exception {
+  public void testGlobalInspectionContext() {
     InspectionProfileImpl profile = new InspectionProfileImpl("Foo");
     InspectionsKt.disableAllTools(profile);
     profile.enableTool(new UnusedDeclarationInspectionBase(true).getShortName(), getProject());
@@ -554,7 +554,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     context.initializeTools(new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
   }
 
-  public void testInspectionsInitialization() throws Exception {
+  public void testInspectionsInitialization() {
     InspectionProfileImpl foo = new InspectionProfileImpl("foo");
     assertEquals(0, countInitializedTools(foo));
     foo.initInspectionTools(getProject());
@@ -578,7 +578,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     assertEquals(0, countInitializedTools(model));
   }
 
-  public void testDoNotInstantiateOnSave() throws Exception {
+  public void testDoNotInstantiateOnSave() {
     InspectionProfileImpl profile = new InspectionProfileImpl("profile", InspectionToolRegistrar.getInstance(), InspectionProfileKt.getBASE_PROFILE());
     assertEquals(0, countInitializedTools(profile));
     InspectionToolWrapper[] toolWrappers = profile.getInspectionTools(null);

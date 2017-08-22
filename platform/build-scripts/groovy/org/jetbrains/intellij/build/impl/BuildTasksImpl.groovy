@@ -87,61 +87,78 @@ class BuildTasksImpl extends BuildTasks {
       buildContext.notifyArtifactBuilt(targetFilePath)
     }
   }
+  
+  /**
+   * Build a list with modules that the IDE will provide for plugins.
+   */
+  void buildProvidedModulesList(String targetFilePath, List<String> modules, List<String> pathsToLicenses) {
+    buildContext.executeStep("Build provided modules list", BuildOptions.PROVIDED_MODULES_LIST_STEP, {
+      buildContext.messages.progress("Building provided modules list for modules $modules")
+      FileUtil.delete(new File(targetFilePath))
+      // Start the product in headless mode using com.intellij.ide.plugins.BundledPluginsLister.
+      runApplicationStarter("$buildContext.paths.temp/builtinModules", modules, pathsToLicenses, ['listBundledPlugins', targetFilePath])
+      if (!new File(targetFilePath).exists()) {
+        buildContext.messages.error("Failed to build provided modules list: $targetFilePath doesn't exist")
+      }
+      buildContext.notifyArtifactBuilt(targetFilePath)
+    })
+  }
 
   /**
    * Build index which is used to search options in the Settings dialog.
    */
   void buildSearchableOptionsIndex(File targetDirectory, List<String> modulesToIndex, List<String> pathsToLicenses) {
     buildContext.executeStep("Build searchable options index", BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP, {
-      def javaRuntimeClasses = "${buildContext.projectBuilder.moduleOutput(buildContext.findModule("java-runtime"))}"
-      if (!new File(javaRuntimeClasses).exists()) {
-        buildContext.messages.error("Cannot build searchable options, 'java-runtime' module isn't compiled ($javaRuntimeClasses doesn't exist)")
-      }
-
       buildContext.messages.progress("Building searchable options for modules $modulesToIndex")
-
       String targetFile = "${targetDirectory.absolutePath}/search/searchableOptions.xml"
       FileUtil.delete(new File(targetFile))
-
-      def tempDir = "$buildContext.paths.temp/searchableOptions"
-      String systemPath = "$tempDir/system"
-      String configPath = "$tempDir/config"
-      buildContext.ant.mkdir(dir: tempDir)
-      pathsToLicenses.each {
-        //todo[nik] previously licenses were copied to systemPath
-        buildContext.ant.copy(file: it, todir: configPath)
-      }
-
-      def ideClasspath = new LinkedHashSet<String>()
-      modulesToIndex.collectMany(ideClasspath) { buildContext.projectBuilder.moduleRuntimeClasspath(buildContext.findModule(it), false) }
-
-      String classpathFile = "$tempDir/classpath.txt"
-      new File(classpathFile).text = ideClasspath.join("\n")
-
-      //Start the product in headless mode using com.intellij.ide.ui.search.TraverseUIStarter. It'll process all UI elements in Settings dialog
-      // and build index for them.
-      buildContext.ant.java(classname: "com.intellij.rt.execution.CommandLineWrapper", fork: true, failonerror: true) {
-        jvmarg(line: "-ea -Xmx500m")
-        jvmarg(value: "-Xbootclasspath/a:${buildContext.projectBuilder.moduleOutput(buildContext.findModule("boot"))}")
-        sysproperty(key: "idea.home.path", value: buildContext.paths.projectHome)
-        sysproperty(key: "idea.system.path", value: systemPath)
-        sysproperty(key: "idea.config.path", value: configPath)
-        if (buildContext.productProperties.platformPrefix != null) {
-          sysproperty(key: "idea.platform.prefix", value: buildContext.productProperties.platformPrefix)
-        }
-        arg(value: "$classpathFile")
-        arg(line: "com.intellij.idea.Main traverseUI")
-        arg(value: targetFile)
-
-        classpath() {
-          pathelement(location: "$javaRuntimeClasses")
-        }
-      }
-
+      // Start the product in headless mode using com.intellij.ide.ui.search.TraverseUIStarter.
+      // It'll process all UI elements in Settings dialog and build index for them.
+      runApplicationStarter("$buildContext.paths.temp/searchableOptions", modulesToIndex, pathsToLicenses, ['traverseUI', targetFile])
       if (!new File(targetFile).exists()) {
         buildContext.messages.error("Failed to build searchable options index: $targetFile doesn't exist")
       }
     })
+  }
+
+  private void runApplicationStarter(String tempDir, List<String> modules, List<String> pathsToLicenses, List<String> arguments) {
+    def javaRuntimeClasses = "${buildContext.getModuleOutputPath(buildContext.findModule("java-runtime"))}"
+    if (!new File(javaRuntimeClasses).exists()) {
+      buildContext.messages.error("Cannot run application starter ${arguments}, 'java-runtime' module isn't compiled ($javaRuntimeClasses doesn't exist)")
+    }
+
+    buildContext.ant.mkdir(dir: tempDir)
+    String systemPath = "$tempDir/system"
+    String configPath = "$tempDir/config"
+    pathsToLicenses.each {
+      //todo[nik] previously licenses were copied to systemPath
+      buildContext.ant.copy(file: it, todir: "$tempDir/config")
+    }
+  
+    def ideClasspath = new LinkedHashSet<String>()
+    modules.collectMany(ideClasspath) { buildContext.getModuleRuntimeClasspath(buildContext.findModule(it), false) }
+
+    String classpathFile = "$tempDir/classpath.txt"
+    new File(classpathFile).text = ideClasspath.join("\n")
+
+    buildContext.ant.java(classname: "com.intellij.rt.execution.CommandLineWrapper", fork: true, failonerror: true) {
+      jvmarg(line: "-ea -Xmx500m")
+      jvmarg(value: "-Xbootclasspath/a:${buildContext.getModuleOutputPath(buildContext.findModule("boot"))}")
+      sysproperty(key: "java.awt.headless", value: true)
+      sysproperty(key: "idea.home.path", value: buildContext.paths.projectHome)
+      sysproperty(key: "idea.system.path", value: systemPath)
+      sysproperty(key: "idea.config.path", value: configPath)
+      if (buildContext.productProperties.platformPrefix != null) {
+        sysproperty(key: "idea.platform.prefix", value: buildContext.productProperties.platformPrefix)
+      }
+      arg(value: "$classpathFile")
+      arg(line: "com.intellij.idea.Main")
+      arguments.each { arg(value: it) }
+
+      classpath() {
+        pathelement(location: "$javaRuntimeClasses")
+      }
+    }
   }
 
   File patchIdeaPropertiesFile() {
@@ -279,7 +296,7 @@ idea.fatal.error.notification=disabled
       if (buildContext.productProperties.scrambleMainJar) {
         scramble()
       }
-      buildContext.gradle.run('Setting up JetBrains JREs', 'setupJbre')
+      buildContext.gradle.run('Setting up JetBrains JREs', 'setupJbre', "-Dintellij.build.target.os=$buildContext.options.targetOS")
       layoutShared()
 
       def propertiesFile = patchIdeaPropertiesFile()

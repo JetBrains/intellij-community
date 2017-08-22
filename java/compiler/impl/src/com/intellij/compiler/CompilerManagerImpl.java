@@ -62,6 +62,7 @@ import java.lang.reflect.Array;
 import java.net.URI;
 import java.util.*;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 
 public class CompilerManagerImpl extends CompilerManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.CompilerManagerImpl");
@@ -114,6 +115,15 @@ public class CompilerManagerImpl extends CompilerManager {
         FileUtil.delete(CompilerPaths.getCompilerSystemDirectory(project));
       }
     });
+  }
+
+  // returns true if all javacs terminated
+  public boolean waitForExternalJavacToTerminate(long time, @NotNull TimeUnit unit) {
+    ExternalJavacManager externalJavacManager = myExternalJavacManager;
+    if (externalJavacManager != null) {
+      if (!externalJavacManager.waitForAllProcessHandlers(time, unit)) return false;
+    }
+    return true;
   }
 
   public Semaphore getCompilationSemaphore() {

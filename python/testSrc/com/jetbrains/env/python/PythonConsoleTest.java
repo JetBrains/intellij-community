@@ -20,7 +20,7 @@ import static org.junit.Assert.assertTrue;
  */
 public class PythonConsoleTest extends PyEnvTestCase {
   @Test
-  public void testConsolePrint() throws Exception {
+  public void testConsolePrint() {
     runPythonTest(new PyConsoleTask() {
       @Override
       public void testing() throws Exception {
@@ -34,7 +34,7 @@ public class PythonConsoleTest extends PyEnvTestCase {
   }
 
   @Test
-  public void testExecuteMultiline() throws Exception {   //PY-4329
+  public void testExecuteMultiline() {   //PY-4329
     runPythonTest(new PyConsoleTask() {
       @Override
       public void testing() throws Exception {
@@ -56,7 +56,7 @@ public class PythonConsoleTest extends PyEnvTestCase {
 
   @Test
   @Staging
-  public void testInterruptAsync() throws Exception {
+  public void testInterruptAsync() {
     runPythonTest(new PyConsoleTask() {
       @Override
       public void testing() throws Exception {
@@ -80,7 +80,7 @@ public class PythonConsoleTest extends PyEnvTestCase {
   }
 
   @Test
-  public void testLineByLineInput() throws Exception {
+  public void testLineByLineInput() {
     runPythonTest(new PyConsoleTask() {
       @Override
       public void testing() throws Exception {
@@ -95,7 +95,7 @@ public class PythonConsoleTest extends PyEnvTestCase {
 
 
   @Test
-  public void testVariablesView() throws Exception {
+  public void testVariablesView() {
     runPythonTest(new PyConsoleTask() {
       @Override
       public void testing() throws Exception {
@@ -110,7 +110,7 @@ public class PythonConsoleTest extends PyEnvTestCase {
   }
 
   @Test
-  public void testCompoundVariable() throws Exception {
+  public void testCompoundVariable() {
     runPythonTest(new PyConsoleTask() {
       @Override
       public void testing() throws Exception {
@@ -126,7 +126,7 @@ public class PythonConsoleTest extends PyEnvTestCase {
   }
 
   @Test
-  public void testChangeVariable() throws Exception {
+  public void testChangeVariable() {
     runPythonTest(new PyConsoleTask() {
       @Override
       public void testing() throws Exception {

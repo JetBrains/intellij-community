@@ -48,11 +48,11 @@ public class NullableStuffInspectionAncientTest extends InspectionTestCase {
     super.tearDown();
   }
 
-  public void testJdk14() throws Exception{
+  public void testJdk14() {
     doTest("nullableProblems/" + getTestName(true), new LocalInspectionToolWrapper(myInspection), "java 1.4");
   }
 
-  public void testJdkAnnotationsWithoutJetBrainsAnnotations() throws Exception{
+  public void testJdkAnnotationsWithoutJetBrainsAnnotations() {
     doTest("nullableProblems/" + getTestName(true), new LocalInspectionToolWrapper(myInspection), "java 1.5");
   }
 

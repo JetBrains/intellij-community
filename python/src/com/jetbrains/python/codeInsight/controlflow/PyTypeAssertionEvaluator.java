@@ -15,7 +15,9 @@
  */
 package com.jetbrains.python.codeInsight.controlflow;
 
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
@@ -25,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Stack;
 import java.util.function.Function;
@@ -149,27 +152,27 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
   }
 
   @Nullable
-  private static PyType createAssertionType(@Nullable PyType initial,
-                                            @Nullable PyType suggested,
-                                            boolean positive,
-                                            boolean transformToDefinition,
-                                            @NotNull TypeEvalContext context) {
+  private static Ref<PyType> createAssertionType(@Nullable PyType initial,
+                                                 @Nullable PyType suggested,
+                                                 boolean positive,
+                                                 boolean transformToDefinition,
+                                                 @NotNull TypeEvalContext context) {
     final PyType transformedType = transformTypeFromAssertion(suggested, transformToDefinition);
     if (positive) {
       if (!(initial instanceof PyUnionType) &&
           !PyTypeChecker.isUnknown(initial, context) &&
           PyTypeChecker.match(transformedType, initial, context)) {
-        return initial;
+        return Ref.create(initial);
       }
-      return transformedType;
+      return Ref.create(transformedType);
     }
     else if (initial instanceof PyUnionType) {
-      return ((PyUnionType)initial).exclude(transformedType, context);
+      return Ref.create(((PyUnionType)initial).exclude(transformedType, context));
     }
-    else if (PyTypeChecker.match(transformedType, initial, context)) {
+    else if (initial != null && PyTypeChecker.match(transformedType, initial, context)) {
       return null;
     }
-    return initial;
+    return Ref.create(initial);
   }
 
   @Nullable
@@ -182,6 +185,10 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
         members.add(transformTypeFromAssertion(tupleType.getElementType(i), transformToDefinition));
       }
       return PyUnionType.union(members);
+    }
+    else if (type instanceof PyUnionType) {
+      final Collection<PyType> members = ((PyUnionType)type).getMembers();
+      return PyUnionType.union(ContainerUtil.map(members, member -> transformTypeFromAssertion(member, transformToDefinition)));
     }
     else if (type instanceof PyInstantiableType) {
       final PyInstantiableType instantiableType = (PyInstantiableType)type;
@@ -196,7 +203,7 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
                              @NotNull Function<TypeEvalContext, PyType> suggestedType) {
     final InstructionTypeCallback typeCallback = new InstructionTypeCallback() {
       @Override
-      public PyType getType(TypeEvalContext context, @Nullable PsiElement anchor) {
+      public Ref<PyType> getType(TypeEvalContext context, @Nullable PsiElement anchor) {
         return createAssertionType(context.getType(target), suggestedType.apply(context), positive, transformToDefinition, context);
       }
     };
@@ -223,7 +230,7 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
 
   static class Assertion {
     private final PyReferenceExpression element;
-    private InstructionTypeCallback myFunction;
+    private final InstructionTypeCallback myFunction;
 
     Assertion(PyReferenceExpression element, InstructionTypeCallback getType) {
       this.element = element;

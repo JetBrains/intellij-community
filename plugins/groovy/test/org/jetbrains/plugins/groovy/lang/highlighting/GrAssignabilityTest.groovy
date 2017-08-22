@@ -58,7 +58,9 @@ class GrAssignabilityTest extends GrHighlightingTestBase {
 
   void testClosureWithDefaultParameters() { doTest() }
 
-  void testClosureCallMethodWithInapplicableArguments() { doTest() }
+  void testClosureApplicability() { doTest() }
+
+  void testSingleParameterMethodApplicability() { doTest() }
 
   void testCallIsNotApplicable() { doTest() }
 
@@ -817,5 +819,62 @@ print 1 + 2
 
 print 4 <warning descr="'plus' in 'org.codehaus.groovy.runtime.DefaultGroovyMethods' cannot be applied to '(java.util.ArrayList)'">+</warning> new ArrayList()
 ''')
+  }
+
+  void testMultiAssignmentCS() {
+    testHighlighting'''
+import groovy.transform.CompileStatic
+
+@CompileStatic
+def foo() {
+    def list = [1, 2]
+    def (a, b) = <error>list</error>
+}
+'''
+  }
+
+  void testMultiAssignmentWithTypeError() {
+    testHighlighting'''
+import groovy.transform.CompileStatic
+
+@CompileStatic
+def foo() {
+    def list = ["", ""]
+    def (Integer a, b) = <error>list</error>
+}
+'''
+  }
+
+  void testMultiAssignmentLiteralWithTypeError() {
+    testHighlighting'''
+import groovy.transform.CompileStatic
+
+@CompileStatic
+def foo() {
+    def (Integer <error>a</error>, b) = ["", ""]
+}
+'''
+  }
+
+  void testMultiAssignment() {
+    testHighlighting'''
+import groovy.transform.CompileStatic
+
+@CompileStatic
+def foo() {
+    def (a, b) = [1, 2]
+}
+'''
+  }
+
+  void testRawListReturn() {
+    testHighlighting'''
+import groovy.transform.CompileStatic
+
+@CompileStatic
+List foo() {
+    return [""]
+}
+'''
   }
 }

@@ -27,8 +27,7 @@ import com.intellij.execution.ui.RunContentManagerImpl;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.*;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.content.Content;
 import org.jetbrains.annotations.NotNull;
@@ -44,11 +43,13 @@ import java.util.Collections;
 class RunConfigurationNode extends AbstractTreeNode<Pair<RunnerAndConfigurationSettings, Content>>
   implements DashboardRunConfigurationNode {
 
-  private final RunContentDescriptor myDescriptor;
+  @Nullable private final RunDashboardContributor myContributor;
+  private final UserDataHolder myUserDataHolder = new UserDataHolderBase();
 
-  RunConfigurationNode(Project project, @NotNull Pair<RunnerAndConfigurationSettings, RunContentDescriptor> value) {
+  RunConfigurationNode(Project project, @NotNull Pair<RunnerAndConfigurationSettings, RunContentDescriptor> value,
+                       @Nullable RunDashboardContributor contributor) {
     super(project, Pair.create(value.first, value.second == null ? null : value.second.getAttachedContent()));
-    myDescriptor = value.second;
+    myContributor = contributor;
   }
 
   @Override
@@ -61,7 +62,17 @@ class RunConfigurationNode extends AbstractTreeNode<Pair<RunnerAndConfigurationS
   @Nullable
   @Override
   public RunContentDescriptor getDescriptor() {
-    return myDescriptor;
+    Content content = getContent();
+    if (content == null) return null;
+
+    return RunContentManagerImpl.getRunContentDescriptorByContent(content);
+  }
+
+  @Nullable
+  @Override
+  public Content getContent() {
+    //noinspection ConstantConditions ???
+    return getValue().second;
   }
 
   @Override
@@ -71,10 +82,9 @@ class RunConfigurationNode extends AbstractTreeNode<Pair<RunnerAndConfigurationS
     boolean isStored = RunManager.getInstance(getProject()).hasSettings(configurationSettings);
     presentation.addText(configurationSettings.getName(),
                          isStored ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.GRAY_ATTRIBUTES);
-    RunDashboardContributor contributor = RunDashboardContributor.getContributor(configurationSettings.getType());
     Icon icon = null;
-    if (contributor != null) {
-      DashboardRunConfigurationStatus status = contributor.getStatus(this);
+    if (myContributor != null) {
+      DashboardRunConfigurationStatus status = myContributor.getStatus(this);
       if (DashboardRunConfigurationStatus.STARTED.equals(status)) {
         icon = getExecutorIcon();
       }
@@ -87,8 +97,8 @@ class RunConfigurationNode extends AbstractTreeNode<Pair<RunnerAndConfigurationS
     }
     presentation.setIcon(isStored ? icon : IconLoader.getDisabledIcon(icon));
 
-    if (contributor != null) {
-      contributor.updatePresentation(presentation, this);
+    if (myContributor != null) {
+      myContributor.updatePresentation(presentation, this);
     }
   }
 
@@ -96,6 +106,23 @@ class RunConfigurationNode extends AbstractTreeNode<Pair<RunnerAndConfigurationS
   @Override
   public Collection<? extends AbstractTreeNode> getChildren() {
     return Collections.emptyList();
+  }
+
+  @Nullable
+  @Override
+  public <T> T getUserData(@NotNull Key<T> key) {
+    return myUserDataHolder.getUserData(key);
+  }
+
+  @Override
+  public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
+    myUserDataHolder.putUserData(key, value);
+  }
+
+  @Nullable
+  @Override
+  public RunDashboardContributor getContributor() {
+    return myContributor;
   }
 
   @Nullable
@@ -110,5 +137,10 @@ class RunConfigurationNode extends AbstractTreeNode<Pair<RunnerAndConfigurationS
       }
     }
     return null;
+  }
+
+  @Override
+  public String toString() {
+    return getConfigurationSettings().getName();
   }
 }

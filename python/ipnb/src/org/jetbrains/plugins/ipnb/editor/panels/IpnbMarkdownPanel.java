@@ -36,13 +36,13 @@ public class IpnbMarkdownPanel extends IpnbEditablePanel<JComponent, IpnbMarkdow
   @Override
   protected JComponent createViewPanel() {
     int width = myParent.getWidth();
-    return IpnbUtils.createLatexPane(myCell.getSourceAsString(), width);
+    return IpnbUtils.createLatexPane(myCell.getSourceAsString(), myParent.getProject(), width);
   }
 
   @Override
   public void updateCellView() {
     int width = myParent.getWidth();
-    myViewPanel = IpnbUtils.createLatexPane(myCell.getSourceAsString(), width);
+    myViewPanel = IpnbUtils.createLatexPane(myCell.getSourceAsString(), myParent.getProject(), width);
     myViewPanel.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {

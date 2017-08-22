@@ -562,7 +562,7 @@ public class ExternalSystemUtil {
                                      @NotNull final ProcessHandler handler) {
             if (executorId.equals(executorIdLocal) && environment.equals(environmentLocal)) {
               handler.addProcessListener(new ProcessAdapter() {
-                public void processTerminated(ProcessEvent event) {
+                public void processTerminated(@NotNull ProcessEvent event) {
                   result.set(event.getExitCode() == 0);
                   targetDone.up();
                 }
@@ -715,9 +715,9 @@ public class ExternalSystemUtil {
    * @param projectSettings         settings of the external project to link
    * @param project                 target ide project to link external project to
    * @param executionResultCallback it might take a while to resolve external project info, that's why it's possible to provide
-   *                                a callback to be notified on processing result. It receives <code>true</code> if an external
+   *                                a callback to be notified on processing result. It receives {@code true} if an external
    *                                project has been successfully linked to the given ide project;
-   *                                <code>false</code> otherwise (note that corresponding notification with error details is expected
+   *                                {@code false} otherwise (note that corresponding notification with error details is expected
    *                                to be shown to the end-user then)
    * @param isPreviewMode           flag which identifies if missing external project binaries should be downloaded
    * @param progressExecutionMode   identifies how progress bar will be represented for the current processing

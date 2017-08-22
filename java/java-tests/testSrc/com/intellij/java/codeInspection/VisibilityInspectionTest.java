@@ -42,7 +42,7 @@ public class VisibilityInspectionTest extends InspectionTestCase {
     return JavaTestUtil.getJavaTestDataPath() + "/inspection";
   }
 
-  private void doTest() throws Exception {
+  private void doTest() {
     doTest("visibility/" + getTestName(false), myTool);
   }
 
@@ -52,7 +52,7 @@ public class VisibilityInspectionTest extends InspectionTestCase {
     super.tearDown();
   }
 
-  public void testinnerConstructor() throws Exception {
+  public void testinnerConstructor() {
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = true;
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = false;
     myTool.SUGGEST_PRIVATE_FOR_INNERS = true;
@@ -60,7 +60,7 @@ public class VisibilityInspectionTest extends InspectionTestCase {
     doTest();
   }
 
-  public void testpackageLevelTops() throws Exception {
+  public void testpackageLevelTops() {
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = false;
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = true;
     myTool.SUGGEST_PRIVATE_FOR_INNERS = false;
@@ -68,7 +68,7 @@ public class VisibilityInspectionTest extends InspectionTestCase {
     doTest();
   }
 
-  public void testSCR5008() throws Exception {
+  public void testSCR5008() {
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = true;
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = true;
     myTool.SUGGEST_PRIVATE_FOR_INNERS = true;
@@ -76,7 +76,7 @@ public class VisibilityInspectionTest extends InspectionTestCase {
     doTest();
   }
 
-  public void testSCR6856() throws Exception {
+  public void testSCR6856() {
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = true;
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = true;
     myTool.SUGGEST_PRIVATE_FOR_INNERS = true;
@@ -84,7 +84,7 @@ public class VisibilityInspectionTest extends InspectionTestCase {
     doTest();
   }
 
-  public void testSCR11792() throws Exception {
+  public void testSCR11792() {
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = true;
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = true;
     myTool.SUGGEST_PRIVATE_FOR_INNERS = true;
@@ -92,68 +92,90 @@ public class VisibilityInspectionTest extends InspectionTestCase {
     doTest();
   }
 
-  public void testIDEADEV10312() throws Exception {
+  public void testIDEADEV10312() {
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = false;
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = false;
     doTest();
   }
 
-  public void testIDEADEV10883() throws Exception {
+  public void testIDEADEV10883() {
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = false;
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = false;
     doTest();
   }
 
-  public void testDefaultConstructor() throws Exception {
+  public void testDefaultConstructor() {
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = true;
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = true;
     myTool.SUGGEST_PRIVATE_FOR_INNERS = false;
     doTest("visibility/defaultConstructor", myTool, false, true);
   }
 
-  public void testImplicitConstructor() throws Exception {
+  public void testImplicitConstructor() {
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = true;
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = true;
     myTool.SUGGEST_PRIVATE_FOR_INNERS = false;
     doTest("visibility/implicitConstructor", myTool, false, true);
   }
 
-  public void testEnumConstants() throws Exception {
+  public void testEnumConstants() {
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = true;
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = true;
     myTool.SUGGEST_PRIVATE_FOR_INNERS = false;
     doTest("visibility/enumConstantsVisibility", myTool, false, true);
   }
 
-  public void testUsagesFromAnnotations() throws Exception {
+  public void testUsagesFromAnnotations() {
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = true;
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = true;
     myTool.SUGGEST_PRIVATE_FOR_INNERS = false;
     doTest("visibility/annotationUsages", myTool, false, true);
   }
 
-  public void testTypeArguments() throws Exception {
+  public void testTypeArguments() {
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = false;
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = false;
     myTool.SUGGEST_PRIVATE_FOR_INNERS = false;
     doTest("visibility/typeArguments", myTool, false, true);
   }
   
-  public void testUsedFromAnnotationsExtendsList() throws Exception {
+  public void testUsedFromAnnotationsExtendsList() {
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = true;
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = true;
     myTool.SUGGEST_PRIVATE_FOR_INNERS = true;
     doTest("visibility/usedFromAnnotationsExtendsList", myTool, false, true);
   }
   
-  public void testUsedQualifiedFromAnotherPackage() throws Exception {
+  public void testUsedQualifiedFromAnotherPackage() {
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = true;
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = true;
     myTool.SUGGEST_PRIVATE_FOR_INNERS = true;
     doTest("visibility/usedFromAnotherPackage", myTool, false, true);
   }
 
-  public void testEntryPointWithPredefinedVisibility() throws Exception {
+  // IDEA-175921
+  public void testInnerClassMethodUsedInsideOtherInnerClassInheritor() {
+    myTool.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = true;
+    myTool.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = true;
+    myTool.SUGGEST_PRIVATE_FOR_INNERS = true;
+    doTest("visibility/innerClassMethodUsedInsideOtherInnerClassInheritor", myTool, false, true);
+  }
+
+  public void testMethodUsedInInheritorInnerClass() {
+    myTool.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = true;
+    myTool.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = true;
+    myTool.SUGGEST_PRIVATE_FOR_INNERS = true;
+    doTest("visibility/methodUsedInInheritorInnerClass", myTool, false, true);
+  }
+
+  public void testInnerClassMethodUsedInsideInheritor() {
+    myTool.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = true;
+    myTool.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = true;
+    myTool.SUGGEST_PRIVATE_FOR_INNERS = true;
+    doTest("visibility/innerClassMethodUsedInsideInheritor", myTool, false, true);
+  }
+
+  public void testEntryPointWithPredefinedVisibility() {
     PlatformTestUtil.registerExtension(Extensions.getRootArea(), ExtensionPointName.create(ToolExtensionPoints.DEAD_CODE_TOOL), new EntryPointWithVisibilityLevel() {
       @Override
       public void readExternal(Element element) throws InvalidDataException {}

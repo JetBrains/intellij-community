@@ -177,7 +177,7 @@ public class RemoveUnusedVariableUtil {
             !(variable.getParent() instanceof PsiDeclarationStatement &&
               ((PsiDeclarationStatement)variable.getParent()).getDeclaredElements().length > 1)) {
           if (deleteMode == RemoveMode.MAKE_STATEMENT) {
-            element = element.replace(createStatementIfNeeded(expression, factory, element));
+            element = element.getParent().replace(createStatementIfNeeded(expression, factory, element));
             List<PsiElement> references = new ArrayList<>();
             collectReferences(element, variable, references);
             deleteReferences(variable, references, deleteMode);

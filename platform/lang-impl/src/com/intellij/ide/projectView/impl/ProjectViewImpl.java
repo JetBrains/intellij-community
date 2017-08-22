@@ -87,6 +87,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -105,8 +106,6 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
-
-import static com.intellij.ide.projectView.impl.StatisticsKt.triggerProjectViewPane;
 
 @State(name = "ProjectView", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class ProjectViewImpl extends ProjectView implements PersistentStateComponent<Element>, Disposable, QuickActionProvider, BusyObject  {
@@ -591,7 +590,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     newPane.setSubId(subId);
     showPane(newPane);
     if (fromContentManager) {
-      triggerProjectViewPane(myCurrentViewId, myCurrentViewSubId);
+      ProjectViewStatistics.recordProjectViewPaneUsage(myCurrentViewId, myCurrentViewSubId);
     }
     ProjectViewSelectInTarget target = getProjectViewSelectInTarget(newPane);
     if (target != null) target.setSubId(subId);
@@ -1045,6 +1044,24 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   private final class MyPanel extends JPanel implements DataProvider {
     MyPanel() {
       super(new BorderLayout());
+
+      UIUtil.putClientProperty(
+        this, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, new Iterable<JComponent>() {
+          @Override
+          public Iterator<JComponent> iterator() {
+            return JBIterable.from(myId2Pane.values())
+              .map(pane -> {
+                JComponent last = null;
+                for (Component c : UIUtil.uiParents(pane.getComponentToFocus(), false)) {
+                  if (c == MyPanel.this || !(c instanceof JComponent)) return null;
+                  last = (JComponent)c;
+                }
+                return last;
+              })
+              .filter(Conditions.notNull())
+              .iterator();
+          }
+        });
     }
 
     @Nullable

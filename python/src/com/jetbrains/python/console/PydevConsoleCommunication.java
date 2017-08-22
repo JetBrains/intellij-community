@@ -44,7 +44,6 @@ import org.apache.xmlrpc.XmlRpcHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.*;
 
@@ -116,6 +115,10 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
    * @throws MalformedURLException
    */
   public PydevConsoleCommunication(Project project, int port, Process process, int clientPort) throws Exception {
+    this(project, null, port, process, clientPort);
+  }
+
+  public PydevConsoleCommunication(Project project, String host, int port, Process process, int clientPort) throws Exception {
     super(project);
 
     //start the server that'll handle input requests
@@ -124,7 +127,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
     myWebServer.addHandler("$default", this);
     this.myWebServer.start();
 
-    this.myClient = new PydevXmlRpcClient(process, port);
+    this.myClient = new PydevXmlRpcClient(process, host, port);
   }
 
   public boolean handshake() throws XmlRpcException {
@@ -666,19 +669,6 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   private static final class MyWebServer extends WebServer {
     public MyWebServer(int port) {
       super(port);
-    }
-
-    @Override
-    public synchronized void shutdown() {
-      try {
-        if (serverSocket != null) {
-          serverSocket.close();
-        }
-      }
-      catch (IOException e) {
-        //pass
-      }
-      super.shutdown();
     }
 
     public boolean waitForTerminate() {

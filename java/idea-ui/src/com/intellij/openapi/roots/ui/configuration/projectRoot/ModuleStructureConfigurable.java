@@ -150,7 +150,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     final ArrayList<AnAction> result = super.createActions(fromPopup);
     if (fromPopup) {
       result.add(Separator.getInstance());
-      result.add(new FlattenModulesToggleAction(myProject, () -> true, () -> myFlattenModules, (value) -> {
+      result.add(new FlattenModulesToggleAction(myProject, () -> true, () -> myFlattenModules, value -> {
         myFlattenModules = value;
         regroupModules();
       }));
@@ -306,8 +306,8 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   private ModuleGroupingTreeHelper<Module, MyNode> createGroupingHelper() {
     ModuleGrouper grouper = getModuleGrouper();
     ModuleGroupingImplementation<Module> grouping = ModuleGroupingTreeHelper.createDefaultGrouping(grouper);
-    return ModuleGroupingTreeHelper.forTree(myRoot, (node) -> node instanceof ModuleGroupNode ? ((ModuleGroupNode)node).getModuleGroup() : null,
-                                            (node) -> node instanceof ModuleNode ? ((ModuleNode)node).getModule() : null,
+    return ModuleGroupingTreeHelper.forTree(myRoot, node -> node instanceof ModuleGroupNode ? ((ModuleGroupNode)node).getModuleGroup() : null,
+                                            node -> node instanceof ModuleNode ? ((ModuleNode)node).getModule() : null,
                                             !myHideModuleGroups && !myFlattenModules,
                                             grouping, ModuleStructureConfigurable::createModuleGroupNode,
                                             module -> createModuleNode(module, grouper), getNodeComparator());
@@ -316,7 +316,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   @Override
   protected Comparator<MyNode> getNodeComparator() {
     List<Comparator<MyNode>> comparators = ContainerUtil
-      .mapNotNull(ModuleStructureExtension.EP_NAME.getExtensions(), moduleStructureExtension -> moduleStructureExtension.getNodeComparator());
+      .mapNotNull(ModuleStructureExtension.EP_NAME.getExtensions(), ModuleStructureExtension::getNodeComparator);
     return new MergingComparator<>(ContainerUtil.concat(comparators, Collections.singletonList(NODE_COMPARATOR)));
   }
 
@@ -602,7 +602,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   @Nullable
   public Module getModule(final String moduleName) {
     if (moduleName == null) return null;
-    return (myContext != null && myContext.myModulesConfigurator != null)
+    return myContext != null && myContext.myModulesConfigurator != null
            ? myContext.myModulesConfigurator.getModule(moduleName)
            : myModuleManager.findModuleByName(moduleName);
   }
@@ -634,6 +634,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
       myModuleAsGroup = moduleAsGroup;
     }
 
+    @Override
     public ModuleGroup getModuleGroup() {
       return myModuleAsGroup;
     }
@@ -680,7 +681,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   private static class ModuleGroupNodeImpl extends MyNode implements ModuleGroupNode {
     private final ModuleGroup myModuleGroup;
 
-    public ModuleGroupNodeImpl(@NotNull NamedConfigurable configurable, @NotNull ModuleGroup moduleGroup) {
+    ModuleGroupNodeImpl(@NotNull NamedConfigurable configurable, @NotNull ModuleGroup moduleGroup) {
       super(configurable, true);
       myModuleGroup = moduleGroup;
     }
@@ -692,7 +693,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   }
 
   private class FacetInModuleRemoveHandler extends RemoveConfigurableHandler<Facet> {
-    public FacetInModuleRemoveHandler() {
+    FacetInModuleRemoveHandler() {
       super(FacetConfigurable.class);
     }
 
@@ -707,7 +708,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   }
 
   private class ModuleRemoveHandler extends RemoveConfigurableHandler<Module> {
-    public ModuleRemoveHandler() {
+    ModuleRemoveHandler() {
       super(ModuleConfigurable.class);
     }
 
@@ -732,7 +733,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   }
 
   private class MyDataProviderWrapper extends JPanel implements DataProvider {
-    public MyDataProviderWrapper(final JComponent component) {
+    MyDataProviderWrapper(final JComponent component) {
       super(new BorderLayout());
       add(component, BorderLayout.CENTER);
     }
@@ -768,8 +769,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   }
 
   private class HideGroupsAction extends ToggleAction implements DumbAware {
-
-    public HideGroupsAction() {
+    HideGroupsAction() {
       super("", "", AllIcons.ObjectBrowser.CompactEmptyPackages);
     }
 
@@ -778,8 +778,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
                        final AnActionEvent e) {
       super.update(e);
       final Presentation presentation = e.getPresentation();
-      String text;
-      text = ProjectBundle
+      String text = ProjectBundle
         .message(myHideModuleGroups ? "project.roots.plain.mode.action.text.enabled" : "project.roots.plain.mode.action.text.disabled");
       presentation.setText(text);
       presentation.setDescription(text);
@@ -821,10 +820,9 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
       public AnAction[] getChildren(@Nullable
                                     final AnActionEvent e) {
 
-        ArrayList<AnAction> result = new ArrayList<>();
-
         AnAction addModuleAction = new AddModuleAction(false);
         addModuleAction.getTemplatePresentation().setText("New Module");
+        List<AnAction> result = new ArrayList<>();
         result.add(addModuleAction);
 
         AnAction importModuleAction = new AddModuleAction(true);
@@ -901,7 +899,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
           dialogBuilder.setPreferredFocusComponent(component.getNameComponent());
           dialogBuilder.setOkOperation(() -> {
             final String name = component.getNameValue();
-            if (name.length() == 0) {
+            if (name.isEmpty()) {
               Messages.showErrorDialog(ProjectBundle.message("enter.module.copy.name.error.message"), CommonBundle.message("title.error"));
               return;
             }
@@ -911,7 +909,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
               return;
             }
 
-            if (component.getPath().length() == 0) {
+            if (component.getPath().isEmpty()) {
               Messages.showErrorDialog(IdeBundle.message("prompt.enter.project.file.location", modulePresentation),
                                        CommonBundle.message("title.error"));
               return;
@@ -931,7 +929,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
           final String path = component.getPath();
           final ModuleBuilder builder = new ModuleBuilder() {
             @Override
-            public void setupRootModel(final ModifiableRootModel modifiableRootModel) throws ConfigurationException {
+            public void setupRootModel(final ModifiableRootModel modifiableRootModel) {
               if (rootModel.isSdkInherited()) {
                 modifiableRootModel.inheritSdk();
               }
@@ -949,8 +947,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
                 if (entry instanceof ModuleSourceOrderEntry) continue;
                 if (entry instanceof ClonableOrderEntry) {
                   modifiableRootModel.addOrderEntry(((ClonableOrderEntry)entry).cloneEntry((RootModelImpl)modifiableRootModel,
-                                                                                           (ProjectRootManagerImpl)ProjectRootManager
-                                                                                             .getInstance(myProject),
+                                                                                           (ProjectRootManagerImpl)ProjectRootManager.getInstance(myProject),
                                                                                            VirtualFilePointerManager.getInstance()));
                 }
               }
@@ -1000,7 +997,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
 
     private final boolean myImport;
 
-    public AddModuleAction(boolean anImport) {
+    AddModuleAction(boolean anImport) {
       super(ProjectBundle.message("add.new.module.text.full"), null, AllIcons.Actions.Module);
       myImport = anImport;
     }
@@ -1014,7 +1011,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   private static class MergingComparator<T> implements Comparator<T> {
     private final List<Comparator<T>> myDelegates;
 
-    public MergingComparator(final List<Comparator<T>> delegates) {
+    MergingComparator(final List<Comparator<T>> delegates) {
       myDelegates = delegates;
     }
 

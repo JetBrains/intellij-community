@@ -190,7 +190,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
       PsiElement last = element;
       while (element instanceof PsiAnnotation) {
         last = element;
-        element = PsiTreeUtil.skipSiblingsForward(element, PsiWhiteSpace.class, PsiComment.class);
+        element = PsiTreeUtil.skipWhitespacesAndCommentsForward(element);
       }
 
       return new TextRange(startOffset, last.getTextRange().getEndOffset());

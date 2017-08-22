@@ -9,7 +9,10 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -19,26 +22,26 @@ public class AnsiEscapeDecoderTest extends PlatformTestCase {
   private static final String STDOUT_KEY = ProcessOutputTypes.STDOUT.toString();
   private static final String STDERR_KEY = ProcessOutputTypes.STDERR.toString();
 
-  public void testTextWithoutColors() throws Exception {
+  public void testTextWithoutColors() {
     check(new ColoredText(""));
     check(new ColoredText("simple text").addExpected("simple text", STDOUT_KEY));
   }
 
-  public void testSingleColoredChunk() throws Exception {
+  public void testSingleColoredChunk() {
     check(new ColoredText("Chrome 35.0.1916 (Linux): Executed 0 of 1\u001B[32m SUCCESS\u001B[39m (0 secs / 0 secs)\n")
             .addExpected("Chrome 35.0.1916 (Linux): Executed 0 of 1", STDOUT_KEY)
             .addExpected(" SUCCESS", "\u001B[32m")
             .addExpected(" (0 secs / 0 secs)\n", "\u001B[39m"));
   }
 
-  public void testCompoundEscSeq() throws Exception {
+  public void testCompoundEscSeq() {
     check(new ColoredText("E\u001B[41m\u001B[37mE\u001B[0mE")
             .addExpected("E", STDOUT_KEY)
             .addExpected("E", "\u001B[41;37m")
             .addExpected("E", STDOUT_KEY));
   }
 
-  public void testOtherEscSeq() throws Exception {
+  public void testOtherEscSeq() {
     check(new ColoredText("Plain\u001B[32mGreen\u001B[39mNormal\u001B[1A\u001B[2K\u001B[31mRed\u001B[39m")
             .addExpected("Plain", STDOUT_KEY)
             .addExpected("Green", "\u001B[32m")
@@ -46,7 +49,7 @@ public class AnsiEscapeDecoderTest extends PlatformTestCase {
             .addExpected("Red", "\u001B[31m"));
   }
 
-  public void testBackspaceControlSequence() throws Exception {
+  public void testBackspaceControlSequence() {
     check(false, ContainerUtil.newArrayList(
       new ColoredText(" 10% 0/1 build modules\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b 70% 1/1 build modules")
         .addExpected(" 70% 1/1 build modules", STDOUT_KEY),
@@ -56,7 +59,7 @@ public class AnsiEscapeDecoderTest extends PlatformTestCase {
     ));
   }
 
-  public void testIncompleteEscapeSequences() throws Exception {
+  public void testIncompleteEscapeSequences() {
     check(true, ContainerUtil.newArrayList(
       new ColoredText("\u001B"),
       new ColoredText("[33m Hello\u001B[3").addExpected(" Hello", "\u001B[33m"),
@@ -175,7 +178,7 @@ public class AnsiEscapeDecoderTest extends PlatformTestCase {
     };
   }
 
-  public void testPerformance() throws IOException {
+  public void testPerformance() {
     Process testProcess = createTestProcess();
 
     //noinspection CodeBlock2Expr

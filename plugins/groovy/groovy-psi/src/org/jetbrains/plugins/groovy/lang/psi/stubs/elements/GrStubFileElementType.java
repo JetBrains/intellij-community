@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ import java.io.IOException;
  * @author ilyas
  */
 public class GrStubFileElementType extends IStubFileElementType<GrFileStub> {
-  public static final int STUB_VERSION = 35;
+  public static final int STUB_VERSION = 37;
 
   public GrStubFileElementType(Language language) {
     super(language);

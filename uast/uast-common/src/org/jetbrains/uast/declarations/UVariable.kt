@@ -52,6 +52,9 @@ interface UVariable : UDeclaration, PsiVariable {
     override fun asLogString() = log("name = $name")
 
     override fun asRenderString() = buildString {
+        if (annotations.isNotEmpty()) {
+            annotations.joinTo(this, separator = " ", postfix = " ") { it.asRenderString() }
+        }
         append(psi.renderModifiers())
         append("var ").append(psi.name).append(": ").append(psi.type.getCanonicalText(false))
         uastInitializer?.let { initializer -> append(" = " + initializer.asRenderString()) }
@@ -126,13 +129,16 @@ interface UEnumConstant : UField, UCallExpression, PsiEnumConstant {
             visitor.visitEnumConstantExpression(this, data)
 
     override fun asRenderString() = buildString {
+        if (annotations.isNotEmpty()) {
+            annotations.joinTo(this, separator = " ", postfix = " ", transform = UAnnotation::asRenderString)
+        }
         append(name ?: "<ERROR>")
         if (valueArguments.isNotEmpty()) {
             valueArguments.joinTo(this, prefix = "(", postfix = ")", transform = UExpression::asRenderString)
         }
         initializingClass?.let {
             appendln(" {")
-            it.uastDeclarations.forEachIndexed { index, declaration ->
+            it.uastDeclarations.forEach { declaration ->
                 appendln(declaration.asRenderString().withMargin)
             }
             append("}")

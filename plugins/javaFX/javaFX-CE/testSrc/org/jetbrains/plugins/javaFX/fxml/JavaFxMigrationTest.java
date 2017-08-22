@@ -14,15 +14,15 @@ import org.jetbrains.annotations.NotNull;
  */
 public class JavaFxMigrationTest extends LightCodeInsightFixtureTestCase {
 
-  public void testImportClasses() throws Exception {
+  public void testImportClasses() {
     doTest();
   }
 
-  public void testImportSkinPackage() throws Exception {
+  public void testImportSkinPackage() {
     doTest();
   }
 
-  public void testImportCssPackage() throws Exception {
+  public void testImportCssPackage() {
     doTest();
   }
 

@@ -51,35 +51,35 @@ public class Interface8MethodsHighlightingTest extends LightCodeInsightFixtureTe
     doTest(false, false);
   }
 
-  public void testStaticMethodAccessibleThroughStaticImportButExplicitlyQualified() throws Exception {
+  public void testStaticMethodAccessibleThroughStaticImportButExplicitlyQualified() {
     doTest(true, false);
   }
 
-  public void testInheritanceOfStaticMethodFromDefault() throws Exception {
+  public void testInheritanceOfStaticMethodFromDefault() {
     doTest();
   }
 
-  public void testUnrelatedDefaultsOverriddenWithConcreteMethodNonEmptySubstitutor() throws Exception {
+  public void testUnrelatedDefaultsOverriddenWithConcreteMethodNonEmptySubstitutor() {
     doTest(false, false);
   }
 
-  public void testUnrelatedDefaultsWithTypeParameter() throws Exception {
+  public void testUnrelatedDefaultsWithTypeParameter() {
     doTest(false, false);
   }
 
-  public void testUnrelatedDefaultsWhenOneInterfaceOverrides2Unrelated() throws Exception {
+  public void testUnrelatedDefaultsWhenOneInterfaceOverrides2Unrelated() {
     doTest(false, false);
   }
 
-  public void testUnrelatedDefaultsWhenOverridingIsPresentExplicitly() throws Exception {
+  public void testUnrelatedDefaultsWhenOverridingIsPresentExplicitly() {
     doTest(false, false);
   }
 
-  public void testIncompatibleReturnTypeWhenDefaultsHierarchyBroken() throws Exception {
+  public void testIncompatibleReturnTypeWhenDefaultsHierarchyBroken() {
     doTest(false, false);
   }
 
-  public void testStaticMethodAccessibleBothThroughStaticImportAndInheritance() throws Exception {
+  public void testStaticMethodAccessibleBothThroughStaticImportAndInheritance() {
     myFixture.addClass("package p; public interface Foo {" +
                        "    static void foo() {}" +
                        "    static void bar() {}" +
@@ -90,7 +90,7 @@ public class Interface8MethodsHighlightingTest extends LightCodeInsightFixtureTe
     doTest(false, false);
   }
 
-  public void testSuperProtectedCalls() throws Exception {
+  public void testSuperProtectedCalls() {
     myFixture.addClass("package p; public class Foo {" +
                        "  protected void foo(){}" +
                        "}");
@@ -99,35 +99,35 @@ public class Interface8MethodsHighlightingTest extends LightCodeInsightFixtureTe
 
   public void testIDEA120498() { doTest(false, false); }
 
-  public void testIgnoreStaticInterfaceMethods() throws Exception {
+  public void testIgnoreStaticInterfaceMethods() {
     doTest(true, false);
   }
 
-  public void testAcceptStaticInterfaceMethodsImportedViaStaticImports() throws Exception {
+  public void testAcceptStaticInterfaceMethodsImportedViaStaticImports() {
     doTest();
   }
 
-  public void testInherit2MethodsWithSameOverrideEquivalentSignatureFromOneSuperclass() throws Exception {
+  public void testInherit2MethodsWithSameOverrideEquivalentSignatureFromOneSuperclass() {
     doTest();
   }
 
-  public void testMultipleDefaultsAndAbstractsSomeOfWhichOverridesEachOther() throws Exception {
+  public void testMultipleDefaultsAndAbstractsSomeOfWhichOverridesEachOther() {
     doTest();
   }
 
-  public void testSubsignatureCheckWhen2DifferentMethodsBecomeOverrideEquivalent() throws Exception {
+  public void testSubsignatureCheckWhen2DifferentMethodsBecomeOverrideEquivalent() {
     doTest();
   }
 
-  public void testUnrelatedDefaultsWhenAbstractIsOverridden() throws Exception {
+  public void testUnrelatedDefaultsWhenAbstractIsOverridden() {
     doTest();
   }
 
-  public void testAbstractOverriddenBySecondDefault() throws Exception {
+  public void testAbstractOverriddenBySecondDefault() {
     doTest();
   }
 
-  public void testMethodHierarchyWithDeclaredTypeParameters() throws Exception {
+  public void testMethodHierarchyWithDeclaredTypeParameters() {
     doTest();
   }
 

@@ -234,6 +234,10 @@ public class PyKnownDecoratorUtil {
     return ContainerUtil.exists(getKnownDecorators(function, context), GENERATOR_BASED_COROUTINE_DECORATORS::contains);
   }
 
+  public static boolean hasRedeclarationDecorator(@NotNull PyFunction function, @NotNull TypeEvalContext context) {
+    return getKnownDecorators(function, context).contains(TYPING_OVERLOAD);
+  }
+
   private static boolean allDecoratorsAreKnown(@NotNull PyDecoratable element, @NotNull List<KnownDecorator> decorators) {
     final PyDecoratorList decoratorList = element.getDecoratorList();
     return decoratorList == null ? decorators.isEmpty() : decoratorList.getDecorators().length == decorators.size();

@@ -38,7 +38,7 @@ public class JavaWithCastSurrounder extends JavaExpressionSurrounder {
 
   @Override
   public boolean isApplicable(PsiExpression expr) {
-    return true;
+    return !PsiType.VOID.equals(expr.getType());
   }
 
   @Override

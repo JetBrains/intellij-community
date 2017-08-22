@@ -87,6 +87,7 @@ public class ConvertToRegexIntention extends Intention {
       public boolean satisfiedBy(@NotNull PsiElement element) {
         return element instanceof GrLiteral &&
                GrStringUtil.isStringLiteral((GrLiteral)element) &&
+               !GrStringUtil.removeQuotes(element.getText()).isEmpty() &&
                !GrStringUtil.isSlashyString(((GrLiteral)element));
       }
     };

@@ -33,35 +33,35 @@ import java.io.IOException;
  */
 public class KillToWordEndActionTest extends LightPlatformCodeInsightTestCase {
 
-  public void testAtWordStart() throws IOException {
+  public void testAtWordStart() {
     doTest(
       "this is a <caret>string",
       "this is a <caret>"
     );
   }
 
-  public void testInTheMiddle() throws IOException {
+  public void testInTheMiddle() {
     doTest(
       "th<caret>is is a string",
       "th<caret> is a string"
     );
   }
 
-  public void testAtWordEnd() throws IOException {
+  public void testAtWordEnd() {
     doTest(
       "this is<caret> a string",
       "this is<caret> string"
     );
   }
 
-  public void testAtWhiteSpaceBetweenWords() throws IOException {
+  public void testAtWhiteSpaceBetweenWords() {
     doTest(
       "this  <caret>     is  a string",
       "this  <caret>  a string"
     );
   }
 
-  public void testAfterLastWordOnTheLineEnd() throws IOException {
+  public void testAfterLastWordOnTheLineEnd() {
     doTest(
       "this is the first string<caret>     \n" +
       "this is the second string",
@@ -69,21 +69,21 @@ public class KillToWordEndActionTest extends LightPlatformCodeInsightTestCase {
     );
   }
 
-  public void testAfterLastWord() throws IOException {
+  public void testAfterLastWord() {
     doTest(
       "this is a string<caret>",
       "this is a string<caret>"
     );
   }
 
-  public void testAfterLastWordBeforeWhiteSpace() throws IOException {
+  public void testAfterLastWordBeforeWhiteSpace() {
     doTest(
       "this is a string<caret>  ",
       "this is a string<caret>"
     );
   }
 
-  public void testAtWhiteSpaceAtLineEnd() throws IOException {
+  public void testAtWhiteSpaceAtLineEnd() {
     doTest(
       "this is the first string  <caret>     \n" +
       "this is the second string",
@@ -91,13 +91,13 @@ public class KillToWordEndActionTest extends LightPlatformCodeInsightTestCase {
     );
   }
 
-  public void testEscapeChars() throws Exception {
+  public void testEscapeChars() {
     configureFromFileText(getTestName(false) + ".java", "class Foo { String s = \"a\\<caret>nb\"; }");
     killToWordEnd();
     checkResultByText("class Foo { String s = \"a\\<caret>b\"; }");
   }
 
-  private void doTest(@NotNull String before, @NotNull String after) throws IOException {
+  private void doTest(@NotNull String before, @NotNull String after) {
     configureFromFileText(getTestName(false) + ".txt", before);
     killToWordEnd();
     checkResultByText(after);

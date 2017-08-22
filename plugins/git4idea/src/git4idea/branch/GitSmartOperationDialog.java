@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,17 +17,18 @@ package git4idea.branch;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.ui.IdeBorderFactory;
+import com.intellij.openapi.util.Ref;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.util.ui.JBUI;
 import git4idea.DialogManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.intellij.openapi.util.text.StringUtil.capitalize;
 
@@ -39,23 +40,41 @@ import static com.intellij.openapi.util.text.StringUtil.capitalize;
  */
 public class GitSmartOperationDialog extends DialogWrapper {
 
-  public static final int SMART_EXIT_CODE = OK_EXIT_CODE;
-  public static final int FORCE_EXIT_CODE = NEXT_USER_EXIT_CODE;
+  public enum Choice {
+    SMART,
+    FORCE,
+    CANCEL;
+
+    @NotNull
+    private static Choice fromDialogExitCode(int exitCode) {
+      if (exitCode == OK_EXIT_CODE) return SMART;
+      if (exitCode == FORCE_EXIT_CODE) return FORCE;
+      if (exitCode == CANCEL_EXIT_CODE) return CANCEL;
+      LOG.error("Unexpected exit code: " + exitCode);
+      return CANCEL;
+    }
+  }
+
+  private static final Logger LOG = Logger.getInstance(GitSmartOperationDialog.class);
+  private static final int FORCE_EXIT_CODE = NEXT_USER_EXIT_CODE;
 
   @NotNull private final JComponent myFileBrowser;
   @NotNull private final String myOperationTitle;
   @Nullable private final String myForceButton;
 
   /**
-   * Shows the dialog with the list of local changes preventing merge/checkout and returns the dialog exit code.
+   * Shows the dialog with the list of local changes preventing merge/checkout and returns the user's choice.
    */
-  static int showAndGetAnswer(@NotNull final Project project, @NotNull final JComponent fileBrowser,
-                              @NotNull final String operationTitle, @Nullable final String forceButtonTitle) {
-    final AtomicInteger exitCode = new AtomicInteger();
+  @NotNull
+  static Choice showAndGetAnswer(@NotNull Project project,
+                                 @NotNull JComponent fileBrowser,
+                                 @NotNull String operationTitle,
+                                 @Nullable String forceButtonTitle) {
+    Ref<Choice> exitCode = Ref.create();
     ApplicationManager.getApplication().invokeAndWait(() -> {
       GitSmartOperationDialog dialog = new GitSmartOperationDialog(project, fileBrowser, operationTitle, forceButtonTitle);
       DialogManager.show(dialog);
-      exitCode.set(dialog.getExitCode());
+      exitCode.set(Choice.fromDialogExitCode(dialog.getExitCode()));
     });
     return exitCode.get();
   }
@@ -90,7 +109,7 @@ public class GitSmartOperationDialog extends DialogWrapper {
     JBLabel description = new JBLabel("<html>Your local changes to the following files would be overwritten by " + myOperationTitle +
                                       ".<br/>" + ApplicationNamesInfo.getInstance().getFullProductName() + " can stash the changes, "
                                       + myOperationTitle + " and unstash them after that.</html>");
-    description.setBorder(IdeBorderFactory.createEmptyBorder(0, 0, 10, 0));
+    description.setBorder(JBUI.Borders.emptyBottom(10));
     return description;
   }
 
@@ -117,5 +136,4 @@ public class GitSmartOperationDialog extends DialogWrapper {
       close(FORCE_EXIT_CODE);
     }
   }
-
 }

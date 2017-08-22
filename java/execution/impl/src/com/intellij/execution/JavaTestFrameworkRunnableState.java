@@ -123,12 +123,17 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     return module != null;
   }
 
+  protected boolean isIdBasedTestTree() {
+    return false;
+  }
+
   @NotNull
   @Override
   public ExecutionResult execute(@NotNull Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
     final RunnerSettings runnerSettings = getRunnerSettings();
 
     final SMTRunnerConsoleProperties testConsoleProperties = getConfiguration().createTestConsoleProperties(executor);
+    testConsoleProperties.setIdBasedTestTree(isIdBasedTestTree());
     testConsoleProperties.setIfUndefined(TestConsoleProperties.HIDE_PASSED_TESTS, false);
 
     final BaseTestsOutputConsoleView consoleView = SMTestRunnerConnectionUtil.createConsole(getFrameworkName(), testConsoleProperties);
@@ -144,7 +149,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     }
     handler.addProcessListener(new ProcessAdapter() {
       @Override
-      public void startNotified(ProcessEvent event) {
+      public void startNotified(@NotNull ProcessEvent event) {
         if (getConfiguration().isSaveOutputToFile()) {
           final File file = OutputFileUtil.getOutputFile(getConfiguration());
           root.setOutputFilePath(file != null ? file.getAbsolutePath() : null);
@@ -152,7 +157,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
       }
 
       @Override
-      public void processTerminated(ProcessEvent event) {
+      public void processTerminated(@NotNull ProcessEvent event) {
         Runnable runnable = () -> {
           root.flushOutputFile();
           deleteTempFiles();

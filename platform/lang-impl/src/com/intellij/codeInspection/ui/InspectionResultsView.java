@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import com.intellij.ide.*;
 import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.ide.actions.exclusion.ExclusionHandler;
 import com.intellij.injected.editor.VirtualFileWindow;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
@@ -66,11 +67,10 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -122,7 +122,6 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
   private InspectionTreeLoadingProgressAware myLoadingProgressPreview;
   private final ExcludedInspectionTreeNodesManager myExcludedInspectionTreeNodesManager;
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
-  private final Map<String, Set<Object>> mySuppressedNodes = FactoryMap.createMap(key -> new THashSet<>());
   private final InspectionViewSuppressActionHolder mySuppressActionHolder = new InspectionViewSuppressActionHolder();
 
   private final Object myTreeStructureUpdateLock = new Object();
@@ -372,7 +371,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
   private JComponent createLeftActionsToolbar() {
     final CommonActionsManager actionsManager = CommonActionsManager.getInstance();
     DefaultActionGroup group = new DefaultActionGroup();
-    group.add(new RerunAction(this, this));
+    group.add(new RerunAction(this));
     group.add(new CloseAction(myGlobalInspectionContext));
     final TreeExpander treeExpander = new DefaultTreeExpander(myTree);
     group.add(actionsManager.createExpandAllAction(treeExpander, myTree));
@@ -569,7 +568,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
       }
     }
     if (previewEditor != null) {
-      new ProblemPreviewEditorPresentation(previewEditor, this);
+      ProblemPreviewEditorPresentation.setupFoldingsForNonProblemRanges(previewEditor, this);
     }
     mySplitter.setSecondComponent(editorPanel);
   }
@@ -614,12 +613,12 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
         settings.setAdditionalLinesCount(0);
         settings.setLeadingWhitespaceShown(true);
         myPreviewEditor.getColorsScheme().setColor(EditorColors.GUTTER_BACKGROUND, myPreviewEditor.getColorsScheme().getDefaultBackground());
-        myPreviewEditor.getScrollPane().setBorder(IdeBorderFactory.createEmptyBorder());
+        myPreviewEditor.getScrollPane().setBorder(JBUI.Borders.empty());
       }
       if (problemCount == 0) {
         myPreviewEditor.getScrollingModel().scrollTo(myPreviewEditor.offsetToLogicalPosition(selectedElement.getTextOffset()), ScrollType.CENTER_UP);
       }
-      myPreviewEditor.getComponent().setBorder(IdeBorderFactory.createEmptyBorder());
+      myPreviewEditor.getComponent().setBorder(JBUI.Borders.empty());
       return Pair.create(myPreviewEditor.getComponent(), myPreviewEditor);
     }
     if (selectedEntity == null) {
@@ -662,10 +661,6 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     return mySuppressActionHolder;
   }
 
-  public Set<Object> getSuppressedNodes(String toolId) {
-    return mySuppressedNodes.get(toolId);
-  }
-
   @NotNull
   public ExcludedInspectionTreeNodesManager getExcludedManager() {
     return myExcludedInspectionTreeNodesManager;
@@ -695,7 +690,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
           }
           final InspectionNode toolNode = presentation.getToolNode();
           LOG.assertTrue(toolNode != null);
-          final Map<RefEntity, CommonProblemDescriptor[]> problems = new HashMap<>();
+          final Map<RefEntity, CommonProblemDescriptor[]> problems = new HashMap<>(1);
           problems.put(refElement, descriptors);
           final Map<String, Set<RefEntity>> contents = new HashMap<>();
           final String groupName = refElement.getRefManager().getGroupName((RefElement)refElement);
@@ -708,7 +703,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
                                               uiOptions.SHOW_STRUCTURE,
                                               true,
                                               contents,
-                                              problems);
+                                              problems::get);
         }
       }
     }));
@@ -1079,11 +1074,6 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     return myDisposed;
   }
 
-  public void updateCurrentProfile() {
-    final String name = myInspectionProfile.getName();
-    myInspectionProfile = myInspectionProfile.getProfileManager().getProfile(name);
-  }
-
   public boolean isRerunAvailable() {
     return !(myProvider instanceof OfflineInspectionRVContentProvider) && myScope.isValid();
   }
@@ -1094,6 +1084,8 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
       AnalysisUIOptions.getInstance(getProject()).save(myGlobalInspectionContext.getUIOptions());
       myGlobalInspectionContext.setTreeState(getTree().getTreeState());
       myGlobalInspectionContext.doInspections(myScope);
+    } else {
+      GlobalInspectionContextImpl.NOTIFICATION_GROUP.createNotification(InspectionsBundle.message("inspection.view.invalid.scope.message"), NotificationType.INFORMATION).notify(getProject());
     }
   }
 }

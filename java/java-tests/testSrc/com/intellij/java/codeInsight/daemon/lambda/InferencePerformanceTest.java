@@ -24,12 +24,12 @@ import org.jetbrains.annotations.NonNls;
 public class InferencePerformanceTest extends LightDaemonAnalyzerTestCase {
   @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/performance";
 
-  public void testPolyMethodCallArgumentPassedToVarargs() throws Exception {
-    PlatformTestUtil.startPerformanceTest("50 poly method calls passed to Arrays.asList", 3500, this::doTest).assertTiming();
+  public void testPolyMethodCallArgumentPassedToVarargs() {
+    PlatformTestUtil.startPerformanceTest("50 poly method calls passed to Arrays.asList", 4000, this::doTest).usesAllCPUCores().assertTiming();
   }
 
-  public void testDiamondConstructorCallPassedToVarargs() throws Exception {
-    PlatformTestUtil.startPerformanceTest("50 diamond constructor calls passed to Arrays.asList", 10000, this::doTest).assertTiming();
+  public void testDiamondConstructorCallPassedToVarargs() {
+    PlatformTestUtil.startPerformanceTest("50 diamond constructor calls passed to Arrays.asList", 12000, this::doTest).usesAllCPUCores().assertTiming();
   }
 
   private void doTest() {

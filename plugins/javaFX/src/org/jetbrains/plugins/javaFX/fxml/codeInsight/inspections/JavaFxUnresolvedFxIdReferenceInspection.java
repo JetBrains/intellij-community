@@ -28,6 +28,7 @@ import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
@@ -144,7 +145,8 @@ public class JavaFxUnresolvedFxIdReferenceInspection extends XmlSuppressableInsp
       final PsiModifierList modifierList = field.getModifierList();
       if (modifierList != null) {
         @PsiModifier.ModifierConstant
-        String visibility = CodeStyleSettingsManager.getSettings(targetClass.getProject()).VISIBILITY;
+        String visibility =
+          CodeStyleSettingsManager.getSettings(targetClass.getProject()).getCustomSettings(JavaCodeStyleSettings.class).VISIBILITY;
         if (VisibilityUtil.ESCALATE_VISIBILITY.equals(visibility)) visibility = PsiModifier.PRIVATE;
         VisibilityUtil.setVisibility(modifierList, visibility);
         if (!PsiModifier.PUBLIC.equals(visibility)) {

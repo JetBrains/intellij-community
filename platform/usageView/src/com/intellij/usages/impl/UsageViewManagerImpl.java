@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -128,6 +128,9 @@ public class UsageViewManagerImpl extends UsageViewManager {
                                     @NotNull final UsageViewPresentation presentation,
                                     @NotNull final FindUsagesProcessPresentation processPresentation,
                                     @Nullable final UsageViewStateListener listener) {
+    if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
+      throw new IllegalStateException("Can't start find usages from under write action. Please consider Application.invokeLater() it instead.");
+    }
     final SearchScope searchScopeToWarnOfFallingOutOf = getMaxSearchScopeToWarnOfFallingOutOf(searchFor);
     final AtomicReference<UsageViewImpl> usageViewRef = new AtomicReference<>();
     long start = System.currentTimeMillis();
@@ -165,7 +168,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
       });
       return scope[0];
     }
-    return GlobalSearchScope.allScope(myProject); // by default do not warn of falling out of scope
+    return GlobalSearchScope.everythingScope(myProject); // by default do not warn of falling out of scope
   }
 
   @Override
@@ -211,12 +214,12 @@ public class UsageViewManagerImpl extends UsageViewManager {
   }
 
 
-  public static void showTooManyUsagesWarning(@NotNull final Project project,
-                                              @NotNull final TooManyUsagesStatus tooManyUsagesStatus,
-                                              @NotNull final ProgressIndicator indicator,
-                                              @NotNull final UsageViewPresentation presentation,
-                                              final int usageCount,
-                                              @Nullable final UsageViewImpl usageView) {
+  public static void showTooManyUsagesWarningLater(@NotNull final Project project,
+                                                   @NotNull final TooManyUsagesStatus tooManyUsagesStatus,
+                                                   @NotNull final ProgressIndicator indicator,
+                                                   @NotNull final UsageViewPresentation presentation,
+                                                   final int usageCount,
+                                                   @Nullable final UsageViewImpl usageView) {
     UIUtil.invokeLaterIfNeeded(() -> {
       if (usageView != null && usageView.searchHasBeenCancelled() || indicator.isCanceled()) return;
       int shownUsageCount = usageView == null ? usageCount : usageView.getRoot().getRecursiveUsageCount();

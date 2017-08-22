@@ -55,7 +55,7 @@ public interface ContentEntry extends Synthetic {
   /**
    * Returns the list of source roots under this content root.
    *
-   * @return list of this <code>ContentEntry</code> {@link com.intellij.openapi.roots.SourceFolder}s
+   * @return list of this {@code ContentEntry} {@link com.intellij.openapi.roots.SourceFolder}s
    */
   @NotNull
   SourceFolder[] getSourceFolders();
@@ -86,7 +86,7 @@ public interface ContentEntry extends Synthetic {
   /**
    * Returns the list of excluded roots configured under this content root. The result doesn't include synthetic excludes like the module output.
    *
-   * @return list of this <code>ContentEntry</code> {@link com.intellij.openapi.roots.ExcludeFolder}s
+   * @return list of this {@code ContentEntry} {@link com.intellij.openapi.roots.ExcludeFolder}s
    */
   @NotNull
   ExcludeFolder[] getExcludeFolders();

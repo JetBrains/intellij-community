@@ -15,18 +15,15 @@
  */
 package com.intellij.codeInsight.editorActions;
 
-import com.intellij.codeInsight.completion.JavaMethodCallElement;
-import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager;
 import com.intellij.codeInsight.hint.ParameterInfoController;
+import com.intellij.codeInsight.hints.ParameterHintsPass;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.util.containers.ContainerUtil;
@@ -35,7 +32,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
-import java.util.List;
 
 public class JavaVarArgNextParameterHandler extends EditorActionHandler {
   private final EditorActionHandler myDelegate;
@@ -79,51 +75,18 @@ public class JavaVarArgNextParameterHandler extends EditorActionHandler {
                     PsiMethod currentMethod = (PsiMethod)((CandidateInfo)objects[currentIndex]).getElement();
                     if (currentMethod.isVarArgs()) {
                       int rParOffset = list.getTextRange().getEndOffset() - 1;
-                      boolean lastParameterIsEmpty =
-                        CharArrayUtil.containsOnlyWhiteSpaces(
-                          text.subSequence(prev + 1, rParOffset));
+                      boolean lastParameterIsEmpty = CharArrayUtil.containsOnlyWhiteSpaces(text.subSequence(prev + 1, rParOffset));
                       if (lastParameterIsEmpty) {
                         if (prevChar == ',') {
-                          List<Inlay> inlays = editor.getInlayModel().getInlineElementsInRange(prev, rParOffset);
-                          ParameterHintsPresentationManager presentationManager = ParameterHintsPresentationManager.getInstance();
-                          String inlayText = null;
-                          List<Inlay> hints = exprList.getUserData(JavaMethodCallElement.COMPLETION_HINTS);
-                          for (Inlay inlay : inlays) {
-                            if (presentationManager.isParameterHint(inlay)) {
-                              inlayText = presentationManager.getHintText(inlay);
-                              if (hints != null) hints.remove(inlay);
-                              Disposer.dispose(inlay);
-                              break;
-                            }
-                          }
                           WriteAction.run(() -> editor.getDocument().deleteString(prev, rParOffset));
-                          if (inlayText != null) {
-                            Inlay inlay = presentationManager.addHint(editor, prev, ", " + inlayText, false, true);
-                            if (hints != null) hints.add(inlay);
-                          }
                         }
                       }
                       else {
-                        int wsStart = CharArrayUtil.shiftBackward(text, rParOffset - 1, " \t") + 1;
-                        List<Inlay> inlays = editor.getInlayModel().getInlineElementsInRange(wsStart, rParOffset);
-                        ParameterHintsPresentationManager presentationManager = ParameterHintsPresentationManager.getInstance();
-                        String inlayText = null;
-                        List<Inlay> hints = exprList.getUserData(JavaMethodCallElement.COMPLETION_HINTS);
-                        for (Inlay inlay : inlays) {
-                          if (presentationManager.isParameterHint(inlay) && presentationManager.getHintText(inlay).startsWith(", ")) {
-                            inlayText = presentationManager.getHintText(inlay);
-                            if (hints != null) hints.remove(inlay);
-                            Disposer.dispose(inlay);
-                            break;
-                          }
-                        }
                         WriteAction.run(() -> editor.getDocument().insertString(rParOffset, ", "));
-                        if (inlayText != null) {
-                          Inlay inlay = presentationManager.addHint(editor, rParOffset + 2, inlayText.substring(2), false, true);
-                          if (hints != null) hints.add(inlay);
-                        }
                       }
                       PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+                      PsiElement call = list.getParent();
+                      if (call != null) ParameterHintsPass.syncUpdate(call, editor);
                     }
                   }
                 }

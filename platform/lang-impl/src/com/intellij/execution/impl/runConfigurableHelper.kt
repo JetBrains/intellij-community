@@ -15,7 +15,46 @@
  */
 package com.intellij.execution.impl
 
+import com.intellij.execution.Executor
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.configurations.ConfigurationType
 
 fun countSettingsOfType(allSettings: List<RunnerAndConfigurationSettings>, type: ConfigurationType) = allSettings.count { it.type == type }
+
+internal class RunConfigurationBean {
+  val settings: RunnerAndConfigurationSettings
+  val configurable: SingleConfigurationConfigurable<*>?
+
+  constructor(settings: RunnerAndConfigurationSettings) {
+    this.settings = settings
+    configurable = null
+  }
+
+  constructor(configurable: SingleConfigurationConfigurable<*>) {
+    this.configurable = configurable
+    settings = this.configurable.settings as RunnerAndConfigurationSettings
+  }
+
+  override fun toString(): String {
+    return settings.toString()
+  }
+}
+
+enum class RunConfigurableNodeKind {
+  CONFIGURATION_TYPE, FOLDER, CONFIGURATION, TEMPORARY_CONFIGURATION, UNKNOWN;
+
+  fun supportsDnD() = this == FOLDER || this == CONFIGURATION || this == TEMPORARY_CONFIGURATION
+
+  val isConfiguration: Boolean
+    get() = (this == CONFIGURATION) or (this == TEMPORARY_CONFIGURATION)
+}
+
+interface RunDialogBase {
+  fun setOKActionEnabled(isEnabled: Boolean)
+
+  val executor: Executor?
+
+  fun setTitle(title: String)
+
+  fun clickDefaultButton()
+}

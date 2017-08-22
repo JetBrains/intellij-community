@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CollectionComboBoxModel;
+import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.JBLabel;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.packaging.PyCondaPackageManagerImpl;
@@ -33,6 +34,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.CaretEvent;
+import javax.swing.event.CaretListener;
+import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -156,6 +160,25 @@ public class CreateCondaEnvDialog extends AbstractCreateVirtualEnvDialog {
 
   protected void registerValidators(final FacetValidatorsManager validatorsManager) {
     mySdkCombo.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent event) {
+        validatorsManager.validate();
+      }
+    });
+    myDestination.getTextField().addCaretListener(new CaretListener() {
+      @Override
+      public void caretUpdate(CaretEvent event) {
+        validatorsManager.validate();
+      }
+    });
+    myDestination.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
+      protected void textChanged(DocumentEvent e) {
+        validatorsManager.validate();
+      }
+    });
+
+    myDestination.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent event) {
         validatorsManager.validate();

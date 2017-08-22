@@ -22,6 +22,7 @@ import com.intellij.ide.projectView.impl.nodes.ExternalLibrariesNode;
 import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement;
 import com.intellij.ide.projectView.impl.nodes.NamedLibraryElementNode;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
+import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
 import com.intellij.openapi.application.ReadAction;
@@ -38,6 +39,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.ProjectViewTestUtil;
 import com.intellij.testGuiFramework.fixtures.extended.ExtendedTreeFixture;
+import com.intellij.testGuiFramework.framework.GuiTestUtil;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.fest.swing.core.MouseButton;
@@ -54,15 +56,17 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static com.intellij.ide.projectView.BaseProjectTreeBuilder.getBuilderFor;
 import static com.intellij.testGuiFramework.framework.GuiTestUtil.SHORT_TIMEOUT;
+import static com.intellij.testGuiFramework.framework.GuiTestUtil.THIRTY_SEC_TIMEOUT;
 import static org.fest.assertions.Assertions.assertThat;
 import static org.fest.reflect.core.Reflection.field;
 import static org.fest.swing.timing.Pause.pause;
@@ -179,6 +183,34 @@ public class ProjectViewFixture extends ToolWindowFixture {
    */
   @NotNull
   public NodeFixture path(String... pathTo) {
+    Ref<NodeFixture> nodeFixtureRef = new Ref<>();
+    try {
+      pause(new Condition("Waiting for a node by path: " + Arrays.toString(pathTo)) {
+        @Override
+        public boolean test() {
+          try {
+            nodeFixtureRef.set(getNodeFixtureByPath(pathTo));
+            return true;
+          }
+          catch (ComponentLookupException e) {
+            return false;
+          }
+        }
+      }, THIRTY_SEC_TIMEOUT);
+    }
+    catch (WaitTimedOutError timedOutError) {
+      AbstractTreeStructure treeStructure = selectProjectPane().getTreeStructure();
+      StringBuilder projectViewStructure = PlatformTestUtil.print(treeStructure, treeStructure.getRootElement(), 10, null, 100, ' ', null);
+      LOG.error("Unable to find path: " +
+                Arrays.toString(pathTo) +
+                " for current project structure.\nActual project structure" +
+                projectViewStructure, timedOutError);
+    }
+    return nodeFixtureRef.get();
+  }
+
+  @NotNull
+  private NodeFixture getNodeFixtureByPath(String[] pathTo) {
     if (pathTo.length == 1) {
       if (pathTo[0].contains("/")) {
         String[] newPath = pathTo[0].split("/");
@@ -189,14 +221,16 @@ public class ProjectViewFixture extends ToolWindowFixture {
   }
 
   public boolean containsPath(String... pathTo) {
-    return path(pathTo) == null;
+    return getNodeFixtureByPath(pathTo) != null;
   }
 
   public class PaneFixture {
     @NotNull private final AbstractProjectViewPane myPane;
+    @NotNull private final AbstractTreeBuilder myBuilder;
 
     PaneFixture(@NotNull AbstractProjectViewPane pane) {
       myPane = pane;
+      myBuilder = getBuilderFor(myPane.getTree());
     }
 
     @NotNull
@@ -292,7 +326,8 @@ public class ProjectViewFixture extends ToolWindowFixture {
               if (nodeText.equals(pathItem)) {
                 newRoot = child;
                 break;
-              } else {
+              }
+              else {
                 treePath.remove(treePath.size() - 1);
               }
             }
@@ -324,6 +359,7 @@ public class ProjectViewFixture extends ToolWindowFixture {
     @NotNull private final ProjectViewNode<?> myNode;
     @NotNull private final AbstractTreeStructure myTreeStructure;
     @NotNull private final AbstractProjectViewPane myPane;
+    @NotNull private final AbstractTreeBuilder myBuilder;
     @NotNull private final Object[] myPath;
 
     NodeFixture(@NotNull ProjectViewNode<?> node, @NotNull AbstractTreeStructure treeStructure, @NotNull AbstractProjectViewPane pane) {
@@ -331,6 +367,7 @@ public class ProjectViewFixture extends ToolWindowFixture {
       myTreeStructure = treeStructure;
       myPane = pane;
       myPath = createPath(treeStructure, node);
+      myBuilder = getBuilderFor(myPane.getTree());
     }
 
     @NotNull
@@ -350,15 +387,40 @@ public class ProjectViewFixture extends ToolWindowFixture {
     }
 
     public Point getLocation() {
-      return ReadAction.compute(() -> {
-        myPane.getTree();
-        final JTree tree = myPane.getTree();
-        final DefaultMutableTreeNode dmtn = TreeUtil.findNodeWithObject((DefaultMutableTreeNode)tree.getModel().getRoot(), myNode);
-        final TreePath path = TreeUtil.getPathFromRoot(dmtn);
-        final Rectangle bounds = tree.getPathBounds(path);
-        assertNotNull(bounds);
-        return new Point(bounds.x + bounds.height / 2, bounds.y + bounds.height / 2);
-      });
+      Ref<DefaultMutableTreeNode> mutableTreeNodeRef = new Ref<>();
+      myPane.getTree();
+      final JTree tree = myPane.getTree();
+
+      pause(new Condition("Waiting until default tree node for node: " + myNode.getTitle() + " will be loaded") {
+        @Override
+        public boolean test() {
+          final DefaultMutableTreeNode treeNode = TreeUtil.findNodeWithObject((DefaultMutableTreeNode)tree.getModel().getRoot(), myNode);
+          if (treeNode == null) {
+            return false;
+          }
+          else {
+            mutableTreeNodeRef.set(treeNode);
+            return true;
+          }
+        }
+      }, GuiTestUtil.THIRTY_SEC_TIMEOUT);
+      assertNotNull(mutableTreeNodeRef.get());
+
+      Ref<Rectangle> boundsRef = new Ref<>();
+      pause(new Condition("Waiting until bounds of tree node: " + myNode.getTitle() + " will be not null") {
+        @Override
+        public boolean test() {
+          return ReadAction.compute(() -> {
+            final TreePath path = TreeUtil.getPathFromRoot(mutableTreeNodeRef.get());
+            final Rectangle bounds = tree.getPathBounds(path);
+            if (bounds != null) boundsRef.set(bounds);
+            return (bounds != null);
+          });
+        }
+      }, GuiTestUtil.THIRTY_SEC_TIMEOUT);
+
+      Rectangle bounds = boundsRef.get();
+      return new Point(bounds.x + bounds.height / 2, bounds.y + bounds.height / 2);
     }
 
 
@@ -429,12 +491,19 @@ public class ProjectViewFixture extends ToolWindowFixture {
 
     @NotNull
     public NodeFixture expand() {
+      CountDownLatch cdl = new CountDownLatch(1);
       GuiActionRunner.execute(new GuiTask() {
         @Override
         protected void executeInEDT() throws Throwable {
-          myPane.expand(myPath, true);
+          myBuilder.expand(myNode, () -> cdl.countDown());
         }
       });
+      try {
+        cdl.await();
+      }
+      catch (InterruptedException e) {
+        e.printStackTrace();
+      }
       return this;
     }
 
@@ -443,17 +512,10 @@ public class ProjectViewFixture extends ToolWindowFixture {
       GuiActionRunner.execute(new GuiTask() {
         @Override
         protected void executeInEDT() throws Throwable {
-          myPane.getTree().scrollRowToVisible(getRow());
+          myBuilder.scrollTo(myNode);
         }
       });
       return this;
-    }
-
-    private int getRow() {
-      TreeNode treeNode = TreeUtil.findNodeWithObject((DefaultMutableTreeNode)myPane.getTree().getModel().getRoot(), myNode);
-      assert treeNode != null;
-      TreePath treePath = TreeUtil.getPathFromRoot(treeNode);
-      return myPane.getTree().getRowForPath(treePath);
     }
   }
 }

@@ -73,7 +73,7 @@ class JUnit5MalformedParameterizedInspection : BaseJavaBatchLocalInspectionTool(
 
           var noMultiArgsProvider = true
           var source : PsiAnnotation? = null
-          AnnotationUtil.findAnnotations(method, JUnitCommonClassNames.SOURCE_ANNOTATIONS).forEach {
+          MetaAnnotationUtil.findMetaAnnotations(method, JUnitCommonClassNames.SOURCE_ANNOTATIONS).forEach {
             when (it.qualifiedName) {
               JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PROVIDER_METHOD_SOURCE -> {
                 checkMethodSource(method, it)
@@ -157,7 +157,7 @@ class JUnit5MalformedParameterizedInspection : BaseJavaBatchLocalInspectionTool(
       }
 
       private fun checkMethodSource(method: PsiMethod, methodSource: PsiAnnotation) {
-        val annotationMemberValue = methodSource.findDeclaredAttributeValue("names")
+        val annotationMemberValue = methodSource.findDeclaredAttributeValue("value")
         processArrayInAnnotationParameter(annotationMemberValue, { attributeValue ->
           for (reference in attributeValue.references) {
             if (reference is MethodSourceReference) {
@@ -191,7 +191,9 @@ class JUnit5MalformedParameterizedInspection : BaseJavaBatchLocalInspectionTool(
                     holder.registerProblem(attributeValue,
                                            "Method source \'$providerName\' must have one of the following return type: Stream<?>, Iterator<?>, Iterable<?> or Object[]")
                   }
-                  else if (hasMultipleParameters(method) && !isArgumentsInheritor(componentType)) {
+                  else if (hasMultipleParameters(method) && !isArgumentsInheritor(componentType) &&
+                           !componentType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) &&
+                           !componentType.deepComponentType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
                     holder.registerProblem(attributeValue, "Multiple parameters have to be wrapped in Arguments")
                   }
                 }
@@ -248,6 +250,10 @@ class JUnit5MalformedParameterizedInspection : BaseJavaBatchLocalInspectionTool(
         if (collectionItemType != null) {
           return collectionItemType
         }
+
+        if (InheritanceUtil.isInheritor(returnType, CommonClassNames.JAVA_UTIL_STREAM_INT_STREAM)) return PsiType.INT;
+        if (InheritanceUtil.isInheritor(returnType, CommonClassNames.JAVA_UTIL_STREAM_LONG_STREAM)) return PsiType.LONG;
+        if (InheritanceUtil.isInheritor(returnType, CommonClassNames.JAVA_UTIL_STREAM_DOUBLE_STREAM)) return PsiType.DOUBLE;
 
         val streamItemType = PsiUtil.substituteTypeParameter(returnType, CommonClassNames.JAVA_UTIL_STREAM_STREAM, 0, false)
         if (streamItemType != null) {

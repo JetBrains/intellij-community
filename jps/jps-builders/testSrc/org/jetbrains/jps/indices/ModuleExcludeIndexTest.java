@@ -25,7 +25,6 @@ import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Collection;
 
 /**
@@ -40,7 +39,7 @@ public class ModuleExcludeIndexTest extends JpsJavaModelTestCase {
     myRoot = FileUtil.createTempDirectory("excludes", null);
   }
 
-  public void testProjectOutput() throws IOException {
+  public void testProjectOutput() {
     File out = new File(myRoot, "out");
     getJavaService().getOrCreateProjectExtension(myProject).setOutputUrl(JpsPathUtil.pathToUrl(out.getAbsolutePath()));
     JpsModule module1 = addModule();

@@ -30,8 +30,8 @@ import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import com.jetbrains.python.refactoring.move.PyMoveRefactoringUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -44,23 +44,23 @@ public class PyMoveSymbolProcessor {
   private final PsiNamedElement myMovedElement;
   private final PyFile myDestinationFile;
   private final List<UsageInfo> myUsages;
-  private final PsiElement[] myAllMovedElements;
-  private final List<PsiFile> myOptimizeImportTargets = new ArrayList<>();
+  private final List<SmartPsiElementPointer<PsiNamedElement>> myAllMovedElements;
+  private final List<PsiFile> myFilesWithStarUsages = new ArrayList<>();
   private final Set<ScopeOwner> myScopeOwnersWithGlobal = new HashSet<>();
 
   public PyMoveSymbolProcessor(@NotNull final PsiNamedElement element,
                                @NotNull PyFile destination,
                                @NotNull Collection<UsageInfo> usages,
-                               @NotNull PsiElement[] otherElements) {
+                               @NotNull List<SmartPsiElementPointer<PsiNamedElement>> otherElements) {
     myMovedElement = element;
     myDestinationFile = destination;
     myAllMovedElements = otherElements;
     myUsages = ContainerUtil.sorted(usages, (u1, u2) -> PsiUtilCore.compareElementsByPosition(u1.getElement(), u2.getElement()));
   }
 
-  public final void moveElement() {
+  @NotNull
+  public final PyMoveSymbolResult moveElement() {
     final PsiElement oldElementBody = PyMoveModuleMembersHelper.expandNamedElementBody(myMovedElement);
-    final PsiFile sourceFile = myMovedElement.getContainingFile();
     if (oldElementBody != null) {
       PyClassRefactoringUtil.rememberNamedReferences(oldElementBody);
       final PsiElement newElementBody = addElementToFile(oldElementBody);
@@ -72,25 +72,17 @@ public class PyMoveSymbolProcessor {
           updateSingleUsage(usageElement, newElement);
         }
       }
-      PyClassRefactoringUtil.restoreNamedReferences(newElementBody, myMovedElement, myAllMovedElements);
+      final PsiElement[] unwrappedElements = ContainerUtil.mapNotNull(myAllMovedElements, SmartPsiElementPointer::getElement).toArray(PsiElement.EMPTY_ARRAY);
+      PyClassRefactoringUtil.restoreNamedReferences(newElementBody, myMovedElement, unwrappedElements);
       deleteElement();
-      optimizeImports(sourceFile);
     }
+    return new PyMoveSymbolResult(myFilesWithStarUsages);
   }
 
   private void deleteElement() {
     final PsiElement elementBody = PyMoveModuleMembersHelper.expandNamedElementBody(myMovedElement);
     assert elementBody != null;
     elementBody.delete();
-  }
-
-  private void optimizeImports(@Nullable PsiFile originalFile) {
-    for (PsiFile usageFile : myOptimizeImportTargets) {
-      PyClassRefactoringUtil.optimizeImports(usageFile);
-    }
-    if (originalFile != null) {
-      PyClassRefactoringUtil.optimizeImports(originalFile);
-    }
   }
 
   @NotNull
@@ -136,7 +128,7 @@ public class PyMoveSymbolProcessor {
         }
         else if (resolvesToLocalStarImport(usage)) {
           PyClassRefactoringUtil.insertImport(usage, newElement);
-          myOptimizeImportTargets.add(usageFile);
+          myFilesWithStarUsages.add(usageFile);
         }
       }
     }
@@ -155,10 +147,11 @@ public class PyMoveSymbolProcessor {
   }
 
   private boolean belongsToSomeMovedElement(@NotNull final PsiElement element) {
-    return ContainerUtil.exists(myAllMovedElements, movedElement -> {
-      final PsiElement movedElementBody = PyMoveModuleMembersHelper.expandNamedElementBody((PsiNamedElement)movedElement);
-      return PsiTreeUtil.isAncestor(movedElementBody, element, false);
-    });
+    return StreamEx.of(myAllMovedElements).
+      map(SmartPsiElementPointer::getElement)
+      .nonNull()
+      .map(PyMoveModuleMembersHelper::expandNamedElementBody)
+      .anyMatch(moved -> PsiTreeUtil.isAncestor(moved, element, false));
   }
 
 

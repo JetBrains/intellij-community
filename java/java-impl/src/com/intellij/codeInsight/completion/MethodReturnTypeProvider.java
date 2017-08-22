@@ -60,7 +60,7 @@ class MethodReturnTypeProvider extends CompletionProvider<CompletionParameters> 
       @Nullable
       @Override
       public PsiType visitType(PsiType type) {
-        if (myProcessed.add(type)) {
+        if (!(type instanceof PsiPrimitiveType) && myProcessed.add(type)) {
           int priority = type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) ? 1 : 1000 - myProcessed.size();
           consumer.consume(PrioritizedLookupElement.withPriority(PsiTypeLookupItem.createLookupItem(type, position), priority));
         }

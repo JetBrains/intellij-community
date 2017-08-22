@@ -30,7 +30,7 @@ import com.intellij.util.ref.GCUtil;
 
 @PlatformTestCase.WrapInCommand
 public class CodeFragmentsTest extends PsiTestCase{
-  public void testAddImport() throws Exception {
+  public void testAddImport() {
     PsiCodeFragment fragment = JavaCodeFragmentFactory.getInstance(myProject).createExpressionCodeFragment("AAA.foo()", null, null, false);
     PsiClass arrayListClass = myJavaFacade.findClass("java.util.ArrayList", GlobalSearchScope.allScope(getProject()));
     PsiReference ref = fragment.findReferenceAt(0);

@@ -26,7 +26,6 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.SoftHashMap;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -173,10 +172,9 @@ public class SvnMergeInfoCache {
   private static class MyCurrentUrlData {
 
     // key - working copy local path
-    @NotNull private final Map<String, BranchInfo> myBranchInfo;
+    @NotNull private final Map<String, BranchInfo> myBranchInfo = ContainerUtil.createSoftMap();
 
     private MyCurrentUrlData() {
-      myBranchInfo = new SoftHashMap<>();
     }
 
     public BranchInfo getBranchInfo(final String branchUrl) {

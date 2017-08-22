@@ -15,8 +15,8 @@
  */
 package org.jetbrains.jps.incremental.artifacts;
 
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.project.IntelliJProjectConfiguration;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.TestFileSystemBuilder;
 import com.intellij.util.text.UniqueNameGenerator;
@@ -124,7 +124,7 @@ public abstract class ArtifactBuilderTestCase extends JpsBuildTestCase {
   }
 
   protected static String getJUnitJarPath() {
-    final File file = PathManager.findFileInLibDirectory("junit.jar");
+    final File file = new File(assertOneElement(IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("JUnit3")));
     assertTrue("File " + file.getAbsolutePath() + " doesn't exist", file.exists());
     return FileUtil.toSystemIndependentName(file.getAbsolutePath());
   }

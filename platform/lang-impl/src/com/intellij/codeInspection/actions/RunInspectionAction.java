@@ -139,8 +139,7 @@ public class RunInspectionAction extends GotoActionBase {
     final BaseAnalysisActionDialog dialog = new BaseAnalysisActionDialog(
       "Run '" + toolWrapper.getDisplayName() + "'",
       AnalysisScopeBundle.message("analysis.scope.title", InspectionsBundle.message("inspection.action.noun")),
-      project, analysisScope, module != null ? module.getName() : null,
-      true, options, psiElement) {
+      project, analysisScope, module, true, options, psiElement) {
 
       private InspectionToolWrapper myUpdatedSettingsToolWrapper;
 

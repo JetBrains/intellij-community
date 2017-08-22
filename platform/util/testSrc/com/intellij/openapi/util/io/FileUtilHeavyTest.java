@@ -194,7 +194,7 @@ public class FileUtilHeavyTest {
       private int count = 0;
 
       @Override
-      public Boolean execute(boolean lastAttempt) throws IOException {
+      public Boolean execute(boolean lastAttempt) {
         count++;
         return stop(lastAttempt) ? true : null;
       }

@@ -326,9 +326,9 @@ public class MultiProcessDebugger implements ProcessDebugger {
 
 
   @Override
-  public void execute(@NotNull AbstractCommand command, boolean waitForResult) {
+  public void execute(@NotNull AbstractCommand command) {
     for (ProcessDebugger d : allDebuggers()) {
-      d.execute(command, waitForResult);
+      d.execute(command);
     }
   }
 
@@ -522,14 +522,14 @@ public class MultiProcessDebugger implements ProcessDebugger {
   @Override
   public void addExceptionBreakpoint(ExceptionBreakpointCommandFactory factory) {
     for (RemoteDebugger d : allDebuggers()) {
-      d.execute(factory.createAddCommand(d), false);
+      d.execute(factory.createAddCommand(d));
     }
   }
 
   @Override
   public void removeExceptionBreakpoint(ExceptionBreakpointCommandFactory factory) {
     for (RemoteDebugger d : allDebuggers()) {
-      d.execute(factory.createRemoveCommand(d), false);
+      d.execute(factory.createRemoveCommand(d));
     }
   }
 

@@ -43,7 +43,7 @@ public class AntCompletionTest extends LightCodeInsightTestCase {
     AntSupport.markFileAsAntFile(myVFile, myFile.getProject(), true);
   }
 
-  public void testSimpleProperty() throws Exception {
+  public void testSimpleProperty() {
     configureByFile("test1.xml");
     performNormalCompletion();
     assertNotNull(getItems());
@@ -51,7 +51,7 @@ public class AntCompletionTest extends LightCodeInsightTestCase {
     select();
   }
 
-  public void testSimplePropertyWithDot1() throws Exception {
+  public void testSimplePropertyWithDot1() {
     configureByFile("test2.xml");
     performNormalCompletion();
     assertNotNull(getItems());
@@ -59,7 +59,7 @@ public class AntCompletionTest extends LightCodeInsightTestCase {
     select();
   }
 
-  public void testSimplePropertyWithDot2() throws Exception {
+  public void testSimplePropertyWithDot2() {
     configureByFile("test4.xml");
     performNormalCompletion();
     assertNotNull(getItems());
@@ -67,7 +67,7 @@ public class AntCompletionTest extends LightCodeInsightTestCase {
     select();
   }
 
-  public void testSimplePropertyWithDot3() throws Exception {
+  public void testSimplePropertyWithDot3() {
     configureByFile("/test5.xml");
     performNormalCompletion();
     assertNotNull(getItems());
@@ -75,7 +75,7 @@ public class AntCompletionTest extends LightCodeInsightTestCase {
     select();
   }
 
-  public void testReplace1() throws Exception {
+  public void testReplace1() {
     configureByFile("test10.xml");
     performNormalCompletion();
     assertNotNull(getItems());
@@ -83,7 +83,7 @@ public class AntCompletionTest extends LightCodeInsightTestCase {
     checkResultByFile("test10-out.xml");
   }
 
-  public void testSimplePropertyWithDot4() throws Exception {
+  public void testSimplePropertyWithDot4() {
     configureByFile("/test6.xml");
     performNormalCompletion();
     assertNotNull(getItems());
@@ -91,7 +91,7 @@ public class AntCompletionTest extends LightCodeInsightTestCase {
     select();
   }
 
-  public void testSimplePropertyWithDotAndMulityReference() throws Exception {
+  public void testSimplePropertyWithDotAndMulityReference() {
     configureByFile("test7.xml");
     performNormalCompletion();
     final LookupElement[] items = getItems();
@@ -100,7 +100,7 @@ public class AntCompletionTest extends LightCodeInsightTestCase {
     select();
   }
 
-  public void testSimplePropertyWithNoPrefix() throws Exception {
+  public void testSimplePropertyWithNoPrefix() {
     configureByFile("test3.xml");
     performNormalCompletion();
     assertNotNull(getItems());
@@ -108,26 +108,26 @@ public class AntCompletionTest extends LightCodeInsightTestCase {
     select();
   }
 
-  public void testInsertion1() throws Exception {
+  public void testInsertion1() {
     configureByFile("test8.xml");
     performNormalCompletion();
 
     checkResultByFile("/test8-out.xml");
   }
 
-  public void testInsertion2() throws Exception {
+  public void testInsertion2() {
     configureByFile("test9.xml");
     performNormalCompletion();
     checkResultByFile("/test8-out.xml");
   }
 
-  public void testTargetCompletion() throws Exception {
+  public void testTargetCompletion() {
     configureByFile("targetCompletion.xml");
     performNormalCompletion();
     checkResultByFile("/targetCompletion-out.xml");
   }
 
-  public void testTargetCompletion2() throws Exception {
+  public void testTargetCompletion2() {
     final String filePath = "targetCompletion2.xml";
 
     configureByFile(filePath);
@@ -137,14 +137,14 @@ public class AntCompletionTest extends LightCodeInsightTestCase {
     checkResultByFile("/targetCompletion2-out.xml");
   }
 
-  public void testEntityCompletion() throws Exception {
+  public void testEntityCompletion() {
     configureByFile("EntityCompletion.xml");
     performNormalCompletion();
 
     checkResultByFile("EntityCompletion-out.xml");
   }
 
-  public void testTargetAttributesCompletion() throws Exception {
+  public void testTargetAttributesCompletion() {
     final String testName = getTestName(false);
     configureByFile(testName + ".xml");
     performNormalCompletion();
@@ -156,33 +156,33 @@ public class AntCompletionTest extends LightCodeInsightTestCase {
     checkResultByFile(testName + "-out.xml");
   }
 
-  public void testEndTagCompletion() throws Exception {
+  public void testEndTagCompletion() {
     doTest();
   }
 
-  public void testTargetIfAttrEasterEgg() throws Exception {
+  public void testTargetIfAttrEasterEgg() {
     doTest();
   }
 
-  public void testTargetUnlessAttrEasterEgg() throws Exception {
-    doTest();
-  }
-
-  // TODO implement refs to params
-  public void _testMacrodefParam() throws Exception {
+  public void testTargetUnlessAttrEasterEgg() {
     doTest();
   }
 
   // TODO implement refs to params
-  public void _testMacrodefParam1() throws Exception {
+  public void _testMacrodefParam() {
     doTest();
   }
 
-  public void testMacrodefNestedElement() throws Exception {
+  // TODO implement refs to params
+  public void _testMacrodefParam1() {
     doTest();
   }
 
-  private void doTest() throws Exception {
+  public void testMacrodefNestedElement() {
+    doTest();
+  }
+
+  private void doTest() {
     final String testName = getTestName(false);
     configureByFile(testName + ".xml");
     performNormalCompletion();

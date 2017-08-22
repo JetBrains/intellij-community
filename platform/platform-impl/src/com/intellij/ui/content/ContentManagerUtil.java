@@ -28,7 +28,7 @@ public class ContentManagerUtil {
   }
 
   /**
-   * This is utility method. It returns <code>ContentManager</code> from the current context.
+   * This is utility method. It returns {@code ContentManager} from the current context.
    */
   public static ContentManager getContentManagerFromContext(DataContext dataContext, boolean requiresVisibleToolWindow){
     Project project = CommonDataKeys.PROJECT.getData(dataContext);

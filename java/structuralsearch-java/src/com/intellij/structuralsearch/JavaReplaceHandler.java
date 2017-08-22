@@ -315,12 +315,32 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
           copy.setModifierProperty(modifier, false);
         }
       }
-      final PsiElement anchor = copy.getFirstChild();
+      for (PsiAnnotation copyAnnotation : copy.getAnnotations()) {
+        for (PsiAnnotation queryAnnotation : query.getAnnotations()) {
+          if (matches(queryAnnotation, copyAnnotation)) {
+            copyAnnotation.delete();
+          }
+        }
+      }
       for (PsiAnnotation annotation : replacementModifierList.getAnnotations()) {
-        copy.addBefore(annotation, anchor);
+        copy.addBefore(annotation, copy.getFirstChild());
       }
       replacementModifierList.replace(copy);
     }
+  }
+
+  private static boolean matches(PsiAnnotation queryAnnotation, PsiAnnotation originalAnnotation) {
+    final PsiJavaCodeReferenceElement queryReferenceElement = queryAnnotation.getNameReferenceElement();
+    if (queryReferenceElement == null) {
+      return false;
+    }
+    final PsiJavaCodeReferenceElement originalReferenceElement = originalAnnotation.getNameReferenceElement();
+    if (originalReferenceElement == null) {
+      return false;
+    }
+    final String queryQualifiedName = queryReferenceElement.getQualifiedName();
+    return queryQualifiedName.equals(originalReferenceElement.getQualifiedName()) ||
+           queryQualifiedName.equals(originalReferenceElement.getReferenceName());
   }
 
   private PsiElement handleSymbolReplacement(PsiElement replacement, final PsiElement el) throws IncorrectOperationException {
@@ -405,7 +425,7 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
             }
             final PsiElement lastElement = unmatchedElements.get(unmatchedElements.size() - 1);
             if (lastElement instanceof PsiCodeBlock) {
-              final PsiElement finallyKeyword = PsiTreeUtil.skipSiblingsBackward(lastElement, PsiWhiteSpace.class);
+              final PsiElement finallyKeyword = PsiTreeUtil.skipWhitespacesBackward(lastElement);
               assert finallyKeyword != null;
               final PsiElement finallyAnchor = tryStatement.getLastChild();
               addElementAfterAnchor(tryStatement, lastElement, finallyAnchor);
@@ -498,8 +518,8 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
         }
         else if (element instanceof PsiField) {
           while (PsiUtil.isJavaToken(nextSibling, JavaTokenType.COMMA)) {
-            lastToDelete = PsiTreeUtil.skipSiblingsForward(nextSibling, PsiWhiteSpace.class);
-            nextSibling = PsiTreeUtil.skipSiblingsForward(lastToDelete, PsiWhiteSpace.class);
+            lastToDelete = PsiTreeUtil.skipWhitespacesForward(nextSibling);
+            nextSibling = PsiTreeUtil.skipWhitespacesForward(lastToDelete);
           }
         }
 

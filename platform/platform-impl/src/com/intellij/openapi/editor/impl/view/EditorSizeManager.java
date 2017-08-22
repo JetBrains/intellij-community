@@ -71,7 +71,8 @@ class EditorSizeManager extends InlayModel.SimpleAdapter implements PrioritizedD
   private int myFoldingChangeEndOffset = Integer.MIN_VALUE;
   
   private int myVirtualPageHeight;
-  
+
+  private boolean myDuringDocumentUpdate; 
   private boolean myDirty; // true if we cannot calculate preferred size now because soft wrap model was invalidated after editor 
                            // became hidden. myLineWidths contents is irrelevant in such a state. Previously calculated preferred size
                            // is kept until soft wraps will be recalculated and size calculations will become possible
@@ -107,6 +108,7 @@ class EditorSizeManager extends InlayModel.SimpleAdapter implements PrioritizedD
 
   @Override
   public void beforeDocumentChange(DocumentEvent event) {
+    myDuringDocumentUpdate = true;
     if (myDocument.isInBulkUpdate()) return;
     myDocumentChangeStartOffset = event.getOffset();
     myDocumentChangeEndOffset = event.getOffset() + event.getNewLength();
@@ -114,6 +116,7 @@ class EditorSizeManager extends InlayModel.SimpleAdapter implements PrioritizedD
 
   @Override
   public void documentChanged(DocumentEvent event) {
+    myDuringDocumentUpdate = false;
     if (myDocument.isInBulkUpdate()) return;
     doInvalidateRange(myDocumentChangeStartOffset, myDocumentChangeEndOffset);
     assertValidState();
@@ -146,7 +149,7 @@ class EditorSizeManager extends InlayModel.SimpleAdapter implements PrioritizedD
 
   @Override
   public void onUpdated(@NotNull Inlay inlay) {
-    if (myDocument.isInEventsHandling() || myDocument.isInBulkUpdate()) return;
+    if (myDuringDocumentUpdate || myDocument.isInBulkUpdate()) return;
     doInvalidateRange(inlay.getOffset(), inlay.getOffset());
   }
 
@@ -158,7 +161,7 @@ class EditorSizeManager extends InlayModel.SimpleAdapter implements PrioritizedD
       myFoldingChangeEndOffset = Math.max(myFoldingChangeEndOffset, event.getActualEndOffset());
       invalidate = false;
     }
-    if (myDocument.isInEventsHandling()) {
+    if (myDuringDocumentUpdate) {
       myDocumentChangeStartOffset = Math.min(myDocumentChangeStartOffset, event.getStartOffset());
       myDocumentChangeEndOffset = Math.max(myDocumentChangeEndOffset, event.getActualEndOffset());
       invalidate = false;
@@ -336,7 +339,7 @@ class EditorSizeManager extends InlayModel.SimpleAdapter implements PrioritizedD
 
   void invalidateRange(int startOffset, int endOffset) {
     if (myDocument.isInBulkUpdate()) return;
-    if (myDocument.isInEventsHandling()) {
+    if (myDuringDocumentUpdate) {
       myDocumentChangeStartOffset = Math.min(myDocumentChangeStartOffset, startOffset);
       myDocumentChangeEndOffset = Math.max(myDocumentChangeEndOffset, endOffset);
     }

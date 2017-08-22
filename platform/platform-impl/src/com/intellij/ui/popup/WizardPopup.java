@@ -261,7 +261,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
 
   protected void disposeAllParents(InputEvent e) {
     myDisposeEvent = e;
-    dispose();
+    Disposer.dispose(this);
     if (myParent != null) {
       myParent.disposeAllParents(null);
     }

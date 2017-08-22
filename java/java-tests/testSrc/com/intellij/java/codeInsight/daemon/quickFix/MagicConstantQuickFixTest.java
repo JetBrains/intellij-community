@@ -32,5 +32,5 @@ public class MagicConstantQuickFixTest extends LightQuickFixTestCase {
     return new LocalInspectionTool[]{new MagicConstantInspection()};
   }
 
-  public void test() throws Exception { doAllTests(); }
+  public void test() { doAllTests(); }
 }

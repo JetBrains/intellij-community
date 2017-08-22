@@ -103,6 +103,8 @@ public class JBTabsImpl extends JComponent
 
   private boolean mySideComponentOnTabs = true;
 
+  private boolean mySideComponentBefore = true;
+
   private boolean mySizeBySelected;
 
   private DataProvider myDataProvider;
@@ -508,13 +510,22 @@ public class JBTabsImpl extends JComponent
     JComponent vToolbar = data.vToolbar.get();
     if (hToolbar != null) {
       final int toolbarHeight = hToolbar.getPreferredSize().height;
-      final Rectangle compRect = layoutComp(deltaX, toolbarHeight + deltaY, data.comp.get(), deltaWidth, deltaHeight);
-      layout(hToolbar, compRect.x, compRect.y - toolbarHeight, compRect.width, toolbarHeight);
+      final int hSeparatorHeight = toolbarHeight > 0 ? 1 : 0;
+      final Rectangle compRect = layoutComp(deltaX, toolbarHeight + hSeparatorHeight + deltaY, data.comp.get(), deltaWidth, deltaHeight);
+      layout(hToolbar, compRect.x, compRect.y - toolbarHeight - hSeparatorHeight, compRect.width, toolbarHeight);
     }
     else if (vToolbar != null) {
       final int toolbarWidth = vToolbar.getPreferredSize().width;
-      final Rectangle compRect = layoutComp(toolbarWidth + deltaX, deltaY, data.comp.get(), deltaWidth, deltaHeight);
-      layout(vToolbar, compRect.x - toolbarWidth, compRect.y, toolbarWidth, compRect.height);
+      final int vSeparatorWidth = toolbarWidth > 0 ? 1 : 0;
+      if (mySideComponentBefore) {
+        final Rectangle compRect = layoutComp(toolbarWidth + vSeparatorWidth + deltaX, deltaY, data.comp.get(), deltaWidth, deltaHeight);
+        layout(vToolbar, compRect.x - toolbarWidth - vSeparatorWidth, compRect.y, toolbarWidth, compRect.height);
+      }
+      else {
+        final Rectangle compRect = layoutComp(new Rectangle(deltaX, deltaY, getWidth() - toolbarWidth - vSeparatorWidth, getHeight()),
+                                              data.comp.get(), deltaWidth, deltaHeight);
+        layout(vToolbar, compRect.x + compRect.width + vSeparatorWidth, compRect.y, toolbarWidth, compRect.height);
+      }
     }
     else {
       layoutComp(deltaX, deltaY, data.comp.get(), deltaWidth, deltaHeight);
@@ -1550,6 +1561,10 @@ public class JBTabsImpl extends JComponent
   }
 
   public Rectangle layoutComp(int componentX, int componentY, final JComponent comp, int deltaWidth, int deltaHeight) {
+    return layoutComp(new Rectangle(componentX, componentY, getWidth(), getHeight()), comp, deltaWidth, deltaHeight);
+  }
+
+  public Rectangle layoutComp(final Rectangle bounds, final JComponent comp, int deltaWidth, int deltaHeight) {
     final Insets insets = getLayoutInsets();
 
     final Insets border = isHideTabs() ? new Insets(0, 0, 0, 0) : myBorder.getEffectiveBorder();
@@ -1562,10 +1577,10 @@ public class JBTabsImpl extends JComponent
     border.right += inner.right;
 
 
-    int x = insets.left + componentX + border.left;
-    int y = insets.top + componentY + border.top;
-    int width = getWidth() - insets.left - insets.right - componentX - border.left - border.right;
-    int height = getHeight() - insets.top - insets.bottom - componentY - border.top - border.bottom;
+    int x = insets.left + bounds.x + border.left;
+    int y = insets.top + bounds.y + border.top;
+    int width = bounds.width - insets.left - insets.right - bounds.x - border.left - border.right;
+    int height = bounds.height - insets.top - insets.bottom - bounds.y - border.top - border.bottom;
 
     if (!noTabsVisible) {
       width += deltaWidth;
@@ -2999,6 +3014,15 @@ public class JBTabsImpl extends JComponent
   }
 
   @Override
+  public JBTabsPresentation setSideComponentBefore(boolean before) {
+    mySideComponentBefore = before;
+
+    relayout(true, false);
+
+    return this;
+  }
+
+  @Override
   public JBTabsPresentation setSingleRow(boolean singleRow) {
     myLayout = singleRow ? mySingleRowLayout : myTableLayout;
 
@@ -3051,6 +3075,10 @@ public class JBTabsImpl extends JComponent
 
   public boolean isSideComponentOnTabs() {
     return mySideComponentOnTabs;
+  }
+
+  public boolean isSideComponentBefore() {
+    return mySideComponentBefore;
   }
 
   public TabLayout getEffectiveLayout() {
@@ -3207,8 +3235,9 @@ public class JBTabsImpl extends JComponent
       final Component each = getComponent(i);
       if (each instanceof JComponent) {
         final JComponent jc = (JComponent)each;
-        final Object done = jc.getClientProperty(LAYOUT_DONE);
-        if (!Boolean.TRUE.equals(done)) {
+        boolean layoutDone = UIUtil.isClientPropertyTrue(jc, LAYOUT_DONE);
+        jc.setVisible(layoutDone);
+        if (!layoutDone) {
           layout(jc, new Rectangle(0, 0, 0, 0));
         }
       }
@@ -3273,7 +3302,7 @@ public class JBTabsImpl extends JComponent
     relayout(true, true);
   }
 
-  boolean isHorizontalTabs() {
+  public boolean isHorizontalTabs() {
     return getTabsPosition() == JBTabsPosition.top || getTabsPosition() == JBTabsPosition.bottom;
   }
 

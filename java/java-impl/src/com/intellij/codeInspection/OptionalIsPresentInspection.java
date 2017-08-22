@@ -137,7 +137,7 @@ public class OptionalIsPresentInspection extends BaseJavaBatchLocalInspectionToo
     if (statement == null) {
       PsiStatement thenStatement = extractThenStatement(ifStatement, false);
       if (thenStatement instanceof PsiReturnStatement) {
-        PsiElement nextElement = PsiTreeUtil.skipSiblingsForward(ifStatement, PsiComment.class, PsiWhiteSpace.class);
+        PsiElement nextElement = PsiTreeUtil.skipWhitespacesAndCommentsForward(ifStatement);
         if (nextElement instanceof PsiStatement) {
           statement = ControlFlowUtils.stripBraces((PsiStatement)nextElement);
         }
@@ -194,6 +194,8 @@ public class OptionalIsPresentInspection extends BaseJavaBatchLocalInspectionToo
     if (!hasOptionalReference.get() || !(lambdaCandidate instanceof PsiExpression)) return ProblemType.INFO;
     PsiExpression expression = (PsiExpression)lambdaCandidate;
     if (falseExpression != null && NullnessUtil.getExpressionNullness(expression) != Nullness.NOT_NULL) {
+      // falseExpression == null is "consumer" case (to be replaced with ifPresent()),
+      // in this case we don't care about expression nullness
       return ProblemType.INFO;
     }
     return ProblemType.WARNING;
@@ -366,8 +368,12 @@ public class OptionalIsPresentInspection extends BaseJavaBatchLocalInspectionToo
       if(!(trueElement instanceof PsiExpression) || !(falseElement instanceof PsiExpression)) return ProblemType.NONE;
       PsiExpression trueExpression = (PsiExpression)trueElement;
       PsiExpression falseExpression = (PsiExpression)falseElement;
-      return (isSimpleOrUnchecked(falseExpression)) ?
-             getTypeByLambdaCandidate(optionalVariable, trueExpression, falseExpression) : ProblemType.NONE;
+      PsiType trueType = trueExpression.getType();
+      PsiType falseType = falseExpression.getType();
+      if (trueType == null || falseType == null || !trueType.isAssignableFrom(falseType) || !isSimpleOrUnchecked(falseExpression)) {
+        return ProblemType.NONE;
+      }
+      return getTypeByLambdaCandidate(optionalVariable, trueExpression, falseExpression);
     }
 
     @Override

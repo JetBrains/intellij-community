@@ -93,8 +93,8 @@
     </component>
 
     <component>
-      <interface-class>com.intellij.internal.statistic.persistence.ApplicationStatisticsPersistenceComponent</interface-class>
-      <implementation-class>com.intellij.internal.statistic.persistence.ApplicationStatisticsPersistenceComponent</implementation-class>
+      <interface-class>com.intellij.internal.statistic.ApplicationStatisticsPersistenceComponent</interface-class>
+      <implementation-class>com.intellij.internal.statistic.ApplicationStatisticsPersistenceComponent</implementation-class>
     </component>
 
     <component>

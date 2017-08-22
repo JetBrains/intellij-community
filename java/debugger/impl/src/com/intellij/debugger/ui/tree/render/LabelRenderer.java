@@ -36,7 +36,7 @@ import javax.swing.*;
 
 public class LabelRenderer extends TypeRenderer implements ValueLabelRenderer, OnDemandRenderer {
   public static final @NonNls String UNIQUE_ID = "LabelRenderer";
-  public boolean myOnDemand;
+  public boolean ON_DEMAND;
 
   private CachedEvaluator myLabelExpression = createCachedEvaluator();
 
@@ -122,15 +122,15 @@ public class LabelRenderer extends TypeRenderer implements ValueLabelRenderer, O
   }
 
   @Override
-  public boolean isOnDemand(EvaluationContext evaluationContext) {
-    return myOnDemand || OnDemandRenderer.super.isOnDemand(evaluationContext);
+  public boolean isOnDemand(EvaluationContext evaluationContext, ValueDescriptor valueDescriptor) {
+    return ON_DEMAND || OnDemandRenderer.super.isOnDemand(evaluationContext, valueDescriptor);
   }
 
   public boolean isOnDemand() {
-    return myOnDemand;
+    return ON_DEMAND;
   }
 
   public void setOnDemand(boolean value) {
-    myOnDemand = value;
+    ON_DEMAND = value;
   }
 }

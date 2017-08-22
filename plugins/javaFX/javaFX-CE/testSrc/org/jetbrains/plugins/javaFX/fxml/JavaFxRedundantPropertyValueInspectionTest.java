@@ -13,35 +13,35 @@ public class JavaFxRedundantPropertyValueInspectionTest extends AbstractJavaFXQu
     myFixture.enableInspections(new JavaFxRedundantPropertyValueInspection());
   }
 
-  public void testModifiedAttribute() throws Exception {
+  public void testModifiedAttribute() {
     checkQuickFixNotAvailable("alignment");
   }
 
-  public void testImmediateAttribute() throws Exception {
+  public void testImmediateAttribute() {
     doLaunchQuickfixTest("alignment");
   }
 
-  public void testInheritedAttribute() throws Exception {
+  public void testInheritedAttribute() {
     doLaunchQuickfixTest("maxHeight");
   }
 
-  public void testModifiedTag() throws Exception {
+  public void testModifiedTag() {
     checkQuickFixNotAvailable("alignment");
   }
 
-  public void testImmediateTag() throws Exception {
+  public void testImmediateTag() {
     doLaunchQuickfixTest("alignment");
   }
 
-  public void testInheritedTag() throws Exception {
+  public void testInheritedTag() {
     doLaunchQuickfixTest("maxHeight");
   }
 
-  public void testAttributeHighlighting() throws Exception {
+  public void testAttributeHighlighting() {
     doTestHighlighting();
   }
 
-  public void testTagHighlighting() throws Exception {
+  public void testTagHighlighting() {
     doTestHighlighting();
   }
 

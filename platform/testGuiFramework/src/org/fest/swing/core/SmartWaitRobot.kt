@@ -25,6 +25,7 @@ import org.fest.util.Preconditions
 import java.awt.Component
 import java.awt.MouseInfo
 import java.awt.Point
+import java.awt.Window
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import javax.swing.SwingUtilities
@@ -48,6 +49,15 @@ class SmartWaitRobot() : BasicRobot(null, ExistingHierarchy()) {
       Pause.pause(waitConst)
       if (!SwingUtilities.isEventDispatchThread()) EdtInvocationManager.getInstance().invokeAndWait({ })
     }
+  }
+
+  override fun close(w: Window) {
+    super.close(w)
+    superWaitForIdle()
+  }
+
+  fun superWaitForIdle() {
+    super.waitForIdle()
   }
 
   //smooth mouse move

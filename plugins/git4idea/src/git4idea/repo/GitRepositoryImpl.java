@@ -17,7 +17,7 @@ package git4idea.repo;
 
 import com.intellij.dvcs.repo.RepositoryImpl;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -34,6 +34,7 @@ import java.io.File;
 import java.util.Collection;
 
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
+import static com.intellij.openapi.progress.util.BackgroundTaskUtil.syncPublisher;
 import static com.intellij.util.ObjectUtils.assertNotNull;
 
 public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
@@ -228,13 +229,11 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
     }
   }
 
-  private static void notifyListenersAsync(@NotNull final GitRepository repository) {
-    ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      Project project = repository.getProject();
-      if (!project.isDisposed()) {
-        project.getMessageBus().syncPublisher(GIT_REPO_CHANGE).repositoryChanged(repository);
-      }
-    });
+  private static void notifyListenersAsync(@NotNull GitRepository repository) {
+    Runnable task = () -> {
+      syncPublisher(repository.getProject(), GIT_REPO_CHANGE).repositoryChanged(repository);
+    };
+    BackgroundTaskUtil.executeOnPooledThread(task, repository);
   }
 
   @NotNull

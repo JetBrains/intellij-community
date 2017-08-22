@@ -20,17 +20,18 @@ import com.intellij.testFramework.fixtures.impl.ModuleFixtureImpl;
 import com.jetbrains.extensions.ModuleExtKt;
 import com.jetbrains.python.PythonModuleTypeBase;
 import com.jetbrains.python.PythonTestUtil;
+import com.jetbrains.python.packaging.PyCondaPackageManagerImpl;
+import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdk.PythonSdkType;
-import com.jetbrains.python.sdkTools.PyTestSdkTools;
-import com.jetbrains.python.sdkTools.SdkCreationType;
+import com.jetbrains.python.tools.sdkTools.PySdkTools;
+import com.jetbrains.python.tools.sdkTools.SdkCreationType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
@@ -179,14 +180,14 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
     return null;
   }
 
-  protected void disposeProcess(ProcessHandler h) throws InterruptedException {
+  protected void disposeProcess(ProcessHandler h) {
     h.destroyProcess();
     if (!waitFor(h)) {
       new Throwable("Can't stop process").printStackTrace();
     }
   }
 
-  protected boolean waitFor(ProcessHandler p) throws InterruptedException {
+  protected boolean waitFor(ProcessHandler p) {
     return p.waitFor(myTimeout);
   }
 
@@ -233,15 +234,25 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
    * Creates SDK by its path
    *
    * @param sdkHome         path to sdk (probably obtained by {@link #runTestOn(String)})
-   * @param sdkCreationType SDK creation strategy (see {@link com.jetbrains.python.sdkTools.SdkCreationType} doc)
+   * @param sdkCreationType SDK creation strategy (see {@link sdkTools.SdkCreationType} doc)
    * @return sdk
    */
   @NotNull
   protected Sdk createTempSdk(@NotNull final String sdkHome, @NotNull final SdkCreationType sdkCreationType)
-    throws InvalidSdkException, IOException {
+    throws InvalidSdkException {
     final VirtualFile sdkHomeFile = LocalFileSystem.getInstance().findFileByPath(sdkHome);
     Assert.assertNotNull("Interpreter file not found: " + sdkHome, sdkHomeFile);
-    return PyTestSdkTools.createTempSdk(sdkHomeFile, sdkCreationType, myFixture.getModule());
+    final Sdk sdk = PySdkTools.createTempSdk(sdkHomeFile, sdkCreationType, myFixture.getModule());
+    // We use gradle script to create environment. This script utilizes Conda.
+    // Conda supports 2 types of package installation: conda native and pip. We use pip.
+    // PyCharm Conda support ignores packages installed via pip ("conda list -e" does it, see PyCondaPackageManagerImpl)
+    // So we need to either fix gradle (PythonEnvsPlugin.groovy on github) or use helper instead of "conda list" to get all packages
+    // We do the latter.
+    final PyPackageManager packageManager = PyPackageManager.getInstance(sdk);
+    if (packageManager instanceof PyCondaPackageManagerImpl) {
+      ((PyCondaPackageManagerImpl)packageManager).useConda = false;
+    }
+    return sdk;
   }
 
 

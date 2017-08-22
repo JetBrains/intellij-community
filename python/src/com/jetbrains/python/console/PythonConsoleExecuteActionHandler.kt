@@ -29,4 +29,5 @@ abstract class PythonConsoleExecuteActionHandler(processHandler: ProcessHandler,
   abstract fun canExecuteNow(): Boolean
   abstract var isEnabled: Boolean
   abstract val consoleCommunication: ConsoleCommunication
+  abstract fun updateConsoleState()
 }

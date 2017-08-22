@@ -243,7 +243,7 @@ public class LabelPainter {
       return shortenRefName(group.getName(), fontMetrics, availableWidth);
     }
 
-    String text = "";
+    StringBuilder text = new StringBuilder();
     String remainder = ", ...";
     String separator = ", ";
     int remainderWidth = fontMetrics.stringWidth(remainder);
@@ -255,15 +255,15 @@ public class LabelPainter {
       String refName = shortenRefName(group.getRefs().get(i).getName(), fontMetrics, width);
       int refNameWidth = fontMetrics.stringWidth(refName);
       if (width - refNameWidth < 0 && !firstRef) {
-        text += remainder;
+        text.append(remainder);
         break;
       }
       else {
-        text += (firstRef ? "" : separator) + refName;
+        text.append(firstRef ? "" : separator).append(refName);
         availableWidth -= (firstRef ? 0 : separatorWidth) + refNameWidth;
       }
     }
-    return text;
+    return text.toString();
   }
 
   @Nullable

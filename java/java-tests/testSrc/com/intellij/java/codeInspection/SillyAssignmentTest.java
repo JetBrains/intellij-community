@@ -26,15 +26,15 @@ public class SillyAssignmentTest extends InspectionTestCase {
     return JavaTestUtil.getJavaTestDataPath() + "/inspection";
   }
 
-  private void doTest() throws Exception {
+  private void doTest() {
     doTest("sillyAssignment/" + getTestName(true),  new SillyAssignmentInspection());
   }
 
-  public void testMultiple() throws Exception {
+  public void testMultiple() {
     doTest();
   }
 
-  public void testSuppressed() throws Exception {
+  public void testSuppressed() {
     doTest();
   }
 }

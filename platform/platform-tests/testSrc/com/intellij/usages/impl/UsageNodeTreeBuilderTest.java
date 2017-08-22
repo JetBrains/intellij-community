@@ -50,7 +50,7 @@ import java.io.IOException;
  * @author max
  */
 public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
-  public void testNoGroupingRules() throws Exception {
+  public void testNoGroupingRules() {
     GroupNode groupNode = buildUsageTree(new int[]{2, 3, 0}, UsageGroupingRule.EMPTY_ARRAY);
 
     assertNotNull(groupNode);
@@ -60,17 +60,17 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
     assertEquals("Root [0, 2, 3]", groupNode.toString());
   }
 
-  public void testOneGroupingRuleOnly() throws Exception {
+  public void testOneGroupingRuleOnly() {
     GroupNode groupNode = buildUsageTree(new int[]{0, 1, 0, 1 , 1}, new UsageGroupingRule[] {new OddEvenGroupingRule()});
     assertEquals("Root [Even[0, 0], Odd[1, 1, 1]]", groupNode.toString());
   }
 
-  public void testNotGroupedItemsComeToEnd() throws Exception {
+  public void testNotGroupedItemsComeToEnd() {
     GroupNode groupNode = buildUsageTree(new int[]{0, 1, 0, 1 , 1, 1003, 1002, 1001}, new UsageGroupingRule[] {new OddEvenGroupingRule()});
     assertEquals("Root [Even[0, 0], Odd[1, 1, 1], 1001, 1002, 1003]", groupNode.toString());
   }
 
-  public void test2Groupings() throws Exception {
+  public void test2Groupings() {
     GroupNode groupNode = buildUsageTree(new int[]{0, 1, 2, 3, 12, 13, 14, 15, 101, 103, 102, 105, 10001, 10002, 10003}, new UsageGroupingRule[] {
       new OddEvenGroupingRule(),
       new LogGroupingRule()});
@@ -78,7 +78,7 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
     assertEquals("Root [Even[1[0, 2], 2[12, 14], 3[102]], Odd[1[1, 3], 2[13, 15], 3[101, 103, 105]], 5[10001, 10002, 10003]]", groupNode.toString());
   }
 
-  public void testDifferentRulesDontDependOnOrder() throws Exception {
+  public void testDifferentRulesDontDependOnOrder() {
     GroupNode groupNode = buildUsageTree(new int[]{10003, 0}, new UsageGroupingRule[] {
       new OddEvenGroupingRule(),
       new LogGroupingRule()});
@@ -86,7 +86,7 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
     assertEquals("Root [Even[1[0]], 5[10003]]", groupNode.toString());
   }
 
-  public void testGroupsFromDifferentRulesAreCorrectlySorted() throws Exception {
+  public void testGroupsFromDifferentRulesAreCorrectlySorted() {
     GroupNode groupNode = buildUsageTree(new int[]{10003, 0, 1, 2, 3, 12, 13, 14, 15, 101, 103, 102, 105, 10001, 10002}, new UsageGroupingRule[] {
       new OddEvenGroupingRule(),
       new LogGroupingRule()});

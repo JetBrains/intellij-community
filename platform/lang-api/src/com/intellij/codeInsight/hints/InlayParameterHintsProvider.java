@@ -90,4 +90,9 @@ public interface InlayParameterHintsProvider {
     return inlayText + ":"; 
   }
 
+  /**
+   * Whether provider should be queried for hints ({@link #getParameterHints(PsiElement)}) even if showing hints is disabled globally
+   * (EditorSettingsExternalizable.isShowParameterNameHints()).
+   */
+  default boolean canShowHintsWhenDisabled() { return false; }
 }

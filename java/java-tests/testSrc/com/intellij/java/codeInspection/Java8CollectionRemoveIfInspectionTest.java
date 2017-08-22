@@ -30,7 +30,7 @@ public class Java8CollectionRemoveIfInspectionTest extends LightQuickFixParamete
     return new LocalInspectionTool[]{new Java8CollectionRemoveIfInspection()};
   }
 
-  public void test() throws Exception {
+  public void test() {
     doAllTests();
   }
 

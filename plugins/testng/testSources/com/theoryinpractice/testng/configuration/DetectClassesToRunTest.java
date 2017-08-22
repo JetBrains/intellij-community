@@ -84,7 +84,7 @@ public class DetectClassesToRunTest extends LightCodeInsightFixtureTestCase {
     doTestMethodConfiguration(aClass, aClass.getMethods());
   }
 
-  public void testPackagePrivateMethodWhenAnnotationIsOnClass() throws Exception {
+  public void testPackagePrivateMethodWhenAnnotationIsOnClass() {
     PsiClass aClass = myFixture.addClass("package a; @org.testng.annotations.Test public class MyTestClass {void testOne(){}}");
     assertFalse(new TestNGFramework().isTestMethod(aClass.getMethods()[0], false));
   }
@@ -139,7 +139,7 @@ public class DetectClassesToRunTest extends LightCodeInsightFixtureTestCase {
     doTestMethodConfiguration(aClass, configClass, configClass.getMethods()[0], aClass.getMethods());
   }
 
-  public void testRerunFailedTestWithDependency() throws Exception {
+  public void testRerunFailedTestWithDependency() {
     final PsiClass aClass =
       myFixture.addClass("package a; public class ATest {" +
                          "  @org.testng.annotations.Test()\n" +
@@ -163,7 +163,7 @@ public class DetectClassesToRunTest extends LightCodeInsightFixtureTestCase {
     assertContainsElements(paramsToRerun, "a");
   }
   
-  public void testRerunFailedParameterized() throws Exception {
+  public void testRerunFailedParameterized() {
     @SuppressWarnings("TestNGDataProvider") final PsiClass aClass =
       myFixture.addClass("package a; " +
                          "import org.testng.annotations.DataProvider;\n" +

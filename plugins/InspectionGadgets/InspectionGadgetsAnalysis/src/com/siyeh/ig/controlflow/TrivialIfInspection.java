@@ -144,7 +144,7 @@ public class TrivialIfInspection extends BaseInspection implements CleanupLocalI
       return;
     }
     final String conditionText = condition.getText();
-    final PsiElement nextStatement = PsiTreeUtil.skipSiblingsForward(statement, PsiWhiteSpace.class);
+    final PsiElement nextStatement = PsiTreeUtil.skipWhitespacesForward(statement);
     @NonNls final String newStatement = "return " + conditionText + ';';
     PsiReplacementUtil.replaceStatement(statement, newStatement);
     assert nextStatement != null;
@@ -192,7 +192,7 @@ public class TrivialIfInspection extends BaseInspection implements CleanupLocalI
   }
 
   private static void replaceSimplifiableImplicitAssignment(PsiIfStatement statement) {
-    final PsiElement prevStatement = PsiTreeUtil.skipSiblingsBackward(statement, PsiWhiteSpace.class);
+    final PsiElement prevStatement = PsiTreeUtil.skipWhitespacesBackward(statement);
     if (prevStatement == null) {
       return;
     }
@@ -216,7 +216,7 @@ public class TrivialIfInspection extends BaseInspection implements CleanupLocalI
   }
 
   private static void replaceSimplifiableImplicitAssignmentNegated(PsiIfStatement statement) {
-    final PsiElement prevStatement = PsiTreeUtil.skipSiblingsBackward(statement, PsiWhiteSpace.class);
+    final PsiElement prevStatement = PsiTreeUtil.skipWhitespacesBackward(statement);
     final PsiExpression condition = statement.getCondition();
     if (condition == null) {
       return;
@@ -243,7 +243,7 @@ public class TrivialIfInspection extends BaseInspection implements CleanupLocalI
       return;
     }
     final String conditionText = BoolUtils.getNegatedExpressionText(condition);
-    final PsiElement nextStatement = PsiTreeUtil.skipSiblingsForward(statement, PsiWhiteSpace.class);
+    final PsiElement nextStatement = PsiTreeUtil.skipWhitespacesForward(statement);
     if (nextStatement == null) {
       return;
     }
@@ -334,7 +334,7 @@ public class TrivialIfInspection extends BaseInspection implements CleanupLocalI
     }
     PsiStatement thenBranch = ifStatement.getThenBranch();
     thenBranch = ControlFlowUtils.stripBraces(thenBranch);
-    final PsiElement nextStatement = PsiTreeUtil.skipSiblingsForward(ifStatement, PsiWhiteSpace.class);
+    final PsiElement nextStatement = PsiTreeUtil.skipWhitespacesForward(ifStatement);
     if (!(nextStatement instanceof PsiStatement)) {
       return false;
     }
@@ -384,7 +384,7 @@ public class TrivialIfInspection extends BaseInspection implements CleanupLocalI
     }
     PsiStatement thenBranch = ifStatement.getThenBranch();
     thenBranch = ControlFlowUtils.stripBraces(thenBranch);
-    final PsiElement nextStatement = PsiTreeUtil.skipSiblingsBackward(ifStatement, PsiWhiteSpace.class);
+    final PsiElement nextStatement = PsiTreeUtil.skipWhitespacesBackward(ifStatement);
     if (!(nextStatement instanceof PsiStatement)) {
       return false;
     }

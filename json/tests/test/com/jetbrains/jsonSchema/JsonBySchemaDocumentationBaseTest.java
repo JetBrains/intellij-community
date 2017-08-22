@@ -48,7 +48,7 @@ public abstract class JsonBySchemaDocumentationBaseTest extends JsonSchemaHeavyA
         }
 
         @Override
-        public void configureFiles() throws Exception {
+        public void configureFiles() {
           configureByFiles(null, "/" + getTestName(true) + "." + extension, "/" + getTestName(true) + "Schema.json");
         }
 

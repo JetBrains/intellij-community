@@ -200,7 +200,8 @@ public class MismatchedCollectionQueryUpdateInspectionBase extends BaseInspectio
       }
       final boolean written = collectionContentsAreUpdated(field, containingClass);
       final boolean read = collectionContentsAreQueried(field, containingClass);
-      if (read == written || UnusedSymbolUtil.isImplicitWrite(field)) {
+      if (read == written || UnusedSymbolUtil.isImplicitWrite(field) || UnusedSymbolUtil.isImplicitRead(field)) {
+        // Even implicit read of the mutable collection field may cause collection change
         return;
       }
       registerFieldError(field, Boolean.valueOf(written));

@@ -76,7 +76,7 @@ public class GitRepositoryReaderTest extends GitPlatformTest {
 
   @After
   @Override
-  public void tearDown() throws Exception {
+  public void tearDown() {
     try {
       if (myTempDir != null) {
         FileUtil.delete(myTempDir);

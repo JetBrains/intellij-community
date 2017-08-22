@@ -264,7 +264,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       child = prev;
     }
 
-    child = PsiTreeUtil.skipSiblingsForward(child, PsiWhiteSpace.class, PsiComment.class);
+    child = PsiTreeUtil.skipWhitespacesAndCommentsForward(child);
     PsiElement anchor;
     if (child != null) {
       anchor = child;
@@ -798,7 +798,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
             if (parent instanceof PsiClass) break;
             endElement = parent;
           }
-          PsiElement last = PsiTreeUtil.skipSiblingsBackward(endElement, PsiWhiteSpace.class);
+          PsiElement last = PsiTreeUtil.skipWhitespacesBackward(endElement);
           if (last.getTextRange().getStartOffset() < myElement.getTextRange().getStartOffset()) {
             last = myElement;
           }

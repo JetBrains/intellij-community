@@ -87,6 +87,7 @@ public class JavaCoverageEnabledConfiguration extends CoverageEnabledConfigurati
 
         ((JavaCoverageRunner)runner).appendCoverageArgument(new File(path).getCanonicalPath(),
                                                             getPatterns(),
+                                                            getExcludePatterns(),
                                                             javaParameters,
                                                             isTrackPerTestCoverage() && !isSampling(),
                                                             isSampling(),
@@ -116,7 +117,19 @@ public class JavaCoverageEnabledConfiguration extends CoverageEnabledConfigurati
     if (myCoveragePatterns != null) {
       List<String> patterns = new ArrayList<>();
       for (ClassFilter coveragePattern : myCoveragePatterns) {
-        if (coveragePattern.isEnabled()) patterns.add(coveragePattern.getPattern());
+        if (coveragePattern.isEnabled() && coveragePattern.isInclude()) patterns.add(coveragePattern.getPattern());
+      }
+      return ArrayUtil.toStringArray(patterns);
+    }
+    return null;
+  }
+
+  @Nullable
+  public String [] getExcludePatterns() {
+    if (myCoveragePatterns != null) {
+      List<String> patterns = new ArrayList<>();
+      for (ClassFilter coveragePattern : myCoveragePatterns) {
+        if (coveragePattern.isEnabled() && !coveragePattern.isInclude()) patterns.add(coveragePattern.getPattern());
       }
       return ArrayUtil.toStringArray(patterns);
     }
@@ -205,7 +218,7 @@ public class JavaCoverageEnabledConfiguration extends CoverageEnabledConfigurati
     if (myCoveragePatterns != null) {
       for (ClassFilter pattern : myCoveragePatterns) {
         @NonNls final Element patternElement = new Element(COVERAGE_PATTERN_ELEMENT_NAME);
-        DefaultJDOMExternalizer.writeExternal(pattern, patternElement);
+        pattern.writeExternal(patternElement);
         element.addContent(patternElement);
       }
     }

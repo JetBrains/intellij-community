@@ -50,6 +50,7 @@ import com.jetbrains.python.packaging.PyPackageUtil;
 import com.jetbrains.python.packaging.PyRequirement;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.testing.PyTestFrameworkService;
 import com.jetbrains.python.testing.PythonTestConfigurationsModel;
 import com.jetbrains.python.testing.TestRunnerService;
 import com.jetbrains.python.testing.VFSTestFrameworkListener;
@@ -128,16 +129,13 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
         final Sdk sdk = PythonSdkType.findPythonSdk(myModule);
         if (sdk != null) {
           final Object selectedItem = myTestRunnerComboBox.getSelectedItem();
-          if (PythonTestConfigurationsModel.PY_TEST_NAME.equals(selectedItem)) {
-            if (!VFSTestFrameworkListener.getInstance().isPyTestInstalled(sdk)) {
-              return new ValidationResult(PyBundle.message("runcfg.testing.no.test.framework", "py.test"),
-                                          createQuickFix(sdk, facetErrorPanel, PyNames.PY_TEST));
-            }
-          }
-          else if (PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME.equals(selectedItem)) {
-            if (!VFSTestFrameworkListener.getInstance().isNoseTestInstalled(sdk)) {
-              return new ValidationResult(PyBundle.message("runcfg.testing.no.test.framework", "nosetest"),
-                                          createQuickFix(sdk, facetErrorPanel, PyNames.NOSE_TEST));
+
+          for (final String framework : PyTestFrameworkService.getFrameworkNamesArray()) {
+            if (PyTestFrameworkService.getSdkReadableNameByFramework(framework).equals(selectedItem)) {
+              if (!VFSTestFrameworkListener.getInstance().isTestFrameworkInstalled(sdk, framework)) {
+                return new ValidationResult(PyBundle.message("runcfg.testing.no.test.framework", framework),
+                                            createQuickFix(sdk, facetErrorPanel, framework));
+              }
             }
           }
         }
@@ -159,7 +157,8 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
           @Override
           public void finished(List<ExecutionException> exceptions) {
             if (exceptions.isEmpty()) {
-              VFSTestFrameworkListener.getInstance().setTestFrameworkInstalled(true, sdk.getHomePath(), name);
+              VFSTestFrameworkListener.getInstance().setTestFrameworkInstalled(true, sdk.getHomePath(),
+                                                                               name);
               facetErrorPanel.getValidatorsManager().validate();
             }
           }

@@ -20,21 +20,16 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.reference.RefManager;
+import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefModule;
 import com.intellij.codeInspection.unnecessaryModuleDependency.UnnecessaryModuleDependencyInspection;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.roots.*;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Set;
+import org.jetbrains.annotations.Nullable;
 
 public class InconsistentLanguageLevelInspection extends GlobalInspectionTool {
   @Override
@@ -42,30 +37,21 @@ public class InconsistentLanguageLevelInspection extends GlobalInspectionTool {
     return false;
   }
 
+  @Nullable
   @Override
-  public void runInspection(@NotNull AnalysisScope scope,
-                            @NotNull InspectionManager manager,
-                            @NotNull GlobalInspectionContext globalContext,
-                            @NotNull ProblemDescriptionsProcessor problemProcessor) {
-    final Set<Module> modules = new THashSet<>();
-    scope.accept(new PsiElementVisitor(){
-      @Override
-      public void visitElement(PsiElement element) {
-        final Module module = ModuleUtilCore.findModuleForPsiElement(element);
-        if (module != null) {
-          modules.add(module);
-        }
-      }
-    });
-
-    LanguageLevel projectLanguageLevel = LanguageLevelProjectExtension.getInstance(manager.getProject()).getLanguageLevel();
-    for (Module module : modules) {
+  public CommonProblemDescriptor[] checkElement(@NotNull RefEntity refEntity,
+                                                @NotNull AnalysisScope scope,
+                                                @NotNull InspectionManager manager,
+                                                @NotNull GlobalInspectionContext globalContext,
+                                                @NotNull ProblemDescriptionsProcessor processor) {
+    if (refEntity instanceof RefModule) {
+      Module module = ((RefModule)refEntity).getModule();
+      if (module.isDisposed() || !scope.containsModule(module)) return null;
+      LanguageLevel projectLanguageLevel = LanguageLevelProjectExtension.getInstance(manager.getProject()).getLanguageLevel();
       LanguageLevel languageLevel = LanguageLevelModuleExtensionImpl.getInstance(module).getLanguageLevel();
       if (languageLevel == null) {
         languageLevel = projectLanguageLevel;
       }
-      RefManager refManager = globalContext.getRefManager();
-      final RefModule refModule = refManager.getRefModule(module);
       for (OrderEntry entry : ModuleRootManager.getInstance(module).getOrderEntries()) {
         if (!(entry instanceof ModuleOrderEntry)) continue;
         final Module dependantModule = ((ModuleOrderEntry)entry).getModule();
@@ -76,14 +62,15 @@ public class InconsistentLanguageLevelInspection extends GlobalInspectionTool {
         }
         if (languageLevel.compareTo(dependantLanguageLevel) < 0) {
           final CommonProblemDescriptor problemDescriptor = manager.createProblemDescriptor(
-            "Inconsistent language level settings: module " + module.getName() + " with language level " + languageLevel +
+            "Module " + module.getName() + " with language level " + languageLevel +
             " depends on module " + dependantModule.getName() +" with language level " + dependantLanguageLevel,
             new UnnecessaryModuleDependencyInspection.RemoveModuleDependencyFix(module, dependantModule),
             (QuickFix)QuickFixFactory.getInstance().createShowModulePropertiesFix(module));
-          problemProcessor.addProblemElement(refModule, problemDescriptor);
+          return new CommonProblemDescriptor[] {problemDescriptor};
         }
       }
     }
+    return null;
   }
 
   @Override

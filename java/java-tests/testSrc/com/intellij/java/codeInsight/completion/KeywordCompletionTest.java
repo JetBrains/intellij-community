@@ -17,6 +17,7 @@ package com.intellij.java.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.completion.LightCompletionTestCase;
+import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -45,6 +46,8 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   }
 
   public void testFileScope1() { doTest(8, FILE_SCOPE_KEYWORDS); }
+  public void testFileScopeAfterComment() { doTest(4, "package", "class", "import", "public", "private"); }
+  public void testFileScopeAfterJavaDoc() { doTest(4, "package", "class", "import", "public", "private"); }
   public void testFileScope2() { doTest(7, CLASS_SCOPE_KEYWORDS); }
   public void testClassScope1() { doTest(5, CLASS_SCOPE_KEYWORDS); }
   public void testClassScope2() { doTest(4, CLASS_SCOPE_KEYWORDS); }
@@ -104,14 +107,15 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testNullInMethodCall() { doTest(); }
   public void testNullInMethodCall2() { doTest(); }
   public void testNewInMethodRefs() { doTest(1, "new", "null", "true", "false"); }
+  public void testNewInCast() { doTest(2, "new", "null", "true", "false"); }
   public void testSpaceAfterInstanceof() { doTest(); }
   public void testInstanceofAfterUnresolved() { doTest(1, "instanceof"); }
   public void testInstanceofAfterStatementStart() { doTest(1, "instanceof"); }
 
   public void testInstanceofNegation() {
-    configureByFile(BASE_PATH + getTestName(true) + ".java");
+    configureByTestName();
     selectItem(myItems[0], '!');
-    checkResultByFile(BASE_PATH + getTestName(true) + "_after.java");
+    checkResultByTestName();
   }
 
   public void testNoPrimitivesInBooleanAnnotationAttribute() { doTest(1, "true", "int", "boolean"); }
@@ -119,6 +123,10 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testNoPrimitivesInEnumAnnotationAttribute() { doTest(0, "true", "int", "boolean"); }
   public void testPrimitivesInClassAnnotationValueAttribute() { doTest(2, "true", "int", "boolean"); }
   public void testPrimitivesInClassAnnotationAttribute() { doTest(3, "true", "int", "boolean"); }
+  public void testPrimitivesInMethodReturningArray() { doTest(2, "true", "byte", "boolean"); }
+
+  public void testNoClassKeywordsInLocalArrayInitializer() { doTest(0, "class", "interface", "enum"); }
+  public void testNoClassKeywordsInFieldArrayInitializer() { doTest(0, "class", "interface", "enum"); }
 
   public void testImportStatic() { doTest(1, "static"); }
   public void testAbstractInInterface() { doTest(1, "abstract"); }
@@ -131,6 +139,7 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testFinalInCatch() { doTest(1, "final"); }
   public void testFinalInIncompleteCatch() { doTest(1, "final"); }
   public void testFinalInTryWithResources() { doTest(1, "final", "float", "class"); }
+  public void testFinalInLambda() { doTest(2, "final", "float"); }
   public void testNoFinalAfterTryBody() { doTest(1, "final", "finally"); }
   public void testClassInMethod() { doTest(2, "class", "char"); }
   public void testIntInClassArray() { doTest(2, "int", "char", "final"); }
@@ -140,22 +149,40 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testIntInGenerics() { doTest(2, "int", "char", "final"); }
   public void testIntInGenerics2() { doTest(2, "int", "char", "final"); }
   public void testBreakInLabeledBlock() { doTest(1, "break label", "continue"); }
+  public void testPrimitiveInForLoop() { doTest(1, "int"); }
+  public void testNoStatementInForLoopCondition() { doTest(0, "synchronized", "if"); }
+  public void testNoStatementInForLoopUpdate() { doTest(0, "synchronized", "if"); }
   public void testPrivateInJava9Interface() { setLanguageLevel(LanguageLevel.JDK_1_9); doTest(); }
+  public void testQualifiedNew() { doTest(1, "new"); }
+
+  public void testOverwriteCatch() {
+    configureByTestName();
+    selectItem(myItems[0], Lookup.REPLACE_SELECT_CHAR);
+    checkResultByTestName();
+  }
 
   public void testTryInExpression() {
-    configureByFile(BASE_PATH + getTestName(true) + ".java");
+    configureByTestName();
     assertEquals("toString", myItems[0].getLookupString());
     assertEquals("this", myItems[1].getLookupString());
   }
 
   private void doTest() {
+    configureByTestName();
+    checkResultByTestName();
+  }
+
+  private void configureByTestName() {
     configureByFile(BASE_PATH + getTestName(true) + ".java");
+  }
+
+  private void checkResultByTestName() {
     checkResultByFile(BASE_PATH + getTestName(true) + "_after.java");
   }
 
   // todo: check included/excluded variants separately
   protected void doTest(int finalCount, String... values) {
-    configureByFile(BASE_PATH + getTestName(true) + ".java");
+    configureByTestName();
     testByCount(finalCount, values);
   }
 }

@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.inheritance;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -97,19 +96,16 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
       if (superMethod == null) {
         return;
       }
-      if (!modifierListsAreEquivalent(method.getModifierList(), superMethod.getModifierList())) {
+      if (!MethodUtils.haveEquivalentModifierLists(method, superMethod)) {
         return;
       }
       final PsiType superReturnType = superMethod.getReturnType();
       if (superReturnType == null || !superReturnType.equals(method.getReturnType())) {
         return;
       }
-      if (method.hasModifierProperty(PsiModifier.FINAL)) {
-        return;  // method overridden and made final - not redundant
-      }
       final PsiCodeBlock superBody = superMethod.getBody();
 
-      EquivalenceChecker checker = new ParameterEquivalenceChecker(method, superMethod);
+      final EquivalenceChecker checker = new ParameterEquivalenceChecker(method, superMethod);
       if (checker.codeBlocksAreEquivalent(body, superBody) || isSuperCallWithSameArguments(body, method, superMethod)) {
         registerMethodError(method);
       }
@@ -232,22 +228,6 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
         }
       }
       return true;
-    }
-
-    private static boolean modifierListsAreEquivalent(@Nullable PsiModifierList list1, @Nullable PsiModifierList list2) {
-      if (list1 == null) {
-        return list2 == null;
-      }
-      else if (list2 == null) {
-        return false;
-      }
-      if (list1.hasModifierProperty(PsiModifier.STRICTFP) != list2.hasModifierProperty(PsiModifier.STRICTFP) ||
-          list1.hasModifierProperty(PsiModifier.SYNCHRONIZED) != list2.hasModifierProperty(PsiModifier.SYNCHRONIZED) ||
-          list1.hasModifierProperty(PsiModifier.PUBLIC) != list2.hasModifierProperty(PsiModifier.PUBLIC) ||
-          list1.hasModifierProperty(PsiModifier.PROTECTED) != list2.hasModifierProperty(PsiModifier.PROTECTED)) {
-        return false;
-      }
-      return AnnotationUtil.equal(list1.getAnnotations(), list2.getAnnotations());
     }
   }
 }

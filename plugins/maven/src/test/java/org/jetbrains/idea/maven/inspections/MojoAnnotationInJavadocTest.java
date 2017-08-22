@@ -26,7 +26,7 @@ public class MojoAnnotationInJavadocTest extends InspectionTestCase {
     return PluginPathManager.getPluginHomePath("maven") + "/src/test/data/inspections";
   }
 
-  public void testJavadocMojoValidTags() throws Exception {
+  public void testJavadocMojoValidTags() {
     doTest(getTestName(true), new JavaDocLocalInspection());
   }
 }

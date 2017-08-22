@@ -21,6 +21,7 @@ import com.intellij.openapi.options.SchemeImportException;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +34,7 @@ import java.lang.reflect.Field;
 public class EclipseCodeStyleImportWorker implements EclipseXmlProfileElements {
   private static final Logger LOG = Logger.getInstance(EclipseCodeStyleImportWorker.class);
 
-  private final static String PROGRAMMATIC_IMPORT_KEY = "<Programmatic>";
+  final static String PROGRAMMATIC_IMPORT_KEY = "<Programmatic>";
 
   private final EclipseImportMap myImportMap;
 
@@ -68,16 +69,22 @@ public class EclipseCodeStyleImportWorker implements EclipseXmlProfileElements {
     if (importDescriptor != null) {
       try {
         if (importDescriptor.isLanguageSpecific()) {
-          CommonCodeStyleSettings languageSettings = settings.getCommonSettings(importDescriptor.getLanguage());
-          if (languageSettings != null) {
-            if (importDescriptor.isIndentOptions()) {
-              CommonCodeStyleSettings.IndentOptions indentOptions = languageSettings.getIndentOptions();
-              if (indentOptions != null) {
-                setValue(indentOptions, key, importDescriptor.getFieldName(), value);
+          if (importDescriptor.isCustomField()) {
+            JavaCodeStyleSettings javaSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
+            setValue(javaSettings, key, importDescriptor.getFieldName(), value);
+          }
+          else {
+            CommonCodeStyleSettings languageSettings = settings.getCommonSettings(importDescriptor.getLanguage());
+            if (languageSettings != null) {
+              if (importDescriptor.isIndentOptions()) {
+                CommonCodeStyleSettings.IndentOptions indentOptions = languageSettings.getIndentOptions();
+                if (indentOptions != null) {
+                  setValue(indentOptions, key, importDescriptor.getFieldName(), value);
+                }
               }
-            }
-            else {
-              setValue(languageSettings, key, importDescriptor.getFieldName(), value);
+              else {
+                setValue(languageSettings, key, importDescriptor.getFieldName(), value);
+              }
             }
           }
         }
@@ -193,7 +200,7 @@ public class EclipseCodeStyleImportWorker implements EclipseXmlProfileElements {
     if (object instanceof CodeStyleSettings) {
       CodeStyleSettings settings = (CodeStyleSettings)object;
       if (OPTION_REMOVE_JAVADOC_BLANK_LINES.equals(key)) {
-        settings.JD_KEEP_EMPTY_LINES = !valueToBoolean(key, value);
+        settings.getCustomSettings(JavaCodeStyleSettings.class).JD_KEEP_EMPTY_LINES = !valueToBoolean(key, value);
       }
       else if (OPTION_NEW_LINE_AT_EOF.equals(key)) {
         EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();

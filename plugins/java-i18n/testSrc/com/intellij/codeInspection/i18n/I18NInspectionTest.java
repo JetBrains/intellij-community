@@ -13,22 +13,22 @@ import com.intellij.testFramework.InspectionTestCase;
  * @author lesya
  */
 public class I18NInspectionTest extends InspectionTestCase {
-  private void doTest() throws Exception {
+  private void doTest() {
     doTest(new I18nInspection());
   }
-  private void doTest(I18nInspection tool) throws Exception {
+  private void doTest(I18nInspection tool) {
     doTest("i18n/" + getTestName(true), tool);
   }
 
-  public void testHardCodedStringLiteralAsParameter() throws Exception{ doTest(); }
-  public void testReturnTypeInheritsNonNlsAnnotationFromParent() throws Exception{ doTest(); }
-  public void testRecursiveInheritance() throws Exception { doTest(); }
-  public void testParameterInheritsNonNlsAnnotationFromSuper() throws Exception { doTest(); }
-  public void testLocalVariables() throws Exception { doTest(); }
-  public void testFields() throws Exception{ doTest(); }
-  public void testAnonymousClassConstructorParameter() throws Exception { doTest(); }
-  public void testStringBufferNonNls() throws Exception { doTest(); }
-  public void testEnum() throws Exception {
+  public void testHardCodedStringLiteralAsParameter() { doTest(); }
+  public void testReturnTypeInheritsNonNlsAnnotationFromParent() { doTest(); }
+  public void testRecursiveInheritance() { doTest(); }
+  public void testParameterInheritsNonNlsAnnotationFromSuper() { doTest(); }
+  public void testLocalVariables() { doTest(); }
+  public void testFields() { doTest(); }
+  public void testAnonymousClassConstructorParameter() { doTest(); }
+  public void testStringBufferNonNls() { doTest(); }
+  public void testEnum() {
      final JavaPsiFacade facade = getJavaFacade();
      final LanguageLevel effectiveLanguageLevel = LanguageLevelProjectExtension.getInstance(facade.getProject()).getLanguageLevel();
      LanguageLevelProjectExtension.getInstance(facade.getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
@@ -40,19 +40,19 @@ public class I18NInspectionTest extends InspectionTestCase {
      }
    }
 
-  public void testVarargNonNlsParameter() throws Exception { doTest(); }
-  public void testInitializerInAnonymousClass() throws Exception{ doTest(); }
-  public void testNonNlsArray() throws Exception{ doTest(); }
-  public void testParameterInNewAnonymousClass() throws Exception{ doTest(); }
-  public void testConstructorCallOfNonNlsVariable() throws Exception{ doTest(); }
-  public void testSwitchOnNonNlsString() throws Exception{ doTest(); }
-  public void testNonNlsComment() throws Exception{
+  public void testVarargNonNlsParameter() { doTest(); }
+  public void testInitializerInAnonymousClass() { doTest(); }
+  public void testNonNlsArray() { doTest(); }
+  public void testParameterInNewAnonymousClass() { doTest(); }
+  public void testConstructorCallOfNonNlsVariable() { doTest(); }
+  public void testSwitchOnNonNlsString() { doTest(); }
+  public void testNonNlsComment() {
     I18nInspection inspection = new I18nInspection();
     inspection.nonNlsCommentPattern = "MYNON-NLS";
     inspection.cacheNonNlsCommentPattern();
     doTest(inspection);
   }
-  public void testAnnotationArgument() throws Exception{ doTest(); }
+  public void testAnnotationArgument() { doTest(); }
 
   @Override
   protected String getTestDataPath() {

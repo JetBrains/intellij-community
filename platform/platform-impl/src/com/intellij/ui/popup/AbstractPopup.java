@@ -78,9 +78,6 @@ public class AbstractPopup implements JBPopup {
 
   private static final Object SUPPRESS_MAC_CORNER = new Object();
 
-  // X server sometimes focuses focusable popups upon appearance, ignoring the fact that we didn't ask to focus them (IDEA-94683)
-  private static final boolean X_WINDOW_FOCUS_BUG = SystemInfo.isXWindow;
-
   private PopupComponent myPopup;
   private MyContentPanel myContent;
   private JComponent     myPreferredFocusedComponent;
@@ -465,7 +462,7 @@ public class AbstractPopup implements JBPopup {
   @Override
   public void showUnderneathOf(@NotNull Component aComponent) {
     show(new RelativePoint(aComponent, UIUtil.isUnderWin10LookAndFeel() ?
-              new Point(1, aComponent.getHeight() + JBUI.scale(1)) :
+              new Point(2, aComponent.getHeight()) :
               new Point(0, aComponent.getHeight())));
   }
 
@@ -1042,7 +1039,7 @@ public class AbstractPopup implements JBPopup {
 
           return result;
         }
-      }, true).doWhenRejected(() -> afterShow.run());
+      }, true).doWhenRejected(afterShow);
 
       delayKeyEventsUntilFocusSettlesDown();
     } else {
@@ -1051,15 +1048,6 @@ public class AbstractPopup implements JBPopup {
         if (isDisposed()) {
           removeActivity();
           return;
-        }
-
-        if (X_WINDOW_FOCUS_BUG && !myRequestFocus && prevOwner != null &&
-            Registry.is("actionSystem.xWindow.remove.focus.from.nonFocusable.popups")) {
-          new Alarm().addRequest(() -> {
-            if (isFocused()) {
-              IdeFocusManager.getInstance(myProject).requestFocus(prevOwner, false);
-            }
-          }, Registry.intValue("actionSystem.xWindow.remove.focus.from.nonFocusable.popups.delay"));
         }
 
         afterShow.run();

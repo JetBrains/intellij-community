@@ -76,7 +76,7 @@ public final class InplaceEditingLayer extends JComponent{
    */
   private Rectangle myPreferredBounds;
   /**
-   * If <code>true</code> then we do not have to react on own events
+   * If {@code true} then we do not have to react on own events
    */
   private boolean myInsideChange;
 
@@ -122,7 +122,7 @@ public final class InplaceEditingLayer extends JComponent{
 
   /**
    * Starts editing of "inplace" property for the component at the
-   * specified point <code>(x, y)</code>.
+   * specified point {@code (x, y)}.
    *
    * @param x x coordinate in the editor coordinate system
    * @param y y coordinate in the editor coordinate system

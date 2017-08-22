@@ -59,6 +59,7 @@ public class GithubCredentialsPanel extends JPanel {
     super(new BorderLayout());
     add(myPane, BorderLayout.CENTER);
 
+    mySignupTextField.setEditorKit(UIUtil.getHTMLEditorKit());
     mySignupTextField.setText("<html>Do not have an account at github.com? <a href=\"https://github.com\">Sign up</a></html>");
     mySignupTextField.setBackground(UIUtil.TRANSPARENT_COLOR);
     mySignupTextField.setCursor(new Cursor(Cursor.HAND_CURSOR));

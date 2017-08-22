@@ -18,11 +18,11 @@ package com.intellij.openapi.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.ui.popup.*;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -81,6 +81,10 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
     return null;
   }
 
+  protected ListSeparator getSeparatorAbove(T value) {
+    return null;
+  }
+
   public void setPaintArrow(final boolean paintArrow) {
     myPaintArrow = paintArrow;
   }
@@ -136,6 +140,12 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
       @Override
       public Icon getIconFor(T value) {
         return ComboBoxTableRenderer.this.getIconFor(value);
+      }
+
+      @Nullable
+      @Override
+      public ListSeparator getSeparatorAbove(T value) {
+        return ComboBoxTableRenderer.this.getSeparatorAbove(value);
       }
 
       public PopupStep onChosen(T selectedValue, boolean finalChoice) {
@@ -299,10 +309,6 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
     }
 
     public Icon getIconFor(T aValue) {
-      return null;
-    }
-
-    public ListSeparator getSeparatorAbove(T value) {
       return null;
     }
 

@@ -241,6 +241,18 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
       if (myProjectGenerator instanceof PyFrameworkProjectGenerator) {
         PyFrameworkProjectGenerator frameworkProjectGenerator = (PyFrameworkProjectGenerator)myProjectGenerator;
         String frameworkName = frameworkProjectGenerator.getFrameworkTitle();
+
+        if (isPy3k && !((PyFrameworkProjectGenerator)myProjectGenerator).supportsPython3()) {
+          setErrorText(frameworkName + " is not supported for the selected interpreter");
+          return false;
+        }
+
+        if (PythonSdkType.isRemote(sdk)) {
+          return true;
+        }
+        // All code beyond this line may be heavy in case of remote sdk and should not be called on AWT
+        // pretend everything is ok for remote and check package later
+
         if (!isFrameworkInstalled(sdk)) {
           if (PyPackageUtil.packageManagementEnabled(sdk)) {
             myInstallFramework = true;
@@ -268,10 +280,6 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
         if (!warningList.isEmpty()) {
           final String warning = StringUtil.join(warningList, "<br/>");
           setWarningText(warning);
-        }
-        if (isPy3k && !((PyFrameworkProjectGenerator)myProjectGenerator).supportsPython3()) {
-          setErrorText(frameworkName + " is not supported for the selected interpreter");
-          return false;
         }
       }
     }

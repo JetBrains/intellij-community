@@ -27,7 +27,7 @@ import com.intellij.openapi.wm.ToolWindowId;
  */
 public class ProjectToolWindowTest extends ToolWindowManagerTestCase {
 
-  public void testProjectViewActivate() throws Exception {
+  public void testProjectViewActivate() {
 
     ToolWindowEP[] extensions = Extensions.getExtensions(ToolWindowEP.EP_NAME);
     for (ToolWindowEP extension : extensions) {

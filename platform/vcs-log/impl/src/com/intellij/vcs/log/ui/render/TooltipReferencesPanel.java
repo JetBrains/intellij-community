@@ -15,6 +15,7 @@
  */
 package com.intellij.vcs.log.ui.render;
 
+import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColorUtil;
@@ -71,7 +72,7 @@ class TooltipReferencesPanel extends ReferencesPanel {
   @Override
   protected Icon createIcon(@NotNull VcsRefType type, @NotNull Collection<VcsRef> refs, int refIndex, int height) {
     if (refIndex == 0) {
-      Color color = type.getBackgroundColor();
+      Color color = EditorColorsUtil.getGlobalOrDefaultColor(type.getBgColorKey());
       return new LabelIcon(height, getBackground(),
                            refs.size() > 1 ? new Color[]{color, color} : new Color[]{color}) {
         @Override

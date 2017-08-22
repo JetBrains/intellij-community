@@ -28,6 +28,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Set;
+
 public class TestUtils {
   public static final String RUN_WITH = "org.junit.runner.RunWith";
 
@@ -64,8 +66,8 @@ public class TestUtils {
     if (method == null) return false;
     final PsiClass containingClass = method.getContainingClass();
     if (containingClass == null) return false;
-    final TestFramework framework = TestFrameworks.detectFramework(containingClass);
-    return framework != null && framework.getName().startsWith("JUnit") && framework.isTestMethod(method, false);
+    final Set<TestFramework> frameworks = TestFrameworks.detectApplicableFrameworks(containingClass);
+    return frameworks.stream().anyMatch(framework -> framework.getName().startsWith("JUnit") && framework.isTestMethod(method, false));
   }
 
   public static boolean isRunnable(PsiMethod method) {
@@ -91,7 +93,8 @@ public class TestUtils {
     }
     final String methodName = method.getName();
     @NonNls final String test = "test";
-    if (!methodName.startsWith(test)) {
+    if (!methodName.startsWith(test) || 
+        !method.hasModifierProperty(PsiModifier.PUBLIC) && method.getParameterList().getParametersCount() > 0) {
       return false;
     }
     final PsiClass containingClass = method.getContainingClass();
@@ -139,5 +142,19 @@ public class TestUtils {
       return true;
     }
     return isInTestSourceContent(element);
+  }
+
+  /**
+   * @return true if class is annotated with {@code @TestInstance(TestInstance.Lifecycle.PER_CLASS)}
+   */
+  public static boolean testInstancePerClass(@NotNull PsiClass containingClass) {
+    PsiAnnotation annotation = AnnotationUtil.findAnnotation(containingClass, JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_TEST_INSTANCE); 
+    if (annotation != null) {
+      PsiAnnotationMemberValue value = annotation.findDeclaredAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
+      if (value != null && value.getText().contains("PER_CLASS")) {
+        return true;
+      }
+    }
+    return false;
   }
 }

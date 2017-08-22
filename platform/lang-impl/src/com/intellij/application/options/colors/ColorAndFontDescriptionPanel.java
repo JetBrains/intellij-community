@@ -21,11 +21,14 @@ import com.intellij.openapi.editor.colors.EditorSchemeAttributeDescriptor;
 import com.intellij.openapi.editor.colors.EditorSchemeAttributeDescriptorWithPath;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.options.colors.AttributesDescriptor;
-import com.intellij.openapi.options.colors.ColorSettingsPage;
+import com.intellij.openapi.options.colors.AbstractKeyDescriptor;
+import com.intellij.openapi.options.colors.ColorAndFontDescriptorsProvider;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
-import com.intellij.ui.*;
+import com.intellij.ui.CollectionComboBoxModel;
+import com.intellij.ui.ColorPanel;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.BitUtil;
 import com.intellij.util.EventDispatcher;
@@ -38,10 +41,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -74,7 +75,6 @@ public class ColorAndFontDescriptionPanel extends JPanel implements OptionsPanel
     myEffectsMap = Collections.unmodifiableMap(map);
   }
   private JComboBox myEffectsCombo;
-  private final EffectsComboModel myEffectsModel;
 
   private JBCheckBox myCbBold;
   private JBCheckBox myCbItalic;
@@ -89,9 +89,8 @@ public class ColorAndFontDescriptionPanel extends JPanel implements OptionsPanel
     add(myPanel, BorderLayout.CENTER);
 
     setBorder(JBUI.Borders.empty(4, 0, 4, 4));
-    myEffectsModel = new EffectsComboModel(ContainerUtil.newArrayList(myEffectsMap.keySet()));
     //noinspection unchecked
-    myEffectsCombo.setModel(myEffectsModel);
+    myEffectsCombo.setModel(new CollectionComboBoxModel<>(ContainerUtil.newArrayList(myEffectsMap.keySet())));
     //noinspection unchecked
     myEffectsCombo.setRenderer(new ListCellRendererWrapper<String>() {
       @Override
@@ -218,18 +217,18 @@ public class ColorAndFontDescriptionPanel extends JPanel implements OptionsPanel
 
 
   private void setInheritanceInfo(ColorAndFontDescription description) {
-    Pair<ColorSettingsPage, AttributesDescriptor> baseDescriptor = description.getBaseAttributeDescriptor();
+    Pair<ColorAndFontDescriptorsProvider, ? extends AbstractKeyDescriptor> baseDescriptor = description.getFallbackKeyDescriptor();
     if (baseDescriptor != null && baseDescriptor.second.getDisplayName() != null) {
       String attrName = baseDescriptor.second.getDisplayName();
       String attrLabel = attrName.replaceAll(EditorSchemeAttributeDescriptorWithPath.NAME_SEPARATOR, FontUtil.rightArrow(UIUtil.getLabelFont()));
-      ColorSettingsPage settingsPage = baseDescriptor.first;
+      ColorAndFontDescriptorsProvider settingsPage = baseDescriptor.first;
       String style = "<div style=\"text-align:right\" vertical-align=\"top\">";
       String tooltipText;
       String labelText;
       if (settingsPage != null) {
         String pageName = settingsPage.getDisplayName();
-        tooltipText = "'" + attrLabel + "' from<br>'" + pageName + "' section";
-        labelText = style + "'" + attrLabel + "'<br>of <a href=\"" + attrName + "\">" + pageName;
+        tooltipText = "Editor | Color Scheme | " + pageName + "<br>" + attrLabel;
+        labelText = style + "<a href=\"" + pageName + "\">" + attrLabel + "</a><br>(" + pageName + ")";
       }
       else {
         tooltipText = attrLabel;
@@ -238,6 +237,7 @@ public class ColorAndFontDescriptionPanel extends JPanel implements OptionsPanel
 
       myInheritanceLabel.setVisible(true);
       myInheritanceLabel.setText(labelText);
+      myInheritanceLabel.getCaret().setDot(0);
       myInheritanceLabel.setToolTipText(tooltipText);
       myInheritanceLabel.setEnabled(true);
       myInheritAttributesBox.setVisible(true);
@@ -318,9 +318,4 @@ public class ColorAndFontDescriptionPanel extends JPanel implements OptionsPanel
     myDispatcher.addListener(listener);
   }
 
-  private static class EffectsComboModel extends CollectionComboBoxModel<String> {
-    public EffectsComboModel(List<String> names) {
-      super(names);
-    }
-  }
 }

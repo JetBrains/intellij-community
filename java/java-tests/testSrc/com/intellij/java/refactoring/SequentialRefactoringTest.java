@@ -23,8 +23,6 @@ import com.intellij.refactoring.extractMethod.PrepareFailedException;
 import com.intellij.refactoring.inline.InlineMethodProcessor;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 
-import java.io.IOException;
-
 /**
  * Is assumed to contain tests that include more than one refactoring into the processing.
  * 
@@ -33,7 +31,7 @@ import java.io.IOException;
  */
 public class SequentialRefactoringTest extends LightCodeInsightTestCase {
 
-  public void testFormattingAfterInlineExtractMethod() throws IOException, PrepareFailedException {
+  public void testFormattingAfterInlineExtractMethod() throws PrepareFailedException {
     String text =
       "public class BrokenAlignment {\n" +
       "\n" +

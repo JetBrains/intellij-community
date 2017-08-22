@@ -17,7 +17,6 @@ package com.siyeh.ig.naming;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.siyeh.ig.LightInspectionTestCase;
-import com.siyeh.ig.naming.OverloadedVarargsMethodInspection;
 
 /**
  * @author Bas Leijdekkers
@@ -56,7 +55,7 @@ public class OverloadedVarargsMethodInspectionTest extends LightInspectionTestCa
            "}");
   }
 
-  public void testGenericMethods() throws Exception {
+  public void testGenericMethods() {
     doTest("interface Foo<T> {" +
            "        void makeItSo(T command, int... values);" +
            "    }" +

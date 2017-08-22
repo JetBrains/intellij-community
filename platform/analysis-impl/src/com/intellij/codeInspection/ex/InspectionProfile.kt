@@ -120,7 +120,7 @@ abstract class NewInspectionProfile(name: String, private var profileManager: Ba
     }
   }
 
-  protected open fun forceInitInspectionTools() = !ApplicationManager.getApplication().isUnitTestMode || INIT_INSPECTIONS
+  protected open fun forceInitInspectionTools(): Boolean = !ApplicationManager.getApplication().isUnitTestMode || INIT_INSPECTIONS
 
   protected abstract fun initialize(project: Project?)
 

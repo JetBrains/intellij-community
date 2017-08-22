@@ -50,7 +50,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
     return "/refactoring/safeDelete/";
   }
 
-  public void testImplicitCtrCall() throws Exception {
+  public void testImplicitCtrCall() {
     try {
       doTest("Super");
       fail();
@@ -61,7 +61,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
     }
   }
 
-  public void testImplicitCtrCall2() throws Exception {
+  public void testImplicitCtrCall2() {
     try {
       doTest("Super");
       fail();
@@ -72,11 +72,11 @@ public class SafeDeleteTest extends MultiFileTestCase {
     }
   }
 
-  public void testMultipleInterfacesImplementation() throws Exception {
+  public void testMultipleInterfacesImplementation() {
     doTest("IFoo");
   }
 
-  public void testMultipleInterfacesImplementationThroughCommonInterface() throws Exception {
+  public void testMultipleInterfacesImplementationThroughCommonInterface() {
     doTest("IFoo");
   }
 
@@ -132,43 +132,43 @@ public class SafeDeleteTest extends MultiFileTestCase {
     doSingleFileTest();
   }
 
-  public void testParameterInHierarchy() throws Exception {
+  public void testParameterInHierarchy() {
     doTest("C2");
   }
 
-  public void testTopLevelDocComment() throws Exception {
+  public void testTopLevelDocComment() {
     doTest("foo.C1");
   }
 
-  public void testOverloadedMethods() throws Exception {
+  public void testOverloadedMethods() {
     doTest("foo.A");
   }
 
-  public void testTopParameterInHierarchy() throws Exception {
+  public void testTopParameterInHierarchy() {
     doTest("I");
   }
 
-  public void testExtendsList() throws Exception {
+  public void testExtendsList() {
     doTest("B");
   }
 
-  public void testJavadocParamRef() throws Exception {
+  public void testJavadocParamRef() {
     doTest("Super");
   }
 
-  public void testEnumConstructorParameter() throws Exception {
+  public void testEnumConstructorParameter() {
     doTest("UserFlags");
   }
 
-  public void testSafeDeleteStaticImports() throws Exception {
+  public void testSafeDeleteStaticImports() {
     doTest("A");
   }
 
-  public void testSafeDeleteImports() throws Exception {
+  public void testSafeDeleteImports() {
     doTest("B");
   }
 
-  public void testRemoveOverridersInspiteOfUnsafeUsages() throws Exception {
+  public void testRemoveOverridersInspiteOfUnsafeUsages() {
     try {
       BaseRefactoringProcessor.ConflictsInTestsException.setTestIgnore(true);
       doTest("A");
@@ -178,15 +178,15 @@ public class SafeDeleteTest extends MultiFileTestCase {
     }
   }
 
-  public void testLocalVariable() throws Exception {
+  public void testLocalVariable() {
     doTest("Super");
   }
 
-  public void testOverrideAnnotation() throws Exception {
+  public void testOverrideAnnotation() {
     doTest("Super");
   }
 
-  public void testSuperCall() throws Exception {
+  public void testSuperCall() {
     try {
       doTest("Super");
       fail("Conflict was not detected");
@@ -237,7 +237,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
     doSingleFileTest();
   }
 
-  public void testMethodDeepHierarchy() throws Exception {
+  public void testMethodDeepHierarchy() {
     doTest("Super");
   }
 
@@ -245,7 +245,11 @@ public class SafeDeleteTest extends MultiFileTestCase {
     doSingleFileTest();   
   }
 
-  public void testLocalVariableSideEffect() throws Exception {
+  public void testNestedTypeParameterBounds() throws Exception {
+    doSingleFileTest();
+  }
+
+  public void testLocalVariableSideEffect() {
     try {
       doTest("Super");
       fail("Side effect was ignored");
@@ -256,7 +260,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
     }
   }
 
-  public void testParameterSideEffect() throws Exception {
+  public void testParameterSideEffect() {
     try {
       doTest("Super");
       fail("Side effect was ignored");
@@ -267,7 +271,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
     }
   }
 
-  public void testUsageInGenerated() throws Exception {
+  public void testUsageInGenerated() {
     doTest("A");
   }
 
@@ -307,7 +311,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
     doSingleFileTest();
   }
 
-  public void testClassWithInnerStaticImport() throws Exception {
+  public void testClassWithInnerStaticImport() {
     doTest("ClassWithInnerStaticImport");
   }
 
@@ -366,7 +370,15 @@ public class SafeDeleteTest extends MultiFileTestCase {
     });
   }
 
-  private void doTest(@NonNls final String qClassName) throws Exception {
+  public void testDeepDeleteFieldAndInitializerMethod() throws Exception {
+    doSingleFileTest();
+  }
+
+  public void testDeleteMethodCascadeWithField() throws Exception {
+    doSingleFileTest();
+  }
+
+  private void doTest(@NonNls final String qClassName) {
     doTest((rootDir, rootAfter) -> this.performAction(qClassName));
   }
 
@@ -392,7 +404,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
     checkResultByFile(getTestRoot() + getTestName(false) + "_after.java");
   }
 
-  private void performAction(final String qClassName) throws Exception {
+  private void performAction(final String qClassName) {
     final PsiClass aClass = myJavaFacade.findClass(qClassName, GlobalSearchScope.allScope(getProject()));
     assertNotNull("Class " + qClassName + " not found", aClass);
     configureByExistingFile(aClass.getContainingFile().getVirtualFile());

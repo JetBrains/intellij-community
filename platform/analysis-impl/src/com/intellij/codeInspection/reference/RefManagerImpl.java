@@ -33,6 +33,7 @@ import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtilCore;
 import com.intellij.openapi.util.Computable;
@@ -44,8 +45,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
@@ -69,6 +72,8 @@ public class RefManagerImpl extends RefManager {
   private AnalysisScope myScope;
   private RefProject myRefProject;
 
+  private final BitSet myUnprocessedFiles = new BitSet();
+  private final boolean processJVMClasses = Registry.is("batch.inspections.process.by.default.jvm.languages");
   private final ConcurrentMap<PsiAnchor, RefElement> myRefTable = ContainerUtil.newConcurrentMap();
   private final ConcurrentMap<PsiElement, RefElement> myPsiToRefTable = ContainerUtil.newConcurrentMap(); // replacement of myRefTable
 
@@ -127,7 +132,7 @@ public class RefManagerImpl extends RefManager {
     }
     if (myModules != null) {
       for (RefModule refModule : myModules.values()) {
-        refModule.accept(visitor);
+        if (myScope.containsModule(refModule.getModule())) refModule.accept(visitor);
       }
     }
     for (RefManagerExtension extension : myExtensions.values()) {
@@ -377,7 +382,7 @@ public class RefManagerImpl extends RefManager {
   }
 
   @NotNull
-  List<RefElement> getSortedElements() {
+  public List<RefElement> getSortedElements() {
     List<RefElement> answer = myCachedSortedRefs;
     if (answer != null) return answer;
 
@@ -396,6 +401,15 @@ public class RefManagerImpl extends RefManager {
   @Override
   public PsiManager getPsiManager() {
     return myPsiManager;
+  }
+
+  @Override
+  public synchronized boolean isInGraph(VirtualFile file) {
+    return !myUnprocessedFiles.get(((VirtualFileWithId)file).getId());
+  }
+
+  private synchronized void registerUnprocessed(VirtualFileWithId virtualFile) {
+    myUnprocessedFiles.set(virtualFile.getId());
   }
 
   void removeReference(@NotNull RefElement refElem) {
@@ -448,12 +462,62 @@ public class RefManagerImpl extends RefManager {
   private class ProjectIterator extends PsiElementVisitor {
     @Override
     public void visitElement(PsiElement element) {
+      ProgressManager.checkCanceled();
       final RefManagerExtension extension = getExtension(element.getLanguage());
       if (extension != null) {
         extension.visitElement(element);
       }
+      else if (processJVMClasses) {
+        processElementNoExtension(element);
+      }
       for (PsiElement aChildren : element.getChildren()) {
         aChildren.accept(this);
+      }
+    }
+
+    private void processElementNoExtension(PsiElement element) {
+      PsiFile containingFile = element.getContainingFile();
+      if (containingFile instanceof PsiClassOwner) {
+        RefElement refFile = getReference(containingFile);
+        LOG.assertTrue(refFile != null, containingFile);
+        for (PsiReference reference : element.getReferences()) {
+          PsiElement resolve = reference.resolve();
+          if (resolve != null) {
+            fireNodeMarkedReferenced(resolve, containingFile);
+            RefElement refWhat = getReference(resolve);
+            if (refWhat == null) {
+              PsiFile targetContainingFile = resolve.getContainingFile();
+              //no logic to distinguish different elements in the file anyway
+              if (containingFile == targetContainingFile) continue;
+              refWhat = getReference(targetContainingFile);
+            }
+
+            if (refWhat != null) {
+              ((RefElementImpl)refWhat).addInReference(refFile);
+              ((RefElementImpl)refFile).addOutReference(refWhat);
+            }
+          }
+        }
+
+        for (PsiClass aClass : ((PsiClassOwner)containingFile).getClasses()) {
+          PsiClass superClass = aClass.getSuperClass();
+          if (superClass != null) {
+            RefElement superClassReference = getReference(superClass);
+            if (superClassReference != null) {
+              //in case of implicit inheritance, e.g. GroovyObject
+              //= no explicit reference is provided, dependency on groovy library could be treated as redundant though it is not
+              //inReference is not important in this case
+              ((RefElementImpl)refFile).addOutReference(superClassReference);
+            }
+          }
+        }
+
+      }
+      else if (element instanceof PsiFile) {
+        VirtualFile virtualFile = PsiUtilCore.getVirtualFile(element);
+        if (virtualFile instanceof VirtualFileWithId) {
+          registerUnprocessed((VirtualFileWithId)virtualFile);
+        }
       }
     }
 
@@ -634,7 +698,12 @@ public class RefManagerImpl extends RefManager {
 
     ((RefManagerImpl)refElement.getRefManager()).removeReference(refElement);
     ((RefElementImpl)refElement).referenceRemoved();
-    if (!deletedRefs.contains(refElement)) deletedRefs.add(refElement);
+    if (!deletedRefs.contains(refElement)) {
+      deletedRefs.add(refElement);
+    }
+    else {
+      LOG.error("deleted second time");
+    }
   }
 
   boolean isValidPointForReference() {

@@ -34,7 +34,7 @@ abstract class LibraryOrderEntryBaseImpl extends OrderEntryBaseImpl implements L
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.LibraryOrderEntryBaseImpl");
   protected final ProjectRootManagerImpl myProjectRootManagerImpl;
   @NotNull protected DependencyScope myScope = DependencyScope.COMPILE;
-  @Nullable private RootProvider myCurrentlySubscribedRootProvider = null;
+  @Nullable private RootProvider myCurrentlySubscribedRootProvider;
 
   LibraryOrderEntryBaseImpl(@NotNull RootModelImpl rootModel, @NotNull ProjectRootManagerImpl projectRootManager) {
     super(rootModel);

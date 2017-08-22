@@ -60,7 +60,7 @@ public class MavenServerEmbedderTest extends MavenImportingTestCase {
     myEmbedder = new MavenEmbedderWrapper(null) {
       @NotNull
       @Override
-      protected MavenServerEmbedder create() throws RemoteException {
+      protected MavenServerEmbedder create() {
         return myEmbedderImpl;
       }
     };
@@ -81,7 +81,7 @@ public class MavenServerEmbedderTest extends MavenImportingTestCase {
     assertEquals(getRepositoryFile(), myEmbedderImpl.getLocalRepositoryFile());
   }
 
-  public void _testReleasingTwice() throws Exception {
+  public void _testReleasingTwice() {
     myEmbedder.release();
     myEmbedder.release();
   }

@@ -85,6 +85,8 @@ import java.util.List;
 
 import static com.intellij.util.containers.ContainerUtil.exists;
 
+import com.intellij.util.containers.Queue;
+
 public class SingleInspectionProfilePanel extends JPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.InspectionToolsPanel");
   @NonNls private static final String INSPECTION_FILTER_HISTORY = "INSPECTION_FILTER_HISTORY";
@@ -937,7 +939,7 @@ public class SingleInspectionProfilePanel extends JPanel {
           });
         final JPanel panel = wrappedTable.createPanel();
         panel.setMinimumSize(new Dimension(getMinimumSize().width, 3 * scopesAndScopesAndSeveritiesTable.getRowHeight()));
-        severityPanel.add(new JBLabel("Severity by Scope"),
+        severityPanel.add(new JBLabel(InspectionsBundle.message("inspection.scopes.and.severities")),
                           new GridBagConstraints(0, 0, 1, 1, 1.0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
                                                  JBUI.insets(5, 0, 2, 10), 0, 0));
         severityPanel.add(panel, new GridBagConstraints(0, 1, 1, 1, 0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
@@ -1048,7 +1050,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
     myBrowser = new JEditorPane(UIUtil.HTML_MIME, EMPTY_HTML);
     myBrowser.setEditable(false);
-    myBrowser.setBorder(IdeBorderFactory.createEmptyBorder(5, 5, 5, 5));
+    myBrowser.setBorder(JBUI.Borders.empty(5, 5, 5, 5));
     myBrowser.addHyperlinkListener(new HyperlinkAdapter() {
       @Override
       protected void hyperlinkActivated(HyperlinkEvent e) {
@@ -1089,7 +1091,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     final JScrollPane tree = initTreeScrollPane();
 
     final JPanel northPanel = new JPanel(new GridBagLayout());
-    northPanel.setBorder(IdeBorderFactory.createEmptyBorder(2, 0, 2, 0));
+    northPanel.setBorder(JBUI.Borders.empty(2, 0, 2, 0));
     myProfileFilter.setPreferredSize(new Dimension(20, myProfileFilter.getPreferredSize().height));
     northPanel.add(myProfileFilter, new GridBagConstraints(0, 0, 1, 1, 0.5, 1, GridBagConstraints.BASELINE_TRAILING, GridBagConstraints.HORIZONTAL,
                                                            JBUI.emptyInsets(), 0, 0));

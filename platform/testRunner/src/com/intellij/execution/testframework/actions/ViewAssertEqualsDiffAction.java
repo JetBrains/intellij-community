@@ -42,6 +42,9 @@ public class ViewAssertEqualsDiffAction extends AnAction implements TestTreeView
   @NonNls public static final String ACTION_ID = "openAssertEqualsDiff";
 
   public void actionPerformed(final AnActionEvent e) {
+    if (!e.getPresentation().isVisible()) {
+      return;
+    }
     if (!openDiff(e.getDataContext(), null)) {
       final Component component = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
       Messages.showInfoMessage(component, "Comparison error was not found", "No Comparison Data Found");
@@ -83,31 +86,16 @@ public class ViewAssertEqualsDiffAction extends AnAction implements TestTreeView
   }
 
   public void update(final AnActionEvent e) {
-    final Presentation presentation = e.getPresentation();
-    final boolean enabled;
-    final DataContext dataContext = e.getDataContext();
-    if (CommonDataKeys.PROJECT.getData(dataContext) == null) {
-      enabled = false;
+    Presentation presentation = e.getPresentation();
+    if (e.getProject() == null) {
+      presentation.setEnabledAndVisible(false);
+      return;
     }
-    else {
-      final AbstractTestProxy test = AbstractTestProxy.DATA_KEY.getData(dataContext);
-      if (test != null) {
-        if (test.isLeaf()) {
-          enabled = test.getDiffViewerProvider() != null;
-        }
-        else if (test.isDefect()) {
-          enabled = true;
-        }
-        else {
-          enabled = false;
-        }
-      }
-      else {
-        enabled = false;
-      }
-    }
-    presentation.setEnabled(enabled);
-    presentation.setVisible(enabled);
+    AbstractTestProxy test = AbstractTestProxy.DATA_KEY.getData(e.getDataContext());
+    boolean visible = test != null && test.getDiffViewerProvider() != null;
+
+    presentation.setEnabled(test != null);
+    presentation.setVisible(visible);
   }
 
   private static class MyDiffWindow extends DiffWindowBase {

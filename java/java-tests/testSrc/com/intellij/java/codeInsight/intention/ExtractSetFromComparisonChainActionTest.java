@@ -20,7 +20,7 @@ import com.intellij.pom.java.LanguageLevel;
 
 public class ExtractSetFromComparisonChainActionTest extends LightIntentionActionTestCase {
 
-  public void test() throws Exception { doAllTests(); }
+  public void test() { doAllTests(); }
 
   @Override
   protected LanguageLevel getDefaultLanguageLevel() {

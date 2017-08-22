@@ -15,10 +15,7 @@
  */
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.CharTailType;
-import com.intellij.codeInsight.ExpectedTypeInfo;
-import com.intellij.codeInsight.ExpectedTypesProvider;
-import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
@@ -29,7 +26,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -87,33 +83,11 @@ class TypeArgumentCompletionProvider extends CompletionProvider<CompletionParame
       PsiType type = info.getType();
       if (type instanceof PsiClassType && !type.equals(expression.getType())) {
         JBIterable<PsiTypeParameter> remainingParams = JBIterable.of(paramOwner.getTypeParameters()).skip(index);
-        List<PsiType> expectedArgs = getExpectedTypeArgs(context, paramOwner, remainingParams, (PsiClassType)type);
+        List<PsiType> expectedArgs = CodeInsightUtil.getExpectedTypeArgs(context, paramOwner, remainingParams, (PsiClassType)type);
         createLookupItems(result, context, info, expectedArgs, paramOwner);
       }
     }
     return true;
-  }
-
-  @NotNull
-  private static List<PsiType> getExpectedTypeArgs(PsiElement context,
-                                                   PsiTypeParameterListOwner paramOwner,
-                                                   JBIterable<PsiTypeParameter> typeParams, PsiClassType expectedType) {
-    if (paramOwner instanceof PsiClass) {
-      PsiClassType.ClassResolveResult resolve = expectedType.resolveGenerics();
-      final PsiClass expectedClass = resolve.getElement();
-
-      if (!InheritanceUtil.isInheritorOrSelf((PsiClass)paramOwner, expectedClass, true)) {
-        return typeParams.map(p -> (PsiType)null).toList();
-      }
-
-      PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(expectedClass, (PsiClass)paramOwner, PsiSubstitutor.EMPTY);
-      assert substitutor != null;
-
-      return typeParams.map(p -> getExpectedTypeArg(context, resolve, substitutor, p)).toList();
-    }
-
-    PsiSubstitutor substitutor = SmartCompletionDecorator.calculateMethodReturnTypeSubstitutor((PsiMethod)paramOwner, expectedType);
-    return typeParams.map(substitutor::substitute).toList();
   }
 
   private void createLookupItems(Consumer<LookupElement> result,
@@ -144,24 +118,6 @@ class TypeArgumentCompletionProvider extends CompletionProvider<CompletionParame
 
   private static boolean hasParameters(PsiTypeParameterListOwner paramOwner, PsiElement context) {
     return paramOwner instanceof PsiClass && ConstructorInsertHandler.hasConstructorParameters((PsiClass)paramOwner, context);
-  }
-
-  @Nullable
-  private static PsiType getExpectedTypeArg(PsiElement context,
-                                            PsiClassType.ClassResolveResult expectedType,
-                                            PsiSubstitutor currentSubstitutor, PsiTypeParameter typeParam) {
-    PsiClass expectedClass = expectedType.getElement();
-    assert expectedClass != null;
-    for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(expectedClass)) {
-      final PsiType argSubstitution = expectedType.getSubstitutor().substitute(parameter);
-      final PsiType paramSubstitution = currentSubstitutor.substitute(parameter);
-      final PsiType substitution = JavaPsiFacade.getInstance(context.getProject()).getResolveHelper()
-        .getSubstitutionForTypeParameter(typeParam, paramSubstitution, argSubstitution, false, PsiUtil.getLanguageLevel(context));
-      if (substitution != null && substitution != PsiType.NULL) {
-        return substitution;
-      }
-    }
-    return null;
   }
 
   private static void addInheritors(CompletionParameters parameters,

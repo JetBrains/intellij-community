@@ -25,6 +25,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author peter
@@ -212,7 +213,7 @@ public class LookupElementPresentation {
   @Override
   public String toString() {
     return "LookupElementPresentation{" +
-           ", itemText='" + myItemText + '\'' +
+           "itemText='" + myItemText + '\'' +
            ", tail=" + myTail +
            ", typeText='" + myTypeText + '\'' +
            '}';
@@ -251,6 +252,22 @@ public class LookupElementPresentation {
     @Nullable
     public Color getForegroundColor() {
       return myFgColor;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (!(o instanceof TextFragment)) return false;
+      TextFragment fragment = (TextFragment)o;
+      return myGrayed == fragment.myGrayed &&
+             myItalic == fragment.myItalic &&
+             Objects.equals(text, fragment.text) &&
+             Objects.equals(myFgColor, fragment.myFgColor);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(text, myGrayed, myItalic, myFgColor);
     }
   }
 }

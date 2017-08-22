@@ -22,43 +22,43 @@ import org.jetbrains.annotations.NotNull;
 
 public class ExtractToMethodReferenceTest extends IPPTestCase {
 
-  public void testUnusedParameterToConfirmSignature() throws Exception {
+  public void testUnusedParameterToConfirmSignature() {
     doTest();
   }
 
-  public void testOverloadedMethodSameName() throws Exception {
+  public void testOverloadedMethodSameName() {
     doTest();
   }
 
-  public void testSameSignatureMethodExists() throws Exception {
+  public void testSameSignatureMethodExists() {
     doTest();
   }
 
-  public void testUnableToCreateStatic() throws Exception {
+  public void testUnableToCreateStatic() {
     doTest();
   }
 
-  public void testRequiredTypeParameter() throws Exception {
+  public void testRequiredTypeParameter() {
     doTest();
   }
 
-  public void testFieldsUsedInsideLambda() throws Exception {
+  public void testFieldsUsedInsideLambda() {
     doTest();
   }
 
-  public void testConvertableToMethodReference() throws Exception {
+  public void testConvertableToMethodReference() {
     assertIntentionNotAvailable();
   }
 
-  public void testNonDenotableParameterTypes() throws Exception {
+  public void testNonDenotableParameterTypes() {
     assertIntentionNotAvailable();
   }
 
-  public void testEmptyCodeBlock() throws Exception {
+  public void testEmptyCodeBlock() {
     doTest();
   }
 
-  public void testUsedLocalVariables() throws Exception {
+  public void testUsedLocalVariables() {
     assertIntentionNotAvailable();
   }
 

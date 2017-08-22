@@ -43,7 +43,7 @@ public abstract class EnhancerProcessHandlerBase extends BaseOSProcessHandler {
     super(process, commandLine, charset);
     addProcessListener(new ProcessAdapter() {
       @Override
-      public void processTerminated(ProcessEvent event) {
+      public void processTerminated(@NotNull ProcessEvent event) {
         final int exitCode = event.getExitCode();
         if (exitCode != 0) {
           reportError("Enhancement process terminated with exit code " + exitCode);
@@ -53,7 +53,7 @@ public abstract class EnhancerProcessHandlerBase extends BaseOSProcessHandler {
   }
 
   @Override
-  public void notifyTextAvailable(String text, Key outputType) {
+  public void notifyTextAvailable(@NotNull String text, @NotNull Key outputType) {
     super.notifyTextAvailable(text, outputType);
     myParsers.get(outputType).appendText(text);
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.jetbrains.python.psi.types;
 
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.PyClass;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -82,14 +83,14 @@ public class PyABCUtil {
              hasMethod(subClass, "discard", inherited, context) &&
              hasMethod(subClass, "add", inherited, context);
     }
-    if (PyNames.ABC_COMPLEX.equals(superClassName)) {
-      return hasMethod(subClass, "__complex__", inherited, context);
+    if (PyNames.ABC_COMPLEX.equals(superClassName) || PyTypingTypeProvider.SUPPORTS_COMPLEX_SIMPLE.equals(superClassName)) {
+      return hasMethod(subClass, PyNames.COMPLEX, inherited, context);
     }
-    if (PyNames.ABC_REAL.equals(superClassName)) {
-      return hasMethod(subClass, "__float__", inherited, context);
+    if (PyNames.ABC_REAL.equals(superClassName) || PyTypingTypeProvider.SUPPORTS_FLOAT_SIMPLE.equals(superClassName)) {
+      return hasMethod(subClass, PyNames.FLOAT, inherited, context);
     }
-    if (PyNames.ABC_INTEGRAL.equals(superClassName)) {
-      return hasMethod(subClass, "__int__", inherited, context);
+    if (PyNames.ABC_INTEGRAL.equals(superClassName) || PyTypingTypeProvider.SUPPORTS_INT_SIMPLE.equals(superClassName)) {
+      return hasMethod(subClass, PyNames.INT, inherited, context);
     }
     if (PyNames.ABC_NUMBER.equals(superClassName) && "Decimal".equals(subClass.getName())) {
       return true;
@@ -99,6 +100,15 @@ public class PyABCUtil {
     }
     if (PyNames.PATH_LIKE.equals(superClassName)) {
       return hasMethod(subClass, PyNames.FSPATH, inherited, context);
+    }
+    if (PyTypingTypeProvider.SUPPORTS_BYTES_SIMPLE.equals(superClassName)) {
+      return hasMethod(subClass, PyNames.BYTES, inherited, context);
+    }
+    if (PyTypingTypeProvider.SUPPORTS_ABS_SIMPLE.equals(superClassName)) {
+      return hasMethod(subClass, PyNames.ABS, inherited, context);
+    }
+    if (PyTypingTypeProvider.SUPPORTS_ROUND_SIMPLE.equals(superClassName)) {
+      return hasMethod(subClass, PyNames.ROUND, inherited, context);
     }
     return false;
   }
@@ -126,12 +136,12 @@ public class PyABCUtil {
       final PyUnionType unionType = (PyUnionType)type;
       for (PyType m : unionType.getMembers()) {
         if (m != null) {
-          if (!isSubtype(m, superClassName, context)) {
-            return false;
+          if (isSubtype(m, superClassName, context)) {
+            return true;
           }
         }
       }
-      return true;
+      return false;
     }
     return false;
   }

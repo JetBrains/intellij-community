@@ -35,10 +35,7 @@ import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
-import com.jetbrains.python.psi.stubs.PyClassNameIndex;
-import com.jetbrains.python.psi.stubs.PyNamedTupleStub;
-import com.jetbrains.python.psi.stubs.PySuperClassIndex;
-import com.jetbrains.python.psi.stubs.PyVariableNameIndex;
+import com.jetbrains.python.psi.stubs.*;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.toolbox.Maybe;
@@ -207,7 +204,7 @@ public class PyStubsTest extends PyTestCase {
 
     new WriteCommandAction(myFixture.getProject(), fileImpl) {
       @Override
-      protected void run(@NotNull final Result result) throws Throwable {
+      protected void run(@NotNull final Result result) {
         pyClass.setName("RenamedClass");
         assertEquals("RenamedClass", pyClass.getName());
       }
@@ -218,7 +215,7 @@ public class PyStubsTest extends PyTestCase {
 
     new WriteCommandAction(myFixture.getProject(), fileImpl) {
       @Override
-      protected void run(@NotNull Result result) throws Throwable {
+      protected void run(@NotNull Result result) {
         ((SingleRootFileViewProvider)fileImpl.getViewProvider()).onContentReload();
       }
     }.execute();
@@ -609,7 +606,7 @@ public class PyStubsTest extends PyTestCase {
 
     final PyType typeFromStub = TypeEvalContext.codeInsightFallback(myFixture.getProject()).getType(attribute);
     doTestNamedTuple(expectedName, expectedFieldsNames, expectedFieldsTypes, typeFromStub);
-    //assertNotParsed(file); remove comment after PY-18816 will be fixed
+    assertNotParsed(file);
 
     final FileASTNode astNode = file.getNode();
     assertNotNull(astNode);
@@ -721,9 +718,157 @@ public class PyStubsTest extends PyTestCase {
       final PyTargetExpression attr = current.findTopLevelAttribute("x");
       assertNotNull(attr);
       final TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), current);
-      // Will turn into concrete type when we start saving annotations in stubs 
-      assertNull(context.getType(attr));
+      assertType("int", attr, context);
       assertNotParsed(external);
+    });
+  }
+
+  // PY-18116
+  public void testParameterAnnotation() {
+    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> {
+      final PyFile file = getTestFile();
+      final PyFunction func = file.findTopLevelFunction("func");
+      final PyNamedParameter param = func.getParameterList().findParameterByName("x");
+      final String annotation = param.getAnnotationValue();
+      assertEquals("int", annotation);
+      assertNotParsed(file);
+      final TypeEvalContext context = TypeEvalContext.codeInsightFallback(myFixture.getProject());
+      assertType("int", param, context);
+      assertNotParsed(file);
+    });
+  }
+
+  // PY-18116
+  public void testFunctionAnnotation() {
+    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> {
+      final PyFile file = getTestFile();
+      final PyFunction func = file.findTopLevelFunction("func");
+      final String annotation = func.getAnnotationValue();
+      assertEquals("int", annotation);
+      assertNotParsed(file);
+      assertType("() -> int", func, TypeEvalContext.codeInsightFallback(myFixture.getProject()));
+      assertNotParsed(file);
+    });
+  }
+
+  // PY-18116
+  public void testVariableAnnotation() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> {
+      final PyFile file = getTestFile();
+      final PyTargetExpression assignmentTarget = file.findTopLevelAttribute("x");
+      final String assignmentAnnotation = assignmentTarget.getAnnotationValue();
+      assertEquals("int", assignmentAnnotation);
+      assertNotParsed(file);
+      assertType("int", assignmentTarget, TypeEvalContext.codeInsightFallback(myFixture.getProject()));
+      assertNotParsed(file);
+
+      final PyTargetExpression typeDecTarget = file.findTopLevelAttribute("y");
+      final String typeDecAnnotation = typeDecTarget.getAnnotationValue();
+      assertEquals("str", typeDecAnnotation);
+      assertNotParsed(file);
+      assertType("str", typeDecTarget, TypeEvalContext.codeInsightFallback(myFixture.getProject()));
+      assertNotParsed(file);
+    });
+  }
+
+  // PY-18116
+  public void testAttributeTypeDeclaration() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> {
+      final PyFile file = getTestFile();
+      final PyClass pyClass = file.findTopLevelClass("MyClass");
+      final TypeEvalContext context = TypeEvalContext.codeInsightFallback(myFixture.getProject());
+      final PyTargetExpression classAttr = pyClass.findClassAttribute("foo", false, context);
+      assertType("str", classAttr, context);
+
+      final PyTargetExpression instAttr = pyClass.findInstanceAttribute("bar", false);
+      assertType("int", instAttr, context);
+      assertNotParsed(file);
+    });
+  }
+
+  // PY-18116
+  public void testTypeAliasInParameterAnnotation() {
+    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> {
+      final PyFile file = getTestFile();
+      final PyFunction func = file.findTopLevelFunction("func");
+      final PyNamedParameter param = func.getParameterList().findParameterByName("x");
+      assertType("Dict[str, Any]", param, TypeEvalContext.codeInsightFallback(myFixture.getProject()));
+      assertNotParsed(file);
+    });
+  }
+
+  // PY-18116
+  public void testTypeAliasStubs() {
+    final PyFile file = getTestFile();
+    final List<PyTargetExpression> attributes = file.getTopLevelAttributes();
+    for (PyTargetExpression attr : attributes) {
+      assertHasTypingAliasStub(attr.getName().endsWith("_ok"), attr);
+    }
+
+    final PyTargetExpression referenceAlias = file.findTopLevelAttribute("plain_ref");
+    final PyTargetExpressionStub referenceAliasStub = referenceAlias.getStub();
+    assertEquals(PyTargetExpressionStub.InitializerType.ReferenceExpression, referenceAliasStub.getInitializerType());
+    assertEquals(QualifiedName.fromDottedString("foo.bar.baz"), referenceAliasStub.getInitializer());
+
+    final PyClass pyClass = file.findTopLevelClass("C");
+    final TypeEvalContext context = TypeEvalContext.codeInsightFallback(myFixture.getProject());
+    final PyTargetExpression classAttr = pyClass.findClassAttribute("class_attr", false, context);
+    assertHasTypingAliasStub(false, classAttr);
+
+    final PyTargetExpression instanceAttr = pyClass.findInstanceAttribute("inst_attr", false);
+    assertHasTypingAliasStub(false, instanceAttr);
+    assertNotParsed(file);
+  }
+
+  // PY-18166
+  public void testUnresolvedTypingSymbol() {
+    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> {
+      final PyFile file = getTestFile();
+      final PyFunction func = file.findTopLevelFunction("func");
+      assertType("() -> Any", func, TypeEvalContext.codeInsightFallback(file.getProject()));
+      assertNotParsed(file);
+    });
+  }
+
+  @Nullable
+  private static PyTypingAliasStub getAliasStub(@NotNull PyTargetExpression targetExpression) {
+    final PyTargetExpressionStub stub = targetExpression.getStub();
+    return stub != null ? stub.getCustomStub(PyTypingAliasStub.class) : null;
+  }
+
+  private static void assertHasTypingAliasStub(boolean has, @NotNull PyTargetExpression expression) {
+    final String message = "Target '" + expression.getName() + "' should " + (has ? "" : "not ") + "have typing alias stub";
+    final PyTypingAliasStub stub = getAliasStub(expression);
+    if (has) {
+      assertNotNull(message, stub);
+    }
+    else {
+      assertNull(message, stub);
+    }
+  }
+
+  // PY-18816
+  public void testParametrizedBaseClass() {
+    final PyFile file = getTestFile();
+    final PyClass genericClass = file.findTopLevelClass("Class");
+    final PyClassStub stub = genericClass.getStub();
+    assertNotNull(stub);
+    final List<String> genericBases = stub.getSubscriptedSuperClasses();
+    assertContainsOrdered(genericBases, "Generic[T, V]");
+    assertNotParsed(file);
+  }
+
+  // PY-18816
+  public void testComplexGenericType() {
+    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> {
+      myFixture.copyDirectoryToProject(getTestName(true), "");
+      final PsiManager manager = PsiManager.getInstance(myFixture.getProject());
+      final PyFile originFile = (PyFile)manager.findFile(myFixture.findFileInTempDir("a.py"));
+      final PyFile libFile = (PyFile)manager.findFile(myFixture.findFileInTempDir("mod.py"));
+
+      final PyTargetExpression instance = originFile.findTopLevelAttribute("expr");
+      assertType("Tuple[int, None, str]", instance, TypeEvalContext.codeAnalysis(myFixture.getProject(), originFile));
+      assertNotParsed(libFile);
     });
   }
 }

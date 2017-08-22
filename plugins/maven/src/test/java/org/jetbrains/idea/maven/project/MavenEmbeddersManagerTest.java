@@ -37,14 +37,14 @@ public class MavenEmbeddersManagerTest extends MavenTestCase {
     }
   }
 
-  public void testBasics() throws Exception {
+  public void testBasics() {
     MavenEmbedderWrapper one = myManager.getEmbedder(MavenEmbeddersManager.FOR_FOLDERS_RESOLVE, null, null);
     MavenEmbedderWrapper two = myManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, null, null);
 
     assertNotSame(one, two);
   }
 
-  public void testForSameId() throws Exception {
+  public void testForSameId() {
     MavenEmbedderWrapper one1 = myManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, null, null);
     MavenEmbedderWrapper one2 = myManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, null, null);
 
@@ -57,7 +57,7 @@ public class MavenEmbeddersManagerTest extends MavenTestCase {
     assertSame(one1, one3);
   }
 
-  public void testCachingOnlyOne() throws Exception {
+  public void testCachingOnlyOne() {
     MavenEmbedderWrapper one1 = myManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, null, null);
     MavenEmbedderWrapper one2 = myManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, null, null);
 
@@ -73,7 +73,7 @@ public class MavenEmbeddersManagerTest extends MavenTestCase {
     assertNotSame(one2, one22);
   }
 
-  public void testResettingAllCachedAndInUse() throws Exception {
+  public void testResettingAllCachedAndInUse() {
     MavenEmbedderWrapper one1 = myManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, null, null);
     MavenEmbedderWrapper one2 = myManager.getEmbedder(MavenEmbeddersManager.FOR_FOLDERS_RESOLVE, null, null);
 

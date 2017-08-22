@@ -45,11 +45,11 @@ public abstract class AbstractMoveElementLeftRightTest extends AbstractEditorTes
     doTestSingle(!moveLeft, current, before);
   }
   
-  private void doTestSingle(boolean moveLeft, String before, String after) throws Exception {
+  private void doTestSingle(boolean moveLeft, String before, String after) {
     configureEditor(before);
     executeAction(moveLeft ? IdeActions.MOVE_ELEMENT_LEFT : IdeActions.MOVE_ELEMENT_RIGHT);
     checkResultByText(after);
   }
   
-  protected abstract void configureEditor(String contents) throws Exception;
+  protected abstract void configureEditor(String contents);
 }

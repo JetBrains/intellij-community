@@ -18,12 +18,12 @@ package org.intellij.plugins.intelliLang.util;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.StringPattern;
-import com.intellij.util.Function;
-import com.intellij.util.containers.WeakHashMap;
+import com.intellij.util.containers.ContainerUtil;
 
 import java.util.LinkedHashSet;
-import java.util.Set;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Simple abstraction of a String matcher that can be based on simple and vastly more
@@ -144,7 +144,7 @@ public abstract class StringMatcher<T> {
   }
 
   private static final class Cache extends StringMatcher<StringMatcher> {
-    private final WeakHashMap<String, Boolean> myCache = new WeakHashMap<>();
+    private final Map<String, Boolean> myCache = ContainerUtil.createWeakMap();
 
     Cache(StringMatcher target) {
       super(target);

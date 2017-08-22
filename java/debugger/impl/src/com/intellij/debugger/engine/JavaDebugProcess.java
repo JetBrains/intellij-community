@@ -35,6 +35,7 @@ import com.intellij.debugger.ui.impl.ThreadsPanel;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.MessageDescriptor;
 import com.intellij.debugger.ui.impl.watch.NodeManagerImpl;
+import com.intellij.debugger.ui.overhead.OverheadView;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ExecutionConsole;
@@ -318,6 +319,7 @@ public class JavaDebugProcess extends XDebugProcess {
       public void registerAdditionalContent(@NotNull RunnerLayoutUi ui) {
         registerThreadsPanel(ui);
         registerMemoryViewPanel(ui);
+        registerOverheadMonitor(ui);
       }
 
       @NotNull
@@ -360,7 +362,8 @@ public class JavaDebugProcess extends XDebugProcess {
       }
 
       private void registerMemoryViewPanel(@NotNull RunnerLayoutUi ui) {
-        if (!Registry.get("debugger.enable.memory.view").asBoolean()) return;
+        if (!Registry.is("debugger.enable.memory.view")) return;
+
         final XDebugSession session = getSession();
         final DebugProcessImpl process = myJavaSession.getProcess();
         final InstancesTracker tracker = InstancesTracker.getInstance(myJavaSession.getProject());
@@ -394,6 +397,35 @@ public class JavaDebugProcess extends XDebugProcess {
             }
           }
         }, memoryViewContent);
+      }
+
+      private void registerOverheadMonitor(@NotNull RunnerLayoutUi ui) {
+        if (!Registry.is("debugger.enable.overhead.monitor")) return;
+
+        OverheadView monitor = new OverheadView(myJavaSession.getProcess());
+        Content overheadContent = ui.createContent("OverheadMonitor", monitor, "Overhead", AllIcons.Debugger.Db_obsolete, null);
+
+        overheadContent.setCloseable(false);
+        overheadContent.setShouldDisposeContent(true);
+
+        //session.addSessionListener(new XDebugSessionListener() {
+        //  @Override
+        //  public void sessionStopped() {
+        //    session.removeSessionListener(this);
+        //    data.getTrackedStacks().clear();
+        //  }
+        //});
+
+        ui.addContent(overheadContent, 0, PlaceInGrid.right, true);
+        //final DebuggerManagerThreadImpl managerThread = process.getManagerThread();
+        //ui.addListener(new ContentManagerAdapter() {
+        //  @Override
+        //  public void selectionChanged(ContentManagerEvent event) {
+        //    if (event != null && event.getContent() == overheadContent) {
+        //      classesFilteredView.setActive(overheadContent.isSelected(), managerThread);
+        //    }
+        //  }
+        //}, overheadContent);
       }
     };
   }

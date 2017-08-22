@@ -50,6 +50,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -77,7 +78,12 @@ public final class ExecutionHandler {
                                                        additionalProperties, antBuildListener, false);
     if (result != null) {
       try {
-        return result.get();
+        long l = System.currentTimeMillis();
+        try {
+          return result.get();
+        } finally {
+          new Throwable(EventQueue.isDispatchThread() + ": " + (System.currentTimeMillis() - l)).printStackTrace(System.out);
+        }
       }
       catch (InterruptedException | java.util.concurrent.ExecutionException e) {
         LOG.warn(e);
@@ -219,7 +225,7 @@ public final class ExecutionHandler {
     handler.addProcessListener(new ProcessAdapter() {
       private final StringBuilder myUnprocessedStdErr = new StringBuilder();
 
-      public void onTextAvailable(ProcessEvent event, Key outputType) {
+      public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
         if (outputType == ProcessOutputTypes.STDERR) {
           final String text = event.getText();
           synchronized (myUnprocessedStdErr) {
@@ -228,7 +234,7 @@ public final class ExecutionHandler {
         }
       }
 
-      public void processTerminated(ProcessEvent event) {
+      public void processTerminated(@NotNull ProcessEvent event) {
         final long buildTime = System.currentTimeMillis() - startTime;
         checkCancelTask.cancel();
         parser.setStopped(true);

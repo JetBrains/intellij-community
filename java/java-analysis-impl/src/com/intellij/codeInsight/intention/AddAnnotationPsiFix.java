@@ -27,6 +27,7 @@ import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
@@ -109,13 +110,19 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
                              @NotNull PsiFile file,
                              @NotNull PsiElement startElement,
                              @NotNull PsiElement endElement) {
-    if (!startElement.isValid()) return false;
-    if (!PsiUtil.isLanguageLevel5OrHigher(startElement)) return false;
-    final PsiModifierListOwner myModifierListOwner = (PsiModifierListOwner)startElement;
+    return isAvailable((PsiModifierListOwner)startElement, myAnnotation);
+  }
+
+  public static boolean isAvailable(@NotNull PsiModifierListOwner modifierListOwner, @NotNull String annotationFQN) {
+    if (!modifierListOwner.isValid()) return false;
+    if (!PsiUtil.isLanguageLevel5OrHigher(modifierListOwner)) return false;
 
     // e.g. PsiTypeParameterImpl doesn't have modifier list
-    return myModifierListOwner.getModifierList() != null
-           && !AnnotationUtil.isAnnotated(myModifierListOwner, myAnnotation, false, false);
+    PsiModifierList modifierList = modifierListOwner.getModifierList();
+    return modifierList != null
+           && !(modifierList instanceof LightElement)
+           && !(modifierListOwner instanceof LightElement)
+           && !AnnotationUtil.isAnnotated(modifierListOwner, annotationFQN, false, false, true);
   }
 
   @Override

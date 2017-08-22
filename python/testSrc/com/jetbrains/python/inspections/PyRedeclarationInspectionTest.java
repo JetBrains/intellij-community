@@ -104,6 +104,26 @@ public class PyRedeclarationInspectionTest extends PyTestCase {
     doTest();
   }
 
+  // PY-23552
+  public void testStaticMethodRedeclaresInstanceMethod() {
+    doTest();
+  }
+
+  // PY-23552
+  public void testClassMethodRedeclaresInstanceMethod() {
+    doTest();
+  }
+
+  // PY-23552
+  public void testStaticMethodRedeclaresAnotherStaticMethod() {
+    doTest();
+  }
+
+  // PY-23552
+  public void testClassMethodRedeclaresAnotherClassMethod() {
+    doTest();
+  }
+
   private void doTest() {
     final String path = "inspections/PyRedeclarationInspection/" + getTestName(true) + ".py";
 

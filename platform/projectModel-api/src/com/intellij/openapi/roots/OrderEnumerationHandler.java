@@ -29,7 +29,7 @@ public abstract class OrderEnumerationHandler {
   public static final ExtensionPointName<Factory> EP_NAME =
     ExtensionPointName.create("com.intellij.orderEnumerationHandlerFactory");
 
-  public static abstract class Factory {
+  public abstract static class Factory {
     /**
      * @deprecated this method isn't called anymore, override {@link #isApplicable(Module)} instead
      */

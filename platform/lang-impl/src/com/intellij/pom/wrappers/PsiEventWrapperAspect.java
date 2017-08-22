@@ -16,7 +16,11 @@
 
 package com.intellij.pom.wrappers;
 
+import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.PomModelAspect;
 import com.intellij.pom.event.PomModelEvent;
@@ -27,11 +31,12 @@ import com.intellij.pom.tree.events.TreeChange;
 import com.intellij.pom.tree.events.TreeChangeEvent;
 import com.intellij.pom.tree.events.impl.ChangeInfoImpl;
 import com.intellij.pom.tree.events.impl.TreeChangeImpl;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.PsiManagerImpl;
-import com.intellij.psi.impl.PsiTreeChangeEventImpl;
-import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.*;
+import com.intellij.psi.impl.source.DummyHolder;
+import com.intellij.testFramework.LightVirtualFile;
 
 import java.util.Collections;
 
@@ -52,11 +57,12 @@ public class PsiEventWrapperAspect implements PomModelAspect{
 
   private static void sendAfterEvents(TreeChangeEvent changeSet) {
     ASTNode rootElement = changeSet.getRootElement();
-    final PsiFile file = (PsiFile)SourceTreeToPsiMap.treeElementToPsi(rootElement);
-    final PsiManagerImpl manager = (PsiManagerImpl)file.getManager();
+    PsiFile file = (PsiFile)rootElement.getPsi();
+    PsiManagerImpl manager = (PsiManagerImpl)file.getManager();
     if(manager == null) return;
 
     if (!file.isPhysical()) {
+      promoteNonPhysicalChangesToDocument(rootElement, file);
       manager.afterChange(false);
       return;
     }
@@ -116,6 +122,20 @@ public class PsiEventWrapperAspect implements PomModelAspect{
             manager.childRemoved(psiEvent);
             break;
         }
+      }
+    }
+  }
+
+  private static void promoteNonPhysicalChangesToDocument(ASTNode rootElement, PsiFile file) {
+    if (file instanceof DummyHolder) return;
+    if (((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(file.getProject())).isCommitInProgress()) return;
+    
+    VirtualFile vFile = file.getViewProvider().getVirtualFile();
+    if (vFile instanceof LightVirtualFile && !(vFile instanceof VirtualFileWindow)) {
+      Document document = FileDocumentManager.getInstance().getCachedDocument(vFile);
+      if (document != null) {
+        CharSequence text = rootElement.getChars();
+        PsiToDocumentSynchronizer.performAtomically(file, () -> document.replaceString(0, document.getTextLength(), text));
       }
     }
   }

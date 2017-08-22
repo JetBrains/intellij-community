@@ -19,17 +19,18 @@ package com.intellij.java.codeInsight.daemon.quickFix;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
-import com.intellij.codeInspection.nullable.NullableStuffInspection;
 import org.jetbrains.annotations.NotNull;
 
 public class ReplaceWithTernaryOperatorTest extends LightQuickFixParameterizedTestCase {
   @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{new DataFlowInspection(), new NullableStuffInspection()};
+    DataFlowInspection dataFlowInspection = new DataFlowInspection();
+    dataFlowInspection.SUGGEST_NULLABLE_ANNOTATIONS = true;
+    return new LocalInspectionTool[]{dataFlowInspection};
   }
 
-  public void test() throws Exception {
+  public void test() {
      doAllTests();
    }
 

@@ -54,7 +54,7 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
   }
 
   @Override
-  protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
+  protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
     moduleBuilder.setLanguageLevel(LanguageLevel.JDK_1_8);
     moduleBuilder.addLibraryJars("guava", getTestDataPath() + "/", "guava-stubs.jar");
     moduleBuilder.addLibraryJars("jsr305", PathManager.getHomePathFor(Assert.class) + "/lib/", "jsr305.jar");
@@ -175,6 +175,10 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
   }
 
   public void testConvertFluentIterableAsIterableParameter() {
+    doTest();
+  }
+
+  public void testConvertFluentIterableAsIterableParameter2() {
     doTest();
   }
 

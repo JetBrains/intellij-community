@@ -164,7 +164,7 @@ public class LibraryDataService extends AbstractProjectDataService<LibraryData, 
     final LibraryTable.ModifiableModel librariesModel = modelsProvider.getModifiableProjectLibrariesModel();
     for (Library library : librariesModel.getLibraries()) {
       if (!ExternalSystemApiUtil.isExternalSystemLibrary(library, projectData.getOwner())) continue;
-      if (isOrphanProjectLibrary(library, modelsProvider)) {
+      if (isOrphanProjectLibrary(library, modelsProvider) && !modelsProvider.isSubstituted(library.getName())) {
         orphanIdeLibraries.add(library);
       }
     }
@@ -225,7 +225,7 @@ public class LibraryDataService extends AbstractProjectDataService<LibraryData, 
                                                 @NotNull final IdeModifiableModelsProvider modelsProvider) {
     RootPolicy<Boolean> visitor = new RootPolicy<Boolean>() {
       @Override
-      public Boolean visitLibraryOrderEntry(LibraryOrderEntry ideDependency, Boolean value) {
+      public Boolean visitLibraryOrderEntry(@NotNull LibraryOrderEntry ideDependency, Boolean value) {
         return !ideDependency.isModuleLevel() &&
                (library == ideDependency.getLibrary() ||
                 (ideDependency.getLibrary() == null && StringUtil.equals(library.getName(), ideDependency.getLibraryName())));

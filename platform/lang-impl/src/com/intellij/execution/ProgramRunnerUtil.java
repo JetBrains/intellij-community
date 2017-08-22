@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.execution;
 
 import com.intellij.execution.configurations.ConfigurationFactory;
-import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.impl.RunDialog;
 import com.intellij.execution.impl.RunManagerImpl;
@@ -92,10 +91,7 @@ public class ProgramRunnerUtil {
         }
       }
 
-      ConfigurationType configurationType = runnerAndConfigurationSettings.getType();
-      if (configurationType != null) {
-        UsageTrigger.trigger("execute." + ConvertUsagesUtil.ensureProperKey(configurationType.getId()) + "." + environment.getExecutor().getId());
-      }
+      UsageTrigger.trigger("execute." + ConvertUsagesUtil.ensureProperKey(runnerAndConfigurationSettings.getType().getId()) + "." + environment.getExecutor().getId());
     }
 
     try {
@@ -142,9 +138,15 @@ public class ProgramRunnerUtil {
     }
   }
 
-  public static void executeConfiguration(@NotNull Project project,
-                                          @NotNull RunnerAndConfigurationSettings configuration,
-                                          @NotNull Executor executor) {
+  /**
+   * @deprecated Use {@link #executeConfiguration(RunnerAndConfigurationSettings, Executor)}
+   */
+  @Deprecated
+  public static void executeConfiguration(@SuppressWarnings("unused") @NotNull Project project, @NotNull RunnerAndConfigurationSettings configuration, @NotNull Executor executor) {
+    executeConfiguration(configuration, executor);
+  }
+
+  public static void executeConfiguration(@NotNull RunnerAndConfigurationSettings configuration, @NotNull Executor executor) {
     ExecutionEnvironmentBuilder builder;
     try {
       builder = ExecutionEnvironmentBuilder.create(executor, configuration);

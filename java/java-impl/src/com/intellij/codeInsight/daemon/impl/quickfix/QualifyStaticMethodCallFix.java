@@ -50,6 +50,11 @@ public class QualifyStaticMethodCallFix extends StaticImportMethodFix {
     };
   }
 
+  @Override
+  protected boolean showMembersFromDefaultPackage() {
+    return true;
+  }
+
   public static void qualifyStatically(PsiMember toImport,
                                        Project project,
                                        PsiReferenceExpression qualifiedExpression) {

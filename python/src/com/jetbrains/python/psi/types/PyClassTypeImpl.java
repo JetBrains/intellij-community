@@ -412,20 +412,28 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       return null;
     }
     try {
-      return Collections.max(classTypes, (t1, t2) -> {
-        if (t1 == t2 || t1 != null && t1.equals(t2)) {
-          return 0;
-        }
-        else if (t2 == null || t1 != null && Sets.newHashSet(t1.getAncestorTypes(context)).contains(t2)) {
-          return 1;
-        }
-        else if (t1 == null || Sets.newHashSet(t2.getAncestorTypes(context)).contains(t1)) {
-          return -1;
-        }
-        else {
-          throw new NotDerivedClassTypeException();
-        }
-      });
+      final String abcMeta = "abc." + PyNames.ABC_META_CLASS;
+
+      return classTypes
+        .stream()
+        .filter(t -> !abcMeta.equals(t.getClassQName()))
+        .max(
+          (t1, t2) -> {
+            if (Objects.equals(t1, t2)) {
+              return 0;
+            }
+            else if (t2 == null || t1 != null && Sets.newHashSet(t1.getAncestorTypes(context)).contains(t2)) {
+              return 1;
+            }
+            else if (t1 == null || Sets.newHashSet(t2.getAncestorTypes(context)).contains(t1)) {
+              return -1;
+            }
+            else {
+              throw new NotDerivedClassTypeException();
+            }
+          }
+        )
+        .orElse(null);
     }
     catch (NotDerivedClassTypeException ignored) {
       return null;
@@ -712,11 +720,8 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     boolean withinOurClass = containingClass == getPyClass() || isInSuperCall(expressionHook);
 
     final CompletionVariantsProcessor processor = new CompletionVariantsProcessor(
-      expressionHook, new FilterNotInstance(myClass), null
+      expressionHook, new FilterNotInstance(myClass), null, false, suppressParentheses
     );
-    if (suppressParentheses) {
-      processor.suppressParentheses();
-    }
     myClass.processClassLevelDeclarations(processor);
 
     // We are here because of completion (see call stack), so we use code complete here

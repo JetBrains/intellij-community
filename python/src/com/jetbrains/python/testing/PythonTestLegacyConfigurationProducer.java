@@ -32,6 +32,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ThreeState;
 import com.jetbrains.python.PythonModuleTypeBase;
 import com.jetbrains.python.facet.PythonFacetSettings;
 import com.jetbrains.python.psi.*;
@@ -45,6 +46,7 @@ import java.io.File;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.stream.Collectors;
 
 abstract public class PythonTestLegacyConfigurationProducer<T extends AbstractPythonLegacyTestRunConfiguration<T>>
   extends AbstractPythonTestConfigurationProducer<AbstractPythonLegacyTestRunConfiguration<T>> {
@@ -110,7 +112,6 @@ abstract public class PythonTestLegacyConfigurationProducer<T extends AbstractPy
   }
 
 
-
   @Override
   protected boolean setupConfigurationFromContext(AbstractPythonLegacyTestRunConfiguration<T> configuration,
                                                   ConfigurationContext context,
@@ -136,7 +137,8 @@ abstract public class PythonTestLegacyConfigurationProducer<T extends AbstractPy
       return setupConfigurationFromFunction(pyFunction, configuration);
     }
     final PyClass pyClass = PsiTreeUtil.getParentOfType(element, PyClass.class, false);
-    if (pyClass != null && isTestClass(pyClass, configuration, TypeEvalContext.userInitiated(pyClass.getProject(), element.getContainingFile()))) {
+    if (pyClass != null &&
+        isTestClass(pyClass, configuration, TypeEvalContext.userInitiated(pyClass.getProject(), element.getContainingFile()))) {
       return setupConfigurationFromClass(pyClass, configuration);
     }
     if (element == null) return false;
@@ -149,7 +151,7 @@ abstract public class PythonTestLegacyConfigurationProducer<T extends AbstractPy
   }
 
   private boolean setupConfigurationFromFolder(@NotNull final PsiDirectory element,
-                                                      @NotNull final AbstractPythonLegacyTestRunConfiguration configuration) {
+                                               @NotNull final AbstractPythonLegacyTestRunConfiguration configuration) {
     final VirtualFile virtualFile = element.getVirtualFile();
     if (!isTestFolder(virtualFile, element.getProject())) return false;
     final String path = virtualFile.getPath();
@@ -162,7 +164,8 @@ abstract public class PythonTestLegacyConfigurationProducer<T extends AbstractPy
     return true;
   }
 
-  private static void setModuleSdk(@NotNull final PsiElement element, @NotNull final AbstractPythonLegacyTestRunConfiguration configuration) {
+  private static void setModuleSdk(@NotNull final PsiElement element,
+                                   @NotNull final AbstractPythonLegacyTestRunConfiguration configuration) {
     configuration.setUseModuleSdk(true);
     configuration.setModule(ModuleUtilCore.findModuleForPsiElement(element));
   }
@@ -206,8 +209,9 @@ abstract public class PythonTestLegacyConfigurationProducer<T extends AbstractPy
 
     cfg.setScriptName(vFile.getPath());
 
-    if (StringUtil.isEmptyOrSpaces(cfg.getWorkingDirectory()))
+    if (StringUtil.isEmptyOrSpaces(cfg.getWorkingDirectory())) {
       cfg.setWorkingDirectory(parent.getPath());
+    }
     cfg.setGeneratedName();
     setModuleSdk(element, cfg);
     return true;
@@ -229,13 +233,14 @@ abstract public class PythonTestLegacyConfigurationProducer<T extends AbstractPy
   }
 
   protected boolean isTestClass(@NotNull final PyClass pyClass,
-                                @Nullable final AbstractPythonLegacyTestRunConfiguration configuration, @Nullable final TypeEvalContext context) {
-    return PythonUnitTestUtil.isTestCaseClass(pyClass, context);
+                                @Nullable final AbstractPythonLegacyTestRunConfiguration configuration,
+                                @Nullable final TypeEvalContext context) {
+    return PythonUnitTestUtil.isTestClass(pyClass, ThreeState.UNSURE, context);
   }
 
   protected boolean isTestFunction(@NotNull final PyFunction pyFunction,
                                    @Nullable final AbstractPythonLegacyTestRunConfiguration configuration) {
-    return PythonUnitTestUtil.isTestCaseFunction(pyFunction);
+    return PythonUnitTestUtil.isTestFunction(pyFunction, ThreeState.UNSURE, null);
   }
 
   protected boolean isTestFile(@NotNull final PyFile file) {
@@ -261,7 +266,9 @@ abstract public class PythonTestLegacyConfigurationProducer<T extends AbstractPy
   }
 
   protected List<PyStatement> getTestCaseClassesFromFile(@NotNull final PyFile pyFile) {
-    return PythonUnitTestUtil.getTestCaseClassesFromFile(pyFile, TypeEvalContext.userInitiated(pyFile.getProject(), pyFile));
+    final TypeEvalContext context = TypeEvalContext.userInitiated(pyFile.getProject(), pyFile);
+    return pyFile.getTopLevelClasses().stream()
+      .filter(o -> PythonUnitTestUtil.isTestClass(o, ThreeState.UNSURE, context))
+      .collect(Collectors.toList());
   }
-
 }

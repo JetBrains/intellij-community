@@ -48,128 +48,128 @@ public class TypeCookTest extends MultiFileTestCase {
     return "/refactoring/typeCook/";
   }
 
-  public void testT01() throws Exception {
+  public void testT01() {
     start();
   }
 
-  public void testT02() throws Exception {
+  public void testT02() {
     start();
   }
 
-  public void testT03() throws Exception {
+  public void testT03() {
     start();
   }
 
-  public void testT04() throws Exception {
+  public void testT04() {
     start();
   }
 
-  public void testT05() throws Exception {
+  public void testT05() {
     start();
   }
 
-  public void testT06() throws Exception {
+  public void testT06() {
     start();
   }
 
-  public void testT07() throws Exception {
+  public void testT07() {
     start();
   }
 
-  public void testT08() throws Exception {
+  public void testT08() {
     start();
   }
 
-  public void testT09() throws Exception {
+  public void testT09() {
     start();
   }
 
-  public void testT10() throws Exception {
+  public void testT10() {
     start();
   }
 
-  public void testT11() throws Exception {
+  public void testT11() {
     start();
   }
 
-  public void testT12() throws Exception {
+  public void testT12() {
     start();
   }
 
 
-  public void testT13() throws Exception {
+  public void testT13() {
     start();
   }
 
-  public void testT14() throws Exception {
+  public void testT14() {
     start();
   }
 
-  public void testT15() throws Exception {
+  public void testT15() {
     start();
   }
 
-  public void testT16() throws Exception {
+  public void testT16() {
     start();
   }
 
-  public void testT17() throws Exception {
+  public void testT17() {
     start();
   }
 
-  public void testT18() throws Exception {
+  public void testT18() {
     start();
   }
 
-  public void testT19() throws Exception {
+  public void testT19() {
     start();
   }
 
-  public void testT20() throws Exception {
+  public void testT20() {
     start();
   }
 
-  public void testT21() throws Exception {
+  public void testT21() {
     start();
   }
 
-  public void testT22() throws Exception {
+  public void testT22() {
     start();
   }
 
-  public void testT23() throws Exception {
+  public void testT23() {
     start();
   }
 
-  public void testT24() throws Exception {
+  public void testT24() {
     start();
   }
 
-  public void testT25() throws Exception {
+  public void testT25() {
     start();
   }
 
-  public void testT26() throws Exception {
+  public void testT26() {
     start();
   }
 
-  public void testT27() throws Exception {
+  public void testT27() {
     start();
   }
 
-  public void testT28() throws Exception {
+  public void testT28() {
     start();
   }
 
-  public void testT29() throws Exception {
+  public void testT29() {
     start();
   }
 
-  public void testT30() throws Exception {
+  public void testT30() {
     start();
   }
 
-  public void testT31() throws Exception {
+  public void testT31() {
     start();
   }
 
@@ -178,195 +178,195 @@ public class TypeCookTest extends MultiFileTestCase {
   // start();
   //}
 
-  public void testT33() throws Exception {
+  public void testT33() {
     start();
   }
 
-  public void testT34() throws Exception {
+  public void testT34() {
     start();
   }
 
-  public void testT35() throws Exception {
+  public void testT35() {
     start();
   }
 
-  public void testT36() throws Exception {
+  public void testT36() {
     start();
   }
 
-  public void testT37() throws Exception {
+  public void testT37() {
     start();
   }
 
-  public void testT38() throws Exception {
+  public void testT38() {
     start();
   }
 
-  public void testT39() throws Exception {
+  public void testT39() {
     start();
   }
 
-  public void testT40() throws Exception {
+  public void testT40() {
     start();
   }
 
-  public void testT41() throws Exception {
+  public void testT41() {
     start();
   }
 
-  public void testT42() throws Exception {
+  public void testT42() {
     start();
   }
 
-  public void testT43() throws Exception {
+  public void testT43() {
     start();
   }
 
-  public void testT44() throws Exception {
+  public void testT44() {
     start();
   }
 
-  public void testT45() throws Exception {
+  public void testT45() {
     start();
   }
 
-  public void testT46() throws Exception {
+  public void testT46() {
     start();
   }
 
-  public void testT47() throws Exception {
+  public void testT47() {
     start();
   }
 
-  public void testT48() throws Exception {
+  public void testT48() {
     start();
   }
 
-  public void testT49() throws Exception {
+  public void testT49() {
     start();
   }
 
-  public void testT50() throws Exception {
+  public void testT50() {
     start();
   }
 
-  public void testT51() throws Exception {
+  public void testT51() {
     start();
   }
 
-  public void testT52() throws Exception {
+  public void testT52() {
     start();
   }
 
-  public void testT53() throws Exception {
+  public void testT53() {
     start();
   }
 
-  public void testT54() throws Exception {
+  public void testT54() {
     start();
   }
 
-  public void testT55() throws Exception {
+  public void testT55() {
     start();
   }
 
-  public void testT56() throws Exception {
+  public void testT56() {
     start();
   }
 
-  public void testT57() throws Exception {
+  public void testT57() {
     start();
   }
 
-  public void testT58() throws Exception {
+  public void testT58() {
     start();
   }
 
-  public void testT59() throws Exception {
+  public void testT59() {
     start();
   }
 
-  public void testT60() throws Exception {
+  public void testT60() {
     start();
   }
 
-  public void testT61() throws Exception {
+  public void testT61() {
     start();
   }
 
-  public void testT62() throws Exception {
+  public void testT62() {
     start();
   }
 
-  public void testT63() throws Exception {
+  public void testT63() {
     start();
   }
 
-  public void testT64() throws Exception {
+  public void testT64() {
     start();
   }
 
-  public void testT65() throws Exception {
+  public void testT65() {
     start();
   }
 
-  public void testT66() throws Exception {
+  public void testT66() {
     start();
   }
 
-  public void testT67() throws Exception {
+  public void testT67() {
     start();
   }
 
-  public void testT68() throws Exception {
+  public void testT68() {
     start();
   }
 
-  public void testT69() throws Exception {
+  public void testT69() {
     start();
   }
 
-  public void testT70() throws Exception {
+  public void testT70() {
     start();
   }
 
-  public void testT71() throws Exception {
+  public void testT71() {
     start();
   }
 
-  public void testT72() throws Exception {
+  public void testT72() {
     start();
   }
 
-  public void testT73() throws Exception {
+  public void testT73() {
     start();
   }
 
-  public void testT74() throws Exception {
+  public void testT74() {
     start();
   }
 
-  public void testT75() throws Exception {
+  public void testT75() {
     start();
   }
 
-  public void testT76() throws Exception {
+  public void testT76() {
     start();
   }
 
-  public void testT77() throws Exception {
+  public void testT77() {
     start();
   }
 
-  public void testT78() throws Exception {
+  public void testT78() {
     start();
   }
 
-  public void testT79() throws Exception {
+  public void testT79() {
     start();
   }
 
-  public void testT80() throws Exception {
+  public void testT80() {
     start();
   }
 
@@ -375,67 +375,67 @@ public class TypeCookTest extends MultiFileTestCase {
   //  start();
   //}
 
-  public void testT82() throws Exception {
+  public void testT82() {
     start();
   }
 
-  public void testT83() throws Exception {
+  public void testT83() {
     start();
   }
 
-  public void testT84() throws Exception {
+  public void testT84() {
     start();
   }
 
-  public void testT85() throws Exception {
+  public void testT85() {
     start();
   }
 
-  public void testT86() throws Exception {
+  public void testT86() {
     start();
   }
 
-  public void testT87() throws Exception {
+  public void testT87() {
     start();
   }
 
-  public void testT88() throws Exception {
+  public void testT88() {
     start();
   }
 
-  public void testT89() throws Exception {
+  public void testT89() {
     start();
   }
 
-  public void testT90() throws Exception {
+  public void testT90() {
     start();
   }
 
-  public void testT91() throws Exception {
+  public void testT91() {
     start();
   }
 
-  public void testT92() throws Exception {
+  public void testT92() {
     start();
   }
 
-  public void testT93() throws Exception {
+  public void testT93() {
     start();
   }
 
-  public void testT94() throws Exception {
+  public void testT94() {
     start();
   }
 
-  public void testT95() throws Exception {
+  public void testT95() {
     start();
   }
 
-  public void testT96() throws Exception {
+  public void testT96() {
     start();
   }
 
-  public void testT97() throws Exception {
+  public void testT97() {
     start();
   }
 
@@ -449,91 +449,91 @@ public class TypeCookTest extends MultiFileTestCase {
   //  start();
   //}
 
-  public void testT100() throws Exception {
+  public void testT100() {
     start();
   }
 
-  public void testT101() throws Exception {
+  public void testT101() {
     start();
   }
 
-  public void testT102() throws Exception {
+  public void testT102() {
     start();
   }
 
-  public void testT103() throws Exception {
+  public void testT103() {
     start();
   }
 
-  public void testT104() throws Exception {
+  public void testT104() {
     start();
   }
 
-  public void testT105() throws Exception {
+  public void testT105() {
     start();
   }
 
-  public void testT106() throws Exception {
+  public void testT106() {
     start();
   }
 
-  public void testT107() throws Exception {
+  public void testT107() {
     start();
   }
 
-  public void testT108() throws Exception {
+  public void testT108() {
     start();
   }
 
-  public void testT109() throws Exception {
+  public void testT109() {
     start();
   }
 
-  public void testT110() throws Exception {
+  public void testT110() {
     start();
   }
 
-  public void testT111() throws Exception {
+  public void testT111() {
     start();
   }
 
-  public void testT112() throws Exception {
+  public void testT112() {
     start();
   }
 
-  public void testT113() throws Exception {
+  public void testT113() {
     start();
   }
 
-  public void testT114() throws Exception {
+  public void testT114() {
     start();
   }
 
-  public void testT115() throws Exception {
+  public void testT115() {
     start();
   }
 
-  public void testT116() throws Exception {
+  public void testT116() {
     start();
   }
 
-  public void testT117() throws Exception {
+  public void testT117() {
     start();
   }
 
-  public void testT118() throws Exception {
+  public void testT118() {
     start();
   }
 
-  public void testT119() throws Exception {
+  public void testT119() {
     start();
   }
 
-  public void testT120() throws Exception {
+  public void testT120() {
     start();
   }
 
-  public void testT121() throws Exception {
+  public void testT121() {
     start();
   }
 
@@ -541,63 +541,63 @@ public class TypeCookTest extends MultiFileTestCase {
   //  start();
   //}
 
-  public void testT123() throws Exception {
+  public void testT123() {
     start();
   }
 
-  public void testT124() throws Exception {
+  public void testT124() {
     start();
   }
 
-  public void testT125() throws Exception {
+  public void testT125() {
     start();
   }
 
-  public void testT126() throws Exception {
+  public void testT126() {
     start();
   }
 
-  public void testT127() throws Exception {
+  public void testT127() {
     start();
   }
 
-  public void testT128() throws Exception {
+  public void testT128() {
     start();
   }
 
-  public void testT129() throws Exception {
+  public void testT129() {
     start();
   }
 
-  public void testT130() throws Exception {
+  public void testT130() {
     start();
   }
 
-  public void testT131() throws Exception {
+  public void testT131() {
     start();
   }
 
-  public void testT132() throws Exception {
+  public void testT132() {
     start();
   }
 
-  public void testT133() throws Exception {
+  public void testT133() {
     start();
   }
 
-  public void testT134() throws Exception {
+  public void testT134() {
     start();
   }
 
-  public void testT135() throws Exception {
+  public void testT135() {
     start();
   }
 
-  public void testT136() throws Exception {
+  public void testT136() {
     start();
   }
 
-  public void testT137() throws Exception {
+  public void testT137() {
     start();
   }
 
@@ -605,11 +605,11 @@ public class TypeCookTest extends MultiFileTestCase {
   //   start();
   // }
 
-  public void testT139() throws Exception {
+  public void testT139() {
     start();
   }
 
-  public void testT140() throws Exception {
+  public void testT140() {
     start();
   }
 
@@ -633,35 +633,35 @@ public class TypeCookTest extends MultiFileTestCase {
   //      start();
   //}
 
-  public void testT146() throws Exception {
+  public void testT146() {
         start();
   }
 
-  public void testT147() throws Exception {
+  public void testT147() {
         start();
   }
 
-  public void testT148() throws Exception {
+  public void testT148() {
         start();
   }
 
-  public void testT149() throws Exception {
+  public void testT149() {
         start(true);
   }
 
-  public void testT150() throws Exception {
+  public void testT150() {
         start();
   }
 
-  public void testT151() throws Exception {
+  public void testT151() {
         start();
   }
 
-  public void testT152() throws Exception {
+  public void testT152() {
         start();
   }
 
-  public void testConvertToDiamond() throws Exception {
+  public void testConvertToDiamond() {
     final LanguageLevelProjectExtension levelProjectExtension = LanguageLevelProjectExtension.getInstance(getProject());
     final LanguageLevel oldLevel = levelProjectExtension.getLanguageLevel();
     try {
@@ -673,11 +673,11 @@ public class TypeCookTest extends MultiFileTestCase {
     }
   }
 
-  public void start() throws Exception {
+  public void start() {
     start(false);
   }
 
-  public void start(final boolean cookObjects) throws Exception {
+  public void start(final boolean cookObjects) {
     doTest((rootDir, rootAfter) -> this.performAction("Test", rootDir.getName(), cookObjects));
   }
 

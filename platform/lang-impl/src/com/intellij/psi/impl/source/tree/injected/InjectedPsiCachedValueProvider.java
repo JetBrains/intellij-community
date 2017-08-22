@@ -75,7 +75,7 @@ class InjectedPsiCachedValueProvider implements ParameterizedCachedValueProvider
     }
 
     @Override
-    public boolean process(PsiElement element, MultiHostInjector injector) {
+    public boolean process(@NotNull PsiElement element, @NotNull MultiHostInjector injector) {
       if (hostRegistrar == null) {
         hostRegistrar = new MultiHostRegistrarImpl(myProject, myHostPsiFile, element);
       }

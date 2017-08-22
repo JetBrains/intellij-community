@@ -43,36 +43,26 @@ public abstract class BaseInspectionVisitor extends JavaElementVisitor {
     return onTheFly;
   }
 
-  protected final void registerNewExpressionError(
-    @NotNull PsiNewExpression expression, Object... infos) {
-    final PsiJavaCodeReferenceElement classReference =
-      expression.getClassOrAnonymousClassReference();
+  protected final void registerNewExpressionError(@NotNull PsiNewExpression expression, Object... infos) {
+    final PsiJavaCodeReferenceElement classReference = expression.getClassOrAnonymousClassReference();
     if (classReference == null) {
-      registerError(expression, infos);
+      return;
     }
-    else {
-      registerError(classReference, infos);
-    }
+    registerError(classReference, infos);
   }
 
-  protected final void registerMethodCallError(
-    @NotNull PsiMethodCallExpression expression,
-    @NonNls Object... infos) {
-    final PsiReferenceExpression methodExpression =
-      expression.getMethodExpression();
+  protected final void registerMethodCallError(@NotNull PsiMethodCallExpression expression, @NonNls Object... infos) {
+    final PsiReferenceExpression methodExpression = expression.getMethodExpression();
     final PsiElement nameToken = methodExpression.getReferenceNameElement();
     if (nameToken == null) {
-      registerError(expression, infos);
+      return;
     }
-    else {
-      registerError(nameToken, infos);
-    }
+    registerError(nameToken, infos);
   }
 
-  protected final void registerStatementError(@NotNull PsiStatement statement,
-                                              Object... infos) {
+  protected final void registerStatementError(@NotNull PsiStatement statement, Object... infos) {
     final PsiElement statementToken = statement.getFirstChild();
-    if (statementToken == null) {
+    if (statementToken == null || statementToken.getText().length() == 0) {
       registerError(statement, infos);
     }
     else {
@@ -81,18 +71,14 @@ public abstract class BaseInspectionVisitor extends JavaElementVisitor {
   }
 
   protected final void registerModuleError(@NotNull PsiJavaModule module, Object... infos) {
-    final PsiJavaModuleReferenceElement identifier = module.getNameIdentifier();
-    registerError(identifier, infos);
+    registerError(module.getNameIdentifier(), infos);
   }
 
-  protected final void registerClassError(@NotNull PsiClass aClass,
-                                          Object... infos) {
-    PsiElement nameIdentifier;
+  protected final void registerClassError(@NotNull PsiClass aClass, Object... infos) {
+    final PsiElement nameIdentifier;
     if (aClass instanceof PsiEnumConstantInitializer) {
-      final PsiEnumConstantInitializer enumConstantInitializer =
-        (PsiEnumConstantInitializer)aClass;
-      final PsiEnumConstant enumConstant =
-        enumConstantInitializer.getEnumConstant();
+      final PsiEnumConstantInitializer enumConstantInitializer = (PsiEnumConstantInitializer)aClass;
+      final PsiEnumConstant enumConstant = enumConstantInitializer.getEnumConstant();
       nameIdentifier = enumConstant.getNameIdentifier();
     }
     else if (aClass instanceof PsiAnonymousClass) {
@@ -103,67 +89,40 @@ public abstract class BaseInspectionVisitor extends JavaElementVisitor {
       nameIdentifier = aClass.getNameIdentifier();
     }
     if (nameIdentifier == null) {
-      registerError(aClass.getContainingFile(), infos);
+      return;
     }
-    else {
-      registerError(nameIdentifier, infos);
-    }
-  }
-
-  protected final void registerMethodError(@NotNull PsiMethod method,
-                                           Object... infos) {
-    final PsiElement nameIdentifier = method.getNameIdentifier();
-    if (nameIdentifier == null) {
-      final LocalQuickFix[] fixes = createAndInitFixes(infos);
-      final String description = inspection.buildErrorString(infos);
-
-      final TextRange methodTextRange;
-      PsiCodeBlock body = method.getBody();
-      if (body != null) {
-        methodTextRange = new TextRange(0, body.getStartOffsetInParent());
-      }
-      else {
-        methodTextRange = new TextRange(0, method.getTextLength());
-      }
-
-      holder.registerProblem(method, methodTextRange, description, fixes);
-    }
-    else {
-      registerError(nameIdentifier, infos);
-    }
-  }
-
-  protected final void registerVariableError(@NotNull PsiVariable variable,
-                                             Object... infos) {
-    final PsiElement nameIdentifier = variable.getNameIdentifier();
-    if (nameIdentifier == null) {
-      registerError(variable, infos);
-    }
-    else {
-      registerError(nameIdentifier, infos);
-    }
-  }
-
-  protected final void registerTypeParameterError(
-    @NotNull PsiTypeParameter typeParameter, Object... infos) {
-    final PsiElement nameIdentifier = typeParameter.getNameIdentifier();
-    if (nameIdentifier == null) {
-      registerError(typeParameter, infos);
-    }
-    else {
-      registerError(nameIdentifier, infos);
-    }
-  }
-
-  protected final void registerFieldError(@NotNull PsiField field,
-                                          Object... infos) {
-    final PsiElement nameIdentifier = field.getNameIdentifier();
     registerError(nameIdentifier, infos);
   }
 
-  protected final void registerModifierError(
-    @NotNull String modifier, @NotNull PsiModifierListOwner parameter,
-    Object... infos) {
+  protected final void registerMethodError(@NotNull PsiMethod method, Object... infos) {
+    final PsiElement nameIdentifier = method.getNameIdentifier();
+    if (nameIdentifier == null) {
+      return;
+    }
+    registerError(nameIdentifier, infos);
+  }
+
+  protected final void registerVariableError(@NotNull PsiVariable variable, Object... infos) {
+    final PsiElement nameIdentifier = variable.getNameIdentifier();
+    if (nameIdentifier == null) {
+      return;
+    }
+    registerError(nameIdentifier, infos);
+  }
+
+  protected final void registerTypeParameterError(@NotNull PsiTypeParameter typeParameter, Object... infos) {
+    final PsiElement nameIdentifier = typeParameter.getNameIdentifier();
+    if (nameIdentifier == null) {
+      return;
+    }
+    registerError(nameIdentifier, infos);
+  }
+
+  protected final void registerFieldError(@NotNull PsiField field, Object... infos) {
+    registerError(field.getNameIdentifier(), infos);
+  }
+
+  protected final void registerModifierError(@NotNull String modifier, @NotNull PsiModifierListOwner parameter, Object... infos) {
     final PsiModifierList modifiers = parameter.getModifierList();
     if (modifiers == null) {
       return;
@@ -177,8 +136,7 @@ public abstract class BaseInspectionVisitor extends JavaElementVisitor {
     }
   }
 
-  protected final void registerClassInitializerError(
-    @NotNull PsiClassInitializer initializer, Object... infos) {
+  protected final void registerClassInitializerError(@NotNull PsiClassInitializer initializer, Object... infos) {
     final PsiCodeBlock body = initializer.getBody();
     final PsiJavaToken lBrace = body.getLBrace();
     if (lBrace == null) {
@@ -189,8 +147,7 @@ public abstract class BaseInspectionVisitor extends JavaElementVisitor {
     }
   }
 
-  protected final void registerError(@NotNull PsiElement location,
-                                     Object... infos) {
+  protected final void registerError(@NotNull PsiElement location, Object... infos) {
     registerError(location, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, infos);
   }
 

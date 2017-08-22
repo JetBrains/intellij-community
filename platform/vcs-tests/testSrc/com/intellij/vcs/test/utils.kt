@@ -40,16 +40,16 @@ inline fun <reified Int : Any, reified Impl : Int> overrideService(): Impl {
   return service<Int>() as Impl
 }
 
-fun assertNotification(type: NotificationType, title: String, content: String, actions: List<String>, actual: Notification): Notification {
+fun assertNotification(type: NotificationType, title: String, content: String, actions: List<String>?, actual: Notification): Notification {
   assertEquals("Incorrect notification type: " + tos(actual), type, actual.type)
   assertEquals("Incorrect notification title: " + tos(actual), title, actual.title)
   assertEquals("Incorrect notification content: " + tos(actual), cleanupForAssertion(content), cleanupForAssertion(actual.content))
-  assertOrderedEquals("Incorrect notification actions", actions, actual.actions.map { it.templatePresentation.text })
+  if (actions != null) assertOrderedEquals("Incorrect notification actions", actual.actions.map { it.templatePresentation.text }, actions)
   return actual
 }
 
 fun assertNotification(type: NotificationType, title: String, content: String, actual: Notification) =
-  assertNotification(type, title, content, listOf(), actual)
+  assertNotification(type, title, content, null, actual)
 
 fun assertSuccessfulNotification(title: String, content: String, actual: Notification) =
   assertNotification(NotificationType.INFORMATION, title, content, actual)

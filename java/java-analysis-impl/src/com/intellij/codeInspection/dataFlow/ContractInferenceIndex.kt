@@ -33,7 +33,7 @@ import java.util.*
  * @author peter
  */
 
-private val gist = GistManager.getInstance().newPsiFileGist("contractInference", 2, MethodDataExternalizer) { file ->
+private val gist = GistManager.getInstance().newPsiFileGist("contractInference", 3, MethodDataExternalizer) { file ->
   indexFile(file.node.lighterAST)
 }
 
@@ -69,8 +69,9 @@ private fun calcData(tree: LighterAST, method: LighterASTNode): MethodData? {
   for (statement in statements) {
     walkMethodBody(tree, statement) { nullityVisitor.visitNode(it); purityVisitor.visitNode(it) }
   }
+  val notNullParams = inferNotNullParameters(tree, method, statements)
 
-  return createData(body, contracts, nullityVisitor.result, purityVisitor.result)
+  return createData(body, contracts, nullityVisitor.result, purityVisitor.result, notNullParams)
 }
 
 private fun walkMethodBody(tree: LighterAST, root: LighterASTNode, processor: (LighterASTNode) -> Unit) {
@@ -88,10 +89,11 @@ private fun walkMethodBody(tree: LighterAST, root: LighterASTNode, processor: (L
 private fun createData(body: LighterASTNode,
                        contracts: List<PreContract>,
                        nullity: NullityInferenceResult?,
-                       purity: PurityInferenceResult?): MethodData? {
-  if (nullity == null && purity == null && !contracts.isNotEmpty()) return null
+                       purity: PurityInferenceResult?,
+                       notNullParams: BitSet): MethodData? {
+  if (nullity == null && purity == null && contracts.isEmpty() && notNullParams.isEmpty) return null
 
-  return MethodData(nullity, purity, contracts, body.startOffset, body.endOffset)
+  return MethodData(nullity, purity, contracts, notNullParams, body.startOffset, body.endOffset)
 }
 
 fun getIndexedData(method: PsiMethodImpl): MethodData? = gist.getFileData(method.containingFile)?.get(methodIndex(method))

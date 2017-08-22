@@ -51,7 +51,7 @@ public class WorkingWithOpenProjectTest extends MavenImportingTestCase {
     PsiTestUtil.addContentRoot(getModule("project"), root);  // should not throw an exception
   }
   
-  public void _testSavingAllDocumentBeforeReimport() throws Exception {
+  public void _testSavingAllDocumentBeforeReimport() {
     // cannot make it work die to order of document listeners
 
     myProjectsManager.listenForExternalChanges();

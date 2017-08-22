@@ -50,11 +50,11 @@ public class XmlPerformanceTest extends LightQuickFixTestCase {
     Class clazz = IdeaTestUtil.class;
   }
 
-  public void testIndentUnindent() throws Exception {
+  public void testIndentUnindent() {
     doIndentTest(2000);
   }
 
-  public void testIndentUnindent2() throws Exception {
+  public void testIndentUnindent2() {
     doIndentTest(2001);
   }
 

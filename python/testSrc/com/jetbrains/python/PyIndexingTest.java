@@ -120,7 +120,16 @@ public class PyIndexingTest extends PyTestCase {
       m.clear();
 
       for (ContentEntry e : entries) {
-        m.addContentEntry(e.getFile());
+        final ContentEntry newEntry = m.addContentEntry(e.getFile());
+        for (SourceFolder folder : e.getSourceFolders()) {
+          newEntry.addSourceFolder(folder.getFile(), folder.isTestSource());
+        }
+        for (ExcludeFolder folder : e.getExcludeFolders()) {
+          newEntry.addExcludeFolder(folder.getFile());
+        }
+        for (String pattern : e.getExcludePatterns()) {
+          newEntry.addExcludePattern(pattern);
+        }
       }
 
       ApplicationManager.getApplication().runWriteAction(() -> {

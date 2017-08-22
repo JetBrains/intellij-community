@@ -48,6 +48,7 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.merge.MergeData;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -61,7 +62,7 @@ import java.util.Map;
 public class ChangeDiffRequestProducer implements DiffRequestProducer {
   private static final Logger LOG = Logger.getInstance(ChangeDiffRequestProducer.class);
 
-  public static Key<Change> CHANGE_KEY = Key.create("DiffRequestPresentable.Change");
+  public static final Key<Change> CHANGE_KEY = Key.create("DiffRequestPresentable.Change");
 
   @Nullable private final Project myProject;
   @NotNull private final Change myChange;
@@ -274,9 +275,7 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer {
         if (!exceptionRef.isNull()) {
           Throwable e = exceptionRef.get();
           if (e instanceof VcsException) throw (VcsException)e;
-          if (e instanceof Error) throw (Error)e;
-          if (e instanceof RuntimeException) throw (RuntimeException)e;
-          throw new RuntimeException(e);
+          ExceptionUtil.rethrow(e);
         }
         MergeData mergeData = mergeDataRef.get();
 

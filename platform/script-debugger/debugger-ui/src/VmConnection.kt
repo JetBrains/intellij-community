@@ -36,7 +36,7 @@ abstract class VmConnection<T : Vm> : Disposable {
 
   private val stateRef = AtomicReference(ConnectionState(ConnectionStatus.NOT_CONNECTED))
 
-  private val dispatcher = EventDispatcher.create(DebugEventListener::class.java)
+  open protected val dispatcher: EventDispatcher<DebugEventListener> = EventDispatcher.create(DebugEventListener::class.java)
   private val connectionDispatcher = ContainerUtil.createLockFreeCopyOnWriteList<(ConnectionState) -> Unit>()
 
   @Volatile var vm: T? = null

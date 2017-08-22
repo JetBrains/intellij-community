@@ -33,12 +33,12 @@ public class IncreaseLanguageLevelFixTest extends JavaCodeInsightFixtureTestCase
   }
 
   @Override
-  protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
+  protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
     moduleBuilder.setLanguageLevel(LanguageLevel.JDK_1_6);
     moduleBuilder.addJdk(IdeaTestUtil.getMockJdk18Path().getPath());
   }
 
-  public void testLambda() throws Exception {
+  public void testLambda() {
     myFixture.configureByFile("Lambda.java");
     assertEquals(LanguageLevel.JDK_1_6, PsiUtil.getLanguageLevel(myFixture.getFile()));
     IntentionAction fix = myFixture.findSingleIntention("Set language level");

@@ -882,7 +882,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       synchronized (myDataLock) {
         final LocalChangeList changeList = myModifier.addChangeList(name, comment, data);
         myChangesViewManager.scheduleRefresh();
-        return changeList.copy();
+        return changeList;
       }
     });
   }

@@ -71,10 +71,12 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
 
   protected JavaTestFramework getCurrentFramework(PsiClass psiClass) {
     if (psiClass != null) {
-      TestFramework framework = TestFrameworks.detectFramework(psiClass);
-      if (framework instanceof JavaTestFramework && ((JavaTestFramework)framework).isMyConfigurationType(getConfigurationType())) {
-        return (JavaTestFramework)framework;
-      }
+      ConfigurationType configurationType = getConfigurationType();
+      Set<TestFramework> frameworks = TestFrameworks.detectApplicableFrameworks(psiClass);
+      return frameworks.stream().filter(framework -> framework instanceof JavaTestFramework && ((JavaTestFramework)framework).isMyConfigurationType(configurationType))
+        .map(framework -> (JavaTestFramework)framework)
+        .findFirst()
+        .orElse(null);
     }
     return null;
   }
@@ -103,9 +105,7 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
       ? ((CommonJavaRunConfigurationParameters)predefinedConfiguration).getVMParameters()
       : null;
     if (vmParameters != null && !Comparing.strEqual(vmParameters, configuration.getVMParameters())) return false;
-    String paramSetName = contextLocation instanceof PsiMemberParameterizedLocation
-                          ? configuration.prepareParameterizedParameter(((PsiMemberParameterizedLocation)contextLocation).getParamSetName()) : null;
-    if (paramSetName != null && !Comparing.strEqual(paramSetName, configuration.getProgramParameters())) return false;
+    if (differentParamSet(configuration, contextLocation)) return false;
 
     if (configuration.isConfiguredByElement(element)) {
       final Module configurationModule = configuration.getConfigurationModule().getModule();
@@ -113,6 +113,13 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
       if (Comparing.equal(predefinedModule, configurationModule)) return true;
     }
 
+    return false;
+  }
+
+  protected boolean differentParamSet(T configuration, Location contextLocation) {
+    String paramSetName = contextLocation instanceof PsiMemberParameterizedLocation
+                          ? configuration.prepareParameterizedParameter(((PsiMemberParameterizedLocation)contextLocation).getParamSetName()) : null;
+    if (paramSetName != null && !Comparing.strEqual(paramSetName, configuration.getProgramParameters())) return true;
     return false;
   }
 

@@ -21,7 +21,7 @@ import com.intellij.testFramework.ExpectedHighlightingData;
 
 public class JavaSymbolHighlightingTest extends LightDaemonAnalyzerTestCase {
 
-  public void testImplicitAnonymousClassParameterHighlighting_InsideLambda() throws Exception {
+  public void testImplicitAnonymousClassParameterHighlighting_InsideLambda() {
     configureFromFileText("Test.java",
                           "class T {\n" +
                           "    public void test() {\n" +

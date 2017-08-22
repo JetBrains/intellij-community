@@ -15,7 +15,7 @@
  */
 package com.intellij.psi.impl.smartPointers;
 
-import com.intellij.lang.LanguageUtil;
+import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ProperTextRange;
@@ -39,7 +39,7 @@ class SmartPsiFileRangePointerImpl extends SmartPsiElementPointerImpl<PsiFile> i
       }
     }
     if (!forInjected && range.equals(containingFile.getTextRange())) return new FileElementInfo(containingFile);
-    return new SelfElementInfo(project, range, Identikit.fromTypes(PsiElement.class, null, LanguageUtil.getRootLanguage(containingFile)), containingFile, forInjected);
+    return new SelfElementInfo(project, range, Identikit.fromTypes(PsiElement.class, null, Language.ANY), containingFile, forInjected);
   }
 
   @Override

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+
+  <problem>
+    <file>Test.java</file>
+    <line>9</line>
+    <description>'Test' is deprecated and marked for removal</description>
+  </problem>
+
+  <problem>
+    <file>Test.java</file>
+    <line>10</line>
+    <description>'Test' is deprecated and marked for removal</description>
+  </problem>
+
+  <problem>
+    <file>Test.java</file>
+    <line>15</line>
+    <description>'Test' is deprecated and marked for removal</description>
+  </problem>
+
+  <problem>
+    <file>Test.java</file>
+    <line>16</line>
+    <description>'Test' is deprecated and marked for removal</description>
+  </problem>
+
+  <problem>
+    <file>Test.java</file>
+    <line>21</line>
+    <description>'Test' is deprecated and marked for removal</description>
+  </problem>
+
+  <problem>
+    <file>Test.java</file>
+    <line>22</line>
+    <description>'Test' is deprecated and marked for removal</description>
+  </problem>
+
+  <problem>
+    <file>Test.java</file>
+    <line>27</line>
+    <description>'Test' is deprecated and marked for removal</description>
+  </problem>
+
+  <problem>
+    <file>Test.java</file>
+    <line>28</line>
+    <description>'Test' is deprecated and marked for removal</description>
+  </problem>
+</problems>

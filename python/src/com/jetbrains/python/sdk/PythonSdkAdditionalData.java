@@ -31,7 +31,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -103,20 +102,22 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
 
   public void setAssociatedProjectPath(@Nullable String associatedProjectPath) {
     myAssociatedProjectPath = associatedProjectPath;
+    myAssociateWithNewProject = false;
   }
 
-  public void associateWithProject(Project project) {
+  public void associateWithProject(@NotNull Project project) {
     final String path = project.getBasePath();
     if (path != null) {
       myAssociatedProjectPath = FileUtil.toSystemIndependentName(path);
     }
+    myAssociateWithNewProject = false;
   }
 
   public void associateWithNewProject() {
     myAssociateWithNewProject = true;
   }
 
-  public void reassociateWithCreatedProject(Project project) {
+  public void reassociateWithCreatedProject(@NotNull Project project) {
     if (myAssociateWithNewProject) {
       associateWithProject(project);
     }

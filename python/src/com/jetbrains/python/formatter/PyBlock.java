@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,18 +90,18 @@ public class PyBlock implements ASTBlock {
   private List<PyBlock> mySubBlocks = null;
   private Map<ASTNode, PyBlock> mySubBlockByNode = null;
   private final boolean myEmptySequence;
-  
+
   // Shared among multiple children sub-blocks
   private Alignment myChildAlignment = null;
   private Alignment myDictAlignment = null;
   private Wrap myDictWrapping = null;
   private Wrap myFromImportWrapping = null;
 
-  public PyBlock(@Nullable PyBlock parent, 
-                 @NotNull ASTNode node, 
-                 @Nullable Alignment alignment, 
-                 @NotNull Indent indent, 
-                 @Nullable Wrap wrap, 
+  public PyBlock(@Nullable PyBlock parent,
+                 @NotNull ASTNode node,
+                 @Nullable Alignment alignment,
+                 @NotNull Indent indent,
+                 @Nullable Wrap wrap,
                  @NotNull PyBlockContext context) {
     myParent = parent;
     myAlignment = alignment;
@@ -189,7 +189,7 @@ public class PyBlock implements ASTBlock {
     Wrap childWrap = null;
     Indent childIndent = Indent.getNoneIndent();
     Alignment childAlignment = null;
-    
+
     final PyCodeStyleSettings settings = myContext.getPySettings();
 
     if (parentType == PyElementTypes.BINARY_EXPRESSION && !isInControlStatement()) {
@@ -260,7 +260,7 @@ public class PyBlock implements ASTBlock {
       }
     }
 
-    
+
     if (parentType == PyElementTypes.LIST_LITERAL_EXPRESSION || parentType == PyElementTypes.LIST_COMP_EXPRESSION) {
       if ((childType == PyTokenTypes.RBRACKET && !settings.HANG_CLOSING_BRACKETS) || childType == PyTokenTypes.LBRACKET) {
         childIndent = Indent.getNoneIndent();
@@ -617,7 +617,7 @@ public class PyBlock implements ASTBlock {
           myContext.getMode() == FormattingMode.ADJUST_INDENT) {
         return true;
       }
-      return !hasHangingIndent(myNode.getPsi()) && !(myNode.getElementType() == PyElementTypes.DICT_LITERAL_EXPRESSION && 
+      return !hasHangingIndent(myNode.getPsi()) && !(myNode.getElementType() == PyElementTypes.DICT_LITERAL_EXPRESSION &&
                                                      myContext.getPySettings().DICT_NEW_LINE_AFTER_LEFT_BRACE);
     }
     if (myNode.getElementType() == PyElementTypes.ARGUMENT_LIST) {
@@ -719,6 +719,8 @@ public class PyBlock implements ASTBlock {
   @Override
   @Nullable
   public Spacing getSpacing(@Nullable Block child1, @NotNull Block child2) {
+    final CommonCodeStyleSettings settings = myContext.getSettings();
+    final PyCodeStyleSettings pySettings = myContext.getPySettings();
     if (child1 instanceof ASTBlock && child2 instanceof ASTBlock) {
       final ASTNode node1 = ((ASTBlock)child1).getNode();
       ASTNode node2 = ((ASTBlock)child2).getNode();
@@ -726,6 +728,29 @@ public class PyBlock implements ASTBlock {
       final PsiElement psi1 = node1.getPsi();
 
       PsiElement psi2 = node2.getPsi();
+
+      if (psi2 instanceof PyStatementList) {
+        // Quite odd getSpacing() doesn't get called with child1=null for the first statement
+        // in the statement list of a class, yet it does get called for the preceding colon and
+        // the statement list itself. Hence we have to handle blank lines around methods here in
+        // addition to SpacingBuilder.
+        if (myNode.getElementType() == PyElementTypes.CLASS_DECLARATION) {
+          final PyStatement[] statements = ((PyStatementList)psi2).getStatements();
+          if (statements.length > 0 && statements[0] instanceof PyFunction) {
+            return getBlankLinesForOption(settings.BLANK_LINES_AROUND_METHOD);
+          }
+        }
+        if (childType1 == PyTokenTypes.COLON && needLineBreakInStatement()) {
+          return Spacing.createSpacing(0, 0, 1, true, settings.KEEP_BLANK_LINES_IN_CODE);
+        }
+      }
+
+      // pycodestyle.py enforces at most 2 blank lines only between comments directly
+      // at the top-level of a file, not inside if, try/except, etc.
+      if (psi1 instanceof PsiComment && myNode.getPsi() instanceof PsiFile) {
+        return Spacing.createSpacing(0, 0, 1, true, 2);
+      }
+
       // skip not inline comments to handles blank lines between various declarations
       if (psi2 instanceof PsiComment && hasLineBreaksBeforeInSameParent(node2, 1)) {
         final PsiElement nonCommentAfter = PyPsiUtils.getNextNonCommentSibling(psi2, true);
@@ -737,25 +762,11 @@ public class PyBlock implements ASTBlock {
       final IElementType childType2 = psi2.getNode().getElementType();
       //noinspection ConstantConditions
       child2 = getSubBlockByNode(node2);
-      final CommonCodeStyleSettings settings = myContext.getSettings();
 
       if ((childType1 == PyTokenTypes.EQ || childType2 == PyTokenTypes.EQ)) {
         final PyNamedParameter namedParameter = as(myNode.getPsi(), PyNamedParameter.class);
         if (namedParameter != null && namedParameter.getAnnotation() != null) {
           return Spacing.createSpacing(1, 1, 0, settings.KEEP_LINE_BREAKS, settings.KEEP_BLANK_LINES_IN_CODE);
-        }
-      }
-      
-      if (childType1 == PyTokenTypes.COLON && psi2 instanceof PyStatementList) {
-        if (needLineBreakInStatement()) {
-          return Spacing.createSpacing(0, 0, 1, true, settings.KEEP_BLANK_LINES_IN_CODE);
-        }
-      }
-
-      if ((PyElementTypes.CLASS_OR_FUNCTION.contains(childType1) && STATEMENT_OR_DECLARATION.contains(childType2)) ||
-          STATEMENT_OR_DECLARATION.contains(childType1) && PyElementTypes.CLASS_OR_FUNCTION.contains(childType2)) {
-        if (PyUtil.isTopLevel(psi1)) {
-          return getBlankLinesForOption(myContext.getPySettings().BLANK_LINES_AROUND_TOP_LEVEL_CLASSES_FUNCTIONS);
         }
       }
 
@@ -765,7 +776,7 @@ public class PyBlock implements ASTBlock {
           final Boolean rightImportIsGroupStart = psi2.getCopyableUserData(IMPORT_GROUP_BEGIN);
           // Cleanup user data, it's no longer needed
           psi1.putCopyableUserData(IMPORT_GROUP_BEGIN, null);
-          // Don't remove IMPORT_GROUP_BEGIN from the element psi2 yet, because spacing is constructed pairwise: 
+          // Don't remove IMPORT_GROUP_BEGIN from the element psi2 yet, because spacing is constructed pairwise:
           // it might be needed on the next iteration.
           //psi2.putCopyableUserData(IMPORT_GROUP_BEGIN, null);
           if (rightImportIsGroupStart != null) {
@@ -780,17 +791,26 @@ public class PyBlock implements ASTBlock {
         }
         if (psi2 instanceof PyStatement && !(psi2 instanceof PyImportStatementBase)) {
           if (PyUtil.isTopLevel(psi1)) {
+            // If there is any function or class after a top-level import, it should be top-level as well
+            if (PyElementTypes.CLASS_OR_FUNCTION.contains(childType2)) {
+              return getBlankLinesForOption(Math.max(settings.BLANK_LINES_AFTER_IMPORTS,
+                                                     pySettings.BLANK_LINES_AROUND_TOP_LEVEL_CLASSES_FUNCTIONS));
+            }
             return getBlankLinesForOption(settings.BLANK_LINES_AFTER_IMPORTS);
           }
           else {
-            return getBlankLinesForOption(myContext.getPySettings().BLANK_LINES_AFTER_LOCAL_IMPORTS);
+            return getBlankLinesForOption(pySettings.BLANK_LINES_AFTER_LOCAL_IMPORTS);
           }
         }
       }
 
-      if (psi2 instanceof PsiComment && !hasLineBreaksBeforeInSameParent(psi2.getNode(), 1) && myContext.getPySettings().SPACE_BEFORE_NUMBER_SIGN) {
-        return Spacing.createSpacing(2, 0, 0, false, 0);
+      if ((PyElementTypes.CLASS_OR_FUNCTION.contains(childType1) && STATEMENT_OR_DECLARATION.contains(childType2)) ||
+          STATEMENT_OR_DECLARATION.contains(childType1) && PyElementTypes.CLASS_OR_FUNCTION.contains(childType2)) {
+        if (PyUtil.isTopLevel(psi1)) {
+          return getBlankLinesForOption(pySettings.BLANK_LINES_AROUND_TOP_LEVEL_CLASSES_FUNCTIONS);
+        }
       }
+
     }
     return myContext.getSpacingBuilder().getSpacing(this, child1, child2);
   }
@@ -871,7 +891,7 @@ public class PyBlock implements ASTBlock {
     // delegation sometimes causes NPEs in formatter core, so we calculate the
     // correct indent manually.
     if (statementListsBelow > 0) { // was 1... strange
-      @SuppressWarnings("ConstantConditions") 
+      @SuppressWarnings("ConstantConditions")
       final int indent = myContext.getSettings().getIndentOptions().INDENT_SIZE;
       return new ChildAttributes(Indent.getSpaceIndent(indent * statementListsBelow), null);
     }
@@ -895,7 +915,18 @@ public class PyBlock implements ASTBlock {
       return false;
     }
     final PyStatement last = statements[statements.length - 1];
-    return last instanceof PyReturnStatement || last instanceof PyRaiseStatement || last instanceof PyPassStatement;
+    return last instanceof PyReturnStatement || last instanceof PyRaiseStatement || last instanceof PyPassStatement || isEllipsis(last);
+  }
+
+  private static boolean isEllipsis(@NotNull PyStatement statement) {
+    if (statement instanceof PyExpressionStatement) {
+      final PyExpression expression = ((PyExpressionStatement)statement).getExpression();
+      if (expression instanceof PyNoneLiteralExpression) {
+        return ((PyNoneLiteralExpression)expression).isEllipsis();
+      }
+    }
+
+    return false;
   }
 
   @Nullable
@@ -941,7 +972,7 @@ public class PyBlock implements ASTBlock {
       }
     }
     else if (lastChild != null && PyElementTypes.LIST_LIKE_EXPRESSIONS.contains(lastChild.getElementType())) {
-      // handle pressing enter at the end of a list literal when there's no closing paren or bracket 
+      // handle pressing enter at the end of a list literal when there's no closing paren or bracket
       final ASTNode lastLastChild = lastChild.getLastChildNode();
       if (lastLastChild != null && lastLastChild.getPsi() instanceof PsiErrorElement) {
         // we're at a place like this: [foo, ... bar, <caret>

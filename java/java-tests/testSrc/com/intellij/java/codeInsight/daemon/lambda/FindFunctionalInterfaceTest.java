@@ -31,15 +31,15 @@ import java.util.Collection;
 import java.util.function.Predicate;
 
 public class FindFunctionalInterfaceTest extends LightCodeInsightFixtureTestCase {
-  public void testMethodArgument() throws Exception {
+  public void testMethodArgument() {
     doTestOneExpression();
   }
 
-  public void testMethodArgumentByTypeParameter() throws Exception {
+  public void testMethodArgumentByTypeParameter() {
     doTestOneExpression();
   }
 
-  public void testFieldDeclaredInFileWithoutFunctionalInterfaces() throws Exception {
+  public void testFieldDeclaredInFileWithoutFunctionalInterfaces() {
     myFixture.addClass("class B {" +
                        "  void f(A a) {" +
                        "    a.r = () -> {};" +
@@ -52,7 +52,7 @@ public class FindFunctionalInterfaceTest extends LightCodeInsightFixtureTestCase
     doTestOneExpression();
   }
 
-  public void testVarargPosition() throws Exception {
+  public void testVarargPosition() {
     myFixture.addClass("\n" +
                        "class A {  \n" +
                        "  <T> void foo(T... r) {}\n" +
@@ -82,7 +82,7 @@ public class FindFunctionalInterfaceTest extends LightCodeInsightFixtureTestCase
     return psiClass;
   }
 
-  public void testFieldFromAnonymousClassScope() throws Exception {
+  public void testFieldFromAnonymousClassScope() {
     configure();
     final PsiElement elementAtCaret = myFixture.getElementAtCaret();
     assertNotNull(elementAtCaret);

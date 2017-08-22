@@ -661,7 +661,7 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
-  public void testDoNotDestroyAlignment_OnPostponedFormatting() throws Exception {
+  public void testDoNotDestroyAlignment_OnPostponedFormatting() {
     getPythonCodeStyleSettings().DICT_ALIGNMENT = PyCodeStyleSettings.DICT_ALIGNMENT_ON_COLON;
     doTest();
   }
@@ -796,6 +796,47 @@ public class PyFormatterTest extends PyTestCase {
     getCodeStyleSettings().setRightMargin(PythonLanguage.INSTANCE, 30);
     getPythonCodeStyleSettings().FROM_IMPORT_PARENTHESES_FORCE_IF_MULTILINE = false;
     getPythonCodeStyleSettings().FROM_IMPORT_TRAILING_COMMA_IF_MULTILINE = true;
+    doTest();
+  }
+
+  // PY-21931
+  public void testSpacesAroundElseInConditionalExpression() {
+    doTest();
+  }
+
+  // PY-20970
+  public void testSpacesAfterNonlocal() {
+    runWithLanguageLevel(LanguageLevel.PYTHON30, this::doTest);
+  }
+
+  // PY-21515
+  public void testSpacesBeforeFromImportSource() {
+    doTest();
+  }
+
+  public void testSpacesAfterFromInYieldFrom() {
+    runWithLanguageLevel(LanguageLevel.PYTHON33, this::doTest);
+  }
+
+  // PY-24220
+  public void testBlankLinesAfterTopLevelImportsBeforeClass() {
+    getCommonCodeStyleSettings().BLANK_LINES_AFTER_IMPORTS = 5;
+    doTest();
+  }
+
+  // PY-24220
+  public void testBlankLinesAfterTopLevelImportsBeforeClassWithPrecedingComments() {
+    getCommonCodeStyleSettings().BLANK_LINES_AFTER_IMPORTS = 5;
+    doTest();
+  }
+
+  // PY-25356
+  public void testCommentsSpacing() {
+    doTest();
+  }
+
+  // PY-19705
+  public void testBlankLinesAroundFirstMethod() {
     doTest();
   }
 

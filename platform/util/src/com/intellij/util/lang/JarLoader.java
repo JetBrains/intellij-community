@@ -22,6 +22,7 @@ import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -131,7 +132,7 @@ class JarLoader extends Loader {
       try {
         ZipEntry entry = zipFile.getEntry(name);
         if (entry != null) {
-          return MemoryResource.load(getBaseURL(), zipFile, entry, myAttributes);
+          return new MyResource(getBaseURL(), entry);
         }
       }
       finally {
@@ -143,6 +144,41 @@ class JarLoader extends Loader {
     }
 
     return null;
+  }
+  
+  private class MyResource extends Resource {
+    private final URL myUrl;
+    private final ZipEntry myEntry;
+
+    public MyResource(URL url, ZipEntry entry) throws IOException {
+      myUrl = new URL(url, entry.getName());
+      myEntry = entry;
+    }
+
+    @Override
+    public URL getURL() {
+      return myUrl;
+    }
+
+    @Override
+    public InputStream getInputStream() throws IOException {
+      return new ByteArrayInputStream(getBytes());
+    }
+
+    @Override
+    public byte[] getBytes() throws IOException {
+      ZipFile file = getZipFile();
+      try {
+        return FileUtil.loadBytes(file.getInputStream(myEntry), (int)myEntry.getSize());
+      } finally {
+        releaseZipFile(file);
+      }
+    }
+
+    @Override
+    public String getValue(Attribute key) {
+      return myAttributes != null ? myAttributes.get(key) : null;
+    }
   }
 
   protected void error(String message, Throwable t) {

@@ -15,9 +15,18 @@
  */
 package com.intellij.java.codeInsight.daemon.quickFix;
 
-public class RenameWrongReferenceTest extends LightQuickFixAvailabilityTestCase {
+import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 
-  public void test() throws Exception { doAllTests(); }
+public class RenameWrongReferenceTest extends LightQuickFixParameterizedTestCase {
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
+  }
+
+  public void test() { doAllTests(); }
 
   @Override
   protected String getBasePath() {

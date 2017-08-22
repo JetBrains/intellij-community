@@ -27,6 +27,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.extractMethod.ExtractMethodHandler;
@@ -266,7 +267,7 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   }
 
   public void testFinalParamUsedInsideAnon() throws Exception {
-    CodeStyleSettingsManager.getSettings(getProject()).GENERATE_FINAL_PARAMETERS = false;
+    CodeStyleSettingsManager.getSettings(getProject()).getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_PARAMETERS = false;
     doTestWithJava17();
   }
 
@@ -283,7 +284,7 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   }
 
   public void testNonFinalWritableParam() throws Exception {
-    CodeStyleSettingsManager.getSettings(getProject()).GENERATE_FINAL_PARAMETERS = true;
+    CodeStyleSettingsManager.getSettings(getProject()).getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_PARAMETERS = true;
     doTest();
   }
 
@@ -448,6 +449,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testFoldingWithFunctionCall() throws Exception {
+    doTest();
+  }
+
   public void testDontSkipVariablesUsedInLeftSideOfAssignments() throws Exception {
     doTest();
   }
@@ -543,7 +548,7 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   }
 
   public void testReassignedVarAfterCall() throws Exception {
-    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    final JavaCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCustomSettings(JavaCodeStyleSettings.class);
     boolean oldGenerateFinalLocals = settings.GENERATE_FINAL_LOCALS;
     try {
       settings.GENERATE_FINAL_LOCALS = true;
@@ -858,7 +863,7 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   }
 
   public void testDefaultNamesConflictResolution() throws Exception {
-    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    final JavaCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCustomSettings(JavaCodeStyleSettings.class);
     final String oldPrefix = settings.LOCAL_VARIABLE_NAME_PREFIX;
     try {
       settings.LOCAL_VARIABLE_NAME_PREFIX = "_";
@@ -873,7 +878,7 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTest();
   }
 
-  public void testCantPassFieldAsParameter() throws Exception {
+  public void testCantPassFieldAsParameter() {
     try {
       doTestPassFieldsAsParams();
       fail("Field was modified inside. Make static should be disabled");
@@ -971,6 +976,34 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   }
 
   public void testDontMakeParametersFinalDueToUsagesInsideAnonymous() throws Exception {
+    doTest();
+  }
+
+  public void testBuilderChainWithArrayAccess() throws Exception {
+    doTest();
+  }
+
+  public void testBuilderChainWithArrayAccessExpr() throws Exception {
+    doTest();
+  }
+
+  public void testBuilderChainWithArrayAccessIf() throws Exception {
+    doTest();
+  }
+
+  public void testBuilderChainWith2DimArrayAccess() throws Exception {
+    doTest();
+  }
+
+  public void testCallOnArrayElement() throws Exception {
+    doTest();
+  }
+
+  public void testCallOn2DimArrayElement() throws Exception {
+    doTest();
+  }
+
+  public void testCallOnFieldArrayElement() throws Exception {
     doTest();
   }
 

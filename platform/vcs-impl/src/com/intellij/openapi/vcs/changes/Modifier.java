@@ -39,6 +39,7 @@ public class Modifier implements ChangeListsWriteOperations {
     myCommandQueue = new LinkedList<>();
   }
 
+  @NotNull
   @Override
   public LocalChangeList addChangeList(@NotNull String name, @Nullable String comment, @Nullable Object data) {
     AddList command = new AddList(name, comment, data);
@@ -46,6 +47,7 @@ public class Modifier implements ChangeListsWriteOperations {
     return command.getNewListCopy();
   }
 
+  @Nullable
   @Override
   public String setDefault(String name) {
     SetDefault command = new SetDefault(name);
@@ -60,6 +62,7 @@ public class Modifier implements ChangeListsWriteOperations {
     return command.isRemoved();
   }
 
+  @Nullable
   @Override
   public MultiMap<LocalChangeList, Change> moveChangesTo(String name, @NotNull Change[] changes) {
     MoveChanges command = new MoveChanges(name, changes);
@@ -95,6 +98,7 @@ public class Modifier implements ChangeListsWriteOperations {
     return command.isResult();
   }
 
+  @Nullable
   @Override
   public String editComment(@NotNull String fromName, String newComment) {
     EditComment command = new EditComment(fromName, newComment);

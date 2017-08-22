@@ -388,7 +388,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
     PsiDocumentManagerBase.checkConsistency(psiFile, frozenWindow);
   }
 
-  public void addToResults(Place place, PsiFile psiFile, MultiHostRegistrarImpl from) {
+  public void addToResults(Place place, PsiFile psiFile, @NotNull MultiHostRegistrarImpl from) {
     addToResults(place, psiFile);
     myReferenceInjector = from.myReferenceInjector;
   }
@@ -582,5 +582,14 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
     DocumentEx delegate = ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(project)).getLastCommittedDocument(window.getDelegate());
     Place place = new Place(ContainerUtil.map(shreds, shred -> ((ShredImpl) shred).withPsiRange()));
     return new DocumentWindowImpl(delegate, window.isOneLine(), place);
+  }
+
+  boolean isValid() {
+    List<Pair<Place, PsiFile>> result = getResult();
+    if (result == null) return false;
+    for (Pair<Place, PsiFile> pair : result) {
+      if (!pair.getFirst().isValid()) return false;
+    }
+    return true;
   }
 }

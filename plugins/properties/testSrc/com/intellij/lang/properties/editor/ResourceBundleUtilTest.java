@@ -27,7 +27,7 @@ import static org.junit.Assert.assertEquals;
 public class ResourceBundleUtilTest {
 
   /**
-   * Holds pairs like <code>('property value'; 'value editor text')</code>.
+   * Holds pairs like {@code ('property value'; 'value editor text')}.
    */
   private static final String[][] TEST_DATA = {
     // Common.

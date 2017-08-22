@@ -208,7 +208,7 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
 
     final DefaultActionGroup popupActions = new DefaultActionGroup();
     popupActions.add(new MyDiffAction());
-    popupActions.add(new MyDiffLocalAction());
+    popupActions.add(new MyDiffAfterWithLocalAction());
     popupActions.add(ShowAllAffectedGenericAction.getInstance());
     popupActions.add(ActionManager.getInstance().getAction(VcsActions.ACTION_COPY_REVISION_NUMBER));
     PopupHandler.installPopupHandler(myList, popupActions, ActionPlaces.UPDATE_POPUP, ActionManager.getInstance());
@@ -292,12 +292,10 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
 
     if (data.isLoading()) {
       VcsFileRevision revision = data.getCurrentLoadingRevision();
-      if (revision != null) {
-        myStatusLabel.setText("<html>Loading revision <tt>" + revision.getRevisionNumber() + "</tt></html>");
-      }
-      else {
-        myStatusLabel.setText("Loading...");
-      }
+      String loadingString = revision != null
+                             ? String.format("Loading revision <tt>%s</tt>...", VcsUtil.getShortRevisionString(revision.getRevisionNumber()))
+                             : "Loading...";
+      myStatusLabel.setText(String.format("<html>%s (%s/%s)</html>", loadingString, data.myBlocks.size(), myRevisions.size()));
 
       myStatusSpinner.resume();
       myStatusSpinner.setVisible(true);
@@ -496,8 +494,8 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
     }
   }
 
-  private class MyDiffLocalAction extends DumbAwareAction {
-    public MyDiffLocalAction() {
+  private class MyDiffAfterWithLocalAction extends DumbAwareAction {
+    public MyDiffAfterWithLocalAction() {
       ActionUtil.copyFrom(this, "Vcs.ShowDiffWithLocal");
     }
 

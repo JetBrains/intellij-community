@@ -65,6 +65,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   public static final DataKey<XDebugSessionTab> TAB_KEY = DataKey.create("XDebugSessionTab");
 
   private XWatchesViewImpl myWatchesView;
+  private XFramesView myFramesView;
   private boolean myWatchesInVariables = Registry.is("debugger.watches.in.variables");
   private final LinkedHashMap<String, XDebugView> myViews = new LinkedHashMap<>();
 
@@ -171,6 +172,9 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     if (XWatchesView.DATA_KEY.is(dataId)) {
       return myWatchesView;
     }
+    else if (XFramesView.DATA_KEY.is(dataId)) {
+      return myFramesView;
+    }
     else if (TAB_KEY.is(dataId)) {
       return this;
     }
@@ -220,9 +224,9 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
 
   @NotNull
   private Content createFramesContent() {
-    XFramesView framesView = new XFramesView(myProject);
-    registerView(DebuggerContentInfo.FRAME_CONTENT, framesView);
-    Content framesContent = myUi.createContent(DebuggerContentInfo.FRAME_CONTENT, framesView.getMainPanel(),
+    myFramesView = new XFramesView(myProject);
+    registerView(DebuggerContentInfo.FRAME_CONTENT, myFramesView);
+    Content framesContent = myUi.createContent(DebuggerContentInfo.FRAME_CONTENT, myFramesView.getMainPanel(),
                                                XDebuggerBundle.message("debugger.session.tab.frames.title"), AllIcons.Debugger.Frame, null);
     framesContent.setCloseable(false);
     return framesContent;

@@ -35,6 +35,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.SmartList;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.messages.MessageBus;
@@ -114,7 +115,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   }
 
   @TestOnly
-  VirtualFilePointer[] getPointersUnder(VirtualFile parent, String childName) {
+  synchronized VirtualFilePointer[] getPointersUnder(VirtualFile parent, String childName) {
     List<FilePointerPartNode> nodes = new ArrayList<>();
     addPointersUnder(parent, true, childName, nodes);
     return toPointers(nodes);
@@ -314,13 +315,13 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   private final Set<VirtualFilePointerImpl> myStoredPointers = ContainerUtil.newIdentityTroveSet();
 
   @TestOnly
-  public void storePointers() {
+  public synchronized void storePointers() {
     myStoredPointers.clear();
     addAllPointersTo(myStoredPointers);
   }
 
   @TestOnly
-  public void assertPointersAreDisposed() {
+  public synchronized void assertPointersAreDisposed() {
     List<VirtualFilePointerImpl> pointers = new ArrayList<>();
     addAllPointersTo(pointers);
     try {
@@ -477,7 +478,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     assertConsistency();
   }
 
-  void assertConsistency() {
+  synchronized void assertConsistency() {
     for (FilePointerPartNode root : myPointers.values()) {
       root.checkConsistency();
     }
@@ -536,7 +537,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     assertConsistency();
   }
 
-  void removeNode(@NotNull FilePointerPartNode node, VirtualFilePointerListener listener) {
+  synchronized void removeNode(@NotNull FilePointerPartNode node, VirtualFilePointerListener listener) {
     FilePointerPartNode root = node.remove();
     boolean rootNodeEmpty = root.children.length == 0 ;
     if (rootNodeEmpty) {
@@ -553,7 +554,8 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   }
 
   private static class DelegatingDisposable implements Disposable {
-    private static final ConcurrentMap<Disposable, DelegatingDisposable> ourInstances = ContainerUtil.newConcurrentMap(ContainerUtil.<Disposable>identityStrategy());
+    private static final ConcurrentMap<Disposable, DelegatingDisposable> ourInstances =
+      ConcurrentCollectionFactory.createMap(ContainerUtil.<Disposable>identityStrategy());
     private final TObjectIntHashMap<VirtualFilePointerImpl> myCounts = new TObjectIntHashMap<>(); // guarded by this
     private final Disposable myParent;
 
@@ -591,7 +593,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   }
 
   @TestOnly
-  int numberOfPointers() {
+  synchronized int numberOfPointers() {
     int number = 0;
     for (FilePointerPartNode root : myPointers.values()) {
       number = root.numberOfPointersUnder();
@@ -600,7 +602,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   }
 
   @TestOnly
-  int numberOfListeners() {
+  synchronized int numberOfListeners() {
     return myPointers.keySet().size();
   }
 

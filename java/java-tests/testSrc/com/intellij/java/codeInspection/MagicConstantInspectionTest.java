@@ -59,7 +59,7 @@ public class MagicConstantInspectionTest extends InspectionTestCase {
     return PsiTestUtil.addJdkAnnotations(IdeaTestUtil.getMockJdk17());
   }
 
-  private void doTest() throws Exception {
+  private void doTest() {
     doTest("magic/" + getTestName(true), new LocalInspectionToolWrapper(new MagicConstantInspection()), "jdk 1.7");
   }
 
@@ -83,9 +83,9 @@ public class MagicConstantInspectionTest extends InspectionTestCase {
     myFilter.allowTreeAccessForFile(aClass.getContainingFile().getVirtualFile());
   }
 
-  public void testSimple() throws Exception { doTest(); }
+  public void testSimple() { doTest(); }
   
-  public void testManyConstantSources() throws Exception { doTest(); }
+  public void testManyConstantSources() { doTest(); }
   // test that the optimisation for not loading AST works
-  public void testWithLibrary() throws Exception { doTest(); }
+  public void testWithLibrary() { doTest(); }
 }

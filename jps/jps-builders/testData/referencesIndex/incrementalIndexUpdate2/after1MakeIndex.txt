@@ -3,9 +3,7 @@ java.lang.Object -> Foo
 
 Backward References:
 Foo in Foo occurrences = 1
-Foo.<init>(0) in Foo occurrences = 1
 Foo.m(0) in Foo occurrences = 1
-java.lang.Object.<init>(0) in Foo occurrences = 1
 java.util.Collections in Foo occurrences = 2
 java.util.Collections.emptySet(0) in Foo occurrences = 1
 

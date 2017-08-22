@@ -19,14 +19,14 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 
 /**
  * Is intended to hold specific java formatting tests for 'braces placement' settings (
- * <code>Project Settings - Code Style - Alignment and Braces</code>).
+ * {@code Project Settings - Code Style - Alignment and Braces}).
  *
  * @author Denis Zhdanov
  * @since Apr 27, 2010 6:39:24 PM
  */
 public class JavaFormatterBracesTest extends AbstractJavaFormatterTest {
 
-  public void testBracePositioningAtPreviousLine() throws Exception {
+  public void testBracePositioningAtPreviousLine() {
     // Inspired by IDEADEV-18529
     doTextTest(
       "public class TestBed\n" +
@@ -62,7 +62,7 @@ public class JavaFormatterBracesTest extends AbstractJavaFormatterTest {
       "}");
   }
 
-  public void testSimpleBlockInOneLinesAndForceBraces() throws Exception {
+  public void testSimpleBlockInOneLinesAndForceBraces() {
     // Inspired by IDEA-19328
     getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
     getSettings().IF_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS;
@@ -74,7 +74,7 @@ public class JavaFormatterBracesTest extends AbstractJavaFormatterTest {
     );
   }
 
-  public void testEnforcingBracesForExpressionEndingWithLineComment() throws Exception {
+  public void testEnforcingBracesForExpressionEndingWithLineComment() {
     // Inspired by IDEA-57936
     getSettings().IF_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS;
 
@@ -90,7 +90,7 @@ public class JavaFormatterBracesTest extends AbstractJavaFormatterTest {
     );
   }
 
-  public void testMoveBraceOnNextLineForAnnotatedMethod() throws Exception {
+  public void testMoveBraceOnNextLineForAnnotatedMethod() {
     // Inspired by IDEA-59336
     getSettings().METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
     getSettings().KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
@@ -141,7 +141,7 @@ public class JavaFormatterBracesTest extends AbstractJavaFormatterTest {
     }
   }
 
-  public void testKeepSimpleClassesInOneLineAndLeftBraceOnNextLine() throws Exception {
+  public void testKeepSimpleClassesInOneLineAndLeftBraceOnNextLine() {
     // Inspired by IDEA-75053.
     getSettings().KEEP_SIMPLE_CLASSES_IN_ONE_LINE = true;
     getSettings().CLASS_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
@@ -165,7 +165,7 @@ public class JavaFormatterBracesTest extends AbstractJavaFormatterTest {
     doTextTest(text, text);
   }
 
-  public void testKeepSimpleBlocksInOneLine_OnIfStatementsThenBlock() throws Exception {
+  public void testKeepSimpleBlocksInOneLine_OnIfStatementsThenBlock() {
     getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
     String singleLine = "if (2 > 3) { System.out.println(\"AA!\"); }";
 
@@ -176,7 +176,7 @@ public class JavaFormatterBracesTest extends AbstractJavaFormatterTest {
     doMethodTest(singleLine, singleLine);
   }
 
-  public void testKeepSimpleBlocksInOneLine_OnIfStatementsElseBlock() throws Exception {
+  public void testKeepSimpleBlocksInOneLine_OnIfStatementsElseBlock() {
     getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
 
     String before = "if (2 > 3) {\n" +
@@ -195,7 +195,7 @@ public class JavaFormatterBracesTest extends AbstractJavaFormatterTest {
     doMethodTest(before, before);
   }
 
-  public void testIfStatement_WhenBraceOnNextLine_AndKeepSimpleBlockInOneLineEnabled() throws Exception {
+  public void testIfStatement_WhenBraceOnNextLine_AndKeepSimpleBlockInOneLineEnabled() {
     getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
     getSettings().BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
     String before = "if (2 > 3) {\n" +
@@ -208,7 +208,7 @@ public class JavaFormatterBracesTest extends AbstractJavaFormatterTest {
     doMethodTest(before, after);
   }
 
-  public void testIfStatementElseBranchIsOnNewLine() throws Exception {
+  public void testIfStatementElseBranchIsOnNewLine() {
     getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
     getSettings().BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
     String before = "if (2 > 3) {\n" +
@@ -226,7 +226,7 @@ public class JavaFormatterBracesTest extends AbstractJavaFormatterTest {
     doMethodTest(before, after);
   }
 
-  public void testIfElseBranchesKeepedInOneLine() throws Exception {
+  public void testIfElseBranchesKeepedInOneLine() {
     getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
     getSettings().BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
 

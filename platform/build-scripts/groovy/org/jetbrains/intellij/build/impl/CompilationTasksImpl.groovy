@@ -33,24 +33,26 @@ class CompilationTasksImpl extends CompilationTasks {
   void compileModules(List<String> moduleNames, List<String> includingTestsInModules) {
     if (context.options.useCompiledClassesFromProjectOutput) {
       context.messages.info("Compilation skipped, the compiled classes from the project output will be used")
+      resolveProjectDependencies()
       return
     }
     if (context.options.pathToCompiledClassesArchive != null) {
       context.messages.info("Compilation skipped, the compiled classes from '${context.options.pathToCompiledClassesArchive}' will be used")
+      resolveProjectDependencies()
       return
     }
 
     CompilationContextImpl.setupCompilationDependencies(context.gradle)
-    ensureKotlinCompilerAddedToClassPath()
 
     context.messages.progress("Compiling project")
+    JpsCompilationRunner runner = new JpsCompilationRunner(context)
     try {
       if (moduleNames == null) {
         if (includingTestsInModules == null) {
-          context.projectBuilder.buildAll()
+          runner.buildAll()
         }
         else {
-          context.projectBuilder.buildProduction()
+          runner.buildProduction()
         }
       }
       else {
@@ -58,12 +60,12 @@ class CompilationTasksImpl extends CompilationTasks {
         if (!invalidModules.empty) {
           context.messages.warning("The following modules won't be compiled: $invalidModules")
         }
-        context.projectBuilder.buildModules(moduleNames.collect { context.findModule(it) }.findAll { it != null })
+        runner.buildModules(moduleNames.collect { context.findModule(it) }.findAll { it != null })
       }
 
       if (includingTestsInModules != null) {
         for (String moduleName : includingTestsInModules) {
-          context.projectBuilder.makeModuleTests(context.findModule(moduleName))
+          runner.buildModuleTests(context.findModule(moduleName))
         }
       }
     }
@@ -73,23 +75,12 @@ class CompilationTasksImpl extends CompilationTasks {
   }
 
   @Override
-  void compileAllModulesAndTests() {
-    compileModules(null, null)
+  void resolveProjectDependencies() {
+    new JpsCompilationRunner(context).resolveProjectDependencies()
   }
 
-  private void ensureKotlinCompilerAddedToClassPath() {
-    if (getClass().getResource("/org/jetbrains/kotlin/jps/build/KotlinBuilder.class") != null) {
-      return
-    }
-
-    def kotlinPluginLibPath = "$context.paths.kotlinHome/lib"
-    if (new File(kotlinPluginLibPath).exists()) {
-      ["jps/kotlin-jps-plugin.jar", "kotlin-plugin.jar", "kotlin-runtime.jar", "kotlin-reflect.jar"].each {
-        BuildUtils.addToJpsClassPath("$kotlinPluginLibPath/$it", context.ant)
-      }
-    }
-    else {
-      context.messages.error("Could not find Kotlin JARs at $kotlinPluginLibPath: run `./gradlew setupKotlin` in dependencies module to download Kotlin JARs")
-    }
+  @Override
+  void compileAllModulesAndTests() {
+    compileModules(null, null)
   }
 }

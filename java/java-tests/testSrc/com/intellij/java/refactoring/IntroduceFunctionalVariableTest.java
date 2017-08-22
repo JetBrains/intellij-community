@@ -39,39 +39,39 @@ public class IntroduceFunctionalVariableTest extends LightRefactoringTestCase  {
     return LanguageLevel.JDK_1_8;
   }
 
-  public void testExpressionNoVarsSelected() throws Exception {
+  public void testExpressionNoVarsSelected() {
     doTest();
   }
 
-  public void testExpressionInLoopNoVars() throws Exception {
+  public void testExpressionInLoopNoVars() {
     doTest();
   }
 
-  public void testStatementInLoop() throws Exception {
+  public void testStatementInLoop() {
     doTest();
   }
   
-  public void testStatements() throws Exception {
+  public void testStatements() {
     doTest();
   }
 
-  public void testPassFieldsAsParameters() throws Exception {
+  public void testPassFieldsAsParameters() {
     doTest();
   }
 
-  public void testSkipUsedLocals() throws Exception {
+  public void testSkipUsedLocals() {
     doTest(0);
   }
 
-  public void testRunnableFromComment() throws Exception {
+  public void testRunnableFromComment() {
     doTest();
   }
 
-  public void testChangeContextBeforePuttingIntoAnonymous() throws Exception {
+  public void testChangeContextBeforePuttingIntoAnonymous() {
     doTest();
   }
 
-  public void testIgnoreMethodObjectSuggestion() throws Exception {
+  public void testIgnoreMethodObjectSuggestion() {
     try {
       doTest();
       fail("Unable to perform is expected");
@@ -84,7 +84,7 @@ public class IntroduceFunctionalVariableTest extends LightRefactoringTestCase  {
     }
   }
 
-  public void testNoSuggestionForInaccessibleInterface() throws Exception {
+  public void testNoSuggestionForInaccessibleInterface() {
     try {
       doTest();
       fail("Should be shown a error hint");
@@ -94,11 +94,11 @@ public class IntroduceFunctionalVariableTest extends LightRefactoringTestCase  {
     }
   }
 
-  public void testPostfixExpressionUnusedAfterAssignment() throws Exception {
+  public void testPostfixExpressionUnusedAfterAssignment() {
     doTest();
   }
 
-  public void testFieldFromSuperClassPreserveContext() throws Exception {
+  public void testFieldFromSuperClassPreserveContext() {
     doTest();
   }
 

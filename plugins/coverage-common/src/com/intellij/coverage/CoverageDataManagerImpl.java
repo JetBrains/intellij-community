@@ -373,7 +373,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
                               final RunnerSettings runnerSettings) {
     handler.addProcessListener(new ProcessAdapter() {
       @Override
-      public void processTerminated(final ProcessEvent event) {
+      public void processTerminated(@NotNull final ProcessEvent event) {
         processGatheredCoverage(configuration, runnerSettings);
       }
     });

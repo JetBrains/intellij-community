@@ -16,6 +16,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInsight.intention.impl.StreamRefactoringUtil;
 import com.intellij.codeInspection.dataFlow.DfaUtil;
 import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.openapi.diagnostic.Logger;
@@ -48,7 +49,7 @@ import java.util.*;
 import java.util.stream.Stream;
 
 import static com.intellij.util.ObjectUtils.tryCast;
-import static com.siyeh.ig.callMatcher.CallMatcher.instanceCall;
+import static com.siyeh.ig.callMatcher.CallMatcher.*;
 import static com.siyeh.ig.psiutils.MethodCallUtils.getQualifierMethodCall;
 
 /**
@@ -80,8 +81,10 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
     instanceCall(CommonClassNames.JAVA_UTIL_OPTIONAL, "isPresent").parameterCount(0);
   private static final CallMatcher BOOLEAN_EQUALS =
     instanceCall(CommonClassNames.JAVA_LANG_BOOLEAN, "equals").parameterCount(1);
+  private static final CallMatcher STREAM_OF =
+    staticCall(CommonClassNames.JAVA_UTIL_STREAM_STREAM, "of").parameterTypes("T");
 
-  private static final CallMatcher STREAM_MATCH = CallMatcher.anyOf(STREAM_ANY_MATCH, STREAM_NONE_MATCH, STREAM_ALL_MATCH);
+  private static final CallMatcher STREAM_MATCH = anyOf(STREAM_ANY_MATCH, STREAM_NONE_MATCH, STREAM_ALL_MATCH);
 
   private static final CallMapper<CallChainSimplification> CALL_TO_FIX_MAPPER = new CallMapper<>(
     ReplaceCollectionStreamFix.handler(),
@@ -91,7 +94,8 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
     ReplaceWithElementIterationFix.handler(),
     ReplaceForEachMethodFix.handler(),
     RemoveBooleanIdentityFix.handler(),
-    ReplaceWithPeekFix.handler()
+    ReplaceWithPeekFix.handler(),
+    SimpleStreamOfFix.handler()
   ).registerAll(SimplifyMatchNegationFix.handlers());
 
   private static final Logger LOG = Logger.getInstance(SimplifyStreamApiCallChainsInspection.class);
@@ -204,7 +208,7 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
   }
 
   static CallMatcher collectorMatcher(String name, int parameterCount) {
-    return CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS, name).parameterCount(parameterCount);
+    return staticCall(CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS, name).parameterCount(parameterCount);
   }
 
   static boolean isParentNegated(PsiMethodCallExpression methodCall) {
@@ -278,14 +282,15 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
 
   private static class ReplaceCollectionStreamFix implements CallChainSimplification {
     private static final CallMatcher EMPTY_LIST =
-      CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_COLLECTIONS, "emptyList").parameterCount(0);
+      staticCall(CommonClassNames.JAVA_UTIL_COLLECTIONS, "emptyList").parameterCount(0);
     private static final CallMatcher EMPTY_SET =
-      CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_COLLECTIONS, "emptySet").parameterCount(0);
+      staticCall(CommonClassNames.JAVA_UTIL_COLLECTIONS, "emptySet").parameterCount(0);
     private static final CallMatcher SINGLETON_LIST =
-      CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_COLLECTIONS, "singletonList").parameterCount(1);
+      staticCall(CommonClassNames.JAVA_UTIL_COLLECTIONS, "singletonList").parameterCount(1);
     private static final CallMatcher SINGLETON =
-      CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_COLLECTIONS, "singleton").parameterCount(1);
-    private static final CallMatcher AS_LIST = CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_ARRAYS, "asList").parameterCount(1);
+      staticCall(CommonClassNames.JAVA_UTIL_COLLECTIONS, "singleton").parameterCount(1);
+    private static final CallMatcher AS_LIST = staticCall(CommonClassNames.JAVA_UTIL_ARRAYS, "asList").parameterCount(1);
+    private static final CallMatcher ENUMSET_OF = staticCall("java.util.EnumSet", "of");
 
     private static final CallMapper<ReplaceCollectionStreamFix> COLLECTION_TO_STREAM_MAPPER = new CallMapper<ReplaceCollectionStreamFix>()
       .register(EMPTY_LIST,
@@ -298,7 +303,10 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
                                         ? null : new ReplaceSingletonWithStreamOfFix("Collections.singletonList()"))
       .register(AS_LIST, call -> hasSingleArrayArgument(call)
                                  ? new ReplaceCollectionStreamFix("Arrays.asList()", CommonClassNames.JAVA_UTIL_ARRAYS, STREAM_METHOD)
-                                 : new ReplaceCollectionStreamFix("Arrays.asList()", CommonClassNames.JAVA_UTIL_STREAM_STREAM, OF_METHOD));
+                                 : new ReplaceCollectionStreamFix("Arrays.asList()", CommonClassNames.JAVA_UTIL_STREAM_STREAM, OF_METHOD))
+      .register(ENUMSET_OF, call ->
+        isEnumSetReplaceableWithStream(call) ? new ReplaceCollectionStreamFix("EnumSet.of()", CommonClassNames.JAVA_UTIL_STREAM_STREAM,
+                                                                              OF_METHOD) : null);
 
     private final String myClassName;
     private final String myMethodName;
@@ -349,6 +357,27 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
 
     public static CallHandler<CallChainSimplification> handler() {
       return CallHandler.of(COLLECTION_STREAM, methodCall -> COLLECTION_TO_STREAM_MAPPER.mapFirst(getQualifierMethodCall(methodCall)));
+    }
+
+    private static boolean isEnumSetReplaceableWithStream(PsiMethodCallExpression call) {
+      // Check that all arguments are enum different enum constants from the same enum
+      PsiExpression[] expressions = call.getArgumentList().getExpressions();
+      if (expressions.length == 0) return false;
+      Set<String> names = new HashSet<>();
+      PsiClass enumClass = null;
+      for (PsiExpression arg : expressions) {
+        PsiReferenceExpression ref = tryCast(PsiUtil.skipParenthesizedExprDown(arg), PsiReferenceExpression.class);
+        if (ref == null) return false;
+        PsiEnumConstant enumConstant = tryCast(ref.resolve(), PsiEnumConstant.class);
+        if (enumConstant == null || !names.add(enumConstant.getName())) return false;
+        if (enumClass == null) {
+          enumClass = enumConstant.getContainingClass();
+        }
+        else if (enumConstant.getContainingClass() != enumClass) {
+          return false;
+        }
+      }
+      return true;
     }
 
     private static boolean hasSingleArrayArgument(PsiMethodCallExpression qualifierCall) {
@@ -461,7 +490,7 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
       handler("reducing", 3, "map({1}).reduce({0}, {2})", false),
       handler("summingInt", 1, "mapToInt({0}).sum()", false),
       handler("summingLong", 1, "mapToLong({0}).sum()", false),
-      handler("summingDouble", 1, "mapToInt({0}).sum()", false));
+      handler("summingDouble", 1, "mapToDouble({0}).sum()", false));
 
     private final String myCollector;
     private final String myStreamSequence;
@@ -785,6 +814,85 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
     }
   }
 
+  private static class SimpleStreamOfFix implements CallChainSimplification {
+    private static final CallMatcher LAMBDA_TERMINAL =
+      instanceCall(CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM, "anyMatch", "allMatch", "noneMatch", "forEach", "forEachOrdered")
+        .parameterCount(1);
+    private static final CallMatcher OPTIONAL_TERMINAL =
+      anyOf(instanceCall(CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM, "findFirst", "findAny").parameterCount(0),
+            instanceCall(CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM, "min", "max", "reduce").parameterCount(1));
+    private ReplacementMode myMode;
+
+    enum ReplacementMode {
+      OPTIONAL, FUNCTION, NEGATED_FUNCTION
+    }
+
+    public SimpleStreamOfFix(ReplacementMode mode) {
+      myMode = mode;
+    }
+
+    @Override
+    public String getName() {
+      switch (myMode) {
+        case OPTIONAL:
+          return "Replace with 'Optional.of'";
+        default:
+          return "Use Stream element explicitly";
+      }
+    }
+
+    @Override
+    public String getMessage() {
+      return "Unnecessary single-element Stream";
+    }
+
+    @Override
+    public PsiElement simplify(PsiMethodCallExpression streamOfCall) {
+      PsiExpression streamOfArg = ArrayUtil.getFirstElement(streamOfCall.getArgumentList().getExpressions());
+      if (streamOfArg == null) return null;
+      PsiMethodCallExpression nextCall = ExpressionUtils.getCallForQualifier(streamOfCall);
+      PsiExpression nextArg = ArrayUtil.getFirstElement(nextCall.getArgumentList().getExpressions());
+      String replacement;
+      if (myMode == ReplacementMode.OPTIONAL) {
+        replacement = CommonClassNames.JAVA_UTIL_OPTIONAL + ".of(" + streamOfArg.getText() + ")";
+      }
+      else {
+        if (nextArg == null) return null;
+        PsiMethod method = LambdaUtil.getFunctionalInterfaceMethod(nextArg.getType());
+        if (method == null) return null;
+        String name = method.getName();
+        replacement =
+          (myMode == ReplacementMode.NEGATED_FUNCTION ? "!" : "") + nextArg.getText() + "." + name + "(" + streamOfArg.getText() + ")";
+      }
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(streamOfCall.getProject());
+      PsiExpression result = factory.createExpressionFromText(replacement, streamOfCall);
+      return nextCall.replace(result);
+    }
+
+    public static CallHandler<CallChainSimplification> handler() {
+      return CallHandler.of(STREAM_OF, call -> {
+        PsiMethodCallExpression nextCall = ExpressionUtils.getCallForQualifier(call);
+        if (nextCall == null) return null;
+        if (LAMBDA_TERMINAL.test(nextCall)) {
+          PsiExpression arg = PsiUtil.skipParenthesizedExprDown(nextCall.getArgumentList().getExpressions()[0]);
+          if (arg instanceof PsiReferenceExpression || arg instanceof PsiMethodCallExpression) {
+            PsiMethod method = LambdaUtil.getFunctionalInterfaceMethod(arg.getType());
+            boolean negate = "noneMatch".equals(nextCall.getMethodExpression().getReferenceName());
+            if (method == null ||
+                negate && PsiUtil.skipParenthesizedExprUp(nextCall.getParent()) instanceof PsiExpressionStatement) {
+              return null;
+            }
+            return new SimpleStreamOfFix(negate ? ReplacementMode.NEGATED_FUNCTION : ReplacementMode.FUNCTION);
+          }
+        }
+        if (OPTIONAL_TERMINAL.test(nextCall)) {
+          return new SimpleStreamOfFix(ReplacementMode.OPTIONAL);
+        }
+        return null;
+      });
+    }
+  }
+
   private static class ReplaceWithBoxedFix implements CallChainSimplification {
     private static final CallMatcher MAP_TO_OBJ = instanceCall(CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM, "mapToObj").parameterCount(1);
 
@@ -954,11 +1062,11 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
       instanceCall(CommonClassNames.JAVA_UTIL_STREAM_INT_STREAM, "map", "mapToLong", "mapToDouble", "mapToObj")
         .parameterCount(1);
     private static final CallMatcher INT_STREAM_RANGE =
-      CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_STREAM_INT_STREAM, "range").parameterTypes("int", "int");
+      staticCall(CommonClassNames.JAVA_UTIL_STREAM_INT_STREAM, "range").parameterTypes("int", "int");
     private static final CallMatcher MIN_INT =
-      CallMatcher.anyOf(
-        CallMatcher.staticCall(CommonClassNames.JAVA_LANG_MATH, "min").parameterTypes("int", "int"),
-        CallMatcher.staticCall(CommonClassNames.JAVA_LANG_INTEGER, "min").parameterTypes("int", "int"));
+      anyOf(
+        staticCall(CommonClassNames.JAVA_LANG_MATH, "min").parameterTypes("int", "int"),
+        staticCall(CommonClassNames.JAVA_LANG_INTEGER, "min").parameterTypes("int", "int"));
 
     private final String myName;
 
@@ -1041,7 +1149,7 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
       PsiLambdaExpression newLambda = (PsiLambdaExpression)factory
         .createExpressionFromText("(" + elementType.getCanonicalText() + " " + name + ")->" + ct.text(body), mapToObjCall);
       PsiParameter newParameter = ArrayUtil.getFirstElement(newLambda.getParameterList().getParameters());
-      replacement += StreamApiUtil.generateMapOperation(newParameter, outElementType, newLambda.getBody());
+      replacement += StreamRefactoringUtil.generateMapOperation(newParameter, outElementType, newLambda.getBody());
       PsiElement result = ct.replaceAndRestoreComments(mapToObjCall, replacement);
       LambdaCanBeMethodReferenceInspection.replaceAllLambdasWithMethodReferences(result);
       result = JavaCodeStyleManager.getInstance(project).shortenClassReferences(result);
@@ -1273,7 +1381,7 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
   }
 
   private static class ReplaceStreamSupportWithCollectionStreamFix implements CallChainSimplification {
-    private static final CallMatcher STREAM_SUPPORT = CallMatcher.staticCall("java.util.stream.StreamSupport", "stream")
+    private static final CallMatcher STREAM_SUPPORT = staticCall("java.util.stream.StreamSupport", "stream")
       .parameterTypes("java.util.Spliterator", "boolean");
     private static final CallMatcher SPLITERATOR =
       instanceCall(CommonClassNames.JAVA_UTIL_COLLECTION, "spliterator").parameterCount(0);

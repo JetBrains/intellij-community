@@ -16,10 +16,11 @@
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
@@ -104,14 +105,14 @@ public class VcsLogRefresherTest extends VcsPlatformTest {
     myDataWaiter.get();
   }
 
-  public void test_first_refresh_reports_full_history() throws InterruptedException, ExecutionException, TimeoutException {
+  public void test_first_refresh_reports_full_history() throws InterruptedException {
     myLoader.readFirstBlock();
 
     DataPack result = myDataWaiter.get();
     assertDataPack(log(myCommits), result.getPermanentGraph().getAllCommits());
   }
 
-  public void test_first_refresh_waits_for_full_log() throws InterruptedException, ExecutionException, TimeoutException {
+  public void test_first_refresh_waits_for_full_log() throws InterruptedException {
     myLogProvider.blockFullLog();
     myLoader.readFirstBlock();
     assertTimeout("Refresh waiter should have failed on the timeout");
@@ -192,7 +193,7 @@ public class VcsLogRefresherTest extends VcsPlatformTest {
     assertNoMoreResultsArrive();
   }
 
-  private void assertTimeout(@NotNull String message) throws InterruptedException, ExecutionException {
+  private void assertTimeout(@NotNull String message) throws InterruptedException {
     assertNull(message, myDataWaiter.myQueue.poll(500, TimeUnit.MILLISECONDS));
   }
 
@@ -207,17 +208,17 @@ public class VcsLogRefresherTest extends VcsPlatformTest {
       public void displayFatalErrorMessage(@NotNull String message) {
         LOG.error(message);
       }
-    });
-    Disposer.register(myProject, myLogData);
+    }, myProject);
     return new VcsLogRefresherImpl(myProject, myLogData.getStorage(), myLogProviders, myLogData.getUserRegistry(), myLogData.getIndex(),
                                    new VcsLogProgress(),
                                    myLogData.getTopCommitsCache(), dataPackConsumer, FAILING_EXCEPTION_HANDLER, RECENT_COMMITS_COUNT
     ) {
       @Override
-      protected void startNewBackgroundTask(@NotNull final Task.Backgroundable refreshTask) {
+      protected ProgressIndicator startNewBackgroundTask(@NotNull final Task.Backgroundable refreshTask) {
         LOG.debug("Starting a background task...");
         myStartedTasks.add(((ProgressManagerImpl)ProgressManager.getInstance()).runProcessWithProgressAsynchronously(refreshTask));
         LOG.debug(myStartedTasks.size() + " started tasks");
+        return new EmptyProgressIndicator();
       }
     };
   }

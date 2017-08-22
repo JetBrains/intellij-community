@@ -48,7 +48,7 @@ public class MavenIndicesManagerTest extends MavenIndicesTestCase {
     }
   }
 
-  public void testEnsuringLocalRepositoryIndex() throws Exception {
+  public void testEnsuringLocalRepositoryIndex() {
     File dir1 = myIndicesFixture.getRepositoryHelper().getTestData("dir/foo");
     File dir2 = myIndicesFixture.getRepositoryHelper().getTestData("dir\\foo");
     File dir3 = myIndicesFixture.getRepositoryHelper().getTestData("dir\\foo\\");
@@ -69,7 +69,7 @@ public class MavenIndicesManagerTest extends MavenIndicesTestCase {
     assertFalse(indices1.get(0).equals(indices2.get(0)));
   }
 
-  public void testEnsuringRemoteRepositoryIndex() throws Exception {
+  public void testEnsuringRemoteRepositoryIndex() {
     File local = myIndicesFixture.getRepositoryHelper().getTestData("dir");
     Pair<String, String> remote1 = Pair.create("id1", "http://foo/bar");
     Pair<String, String> remote2 = Pair.create("id1", "  http://foo\\bar\\\\  ");
@@ -84,7 +84,7 @@ public class MavenIndicesManagerTest extends MavenIndicesTestCase {
     assertEquals(4, myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject, local, asList(remote1, remote2, remote3, remote4, remote5)).size());
   }
 
-  public void testDefaultArchetypes() throws Exception {
+  public void testDefaultArchetypes() {
     assertArchetypeExists("org.apache.maven.archetypes:maven-archetype-quickstart:RELEASE");
   }
 

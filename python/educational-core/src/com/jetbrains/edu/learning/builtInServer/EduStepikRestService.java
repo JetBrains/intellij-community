@@ -18,6 +18,7 @@ package com.jetbrains.edu.learning.builtInServer;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.StreamUtil;
@@ -39,9 +40,11 @@ import org.jetbrains.ide.RestService;
 import org.jetbrains.io.Responses;
 
 import javax.swing.*;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.charset.Charset;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -53,7 +56,7 @@ import static com.jetbrains.edu.learning.stepic.EduStepicNames.LINK;
 public class EduStepikRestService extends RestService {
   private static final Logger LOG = Logger.getInstance(EduStepikRestService.class.getName());
   private static final Pattern OPEN_COURSE_PATTERN = Pattern.compile("/" + EDU_STEPIK_SERVICE_NAME + "\\?link=.+");
-  private static final Pattern COURSE_PATTERN = Pattern.compile("https://stepik\\.org/lesson/[a-zA-Z\\-]*-(\\d+)/step/(\\d+)");
+  private static final Pattern COURSE_PATTERN = Pattern.compile("https://stepik\\.org/lesson(?:/[a-zA-Z\\-]*-|/)(\\d+)/step/(\\d+)");
   private static final Pattern
     OAUTH_CODE_PATTERN = Pattern.compile("/" + RestService.PREFIX + "/" + EDU_STEPIK_SERVICE_NAME + "/oauth" + "\\?code=(\\w+)");
 
@@ -199,9 +202,11 @@ public class EduStepikRestService extends RestService {
 
   private void sendHtmlResponse(@NotNull HttpRequest request, @NotNull ChannelHandlerContext context, String pagePath) throws IOException {
     BufferExposingByteArrayOutputStream byteOut = new BufferExposingByteArrayOutputStream();
-    InputStream pageStream = getClass().getResourceAsStream(pagePath);
+    InputStream pageTemplateStream = getClass().getResourceAsStream(pagePath);
+    String pageTemplate = StreamUtil.readText(pageTemplateStream, Charset.forName("UTF-8"));
     try {
-      byteOut.write(StreamUtil.loadFromStream(pageStream));
+      String pageWithProductName = pageTemplate.replaceAll("%IDE_NAME", ApplicationNamesInfo.getInstance().getFullProductName());
+      byteOut.write(StreamUtil.loadFromStream(new ByteArrayInputStream(pageWithProductName.getBytes(Charset.forName("UTF-8")))));
       HttpResponse response = Responses.response("text/html", Unpooled.wrappedBuffer(byteOut.getInternalBuffer(), 0, byteOut.size()));
       Responses.addNoCache(response);
       response.headers().set("X-Frame-Options", "Deny");
@@ -209,7 +214,7 @@ public class EduStepikRestService extends RestService {
     }
     finally {
       byteOut.close();
-      pageStream.close();
+      pageTemplateStream.close();
     }
   }
 

@@ -17,6 +17,7 @@ package com.intellij.java.codeInsight.daemon
 
 import com.intellij.codeInsight.daemon.impl.JavaHighlightInfoTypes
 import com.intellij.codeInspection.deprecation.DeprecationInspection
+import com.intellij.codeInspection.deprecation.MarkedForRemovalInspection
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.*
 import com.intellij.openapi.util.TextRange
@@ -80,6 +81,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     addFile("pkg/main/C.java", "package pkg.main;\npublic class C { }")
     addFile("pkg/main/Impl.java", "package pkg.main;\npublic class Impl extends C { }")
     highlight("""
+        import pkg.main.C;
         module M {
           requires M2;
           <error descr="Duplicate 'requires': M2">requires M2;</error>
@@ -87,19 +89,29 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
           <error descr="Duplicate 'exports': pkg.main">exports pkg. main;</error>
           opens pkg.main;
           <error descr="Duplicate 'opens': pkg.main">opens pkg. main;</error>
-          uses pkg.main.C;
+          uses C;
           <error descr="Duplicate 'uses': pkg.main.C">uses pkg. main . /*...*/ C;</error>
           provides pkg .main .C with pkg.main.Impl;
-          <error descr="Duplicate 'provides': pkg.main.C">provides pkg.main.C with pkg. main. Impl;</error>
+          <error descr="Duplicate 'provides': pkg.main.C">provides C with pkg. main. Impl;</error>
         }""".trimIndent())
   }
 
-  fun testUnusedStatements() {
-    addFile("pkg/main/C.java", "package pkg.main;\npublic class C { }")
-    addFile("pkg/main/Impl.java", "package pkg.main;\npublic class Impl extends C { }")
+  fun testUnusedServices() {
+    addFile("pkg/main/C1.java", "package pkg.main;\npublic class C1 { }")
+    addFile("pkg/main/C2.java", "package pkg.main;\npublic class C2 { }")
+    addFile("pkg/main/C3.java", "package pkg.main;\npublic class C3 { }")
+    addFile("pkg/main/Impl1.java", "package pkg.main;\npublic class Impl1 extends C1 { }")
+    addFile("pkg/main/Impl2.java", "package pkg.main;\npublic class Impl2 extends C2 { }")
+    addFile("pkg/main/Impl3.java", "package pkg.main;\npublic class Impl3 extends C3 { }")
     highlight("""
+        import pkg.main.C2;
+        import pkg.main.C3;
         module M {
-          provides pkg.main.<warning descr="Service interface provided but not exported or used">C</warning> with pkg.main.Impl;
+          uses C2;
+          uses pkg.main.C3;
+          provides pkg.main.<warning descr="Service interface provided but not exported or used">C1</warning> with pkg.main.Impl1;
+          provides pkg.main.C2 with pkg.main.Impl2;
+          provides C3 with pkg.main.Impl3;
         }""".trimIndent())
   }
 
@@ -178,6 +190,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     addFile("pkg/m2/C.java", "package pkg.m2;\npublic class C { }", M2)
     addFile("pkg/m2/Impl.java", "package pkg.m2;\npublic class Impl extends C { }", M2)
     highlight("""
+        import pkg.main.Impl6;
         module M {
           requires M2;
           provides pkg.main.C with pkg.main.<error descr="Cannot resolve symbol 'NoImpl'">NoImpl</error>;
@@ -186,7 +199,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
           provides pkg.main.C with pkg.main.<error descr="The service implementation is an abstract class: Impl3">Impl3</error>;
           provides pkg.main.C with pkg.main.<error descr="The service implementation does not have a public default constructor: Impl4">Impl4</error>;
           provides pkg.main.C with pkg.main.<error descr="The service implementation does not have a public default constructor: Impl5">Impl5</error>;
-          provides pkg.main.C with pkg.main.Impl6, <error descr="Duplicate implementation: pkg.main.Impl6">pkg.main.Impl6</error>;
+          provides pkg.main.C with pkg.main.Impl6, <error descr="Duplicate implementation: pkg.main.Impl6">Impl6</error>;
           provides pkg.main.C with pkg.main.<error descr="The 'provider' method return type must be a subtype of the service interface type: Impl7">Impl7</error>;
           provides pkg.main.C with pkg.main.Impl8;
           provides pkg.main.C with pkg.main.Impl9.<error descr="The service implementation is an inner class: Inner">Inner</error>;
@@ -211,18 +224,28 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     fixes("module M { uses <caret>pkg.m3.C3; }", "AddModuleDependencyFix")
   }
 
-  fun testPackageAccessibility() {
-    addFile("module-info.java", "module M { requires M2; requires M6; requires lib.named; requires lib.auto; }")
+  fun testPackageAccessibility() = doTestPackageAccessibility(moduleFileInTests = false, checkFileInTests = false)
+  fun testPackageAccessibilityInNonModularTest() = doTestPackageAccessibility(moduleFileInTests = true, checkFileInTests = false)
+  fun testPackageAccessibilityInModularTest() = doTestPackageAccessibility(moduleFileInTests = true, checkFileInTests = true)
+
+  private fun doTestPackageAccessibility(moduleFileInTests: Boolean = false, checkFileInTests: Boolean = false) {
+    val moduleFileText = "module M { requires M2; requires M6; requires lib.named; requires lib.auto; }"
+    if (moduleFileInTests) addTestFile("module-info.java", moduleFileText) else addFile("module-info.java", moduleFileText)
+
     addFile("module-info.java", "module M2 { exports pkg.m2; exports pkg.m2.impl to close.friends.only; }", M2)
     addFile("pkg/m2/C2.java", "package pkg.m2;\npublic class C2 { }", M2)
     addFile("pkg/m2/impl/C2Impl.java", "package pkg.m2.impl;\nimport pkg.m2.C2;\npublic class C2Impl { public static int I; public static C2 make() {} }", M2)
+    addFile("pkg/sub/C2X.java", "package pkg.sub;\npublic class C2X { }", M2)
+    addFile("pkg/unreachable/C3.java", "package pkg.unreachable;\npublic class C3 { }", M3)
     addFile("pkg/m4/C4.java", "package pkg.m4;\npublic class C4 { }", M4)
     addFile("module-info.java", "module M5 { exports pkg.m5; }", M5)
     addFile("pkg/m5/C5.java", "package pkg.m5;\npublic class C5 { }", M5)
     addFile("module-info.java", "module M6 { requires transitive M7; }", M6)
+    addFile("pkg/sub/C6X.java", "package pkg.sub;\npublic class C6X { }", M6)
     addFile("module-info.java", "module M7 { exports pkg.m7; }", M7)
     addFile("pkg/m7/C7.java", "package pkg.m7;\npublic class C7 { }", M7)
-    highlight("test.java", """
+
+    var checkFileText = """
         import pkg.m2.C2;
         import pkg.m2.*;
         import <error descr="Package 'pkg.m2.impl' is declared in module 'M2', which does not export it to module 'M'">pkg.m2.impl</error>.C2Impl;
@@ -230,6 +253,8 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
         import <error descr="Package 'pkg.m4' is declared in the unnamed module, but module 'M' does not read it">pkg.m4</error>.C4;
         import <error descr="Package 'pkg.m5' is declared in module 'M5', but module 'M' does not read it">pkg.m5</error>.C5;
         import pkg.m7.C7;
+        import <error descr="Package 'pkg.sub' is declared in module 'M2', which does not export it to module 'M'">pkg.sub</error>.*;
+        import <error descr="Package not found: pkg.unreachable">pkg.unreachable</error>.*;
 
         import pkg.lib1.LC1;
         import <error descr="Package 'pkg.lib1.impl' is declared in module 'lib.named', which does not export it to module 'M'">pkg.lib1.impl</error>.LC1Impl;
@@ -256,92 +281,13 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
           Supplier<C2> s1 = <error descr="Package 'pkg.m2.impl' is declared in module 'M2', which does not export it to module 'M'">C2Impl</error>::make;
           Supplier<C2> s2 = <error descr="Package 'pkg.m2.impl' is declared in module 'M2', which does not export it to module 'M'">pkg.m2.impl</error>.C2Impl::make;
         }}
-        """.trimIndent())
-  }
-
-  fun testPackageAccessibilityInNonModularTest() {
-    addFile("module-info.java", "module M { }")
-    addFile("module-info.java", "module M2 { exports pkg.m2; exports pkg.m2.impl to close.friends.only; }", M2)
-    addFile("pkg/m2/C2.java", "package pkg.m2;\npublic class C2 { }", M2)
-    addFile("pkg/m2/impl/C2Impl.java", "package pkg.m2.impl;\nimport pkg.m2.C2;\npublic class C2Impl { public static C2 make() {} }", M2)
-    addFile("pkg/m4/C4.java", "package pkg.m4;\npublic class C4 { }", M4)
-    addFile("module-info.java", "module M5 { exports pkg.m5; }", M5)
-    addFile("pkg/m5/C5.java", "package pkg.m5;\npublic class C5 { }", M5)
-    addFile("module-info.java", "module M6 { requires transitive M7; }", M6)
-    addFile("module-info.java", "module M7 { exports pkg.m7; }", M7)
-    addFile("pkg/m7/C7.java", "package pkg.m7;\npublic class C7 { }", M7)
-    highlight("test.java", """
-        import pkg.m2.C2;
-        import pkg.m2.*;
-        import pkg.m2.impl.C2Impl;
-        import pkg.m2.impl.*;
-        import pkg.m4.C4;
-        import pkg.m5.C5;
-        import pkg.m7.C7;
-
-        import pkg.lib1.LC1;
-        import pkg.lib1.impl.LC1Impl;
-        import pkg.lib1.impl.*;
-
-        import pkg.lib2.LC2;
-        import pkg.lib2.impl.LC2Impl;
-
-        import static pkg.m2.impl.C2Impl.make;
-
-        /** See also {@link C2Impl#make} */
-        class C {{
-          C2Impl.make();
-          pkg.m2.impl.C2Impl.make();
-        }}
-        """.trimIndent(), true)
-  }
-
-  fun testPackageAccessibilityInModularTest() {
-    addTestFile("module-info.java", "module M { requires M2; requires M6; requires lib.named; requires lib.auto; }")
-    addFile("module-info.java", "module M2 { exports pkg.m2; exports pkg.m2.impl to close.friends.only; }", M2)
-    addFile("pkg/m2/C2.java", "package pkg.m2;\npublic class C2 { }", M2)
-    addFile("pkg/m2/impl/C2Impl.java", "package pkg.m2.impl;\nimport pkg.m2.C2;\npublic class C2Impl { public static int I; public static C2 make() {} }", M2)
-    addFile("pkg/m4/C4.java", "package pkg.m4;\npublic class C4 { }", M4)
-    addFile("module-info.java", "module M5 { exports pkg.m5; }", M5)
-    addFile("pkg/m5/C5.java", "package pkg.m5;\npublic class C5 { }", M5)
-    addFile("module-info.java", "module M6 { requires transitive M7; }", M6)
-    addFile("module-info.java", "module M7 { exports pkg.m7; }", M7)
-    addFile("pkg/m7/C7.java", "package pkg.m7;\npublic class C7 { }", M7)
-    highlight("test.java", """
-        import pkg.m2.C2;
-        import pkg.m2.*;
-        import <error descr="Package 'pkg.m2.impl' is declared in module 'M2', which does not export it to module 'M'">pkg.m2.impl</error>.C2Impl;
-        import <error descr="Package 'pkg.m2.impl' is declared in module 'M2', which does not export it to module 'M'">pkg.m2.impl</error>.*;
-        import <error descr="Package 'pkg.m4' is declared in the unnamed module, but module 'M' does not read it">pkg.m4</error>.C4;
-        import <error descr="Package 'pkg.m5' is declared in module 'M5', but module 'M' does not read it">pkg.m5</error>.C5;
-        import pkg.m7.C7;
-
-        import pkg.lib1.LC1;
-        import <error descr="Package 'pkg.lib1.impl' is declared in module 'lib.named', which does not export it to module 'M'">pkg.lib1.impl</error>.LC1Impl;
-        import <error descr="Package 'pkg.lib1.impl' is declared in module 'lib.named', which does not export it to module 'M'">pkg.lib1.impl</error>.*;
-
-        import pkg.lib2.LC2;
-        import pkg.lib2.impl.LC2Impl;
-
-        import static <error descr="Package 'pkg.m2.impl' is declared in module 'M2', which does not export it to module 'M'">pkg.m2.impl</error>.C2Impl.make;
-
-        import java.util.List;
-        import java.util.function.Supplier;
-
-        /** See also {@link C2Impl#I} and {@link C2Impl#make} */
-        class C {{
-          <error descr="Package 'pkg.m2.impl' is declared in module 'M2', which does not export it to module 'M'">C2Impl</error>.I = 0;
-          <error descr="Package 'pkg.m2.impl' is declared in module 'M2', which does not export it to module 'M'">C2Impl</error>.make();
-          <error descr="Package 'pkg.m2.impl' is declared in module 'M2', which does not export it to module 'M'">pkg.m2.impl</error>.C2Impl.I = 1;
-          <error descr="Package 'pkg.m2.impl' is declared in module 'M2', which does not export it to module 'M'">pkg.m2.impl</error>.C2Impl.make();
-
-          List<<error descr="Package 'pkg.m2.impl' is declared in module 'M2', which does not export it to module 'M'">C2Impl</error>> l1 = null;
-          List<<error descr="Package 'pkg.m2.impl' is declared in module 'M2', which does not export it to module 'M'">pkg.m2.impl</error>.C2Impl> l2 = null;
-
-          Supplier<C2> s1 = <error descr="Package 'pkg.m2.impl' is declared in module 'M2', which does not export it to module 'M'">C2Impl</error>::make;
-          Supplier<C2> s2 = <error descr="Package 'pkg.m2.impl' is declared in module 'M2', which does not export it to module 'M'">pkg.m2.impl</error>.C2Impl::make;
-        }}
-        """.trimIndent(), true)
+        """.trimIndent()
+    if (moduleFileInTests != checkFileInTests) {
+      checkFileText = Regex("(<error [^>]+>)([^<]+)(</error>)").replace(checkFileText, {
+        if (it.value.contains("unreachable")) it.value else it.groups[2]!!.value
+      })
+    }
+    highlight("test.java", checkFileText, checkFileInTests)
   }
 
   fun testLinearModuleGraphBug() {
@@ -351,9 +297,15 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   }
 
   fun testDeprecations() {
-    myFixture.enableInspections(DeprecationInspection())
+    myFixture.enableInspections(DeprecationInspection(), MarkedForRemovalInspection())
     addFile("module-info.java", "@Deprecated module M2 { }", M2)
     highlight("""module M { requires <warning descr="'M2' is deprecated">M2</warning>; }""")
+  }
+
+  fun testMarkedForRemoval() {
+    myFixture.enableInspections(DeprecationInspection(), MarkedForRemovalInspection())
+    addFile("module-info.java", "@Deprecated(forRemoval=true) module M2 { }", M2)
+    highlight("""module M { requires <warning descr="'M2' is deprecated and marked for removal">M2</warning>; }""")
   }
 
   fun testPackageConflicts() {

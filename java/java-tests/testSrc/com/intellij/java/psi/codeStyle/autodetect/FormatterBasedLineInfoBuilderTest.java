@@ -23,10 +23,8 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.psi.codeStyle.autodetect.FormatterBasedLineIndentInfoBuilder;
 import com.intellij.psi.codeStyle.autodetect.LineIndentInfo;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
-import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.util.List;
 
 public class FormatterBasedLineInfoBuilderTest extends LightPlatformCodeInsightTestCase {
@@ -38,7 +36,7 @@ public class FormatterBasedLineInfoBuilderTest extends LightPlatformCodeInsightT
            "/psi/autodetect/";
   }
   
-  public void testKotlinComment() throws IOException, JDOMException {
+  public void testKotlinComment() {
     String text = "[i_cont]([i_norm]/**\n" +
                   " [i_norm]([i_space_1]*)\n" +
                   " [i_space_1]*/)";
@@ -47,7 +45,7 @@ public class FormatterBasedLineInfoBuilderTest extends LightPlatformCodeInsightT
     assertLinesWithNormalIndent(infos, 0);
   }
   
-  public void testXmlContinuationWithoutFirst() throws IOException, JDOMException {
+  public void testXmlContinuationWithoutFirst() {
     String text = "[i_none]<idea-plugin>\n" +
                   "    [i_none]([i_norm]([i_none]<[i_none]name/>)\n" +
                   "             [i_norm]([i_none]([]<[i_none]id/>)))\n" +
@@ -62,7 +60,7 @@ public class FormatterBasedLineInfoBuilderTest extends LightPlatformCodeInsightT
     assertEquals(expected, linesWithNormalIndent);
   }
 
-  private static List<LineIndentInfo> getLineInfos(String text) throws IOException, JDOMException {
+  private static List<LineIndentInfo> getLineInfos(String text) {
     TestData data = FormatterEngineTestsKt.extractFormattingTestData(text);
     Document document = EditorFactory.getInstance().createDocument(data.getTextToFormat());
     FormatterBasedLineIndentInfoBuilder builder = new FormatterBasedLineIndentInfoBuilder(document, data.getRootBlock(), null);

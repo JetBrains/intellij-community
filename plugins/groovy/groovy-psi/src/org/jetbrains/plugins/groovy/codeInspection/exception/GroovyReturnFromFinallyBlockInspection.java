@@ -28,13 +28,6 @@ public class GroovyReturnFromFinallyBlockInspection extends BaseInspection {
   @Override
   @Nls
   @NotNull
-  public String getGroupDisplayName() {
-    return ERROR_HANDLING;
-  }
-
-  @Override
-  @Nls
-  @NotNull
   public String getDisplayName() {
     return "'return' inside 'finally' block";
   }

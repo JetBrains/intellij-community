@@ -17,6 +17,7 @@ package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.FullValueEvaluatorProvider;
+import com.intellij.debugger.engine.JavaDebugProcess;
 import com.intellij.debugger.engine.JavaValue;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -40,7 +41,7 @@ public interface OnDemandRenderer extends FullValueEvaluatorProvider {
   @Override
   default XFullValueEvaluator getFullValueEvaluator(EvaluationContextImpl evaluationContext,
                                                     ValueDescriptorImpl valueDescriptor) {
-    if (isOnDemand(evaluationContext) && !isCalculated(valueDescriptor)) {
+    if (isOnDemand(evaluationContext, valueDescriptor) && !isCalculated(valueDescriptor)) {
       return createFullValueEvaluator(getLinkText());
     }
     return null;
@@ -48,12 +49,12 @@ public interface OnDemandRenderer extends FullValueEvaluatorProvider {
 
   String getLinkText();
 
-  default boolean isOnDemand(EvaluationContext evaluationContext) {
-    return isOnDemandForced(evaluationContext);
+  default boolean isOnDemand(EvaluationContext evaluationContext, ValueDescriptor valueDescriptor) {
+    return isOnDemandForced((DebugProcessImpl)evaluationContext.getDebugProcess());
   }
 
   default boolean isShowValue(ValueDescriptor valueDescriptor, EvaluationContext evaluationContext) {
-    return !isOnDemand(evaluationContext) || isCalculated(valueDescriptor);
+    return !isOnDemand(evaluationContext, valueDescriptor) || isCalculated(valueDescriptor);
   }
 
   static XFullValueEvaluator createFullValueEvaluator(String text) {
@@ -81,8 +82,8 @@ public interface OnDemandRenderer extends FullValueEvaluatorProvider {
     ON_DEMAND_CALCULATED.set(descriptor, true);
   }
 
-  static boolean isOnDemandForced(EvaluationContext evaluationContext) {
-    return ForceOnDemandRenderersAction.isForcedOnDemand(
-      (XDebugSessionImpl)((DebugProcessImpl)evaluationContext.getDebugProcess()).getXdebugProcess().getSession());
+  static boolean isOnDemandForced(DebugProcessImpl debugProcess) {
+    JavaDebugProcess process = debugProcess.getXdebugProcess();
+    return process != null && ForceOnDemandRenderersAction.isForcedOnDemand((XDebugSessionImpl)process.getSession());
   }
 }

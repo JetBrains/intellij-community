@@ -172,7 +172,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
           .orElse(file.getTextRange());
         success = refCountHolder.analyze(file, dirtyScope, progress, () -> {
           highlight.run();
-          progress.checkCanceled();
+          ProgressManager.checkCanceled();
           if (document != null) {
             new PostHighlightingVisitor(file, document, refCountHolder).collectHighlights(holder, progress);
           }
@@ -1323,7 +1323,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     }
     final PsiElement method = result.getElement();
     if (method != null && !result.isAccessible()) {
-      final String accessProblem = HighlightUtil.buildProblemWithAccessDescription(expression, result);
+      String accessProblem = HighlightUtil.buildProblemWithAccessDescription(expression, method, result);
       HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(accessProblem).create();
       HighlightUtil.registerAccessQuickFixAction((PsiMember)method, expression, info, result.getCurrentFileResolveScope());
       myHolder.add(info);
@@ -1460,10 +1460,10 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   // is not accessible from the class or interface in which the method reference expression appears.
   private void checkFunctionalInterfaceTypeAccessible(@NotNull PsiFunctionalExpression expression, PsiType functionalInterfaceType) {
     PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
-    final PsiClass psiClass = resolveResult.getElement();
+    PsiClass psiClass = resolveResult.getElement();
     if (psiClass != null) {
       if (!PsiUtil.isAccessible(myFile.getProject(), psiClass, expression, null)) {
-        String text = HighlightUtil.buildProblemWithAccessDescription(expression, resolveResult);
+        String text = HighlightUtil.buildProblemWithAccessDescription(expression, psiClass, resolveResult);
         myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(text).create());
       }
       else {

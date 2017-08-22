@@ -36,6 +36,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
+import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
@@ -54,12 +55,18 @@ import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.border.CompoundBorder;
+import javax.swing.border.LineBorder;
+import javax.swing.border.TitledBorder;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.plaf.ColorUIResource;
 import javax.swing.plaf.UIResource;
 import javax.swing.table.*;
-import javax.swing.tree.*;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeModel;
+import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.*;
 import java.lang.reflect.Field;
@@ -374,7 +381,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
           append(", double-buffered", SimpleTextAttributes.GRAYED_ATTRIBUTES);
         }
         componentNode.setText(toString());
-        setIcon(JBUI.scale(new TwoColorsIcon(11, component.getForeground(), component.getBackground())));
+        setIcon(createColorIcon(component.getForeground(), component.getBackground()));
       }
       if (value instanceof HierarchyTree.ClickInfoNode) {
         append(value.toString());
@@ -390,9 +397,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
 
   @NotNull
   private static String getComponentName(Component component) {
-    Class<?> clazz0 = component.getClass();
-    Class<?> clazz = clazz0.isAnonymousClass() ? clazz0.getSuperclass() : clazz0;
-    String name = clazz.getSimpleName();
+    String name = getClassName(component);
 
     String componentName = component.getName();
     if (StringUtil.isNotEmpty(componentName)) {
@@ -784,6 +789,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       RENDERERS.put(Font.class, new FontRenderer());
       RENDERERS.put(Boolean.class, new BooleanRenderer());
       RENDERERS.put(Icon.class, new IconRenderer());
+      RENDERERS.put(Border.class, new BorderRenderer());
     }
 
     private static final Renderer<Object> DEFAULT_RENDERER = new ObjectRenderer();
@@ -881,7 +887,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
 
       if (value instanceof UIResource) sb.append(" UIResource");
       setText(sb.toString());
-      setIcon(JBUI.scale(new ColorIcon(13, 11, value, true)));
+      setIcon(createColorIcon(value));
       return this;
     }
   }
@@ -908,9 +914,77 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
   private static class IconRenderer extends JLabel implements Renderer<Icon> {
     public JComponent setValue(@NotNull final Icon value) {
       setIcon(value);
-      String toString = StringUtil.notNullize(String.valueOf(value), "toString()==null");
-      setText(toString.replace('\n', ' '));
+      setText(getToStringValue(value));
       return this;
+    }
+  }
+
+  private static class BorderRenderer extends JLabel implements Renderer<Border> {
+    public JComponent setValue(@NotNull final Border value) {
+      setText(getTextDescription(value));
+
+      if (value instanceof CompoundBorder) {
+        Color insideColor = getBorderColor(((CompoundBorder)value).getInsideBorder());
+        Color outsideColor = getBorderColor(((CompoundBorder)value).getOutsideBorder());
+        if (insideColor != null && outsideColor != null) {
+          setIcon(createColorIcon(outsideColor, insideColor));
+        }
+        else if (insideColor != null) {
+          setIcon(createColorIcon(insideColor));
+        }
+        else if (outsideColor != null) {
+          setIcon(createColorIcon(outsideColor));
+        }
+        else {
+          setIcon(null);
+        }
+      }
+      else {
+        Color color = getBorderColor(value);
+        setIcon(color != null ? createColorIcon(color) : null);
+      }
+      return this;
+    }
+
+    @Nullable
+    private static Color getBorderColor(@NotNull Border value) {
+      if (value instanceof LineBorder) {
+        return ((LineBorder)value).getLineColor();
+      }
+      else if (value instanceof CustomLineBorder) {
+        try {
+          return (Color)ReflectionUtil.findField(CustomLineBorder.class, Color.class, "myColor").get(value);
+        }
+        catch (Exception ignore) {
+        }
+      }
+
+      return null;
+    }
+
+    @NotNull
+    private static String getTextDescription(@NotNull Border value) {
+      StringBuilder sb = new StringBuilder();
+      sb.append(getClassName(value));
+
+      Color color = getBorderColor(value);
+      if (color != null) sb.append(" color=").append(color.toString());
+
+      if (value instanceof LineBorder) {
+        if (((LineBorder)value).getRoundedCorners()) sb.append(" roundedCorners=true");
+      }
+      if (value instanceof TitledBorder) {
+        sb.append(" title='").append(((TitledBorder)value).getTitle()).append("'");
+      }
+      if (value instanceof CompoundBorder) {
+        sb.append(" inside={").append(getTextDescription(((CompoundBorder)value).getInsideBorder())).append("}");
+        sb.append(" outside={").append(getTextDescription(((CompoundBorder)value).getOutsideBorder())).append("}");
+      }
+
+      if (value instanceof UIResource) sb.append(" UIResource");
+      sb.append(" (").append(getToStringValue(value)).append(")");
+
+      return sb.toString();
     }
   }
 
@@ -919,11 +993,32 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       putClientProperty("html.disable", Boolean.TRUE);
     }
     public JComponent setValue(@NotNull final Object value) {
-      String toString = StringUtil.notNullize(String.valueOf(value), "toString()==null");
-      setText(toString.replace('\n', ' '));
+      setText(getToStringValue(value));
       return this;
     }
   }
+
+  @NotNull
+  private static String getToStringValue(@NotNull Object value) {
+    String toString = StringUtil.notNullize(String.valueOf(value), "toString()==null");
+    return toString.replace('\n', ' ');
+  }
+
+  @NotNull
+  private static String getClassName(Object value) {
+    Class<?> clazz0 = value.getClass();
+    Class<?> clazz = clazz0.isAnonymousClass() ? clazz0.getSuperclass() : clazz0;
+    return clazz.getSimpleName();
+  }
+
+  private static ColorIcon createColorIcon(Color color) {
+    return JBUI.scale(new ColorIcon(13, 11, color, true));
+  }
+
+  private static Icon createColorIcon(Color color1, Color color2) {
+    return JBUI.scale(new TwoColorsIcon(11, color1, color2));
+  }
+
 
   private static class PropertyBean {
     final String propertyName;
@@ -1322,17 +1417,15 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
         JTree tree = (JTree)component;
         TreePath path = tree.getClosestPathForLocation(me.getX(), me.getY());
         if (path != null) {
-          TreeNode value = ((TreeNode)path.getLastPathComponent());
-          if (value instanceof DefaultMutableTreeNode) {
-            DefaultMutableTreeNode node = (DefaultMutableTreeNode)value;
-
-            Component rendererComponent = tree.getCellRenderer()
-              .getTreeCellRendererComponent(tree, node.getUserObject(), tree.getSelectionModel().isPathSelected(path),
-                                            tree.isExpanded(path), node.isLeaf(), tree.getRowForPath(path), tree.hasFocus());
-            clickInfo.add(new PropertyBean(RENDERER_BOUNDS, tree.getPathBounds(path)));
-            clickInfo.addAll(new InspectorTableModel(rendererComponent).myProperties);
-            return clickInfo;
-          }
+          Object object = path.getLastPathComponent();
+          Component rendererComponent = tree.getCellRenderer().getTreeCellRendererComponent(
+              tree, object, tree.getSelectionModel().isPathSelected(path),
+              tree.isExpanded(path),
+              tree.getModel().isLeaf(object),
+              tree.getRowForPath(path), tree.hasFocus());
+          clickInfo.add(new PropertyBean(RENDERER_BOUNDS, tree.getPathBounds(path)));
+          clickInfo.addAll(new InspectorTableModel(rendererComponent).myProperties);
+          return clickInfo;
         }
       }
       return null;

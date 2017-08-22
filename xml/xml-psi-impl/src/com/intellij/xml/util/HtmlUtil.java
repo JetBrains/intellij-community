@@ -42,7 +42,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.XmlRecursiveElementWalkingVisitor;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.html.HtmlDocumentImpl;
-import com.intellij.psi.impl.source.html.dtd.HtmlAttributeDescriptorImpl;
 import com.intellij.psi.impl.source.parsing.xml.HtmlBuilderDriver;
 import com.intellij.psi.impl.source.parsing.xml.XmlBuilder;
 import com.intellij.psi.impl.source.tree.CompositeElement;
@@ -125,7 +124,7 @@ public class HtmlUtil {
 
   private static final Set<String> BLOCK_TAGS_MAP = new THashSet<>();
 
-  @NonNls private static final String[] INLINE_ELEMENTS_CONTAINER = {"p", "h1", "h2", "h3", "h4", "h5", "h6", "pre", "dt"};
+  @NonNls private static final String[] INLINE_ELEMENTS_CONTAINER = {"p", "h1", "h2", "h3", "h4", "h5", "h6", "pre"};
   private static final Set<String> INLINE_ELEMENTS_CONTAINER_MAP = new THashSet<>();
   
   private static final Set<String> POSSIBLY_INLINE_TAGS_MAP = new THashSet<>();
@@ -250,7 +249,7 @@ public class HtmlUtil {
   }
 
   public static boolean isBooleanAttribute(@NotNull XmlAttributeDescriptor descriptor, @Nullable PsiElement context) {
-    if (descriptor instanceof HtmlAttributeDescriptorImpl && descriptor.isEnumerated()) {
+    if (descriptor.isEnumerated()) {
       final String[] values = descriptor.getEnumeratedValues();
       if (values == null) {
         return false;
@@ -612,11 +611,11 @@ public class HtmlUtil {
     return tagName != null && "br".equalsIgnoreCase(tagName);
   }
 
-  public static boolean hasHtml(PsiFile file) {
+  public static boolean hasHtml(@NotNull PsiFile file) {
     return isHtmlFile(file) || file.getViewProvider() instanceof TemplateLanguageFileViewProvider;
   }
 
-  public static boolean supportsXmlTypedHandlers(PsiFile file) {
+  public static boolean supportsXmlTypedHandlers(@NotNull PsiFile file) {
     Language language = file.getLanguage();
     while (language != null) {
       if ("JavaScript".equals(language.getID())) return true;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,6 +87,21 @@ public class MockUpdateParameterInfoContext implements UpdateParameterInfoContex
 
   public Object[] getObjectsToView() {
     return myItems;
+  }
+
+  @Override
+  public boolean isPreservedOnHintHidden() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void setPreservedOnHintHidden(boolean value) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public boolean isInnermostContext() {
+    return false;
   }
 
   public Project getProject() {

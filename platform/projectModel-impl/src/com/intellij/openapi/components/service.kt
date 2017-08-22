@@ -20,7 +20,6 @@ import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.project.Project
 
 inline fun <reified T : Any> service(): T = ServiceManager.getService(T::class.java)
-
 inline fun <reified T : Any> Project.service(): T = ServiceManager.getService(this, T::class.java)
 
 val ComponentManager.stateStore: IComponentStore
@@ -29,5 +28,6 @@ val ComponentManager.stateStore: IComponentStore
     return picoContainer.getComponentInstance(key) as IComponentStore
   }
 
-@Suppress("DEPRECATION")
-fun <T> ComponentManager.getComponents(baseClass: Class<T>) = (this as ComponentManagerImpl).getComponentInstancesOfType(baseClass)
+@Suppress("EXTENSION_SHADOWED_BY_MEMBER")
+fun <T> ComponentManager.getComponents(baseClass: Class<T>): List<T> =
+  (this as ComponentManagerImpl).getComponentInstancesOfType(baseClass)

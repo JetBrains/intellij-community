@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,9 +22,9 @@ import com.intellij.application.options.codeStyle.arrangement.ui.ArrangementRepr
 import com.intellij.application.options.codeStyle.arrangement.util.ArrangementRuleIndexControl;
 import com.intellij.psi.codeStyle.arrangement.ArrangementUtil;
 import com.intellij.psi.codeStyle.arrangement.std.*;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.ui.GridBag;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -122,7 +122,7 @@ public class ArrangementGroupingComponent extends JPanel implements ArrangementR
     add(new JLabel(" "), new GridBag().weightx(1).fillCellHorizontally());
     
     setBackground(UIUtil.getListBackground());
-    setBorder(IdeBorderFactory.createEmptyBorder(ArrangementConstants.VERTICAL_GAP));
+    setBorder(JBUI.Borders.empty(ArrangementConstants.VERTICAL_GAP));
     setOpaque(!UIUtil.isUnderIntelliJLaF() && !UIUtil.isUnderNativeMacLookAndFeel() && !UIUtil.isUnderDarcula());
   }
 

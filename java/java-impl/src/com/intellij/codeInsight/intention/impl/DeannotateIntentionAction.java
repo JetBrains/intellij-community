@@ -45,7 +45,7 @@ public class DeannotateIntentionAction implements IntentionAction, LowPriorityAc
   @Override
   @NotNull
   public String getText() {
-    return CodeInsightBundle.message("deannotate.intention.action.text") + (myAnnotationName != null ? " " + myAnnotationName : "...");
+    return CodeInsightBundle.message("deannotate.intention.action.text") + (myAnnotationName != null ? " @" + myAnnotationName : "...");
   }
 
   @Override

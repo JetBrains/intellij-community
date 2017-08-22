@@ -21,31 +21,31 @@ public class RncParsingTest extends AbstractParsingTest {
     super("complex");
   }
 
-  public void testExternal() throws Throwable {
+  public void testExternal() {
     doTest(true);
   }
 
-  public void testMain() throws Throwable {
+  public void testMain() {
    doTest(true);
   }
 
-  public void testElements() throws Throwable {
+  public void testElements() {
    doTest(true);
   }
 
-  public void testProperties() throws Throwable {
+  public void testProperties() {
    doTest(true);
   }
 
-  public void testDatatype() throws Throwable {
+  public void testDatatype() {
    doTest(true);
   }
 
-  public void testRelaxNG() throws Throwable {
+  public void testRelaxNG() {
    doTest(true);
   }
 
-  public void testDocbook() throws Throwable {
+  public void testDocbook() {
     doTest(true);
   }
 }

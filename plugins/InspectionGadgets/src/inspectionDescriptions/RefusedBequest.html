@@ -3,12 +3,14 @@
 Reports any methods which override concrete methods,
 but which do not call that method as <b>super</b>. This is also known as a <i>refused bequest</i> and such methods
 may represent a failure of abstraction which can lead to hard-to-trace bugs. Methods overridden
-from <b>java.lang.Object</b> are not reported by this inspection.
+from <b>java.lang.Object</b> except for <b>clone()</b> are not reported by this inspection.
+A <b>clone()</b> method is expected to call its super, which will automatically return an object of the correct type.
 <!-- tooltip end -->
 <p>
 Use the first checkbox below to only warn when the super method is annotated by an annotation specified in the table below.
 <p>
-Use the second checkbox below to ignore super methods when they are empty. Enabling this option can be processor intensive.
+Use the second checkbox below to ignore super methods when they are empty or only throw an exception.
+  Enabling this option can be processor intensive.
 <p>
 
 </body>

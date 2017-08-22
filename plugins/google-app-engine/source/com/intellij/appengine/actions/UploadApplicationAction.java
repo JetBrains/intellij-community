@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,7 +80,7 @@ public class UploadApplicationAction extends AnAction {
     final Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     RunnerAndConfigurationSettings configurationToRun = getConfigurationToRun(project);
     if (configurationToRun != null) {
-      ProgramRunnerUtil.executeConfiguration(project, configurationToRun, DefaultRunExecutor.getRunExecutorInstance());
+      ProgramRunnerUtil.executeConfiguration(configurationToRun, DefaultRunExecutor.getRunExecutorInstance());
     }
     else {
       AppEngineCloudType serverType = AppEngineCloudType.getInstance();

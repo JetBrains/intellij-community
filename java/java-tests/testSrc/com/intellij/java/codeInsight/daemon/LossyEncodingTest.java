@@ -21,15 +21,14 @@ import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LossyEncodingInspection;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -78,7 +77,7 @@ public class LossyEncodingTest extends DaemonAnalyzerTestCase {
     doDoTest(true, false);
   }
 
-  public void testNativeConversion() throws Exception {
+  public void testNativeConversion() {
     configureByText(StdFileTypes.PROPERTIES, "a=<caret>v");
     EncodingProjectManager.getInstance(getProject()).setNative2AsciiForPropertiesFiles(null, true);
     UIUtil.dispatchAllInvocationEvents();  //reload files
@@ -127,37 +126,11 @@ public class LossyEncodingTest extends DaemonAnalyzerTestCase {
     doDoTest(true, false);
   }
 
-  public void testDetectWrongEncoding0() throws Exception {
-    String threeNotoriousRussianLetters = "\u0416\u041e\u041f";
-    configureByText(FileTypes.PLAIN_TEXT, threeNotoriousRussianLetters);
-    VirtualFile virtualFile = getFile().getVirtualFile();
-    final Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-      document.insertString(0, " ");
-      document.deleteString(0, 1);
-    });
-
-
-    assertTrue(FileDocumentManager.getInstance().isDocumentUnsaved(document));
-    assertEquals(CharsetToolkit.UTF8_CHARSET, virtualFile.getCharset());
-    Charset WINDOWS_1251 = Charset.forName("windows-1251");
-    virtualFile.setCharset(WINDOWS_1251);
-    FileDocumentManager.getInstance().saveAllDocuments();  // save in wrong encoding
-    assertEquals(WINDOWS_1251, virtualFile.getCharset());
-    assertEquals(threeNotoriousRussianLetters, new String(virtualFile.contentsToByteArray(), WINDOWS_1251));
-    virtualFile.setCharset(CharsetToolkit.UTF8_CHARSET);
-
-    doHighlighting();
-    List<HighlightInfo> infos = DaemonCodeAnalyzerEx.getInstanceEx(getProject()).getFileLevelHighlights(getProject(), getFile());
-    HighlightInfo info = assertOneElement(infos);
-    assertEquals("File was loaded in the wrong encoding: 'UTF-8'", info.getDescription());
-  }
-
-  public void testDetectWrongEncoding() throws Exception {
-    VirtualFile virtualFile = getVirtualFile(BASE_PATH + "/" + "Win1251.txt");
+  public void testDetectWrongEncoding() {
+    VirtualFile virtualFile = getVirtualFile(BASE_PATH + "/Win1251.txt");
     virtualFile.setCharset(CharsetToolkit.UTF8_CHARSET);
     configureByExistingFile(virtualFile);
-    final Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
+    Document document = ObjectUtils.notNull(FileDocumentManager.getInstance().getDocument(virtualFile));
 
     assertFalse(FileDocumentManager.getInstance().isDocumentUnsaved(document));
     assertEquals(CharsetToolkit.UTF8_CHARSET, virtualFile.getCharset());
@@ -168,11 +141,11 @@ public class LossyEncodingTest extends DaemonAnalyzerTestCase {
     assertEquals("File was loaded in the wrong encoding: 'UTF-8'", info.getDescription());
   }
 
-  public void testSurrogateUTF8() throws Exception {
+  public void testSurrogateUTF8() {
     VirtualFile virtualFile = getVirtualFile(BASE_PATH + "/" + "surrogate.txt");
     virtualFile.setCharset(CharsetToolkit.UTF8_CHARSET);
     configureByExistingFile(virtualFile);
-    final Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
+    final Document document = ObjectUtils.notNull(FileDocumentManager.getInstance().getDocument(virtualFile));
 
     assertFalse(FileDocumentManager.getInstance().isDocumentUnsaved(document));
     assertEquals(CharsetToolkit.UTF8_CHARSET, virtualFile.getCharset());
@@ -180,11 +153,11 @@ public class LossyEncodingTest extends DaemonAnalyzerTestCase {
     assertEmpty(doHighlighting());
   }
 
-  public void testInconsistentLineSeparators() throws Exception {
+  public void testInconsistentLineSeparators() {
     VirtualFile virtualFile = getVirtualFile(BASE_PATH + "/" + getTestName(false) + ".txt");
     configureByExistingFile(virtualFile);
     FileDocumentManager.getInstance().saveAllDocuments();
-    final Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
+    final Document document = ObjectUtils.notNull(FileDocumentManager.getInstance().getDocument(virtualFile));
     assertFalse(FileDocumentManager.getInstance().isDocumentUnsaved(document));
     doHighlighting();
     List<HighlightInfo> infos = DaemonCodeAnalyzerEx.getInstanceEx(getProject()).getFileLevelHighlights(getProject(), getFile());

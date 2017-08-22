@@ -19,7 +19,7 @@ import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCa
 
 public class MethodReturnBooleanTest extends LightQuickFixParameterizedTestCase {
 
-  public void test() throws Exception { 
+  public void test() {
     doAllTests();
   }
 

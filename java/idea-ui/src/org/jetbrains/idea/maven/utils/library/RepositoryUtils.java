@@ -24,6 +24,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.AnnotationOrderRootType;
 import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
@@ -118,6 +119,7 @@ public class RepositoryUtils {
       return;
     }
     final RepositoryLibraryProperties properties = (RepositoryLibraryProperties)library.getProperties();
+    String[] annotationUrls = library.getUrls(AnnotationOrderRootType.getInstance());
 
     JarRepositoryManager.loadDependenciesAsync(
       project, properties, downloadSources, downloadJavaDocs, null, copyTo,
@@ -134,6 +136,9 @@ public class RepositoryUtils {
                 editor.setKeepInvalidUrls(false);
                 editor.removeAllRoots();
                 editor.addRoots(roots);
+                for (String url : annotationUrls) {
+                  editor.addRoot(url, AnnotationOrderRootType.getInstance());
+                }
                 final Library.ModifiableModel model = library.getModifiableModel();
                 editor.applyTo((LibraryEx.ModifiableModelEx)model);
                 model.commit();

@@ -57,12 +57,12 @@ public class XmlPerformanceFormatterTest extends XmlFormatterTestBase {
     SemService.getSemService(getProject()); // insanely expensive
   }
 
-  public void testReformatCodeFragment() throws Exception {
+  public void testReformatCodeFragment() {
     PlatformTestUtil.startPerformanceTest("reformat code fragment", 6300,
                                           () -> checkFormattingDoesNotProduceException("performance")).useLegacyScaling().assertTiming();
   }
 
-  public void testPerformance3() throws Exception {
+  public void testPerformance3() {
     final FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
     try {
       PlatformTestUtil.startPerformanceTest("xml formatter", 6800, createTestRunnable()).useLegacyScaling().assertTiming();
@@ -99,7 +99,7 @@ public class XmlPerformanceFormatterTest extends XmlFormatterTestBase {
     CodeInsightTestFixtureImpl.instantiateAndRun(myFile, myEditor, new int[]{Pass.UPDATE_ALL, Pass.LOCAL_INSPECTIONS}, false);
   }
 
-  public void testPerformance4() throws Exception {
+  public void testPerformance4() {
     final FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
     try {
       PlatformTestUtil.startPerformanceTest("xml formatter", 20000, createTestRunnable()).useLegacyScaling().assertTiming();
@@ -120,7 +120,7 @@ public class XmlPerformanceFormatterTest extends XmlFormatterTestBase {
   };
   }
 
-  public void testPerformance5() throws Exception {
+  public void testPerformance5() {
     final FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
     try {
       PlatformTestUtil.startPerformanceTest("xml formatter", 10000, createTestRunnable()).useLegacyScaling().assertTiming();
@@ -133,7 +133,7 @@ public class XmlPerformanceFormatterTest extends XmlFormatterTestBase {
     }
   }
 
-  public void testPerformance6() throws Exception {
+  public void testPerformance6() {
     final FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
     try {
       PlatformTestUtil.startPerformanceTest("xml formatter", 20000, createTestRunnable()).useLegacyScaling().assertTiming();
@@ -159,7 +159,7 @@ public class XmlPerformanceFormatterTest extends XmlFormatterTestBase {
       .assertTiming();
   }
   
-  private static ThrowableRunnable createAdjustLineIndentInRangeRunnable(final @NotNull PsiFile file) throws Exception {
+  private static ThrowableRunnable createAdjustLineIndentInRangeRunnable(final @NotNull PsiFile file) {
     return () -> {
       final Document document = PsiDocumentManager.getInstance(getProject()).getDocument(file);
       assertNotNull(document);

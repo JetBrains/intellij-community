@@ -37,7 +37,7 @@ public class GradleProjectResolverUtilTest {
   public static final ProjectRule myProjectRule = new ProjectRule();
 
   @Test
-  public void testGetGradlePath() throws Exception {
+  public void testGetGradlePath() {
     assertNull(GradleProjectResolverUtil.getGradlePath(null));
 
     final Module rootModule = createModuleMock("rootModule");

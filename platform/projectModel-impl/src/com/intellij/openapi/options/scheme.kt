@@ -73,6 +73,9 @@ abstract class SchemeProcessor<SCHEME : Scheme, MUTABLE_SCHEME: SCHEME> {
   open fun initScheme(scheme: MUTABLE_SCHEME) {
   }
 
+  /**
+   * Called on external scheme add or change file events.
+   */
   open fun onSchemeAdded(scheme: MUTABLE_SCHEME) {
   }
 

@@ -9915,8 +9915,9 @@
     <option name="to" path="ActionManager" hit="Send Commands To Flex Debugger" />
     <option name="eof" path="ActionManager" hit="Send EOF" />
     <option name="send" path="ActionManager" hit="Send EOF" />
-    <option name="send" path="ActionManager" hit="Send Statistics" />
-    <option name="statistics" path="ActionManager" hit="Send Statistics" />
+    <option name="collect" path="ActionManager" hit="Collect And Send Statistics" />
+    <option name="send" path="ActionManager" hit="Collect And Send Statistics" />
+    <option name="statistics" path="ActionManager" hit="Collect And Send Statistics" />
     <option name="favorites" path="ActionManager" hit="Send to Favorites" />
     <option name="send" path="ActionManager" hit="Send to Favorites" />
     <option name="to" path="ActionManager" hit="Send to Favorites" />

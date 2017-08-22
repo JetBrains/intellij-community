@@ -39,6 +39,15 @@ public interface EduPluginConfigurator {
   String getTestFileName();
 
   /**
+   * Default language name used to publish submissions to stepik
+   * @return
+   */
+  @NotNull
+  default String getStepikDefaultLanguage() {
+    return "";
+  }
+
+  /**
    * Creates content (including its directory or module) of new lesson in project
    *
    * @param project Parameter is used in Java and Kotlin plugins
@@ -119,8 +128,7 @@ public interface EduPluginConfigurator {
       StudyPreviousTaskAction.ACTION_ID,
       StudyNextTaskAction.ACTION_ID,
       StudyRefreshTaskFileAction.ACTION_ID,
-      StudyShowHintAction.ACTION_ID,
-      StudyUpdateRecommendationAction.ACTION_ID
+      StudyShowHintAction.ACTION_ID
     };
     ActionManager actionManager = ActionManager.getInstance();
     Arrays.stream(ids)

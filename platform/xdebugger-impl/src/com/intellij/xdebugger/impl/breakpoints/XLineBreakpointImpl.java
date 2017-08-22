@@ -48,6 +48,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DragSource;
 import java.io.File;
 import java.util.List;
@@ -221,10 +222,17 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
   protected GutterDraggableObject createBreakpointDraggableObject() {
     return new GutterDraggableObject() {
       @Override
-      public boolean copy(int line, VirtualFile file) {
+      public boolean copy(int line, VirtualFile file, int actionId) {
         if (canMoveTo(line, file)) {
-          setFileUrl(file.getUrl());
-          setLine(line, true);
+          final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(getProject()).getBreakpointManager();
+          if (isCopyAction(actionId)) {
+            WriteAction
+              .run(() -> ((XBreakpointManagerImpl)breakpointManager).copyLineBreakpoint(XLineBreakpointImpl.this, file.getUrl(), line));
+          }
+          else {
+            setFileUrl(file.getUrl());
+            setLine(line, true);
+          }
           return true;
         }
         return false;
@@ -236,8 +244,16 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
       }
 
       @Override
-      public Cursor getCursor(int line) {
-        return canMoveTo(line, getFile()) ? DragSource.DefaultMoveDrop : DragSource.DefaultMoveNoDrop;
+      public Cursor getCursor(int line, int actionId) {
+        if (canMoveTo(line, getFile())) {
+          return isCopyAction(actionId) ? DragSource.DefaultCopyDrop : DragSource.DefaultMoveDrop;
+        }
+
+        return DragSource.DefaultMoveNoDrop;
+      }
+
+      private boolean isCopyAction(int actionId) {
+        return (actionId & DnDConstants.ACTION_COPY) == DnDConstants.ACTION_COPY;
       }
     };
   }

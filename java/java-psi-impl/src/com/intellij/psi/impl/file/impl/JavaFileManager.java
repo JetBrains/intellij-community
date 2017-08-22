@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,9 +33,14 @@ public interface JavaFileManager {
   class SERVICE {
     private SERVICE() { }
 
+    /** @deprecated use {@link JavaFileManager#getInstance(Project)} (to be removed in IDEA 2018) */
     public static JavaFileManager getInstance(@NotNull Project project) {
-      return ServiceManager.getService(project, JavaFileManager.class);
+      return JavaFileManager.getInstance(project);
     }
+  }
+
+  static JavaFileManager getInstance(@NotNull Project project) {
+    return ServiceManager.getService(project, JavaFileManager.class);
   }
 
   @Nullable

@@ -27,7 +27,7 @@ import com.intellij.util.IncorrectOperationException;
  */
 public class ReferenceParameterListTest extends PsiTestCase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.ReferenceParameterListTest");
-  public void testParameterListInExtends() throws Exception {
+  public void testParameterListInExtends() {
     final PsiManager manager = PsiManager.getInstance(myProject);
     final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
     final PsiClass classFromText = factory.createClassFromText("class X extends Y<Z, W> {}", null);
@@ -46,7 +46,7 @@ public class ReferenceParameterListTest extends PsiTestCase {
     final PsiJavaCodeReferenceElement reference = ((PsiClassReferenceType) refType).getReference();
     assertEquals("Y<Z,W>", reference.getCanonicalText());
   }
-  public void testResolvableParameterListInExtends() throws Exception {
+  public void testResolvableParameterListInExtends() {
     final PsiManager manager = PsiManager.getInstance(myProject);
     final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
     final PsiClass classFromText = factory.createClassFromText(

@@ -15,6 +15,8 @@
  */
 package com.intellij.configurationStore
 
+import com.intellij.concurrency.ConcurrentCollectionFactory
+import com.intellij.configurationStore.schemeManager.*
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil
 import com.intellij.openapi.application.runUndoTransparentWriteAction
 import com.intellij.openapi.components.RoamingType
@@ -23,9 +25,11 @@ import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil.DEFAULT_E
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.extensions.AbstractExtensionPointBean
 import com.intellij.openapi.options.*
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.WriteExternalException
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.SafeWriteRequestor
@@ -89,7 +93,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
   private val filesToDelete = ContainerUtil.newConcurrentSet<String>()
 
   // scheme could be changed - so, hashcode will be changed - we must use identity hashing strategy
-  private val schemeToInfo = ContainerUtil.newConcurrentMap<T, ExternalInfo>(ContainerUtil.identityStrategy())
+  private val schemeToInfo = ConcurrentCollectionFactory.createMap<T, ExternalInfo>(ContainerUtil.identityStrategy())
 
   private val useVfs = messageBus != null
 
@@ -109,8 +113,9 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
   }
 
   private inner class SchemeFileTracker : BulkFileListener {
-    private fun isMy(file: VirtualFile) = isMy(file.nameSequence)
-    private fun isMy(name: CharSequence) = name.endsWith(schemeExtension, ignoreCase = true) && (processor !is LazySchemeProcessor || processor.isSchemeFile(name))
+    private fun isMy(file: VirtualFile) = canRead(file.nameSequence)
+
+    private fun isMyDirectory(parent: VirtualFile) = cachedVirtualDirectory.let { if (it == null) ioDirectory.systemIndependentPath == parent.path else it == parent }
 
     override fun after(events: MutableList<out VFileEvent>) {
       eventLoop@ for (event in events) {
@@ -118,16 +123,21 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
           continue
         }
 
-        fun isMyDirectory(parent: VirtualFile) = cachedVirtualDirectory.let { if (it == null) ioDirectory.systemIndependentPath == parent.path else it == parent }
-
         when (event) {
           is VFileContentChangeEvent -> {
-            if (!isMy(event.file) || !isMyDirectory(event.file.parent)) {
+            val fileName = event.file.name
+            if (!canRead(fileName) || !isMyDirectory(event.file.parent)) {
               continue@eventLoop
             }
 
             val oldCurrentScheme = currentScheme
-            findExternalizableSchemeByFileName(event.file.name)?.let {
+            val changedScheme = findExternalizableSchemeByFileName(fileName)
+
+            if (callSchemeContentChangedIfSupported(changedScheme, fileName, event.file)) {
+              continue@eventLoop
+            }
+
+            changedScheme?.let {
               removeScheme(it)
               processor.onSchemeDeleted(it)
             }
@@ -140,12 +150,12 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
           }
 
           is VFileCreateEvent -> {
-            if (isMy(event.childName)) {
+            if (canRead(event.childName)) {
               if (isMyDirectory(event.parent)) {
                 event.file?.let { schemeCreatedExternally(it) }
               }
             }
-            else if (event.file?.isDirectory ?: false) {
+            else if (event.file?.isDirectory == true) {
               val dir = virtualDirectory
               if (event.file == dir) {
                 for (file in dir!!.children) {
@@ -175,6 +185,28 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
           }
         }
       }
+    }
+
+    private fun callSchemeContentChangedIfSupported(changedScheme: MUTABLE_SCHEME?, fileName: String, file: VirtualFile): Boolean {
+      if (changedScheme == null || processor !is SchemeContentChangedHandler<*> || processor !is LazySchemeProcessor) {
+        return false
+      }
+
+      // unrealistic case, but who knows
+      val externalInfo = schemeToInfo.get(changedScheme) ?: return false
+
+      catchAndLog(fileName) {
+        val bytes = file.contentsToByteArray()
+        lazyPreloadScheme(bytes, isUseOldFileNameSanitize) { name, parser ->
+          val attributeProvider = Function<String, String?> { parser.getAttributeValue(null, it) }
+          val schemeName = name ?: processor.getName(attributeProvider, FileUtilRt.getNameWithoutExtension(fileName))
+          val dataHolder = SchemeDataHolderImpl(bytes, externalInfo)
+          @Suppress("UNCHECKED_CAST")
+          (processor as SchemeContentChangedHandler<MUTABLE_SCHEME>).schemeContentChanged(changedScheme, schemeName, dataHolder)
+        }
+        return true
+      }
+      return false
     }
 
     private fun schemeCreatedExternally(file: VirtualFile) {
@@ -243,12 +275,14 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
         val attributeProvider = Function<String, String?> { parser.getAttributeValue(null, it) }
         val fileName = PathUtilRt.getFileName(url.path)
         val extension = getFileExtension(fileName, true)
-        val externalInfo = ExternalInfo(fileName.substring(0, fileName.length - extension.length), extension)
+        val externalInfo = ExternalInfo(
+          fileName.substring(0, fileName.length - extension.length), extension)
 
         val schemeName = name ?: (processor as LazySchemeProcessor).getName(attributeProvider, externalInfo.fileNameWithoutExtension)
         externalInfo.schemeName = schemeName
 
-        val scheme = (processor as LazySchemeProcessor).createScheme(SchemeDataHolderImpl(bytes, externalInfo), schemeName, attributeProvider, true)
+        val scheme = (processor as LazySchemeProcessor).createScheme(SchemeDataHolderImpl(bytes, externalInfo), schemeName,
+                                                                     attributeProvider, true)
         val oldInfo = schemeToInfo.put(scheme, externalInfo)
         LOG.assertTrue(oldInfo == null)
         val oldScheme = readOnlyExternalizableSchemes.put(scheme.name, scheme)
@@ -257,6 +291,9 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
         }
         schemes.add(scheme)
       }
+    }
+    catch (e: ProcessCanceledException) {
+      throw e
     }
     catch (e: Throwable) {
       LOG.error("Cannot read scheme from $resourceName", e)
@@ -474,9 +511,11 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
     }
 
     if (schemes === this.schemes) {
+      @Suppress("UNCHECKED_CAST")
       addNewScheme(scheme as T, true)
     }
     else {
+      @Suppress("UNCHECKED_CAST")
       schemes.add(scheme as T)
     }
     return scheme
@@ -485,7 +524,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
   private val T.fileName: String?
     get() = schemeToInfo.get(this)?.fileNameWithoutExtension
 
-  fun canRead(name: CharSequence) = (updateExtension && name.endsWith(DEFAULT_EXT, true) || name.endsWith(schemeExtension, true)) && (processor !is LazySchemeProcessor || processor.isSchemeFile(name))
+  fun canRead(name: CharSequence) = (updateExtension && name.endsWith(DEFAULT_EXT, true) || name.endsWith(schemeExtension, ignoreCase = true)) && (processor !is LazySchemeProcessor || processor.isSchemeFile(name))
 
   private fun readSchemeFromFile(file: VirtualFile, schemes: MutableList<T>): MUTABLE_SCHEME? {
     val fileName = file.name
@@ -638,14 +677,14 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
 
         if (renamed) {
           val oldFile = dir.findChild(externalInfo!!.fileName)
-          oldFile?.let {
+          if (oldFile != null) {
             // VFS doesn't allow to rename to existing file, so, check it
-            if (dir!!.findChild(fileName) == null) {
-              runUndoTransparentWriteAction { it.rename(this, fileName) }
+            if (dir.findChild(fileName) == null) {
+              runUndoTransparentWriteAction { oldFile.rename(this, fileName) }
               file = oldFile
             }
             else {
-              externalInfo!!.scheduleDelete()
+              externalInfo.scheduleDelete()
             }
           }
         }
@@ -834,32 +873,41 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
   override fun addNewScheme(scheme: T, replaceExisting: Boolean) {
     var toReplace = -1
     val schemes = schemes
-    for (i in schemes.indices) {
-      val existing = schemes.get(i)
-      if (existing.name == scheme.name) {
-        if (existing.javaClass != scheme.javaClass) {
-          LOG.warn("'${scheme.name}' ${existing.javaClass.simpleName} replaced with ${scheme.javaClass.simpleName}")
-        }
+    for ((index, existing) in schemes.withIndex()) {
+      if (existing.name != scheme.name) {
+        continue
+      }
 
-        toReplace = i
-        if (replaceExisting && processor.isExternalizable(existing)) {
-          val oldInfo = schemeToInfo.remove(existing)
-          if (oldInfo != null && processor.isExternalizable(scheme) && !schemeToInfo.containsKey(scheme)) {
-            schemeToInfo.put(scheme, oldInfo)
-          }
-        }
+      toReplace = index
+      if (existing === scheme) {
+        // do not just return, below scheme will be removed from filesToDelete list
         break
       }
+
+      if (existing.javaClass != scheme.javaClass) {
+        LOG.warn("'${scheme.name}' ${existing.javaClass.simpleName} replaced with ${scheme.javaClass.simpleName}")
+      }
+
+      if (replaceExisting && processor.isExternalizable(existing)) {
+        val oldInfo = schemeToInfo.remove(existing)
+        if (oldInfo != null && processor.isExternalizable(scheme) && !schemeToInfo.containsKey(scheme)) {
+          schemeToInfo.put(scheme, oldInfo)
+        }
+      }
     }
-    if (toReplace == -1) {
-      schemes.add(scheme)
-    }
-    else if (replaceExisting || !processor.isExternalizable(scheme)) {
-      schemes.set(toReplace, scheme)
-    }
-    else {
-      (scheme as ExternalizableScheme).renameScheme(UniqueNameGenerator.generateUniqueName(scheme.name, collectExistingNames(schemes)))
-      schemes.add(scheme)
+
+    when {
+      toReplace == -1 -> schemes.add(scheme)
+      (replaceExisting || !processor.isExternalizable(scheme)) -> {
+        if (schemes.get(toReplace) !== scheme) {
+          // avoid "set" (LockFreeCopyOnWriteArrayList calls ARRAY_UPDATER.compareAndSet and so on)
+          schemes.set(toReplace, scheme)
+        }
+      }
+      else -> {
+        (scheme as ExternalizableScheme).renameScheme(UniqueNameGenerator.generateUniqueName(scheme.name, collectExistingNames(schemes)))
+        schemes.add(scheme)
+      }
     }
 
     if (processor.isExternalizable(scheme) && filesToDelete.isNotEmpty()) {
@@ -954,20 +1002,4 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
   override fun isMetadataEditable(scheme: T) = !readOnlyExternalizableSchemes.containsKey(scheme.name)
 
   override fun toString() = fileSpec
-}
-
-private fun ExternalizableScheme.renameScheme(newName: String) {
-  if (newName != name) {
-    name = newName
-    LOG.assertTrue(newName == name)
-  }
-}
-
-private inline fun catchAndLog(fileName: String, runnable: (fileName: String) -> Unit) {
-  try {
-    runnable(fileName)
-  }
-  catch (e: Throwable) {
-    LOG.error("Cannot read scheme $fileName", e)
-  }
 }

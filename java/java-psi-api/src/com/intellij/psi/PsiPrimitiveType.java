@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.psi;
 
+import com.intellij.lang.jvm.types.JvmPrimitiveType;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
@@ -29,7 +30,8 @@ import java.util.Map;
 /**
  * Represents primitive types of Java language.
  */
-public class PsiPrimitiveType extends PsiType.Stub {
+public class PsiPrimitiveType extends PsiType.Stub implements JvmPrimitiveType {
+
   private static final Map<String, PsiPrimitiveType> ourQNameToUnboxed = new THashMap<>();
   private static final Map<PsiPrimitiveType, String> ourUnboxedToQName = new THashMap<>();
 

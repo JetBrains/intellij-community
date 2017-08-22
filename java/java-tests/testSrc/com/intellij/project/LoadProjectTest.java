@@ -48,7 +48,7 @@ public class LoadProjectTest extends PlatformTestCase {
   }
 
   @Override
-  protected void tearDown() throws Exception {
+  protected void tearDown() {
     Project project = getProject();
     myProject = null;
 
@@ -65,7 +65,7 @@ public class LoadProjectTest extends PlatformTestCase {
                                     psiFile.getProject() == project);
   }
 
-  public void testLoadProject() throws Exception {
+  public void testLoadProject() {
     VirtualFile src = ProjectRootManager.getInstance(getProject()).getContentSourceRoots()[0];
 
     VirtualFile a = src.findFileByRelativePath("/x/AClass.java");

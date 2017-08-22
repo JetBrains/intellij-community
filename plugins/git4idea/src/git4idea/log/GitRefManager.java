@@ -2,17 +2,23 @@ package git4idea.log;
 
 import com.intellij.dvcs.repo.RepositoryManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.colors.ColorKey;
+import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.RefGroup;
+import com.intellij.vcs.log.VcsLogRefManager;
+import com.intellij.vcs.log.VcsRef;
+import com.intellij.vcs.log.VcsRefType;
 import com.intellij.vcs.log.impl.SimpleRefGroup;
 import com.intellij.vcs.log.impl.SingletonRefGroup;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import git4idea.GitBranch;
+import git4idea.GitColors;
 import git4idea.GitRemoteBranch;
 import git4idea.GitTag;
 import git4idea.repo.GitBranchTrackInfo;
@@ -32,11 +38,11 @@ import java.util.List;
  * @author Kirill Likhodedov
  */
 public class GitRefManager implements VcsLogRefManager {
-  public static final VcsRefType HEAD = new SimpleRefType(true, VcsLogStandardColors.Refs.TIP, "HEAD");
-  public static final VcsRefType LOCAL_BRANCH = new SimpleRefType(true, VcsLogStandardColors.Refs.BRANCH, "LOCAL_BRANCH");
-  public static final VcsRefType REMOTE_BRANCH = new SimpleRefType(true, VcsLogStandardColors.Refs.BRANCH_REF, "REMOTE_BRANCH");
-  public static final VcsRefType TAG = new SimpleRefType(false, VcsLogStandardColors.Refs.TAG, "TAG");
-  public static final VcsRefType OTHER = new SimpleRefType(false, VcsLogStandardColors.Refs.TAG, "OTHER");
+  public static final VcsRefType HEAD = new SimpleRefType(true, GitColors.REFS_HEAD);
+  public static final VcsRefType LOCAL_BRANCH = new SimpleRefType(true, GitColors.REFS_LOCAL_BRANCH);
+  public static final VcsRefType REMOTE_BRANCH = new SimpleRefType(true, GitColors.REFS_REMOTE_BRANCH);
+  public static final VcsRefType TAG = new SimpleRefType(false, GitColors.REFS_TAG);
+  public static final VcsRefType OTHER = new SimpleRefType(false, GitColors.REFS_OTHER);
 
   private static final List<VcsRefType> REF_TYPE_INDEX = Arrays.asList(HEAD, LOCAL_BRANCH, REMOTE_BRANCH, TAG, OTHER);
 
@@ -313,13 +319,11 @@ public class GitRefManager implements VcsLogRefManager {
 
   private static class SimpleRefType implements VcsRefType {
     private final boolean myIsBranch;
-    @NotNull private final Color myColor;
-    @NotNull private final String myName;
+    private final ColorKey myColorKey;
 
-    public SimpleRefType(boolean isBranch, @NotNull Color color, @NotNull String typeName) {
+    public SimpleRefType(boolean isBranch, @NotNull ColorKey colorKey) {
       myIsBranch = isBranch;
-      myColor = color;
-      myName = typeName;
+      myColorKey = colorKey;
     }
 
     @Override
@@ -329,13 +333,13 @@ public class GitRefManager implements VcsLogRefManager {
 
     @NotNull
     @Override
-    public Color getBackgroundColor() {
-      return myColor;
+    public ColorKey getBgColorKey() {
+      return myColorKey;
     }
 
     @Override
     public String toString() {
-      return myName;
+      return myColorKey.getExternalName();
     }
 
     @Override
@@ -343,12 +347,12 @@ public class GitRefManager implements VcsLogRefManager {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
       SimpleRefType type = (SimpleRefType)o;
-      return myIsBranch == type.myIsBranch && Objects.equals(myName, type.myName);
+      return myIsBranch == type.myIsBranch && myColorKey == type.myColorKey;
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(myIsBranch, myName);
+      return Objects.hash(myIsBranch, myColorKey);
     }
   }
 
@@ -381,7 +385,8 @@ public class GitRefManager implements VcsLogRefManager {
     @NotNull
     @Override
     public List<Color> getColors() {
-      return Collections.singletonList(VcsLogStandardColors.Refs.TIP);
+      Color color = EditorColorsUtil.getGlobalOrDefaultColor(GitColors.REFS_HEAD);
+      return Collections.singletonList(color);
     }
   }
 
@@ -414,7 +419,8 @@ public class GitRefManager implements VcsLogRefManager {
     @NotNull
     @Override
     public List<Color> getColors() {
-      return Collections.singletonList(VcsLogStandardColors.Refs.BRANCH_REF);
+      Color color = EditorColorsUtil.getGlobalOrDefaultColor(GitColors.REFS_REMOTE_BRANCH);
+      return Collections.singletonList(color);
     }
   }
 

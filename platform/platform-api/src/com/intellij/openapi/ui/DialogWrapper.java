@@ -117,10 +117,10 @@ public abstract class DialogWrapper {
   public static final int NEXT_USER_EXIT_CODE = 2;
 
   /**
-   * If your action returned by <code>createActions</code> method has non
-   * <code>null</code> value for this key, then the button that corresponds to the action will be the
+   * If your action returned by {@code createActions} method has non
+   * {@code null} value for this key, then the button that corresponds to the action will be the
    * default button for the dialog. It's true if you don't change this behaviour
-   * of <code>createJButtonForAction(Action)</code> method.
+   * of {@code createJButtonForAction(Action)} method.
    */
   @NonNls public static final String DEFAULT_ACTION = "DefaultAction";
 
@@ -206,13 +206,13 @@ public abstract class DialogWrapper {
   private static final Color BALLOON_BACKGROUND = new JBColor(new Color(0xf5e6e7), new Color(0x593d41));
 
   /**
-   * Creates modal <code>DialogWrapper</code>. The currently active window will be the dialog's parent.
+   * Creates modal {@code DialogWrapper}. The currently active window will be the dialog's parent.
    *
    * @param project     parent window for the dialog will be calculated based on focused window for the
-   *                    specified <code>project</code>. This parameter can be <code>null</code>. In this case parent window
+   *                    specified {@code project}. This parameter can be {@code null}. In this case parent window
    *                    will be suggested based on current focused window.
    * @param canBeParent specifies whether the dialog can be parent for other windows. This parameter is used
-   *                    by <code>WindowManager</code>.
+   *                    by {@code WindowManager}.
    * @throws IllegalStateException if the dialog is invoked not on the event dispatch thread
    */
   protected DialogWrapper(@Nullable Project project, boolean canBeParent) {
@@ -244,11 +244,11 @@ public abstract class DialogWrapper {
   }
 
   /**
-   * Creates modal <code>DialogWrapper</code> that can be parent for other windows.
+   * Creates modal {@code DialogWrapper} that can be parent for other windows.
    * The currently active window will be the dialog's parent.
    *
    * @param project parent window for the dialog will be calculated based on focused window for the
-   *                specified <code>project</code>. This parameter can be <code>null</code>. In this case parent window
+   *                specified {@code project}. This parameter can be {@code null}. In this case parent window
    *                will be suggested based on current focused window.
    * @throws IllegalStateException if the dialog is invoked not on the event dispatch thread
    * @see DialogWrapper#DialogWrapper(Project, boolean)
@@ -258,10 +258,10 @@ public abstract class DialogWrapper {
   }
 
   /**
-   * Creates modal <code>DialogWrapper</code>. The currently active window will be the dialog's parent.
+   * Creates modal {@code DialogWrapper}. The currently active window will be the dialog's parent.
    *
    * @param canBeParent specifies whether the dialog can be parent for other windows. This parameter is used
-   *                    by <code>WindowManager</code>.
+   *                    by {@code WindowManager}.
    * @throws IllegalStateException if the dialog is invoked not on the event dispatch thread
    */
   protected DialogWrapper(boolean canBeParent) {
@@ -296,7 +296,7 @@ public abstract class DialogWrapper {
 
   /**
    * @param parent      parent component which is used to calculate heavy weight window ancestor.
-   *                    <code>parent</code> cannot be <code>null</code> and must be showing.
+   *                    {@code parent} cannot be {@code null} and must be showing.
    * @param canBeParent can be parent
    * @throws IllegalStateException if the dialog is invoked not on the event dispatch thread
    */
@@ -323,17 +323,17 @@ public abstract class DialogWrapper {
   /**
    * Allows to postpone first start of validation
    *
-   * @return <code>false</code> if start validation in <code>init()</code> method
+   * @return {@code false} if start validation in {@code init()} method
    */
   protected boolean postponeValidation() {
     return true;
   }
 
   /**
-   * Validates user input and returns <code>null</code> if everything is fine
+   * Validates user input and returns {@code null} if everything is fine
    * or validation description with component where problem has been found.
    *
-   * @return <code>null</code> if everything is OK or validation descriptor
+   * @return {@code null} if everything is OK or validation descriptor
    */
   @Nullable
   protected ValidationInfo doValidate() {
@@ -341,13 +341,13 @@ public abstract class DialogWrapper {
   }
 
   /**
-   * Validates user input and returns <code>List&lt;ValidationInfo&gt;</code>.
+   * Validates user input and returns {@code List<ValidationInfo>}.
    * If everything is fine the returned list is empty otherwise
    * the list contains all invalid fields with error messages.
    * This method should preferably be used when validating forms with multiply
    * fields that require validation.
    *
-   * @return <code>List&lt;ValidationInfo&gt;</code> of invalid fields. List
+   * @return {@code List<ValidationInfo>} of invalid fields. List
    * is empty if no errors found.
    */
   @NotNull
@@ -436,8 +436,8 @@ public abstract class DialogWrapper {
 
   /**
    * Creates border for dialog's content pane. By default content
-   * pane has has empty border with <code>(8,12,8,12)</code> insets. Subclasses can
-   * return <code>null</code> for no border.
+   * pane has has empty border with {@code (8,12,8,12)} insets. Subclasses can
+   * return {@code null} for no border.
    *
    * @return content pane border
    */
@@ -460,8 +460,8 @@ public abstract class DialogWrapper {
 
   /**
    * Creates panel located at the south of the content pane. By default that
-   * panel contains dialog's buttons. This default implementation uses <code>createActions()</code>
-   * and <code>createJButtonForAction(Action)</code> methods to construct the panel.
+   * panel contains dialog's buttons. This default implementation uses {@code createActions()}
+   * and {@code createJButtonForAction(Action)} methods to construct the panel.
    *
    * @return south panel
    */
@@ -687,8 +687,8 @@ public abstract class DialogWrapper {
   }
 
   /**
-   * Creates <code>JButton</code> for the specified action. If the button has not <code>null</code>
-   * value for <code>DialogWrapper.DEFAULT_ACTION</code> key then the created button will be the
+   * Creates {@code JButton} for the specified action. If the button has not {@code null}
+   * value for {@code DialogWrapper.DEFAULT_ACTION} key then the created button will be the
    * default one for the dialog.
    *
    * @param action action for the button
@@ -776,6 +776,7 @@ public abstract class DialogWrapper {
     for (int i = 0; i < text.length(); i++) {
       char ch = text.charAt(i);
       if (ch == '_' || ch == '&') {
+        //noinspection AssignmentToForLoopParameter
         i++;
         if (i >= text.length()) {
           break;
@@ -852,7 +853,7 @@ public abstract class DialogWrapper {
 
   /**
    * Factory method. It creates the panel located at the
-   * north of the dialog's content pane. The implementation can return <code>null</code>
+   * north of the dialog's content pane. The implementation can return {@code null}
    * value. In this case there will be no input panel.
    *
    * @return north panel
@@ -864,7 +865,7 @@ public abstract class DialogWrapper {
 
   /**
    * Factory method. It creates panel with dialog options. Options panel is located at the
-   * center of the dialog's content pane. The implementation can return <code>null</code>
+   * center of the dialog's content pane. The implementation can return {@code null}
    * value. In this case there will be no options panel.
    *
    * @return center panel
@@ -902,7 +903,7 @@ public abstract class DialogWrapper {
   /**
    * Dispose the wrapped and releases all resources allocated be the wrapper to help
    * more efficient garbage collection. You should never invoke this method twice or
-   * invoke any method of the wrapper after invocation of <code>dispose</code>.
+   * invoke any method of the wrapper after invocation of {@code dispose}.
    *
    * @throws IllegalStateException if the dialog is disposed not on the event dispatch thread
    */
@@ -970,7 +971,7 @@ public abstract class DialogWrapper {
     SwingUtilities.invokeLater(() -> {
       for (WindowListener listener : window.getWindowListeners()) {
         if (listener.getClass().getName().startsWith("com.intellij.")) {
-          LOG.warn("Stale listener: " + listener);
+          //LOG.warn("Stale listener: " + listener);
           window.removeWindowListener(listener);
         }
       }
@@ -980,7 +981,7 @@ public abstract class DialogWrapper {
 
   /**
    * This method is invoked by default implementation of "Cancel" action. It just closes dialog
-   * with <code>CANCEL_EXIT_CODE</code>. This is convenient place to override functionality of "Cancel" action.
+   * with {@code CANCEL_EXIT_CODE}. This is convenient place to override functionality of "Cancel" action.
    * Note that the method does nothing if "Cancel" action isn't enabled.
    */
   public void doCancelAction() {
@@ -999,7 +1000,7 @@ public abstract class DialogWrapper {
 
   /**
    * You can use this method if you want to know by which event this actions got triggered. It is called only if
-   * the cancel action was triggered by some input event, <code>doCancelAction</code> is called otherwise.
+   * the cancel action was triggered by some input event, {@code doCancelAction} is called otherwise.
    *
    * @param source AWT event
    * @see #doCancelAction
@@ -1021,7 +1022,7 @@ public abstract class DialogWrapper {
 
   /**
    * This method is invoked by default implementation of "OK" action. It just closes dialog
-   * with <code>OK_EXIT_CODE</code>. This is convenient place to override functionality of "OK" action.
+   * with {@code OK_EXIT_CODE}. This is convenient place to override functionality of "OK" action.
    * Note that the method does nothing if "OK" action isn't enabled.
    */
   protected void doOKAction() {
@@ -1040,7 +1041,7 @@ public abstract class DialogWrapper {
 
   /**
    * @return whether the native window cross button closes the window or not.
-   * <code>true</code> means that cross performs hide or dispose of the dialog.
+   * {@code true} means that cross performs hide or dispose of the dialog.
    */
   public boolean shouldCloseOnCross() {
     return myCrossClosesWindow;
@@ -1052,7 +1053,7 @@ public abstract class DialogWrapper {
    * By default "OK" and "Cancel" actions are returned. The "Help" action is automatically added if
    * {@link #getHelpId()} returns non-null value.
    * <p/>
-   * Each action is represented by <code>JButton</code> created by {@link #createJButtonForAction(Action)}.
+   * Each action is represented by {@code JButton} created by {@link #createJButtonForAction(Action)}.
    * These buttons are then placed into {@link #createSouthPanel() south panel} of dialog.
    *
    * @return dialog actions
@@ -1075,7 +1076,7 @@ public abstract class DialogWrapper {
 
   /**
    * @return default implementation of "OK" action. This action just invokes
-   * <code>doOKAction()</code> method.
+   * {@code doOKAction()} method.
    * @see #doOKAction
    */
   @NotNull
@@ -1085,7 +1086,7 @@ public abstract class DialogWrapper {
 
   /**
    * @return default implementation of "Cancel" action. This action just invokes
-   * <code>doCancelAction()</code> method.
+   * {@code doCancelAction()} method.
    * @see #doCancelAction
    */
   @NotNull
@@ -1095,7 +1096,7 @@ public abstract class DialogWrapper {
 
   /**
    * @return default implementation of "Help" action. This action just invokes
-   * <code>doHelpAction()</code> method.
+   * {@code doHelpAction()} method.
    * @see #doHelpAction
    */
   @NotNull
@@ -1138,7 +1139,7 @@ public abstract class DialogWrapper {
   /**
    * Returns key for persisting dialog dimensions.
    * <p/>
-   * Default implementation returns <code>null</code> (no persisting).
+   * Default implementation returns {@code null} (no persisting).
    *
    * @return dimension service key
    */
@@ -1169,7 +1170,7 @@ public abstract class DialogWrapper {
   /**
    * @return horizontal stretch of the dialog. It means that the dialog's horizontal size is
    * the product of horizontal stretch by horizontal size of packed dialog. The default value
-   * is <code>1.0f</code>
+   * is {@code 1.0f}
    */
   public final float getHorizontalStretch() {
     return myHorizontalStretch;
@@ -1178,7 +1179,7 @@ public abstract class DialogWrapper {
   /**
    * @return vertical stretch of the dialog. It means that the dialog's vertical size is
    * the product of vertical stretch by vertical size of packed dialog. The default value
-   * is <code>1.0f</code>
+   * is {@code 1.0f}
    */
   public final float getVerticalStretch() {
     return myVerticalStretch;
@@ -1440,9 +1441,9 @@ public abstract class DialogWrapper {
    * Sets horizontal alignment of dialog's buttons.
    *
    * @param alignment alignment of the buttons. Acceptable values are
-   *                  <code>SwingConstants.CENTER</code> and <code>SwingConstants.RIGHT</code>.
-   *                  The <code>SwingConstants.RIGHT</code> is the default value.
-   * @throws IllegalArgumentException if <code>alignment</code> isn't acceptable
+   *                  {@code SwingConstants.CENTER} and {@code SwingConstants.RIGHT}.
+   *                  The {@code SwingConstants.RIGHT} is the default value.
+   * @throws IllegalArgumentException if {@code alignment} isn't acceptable
    */
   protected final void setButtonsAlignment(@MagicConstant(intValues = {SwingConstants.CENTER, SwingConstants.RIGHT}) int alignment) {
     if (SwingConstants.CENTER != alignment && SwingConstants.RIGHT != alignment) {
@@ -1547,7 +1548,7 @@ public abstract class DialogWrapper {
   }
 
   /**
-   * @return <code>true</code> if and only if visible
+   * @return {@code true} if and only if visible
    * @see Component#isVisible
    */
   public boolean isVisible() {
@@ -1555,7 +1556,7 @@ public abstract class DialogWrapper {
   }
 
   /**
-   * @return <code>true</code> if and only if showing
+   * @return {@code true} if and only if showing
    * @see Window#isShowing
    */
   public boolean isShowing() {
@@ -1941,7 +1942,11 @@ public abstract class DialogWrapper {
     if (myInfo.equals(info)) return;
 
     myErrorTextAlarm.cancelAllRequests();
-    SwingUtilities.invokeLater(() -> myErrorText.clearError());
+    SwingUtilities.invokeLater(() -> {
+      if (myErrorText != null) {
+        myErrorText.clearError();
+      }
+    });
 
     List<ValidationInfo> corrected = myInfo.stream().filter((vi) -> !info.contains(vi)).collect(Collectors.toList());
     if (Registry.is("ide.inplace.errors.outline")) {
@@ -2119,7 +2124,7 @@ public abstract class DialogWrapper {
 
     private ErrorText(int horizontalAlignment) {
       setLayout(new BorderLayout());
-      myLabel.setBorder(JBUI.Borders.empty(16, 13, 16, 13));
+      myLabel.setBorder(JBUI.Borders.empty(16, 13));
       myLabel.setHorizontalAlignment(horizontalAlignment);
       JBScrollPane pane =
         new JBScrollPane(myLabel, ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);

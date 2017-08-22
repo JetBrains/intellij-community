@@ -291,7 +291,8 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
       final int shift = e.getNewLength() - e.getOldLength();
       if (repaintEnd > 0) {
         while (insertSegmentCount > 0 && oldEndIndex > startIndex) {
-          if (!segmentsEqual(mySegments, oldEndIndex - 1, insertSegments, insertSegmentCount - 1, shift)) {
+          if (!segmentsEqual(mySegments, oldEndIndex - 1, insertSegments, insertSegmentCount - 1, shift) ||
+              hasAdditionalData(oldEndIndex - 1)) {
             break;
           }
           insertSegmentCount--;
@@ -326,6 +327,10 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     catch (RuntimeException ex) {
       throw new InvalidStateException(this, "Error updating  after " + e, ex);
     }
+  }
+
+  protected boolean hasAdditionalData(int segmentIndex) {
+    return false;
   }
 
   @Override

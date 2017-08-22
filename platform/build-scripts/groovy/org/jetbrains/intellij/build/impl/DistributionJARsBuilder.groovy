@@ -171,7 +171,7 @@ class DistributionJARsBuilder {
         arg(value: targetDirectory)
         arg(value: ignoredJarsFile.parent)
         classpath {
-          buildContext.projectBuilder.moduleRuntimeClasspath(buildContext.findRequiredModule("util"), false).each {
+          buildContext.getModuleRuntimeClasspath(buildContext.findRequiredModule("util"), false).each {
             pathelement(location: it)
           }
         }
@@ -183,7 +183,7 @@ class DistributionJARsBuilder {
     def productProperties = buildContext.productProperties
     if (productProperties.generateLibrariesLicensesTable) {
       buildContext.messages.block("Generate table of licenses for used third-party libraries") {
-        def generator = new LibraryLicensesListGenerator(buildContext.projectBuilder, buildContext.project, productProperties.allLibraryLicenses)
+        def generator = new LibraryLicensesListGenerator(buildContext.messages, buildContext.project, productProperties.allLibraryLicenses)
         def artifactNamePrefix = buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)
         generator.generateLicensesTable("$buildContext.paths.artifacts/$artifactNamePrefix-third-party-libraries.txt", usedModules)
       }
@@ -215,6 +215,9 @@ class DistributionJARsBuilder {
     if (!buildContext.options.buildStepsToSkip.contains(BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP)) {
       layoutBuilder.patchModuleOutput(productLayout.searchableOptionsModule, FileUtil.toSystemIndependentName(searchableOptionsDir.absolutePath))
     }
+
+    String providedModulesFile = "${buildContext.paths.artifacts}/${buildContext.productProperties.productCode}-builtinModules.json"
+    buildTasks.buildProvidedModulesList(providedModulesFile, productLayout.mainModules, productLayout.licenseFilesToBuildSearchableOptions)
 
     def applicationInfoFile = FileUtil.toSystemIndependentName(patchedApplicationInfo.absolutePath)
     def applicationInfoDir = "$buildContext.paths.temp/applicationInfo"
@@ -255,7 +258,7 @@ class DistributionJARsBuilder {
       def pluginsToPublish = getPluginsByModules(productLayout.pluginModulesToPublish)
       if (buildContext.productProperties.setPluginAndIDEVersionInPluginXml) {
         pluginsToPublish.each { plugin ->
-          def moduleOutput = buildContext.projectBuilder.moduleOutput(buildContext.findRequiredModule(plugin.mainModule))
+          def moduleOutput = buildContext.getModuleOutputPath(buildContext.findRequiredModule(plugin.mainModule))
           def pluginXmlPath = "$moduleOutput/META-INF/plugin.xml"
           if (!new File(pluginXmlPath)) {
             buildContext.messages.error("plugin.xml not found in $plugin.mainModule module: $pluginXmlPath")
@@ -325,7 +328,7 @@ class DistributionJARsBuilder {
   }
 
   private boolean containsFileInOutput(String moduleName, String filePath, Collection<String> excludes) {
-    def moduleOutput = new File(buildContext.projectBuilder.getModuleOutput(buildContext.findRequiredModule(moduleName), false))
+    def moduleOutput = new File(buildContext.getModuleOutputPath(buildContext.findRequiredModule(moduleName)))
     def fileInOutput = new File(moduleOutput, filePath)
     return fileInOutput.exists() && (excludes == null || excludes.every {
       createFileSet(it, moduleOutput).iterator().every { !(it instanceof FileProvider && FileUtil.filesEqual(it.file, fileInOutput))}
@@ -451,7 +454,7 @@ class DistributionJARsBuilder {
     moduleExcludes.entrySet().each { entry ->
       String module = entry.key
       entry.value.each { pattern ->
-        def moduleOutput = new File(buildContext.projectBuilder.getModuleOutput(buildContext.findRequiredModule(module), false))
+        def moduleOutput = new File(buildContext.getModuleOutputPath(buildContext.findRequiredModule(module)))
         if (!moduleOutput.exists()) {
           buildContext.messages.error("There are excludes defined for module '$module', but the module wasn't compiled; " +
                                       "most probably it means that '$module' isn't include into the product distribution so it makes no sense to define excludes for it.")
@@ -522,7 +525,7 @@ class DistributionJARsBuilder {
   }
 
   private File createKeyMapWithAltClickReassignedToMultipleCarets() {
-    def sourceFile = new File("${buildContext.projectBuilder.moduleOutput(buildContext.findModule("platform-resources"))}/keymaps/\$default.xml")
+    def sourceFile = new File("${buildContext.getModuleOutputPath(buildContext.findModule("platform-resources"))}/keymaps/\$default.xml")
     String defaultKeymapContent = sourceFile.text
     defaultKeymapContent = defaultKeymapContent.replace("<mouse-shortcut keystroke=\"alt button1\"/>", "")
     defaultKeymapContent = defaultKeymapContent.replace("<mouse-shortcut keystroke=\"alt shift button1\"/>",

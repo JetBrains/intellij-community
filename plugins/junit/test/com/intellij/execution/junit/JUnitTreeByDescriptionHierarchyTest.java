@@ -25,7 +25,6 @@ import org.junit.runner.Description;
 import org.junit.runner.Result;
 import org.junit.runner.notification.Failure;
 
-import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -33,11 +32,10 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 public class JUnitTreeByDescriptionHierarchyTest {
   @Test
-  public void testEmptySuite() throws Exception {
+  public void testEmptySuite() {
     doTest(Description.createSuiteDescription("empty suite"), "##teamcity[enteredTheMatrix]\n" +
                                                               "##teamcity[treeEnded]\n");
   }
@@ -490,7 +488,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
   }
 
   @Test
-  public void testLongOutputPreservesTestName() throws Exception {
+  public void testLongOutputPreservesTestName() {
     StringBuffer buf = new StringBuffer();
     for (int i = 0; i < 1000; i++) {
       buf.append(DebugUtil.currentStackTrace());
@@ -811,7 +809,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
   private static JUnit4TestListener createListener(final StringBuffer buf) {
     return new JUnit4TestListener(new PrintStream(new OutputStream() {
       @Override
-      public void write(int b) throws IOException {
+      public void write(int b) {
         buf.append(new String(new byte[]{(byte)b}));
       }
     })) {

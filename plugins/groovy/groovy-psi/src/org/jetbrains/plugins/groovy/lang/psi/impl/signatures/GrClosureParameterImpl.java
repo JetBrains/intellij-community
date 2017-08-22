@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,15 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl.signatures;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 class GrClosureParameterImpl implements GrClosureParameter {
 
@@ -43,19 +44,7 @@ class GrClosureParameterImpl implements GrClosureParameter {
   @Nullable
   @Override
   public PsiType getType() {
-    PsiType typeParameter = myParameter.getType();
-    PsiType type = mySubstitutor.substitute(typeParameter);
-    if (typeParameter instanceof PsiClassType) {
-      final PsiClass parameterClass = ((PsiClassType)typeParameter).resolve();
-      if (parameterClass instanceof PsiTypeParameter && type != null) {
-
-        PsiClassType[] types = parameterClass.getExtendsListTypes();
-        if (types.length > 0 && !TypesUtil.isAssignableByMethodCallConversion(types[0], type, myParameter)) {
-          type = types[0];
-        }
-      }
-    }
-
+    PsiType type = mySubstitutor.substitute(myParameter.getType());
     return myEraseType ? TypeConversionUtil.erasure(type) : type;
   }
 

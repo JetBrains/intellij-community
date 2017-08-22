@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.remoteServer.impl.runtime.ui.tree;
 
 import com.intellij.execution.Executor;
@@ -19,7 +34,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.RemoteServer;
@@ -231,7 +245,7 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
           public PopupStep onChosen(final RunnerAndConfigurationSettings selectedValue, boolean finalChoice) {
             return doFinalStep(() -> {
               if (selectedValue != null) {
-                ProgramRunnerUtil.executeConfiguration(doGetProject(), selectedValue, executor);
+                ProgramRunnerUtil.executeConfiguration(selectedValue, executor);
               }
               else {
                 configurationManager.createAndRunConfiguration(serverType, RemoteServerNode.this.getValue());
@@ -285,7 +299,8 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
     @Override
     public boolean isDeployActionVisible() {
       DeploymentTask<?> deploymentTask = getValue().getDeploymentTask();
-      return deploymentTask instanceof DeploymentTaskImpl<?> && ((DeploymentTaskImpl)deploymentTask).getExecutionEnvironment().getRunnerAndConfigurationSettings() != null;
+      return deploymentTask instanceof DeploymentTaskImpl<?> && deploymentTask
+                                                                  .getExecutionEnvironment().getRunnerAndConfigurationSettings() != null;
     }
 
     @Override
@@ -301,10 +316,10 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
     public void doDeploy(Executor executor) {
       DeploymentTask<?> deploymentTask = getDeployment().getDeploymentTask();
       if (deploymentTask != null) {
-        ExecutionEnvironment environment = ((DeploymentTaskImpl)deploymentTask).getExecutionEnvironment();
+        ExecutionEnvironment environment = deploymentTask.getExecutionEnvironment();
         RunnerAndConfigurationSettings settings = environment.getRunnerAndConfigurationSettings();
         if (settings != null) {
-          ProgramRunnerUtil.executeConfiguration(doGetProject(), settings, executor);
+          ProgramRunnerUtil.executeConfiguration(settings, executor);
         }
       }
     }
@@ -340,7 +355,7 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
     public void editConfiguration() {
       DeploymentTask<?> task = getDeployment().getDeploymentTask();
       if (task != null) {
-        RunnerAndConfigurationSettings settings = ((DeploymentTaskImpl)task).getExecutionEnvironment().getRunnerAndConfigurationSettings();
+        RunnerAndConfigurationSettings settings = task.getExecutionEnvironment().getRunnerAndConfigurationSettings();
         if (settings != null) {
           RunDialog.editConfiguration(doGetProject(), settings, "Edit Deployment Configuration");
         }

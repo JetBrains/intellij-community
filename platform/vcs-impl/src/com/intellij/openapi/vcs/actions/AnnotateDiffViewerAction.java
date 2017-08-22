@@ -284,7 +284,10 @@ public class AnnotateDiffViewerAction {
                                                                 @Nullable final FilePath path,
                                                                 @Nullable final VcsRevisionNumber revisionNumber) {
     if (vcs == null || path == null || revisionNumber == null) return null;
-    if (revisionNumber instanceof TextRevisionNumber) return null;
+    if (revisionNumber instanceof TextRevisionNumber ||
+        revisionNumber == VcsRevisionNumber.NULL) {
+      return null;
+    }
     final AnnotationProvider annotationProvider = vcs.getAnnotationProvider();
     if (!(annotationProvider instanceof AnnotationProviderEx)) return null;
 

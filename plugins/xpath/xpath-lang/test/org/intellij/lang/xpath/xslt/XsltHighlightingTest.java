@@ -34,104 +34,104 @@ public class XsltHighlightingTest extends TestBase {
       ApplicationManager.getApplication().runWriteAction(() -> ExternalResourceManagerEx.getInstanceEx().addIgnoredResource("urn:my"));
     }
 
-    public void xtestBackwardIncludedVariable() throws Throwable {
+    public void xtestBackwardIncludedVariable() {
         doXsltHighlighting();
     }
 
-    public void testUnknownTemplate() throws Throwable {
+    public void testUnknownTemplate() {
         doXsltHighlighting();
     }
 
-    public void testDuplicateTemplate() throws Throwable {
+    public void testDuplicateTemplate() {
         doXsltHighlighting();
     }
 
-    public void testUnknownMode() throws Throwable {
+    public void testUnknownMode() {
         doXsltHighlighting();
     }
 
-    public void testUndeclaredParam() throws Throwable {
+    public void testUndeclaredParam() {
         doXsltHighlighting();
     }
 
-    public void testMissingParam() throws Throwable {
+    public void testMissingParam() {
         doXsltHighlighting();
     }
 
-    public void testUnusedVariable() throws Throwable {
+    public void testUnusedVariable() {
         doXsltHighlighting();
     }
 
-    public void testDuplicateVariable() throws Throwable {
+    public void testDuplicateVariable() {
         doXsltHighlighting();
     }
 
-    public void testNonDuplicateVariable() throws Throwable {
+    public void testNonDuplicateVariable() {
         doXsltHighlighting();
     }
 
-    public void testShadowedVariable() throws Throwable {
+    public void testShadowedVariable() {
         doXsltHighlighting();
     }
 
-    public void testShadowedVariable2() throws Throwable {
+    public void testShadowedVariable2() {
         doXsltHighlighting();
     }
 
-    public void testValidPatterns() throws Throwable {
+    public void testValidPatterns() {
         doXsltHighlighting();
     }
 
-    public void testInvalidPattern1() throws Throwable {
+    public void testInvalidPattern1() {
         doXsltHighlighting();
     }
 
-    public void testInvalidPattern2() throws Throwable {
+    public void testInvalidPattern2() {
         doXsltHighlighting();
     }
 
-    public void testInvalidPattern3() throws Throwable {
+    public void testInvalidPattern3() {
         doXsltHighlighting();
     }
 
-    public void testInvalidPattern4() throws Throwable {
+    public void testInvalidPattern4() {
         doXsltHighlighting();
     }
 
-    public void testInvalidPattern5() throws Throwable {
+    public void testInvalidPattern5() {
         doXsltHighlighting();
     }
 
-    public void testInvalidPattern6() throws Throwable {
+    public void testInvalidPattern6() {
         doXsltHighlighting();
     }
 
-    public void testEmptyExpression() throws Throwable {
+    public void testEmptyExpression() {
         doXsltHighlighting();
     }
 
-    public void testEmptyAVT() throws Throwable {
+    public void testEmptyAVT() {
         doXsltHighlighting();
     }
 
-    public void testInvalidSingleClosingBrace() throws Throwable {
+    public void testInvalidSingleClosingBrace() {
         doXsltHighlighting();
     }
 
-    public void testEscapedXPathString() throws Throwable {
+    public void testEscapedXPathString() {
         doXsltHighlighting();
     }
 
-    public void testXsltFreeze() throws Throwable {
+    public void testXsltFreeze() {
       doXsltHighlighting();
     }
 
-    public void testTemplateWithPrefix() throws Throwable {
+    public void testTemplateWithPrefix() {
         myFixture.enableInspections(XmlUnusedNamespaceInspection.class);
         doXsltHighlighting();
     }
 
-    public void xtestPerformance() throws Throwable {
+    public void xtestPerformance() {
         myFixture.configureByFile(getTestFileName() + ".xsl");
         final long l = runHighlighting();
         assertTrue("Highlighting took " + l + "ms", l < 6000);
@@ -148,7 +148,7 @@ public class XsltHighlightingTest extends TestBase {
         });
     }
 
-    private void doXsltHighlighting() throws Throwable {
+    private void doXsltHighlighting() {
         final String name = getTestFileName();
         myFixture.testHighlighting(true, false, false, name + ".xsl");
     }

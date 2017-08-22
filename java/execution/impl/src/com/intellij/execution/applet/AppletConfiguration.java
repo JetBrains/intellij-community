@@ -117,7 +117,7 @@ public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
         if (htmlUrl != null) {
           handler.addProcessListener(new ProcessAdapter() {
             @Override
-            public void processTerminated(ProcessEvent event) {
+            public void processTerminated(@NotNull ProcessEvent event) {
               htmlUrl.deleteFile();
             }
           });

@@ -31,10 +31,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
-import com.intellij.openapi.vfs.StandardFileSystems
-import com.intellij.openapi.vfs.VfsUtilCore
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileVisitor
+import com.intellij.openapi.vfs.*
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.compiled.ClsFileImpl
@@ -159,7 +156,7 @@ class IdeaDecompilerTest : LightCodeInsightFixtureTestCase() {
     return fs.refreshAndFindFileByPath(path)!!
   }
 
-  private fun RegistryValue.withValue(testValue: Boolean, block: () -> Unit): Unit {
+  private fun RegistryValue.withValue(testValue: Boolean, block: () -> Unit) {
     val currentValue = asBoolean()
     try {
       setValue(testValue)
@@ -191,7 +188,7 @@ class IdeaDecompilerTest : LightCodeInsightFixtureTestCase() {
         }
       }
       else if (ArchiveFileType.INSTANCE == file.fileType) {
-        val jarFile = StandardFileSystems.getJarRootForLocalFile(file)
+        val jarFile = JarFileSystem.getInstance().getRootByLocal(file)
         if (jarFile != null) {
           VfsUtilCore.visitChildrenRecursively(jarFile, this)
         }

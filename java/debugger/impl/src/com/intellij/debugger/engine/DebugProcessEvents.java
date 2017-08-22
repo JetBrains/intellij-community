@@ -28,6 +28,8 @@ import com.intellij.debugger.requests.Requestor;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint;
+import com.intellij.debugger.ui.overhead.OverheadProducer;
+import com.intellij.debugger.ui.overhead.OverheadTimings;
 import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -41,6 +43,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
+import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.sun.jdi.InternalException;
 import com.sun.jdi.ThreadReference;
 import com.sun.jdi.VMDisconnectedException;
@@ -442,7 +445,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
         final MethodFilter methodFilter = hint.getMethodFilter();
         if (methodFilter instanceof NamedMethodFilter && !hint.wasStepTargetMethodMatched()) {
           final String message = "Method <b>" + ((NamedMethodFilter)methodFilter).getMethodName() + "()</b> has not been called";
-          XDebugSessionImpl.NOTIFICATION_GROUP.createNotification(message, MessageType.INFO).notify(project);
+          XDebuggerManagerImpl.NOTIFICATION_GROUP.createNotification(message, MessageType.INFO).notify(project);
         }
         if (hint.wasStepTargetMethodMatched() && hint.isResetIgnoreFilters()) {
           checkPositionNotFiltered(suspendContext.getThread(), filters -> mySession.resetIgnoreStepFiltersFlag());
@@ -475,6 +478,10 @@ public class DebugProcessEvents extends DebugProcessImpl {
 
         boolean resumePreferred = requestor != null && DebuggerSettings.SUSPEND_NONE.equals(requestor.getSuspendPolicy());
         boolean requestHit;
+        long start = 0;
+        if (requestor instanceof OverheadProducer) {
+          start = System.currentTimeMillis();
+        }
         try {
           requestHit = (requestor != null) && requestor.processLocatableEvent(this, event);
         }
@@ -490,6 +497,11 @@ public class DebugProcessEvents extends DebugProcessImpl {
           }, ModalityState.NON_MODAL);
           requestHit = considerRequestHit[0];
           resumePreferred = !requestHit;
+        }
+        finally {
+          if (requestor instanceof OverheadProducer) {
+            OverheadTimings.add(DebugProcessEvents.this, (OverheadProducer)requestor, System.currentTimeMillis() - start);
+          }
         }
 
         if (requestHit && requestor instanceof Breakpoint) {
@@ -528,7 +540,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
 
   private void notifySkippedBreakpoints(LocatableEvent event) {
     if (event != null) {
-      XDebugSessionImpl.NOTIFICATION_GROUP
+      XDebuggerManagerImpl.NOTIFICATION_GROUP
         .createNotification(DebuggerBundle.message("message.breakpoint.skipped", event.location()), MessageType.INFO)
         .notify(getProject());
     }

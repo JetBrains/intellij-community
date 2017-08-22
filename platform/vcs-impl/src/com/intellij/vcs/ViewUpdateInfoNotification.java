@@ -17,8 +17,10 @@ package com.intellij.vcs;
 
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.update.UpdateInfoTree;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -31,15 +33,23 @@ public class ViewUpdateInfoNotification extends NotificationAction {
   @NotNull private final Project myProject;
   @NotNull private final UpdateInfoTree myTree;
 
-  public ViewUpdateInfoNotification(@NotNull Project project, @NotNull UpdateInfoTree updateInfoTree, @NotNull String actionName) {
+  public ViewUpdateInfoNotification(@NotNull Project project, @NotNull UpdateInfoTree updateInfoTree, @NotNull String actionName,
+                                    @NotNull Notification notification) {
     super(actionName);
     myProject = project;
     myTree = updateInfoTree;
+    Disposer.register(updateInfoTree, new Disposable() {
+      @Override
+      public void dispose() {
+        notification.expire();
+      }
+    });
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
     focusUpdateInfoTree(myProject, myTree);
+    notification.expire();
   }
 
   public static void focusUpdateInfoTree(@NotNull Project project, @NotNull UpdateInfoTree updateInfoTree) {

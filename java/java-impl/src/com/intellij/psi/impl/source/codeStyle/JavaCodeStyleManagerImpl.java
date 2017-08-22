@@ -889,7 +889,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   @NotNull
   private String[] getSuggestionsByName(@NotNull String name, @NotNull VariableKind variableKind, boolean isArray, boolean correctKeywords) {
     boolean upperCaseStyle = variableKind == VariableKind.STATIC_FINAL_FIELD;
-    boolean preferLongerNames = getSettings().PREFER_LONGER_NAMES;
+    boolean preferLongerNames = getJavaSettings().PREFER_LONGER_NAMES;
     String prefix = getPrefixByVariableKind(variableKind);
     String suffix = getSuffixByVariableKind(variableKind);
 
@@ -1005,9 +1005,9 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     return true;
   }
 
-  private static boolean hasConflictingVariableAfterwards(@Nullable PsiElement scope,
-                                                          @NotNull final String name,
-                                                          @NotNull Predicate<PsiVariable> canBeReused) {
+  public static boolean hasConflictingVariableAfterwards(@Nullable PsiElement scope,
+                                                         @NotNull final String name,
+                                                         @NotNull Predicate<PsiVariable> canBeReused) {
     PsiElement run = scope;
     while (run != null) {
       class CancelException extends RuntimeException {
@@ -1071,16 +1071,16 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     String prefix = "";
     switch (variableKind) {
       case FIELD:
-        prefix = getSettings().FIELD_NAME_PREFIX;
+        prefix = getJavaSettings().FIELD_NAME_PREFIX;
         break;
       case STATIC_FIELD:
-        prefix = getSettings().STATIC_FIELD_NAME_PREFIX;
+        prefix = getJavaSettings().STATIC_FIELD_NAME_PREFIX;
         break;
       case PARAMETER:
-        prefix = getSettings().PARAMETER_NAME_PREFIX;
+        prefix = getJavaSettings().PARAMETER_NAME_PREFIX;
         break;
       case LOCAL_VARIABLE:
-        prefix = getSettings().LOCAL_VARIABLE_NAME_PREFIX;
+        prefix = getJavaSettings().LOCAL_VARIABLE_NAME_PREFIX;
         break;
       case STATIC_FINAL_FIELD:
         prefix = "";
@@ -1101,16 +1101,16 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     String suffix = "";
     switch (variableKind) {
       case FIELD:
-        suffix = getSettings().FIELD_NAME_SUFFIX;
+        suffix = getJavaSettings().FIELD_NAME_SUFFIX;
         break;
       case STATIC_FIELD:
-        suffix = getSettings().STATIC_FIELD_NAME_SUFFIX;
+        suffix = getJavaSettings().STATIC_FIELD_NAME_SUFFIX;
         break;
       case PARAMETER:
-        suffix = getSettings().PARAMETER_NAME_SUFFIX;
+        suffix = getJavaSettings().PARAMETER_NAME_SUFFIX;
         break;
       case LOCAL_VARIABLE:
-        suffix = getSettings().LOCAL_VARIABLE_NAME_SUFFIX;
+        suffix = getJavaSettings().LOCAL_VARIABLE_NAME_SUFFIX;
         break;
       case STATIC_FINAL_FIELD:
         suffix = "";
@@ -1127,10 +1127,10 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
 
   @Nullable
   private CodeStyleSettings.TypeToNameMap getMapByVariableKind(@NotNull VariableKind variableKind) {
-    if (variableKind == VariableKind.FIELD) return getSettings().FIELD_TYPE_TO_NAME;
-    if (variableKind == VariableKind.STATIC_FIELD) return getSettings().STATIC_FIELD_TYPE_TO_NAME;
-    if (variableKind == VariableKind.PARAMETER) return getSettings().PARAMETER_TYPE_TO_NAME;
-    if (variableKind == VariableKind.LOCAL_VARIABLE) return getSettings().LOCAL_VARIABLE_TYPE_TO_NAME;
+    if (variableKind == VariableKind.FIELD) return getJavaSettings().FIELD_TYPE_TO_NAME;
+    if (variableKind == VariableKind.STATIC_FIELD) return getJavaSettings().STATIC_FIELD_TYPE_TO_NAME;
+    if (variableKind == VariableKind.PARAMETER) return getJavaSettings().PARAMETER_TYPE_TO_NAME;
+    if (variableKind == VariableKind.LOCAL_VARIABLE) return getJavaSettings().LOCAL_VARIABLE_TYPE_TO_NAME;
     return null;
   }
 
@@ -1150,6 +1150,11 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   @NotNull
   private CodeStyleSettings getSettings() {
     return CodeStyleSettingsManager.getSettings(myProject);
+  }
+
+  @NotNull
+  private JavaCodeStyleSettings getJavaSettings() {
+    return getSettings().getCustomSettings(JavaCodeStyleSettings.class);
   }
 
   private static boolean isStringPsiLiteral(@NotNull PsiElement element) {

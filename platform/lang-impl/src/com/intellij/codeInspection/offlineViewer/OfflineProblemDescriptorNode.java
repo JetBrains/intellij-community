@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,23 +18,20 @@ package com.intellij.codeInspection.offlineViewer;
 
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.ProblemDescriptorUtil;
-import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.offline.OfflineProblemDescriptor;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import com.intellij.codeInspection.ui.ProblemDescriptionNode;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.FileStatus;
 import org.jetbrains.annotations.NotNull;
 
 public class OfflineProblemDescriptorNode extends ProblemDescriptionNode {
   private OfflineProblemDescriptorNode(RefEntity refEntity,
                                CommonProblemDescriptor descriptor,
-                               @NotNull InspectionToolWrapper toolWrapper,
                                @NotNull InspectionToolPresentation presentation,
                                @NotNull OfflineProblemDescriptor offlineDescriptor) {
-    super(refEntity, descriptor, toolWrapper, presentation, false, offlineDescriptor::getLine);
+    super(refEntity, descriptor, presentation, false, offlineDescriptor::getLine);
     if (descriptor == null) {
       setUserObject(offlineDescriptor);
     }
@@ -43,18 +40,11 @@ public class OfflineProblemDescriptorNode extends ProblemDescriptionNode {
 
   static OfflineProblemDescriptorNode create(@NotNull OfflineProblemDescriptor offlineDescriptor,
                                              @NotNull OfflineDescriptorResolveResult resolveResult,
-                                             @NotNull InspectionToolWrapper toolWrapper,
                                              @NotNull InspectionToolPresentation presentation) {
     return new OfflineProblemDescriptorNode(resolveResult.getResolvedEntity(),
                                             resolveResult.getResolvedDescriptor(),
-                                            toolWrapper,
                                             presentation,
                                             offlineDescriptor);
-  }
-
-  @Override
-  public FileStatus getNodeStatus() {
-    return FileStatus.NOT_CHANGED;
   }
 
   @NotNull
@@ -70,7 +60,7 @@ public class OfflineProblemDescriptorNode extends ProblemDescriptionNode {
   protected boolean calculateIsValid() {
     boolean isValid = super.calculateIsValid();
     if (!isValid) {
-      if (getDescriptor() == null && !(myToolWrapper instanceof LocalInspectionToolWrapper)) {
+      if (getDescriptor() == null && !(getToolWrapper() instanceof LocalInspectionToolWrapper)) {
         isValid = myElement != null && myElement.isValid();
       }
     }

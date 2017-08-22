@@ -32,6 +32,7 @@ import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.*;
 import com.intellij.testIntegration.JavaTestFramework;
 import com.intellij.testIntegration.TestFramework;
+import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -331,8 +332,11 @@ public class JUnitUtil {
   }
 
   public static boolean isTestMethodOrConfig(@NotNull PsiMethod psiMethod) {
+    final PsiClass containingClass = psiMethod.getContainingClass();
+    if (containingClass == null) {
+      return false;
+    }
     if (isTestMethod(PsiLocation.fromPsiElement(psiMethod), false)) {
-      final PsiClass containingClass = psiMethod.getContainingClass();
       assert containingClass != null : psiMethod + "; " + psiMethod.getClass() + "; " + psiMethod.getParent();
       if (containingClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
         final boolean[] foundNonAbstractInheritor = new boolean[1];
@@ -371,6 +375,10 @@ public class JUnitUtil {
         }
 
         if (AnnotationUtil.isAnnotated(psiMethod, INSTANCE_5_CONFIGS)) {
+          return true;
+        }
+        
+        if (TestUtils.testInstancePerClass(containingClass) && AnnotationUtil.isAnnotated(psiMethod, STATIC_5_CONFIGS)) {
           return true;
         }
       }

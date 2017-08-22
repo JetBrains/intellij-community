@@ -19,7 +19,6 @@ package com.intellij.java.codeInspection;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.nullable.NullableStuffInspection;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.IdeaTestUtil;
@@ -54,6 +53,7 @@ public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase
     myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
   }
 
+  @Override
   public void setUp() throws Exception {
     super.setUp();
     myInspection.REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = false;
@@ -65,13 +65,24 @@ public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase
     super.tearDown();
   }
 
-  public void testProblems() throws Exception{ doTest(); }
-  public void testProblems2() throws Exception{ doTest(); }
-  public void testNullableFieldNotnullParam() throws Exception{ doTest(); }
-  public void testNotNullFieldNullableParam() throws Exception{ doTest(); }
-  public void testNotNullCustomException() throws Exception{ doTest(); }
+  public void testProblems() { doTest();}
 
-  public void testNotNullFieldNotInitialized() throws Exception{ doTest(); }
+  public void testAnnotatingPrimitivesTypeUse() {
+    DataFlowInspection8Test.setupTypeUseAnnotations("typeUse", myFixture);
+    doTest();
+  }
+
+  public void testAnnotatingPrimitivesAmbiguous() {
+    DataFlowInspection8Test.setupAmbiguousAnnotations("withTypeUse", myFixture);
+    doTest();
+  }
+
+  public void testProblems2() { doTest(); }
+  public void testNullableFieldNotnullParam() { doTest(); }
+  public void testNotNullFieldNullableParam() { doTest(); }
+  public void testNotNullCustomException() { doTest(); }
+
+  public void testNotNullFieldNotInitialized() { doTest(); }
   public void testNotNullFieldInitializedInLambda() { doTest(); }
   public void testNotNullFieldNotInitializedInOneConstructor() { doTest(); }
   public void testNotNullFieldNotInitializedSetting() {
@@ -86,8 +97,8 @@ public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase
 
   public void testNotNullAnnotationChecksInChildClassMethods() { doTest(); }
 
-  public void testGetterSetterProblems() throws Exception{ doTest(); }
-  public void testOverriddenMethods() throws Exception{
+  public void testGetterSetterProblems() { doTest(); }
+  public void testOverriddenMethods() {
     myInspection.REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true;
     doTest();
   }
@@ -148,12 +159,7 @@ public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase
 
     final NullableNotNullManager nnnManager = NullableNotNullManager.getInstance(getProject());
     nnnManager.setNullables("custom.CheckForNull");
-    Disposer.register(myFixture.getTestRootDisposable(), new Disposable() {
-      @Override
-      public void dispose() {
-        nnnManager.setNullables();
-      }
-    });
+    Disposer.register(myFixture.getTestRootDisposable(), nnnManager::setNullables);
 
     myFixture.addClass("package foo;" +
                        "import static java.lang.annotation.ElementType.*;" +
@@ -212,6 +218,11 @@ public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase
     doTest();
   }
 
+  public void testPassingNullableMapValueWhereNotNullIsExpected() {
+    DataFlowInspection8Test.setupTypeUseAnnotations("typeUse", myFixture);
+    doTest();
+  }
+
   public void testNotNullCollectionItemWithNullableSuperType() {
     DataFlowInspection8Test.setupTypeUseAnnotations("typeUse", myFixture);
     doTest();
@@ -220,6 +231,12 @@ public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase
   public void testNotNullTypeArgumentWithNullableSuperType() {
     DataFlowInspection8Test.setupTypeUseAnnotations("typeUse", myFixture);
     doTest();
+  }
+
+  public void testAnnotateQuickFixOnMethodReference() {
+    doTest();
+    myFixture.launchAction(myFixture.findSingleIntention("Annotate"));
+    myFixture.checkResultByFile(getTestName(false) + "_after.java");
   }
 
 }

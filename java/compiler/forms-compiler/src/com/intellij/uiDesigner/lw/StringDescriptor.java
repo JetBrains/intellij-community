@@ -71,16 +71,16 @@ public final class StringDescriptor {
   }
 
   /**
-   * @return not <code>null</code> value if this is "trivial" StringDescriptor.
+   * @return not {@code null} value if this is "trivial" StringDescriptor.
    * If StringDescriptor is "trivial" then {@link #getBundleName()} and {@link #getKey()}
-   * return <code>null</code>.
+   * return {@code null}.
    */
   public String getValue(){
     return myValue;
   }
 
   /**
-   * @return not <code>null</code> value if this is non "trivial" StringDescriptor.
+   * @return not {@code null} value if this is non "trivial" StringDescriptor.
    */
   public String getBundleName() {
     return myBundleName;
@@ -91,7 +91,7 @@ public final class StringDescriptor {
   }
 
   /**
-   * @return not <code>null</code> value if this is non "trivial" StringDescriptor.
+   * @return not {@code null} value if this is non "trivial" StringDescriptor.
    */
   public String getKey() {
     return myKey;

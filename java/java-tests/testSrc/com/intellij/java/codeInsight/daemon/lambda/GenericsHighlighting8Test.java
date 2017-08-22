@@ -552,64 +552,64 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
-  public void testIDEA21597() throws Exception {
+  public void testIDEA21597() {
     doTest();
   }
-  public void testIDEA20573() throws Exception {
+  public void testIDEA20573() {
     doTest();
   }
-  public void testIDEA20244() throws Exception {
+  public void testIDEA20244() {
     doTest();
   }
-  public void testIDEA22005() throws Exception {
+  public void testIDEA22005() {
     doTest();
   }
-  public void testIDEA57259() throws Exception {
+  public void testIDEA57259() {
     doTest();
   }
-  public void testIDEA107957() throws Exception {
+  public void testIDEA107957() {
     doTest();
   }
-  public void testIDEA109875() throws Exception {
+  public void testIDEA109875() {
     doTest();
   }
-  public void testIDEA106964() throws Exception {
+  public void testIDEA106964() {
     doTest();
   }
-  public void testIDEA107782() throws Exception {
+  public void testIDEA107782() {
     doTest();
   }
-  public void testInheritedWithDifferentArgsInTypeParams() throws Exception {
+  public void testInheritedWithDifferentArgsInTypeParams() {
     doTest();
   }
-  public void testIllegalForwardReferenceInTypeParameterDefinition() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA57877() throws Exception {
-    doTest();
-  }
-  public void testIDEA110568() throws Exception {
-    doTest();
-  }
-  public void testSelfRef() throws Exception {
-    doTest();
-  }
-  public void testTypeParamsCyclicInference() throws Exception {
-    doTest();
-  }
-  public void testCaptureTopLevelWildcardsForConditionalExpression() throws Exception {
-    doTest();
-  }
-  public void testGenericsOverrideMethodInRawInheritor() throws Exception {
+  public void testIllegalForwardReferenceInTypeParameterDefinition() {
     doTest();
   }
 
-  public void testIDEA107654() throws Exception {
+  public void testIDEA57877() {
+    doTest();
+  }
+  public void testIDEA110568() {
+    doTest();
+  }
+  public void testSelfRef() {
+    doTest();
+  }
+  public void testTypeParamsCyclicInference() {
+    doTest();
+  }
+  public void testCaptureTopLevelWildcardsForConditionalExpression() {
+    doTest();
+  }
+  public void testGenericsOverrideMethodInRawInheritor() {
     doTest();
   }
 
-  public void testIDEA55510() throws Exception {
+  public void testIDEA107654() {
+    doTest();
+  }
+
+  public void testIDEA55510() {
     doTest();
   }
 
@@ -634,23 +634,23 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
-  public void testIDEA108287() throws Exception {
+  public void testIDEA108287() {
     doTest();
   }
 
-  public void testIDEA77128() throws Exception {
+  public void testIDEA77128() {
     doTest();
   }
 
-  public void testDisableCastingToNestedWildcards() throws Exception {
+  public void testDisableCastingToNestedWildcards() {
     doTest();
   }
 
-  public void testBooleanInferenceFromIfCondition() throws Exception {
+  public void testBooleanInferenceFromIfCondition() {
     doTest();
   }
 
-  public void testMethodCallOnRawTypesExtended() throws Exception {
+  public void testMethodCallOnRawTypesExtended() {
     doTest();
   }
 
@@ -726,48 +726,48 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   public void testAmbiguousTypeParamVsConcrete() {
     doTest();
   }
-  public void testRawAssignments() throws Exception {
+  public void testRawAssignments() {
     doTest();
   }
-  public void testIDEA87860() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA114797() throws Exception {
+  public void testIDEA87860() {
     doTest();
   }
 
-  public void testCastToIntersectionType() throws Exception {
+  public void testIDEA114797() {
     doTest();
   }
 
-  public void testCastToIntersection() throws Exception {
+  public void testCastToIntersectionType() {
     doTest();
   }
 
-  public void testIDEA122401() throws Exception {
+  public void testCastToIntersection() {
     doTest();
   }
 
-  public void testCaptureInsideNestedCalls() throws Exception {
+  public void testIDEA122401() {
+    doTest();
+  }
+
+  public void testCaptureInsideNestedCalls() {
     doTest();
   }
 
   public void testSuperWildcardWithBoundPromotion() { doTest();}
 
-  public void testErasure() throws Exception { doTest(); }
+  public void testErasure() { doTest(); }
 
-  public void testWildcardBoundsCombination() throws Exception {
+  public void testWildcardBoundsCombination() {
     doTest();
   }
 
-  public void testIDEA128333() throws Exception {
+  public void testIDEA128333() {
     doTest();
   }
 
   public void testIDEA78402() { doTest(); }
 
-  public void testUncheckedWarningInsideLambdaReturnStatement() throws Exception {
+  public void testUncheckedWarningInsideLambdaReturnStatement() {
     doTest(true);
   }
 
@@ -775,19 +775,19 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
     doTest(false);
   }
 
-  public void testSuperWildcardCapturedSuperExtendsWildcardCapturedExtends() throws Exception {
+  public void testSuperWildcardCapturedSuperExtendsWildcardCapturedExtends() {
     doTest(false);
   }
 
-  public void testRejectContradictingEqualsBounds() throws Exception {
+  public void testRejectContradictingEqualsBounds() {
     doTest(false);
   }
 
-  public void testRejectEqualsBoundsContradictingLowerBound() throws Exception {
+  public void testRejectEqualsBoundsContradictingLowerBound() {
     doTest(false);
   }
 
-  public void testSuperInterfaceMethodCalledByMatterOfInterface() throws Exception {
+  public void testSuperInterfaceMethodCalledByMatterOfInterface() {
     doTest(false);
   }
 
@@ -802,234 +802,235 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
    }
 
 
-  public void testIDEA67584() throws Exception {
+  public void testIDEA67584() {
     doTest();
   }
-  public void testIDEA113225() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA139069() throws Exception {
+  public void testIDEA113225() {
     doTest();
   }
 
-  public void testIDEA67745() throws Exception {
+  public void testIDEA139069() {
     doTest();
   }
 
-  public void testIDEA57313() throws Exception {
+  public void testIDEA67745() {
     doTest();
   }
 
-  public void testIDEA57387() throws Exception {
+  public void testIDEA57313() {
     doTest();
   }
 
-  public void testIDEA57314() throws Exception {
+  public void testIDEA57387() {
     doTest();
   }
 
-  public void testIDEA57322() throws Exception {
+  public void testIDEA57314() {
     doTest();
   }
 
-  public void testIDEA57362() throws Exception {
+  public void testIDEA57322() {
     doTest();
   }
 
-  public void testIDEA57320() throws Exception {
+  public void testIDEA57362() {
     doTest();
   }
 
-  public void testIDEA139090() throws Exception {
+  public void testIDEA57320() {
     doTest();
   }
 
-  public void testIDEA57502() throws Exception {
+  public void testIDEA139090() {
     doTest();
   }
 
-  public void testIDEA67746() throws Exception {
+  public void testIDEA57502() {
     doTest();
   }
 
-  public void testIDEA67592() throws Exception {
+  public void testIDEA67746() {
     doTest();
   }
 
-  public void testIDEA93713() throws Exception {
+  public void testIDEA67592() {
     doTest();
   }
 
-  public void testIDEA107713() throws Exception {
+  public void testIDEA93713() {
     doTest();
   }
 
-  public void testExceptionCollectionWithLambda() throws Exception {
+  public void testIDEA107713() {
     doTest();
   }
 
-  public void testUncheckedWarningsWhenInferredTypeLeadsToRawRoGenericAssignment() throws Exception {
+  public void testExceptionCollectionWithLambda() {
+    doTest();
+  }
+
+  public void testUncheckedWarningsWhenInferredTypeLeadsToRawRoGenericAssignment() {
     doTest(true);
   }
 
-  public void testExpectedTypeBasedOnArrayCreationWithoutExplicitType() throws Exception {
+  public void testExpectedTypeBasedOnArrayCreationWithoutExplicitType() {
     doTest();
   }
 
-  public void testIDEA148348() throws Exception {
+  public void testIDEA148348() {
     doTest();
   }
 
-  public void testIDEA148361() throws Exception {
+  public void testIDEA148361() {
     doTest();
   }
 
-  public void testIDEA134059() throws Exception {
+  public void testIDEA134059() {
     doTest();
   }
 
-  public void testIDEA139222() throws Exception {
+  public void testIDEA139222() {
     doTest();
   }
 
-  public void testIDEA139156() throws Exception {
+  public void testIDEA139156() {
     doTest();
   }
 
-  public void testIDEA139169() throws Exception {
+  public void testIDEA139169() {
     doTest();
   }
 
-  public void testIDEA131686() throws Exception {
+  public void testIDEA131686() {
     doTest();
   }
 
-  public void testIDEA56754() throws Exception {
+  public void testIDEA56754() {
     doTest();
   }
 
-  public void testAccessClassForWildcardCaptureType() throws Exception {
+  public void testAccessClassForWildcardCaptureType() {
     doTest();
   }
 
-  public void testDistinguishTypeArgs() throws Exception {
+  public void testDistinguishTypeArgs() {
     doTest();
   }
 
-  public void testRecursiveCapturedWildcardTypes() throws Exception {
+  public void testRecursiveCapturedWildcardTypes() {
     doTest();
   }
 
-  public void testRecursiveCapturedWildcardTypesIDEA139167() throws Exception {
+  public void testRecursiveCapturedWildcardTypesIDEA139167() {
     doTest();
   }
   
-  public void testRecursiveCapturedWildcardTypesIDEA139157() throws Exception {
+  public void testRecursiveCapturedWildcardTypesIDEA139157() {
     doTest();
   }
 
-  public void testIDEA146897() throws Exception {
+  public void testIDEA146897() {
     doTest();
   }
 
-  public void testIDEA139096() throws Exception {
+  public void testIDEA139096() {
     doTest();
   }
 
-  public void testCastingCapturedWildcardToPrimitive() throws Exception {
+  public void testCastingCapturedWildcardToPrimitive() {
     doTest();
   }
 
-  public void testCastingCapturedWildcardToArray() throws Exception {
+  public void testCastingCapturedWildcardToArray() {
     doTest();
   }
 
-  public void testCheckUncheckedAssignmentDuringVariablesResaolution() throws Exception {
+  public void testCheckUncheckedAssignmentDuringVariablesResaolution() {
     doTest(true);
   }
 
-  public void testRetrieveInferenceErrorsFromContainingCallsIfCurrentDoesNotProvideAny() throws Exception {
+  public void testRetrieveInferenceErrorsFromContainingCallsIfCurrentDoesNotProvideAny() {
     doTest();
   }
 
-  public void testForeachOverCapturedWildcardWithCollectionUpperBound() throws Exception {
+  public void testForeachOverCapturedWildcardWithCollectionUpperBound() {
     doTest();
   }
 
-  public void testCapturedWildcardWithPrimitiveTypesChecks() throws Exception {
+  public void testCapturedWildcardWithPrimitiveTypesChecks() {
     doTest();
   }
 
-  public void testCapturedWildcardPackageLocalAccess() throws Exception {
+  public void testCapturedWildcardPackageLocalAccess() {
     doTest();
   }
 
-  public void testCapturedWildcardPassedThroughMethodCallChain() throws Exception {
+  public void testCapturedWildcardPassedThroughMethodCallChain() {
     doTest();
   }
 
-  public void testIDEA152179() throws Exception {
+  public void testIDEA152179() {
     doTest();
   }
 
-  public void testLooseInvocationContextForProperPrimitiveTypes() throws Exception {
+  public void testLooseInvocationContextForProperPrimitiveTypes() {
     doTest();
   }
 
-  public void testUncheckedWarningsInsideIncorporationPhase() throws Exception {
+  public void testUncheckedWarningsInsideIncorporationPhase() {
     doTest();
   }
 
-  public void testUnifiedSubstitutorUpInTheHierarchy() throws Exception {
+  public void testUnifiedSubstitutorUpInTheHierarchy() {
     doTest();
   }
 
-  public void testNestedCaptures() throws Exception {
+  public void testNestedCaptures() {
     doTest();
   }
 
-  public void testErasureOfReturnTypeOfNonGenericMethod() throws Exception {
+  public void testErasureOfReturnTypeOfNonGenericMethod() {
     doTest();
   }
 
-  public void testUncheckedCastWithCapturedWildcards() throws Exception {
+  public void testUncheckedCastWithCapturedWildcards() {
     doTest(true);
   }
 
-  public void testReifiableCapturedWildcards() throws Exception {
+  public void testReifiableCapturedWildcards() {
     doTest(true);
   }
 
-  public void testUncheckedWarningsInsideLambda() throws Exception {
+  public void testUncheckedWarningsInsideLambda() {
     doTest(true);
   }
 
-  public void testLowerBoundOfCapturedWildcardInSubtypingConstraint() throws Exception {
+  public void testLowerBoundOfCapturedWildcardInSubtypingConstraint() {
     doTest(true);
   }
 
-  public void testMembersContainedInCapturedWildcardType() throws Exception {
+  public void testMembersContainedInCapturedWildcardType() {
     doTest();
   }
 
   public void testNonGenericInnerOfGenericOuter() { doTest(); }
 
-  public void testTypeParameterBoundsWithSubstitutionWhenMethodHierarchyIsChecked() throws Exception {
+  public void testTypeParameterBoundsWithSubstitutionWhenMethodHierarchyIsChecked() {
     doTest();
   }
 
-  public void testBoundsPromotionForDerivedType() throws Exception {
+  public void testBoundsPromotionForDerivedType() {
     doTest();
   }
 
-  public void testSameErasureForStaticMethodsInInterfaces() throws Exception {
+  public void testSameErasureForStaticMethodsInInterfaces() {
     doTest();
   }
 
-  public void testConditionalExpressionInIncompleteCall() throws Exception {
+  public void testConditionalExpressionInIncompleteCall() {
     doTest();
   }
 
   public void testBridgeMethodOverriding() { doTest(); }
+  public void testNestedWildcardsWithImplicitBounds() { doTest(); }
 }

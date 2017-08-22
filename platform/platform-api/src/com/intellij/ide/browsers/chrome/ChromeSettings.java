@@ -33,6 +33,8 @@ import java.util.Map;
 
 public final class ChromeSettings extends BrowserSpecificSettings {
   public static final String USER_DATA_DIR_ARG = "--user-data-dir=";
+  public static final String NO_FIRST_RUN_ARG = "--no-first-run";
+  public static final String NO_DEFAULT_BROWSER_CHECK_ARG = "--no-default-browser-check";
   private @Nullable String myCommandLineOptions;
   private @Nullable String myUserDataDirectoryPath;
   private boolean myUseCustomProfile;

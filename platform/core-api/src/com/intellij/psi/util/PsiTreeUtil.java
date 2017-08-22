@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,11 +42,14 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.psi.SyntaxTraverser.psiTraverser;
+
 public class PsiTreeUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.util.PsiTreeUtil");
 
-  private static final Key<Integer> INDEX = Key.create("PsiTreeUtil.copyElements.INDEX");
   private static final Key<Object> MARKER = Key.create("PsiTreeUtil.copyElements.MARKER");
+  private static final Class[] WS = {PsiWhiteSpace.class};
+  private static final Class[] WS_COMMENTS = {PsiWhiteSpace.class, PsiComment.class};
 
   /**
    * Checks whether one element in the psi tree is under another.
@@ -101,28 +104,30 @@ public class PsiTreeUtil {
   }
 
   @Nullable
+  @SuppressWarnings("Duplicates")
   public static PsiElement findCommonParent(@NotNull List<? extends PsiElement> elements) {
     if (elements.isEmpty()) return null;
+
     PsiElement toReturn = null;
     for (PsiElement element : elements) {
       if (element == null) continue;
       toReturn = toReturn == null ? element : findCommonParent(toReturn, element);
       if (toReturn == null) return null;
     }
-
     return toReturn;
   }
 
   @Nullable
+  @SuppressWarnings("Duplicates")
   public static PsiElement findCommonParent(@NotNull PsiElement... elements) {
     if (elements.length == 0) return null;
+
     PsiElement toReturn = null;
     for (PsiElement element : elements) {
       if (element == null) continue;
       toReturn = toReturn == null ? element : findCommonParent(toReturn, element);
       if (toReturn == null) return null;
     }
-
     return toReturn;
   }
 
@@ -138,15 +143,15 @@ public class PsiTreeUtil {
 
     PsiElement parent1 = element1;
     PsiElement parent2 = element2;
-    while(depth1 > depth2) {
+    while (depth1 > depth2) {
       parent1 = parent1.getParent();
       depth1--;
     }
-    while(depth2 > depth1) {
+    while (depth2 > depth1) {
       parent2 = parent2.getParent();
       depth2--;
     }
-    while(parent1 != null && parent2 != null && !parent1.equals(parent2)) {
+    while (parent1 != null && parent2 != null && !parent1.equals(parent2)) {
       parent1 = parent1.getParent();
       parent2 = parent2.getParent();
     }
@@ -269,8 +274,8 @@ public class PsiTreeUtil {
     };
 
     processElements(element, processor);
-    //noinspection unchecked
-    return (T)processor.getFoundElement();
+    @SuppressWarnings("unchecked") T t = (T)processor.getFoundElement();
+    return t;
   }
 
   @NotNull
@@ -313,8 +318,8 @@ public class PsiTreeUtil {
     if (element == null) return null;
     for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
       if (aClass.isInstance(child)) {
-        //noinspection unchecked
-        return (T)child;
+        @SuppressWarnings("unchecked") T t = (T)child;
+        return t;
       }
     }
     return null;
@@ -370,8 +375,8 @@ public class PsiTreeUtil {
     for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
       if (aClass.isInstance(child)) {
         if (result == null) result = new SmartList<>();
-        //noinspection unchecked
-        result.add((T)child);
+        @SuppressWarnings("unchecked") T t = (T)child;
+        result.add(t);
       }
     }
     return result == null ? null : ArrayUtil.toObjectArray(result, aClass);
@@ -386,8 +391,8 @@ public class PsiTreeUtil {
     for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
       if (instanceOf(child, classes)) {
         if (result == null) result = ContainerUtil.newSmartList();
-        //noinspection unchecked
-        result.add((T)child);
+        @SuppressWarnings("unchecked") T t = (T)child;
+        result.add(t);
       }
     }
     if (result == null) {
@@ -403,8 +408,8 @@ public class PsiTreeUtil {
     List<T> result = new SmartList<>();
     for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
       if (aClass.isInstance(child)) {
-        //noinspection unchecked
-        result.add((T)child);
+        @SuppressWarnings("unchecked") T t = (T)child;
+        result.add(t);
       }
     }
     return result;
@@ -420,8 +425,8 @@ public class PsiTreeUtil {
     for (StubElement childStub : stub.getChildrenStubs()) {
       PsiElement child = childStub.getPsi();
       if (aClass.isInstance(child)) {
-        //noinspection unchecked
-        return (T)child;
+        @SuppressWarnings("unchecked") T t = (T)child;
+        return t;
       }
     }
     return null;
@@ -439,8 +444,8 @@ public class PsiTreeUtil {
     for (StubElement childStub : stub.getChildrenStubs()) {
       PsiElement child = childStub.getPsi();
       if (aClass.isInstance(child)) {
-        //noinspection unchecked
-        result.add((T)child);
+        @SuppressWarnings("unchecked") T t = (T)child;
+        result.add(t);
       }
     }
     return result;
@@ -471,8 +476,8 @@ public class PsiTreeUtil {
     for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
       for (Class<? extends T> aClass : classes) {
         if (aClass.isInstance(child)) {
-          //noinspection unchecked
-          return (T)child;
+          @SuppressWarnings("unchecked") T t = (T)child;
+          return t;
         }
       }
     }
@@ -485,8 +490,8 @@ public class PsiTreeUtil {
     if (sibling == null) return null;
     for (PsiElement child = sibling.getNextSibling(); child != null; child = child.getNextSibling()) {
       if (aClass.isInstance(child)) {
-        //noinspection unchecked
-        return (T)child;
+        @SuppressWarnings("unchecked") T t = (T)child;
+        return t;
       }
     }
     return null;
@@ -498,8 +503,8 @@ public class PsiTreeUtil {
     if (sibling == null) return null;
     for (PsiElement child = sibling.getPrevSibling(); child != null; child = child.getPrevSibling()) {
       if (aClass.isInstance(child)) {
-        //noinspection unchecked
-        return (T)child;
+        @SuppressWarnings("unchecked") T t = (T)child;
+        return t;
       }
     }
     return null;
@@ -532,7 +537,6 @@ public class PsiTreeUtil {
     if (element instanceof StubBasedPsiElement) {
       StubBase stub = (StubBase)((StubBasedPsiElement)element).getStub();
       if (stub != null) {
-        //noinspection unchecked
         final StubElement parentStub = stub.getParentStub();
         return parentStub != null ? parentStub.getPsi() : null;
       }
@@ -546,8 +550,8 @@ public class PsiTreeUtil {
     if (element instanceof StubBasedPsiElement) {
       StubBase stub = (StubBase)((StubBasedPsiElement)element).getStub();
       if (stub != null) {
-        //noinspection unchecked
-        return (E)stub.getParentStubOfType(parentClass);
+        @SuppressWarnings("unchecked") E e = (E)stub.getParentStubOfType(parentClass);
+        return e;
       }
     }
     return getParentOfType(element, parentClass);
@@ -570,8 +574,8 @@ public class PsiTreeUtil {
       element = element.getContext();
     }
 
-    //noinspection unchecked
-    return (T)element;
+    @SuppressWarnings("unchecked") T t = (T)element;
+    return t;
   }
 
   @Nullable
@@ -603,8 +607,8 @@ public class PsiTreeUtil {
       element = element.getContext();
     }
 
-    //noinspection unchecked
-    return (T)element;
+    @SuppressWarnings("unchecked") T t = (T)element;
+    return t;
   }
 
   @Nullable
@@ -628,8 +632,8 @@ public class PsiTreeUtil {
 
     while (element != null && (minStartOffset == -1 || element.getNode().getStartOffset() >= minStartOffset)) {
       if (aClass.isInstance(element)) {
-        //noinspection unchecked
-        return (T)element;
+        @SuppressWarnings("unchecked") T t = (T)element;
+        return t;
       }
       if (element instanceof PsiFile) {
         return null;
@@ -659,15 +663,23 @@ public class PsiTreeUtil {
       element = element.getParent();
     }
 
-    //noinspection unchecked
-    return (T)element;
+    @SuppressWarnings("unchecked") T t = (T)element;
+    return t;
   }
 
   @Nullable
   public static PsiElement findSiblingForward(@NotNull final PsiElement element,
                                               @NotNull final IElementType elementType,
                                               @Nullable final Consumer<PsiElement> consumer) {
-    for (PsiElement e = element.getNextSibling(); e != null; e = e.getNextSibling()) {
+    return findSiblingForward(element, elementType, true, consumer);
+  }
+
+  @Nullable
+  public static PsiElement findSiblingForward(@NotNull final PsiElement element,
+                                              @NotNull final IElementType elementType,
+                                              boolean strict,
+                                              @Nullable final Consumer<PsiElement> consumer) {
+    for (PsiElement e = strict ? element.getNextSibling() : element; e != null; e = e.getNextSibling()) {
       if (elementType.equals(e.getNode().getElementType())) {
         return e;
       }
@@ -680,7 +692,15 @@ public class PsiTreeUtil {
   public static PsiElement findSiblingBackward(@NotNull final PsiElement element,
                                                @NotNull final IElementType elementType,
                                                @Nullable final Consumer<PsiElement> consumer) {
-    for (PsiElement e = element.getPrevSibling(); e != null; e = e.getPrevSibling()) {
+    return findSiblingBackward(element, elementType, true, consumer);
+  }
+
+  @Nullable
+  public static PsiElement findSiblingBackward(@NotNull final PsiElement element,
+                                               @NotNull final IElementType elementType,
+                                               boolean strict,
+                                               @Nullable final Consumer<PsiElement> consumer) {
+    for (PsiElement e = strict ? element.getPrevSibling() : element; e != null; e = e.getPrevSibling()) {
       if (elementType.equals(e.getNode().getElementType())) {
         return e;
       }
@@ -702,6 +722,18 @@ public class PsiTreeUtil {
   }
 
   @Nullable
+  @Contract("null -> null")
+  public static PsiElement skipWhitespacesForward(@Nullable PsiElement element) {
+    return skipSiblingsForward(element, WS);
+  }
+
+  @Nullable
+  @Contract("null -> null")
+  public static PsiElement skipWhitespacesAndCommentsForward(@Nullable PsiElement element) {
+    return skipSiblingsForward(element, WS_COMMENTS);
+  }
+
+  @Nullable
   @Contract("null, _ -> null")
   public static PsiElement skipSiblingsBackward(@Nullable PsiElement element, @NotNull Class... elementClasses) {
     if (element == null) return null;
@@ -711,6 +743,18 @@ public class PsiTreeUtil {
       }
     }
     return null;
+  }
+
+  @Nullable
+  @Contract("null -> null")
+  public static PsiElement skipWhitespacesBackward(@Nullable PsiElement element) {
+    return skipSiblingsBackward(element, WS);
+  }
+
+  @Nullable
+  @Contract("null -> null")
+  public static PsiElement skipWhitespacesAndCommentsBackward(@Nullable PsiElement element) {
+    return skipSiblingsBackward(element, WS_COMMENTS);
   }
 
   @Nullable
@@ -744,8 +788,8 @@ public class PsiTreeUtil {
     PsiElement run = element;
     while (run != null) {
       if (instanceOf(run, classes)) {
-        //noinspection unchecked
-        return (T)run;
+        @SuppressWarnings("unchecked") T t = (T)run;
+        return t;
       }
       if (run instanceof PsiFile) break;
       run = run.getParent();
@@ -763,15 +807,13 @@ public class PsiTreeUtil {
 
   @SafeVarargs
   @NotNull
-  public static <T extends PsiElement> Collection<T> collectElementsOfType(@Nullable final PsiElement element,
-                                                                           @NotNull final Class<T>... classes) {
+  public static <T extends PsiElement> Collection<T> collectElementsOfType(@Nullable PsiElement element, @NotNull Class<T>... classes) {
     CollectFilteredElements<T> processor = new CollectFilteredElements<>(element1 -> {
       for (Class<T> clazz : classes) {
         if (clazz.isInstance(element1)) {
           return true;
         }
       }
-
       return false;
     });
     processElements(element, processor);
@@ -779,7 +821,7 @@ public class PsiTreeUtil {
   }
 
   @Contract("null, _ -> true")
-  public static boolean processElements(@Nullable PsiElement element, @NotNull final PsiElementProcessor processor) {
+  public static boolean processElements(@Nullable PsiElement element, @NotNull PsiElementProcessor processor) {
     if (element == null) return true;
     if (element instanceof PsiCompiledElement || !element.isPhysical()) { // DummyHolders cannot be visited by walking visitors because children/parent relationship is broken there
       //noinspection unchecked
@@ -813,54 +855,6 @@ public class PsiTreeUtil {
       if (!processElements(element, processor)) return false;
     }
     return true;
-  }
-
-  @NotNull
-  public static PsiElement[] copyElements(@NotNull PsiElement[] elements) {
-    ArrayList<PsiElement> roots = new ArrayList<>();
-    for (int i = 0; i < elements.length; i++) {
-      PsiElement rootCandidate = elements[i];
-      boolean failed = false;
-      for (int j = 0; j < elements.length; j++) {
-        PsiElement element = elements[j];
-        if (i != j && isAncestor(element, rootCandidate, true)) {
-          failed = true;
-          break;
-        }
-      }
-      if (!failed) {
-        roots.add(rootCandidate);
-      }
-    }
-    for (int i = 0; i < elements.length; i++) {
-      PsiElement element = elements[i];
-      element.putCopyableUserData(INDEX, i);
-    }
-    PsiElement[] newRoots = new PsiElement[roots.size()];
-    for (int i = 0; i < roots.size(); i++) {
-      PsiElement root = roots.get(i);
-      newRoots[i] = root.copy();
-    }
-
-    final PsiElement[] result = new PsiElement[elements.length];
-    for (PsiElement newRoot : newRoots) {
-      decodeIndices(newRoot, result);
-    }
-    return result;
-  }
-
-  private static void decodeIndices(@NotNull PsiElement element, @NotNull PsiElement[] result) {
-    final Integer data = element.getCopyableUserData(INDEX);
-    if (data != null) {
-      element.putCopyableUserData(INDEX, null);
-      int index = data.intValue();
-      result[index] = element;
-    }
-    PsiElement child = element.getFirstChild();
-    while (child != null) {
-      decodeIndices(child, result);
-      child = child.getNextSibling();
-    }
   }
 
   public static void mark(@NotNull PsiElement element, @NotNull Object marker) {
@@ -1050,7 +1044,7 @@ public class PsiTreeUtil {
   }
 
   public static boolean hasErrorElements(@NotNull PsiElement element) {
-    return !SyntaxTraverser.psiTraverser(element).traverse().filter(PsiErrorElement.class).isEmpty();
+    return !psiTraverser(element).traverse().filter(PsiErrorElement.class).isEmpty();
   }
 
   @NotNull
@@ -1156,31 +1150,6 @@ public class PsiTreeUtil {
     return res;
   }
 
-  @NotNull
-  public static <T extends PsiElement> Iterator<T> childIterator(@NotNull final PsiElement element, @NotNull final Class<T> aClass) {
-    return new Iterator<T>() {
-      private T next = getChildOfType(element, aClass);
-
-      @Override
-      public boolean hasNext() {
-        return next != null;
-      }
-
-      @Override
-      public T next() {
-        if (next == null) throw new NoSuchElementException();
-        T current = next;
-        next = getNextSiblingOfType(current, aClass);
-        return current;
-      }
-
-      @Override
-      public void remove() {
-        throw new UnsupportedOperationException();
-      }
-    };
-  }
-
   @Nullable
   public static PsiElement getDeepestVisibleFirst(@NotNull PsiElement psiElement) {
     PsiElement first = getDeepestFirst(psiElement);
@@ -1198,4 +1167,12 @@ public class PsiTreeUtil {
     }
     return last;
   }
+
+  //<editor-fold desc="Deprecated stuff.">
+  /** use {@link SyntaxTraverser#psiTraverser()} (to be removed in IDEA 2019) */
+  @Deprecated
+  public static <T extends PsiElement> Iterator<T> childIterator(@NotNull PsiElement element, @NotNull Class<T> aClass) {
+    return psiTraverser().children(element).filter(aClass).iterator();
+  }
+  //</editor-fold>
 }

@@ -42,6 +42,14 @@ public interface Inlay extends Disposable, UserDataHolderEx {
   int getOffset();
 
   /**
+   * Tells whether this element is associated with preceding or following text. This relation defines certain aspects of inlay's behaviour
+   * with respect to changes in editor, e.g. when text is inserted at inlay's position, inlay will end up before the inserted text if the
+   * returned value is {@code false} and after the text, if the returned value is {@code true}. The value is determined at element's
+   * creation (see {@link InlayModel#addInlineElement(int, boolean, EditorCustomElementRenderer)}.
+   */
+  boolean isRelatedToPrecedingText();
+  
+  /**
    * Returns current visual position of the inlay's left boundary.
    */
   @NotNull
@@ -65,4 +73,9 @@ public interface Inlay extends Disposable, UserDataHolderEx {
    * @see EditorCustomElementRenderer#calcWidthInPixels(Editor)
    */
   void updateSize();
+
+  /**
+   * Causes repaint of inlay in editor.
+   */
+  void repaint();
 }

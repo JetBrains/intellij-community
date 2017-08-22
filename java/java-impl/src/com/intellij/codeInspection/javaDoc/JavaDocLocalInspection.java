@@ -406,6 +406,11 @@ public class JavaDocLocalInspection extends JavaDocLocalInspectionBase {
     }
 
     @Override
+    public boolean startInWriteAction() {
+      return false;
+    }
+
+    @Override
     @NotNull
     public String getFamilyName() {
       //noinspection DialogTitleCapitalization

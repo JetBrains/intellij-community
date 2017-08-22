@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @author max
  */
-@SuppressWarnings("JUnitTestClassNamingConvention")
+@SuppressWarnings({"JUnitTestClassNamingConvention", "UseOfSystemOutOrSystemErr"})
 public class _LastInSuiteTest extends TestCase {
   @Override
   protected void setUp() throws Exception {
@@ -57,10 +57,8 @@ public class _LastInSuiteTest extends TestCase {
   }
 
   public void testProjectLeak() throws Exception {
-    boolean guiTestMode = Boolean.getBoolean("idea.test.guimode");
-    if (guiTestMode) {
-      final Application application = ApplicationManager.getApplication();
-
+    if (Boolean.getBoolean("idea.test.guimode")) {
+      Application application = ApplicationManager.getApplication();
       TransactionGuard.getInstance().submitTransactionAndWait(() -> {
         IdeEventQueue.getInstance().flushQueue();
         ((ApplicationImpl)application).exit(true, true, false);
@@ -68,6 +66,7 @@ public class _LastInSuiteTest extends TestCase {
       ShutDownTracker.getInstance().waitFor(100, TimeUnit.SECONDS);
       return;
     }
+
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       try {
         LightPlatformTestCase.initApplication(); // in case nobody cared to init. LightPlatformTestCase.disposeApplication() would not work otherwise.
@@ -80,13 +79,12 @@ public class _LastInSuiteTest extends TestCase {
       }
 
       PlatformTestUtil.cleanupAllProjects();
-      
+
       ApplicationImpl application = (ApplicationImpl)ApplicationManager.getApplication();
       System.out.println(application.writeActionStatistics());
       System.out.println(ActionUtil.ActionPauses.STAT.statistics());
       System.out.println(((AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService()).statistics());
-      System.out.println("ProcessIOExecutorService threads created: " +
-                         ((ProcessIOExecutorService)ProcessIOExecutorService.INSTANCE).getThreadCounter());
+      System.out.println("ProcessIOExecutorService threads created: " + ((ProcessIOExecutorService)ProcessIOExecutorService.INSTANCE).getThreadCounter());
 
       try {
         LeakHunter.checkNonDefaultProjectLeak();
@@ -100,7 +98,6 @@ public class _LastInSuiteTest extends TestCase {
         LightPlatformTestCase.disposeApplication();
         UIUtil.dispatchAllInvocationEvents();
       }
-
     });
 
     try {
@@ -112,10 +109,10 @@ public class _LastInSuiteTest extends TestCase {
     }
   }
 
-  @SuppressWarnings("UseOfSystemOutOrSystemErr")
   public void testStatistics() throws Exception {
-    if (_FirstInSuiteTest.suiteStarted != 0) {
-      long testSuiteDuration = System.nanoTime() - _FirstInSuiteTest.suiteStarted;
+    long started = _FirstInSuiteTest.getSuiteStartTime();
+    if (started != 0) {
+      long testSuiteDuration = System.nanoTime() - started;
       System.out.println(String.format("##teamcity[buildStatisticValue key='ideaTests.totalTimeMs' value='%d']", testSuiteDuration / 1000000));
     }
     LightPlatformTestCase.reportTestExecutionStatistics();
@@ -126,14 +123,14 @@ public class _LastInSuiteTest extends TestCase {
       Method snapshot = ReflectionUtil.getMethod(Class.forName("com.intellij.util.ProfilingUtil"), "captureMemorySnapshot");
       if (snapshot != null) {
         Object path = snapshot.invoke(null);
-        System.out.println("Memory snapshot captured to '"+path+"'");
+        System.out.println("Memory snapshot captured to '" + path + "'");
       }
     }
     catch (ClassNotFoundException e) {
       // ProfilingUtil is missing from the classpath, ignore
     }
     catch (Exception e) {
-      e.printStackTrace();
+      e.printStackTrace(System.err);
     }
   }
 }

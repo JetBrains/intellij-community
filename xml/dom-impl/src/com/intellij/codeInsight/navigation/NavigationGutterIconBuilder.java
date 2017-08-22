@@ -58,22 +58,22 @@ import java.util.*;
 public class NavigationGutterIconBuilder<T> {
   @NonNls private static final String PATTERN = "&nbsp;&nbsp;&nbsp;&nbsp;{0}";
   private static final NotNullFunction<PsiElement,Collection<? extends PsiElement>> DEFAULT_PSI_CONVERTOR =
-    element -> ContainerUtil.createMaybeSingletonList(element);
+    ContainerUtil::createMaybeSingletonList;
 
   private final Icon myIcon;
-  private final NotNullFunction<T,Collection<? extends PsiElement>> myConverter;
+  private final NotNullFunction<T, Collection<? extends PsiElement>> myConverter;
 
-  private NotNullLazyValue<Collection<T>> myTargets;
-  private boolean myLazy;
+  protected NotNullLazyValue<Collection<T>> myTargets;
+  protected boolean myLazy;
   private String myTooltipText;
   private String myPopupTitle;
   private String myEmptyText;
   private String myTooltipTitle;
   private GutterIconRenderer.Alignment myAlignment = GutterIconRenderer.Alignment.CENTER;
   private Computable<PsiElementListCellRenderer> myCellRenderer;
-  private NullableFunction<T,String> myNamer = ElementPresentationManager.namer();
-  private final NotNullFunction<T, Collection<? extends GotoRelatedItem>> myGotoRelatedItemProvider;
-  public static final NotNullFunction<DomElement,Collection<? extends PsiElement>> DEFAULT_DOM_CONVERTOR =
+  private NullableFunction<T, String> myNamer = ElementPresentationManager.namer();
+  protected final NotNullFunction<T, Collection<? extends GotoRelatedItem>> myGotoRelatedItemProvider;
+  public static final NotNullFunction<DomElement, Collection<? extends PsiElement>> DEFAULT_DOM_CONVERTOR =
     o -> ContainerUtil.createMaybeSingletonList(o.getXmlElement());
   public static final NotNullFunction<DomElement, Collection<? extends GotoRelatedItem>> DOM_GOTO_RELATED_ITEM_PROVIDER = dom -> {
     if (dom.getXmlElement() != null) {
@@ -90,25 +90,28 @@ public class NavigationGutterIconBuilder<T> {
 
   protected NavigationGutterIconBuilder(@NotNull final Icon icon,
                                         @NotNull NotNullFunction<T, Collection<? extends PsiElement>> converter,
-                                        final @Nullable NotNullFunction<T, Collection<? extends GotoRelatedItem>> gotoRelatedItemProvider) {
+                                        @Nullable final NotNullFunction<T, Collection<? extends GotoRelatedItem>> gotoRelatedItemProvider) {
     myIcon = icon;
     myConverter = converter;
     myGotoRelatedItemProvider = gotoRelatedItemProvider;
   }
 
+  @NotNull
   public static NavigationGutterIconBuilder<PsiElement> create(@NotNull final Icon icon) {
     return create(icon, DEFAULT_PSI_CONVERTOR, PSI_GOTO_RELATED_ITEM_PROVIDER);
   }
 
+  @NotNull
   public static <T> NavigationGutterIconBuilder<T> create(@NotNull final Icon icon,
                                                           @NotNull NotNullFunction<T, Collection<? extends PsiElement>> converter) {
     return create(icon, converter, null);
   }
 
+  @NotNull
   public static <T> NavigationGutterIconBuilder<T> create(@NotNull final Icon icon,
                                                           @NotNull NotNullFunction<T, Collection<? extends PsiElement>> converter,
-                                                          final @Nullable NotNullFunction<T, Collection<? extends GotoRelatedItem>> gotoRelatedItemProvider) {
-    return new NavigationGutterIconBuilder<T>(icon, converter, gotoRelatedItemProvider);
+                                                          @Nullable final NotNullFunction<T, Collection<? extends GotoRelatedItem>> gotoRelatedItemProvider) {
+    return new NavigationGutterIconBuilder<>(icon, converter, gotoRelatedItemProvider);
   }
 
   public NavigationGutterIconBuilder<T> setTarget(@Nullable T target) {
@@ -157,13 +160,13 @@ public class NavigationGutterIconBuilder<T> {
     return this;
   }
 
-  public NavigationGutterIconBuilder<T> setNamer(@NotNull NullableFunction<T,String> namer) {
+  public NavigationGutterIconBuilder<T> setNamer(@NotNull NullableFunction<T, String> namer) {
     myNamer = namer;
     return this;
   }
 
   public NavigationGutterIconBuilder<T> setCellRenderer(@NotNull final PsiElementListCellRenderer cellRenderer) {
-    myCellRenderer = new Computable.PredefinedValueComputable<PsiElementListCellRenderer>(cellRenderer);
+    myCellRenderer = new Computable.PredefinedValueComputable<>(cellRenderer);
     return this;
   }
 
@@ -186,15 +189,20 @@ public class NavigationGutterIconBuilder<T> {
     return annotation;
   }
 
+  @NotNull
   public RelatedItemLineMarkerInfo<PsiElement> createLineMarkerInfo(@NotNull PsiElement element) {
     final MyNavigationGutterIconRenderer renderer = createGutterIconRenderer(element.getProject());
     final String tooltip = renderer.getTooltipText();
-    NotNullLazyValue<Collection<? extends GotoRelatedItem>> gotoTargets = createGotoTargetsThunk(myLazy, myGotoRelatedItemProvider,
-                                                                                                 evaluateAndForget(myTargets));
-    return new RelatedItemLineMarkerInfo<PsiElement>(element, element.getTextRange(), renderer.getIcon(), Pass.LINE_MARKERS,
-                                                     tooltip == null ? null : new ConstantFunction<PsiElement, String>(tooltip),
-                                                     renderer.isNavigateAction() ? renderer : null, renderer.getAlignment(),
-                                                     gotoTargets);
+    NotNullLazyValue<Collection<? extends GotoRelatedItem>> gotoTargets = getGotoTargets();
+    return new RelatedItemLineMarkerInfo<>(element, element.getTextRange(), renderer.getIcon(), Pass.LINE_MARKERS,
+                                           tooltip == null ? null : new ConstantFunction<>(tooltip),
+                                           renderer.isNavigateAction() ? renderer : null, renderer.getAlignment(),
+                                           gotoTargets);
+  }
+
+  @NotNull
+  protected NotNullLazyValue<Collection<? extends GotoRelatedItem>> getGotoTargets() {
+    return createGotoTargetsThunk(myLazy, myGotoRelatedItemProvider, evaluateAndForget(myTargets));
   }
 
   private static <T> NotNullLazyValue<Collection<? extends GotoRelatedItem>> createGotoTargetsThunk(boolean lazy,
@@ -220,8 +228,9 @@ public class NavigationGutterIconBuilder<T> {
   private void checkBuilt() {
     assert myTargets != null : "Must have called .setTargets() before calling create()";
   }
-  
-  private static <T> Factory<T> evaluateAndForget(NotNullLazyValue<T> lazyValue) {
+
+  protected static <T> Factory<T> evaluateAndForget(NotNullLazyValue<T> lazyValue) {
+
     final Ref<NotNullLazyValue<T>> ref = Ref.create(lazyValue);
     return new Factory<T>() {
       volatile T result;
@@ -237,7 +246,7 @@ public class NavigationGutterIconBuilder<T> {
     };
   }
 
-  private MyNavigationGutterIconRenderer createGutterIconRenderer(@NotNull final Project project) {
+  protected MyNavigationGutterIconRenderer createGutterIconRenderer(@NotNull final Project project) {
     checkBuilt();
 
     NotNullLazyValue<List<SmartPsiElementPointer>> pointers = createPointersThunk(myLazy, project, evaluateAndForget(myTargets),
@@ -246,7 +255,7 @@ public class NavigationGutterIconBuilder<T> {
     final boolean empty = isEmpty();
 
     if (myTooltipText == null && !myLazy) {
-      final SortedSet<String> names = new TreeSet<String>();
+      final SortedSet<String> names = new TreeSet<>();
       for (T t : myTargets.getValue()) {
         final String text = myNamer.fun(t);
         if (text != null) {
@@ -265,10 +274,11 @@ public class NavigationGutterIconBuilder<T> {
     }
 
     Computable<PsiElementListCellRenderer> renderer =
-      myCellRenderer == null ? (Computable<PsiElementListCellRenderer>)() -> new DefaultPsiElementCellRenderer() : myCellRenderer;
+      myCellRenderer == null ? DefaultPsiElementCellRenderer::new : myCellRenderer;
     return new MyNavigationGutterIconRenderer(this, myAlignment, myIcon, myTooltipText, pointers, renderer, empty);
   }
 
+  @NotNull
   private static <T> NotNullLazyValue<List<SmartPsiElementPointer>> createPointersThunk(boolean lazy,
                                                                                         final Project project,
                                                                                         final Factory<Collection<T>> targets,
@@ -289,8 +299,8 @@ public class NavigationGutterIconBuilder<T> {
   private static <T> List<SmartPsiElementPointer> calcPsiTargets(Project project, Collection<? extends T> targets,
                                                                  NotNullFunction<T, Collection<? extends PsiElement>> converter) {
     SmartPointerManager manager = SmartPointerManager.getInstance(project);
-    Set<PsiElement> elements = new THashSet<PsiElement>();
-    final List<SmartPsiElementPointer> list = new ArrayList<SmartPsiElementPointer>(targets.size());
+    Set<PsiElement> elements = new THashSet<>();
+    final List<SmartPsiElementPointer> list = new ArrayList<>(targets.size());
     for (final T target : targets) {
       for (final PsiElement psiElement : converter.fun(target)) {
         if (elements.add(psiElement) && psiElement.isValid()) {
@@ -306,7 +316,7 @@ public class NavigationGutterIconBuilder<T> {
       return false;
     }
 
-    Set<PsiElement> elements = new THashSet<PsiElement>();
+    Set<PsiElement> elements = new THashSet<>();
     Collection<? extends T> targets = myTargets.getValue();
     for (final T target : targets) {
       for (final PsiElement psiElement : myConverter.fun(target)) {
@@ -324,13 +334,13 @@ public class NavigationGutterIconBuilder<T> {
     private final String myTooltipText;
     private final boolean myEmpty;
 
-    public MyNavigationGutterIconRenderer(@NotNull NavigationGutterIconBuilder builder,
-                                          final Alignment alignment,
-                                          final Icon icon,
-                                          @Nullable final String tooltipText,
-                                          @NotNull NotNullLazyValue<List<SmartPsiElementPointer>> pointers,
-                                          Computable<PsiElementListCellRenderer> cellRenderer,
-                                          boolean empty) {
+    MyNavigationGutterIconRenderer(@NotNull NavigationGutterIconBuilder builder,
+                                   final Alignment alignment,
+                                   final Icon icon,
+                                   @Nullable final String tooltipText,
+                                   @NotNull NotNullLazyValue<List<SmartPsiElementPointer>> pointers,
+                                   Computable<PsiElementListCellRenderer> cellRenderer,
+                                   boolean empty) {
       super(builder.myPopupTitle, builder.myEmptyText, cellRenderer, pointers);
       myAlignment = alignment;
       myIcon = icon;

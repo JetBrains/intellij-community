@@ -26,37 +26,37 @@ public class RngIndexHighlightingTest extends AbstractIndexTest {
     return "highlighting/rng";
   }
 
-  public void testInspectionUnusedDefine1() throws Throwable {
+  public void testInspectionUnusedDefine1() {
     doHighlightingTest("unused-define-1.rng");
   }
 
-  public void testInspectionUnusedDefine2() throws Throwable {
+  public void testInspectionUnusedDefine2() {
     doHighlightingTest("unused-define-2.rng");
   }
 
-  public void testInspectionDefine1() throws Throwable {
+  public void testInspectionDefine1() {
     doHighlightingTest("used-define-1.rng");
   }
 
-  public void testInspectionDefine2() throws Throwable {
+  public void testInspectionDefine2() {
     doHighlightingTest("used-define-2.rng");
   }
 
-  public void testInspectionDefine3() throws Throwable {
+  public void testInspectionDefine3() {
     doHighlightingTest("used-define-3-include.rng");
   }
 
-  public void testIncludedGrammarWithoutStart() throws Throwable {
+  public void testIncludedGrammarWithoutStart() {
     // adding a <weak_warning> tag doesn't work because it seems to prevent the index to recognize the file
     // because the replacement is done *after* building the index :(
     doCustomHighlighting("included-grammar.rng", false, false);
   }
 
-  public void testBackwardIncludeRef() throws Throwable {
+  public void testBackwardIncludeRef() {
     doHighlightingTest("backward-include-ref.rng");
   }
 
-  public void testUnrelatedBackwardIncludeRef() throws Throwable {
+  public void testUnrelatedBackwardIncludeRef() {
     doHighlightingTest("backward-with-include.rng");
   }
 }

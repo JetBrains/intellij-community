@@ -820,6 +820,11 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     }
 
     @Override
+    public boolean isSingleParameterInfo() {
+      return false;
+    }
+
+    @Override
     public void setHighlightedParameter(Object parameter) {
       // nothing, we don't use it
     }
@@ -862,6 +867,21 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     @Override
     public Object[] getObjectsToView() {
       return null; // we don't use it
+    }
+
+    @Override
+    public boolean isPreservedOnHintHidden() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void setPreservedOnHintHidden(boolean value) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean isInnermostContext() {
+      return false;
     }
 
     @Override

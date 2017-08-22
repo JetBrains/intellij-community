@@ -1527,7 +1527,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                  findMatchesCount(s9, "java.lang.String.'_method ( '_params* )"));
   }
 
-  public void testAnnotations() throws Exception {
+  public void testAnnotations() {
     String s1 = "@MyBean(\"\")\n" +
                 "@MyBean2(\"\")\n" +
                 "public class TestBean {}\n" +
@@ -1593,15 +1593,15 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                 "  @NotNull private static Collection resolveElements2(final PsiReference reference, final Project project) {}\n" +
                 "}";
 
-    assertEquals("Find annotated methods",2,
+    assertEquals("Find annotated methods", 2,
                  findMatchesCount(s5, "class '_c {@NotNull '_rt 'method* ('_pt* '_p*){ '_inst*; } }"));
-    assertEquals("Find annotated methods, 2",2,
+    assertEquals("Find annotated methods, 2", 2,
                  findMatchesCount(s5, "class '_c {@'_:NotNull '_rt 'method* ('_pt* '_p*){ '_inst*; } }"));
 
     String s7 = "class A { void message(@NonNls String msg); }\n" +
                 "class B { void message2(String msg); }\n" +
                 "class C { void message2(String msg); }";
-    assertEquals("Find not annotated methods",2,findMatchesCount(s7, "class '_A { void 'b( @'_Ann{0,0}:NonNls String  '_); }"));
+    assertEquals("Find not annotated methods", 2, findMatchesCount(s7, "class '_A { void 'b( @'_Ann{0,0}:NonNls String  '_); }"));
 
     String s9 = "class A {\n" +
                 "  Object[] method1() {}\n" +
@@ -1611,29 +1611,42 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                 "  @MyAnnotation Object[] method2(int a) {}\n" +
                 "  @NonNls Object[] method3() {}\n" +
                 "}";
-    assertEquals("Find not annotated methods, 2",2,
+    assertEquals("Find not annotated methods, 2", 2,
                  findMatchesCount(s9, "class '_A { @'_Ann{0,0}:NonNls '_Type:Object\\[\\] 'b+( '_pt* '_p* ); }"));
-    assertEquals("Find not annotated methods, 2",2,
+    assertEquals("Find not annotated methods, 2", 2,
                  findMatchesCount(s9, "class '_A { @'_Ann{0,0}:NonNls '_Type [] 'b+( '_pt* '_p* ); }"));
-    assertEquals("Find not annotated methods, 2",2,
+    assertEquals("Find not annotated methods, 2", 2,
                  findMatchesCount(s9, "class '_A { @'_Ann{0,0}:NonNls '_Type:Object [] 'b+( '_pt* '_p* ); }"));
 
     String s11 = "class A {\n" +
-                 "@Foo(value=baz) int a;\n" +
-                 "@Foo(value=baz2) int a2;\n" +
-                 "@Foo(value=baz2) int a3;\n" +
-                 "@Foo(value2=baz3) int a3;\n" +
-                 "@Foo(value2=baz3) int a3;\n" +
-                 "@Foo(value2=baz3) int a3;\n" +
-                 "@Foo(value2=baz4) int a3;\n" +
+                 "  @Foo(value=baz) int a;\n" +
+                 "  @Foo(value=baz2) int a2;\n" +
+                 "  @Foo(baz2) int a3;\n" +
+                 "  @Foo(value2=baz2) int a4;\n" +
+                 "  @Foo(value2=baz2) int a5;\n" +
+                 "  @Foo(value2=baz3) int a6;\n" +
+                 "  @Foo(value2=baz3) int a7;\n" +
+                 "  @Foo(value2=baz3) int a8;\n" +
+                 "  @Foo(value2=baz4) int a9;\n" +
+                 "  @Foo int a10;\n" +
                  "}";
-    assertEquals("Find anno parameter value",1,findMatchesCount(s11, "@Foo(value=baz) int 'a;"));
-    assertEquals("Find anno parameter value",2,findMatchesCount(s11, "@Foo(value='baz:baz2 ) int '_a;"));
-    assertEquals("Find anno parameter value",3,findMatchesCount(s11, "@Foo('value:value2 = baz3 ) int '_a;"));
-    assertEquals("Find anno parameter value",3,findMatchesCount(s11, "@Foo('value:value2 = '_baz3:baz3 ) int '_a;"));
-    assertEquals("Find anno parameter value",0,findMatchesCount(s11, "@Foo('value:value2 = '_baz3:baz ) int '_a;"));
-    assertEquals("Find anno parameter value",4,findMatchesCount(s11, "@Foo('value:value2 = '_baz3 ) int '_a;"));
-    assertEquals("Find anno parameter value",4,findMatchesCount(s11, "@Foo('value:value2 = ) int '_a;"));
+    assertEquals("Find anno parameter value", 1, findMatchesCount(s11, "@Foo(value=baz) int 'a;"));
+    assertEquals("Find anno parameter value", 2, findMatchesCount(s11, "@Foo(value='baz:baz2 ) int '_a;"));
+    assertEquals("Find anno parameter value", 3, findMatchesCount(s11, "@Foo('value:value2 = baz3 ) int '_a;"));
+    assertEquals("Find anno parameter value", 3, findMatchesCount(s11, "@Foo('value:value2 = '_baz3:baz3 ) int '_a;"));
+    assertEquals("Find anno parameter value", 0, findMatchesCount(s11, "@Foo('value:value2 = '_baz3:baz ) int '_a;"));
+    assertEquals("Find anno parameter value", 6, findMatchesCount(s11, "@Foo('value:value2 = '_baz3 ) int '_a;"));
+    try {
+      findMatchesCount(s11, "@Foo('value:value2 = ) int '_a;");
+      fail("should report missing value");
+    } catch (MalformedPatternException ignored) {}
+    assertEquals("Match anno parameter name", 6, findMatchesCount(s11, "@Foo(value2='_value)"));
+    assertEquals("Match anno parameter name 2", 3, findMatchesCount(s11, "@Foo(value='_value)"));
+    assertEquals("Match anno parameter value only", 4, findMatchesCount(s11, "@Foo(baz2)"));
+    assertEquals("Match all anno parameters", 9, findMatchesCount(s11, "@Foo('_any)"));
+    assertEquals("Match all annotations", 10, findMatchesCount(s11, "@Foo('_any*)"));
+    // todo
+    //assertEquals("Match annotations without parameters", 1, findMatchesCount(s11, "@Foo('_any{0,0})"));
 
     String source1 = "class A {" +
                      "  void m() {" +
@@ -1677,6 +1690,14 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                           "}";
     assertEquals("Find annotation on instanceof expression", 1, findMatchesCount(source5, "'_a instanceof @HH String"));
     assertEquals("Match annotation correctly on instanceof expression", 0, findMatchesCount(source5, "'_a instanceof @GG String"));
+
+    String source6 = "@SuppressWarnings({\"WeakerAccess\", \"unused\", \"UnnecessaryInterfaceModifier\"}) class A {" +
+                     "  @SuppressWarnings({\"unused\"}) @NotNull int i;" +
+                     "}";
+    assertEquals("Find SuppressWarnings annotations", 2, findMatchesCount(source6, "@SuppressWarnings"));
+    assertEquals("Find SuppressWarnings annotations", 2, findMatchesCount(source6, "@SuppressWarnings(value='_any)"));
+    assertEquals("Find annotation with 3 value array initializer", 1, findMatchesCount(source6, "@SuppressWarnings({'_value{3,3} })"));
+
   }
 
   public void testBoxingAndUnboxing() {
@@ -2019,7 +2040,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals(7,findMatchesCount(s3, s4));
   }
 
-  public void testMultiStatementPatternWithTypedVariable() throws Exception {
+  public void testMultiStatementPatternWithTypedVariable() {
     String s = "class X {{ Integer i; i.valueOf(); }}";
     assertEquals(1, findMatchesCount(s, "Integer '_i;\n'_i.valueOf();"));
 
@@ -2031,21 +2052,21 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals(1, findMatchesCount(s, pattern));
   }
 
-  public void testFindAnnotationDeclarations() throws Exception {
+  public void testFindAnnotationDeclarations() {
     String s = "interface Foo {} interface Bar {} @interface X {}";
     String s2 = "@interface 'x {}";
 
     assertEquals(1, findMatchesCount(s,s2));
   }
 
-  public void testFindEnums() throws Exception {
+  public void testFindEnums() {
     String s = "class Foo {} class Bar {} enum X {}";
     String s2 = "enum 'x {}";
 
     assertEquals(1, findMatchesCount(s,s2));
   }
 
-  public void testFindDeclaration() throws Exception {
+  public void testFindDeclaration() {
     String s = "public class F {\n" +
                "  static Category cat = Category.getInstance(F.class.getName());\n" +
                "  Category cat2 = Category.getInstance(F.class.getName());\n" +
@@ -2252,6 +2273,8 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
       findMatchesCount(source, "import java.util.ArrayList;");
       fail("malformed pattern warning expected");
     } catch (MalformedPatternException ignored) {}
+
+    findMatchesCount(source, "'_ReturnType '_Method*('_ParameterType '_Parameter);");
   }
 
   public void testFindInnerClass() {

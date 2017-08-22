@@ -98,7 +98,9 @@ public class GradleApplicationEnvironmentProvider implements GradleExecutionEnvi
 
     StringBuilder parametersString = new StringBuilder();
     for (String parameter : params.getProgramParametersList().getParameters()) {
-      parametersString.append("args '").append(parameter).append("'\n");
+      if (StringUtil.isEmpty(parameter)) continue;
+      String escaped = StringUtil.escapeChars(parameter, '\\', '"', '\'');
+      parametersString.append("args '").append(escaped).append("'\n");
     }
 
     StringBuilder vmParametersString = new StringBuilder();
@@ -134,20 +136,22 @@ public class GradleApplicationEnvironmentProvider implements GradleExecutionEnvi
       String workingDir = ProgramParametersUtil.getWorkingDir(applicationConfiguration, project, module);
       workingDir = workingDir == null ? null : FileUtil.toSystemIndependentName(workingDir);
       @Language("Groovy")
-      String initScript = "projectsEvaluated {\n" +
-                          "  def project = rootProject.findProject('" + gradlePath + "')\n" +
-                          "  if(project?.convention?.findPlugin(JavaPluginConvention)) {\n" +
-                          "    project.tasks.create(name: '" + runAppTaskName + "', overwrite: true, type: JavaExec) {\n" +
+      String initScript = "allprojects {\n" +
+                          "    afterEvaluate { project ->\n" +
+                          "      if(project.path == '" + gradlePath + "' && project?.convention?.findPlugin(JavaPluginConvention)) {\n" +
+                          "         project.tasks.create(name: '" + runAppTaskName + "', overwrite: true, type: JavaExec) {\n" +
                           (javaExePath != null ?
-                          "      executable = '" + javaExePath + "'\n" : "") +
-                          "      classpath = project.sourceSets.'" + sourceSetName + "'.runtimeClasspath\n" +
-                          "      main = '" + mainClass.getQualifiedName() + "'\n" +
+                           "          executable = '" + javaExePath + "'\n" : "") +
+                          "           classpath = project.sourceSets.'" + sourceSetName + "'.runtimeClasspath\n" +
+                          "           main = '" + mainClass.getQualifiedName() + "'\n" +
                           parametersString.toString() +
                           vmParametersString.toString() +
                           (StringUtil.isNotEmpty(workingDir) ?
-                          "      workingDir = '" + workingDir + "'\n" : "") +
+                           "          workingDir = '" + workingDir + "'\n" : "") +
+                          "           standardInput = System.in\n" +
+                          "         }\n" +
+                          "      }\n" +
                           "    }\n" +
-                          "  }\n" +
                           "}\n";
 
       runConfiguration.putUserData(GradleTaskManager.INIT_SCRIPT_KEY, initScript);

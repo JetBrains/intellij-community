@@ -15,6 +15,7 @@
  */
 package com.intellij.slicer;
 
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
@@ -189,6 +190,10 @@ class SliceForwardUtil {
                                                  @NotNull Processor<SliceUsage> processor) {
     if (!parent.params.scope.contains(element)) return true;
     if (element instanceof PsiCompiledElement) element = element.getNavigationElement();
+    if (element.getLanguage() != JavaLanguage.INSTANCE) {
+      SliceUsage usage = SliceUtil.createSliceUsage(element, parent, EmptySubstitutor.getInstance(), parent.indexNesting, "");
+      return processor.process(usage);
+    }
     Pair<PsiElement, PsiSubstitutor> pair = getAssignmentTarget(element, parent);
     if (pair != null) {
       SliceUsage usage = SliceUtil.createSliceUsage(element, parent, pair.getSecond(),parent.indexNesting, "");

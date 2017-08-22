@@ -31,7 +31,6 @@ import junit.framework.TestCase;
 
 import javax.swing.*;
 import java.awt.*;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -148,7 +147,7 @@ public class LaterInvocatorTest extends PlatformTestCase {
     if (exception[0] != null) throw exception[0];
   }
 
-  public void testReorder() throws InterruptedException, InvocationTargetException {
+  public void testReorder() {
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       LaterInvocator.enterModal(myWindow1);
       synchronized (this) {
@@ -164,7 +163,7 @@ public class LaterInvocatorTest extends PlatformTestCase {
     });
   }
 
-  public void testTrueReorder() throws InvocationTargetException, InterruptedException {
+  public void testTrueReorder() {
     SwingUtilities.invokeLater(() -> {
       LaterInvocator.enterModal(myWindow1);
       ApplicationManager.getApplication().invokeLater(new MyRunnable("1"), ModalityState.NON_MODAL);
@@ -178,7 +177,7 @@ public class LaterInvocatorTest extends PlatformTestCase {
     checkOrder(2);
   }
 
-  public void testEverInvoked() throws InvocationTargetException, InterruptedException {
+  public void testEverInvoked() {
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       LaterInvocator.enterModal(myWindow1);
       ApplicationManager.getApplication().invokeLater(ENTER_MODAL, ModalityState.NON_MODAL);
@@ -194,7 +193,7 @@ public class LaterInvocatorTest extends PlatformTestCase {
     });
   }
 
-  public void testDoesNotInvokeWhenModal() throws InvocationTargetException, InterruptedException {
+  public void testDoesNotInvokeWhenModal() {
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       LaterInvocator.enterModal(myWindow1);
 
@@ -209,7 +208,7 @@ public class LaterInvocatorTest extends PlatformTestCase {
     });
   }
 
-  public void testStress() throws Exception {
+  public void testStress() {
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       int N = 1000;
       //long start = System.currentTimeMillis();
@@ -274,7 +273,7 @@ public class LaterInvocatorTest extends PlatformTestCase {
   }
 
 
-  public void testOrderWithSwingInvokeLater2() throws InterruptedException, InvocationTargetException {
+  public void testOrderWithSwingInvokeLater2() {
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       LaterInvocator.enterModal(myWindow1);
       synchronized (this) {
@@ -289,7 +288,7 @@ public class LaterInvocatorTest extends PlatformTestCase {
     });
   }
 
-  public void testOrderWithSwingInvokeLater3() throws InterruptedException, InvocationTargetException {
+  public void testOrderWithSwingInvokeLater3() {
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       LaterInvocator.enterModal(myWindow1);
       synchronized (this) {
@@ -304,7 +303,7 @@ public class LaterInvocatorTest extends PlatformTestCase {
     });
   }
 
-  public void testExpired() throws Exception {
+  public void testExpired() {
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
@@ -333,7 +332,7 @@ public class LaterInvocatorTest extends PlatformTestCase {
     });
   }
 
-  public void testOrderWithSwingInvokeLater4() throws InterruptedException, InvocationTargetException {
+  public void testOrderWithSwingInvokeLater4() {
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       SwingUtilities.invokeLater(ENTER_MODAL);
       flushSwingQueue();
@@ -356,7 +355,7 @@ public class LaterInvocatorTest extends PlatformTestCase {
     });
   }
 
-  public void testDeadLock() throws InvocationTargetException, InterruptedException {
+  public void testDeadLock() throws InterruptedException {
     final Object lock = new Object();
     final boolean[] started = { false };
     final Thread thread = new Thread("later invokator test") {

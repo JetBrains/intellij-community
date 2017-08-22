@@ -28,7 +28,7 @@ public class EqualsAndHashCodeTest extends InspectionTestCase {
     return JavaTestUtil.getJavaTestDataPath() + "/inspection";
   }
 
-  private void doTest() throws Exception {
+  private void doTest() {
     doTest("equalsAndHashcode/" + getTestName(true), myTool);
   }
 
@@ -39,11 +39,11 @@ public class EqualsAndHashCodeTest extends InspectionTestCase {
     super.tearDown();
   }
 
-  public void testInnerClass() throws Exception {
+  public void testInnerClass() {
     doTest();
   }
 
-  public void testHierarchy() throws Exception {
+  public void testHierarchy() {
     doTest();
   }
 

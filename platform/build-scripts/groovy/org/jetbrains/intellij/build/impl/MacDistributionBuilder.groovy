@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
   private final String icnsPath
 
   MacDistributionBuilder(BuildContext buildContext, MacDistributionCustomizer customizer, File ideaProperties) {
-    super(BuildOptions.OS_MAC, "Mac OS", buildContext)
+    super(BuildOptions.OS_MAC, "macOS", buildContext)
     this.ideaProperties = ideaProperties
     this.customizer = customizer
     icnsPath = (buildContext.applicationInfo.isEAP ? customizer.icnsPathForEAP : null) ?: customizer.icnsPath
@@ -40,7 +40,7 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
 
   @Override
   String copyFilesForOsDistribution() {
-    buildContext.messages.progress("Building distributions for Mac OS")
+    buildContext.messages.progress("Building distributions for macOS")
     String macDistPath = "$buildContext.paths.buildOutputRoot/dist.mac"
     def docTypes = (customizer.associateIpr ? """
       <dict>
@@ -69,7 +69,7 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
         buildContext.messages.error("Path to zip archive with help files isn't specified")
       }
       if (!new File(helpZip).exists() && buildContext.options.isInDevelopmentMode) {
-        buildContext.messages.warning("Help won't be bundled with Mac OS X distribution: $helpZip doesn't exist")
+        buildContext.messages.warning("Help won't be bundled with macOS distribution: $helpZip doesn't exist")
       }
       else {
         buildContext.ant.unzip(src: helpZip, dest: "$macDistPath/Resources")
@@ -80,10 +80,10 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
 
     if (!customizer.binariesToSign.empty) {
       if (buildContext.proprietaryBuildTools.macHostProperties == null) {
-        buildContext.messages.info("A Mac OS build agent isn't configured, binary files won't be signed")
+        buildContext.messages.info("A macOS build agent isn't configured, binary files won't be signed")
       }
       else {
-        buildContext.executeStep("Sign binaries for Mac OS distribution", BuildOptions.MAC_SIGN_STEP) {
+        buildContext.executeStep("Sign binaries for macOS distribution", BuildOptions.MAC_SIGN_STEP) {
           MacDmgBuilder.signBinaryFiles(buildContext, customizer, buildContext.proprietaryBuildTools.macHostProperties, macDistPath)
         }
       }
@@ -93,15 +93,17 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
 
   @Override
   void buildArtifacts(String osSpecificDistPath) {
-    def macZipPath = buildMacZip(osSpecificDistPath)
-    if (buildContext.proprietaryBuildTools.macHostProperties == null) {
-      buildContext.messages.info("A Mac OS build agent isn't configured, dmg artifact won't be produced")
-      buildContext.notifyArtifactBuilt(macZipPath)
-    }
-    else {
-      buildContext.executeStep("Build dmg artifact for Mac OS X", BuildOptions.MAC_DMG_STEP) {
-        MacDmgBuilder.signAndBuildDmg(buildContext, customizer, buildContext.proprietaryBuildTools.macHostProperties, macZipPath)
-        buildContext.ant.delete(file: macZipPath)
+    buildContext.executeStep("Build macOS artifacts", BuildOptions.MAC_ARTIFACTS_STEP) {
+      def macZipPath = buildMacZip(osSpecificDistPath)
+      if (buildContext.proprietaryBuildTools.macHostProperties == null) {
+        buildContext.messages.info("A macOS build agent isn't configured - .dmg artifact won't be produced")
+        buildContext.notifyArtifactBuilt(macZipPath)
+      }
+      else {
+        buildContext.executeStep("Build .dmg artifact for macOS", BuildOptions.MAC_DMG_STEP) {
+          MacDmgBuilder.signAndBuildDmg(buildContext, customizer, buildContext.proprietaryBuildTools.macHostProperties, macZipPath)
+          buildContext.ant.delete(file: macZipPath)
+        }
       }
     }
   }
@@ -122,10 +124,12 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     }
 
     buildContext.ant.copy(todir: target) {
-      fileset(dir: "$buildContext.paths.communityHome/build/conf/mac/Contents")
+      fileset(dir: "$buildContext.paths.communityHome/platform/build-scripts/resources/mac/Contents")
     }
 
     String executable = buildContext.productProperties.baseFileName
+    buildContext.ant.move(file: "$target/MacOS/executable", tofile: "$target/MacOS/$executable")
+
     buildContext.ant.copy(file: icnsPath, todir: "$target/Resources")
     String helpId = macCustomizer.helpId
     if (helpId != null) {
@@ -231,14 +235,14 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
       replacefilter(token: "@@bundled_help_attributes@@", value: bundledHelpAttributes)
     }
 
-    if (executable != "idea") {
-      buildContext.ant.move(file: "$target/MacOS/idea", tofile: "$target/MacOS/$executable")
+    buildContext.ant.copy(todir: "$target/bin") {
+      fileset(dir: "$buildContext.paths.communityHome/platform/build-scripts/resources/mac/scripts")
+      filterset(begintoken: "@@", endtoken: "@@") {
+        filter(token: "product_full", value: fullName)
+        filter(token: "script_name", value: executable)
+      }
     }
 
-    buildContext.ant.replace(dir: "$target/bin", includes: "inspect.sh,format.sh") {
-      replacefilter(token: "@@product_full@@", value: fullName)
-      replacefilter(token: "@@script_name@@", value: executable)
-    }
     String inspectScript = buildContext.productProperties.inspectCommandName
     if (inspectScript != "inspect") {
       String targetPath = "$target/bin/${inspectScript}.sh"
@@ -251,12 +255,12 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
   }
 
   private String buildMacZip(String macDistPath) {
-    return buildContext.messages.block("Build zip archive for Mac OS") {
+    return buildContext.messages.block("Build zip archive for macOS") {
       def extraBins = customizer.extraExecutables
       def allPaths = [buildContext.paths.distAll, macDistPath]
       String zipRoot = "${customizer.getRootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)}/Contents"
       def targetPath = "$buildContext.paths.artifacts/${buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}.mac.zip"
-      buildContext.messages.progress("Building zip archive for Mac OS")
+      buildContext.messages.progress("Building zip archive for macOS")
       buildContext.ant.zip(zipfile: targetPath) {
         allPaths.each {
           zipfileset(dir: it, prefix: zipRoot) {

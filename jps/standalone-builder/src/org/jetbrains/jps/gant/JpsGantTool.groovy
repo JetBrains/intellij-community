@@ -30,7 +30,9 @@ import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import org.jetbrains.jps.model.serialization.JpsProjectLoader
 
 /**
- * This class is replaced by type-safe org.jetbrains.intellij.build.impl.LayoutBuilder.
+ * @deprecated use classes from {@link org.jetbrains.intellij.build} package in platform-build-scripts module for building IDEs based
+ * on IntelliJ Platform; these scripts use type-safe org.jetbrains.intellij.build.impl.LayoutBuilder to lay out modules output by JARs and
+ * directories.
  *
  * @author nik
  */

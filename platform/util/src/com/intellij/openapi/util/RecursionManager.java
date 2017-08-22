@@ -17,8 +17,7 @@ package com.intellij.openapi.util;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.containers.SoftHashMap;
-import com.intellij.util.containers.SoftKeySoftValueHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -47,7 +46,7 @@ import java.util.*;
  * @see RecursionGuard.StackStamp
  * @author peter
  */
-@SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
+@SuppressWarnings("UtilityClassWithoutPrivateConstructor")
 public class RecursionManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.RecursionManager");
   private static final Object NULL = new Object();
@@ -90,7 +89,7 @@ public class RecursionManager {
         if (memoize) {
           Object o = stack.getMemoizedValue(realKey);
           if (o != null) {
-            SoftKeySoftValueHashMap<MyKey, Object> map = stack.intermediateCache.get(realKey);
+            Map<MyKey, Object> map = stack.intermediateCache.get(realKey);
             if (map != null) {
               for (MyKey noCacheUntil : map.keySet()) {
                 stack.prohibitResultCaching(noCacheUntil);
@@ -206,9 +205,9 @@ public class RecursionManager {
     private final LinkedHashMap<MyKey, Integer> progressMap = new LinkedHashMap<MyKey, Integer>();
     private final Set<MyKey> toMemoize = new THashSet<MyKey>();
     private final THashMap<MyKey, MyKey> key2ReentrancyDuringItsCalculation = new THashMap<MyKey, MyKey>();
-    private final SoftHashMap<MyKey, SoftKeySoftValueHashMap<MyKey, Object>> intermediateCache = new SoftHashMap<MyKey, SoftKeySoftValueHashMap<MyKey, Object>>();
-    private int enters = 0;
-    private int exits = 0;
+    private final Map<MyKey, Map<MyKey, Object>> intermediateCache = ContainerUtil.createSoftMap();
+    private int enters;
+    private int exits;
 
     boolean checkReentrancy(MyKey realKey) {
       if (progressMap.containsKey(realKey)) {
@@ -221,7 +220,7 @@ public class RecursionManager {
 
     @Nullable
     Object getMemoizedValue(MyKey realKey) {
-      SoftKeySoftValueHashMap<MyKey, Object> map = intermediateCache.get(realKey);
+      Map<MyKey, Object> map = intermediateCache.get(realKey);
       if (map == null) return null;
 
       if (depth == 0) {
@@ -261,9 +260,9 @@ public class RecursionManager {
 
     final void maybeMemoize(MyKey realKey, @NotNull Object result, int startStamp) {
       if (memoizationStamp == startStamp && toMemoize.contains(realKey)) {
-        SoftKeySoftValueHashMap<MyKey, Object> map = intermediateCache.get(realKey);
+        Map<MyKey, Object> map = intermediateCache.get(realKey);
         if (map == null) {
-          intermediateCache.put(realKey, map = new SoftKeySoftValueHashMap<MyKey, Object>());
+          intermediateCache.put(realKey, map = ContainerUtil.createSoftKeySoftValueMap());
         }
         final MyKey reentered = key2ReentrancyDuringItsCalculation.get(realKey);
         assert reentered != null;

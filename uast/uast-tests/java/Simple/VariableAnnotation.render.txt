@@ -1,0 +1,10 @@
+abstract annotation TestAnnotation {
+}
+
+final enum Weekday {
+    @TestAnnotation MONDAY
+    TUESDAY
+    public fun foo(@TestAnnotation a: int) : void {
+        @TestAnnotation var b: int = 0
+    }
+}

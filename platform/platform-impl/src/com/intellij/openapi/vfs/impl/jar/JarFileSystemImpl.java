@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,14 +18,17 @@ package com.intellij.openapi.vfs.impl.jar;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.impl.ArchiveHandler;
 import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.util.Set;
@@ -36,7 +39,8 @@ public class JarFileSystemImpl extends JarFileSystem {
 
   public JarFileSystemImpl() {
     boolean noCopy = SystemProperties.getBooleanProperty("idea.jars.nocopy", !SystemInfo.isWindows);
-    myNoCopyJarPaths = noCopy ? null : ContainerUtil.newConcurrentSet(FileUtil.PATH_HASHING_STRATEGY);
+    //noinspection deprecation
+    myNoCopyJarPaths = noCopy ? null : ConcurrentCollectionFactory.createConcurrentSet(FileUtil.PATH_HASHING_STRATEGY);
 
     // to prevent platform .jar files from copying
     boolean runningFromDist = new File(PathManager.getLibPath(), "openapi.jar").exists();
@@ -55,11 +59,16 @@ public class JarFileSystemImpl extends JarFileSystem {
   @Nullable
   public File getMirroredFile(@NotNull VirtualFile vFile) {
     VirtualFile root = getRootByLocal(vFile);
-    return root == null ? null : getHandler(root).getFileToUse();
+    if (root != null) {
+      ArchiveHandler handler = getHandler(root);
+      if (handler instanceof JarHandler) return ((JarHandler)handler).getFileToUse();
+      return handler.getFile();
+    }
+    return null;
   }
 
   public boolean isMakeCopyOfJar(@NotNull File originalJar) {
-    if (myNoCopyJarPaths == null || myNoCopyJarPaths.contains(originalJar.getPath())) return false;
+    if (myNoCopyJarPaths == null || myNoCopyJarPaths.contains(FileUtil.toSystemIndependentName(originalJar.getPath()))) return false;
     if (myNoCopyJarDir != null && FileUtil.isAncestor(myNoCopyJarDir, originalJar, false)) return false;
     return true;
   }
@@ -109,27 +118,37 @@ public class JarFileSystemImpl extends JarFileSystem {
 
   @NotNull
   @Override
-  protected JarHandler getHandler(@NotNull VirtualFile entryFile) {
-    return VfsImplUtil.getHandler(this, entryFile, JarHandler::new);
+  protected ArchiveHandler getHandler(@NotNull VirtualFile entryFile) {
+    boolean useNewJarHandler = Registry.is("vfs.use.new.jar.handler");
+    return VfsImplUtil.getHandler(this, entryFile, useNewJarHandler ? BasicJarHandler::new : JarHandler::new);
   }
 
   @Override
   public VirtualFile findFileByPath(@NotNull String path) {
-    return VfsImplUtil.findFileByPath(this, path);
+    return isValid(path) ? VfsImplUtil.findFileByPath(this, path) : null;
   }
 
   @Override
   public VirtualFile findFileByPathIfCached(@NotNull String path) {
-    return VfsImplUtil.findFileByPathIfCached(this, path);
+    return isValid(path) ? VfsImplUtil.findFileByPathIfCached(this, path) : null;
   }
 
   @Override
   public VirtualFile refreshAndFindFileByPath(@NotNull String path) {
-    return VfsImplUtil.refreshAndFindFileByPath(this, path);
+    return isValid(path) ? VfsImplUtil.refreshAndFindFileByPath(this, path) : null;
+  }
+
+  private static boolean isValid(String path) {
+    return path.contains(JAR_SEPARATOR);
   }
 
   @Override
   public void refresh(boolean asynchronous) {
     VfsImplUtil.refresh(this, asynchronous);
+  }
+
+  @TestOnly
+  public void cleanupForNextTest() {
+    BasicJarHandler.closeOpenedZipReferences();
   }
 }

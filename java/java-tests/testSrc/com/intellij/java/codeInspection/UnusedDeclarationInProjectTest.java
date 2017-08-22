@@ -27,7 +27,7 @@ public class UnusedDeclarationInProjectTest extends AbstractUnusedDeclarationTes
     return new AnalysisScope(getProject());
   }
 
-  public void testInstantiatedInTestOnly() throws Exception {
+  public void testInstantiatedInTestOnly() {
     myTool.setTestEntryPoints(false);
     try {
       doTest();
@@ -37,7 +37,7 @@ public class UnusedDeclarationInProjectTest extends AbstractUnusedDeclarationTes
     }
   }
 
-  public void testInstantiatedInTestOnlyStatic() throws Exception {
+  public void testInstantiatedInTestOnlyStatic() {
     myTool.setTestEntryPoints(false);
     try {
       doTest();
@@ -47,7 +47,7 @@ public class UnusedDeclarationInProjectTest extends AbstractUnusedDeclarationTes
     }
   }
 
-  public void testIgnoreUnusedFields() throws Exception {
+  public void testIgnoreUnusedFields() {
     myTool.getSharedLocalInspectionTool().FIELD = false;
     try {
       doTest();

@@ -42,12 +42,12 @@ import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.ui.AppIcon;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Queue;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Debugger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -61,6 +61,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.LockSupport;
 
 public class DumbServiceImpl extends DumbService implements Disposable, ModificationTracker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.project.DumbServiceImpl");
@@ -272,6 +273,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     return !myProject.isDisposed();
   }
 
+  @Debugger.Insert(keyExpression = "runnable", group = "com.intellij.openapi.project.DumbService.runWhenSmart")
   private void updateFinished() {
     if (!WriteAction.compute(this::switchToSmartMode)) return;
 
@@ -318,22 +320,13 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   @Override
   public void waitForSmartMode() {
-    if (!isDumb()) {
-      return;
-    }
-
-    final Application application = ApplicationManager.getApplication();
+    Application application = ApplicationManager.getApplication();
     if (application.isReadAccessAllowed() || application.isDispatchThread()) {
       throw new AssertionError("Don't invoke waitForSmartMode from inside read action in dumb mode");
     }
 
-    final Semaphore semaphore = new Semaphore();
-    semaphore.down();
-    runWhenSmart(semaphore::up);
-    while (true) {
-      if (semaphore.waitFor(50)) {
-        return;
-      }
+    while (isDumb() && !myProject.isDisposed()) {
+      LockSupport.parkNanos(50_000_000);
       ProgressManager.checkCanceled();
     }
   }

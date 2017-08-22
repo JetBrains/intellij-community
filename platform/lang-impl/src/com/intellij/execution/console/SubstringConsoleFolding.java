@@ -1,6 +1,7 @@
 package com.intellij.execution.console;
 
 import com.intellij.execution.ConsoleFolding;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -22,6 +23,6 @@ public class SubstringConsoleFolding extends ConsoleFolding {
 
   @Override
   public String getPlaceholderText(@NotNull List<String> lines) {
-    return " <" + lines.size() + " internal calls>";
+    return " <" + lines.size() + " internal " + StringUtil.pluralize("call", lines.size()) + ">";
   }
 }

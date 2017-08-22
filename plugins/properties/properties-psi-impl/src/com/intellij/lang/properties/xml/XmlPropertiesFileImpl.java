@@ -196,7 +196,7 @@ public class XmlPropertiesFileImpl extends XmlPropertiesFile {
     return entry;
   }
 
-  public static PropertiesFile getPropertiesFile(final PsiFile file) {
+  public static PropertiesFile getPropertiesFile(@NotNull PsiFile file) {
     CachedValuesManager manager = CachedValuesManager.getManager(file.getProject());
     if (file instanceof XmlFile) {
       return manager.getCachedValue(file, KEY,

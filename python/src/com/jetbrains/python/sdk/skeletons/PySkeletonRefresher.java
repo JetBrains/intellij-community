@@ -108,8 +108,8 @@ public class PySkeletonRefresher {
   }
 
   public static void refreshSkeletonsOfSdk(@Nullable Project project,
-                                           Component ownerComponent,
-                                           String skeletonsPath,
+                                           @Nullable Component ownerComponent,
+                                           @Nullable String skeletonsPath,
                                            @NotNull Sdk sdk)
     throws InvalidSdkException {
     final Map<String, List<String>> errors = new TreeMap<>();
@@ -815,32 +815,12 @@ public class PySkeletonRefresher {
       return null;
     }
     LOG.info("Pregenerated skeletons root is " + root);
-    @NonNls final String versionString = mySdk.getVersionString();
-    if (versionString == null) {
-      return null;
-    }
 
-    if (PySdkUtil.isRemote(mySdk)) {
-      return null;
-    }
+    String prebuiltSkeletonsName = getPregeneratedSkeletonsName();
+    if (prebuiltSkeletonsName == null) return null;
 
-    String version = versionString.toLowerCase().replace(" ", "-");
-    File f;
-    if (SystemInfo.isMac) {
-      String osVersion = SystemInfo.OS_VERSION;
-      int dot = osVersion.indexOf('.');
-      if (dot >= 0) {
-        int secondDot = osVersion.indexOf('.', dot + 1);
-        if (secondDot >= 0) {
-          osVersion = osVersion.substring(0, secondDot);
-        }
-      }
-      f = new File(root, "skeletons-mac-" + myGeneratorVersion + "-" + osVersion + "-" + version + ".zip");
-    }
-    else {
-      String os = SystemInfo.isWindows ? "win" : "nix";
-      f = new File(root, "skeletons-" + os + "-" + myGeneratorVersion + "-" + version + ".zip");
-    }
+    File f = new File(root, prebuiltSkeletonsName);
+
     if (f.exists()) {
       LOG.info("Found pregenerated skeletons at " + f.getPath());
       final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f);
@@ -854,6 +834,41 @@ public class PySkeletonRefresher {
       LOG.info("Not found pregenerated skeletons at " + f.getPath());
       return null;
     }
+  }
+
+  public String getPregeneratedSkeletonsName() {
+    return getPregeneratedSkeletonsName(mySdk, myGeneratorVersion);
+  }
+
+  @Nullable
+  public static String getPregeneratedSkeletonsName(@NotNull Sdk sdk, int generatorVersion) {
+    String prebuiltSkeletonsName;
+    @NonNls final String versionString = sdk.getVersionString();
+    if (versionString == null) {
+      return null;
+    }
+
+    if (PySdkUtil.isRemote(sdk)) {
+      return null;
+    }
+
+    String version = versionString.toLowerCase().replace(" ", "-");
+
+    if (SystemInfo.isMac) {
+      String osVersion = SystemInfo.OS_VERSION;
+      int dot = osVersion.indexOf('.');
+      if (dot >= 0) {
+        int secondDot = osVersion.indexOf('.', dot + 1);
+        if (secondDot >= 0) {
+          osVersion = osVersion.substring(0, secondDot);
+        }
+      }
+      prebuiltSkeletonsName = "skeletons-mac-" + generatorVersion + "-" + osVersion + "-" + version + ".zip";
+    }
+    else {
+      String os = SystemInfo.isWindows ? "win" : "nix";
+      prebuiltSkeletonsName = "skeletons-" + os + "-" + generatorVersion + "-" + version + ".zip";
+    } return prebuiltSkeletonsName;
   }
 
   @Nullable

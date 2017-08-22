@@ -20,6 +20,7 @@ import com.intellij.JavaTestUtil;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.unusedLibraries.UnusedLibrariesInspection;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.project.IntelliJProjectConfiguration;
 import com.intellij.testFramework.InspectionTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.annotations.NotNull;
@@ -33,10 +34,10 @@ public class UnusedLibraryInspectionTest extends InspectionTestCase {
   @Override
   protected void setupRootModel(@NotNull String testDir, @NotNull VirtualFile[] sourceDir, String sdkName) {
     super.setupRootModel(testDir, sourceDir, sdkName);
-    PsiTestUtil.addLibrary(getModule(), "JUnit", getTestDataPath(), "/junit.jar");
+    PsiTestUtil.addProjectLibrary(getModule(), "JUnit", IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("JUnit4"));
   }
 
-  private void doTest() throws Exception {
+  private void doTest() {
     doTest("/" + getTestName(true), new UnusedLibrariesInspection());
   }
 
@@ -46,8 +47,8 @@ public class UnusedLibraryInspectionTest extends InspectionTestCase {
     return new AnalysisScope(getProject());
   }
 
-  public void testSimple() throws Exception { doTest(); }
-  public void testUsedJunit() throws Exception { doTest(); }
-  public void testUsedJunitFromField() throws Exception { doTest(); }
-  public void testUsedInParameterAnnotation() throws Exception { doTest(); }
+  public void testSimple() { doTest(); }
+  public void testUsedJunit() { doTest(); }
+  public void testUsedJunitFromField() { doTest(); }
+  public void testUsedInParameterAnnotation() { doTest(); }
 }

@@ -195,7 +195,7 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
       final String externalProjectPath = ExternalSystemApiUtil.getExternalProjectPath(module);
       if (externalProjectPath == null || StringUtil.endsWith(externalProjectPath, "buildSrc")) continue;
 
-      final DataNode<ModuleData> moduleDataNode = moduleDataFinder.findModuleData(module);
+      final DataNode<? extends ModuleData> moduleDataNode = moduleDataFinder.findMainModuleData(module);
       if (moduleDataNode == null) continue;
 
       List<String> gradleTasks = ContainerUtil.mapNotNull(ExternalSystemApiUtil.findAll(moduleDataNode, ProjectKeys.TASK),

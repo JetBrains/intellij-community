@@ -24,7 +24,7 @@ import org.junit.Assert;
  * @author Irina.Chernushina on 2/17/2016.
  */
 public class JsonSchemaPatternComparatorTest extends LightPlatformCodeInsightFixtureTestCase {
-  public void testPatterns() throws Exception {
+  public void testPatterns() {
     final JsonSchemaPatternComparator comparator = new JsonSchemaPatternComparator(getProject());
     Assert.assertEquals(ThreeState.YES, comparator.isSimilar(p("test"), p("test")));
     Assert.assertEquals(ThreeState.YES, comparator.isSimilar(p("test"), p("tes*")));
@@ -37,7 +37,7 @@ public class JsonSchemaPatternComparatorTest extends LightPlatformCodeInsightFix
     Assert.assertEquals(ThreeState.UNSURE, comparator.isSimilar(p("two*words"), p("circus")));
   }
 
-  public void test2Files() throws Exception {
+  public void test2Files() {
     final JsonSchemaPatternComparator comparator = new JsonSchemaPatternComparator(getProject());
     Assert.assertEquals(ThreeState.YES, comparator.isSimilar(f("test"), f("test")));
     Assert.assertEquals(ThreeState.YES, comparator.isSimilar(f("./test"), f("test")));
@@ -46,7 +46,7 @@ public class JsonSchemaPatternComparatorTest extends LightPlatformCodeInsightFix
     Assert.assertEquals(ThreeState.YES, comparator.isSimilar(f("one/../one/two"), f("one/two")));
   }
 
-  public void test2Dirs() throws Exception {
+  public void test2Dirs() {
     final JsonSchemaPatternComparator comparator = new JsonSchemaPatternComparator(getProject());
     Assert.assertEquals(ThreeState.YES, comparator.isSimilar(d("test"), d("test")));
     Assert.assertEquals(ThreeState.YES, comparator.isSimilar(d("./test"), d("test")));
@@ -57,7 +57,7 @@ public class JsonSchemaPatternComparatorTest extends LightPlatformCodeInsightFix
     Assert.assertEquals(ThreeState.YES, comparator.isSimilar(d("test/child"), d("test")));
   }
 
-  public void testDirAndFile() throws Exception {
+  public void testDirAndFile() {
     final JsonSchemaPatternComparator comparator = new JsonSchemaPatternComparator(getProject());
     Assert.assertEquals(ThreeState.NO, comparator.isSimilar(d("test"), f("test")));
     Assert.assertEquals(ThreeState.YES, comparator.isSimilar(d("test"), f("test/lower")));

@@ -594,7 +594,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       String childName = event.getChildName();
       // assume there is no need to canonicalize names in VFileCreateEvent
       boolean childExists = !myData.isAdoptedName(childName) && existingNames.contains(childName);
-      if (!event.isValid(childExists)) {
+      if (childExists) {
         childrenToCreate.remove(i);
       }
     }

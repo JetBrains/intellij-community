@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -97,8 +98,12 @@ public class SingleStatementInBlockInspection extends BaseInspection {
     @Override
     protected boolean isApplicable(PsiStatement body) {
       if (body instanceof PsiBlockStatement) {
-        final PsiStatement[] statements = ((PsiBlockStatement)body).getCodeBlock().getStatements();
-        if (statements.length == 1 && !(statements[0] instanceof PsiDeclarationStatement)) {
+        final PsiCodeBlock codeBlock = ((PsiBlockStatement)body).getCodeBlock();
+        if (PsiUtilCore.hasErrorElementChild(codeBlock)) {
+          return false;
+        }
+        final PsiStatement[] statements = codeBlock.getStatements();
+        if (statements.length == 1 && !(statements[0] instanceof PsiDeclarationStatement) && !isDanglingElseProblem(statements[0], body)) {
           final PsiFile file = body.getContainingFile();
           //this inspection doesn't work in JSP files, as it can't tell about tags
           // inside the braces
@@ -124,6 +129,45 @@ public class SingleStatementInBlockInspection extends BaseInspection {
         }
       }
       return null;
+    }
+
+    /**
+     * See JLS paragraphs 14.5, 14.9
+     */
+    private static boolean isDanglingElseProblem(@Nullable PsiStatement statement, @NotNull PsiStatement outerStatement) {
+      return hasShortIf(statement) && hasPotentialDanglingElse(outerStatement);
+    }
+
+    private static boolean hasShortIf(@Nullable PsiStatement statement) {
+      if (statement instanceof PsiIfStatement) {
+        final PsiStatement elseBranch = ((PsiIfStatement)statement).getElseBranch();
+        return elseBranch == null || hasShortIf(elseBranch);
+      }
+      if (statement instanceof PsiLabeledStatement) {
+        return hasShortIf(((PsiLabeledStatement)statement).getStatement());
+      }
+      if (statement instanceof PsiWhileStatement || statement instanceof PsiForStatement || statement instanceof PsiForeachStatement) {
+        return hasShortIf(((PsiLoopStatement)statement).getBody());
+      }
+      return false;
+    }
+
+    private static boolean hasPotentialDanglingElse(@NotNull PsiStatement statement) {
+      final PsiElement parent = statement.getParent();
+      if (parent instanceof PsiIfStatement) {
+        final PsiIfStatement ifStatement = (PsiIfStatement)parent;
+        if (ifStatement.getThenBranch() == statement && ifStatement.getElseBranch() != null) {
+          return true;
+        }
+        return hasPotentialDanglingElse(ifStatement);
+      }
+      if (parent instanceof PsiLabeledStatement ||
+          parent instanceof PsiWhileStatement ||
+          parent instanceof PsiForStatement ||
+          parent instanceof PsiForeachStatement) {
+        return hasPotentialDanglingElse((PsiStatement)parent);
+      }
+      return false;
     }
   }
 

@@ -929,9 +929,13 @@ class Foo {
   }
 
   void "test invoke surround template by tab"() {
-    myFixture.configureByText "a.txt", "B<caret>"
+    myFixture.configureByText "a.java", "class A { public void B() { I<caret> } }"
     myFixture.type('\t')
-    myFixture.checkResult("{<caret>}")
+    myFixture.checkResult("class A { public void B() {\n" +
+                          "    for (Object o :) {\n" +
+                          "        \n" +
+                          "    }\n" +
+                          "} }")
   }
 
   void "test escape string characters in soutv"() {

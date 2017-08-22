@@ -24,8 +24,8 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.jetbrains.python.PyNames
 import com.jetbrains.python.PythonHelper
-import com.jetbrains.python.testing.PythonTestConfigurationsModel
 
 /**
  * unittest
@@ -39,12 +39,22 @@ class PyUnitTestSettingsEditor(configuration: PyAbstractTestConfiguration) :
 
 class PyUnitTestExecutionEnvironment(configuration: PyUnitTestConfiguration, environment: ExecutionEnvironment) :
   PyTestExecutionEnvironment<PyUnitTestConfiguration>(configuration, environment) {
-  override fun getRunner() = PythonHelper.UNITTEST
+
+  override fun getRunner() =
+    // different runner is used for setup.py
+    if (configuration.isSetupPyBased()) {
+      PythonHelper.SETUPPY
+    }
+    else {
+      PythonHelper.UNITTEST
+    }
+
 }
 
 
 class PyUnitTestConfiguration(project: Project, factory: PyUnitTestFactory) :
-  PyAbstractTestConfiguration(project, factory, runBareFunctions = false) { // Bare functions not supported in unittest: classes only
+  PyAbstractTestConfiguration(project, factory,
+                              PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME) { // Bare functions not supported in unittest: classes only
   @ConfigField
   var pattern: String? = null
 
@@ -66,6 +76,17 @@ class PyUnitTestConfiguration(project: Project, factory: PyUnitTestFactory) :
     }
 
   }
+
+  /**
+   * @return configuration should use runner for setup.py
+   */
+  internal fun isSetupPyBased(): Boolean {
+    val setupPy = target.targetType == TestTargetType.PATH && target.target.endsWith(PyNames.SETUP_DOT_PY)
+    return setupPy
+  }
+
+  // setup.py runner is not id-based
+  override fun isIdTestBased() = !isSetupPyBased()
 
   override fun checkConfiguration() {
     super.checkConfiguration()

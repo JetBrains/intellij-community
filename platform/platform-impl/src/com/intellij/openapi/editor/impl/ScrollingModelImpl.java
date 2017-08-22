@@ -97,7 +97,7 @@ public class ScrollingModelImpl implements ScrollingModelEx {
   /**
    * Corrects viewport position if necessary on initial editor showing.
    *
-   * @return <code>true</code> if the vertical viewport position has been adjusted; <code>false</code> otherwise
+   * @return {@code true} if the vertical viewport position has been adjusted; {@code false} otherwise
    */
   private boolean adjustVerticalOffsetIfNecessary() {
     // There is a possible case that the editor is configured to show virtual space at file bottom and requested position is located
@@ -137,8 +137,8 @@ public class ScrollingModelImpl implements ScrollingModelEx {
 
   @Override
   public void scrollToCaret(@NotNull ScrollType scrollType) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug(new Throwable());
+    if (LOG.isTraceEnabled()) {
+      LOG.trace(new Throwable());
     }
     assertIsDispatchThread();
     myEditor.validateSize();

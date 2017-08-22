@@ -17,7 +17,6 @@ package git4idea.config;
 
 import com.intellij.dvcs.branch.DvcsSyncSettings;
 import com.intellij.dvcs.ui.DvcsBundle;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -30,6 +29,7 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.EnumComboBoxModel;
 import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.components.ExpandableTextField;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.containers.ContainerUtil;
@@ -68,7 +68,7 @@ public class GitVcsPanel {
   private JBCheckBox myWarnAboutCrlf;
   private JCheckBox myWarnAboutDetachedHead;
   private JCheckBox myEnableForcePush;
-  private TextFieldWithBrowseButton myProtectedBranchesButton;
+  private JTextField myProtectedBranchesField;
   private JBLabel myProtectedBranchesLabel;
   private JComboBox myUpdateMethodComboBox;
 
@@ -95,11 +95,11 @@ public class GitVcsPanel {
       mySyncControl.setVisible(true);
     }
     mySyncControl.setToolTipText(DvcsBundle.message("sync.setting.description", "Git"));
-    myProtectedBranchesLabel.setLabelFor(myProtectedBranchesButton);
+    myProtectedBranchesLabel.setLabelFor(myProtectedBranchesField);
     myEnableForcePush.addItemListener(new ItemListener() {
       @Override
       public void itemStateChanged(ItemEvent e) {
-        UIUtil.setEnabled(myProtectedBranchesButton, myEnableForcePush.isSelected(), true);
+        UIUtil.setEnabled(myProtectedBranchesField, myEnableForcePush.isSelected(), true);
         UIUtil.setEnabled(myProtectedBranchesLabel, myEnableForcePush.isSelected(), false);
       }
     });
@@ -133,10 +133,10 @@ public class GitVcsPanel {
     if (version.isSupported()) {
       Messages.showInfoMessage(myRootPanel,
                                String.format("<html>%s<br>Git version is %s</html>", GitBundle.getString("find.git.success.title"),
-                                             version.toString()),
+                                             version.getPresentation()),
                                GitBundle.getString("find.git.success.title"));
     } else {
-      Messages.showWarningDialog(myRootPanel, GitBundle.message("find.git.unsupported.message", version.toString(), GitVersion.MIN),
+      Messages.showWarningDialog(myRootPanel, GitBundle.message("find.git.unsupported.message", version.getPresentation(), GitVersion.MIN.getPresentation()),
                                  GitBundle.getString("find.git.success.title"));
     }
   }
@@ -167,7 +167,7 @@ public class GitVcsPanel {
     myWarnAboutDetachedHead.setSelected(settings.warnAboutDetachedHead());
     myEnableForcePush.setSelected(settings.isForcePushAllowed());
     myUpdateMethodComboBox.setSelectedItem(settings.getUpdateType());
-    myProtectedBranchesButton.setText(ParametersListUtil.COLON_LINE_JOINER.fun(sharedSettings.getForcePushProhibitedPatterns()));
+    myProtectedBranchesField.setText(ParametersListUtil.COLON_LINE_JOINER.fun(sharedSettings.getForcePushProhibitedPatterns()));
   }
 
   /**
@@ -213,18 +213,11 @@ public class GitVcsPanel {
 
   @NotNull
   private List<String> getProtectedBranchesPatterns() {
-    return ParametersListUtil.COLON_LINE_PARSER.fun(myProtectedBranchesButton.getText());
+    return ParametersListUtil.COLON_LINE_PARSER.fun(myProtectedBranchesField.getText());
   }
 
   private void createUIComponents() {
-    myProtectedBranchesButton = new TextFieldWithBrowseButton.NoPathCompletion(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        Messages.showTextAreaDialog(myProtectedBranchesButton.getTextField(), "Protected Branches", "Git.Force.Push.Protected.Branches",
-                                    ParametersListUtil.COLON_LINE_PARSER, ParametersListUtil.COLON_LINE_JOINER);
-      }
-    });
-    myProtectedBranchesButton.setButtonIcon(AllIcons.Actions.ShowViewer);
+    myProtectedBranchesField = new ExpandableTextField(ParametersListUtil.COLON_LINE_PARSER, ParametersListUtil.COLON_LINE_JOINER);
     myUpdateMethodComboBox = new ComboBox(new EnumComboBoxModel<>(UpdateMethod.class));
     myUpdateMethodComboBox.setRenderer(new ListCellRendererWrapper<UpdateMethod>() {
       @Override

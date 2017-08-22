@@ -41,7 +41,7 @@ import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.util.FileContentUtil;
-import com.intellij.util.containers.WeakHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.messages.MessageBus;
 import com.jetbrains.python.PythonFileType;
@@ -65,7 +65,7 @@ import java.util.*;
 public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLevel> {
   public static final Key<LanguageLevel> PYTHON_LANGUAGE_LEVEL = Key.create("PYTHON_LANGUAGE_LEVEL");
 
-  private final Map<Module, Sdk> myModuleSdks = new WeakHashMap<>();
+  private final Map<Module, Sdk> myModuleSdks = ContainerUtil.createWeakMap();
 
   public static void pushLanguageLevel(final Project project) {
     PushedFilePropertiesUpdater.getInstance(project).pushAll(new PythonLanguageLevelPusher());

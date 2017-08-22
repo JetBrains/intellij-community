@@ -22,7 +22,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 
 public class PropertyUtilTest extends LightCodeInsightTestCase {
-  public void testSuggestGetterName() throws Exception {
+  public void testSuggestGetterName() {
     assertEquals("isValid", PropertyUtil.suggestGetterName("valid", getType("boolean")));
     assertEquals("getValid", PropertyUtil.suggestGetterName("valid", getType("Object")));
     assertEquals("isValid", PropertyUtil.suggestGetterName(createField("valid", "boolean")));
@@ -36,7 +36,7 @@ public class PropertyUtilTest extends LightCodeInsightTestCase {
     assertEquals("getBool", PropertyUtil.suggestGetterName(createField("bool", "java.lang.Boolean")));
   }
 
-  public void testSuggestSetterName() throws Exception {
+  public void testSuggestSetterName() {
     assertEquals("setValid", PropertyUtil.suggestSetterName("valid"));
     assertEquals("setValid", PropertyUtil.suggestSetterName(createField("valid", "Object")));
 
@@ -48,7 +48,7 @@ public class PropertyUtilTest extends LightCodeInsightTestCase {
     assertEquals("setBool", PropertyUtil.suggestSetterName(createField("bool", "java.lang.Boolean")));
   }
 
-  public void testSuggestPropertyName() throws Exception {
+  public void testSuggestPropertyName() {
     assertEquals("valid", PropertyUtil.getPropertyName("isValid"));
     assertEquals("valid", PropertyUtil.getPropertyName("getValid"));
     assertEquals("valid", PropertyUtil.getPropertyName("setValid"));

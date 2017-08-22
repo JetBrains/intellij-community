@@ -37,76 +37,76 @@ public class InlineMethodTest extends LightRefactoringTestCase {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
-  public void testInlineParms() throws Exception {
+  public void testInlineParms() {
     doTest();
   }
 
-  public void testInlineWithQualifier() throws Exception {
+  public void testInlineWithQualifier() {
     doTest();
   }
 
-  public void testInlineWithQualifierFromSuper() throws Exception { doTest(); }
-  public void testTry() throws Exception {
+  public void testInlineWithQualifierFromSuper() { doTest(); }
+  public void testTry() {
     doTest();
   }
 
-  public void testTrySynchronized() throws Exception {
+  public void testTrySynchronized() {
     doTest();
   }
 
-  public void testStaticSynchronized() throws Exception {
+  public void testStaticSynchronized() {
     doTest();
   }
 
-  public void testSuperInsideHierarchy() throws Exception {
+  public void testSuperInsideHierarchy() {
     doTest();
   }
 
-  public void testSideEffect() throws Exception { doTest(); }
+  public void testSideEffect() { doTest(); }
 
-  public void testInlineWithTry() throws Exception { doTest(); }
+  public void testInlineWithTry() { doTest(); }
 
-  public void testVoidWithReturn() throws Exception { doTest(); }
-  public void testVoidWithReturn1() throws Exception { doTest(); }
+  public void testVoidWithReturn() { doTest(); }
+  public void testVoidWithReturn1() { doTest(); }
 
-  public void testScr10884() throws Exception {
+  public void testScr10884() {
     doTest();
   }
-  public void testFinalParameters() throws Exception { doTest(); }
-  public void testFinalParameters1() throws Exception { doTest(); }
+  public void testFinalParameters() { doTest(); }
+  public void testFinalParameters1() { doTest(); }
 
-  public void testScr13831() throws Exception { doTest(); }
+  public void testScr13831() { doTest(); }
 
-  public void testNameClash() throws Exception { doTest(); }
+  public void testNameClash() { doTest(); }
 
-  public void testArrayAccess() throws Exception { doTest(); }
+  public void testArrayAccess() { doTest(); }
 
-  public void testConflictingField() throws Exception { doTest(); }
+  public void testConflictingField() { doTest(); }
 
-  public void testCallInFor() throws Exception { doTest(); }
+  public void testCallInFor() { doTest(); }
 
-  public void testSCR20655() throws Exception { doTest(); }
+  public void testSCR20655() { doTest(); }
 
 
-  public void testFieldInitializer() throws Exception { doTest(); }
+  public void testFieldInitializer() { doTest(); }
 
-  public void testMethodCallInOtherAnonymousOrInner() throws Exception { doTest(); }
+  public void testMethodCallInOtherAnonymousOrInner() { doTest(); }
 
-  public void testStaticFieldInitializer() throws Exception { doTest(); }
-  public void testSCR22644() throws Exception { doTest(); }
+  public void testStaticFieldInitializer() { doTest(); }
+  public void testSCR22644() { doTest(); }
 
-  public void testCallUnderIf() throws Exception { doTest(); }
+  public void testCallUnderIf() { doTest(); }
 
   //This gives extra 'result' local variable, currently I don't see a way to cope with it, todo: think about addional inline possibilities
   //public void testLocalVariableResult() throws Exception { doTest(); }
 
-  public void testSCR31093() throws Exception { doTest(); }
+  public void testSCR31093() { doTest(); }
 
-  public void testSCR37742() throws Exception { doTest(); }
+  public void testSCR37742() { doTest(); }
   
-  public void testChainingConstructor() throws Exception { doTest(); }
+  public void testChainingConstructor() { doTest(); }
 
-  public void testChainingConstructor1() throws Exception {
+  public void testChainingConstructor1() {
     BaseRefactoringProcessor.ConflictsInTestsException.setTestIgnore(true);
     try {
       doTest();
@@ -116,132 +116,132 @@ public class InlineMethodTest extends LightRefactoringTestCase {
     }
   }
 
-  public void testNestedCall() throws Exception { doTest(); }
+  public void testNestedCall() { doTest(); }
 
-  public void testIDEADEV3672() throws Exception { doTest(); }
+  public void testIDEADEV3672() { doTest(); }
 
-  public void testIDEADEV5806() throws Exception { doTest(); }
+  public void testIDEADEV5806() { doTest(); }
 
-  public void testIDEADEV6807() throws Exception { doTest(); }
+  public void testIDEADEV6807() { doTest(); }
 
-  public void testIDEADEV12616() throws Exception { doTest(); }
+  public void testIDEADEV12616() { doTest(); }
 
-  public void testVarargs() throws Exception { doTest(); }
+  public void testVarargs() { doTest(); }
 
-  public void testVarargs1() throws Exception { doTest(); }
+  public void testVarargs1() { doTest(); }
 
-  public void testFlatVarargs() throws Exception {doTest();}
-  public void testFlatVarargs1() throws Exception {doTest();}
+  public void testFlatVarargs() {doTest();}
+  public void testFlatVarargs1() {doTest();}
 
-  public void testEnumConstructor() throws Exception { doTest(); }
+  public void testEnumConstructor() { doTest(); }
 
-  public void testEnumConstantConstructorParameter() throws Exception {  // IDEADEV-26133
+  public void testEnumConstantConstructorParameter() {  // IDEADEV-26133
     doTest(); 
   }
 
-  public void testEnumConstantConstructorParameterComplex() throws Exception {  // IDEADEV-26133
+  public void testEnumConstantConstructorParameterComplex() {  // IDEADEV-26133
     doTest();
   }
 
-  public void testEnumConstantConstructorParameterComplex2() throws Exception {  // IDEADEV-26133
+  public void testEnumConstantConstructorParameterComplex2() {  // IDEADEV-26133
     doTest();
   }
 
-  public void testEnumConstantConstructorWithArgs() throws Exception {
+  public void testEnumConstantConstructorWithArgs() {
     doTest();
   }
 
-  public void testConstantInChainingConstructor() throws Exception {   // IDEADEV-28136
+  public void testConstantInChainingConstructor() {   // IDEADEV-28136
     doTest();
   }
 
-  public void testReplaceParameterWithArgumentForConstructor() throws Exception {   // IDEADEV-23652
+  public void testReplaceParameterWithArgumentForConstructor() {   // IDEADEV-23652
     doTest();
   }
 
-  public void testTailCallReturn() throws Exception {  // IDEADEV-27983
+  public void testTailCallReturn() {  // IDEADEV-27983
     doTest();
   }
 
-  public void testTailCallSimple() throws Exception {  // IDEADEV-27983
+  public void testTailCallSimple() {  // IDEADEV-27983
     doTest();
   }
 
-  public void testTailComment() throws Exception {   //IDEADEV-33638
+  public void testTailComment() {   //IDEADEV-33638
     doTest();
   }
 
-  public void testInferredType() throws Exception {
+  public void testInferredType() {
     setLanguageLevel(LanguageLevel.JDK_1_7);
     doTest();
   }
 
-  public void testReplaceGenericsInside() throws Exception {
+  public void testReplaceGenericsInside() {
     doTest();
   }
 
-  public void testStaticMethodWithoutParams() throws Exception {
+  public void testStaticMethodWithoutParams() {
     doTest();
   }
 
-  public void testWithSuperInside() throws Exception {
+  public void testWithSuperInside() {
     doTest();
   }
 
-  public void testRawSubstitution() throws Exception {
+  public void testRawSubstitution() {
     doTest();
   }
   
-  public void testSubstitution() throws Exception {
+  public void testSubstitution() {
     doTest();
   }
 
-  public void testSubstitutionForWildcards() throws Exception {
+  public void testSubstitutionForWildcards() {
     doTest();
   }
 
-  public void testParamNameConflictsWithLocalVar() throws Exception {
+  public void testParamNameConflictsWithLocalVar() {
     doTest();
   }
 
-  public void testArrayTypeInferenceFromVarargs() throws Exception {
+  public void testArrayTypeInferenceFromVarargs() {
     doTest();
   }
 
-  public void testSuperMethodInAnonymousClass() throws Exception {
+  public void testSuperMethodInAnonymousClass() {
     doTest();
   }
   
-  public void testInlineAnonymousClassWithPrivateMethodInside() throws Exception {
+  public void testInlineAnonymousClassWithPrivateMethodInside() {
     doTest();
   }
 
-  public void testChainedConstructor() throws Exception {
+  public void testChainedConstructor() {
     doTestInlineThisOnly();
   }
 
-  public void testChainedConstructor1() throws Exception {
+  public void testChainedConstructor1() {
     doTest();
   }
 
-  public void testMethodUsedInJavadoc() throws Exception {
+  public void testMethodUsedInJavadoc() {
     doTestConflict("Inlined method is used in javadoc");
   }
 
-  public void testNotAStatement() throws Exception {
+  public void testNotAStatement() {
     doTestConflict("Inlined result would contain parse errors");
   }
 
 
-  public void testInSuperCall() throws Exception {
+  public void testInSuperCall() {
     doTestConflict("Inline cannot be applied to multiline method in constructor call");
   }
 
-  public void testMethodReferenceInsideMethodCall() throws Exception {
+  public void testMethodReferenceInsideMethodCall() {
     doTest();
   }
 
-  private void doTestConflict(final String conflict) throws Exception {
+  private void doTestConflict(final String conflict) {
     try {
       doTest();
       fail("Conflict was not detected");
@@ -251,123 +251,123 @@ public class InlineMethodTest extends LightRefactoringTestCase {
     }
   }
 
-  public void testInlineRunnableRun() throws Exception {
+  public void testInlineRunnableRun() {
     doTestInlineThisOnly();
   }
   
-  public void testOneLineLambdaVoidCompatibleToBlock() throws Exception {
+  public void testOneLineLambdaVoidCompatibleToBlock() {
     doTestInlineThisOnly();
   }
 
-  public void testOneLineLambdaValueCompatibleToBlock() throws Exception {
+  public void testOneLineLambdaValueCompatibleToBlock() {
     doTestInlineThisOnly();
   }
 
-  public void testOneLineLambdaVoidCompatibleOneLine() throws Exception {
+  public void testOneLineLambdaVoidCompatibleOneLine() {
     doTestInlineThisOnly();
   }
  
-  public void testOneLineLambdaValueCompatibleOneLine() throws Exception {
+  public void testOneLineLambdaValueCompatibleOneLine() {
     doTestInlineThisOnly();
   }
 
-  public void testOnMethodReference() throws Exception {
+  public void testOnMethodReference() {
     doTestInlineThisOnly();
   }
 
-  public void testNonCodeUsage() throws Exception {
+  public void testNonCodeUsage() {
     doTest(true);
   }
 
-  public void testMethodInsideChangeIfStatement() throws Exception {
+  public void testMethodInsideChangeIfStatement() {
     doTest();
   }
 
-  public void testSameVarMethodNames() throws Exception {
+  public void testSameVarMethodNames() {
     doTest();
   }
 
-  public void testThisNameConflict() throws Exception {
+  public void testThisNameConflict() {
     doTest();
   }
 
-  public void testStringPlusOverload() throws Exception {
+  public void testStringPlusOverload() {
     doTest();
   }
   
-  public void testReturnStatementWithoutBraces() throws Exception {
+  public void testReturnStatementWithoutBraces() {
     doTestInlineThisOnly();
   }
 
-  public void testUnresolvedArgPassedToSameNameParameter() throws Exception {
+  public void testUnresolvedArgPassedToSameNameParameter() {
     doTestInlineThisOnly();
   }
 
-  public void testMakeTypesDenotable() throws Exception {
+  public void testMakeTypesDenotable() {
     doTestInlineThisOnly();
   }
 
-  public void testInlineIntoMethodRef() throws Exception {
+  public void testInlineIntoMethodRef() {
     doTestInlineThisOnly();
   }
 
-  public void testInlineIntoConstructorRef() throws Exception {
+  public void testInlineIntoConstructorRef() {
     doTestInlineThisOnly();
   }
 
-  public void testSideEffectsInMethodRefQualifier() throws Exception {
+  public void testSideEffectsInMethodRefQualifier() {
     doTestConflict("Inlined method is used in method reference with side effects in qualifier");
   }
 
-  public void testRedundantCastOnMethodReferenceToLambda() throws Exception {
+  public void testRedundantCastOnMethodReferenceToLambda() {
     doTest();
   }
 
-  public void testInaccessibleSuperCallWhenQualifiedInline() throws Exception {
+  public void testInaccessibleSuperCallWhenQualifiedInline() {
     doTestConflict("Inlined method calls super.bar() which won't be accessed in class <b><code>B</code></b>");
   }
 
-  public void testSuperCallWhenUnqualifiedInline() throws Exception {
+  public void testSuperCallWhenUnqualifiedInline() {
     doTestInlineThisOnly();
   }
 
-  public void testDeleteOverrideAnnotations() throws Exception {
+  public void testDeleteOverrideAnnotations() {
     doTest();
   }
 
-  public void testNegativeArguments() throws Exception {
+  public void testNegativeArguments() {
     doTest();
   }
 
-  public void testInaccessibleFieldInSuperClass() throws Exception {
+  public void testInaccessibleFieldInSuperClass() {
     doTestConflict("Field <b><code>A.i</code></b> that is used in inlined method is not accessible from call site(s) in method <b><code>B.bar()</code></b>");
   }
 
-  public void testPrivateFieldInSuperClassInSameFile() throws Exception {
+  public void testPrivateFieldInSuperClassInSameFile() {
     doTest();
   }
 
-  public void testInlineMultipleOccurrencesInFieldInitializer() throws Exception {
+  public void testInlineMultipleOccurrencesInFieldInitializer() {
     doTest();
   }
 
-  public void testAvoidMultipleSubstitutionInParameterTypes() throws Exception {
+  public void testAvoidMultipleSubstitutionInParameterTypes() {
     doTest();
   }
 
-  public void testRespectProjectScopeSrc() throws Exception {
+  public void testRespectProjectScopeSrc() {
     doTest();
   }
 
-  public void testRespectProjectScopeSrcConstructorCall() throws Exception {
+  public void testRespectProjectScopeSrcConstructorCall() {
     doTest();
   }
 
-  public void testChainedConstructorWithMultipleStatements() throws Exception {
+  public void testChainedConstructorWithMultipleStatements() {
     doTestInlineThisOnly();
   }
 
-  public void testThisExpressionValidationForLocalClasses() throws Exception {
+  public void testThisExpressionValidationForLocalClasses() {
     doTestInlineThisOnly();
   }
 
@@ -388,11 +388,11 @@ public class InlineMethodTest extends LightRefactoringTestCase {
     checkResultByFile(fileName + ".after");
   }
 
-  private void doTest() throws Exception {
+  private void doTest() {
     doTest(false);
   }
 
-  private void doTest(final boolean nonCode) throws Exception {
+  private void doTest(final boolean nonCode) {
     String name = getTestName(false);
     @NonNls String fileName = "/refactoring/inlineMethod/" + name + ".java";
     configureByFile(fileName);

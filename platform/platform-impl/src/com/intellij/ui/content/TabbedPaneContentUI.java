@@ -45,19 +45,19 @@ public class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
   private TabbedPaneWrapper myTabbedPaneWrapper;
 
   /**
-   * Creates <code>TabbedPaneContentUI</code> with bottom tab placement.
+   * Creates {@code TabbedPaneContentUI} with bottom tab placement.
    */
   public TabbedPaneContentUI() {
     this(JTabbedPane.BOTTOM);
   }
 
   /**
-   * Creates <code>TabbedPaneContentUI</code> with cpecified tab placement.
+   * Creates {@code TabbedPaneContentUI} with cpecified tab placement.
    *
    * @param tabPlacement constant which defines where the tabs are located.
-   *                     Acceptable values are <code>javax.swing.JTabbedPane#TOP</code>,
-   *                     <code>javax.swing.JTabbedPane#LEFT</code>, <code>javax.swing.JTabbedPane#BOTTOM</code>
-   *                     and <code>javax.swing.JTabbedPane#RIGHT</code>.
+   *                     Acceptable values are {@code javax.swing.JTabbedPane#TOP},
+   *                     {@code javax.swing.JTabbedPane#LEFT}, {@code javax.swing.JTabbedPane#BOTTOM}
+   *                     and {@code javax.swing.JTabbedPane#RIGHT}.
    */
   public TabbedPaneContentUI(int tabPlacement) {
     myTabbedPaneWrapper = new MyTabbedPaneWrapper(tabPlacement);
@@ -209,8 +209,8 @@ public class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
       }
 
       /**
-       * @return content at the specified location.  <code>x</code> and <code>y</code> are in
-       *         tabbed pane coordinate system. The method returns <code>null</code> if there is no contnt at the
+       * @return content at the specified location.  {@code x} and {@code y} are in
+       *         tabbed pane coordinate system. The method returns {@code null} if there is no contnt at the
        *         specified location.
        */
       private Content getContentAt(int x, int y) {
@@ -230,7 +230,7 @@ public class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
       }
 
       /**
-       * Shows showPopup menu at the specified location. The <code>x</code> and <code>y</code> coordinates
+       * Shows showPopup menu at the specified location. The {@code x} and {@code y} coordinates
        * are in JTabbedPane coordinate system.
        */
       private void showPopup(int x, int y) {

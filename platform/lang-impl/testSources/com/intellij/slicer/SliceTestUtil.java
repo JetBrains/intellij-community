@@ -46,13 +46,21 @@ public class SliceTestUtil {
   }
 
   public static Map<String, RangeMarker> extractSliceOffsetsFromDocument(final Document document) {
+    return extractSliceOffsetsFromDocuments(Collections.singletonList(document));
+  }
+
+  public static Map<String, RangeMarker> extractSliceOffsetsFromDocuments(final List<Document> documents) {
     Map<String, RangeMarker> sliceUsageName2Offset = new THashMap<>();
 
-    extract(document, sliceUsageName2Offset, "");
-    int index = document.getText().indexOf("<flown");
-    if(index!=-1) {
-      fail(document.getText().substring(index, Math.min(document.getText().length(), index+50)));
+    extract(documents, sliceUsageName2Offset, "");
+
+    for (Document document : documents) {
+      int index = document.getText().indexOf("<flown");
+      if(index!=-1) {
+        fail(document.getText().substring(index, Math.min(document.getText().length(), index+50)));
+      }
     }
+
     assertTrue(!sliceUsageName2Offset.isEmpty());
     return sliceUsageName2Offset;
   }
@@ -74,19 +82,28 @@ public class SliceTestUtil {
     }
   }
 
-  private static void extract(final Document document, final Map<String, RangeMarker> sliceUsageName2Offset, final String name) {
+  private static void extract(final List<Document> documents, final Map<String, RangeMarker> sliceUsageName2Offset, final String name) {
     WriteCommandAction.runWriteCommandAction(null, () -> {
       for (int i = 1; i < 9; i++) {
         String newName = name + i;
         String s = "<flown" + newName + ">";
-        if (!document.getText().contains(s)) break;
-        int off = document.getText().indexOf(s);
 
-        document.deleteString(off, off + s.length());
-        RangeMarker prev = sliceUsageName2Offset.put(newName, document.createRangeMarker(off, off));
-        assertNull(prev);
+        boolean continueExtraction = false;
+        for (Document document : documents) {
+          if (!document.getText().contains(s)) continue;
 
-        extract(document, sliceUsageName2Offset, newName);
+          int off = document.getText().indexOf(s);
+
+          document.deleteString(off, off + s.length());
+          RangeMarker prev = sliceUsageName2Offset.put(newName, document.createRangeMarker(off, off));
+          assertNull(prev);
+
+          continueExtraction = true;
+        }
+
+        if (continueExtraction) {
+          extract(documents, sliceUsageName2Offset, newName);
+        }
       }
     });
   }

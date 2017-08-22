@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.util;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
+import com.intellij.codeInsight.intention.impl.StreamRefactoringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -29,6 +30,9 @@ import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.StreamApiUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
 
 /**
  * @author Tagir Valeev
@@ -107,10 +111,14 @@ public class OptionalUtil {
    * @return an expression text which will unwrap an {@code Optional}.
    */
   public static String generateOptionalUnwrap(String qualifier, PsiVariable var,
-                                               PsiExpression trueExpression, PsiExpression falseExpression,
-                                               PsiType targetType, boolean useOrElseGet) {
+                                              PsiExpression trueExpression, PsiExpression falseExpression,
+                                              @Nullable PsiType targetType, boolean useOrElseGet) {
     PsiExpression stripped = PsiUtil.skipParenthesizedExprDown(trueExpression);
-    if (!ExpressionUtils.isReferenceTo(trueExpression, var)) {
+    PsiType trueType = trueExpression.getType();
+    boolean trivialMap = ExpressionUtils.isReferenceTo(trueExpression, var) &&
+                         targetType != null &&
+                         (trueType instanceof PsiLambdaParameterType || Objects.requireNonNull(trueType).isAssignableFrom(targetType));
+    if (!trivialMap) {
       if (stripped instanceof PsiTypeCastExpression && ExpressionUtils.isNullLiteral(falseExpression)) {
         PsiTypeCastExpression castExpression = (PsiTypeCastExpression)stripped;
         PsiTypeElement castType = castExpression.getCastType();
@@ -119,7 +127,7 @@ public class OptionalUtil {
           return "(" + castType.getText() + ")" + qualifier + ".orElse(null)";
         }
       }
-      if (ExpressionUtils.isLiteral(falseExpression, Boolean.FALSE) && PsiType.BOOLEAN.equals(trueExpression.getType())) {
+      if (ExpressionUtils.isLiteral(falseExpression, Boolean.FALSE) && PsiType.BOOLEAN.equals(trueType)) {
         if (ExpressionUtils.isLiteral(trueExpression, Boolean.TRUE)) {
           return qualifier + ".isPresent()";
         }
@@ -182,13 +190,13 @@ public class OptionalUtil {
                     return qualifier + ".stream()";
                   }
                   if(arg.getType() != null && elementType.isAssignableFrom(arg.getType())) {
-                    return qualifier + ".stream()" + StreamApiUtil.generateMapOperation(var, elementType, arg);
+                    return qualifier + ".stream()" + StreamRefactoringUtil.generateMapOperation(var, elementType, arg);
                   }
                 }
               }
             }
           }
-          String flatMapOperationName = StreamApiUtil.getFlatMapOperationName(var.getType(), elementType);
+          String flatMapOperationName = StreamRefactoringUtil.getFlatMapOperationName(var.getType(), elementType);
           if(flatMapOperationName != null) {
             return qualifier + ".stream()."+flatMapOperationName+"(" + LambdaUtil.createLambda(var, trueExpression) + ")";
           }

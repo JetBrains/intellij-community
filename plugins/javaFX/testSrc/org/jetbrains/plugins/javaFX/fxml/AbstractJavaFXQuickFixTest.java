@@ -23,7 +23,7 @@ import java.util.List;
 public abstract class AbstractJavaFXQuickFixTest extends AbstractJavaFXTestCase {
   protected abstract String getHint(String tagName);
 
-  protected void doLaunchQuickfixTest(final String tagName) throws Exception {
+  protected void doLaunchQuickfixTest(final String tagName) {
     myFixture.configureByFiles(getTestName(true) + ".fxml");
     final IntentionAction singleIntention = myFixture.findSingleIntention(getHint(tagName));
     assertNotNull(singleIntention);
@@ -31,7 +31,7 @@ public abstract class AbstractJavaFXQuickFixTest extends AbstractJavaFXTestCase 
     myFixture.checkResultByFile(getTestName(true) + "_after.fxml");
   }
 
-  protected void checkQuickFixNotAvailable(String tagName) throws Exception {
+  protected void checkQuickFixNotAvailable(String tagName) {
     myFixture.configureByFiles(getTestName(true) + ".fxml");
     final List<IntentionAction> intentions = myFixture.getAvailableIntentions();
     final IntentionAction intention = CodeInsightTestUtil.findIntentionByText(intentions, getHint(tagName));

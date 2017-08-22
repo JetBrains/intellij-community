@@ -43,10 +43,7 @@ import com.intellij.openapi.ui.ex.MultiLineLabel;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.AnActionButtonRunnable;
@@ -55,7 +52,6 @@ import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IconUtil;
-import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FilteringIterator;
 import com.intellij.util.containers.HashSet;
@@ -534,7 +530,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
       VirtualFile[] files = getLibraryEditor().getFiles(type);
       for (VirtualFile file : files) {
         if (!VfsUtilCore.isUnder(file, excludedRoots)) {
-          roots.add(PathUtil.getLocalFile(file));
+          roots.add(VfsUtil.getLocalFile(file));
         }
       }
     }

@@ -24,7 +24,6 @@ import com.intellij.ui.tabs.impl.TabLayout;
 
 import javax.swing.*;
 import java.awt.*;
-import java.lang.ref.WeakReference;
 
 public abstract class SingleRowLayoutStrategy {
 
@@ -197,7 +196,8 @@ public abstract class SingleRowLayoutStrategy {
       } else {
         JComponent vToolbar = data.vToolbar.get();
         final int vToolbarWidth = vToolbar != null ? vToolbar.getPreferredSize().width : 0;
-        final int x = vToolbarWidth > 0 ? vToolbarWidth + 1 : 0;
+        final int vSeparatorWidth = vToolbarWidth > 0 ? 1 : 0;
+        final int x = vToolbarWidth > 0 ? vToolbarWidth + vSeparatorWidth : 0;
         JComponent hToolbar = data.hToolbar.get();
         final int hToolbarHeight = !myTabs.isSideComponentOnTabs() && hToolbar != null ? hToolbar.getPreferredSize().height : 0;
         final int y = myTabs.myHeaderFitSize.height + (myTabs.isEditorTabs() ? 0 : 1) +
@@ -216,9 +216,14 @@ public abstract class SingleRowLayoutStrategy {
             myTabs.layout(hToolbar, compBounds.x, compBounds.y - toolbarHeight - 1, compBounds.width, toolbarHeight);
           }
         } else if (vToolbar != null) {
-          final Rectangle compBounds = myTabs.layoutComp(x, y, comp, 0, 0);
-          final int toolbarWidth = vToolbar.getPreferredSize().width;
-          myTabs.layout(vToolbar, compBounds.x - toolbarWidth - 1, compBounds.y, toolbarWidth, compBounds.height);
+          if (myTabs.isSideComponentBefore()) {
+            final Rectangle compBounds = myTabs.layoutComp(x, y, comp, 0, 0);
+            myTabs.layout(vToolbar, compBounds.x - vToolbarWidth - vSeparatorWidth, compBounds.y, vToolbarWidth, compBounds.height);
+          } else {
+            int width = vToolbarWidth > 0 ? myTabs.getWidth() - vToolbarWidth - vSeparatorWidth : myTabs.getWidth();
+            final Rectangle compBounds = myTabs.layoutComp(new Rectangle(0, y, width, myTabs.getHeight()), comp, 0, 0);
+            myTabs.layout(vToolbar, compBounds.x + compBounds.width + vSeparatorWidth, compBounds.y, vToolbarWidth, compBounds.height);
+          }
         } else {
           myTabs.layoutComp(x, y, comp, 0, 0);
         }

@@ -1,9 +1,7 @@
 <html>
 <body>
-Reports <b>StringBuffer.toString()</b>
-or <b>StringBuilder.toString()</b> in String concatenations.
-In addition to being confusing, this code performs String allocation and copying, which is unnecessary
-as of JDK1.4.
+Reports <b>StringBuffer.toString()</b> or <b>StringBuilder.toString()</b> calls in String concatenations.
+Such calls are unnecessary when concatenating and can be removed, saving a method call and an object allocation which may improve performance.
 <!-- tooltip end -->
 <p>
 

@@ -2,6 +2,7 @@ package com.jetbrains.edu.learning.stepic;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
+import com.google.gson.internal.LinkedTreeMap;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -18,7 +19,6 @@ import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.*;
@@ -52,7 +52,7 @@ public class StepicWrappers {
     @Expose List<List<String>> samples;
     @Expose Integer executionMemoryLimit;
     @Expose Integer executionTimeLimit;
-    @Expose CodeTemplatesWrapper codeTemplates;
+    @Expose LinkedTreeMap codeTemplates;
     @SerializedName("format_version")
     @Expose public int formatVersion = 3;
     @SerializedName("last_subtask_index")
@@ -132,24 +132,6 @@ public class StepicWrappers {
                        .filter(file -> StudyUtils.isTestsFile(project, file.getName()))
                        .collect(Collectors.toList()));
     return testFiles;
-  }
-
-  static class CodeTemplatesWrapper {
-    String python3;
-    String python27;
-
-    @Nullable
-    public String getTemplateForLanguage(@NotNull final String language) {
-      if (language.equals(EduAdaptiveStepicConnector.PYTHON2)) {
-        return python27;
-      }
-
-      if (language.equals(EduAdaptiveStepicConnector.PYTHON3)) {
-        return python3;
-      }
-
-      return null;
-    }
   }
 
   public static class CoursesContainer {

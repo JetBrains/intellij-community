@@ -36,6 +36,10 @@ public class AddMissingRequiredAnnotationParametersTest extends LightQuickFixTes
     doTest();
   }
 
+  public void testFewParameters3() {
+    doTest();
+  }
+
   public void testFewParametersWithoutOrder() {
     doTest();
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
 import com.intellij.ide.util.projectWizard.*;
 import com.intellij.ide.wizard.CommitStepException;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
@@ -47,7 +48,6 @@ import com.intellij.platform.ProjectTemplatesFactory;
 import com.intellij.platform.templates.*;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.ui.CollectionListModel;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.SingleSelectionModel;
 import com.intellij.ui.components.JBLabel;
@@ -56,7 +56,9 @@ import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.Function;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.*;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.update.UiNotifyConnector;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -155,7 +157,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
       @Override
       protected JComponent createItemComponent() {
         JComponent component = super.createItemComponent();
-        myTextLabel.setBorder(IdeBorderFactory.createEmptyBorder(3));
+        myTextLabel.setBorder(JBUI.Borders.empty(3));
         return component;
       }
     });
@@ -187,7 +189,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
     Disposer.register(this, myFrameworksPanel);
     myFrameworksPanelPlaceholder.add(myFrameworksPanel.getMainPanel());
     myFrameworksLabel.setLabelFor(myFrameworksPanel.getFrameworksTree());
-    myFrameworksLabel.setBorder(IdeBorderFactory.createEmptyBorder(3));
+    myFrameworksLabel.setBorder(JBUI.Borders.empty(3));
 
     myConfigurationUpdater = new ModuleBuilder.ModuleConfigurationUpdater() {
       @Override
@@ -595,6 +597,15 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
   }
 
   void loadRemoteTemplates(final ChooseTemplateStep chooseTemplateStep) {
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      UiNotifyConnector.doWhenFirstShown(myPanel, () -> startLoadingRemoteTemplates(chooseTemplateStep));
+    }
+    else {
+      startLoadingRemoteTemplates(chooseTemplateStep);
+    }
+  }
+
+  private void startLoadingRemoteTemplates(ChooseTemplateStep chooseTemplateStep) {
     myTemplatesList.setPaintBusy(true);
     chooseTemplateStep.getTemplateList().setPaintBusy(true);
     ProgressManager.getInstance().run(new Task.Backgroundable(myContext.getProject(), "Loading Templates") {

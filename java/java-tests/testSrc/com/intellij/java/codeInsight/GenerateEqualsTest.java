@@ -19,63 +19,63 @@ package com.intellij.java.codeInsight;
  * @author dsl
  */
 public class GenerateEqualsTest extends GenerateEqualsTestCase {
-  public void testNoBaseEquals() throws Exception {
+  public void testNoBaseEquals() {
     doTest(new int[0], new int[0], new int[0], false);
   }
 
-  public void testPrimitiveFields() throws Exception {
+  public void testPrimitiveFields() {
     doTest(new int[]{0, 1, 2}, new int[0], new int[0], false);
   }
 
-  public void testFields() throws Exception {
+  public void testFields() {
     doTest(new int[]{0, 1, 2}, new int[0], new int[]{1}, false);
   }
 
-  public void testAbstractSuperEquals() throws Exception {
+  public void testAbstractSuperEquals() {
     doTest(new int[0], new int[0], new int[0], false);
   }
 
-  public void testSuperEquals() throws Exception {
+  public void testSuperEquals() {
     doTest(new int[0], new int[0], new int[0], false);
   }
 
-  public void testHashCode() throws Exception {
+  public void testHashCode() {
     doTest(new int[]{0, 1, 2, 3}, new int[]{0, 1, 2, 3}, new int[]{1}, false);
   }
 
-  public void testArrays() throws Exception {
+  public void testArrays() {
     doTest(new int[]{0, 1, 2}, new int[]{0, 1, 2}, new int[0], false);
   }
 
-  public void testOneDoubleField() throws Exception {
+  public void testOneDoubleField() {
     doTest(new int[]{0}, new int[]{0}, new int[0], false);
   }
 
-  public void testOneFloatField() throws Exception {
+  public void testOneFloatField() {
     doTest(new int[]{0}, new int[]{0}, new int[0], false);
   }
 
-  public void testOneField() throws Exception {
+  public void testOneField() {
     doTest(new int[]{0}, new int[]{0}, new int[0], false);
   }
 
-  public void testNotNull() throws Exception {
+  public void testNotNull() {
     doTest(new int[]{0}, new int[]{0}, new int[0], false);
   }
 
-  public void testInsertOverride() throws Exception {
+  public void testInsertOverride() {
     doTest(new int[]{0}, new int[]{0}, new int[0], true);
   }
   
-  public void testLangClass() throws Exception {
+  public void testLangClass() {
     doTest(new int[]{0}, new int[]{0}, new int[0], true);
   }
 
-  public void testLocalLangClass() throws Exception {
+  public void testLocalLangClass() {
     doTest(new int[]{0}, new int[]{0}, new int[0], true);
   }
 
-  public void testArraysClass() throws Exception {
+  public void testArraysClass() {
     doTest(new int[]{0}, new int[]{0}, new int[0], true);
   }
 

@@ -54,16 +54,21 @@ public class StaticImportMethodFix extends StaticImportMemberFix<PsiMethod> {
 
   @NotNull
   @Override
-  protected List<PsiMethod> getMembersToImport(boolean applicableOnly) {
+  protected List<PsiMethod> getMembersToImport(boolean applicableOnly, @NotNull StaticMembersProcessor.SearchMode searchMode) {
     final Project project = myMethodCall.getProject();
     PsiShortNamesCache cache = PsiShortNamesCache.getInstance(project);
     final PsiMethodCallExpression element = myMethodCall.getElement();
     PsiReferenceExpression reference = element == null ? null : element.getMethodExpression();
     String name = reference == null ? null : reference.getReferenceName();
     if (name == null) return Collections.emptyList();
-    final StaticMembersProcessor<PsiMethod> processor = new MyStaticMethodProcessor(element);
+    final StaticMembersProcessor<PsiMethod> processor = new MyStaticMethodProcessor(element, showMembersFromDefaultPackage(), searchMode);
     cache.processMethodsWithName(name, element.getResolveScope(), processor);
     return processor.getMembersToImport(applicableOnly);
+  }
+
+  @Override
+  protected boolean showMembersFromDefaultPackage() {
+    return false;
   }
 
   @NotNull
@@ -93,8 +98,8 @@ public class StaticImportMethodFix extends StaticImportMemberFix<PsiMethod> {
 
   private static class MyStaticMethodProcessor extends StaticMembersProcessor<PsiMethod> {
 
-    private MyStaticMethodProcessor(PsiMethodCallExpression place) {
-      super(place);
+    private MyStaticMethodProcessor(@NotNull PsiMethodCallExpression place, boolean showMembersFromDefaultPackage, @NotNull SearchMode mode) {
+      super(place, showMembersFromDefaultPackage, mode);
     }
 
     @Override

@@ -15,13 +15,11 @@
  */
 package com.intellij.vcs.commit;
 
-import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.impl.IntentionActionFilter;
 import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.longLine.LongLineInspection;
 import com.intellij.openapi.actionSystem.ShortcutProvider;
 import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.editor.Document;
@@ -59,12 +57,6 @@ public abstract class BaseCommitMessageInspection extends LocalInspectionTool {
     return "";
   }
 
-  @NotNull
-  @Override
-  public HighlightDisplayLevel getDefaultLevel() {
-    return HighlightDisplayLevel.ERROR;
-  }
-
   @Override
   public boolean isSuppressedFor(@NotNull PsiElement element) {
     return !isCommitMessage(element);
@@ -100,10 +92,14 @@ public abstract class BaseCommitMessageInspection extends LocalInspectionTool {
                                                int rightMargin,
                                                @NotNull String problemText,
                                                @NotNull LocalQuickFix... fixes) {
-    TextRange exceedingRange = LongLineInspection.getExceedingRange(document, line, rightMargin);
+    int start = document.getLineStartOffset(line);
+    int end = document.getLineEndOffset(line);
 
-    return !exceedingRange.isEmpty() ? manager
-      .createProblemDescriptor(file, exceedingRange, problemText, GENERIC_ERROR_OR_WARNING, isOnTheFly, fixes) : null;
+    if (end > start + rightMargin) {
+      TextRange exceedingRange = new TextRange(start + rightMargin, end);
+      return manager.createProblemDescriptor(file, exceedingRange, problemText, GENERIC_ERROR_OR_WARNING, isOnTheFly, fixes);
+    }
+    return null;
   }
 
   public boolean canReformat(@NotNull Project project, @NotNull Document document) {

@@ -157,13 +157,6 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
   }
 
   @Override
-  public boolean rootsDiffer() {
-    synchronized (myMonitor) {
-      return myMapping.isRootsDifferFromSettings();
-    }
-  }
-
-  @Override
   @Nullable
   public RootUrlInfo getWcRootForUrl(final String url) {
     synchronized (myMonitor) {

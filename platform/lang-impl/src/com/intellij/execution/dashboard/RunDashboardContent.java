@@ -16,10 +16,8 @@
 package com.intellij.execution.dashboard;
 
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.StopAction;
-import com.intellij.execution.dashboard.tree.DashboardGrouper;
-import com.intellij.execution.dashboard.tree.RunDashboardTreeStructure;
+import com.intellij.execution.dashboard.tree.*;
 import com.intellij.execution.runners.FakeRerunAction;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManagerImpl;
@@ -53,7 +51,6 @@ import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.*;
@@ -82,8 +79,9 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
   private final JBPanelWithEmptyText myMessagePanel;
   private final JComponent myToolbar;
 
-  private final DefaultTreeModel myTreeModel;
+  private final RunDashboardTreeModel myTreeModel;
   private AbstractTreeBuilder myBuilder;
+  private RunDashboardAnimator myAnimator;
   private AbstractTreeNode<?> myLastSelection;
   private final Set<Object> myCollapsedTreeNodeValues = new HashSet<>();
   private final List<DashboardGrouper> myGroupers;
@@ -102,13 +100,18 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
     myProject = project;
     myGroupers = groupers;
 
-    myTreeModel = new DefaultTreeModel(new DefaultMutableTreeNode());
-    myTree = new Tree(myTreeModel);
+    myTree = new Tree();
+    myTreeModel = new RunDashboardTreeModel(new DefaultMutableTreeNode(), myProject, myTree);
+    myTree.setModel(myTreeModel);
     myTree.setRootVisible(false);
 
     myTree.setShowsRootHandles(true);
-    myTree.setCellRenderer(new NodeRenderer());
     myTree.setLineStyleAngled();
+
+    myTree.setCellRenderer(new RunDashboardTreeCellRenderer());
+    RunDashboardTreeMouseListener mouseListener = new RunDashboardTreeMouseListener(myTree);
+    mouseListener.installOn(myTree);
+    RowsDnDSupport.install(myTree, myTreeModel);
 
     myToolbar = createToolbar();
     add(myToolbar, BorderLayout.WEST);
@@ -139,6 +142,7 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
         }
         RunnerLayoutUiImpl layoutUiImpl = (RunnerLayoutUiImpl)layoutUi;
         layoutUiImpl.setLeftToolbarVisible(false);
+        layoutUiImpl.setContentToolbarBefore(false);
         List<AnAction> leftToolbarActions = layoutUiImpl.getActions();
         myContentActions.put(content, leftToolbarActions);
         updateContentToolbar(content);
@@ -226,10 +230,9 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
       protected boolean onDoubleClick(MouseEvent event) {
         if (myLastSelection instanceof DashboardRunConfigurationNode && myLastSelection.getChildren().isEmpty()) {
           DashboardRunConfigurationNode node = (DashboardRunConfigurationNode)myLastSelection;
-          RunnerAndConfigurationSettings settings = node.getConfigurationSettings();
-          RunDashboardContributor contributor = RunDashboardContributor.getContributor(settings.getType());
+          RunDashboardContributor contributor = node.getContributor();
           if (contributor != null) {
-            return contributor.handleDoubleClick(settings.getConfiguration());
+            return contributor.handleDoubleClick(node.getConfigurationSettings().getConfiguration());
           }
         }
         return false;
@@ -337,6 +340,7 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
     };
     myBuilder.initRootNode();
     Disposer.register(this, myBuilder);
+    myAnimator = new RunDashboardAnimatorImpl(myBuilder);
   }
 
   private JComponent createToolbar() {
@@ -416,6 +420,11 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
     return myBuilder;
   }
 
+  @NotNull
+  public RunDashboardAnimator getAnimator() {
+    return myAnimator;
+  }
+
   private class GroupAction extends ToggleAction implements DumbAware {
     private final DashboardGrouper myGrouper;
 
@@ -472,12 +481,18 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
 
     @Override
     public boolean isSelected(AnActionEvent e) {
-      return RunDashboardManager.getInstance(myProject).isShowConfigurations();
+      Project project = e.getProject();
+      if (project == null) return true;
+
+      return RunDashboardManager.getInstance(project).isShowConfigurations();
     }
 
     @Override
     public void setSelected(AnActionEvent e, boolean state) {
-      RunDashboardManager.getInstance(myProject).setShowConfigurations(state);
+      Project project = e.getProject();
+      if (project == null) return;
+
+      RunDashboardManager.getInstance(project).setShowConfigurations(state);
       updateContent(false);
     }
   }

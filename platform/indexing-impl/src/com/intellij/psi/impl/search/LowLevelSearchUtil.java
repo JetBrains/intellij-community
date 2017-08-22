@@ -22,6 +22,7 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -116,7 +117,7 @@ public class LowLevelSearchUtil {
     TreeElement prevNode = null;
     PsiElement run = null;
     while (run != scope) {
-      progress.checkCanceled();
+      ProgressManager.checkCanceled();
       if (useTree) {
         start += prevNode == null ? 0 : prevNode.getStartOffsetInParent();
         prevNode = leafNode;
@@ -185,7 +186,7 @@ public class LowLevelSearchUtil {
 
   @NotNull
   static int[] getTextOccurrencesInScope(@NotNull PsiElement scope, @NotNull StringSearcher searcher, ProgressIndicator progress) {
-    if (progress != null) progress.checkCanceled();
+    ProgressManager.checkCanceled();
 
     PsiFile file = scope.getContainingFile();
     FileViewProvider viewProvider = file.getViewProvider();
@@ -285,7 +286,7 @@ public class LowLevelSearchUtil {
       occurrences.add(newStart);
       occurrences.add(newEnd);
       for (int index = newStart; index < newEnd; index++) {
-        if (progress != null) progress.checkCanceled();
+        ProgressManager.checkCanceled();
         //noinspection AssignmentToForLoopParameter
         index = searcher.scan(text, index, newEnd);
         if (index < 0) break;

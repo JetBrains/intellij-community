@@ -90,7 +90,7 @@ public class PyEditingTest extends PyTestCase {
   }
 
   // PY-18972
-  public void testFString() throws Exception {
+  public void testFString() {
     assertEquals("f''", doTestTyping("f", 1, '\''));
     assertEquals("rf''", doTestTyping("rf", 2, '\''));
     assertEquals("fr''", doTestTyping("fr", 2, '\''));
@@ -128,7 +128,7 @@ public class PyEditingTest extends PyTestCase {
     myFixture.checkResultByFile("/editing/" + fileName + ".after.py", true);
   }
 
-  public void testUncommentWithSpace() throws Exception {   // PY-980
+  public void testUncommentWithSpace() {   // PY-980
     myFixture.configureByFile("/editing/uncommentWithSpace.before.py");
     myFixture.getEditor().getCaretModel().moveToLogicalPosition(new LogicalPosition(0, 1));
     PlatformTestUtil.invokeNamedAction(IdeActions.ACTION_COMMENT_LINE);

@@ -17,6 +17,7 @@ package com.intellij.debugger.impl;
 
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.actions.ThreadDumpAction;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.JavaExecutionStack;
@@ -28,12 +29,14 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.unscramble.ThreadState;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.MessageCategory;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.frame.XExecutionStack;
 import com.sun.jdi.ReferenceType;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -114,6 +117,10 @@ class ReloadClassesWorker {
     breakpointManager.disableBreakpoints(debugProcess);
 
     //virtualMachineProxy.suspend();
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Threads before hotswap:\n",
+                StreamEx.of(ThreadDumpAction.buildThreadStates(virtualMachineProxy)).map(ThreadState::getStackTrace).joining("\n"));
+    }
 
     if (Registry.is("debugger.resume.yourkit.threads")) {
       virtualMachineProxy.allThreads().stream()

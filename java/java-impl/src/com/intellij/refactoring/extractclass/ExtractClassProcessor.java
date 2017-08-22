@@ -28,10 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -231,7 +228,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
   private String calculateDelegateFieldName() {
     final Project project = sourceClass.getProject();
     final CodeStyleSettingsManager settingsManager = CodeStyleSettingsManager.getInstance(project);
-    final CodeStyleSettings settings = settingsManager.getCurrentSettings();
+    final JavaCodeStyleSettings settings = settingsManager.getCurrentSettings().getCustomSettings(JavaCodeStyleSettings.class);
 
     final String baseName = settings.FIELD_NAME_PREFIX.length() == 0 ? StringUtil.decapitalize(newClassName) : newClassName;
     String name = settings.FIELD_NAME_PREFIX + baseName + settings.FIELD_NAME_SUFFIX;

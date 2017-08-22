@@ -95,14 +95,9 @@ private class ImportSettingsAction : AnAction(), DumbAware {
 
     UpdateSettings.getInstance().forceCheckForUpdateAfterRestart()
 
-    val key = if (ApplicationManager.getApplication().isRestartCapable)
-      "message.settings.imported.successfully.restart"
-    else
-      "message.settings.imported.successfully"
-    if (Messages.showOkCancelDialog(IdeBundle.message(key,
-                                                      ApplicationNamesInfo.getInstance().productName,
-                                                      ApplicationNamesInfo.getInstance().fullProductName),
-                                    IdeBundle.message("title.restart.needed"), Messages.getQuestionIcon()) == Messages.OK) {
+    val action = IdeBundle.message(if (ApplicationManager.getApplication().isRestartCapable) "ide.restart.action" else "ide.shutdown.action")
+    val message = IdeBundle.message("message.settings.imported.successfully", action, ApplicationNamesInfo.getInstance().fullProductName)
+    if (Messages.showOkCancelDialog(message, IdeBundle.message("title.restart.needed"), Messages.getQuestionIcon()) == Messages.OK) {
       (ApplicationManager.getApplication() as ApplicationEx).restart(true)
     }
   }
@@ -110,8 +105,8 @@ private class ImportSettingsAction : AnAction(), DumbAware {
   private fun getRelativeNamesToExtract(chosenComponents: Set<ExportableItem>): Set<String> {
     val result = THashSet<String>()
     val root = Paths.get(PathManager.getConfigPath())
-    for (item in chosenComponents) {
-      result.add(root.relativize(item.file).systemIndependentPath)
+    for ((file) in chosenComponents) {
+      result.add(root.relativize(file).systemIndependentPath)
     }
 
     result.add(PluginManager.INSTALLED_TXT)
@@ -126,7 +121,7 @@ private class ImportSettingsAction : AnAction(), DumbAware {
 fun getPaths(input: InputStream): Set<String> {
   val result = THashSet<String>()
   val zipIn = ZipInputStream(input)
-  try {
+  zipIn.use {
     while (true) {
       val entry = zipIn.nextEntry ?: break
       var path = entry.name
@@ -136,9 +131,6 @@ fun getPaths(input: InputStream): Set<String> {
         result.add("$path/")
       }
     }
-  }
-  finally {
-    zipIn.close()
   }
   return result
 }

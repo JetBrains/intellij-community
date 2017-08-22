@@ -206,7 +206,10 @@ public class AtomicConversionRule extends TypeConversionRule {
       final PsiJavaToken signToken = ((PsiAssignmentExpression)context).getOperationSign();
       final IElementType operationSign = signToken.getTokenType();
       final String sign = signToken.getText();
-      if (parent instanceof PsiExpressionStatement) {
+      boolean voidContext = parent instanceof PsiExpressionStatement ||
+                  (parent instanceof PsiLambdaExpression && PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType(
+                    (PsiFunctionalExpression)parent)));
+      if (voidContext) {
         if (operationSign == JavaTokenType.EQ) {
           final PsiExpression lExpression = ((PsiAssignmentExpression)context).getLExpression();
           if (lExpression instanceof PsiReferenceExpression) {

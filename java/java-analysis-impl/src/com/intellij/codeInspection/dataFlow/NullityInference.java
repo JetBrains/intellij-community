@@ -18,21 +18,21 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.openapi.util.RecursionManager;
-import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiPrimitiveType;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.TokenType;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.JavaLightTreeUtil;
 import com.intellij.psi.impl.source.PsiMethodImpl;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.BitSet;
 import java.util.List;
 
 import static com.intellij.psi.impl.source.tree.JavaElementType.*;
@@ -57,6 +57,29 @@ public class NullityInference {
       NullityInferenceResult result = data == null ? null : data.getNullity();
       Nullness nullness = result == null ? null : RecursionManager.doPreventingRecursion(method, true, () -> result.getNullness(method, data.methodBody(method)));
       if (nullness == null) nullness = Nullness.UNKNOWN;
+      return CachedValueProvider.Result.create(nullness, method, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+    });
+  }
+
+  public static Nullness inferNullity(PsiParameter parameter) {
+    if (!parameter.isPhysical() || parameter.getType() instanceof PsiPrimitiveType) return Nullness.UNKNOWN;
+    PsiParameterList parent = ObjectUtils.tryCast(parameter.getParent(), PsiParameterList.class);
+    if (parent == null) return Nullness.UNKNOWN;
+    PsiMethodImpl method = ObjectUtils.tryCast(parent.getParent(), PsiMethodImpl.class);
+    if (method == null || !InferenceFromSourceUtil.shouldInferFromSource(method)) return Nullness.UNKNOWN;
+
+    return CachedValuesManager.getCachedValue(parameter, () -> {
+      Nullness nullness = Nullness.UNKNOWN;
+      MethodData data = ContractInferenceIndexKt.getIndexedData(method);
+      if (data != null) {
+        BitSet notNullParameters = data.getNotNullParameters();
+        if (!notNullParameters.isEmpty()) {
+          int index = ArrayUtil.indexOf(parent.getParameters(), parameter);
+          if (notNullParameters.get(index)) {
+            nullness = Nullness.NOT_NULL;
+          }
+        }
+      }
       return CachedValueProvider.Result.create(nullness, method, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
     });
   }

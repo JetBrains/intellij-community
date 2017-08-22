@@ -161,4 +161,9 @@ public class GitPushTarget implements PushTarget {
     result = 31 * result + (myIsNewBranchCreated ? 1 : 0);
     return result;
   }
+
+  @Override
+  public String toString() {
+    return myRemoteBranch.getNameForLocalOperations();
+  }
 }

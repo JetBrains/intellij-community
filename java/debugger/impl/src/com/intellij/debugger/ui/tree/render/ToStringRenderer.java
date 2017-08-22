@@ -42,6 +42,7 @@ public class ToStringRenderer extends NodeRendererImpl implements OnDemandRender
   public static final @NonNls String UNIQUE_ID = "ToStringRenderer";
 
   private boolean USE_CLASS_FILTERS = false;
+  private boolean ON_DEMAND;
   private ClassFilter[] myClassFilters = ClassFilter.EMPTY_ARRAY;
 
   public ToStringRenderer() {
@@ -117,26 +118,24 @@ public class ToStringRenderer extends NodeRendererImpl implements OnDemandRender
   }
 
   @Override
+  public boolean isOnDemand(EvaluationContext evaluationContext, ValueDescriptor valueDescriptor) {
+    if (ON_DEMAND || (USE_CLASS_FILTERS && !isFiltered(valueDescriptor.getType()))) {
+      return true;
+    }
+    return OnDemandRenderer.super.isOnDemand(evaluationContext, valueDescriptor);
+  }
+
+  @Override
   public boolean isApplicable(Type type) {
-    if(!(type instanceof ReferenceType)) {
+    if (!(type instanceof ReferenceType)) {
       return false;
     }
 
-    if(JAVA_LANG_STRING.equals(type.name())) {
+    if (JAVA_LANG_STRING.equals(type.name())) {
       return false; // do not render 'String' objects for performance reasons
     }
 
-    if(!overridesToString(type)) {
-      return false;
-    }
-
-    if (USE_CLASS_FILTERS) {
-      if (!isFiltered(type)) {
-        return false;
-      }
-    }
-
-    return true;
+    return overridesToString(type);
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
@@ -169,7 +168,8 @@ public class ToStringRenderer extends NodeRendererImpl implements OnDemandRender
   public void readExternal(Element element) {
     super.readExternal(element);
 
-    USE_CLASS_FILTERS = "true".equalsIgnoreCase(JDOMExternalizerUtil.readField(element, "USE_CLASS_FILTERS"));
+    ON_DEMAND = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, "ON_DEMAND"));
+    USE_CLASS_FILTERS = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, "USE_CLASS_FILTERS"));
     myClassFilters = DebuggerUtilsEx.readFilters(element.getChildren("filter"));
   }
 
@@ -178,6 +178,9 @@ public class ToStringRenderer extends NodeRendererImpl implements OnDemandRender
   public void writeExternal(Element element) {
     super.writeExternal(element);
 
+    if (ON_DEMAND) {
+      JDOMExternalizerUtil.writeField(element, "ON_DEMAND", "true");
+    }
     if (USE_CLASS_FILTERS) {
       JDOMExternalizerUtil.writeField(element, "USE_CLASS_FILTERS", "true");
     }
@@ -201,5 +204,13 @@ public class ToStringRenderer extends NodeRendererImpl implements OnDemandRender
       }
     }
     return DebuggerUtilsEx.isFiltered(t.name(), myClassFilters);
+  }
+
+  public boolean isOnDemand() {
+    return ON_DEMAND;
+  }
+
+  public void setOnDemand(boolean value) {
+    ON_DEMAND = value;
   }
 }

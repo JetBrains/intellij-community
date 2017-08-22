@@ -138,7 +138,7 @@ public class UrlUtilTest {
   }
 
   @Test
-  public void testUrlParsing() throws Exception {
+  public void testUrlParsing() {
     doUrlTest("not detecting jetbrains.com", null);
     doUrlTest("mailto:admin@jetbrains.com;", "mailto:admin@jetbrains.com");
     doUrlTest("news://jetbrains.com is good", "news://jetbrains.com");
@@ -167,7 +167,7 @@ public class UrlUtilTest {
   }
 
   @Test
-  public void testEncodeURIComponent() throws Exception {
+  public void testEncodeURIComponent() {
     assertEquals("Test", URLUtil.encodeURIComponent("Test"));
     assertEquals("%20Test%20%20(~%2Fpath!)", URLUtil.encodeURIComponent(" Test  (~/path!)"));
     StringBuilder str = new StringBuilder("");

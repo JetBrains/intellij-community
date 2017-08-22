@@ -31,10 +31,7 @@ import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.LightColors;
-import com.intellij.ui.OnePixelSplitter;
-import com.intellij.ui.SearchTextField;
+import com.intellij.ui.*;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
@@ -438,12 +435,6 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
 
     UIUtil.addUndoRedoActions(textComponent);
 
-    if (UIUtil.isUnderWindowsLookAndFeel()) {
-      textComponent.setFont(UIManager.getFont("TextField.font"));
-    } else {
-      Utils.setSmallerFont(textComponent);
-    }
-
     textComponent.putClientProperty("AuxEditorComponent", Boolean.TRUE);
     textComponent.setBackground(UIUtil.getTextFieldBackground());
     textComponent.addFocusListener(new FocusListener() {
@@ -549,7 +540,9 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
     toolbar.setForceMinimumSize(true);
     toolbar.setReservePlaceAutoPopupIcon(false);
     toolbar.setSecondaryButtonPopupStateModifier(mySearchToolbar1PopupStateModifier);
-    toolbar.setSecondaryActionsTooltip("More Options(" + ShowMoreOptions.SHORT_CUT + ")");
+    toolbar.setSecondaryActionsTooltip("Show Filter Popup (" + KeymapUtil.getShortcutText(ShowMoreOptions.SHORT_CUT) + ")");
+    toolbar.setSecondaryActionsIcon(AllIcons.General.Filter);
+
     new ShowMoreOptions(toolbar, mySearchFieldWrapper);
     return toolbar;
   }

@@ -30,7 +30,7 @@ public class Java8ListSortInspectionTest extends LightQuickFixParameterizedTestC
     return new LocalInspectionTool[]{new Java8ListSortInspection()};
   }
 
-  public void test() throws Exception {
+  public void test() {
     doAllTests();
   }
 

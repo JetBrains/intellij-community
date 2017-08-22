@@ -18,6 +18,7 @@ package com.jetbrains.python.newProject.steps;
 import com.intellij.ide.util.projectWizard.AbstractNewProjectStep;
 import com.intellij.ide.util.projectWizard.ProjectSettingsStepBase;
 import com.intellij.ide.util.projectWizard.WebProjectTemplate;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
@@ -25,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
+import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.Messages;
@@ -41,6 +43,7 @@ import com.jetbrains.python.sdk.PyDetectedSdk;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.PythonSdkUpdater;
+import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,6 +62,13 @@ public class PythonGenerateProjectCallback<T> extends AbstractNewProjectStep.Abs
 
     if (sdk instanceof PyDetectedSdk) {
       sdk = addDetectedSdk(settingsStep, sdk);
+      if (PythonSdkType.isVirtualEnv(sdk)) {
+        final SdkModificator sdkModificator = sdk.getSdkModificator();
+        final PythonSdkAdditionalData additionalData = new PythonSdkAdditionalData(PythonSdkFlavor.getFlavor(sdk));
+        additionalData.associateWithNewProject();
+        sdkModificator.setSdkAdditionalData(additionalData);
+        ApplicationManager.getApplication().runWriteAction(sdkModificator::commitChanges);
+      }
     }
 
     if (generator instanceof PythonProjectGenerator) {

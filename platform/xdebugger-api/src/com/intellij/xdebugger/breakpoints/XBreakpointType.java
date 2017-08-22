@@ -64,7 +64,7 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
   /**
    * @param id                     an unique id of breakpoint type
    * @param title                  title of tab in the breakpoints dialog
-   * @param suspendThreadSupported <code>true</code> if suspending only one thread is supported for this type of breakpoints
+   * @param suspendThreadSupported {@code true} if suspending only one thread is supported for this type of breakpoints
    */
   protected XBreakpointType(@NonNls @NotNull final String id, @Nls @NotNull final String title, boolean suspendThreadSupported) {
     myId = id;
@@ -194,9 +194,9 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
   }
 
   /**
-   * Return <code>true</code> from this method in order to allow adding breakpoints from the "Breakpoints" dialog. Also override
+   * Return {@code true} from this method in order to allow adding breakpoints from the "Breakpoints" dialog. Also override
    * {@link XBreakpointType#addBreakpoint(Project,JComponent)} method.
-   * @return <code>true</code> if "Add" button should be visible in "Breakpoints" dialog
+   * @return {@code true} if "Add" button should be visible in "Breakpoints" dialog
    */
   public boolean isAddBreakpointButtonVisible() {
     return false;
@@ -206,7 +206,7 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
    * This method is called then "Add" button is pressed in the "Breakpoints" dialog 
    * @param project
    * @param parentComponent
-   * @return the created breakpoint or <code>null</code> if breakpoint wasn't created
+   * @return the created breakpoint or {@code null} if breakpoint wasn't created
    */
   @Nullable
   public B addBreakpoint(final Project project, JComponent parentComponent) {

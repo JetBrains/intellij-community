@@ -132,18 +132,10 @@ public class PersistenceStressTest extends LightPlatformCodeInsightFixtureTestCa
 
   @NotNull
   private Future<Boolean> submit(final PersistentHashMap<String, Record> map) {
-    return myThreadPool.submit(() -> {
-      try {
-        return doTask(map);
-      }
-      catch (IOException e) {
-        e.printStackTrace();
-        return false;
-      }
-    });
+    return myThreadPool.submit(() -> doTask(map));
   }
 
-  private boolean doTask(PersistentHashMap<String, Record> map) throws IOException {
+  private boolean doTask(PersistentHashMap<String, Record> map) {
     Random random = new Random();
     try {
       for (int i = 0; i < 100000; i++) {

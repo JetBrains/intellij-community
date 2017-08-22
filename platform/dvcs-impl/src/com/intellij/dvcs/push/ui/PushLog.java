@@ -41,6 +41,7 @@ import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,7 +59,6 @@ import java.util.List;
 import static com.intellij.openapi.actionSystem.IdeActions.ACTION_COLLAPSE_ALL;
 import static com.intellij.openapi.actionSystem.IdeActions.ACTION_EXPAND_ALL;
 import static com.intellij.util.containers.ContainerUtil.emptyList;
-import static java.util.stream.Collectors.toCollection;
 
 public class PushLog extends JPanel implements DataProvider {
 
@@ -140,6 +140,17 @@ public class PushLog extends JPanel implements DataProvider {
           refreshNode(root);
         }
         restoreSelection(lastSelectedPathComponent);
+      }
+
+      @Override
+      protected void installSpeedSearch() {
+        new TreeSpeedSearch(this, path -> {
+          Object pathComponent = path.getLastPathComponent();
+          if (pathComponent instanceof RepositoryNode) {
+            return ((RepositoryNode)pathComponent).getRepositoryName();
+          }
+          return pathComponent.toString();
+        });
       }
     };
     myTree.setUI(new MyTreeUi());
@@ -270,6 +281,14 @@ public class PushLog extends JPanel implements DataProvider {
     myScrollPane.setMinimumSize(new Dimension(myTree.getMinimumSize().width, myScrollPane.getPreferredSize().height));
   }
 
+  public void highlightNodeOrFirst(@Nullable RepositoryNode repositoryNode, boolean shouldScrollTo) {
+    TreePath selectionPath = repositoryNode != null ? TreeUtil.getPathFromRoot(repositoryNode) : TreeUtil.getFirstNodePath(myTree);
+    myTree.setSelectionPath(selectionPath);
+    if (shouldScrollTo) {
+      myTree.scrollPathToVisible(selectionPath);
+    }
+  }
+
   private class MyShowCommitInfoAction extends DumbAwareAction {
     @Override
     public void actionPerformed(AnActionEvent e) {
@@ -329,15 +348,15 @@ public class PushLog extends JPanel implements DataProvider {
 
   @NotNull
   private static List<CommitNode> collectSelectedCommitNodes(@NotNull List<DefaultMutableTreeNode> selectedNodes) {
-    List<CommitNode> nodes = ContainerUtil.newArrayList();
-    for (DefaultMutableTreeNode node : selectedNodes) {
-      if (node instanceof RepositoryNode) {
-        nodes.addAll(getChildNodesByType(node, CommitNode.class, true));
-      }
-      else if (node instanceof CommitNode && !nodes.contains(node)) {
-        nodes.add((CommitNode)node);
-      }
-    }
+    //addAll Commit nodes from selected Repository nodes;
+    List<CommitNode> nodes = StreamEx.of(selectedNodes)
+      .select(RepositoryNode.class)
+      .toFlatList(node -> getChildNodesByType(node, CommitNode.class, true));
+    // add all others selected Commit nodes;
+    nodes.addAll(StreamEx.of(selectedNodes)
+                   .select(CommitNode.class)
+                   .filter(node -> !nodes.contains(node))
+                   .toList());
     return nodes;
   }
 
@@ -467,9 +486,11 @@ public class PushLog extends JPanel implements DataProvider {
   }
 
   private void toggleRepositoriesFromCommits() {
-    LinkedHashSet<CheckedTreeNode> checkedNodes =
-      getSelectedTreeNodes().stream().map(n -> n instanceof CommitNode ? n.getParent() : n).filter(CheckedTreeNode.class::isInstance)
-        .map(CheckedTreeNode.class::cast).collect(toCollection(LinkedHashSet::new));
+    LinkedHashSet<CheckedTreeNode> checkedNodes = StreamEx.of(getSelectedTreeNodes())
+      .map(n -> n instanceof CommitNode ? n.getParent() : n)
+      .select(CheckedTreeNode.class)
+      .filter(CheckedTreeNode::isEnabled)
+      .toCollection(LinkedHashSet::new);
     if (checkedNodes.isEmpty()) return;
     // use new state from first lead node;
     boolean newState = !checkedNodes.iterator().next().isChecked();
@@ -529,25 +550,28 @@ public class PushLog extends JPanel implements DataProvider {
     //todo should be optimized in case of start loading just edited node
     final DefaultTreeModel model = ((DefaultTreeModel)myTree.getModel());
     model.nodeStructureChanged(parentNode);
-    expandSelected(parentNode);
+    autoExpandChecked(parentNode);
     myShouldRepaint = false;
   }
 
-  private void expandSelected(@NotNull DefaultMutableTreeNode node) {
+  private void autoExpandChecked(@NotNull DefaultMutableTreeNode node) {
     if (node.getChildCount() <= 0) return;
     if (node instanceof RepositoryNode) {
-      TreePath path = TreeUtil.getPathFromRoot(node);
-      myTree.expandPath(path);
+      expandIfChecked((RepositoryNode)node);
       return;
     }
     for (DefaultMutableTreeNode childNode = (DefaultMutableTreeNode)node.getFirstChild();
          childNode != null;
          childNode = (DefaultMutableTreeNode)node.getChildAfter(childNode)) {
       if (!(childNode instanceof RepositoryNode)) return;
-      TreePath path = TreeUtil.getPathFromRoot(childNode);
-      if (((RepositoryNode)childNode).isChecked()) {
-        myTree.expandPath(path);
-      }
+      expandIfChecked((RepositoryNode)childNode);
+    }
+  }
+
+  private void expandIfChecked(@NotNull RepositoryNode node) {
+    if (node.isChecked()) {
+      TreePath path = TreeUtil.getPathFromRoot(node);
+      myTree.expandPath(path);
     }
   }
 

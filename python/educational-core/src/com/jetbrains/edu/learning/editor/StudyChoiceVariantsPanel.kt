@@ -1,14 +1,11 @@
 package com.jetbrains.edu.learning.editor
 
-import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.edu.learning.courseFormat.tasks.ChoiceTask
-import com.sun.javafx.application.PlatformImpl
 import javafx.application.Platform
 import javafx.beans.value.ObservableValue
 import javafx.embed.swing.JFXPanel
@@ -39,43 +36,39 @@ class StudyChoiceVariantsPanel(task: ChoiceTask) : JScrollPane() {
   init {
     val jfxPanel = JFXPanel()
     LafManager.getInstance().addLafManagerListener(StudyLafManagerListener(jfxPanel))
-    ApplicationManager.getApplication().invokeLater {
-      IdeEventQueue.unsafeNonblockingExecute(Runnable {
-        PlatformImpl.runLater(Runnable {
-          val group = Group()
-          val scene = Scene(group, getSceneBackground())
-          jfxPanel.scene = scene
-          val vBox = VBox()
-          vBox.spacing = 10.0
-          vBox.padding = Insets(TOP_INSET, RIGHT_INSET, BOTTOM_INSET, LEFT_INSET)
-          if (task.isMultipleChoice) {
-            for ((index, variant) in task.choiceVariants.withIndex()) {
-              val isSelected = task.selectedVariants.contains(index)
-              val checkBox = CheckBox(variant)
-              checkBox.isSelected = isSelected
-              checkBox.selectedProperty().addListener(createSelectionListener(task, index))
-              setUpButtonStyle(checkBox, scene)
-              vBox.children.add(checkBox)
-              buttons.add(checkBox)
-            }
-          }
-          else {
-            val toggleGroup = ToggleGroup()
-            for ((index, variant) in task.choiceVariants.withIndex()) {
-              val isSelected = task.selectedVariants.contains(index)
-              val radioButton = RadioButton(variant)
-              radioButton.toggleGroup = toggleGroup
-              radioButton.isSelected = isSelected
-              radioButton.selectedProperty().addListener(createSelectionListener(task, index))
-              setUpButtonStyle(radioButton, scene)
-              vBox.children.add(radioButton)
-              buttons.add(radioButton)
-            }
-          }
+    Platform.runLater {
+      val group = Group()
+      val scene = Scene(group, getSceneBackground())
+      jfxPanel.scene = scene
+      val vBox = VBox()
+      vBox.spacing = 10.0
+      vBox.padding = Insets(TOP_INSET, RIGHT_INSET, BOTTOM_INSET, LEFT_INSET)
+      if (task.isMultipleChoice) {
+        for ((index, variant) in task.choiceVariants.withIndex()) {
+          val isSelected = task.selectedVariants.contains(index)
+          val checkBox = CheckBox(variant)
+          checkBox.isSelected = isSelected
+          checkBox.selectedProperty().addListener(createSelectionListener(task, index))
+          setUpButtonStyle(checkBox, scene)
+          vBox.children.add(checkBox)
+          buttons.add(checkBox)
+        }
+      }
+      else {
+        val toggleGroup = ToggleGroup()
+        for ((index, variant) in task.choiceVariants.withIndex()) {
+          val isSelected = task.selectedVariants.contains(index)
+          val radioButton = RadioButton(variant)
+          radioButton.toggleGroup = toggleGroup
+          radioButton.isSelected = isSelected
+          radioButton.selectedProperty().addListener(createSelectionListener(task, index))
+          setUpButtonStyle(radioButton, scene)
+          vBox.children.add(radioButton)
+          buttons.add(radioButton)
+        }
+      }
 
-          group.children.add(vBox)
-        })
-      })
+      group.children.add(vBox)
     }
     setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER)
     setViewportView(jfxPanel)

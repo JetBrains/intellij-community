@@ -23,7 +23,7 @@ import com.intellij.openapi.util.text.StringUtil
 class PyCreateSetupPyFromTemplateHandler : DefaultCreateFromTemplateHandler() {
 
   override fun handlesTemplate(template: FileTemplate?): Boolean {
-    return template == FileTemplateManager.getDefaultInstance().getInternalTemplate("Setup Script")
+    return template == FileTemplateManager.getDefaultInstance().getInternalTemplate(CreateSetupPyAction.SETUP_SCRIPT_TEMPLATE_NAME)
   }
 
   override fun prepareProperties(props: MutableMap<String, Any>?) {

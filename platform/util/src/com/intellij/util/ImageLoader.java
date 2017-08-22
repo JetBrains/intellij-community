@@ -164,17 +164,20 @@ public class ImageLoader implements Serializable {
                                        float pixScale)
     {
       ImageDescList vars = new ImageDescList();
-      if (retina || dark) {
+
+      boolean ideSvgIconSupport = Registry.is("ide.svg.icon");
+
+      if (retina || dark || ideSvgIconSupport) {
         final String name = FileUtil.getNameWithoutExtension(file);
         final String ext = FileUtilRt.getExtension(file);
 
         pixScale = adjustScaleFactor(allowFloatScaling, pixScale);
 
-        if (Registry.is("ide.svg.icon") && dark) {
+        if (ideSvgIconSupport && dark) {
           vars.add(new ImageDesc(name + "_dark.svg", cls, pixScale, ImageDesc.Type.SVG));
         }
 
-        if (Registry.is("ide.svg.icon")) {
+        if (ideSvgIconSupport) {
           vars.add(new ImageDesc(name + ".svg", cls, pixScale, ImageDesc.Type.SVG));
         }
 

@@ -94,7 +94,7 @@ class OfflineDescriptorResolveResult {
           return descriptor;
         }
       }
-      return createRerunGlobalToolDescriptor((GlobalInspectionToolWrapper)toolWrapper, element);
+      return createRerunGlobalToolDescriptor((GlobalInspectionToolWrapper)toolWrapper, element, offlineDescriptor);
     }
     if (!(toolWrapper instanceof LocalInspectionToolWrapper)) return null;
     final InspectionManager inspectionManager = InspectionManager.getInstance(presentation.getContext().getProject());
@@ -195,7 +195,8 @@ class OfflineDescriptorResolveResult {
   }
 
   private static CommonProblemDescriptor createRerunGlobalToolDescriptor(@NotNull GlobalInspectionToolWrapper wrapper,
-                                                                         @Nullable RefEntity entity) {
+                                                                         @Nullable RefEntity entity,
+                                                                         OfflineProblemDescriptor offlineDescriptor) {
     return new CommonProblemDescriptorImpl(new QuickFix[]{new QuickFix() {
       @Nls
       @NotNull
@@ -216,6 +217,6 @@ class OfflineDescriptorResolveResult {
         }
         RunInspectionAction.runInspection(project, wrapper.getShortName(), file, null, psiFile);
       }
-    }}, "Problem detected by global inspection \'" + wrapper.getDisplayName() + "\'");
+    }}, offlineDescriptor.getDescription());
   }
 }

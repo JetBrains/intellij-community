@@ -22,8 +22,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.psi.PsiModifier;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -40,12 +40,12 @@ import java.util.Set;
 public class JavaFXQuickfixTest extends LightCodeInsightFixtureTestCase {
   public static final DefaultLightProjectDescriptor JAVA_FX_WITH_GROOVY_DESCRIPTOR = new DefaultLightProjectDescriptor() {
     @Override
-       public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
+    public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
       AbstractJavaFXTestCase.addJavaFxJarAsLibrary(module, model);
-       PsiTestUtil.addLibrary(module, model, "javafx", PluginPathManager.getPluginHomePath("javaFX") + "/testData", "groovy-1.8.0.jar");
-       super.configureModule(module, model, contentEntry);
-     }
-   };
+      PsiTestUtil.addLibrary(module, model, "javafx", PluginPathManager.getPluginHomePath("javaFX") + "/testData", "groovy-1.8.0.jar");
+      super.configureModule(module, model, contentEntry);
+    }
+  };
 
   @NotNull
   @Override
@@ -53,81 +53,83 @@ public class JavaFXQuickfixTest extends LightCodeInsightFixtureTestCase {
     return JAVA_FX_WITH_GROOVY_DESCRIPTOR;
   }
 
-  public void testCreateControllerMethod() throws Exception {
+  public void testCreateControllerMethod() {
     doTest("Create method 'void bar(ActionEvent)'", ".java");
   }
 
-  public void testCreateControllerMethodInGroovy() throws Exception {
+  public void testCreateControllerMethodInGroovy() {
     doTest("Create method 'void bar(ActionEvent)'", ".groovy");
   }
 
-  public void testCreateControllerMethodGeneric() throws Exception {
+  public void testCreateControllerMethodGeneric() {
     doTest("Create method 'void onSort(SortEvent)'", ".java");
   }
 
-  public void testCreateControllerMethodHalfRaw() throws Exception {
+  public void testCreateControllerMethodHalfRaw() {
     doTest("Create method 'void onSort(SortEvent)'", ".java");
   }
 
-  public void testCreateFieldPublicVisibility() throws Exception {
+  public void testCreateFieldPublicVisibility() {
     doTestWithDefaultVisibility("Create field 'btn'", "CreateField", PsiModifier.PUBLIC, ".java");
   }
 
-  public void testCreateFieldProtectedVisibility() throws Exception {
+  public void testCreateFieldProtectedVisibility() {
     doTestWithDefaultVisibility("Create field 'btn'", "CreateField", PsiModifier.PROTECTED, ".java");
   }
 
-  public void testCreateFieldPrivateVisibility() throws Exception {
+  public void testCreateFieldPrivateVisibility() {
     doTestWithDefaultVisibility("Create field 'btn'", "CreateField", PsiModifier.PRIVATE, ".java");
   }
 
-  public void testCreateFieldPackageLocalVisibility() throws Exception {
+  public void testCreateFieldPackageLocalVisibility() {
     doTestWithDefaultVisibility("Create field 'btn'", "CreateField", PsiModifier.PACKAGE_LOCAL, ".java");
   }
 
-  public void testCreateFieldEscalateVisibility() throws Exception {
+  public void testCreateFieldEscalateVisibility() {
     doTestWithDefaultVisibility("Create field 'btn'", "CreateField", VisibilityUtil.ESCALATE_VISIBILITY, ".java");
   }
 
-  public void testCreateMethodPublicVisibility() throws Exception {
+  public void testCreateMethodPublicVisibility() {
     doTestWithDefaultVisibility("Create method 'void onAction(ActionEvent)'", "CreateMethod", PsiModifier.PUBLIC, ".java");
   }
 
-  public void testCreateMethodProtectedVisibility() throws Exception {
+  public void testCreateMethodProtectedVisibility() {
     doTestWithDefaultVisibility("Create method 'void onAction(ActionEvent)'", "CreateMethod", PsiModifier.PROTECTED, ".java");
   }
 
-  public void testCreateMethodPrivateVisibility() throws Exception {
+  public void testCreateMethodPrivateVisibility() {
     doTestWithDefaultVisibility("Create method 'void onAction(ActionEvent)'", "CreateMethod", PsiModifier.PRIVATE, ".java");
   }
 
-  public void testCreateMethodPackageLocalVisibility() throws Exception {
+  public void testCreateMethodPackageLocalVisibility() {
     doTestWithDefaultVisibility("Create method 'void onAction(ActionEvent)'", "CreateMethod", PsiModifier.PACKAGE_LOCAL, ".java");
   }
 
-  public void testCreateMethodEscalateVisibility() throws Exception {
-    doTestWithDefaultVisibility("Create method 'void onAction(ActionEvent)'", "CreateMethod", VisibilityUtil.ESCALATE_VISIBILITY, ".java");
+  public void testCreateMethodEscalateVisibility() {
+    doTestWithDefaultVisibility("Create method 'void onAction(ActionEvent)'", "CreateMethod", VisibilityUtil.ESCALATE_VISIBILITY,
+                                ".java");
   }
 
-  public void testCreateFieldEmptyName() throws Exception {
+  public void testCreateFieldEmptyName() {
     String path = getTestName(true) + ".fxml";
     final IntentionAction intention =
       myFixture.getAvailableIntention("Create field 'btn'", path, getTestName(false) + ".java");
     assertNull(intention);
   }
 
-  public void testRegisterPageLanguage() throws Exception {
+  public void testRegisterPageLanguage() {
     myFixture.configureByFile(getTestName(true) + ".fxml");
     final IntentionAction intention = myFixture.findSingleIntention("Specify page language");
     assertNotNull(intention);
     Set<String> languages = JavaFxInjectPageLanguageIntention.getAvailableLanguages(getProject());
     assertContainsElements(languages, "groovy");
-    JavaFxInjectPageLanguageIntention languageIntention = (JavaFxInjectPageLanguageIntention)((IntentionActionDelegate)intention).getDelegate();
+    JavaFxInjectPageLanguageIntention languageIntention =
+      (JavaFxInjectPageLanguageIntention)((IntentionActionDelegate)intention).getDelegate();
     languageIntention.registerPageLanguage(getProject(), (XmlFile)myFixture.getFile(), "groovy");
     myFixture.checkResultByFile(getTestName(true) + ".fxml", getTestName(true) + "_after.fxml", true);
   }
 
-  public void testWrapWithDefine() throws Exception {
+  public void testWrapWithDefine() {
     final IntentionAction intention =
       myFixture.getAvailableIntention("Wrap \"lb\" with fx:define", getTestName(true) + ".fxml");
     assertNotNull(intention);
@@ -138,8 +140,8 @@ public class JavaFXQuickfixTest extends LightCodeInsightFixtureTestCase {
   private void doTestWithDefaultVisibility(final String actionName,
                                            final String inputName,
                                            final String defaultVisibility,
-                                           final String extension) throws Exception {
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+                                           final String extension) {
+    JavaCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCustomSettings(JavaCodeStyleSettings.class);
     String savedVisibility = settings.VISIBILITY;
     try {
       settings.VISIBILITY = defaultVisibility;
@@ -150,11 +152,11 @@ public class JavaFXQuickfixTest extends LightCodeInsightFixtureTestCase {
     }
   }
 
-  private void doTest(final String actionName, final String extension) throws Exception {
+  private void doTest(final String actionName, final String extension) {
     doTest(actionName, getTestName(false), getTestName(false), extension);
   }
 
-  private void doTest(final String actionName, final String inputName, final String outputName, final String extension) throws Exception {
+  private void doTest(final String actionName, final String inputName, final String outputName, final String extension) {
     String path = PlatformTestUtil.lowercaseFirstLetter(inputName, true) + ".fxml";
     final IntentionAction intention =
       myFixture.getAvailableIntention(actionName, path, inputName + extension);
@@ -168,7 +170,7 @@ public class JavaFXQuickfixTest extends LightCodeInsightFixtureTestCase {
     super.setUp();
     myFixture.enableInspections(new JavaFxUnresolvedFxIdReferenceInspection());
   }
-  
+
   @NotNull
   @Override
   protected String getTestDataPath() {

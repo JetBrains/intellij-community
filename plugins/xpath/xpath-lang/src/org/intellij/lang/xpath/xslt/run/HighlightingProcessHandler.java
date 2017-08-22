@@ -32,16 +32,20 @@ class HighlightingProcessHandler extends ProcessHandler {
         myProcessReader.start();
     }
 
+    @Override
     protected void destroyProcessImpl() {
     }
 
+    @Override
     protected void detachProcessImpl() {
     }
 
+    @Override
     public boolean detachIsDefault() {
         return false;
     }
 
+    @Override
     @SuppressWarnings({"ConstantConditions"})
     public OutputStream getProcessInput() {
         return null;

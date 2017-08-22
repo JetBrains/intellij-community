@@ -17,30 +17,47 @@ package com.intellij.testGuiFramework.framework
 
 import com.intellij.testGuiFramework.launcher.GuiTestLocalLauncher
 import org.junit.runner.Runner
+import org.junit.runner.notification.Failure
 import org.junit.runner.notification.RunNotifier
 import org.junit.runners.Suite
 import org.junit.runners.model.RunnerBuilder
 
-class GuiTestSuite(suiteClass: Class<*>, val builder: RunnerBuilder): Suite(suiteClass, builder) {
+class GuiTestSuite(suiteClass: Class<*>, val builder: RunnerBuilder) : Suite(suiteClass, builder) {
 
   //IDE type to run suite tests with
   val myIde = GuiTestLocalRunner.getIdeFromAnnotation(suiteClass)
   var myFirstStart = true
+  val UNDEFINED_FIRST_CLASS = "undefined"
+  val myFirstStartClassName: String by lazy {
+    val annotation = suiteClass.getAnnotation(FirstStartWith::class.java)
+    val value = annotation?.value
+    if (value != null) value.java.canonicalName else UNDEFINED_FIRST_CLASS
+  }
+  val LOG = org.apache.log4j.Logger.getLogger("#com.intellij.testGuiFramework.framework.GuiTestSuite")!!
 
   override fun runChild(runner: Runner, notifier: RunNotifier?) {
-    //let's start IDE to complete installation, import configs and etc before running tests
-    if (myFirstStart) firstStart()
-
-    val testClass = runner.description.testClass
-    //check that ide types are equal
-    check(GuiTestLocalRunner.getIdeFromAnnotation(testClass).ideType == myIde.ideType)
-    val guiTestLocalRunner = GuiTestLocalRunner(testClass)
-    super.runChild(guiTestLocalRunner, notifier)
+    try {
+      //let's start IDE to complete installation, import configs and etc before running tests
+      if (myFirstStart) firstStart()
+      val testClass = runner.description.testClass
+      //check that ide types are equal
+      check(GuiTestLocalRunner.getIdeFromAnnotation(testClass).ideType.javaClass == myIde.ideType.javaClass)
+      val guiTestLocalRunner = GuiTestLocalRunner(testClass)
+      super.runChild(guiTestLocalRunner, notifier)
+    }
+    catch (e: Exception) {
+      LOG.error(e)
+      notifier?.fireTestFailure(Failure(runner.description, e))
+    }
   }
 
   private fun firstStart() {
-    GuiTestLocalLauncher.firstStartIdeLocally(myIde)
+    if (myFirstStartClassName == UNDEFINED_FIRST_CLASS) return
+    LOG.info("IDE is configuring for the first time...")
+    GuiTestLocalLauncher.firstStartIdeLocally(myIde, myFirstStartClassName)
     myFirstStart = false
   }
+
+
 
 }

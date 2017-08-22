@@ -31,7 +31,7 @@ import static org.jetbrains.plugins.ipnb.run.IpnbCommandLineState.getHostPortFro
  */
 public class WebSocketConnectionTest extends TestCase {
   @Override
-  protected void setUp() throws Exception {
+  protected void setUp() {
     //WebSocketImpl.DEBUG = true;
     Assume.assumeTrue(pingHost(getTestServerURI()));
   }

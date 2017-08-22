@@ -22,6 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
@@ -212,6 +213,15 @@ public class ByteCodeViewerManager extends DockablePopupManager<ByteCodeViewerCo
       if (containingFile instanceof PsiClassOwner) {
         PsiClass[] classes = ((PsiClassOwner)containingFile).getClasses();
         if (classes.length == 1) return classes[0];
+
+        TextRange textRange = psiElement.getTextRange();
+        if (textRange != null) {
+          for (PsiClass aClass : classes) {
+            PsiElement navigationElement = aClass.getNavigationElement();
+            TextRange classRange = navigationElement != null ? navigationElement.getTextRange() : null;
+            if (classRange != null && classRange.contains(textRange)) return aClass;
+          }
+        }
       }
       return null;
     }

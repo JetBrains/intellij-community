@@ -4,11 +4,8 @@ java.lang.Runnable -> anonymous(id=0)
 
 Backward References:
 Anonymous in Anonymous occurrences = 1
-Anonymous.<init>(0) in Anonymous occurrences = 1
 Anonymous.m(0) in Anonymous occurrences = 1
-java.lang.Object.<init>(0) in Anonymous occurrences = 2
 java.lang.Runnable in Anonymous occurrences = 2
-java.lang.Runnable.<init>(0) in Anonymous occurrences = 1
 java.lang.Runnable.run(0) in Anonymous occurrences = 2
 
 Class Definitions:

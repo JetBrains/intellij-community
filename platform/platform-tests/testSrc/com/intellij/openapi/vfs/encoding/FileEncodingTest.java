@@ -36,6 +36,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.IoTestUtil;
@@ -49,7 +50,6 @@ import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.ByteArrayCharSequence;
 import com.intellij.util.text.XmlCharsetDetector;
@@ -68,8 +68,8 @@ import static org.junit.Assert.assertArrayEquals;
 
 @SuppressWarnings("HardCodedStringLiteral")
 public class FileEncodingTest extends PlatformTestCase implements TestDialog {
-  private static final Charset US_ASCII = Charset.forName("US-ASCII");
-  private static final Charset WINDOWS_1251 = Charset.forName("windows-1251");
+  private static final Charset US_ASCII = CharsetToolkit.US_ASCII_CHARSET;
+  private static final Charset WINDOWS_1251 = CharsetToolkit.WIN_1251_CHARSET;
   private static final Charset WINDOWS_1252 = Charset.forName("windows-1252");
   private static final String UTF8_XML_PROLOG = prolog(CharsetToolkit.UTF8_CHARSET);
   private static final byte[] NO_BOM = ArrayUtil.EMPTY_BYTE_ARRAY;
@@ -407,7 +407,7 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
     }.execute().throwException();
   }
 
-  public void testCopyNested() throws IOException, IncorrectOperationException {
+  public void testCopyNested() throws IOException {
     File root = createTempDirectory();
     File dir1 = new File(root, "dir1");
     assertTrue(dir1.mkdir());
@@ -589,25 +589,6 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
     Assert.assertNotSame(EncodingUtil.isSafeToConvertTo(file, text, bytes, WINDOWS_1251), EncodingUtil.Magic8.NO_WAY);
     failReason = EncodingUtil.checkCanReload(file).second;
     assertNull(failReason);
-  }
-
-  private static String toHexString(byte[] b, int start, int end) {
-    final String hexChar = "0123456789abcdef";
-
-    StringBuilder hex = new StringBuilder();
-    StringBuilder ch = new StringBuilder();
-
-    for (int i = start; i < end; i++) {
-      hex.append(hexChar.charAt((b[i] >> 4) & 0x0f));
-      hex.append(hexChar.charAt(b[i] & 0x0f));
-      hex.append(" ");
-      if ((i-start+1) % 5 == 0) hex.append("   ");
-
-      ch.append((char)b[i]);
-      ch.append("  ");
-      if ((i-start+1) % 5 == 0) ch.append("   ");
-    }
-    return hex + "\n" + ch;
   }
 
   public void testSetEncodingForDirectoryChangesEncodingsForEvenNotLoadedFiles() throws IOException {
@@ -920,5 +901,43 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
     vFile.setBOM(null);
     CharSequence loaded = LoadTextUtil.loadText(vFile);
     assertEquals(text, loaded.toString());
+  }
+
+  public void testNewUTF8FileCanBeCreatedWithOrWithoutBOMDependingOnTheSettings() throws IOException {
+    EncodingProjectManagerImpl manager = (EncodingProjectManagerImpl)EncodingProjectManager.getInstance(getProject());
+    EncodingProjectManagerImpl.BOMForNewUTF8Files old = manager.getBOMForNewUTF8Files();
+    String oldProject = manager.getDefaultCharsetName();
+    manager.setDefaultCharsetName(CharsetToolkit.UTF8);
+    try {
+      manager.setBOMForNewUtf8Files(EncodingProjectManagerImpl.BOMForNewUTF8Files.NEVER);
+      VirtualFile file = createFile("x.txt", "xx").getVirtualFile();
+      assertNull(file.getBOM());
+
+      manager.setBOMForNewUtf8Files(EncodingProjectManagerImpl.BOMForNewUTF8Files.ALWAYS);
+      VirtualFile file2 = createFile("x2.txt", "xx").getVirtualFile();
+      assertArrayEquals(CharsetToolkit.UTF8_BOM, file2.getBOM());
+
+      manager.setBOMForNewUtf8Files(EncodingProjectManagerImpl.BOMForNewUTF8Files.WINDOWS_ONLY);
+      VirtualFile file3 = createFile("x3.txt", "xx").getVirtualFile();
+      byte[] expected = SystemInfo.isWindows ? CharsetToolkit.UTF8_BOM : null;
+      assertArrayEquals(expected, file3.getBOM());
+
+      manager.setBOMForNewUtf8Files(EncodingProjectManagerImpl.BOMForNewUTF8Files.NEVER);
+      VirtualFile file4 = createFile("x4.txt", "xx").getVirtualFile();
+      assertNull(file4.getBOM());
+    }
+    finally {
+      manager.setBOMForNewUtf8Files(old);
+      manager.setDefaultCharsetName(oldProject);
+    }
+  }
+
+  public void testBigFileAutoDetectedAsTextMustDetermineItsEncodingFromTheWholeTextToMinimizePossibilityOfUmlautInTheEndMisdetectionError() {
+    VirtualFile vTestRoot = getTestRoot();
+    VirtualFile file = vTestRoot.findChild("BIGCHANGES");
+    assertNotNull(file);
+
+    assertNull(file.getBOM());
+    assertEquals(CharsetToolkit.UTF8_CHARSET, file.getCharset());
   }
 }

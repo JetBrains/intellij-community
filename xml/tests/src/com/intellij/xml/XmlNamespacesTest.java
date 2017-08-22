@@ -30,13 +30,13 @@ import org.jetbrains.annotations.NotNull;
  * @author Dmitry Avdeev
  */
 public class XmlNamespacesTest extends LightCodeInsightFixtureTestCase {
-  public void testUnusedNamespaces() throws Exception {
+  public void testUnusedNamespaces() {
     doUnusedDeclarationTest(
       "<all xmlns=\"http://www.w3.org/2001/XMLSchema\" <warning descr=\"Namespace declaration is never used\">xmlns:xsi=\"http://www.w3.org/2001/XMLSc<caret>hema-instance\"</warning>/>",
       "<all xmlns=\"http://www.w3.org/2001/XMLSchema\"/>", XmlBundle.message("xml.inspections.unused.schema.remove"));
   }
 
-  public void testUnusedDefaultNamespace() throws Exception {
+  public void testUnusedDefaultNamespace() {
     doUnusedDeclarationTest("<schema:schema \n" +
                             "            xmlns:schema=\"http://www.w3.org/2001/XMLSchema\"\n" +
                             "            <warning descr=\"Namespace declaration is never used\">xmlns=\"http://www.w3.org/2001/X<caret>Include\"</warning>\n" +
@@ -57,7 +57,7 @@ public class XmlNamespacesTest extends LightCodeInsightFixtureTestCase {
                           "</schema:schema>");
   }
 
-  public void testDifferentPrefixes() throws Exception {
+  public void testDifferentPrefixes() {
     doUnusedDeclarationTest(
       "<x:all  <warning descr=\"Namespace declaration is never used\">xmlns=\"http://www.w3.org/2001/XMLS<caret>chema\"</warning>\n" +
       "        xmlns:x=\"http://www.w3.org/2001/XMLSchema\"\n" +
@@ -73,7 +73,7 @@ public class XmlNamespacesTest extends LightCodeInsightFixtureTestCase {
                           "/>");
   }
 
-  public void testUnusedLocation() throws Exception {
+  public void testUnusedLocation() {
     doUnusedDeclarationTest("<x:all\n" +
                             "        xmlns:x=\"http://www.w3.org/2001/XMLSchema\"\n" +
                             "        xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
@@ -86,7 +86,7 @@ public class XmlNamespacesTest extends LightCodeInsightFixtureTestCase {
                             XmlUnusedNamespaceInspection.RemoveNamespaceLocationFix.NAME);
   }
 
-  public void testUnusedLocationOnly() throws Exception {
+  public void testUnusedLocationOnly() {
     doUnusedDeclarationTest("<x:all\n" +
                             "        xmlns:x=\"http://www.w3.org/2001/XMLSchema\"\n" +
                             "        <warning descr=\"Namespace declaration is never used\">xmlns:y=\"http://www.w3.org/2001/XInclude\"</warning>\n" +
@@ -100,7 +100,7 @@ public class XmlNamespacesTest extends LightCodeInsightFixtureTestCase {
                             XmlBundle.message("xml.inspections.unused.schema.remove"));
   }
 
-  public void testUnusedDefaultLocation() throws Exception {
+  public void testUnusedDefaultLocation() {
     doUnusedDeclarationTest("<x:all\n" +
                             "        xmlns:x=\"http://www.w3.org/2001/XMLSchema\"\n" +
                             "        xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
@@ -112,7 +112,7 @@ public class XmlNamespacesTest extends LightCodeInsightFixtureTestCase {
                             XmlUnusedNamespaceInspection.RemoveNamespaceLocationFix.NAME);
   }
 
-  public void testKeepFormatting() throws Exception {
+  public void testKeepFormatting() {
     doUnusedDeclarationTest("<xs:schema attributeFormDefault=\"unqualified\"\n" +
                             "           <warning descr=\"Namespace declaration is never used\">xmlns:xsi=\"http://www.w3.org/20<caret>01/XMLSchema-instance\"</warning>\n" +
                             "           elementFormDefault=\"qualified\" xmlns:xs=\"http://www.w3.org/2001/XMLSchema\">\n" +
@@ -135,7 +135,7 @@ public class XmlNamespacesTest extends LightCodeInsightFixtureTestCase {
                             XmlBundle.message("xml.inspections.unused.schema.remove"));
   }
 
-  public void testImplicitPrefixUsage() throws Exception {
+  public void testImplicitPrefixUsage() {
     myFixture.configureByText("a.xml", "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\"\n" +
                                        "           xmlns:x2=\"http://www.w3.org/2001/XMLSchema\"\n" +
                                        "           <warning descr=\"Namespace declaration is never used\">xmlns:x3=\"http://www.w3.org/2001/XMLSchema\"</warning> >\n" +
@@ -144,7 +144,7 @@ public class XmlNamespacesTest extends LightCodeInsightFixtureTestCase {
     myFixture.testHighlighting();
   }
 
-  public void testUnusedLocationDetection() throws Exception {
+  public void testUnusedLocationDetection() {
     myFixture.configureByFile("web-app_2_5.xsd");
     myFixture.configureByText("a.xml", "<web-app xmlns=\"http://java.sun.com/xml/ns/javaee\"\n" +
                                        "         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
@@ -156,7 +156,7 @@ public class XmlNamespacesTest extends LightCodeInsightFixtureTestCase {
     myFixture.testHighlighting();
   }
 
-  public void testWSDD() throws Exception {
+  public void testWSDD() {
     myFixture.configureByText("a.xml",
                               "<deployment xmlns=\"http://xml.apache.org/axis/wsdd/\" xmlns:java=\"http://xml.apache.org/axis/wsdd/providers/java\">\n" +
                               "<typeMapping deserializer=\"org.apache.axis.encoding.ser.BeanDeserializerFactory\" encodingStyle=\"\" qname=\"ns38:AxisAnalysis\" serializer=\"org.apache.axis.encoding.ser.BeanSerializerFactory\" languageSpecificType=\"java:com.pls.xactservice.axis.bindings.AxisAnalysis\"/>\n" +
@@ -164,7 +164,7 @@ public class XmlNamespacesTest extends LightCodeInsightFixtureTestCase {
     myFixture.testHighlighting();
   }
 
-  public void testPrefixesInTagValues() throws Exception {
+  public void testPrefixesInTagValues() {
     myFixture.configureByText("a.xml",
                               "<<info descr=\"Namespace '' is not bound\">nodeTypes</info> xmlns:nt=\"<error descr=\"URI is not registered (Settings | Languages & Frameworks | Schemas and DTDs)\">http://www.jcp.org/jcr/nt/1.0</error>\" xmlns:customns=\"<error descr=\"URI is not registered (Settings | Languages & Frameworks | Schemas and DTDs)\">http://customurl</error>\">\n" +
                               "<nodeType name=\"customns:item\" isMixin=\"false\" hasOrderableChildNodes=\"false\">\n" +
@@ -176,7 +176,7 @@ public class XmlNamespacesTest extends LightCodeInsightFixtureTestCase {
     myFixture.testHighlighting();
   }
 
-  public void testLocallyUsedNamespace() throws Exception {
+  public void testLocallyUsedNamespace() {
     myFixture.configureByText("a.xml", "<x:all\n" +
                                        "        xmlns:x=\"http://www.w3.org/2001/XMLSchema\"\n" +
                                        "        xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
@@ -188,7 +188,7 @@ public class XmlNamespacesTest extends LightCodeInsightFixtureTestCase {
     myFixture.testHighlighting();
   }
 
-  public void testLocallyUsedNamespaceWithPrefix() throws Exception {
+  public void testLocallyUsedNamespaceWithPrefix() {
     myFixture.configureByText("a.xml", "<s:foo xmlns:s=\"<error descr=\"URI is not registered (Settings | Languages & Frameworks | Schemas and DTDs)\">http://foo</error>\"\n" +
                                        "       <warning descr=\"Namespace declaration is never used\">xmlns:bar=\"<error descr=\"URI is not registered (Settings | Languages & Frameworks | Schemas and DTDs)\">http://bar</error>\"</warning>\n" +
                                        "       xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
@@ -200,11 +200,11 @@ public class XmlNamespacesTest extends LightCodeInsightFixtureTestCase {
     myFixture.testHighlighting();
   }
 
-  public void testSubDirectory() throws Exception {
+  public void testSubDirectory() {
     myFixture.testHighlighting("moved.xml", "trg/move-def.xsd");
   }
 
-  public void testSuppressedOptimize() throws Exception {
+  public void testSuppressedOptimize() {
     myFixture.configureByFile("web-app_2_5.xsd");
     String text = "<!--suppress XmlUnusedNamespaceDeclaration -->\n" +
                   "<web-app xmlns=\"http://java.sun.com/xml/ns/javaee\"\n" +
@@ -218,7 +218,7 @@ public class XmlNamespacesTest extends LightCodeInsightFixtureTestCase {
     doOptimizeImportsTest(text);
   }
 
-  public void testUsedInXmlns() throws Exception {
+  public void testUsedInXmlns() {
     myFixture.testHighlighting("spring.xml", "spring-beans-2.5.xsd", "spring-batch-2.1.xsd");
     IntentionAction action = myFixture.getAvailableIntention(XmlBundle.message("xml.inspections.unused.schema.remove"));
     assertNotNull(action);
@@ -226,18 +226,18 @@ public class XmlNamespacesTest extends LightCodeInsightFixtureTestCase {
     myFixture.checkResultByFile("spring_after.xml");
   }
 
-  public void testXsiType() throws Exception {
+  public void testXsiType() {
     myFixture.testHighlighting("import.xml", "import.xsd");
   }
 
-  public void testDoNotOptimizeWhenInspectionDisabled() throws Exception {
+  public void testDoNotOptimizeWhenInspectionDisabled() {
     myFixture.disableInspections(new XmlUnusedNamespaceInspection());
     String text = "<all xmlns=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"/>";
     myFixture.configureByText(XmlFileType.INSTANCE, text);
     doOptimizeImportsTest(text);
   }
 
-  public void testFixAll() throws Exception {
+  public void testFixAll() {
     myFixture.configureByFiles("fixAll.xml", "spring-beans-2.5.xsd", "spring-batch-2.1.xsd");
     IntentionAction action = myFixture.findSingleIntention("Fix all");
     assertNotNull(action);
@@ -245,7 +245,7 @@ public class XmlNamespacesTest extends LightCodeInsightFixtureTestCase {
     myFixture.checkResultByFile("fixAll_after.xml");
   }
 
-  public void testImplicitPrefixes() throws Exception {
+  public void testImplicitPrefixes() {
     myFixture.configureByText(XmlFileType.INSTANCE, "<schema xmlns=\"http://www.w3.org/2001/XMLSchema\" \n" +
                                                     "        xmlns:x=\"http://www.w3.org/2001/XMLSchema\"\n" +
                                                     "        <warning descr=\"Namespace declaration is never used\">xmlns:y=\"http://www.w3.org/2001/XMLSchema\"</warning>>\n" +
@@ -254,7 +254,7 @@ public class XmlNamespacesTest extends LightCodeInsightFixtureTestCase {
     myFixture.testHighlighting();
   }
 
-  private void doUnusedDeclarationTest(String text, String after, String name) throws Exception {
+  private void doUnusedDeclarationTest(String text, String after, String name) {
     doUnusedDeclarationTest(text, after, name, true);
   }
 
@@ -276,7 +276,7 @@ public class XmlNamespacesTest extends LightCodeInsightFixtureTestCase {
     myFixture.testHighlighting();
     new WriteCommandAction(getProject(), getFile()) {
       @Override
-      protected void run(@NotNull Result result) throws Throwable {
+      protected void run(@NotNull Result result) {
         new OptimizeImportsProcessor(getProject(), getFile()).runWithoutProgress();
       }
     }.execute();

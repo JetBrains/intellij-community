@@ -104,7 +104,7 @@ public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType 
   @Nullable
   @Override
   public PyType getCallType(@NotNull TypeEvalContext context, @NotNull PyCallSiteExpression callSite) {
-    if (myDefinitionLevel == DefinitionLevel.AS_SUPERCLASS) {
+    if (myDefinitionLevel == DefinitionLevel.NT_FUNCTION) {
       return new PyNamedTupleType(myClass, myDeclaration, myName, myFields, DefinitionLevel.NEW_TYPE);
     }
     else if (myDefinitionLevel == DefinitionLevel.NEW_TYPE) {
@@ -135,6 +135,23 @@ public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType 
     return "PyNamedTupleType: " + myName;
   }
 
+  @Override
+  public boolean equals(Object o) {
+    if (o == this) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    if (!super.equals(o)) return false;
+
+    final PyNamedTupleType type = (PyNamedTupleType)o;
+    return Objects.equals(myName, type.myName) &&
+           Objects.equals(myFields.keySet(), type.myFields.keySet()) &&
+           myDefinitionLevel == type.myDefinitionLevel;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(super.hashCode(), myName, myFields.keySet(), myDefinitionLevel);
+  }
+
   @NotNull
   @Override
   public Set<String> getMemberNames(boolean inherited, @NotNull TypeEvalContext context) {
@@ -155,7 +172,7 @@ public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType 
 
   @Override
   public boolean isCallable() {
-    return myDefinitionLevel == DefinitionLevel.NEW_TYPE;
+    return myDefinitionLevel != DefinitionLevel.INSTANCE;
   }
 
   @Nullable
@@ -173,7 +190,7 @@ public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType 
 
   public enum DefinitionLevel {
 
-    AS_SUPERCLASS,
+    NT_FUNCTION, // type for collections.namedtuple and typing.NamedTuple.__init__
     NEW_TYPE,
     INSTANCE
   }

@@ -64,7 +64,7 @@ public class GradleProjectOpenProcessorTest extends GradleImportingTestCase {
    */
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   @Parameterized.Parameters(name = "with Gradle-{0}")
-  public static Collection<Object[]> data() throws Throwable {
+  public static Collection<Object[]> data() {
     return Arrays.asList(new Object[][]{{BASE_GRADLE_VERSION}});
   }
 
@@ -73,7 +73,7 @@ public class GradleProjectOpenProcessorTest extends GradleImportingTestCase {
     super.setUp();
     new WriteAction() {
       @Override
-      protected void run(@NotNull Result result) throws Throwable {
+      protected void run(@NotNull Result result) {
         for (Sdk sdk : ProjectJdkTable.getInstance().getAllJdks()) {
           if (GRADLE_JDK_NAME.equals(sdk.getName())) continue;
           ProjectJdkTable.getInstance().removeJdk(sdk);
@@ -88,7 +88,7 @@ public class GradleProjectOpenProcessorTest extends GradleImportingTestCase {
     try {
       new WriteAction() {
         @Override
-        protected void run(@NotNull Result result) throws Throwable {
+        protected void run(@NotNull Result result) {
           for (Sdk sdk : removedSdks) {
             SdkConfigurationUtil.addSdk(sdk);
           }

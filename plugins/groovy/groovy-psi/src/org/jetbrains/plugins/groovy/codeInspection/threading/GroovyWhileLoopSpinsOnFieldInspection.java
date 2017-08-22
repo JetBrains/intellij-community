@@ -20,7 +20,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiModifier;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
@@ -42,13 +41,6 @@ public class GroovyWhileLoopSpinsOnFieldInspection extends BaseInspection {
 
   @SuppressWarnings({"PublicField", "WeakerAccess"})
   public boolean ignoreNonEmtpyLoops = false;
-
-  @Override
-  @Nls
-  @NotNull
-  public String getGroupDisplayName() {
-    return THREADING_ISSUES;
-  }
 
   @Override
   @NotNull

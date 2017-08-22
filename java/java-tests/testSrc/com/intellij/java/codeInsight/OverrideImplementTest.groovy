@@ -78,6 +78,25 @@ interface B extends A {
 """
   }
 
+  void testImplementInAnnotation() {
+    def file = myFixture.addClass("""\
+@interface A {
+    <caret>
+}
+""").containingFile.virtualFile
+    myFixture.configureFromExistingVirtualFile(file)
+
+    Presentation presentation = new Presentation()
+    presentation.setText(ActionsBundle.message("action.ImplementMethods.text"))
+    CommandProcessor.instance.executeCommand(project, { invokeAction(true) }, presentation.text, null)
+
+    myFixture.checkResult """\
+@interface A {
+    <caret>
+}
+"""
+  }
+
   void testImplementInterfaceWhenClassProvidesProtectedImplementation() {
     myFixture.addClass """\
 interface A {

@@ -17,6 +17,7 @@
 package com.intellij.util;
 
 import com.intellij.concurrency.AsyncFuture;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
@@ -86,6 +87,7 @@ public class UniqueResultsQuery<T, M> implements Query<T> {
     return findAll().toArray(a);
   }
 
+  @NotNull
   @Override
   public Iterator<T> iterator() {
     return findAll().iterator();
@@ -102,6 +104,7 @@ public class UniqueResultsQuery<T, M> implements Query<T> {
 
     @Override
     public boolean process(final T t) {
+      ProgressManager.checkCanceled();
       return !myProcessedElements.add(myMapper.fun(t)) || myConsumer.process(t);
     }
   }

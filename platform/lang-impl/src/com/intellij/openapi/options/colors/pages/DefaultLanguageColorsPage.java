@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@ import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.RainbowColorSettingsPage;
 import com.intellij.psi.codeStyle.DisplayPriority;
 import com.intellij.psi.codeStyle.DisplayPrioritySortable;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -173,12 +172,14 @@ public class DefaultLanguageColorsPage implements RainbowColorSettingsPage, Disp
       OptionsBundle.message("options.language.defaults.markup.entity"), DefaultLanguageHighlighterColors.MARKUP_ENTITY),
     new AttributesDescriptor(
       OptionsBundle.message("options.language.defaults.template.language"), DefaultLanguageHighlighterColors.TEMPLATE_LANGUAGE_COLOR),
-    
-  };
 
-  private static final AttributesDescriptor INLINE_PARAMETER_HINT_DESCRIPTOR = new AttributesDescriptor(
-    OptionsBundle.message("options.java.attribute.descriptor.inline.parameter.hint"),
-    DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT);
+    new AttributesDescriptor(
+      OptionsBundle.message("options.java.attribute.descriptor.inline.parameter.hint"), 
+      DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.java.attribute.descriptor.inline.parameter.hint.highlighted"), 
+      DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT_HIGHLIGHTED)
+  };
 
   @Nullable
   @Override
@@ -224,7 +225,7 @@ public class DefaultLanguageColorsPage implements RainbowColorSettingsPage, Disp
       "Function <func_decl>declaration</func_decl> (<param>parameter1</param> <param>parameter2</param> <param>parameter3</param> <param>parameter4</param>)\n" +
       "    Local <local_var>variable1</local_var> <local_var>variable2</local_var> <local_var>variable3</local_var> <local_var>variable4</local_var>\n" +
       "Function <func_call>call</func_call>(" +
-      "<parameter_hint p>0, <parameter_hint param> 1, <parameter_hint parameterName> 2" +
+      "<parameter_hint p>0, <parameter_hint_highlighted param>1, <parameter_hint parameterName>2" +
       ")\n" +
       "Interface <interface>Name</interface>\n" +
       "<metadata>@Metadata</metadata>\n" +
@@ -248,7 +249,7 @@ public class DefaultLanguageColorsPage implements RainbowColorSettingsPage, Disp
   @NotNull
   @Override
   public AttributesDescriptor[] getAttributeDescriptors() {
-    return ArrayUtil.append(ATTRIBUTES_DESCRIPTORS, INLINE_PARAMETER_HINT_DESCRIPTOR);
+    return ATTRIBUTES_DESCRIPTORS;
   }
 
   @NotNull

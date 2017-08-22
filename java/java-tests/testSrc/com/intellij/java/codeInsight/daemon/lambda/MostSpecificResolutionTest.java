@@ -31,105 +31,105 @@ public class MostSpecificResolutionTest extends LightDaemonAnalyzerTestCase {
     enableInspectionTool(new UnusedDeclarationInspection());
   }
 
-  public void testVoidConflict() throws Exception {
+  public void testVoidConflict() {
     doTest();
   }
 
-  public void testNestedLambdaSpecifics() throws Exception {
+  public void testNestedLambdaSpecifics() {
     doTest();
   }
 
-  public void testBothVarargs() throws Exception {
+  public void testBothVarargs() {
     doTest();
   }
 
-  public void testNestedVarargs() throws Exception {
+  public void testNestedVarargs() {
     doTest();
   }
 
-  public void testMostSpecificForSameFunctionalTypes() throws Exception {
+  public void testMostSpecificForSameFunctionalTypes() {
     doTest();
   }
 
-  public void testIDEA121884() throws Exception {
+  public void testIDEA121884() {
     doTest();
   }
 
-  public void testIDEA121999() throws Exception {
+  public void testIDEA121999() {
     doTest();
   }
 
-  public void testRelatedSAMErasures() throws Exception {
+  public void testRelatedSAMErasures() {
     doTest();
   }
 
-  public void testJDK8034223() throws Exception {
+  public void testJDK8034223() {
     doTest();
   }
 
-  public void testIDEA123352() throws Exception {
+  public void testIDEA123352() {
     doTest();
   }
 
-  public void testIncompleteMethodInInterface() throws Exception {
+  public void testIncompleteMethodInInterface() {
     doTest(false);
   }
 
-  public void testMostSpecificByReturnType() throws Exception {
+  public void testMostSpecificByReturnType() {
     doTest();
   }
 
-  public void testDifferentParamsLength() throws Exception {
+  public void testDifferentParamsLength() {
     doTest(false);
   }
 
-  public void testNoReturnTypeResolutionForThrownException() throws Exception {
+  public void testNoReturnTypeResolutionForThrownException() {
     doTest(false);
   }
 
-  public void testBoxingAndOverloadResolution() throws Exception {
+  public void testBoxingAndOverloadResolution() {
     doTest();
   }
 
-  public void testSuperMethodsInExactCheck() throws Exception {
+  public void testSuperMethodsInExactCheck() {
     doTest();
   }
 
-  public void testTargetTypeParameter() throws Exception {
+  public void testTargetTypeParameter() {
     doTest(false);
   }
 
-  public void testJDK8042508() throws Exception {
+  public void testJDK8042508() {
     if (Registry.is("JDK8042508.bug.fixed", false)) {
       doTest(false);
     }
   }
 
-  public void testIDEA125855() throws Exception {
+  public void testIDEA125855() {
     doTest();
   }
 
-  public void testIDEA127584() throws Exception {
+  public void testIDEA127584() {
     doTest();
   }
 
-  public void testVarargsSpecificsDuringMethodReferenceResolve() throws Exception {
+  public void testVarargsSpecificsDuringMethodReferenceResolve() {
     doTest();
   }
 
-  public void testFunctionalTypeComparisonWhenMethodsAreNotGeneric() throws Exception {
+  public void testFunctionalTypeComparisonWhenMethodsAreNotGeneric() {
     doTest(false);
   }
 
-  public void testInferSpecificForGenericMethodWhenCallProvidesExplicitTypeArguments() throws Exception {
+  public void testInferSpecificForGenericMethodWhenCallProvidesExplicitTypeArguments() {
     doTest(false);
   }
 
-  public void testIncompatibleSiteSubstitutionBounds() throws Exception {
+  public void testIncompatibleSiteSubstitutionBounds() {
     doTest(false);
   }
 
-  public void testEnsureArgTypesAreNotCalculatedDuringOverload() throws Exception {
+  public void testEnsureArgTypesAreNotCalculatedDuringOverload() {
     doTest();
   }
 

@@ -6,7 +6,7 @@ import javax.swing.*;
 
 /**
  * NOTE THIS FILE IS AUTO-GENERATED
- * DO NOT EDIT IT BY HAND, run build/scripts/icons.gant instead
+ * DO NOT EDIT IT BY HAND, run "Generate icon classes" configuration instead
  */
 public class DvcsImplIcons {
   private static Icon load(String path) {
@@ -14,6 +14,8 @@ public class DvcsImplIcons {
   }
 
   public static final Icon CherryPick = load("/icons/cherryPick.png"); // 16x16
+  public static final Icon CurrentBranchFavoriteLabel = load("/icons/currentBranchFavoriteLabel.png"); // 16x16
+  public static final Icon CurrentBranchLabel = load("/icons/currentBranchLabel.png"); // 16x16
   public static final Icon Favorite = load("/icons/favorite.png"); // 16x16
   public static final Icon FavoriteOnHover = load("/icons/favoriteOnHover.png"); // 16x16
   public static final Icon NotFavoriteOnHover = load("/icons/notFavoriteOnHover.png"); // 16x16

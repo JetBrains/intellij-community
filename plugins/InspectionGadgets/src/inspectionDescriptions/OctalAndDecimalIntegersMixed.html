@@ -1,8 +1,8 @@
 <html>
 <body>
-Reports any use of both octal and decimal integers in an array
-initialization. This is often due to creating an array by copying a list of numbers into an array without noticing
-that some of them are zero-padded, and will thus be interpreted by the Java compiler as octal.
+Reports mixed octal and decimal integer literals in a single array initializer.
+This is often due to copying a list of numbers into an array initializer, where
+some of the numbers in the array are zero-padded, and will thus be interpreted by the Java compiler as octal.
 <!-- tooltip end -->
 <p>
 

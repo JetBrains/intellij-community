@@ -18,7 +18,11 @@ package com.intellij.ide.util;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.lang.findUsages.LanguageFindUsages;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.meta.PsiMetaData;
+import com.intellij.psi.meta.PsiMetaOwner;
+import com.intellij.psi.meta.PsiPresentableMetaData;
 import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NotNull;
 
@@ -62,10 +66,12 @@ public class DeleteTypeDescriptionLocation extends ElementDescriptionLocation {
         if (element instanceof PsiDirectory) {
           return IdeBundle.message("prompt.delete.directory", count);
         }
-        if (!plural) {
-          return LanguageFindUsages.INSTANCE.forLanguage(element.getLanguage()).getType(element);
+        PsiMetaData metaData = element instanceof PsiMetaOwner ? ((PsiMetaOwner)element).getMetaData() : null;
+        String typeName = metaData instanceof PsiPresentableMetaData ? ((PsiPresentableMetaData)metaData).getTypeName() : null;
+        if (typeName == null) {
+          typeName = LanguageFindUsages.INSTANCE.forLanguage(element.getLanguage()).getType(element);
         }
-        return "elements";
+        return !plural ? typeName : StringUtil.pluralize(typeName);
       }
       return null;
     }

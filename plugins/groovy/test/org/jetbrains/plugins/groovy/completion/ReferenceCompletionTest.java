@@ -23,31 +23,31 @@ import org.jetbrains.plugins.groovy.util.TestUtils;
  */
 public class ReferenceCompletionTest extends CompletionTestBase {
 
-  public void testEscapedReference() throws Throwable { doTest(); }
-  public void testGrvy1021() throws Throwable { doTest(); }
-  public void testGrvy1021a() throws Throwable { doTest(); }
-  public void testGrvy1021b() throws Throwable { doTest(); }
-  public void testGrvy1156() throws Throwable { doTest(); }
-  public void testGrvy117() throws Throwable { doTest(); }
-  public void testGrvy1272() throws Throwable { doTest(); }
-  public void testGRVY1316() throws Throwable { doTest(); }
-  public void testGrvy194() throws Throwable { doTest(); }
-  public void testGrvy194_1() throws Throwable { doTest(); }
-  public void testGRVY223() throws Throwable { doTest(); }
-  public void testGrvy487() throws Throwable { doTest(); }
-  public void testGrvy491() throws Throwable { doTest(); }
-  public void testGrvy76() throws Throwable { doTest(); }
-  public void testGrvy959() throws Throwable { doTest(); }
-  public void testOnDemand() throws Throwable { doTest(); }
-  public void testStaticMethod() throws Throwable { doTest(); }
-  public void testThrowVariable() throws Throwable { doTest(); }
-  public void testTupleCompl1() throws Throwable { doTest(); }
-  public void testTupleLongListAssign() throws Throwable { doTest(); }
-  public void testTupleObjCompl() throws Throwable { doTest(); }
-  public void testTupleShortListAss() throws Throwable { doTest(); }
-  public void testTupleTypedCompl() throws Throwable { doTest(); }
-  public void testType() throws Throwable { doTest(); }
-  public void testUntyped() throws Throwable { doTest(); }
+  public void testEscapedReference() { doTest(); }
+  public void testGrvy1021() { doTest(); }
+  public void testGrvy1021a() { doTest(); }
+  public void testGrvy1021b() { doTest(); }
+  public void testGrvy1156() { doTest(); }
+  public void testGrvy117() { doTest(); }
+  public void testGrvy1272() { doTest(); }
+  public void testGRVY1316() { doTest(); }
+  public void testGrvy194() { doTest(); }
+  public void testGrvy194_1() { doTest(); }
+  public void testGRVY223() { doTest(); }
+  public void testGrvy487() { doTest(); }
+  public void testGrvy491() { doTest(); }
+  public void testGrvy76() { doTest(); }
+  public void testGrvy959() { doTest(); }
+  public void testOnDemand() { doTest(); }
+  public void testStaticMethod() { doTest(); }
+  public void testThrowVariable() { doTest(); }
+  public void testTupleCompl1() { doTest(); }
+  public void testTupleLongListAssign() { doTest(); }
+  public void testTupleObjCompl() { doTest(); }
+  public void testTupleShortListAss() { doTest(); }
+  public void testTupleTypedCompl() { doTest(); }
+  public void testType() { doTest(); }
+  public void testUntyped() { doTest(); }
 
   @Override
   protected String getBasePath() {

@@ -194,6 +194,11 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
     }
   }
 
+  @NotNull
+  public HighlighterIterator createBaseIterator(int startOffset) {
+    return super.createIterator(startOffset);
+  }
+
   private class MappingSegments extends SegmentArrayWithData {
     private MappedRange[] myRanges = new MappedRange[INITIAL_SIZE];
 
@@ -270,6 +275,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
       if (endIndex < mySegmentCount) {
         System.arraycopy(array, endIndex, array, startIndex, mySegmentCount - endIndex);
       }
+      Arrays.fill(array, mySegmentCount - (endIndex - startIndex), mySegmentCount, null);
       return array;
     }
 
@@ -484,6 +490,11 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
     }
   }
 
+  @Override
+  protected boolean hasAdditionalData(int segmentIndex) {
+    return getSegments().myRanges[segmentIndex] != null;
+  }
+
   private class LayeredHighlighterIteratorImpl implements LayeredHighlighterIterator {
     private final HighlighterIterator myBaseIterator;
     private HighlighterIterator myLayerIterator;
@@ -491,7 +502,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
     private Mapper myCurrentMapper;
 
     private LayeredHighlighterIteratorImpl(int offset) {
-      myBaseIterator = LayeredLexerEditorHighlighter.super.createIterator(offset);
+      myBaseIterator = createBaseIterator(offset);
       if (!myBaseIterator.atEnd()) {
         int shift = offset - myBaseIterator.getStart();
         initLayer(shift);

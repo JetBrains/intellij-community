@@ -3,8 +3,8 @@
 The inspection detects a situation where Java 9 module A requires Java 9 module B, but A doesn't use any package from B.
 Also, requiring the module 'java.base' is redundant.
 <p>
-  The fix deletes the 'requires' statement for such redundant dependencies.
-  If the deleted dependency re-exported modules that are actually used, the fix adds 'requires' statements for these modules.
+  The fix deletes the 'requires' directive for such redundant dependencies.
+  If the deleted dependency re-exported modules that are actually used, the fix adds 'requires' directive for these modules.
 <p>
 <small>New in 2017.1</small>
 </body>

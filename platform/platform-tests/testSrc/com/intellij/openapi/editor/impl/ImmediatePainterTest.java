@@ -208,7 +208,7 @@ public class ImmediatePainterTest extends AbstractEditorTest {
   //  assertTypedCorrectly(1, '+');
   //}
 
-  protected void init(String text) throws IOException {
+  protected void init(String text) {
     init(text, TestFileType.TEXT);
 
     myEditor.getSettings().setAdditionalLinesCount(0);

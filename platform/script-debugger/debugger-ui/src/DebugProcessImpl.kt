@@ -45,8 +45,10 @@ interface MultiVmDebugProcess {
       val mainVm = mainVm ?: return emptyList()
       val result = mutableListOf<Vm>()
       fun addRecursively(vm: Vm) {
-        result.add(vm)
-        vm.childVMs.forEach { addRecursively(it) }
+        if (vm.attachStateManager.isAttached) {
+          result.add(vm)
+          vm.childVMs.forEach { addRecursively(it) }
+        }
       }
       addRecursively(mainVm)
       return result

@@ -154,7 +154,7 @@ public class EmptyStatementBodyInspection extends BaseInspection {
       else if (element instanceof PsiEmptyStatement) {
         return !commentsAreContent ||
                PsiTreeUtil.getChildOfType(element, PsiComment.class) == null &&
-               !(PsiTreeUtil.skipSiblingsBackward(element, PsiWhiteSpace.class) instanceof PsiComment);
+               !(PsiTreeUtil.skipWhitespacesBackward(element) instanceof PsiComment);
       }
       else if (element instanceof PsiWhiteSpace) {
         return true;

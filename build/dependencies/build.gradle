@@ -55,6 +55,7 @@ apply from: 'setupJbre.gradle'
 apply from: 'setupKotlin.gradle'
 apply from: 'setupJetSign.gradle'
 apply from: 'setupAndroidSdk.gradle'
+apply from: 'setupBuildScriptsDeps.gradle'
 
 task setupDependencies(dependsOn: ['setupJdks', 'setupJbre', 'setupKotlinPlugin', 'setupJetSign'], group: 'dependencies')
 clean.dependsOn('cleanSetupJdks', 'cleanSetupJbre', 'cleanSetupKotlinPlugin', 'cleanSetupJetSign')

@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Transient;
+import com.sun.javafx.application.PlatformImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,6 +16,7 @@ import org.jetbrains.annotations.Nullable;
 public class IpnbSettings implements PersistentStateComponent<IpnbSettings> {
   private static final String IPNB_PASSWORD_KEY = "IPNB_SSH_SETTINGS_PASSWORD_KEY";
   private String myUsername;
+  private boolean hasFx = true;
 
   public static IpnbSettings getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, IpnbSettings.class);
@@ -27,7 +29,23 @@ public class IpnbSettings implements PersistentStateComponent<IpnbSettings> {
   public void setUsername(@Nullable String username) {
     myUsername = username;
   }
-  
+
+  public boolean hasFx() {
+    if (hasFx) {
+      try {
+        PlatformImpl.setImplicitExit(false);
+      }
+      catch (NoClassDefFoundError e) {
+        hasFx = false;
+      }
+    }
+    return hasFx;
+  }
+
+  public void setHasFx(boolean hasFx) {
+    this.hasFx = hasFx;
+  }
+
   @Transient
   @NotNull
   public String getPassword(@NotNull String projectPathHash) {

@@ -137,6 +137,11 @@ class Equations {
       .toList();
     return new Equations(newPairs, this.stable);
   }
+
+  Optional<Result> find(Direction direction) {
+    int key = direction.asInt();
+    return StreamEx.of(results).findFirst(pair -> pair.directionKey == key).map(pair -> pair.result);
+  }
 }
 
 class DirectionResultPair {
@@ -179,7 +184,14 @@ class DirectionResultPair {
   }
 }
 
-interface Result {}
+interface Result {
+  /**
+   * @return a stream of keys which should be solved to make this result final
+   */
+  default Stream<EKey> dependencies() {
+    return Stream.empty();
+  }
+}
 final class Final implements Result {
   @NotNull final Value value;
 
@@ -239,6 +251,11 @@ final class Pending implements Result {
   }
 
   @Override
+  public Stream<EKey> dependencies() {
+    return Arrays.stream(delta).flatMap(component -> Stream.of(component.ids));
+  }
+
+  @Override
   public String toString() {
     return "Pending["+delta.length+"]";
   }
@@ -259,11 +276,15 @@ final class Effects implements Result {
     if(this.equals(other)) return this;
     Set<EffectQuantum> newEffects = new HashSet<>(this.effects);
     newEffects.addAll(other.effects);
+    if(newEffects.contains(EffectQuantum.TopEffectQuantum)) {
+      newEffects = TOP_EFFECTS;
+    }
     DataValue newReturnValue = this.returnValue.equals(other.returnValue) ? this.returnValue : DataValue.UnknownDataValue1;
     return new Effects(newReturnValue, newEffects);
   }
 
-  Stream<EKey> dependencies() {
+  @Override
+  public Stream<EKey> dependencies() {
     return Stream.concat(returnValue.dependencies(), effects.stream().flatMap(EffectQuantum::dependencies));
   }
 

@@ -21,7 +21,7 @@ import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCa
  * @author yole
  */
 public class CreateInnerClassFromNewTest extends LightQuickFixParameterizedTestCase {
-  public void test() throws Exception {
+  public void test() {
     doAllTests();
   }
 

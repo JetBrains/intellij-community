@@ -1,7 +1,7 @@
 <component xmlns="http://jetbrains.org/intellij/schema/application-info"
            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
            xsi:schemaLocation="http://jetbrains.org/intellij/schema/application-info http://jetbrains.org/intellij/schema/ApplicationInfo.xsd">
-  <version major="2017" minor="2" eap="true"/>
+  <version major="2017" minor="3" eap="true"/>
   <company name="JetBrains s.r.o." url="https://www.jetbrains.com/?fromIDE"/>
   <build number="__BUILD_NUMBER__" date="__BUILD_DATE__"/>
   <logo url="/pycharm_core_logo.png" textcolor="000000" progressColor="08f5d6" progressX="114" progressY="278" progressHeight="3"/>
@@ -9,7 +9,7 @@
          copyrightForeground="313131" linkColor="1f29b2"/>
   <icon size32="/PyCharmCore32.png" size16="/PyCharmCore16.png" ico="PyCharmCore.ico"/>
   <package code="__PACKAGE_CODE__"/>
-  <names product="PyCharm" fullname="PyCharm Community Edition" script="charm"/>
+  <names product="PyCharm" edition="Community Edition" script="charm"/>
 
   <welcome-screen logo-url="/PyCharmCoreWelcomeScreen.png"/>
 
@@ -19,7 +19,6 @@
 
   <help webhelp-url="https://www.jetbrains.com/pycharm/webhelp"/>
   <documentation url="https://www.jetbrains.com/pycharm/documentation"/>
-
   <support url="https://intellij-support.jetbrains.com/hc/en-us#"/>
   <feedback eap-url="https://youtrack.jetbrains.com/newissue?project=PY&amp;clearDraft=true&amp;c=Affected+versions+$BUILD&amp;description=$DESCR"
             release-url="https://www.jetbrains.com/feedback/feedback.jsp?product=PyCharm&amp;build=$BUILD&amp;timezone=$TIMEZONE&amp;eval=$EVAL"/>

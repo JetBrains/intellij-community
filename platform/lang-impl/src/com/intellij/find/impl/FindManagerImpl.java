@@ -34,7 +34,6 @@ import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -91,14 +90,14 @@ public class FindManagerImpl extends FindManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.find.impl.FindManagerImpl");
 
   private final FindUsagesManager myFindUsagesManager;
-  private boolean isFindWasPerformed = false;
-  private boolean isSelectNextOccurrenceWasPerformed = false;
+  private boolean isFindWasPerformed;
+  private boolean isSelectNextOccurrenceWasPerformed;
   private Point myReplaceInFilePromptPos = new Point(-1, -1);
   private Point myReplaceInProjectPromptPos = new Point(-1, -1);
   private final FindModel myFindInProjectModel = new FindModel();
   private final FindModel myFindInFileModel = new FindModel();
-  private FindModel myFindNextModel = null;
-  private FindModel myPreviousFindModel = null;
+  private FindModel myFindNextModel;
+  private FindModel myPreviousFindModel;
   private static final FindResultImpl NOT_FOUND_RESULT = new FindResultImpl();
   private final Project myProject;
   private final MessageBus myBus;
@@ -120,12 +119,9 @@ public class FindManagerImpl extends FindManager {
     myFindInProjectModel.setMultipleFiles(true);
 
     NotificationsConfigurationImpl.remove("FindInPath");
-    Disposer.register(project, new Disposable() {
-      @Override
-      public void dispose() {
-        if (myHelper != null) {
-          Disposer.dispose(myHelper);
-        }
+    Disposer.register(project, () -> {
+      if (myHelper != null) {
+        Disposer.dispose(myHelper);
       }
     });
   }
@@ -145,7 +141,9 @@ public class FindManagerImpl extends FindManager {
   }
 
   @PromptResultValue
-  public int showPromptDialogImpl(@NotNull final FindModel model, String title, @Nullable final MalformedReplacementStringException exception) {
+  private int showPromptDialogImpl(@NotNull final FindModel model,
+                                   String title,
+                                   @Nullable final MalformedReplacementStringException exception) {
     ReplacePromptDialog replacePromptDialog = new ReplacePromptDialog(model.isMultipleFiles(), title, myProject, exception) {
       @Override
       @Nullable
@@ -195,12 +193,7 @@ public class FindManagerImpl extends FindManager {
   public void showFindDialog(@NotNull FindModel model, @NotNull Runnable okHandler) {
     if (myHelper == null || Disposer.isDisposed(myHelper)) {
       myHelper = new FindUIHelper(myProject, model, okHandler);
-        Disposer.register(myHelper, new Disposable() {
-          @Override
-          public void dispose() {
-            myHelper = null;
-          }
-        });
+        Disposer.register(myHelper, () -> myHelper = null);
     }
     else {
       myHelper.setModel(model);
@@ -376,7 +369,7 @@ public class FindManagerImpl extends FindManager {
       return true;
     }
   }
-  private static Key<FindExceptCommentsOrLiteralsData> ourExceptCommentsOrLiteralsDataKey = Key.create("except.comments.literals.search.data");
+  private static final Key<FindExceptCommentsOrLiteralsData> ourExceptCommentsOrLiteralsDataKey = Key.create("except.comments.literals.search.data");
 
   private Predicate<FindResult> getFindContextPredicate(@NotNull FindModel model, VirtualFile file, CharSequence text) {
     if (file == null) return null;
@@ -505,7 +498,7 @@ public class FindManagerImpl extends FindManager {
     return new StringSearcher(model.getStringToFind(), model.isCaseSensitive(), model.isForward());
   }
 
-  public static void clearPreviousFindData(FindModel model) {
+  static void clearPreviousFindData(FindModel model) {
     synchronized (model) {
       model.putUserData(ourCommentsLiteralsSearchDataKey, null);
       model.putUserData(ourExceptCommentsOrLiteralsDataKey, null);
@@ -514,7 +507,7 @@ public class FindManagerImpl extends FindManager {
 
   private static class CommentsLiteralsSearchData {
     final VirtualFile lastFile;
-    int startOffset = 0;
+    int startOffset;
     final SyntaxHighlighterOverEditorHighlighter highlighter;
 
     TokenSet tokensOfInterest;
@@ -523,9 +516,9 @@ public class FindManagerImpl extends FindManager {
     final Set<Language> relevantLanguages;
     final FindModel model;
 
-    public CommentsLiteralsSearchData(VirtualFile lastFile, Set<Language> relevantLanguages,
-                                      SyntaxHighlighterOverEditorHighlighter highlighter, TokenSet tokensOfInterest,
-                                      StringSearcher searcher, Matcher matcher, FindModel model) {
+    CommentsLiteralsSearchData(VirtualFile lastFile, Set<Language> relevantLanguages,
+                               SyntaxHighlighterOverEditorHighlighter highlighter, TokenSet tokensOfInterest,
+                               StringSearcher searcher, Matcher matcher, FindModel model) {
       this.lastFile = lastFile;
       this.highlighter = highlighter;
       this.tokensOfInterest = tokensOfInterest;
@@ -636,8 +629,8 @@ public class FindManagerImpl extends FindManager {
         final TextAttributesKey[] keys = data.highlighter.getTokenHighlights(tokenType);
 
         if (tokens.contains(tokenType) ||
-            (model.isInStringLiteralsOnly() && ChunkExtractor.isHighlightedAsString(keys)) ||
-            (model.isInCommentsOnly() && ChunkExtractor.isHighlightedAsComment(keys))
+            model.isInStringLiteralsOnly() && ChunkExtractor.isHighlightedAsString(keys) ||
+            model.isInCommentsOnly() && ChunkExtractor.isHighlightedAsComment(keys)
           ) {
           int start = lexer.getTokenStart();
           int end = lexer.getTokenEnd();
@@ -727,7 +720,8 @@ public class FindManagerImpl extends FindManager {
     return tokensOfInterest;
   }
 
-  private static @Nullable SyntaxHighlighter getHighlighter(VirtualFile file, @Nullable Language lang) {
+  @Nullable
+  private static SyntaxHighlighter getHighlighter(VirtualFile file, @Nullable Language lang) {
     SyntaxHighlighter syntaxHighlighter = lang != null ? SyntaxHighlighterFactory.getSyntaxHighlighter(lang, null, file) : null;
     if (lang == null || syntaxHighlighter instanceof PlainSyntaxHighlighter) {
       syntaxHighlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(file.getFileType(), null, file);

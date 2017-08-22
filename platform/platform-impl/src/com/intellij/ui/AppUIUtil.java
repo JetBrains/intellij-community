@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,9 +34,11 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.ui.AppIcon.MacAppIcon;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.SwingHelper;
 import org.jetbrains.annotations.NonNls;
@@ -63,36 +65,46 @@ import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
  */
 public class AppUIUtil {
   private static final String VENDOR_PREFIX = "jetbrains-";
+  private static final boolean DEBUG_MODE = SystemProperties.getBooleanProperty("idea.debug.mode", false);
+  private static boolean ourMacDocIconSet = false;
 
   public static void updateWindowIcon(@NotNull Window window) {
-    window.setIconImages(getAppIconImages());
-  }
-
-  @SuppressWarnings({"UnnecessaryFullyQualifiedName", "deprecation"})
-  private static List<Image> getAppIconImages() {
     ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
     List<Image> images = ContainerUtil.newArrayListWithCapacity(3);
 
-    if (SystemInfo.isUnix) {//MacOS is Unix too
+    if (SystemInfo.isUnix) {
       String bigIconUrl = appInfo.getBigIconUrl();
       if (bigIconUrl != null) {
-        images.add(com.intellij.util.ImageLoader.loadFromResource(bigIconUrl));
+        Image bigIcon = ImageLoader.loadFromResource(bigIconUrl);
+        if (bigIcon != null) {
+          images.add(bigIcon);
+        }
       }
     }
 
-    images.add(com.intellij.util.ImageLoader.loadFromResource(appInfo.getIconUrl()));
-    images.add(com.intellij.util.ImageLoader.loadFromResource(appInfo.getSmallIconUrl()));
+    images.add(ImageLoader.loadFromResource(appInfo.getIconUrl()));
+    images.add(ImageLoader.loadFromResource(appInfo.getSmallIconUrl()));
+
     for (int i = 0; i < images.size(); i++) {
       Image image = images.get(i);
       if (image instanceof JBHiDPIScaledImage) {
         images.set(i, ((JBHiDPIScaledImage)image).getDelegate());
       }
     }
-    return images;
+
+    if (!images.isEmpty()) {
+      if (!SystemInfo.isMac) {
+        window.setIconImages(images);
+      }
+      else if (DEBUG_MODE && !ourMacDocIconSet) {
+        MacAppIcon.setDockIcon(ImageUtil.toBufferedImage(images.get(0)));
+        ourMacDocIconSet = true;
+      }
+    }
   }
 
   public static void invokeLaterIfProjectAlive(@NotNull Project project, @NotNull Runnable runnable) {
-    final Application application = ApplicationManager.getApplication();
+    Application application = ApplicationManager.getApplication();
     if (application.isDispatchThread()) {
       runnable.run();
     }
@@ -123,8 +135,8 @@ public class AppUIUtil {
 
   public static void updateFrameClass() {
     try {
-      final Toolkit toolkit = Toolkit.getDefaultToolkit();
-      final Class<? extends Toolkit> aClass = toolkit.getClass();
+      Toolkit toolkit = Toolkit.getDefaultToolkit();
+      Class<? extends Toolkit> aClass = toolkit.getClass();
       if ("sun.awt.X11.XToolkit".equals(aClass.getName())) {
         ReflectionUtil.setField(aClass, toolkit, null, "awtAppClassName", getFrameClass());
       }
@@ -132,13 +144,16 @@ public class AppUIUtil {
     catch (Exception ignore) { }
   }
 
+  // keep in sync with LinuxDistributionBuilder#getFrameClass
   public static String getFrameClass() {
-    String name = ApplicationNamesInfo.getInstance().getProductName().toLowerCase(Locale.US);
-    String wmClass = VENDOR_PREFIX + name.replace(' ', '-');
-    if ("true".equals(System.getProperty("idea.debug.mode"))) {
-      wmClass += "-debug";
-    }
-    return PlatformUtils.isCommunityEdition() ? wmClass + "-ce" : wmClass;
+    String name = ApplicationNamesInfo.getInstance().getFullProductNameWithEdition()
+      .toLowerCase(Locale.US)
+      .replace(' ', '-')
+      .replace("intellij-idea", "idea").replace("android-studio", "studio")  // backward compatibility
+      .replace("-community-edition", "-ce").replace("-ultimate-edition", "").replace("-professional-edition", "");
+    String wmClass = VENDOR_PREFIX + name;
+    if (DEBUG_MODE) wmClass += "-debug";
+    return wmClass;
   }
 
   public static void registerBundledFonts() {
@@ -239,7 +254,6 @@ public class AppUIUtil {
    */
   public static void showPrivacyPolicyAgreement(@NotNull String htmlText) {
     DialogWrapper dialog = new DialogWrapper(true) {
-      @Nullable
       @Override
       protected JComponent createCenterPanel() {
         JPanel centerPanel = new JPanel(new BorderLayout(JBUI.scale(5), JBUI.scale(5)));

@@ -17,7 +17,7 @@ package com.intellij.java.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.unneededThrows.RedundantThrowsDeclaration;
+import com.intellij.codeInspection.unneededThrows.RedundantThrowsDeclarationLocalInspection;
 import org.jetbrains.annotations.NotNull;
 
 
@@ -25,10 +25,10 @@ public class MethodThrowsTest extends LightQuickFixParameterizedTestCase {
   @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
-    return new LocalInspectionTool[] {new RedundantThrowsDeclaration()};
+    return new LocalInspectionTool[] {new RedundantThrowsDeclarationLocalInspection()};
   }
 
-  public void test() throws Exception { doAllTests(); }
+  public void test() { doAllTests(); }
 
   @Override
   protected String getBasePath() {

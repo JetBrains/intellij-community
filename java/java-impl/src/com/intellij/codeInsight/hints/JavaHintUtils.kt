@@ -17,17 +17,37 @@ package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.completion.CompletionMemory
 import com.intellij.codeInsight.completion.JavaMethodCallElement
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil
 import com.intellij.psi.impl.source.tree.java.PsiMethodCallExpressionImpl
 import com.intellij.psi.impl.source.tree.java.PsiNewExpressionImpl
 import com.intellij.psi.util.TypeConversionUtil
+import com.intellij.util.IncorrectOperationException
 
 
 object JavaInlayHintsProvider {
 
   fun hints(callExpression: PsiCallExpression): Set<InlayInfo> {
-    if (JavaMethodCallElement.hasCompletionHints(callExpression)) return emptySet()
+    if (JavaMethodCallElement.isCompletionMode(callExpression)) {
+      val method = CompletionMemory.getChosenMethod(callExpression)?:return emptySet()
+      
+      val params = method.parameterList.parameters
+      val arguments = callExpression.argumentList?.expressions ?: emptyArray()
+      
+      return  params.mapIndexedNotNull { i, parameter -> 
+        val paramName = parameter.name ?: return@mapIndexedNotNull null
+        val varargHint = parameter.type is PsiEllipsisType && params.size > 1 && 
+                         (arguments.size == params.size - 1 || params.size == 2 && arguments.isEmpty())
+        val paramToShow = (if (varargHint) ", " else "") + paramName
+        val offset = if (i < arguments.size) inlayOffset(arguments[i]) 
+                        else if (varargHint && i <= arguments.size) inlayOffset(arguments[i - 1], true)
+                        else (callExpression.argumentList?.textOffset?:return@mapIndexedNotNull null) + 1
+        InlayInfo(paramToShow, offset, false, params.size == 1, varargHint)
+      }.toSet()
+    }
+    
+    if (!EditorSettingsExternalizable.getInstance().isShowParameterNameHints) return emptySet()
     
     val resolveResult = callExpression.resolveMethodGenerics()
     val hints = methodHints(callExpression, resolveResult)
@@ -69,10 +89,53 @@ object JavaInlayHintsProvider {
     
     if (element is PsiMethod && isMethodToShow(element, callExpression)) {
       val info = callInfo(callExpression, element)
-      return hintSet(info, substitutor)
+      if (isCallInfoToShow(info)) {
+        return hintSet(info, substitutor)
+      }
     }
     
     return emptySet()
+  }
+
+  private fun isCallInfoToShow(info: CallInfo): Boolean {
+    val hintsProvider = JavaInlayParameterHintsProvider.getInstance()
+    if (hintsProvider.ignoreOneCharOneDigitHints.get() && info.allParamsSequential()) {
+      return false
+    }
+    return true
+  }
+
+  private fun String.decomposeOrderedParams(): Pair<String, Int>? {
+    val firstDigit = indexOfFirst { it.isDigit() }
+    if (firstDigit < 0) return null
+
+    val prefix = substring(0, firstDigit)
+    try {
+      val number = substring(firstDigit, length).toInt()
+      return prefix to number
+    }
+    catch (e: NumberFormatException) {
+      return null
+    }
+  }
+
+  private fun CallInfo.allParamsSequential(): Boolean {
+    val paramNames = regularArgs
+      .map { it.parameter.name?.decomposeOrderedParams() }
+      .filterNotNull()
+
+    if (paramNames.size > 1 && paramNames.size == regularArgs.size) {
+      val prefixes = paramNames.map { it.first }
+      if (prefixes.toSet().size != 1) return false
+
+      val numbers = paramNames.map { it.second }
+      val first = numbers.first()
+      if (first == 0 || first == 1) {
+        return numbers.areSequential()
+      }
+    }
+
+    return false
   }
 
   private fun hintSet(info: CallInfo, substitutor: PsiSubstitutor): Set<InlayInfo> {
@@ -88,7 +151,7 @@ object JavaInlayHintsProvider {
     }
     
     resultSet.addAll(info.unclearInlays(substitutor))
-    
+
     return resultSet
   }
 
@@ -150,6 +213,15 @@ object JavaInlayHintsProvider {
   
 }
 
+private fun List<Int>.areSequential(): Boolean {
+  if (size == 0) throw IncorrectOperationException("List is empty")
+  val ordered = (first()..first() + size - 1).toList()
+  if (ordered.size == size) {
+    return zip(ordered).all { it.first == it.second }
+  }
+  return false
+}
+
 
 private fun inlayInfo(info: CallArgumentInfo, showOnlyIfExistedBefore: Boolean = false): InlayInfo? {
   return inlayInfo(info.argument, info.parameter, showOnlyIfExistedBefore)
@@ -163,12 +235,14 @@ private fun inlayInfo(callArgument: PsiExpression, methodParam: PsiParameter, sh
   return InlayInfo(paramToShow, offset, showOnlyIfExistedBefore)
 }
 
-fun inlayOffset(callArgument: PsiExpression): Int {
+fun inlayOffset(callArgument: PsiExpression): Int = inlayOffset(callArgument, false)
+
+fun inlayOffset(callArgument: PsiExpression, atEnd: Boolean): Int {
   if (callArgument.textRange.isEmpty) {
     val next = callArgument.nextSibling as? PsiWhiteSpace
     if (next != null) return next.textRange.endOffset
   }
-  return callArgument.textRange.startOffset
+  return if (atEnd) callArgument.textRange.endOffset else callArgument.textRange.startOffset
 }
 
 private fun isUnclearExpression(callArgument: PsiElement): Boolean {

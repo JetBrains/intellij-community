@@ -52,7 +52,7 @@ public class PythonDocTestCommandLineState extends PythonTestCommandLineStateBas
         specs.add(myConfig.getScriptName() + "::" + myConfig.getClassName() + "::" + myConfig.getMethodName());
         break;
       case TEST_FOLDER:
-	if (!myConfig.getPattern().isEmpty())
+	if (myConfig.usePattern() && !myConfig.getPattern().isEmpty())
           specs.add(myConfig.getFolderName() + "/" + ";" + myConfig.getPattern());
         else
           specs.add(myConfig.getFolderName() + "/");

@@ -38,7 +38,7 @@ public class NullnessUtil {
 
   static Boolean calcCanBeNull(DfaVariableValue value) {
     PsiModifierListOwner var = value.getPsiVariable();
-    Nullness nullability = DfaPsiUtil.getElementNullability(value.getVariableType(), var);
+    Nullness nullability = DfaPsiUtil.getElementNullabilityIgnoringParameterInference(value.getVariableType(), var);
     if (nullability != Nullness.UNKNOWN) {
       return toBoolean(nullability);
     }
@@ -147,6 +147,13 @@ public class NullnessUtil {
     if (expression instanceof PsiReferenceExpression) {
       PsiElement target = ((PsiReferenceExpression)expression).resolve();
       return DfaPsiUtil.getElementNullability(expression.getType(), (PsiModifierListOwner)target);
+    }
+    if (expression instanceof PsiAssignmentExpression) {
+      PsiAssignmentExpression assignment = (PsiAssignmentExpression)expression;
+      if(assignment.getOperationTokenType().equals(JavaTokenType.EQ)) {
+        return getExpressionNullness(assignment.getRExpression());
+      }
+      return Nullness.NOT_NULL;
     }
     if (expression instanceof PsiMethodCallExpression) {
       PsiMethod method = ((PsiMethodCallExpression)expression).resolveMethod();

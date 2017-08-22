@@ -70,6 +70,13 @@ public class FontFallbackIterator {
     return this;
   }
 
+  public FontFallbackIterator setPreferredFont(@NotNull String familyName, int size) {
+    FontPreferencesImpl preferences = new FontPreferencesImpl();
+    preferences.register(familyName, size);
+    myFontPreferences = preferences;
+    return this;
+  }
+
   public FontFallbackIterator setFontStyle(@JdkConstants.FontStyle int fontStyle) {
     myFontStyle = fontStyle;
     return this;

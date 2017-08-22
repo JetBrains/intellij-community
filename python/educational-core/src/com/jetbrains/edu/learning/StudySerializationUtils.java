@@ -742,6 +742,7 @@ public class StudySerializationUtils {
             case "code": return gson.fromJson(json, CodeTask.class);
             case "pycharm": return gson.fromJson(json, PyCharmTask.class);
             case "subtasks": return gson.fromJson(json, TaskWithSubtasks.class);
+            case "output": return gson.fromJson(json, OutputTask.class);
             default: {
               LOG.warn("Unsupported task type " + taskType);
               return null;

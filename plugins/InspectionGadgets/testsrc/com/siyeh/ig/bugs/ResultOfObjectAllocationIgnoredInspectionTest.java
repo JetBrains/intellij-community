@@ -24,13 +24,15 @@ import org.jetbrains.annotations.Nullable;
  */
 public class ResultOfObjectAllocationIgnoredInspectionTest extends LightInspectionTestCase {
 
-  public void testResultOfObjectAllocationIgnored() throws Exception {
+  public void testResultOfObjectAllocationIgnored() {
     doTest();
   }
 
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {
-    return new ResultOfObjectAllocationIgnoredInspection();
+    final ResultOfObjectAllocationIgnoredInspection inspection = new ResultOfObjectAllocationIgnoredInspection();
+    inspection.ignoredClasses.add("javax.swing.JFrame");
+    return inspection;
   }
 }

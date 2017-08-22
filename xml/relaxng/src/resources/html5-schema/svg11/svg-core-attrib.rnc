@@ -28,11 +28,15 @@ grammar {
     SVG.base.attrib = attribute xml:base { URI.datatype }?
     SVG.lang.attrib = attribute xml:lang { LanguageCode.datatype }?
     SVG.space.attrib = attribute xml:space { string "default" | string "preserve" }?
+    SVG.tabindex.attrib = attribute tabindex { Integer.datatype }?
+    SVG.focusable.attrib = attribute focusable { string "true" | string "false" }?
     SVG.Core.extra.attrib = empty
     SVG.Core.attrib =
         SVG.id.attrib,
         SVG.base.attrib,
         SVG.lang.attrib,
         SVG.space.attrib,
+        SVG.tabindex.attrib,
+        SVG.focusable.attrib,
         SVG.Core.extra.attrib
 }

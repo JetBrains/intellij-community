@@ -20,28 +20,29 @@ import org.jetbrains.jps.idea.IdeaProjectLoader
 String home = IdeaProjectLoader.guessHome(this)
 
 target(compile: "Compile project") {
-  new IdeaCommunityBuilder(home, binding).compileModules()
+  new IdeaCommunityBuilder(home).compileModules()
 }
 
 target('default': 'The default target') {
   def options = new BuildOptions()
   options.buildNumber = null //we cannot provide consistent build number for IDEA Community if it's built separately so use *.SNAPSHOT number to avoid confusion
-  new IdeaCommunityBuilder(home, binding, options).buildDistributions()
+  new IdeaCommunityBuilder(home, options).buildDistributions()
 }
 
 target('build-intellij-core' : 'Build intellij-core.zip') {
   def options = new BuildOptions()
-  new IdeaCommunityBuilder(home, binding, options).buildIntelliJCore()
+  new IdeaCommunityBuilder(home, options).buildIntelliJCore()
 }
 
 target('update-from-sources': 'Update locally installed distribution from compiled classes') {
   def options = new BuildOptions()
   options.useCompiledClassesFromProjectOutput = true
   options.buildStepsToSkip << BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP
+  options.buildStepsToSkip << BuildOptions.PROVIDED_MODULES_LIST_STEP
   options.buildStepsToSkip << BuildOptions.SOURCES_ARCHIVE_STEP
   //when IDEA CE is updated from IDEA UE sources project should be loaded from IDEA UE directory
   String projectHome = isDefined("devIdeaHome") ? devIdeaHome : home
-  new IdeaCommunityBuilder(home, binding, options, projectHome).buildUnpackedDistribution(deploy)
+  new IdeaCommunityBuilder(home, options, projectHome).buildUnpackedDistribution(deploy)
 }
 
 private boolean isDefined(String key) {

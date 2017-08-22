@@ -15,23 +15,16 @@
  */
 package com.jetbrains.python.testing.pytest;
 
-import com.google.common.collect.Lists;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileSystemItem;
 import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyStatement;
+import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.testing.PythonUnitTestUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 /**
  * User: catherine
+ *
  * @deprecated use {@link PythonUnitTestUtil} will be removed in 2018
  */
 @Deprecated
@@ -40,11 +33,31 @@ public class PyTestUtil {
 
   @Deprecated
   public static boolean isPyTestFunction(PyFunction pyFunction) {
-    return PythonUnitTestUtil.isTestFunction(pyFunction);
+    String name = pyFunction.getName();
+    if (name != null && name.startsWith("test")) {
+      return true;
+    }
+    return false;
   }
 
   @Deprecated
   public static boolean isPyTestClass(final PyClass pyClass, @Nullable final TypeEvalContext context) {
-    return PythonUnitTestUtil.isTestClass(pyClass, context);
+    final TypeEvalContext contextToUse = (context != null ? context : TypeEvalContext.codeInsightFallback(pyClass.getProject()));
+    for (PyClassLikeType type : pyClass.getAncestorTypes(contextToUse)) {
+      if (type != null && PythonUnitTestUtil.PYTHON_TEST_QUALIFIED_CLASSES.contains(type.getClassQName())) {
+        return true;
+      }
+    }
+    final String className = pyClass.getName();
+    if (className == null) return false;
+    final String name = className.toLowerCase();
+    if (name.startsWith("test")) {
+      for (PyFunction cls : pyClass.getMethods()) {
+        if (isPyTestFunction(cls)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 }

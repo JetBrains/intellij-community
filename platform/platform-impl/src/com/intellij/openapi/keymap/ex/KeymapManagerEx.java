@@ -39,7 +39,7 @@ public abstract class KeymapManagerEx extends KeymapManager {
   public abstract void setActiveKeymap(@Nullable Keymap keymap);
 
   /**
-   * Instructs the manager that one action should use shortcut of another one (<code>'use-shortcut-of'</code> attribute at
+   * Instructs the manager that one action should use shortcut of another one ({@code 'use-shortcut-of'} attribute at
    * action's config located at plugin.xml).
    *
    * @param sourceActionId if of the action which shortcut should be used for the 'target action'

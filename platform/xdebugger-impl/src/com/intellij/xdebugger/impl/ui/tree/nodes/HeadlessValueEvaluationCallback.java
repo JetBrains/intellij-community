@@ -23,7 +23,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
-import com.intellij.xdebugger.impl.XDebugSessionImpl;
+import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,7 +62,7 @@ public class HeadlessValueEvaluationCallback implements XFullValueEvaluator.XFul
   public void errorOccurred(@NotNull String errorMessage) {
     try {
       String message = XDebuggerBundle.message("load.value.task.error", errorMessage);
-      XDebugSessionImpl.NOTIFICATION_GROUP.createNotification(message, NotificationType.ERROR).notify(myNode.getTree().getProject());
+      XDebuggerManagerImpl.NOTIFICATION_GROUP.createNotification(message, NotificationType.ERROR).notify(myNode.getTree().getProject());
     }
     finally {
       evaluationComplete(errorMessage);

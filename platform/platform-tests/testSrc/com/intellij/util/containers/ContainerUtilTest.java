@@ -18,6 +18,7 @@ package com.intellij.util.containers;
 import com.intellij.openapi.util.Condition;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ArrayUtil;
+import one.util.streamex.IntStreamEx;
 import org.junit.Test;
 
 import java.util.*;
@@ -74,7 +75,7 @@ public class ContainerUtilTest {
   }
 
   @Test
-  public void testIterateWithCondition() throws Exception {
+  public void testIterateWithCondition() {
     Condition<Integer> cond = integer -> integer > 2;
 
     assertIterating(Arrays.asList(1, 4, 2, 5), cond, 4, 5);
@@ -89,7 +90,7 @@ public class ContainerUtilTest {
   }
 
   @Test
-  public void testIteratingBackward() throws Exception {
+  public void testIteratingBackward() {
     List<String> ss = new ArrayList<>();
     ss.add("a");
     ss.add("b");
@@ -161,11 +162,13 @@ public class ContainerUtilTest {
   @Test
   public void testCOWListPerformanceAdd() {
     List<Object> list = ContainerUtil.createLockFreeCopyOnWriteList();
+    int count = 15000;
+    List<Integer> ints = IntStreamEx.range(0, count).boxed().toList();
     PlatformTestUtil.startPerformanceTest("COWList add", 3500, () -> {
       for (int it = 0; it < 10; it++) {
         list.clear();
-        for (int i = 0; i < 15000; i++) {
-          list.add(i);
+        for (int i = 0; i < count; i++) {
+          list.add(ints.get(i));
         }
       }
     }).assertTiming();

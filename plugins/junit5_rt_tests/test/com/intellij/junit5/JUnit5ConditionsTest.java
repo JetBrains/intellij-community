@@ -27,7 +27,7 @@ import java.util.Arrays;
 
 class JUnit5ConditionsTest {
   @Test
-  void disabledConditions() throws Exception {
+  void disabledConditions() {
     String[] disabledClasses = {DisabledClass.class.getName(), MetaDisabledClass.class.getName()};
     Arrays.stream(disabledClasses)
       .flatMap(klass -> Arrays.stream(new String[]{klass, klass + ",test1"}))

@@ -104,18 +104,24 @@ public class ConfigurationModuleSelector {
   }
 
   public void reset(final ModuleBasedConfiguration configuration) {
-    final Module[] modules = ModuleManager.getInstance(getProject()).getModules();
-    final List<Module> list = new ArrayList<>();
-    for (final Module module : modules) {
-      if (isModuleAccepted(module)) list.add(module);
-    }
-    setModules(list);
+    reset();
     if (myModulesList != null) {
       myModulesList.setSelectedItem(configuration.getConfigurationModule().getModule());
     }
     else {
       myModulesDescriptionsComboBox.setSelectedModule(myProject, configuration.getConfigurationModule().getModuleName());
     }
+  }
+
+  public void reset() {
+    final Module[] modules = ModuleManager.getInstance(getProject()).getModules();
+    final List<Module> list = new ArrayList<>();
+    for (final Module module : modules) {
+      if (isModuleAccepted(module)) {
+        list.add(module);
+      }
+    }
+    setModules(list);
   }
 
   public boolean isModuleAccepted(final Module module) {

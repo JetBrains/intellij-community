@@ -94,7 +94,7 @@ public class PyCallHierarchyTest extends PyTestCase {
     return getVerificationFilePath(CALLEE_VERIFICATION_SUFFIX);
   }
 
-  private void checkHierarchyTreeStructure(PyFunction function) throws Exception {
+  private void checkHierarchyTreeStructure(PyFunction function) {
     final PyCallerFunctionTreeStructure callerStructure = new PyCallerFunctionTreeStructure(myFixture.getProject(), function,
                                                                                             HierarchyBrowserBaseEx.SCOPE_PROJECT);
     assertSameLinesWithFile(getVerificationCallerFilePath(), dump(callerStructure, null));
@@ -103,7 +103,7 @@ public class PyCallHierarchyTest extends PyTestCase {
     assertSameLinesWithFile(getVerificationCalleeFilePath(), dump(calleeStructure, null));
   }
 
-  private void doTestCallHierarchy(String ... fileNames) throws Exception {
+  private void doTestCallHierarchy(String ... fileNames) {
     configureByFiles(fileNames);
 
     final PsiElement targetElement = TargetElementUtil
@@ -116,43 +116,43 @@ public class PyCallHierarchyTest extends PyTestCase {
     checkHierarchyTreeStructure(function);
   }
 
-  public void testSimple() throws Exception {
+  public void testSimple() {
     doTestCallHierarchy("main.py");
   }
 
-  public void testArgumentList() throws Exception {
+  public void testArgumentList() {
     doTestCallHierarchy("main.py", "file_1.py");
   }
 
-  public void testDefaultValue() throws Exception {
+  public void testDefaultValue() {
     doTestCallHierarchy("main.py");
   }
 
-  public void testLambda() throws Exception {
+  public void testLambda() {
     doTestCallHierarchy("main.py", "file_1.py");
   }
 
-  public void testNestedCall() throws Exception {
+  public void testNestedCall() {
     doTestCallHierarchy("main.py", "file_1.py");
   }
 
-  public void testInheritance() throws Exception {
+  public void testInheritance() {
     doTestCallHierarchy("main.py");
   }
 
-  public void testOverriddenMethod() throws Exception {
+  public void testOverriddenMethod() {
     doTestCallHierarchy("main.py", "file_1.py");
   }
 
-  public void testInnerFunction() throws Exception {
+  public void testInnerFunction() {
     doTestCallHierarchy("main.py");
   }
 
-  public void testConstructor() throws Exception {
+  public void testConstructor() {
     doTestCallHierarchy("main.py");
   }
 
-  public void testParentheses() throws Exception {
+  public void testParentheses() {
     doTestCallHierarchy("main.py", "file_1.py");
   }
 }

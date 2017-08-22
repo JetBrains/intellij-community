@@ -28,7 +28,6 @@ import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm
 import com.intellij.execution.testframework.ui.TestsOutputConsolePrinter;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.psi.impl.DebugUtil;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NotNull;
 
@@ -539,7 +538,7 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
     assertAllOutputs(myMockResettablePrinter, "preved", "","Empty test suite.\n");
   }
 
-  public void testEnsureOrderedClearFlush() throws Exception {
+  public void testEnsureOrderedClearFlush() {
     StringBuffer buf = new StringBuffer();
     String expected = "";
     for(int i = 0; i < 100; i++) {

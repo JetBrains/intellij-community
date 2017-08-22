@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -121,7 +121,7 @@ public class PyRefactoringUtil {
       final String prefix = parentText.substring(0, startOffset);
       final String suffix = parentText.substring(endOffset, parentText.length());
       final TextRange textRange = TextRange.from(startOffset, endOffset - startOffset);
-      final PsiElement fakeExpression = generator.createFromText(langLevel, parent.getClass(), prefix + "python" + suffix);
+      final PsiElement fakeExpression = generator.createExpressionFromText(langLevel, prefix + "python" + suffix);
       if (PsiUtilCore.hasErrorElementChild(fakeExpression)) {
         return null;
       }
@@ -211,18 +211,18 @@ public class PyRefactoringUtil {
       startsWithWhitespace = true;
     }
     if (element2 instanceof PsiWhiteSpace) {
-      element2 = PsiTreeUtil.skipSiblingsBackward(element2, PsiWhiteSpace.class);
+      element2 = PsiTreeUtil.skipWhitespacesBackward(element2);
       endsWithWhitespace = true;
     }
     while (element2 instanceof PsiComment) {
       endComment = element2;
-      element2 = PsiTreeUtil.skipSiblingsBackward(element2, PsiWhiteSpace.class, PsiComment.class);
+      element2 = PsiTreeUtil.skipWhitespacesAndCommentsBackward(element2);
       endsWithWhitespace = true;
     }
 
     while (element1 instanceof PsiComment) {
       array.add(element1);
-      element1 = PsiTreeUtil.skipSiblingsForward(element1, PsiWhiteSpace.class);
+      element1 = PsiTreeUtil.skipWhitespacesForward(element1);
       startsWithWhitespace = true;
     }
 
@@ -291,7 +291,7 @@ public class PyRefactoringUtil {
 
     while (endComment instanceof PsiComment) {
       array.add(endComment);
-      endComment = PsiTreeUtil.skipSiblingsForward(endComment, PsiWhiteSpace.class);
+      endComment = PsiTreeUtil.skipWhitespacesForward(endComment);
     }
 
     for (PsiElement element : array) {

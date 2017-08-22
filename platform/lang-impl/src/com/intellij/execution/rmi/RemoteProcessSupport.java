@@ -279,7 +279,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
   private ProcessListener getProcessListener(@NotNull final Pair<Target, Parameters> key) {
     return new ProcessListener() {
       @Override
-      public void startNotified(ProcessEvent event) {
+      public void startNotified(@NotNull ProcessEvent event) {
         ProcessHandler processHandler = event.getProcessHandler();
         processHandler.putUserData(ProcessHandler.SILENTLY_DESTROY_ON_CLOSE, Boolean.TRUE);
         Info o;
@@ -292,21 +292,21 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
       }
 
       @Override
-      public void processTerminated(ProcessEvent event) {
+      public void processTerminated(@NotNull ProcessEvent event) {
         if (dropProcessInfo(key, null, event.getProcessHandler())) {
           fireModificationCountChanged();
         }
       }
 
       @Override
-      public void processWillTerminate(ProcessEvent event, boolean willBeDestroyed) {
+      public void processWillTerminate(@NotNull ProcessEvent event, boolean willBeDestroyed) {
         if (dropProcessInfo(key, null, event.getProcessHandler())) {
           fireModificationCountChanged();
         }
       }
 
       @Override
-      public void onTextAvailable(ProcessEvent event, Key outputType) {
+      public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
         String text = StringUtil.notNullize(event.getText());
         if (outputType == ProcessOutputTypes.STDERR) {
           LOG.warn(text.trim());

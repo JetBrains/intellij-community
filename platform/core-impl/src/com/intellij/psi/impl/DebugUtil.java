@@ -47,32 +47,6 @@ import java.util.Set;
 public class DebugUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.DebugUtil");
 
-  public static class LengthBuilder implements Appendable {
-    private int myLength = 0;
-
-    public int getLength() {
-      return myLength;
-    }
-
-    @Override
-    public Appendable append(final CharSequence csq) {
-      myLength += csq.length();
-      return this;
-    }
-
-    @Override
-    public Appendable append(final CharSequence csq, final int start, final int end) {
-      myLength += csq.subSequence(start, end).length();
-      return this;
-    }
-
-    @Override
-    public Appendable append(final char c) {
-      myLength++;
-      return this;
-    }
-  }
-
   public static /*final*/ boolean CHECK = false;
   public static final boolean DO_EXPENSIVE_CHECKS;
   static {
@@ -88,42 +62,20 @@ public class DebugUtil {
   }
 
   public static String treeToString(@NotNull final ASTNode root, final boolean skipWhitespaces) {
-    final LengthBuilder ruler = new LengthBuilder();
-    treeToBuffer(ruler, root, 0, skipWhitespaces, false, false, true);
-    final StringBuilder buffer = new StringBuilder(ruler.getLength());
+    StringBuilder buffer = new StringBuilder();
     treeToBuffer(buffer, root, 0, skipWhitespaces, false, false, true);
     return buffer.toString();
   }
 
   public static String nodeTreeToString(@NotNull final ASTNode root, final boolean skipWhitespaces) {
-    final LengthBuilder ruler = new LengthBuilder();
-    treeToBuffer(ruler, root, 0, skipWhitespaces, false, false, false);
-    final StringBuilder buffer = new StringBuilder(ruler.getLength());
+    StringBuilder buffer = new StringBuilder();
     treeToBuffer(buffer, root, 0, skipWhitespaces, false, false, false);
     return buffer.toString();
   }
 
   public static String treeToString(@NotNull ASTNode root, boolean skipWhitespaces, boolean showRanges) {
-    final LengthBuilder ruler = new LengthBuilder();
-    treeToBuffer(ruler, root, 0, skipWhitespaces, showRanges, false, true);
-    final StringBuilder buffer = new StringBuilder(ruler.getLength());
+    StringBuilder buffer = new StringBuilder();
     treeToBuffer(buffer, root, 0, skipWhitespaces, showRanges, false, true);
-    return buffer.toString();
-  }
-
-  public static String treeToStringWithUserData(TreeElement root, boolean skipWhitespaces) {
-    final LengthBuilder ruler = new LengthBuilder();
-    treeToBufferWithUserData(ruler, root, 0, skipWhitespaces);
-    final StringBuilder buffer = new StringBuilder(ruler.getLength());
-    treeToBufferWithUserData(buffer, root, 0, skipWhitespaces);
-    return buffer.toString();
-  }
-
-  public static String treeToStringWithUserData(PsiElement root, boolean skipWhitespaces) {
-    final LengthBuilder ruler = new LengthBuilder();
-    treeToBufferWithUserData(ruler, root, 0, skipWhitespaces);
-    final StringBuilder buffer = new StringBuilder(ruler.getLength());
-    treeToBufferWithUserData(buffer, root, 0, skipWhitespaces);
     return buffer.toString();
   }
 
@@ -225,9 +177,7 @@ public class DebugUtil {
 
   public static String lightTreeToString(@NotNull final FlyweightCapableTreeStructure<LighterASTNode> tree,
                                          final boolean skipWhitespaces) {
-    final LengthBuilder ruler = new LengthBuilder();
-    lightTreeToBuffer(tree, tree.getRoot(), ruler, 0, skipWhitespaces);
-    final StringBuilder buffer = new StringBuilder(ruler.getLength());
+    final StringBuilder buffer = new StringBuilder();
     lightTreeToBuffer(tree, tree.getRoot(), buffer, 0, skipWhitespaces);
     return buffer.toString();
   }
@@ -280,9 +230,7 @@ public class DebugUtil {
   }
 
   public static String stubTreeToString(final Stub root) {
-    final LengthBuilder ruler = new LengthBuilder();
-    stubTreeToBuffer(root, ruler, 0);
-    final StringBuilder builder = new StringBuilder(ruler.getLength());
+    StringBuilder builder = new StringBuilder();
     stubTreeToBuffer(root, builder, 0);
     return builder.toString();
   }
@@ -444,9 +392,7 @@ public class DebugUtil {
   }
 
   public static String psiToString(@NotNull final PsiElement root, final boolean skipWhiteSpaces, final boolean showRanges, PairConsumer<PsiElement, Consumer<PsiElement>> extra) {
-    final LengthBuilder ruler = new LengthBuilder();
-    psiToBuffer(ruler, root, skipWhiteSpaces, showRanges, extra);
-    final StringBuilder buffer = new StringBuilder(ruler.getLength());
+    StringBuilder buffer = new StringBuilder();
     psiToBuffer(buffer, root, skipWhiteSpaces, showRanges, extra);
     return buffer.toString();
   }

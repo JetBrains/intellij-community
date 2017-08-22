@@ -176,8 +176,11 @@ fun canonicalizeUrl(url: String, baseUrl: Url?, trimFileScheme: Boolean, baseUrl
 
 fun doCanonicalize(url: String, baseUrl: Url, baseUrlIsFile: Boolean, asLocalFileIfAbsoluteAndExists: Boolean): Url {
   val path = canonicalizePath(url, baseUrl, baseUrlIsFile)
-  if ((baseUrl.scheme == null && baseUrl.isInLocalFileSystem) || (asLocalFileIfAbsoluteAndExists && SourceResolver.isAbsolute(path) && File(path).exists())) {
+  if (baseUrl.scheme == null && baseUrl.isInLocalFileSystem) {
     return Urls.newLocalFileUrl(path)
+  }
+  else if (asLocalFileIfAbsoluteAndExists && SourceResolver.isAbsolute(path)) {
+    return if (File(path).exists()) Urls.newLocalFileUrl(path) else Urls.parse(url, false) ?: UrlImpl(null, null, url, null)
   }
   else {
     val split = path.split('?', limit = 2)

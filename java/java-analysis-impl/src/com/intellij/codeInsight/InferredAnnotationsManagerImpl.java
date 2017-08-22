@@ -139,6 +139,7 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
     return null;
   }
 
+  @Nullable
   private PsiAnnotation getInferredNullityAnnotation(PsiParameter parameter) {
     PsiElement parent = parameter.getParent();
     if (!(parent instanceof PsiParameterList)) return null;
@@ -158,7 +159,8 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
         }
       }
     }
-    return null;
+    Nullness nullness = NullityInference.inferNullity(parameter);
+    return nullness == Nullness.NOT_NULL ? ProjectBytecodeAnalysis.getInstance(myProject).getNotNullAnnotation() : null;
   }
 
   @Nullable
@@ -195,9 +197,7 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
 
     if (listOwner instanceof PsiMethod) {
       PsiAnnotation hardcoded = getHardcodedContractAnnotation((PsiMethod)listOwner);
-      if (hardcoded != null) {
-        result.add(hardcoded);
-      }
+      ContainerUtil.addIfNotNull(result, hardcoded);
       if (listOwner instanceof PsiMethodImpl) {
         if (hardcoded == null && !ignoreInference(listOwner, ORG_JETBRAINS_ANNOTATIONS_CONTRACT)) {
           ContainerUtil.addIfNotNull(result, getInferredContractAnnotation((PsiMethodImpl)listOwner));
@@ -210,6 +210,10 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
           }
         }
       }
+    }
+
+    if (listOwner instanceof PsiParameter && !ignoreInference(listOwner, AnnotationUtil.NOT_NULL)) {
+      ContainerUtil.addIfNotNull(result, getInferredNullityAnnotation((PsiParameter)listOwner));
     }
 
     return result.toArray(PsiAnnotation.EMPTY_ARRAY);

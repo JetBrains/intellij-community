@@ -32,6 +32,10 @@ public class RestRefereneceCompletionTest extends RestFixtureTestCase {
     doTest();
   }
 
+  public void testSharp() {
+    doTest();
+  }
+
   public void testAlreadyFilled() {
     final String path = "/completion/reference/alreadyFilled.rst";
     myFixture.configureByFile(path);

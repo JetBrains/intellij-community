@@ -32,11 +32,11 @@ public class JavaAnonymousClassesHelperTest extends LightCodeInsightFixtureTestC
     myFixture.configureByFile(getTestName(false) + ".java");
   }
 
-  public void testSimple()                                    throws Exception {doTest(7);}
-  public void testSimpleInConstructor()                       throws Exception {doTest(2);}
-  public void testInsideAnonymousMethod()                     throws Exception {doTest(1);}
-  public void testAnonymousParameterInAnonymousConstructor()  throws Exception {doTest(1);}
-  public void testAnonymousParameterInAnonymousConstructor2() throws Exception {doTest(2);}
+  public void testSimple() {doTest(7);}
+  public void testSimpleInConstructor() {doTest(2);}
+  public void testInsideAnonymousMethod() {doTest(1);}
+  public void testAnonymousParameterInAnonymousConstructor() {doTest(1);}
+  public void testAnonymousParameterInAnonymousConstructor2() {doTest(2);}
 
   @SuppressWarnings("ConstantConditions")
   private void doTest(int num) {

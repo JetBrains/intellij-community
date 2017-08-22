@@ -25,13 +25,13 @@ import org.jetbrains.annotations.NonNls;
 public class GenericsHighlightingGenerated8Test extends LightDaemonAnalyzerTestCase {
   @NonNls private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/genericsHighlightingGenerated8";
 
-  public void testEmptyTestT() throws Exception {}
+  public void testEmptyTestT() {}
 
-  public void _testUnrelatedClasses() throws Exception {
+  public void _testUnrelatedClasses() {
     doTest();
   }
 
-  public void _testUnrelatedClassesExtendsTypeParams() throws Exception {
+  public void _testUnrelatedClassesExtendsTypeParams() {
     doTest();
   }
 

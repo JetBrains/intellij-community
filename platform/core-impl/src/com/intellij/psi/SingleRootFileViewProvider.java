@@ -18,7 +18,9 @@ package com.intellij.psi;
 import com.google.common.util.concurrent.Atomics;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.command.undo.UndoConstants;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
@@ -67,10 +69,12 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   private static final Key<Boolean> OUR_NO_SIZE_LIMIT_KEY = Key.create("no.size.limit");
   private static final Logger LOG = Logger.getInstance("#" + SingleRootFileViewProvider.class.getCanonicalName());
   public static final Key<Object> FREE_THREADED = Key.create("FREE_THREADED");
+  private static final Key<Set<SingleRootFileViewProvider>> KNOWN_COPIES = Key.create("KNOWN_COPIES");
   @NotNull private final PsiManager myManager;
   @NotNull private final VirtualFile myVirtualFile;
   private final boolean myEventSystemEnabled;
   private final boolean myPhysical;
+  private boolean myInvalidated;
   private final AtomicReference<PsiFile> myPsiFile = Atomics.newReference();
   private volatile Content myContent;
   private volatile Reference<Document> myDocument;
@@ -149,7 +153,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     if (!isPhysical()) {
       FileManager fileManager = ((PsiManagerEx)myManager).getFileManager();
       VirtualFile virtualFile = getVirtualFile();
-      if (fileManager.findCachedViewProvider(virtualFile) == null) {
+      if (myPsiFile.get() == null && fileManager.findCachedViewProvider(virtualFile) == null) {
         fileManager.setViewProvider(virtualFile, this);
       }
     }
@@ -550,10 +554,10 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     int fileLength = myContent.getTextLength();
     for (FileElement fileElement : knownTreeRoots) {
       int nodeLength = fileElement.getTextLength();
-      if (nodeLength != fileLength) {
+      if (!isDocumentConsistentWithPsi(fileLength, fileElement, nodeLength)) {
         PsiUtilCore.ensureValid(fileElement.getPsi());
-        List<Attachment> attachments = ContainerUtil.newArrayList(new Attachment(myVirtualFile.getNameWithoutExtension() + ".tree.txt", fileElement.getText()),
-                                                                  new Attachment(myVirtualFile.getNameWithoutExtension() + ".file.txt", myContent.toString()));
+        List<Attachment> attachments = ContainerUtil.newArrayList(new Attachment(myVirtualFile.getName(), myContent.getText().toString()),
+                                                                  new Attachment(myVirtualFile.getNameWithoutExtension() + ".tree.txt", fileElement.getText()));
         if (document != null) {
           attachments.add(new Attachment(myVirtualFile.getNameWithoutExtension() + ".document.txt", document.getText()));
         }
@@ -564,6 +568,16 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     }
   }
 
+  private boolean isDocumentConsistentWithPsi(int fileLength, FileElement fileElement, int nodeLength) {
+    if (nodeLength != fileLength) return false;
+
+    if (ApplicationManager.getApplication().isUnitTestMode() && !ApplicationInfoImpl.isInStressTest()) {
+      return fileElement.textMatches(myContent.getText());
+    }
+
+    return true;
+  }
+
   @NonNls
   @Override
   public String toString() {
@@ -571,10 +585,33 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   }
 
   public void markInvalidated() {
+    if (myInvalidated) return;
+    
+    myInvalidated = true;
     PsiFile psiFile = getCachedPsi(myBaseLanguage);
     if (psiFile instanceof PsiFileEx) {
       ((PsiFileEx)psiFile).markInvalidated();
     }
+    invalidateCopies();
+  }
+
+  private void invalidateCopies() {
+    Set<SingleRootFileViewProvider> knownCopies = getUserData(KNOWN_COPIES);
+    if (knownCopies != null) {
+      for (SingleRootFileViewProvider copy : knownCopies) {
+        if (copy.getCachedPsiFiles().stream().anyMatch(f -> f.getOriginalFile().getViewProvider() == this)) {
+          ((PsiManagerEx)myManager).getFileManager().setViewProvider(copy.getVirtualFile(), null);
+        }
+      }
+    }
+  }
+
+  public void registerAsCopy(@NotNull SingleRootFileViewProvider copy) {
+    Set<SingleRootFileViewProvider> copies = getUserData(KNOWN_COPIES);
+    if (copies == null) {
+      copies = putUserDataIfAbsent(KNOWN_COPIES, Collections.newSetFromMap(ContainerUtil.createConcurrentWeakMap()));
+    }
+    copies.add(copy);
   }
 
   private interface Content {

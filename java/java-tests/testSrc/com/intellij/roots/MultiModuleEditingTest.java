@@ -59,7 +59,7 @@ public class MultiModuleEditingTest extends ModuleTestCase {
   protected void setUpJdk() {
   }
 
-  public void testAddTwoModules() throws Exception {
+  public void testAddTwoModules() {
     final MessageBusConnection connection = myProject.getMessageBus().connect();
     final MyModuleListener moduleListener = new MyModuleListener();
     connection.subscribe(ProjectTopics.MODULES, moduleListener);

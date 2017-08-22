@@ -323,7 +323,7 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
 
     @Override
     public StructureViewBuilder getStructureViewBuilder() {
-      VirtualFile file = FileDocumentManager.getInstance().getFile(myEditor.getDocument());
+      VirtualFile file = getFile();
       if (file == null) return null;
 
       final Project project = myEditor.getProject();
@@ -384,6 +384,12 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
 
     @Override
     public void navigateTo(@NotNull final Navigatable navigatable) {
+    }
+
+    @Nullable
+    @Override
+    public VirtualFile getFile() {
+      return FileDocumentManager.getInstance().getFile(myEditor.getDocument());
     }
   }
 }

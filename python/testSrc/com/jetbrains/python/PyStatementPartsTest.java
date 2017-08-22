@@ -34,7 +34,7 @@ public class PyStatementPartsTest extends LightMarkedTestCase {
     return PythonTestUtil.getTestDataPath() + "/psi/parts/";
   }
 
-  public void testIf() throws Exception {
+  public void testIf() {
     Map<String, PsiElement> marks = loadTest();
     Assert.assertEquals(2, marks.size());
     PsiElement elt = marks.get("<the_if>").getParent().getParent(); // if_keyword -> if_part -> if_stmt
@@ -46,7 +46,7 @@ public class PyStatementPartsTest extends LightMarkedTestCase {
     Assert.assertEquals(marks.get("<the_cond>").getParent(), if_cond);
   }
 
-  public void testIfElse() throws Exception {
+  public void testIfElse() {
     Map<String, PsiElement> marks = loadTest();
     Assert.assertEquals(4, marks.size());
     PsiElement elt = marks.get("<the_if>").getParent().getParent(); // if_keyword -> if_part -> if_stmt
@@ -71,7 +71,7 @@ public class PyStatementPartsTest extends LightMarkedTestCase {
 
   }
 
-  public void testIfElifElse() throws Exception {
+  public void testIfElifElse() {
     Map<String, PsiElement> marks = loadTest();
     Assert.assertEquals(6, marks.size());
     PsiElement elt = marks.get("<the_if>").getParent().getParent(); // if_keyword -> if_part -> if_stmt
@@ -105,7 +105,7 @@ public class PyStatementPartsTest extends LightMarkedTestCase {
 
   }
 
-  public void testWhile()  throws Exception {
+  public void testWhile() {
     Map<String, PsiElement> marks = loadTest();
     Assert.assertEquals(3, marks.size());
 
@@ -123,7 +123,7 @@ public class PyStatementPartsTest extends LightMarkedTestCase {
     Assert.assertEquals(while_stmt.getElsePart(), elt);
   }
 
-  public void testFor()  throws Exception {
+  public void testFor() {
     Map<String, PsiElement> marks = loadTest();
     Assert.assertEquals(4, marks.size());
 
@@ -144,7 +144,7 @@ public class PyStatementPartsTest extends LightMarkedTestCase {
     Assert.assertEquals(stmt.getElsePart(), elt);
   }
 
-  public void testTry() throws Exception {
+  public void testTry() {
     Map<String, PsiElement> marks = loadTest();
     Assert.assertEquals(6, marks.size());
 

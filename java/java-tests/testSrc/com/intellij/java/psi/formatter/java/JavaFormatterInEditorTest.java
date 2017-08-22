@@ -28,8 +28,6 @@ import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
-
 /**
  * Is intended to test formatting in editor behavior, i.e. check how formatting affects things like caret position, selection etc.
  *
@@ -38,7 +36,7 @@ import java.io.IOException;
  */
 public class JavaFormatterInEditorTest extends LightPlatformCodeInsightTestCase {
 
-  public void testCaretPositionOnLongLineWrapping() throws IOException {
+  public void testCaretPositionOnLongLineWrapping() {
     // Inspired by IDEA-70242
     CommonCodeStyleSettings javaCommonSettings = getCurrentCodeStyleSettings().getCommonSettings(JavaLanguage.INSTANCE);
     javaCommonSettings.WRAP_LONG_LINES = true;
@@ -57,7 +55,7 @@ public class JavaFormatterInEditorTest extends LightPlatformCodeInsightTestCase 
     );
   }
 
-  public void testCaretPositionPreserved_WhenOnSameLineWithWhiteSpacesOnly() throws IOException {
+  public void testCaretPositionPreserved_WhenOnSameLineWithWhiteSpacesOnly() {
     String text = "class Test {\n" +
                   "    void test() {\n" +
                   "         <caret>\n" +
@@ -73,7 +71,7 @@ public class JavaFormatterInEditorTest extends LightPlatformCodeInsightTestCase 
     doTest(before, text);
   }
 
-  public void testCaretPositionPreserved_WhenSomeFormattingNeeded() throws IOException {
+  public void testCaretPositionPreserved_WhenSomeFormattingNeeded() {
     String before = "public class Test {\n" +
                     "        int a;\n" +
                     "    \n" +
@@ -106,7 +104,7 @@ public class JavaFormatterInEditorTest extends LightPlatformCodeInsightTestCase 
     doTest(before, after);
   }
 
-  public void testCaretLineAndPositionPreserved_WhenBracketOnNextLineWillBeFormatted() throws IOException {
+  public void testCaretLineAndPositionPreserved_WhenBracketOnNextLineWillBeFormatted() {
     String before = "public class Test {\n" +
                     "        int a;\n" +
                     "    \n" +
@@ -139,7 +137,7 @@ public class JavaFormatterInEditorTest extends LightPlatformCodeInsightTestCase 
     doTest(before, after);
   }
 
-  public void testKeepIndentsOnBlankLinesCaretPosition() throws IOException {
+  public void testKeepIndentsOnBlankLinesCaretPosition() {
     CommonCodeStyleSettings.IndentOptions indentOptions =
       CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE).getIndentOptions();
     assertNotNull(indentOptions);
@@ -221,7 +219,7 @@ public class JavaFormatterInEditorTest extends LightPlatformCodeInsightTestCase 
     }
   } 
 
-  public void doTest(@NotNull String before, @NotNull String after) throws IOException {
+  public void doTest(@NotNull String before, @NotNull String after) {
     configureFromFileText(getTestName(false) + ".java", before);
     WriteCommandAction.runWriteCommandAction(getProject(), () -> CodeStyleManager.getInstance(getProject()).reformatText(getFile(), 0, getEditor().getDocument().getTextLength()));
 

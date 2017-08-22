@@ -43,7 +43,7 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
   private static final String TEST_TEMPLATE_TXT = "testTemplate.txt";
   private static final String HI_THERE = "hi there";
 
-  public void testSchemas() throws Exception {
+  public void testSchemas() {
     assertEquals(FileTemplatesScheme.DEFAULT, myTemplateManager.getCurrentScheme());
 
     FileTemplate template = myTemplateManager.getTemplate(TEST_TEMPLATE_TXT);
@@ -59,12 +59,12 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
     assertEquals(newText, myTemplateManager.getTemplate(TEST_TEMPLATE_TXT).getText());
   }
 
-  public void testDefaultProject() throws Exception {
+  public void testDefaultProject() {
     Project defaultProject = ProjectManager.getInstance().getDefaultProject();
     assertNull(FileTemplateManager.getInstance(defaultProject).getProjectScheme());
   }
 
-  public void testConfigurable() throws Exception {
+  public void testConfigurable() {
     AllFileTemplatesConfigurable configurable = new AllFileTemplatesConfigurable(getProject());
     try {
       configurable.createComponent();
@@ -75,7 +75,7 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
     }
   }
 
-  public void testSaveFileAsTemplate() throws Exception {
+  public void testSaveFileAsTemplate() {
     AllFileTemplatesConfigurable configurable = new AllFileTemplatesConfigurable(getProject());
     try {
       configurable.createComponent();
@@ -190,7 +190,7 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
     }
   }
 
-  public void testRemoveTemplate() throws Exception {
+  public void testRemoveTemplate() {
     FileTemplate[] before = myTemplateManager.getAllTemplates();
     try {
       FileTemplate template = myTemplateManager.getTemplate(TEST_TEMPLATE_TXT);
@@ -208,7 +208,7 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
     }
   }
 
-  public void testSaveReformatCode() throws Exception {
+  public void testSaveReformatCode() {
     FileTemplate template = myTemplateManager.getTemplate(TEST_TEMPLATE_TXT);
     assertTrue(template.isReformatCode());
     template.setReformatCode(false);
@@ -221,7 +221,7 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
       .writeElement(element));
   }
 
-  public void testDoNotSaveDefaults() throws Exception {
+  public void testDoNotSaveDefaults() {
     assertFalse(((FileTemplateBase)myTemplateManager.getTemplate(TEST_TEMPLATE_TXT)).isLiveTemplateEnabledByDefault());
     FileTemplateBase template = (FileTemplateBase)myTemplateManager.getTemplate("templateWithLiveTemplate.txt");
     assertTrue(template.isLiveTemplateEnabledByDefault());

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.xdebugger.frame;
 
+import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,7 +25,8 @@ import java.awt.event.MouseEvent;
  * Describes a hyperlink inside a debugger node
  */
 public abstract class XDebuggerTreeNodeHyperlink {
-  public static final SimpleTextAttributes TEXT_ATTRIBUTES = SimpleTextAttributes.GRAY_ATTRIBUTES;
+  public static final SimpleTextAttributes TEXT_ATTRIBUTES =
+    new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, new JBColor(0x779dbd, 0x5676a0));
 
   private final String linkText;
 

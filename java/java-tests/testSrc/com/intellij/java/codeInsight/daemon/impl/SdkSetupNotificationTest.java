@@ -23,22 +23,22 @@ import com.intellij.ui.EditorNotificationPanel;
  */
 public class SdkSetupNotificationTest extends SdkSetupNotificationTestBase {
 
-  public void testProjectSdk() throws Exception {
+  public void testProjectSdk() {
     final EditorNotificationPanel panel = configureBySdkAndText(IdeaTestUtil.getMockJdk18(), false, "Sample.java", "class Sample {}");
     assertNull(panel);
   }
 
-  public void testNoProjectSdk() throws Exception {
+  public void testNoProjectSdk() {
     final EditorNotificationPanel panel = configureBySdkAndText(null, false, "Sample.java", "class Sample {}");
     assertSdkSetupPanelShown(panel, "Project SDK is not defined");
   }
 
-  public void testModuleSdk() throws Exception {
+  public void testModuleSdk() {
     final EditorNotificationPanel panel = configureBySdkAndText(IdeaTestUtil.getMockJdk18(), true, "Sample.java", "class Sample {}");
     assertNull(panel);
   }
 
-  public void testNoModuleSdk() throws Exception {
+  public void testNoModuleSdk() {
     final EditorNotificationPanel panel = configureBySdkAndText(null, true, "Sample.java", "class Sample {}");
     assertSdkSetupPanelShown(panel, "Module SDK is not defined");
   }

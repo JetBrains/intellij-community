@@ -443,14 +443,15 @@ public class PyPIPackageUtil {
 
   @NotNull
   public Map<String, String> loadAndGetPackages() throws IOException {
-    Map<String, String> pyPIPackages = getPyPIPackages();
+    // The map returned by getPyPIPackages() is already thread-safe;
+    // this lock is solely to prevent multiple threads from updating
+    // the mammoth cache of PyPI packages simultaneously.
     synchronized (myPyPIPackageCacheUpdateLock) {
-      if (pyPIPackages.isEmpty()) {
+      if (getPyPIPackages().isEmpty()) {
         updatePyPICache(PyPackageService.getInstance());
-        pyPIPackages = getPyPIPackages();
       }
+      return getPyPIPackages();
     }
-    return pyPIPackages;
   }
 
   @NotNull

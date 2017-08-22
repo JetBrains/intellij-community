@@ -4,7 +4,7 @@ import com.siyeh.ig.IGInspectionTestCase;
 
 public class ConstructorCountInspectionTest extends IGInspectionTestCase {
 
-  public void test() throws Exception {
+  public void test() {
     final ConstructorCountInspection tool = new ConstructorCountInspection();
     tool.m_limit = 2;
     tool.ignoreDeprecatedConstructors = true;

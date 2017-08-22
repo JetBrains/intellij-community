@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,13 +34,15 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiElementProcessorAdapter;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.*;
+import com.intellij.util.CommonProcessors;
+import com.intellij.util.NullableFunction;
+import com.intellij.util.Processor;
+import com.intellij.util.Processors;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -321,12 +323,10 @@ public class GroovyMarkerTypes {
 
   private static class OverridingMethodsUpdater extends ListBackgroundUpdaterTask {
     private final GrMethod myMethod;
-    private final PsiElementListCellRenderer myRenderer;
 
     public OverridingMethodsUpdater(GrMethod method, PsiElementListCellRenderer renderer) {
-      super(method.getProject(), MarkerType.SEARCHING_FOR_OVERRIDING_METHODS);
+      super(method.getProject(), MarkerType.SEARCHING_FOR_OVERRIDING_METHODS, renderer.getComparator());
       myMethod = method;
-      myRenderer = renderer;
     }
 
     @Override
@@ -344,7 +344,7 @@ public class GroovyMarkerTypes {
           new CommonProcessors.CollectProcessor<PsiMethod>() {
             @Override
             public boolean process(PsiMethod psiMethod) {
-              if (!updateComponent(com.intellij.psi.impl.PsiImplUtil.handleMirror(psiMethod), myRenderer.getComparator())) {
+              if (!updateComponent(com.intellij.psi.impl.PsiImplUtil.handleMirror(psiMethod))) {
                 indicator.cancel();
               }
               indicator.checkCanceled();

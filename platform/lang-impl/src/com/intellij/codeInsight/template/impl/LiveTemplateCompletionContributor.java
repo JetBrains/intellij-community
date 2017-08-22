@@ -22,6 +22,7 @@ import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -73,6 +74,7 @@ public class LiveTemplateCompletionContributor extends CompletionContributor {
       protected void addCompletions(@NotNull final CompletionParameters parameters,
                                     ProcessingContext context,
                                     @NotNull CompletionResultSet result) {
+        ProgressManager.checkCanceled();
         final PsiFile file = parameters.getPosition().getContainingFile();
         if (file instanceof PsiPlainTextFile && parameters.getEditor().getComponent().getParent() instanceof EditorTextField) {
           return;
@@ -110,6 +112,7 @@ public class LiveTemplateCompletionContributor extends CompletionContributor {
         }
 
         for (Map.Entry<TemplateImpl, String> possible : templates.entrySet()) {
+          ProgressManager.checkCanceled();
           String templateKey = possible.getKey().getKey();
           String currentPrefix = possible.getValue();
           result.withPrefixMatcher(result.getPrefixMatcher().cloneWithPrefix(currentPrefix))
@@ -122,6 +125,7 @@ public class LiveTemplateCompletionContributor extends CompletionContributor {
   public static boolean customTemplateAvailableAndHasCompletionItem(@Nullable Character shortcutChar, @NotNull Editor editor, @NotNull PsiFile file, int offset) {
     CustomTemplateCallback callback = new CustomTemplateCallback(editor, file);
     for (CustomLiveTemplate customLiveTemplate : TemplateManagerImpl.listApplicableCustomTemplates(editor, file, false)) {
+      ProgressManager.checkCanceled();
       if (customLiveTemplate instanceof CustomLiveTemplateBase) {
         if ((shortcutChar == null || customLiveTemplate.getShortcut() == shortcutChar.charValue())
             && ((CustomLiveTemplateBase)customLiveTemplate).hasCompletionItem(file, offset)) {
@@ -141,6 +145,7 @@ public class LiveTemplateCompletionContributor extends CompletionContributor {
                                            CompletionResultSet result) {
     if (!templatesShown.getAndSet(true)) {
       for (final Map.Entry<TemplateImpl, String> entry : templates.entrySet()) {
+        ProgressManager.checkCanceled();
         result.withPrefixMatcher(result.getPrefixMatcher().cloneWithPrefix(StringUtil.notNullize(entry.getValue())))
           .addElement(new LiveTemplateLookupElementImpl(entry.getKey(), false));
       }
@@ -151,6 +156,7 @@ public class LiveTemplateCompletionContributor extends CompletionContributor {
     PsiFile file = parameters.getPosition().getContainingFile();
     Editor editor = parameters.getEditor();
     for (CustomLiveTemplate customLiveTemplate : TemplateManagerImpl.listApplicableCustomTemplates(editor, file, false)) {
+      ProgressManager.checkCanceled();
       if (customLiveTemplate instanceof CustomLiveTemplateBase) {
         ((CustomLiveTemplateBase)customLiveTemplate).addCompletions(parameters, result);
       }

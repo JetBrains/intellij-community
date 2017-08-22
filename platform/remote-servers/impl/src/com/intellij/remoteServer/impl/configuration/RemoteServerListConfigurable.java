@@ -196,10 +196,10 @@ public class RemoteServerListConfigurable extends MasterDetailsComponent impleme
     if (result == null) {
       ServerType<?> singleServerType = getSingleServerType();
       if (singleServerType != null) {
-        return singleServerType.getHelpTopic();
+        result = singleServerType.getHelpTopic();
       }
     }
-    return "reference.settings.clouds";
+    return result != null ? result : "reference.settings.clouds";
   }
 
   @Override

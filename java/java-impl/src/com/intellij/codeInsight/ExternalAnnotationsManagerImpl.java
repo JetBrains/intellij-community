@@ -62,6 +62,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -488,7 +489,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
 
     //choose external place iff USE_EXTERNAL_ANNOTATIONS option is on,
     //otherwise external annotations should be read-only
-    if (CodeStyleSettingsManager.getSettings(project).USE_EXTERNAL_ANNOTATIONS) {
+    if (CodeStyleSettingsManager.getSettings(project).getCustomSettings(JavaCodeStyleSettings.class).USE_EXTERNAL_ANNOTATIONS) {
       final PsiFile containingFile = element.getContainingFile();
       final VirtualFile virtualFile = containingFile.getVirtualFile();
       LOG.assertTrue(virtualFile != null);
@@ -760,7 +761,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
   public static boolean areExternalAnnotationsApplicable(@NotNull PsiModifierListOwner owner) {
     if (!owner.isPhysical()) return false;
     if (!owner.getManager().isInProject(owner)) return true;
-    return CodeStyleSettingsManager.getSettings(owner.getProject()).USE_EXTERNAL_ANNOTATIONS;
+    return CodeStyleSettingsManager.getSettings(owner.getProject()).getCustomSettings(JavaCodeStyleSettings.class).USE_EXTERNAL_ANNOTATIONS;
   }
 
   private static class MyExternalPromptDialog extends OptionsMessageDialog {
@@ -809,12 +810,12 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
 
     @Override
     protected boolean isToBeShown() {
-      return CodeStyleSettingsManager.getSettings(myProject).USE_EXTERNAL_ANNOTATIONS;
+      return CodeStyleSettingsManager.getSettings(myProject).getCustomSettings(JavaCodeStyleSettings.class).USE_EXTERNAL_ANNOTATIONS;
     }
 
     @Override
     protected void setToBeShown(boolean value, boolean onOk) {
-      CodeStyleSettingsManager.getSettings(myProject).USE_EXTERNAL_ANNOTATIONS = value;
+      CodeStyleSettingsManager.getSettings(myProject).getCustomSettings(JavaCodeStyleSettings.class).USE_EXTERNAL_ANNOTATIONS = value;
     }
 
     @Override

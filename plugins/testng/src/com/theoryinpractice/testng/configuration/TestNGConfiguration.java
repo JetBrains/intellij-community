@@ -228,6 +228,11 @@ public class TestNGConfiguration extends JavaTestConfigurationBase {
     return TestNGConfigurationProducer.getInvocationNumber(paramSetName);
   }
 
+  @Override
+  public TestSearchScope getTestSearchScope() {
+    return getPersistantData().getScope();
+  }
+
   public void setPackageConfiguration(Module module, PsiPackage pkg) {
     data.setPackage(pkg);
     setModule(module);

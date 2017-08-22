@@ -1,3 +1,0 @@
-#!/bin/bash
-export JDK_HOME=/usr/lib/jvm/java-6-sun
-sh /opt/jetbrains/idea/bin/idea.sh

@@ -38,42 +38,42 @@ public class LambdaRedundantCastTest extends LightDaemonAnalyzerTestCase {
   public void testLambdaReturnExpressions1() { doTest(); }
   public void testPreventBadReturnTypeInReturnExpression() { doTest(); }
   public void testExpectedTypeByNestedArrayInitializer() { doTest(); }
-  public void testCastToPrimitive() throws Exception {
+  public void testCastToPrimitive() {
     doTest();
   }
 
-  public void testAnotherInterfaceMethodIsPointed() throws Exception {
+  public void testAnotherInterfaceMethodIsPointed() {
     doTest();
   }
 
-  public void testSerializableLambda() throws Exception {
+  public void testSerializableLambda() {
     doTest();
   }
 
-  public void testWithAnonymousClasses() throws Exception {
+  public void testWithAnonymousClasses() {
     doTest();
   }
 
 
-  public void testCastInMethodCallQualifierWithWildcardReturn() throws Exception {
+  public void testCastInMethodCallQualifierWithWildcardReturn() {
     doTest();
   }
 
-  public void testCapturedWildcardInCast() throws Exception {
+  public void testCapturedWildcardInCast() {
     doTest();
   }
 
-  public void testTopLevelResolutionFailures() throws Exception {
+  public void testTopLevelResolutionFailures() {
     doTest();
   }
 
-  public void testEnumConstantWithFunctionalExpressionArg() throws Exception { doTest(); }
-  public void testSecondLevelOverload() throws Exception { doTest(); }
-  public void testStopAtMemberLevelDuringWalkUp() throws Exception { doTest(); }
+  public void testEnumConstantWithFunctionalExpressionArg() { doTest(); }
+  public void testSecondLevelOverload() { doTest(); }
+  public void testStopAtMemberLevelDuringWalkUp() { doTest(); }
 
   public void testIDEA154861() { doTest();}
 
-  public void testQualifierOfMethodWithCast() throws Exception {
+  public void testQualifierOfMethodWithCast() {
     doTest();
   }
 
@@ -81,11 +81,11 @@ public class LambdaRedundantCastTest extends LightDaemonAnalyzerTestCase {
   public void testCastInConditionalBranch() { doTest();}
   public void testCastInsideLambdaReturnExpressionPassedToEnumConstant() { doTest(); }
   public void testGroundTargetTypeDiffersFromCastType() { doTest(); }
-  public void testRejectReturnTypeChange() throws Exception {
+  public void testRejectReturnTypeChange() {
     doTest();
   }
 
-  public void testInvalidConditional() throws Exception {
+  public void testInvalidConditional() {
     doTest();
   }
 

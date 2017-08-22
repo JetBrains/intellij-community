@@ -500,13 +500,13 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
 
       final PsiType returnType = method.getInferredReturnType();
       if ((returnType != null || method.getModifierList().hasModifierProperty(GrModifier.DEF)) && !PsiType.VOID.equals(returnType)) {
-        builder.append(CodeDocumentationUtil.createDocCommentLine(RETURN_TAG, project, commenter));
+        builder.append(CodeDocumentationUtil.createDocCommentLine(RETURN_TAG, contextComment.getContainingFile(), commenter));
         builder.append(LINE_SEPARATOR);
       }
 
       final PsiClassType[] references = method.getThrowsList().getReferencedTypes();
       for (PsiClassType reference : references) {
-        builder.append(CodeDocumentationUtil.createDocCommentLine(THROWS_TAG, project, commenter));
+        builder.append(CodeDocumentationUtil.createDocCommentLine(THROWS_TAG, contextComment.getContainingFile(), commenter));
         builder.append(reference.getClassName());
         builder.append(LINE_SEPARATOR);
       }

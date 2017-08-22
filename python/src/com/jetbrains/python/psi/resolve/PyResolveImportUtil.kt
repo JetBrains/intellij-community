@@ -314,7 +314,7 @@ private fun findCache(context: PyQualifiedNameResolveContext): PythonPathCache? 
     context.module != null ->
       if (context.effectiveSdk != context.sdk) null else PythonModulePathCache.getInstance(context.module)
     context.footholdFile != null -> {
-      val sdk = PyBuiltinCache.findSdkForNonModuleFile(context.footholdFile)
+      val sdk = PyBuiltinCache.findSdkForNonModuleFile(context.footholdFile!!)
       if (sdk != null) PythonSdkPathCache.getInstance(context.project, sdk) else null
     }
     else -> null

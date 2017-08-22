@@ -25,7 +25,6 @@ class FirstStarter {
 }
 
 fun main(args: Array<String>) {
-
   startRobotRoutine()
   startIdeMainRoutine(args)
 }

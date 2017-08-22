@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
+import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isCompileStatic;
+
 /**
  * @author Maxim.Medvedev
  */
@@ -37,6 +39,7 @@ public class GrContainerTypeConverter extends GrTypeConverter {
   @Override
   public Boolean isConvertible(@NotNull PsiType lType, @NotNull PsiType rType, @NotNull GroovyPsiElement context) {
     if (!isCollectionOrArray(lType) || !isCollectionOrArray(rType)) return null;
+    if (isCompileStatic(context)) return null;
 
     final PsiType lComponentType = extractComponentType(lType);
     final PsiType rComponentType = extractComponentType(rType);

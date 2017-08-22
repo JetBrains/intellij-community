@@ -100,6 +100,9 @@ public class OSProcessUtil {
   public static int getProcessID(@NotNull Process process) {
     if (SystemInfo.isWindows) {
       try {
+        if (process instanceof WinPtyProcess) {
+          return ((WinPtyProcess)process).getChildProcessId();
+        }
         if (Registry.is("disable.winp")) {
           return WinProcessManager.getProcessPid(process);
         }
