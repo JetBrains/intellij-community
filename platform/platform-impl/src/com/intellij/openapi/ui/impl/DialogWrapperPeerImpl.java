@@ -183,9 +183,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
       myWindowManager = (WindowManagerEx)WindowManager.getInstance();
     }
 
-    OwnerOptional.fromComponent(parent).ifWindow(window -> {
-      createDialog(window, canBeParent);
-    });
+    createDialog(OwnerOptional.fromComponent(parent).get(), canBeParent);
   }
 
   public DialogWrapperPeerImpl(@NotNull final DialogWrapper wrapper,final Window owner, final boolean canBeParent,
