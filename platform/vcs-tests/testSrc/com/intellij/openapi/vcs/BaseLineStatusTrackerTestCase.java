@@ -148,6 +148,10 @@ public abstract class BaseLineStatusTrackerTestCase extends LightPlatformTestCas
     for (Range range : ranges) {
       List<Range.InnerRange> innerRanges = range.getInnerRanges();
       if (innerRanges == null) return;
+      if (range.getType() != Range.MODIFIED) {
+        assertEmpty(innerRanges);
+        continue;
+      }
 
       int last = 0;
       for (Range.InnerRange innerRange : innerRanges) {

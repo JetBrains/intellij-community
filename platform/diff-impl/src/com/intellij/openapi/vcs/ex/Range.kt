@@ -15,6 +15,9 @@
  */
 package com.intellij.openapi.vcs.ex
 
+internal typealias LstRange = com.intellij.openapi.vcs.ex.Range
+internal typealias LstInnerRange = com.intellij.openapi.vcs.ex.Range.InnerRange
+
 data class Range(val line1: Int,
                  val line2: Int,
                  val vcsLine1: Int,

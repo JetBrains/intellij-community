@@ -26,7 +26,6 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.EditorFactoryAdapter;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
-import com.intellij.openapi.editor.ex.DocumentBulkUpdateListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.DirectoryIndex;
@@ -83,19 +82,6 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
     myPartner = new QueueProcessorRemovePartner<>(myProject, baseRevisionLoader -> baseRevisionLoader.run());
 
     MessageBusConnection busConnection = project.getMessageBus().connect();
-    busConnection.subscribe(DocumentBulkUpdateListener.TOPIC, new DocumentBulkUpdateListener.Adapter() {
-      @Override
-      public void updateStarted(@NotNull final Document doc) {
-        final LineStatusTracker tracker = getLineStatusTracker(doc);
-        if (tracker != null) tracker.startBulkUpdate();
-      }
-
-      @Override
-      public void updateFinished(@NotNull final Document doc) {
-        final LineStatusTracker tracker = getLineStatusTracker(doc);
-        if (tracker != null) tracker.finishBulkUpdate();
-      }
-    });
     busConnection.subscribe(LineStatusTrackerSettingListener.TOPIC, new LineStatusTrackerSettingListener() {
       @Override
       public void settingsUpdated() {

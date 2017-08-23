@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,139 +17,141 @@
 
 package com.intellij.openapi.vcs.ex
 
-import com.intellij.diff.comparison.ByLine
-import com.intellij.diff.comparison.ComparisonPolicy
-import com.intellij.diff.comparison.DiffTooBigException
-import com.intellij.diff.comparison.expand
+import com.intellij.diff.comparison.*
 import com.intellij.diff.comparison.iterables.DiffIterableUtil
+import com.intellij.diff.comparison.iterables.DiffIterableUtil.fair
+import com.intellij.diff.comparison.iterables.FairDiffIterable
+import com.intellij.diff.tools.util.text.LineOffsets
+import com.intellij.diff.tools.util.text.LineOffsetsUtil
 import com.intellij.diff.util.DiffUtil
+import com.intellij.diff.util.Range
+import com.intellij.diff.util.Side
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.progress.DumbProgressIndicator
-import com.intellij.openapi.vcs.ex.Range.InnerRange
-import com.intellij.util.diff.FilesTooBigForDiffException
 import java.util.*
 
-@JvmOverloads
-@Throws(FilesTooBigForDiffException::class)
-fun createRanges(current: Document, vcs: Document, innerWhitespaceChanges: Boolean = false): List<Range> {
-  return createRanges(DiffUtil.getLines(current), DiffUtil.getLines(vcs), 0, 0, innerWhitespaceChanges)
-}
-
-@Throws(FilesTooBigForDiffException::class)
 fun createRanges(current: List<String>,
                  vcs: List<String>,
                  currentShift: Int,
                  vcsShift: Int,
-                 innerWhitespaceChanges: Boolean): List<Range> {
-  try {
-    return if (innerWhitespaceChanges) {
-      createRangesSmart(current, vcs, currentShift, vcsShift)
-    }
-    else {
-      createRangesSimple(current, vcs, currentShift, vcsShift)
-    }
+                 innerWhitespaceChanges: Boolean): List<LstRange> {
+  val iterable = compareLines(vcs, current)
+  return iterable.iterateChanges().map {
+    val inner = if (innerWhitespaceChanges) createInnerRanges(vcs.subList(it.start1, it.end1), current.subList(it.start2, it.end2)) else null
+    LstRange(it.start2 + currentShift, it.end2 + currentShift, it.start1 + vcsShift, it.end1 + vcsShift, inner)
   }
-  catch (e: DiffTooBigException) {
-    throw FilesTooBigForDiffException()
-  }
-
 }
 
-@Throws(DiffTooBigException::class)
-private fun createRangesSimple(current: List<String>,
-                               vcs: List<String>,
-                               currentShift: Int,
-                               vcsShift: Int): List<Range> {
-  val iterable = ByLine.compare(vcs, current, ComparisonPolicy.DEFAULT, DumbProgressIndicator.INSTANCE)
+fun createRanges(current: Document, vcs: Document): List<LstRange> {
+  return createRanges(current.immutableCharSequence, vcs.immutableCharSequence, current.lineOffsets, vcs.lineOffsets)
+}
 
-  val result = ArrayList<Range>()
-  for (range in iterable.iterateChanges()) {
-    val vcsLine1 = vcsShift + range.start1
-    val vcsLine2 = vcsShift + range.end1
-    val currentLine1 = currentShift + range.start2
-    val currentLine2 = currentShift + range.end2
+fun createRanges(current: CharSequence, vcs: CharSequence): List<LstRange> {
+  return createRanges(current, vcs, current.lineOffsets, vcs.lineOffsets)
+}
 
-    result.add(Range(currentLine1, currentLine2, vcsLine1, vcsLine2))
+private fun createRanges(current: CharSequence,
+                         vcs: CharSequence,
+                         currentLineOffsets: LineOffsets,
+                         vcsLineOffsets: LineOffsets): List<LstRange> {
+  val iterable = compareLines(vcs, current, vcsLineOffsets, currentLineOffsets)
+  return iterable.iterateChanges().map { LstRange(it.start2, it.end2, it.start1, it.end1) }
+}
+
+
+fun compareLines(text1: CharSequence,
+                 text2: CharSequence,
+                 lineOffsets1: LineOffsets,
+                 lineOffsets2: LineOffsets): FairDiffIterable {
+  return compareLines(Range(0, lineOffsets1.lineCount,
+                            0, lineOffsets2.lineCount),
+                      text1, text2, lineOffsets1, lineOffsets2)
+}
+
+fun compareLines(lineRange: Range,
+                 text1: CharSequence,
+                 text2: CharSequence,
+                 lineOffsets1: LineOffsets,
+                 lineOffsets2: LineOffsets): FairDiffIterable {
+  val lines1 = DiffUtil.getLines(text1, lineOffsets1, lineRange.start1, lineRange.end1)
+  val lines2 = DiffUtil.getLines(text2, lineOffsets2, lineRange.start2, lineRange.end2)
+  return compareLines(lines1, lines2)
+}
+
+fun createInnerRanges(lineRange: Range,
+                      text1: CharSequence,
+                      text2: CharSequence,
+                      lineOffsets1: LineOffsets,
+                      lineOffsets2: LineOffsets): List<LstInnerRange> {
+  val lines1 = DiffUtil.getLines(text1, lineOffsets1, lineRange.start1, lineRange.end1)
+  val lines2 = DiffUtil.getLines(text2, lineOffsets2, lineRange.start2, lineRange.end2)
+  return createInnerRanges(lines1, lines2)
+}
+
+/**
+ * Compare lines, preferring non-optimal but less confusing results for whitespace-only changed lines
+ * Ex: "X\n\nY\nZ" vs " X\n Y\n\n Z" should be a single big change, rather than 2 changes separated by "matched" empty line.
+ */
+private fun compareLines(lines1: List<String>,
+                         lines2: List<String>): FairDiffIterable {
+  val iwIterable: FairDiffIterable = compareLinesSafe(lines1, lines2, ComparisonPolicy.IGNORE_WHITESPACES)
+
+  val builder = DiffIterableUtil.ExpandChangeBuilder(lines1, lines2)
+  for (range in iwIterable.unchanged()) {
+    val count = range.end1 - range.start1
+    for (i in 0 until count) {
+      val index1 = range.start1 + i
+      val index2 = range.start2 + i
+      if (lines1[index1] == lines2[index2]) {
+        builder.markEqual(index1, index2)
+      }
+    }
   }
+
+  return DiffIterableUtil.fair(builder.finish())
+}
+
+private fun createInnerRanges(lines1: List<String>,
+                              lines2: List<String>): List<LstInnerRange> {
+  val iwIterable: FairDiffIterable = compareLinesSafe(lines1, lines2, ComparisonPolicy.IGNORE_WHITESPACES)
+
+  val result = ArrayList<LstInnerRange>()
+  for (pair in DiffIterableUtil.iterateAll(iwIterable)) {
+    val range = pair.first
+    val equals = pair.second
+    result.add(LstInnerRange(range.start2, range.end2, getChangeType(range, equals)))
+  }
+  result.trimToSize()
   return result
 }
 
-@Throws(DiffTooBigException::class)
-private fun createRangesSmart(current: List<String>,
-                              vcs: List<String>,
-                              currentShift: Int,
-                              vcsShift: Int): List<Range> {
-  val iwIterable = ByLine.compare(vcs, current, ComparisonPolicy.IGNORE_WHITESPACES, DumbProgressIndicator.INSTANCE)
-
-  val rangeBuilder = RangeBuilder(current, vcs, currentShift, vcsShift)
-
-  for (range in iwIterable.iterateUnchanged()) {
-    val count = range.end1 - range.start1
-    for (i in 0..count - 1) {
-      val vcsIndex = range.start1 + i
-      val currentIndex = range.start2 + i
-      if (vcs[vcsIndex] == current[currentIndex]) {
-        rangeBuilder.markEqual(vcsIndex, currentIndex)
-      }
-    }
-  }
-
-  return rangeBuilder.finish()
+private fun getChangeType(range: Range, equals: Boolean): Byte {
+  if (equals) return LstRange.EQUAL
+  val deleted = range.end1 - range.start1
+  val inserted = range.end2 - range.start2
+  if (deleted > 0 && inserted > 0) return LstRange.MODIFIED
+  if (deleted > 0) return LstRange.DELETED
+  if (inserted > 0) return LstRange.INSERTED
+  return LstRange.EQUAL
 }
 
-private class RangeBuilder(private val myCurrent: List<String>,
-                           private val myVcs: List<String>,
-                           private val myCurrentShift: Int,
-                           private val myVcsShift: Int) : DiffIterableUtil.ChangeBuilderBase(myVcs.size, myCurrent.size) {
 
-  private val myResult = ArrayList<Range>()
-
-  fun finish(): List<Range> {
-    doFinish()
-    return myResult
+private fun compareLinesSafe(lines1: List<String>, lines2: List<String>, comparisonPolicy: ComparisonPolicy): FairDiffIterable {
+  try {
+    return ByLine.compare(lines1, lines2, comparisonPolicy, DumbProgressIndicator.INSTANCE)
   }
-
-  override fun addChange(vcsStart: Int, currentStart: Int, vcsEnd: Int, currentEnd: Int) {
-    val range = expand(myVcs, myCurrent, vcsStart, currentStart, vcsEnd, currentEnd)
-    if (range.isEmpty) return
-
-    val innerRanges = calcInnerRanges(range)
-    val newRange = Range(range.start2 + myCurrentShift, range.end2 + myCurrentShift,
-                         range.start1 + myVcsShift, range.end1 + myVcsShift, innerRanges)
-
-    myResult.add(newRange)
-  }
-
-  private fun calcInnerRanges(blockRange: com.intellij.diff.util.Range): List<InnerRange>? {
-    try {
-      val vcs = myVcs.subList(blockRange.start1, blockRange.end1)
-      val current = myCurrent.subList(blockRange.start2, blockRange.end2)
-
-      val result = ArrayList<InnerRange>()
-      val iwIterable = ByLine.compare(vcs, current, ComparisonPolicy.IGNORE_WHITESPACES, DumbProgressIndicator.INSTANCE)
-      for (pair in DiffIterableUtil.iterateAll(iwIterable)) {
-        val range = pair.first
-        val equals = pair.second
-
-        val type = if (equals) Range.EQUAL else getChangeType(range.start1, range.end1, range.start2, range.end2)
-        result.add(InnerRange(range.start2, range.end2,
-                              type))
-      }
-      result.trimToSize()
-      return result
-    }
-    catch (e: DiffTooBigException) {
-      return null
-    }
-
+  catch (e: DiffTooBigException) {
+    val range = expand(lines1, lines2, 0, 0, lines1.size, lines2.size,
+                       { line1, line2 -> ComparisonUtil.isEquals(line1, line2, comparisonPolicy) })
+    val ranges = if (range.isEmpty) emptyList() else listOf(range)
+    return fair(DiffIterableUtil.create(ranges, lines1.size, lines2.size))
   }
 }
 
-private fun getChangeType(vcsStart: Int, vcsEnd: Int, currentStart: Int, currentEnd: Int): Byte {
-  val deleted = vcsEnd - vcsStart
-  val inserted = currentEnd - currentStart
-  if (deleted > 0 && inserted > 0) return Range.MODIFIED
-  if (deleted > 0) return Range.DELETED
-  if (inserted > 0) return Range.INSERTED
-  return Range.EQUAL
-}
+
+internal operator fun <T> Side.get(v1: T, v2: T): T = if (isLeft) v1 else v2
+internal fun Range.start(side: Side) = side[start1, start2]
+internal fun Range.end(side: Side) = side[end1, end2]
+
+internal val Document.lineOffsets: LineOffsets get() = LineOffsetsUtil.create(this)
+internal val CharSequence.lineOffsets: LineOffsets get() = LineOffsetsUtil.create(this)

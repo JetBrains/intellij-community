@@ -26,19 +26,15 @@ import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.editor.markup.MarkupEditorFilter
 import com.intellij.openapi.editor.markup.MarkupEditorFilterFactory
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.EditorNotificationPanel
 import org.jetbrains.annotations.CalledInAwt
 import java.awt.Graphics
 import java.awt.Point
 import java.awt.event.MouseEvent
 import java.util.*
-import javax.swing.JPanel
 
 class LineStatusTracker private constructor(override val project: Project,
                                             document: Document,
@@ -49,7 +45,6 @@ class LineStatusTracker private constructor(override val project: Project,
     DEFAULT, SMART, SILENT
   }
 
-  private val fileEditorManager: FileEditorManager = FileEditorManager.getInstance(project)
   private val vcsDirtyScopeManager: VcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(project)
 
   override val renderer: MyLineStatusMarkerRenderer = MyLineStatusMarkerRenderer(this)
@@ -58,8 +53,9 @@ class LineStatusTracker private constructor(override val project: Project,
     set(value) {
       if (value == mode) return
       field = value
-      reinstallRanges()
+      updateInnerRanges()
     }
+
 
   @CalledInAwt
   fun isAvailableAt(editor: Editor): Boolean {
@@ -70,38 +66,12 @@ class LineStatusTracker private constructor(override val project: Project,
   override fun isDetectWhitespaceChangedLines(): Boolean = mode == Mode.SMART
 
   @CalledInAwt
-  override fun installNotification(text: String) {
-    val editors = fileEditorManager.getAllEditors(virtualFile)
-    for (editor in editors) {
-      val panel = editor.getUserData(PANEL_KEY)
-      if (panel == null) {
-        val newPanel = EditorNotificationPanel().text(text)
-        editor.putUserData(PANEL_KEY, newPanel)
-        fileEditorManager.addTopComponent(editor, newPanel)
-      }
-    }
-  }
-
-  @CalledInAwt
-  override fun destroyNotification() {
-    val editors = fileEditorManager.getEditors(virtualFile)
-    for (editor in editors) {
-      val panel = editor.getUserData(PANEL_KEY)
-      if (panel != null) {
-        fileEditorManager.removeTopComponent(editor, panel)
-        editor.putUserData(PANEL_KEY, null)
-      }
-    }
-  }
-
-  @CalledInAwt
   override fun fireFileUnchanged() {
     if (GeneralSettings.getInstance().isSaveOnFrameDeactivation) {
       // later to avoid saving inside document change event processing.
       TransactionGuard.getInstance().submitTransactionLater(project, Runnable {
         FileDocumentManager.getInstance().saveDocument(document)
-        val ranges = getRanges()
-        if (ranges == null || ranges.isEmpty()) {
+        if (blocks.isEmpty()) {
           // file was modified, and now it's not -> dirty local change
           vcsDirtyScopeManager.fileDirty(virtualFile)
         }
@@ -109,12 +79,7 @@ class LineStatusTracker private constructor(override val project: Project,
     }
   }
 
-  override fun doRollbackRange(range: Range) {
-    super.doRollbackRange(range)
-    markLinesUnchanged(range.line1, range.line1 + range.vcsLine2 - range.vcsLine1)
-  }
-
-  private fun markLinesUnchanged(startLine: Int, endLine: Int) {
+  override fun fireLinesUnchanged(startLine: Int, endLine: Int) {
     if (document.textLength == 0) return  // empty document has no lines
     if (startLine == endLine) return
     (document as DocumentImpl).clearLineModificationFlags(startLine, endLine)
@@ -166,8 +131,6 @@ class LineStatusTracker private constructor(override val project: Project,
   }
 
   companion object {
-    private val PANEL_KEY = Key<JPanel>("LineStatusTracker.CanNotCalculateDiffPanel")
-
     @JvmStatic
     fun createOn(virtualFile: VirtualFile,
                  document: Document,

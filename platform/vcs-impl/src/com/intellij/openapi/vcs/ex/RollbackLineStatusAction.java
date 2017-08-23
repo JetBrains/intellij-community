@@ -19,7 +19,6 @@ import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -76,15 +75,11 @@ public class RollbackLineStatusAction extends DumbAwareAction {
 
     if (range != null) {
       if (editor != null) DiffUtil.moveCaretToLineRangeIfNeeded(editor, range.getLine1(), range.getLine2());
-      execute(tracker, () -> tracker.rollbackChanges(range));
+      tracker.rollbackChanges(range);
     }
     else {
       BitSet selectedLines = DiffUtil.getSelectedLines(editor);
-      execute(tracker, () -> tracker.rollbackChanges(selectedLines));
+      tracker.rollbackChanges(selectedLines);
     }
-  }
-
-  private static void execute(@NotNull final LineStatusTrackerBase tracker, @NotNull final Runnable task) {
-    DiffUtil.executeWriteCommand(tracker.getDocument(), tracker.getProject(), VcsBundle.message("command.name.rollback.change"), task);
   }
 }
