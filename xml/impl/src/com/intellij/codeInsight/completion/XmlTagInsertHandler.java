@@ -43,6 +43,9 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.formatter.xml.XmlCodeStyleSettings;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -54,6 +57,7 @@ import com.intellij.xml.actions.GenerateXmlTagAction;
 import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -295,7 +299,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
       }
     }
     else if (completionChar == '/') {
-      template.addTextSegment("/>");
+      template.addTextSegment(closeTag(tag));
     }
     else if (completionChar == ' ' && template.getSegmentsCount() == 0) {
       if (WebEditorOptions.getInstance().isAutomaticallyStartAttribute() &&
@@ -306,7 +310,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
     }
     else if (completionChar == Lookup.AUTO_INSERT_SELECT_CHAR || completionChar == Lookup.NORMAL_SELECT_CHAR || completionChar == Lookup.REPLACE_SELECT_CHAR) {
       if (WebEditorOptions.getInstance().isAutomaticallyInsertClosingTag() && isHtmlCode && HtmlUtil.isSingleHtmlTag(tag.getName())) {
-        template.addTextSegment(HtmlUtil.isHtmlTag(tag) ? ">" : "/>");
+        template.addTextSegment(HtmlUtil.isHtmlTag(tag) ? ">" : closeTag(tag));
       }
       else {
         if (needAlLeastOneAttribute(tag) && WebEditorOptions.getInstance().isAutomaticallyStartAttribute() && tag.getAttributes().length == 0
@@ -321,6 +325,15 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
     }
 
     return false;
+  }
+
+  @NotNull
+  private static String closeTag(XmlTag tag) {
+    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(tag.getProject());
+    boolean html = HtmlUtil.isHtmlTag(tag);
+    boolean needsSpace = (html && settings.HTML_SPACE_INSIDE_EMPTY_TAG) ||
+                         (!html && settings.getCustomSettings(XmlCodeStyleSettings.class).XML_SPACE_INSIDE_EMPTY_TAG);
+    return needsSpace ? " />" : "/>";
   }
 
   private static void completeAttribute(Template template, boolean htmlCode) {
@@ -381,7 +394,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
         return;
       case XmlElementDescriptor.CONTENT_TYPE_EMPTY:
         if (completeIt) {
-          template.addTextSegment("/>");
+          template.addTextSegment(closeTag(context));
         }
         break;
       case XmlElementDescriptor.CONTENT_TYPE_MIXED:
