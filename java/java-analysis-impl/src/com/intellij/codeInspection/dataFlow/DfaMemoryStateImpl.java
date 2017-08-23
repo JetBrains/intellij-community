@@ -1039,26 +1039,48 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   @Nullable
   @SuppressWarnings("unchecked")
   public <T> T getValueFact(@NotNull DfaFactType<T> factType, @NotNull DfaValue value) {
-    if (factType == DfaFactType.RANGE) {
-      LongRangeSet range = getRange(value);
-      if (range != null) {
-        return (T)range;
-      }
-    }
     if (value instanceof DfaVariableValue) {
-      DfaVariableState state = findVariableState((DfaVariableValue)value);
+      DfaVariableValue var = (DfaVariableValue)value;
+      DfaVariableState state = findVariableState(var);
       if (state != null) {
         T fact = state.getFact(factType);
         if (fact != null) {
           return fact;
         }
       }
-      DfaConstValue constValue = getConstantValue((DfaVariableValue)value);
-      if (constValue != null) {
-        value = constValue;
-      }
+      value = resolveVariableValue(var);
     }
     return factType.fromDfaValue(value);
+  }
+
+  @NotNull
+  private DfaValue resolveVariableValue(DfaVariableValue var) {
+    DfaConstValue constValue = getConstantValue(var);
+    if (constValue != null) {
+      return constValue;
+    }
+    DfaVariableValue qualifier = var.getQualifier();
+    if (qualifier != null) {
+      return StreamEx.of(SpecialField.values()).map(sf -> sf.createValue(myFactory, qualifier))
+            .nonNull().findFirst().orElse(var);
+    }
+    return var;
+  }
+
+  DfaFactMap getFactMap(@NotNull DfaValue value) {
+    if (value instanceof DfaVariableValue) {
+      DfaVariableState state = findVariableState((DfaVariableValue)value);
+      if (state != null) {
+        return state.myFactMap;
+      }
+      value = resolveVariableValue((DfaVariableValue)value);
+    }
+    DfaValue finalValue = value;
+    return StreamEx.of(DfaFactType.getTypes()).foldLeft(DfaFactMap.EMPTY, (map, type) -> updateMap(map, type, finalValue));
+  }
+
+  private static <T> DfaFactMap updateMap(DfaFactMap map, DfaFactType<T> factType, DfaValue value) {
+    return map.with(factType, factType.fromDfaValue(value));
   }
 
   @Nullable

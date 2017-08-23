@@ -22,6 +22,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -109,6 +110,21 @@ public final class DfaFactMap {
     if (curFact == null) return with(type, value);
     T newFact = type.intersectFacts(curFact, value);
     return newFact == null ? null : with(type, newFact);
+  }
+
+  private <TT> DfaFactMap intersect(DfaFactMap otherMap, @NotNull DfaFactType<TT> type) {
+    return intersect(type, otherMap.get(type));
+  }
+
+  @Nullable
+  public static DfaFactMap intersect(DfaFactMap map1, DfaFactMap map2) {
+    if(map1 == null || map2 == null) return null;
+    List<DfaFactType<?>> types = DfaFactType.getTypes();
+    for (DfaFactType<?> type : types) {
+      map1 = map1.intersect(map2, type);
+      if (map1 == null) return null;
+    }
+    return map1;
   }
 
   @Override
