@@ -89,11 +89,8 @@ fun indexSdkAndStoreSerializedStubs(projectPath: String, sdkPath: String, stubsF
             val stub = buildStubForFile(fileContent, serializationManager)
             val hashCode = hashing.hashString(fileContent)
 
-            val stub2 = storage.get(hashCode)
-
             val bytes = BufferExposingByteArrayOutputStream()
             serializationManager.serialize(stub, bytes)
-
 
             val contentLength =
               if (file.fileType.isBinary) {
