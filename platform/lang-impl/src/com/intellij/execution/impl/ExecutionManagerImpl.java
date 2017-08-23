@@ -45,7 +45,6 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Trinity;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.util.Alarm;
@@ -337,16 +336,14 @@ public abstract class ExecutionManagerImpl extends ExecutionManager implements D
       //noinspection SSBasedInspection
       SwingUtilities.invokeLater(() -> {
         if (!myProject.isDisposed()) {
-          if (!Registry.is("dumb.aware.run.configurations")) {
+          RunnerAndConfigurationSettings settings = environment.getRunnerAndConfigurationSettings();
+          if (settings != null && !settings.getType().isDumbAware() && DumbService.isDumb(myProject)) {
             DumbService.getInstance(myProject).runWhenSmart(startRunnable);
           } else {
             try {
-              DumbService.getInstance(myProject).setAlternativeResolveEnabled(true);
               startRunnable.run();
             } catch (IndexNotReadyException ignored) {
               ExecutionUtil.handleExecutionError(environment, new ExecutionException("cannot start while indexing is in progress."));
-            } finally {
-              DumbService.getInstance(myProject).setAlternativeResolveEnabled(false);
             }
           }
         }
@@ -425,7 +422,8 @@ public abstract class ExecutionManagerImpl extends ExecutionManager implements D
           // a new rerun has been requested before starting this one, ignore this rerun
           return;
         }
-        if ((DumbService.getInstance(myProject).isDumb() && !Registry.is("dumb.aware.run.configurations")) || ExecutorRegistry.getInstance().isStarting(environment)) {
+        if ((DumbService.getInstance(myProject).isDumb() && configuration != null && !configuration.getType().isDumbAware()) ||
+            ExecutorRegistry.getInstance().isStarting(environment)) {
           awaitTermination(this, 100);
           return;
         }

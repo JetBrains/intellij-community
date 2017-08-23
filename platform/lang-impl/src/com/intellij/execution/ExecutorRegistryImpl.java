@@ -33,7 +33,6 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.util.Trinity;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -203,8 +202,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry implements Disposable
       final Presentation presentation = e.getPresentation();
       final Project project = e.getProject();
 
-      if (project == null || !project.isInitialized() || project.isDisposed() ||
-          (DumbService.getInstance(project).isDumb() && !Registry.is("dumb.aware.run.configurations"))) {
+      if (project == null || !project.isInitialized() || project.isDisposed()) {
         presentation.setEnabled(false);
         return;
       }
@@ -212,8 +210,12 @@ public class ExecutorRegistryImpl extends ExecutorRegistry implements Disposable
       final RunnerAndConfigurationSettings selectedConfiguration = getSelectedConfiguration(project);
       boolean enabled = false;
       String text;
-      final String textWithMnemonic = getTemplatePresentation().getTextWithMnemonic();
       if (selectedConfiguration != null) {
+        if (DumbService.isDumb(project) && !selectedConfiguration.getType().isDumbAware()) {
+          presentation.setEnabled(false);
+          return;
+        }
+
         presentation.setIcon(getInformativeIcon(project, selectedConfiguration));
         final ProgramRunner runner = RunnerRegistry.getInstance().getRunner(myExecutor.getId(), selectedConfiguration.getConfiguration());
 
@@ -227,7 +229,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry implements Disposable
         text = myExecutor.getStartActionText(selectedConfiguration.getName());
       }
       else {
-        text = textWithMnemonic;
+        text = getTemplatePresentation().getTextWithMnemonic();
       }
 
       presentation.setEnabled(enabled);

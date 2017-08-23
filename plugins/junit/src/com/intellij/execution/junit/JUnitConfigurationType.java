@@ -31,7 +31,8 @@ public class JUnitConfigurationType implements ConfigurationType {
   /**reflection*/
   public JUnitConfigurationType() {
     myFactory = new ConfigurationFactoryEx(this) {
-      public RunConfiguration createTemplateConfiguration(Project project) {
+      @NotNull
+      public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
         return new JUnitConfiguration("", project, this);
       }
 
@@ -61,6 +62,11 @@ public class JUnitConfigurationType implements ConfigurationType {
   @NotNull
   public String getId() {
     return "JUnit";
+  }
+
+  @Override
+  public boolean isDumbAware() {
+    return true;
   }
 
   @NotNull
