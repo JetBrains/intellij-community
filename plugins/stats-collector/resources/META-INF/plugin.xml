@@ -73,6 +73,7 @@
                         serviceImplementation="com.intellij.completion.tracker.UserDataLookupElementTracking"/>
 
     <applicationConfigurable provider="com.intellij.plugin.PluginSettingsConfigurableProvider"/>
+    <preloadingActivity implementation="com.intellij.completion.enhancer.FirstContributorPreloader" order="last"/>
   </extensions>
 
   <actions>
