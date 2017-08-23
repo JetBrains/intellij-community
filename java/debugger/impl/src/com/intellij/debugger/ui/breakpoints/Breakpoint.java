@@ -35,6 +35,7 @@ import com.intellij.debugger.requests.Requestor;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.impl.watch.CompilingEvaluatorImpl;
 import com.intellij.debugger.ui.overhead.OverheadProducer;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
@@ -45,6 +46,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.AppUIUtil;
+import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.StringBuilderSpinAllocator;
@@ -134,6 +136,17 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
    */
   @Override
   public abstract void processClassPrepare(DebugProcess debuggerProcess, final ReferenceType referenceType);
+
+  @Override
+  public void customizeRenderer(ColoredTableCellRenderer renderer) {
+    if (myXBreakpoint != null) {
+      renderer.setIcon(myXBreakpoint.getType().getEnabledIcon());
+    }
+    else {
+      renderer.setIcon(AllIcons.Debugger.Db_set_breakpoint);
+    }
+    renderer.append(getDisplayName());
+  }
 
   public abstract String getDisplayName ();
   

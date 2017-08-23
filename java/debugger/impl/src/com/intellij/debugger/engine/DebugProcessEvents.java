@@ -27,6 +27,7 @@ import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.requests.Requestor;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
+import com.intellij.debugger.ui.breakpoints.RunToCursorBreakpoint;
 import com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint;
 import com.intellij.debugger.ui.overhead.OverheadProducer;
 import com.intellij.debugger.ui.overhead.OverheadTimings;
@@ -499,8 +500,10 @@ public class DebugProcessEvents extends DebugProcessImpl {
           resumePreferred = !requestHit;
         }
         finally {
-          if (requestor instanceof OverheadProducer) {
-            OverheadTimings.add(DebugProcessEvents.this, (OverheadProducer)requestor, requestHit ? 1 : 0, System.currentTimeMillis() - start);
+          if (requestor instanceof OverheadProducer && !(requestor instanceof RunToCursorBreakpoint)) {
+            OverheadTimings.add(DebugProcessEvents.this, (OverheadProducer)requestor,
+                                requestHit || requestor instanceof StackCapturingLineBreakpoint ? 1 : 0,
+                                System.currentTimeMillis() - start);
           }
         }
 

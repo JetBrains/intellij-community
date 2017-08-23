@@ -15,11 +15,13 @@
  */
 package com.intellij.debugger.ui.overhead;
 
+import com.intellij.ui.ColoredTableCellRenderer;
+
 /**
  * @author egor
  */
 public interface OverheadProducer {
   boolean isEnabled();
   void setEnabled(boolean enabled);
-  String getDisplayName();
+  void customizeRenderer(ColoredTableCellRenderer renderer);
 }

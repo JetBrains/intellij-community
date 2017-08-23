@@ -19,19 +19,19 @@ import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TableUtil;
-import com.intellij.ui.table.JBTable;
+import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
-import one.util.streamex.IntStreamEx;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.table.TableCellRenderer;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -46,7 +46,7 @@ public class OverheadView extends BorderLayoutPanel {
   static final EnabledColumnInfo ENABLED_COLUMN = new EnabledColumnInfo();
   static final NameColumnInfo NAME_COLUMN = new NameColumnInfo();
 
-  final JBTable myTable;
+  final TableView<OverheadProducer> myTable;
   final ListTableModel<OverheadProducer> myModel;
 
   public OverheadView(@NotNull DebugProcessImpl process) {
@@ -60,7 +60,7 @@ public class OverheadView extends BorderLayoutPanel {
                                    new ArrayList<>(OverheadTimings.getProducers(process)),
                                    3, SortOrder.DESCENDING);
     myModel.setSortable(true);
-    myTable = new JBTable(myModel);
+    myTable = new TableView<>(myModel);
     addToCenter(ScrollPaneFactory.createScrollPane(myTable));
     TableUtil.setupCheckboxColumn(myTable.getColumnModel().getColumn(0));
     OverheadTimings.addListener(o -> DebuggerUIUtil.invokeLater(() -> {
@@ -80,14 +80,10 @@ public class OverheadView extends BorderLayoutPanel {
 
       @Override
       public void actionPerformed(@NotNull final AnActionEvent e) {
-        getSelected().forEach(c -> c.setEnabled(!c.isEnabled()));
+        myTable.getSelection().forEach(c -> c.setEnabled(!c.isEnabled()));
         myTable.repaint();
       }
     }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0)), myTable);
-  }
-
-  private StreamEx<OverheadProducer> getSelected() {
-    return IntStreamEx.of(myTable.getSelectedRows()).map(myTable::convertRowIndexToModel).mapToObj(myModel::getItem);
   }
 
   private static class EnabledColumnInfo extends ColumnInfo<OverheadProducer, Boolean> {
@@ -117,21 +113,34 @@ public class OverheadView extends BorderLayoutPanel {
     }
   }
 
-  private static class NameColumnInfo extends ColumnInfo<OverheadProducer, String> {
+  private static class NameColumnInfo extends ColumnInfo<OverheadProducer, OverheadProducer> {
     public NameColumnInfo() {
       super("name");
     }
 
     @Nullable
     @Override
-    public String valueOf(OverheadProducer aspects) {
-      return aspects.getDisplayName();
+    public OverheadProducer valueOf(OverheadProducer aspects) {
+      return aspects;
+    }
+
+    @Override
+    public Class<?> getColumnClass() {
+      return OverheadProducer.class;
     }
 
     @Nullable
     @Override
-    public Comparator<OverheadProducer> getComparator() {
-      return Comparator.comparing(i -> valueOf(i));
+    public TableCellRenderer getRenderer(OverheadProducer producer) {
+      return new ColoredTableCellRenderer() {
+        @Override
+        protected void customizeCellRenderer(JTable table, @Nullable Object value, boolean selected, boolean hasFocus, int row, int column) {
+          if (value instanceof OverheadProducer) {
+            ((OverheadProducer)value).customizeRenderer(this);
+          }
+          setTransparentIconBackground(true);
+        }
+      };
     }
   }
 

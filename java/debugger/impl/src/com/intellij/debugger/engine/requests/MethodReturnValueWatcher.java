@@ -21,9 +21,11 @@ import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.overhead.OverheadProducer;
 import com.intellij.debugger.ui.overhead.OverheadTimings;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.util.ArrayUtil;
 import com.sun.jdi.*;
 import com.sun.jdi.event.Event;
@@ -244,7 +246,8 @@ public class MethodReturnValueWatcher implements OverheadProducer {
   }
 
   @Override
-  public String getDisplayName() {
-    return DebuggerBundle.message("action.watches.method.return.value.enable");
+  public void customizeRenderer(ColoredTableCellRenderer renderer) {
+    renderer.setIcon(AllIcons.Debugger.WatchLastReturnValue);
+    renderer.append(DebuggerBundle.message("action.watches.method.return.value.enable"));
   }
 }
