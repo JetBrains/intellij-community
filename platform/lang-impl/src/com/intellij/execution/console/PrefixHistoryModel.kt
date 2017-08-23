@@ -162,6 +162,9 @@ private class PrefixHistoryModel constructor(private val masterModel: MasterMode
     }
   }
 
+  //Can be remove when https://youtrack.jetbrains.com/issue/KT-19830 is fixed
+  override fun prevOnLastLine(): Boolean = true
+
   override fun hasHistory(): Boolean = myEntries != null
 }
 
