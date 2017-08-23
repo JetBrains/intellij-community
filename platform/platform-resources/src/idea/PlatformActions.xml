@@ -797,6 +797,11 @@
       <reference ref="MaintenanceGroup"/>
 
       <action internal="true" id="SendStatistics" class="com.intellij.internal.statistic.actions.SendStatisticsAction" text="Collect And Send Statistics"/>
+
+      <group id="Internal.Profile" popup="true" text="Profiler">
+        <action id="DTraceAction" internal="true" class="com.intellij.internal.performance.profiler.dtrace.DTraceAction" text="DTrace lwawt"/>
+      </group>
+
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>
 
