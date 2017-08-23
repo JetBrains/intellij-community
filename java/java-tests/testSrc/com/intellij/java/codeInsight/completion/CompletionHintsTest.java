@@ -411,6 +411,20 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     checkResultWithInlays("class C { int vararg(int a, int b, int... args){ return 0; } void m() { vararg(<hint text=\"a:\"/>1, <HINT text=\"b:\"/>2<caret><hint text=\", args:\"/>) } }");
   }
 
+  public void testVarargHintsDontSwitchPlaces() throws Exception {
+    configureJava("class C { void m() { java.util.Collections.add<caret> } }");
+    complete();
+    checkResultWithInlays("class C { void m() { java.util.Collections.addAll(<HINT text=\"c:\"/><caret><hint text=\", elements:\"/>) } }");
+    left();
+    type('s');
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C { void m() { java.util.Collections.addAll(<HINT text=\"c:\"/>s<caret><hint text=\", elements:\"/>) } }");
+    backspace();
+    checkResultWithInlays("class C { void m() { java.util.Collections.addAll(<HINT text=\"c:\"/><caret><hint text=\", elements:\"/>) } }");
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C { void m() { java.util.Collections.addAll(<HINT text=\"c:\"/><caret><hint text=\", elements:\"/>) } }");
+  }
+
   public void testHintsDontDisappearWhenNavigatingAwayFromUncompletedInvocation() throws Exception {
     configureJava("class C { void m() { System.setPro<caret> } }");
     complete("setProperty");
@@ -634,6 +648,10 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
 
   private void delete() {
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_DELETE);
+  }
+
+  private void backspace() {
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_BACKSPACE);
   }
 
   private void configureJava(String text) {

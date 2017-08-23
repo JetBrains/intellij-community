@@ -45,7 +45,7 @@ class InlayImpl extends RangeMarkerImpl implements Inlay, Getter<InlayImpl> {
     myOriginalOffset = offset;
     myRenderer = renderer;
     doUpdateSize();
-    myEditor.getInlayModel().myInlayTree.addInterval(this, offset, offset, false, false, false, 0);
+    myEditor.getInlayModel().myInlayTree.addInterval(this, offset, offset, false, false, relatesToPreceedingText, 0);
   }
 
   @Override
@@ -72,15 +72,8 @@ class InlayImpl extends RangeMarkerImpl implements Inlay, Getter<InlayImpl> {
   @Override
   protected void changedUpdateImpl(@NotNull DocumentEvent e) {
     super.changedUpdateImpl(e);
-    if (isValid()) {
-      if (DocumentUtil.isInsideSurrogatePair(getDocument(), intervalStart())) {
-        invalidate(e);
-      }
-      else if (myRelatedToPrecedingText && e.getOldLength() == 0) {
-        int newOffset = e.getOffset() + e.getNewLength();
-        setIntervalStart(newOffset);
-        setIntervalEnd(newOffset);
-      }
+    if (isValid() && DocumentUtil.isInsideSurrogatePair(getDocument(), intervalStart())) {
+      invalidate(e);
     }
   }
 
