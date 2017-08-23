@@ -477,7 +477,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
         final LocatableEventRequestor requestor = (LocatableEventRequestor) getRequestsManager().findRequestor(event.request());
 
         boolean resumePreferred = requestor != null && DebuggerSettings.SUSPEND_NONE.equals(requestor.getSuspendPolicy());
-        boolean requestHit;
+        boolean requestHit = false;
         long start = 0;
         if (requestor instanceof OverheadProducer) {
           start = System.currentTimeMillis();
@@ -500,7 +500,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
         }
         finally {
           if (requestor instanceof OverheadProducer) {
-            OverheadTimings.add(DebugProcessEvents.this, (OverheadProducer)requestor, System.currentTimeMillis() - start);
+            OverheadTimings.add(DebugProcessEvents.this, (OverheadProducer)requestor, requestHit ? 1 : 0, System.currentTimeMillis() - start);
           }
         }
 

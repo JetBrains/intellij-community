@@ -181,7 +181,7 @@ public class MethodReturnValueWatcher implements OverheadProducer {
         myExitRequest = null;
       }
       if (enabled) {
-        OverheadTimings.add(myProcess, this, null);
+        OverheadTimings.add(myProcess, this, 1, null);
         clear();
         myThread = thread;
 

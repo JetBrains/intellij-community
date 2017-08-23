@@ -49,14 +49,14 @@ public class OverheadTimings {
     return getTimings(process).myMap.keySet();
   }
 
-  public static void add(DebugProcess process, OverheadProducer producer, @Nullable Long overhead) {
+  public static void add(DebugProcess process, OverheadProducer producer, long hits, @Nullable Long overhead) {
     OverheadTimings timings = getTimings(process);
-    timings.myMap.merge(producer, new Timings(1, overhead), (old, value) -> {
+    timings.myMap.merge(producer, new Timings(hits, overhead), (old, value) -> {
       Long newTime = old.myTime;
       if (value.myTime != null) {
         newTime += value.myTime;
       }
-      return new Timings(old.myHits + 1, newTime);
+      return new Timings(old.myHits + value.myHits, newTime);
     });
     timings.myEventDispatcher.getMulticaster().timingAdded(producer);
   }
