@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.IntentionWrapper;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.lang.jvm.JvmModifier;
-import com.intellij.lang.jvm.actions.JvmElementActionsFactory;
 import com.intellij.lang.jvm.actions.MemberRequest;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -28,6 +27,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.lang.jvm.actions.JvmElementActionFactories.createPropertyActions;
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 import static com.intellij.util.ArrayUtil.toObjectArray;
 
@@ -53,11 +53,7 @@ public class CreateBeanPropertyFixes {
       if (aClass == null) return IntentionAction.EMPTY_ARRAY;
       type = facade.getElementFactory().createType(aClass);
     }
-    JvmElementActionsFactory factory = JvmElementActionsFactory.forLanguage(psiClass.getLanguage());
-    if (factory == null) return IntentionAction.EMPTY_ARRAY;
-    return toObjectArray(
-      factory.createAddPropertyActions(psiClass,
-                                       new MemberRequest.Property(propertyName, JvmModifier.PUBLIC, type, createSetter, !createSetter)),
-      IntentionAction.class);
+    MemberRequest.Property request = new MemberRequest.Property(propertyName, JvmModifier.PUBLIC, type, createSetter, !createSetter);
+    return toObjectArray(createPropertyActions(psiClass, request), IntentionAction.class);
   }
 }

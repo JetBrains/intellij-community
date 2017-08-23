@@ -17,7 +17,7 @@ package org.jetbrains.plugins.javaFX.fxml.refs;
 
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
-import com.intellij.lang.jvm.actions.JvmElementActionsFactory;
+import com.intellij.lang.jvm.actions.JvmElementActionFactories;
 import com.intellij.lang.jvm.actions.MemberRequest;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -100,10 +100,6 @@ public class JavaFxEventHandlerReference extends PsiReferenceBase<XmlAttributeVa
     @Override
     public void registerFixes(@NotNull final JavaFxEventHandlerReference ref, @NotNull final QuickFixActionRegistrar registrar) {
       if (ref.myController != null && ref.myEventHandler == null) {
-        JvmElementActionsFactory intentionActionsFactory =
-          JvmElementActionsFactory.forLanguage(ref.myController.getLanguage());
-        if (intentionActionsFactory == null) return;
-
         String javaSignature = getHandlerSignature(ref);
         PsiMethod javaMethod = JavaPsiFacade.getElementFactory(ref.myController.getProject())
           .createMethodFromText(javaSignature, ref.myController);
@@ -114,7 +110,7 @@ public class JavaFxEventHandlerReference extends PsiReferenceBase<XmlAttributeVa
                                             Arrays.asList(javaMethod.getModifiers()),
                                             javaMethod.getReturnType(),
                                             Arrays.asList(javaMethod.getParameterList().getParameters()));
-        intentionActionsFactory.createAddMethodActions(ref.myController, method).forEach(registrar::register);
+        JvmElementActionFactories.createMethodActions(ref.myController, method).forEach(registrar::register);
       }
     }
 
