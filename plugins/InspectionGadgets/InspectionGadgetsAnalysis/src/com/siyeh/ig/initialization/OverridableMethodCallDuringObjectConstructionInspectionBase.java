@@ -52,10 +52,8 @@ public class OverridableMethodCallDuringObjectConstructionInspectionBase extends
       }
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();
       final PsiExpression qualifier = methodExpression.getQualifierExpression();
-      if (qualifier != null) {
-        if (!(qualifier instanceof PsiThisExpression || qualifier instanceof PsiSuperExpression)) {
-          return;
-        }
+      if (qualifier != null && !(qualifier instanceof PsiThisExpression)) {
+        return;
       }
       final PsiClass containingClass = PsiTreeUtil.getParentOfType(expression, PsiClass.class);
       if (containingClass == null || containingClass.hasModifierProperty(PsiModifier.FINAL)) {
