@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,26 +18,15 @@ package com.intellij.execution.configuration;
 import com.intellij.openapi.application.PathMacroFilter;
 import org.jdom.Attribute;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
 class RunConfigurationPathMacroFilter extends PathMacroFilter {
   @Override
-  public boolean skipPathMacros(Attribute attribute) {
-    final Element parent = attribute.getParent();
-    final String attrName = attribute.getName();
-    String tagName = parent.getName();
-    if (tagName.equals(EnvironmentVariablesComponent.ENV) &&
-        (attrName.equals(EnvironmentVariablesComponent.NAME) || attrName.equals(EnvironmentVariablesComponent.VALUE))) {
-      return true;
-    }
-
-    if (tagName.equals("configuration") && attrName.equals("name")) {
-      return true;
-    }
-
-    return false;
+  public boolean skipPathMacros(@NotNull Attribute attribute) {
+    return attribute.getParent().getName().equals("configuration") && attribute.getName().equals("name");
   }
 
   @Override
