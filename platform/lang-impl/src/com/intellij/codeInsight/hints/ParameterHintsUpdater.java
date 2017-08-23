@@ -73,7 +73,8 @@ public class ParameterHintsUpdater {
     editorHints.forEach(editorHint -> {
       int offset = editorHint.getOffset();
       String presentationText = presentationManager.getHintText(editorHint);
-      ParameterHintsPass.HintData newHint = findAndRemoveMatchingHint(offset, presentationText, myNewHints);
+      ParameterHintsPass.HintData newHint = findAndRemoveMatchingHint(offset, presentationText, editorHint.isRelatedToPrecedingText(), 
+                                                                      myNewHints);
       String newText = newHint == null ? null : newHint.presentationText;
       if (!myForceImmediateUpdate && delayRemoval(editorHint)) {
         myEditor.putUserData(HINT_REMOVAL_DELAYED, Boolean.TRUE);
@@ -98,14 +99,16 @@ public class ParameterHintsUpdater {
   }
 
   @Nullable
-  private static ParameterHintsPass.HintData findAndRemoveMatchingHint(int offset, String presentationText, 
+  private static ParameterHintsPass.HintData findAndRemoveMatchingHint(int offset, String presentationText, boolean relatesToPrecedingText, 
                                                                        TIntObjectHashMap<List<ParameterHintsPass.HintData>> data) {
     List<ParameterHintsPass.HintData> newHintList = data.get(offset);
     ParameterHintsPass.HintData newHint = null;
     if (newHintList != null) {
       ParameterHintsPass.HintData lastHint = null;
       for (Iterator<ParameterHintsPass.HintData> iterator = newHintList.iterator(); iterator.hasNext(); ) {
-        lastHint = iterator.next();
+        ParameterHintsPass.HintData hint = iterator.next();
+        if (hint.relatesToPrecedingText != relatesToPrecedingText) continue;
+        lastHint = hint;
         if (Objects.equals(lastHint.presentationText, presentationText)) {
           newHint = lastHint;
           iterator.remove();
