@@ -33,6 +33,10 @@ import java.util.*
 val stubsFileName = SDK_STUBS_STORAGE_NAME
 
 fun main(args: Array<String>) {
+  buildStubs()
+}
+
+fun buildStubs() {
   val app = IdeaTestApplication.getInstance()
 
 
