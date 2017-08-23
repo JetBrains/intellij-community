@@ -814,33 +814,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
         modifierList.setModifierProperty(PsiModifier.STATIC, true);
         PsiUtil.setModifierProperty(myInnerMethod, PsiModifier.STATIC, true);
       }
-      PsiMethodCallExpression methodCallExpression = null;
-      if (element instanceof PsiMethodCallExpression) {
-        methodCallExpression = (PsiMethodCallExpression)element;
-      }
-      else if (element instanceof PsiExpressionStatement) {
-        final PsiExpression expression = ((PsiExpressionStatement)element).getExpression();
-        if (expression instanceof PsiMethodCallExpression) {
-          methodCallExpression = (PsiMethodCallExpression)expression;
-        }
-        else if (expression instanceof PsiAssignmentExpression) {
-          final PsiExpression psiExpression = ((PsiAssignmentExpression)expression).getRExpression();
-          if (psiExpression instanceof PsiMethodCallExpression) {
-            methodCallExpression = (PsiMethodCallExpression)psiExpression;
-          }
-        }
-      } else if (element instanceof PsiDeclarationStatement) {
-        final PsiElement[] declaredElements = ((PsiDeclarationStatement)element).getDeclaredElements();
-        for (PsiElement declaredElement : declaredElements) {
-          if (declaredElement instanceof PsiLocalVariable) {
-            final PsiExpression initializer = ((PsiLocalVariable)declaredElement).getInitializer();
-            if (initializer instanceof PsiMethodCallExpression) {
-              methodCallExpression = (PsiMethodCallExpression)initializer;
-              break;
-            }
-          }
-        }
-      }
+      PsiMethodCallExpression methodCallExpression = getMatchMethodCallExpression(element);
       if (methodCallExpression == null) return element;
 
       PsiExpression expression = processMethodDeclaration(methodCallExpression.getArgumentList());

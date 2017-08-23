@@ -131,7 +131,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   @PsiModifier.ModifierConstant protected String myMethodVisibility = PsiModifier.PRIVATE;
   protected boolean myGenerateConditionalExit;
   protected PsiStatement myFirstExitStatementCopy;
-  private PsiMethod myExtractedMethod;
+  protected PsiMethod myExtractedMethod;
   private PsiMethodCallExpression myMethodCall;
   protected boolean myNullConditionalCheck;
   protected boolean myNotNullConditionalCheck;
@@ -1271,7 +1271,8 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   public PsiElement processMatch(Match match) throws IncorrectOperationException {
-    if (RefactoringUtil.isInStaticContext(match.getMatchStart(), myExtractedMethod.getContainingClass())) {
+    if (PsiTreeUtil.isContextAncestor(myExtractedMethod.getContainingClass(), match.getMatchStart(), false) &&
+        RefactoringUtil.isInStaticContext(match.getMatchStart(), myExtractedMethod.getContainingClass())) {
       PsiUtil.setModifierProperty(myExtractedMethod, PsiModifier.STATIC, true);
     }
     final PsiMethodCallExpression methodCallExpression = generateMethodCall(match.getInstanceExpression(), false);
@@ -1303,6 +1304,45 @@ public class ExtractMethodProcessor implements MatchProvider {
       }
     }
     return match.replace(myExtractedMethod, methodCallExpression, myOutputVariable);
+  }
+
+  @Nullable
+  protected PsiMethodCallExpression getMatchMethodCallExpression(PsiElement element) {
+    PsiMethodCallExpression methodCallExpression = null;
+    if (element instanceof PsiMethodCallExpression) {
+      methodCallExpression = (PsiMethodCallExpression)element;
+    }
+    else if (element instanceof PsiExpressionStatement) {
+      final PsiExpression expression = ((PsiExpressionStatement)element).getExpression();
+      if (expression instanceof PsiMethodCallExpression) {
+        methodCallExpression = (PsiMethodCallExpression)expression;
+      }
+      else if (expression instanceof PsiAssignmentExpression) {
+        final PsiExpression psiExpression = ((PsiAssignmentExpression)expression).getRExpression();
+        if (psiExpression instanceof PsiMethodCallExpression) {
+          methodCallExpression = (PsiMethodCallExpression)psiExpression;
+        }
+      }
+    }
+    else if (element instanceof PsiDeclarationStatement) {
+      final PsiElement[] declaredElements = ((PsiDeclarationStatement)element).getDeclaredElements();
+      for (PsiElement declaredElement : declaredElements) {
+        if (declaredElement instanceof PsiLocalVariable) {
+          final PsiExpression initializer = ((PsiLocalVariable)declaredElement).getInitializer();
+          if (initializer instanceof PsiMethodCallExpression) {
+            methodCallExpression = (PsiMethodCallExpression)initializer;
+            break;
+          }
+        }
+      }
+    }
+    else if (element instanceof PsiIfStatement) {
+      PsiExpression condition = ((PsiIfStatement)element).getCondition();
+      if (condition instanceof PsiMethodCallExpression) {
+        methodCallExpression = (PsiMethodCallExpression)condition;
+      }
+    }
+    return methodCallExpression;
   }
 
   protected void deleteExtracted() throws IncorrectOperationException {
