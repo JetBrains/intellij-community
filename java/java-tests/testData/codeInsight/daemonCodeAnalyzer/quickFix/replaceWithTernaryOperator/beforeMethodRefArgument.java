@@ -1,4 +1,4 @@
-// "Replace with ' != null ?:'" "true"
+// "Replace with null-checking lambda" "true"
 
 import java.util.Arrays;
 

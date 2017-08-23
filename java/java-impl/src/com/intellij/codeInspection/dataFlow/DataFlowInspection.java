@@ -81,7 +81,7 @@ public class DataFlowInspection extends DataFlowInspectionBase {
   protected List<LocalQuickFix> createMethodReferenceNPEFixes(PsiMethodReferenceExpression methodRef) {
     List<LocalQuickFix> fixes = new ArrayList<>();
     ContainerUtil.addIfNotNull(fixes, StreamFilterNotNullFix.makeFix(methodRef));
-    fixes.add(new ReplaceWithTernaryOperatorFix(null));
+    fixes.add(new ReplaceWithTernaryOperatorFix.ReplaceMethodRefWithTernaryOperatorFix());
     return fixes;
   }
 
