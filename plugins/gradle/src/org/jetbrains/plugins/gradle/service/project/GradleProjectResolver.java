@@ -920,7 +920,9 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     GradleProjectResolverExtension projectResolverChain;
     if (settings != null) {
       List<ClassHolder<? extends GradleProjectResolverExtension>> extensionClasses = settings.getResolverExtensions();
-
+      if(extensionClasses.isEmpty()) {
+        extensionClasses.add(ClassHolder.from(BaseGradleProjectResolverExtension.class));
+      }
       Deque<GradleProjectResolverExtension> extensions = new ArrayDeque<>();
       for (ClassHolder<? extends GradleProjectResolverExtension> holder : extensionClasses) {
         final GradleProjectResolverExtension extension;
