@@ -104,11 +104,11 @@ class MPSProperties extends ProductProperties {
         }
 
         // copy mac executable
-        context.ant.copy(file: "$context.paths.communityHome/build/conf/mac/Contents/MacOS/idea",
+        context.ant.copy(file: "$context.paths.communityHome/platform/build-scripts/resources/mac/Contents/MacOS/executable",
                 tofile: "$targetDirectory/build/resources/mps")
 
         // copy windows append.bat
-        context.ant.copy(file: "$context.paths.communityHome/bin/scripts/win/append.bat",
+        context.ant.copy(file: "$context.paths.communityHome/platform/build-scripts/resources/win/scripts/append.bat",
                 todir: "$targetDirectory/bin/win/")
 
         // copy jre version
