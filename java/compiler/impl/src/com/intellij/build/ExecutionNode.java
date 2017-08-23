@@ -123,6 +123,11 @@ public class ExecutionNode extends CachingSimpleNode {
     cleanUpCache();
   }
 
+  public void add(int index, ExecutionNode node) {
+    myChildrenList.add(index, node);
+    cleanUpCache();
+  }
+
   void removeChildren() {
     myChildrenList.clear();
     cleanUpCache();

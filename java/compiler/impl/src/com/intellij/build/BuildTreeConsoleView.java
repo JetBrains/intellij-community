@@ -325,6 +325,22 @@ public class BuildTreeConsoleView implements ConsoleView, BuildConsoleView {
       if (myDetailsHandler.myExecutionNode == null) {
         myDetailsHandler.setNode(getRootElement());
       }
+
+      if (((FinishBuildEvent)event).getResult() instanceof FailureResult) {
+        JTree tree = myBuilder.getTree();
+        if (tree != null && !tree.isRootVisible()) {
+          ExecutionNode rootElement = getRootElement();
+          ExecutionNode resultNode = new ExecutionNode(myProject);
+          resultNode.setName(StringUtil.toTitleCase(rootElement.getName()));
+          resultNode.setHint(rootElement.getHint());
+          resultNode.setEndTime(rootElement.getEndTime());
+          resultNode.setStartTime(rootElement.getStartTime());
+          resultNode.setResult(rootElement.getResult());
+          resultNode.setTooltip(rootElement.getTooltip());
+          rootElement.add(0, resultNode);
+          myBuilder.queueUpdateFrom(resultNode, false, false);
+        }
+      }
     }
   }
 
