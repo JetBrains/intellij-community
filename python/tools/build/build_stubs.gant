@@ -1,4 +1,5 @@
-import static com.jetbrains.python.tools.BuildStubsForSdkKt.buildStubs
+import org.jetbrains.intellij.build.impl.CompilationContextImpl
+import org.jetbrains.jps.idea.IdeaProjectLoader
 
 /*
  * Copyright 2000-2017 JetBrains s.r.o.
@@ -16,5 +17,17 @@ import static com.jetbrains.python.tools.BuildStubsForSdkKt.buildStubs
  * limitations under the License.
  */
 target("default": "Build Python Stubs") {
-  buildStubs()
+  String home = IdeaProjectLoader.guessHome(this)
+  def context = CompilationContextImpl.create("$home", home,
+                                              "$home/out")
+
+  List<String> buildClasspath = context.getModuleRuntimeClasspath(context.findRequiredModule("python-community-tools"), false)
+
+  context.ant.java(classname: "com.jetbrains.python.tools.BuildStubsForSdkKt") {
+    classpath {
+      buildClasspath.each {
+        pathelement(location: it)
+      }
+    }
+  }
 }
