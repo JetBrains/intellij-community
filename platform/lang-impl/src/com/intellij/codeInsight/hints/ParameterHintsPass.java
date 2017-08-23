@@ -120,7 +120,7 @@ public class ParameterHintsPass extends EditorBoundHighlightingPass {
     if (ParameterHintsUpdater.hintRemovalDelayed(myEditor)) {
       forceHintsUpdateOnNextPass(myEditor);
     }
-    else {
+    else if (myRootElement == myFile) {
       putCurrentPsiModificationStamp(myEditor, myFile);
     }
   }
