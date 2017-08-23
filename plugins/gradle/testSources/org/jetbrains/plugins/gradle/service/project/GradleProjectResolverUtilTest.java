@@ -16,25 +16,27 @@
 package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.testFramework.ProjectRule;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ExternalProjectSystemRegistry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.junit.ClassRule;
 import org.junit.Test;
+import org.picocontainer.PicoContainer;
 
 import static org.jetbrains.plugins.gradle.util.GradleConstants.GRADLE_SOURCE_SET_MODULE_TYPE_KEY;
 import static org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Vladislav.Soroka
  * @since 2/28/2017
  */
 public class GradleProjectResolverUtilTest {
-  @ClassRule
-  public static final ProjectRule myProjectRule = new ProjectRule();
 
   @Test
   public void testGetGradlePath() {
@@ -60,11 +62,20 @@ public class GradleProjectResolverUtilTest {
 
   @NotNull
   private static Module createModuleMock(@Nullable String projectId, @Nullable String moduleType) {
-    final Module module = myProjectRule.getModule();
-    ExternalSystemModulePropertyManager modulePropertyManager = ExternalSystemModulePropertyManager.getInstance(module);
-    modulePropertyManager.setExternalId(SYSTEM_ID);
-    modulePropertyManager.setExternalModuleType(moduleType);
-    modulePropertyManager.setLinkedProjectId(projectId);
+    Module module = mock(Module.class);
+    Project project = mock(Project.class);
+    PicoContainer container = mock(PicoContainer.class);
+
+    when(module.getPicoContainer()).thenReturn(container);
+    when(module.getProject()).thenReturn(project);
+    when(project.getPicoContainer()).thenReturn(container);
+    when(container.getComponentInstance(ExternalProjectsManager.class.getName())).thenReturn(null);
+    ExternalSystemModulePropertyManager modulePropertyManager = new ExternalSystemModulePropertyManager(module);
+    when(container.getComponentInstance(ExternalSystemModulePropertyManager.class.getName())).thenReturn(modulePropertyManager);
+
+    when(module.getOptionValue(ExternalProjectSystemRegistry.EXTERNAL_SYSTEM_ID_KEY)).thenReturn(SYSTEM_ID.getId());
+    when(module.getOptionValue("external.system.module.type")).thenReturn(moduleType);
+    when(module.getOptionValue("external.linked.project.id")).thenReturn(projectId);
     return module;
   }
 }
