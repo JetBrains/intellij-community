@@ -25,10 +25,9 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.searches.AllOverridingMethodsSearch;
+import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
@@ -283,11 +282,9 @@ public class RedundantThrowsDeclarationInspection extends GlobalJavaBatchInspect
           }
         }
       } else {
-        final Query<Pair<PsiMethod,PsiMethod>> query = AllOverridingMethodsSearch.search(psiMethod.getContainingClass());
-        query.forEach(pair -> {
-          if (pair.first == psiMethod) {
-            removeException(null, exceptionType, refsToDelete, pair.second);
-          }
+        final Query<PsiMethod> query = OverridingMethodsSearch.search(psiMethod);
+        query.forEach(m -> {
+          removeException(null, exceptionType, refsToDelete, m);
           return true;
         });
       }
