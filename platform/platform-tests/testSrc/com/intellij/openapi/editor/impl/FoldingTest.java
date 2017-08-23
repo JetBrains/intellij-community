@@ -357,4 +357,10 @@ public class FoldingTest extends AbstractEditorTest {
     WriteCommandAction.runWriteCommandAction(ourProject, () -> myEditor.getDocument().deleteString(15, 20));
     Assert.assertArrayEquals(new FoldRegion[]{inner}, myModel.fetchTopLevel());
   }
+  
+  public void testClearingInvalidatesFoldRegions() {
+    FoldRegion region = addCollapsedFoldRegion(5, 10, "...");
+    myModel.runBatchFoldingOperation(() -> myModel.clearFoldRegions());
+    assertFalse(region.isValid());
+  }
 }

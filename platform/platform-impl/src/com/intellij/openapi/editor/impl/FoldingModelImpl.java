@@ -315,10 +315,8 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
     }
     FoldRegion[] regions = getAllFoldRegions();
     for (FoldRegion region : regions) {
-      if (!region.isExpanded()) {
-        notifyListenersOnFoldRegionStateChange(region);
-        myFoldRegionsProcessed = true;
-      }
+      if (!region.isExpanded()) notifyListenersOnFoldRegionStateChange(region);
+      region.dispose();
     }
     doClearFoldRegions();
   }

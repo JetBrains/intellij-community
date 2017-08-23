@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.FoldingModel;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.util.Disposer;
 
 import javax.swing.*;
@@ -45,6 +46,7 @@ public class EditorStressTest extends AbstractEditorTest {
                                                                          new RemoveFoldRegion(),
                                                                          new CollapseFoldRegion(),
                                                                          new ExpandFoldRegion(),
+                                                                         new ClearFoldRegions(),
                                                                          new ChangeBulkModeState(),
                                                                          new ChangeEditorVisibility(),
                                                                          new AddInlay(),
@@ -194,6 +196,16 @@ public class EditorStressTest extends AbstractEditorTest {
       if (foldRegions.length == 0) return;
       final FoldRegion region = foldRegions[random.nextInt(foldRegions.length)];
       foldingModel.runBatchFoldingOperation(() -> region.setExpanded(true));
+    }
+  }
+  
+  private static class ClearFoldRegions implements Action {
+    @Override
+    public void perform(final EditorEx editor, Random random) {
+      DocumentEx document = editor.getDocument();
+      if (document.isInBulkUpdate()) return;
+      FoldingModelEx foldingModel = editor.getFoldingModel();
+      foldingModel.runBatchFoldingOperation(() -> foldingModel.clearFoldRegions());
     }
   }
   
