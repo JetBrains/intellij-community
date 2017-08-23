@@ -21,13 +21,14 @@ import com.intellij.psi.PsiMember;
 import com.intellij.refactoring.changeSignature.CallerChooserBase;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
 public abstract class AbstractJavaMemberCallerChooser<M extends PsiMember> extends CallerChooserBase<M> {
 
-  public AbstractJavaMemberCallerChooser(M member, Project project, String title, Tree previousTree, Consumer<Set<M>> callback) {
+  public AbstractJavaMemberCallerChooser(M member, Project project, @Nls(capitalization = Nls.Capitalization.Title) String title, Tree previousTree, Consumer<Set<M>> callback) {
     super(member, project, title, previousTree, "dummy." + StdFileTypes.JAVA.getDefaultExtension(), callback);
   }
 

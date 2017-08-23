@@ -43,6 +43,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -92,7 +93,7 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
     return "";
   }
 
-  public CallerChooserBase(M method, Project project, String title, Tree previousTree, String fileName, Consumer<Set<M>> callback) {
+  public CallerChooserBase(M method, Project project, @Nls(capitalization = Nls.Capitalization.Title) String title, Tree previousTree, String fileName, Consumer<Set<M>> callback) {
     super(true);
     myMethod = method;
     myProject = project;
