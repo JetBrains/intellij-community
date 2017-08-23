@@ -17,7 +17,7 @@ package com.intellij.spellchecker.inspection.quickfixes;
 
 public class JavaSpellCheckerFixesTest extends AbstractSpellCheckerFixesTest {
   protected String getExtension() {
-    return ".xml";
+    return ".java";
   }
 
   public void testSimpleWordChangeTo() {
