@@ -34,7 +34,7 @@ import com.intellij.psi.impl.beanProperties.CreateJavaBeanPropertyFix
 import com.intellij.psi.util.PsiFormatUtil
 import com.intellij.psi.util.PsiFormatUtilBase
 
-class JavaElementActionsFactoryImpl(
+class JavaElementActionsFactory(
   private val materializer: JavaElementMaterializer,
   private val renderer: JavaElementRenderer
 ) : JvmElementActionsFactory() {

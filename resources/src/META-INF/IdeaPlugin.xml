@@ -2020,7 +2020,7 @@
     <projectService serviceInterface="org.jetbrains.uast.UastContext" serviceImplementation="org.jetbrains.uast.UastContext"/>
     <metaLanguage implementation="com.intellij.uast.UastMetaLanguage"/>
     <smartPointer.anchorProvider implementation="com.intellij.uast.UastElementAnchorProvider"/>
-    <lang.jvm.actions.jvmElementActionsFactory implementation="com.intellij.codeInsight.intention.impl.JavaElementActionsFactoryImpl"/>
+    <lang.jvm.actions.jvmElementActionsFactory implementation="com.intellij.codeInsight.intention.impl.JavaElementActionsFactory"/>
 
     <deadCode implementation="com.intellij.codeInspection.java19modules.Java9ModuleEntryPoint"/>
 
