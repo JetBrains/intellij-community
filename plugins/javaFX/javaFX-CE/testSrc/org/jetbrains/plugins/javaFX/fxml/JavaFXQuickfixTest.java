@@ -17,6 +17,7 @@ package org.jetbrains.plugins.javaFX.fxml;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
+import com.intellij.idea.Bombed;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ContentEntry;
@@ -35,6 +36,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections.JavaFxUnresolvedFxIdReferenceInspection;
 import org.jetbrains.plugins.javaFX.fxml.codeInsight.intentions.JavaFxInjectPageLanguageIntention;
 
+import java.util.Calendar;
 import java.util.Set;
 
 public class JavaFXQuickfixTest extends LightCodeInsightFixtureTestCase {
@@ -57,6 +59,7 @@ public class JavaFXQuickfixTest extends LightCodeInsightFixtureTestCase {
     doTest("Create method 'void bar(ActionEvent)'", ".java");
   }
 
+  @Bombed(year = 2017, month = Calendar.SEPTEMBER, day = 1, user = "Daniil Ovchinnikov")
   public void testCreateControllerMethodInGroovy() {
     doTest("Create method 'void bar(ActionEvent)'", ".groovy");
   }
