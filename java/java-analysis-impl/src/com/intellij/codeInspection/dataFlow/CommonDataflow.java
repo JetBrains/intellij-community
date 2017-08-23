@@ -15,13 +15,16 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.PushInstruction;
+import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.psi.*;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,6 +49,7 @@ public class CommonDataflow {
   private static DataflowResult runDFA(@Nullable PsiElement block) {
     if (block == null) return null;
     DataFlowRunner runner = new DataFlowRunner(false, true);
+    DfaConstValue fail = runner.getFactory().getConstFactory().getContractFail();
     DataflowResult dfr = new DataflowResult();
     StandardInstructionVisitor visitor = new StandardInstructionVisitor() {
       @Override
@@ -55,6 +59,23 @@ public class CommonDataflow {
         if (place != null) {
           for (DfaInstructionState state : states) {
             dfr.add(place, (DfaMemoryStateImpl)state.getMemoryState());
+          }
+        }
+        return states;
+      }
+
+      @Override
+      public DfaInstructionState[] visitMethodCall(MethodCallInstruction instruction,
+                                                   DataFlowRunner runner,
+                                                   DfaMemoryState memState) {
+        DfaInstructionState[] states = super.visitMethodCall(instruction, runner, memState);
+        PsiExpression context = ObjectUtils.tryCast(instruction.getContext(), PsiExpression.class);
+        if (context != null) {
+          for (DfaInstructionState state : states) {
+            DfaValue value = state.getMemoryState().peek();
+            if(value != fail) {
+              dfr.add(context, (DfaMemoryStateImpl)state.getMemoryState());
+            }
           }
         }
         return states;
