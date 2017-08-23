@@ -73,9 +73,6 @@
                         serviceImplementation="com.intellij.completion.tracker.UserDataLookupElementTracking"/>
 
     <applicationConfigurable provider="com.intellij.plugin.PluginSettingsConfigurableProvider"/>
-
-    <reporting.sendPermission implementation="com.intellij.reporting.DataSendAllowed"/>
-
   </extensions>
 
   <actions>

@@ -17,12 +17,13 @@ package com.intellij.reporting
 
 import com.intellij.openapi.application.ApplicationManager
 
-class DataSendAllowed : DataSendPermission {
-    override fun isDataSendAllowed() = true
-}
+//class DataSendAllowed : DataSendPermission {
+//    override fun isDataSendAllowed() = true
+//}
 
 fun isSendAllowed(): Boolean {
-    return DataSendPermission.EP_NAME.extensions.any { it.isDataSendAllowed }
+    //return DataSendPermission.EP_NAME.extensions.any { it.isDataSendAllowed }
+    return true
 }
 
 fun isUnitTestMode(): Boolean {
