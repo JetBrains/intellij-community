@@ -26,9 +26,9 @@ public class MoveCommentToSeparateLineIntentionTest extends IPPTestCase {
   public void testBigWhitespace() { doTest(); }
   public void testStartOfFile2() { doTest(); }
 
-  public void testStartOfFile() {
-    assertIntentionNotAvailable();
-  }
+  public void testStartOfFile() { assertIntentionNotAvailable();}
+  public void testStartOfFile3() { assertIntentionNotAvailable();}
+  public void testIncomplete() { assertIntentionNotAvailable();}
 
   @Override
   protected String getIntentionName() {

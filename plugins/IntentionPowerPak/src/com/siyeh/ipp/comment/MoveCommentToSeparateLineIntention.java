@@ -40,7 +40,7 @@ public class MoveCommentToSeparateLineIntention extends Intention {
     final PsiWhiteSpace whitespace;
     while (true) {
       final PsiElement prevLeaf = PsiTreeUtil.prevLeaf(element);
-      if (prevLeaf == null || CommentOnLineWithSourcePredicate.isLineBreakWhiteSpace(prevLeaf)) {
+      if (prevLeaf == null || prevLeaf instanceof PsiWhiteSpace && prevLeaf.getText().indexOf('\n') >= 0) {
         whitespace = (PsiWhiteSpace)prevLeaf;
         break;
       }
