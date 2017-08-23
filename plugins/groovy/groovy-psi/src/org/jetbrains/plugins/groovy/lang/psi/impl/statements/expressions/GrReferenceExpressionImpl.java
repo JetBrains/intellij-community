@@ -47,7 +47,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
@@ -376,14 +375,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       final PsiType type;
       if (resolved instanceof GrField) {
         type = ((GrField)resolved).getType();
-      }
-      else if (resolved instanceof GrVariable) {
-        type = ((GrVariable)resolved).getDeclaredType();
-      }
-      else if (resolved instanceof GrAccessorMethod) {
-        type = ((GrAccessorMethod)resolved).getProperty().getType();
-      }
-      else {
+      } else {
         type = null;
       }
       if (type != null) {
