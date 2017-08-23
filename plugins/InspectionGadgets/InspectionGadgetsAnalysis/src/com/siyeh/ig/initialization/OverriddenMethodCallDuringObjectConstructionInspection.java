@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,11 @@
 package com.siyeh.ig.initialization;
 
 import com.intellij.psi.*;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.CloneUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
@@ -56,10 +54,8 @@ public class OverriddenMethodCallDuringObjectConstructionInspection extends Base
       }
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();
       final PsiExpression qualifier = methodExpression.getQualifierExpression();
-      if (qualifier != null) {
-        if (!(qualifier instanceof PsiThisExpression || qualifier instanceof PsiSuperExpression)) {
-          return;
-        }
+      if (qualifier != null && !(qualifier instanceof PsiThisExpression)) {
+        return;
       }
       final PsiClass containingClass = PsiTreeUtil.getParentOfType(expression, PsiClass.class);
       if (containingClass == null || containingClass.hasModifierProperty(PsiModifier.FINAL)) {
@@ -69,18 +65,8 @@ public class OverriddenMethodCallDuringObjectConstructionInspection extends Base
       if (calledMethod == null || !PsiUtil.canBeOverriden(calledMethod)) {
         return;
       }
-      final PsiClass calledMethodClass = calledMethod.getContainingClass();
-      if (!InheritanceUtil.isInheritorOrSelf(containingClass, calledMethodClass, true)) {
-        return;
-      }
       if (!MethodUtils.isOverriddenInHierarchy(calledMethod, containingClass)) {
         return;
-      }
-      if (CloneUtils.isClone(calledMethod)) {
-        final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(expression, PsiMethod.class);
-        if (CloneUtils.isClone(containingMethod)) {
-          return;
-        }
       }
       registerMethodCallError(expression);
     }
