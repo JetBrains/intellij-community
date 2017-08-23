@@ -400,7 +400,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
           forceNotNull(runner, memState, arg);
         }
       }
-      else if (!instruction.updateOfNullable(memState, arg) && requiredNullability == Nullness.UNKNOWN) {
+      else if (requiredNullability == Nullness.UNKNOWN) {
         checkNotNullable(memState, arg, NullabilityProblem.passingNullableArgumentToNonAnnotatedParameter, anchor);
       }
     }

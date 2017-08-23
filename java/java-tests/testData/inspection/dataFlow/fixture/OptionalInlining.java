@@ -129,7 +129,7 @@ public class OptionalInlining {
   }
 
   void testGuavaTransform(com.google.common.base.Optional<String> opt) {
-    String trimmed = com.google.common.base.Optional.fromNullable(nullableMethod()).transform(xx -> xx.trim()).or("");
+    String trimmed = com.google.common.base.Optional.fromNullable(<warning descr="Argument 'nullableMethod()' might be null but passed to non annotated parameter">nullableMethod()</warning>).transform(xx -> xx.trim()).or("");
     if(<warning descr="Condition 'trimmed == null' is always 'false'">trimmed == null</warning>) {
       System.out.println("impossible");
     }
@@ -145,7 +145,7 @@ public class OptionalInlining {
 
   void testToJavaUtil() {
     String xyz = nullableMethod();
-    Object n = com.google.common.base.Optional.fromNullable(xyz).transform(String::trim).toJavaUtil().map(this::getObj).orElse(null);
+    Object n = com.google.common.base.Optional.fromNullable(<warning descr="Argument 'xyz' might be null but passed to non annotated parameter">xyz</warning>).transform(String::trim).toJavaUtil().map(this::getObj).orElse(null);
     if(n instanceof Integer) {
       // n instanceof Integer -> n is not null -> xyz was not null -> safe to dereference
       System.out.println(xyz.trim());

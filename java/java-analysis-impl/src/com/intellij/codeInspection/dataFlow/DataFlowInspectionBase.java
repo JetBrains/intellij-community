@@ -178,10 +178,11 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
   private void analyzeNullLiteralMethodArguments(PsiMethod method, ProblemsHolder holder, boolean isOnTheFly) {
     if (REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER && isOnTheFly) {
       for (PsiParameter parameter : NullParameterConstraintChecker.checkMethodParameters(method)) {
-        holder.registerProblem(parameter.getNameIdentifier(),
-                               InspectionsBundle.message("dataflow.method.fails.with.null.argument"),
-                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                               createNavigateToNullParameterUsagesFix(parameter));
+        PsiIdentifier name = parameter.getNameIdentifier();
+        if (name != null) {
+          holder.registerProblem(name, InspectionsBundle.message("dataflow.method.fails.with.null.argument"),
+                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING, createNavigateToNullParameterUsagesFix(parameter));
+        }
       }
     }
   }
@@ -330,7 +331,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
       reportNullableArgumentsPassedToNonAnnotated(visitor, holder, reportedAnchors);
     }
 
-    reportOptionalOfNullableImprovements(holder, reportedAnchors, runner.getInstructions());
+    reportOptionalOfNullableImprovements(holder, reportedAnchors, visitor.getOfNullableCalls());
 
     reportUncheckedOptionalGet(holder, visitor.getOptionalCalls(), visitor.getOptionalQualifiers());
 
@@ -463,27 +464,25 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     }
   }
 
-  private static void reportOptionalOfNullableImprovements(ProblemsHolder holder, Set<PsiElement> reportedAnchors, Instruction[] instructions) {
-    for (Instruction instruction : instructions) {
-      if (instruction instanceof MethodCallInstruction) {
-        MethodCallInstruction methodCall = (MethodCallInstruction)instruction;
-        if (methodCall.getArgCount() != 1) continue;
-
-        final PsiElement arg = methodCall.getArgumentAnchor(0);
-
-        if (methodCall.isOptionalAlwaysNullProblem()) {
-          if (!reportedAnchors.add(arg)) continue;
-          holder.registerProblem(arg, "Passing <code>null</code> argument to <code>Optional</code>",
-                                 DfaOptionalSupport.createReplaceOptionalOfNullableWithEmptyFix(arg));
+  private static void reportOptionalOfNullableImprovements(ProblemsHolder holder,
+                                                           Set<PsiElement> reportedAnchors,
+                                                           Map<MethodCallInstruction, ThreeState> nullArgs) {
+    nullArgs.forEach((call, nullArg) -> {
+      PsiElement arg = call.getArgumentAnchor(0);
+      if (reportedAnchors.add(arg)) {
+        switch (nullArg) {
+          case YES:
+            holder.registerProblem(arg, "Passing <code>null</code> argument to <code>Optional</code>",
+                                   DfaOptionalSupport.createReplaceOptionalOfNullableWithEmptyFix(arg));
+            break;
+          case NO:
+            holder.registerProblem(arg, "Passing a non-null argument to <code>Optional</code>",
+                                   DfaOptionalSupport.createReplaceOptionalOfNullableWithOfFix(arg));
+            break;
+          default:
         }
-        else if (methodCall.isOptionalAlwaysNotNullProblem()) {
-          if (!reportedAnchors.add(arg)) continue;
-          holder.registerProblem(arg, "Passing a non-null argument to <code>Optional</code>",
-                                 DfaOptionalSupport.createReplaceOptionalOfNullableWithOfFix(arg));
-        }
-
       }
-    }
+    });
   }
 
   private static void reportConstantReferenceValues(ProblemsHolder holder, StandardInstructionVisitor visitor, Set<PsiElement> reportedAnchors) {
@@ -932,6 +931,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     private final Map<MethodCallInstruction, Boolean> myFailingCalls = new HashMap<>();
     private final Map<PsiMethodCallExpression, ThreeState> myOptionalCalls = new HashMap<>();
     private final Map<PsiMethodCallExpression, ThreeState> myBooleanCalls = new HashMap<>();
+    private final Map<MethodCallInstruction, ThreeState> myOfNullableCalls = new HashMap<>();
     private final Map<PsiMethodReferenceExpression, DfaValue> myMethodReferenceResults = new HashMap<>();
     private final Map<PsiArrayAccessExpression, ThreeState> myOutOfBoundsArrayAccesses = new HashMap<>();
     private final List<PsiExpression> myOptionalQualifiers = new ArrayList<>();
@@ -954,6 +954,10 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
 
     Map<PsiMethodCallExpression, ThreeState> getOptionalCalls() {
       return myOptionalCalls;
+    }
+
+    Map<MethodCallInstruction, ThreeState> getOfNullableCalls() {
+      return myOfNullableCalls;
     }
 
     Map<PsiMethodCallExpression, ThreeState> getBooleanCalls() {
@@ -999,6 +1003,11 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
             myOptionalCalls.merge(call, state, ThreeState::merge);
           }
         }
+      }
+      if (instruction.matches(DfaOptionalSupport.OPTIONAL_OF_NULLABLE)) {
+        DfaValue arg = memState.peek();
+        ThreeState nullArg = memState.isNull(arg) ? ThreeState.YES : memState.isNotNull(arg) ? ThreeState.NO : ThreeState.UNSURE;
+        myOfNullableCalls.merge(instruction, nullArg, ThreeState::merge);
       }
       DfaInstructionState[] states = super.visitMethodCall(instruction, runner, memState);
       if (hasNonTrivialFailingContracts(instruction)) {
