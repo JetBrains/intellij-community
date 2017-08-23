@@ -25,7 +25,6 @@ import com.intellij.util.io.DataInputOutputUtil
 import com.intellij.util.io.KeyDescriptor
 import java.io.DataInput
 import java.io.DataOutput
-import java.nio.charset.Charset
 
 /**
  * @author traff
@@ -47,13 +46,8 @@ interface PrebuiltStubsProvider {
 class FileContentHashing {
   private val hashing = Hashing.sha256()
 
-  fun hashString(text: CharSequence, charset: Charset): HashCode {
-    return hashing.hashString(text, charset)
-
-  }
-
   fun hashString(fileContent: FileContent): HashCode {
-    return hashString(fileContent.contentAsText, fileContent.file.charset)
+    return hashing.hashBytes(fileContent.content)
   }
 }
 
