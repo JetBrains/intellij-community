@@ -40,6 +40,7 @@
   <depends>com.intellij.modules.lang</depends>
   <depends>org.intellij.groovy</depends>
   <depends optional="true" config-file="gradle-maven-integration.xml">org.jetbrains.idea.maven</depends>
+  <depends optional="true" config-file="gradle-coverage-integration.xml">com.intellij.modules.coverage</depends>
 
   <resource-bundle>i18n.GradleBundle</resource-bundle>
 

@@ -47,6 +47,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingModel;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.execution.ExternalSystemExecutionConsoleManager;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
@@ -125,6 +126,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
     if (e != null) {
       mySettings = XmlSerializer.deserialize(e, ExternalSystemTaskExecutionSettings.class);
     }
+    JavaRunConfigurationExtensionManager.getInstance().readExternal(this, element);
   }
 
   @Override
@@ -144,6 +146,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
         }
       }
     }));
+    JavaRunConfigurationExtensionManager.getInstance().writeExternal(this, element);
   }
 
   @NotNull
@@ -156,6 +159,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
   public SettingsEditor<ExternalSystemRunConfiguration> getConfigurationEditor() {
     SettingsEditorGroup<ExternalSystemRunConfiguration> group = new SettingsEditorGroup<>();
     group.addEditor(ExecutionBundle.message("run.configuration.configuration.tab.title"), new ExternalSystemRunConfigurationEditor(getProject(), mySettings.getExternalSystemId()));
+    JavaRunConfigurationExtensionManager.getInstance().appendEditors(this, group);
     group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel<>());
     return group;
   }
@@ -234,20 +238,29 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
       if (mySettings.getTaskNames().isEmpty()) {
         throw new ExecutionException(ExternalSystemBundle.message("run.error.undefined.task"));
       }
-      String jvmAgentSetup = null;
+
+      final JavaParameters extensionsJP = new JavaParameters();
+      final RunConfigurationExtension[] extensions = Extensions.getExtensions(RunConfigurationExtension.EP_NAME);
+      for (RunConfigurationExtension ext : extensions) {
+        ext.updateJavaParameters(myConfiguration, extensionsJP, myEnv.getRunnerSettings());
+      }
+
+      String jvmAgentSetup;
       if (myDebugPort > 0) {
         jvmAgentSetup = "-agentlib:jdwp=transport=dt_socket,server=n,suspend=y,address=" + myDebugPort;
       } else {
-        ParametersList parametersList = myEnv.getUserData(ExternalSystemTaskExecutionSettings.JVM_AGENT_SETUP_KEY);
-        if (parametersList != null) {
-          for (String parameter : parametersList.getList()) {
-            if (parameter.startsWith("-agentlib:")) continue;
-            if (parameter.startsWith("-agentpath:")) continue;
-            if (parameter.startsWith("-javaagent:")) continue;
-            throw new ExecutionException(ExternalSystemBundle.message("run.invalid.jvm.agent.configuration", parameter));
-          }
-          jvmAgentSetup = parametersList.getParametersString();
+        ParametersList parametersList = extensionsJP.getVMParametersList();
+        final ParametersList data = myEnv.getUserData(ExternalSystemTaskExecutionSettings.JVM_AGENT_SETUP_KEY);
+        if (data != null) {
+          parametersList.addAll(data.getList());
         }
+        for (String parameter : parametersList.getList()) {
+          if (parameter.startsWith("-agentlib:")) continue;
+          if (parameter.startsWith("-agentpath:")) continue;
+          if (parameter.startsWith("-javaagent:")) continue;
+          throw new ExecutionException(ExternalSystemBundle.message("run.invalid.jvm.agent.configuration", parameter));
+        }
+        jvmAgentSetup = parametersList.getParametersString();
       }
 
       ApplicationManager.getApplication().assertIsDispatchThread();
@@ -275,6 +288,9 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
                                    : AbstractExternalSystemTaskConfigurationType.generateName(
                                      myProject, mySettings.getExternalSystemId(), mySettings.getExternalProjectPath(),
                                      mySettings.getTaskNames(), mySettings.getExecutionName(), ": ", "");
+
+      JavaRunConfigurationExtensionManager.getInstance().attachExtensionsToProcess(myConfiguration, processHandler, myEnv.getRunnerSettings());
+
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
         final String startDateTime = DateFormatUtil.formatTimeWithSeconds(System.currentTimeMillis());
         final String greeting;

@@ -29,5 +29,6 @@
     <orderEntry type="module" module-name="openapi" />
     <orderEntry type="module" module-name="configuration-store-impl" />
     <orderEntry type="module" module-name="testExtensions" scope="TEST" />
+    <orderEntry type="module" module-name="execution-impl" />
   </component>
 </module>
