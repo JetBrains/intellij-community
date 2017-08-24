@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -239,15 +239,19 @@ public class CodeBlockBlock extends AbstractJavaBlock {
 
   private Indent calcCurrentIndent(final ASTNode child, final int state) {
     IElementType elementType = child.getElementType();
+
     if (isRBrace(child) || elementType == JavaTokenType.AT) {
       return Indent.getNoneIndent();
     }
 
-    if (state == BEFORE_FIRST) return Indent.getNoneIndent();
+    if (state == BEFORE_FIRST) {
+      return Indent.getNoneIndent();
+    }
 
     if (elementType == JavaElementType.SWITCH_LABEL_STATEMENT) {
       return getCodeBlockInternalIndent(myChildrenIndent);
     }
+
     if (state == BEFORE_LBRACE) {
       if (elementType == JavaTokenType.LBRACE
           || elementType == JavaTokenType.CLASS_KEYWORD
@@ -262,12 +266,7 @@ public class CodeBlockBlock extends AbstractJavaBlock {
       }
     }
     else {
-      if (isRBrace(child)) {
-        return Indent.getNoneIndent();
-      }
-      else {
-        return getCodeBlockInternalIndent(myChildrenIndent);
-      }
+      return getCodeBlockInternalIndent(myChildrenIndent);
     }
   }
 
