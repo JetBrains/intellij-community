@@ -475,9 +475,17 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
     }
 
     public String declareResult(String desiredName, PsiType type, String initializer, @NotNull ResultKind kind) {
+      return declareResult(desiredName, type, null, initializer, kind);
+    }
+
+    public String declareResult(String desiredName,
+                                PsiType type,
+                                String mostAbstractAllowedType,
+                                String initializer,
+                                @NotNull ResultKind kind) {
       if (kind != ResultKind.UNKNOWN && myStreamExpression.getParent() instanceof PsiVariable) {
         PsiVariable var = (PsiVariable)myStreamExpression.getParent();
-        if (EquivalenceChecker.getCanonicalPsiEquivalence().typesAreEquivalent(var.getType(), type) &&
+        if (isCompatibleType(var, type, mostAbstractAllowedType) &&
             var.getParent() instanceof PsiDeclarationStatement && (kind == ResultKind.FINAL || canUseAsNonFinal(var))) {
           PsiDeclarationStatement declaration = (PsiDeclarationStatement)var.getParent();
           if(declaration.getDeclaredElements().length == 1) {
@@ -504,6 +512,14 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
       }
       setFinisher(name);
       return name;
+    }
+
+    private static boolean isCompatibleType(@NotNull PsiVariable var, @NotNull PsiType type, @Nullable String mostAbstractAllowedType) {
+      if (EquivalenceChecker.getCanonicalPsiEquivalence().typesAreEquivalent(var.getType(), type)) return true;
+      if (mostAbstractAllowedType == null) return false;
+      PsiType[] superTypes = type.getSuperTypes();
+      return Arrays.stream(superTypes).anyMatch(superType -> InheritanceUtil.isInheritor(superType, mostAbstractAllowedType) &&
+                                                             isCompatibleType(var, superType, mostAbstractAllowedType));
     }
 
     @Contract("null -> false")

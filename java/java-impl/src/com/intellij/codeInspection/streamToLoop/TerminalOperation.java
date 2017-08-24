@@ -591,10 +591,14 @@ abstract class TerminalOperation extends Operation {
     final PsiType myType;
     final Function<StreamToLoopReplacementContext, String> myAccNameSupplier;
     final FunctionHelper mySupplier;
+    final String myMostAbstractAllowedType;
 
-    CollectorBasedTerminalOperation(PsiType type, Function<StreamToLoopReplacementContext, String> accNameSupplier,
+    CollectorBasedTerminalOperation(PsiType type,
+                                    String mostAbstractAllowedType,
+                                    Function<StreamToLoopReplacementContext, String> accNameSupplier,
                                     FunctionHelper accSupplier) {
       myType = type;
+      myMostAbstractAllowedType = mostAbstractAllowedType;
       myAccNameSupplier = accNameSupplier;
       mySupplier = accSupplier;
     }
@@ -603,7 +607,8 @@ abstract class TerminalOperation extends Operation {
     String initAccumulator(StreamVariable inVar, StreamToLoopReplacementContext context) {
       transform(context, inVar.getName());
       PsiType resultType = correctReturnType(myType);
-      return context.declareResult(myAccNameSupplier.apply(context), resultType, getSupplier(), ResultKind.FINAL);
+      return context
+        .declareResult(myAccNameSupplier.apply(context), resultType, myMostAbstractAllowedType, getSupplier(), ResultKind.FINAL);
     }
 
     @Override
@@ -710,7 +715,8 @@ abstract class TerminalOperation extends Operation {
     private final boolean myList;
 
     public ToCollectionTerminalOperation(PsiType resultType, FunctionHelper fn, String desiredName) {
-      super(resultType, context -> fn.suggestFinalOutputNames(context, desiredName, "collection").get(0), fn);
+      super(resultType, CommonClassNames.JAVA_UTIL_COLLECTION,
+            context -> fn.suggestFinalOutputNames(context, desiredName, "collection").get(0), fn);
       myList = InheritanceUtil.isInheritor(resultType, CommonClassNames.JAVA_UTIL_LIST);
     }
 
@@ -809,7 +815,7 @@ abstract class TerminalOperation extends Operation {
                            PsiExpression merger,
                            FunctionHelper supplier,
                            PsiType resultType) {
-      super(resultType, context -> "map", supplier);
+      super(resultType, CommonClassNames.JAVA_UTIL_MAP, context -> "map", supplier);
       myKeyExtractor = keyExtractor;
       myValueExtractor = valueExtractor;
       myMerger = merger;
@@ -878,7 +884,7 @@ abstract class TerminalOperation extends Operation {
     private String myKeyVar;
 
     public GroupByTerminalOperation(FunctionHelper keyExtractor, FunctionHelper supplier, PsiType resultType, CollectorOperation collector) {
-      super(resultType, context -> "map", supplier);
+      super(resultType, CommonClassNames.JAVA_UTIL_MAP, context -> "map", supplier);
       myKeyExtractor = keyExtractor;
       myCollector = collector;
     }
@@ -947,7 +953,7 @@ abstract class TerminalOperation extends Operation {
       PsiType resultType = context.createType(myResultType);
       resultType = correctTypeParameters(resultType, CommonClassNames.JAVA_UTIL_MAP,
                                          Collections.singletonMap("V", myCollector::correctReturnType));
-      String map = context.declareResult("map", resultType, "new java.util.HashMap<>()", ResultKind.FINAL);
+      String map = context.declareResult("map", resultType, CommonClassNames.JAVA_UTIL_MAP, "new java.util.HashMap<>()", ResultKind.FINAL);
       myPredicate.transform(context, inVar.getName());
       myCollector.transform(context, inVar.getName());
       context.addBeforeStep(map + ".put(false, " + myCollector.getSupplier() + ");");
