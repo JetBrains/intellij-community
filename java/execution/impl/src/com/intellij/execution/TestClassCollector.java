@@ -94,7 +94,7 @@ public class TestClassCollector {
                 }
               }
               catch (Throwable e) {
-                LOG.error(e);
+                LOG.error("error processing: " + fName, e);
               }
             }
             return result;
