@@ -2106,7 +2106,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
 
   public void testBillionLaughsValidation() {
     configureByFiles(null, BASE_PATH + "BillionLaughs.xml");
-    doDoTest(true, false);
+    doDoTest(false, false);
   }
 
   public void testMaxOccurLimitValidation() {
