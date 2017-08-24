@@ -16,7 +16,6 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.impl.AllowedApiFilterExtension;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.typeMigration.TypeMigrationVariableTypeFixProvider;
 import com.intellij.util.IncorrectOperationException;
@@ -212,11 +211,24 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
   }
 
   public static class ConvertNonFinalLocalToAtomicFix extends ConvertFieldToAtomicIntention implements HighPriorityAction {
+    private PsiElement myContext;
+
+    public ConvertNonFinalLocalToAtomicFix(PsiElement context) {
+      myContext = context;
+    }
+
+    @Override
+    public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
+      return myContext.isValid();
+    }
+
     @Override
     PsiVariable getVariable(PsiElement element) {
-      PsiReferenceExpression ref = PsiTreeUtil.getParentOfType(element, PsiReferenceExpression.class);
-      if (ref != null && PsiUtil.isAccessedForWriting(ref)) {
-        return ObjectUtils.tryCast(ref.resolve(), PsiLocalVariable.class);
+      if(myContext instanceof PsiReferenceExpression && myContext.isValid()) {
+        PsiReferenceExpression ref = (PsiReferenceExpression)myContext;
+        if(PsiUtil.isAccessedForWriting(ref)) {
+          return ObjectUtils.tryCast(ref.resolve(), PsiLocalVariable.class);
+        }
       }
       return null;
     }

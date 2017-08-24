@@ -20,6 +20,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.xmlb.annotations.Attribute;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
@@ -43,9 +44,9 @@ public class ErrorFixExtensionPoint extends AbstractExtensionPointBean {
   @Attribute("implementationClass")
   public String implementationClass;
 
-  IntentionAction instantiate() {
+  IntentionAction instantiate(PsiElement context) {
     try {
-      return findClass(implementationClass).asSubclass(IntentionAction.class).getConstructor().newInstance();
+      return findClass(implementationClass).asSubclass(IntentionAction.class).getConstructor(PsiElement.class).newInstance(context);
     }
     catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException | ClassNotFoundException e) {
       throw new RuntimeException("Error instantiating quick-fix " + implementationClass + " (error code: " + errorCode + ")", e);
@@ -63,14 +64,15 @@ public class ErrorFixExtensionPoint extends AbstractExtensionPointBean {
     return map;
   }
 
-  @Contract("null, _ -> null")
+  @Contract("null, _, _ -> null")
   @Nullable
   public static HighlightInfo registerFixes(@Nullable HighlightInfo info,
+                                            @NotNull PsiElement context,
                                             @NotNull @PropertyKey(resourceBundle = BUNDLE) String code) {
     if (info == null) return null;
     List<ErrorFixExtensionPoint> fixes = getCodeToFixMap().get(code);
     for (ErrorFixExtensionPoint fix : fixes) {
-      QuickFixAction.registerQuickFixAction(info, fix.instantiate());
+      QuickFixAction.registerQuickFixAction(info, fix.instantiate(context));
     }
     return info;
   }
