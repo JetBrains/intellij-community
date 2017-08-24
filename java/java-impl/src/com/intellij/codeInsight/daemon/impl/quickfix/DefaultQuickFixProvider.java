@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,10 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
+import com.intellij.lang.java.request.CreateFieldFromUsage;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -31,6 +34,8 @@ import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.EnumMap;
 import java.util.Map;
 
@@ -55,14 +60,14 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
       TextRange fixRange = HighlightMethodUtil.getFixRange(ref);
       PsiReferenceExpression refExpr = (PsiReferenceExpression)ref;
 
-      registrar.register(fixRange, new CreateEnumConstantFromUsageFix(refExpr), null);
       registrar.register(new RenameWrongRefFix(refExpr));
-
       if (!ref.isQualified()) {
         registrar.register(fixRange, new BringVariableIntoScopeFix(refExpr), null);
       }
 
-      registerPriorityActions(registrar, fixRange, refExpr);
+      for (IntentionAction action : createVariableActions(refExpr)) {
+        registrar.register(fixRange, action, null);
+      }
     }
 
     registrar.register(new CreateClassFromUsageFix(ref, CreateClassKind.INTERFACE));
@@ -85,9 +90,19 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
     }
   }
 
-  private static void registerPriorityActions(@NotNull QuickFixActionRegistrar registrar,
-                                              @NotNull TextRange fixRange,
-                                              @NotNull PsiReferenceExpression refExpr) {
+  @NotNull
+  private static Collection<IntentionAction> createVariableActions(@NotNull PsiReferenceExpression refExpr) {
+    final Collection<IntentionAction> result = new ArrayList<>();
+
+    if (ApplicationManager.getApplication().isUnitTestMode() || Registry.is("ide.interlanguage.fixes")) {
+      result.addAll(CreateFieldFromUsage.generateActions(refExpr));
+      if (!refExpr.isQualified()) {
+        result.add(new CreateLocalFromUsageFix(refExpr));
+        result.add(new CreateParameterFromUsageFix(refExpr));
+      }
+      return result;
+    }
+
     final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(refExpr.getProject());
 
     final Map<VariableKind, IntentionAction> map = new EnumMap<>(VariableKind.class);
@@ -103,9 +118,9 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
       map.put(kind, PriorityIntentionActionWrapper.highPriority(map.get(kind)));
     }
 
-    for (IntentionAction action : map.values()) {
-      registrar.register(fixRange, action, null);
-    }
+    result.add(new CreateEnumConstantFromUsageFix(refExpr));
+    result.addAll(map.values());
+    return result;
   }
 
   @Nullable

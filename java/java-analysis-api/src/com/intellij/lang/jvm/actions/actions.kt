@@ -22,7 +22,7 @@ import com.intellij.lang.jvm.JvmClass
 import com.intellij.lang.jvm.JvmModifiersOwner
 import com.intellij.openapi.extensions.ExtensionPointName
 
-private val EP_NAME = ExtensionPointName.create<JvmElementActionsFactory>("com.intellij.lang.jvm.actions.jvmElementActionsFactory")
+val EP_NAME = ExtensionPointName.create<JvmElementActionsFactory>("com.intellij.lang.jvm.actions.jvmElementActionsFactory")
 
 private inline fun createActions(crossinline actions: (JvmElementActionsFactory) -> List<IntentionAction>): List<IntentionAction> {
   return EP_NAME.extensions.flatMap {
