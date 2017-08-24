@@ -1539,36 +1539,34 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
 
     @Override
-    public void modify(final BaseRevision was, final BaseRevision become) {
-      myScheduler.submit(() -> {
-        final AbstractVcs vcs = getVcs(was);
-        if (vcs != null) {
-          myRevisionsCache.plus(Pair.create(was.getPath(), vcs));
-        }
-        // maybe define modify method?
-        myProject.getMessageBus().syncPublisher(VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).dirty(become);
-      });
+    public void modify(BaseRevision was, BaseRevision become) {
+      doModify(was, become, true);
     }
 
     @Override
     public void plus(final BaseRevision baseRevision) {
-      myScheduler.submit(() -> {
-        final AbstractVcs vcs = getVcs(baseRevision);
-        if (vcs != null) {
-          myRevisionsCache.plus(Pair.create(baseRevision.getPath(), vcs));
-        }
-        myProject.getMessageBus().syncPublisher(VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).dirty(baseRevision);
-      });
+      doModify(baseRevision, baseRevision, true);
     }
 
     @Override
     public void minus(final BaseRevision baseRevision) {
+      doModify(baseRevision, baseRevision, false);
+    }
+
+    private void doModify(BaseRevision was, BaseRevision become, boolean plus) {
       myScheduler.submit(() -> {
-        final AbstractVcs vcs = getVcs(baseRevision);
+        final AbstractVcs vcs = getVcs(was);
         if (vcs != null) {
-          myRevisionsCache.minus(Pair.create(baseRevision.getPath(), vcs));
+          Pair<String, AbstractVcs> pair = Pair.create(was.getPath(), vcs);
+          if (plus) {
+            myRevisionsCache.plus(pair);
+          }
+          else {
+            myRevisionsCache.minus(pair);
+          }
         }
-        myProject.getMessageBus().syncPublisher(VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).dirty(baseRevision.getPath());
+        // maybe define modify method?
+        myProject.getMessageBus().syncPublisher(VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).dirty(become);
       });
     }
 
