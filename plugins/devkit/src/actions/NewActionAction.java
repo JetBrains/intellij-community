@@ -97,7 +97,7 @@ public class NewActionAction extends CreateElementActionBase implements Descript
   @NotNull
   @Override
   protected PsiElement[] create(String newName, PsiDirectory directory) throws Exception {
-    PsiClass createdClass = DevkitActionsUtil.createSingleClass(newName, "Action.java", directory);
+    PsiClass createdClass = DevkitActionsUtil.createSingleClass(newName, "Action.java", directory, null);
     DescriptorUtil.patchPluginXml(this, createdClass, pluginDescriptorToPatch);
     return new PsiElement[]{createdClass};
   }

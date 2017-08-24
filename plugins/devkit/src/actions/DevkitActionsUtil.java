@@ -95,7 +95,8 @@ public final class DevkitActionsUtil {
     return null;
   }
 
-  public static PsiClass createSingleClass(String name, String classTemplateName, PsiDirectory directory) {
+  public static PsiClass createSingleClass(String name, String classTemplateName, PsiDirectory directory,
+                                           @Nullable Map<String, String> properties) {
     if (name.contains(".")) {
       String[] names = name.split("\\.");
       for (int i = 0; i < names.length - 1; i++) {
@@ -104,7 +105,10 @@ public final class DevkitActionsUtil {
       name = names[names.length - 1];
     }
 
-    return JavaDirectoryService.getInstance().createClass(directory, name, classTemplateName);
+    if (properties == null) {
+      properties = Collections.emptyMap();
+    }
+    return JavaDirectoryService.getInstance().createClass(directory, name, classTemplateName, false, properties);
   }
 
   @Nullable

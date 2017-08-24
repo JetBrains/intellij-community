@@ -39,6 +39,11 @@ public class NewApplicationServiceAction extends NewServiceActionBase {
   }
 
   @Override
+  protected String getImplementationTemplateName() {
+    return "ApplicationServiceImplementation.java";
+  }
+
+  @Override
   protected String getDialogTitle() {
     return DevKitBundle.message("new.application.service.dialog.title");
   }

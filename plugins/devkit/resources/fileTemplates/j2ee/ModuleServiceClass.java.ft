@@ -6,6 +6,9 @@ import org.jetbrains.annotations.NotNull;
 
 #parse("File Header.java")
 public class ${NAME} {
+    public ${NAME}(Module module) {
+    }
+
     public static ${NAME} getInstance(@NotNull Module module) {
         return ModuleServiceManager.getService(module, ${NAME}.class);
     }

@@ -43,17 +43,18 @@ public class ServiceCreatorTest extends JavaCodeInsightFixtureTestCase {
 
   public void testCreateApplicationServiceInterfaceAndImplementation() {
     doTestCreateInterfaceAndImplementation("my.plugin.ApplicationServiceInterface", "my.plugin.impl.ApplicationServiceImpl",
-                                           "ApplicationServiceInterface.java", "applicationService");
+                                           "ApplicationServiceInterface.java", "ApplicationServiceImplementation.java",
+                                           "applicationService");
   }
 
   public void testCreateProjectServiceInterfaceAndImplementation() {
     doTestCreateInterfaceAndImplementation("my.plugin.ProjectServiceInterface", "my.plugin.impl.ProjectServiceImpl",
-                                           "ProjectServiceInterface.java", "projectService");
+                                           "ProjectServiceInterface.java", "ProjectServiceImplementation.java", "projectService");
   }
 
   public void testCreateModuleServiceInterfaceAndImplementation() {
     doTestCreateInterfaceAndImplementation("my.plugin.ModuleServiceInterface", "my.plugin.impl.ModuleServiceImpl",
-                                           "ModuleServiceInterface.java", "moduleService");
+                                           "ModuleServiceInterface.java", "ModuleServiceImplementation.java", "moduleService");
   }
 
   public void testCreateApplicationServiceOnlyImplementation() {
@@ -70,12 +71,13 @@ public class ServiceCreatorTest extends JavaCodeInsightFixtureTestCase {
 
 
   private void doTestCreateInterfaceAndImplementation(String interfaceFqName, String implementationFqName,
-                                                     String interfaceTemplate, String tagName) {
+                                                     String interfaceTemplate, String implementationTemplate, String tagName) {
     VirtualFile copied = myFixture.copyDirectoryToProject("", "");
     PsiDirectory dir = myFixture.getPsiManager().findDirectory(copied);
     XmlFile pluginXml = PluginModuleType.getPluginXml(myFixture.getModule());
 
-    NewServiceActionBase.ServiceCreator creator = new NewServiceActionBase.ServiceCreator(dir, interfaceTemplate, null, tagName);
+    NewServiceActionBase.ServiceCreator creator = new NewServiceActionBase.ServiceCreator(
+      dir, interfaceTemplate, implementationTemplate, null, tagName);
     boolean created = creator.createInterfaceAndImplementation(interfaceFqName, implementationFqName, pluginXml);
     assertTrue(created);
 
@@ -120,7 +122,7 @@ public class ServiceCreatorTest extends JavaCodeInsightFixtureTestCase {
     PsiDirectory dir = myFixture.getPsiManager().findDirectory(copied);
     XmlFile pluginXml = PluginModuleType.getPluginXml(myFixture.getModule());
 
-    NewServiceActionBase.ServiceCreator creator = new NewServiceActionBase.ServiceCreator(dir, null, classTemplate, tagName);
+    NewServiceActionBase.ServiceCreator creator = new NewServiceActionBase.ServiceCreator(dir, null, null, classTemplate, tagName);
     boolean created = creator.createOnlyImplementation(implementationFqName, pluginXml);
     assertTrue(created);
 

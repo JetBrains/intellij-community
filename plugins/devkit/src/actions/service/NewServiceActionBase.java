@@ -20,7 +20,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.actions.CreateInDirectoryActionBase;
 import com.intellij.ide.actions.ElementCreator;
-import com.intellij.ide.fileTemplates.JavaTemplateUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.Result;
@@ -33,11 +32,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomManager;
 import com.intellij.xml.util.IncludedXmlTag;
@@ -78,7 +79,8 @@ public abstract class NewServiceActionBase extends CreateInDirectoryActionBase i
     PsiDirectory dir = view.getOrChooseDirectory();
     if (dir == null) return;
 
-    ServiceCreator serviceCreator = new ServiceCreator(dir, getInterfaceTemplateName(), getOnlyImplementationTemplateName(), getTagName());
+    ServiceCreator serviceCreator = new ServiceCreator(dir, getInterfaceTemplateName(), getImplementationTemplateName(),
+                                                       getOnlyImplementationTemplateName(), getTagName());
     PsiClass[] createdClasses = invokeDialog(project, serviceCreator, dir);
     if (createdClasses == null) {
       return;
@@ -100,6 +102,7 @@ public abstract class NewServiceActionBase extends CreateInDirectoryActionBase i
 
   protected abstract String getOnlyImplementationTemplateName();
   protected abstract String getInterfaceTemplateName();
+  protected abstract String getImplementationTemplateName();
 
   protected abstract String getDialogTitle();
 
@@ -220,10 +223,13 @@ public abstract class NewServiceActionBase extends CreateInDirectoryActionBase i
 
 
   static class ServiceCreator { // not private for testing purpose only
-    private final Logger LOG = Logger.getInstance(ServiceCreator.class);
+    private static final Logger LOG = Logger.getInstance(ServiceCreator.class);
+    private static final String INTERFACE_NAME_PROPERTY = "INTERFACE_NAME";
+    private static final String INTERFACE_PACKAGE_PROPERTY = "INTERFACE_PACKAGE_NAME";
 
     private final PsiDirectory myDirectory;
     private final String myServiceInterfaceTemplateName;
+    private final String myServiceImplementationTemplateName;
     private final String myServiceOnlyImplementationTemplateName;
     private final String myTagName;
 
@@ -231,12 +237,14 @@ public abstract class NewServiceActionBase extends CreateInDirectoryActionBase i
 
     ServiceCreator(PsiDirectory directory,
                    String serviceInterfaceTemplateName,
+                   String serviceImplementationTemplateName,
                    String serviceOnlyImplementationTemplateName,
                    String tagName) {
       myDirectory = directory;
-      this.myServiceInterfaceTemplateName = serviceInterfaceTemplateName;
-      this.myServiceOnlyImplementationTemplateName = serviceOnlyImplementationTemplateName;
-      this.myTagName = tagName;
+      myServiceInterfaceTemplateName = serviceInterfaceTemplateName;
+      myServiceImplementationTemplateName = serviceImplementationTemplateName;
+      myServiceOnlyImplementationTemplateName = serviceOnlyImplementationTemplateName;
+      myTagName = tagName;
     }
 
     PsiClass[] getCreatedClasses() {
@@ -246,19 +254,23 @@ public abstract class NewServiceActionBase extends CreateInDirectoryActionBase i
     /**
      * @return whether the service was created (which indicates whether the create service dialog can be closed).
      */
-    @SuppressWarnings("ConstantConditions") // no NPE here since created classes are not anonymous
     boolean createInterfaceAndImplementation(String interfaceName, String implementationName, XmlFile pluginXml) {
       return doCreateService(() -> {
-        PsiClass createdInterface = DevkitActionsUtil.createSingleClass(interfaceName, myServiceInterfaceTemplateName, myDirectory);
-        PsiClass createdImplementation = DevkitActionsUtil.createSingleClass(
-          implementationName, JavaTemplateUtil.INTERNAL_CLASS_TEMPLATE_NAME, myDirectory);
+        PsiClass createdInterface = DevkitActionsUtil.createSingleClass(interfaceName, myServiceInterfaceTemplateName, myDirectory, null);
 
-        // make service implementation implement service interface
-        JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
-        PsiElementFactory factory = facade.getElementFactory();
-        PsiJavaCodeReferenceElement interfaceReference =
-          factory.createReferenceElementByFQClassName(createdInterface.getQualifiedName(), createdImplementation.getResolveScope());
-        createdImplementation.getImplementsList().add(interfaceReference);
+        String interfaceShortName = createdInterface.getName();
+        String implementationDirRelativePackage = StringUtil.getPackageName(implementationName);
+        String interfacePackage;
+        if (implementationDirRelativePackage.isEmpty()) {
+          interfacePackage = ""; // interface and implementation are placed in the same package; there shouldn't be an import statement
+        } else {
+          //noinspection ConstantConditions
+          interfacePackage = StringUtil.getPackageName(createdInterface.getQualifiedName());
+        }
+
+        PsiClass createdImplementation = DevkitActionsUtil.createSingleClass(
+          implementationName, myServiceImplementationTemplateName, myDirectory,
+          ContainerUtil.stringMap(INTERFACE_NAME_PROPERTY, interfaceShortName, INTERFACE_PACKAGE_PROPERTY, interfacePackage));
 
         patchPluginXml(createdInterface, createdImplementation, pluginXml);
 
@@ -273,7 +285,7 @@ public abstract class NewServiceActionBase extends CreateInDirectoryActionBase i
     boolean createOnlyImplementation(String onlyImplementationName, XmlFile pluginXml) {
       return doCreateService(() -> {
         PsiClass createdOnlyImplementation = DevkitActionsUtil.createSingleClass(
-          onlyImplementationName, myServiceOnlyImplementationTemplateName, myDirectory);
+          onlyImplementationName, myServiceOnlyImplementationTemplateName, myDirectory, null);
 
         patchPluginXml(null, createdOnlyImplementation, pluginXml);
 
