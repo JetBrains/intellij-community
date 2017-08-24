@@ -133,8 +133,8 @@ public class ExecutionTargetManagerImpl extends ExecutionTargetManager implement
     }
   }
 
-  private static ExecutionTarget getDefaultTarget(List<ExecutionTarget> suitable){
-    ExecutionTarget result = ContainerUtil.find(suitable, ExecutionTarget::isReady);
+  private ExecutionTarget getDefaultTarget(List<ExecutionTarget> suitable){
+    ExecutionTarget result = mySavedActiveTargetId == null ? ContainerUtil.find(suitable, ExecutionTarget::isReady) : ContainerUtil.getFirstItem(suitable);
     return  result != null ? result : DefaultExecutionTarget.INSTANCE;
   }
 
