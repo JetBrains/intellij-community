@@ -15,11 +15,14 @@
  */
 package com.intellij.build.events;
 
+import org.jetbrains.annotations.ApiStatus;
+
 import java.util.List;
 
 /**
  * @author Vladislav.Soroka
  */
+@ApiStatus.Experimental
 public interface FailureResult extends EventResult {
   List<? extends Failure> getFailures();
 }

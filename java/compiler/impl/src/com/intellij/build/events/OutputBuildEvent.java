@@ -15,9 +15,12 @@
  */
 package com.intellij.build.events;
 
+import org.jetbrains.annotations.ApiStatus;
+
 /**
  * @author Vladislav.Soroka
  */
+@ApiStatus.Experimental
 public interface OutputBuildEvent {
 
 }

@@ -16,10 +16,12 @@
 package com.intellij.build;
 
 import com.intellij.build.events.BuildEvent;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * @author Vladislav.Soroka
  */
+@ApiStatus.Experimental
 public interface BuildProgressListener {
   void onEvent(BuildEvent event);
 }
