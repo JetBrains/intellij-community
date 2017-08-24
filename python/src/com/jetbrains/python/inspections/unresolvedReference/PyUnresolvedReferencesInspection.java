@@ -469,7 +469,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       }
 
       final List<QualifiedName> qualifiedNames = getCanonicalNames(reference, myTypeEvalContext);
-      for (QualifiedName name: qualifiedNames) {
+      for (QualifiedName name : qualifiedNames) {
         final String canonicalName = name.toString();
         for (String ignored : myIgnoredIdentifiers) {
           if (ignored.endsWith(END_WILDCARD)) {
@@ -1063,6 +1063,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       List<String> dunderAll = null;
 
       // TODO: Use strategies instead of pack of "continue"
+      iterUnused:
       for (PyImportedNameDefiner unusedImport : unusedImports) {
         if (packageQName == null) {
           final PsiFile file = unusedImport.getContainingFile();
@@ -1084,14 +1085,10 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           }
           // Don't report conditional imports as unused
           if (PsiTreeUtil.getParentOfType(unusedImport, PyIfStatement.class) != null) {
-            boolean isUsed = false;
             for (PyElement e : unusedImport.iterateNames()) {
               if (usedImportNames.contains(e.getName())) {
-                isUsed = true;
+                continue iterUnused;
               }
-            }
-            if (isUsed) {
-              continue;
             }
           }
           PsiFileSystemItem importedElement;
@@ -1161,6 +1158,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
 
   /**
    * Checks if one or more extension points ask unused import to be skipped
+   *
    * @param importNameDefiner unused import
    * @return true of one or more asks
    */
