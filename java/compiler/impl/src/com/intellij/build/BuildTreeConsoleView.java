@@ -24,15 +24,20 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ThreeComponentsSplitter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.Navigatable;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.SimpleTreeBuilder;
 import com.intellij.ui.treeStructure.SimpleTreeStructure;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns;
 import com.intellij.ui.treeStructure.treetable.TreeColumnInfo;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
@@ -55,17 +60,15 @@ import javax.swing.table.TableColumn;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.util.Iterator;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
  * @author Vladislav.Soroka
  */
-public class BuildTreeConsoleView implements ConsoleView, BuildConsoleView {
+public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildConsoleView {
   private static final Logger LOG = Logger.getInstance(BuildTreeConsoleView.class);
 
   @NonNls private static final String TREE = "tree";
@@ -372,6 +375,39 @@ public class BuildTreeConsoleView implements ConsoleView, BuildConsoleView {
     myTimeColumn.setPreferredWidth(width);
     myTimeColumn.setMinWidth(width);
     myTimeColumn.setMaxWidth(width);
+  }
+
+  @Nullable
+  @Override
+  public Object getData(String dataId) {
+    if (PlatformDataKeys.HELP_ID.is(dataId)) return "reference.build.tool.window";
+    if (CommonDataKeys.PROJECT.is(dataId)) return myProject;
+    if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
+      return extractNavigatables();
+    }
+    return null;
+  }
+
+  private Object extractNavigatables() {
+    final List<Navigatable> navigatables = new ArrayList<>();
+    for (ExecutionNode each : getSelectedNodes()) {
+      List<Navigatable> navigatable = each.getNavigatables();
+      navigatables.addAll(navigatable);
+    }
+    return navigatables.isEmpty() ? null : navigatables.toArray(new Navigatable[navigatables.size()]);
+  }
+
+  private ExecutionNode[] getSelectedNodes() {
+    JTree tree = myBuilder.getTree();
+    if (tree instanceof Tree) {
+      DefaultMutableTreeNode[] selectedNodes = ((Tree)tree).getSelectedNodes(DefaultMutableTreeNode.class, null);
+      return Arrays.stream(selectedNodes)
+        .map(DefaultMutableTreeNode::getUserObject)
+        .filter(userObject -> userObject instanceof ExecutionNode)
+        .map(ExecutionNode.class::cast)
+        .distinct().toArray(ExecutionNode[]::new);
+    }
+    return new ExecutionNode[0];
   }
 
   private static class DetailsHandler {

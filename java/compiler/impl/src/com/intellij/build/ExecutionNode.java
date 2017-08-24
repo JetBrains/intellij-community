@@ -15,19 +15,22 @@
  */
 package com.intellij.build;
 
-import com.intellij.build.events.EventResult;
-import com.intellij.build.events.FailureResult;
-import com.intellij.build.events.SkippedResult;
+import com.intellij.build.events.*;
+import com.intellij.build.events.impl.FailureImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.Navigatable;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.CachingSimpleNode;
 import com.intellij.ui.treeStructure.SimpleNode;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -43,6 +46,7 @@ public class ExecutionNode extends CachingSimpleNode {
   private String tooltip;
   @Nullable
   private String hint;
+  @Nullable
   private EventResult myResult;
   private boolean myAutoExpandNode;
 
@@ -172,10 +176,11 @@ public class ExecutionNode extends CachingSimpleNode {
     return endTime <= 0 && !isSkipped() && !isFailed();
   }
 
-  public void setResult(EventResult result) {
+  public void setResult(@Nullable EventResult result) {
     myResult = result;
   }
 
+  @Nullable
   public EventResult getResult() {
     return myResult;
   }
@@ -187,5 +192,22 @@ public class ExecutionNode extends CachingSimpleNode {
 
   public void setAutoExpandNode(boolean autoExpandNode) {
     myAutoExpandNode = autoExpandNode;
+  }
+
+  @NotNull
+  public List<Navigatable> getNavigatables() {
+    if (myResult == null) return Collections.emptyList();
+
+    if (myResult instanceof FailureResult) {
+      List<Navigatable> result = new SmartList<>();
+      for (Failure failure : ((FailureResult)myResult).getFailures()) {
+        NotificationData notificationData = ((FailureImpl)failure).getNotificationData();
+        if (notificationData != null) {
+          ContainerUtil.addIfNotNull(result, notificationData.getNavigatable());
+        }
+      }
+      return result;
+    }
+    return Collections.emptyList();
   }
 }

@@ -70,6 +70,7 @@ import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.task.TaskCallback;
 import com.intellij.openapi.externalSystem.view.ExternalProjectsView;
 import com.intellij.openapi.externalSystem.view.ExternalProjectsViewImpl;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -91,6 +92,8 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
+import com.intellij.pom.Navigatable;
+import com.intellij.pom.NonNavigatable;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -454,14 +457,29 @@ public class ExternalSystemUtil {
                 final NotificationGroup registeredGroup = NotificationGroup.findRegisteredGroup(notificationData.getBalloonGroup());
                 group = registeredGroup != null ? registeredGroup : NotificationGroup.balloonGroup(notificationData.getBalloonGroup());
               }
-              if (group == null) return;
+              if (group != null) {
+                int line = notificationData.getLine() - 1;
+                int column = notificationData.getColumn() - 1;
+                final VirtualFile virtualFile =
+                  notificationData.getFilePath() != null ? findLocalFileByPath(notificationData.getFilePath()) : null;
 
-              final Notification notification = group.createNotification(
-                notificationData.getTitle(), notificationData.getMessage(),
-                notificationData.getNotificationCategory().getNotificationType(), notificationData.getListener());
-              failureResult = new FailureResultImpl(list(new FailureImpl(
-                notificationData.getMessage(), e, new NotificationDataImpl(notification, notificationData.getListener(),
-                                                                           notificationData.getNavigatable()))));
+                final Navigatable navigatable;
+                if (notificationData.getNavigatable() == null || notificationData.getNavigatable() instanceof NonNavigatable) {
+                  navigatable = virtualFile != null ? new OpenFileDescriptor(project, virtualFile, line, column) : NonNavigatable.INSTANCE;
+                }
+                else {
+                  navigatable = notificationData.getNavigatable();
+                }
+
+                final Notification notification = group.createNotification(
+                  notificationData.getTitle(), notificationData.getMessage(),
+                  notificationData.getNotificationCategory().getNotificationType(), notificationData.getListener());
+                failureResult = new FailureResultImpl(list(new FailureImpl(
+                  notificationData.getMessage(), e, new NotificationDataImpl(notification, notificationData.getListener(), navigatable))));
+              }
+              else {
+                failureResult = new FailureResultImpl(e);
+              }
             }
             ServiceManager.getService(project, SyncViewManager.class).onEvent(
               new FinishBuildEventImpl(id, null, System.currentTimeMillis(), "sync failed", failureResult));
