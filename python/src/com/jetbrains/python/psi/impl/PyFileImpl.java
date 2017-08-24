@@ -518,11 +518,14 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   }
 
   private static class DunderAllBuilder extends PyRecursiveElementVisitor {
-    @Nullable private List<String> myResult = null;
+
+    @NotNull
+    private final List<String> myResult = new ArrayList<>();
     private boolean myDynamic = false;
     private boolean myFoundDunderAll = false;
 
     // hashlib builds __all__ by concatenating multiple lists of strings, and we want to understand this
+    @NotNull
     private final Map<String, List<String>> myDunderLike = new HashMap<>();
 
     @Override
@@ -534,77 +537,65 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
 
     @Override
     public void visitPyTargetExpression(PyTargetExpression node) {
+      if (myDynamic) return;
+
       if (PyNames.ALL.equals(node.getName())) {
         myFoundDunderAll = true;
-        PyExpression value = node.findAssignedValue();
+        final PyExpression value = node.findAssignedValue();
         if (value instanceof PyBinaryExpression) {
-          PyBinaryExpression binaryExpression = (PyBinaryExpression)value;
+          final PyBinaryExpression binaryExpression = (PyBinaryExpression)value;
           if (binaryExpression.isOperator("+")) {
-            List<String> lhs = getStringListFromValue(binaryExpression.getLeftExpression());
-            List<String> rhs = getStringListFromValue(binaryExpression.getRightExpression());
-            if (lhs != null && rhs != null) {
-              myResult = new ArrayList<>(lhs);
-              myResult.addAll(rhs);
-            }
+            processSubList(getStringListFromValue(binaryExpression.getLeftExpression()));
+            processSubList(getStringListFromValue(binaryExpression.getRightExpression()));
+          }
+          else {
+            myDynamic = true;
           }
         }
         else {
-          myResult = PyUtil.getStringListFromTargetExpression(node);
+          processSubList(getStringListFromValue(value));
         }
       }
+
       if (!myFoundDunderAll) {
-        List<String> names = PyUtil.getStringListFromTargetExpression(node);
+        final List<String> names = getStringListFromValue(node.findAssignedValue());
         if (names != null) {
           myDunderLike.put(node.getName(), names);
         }
       }
     }
 
-    @Nullable
-    private List<String> getStringListFromValue(PyExpression expression) {
-      if (expression instanceof PyReferenceExpression && !((PyReferenceExpression)expression).isQualified()) {
-        return myDunderLike.get(((PyReferenceExpression)expression).getReferencedName());
-      }
-      return PyUtil.strListValue(expression);
-    }
-
     @Override
     public void visitPyAugAssignmentStatement(PyAugAssignmentStatement node) {
+      if (myDynamic || !myFoundDunderAll) return;
+
       if (PyNames.ALL.equals(node.getTarget().getName())) {
-        myDynamic = true;
+        processSubList(getStringListFromValue(node.getValue()));
       }
     }
 
     @Override
     public void visitPyCallExpression(PyCallExpression node) {
+      if (myDynamic || !myFoundDunderAll) return;
+
       final PyExpression callee = node.getCallee();
       if (callee instanceof PyQualifiedExpression) {
         final PyExpression qualifier = ((PyQualifiedExpression)callee).getQualifier();
         if (qualifier != null && PyNames.ALL.equals(qualifier.getText())) {
           final String calleeName = callee.getName();
-          if ("append".equals(calleeName)) {
+          if (PyNames.APPEND.equals(calleeName)) {
             final PyStringLiteralExpression argument = node.getArgument(0, PyStringLiteralExpression.class);
             if (argument != null) {
-              if (myResult == null) {
-                myResult = new ArrayList<>();
-              }
               myResult.add(argument.getStringValue());
               return;
             }
           }
-          else if ("extend".equals(calleeName)) {
+          else if (PyNames.EXTEND.equals(calleeName)) {
             final PyExpression argument = node.getArgument(0, PyExpression.class);
-            if (argument != null) {
-              final List<String> results = PyUtil.strListValue(argument);
-              if (results != null) {
-                if (myResult == null) {
-                  myResult = new ArrayList<>();
-                }
-                myResult.addAll(results);
-                return;
-              }
-            }
+            processSubList(getStringListFromValue(argument));
+            return;
           }
+
           myDynamic = true;
         }
       }
@@ -612,7 +603,24 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
 
     @Nullable
     List<String> result() {
-      return myDynamic ? null : myResult;
+      return myDynamic || !myFoundDunderAll ? null : myResult;
+    }
+
+    private void processSubList(@Nullable List<String> list) {
+      if (list == null) {
+        myDynamic = true;
+      }
+      else {
+        myResult.addAll(list);
+      }
+    }
+
+    @Nullable
+    private List<String> getStringListFromValue(@Nullable PyExpression expression) {
+      if (expression instanceof PyReferenceExpression && !((PyReferenceExpression)expression).isQualified()) {
+        return myDunderLike.get(((PyReferenceExpression)expression).getReferencedName());
+      }
+      return PyUtil.strListValue(expression);
     }
   }
 
