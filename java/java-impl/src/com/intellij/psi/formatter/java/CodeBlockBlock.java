@@ -258,6 +258,7 @@ public class CodeBlockBlock extends AbstractJavaBlock {
           || elementType == JavaTokenType.INTERFACE_KEYWORD
           || elementType == JavaTokenType.IDENTIFIER
           || elementType == JavaTokenType.ENUM_KEYWORD
+          || elementType == JavaTokenType.MODULE_KEYWORD
           || elementType == JavaElementType.MODULE_REFERENCE) {
         return Indent.getNoneIndent();
       }

@@ -44,4 +44,8 @@ class JavaModuleFormatterTest : AbstractJavaFormatterTest() {
   fun testProvidesWith() {
     doTextTest("module m { provides I with C1,C2,C3; }", "module m {\n    provides I with C1, C2, C3;\n}")
   }
+
+  fun testAnnotatedModule() {
+    doTextTest("@Deprecated\nmodule m { }", "@Deprecated\nmodule m {\n}")
+  }
 }
