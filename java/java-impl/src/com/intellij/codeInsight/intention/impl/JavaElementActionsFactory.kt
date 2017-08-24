@@ -20,7 +20,11 @@ import com.intellij.codeInsight.daemon.impl.quickfix.AddConstructorFix
 import com.intellij.codeInsight.daemon.impl.quickfix.ModifierFix
 import com.intellij.codeInsight.intention.AbstractIntentionAction
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.lang.java.actions.CreateEnumConstantAction
+import com.intellij.lang.java.actions.CreateFieldAction
+import com.intellij.lang.java.actions.toJavaClassOrNull
 import com.intellij.lang.jvm.*
+import com.intellij.lang.jvm.actions.CreateFieldRequest
 import com.intellij.lang.jvm.actions.JvmElementActionsFactory
 import com.intellij.lang.jvm.actions.MemberRequest
 import com.intellij.lang.jvm.types.JvmType
@@ -124,6 +128,14 @@ class JavaElementActionsFactory(
     }
   }
 
+  override fun createAddFieldActions(targetClass: JvmClass, request: CreateFieldRequest): List<IntentionAction> {
+    val javaClass = targetClass.toJavaClassOrNull() ?: return emptyList()
+    return listOf(
+      CreateFieldAction(javaClass, request, false),
+      CreateFieldAction(javaClass, request, true),
+      CreateEnumConstantAction(javaClass, request)
+    )
+  }
 }
 
 class JavaElementRenderer {

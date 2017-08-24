@@ -658,7 +658,7 @@ public class CreateFromUsageUtils {
   }
 
   @NotNull
-  static ExpectedTypeInfo[] guessExpectedTypes(@NotNull PsiExpression expression, boolean allowVoidType) {
+  public static ExpectedTypeInfo[] guessExpectedTypes(@NotNull PsiExpression expression, boolean allowVoidType) {
     PsiManager manager = expression.getManager();
     GlobalSearchScope resolveScope = expression.getResolveScope();
 
