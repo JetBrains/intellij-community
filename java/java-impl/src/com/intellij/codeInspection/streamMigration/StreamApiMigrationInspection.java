@@ -41,6 +41,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
@@ -508,7 +509,8 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       }
       Collection<PsiStatement> exitPoints = tb.findExitPoints(controlFlow);
       if (exitPoints == null) return null;
-      if (exitPoints.isEmpty() && nonFinalVariables.isEmpty()) {
+      if ((exitPoints.isEmpty()) &&
+          nonFinalVariables.isEmpty()) {
         boolean shouldWarn = SUGGEST_FOREACH &&
                              (REPLACE_TRIVIAL_FOREACH ||
                               tb.hasOperations() ||
@@ -743,14 +745,12 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     }
   }
 
-   static class CompoundFilterOp extends FilterOp {
-    private final PsiExpression myMatchExpression;
+  static class CompoundFilterOp extends FilterOp {
     private final StreamSource mySource;
     private final PsiVariable myMatchVariable;
 
     protected CompoundFilterOp(StreamSource source, PsiVariable matchVariable, FilterOp sourceFilter) {
       super(sourceFilter.getExpression(), matchVariable, sourceFilter.isNegated());
-      myMatchExpression = sourceFilter.getExpression();
       mySource = source;
       myMatchVariable = sourceFilter.getVariable();
     }
@@ -759,7 +759,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     @Override
     PsiExpression makeIntermediateExpression(PsiElementFactory factory) {
       return factory.createExpressionFromText(mySource.createReplacement() + ".anyMatch(" +
-                                              LambdaUtil.createLambda(myMatchVariable, myMatchExpression) + ")", myMatchExpression);
+                                              LambdaUtil.createLambda(myMatchVariable, myExpression) + ")", myExpression);
     }
 
     @Override
@@ -769,7 +769,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
 
     @Override
     StreamEx<PsiExpression> expressions() {
-      return StreamEx.of(myMatchExpression, mySource.getExpression());
+      return StreamEx.of(myExpression, mySource.getExpression());
     }
   }
 

@@ -29,10 +29,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.NoSuchElementException;
-import java.util.Objects;
+import java.util.*;
 
 import static com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.*;
 import static com.intellij.util.ObjectUtils.tryCast;
@@ -81,7 +78,7 @@ class TerminalBlock {
     if (startOffset < 0 || endOffset < 0) return null;
     return ControlFlowUtil
       .findExitPointsAndStatements(controlFlow, startOffset, endOffset, new IntArrayList(), PsiContinueStatement.class,
-                                   PsiBreakStatement.class, PsiReturnStatement.class, PsiThrowStatement.class);
+                                   PsiBreakStatement.class, PsiReturnStatement.class);
   }
 
   PsiStatement getSingleStatement() {
@@ -122,27 +119,6 @@ class TerminalBlock {
           return new TerminalBlock(this, new FilterOp(ifStatement.getCondition(), myVariable, false), myVariable, thenBranch);
         }
       }
-    }
-    else if (single instanceof PsiLoopStatement) {
-      // Try extract nested filter like this:
-      // for(List subList : list) for(T t : subList) if(condition.test(t)) { ...; break; }
-      // if t is not used in "...", then this could be converted to
-      // list.stream().filter(subList -> subList.stream().anyMatch(condition)).forEach(subList -> ...)
-      PsiLoopStatement loopStatement = (PsiLoopStatement)single;
-      StreamSource source = StreamSource.tryCreate(loopStatement);
-      final PsiStatement body = loopStatement.getBody();
-      if (source == null || body == null) return null;
-      TerminalBlock innerTb = from(source, body);
-      FilterOp innerFilter = innerTb.getLastOperation(FilterOp.class);
-      if (innerFilter == null) return null;
-      if (!VariableAccessUtils.variableIsUsed(myVariable, body)) return null;
-      PsiStatement[] statements = innerTb.getStatements();
-      PsiStatement lastStatement = statements[statements.length - 1];
-      PsiReturnStatement returnStatement = tryCast(lastStatement, PsiReturnStatement.class);
-      if (returnStatement == null) return null;
-      if (!ExpressionUtils.isReferenceTo(returnStatement.getReturnValue(), getVariable())) return null;
-      return new TerminalBlock(this, new CompoundFilterOp(source, myVariable, innerFilter),
-                               myVariable, statements);
     }
     if(myStatements.length >= 1) {
       PsiStatement first = myStatements[0];
@@ -199,11 +175,16 @@ class TerminalBlock {
         if(withFlatMapFilter != null && !withFlatMapFilter.isEmpty()) {
           PsiStatement[] statements = withFlatMapFilter.getStatements();
           PsiStatement lastStatement = statements[statements.length-1];
-          if (lastStatement instanceof PsiBreakStatement && op.breaksMe((PsiBreakStatement)lastStatement) &&
-              ReferencesSearch.search(withFlatMapFilter.getVariable(), new LocalSearchScope(statements)).findFirst() == null) {
+          boolean flowBreaks = lastStatement instanceof PsiBreakStatement && op.breaksMe((PsiBreakStatement)lastStatement) ||
+                               lastStatement instanceof PsiReturnStatement ||
+                               lastStatement instanceof PsiThrowStatement;
+          if (flowBreaks && ReferencesSearch.search(withFlatMapFilter.getVariable(), new LocalSearchScope(statements)).findFirst() == null) {
             FilterOp filterOp = (FilterOp)withFlatMapFilter.getLastOperation();
             return new TerminalBlock(this, new CompoundFilterOp(op.getSource(), op.getVariable(), filterOp),
-                                     myVariable, Arrays.copyOfRange(statements, 0, statements.length-1));
+                                     myVariable,
+                                     lastStatement instanceof PsiReturnStatement || lastStatement instanceof PsiThrowStatement
+                                     ? statements
+                                     : Arrays.copyOfRange(statements, 0, statements.length - 1));
           }
         }
       }
