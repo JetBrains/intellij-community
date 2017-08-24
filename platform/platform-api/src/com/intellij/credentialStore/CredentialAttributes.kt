@@ -28,6 +28,8 @@ import java.util.concurrent.atomic.AtomicReference
 
 const val SERVICE_NAME_PREFIX = "IntelliJ Platform"
 
+fun generateServiceName(subsystem: String, key: String) = "$SERVICE_NAME_PREFIX $subsystem — $key"
+
 /**
  * requestor is deprecated. Never use it in new code.
  */
