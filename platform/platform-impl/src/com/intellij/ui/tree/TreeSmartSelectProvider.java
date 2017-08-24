@@ -37,20 +37,36 @@ public class TreeSmartSelectProvider implements SmartSelectProvider<JTree> {
 
   private static void increaseSelection(TreePath path, JTree tree) {
     TreePath parentPath = path.getParentPath();
-    if (parentPath == null) return;
+
+    if (parentPath == null) {
+      return;
+    }
+
     boolean madeSelection = false;
+
     for (int i = 0; i < tree.getRowCount(); i++) {
       TreePath row = tree.getPathForRow(i);
       if (parentPath.isDescendant(row) && !row.equals(parentPath)) {
         if (!tree.isRowSelected(i)) {
           madeSelection = true;
-          tree.getSelectionModel().addSelectionPath(row);
+          addSelection(tree, row);
         }
       }
     }
+
     if (!madeSelection) {
-      increaseSelection(parentPath, tree);
+      if (tree.isRowSelected(tree.getRowForPath(parentPath))) {
+        increaseSelection(parentPath, tree);
+      } else {
+        addSelection(tree, parentPath);
+      }
     }
+  }
+
+  private static void addSelection(JTree tree, TreePath path) {
+    TreePath leadPath = tree.getLeadSelectionPath();
+    tree.getSelectionModel().addSelectionPath(path);
+    tree.setLeadSelectionPath(leadPath);
   }
 
   @Override
