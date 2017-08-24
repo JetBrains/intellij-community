@@ -30,6 +30,7 @@ import org.fest.swing.core.Robot
 import org.fest.swing.core.SmartWaitRobot
 import org.fest.swing.exception.WaitTimedOutError
 import org.fest.swing.fixture.JButtonFixture
+import org.fest.swing.fixture.JCheckBoxFixture
 import org.fest.swing.fixture.JRadioButtonFixture
 import org.fest.swing.timing.Condition
 import org.fest.swing.timing.Pause
@@ -41,6 +42,7 @@ import java.io.File
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JButton
+import javax.swing.JCheckBox
 import javax.swing.JDialog
 import javax.swing.JRadioButton
 import kotlin.concurrent.thread
@@ -75,6 +77,8 @@ abstract class FirstStart(val ideType: IdeType) {
   }
 
   companion object {
+    var DEFAULT_TIMEOUT: Long = GuiTestCase().defaultTimeout
+
     fun guessIdeAndStartRobot() {
       val firstStartClass = System.getProperty("idea.gui.test.first.start.class")
       val firstStart = Class.forName(firstStartClass).newInstance() as FirstStart
@@ -125,7 +129,7 @@ abstract class FirstStart(val ideType: IdeType) {
         LOG.info("Waiting for '$policyAgreementTitle' dialog")
         with(JDialogFixture.findByPartOfTitle(myRobot, policyAgreementTitle, Timeout.timeout(2, TimeUnit.MINUTES))) {
           LOG.info("Accept '$policyAgreementTitle' dialog")
-          button("Accept", 120)
+          button("Accept").click()
         }
       }
       catch (e: WaitTimedOutError) {
@@ -139,22 +143,24 @@ abstract class FirstStart(val ideType: IdeType) {
     with(myRobot) {
       val title = "Complete Installation"
       LOG.info("Waiting for '$title' dialog")
-      dialog(title, 120)
+      dialog(title).focus()
+
       LOG.info("Click OK on 'Do not import settings'")
-      radioButton("Do not import settings", 120)
-      button("OK", 120)
+      radioButton("Do not import settings").select()
+      button("OK").click()
     }
   }
 
-  protected fun customizeIntellijIdea() {
+  protected fun customizeIde(ideName: String = ideType.name) {
     if (!needToShowCustomizeWizard()) return
     with(myRobot) {
-      val title = "Customize IntelliJ IDEA"
+      val title = "Customize $ideName"
       LOG.info("Waiting for '$title' dialog")
-      dialog(title, 120)
+      dialog(title).focus()
+
       val buttonText = "Skip All and Set Defaults"
       LOG.info("Click '$buttonText'")
-      button(buttonText, 120)
+      button(buttonText).click()
     }
   }
 
@@ -172,24 +178,32 @@ abstract class FirstStart(val ideType: IdeType) {
   }
 
   object Utils {
-
-    fun Robot.dialog(title: String? = null, timeoutSeconds: Long) {
-      waitUntilFound(this, null, JDialog::class.java, timeoutSeconds) { jDialog ->
-        if (title != null) jDialog.title == title else true
+    fun Robot.dialog(title: String? = null, timeoutSeconds: Long = DEFAULT_TIMEOUT) : JDialogFixture {
+      val jDialog = waitUntilFound(this, null, JDialog::class.java, timeoutSeconds) { dialog ->
+        if (title != null) dialog.title == title else true
       }
+      return JDialogFixture(this, jDialog)
     }
 
-    fun Robot.radioButton(text: String, timeoutSeconds: Long) {
-      val rb = waitUntilFound(this, null, JRadioButton::class.java, timeoutSeconds) { radioButton ->
+    fun Robot.radioButton(text: String, timeoutSeconds: Long = DEFAULT_TIMEOUT) : JRadioButtonFixture {
+      val jRadioButton = waitUntilFound(this, null, JRadioButton::class.java, timeoutSeconds) { radioButton ->
         radioButton.text == text && radioButton.isShowing && radioButton.isEnabled
       }
-      val jRadioButtonFixture = JRadioButtonFixture(this, rb)
-      jRadioButtonFixture.select()
+      return JRadioButtonFixture(this, jRadioButton)
     }
 
-    fun Robot.button(text: String, timeoutSeconds: Long) {
-      val jButton = waitUntilFound(this, null, JButton::class.java, timeoutSeconds) { jButton -> jButton.isShowing && jButton.text == text }
-      JButtonFixture(this, jButton).click()
+    fun Robot.button(text: String, timeoutSeconds: Long = DEFAULT_TIMEOUT) : JButtonFixture {
+      val jButton = waitUntilFound(this, null, JButton::class.java, timeoutSeconds) { button ->
+        button.isShowing && button.text == text
+      }
+      return JButtonFixture(this, jButton)
+    }
+
+    fun Robot.checkbox(text: String, timeoutSeconds: Long = DEFAULT_TIMEOUT) : JCheckBoxFixture {
+      val jCheckBox = waitUntilFound(this, null, JCheckBox::class.java, timeoutSeconds) { checkBox ->
+        checkBox.text == text && checkBox.isShowing && checkBox.isEnabled
+      }
+      return JCheckBoxFixture(this, jCheckBox)
     }
 
     fun <ComponentType : Component> waitUntilFound(myRobot: Robot,

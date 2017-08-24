@@ -15,4 +15,4 @@
  */
 package com.intellij.testGuiFramework.launcher.ide
 
-class CommunityIde: IdeType(platformPrefix = "Idea", ideJarName = "idea.jar", mainModule = "community-main")
+class CommunityIde : IdeType(name = "IntelliJ IDEA", platformPrefix = "Idea", ideJarName = "idea.jar", mainModule = "community-main")

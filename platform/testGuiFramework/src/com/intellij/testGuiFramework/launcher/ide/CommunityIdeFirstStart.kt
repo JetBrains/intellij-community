@@ -22,7 +22,7 @@ class CommunityIdeFirstStart : FirstStart(ideType = CommunityIde()) {
   override fun completeFirstStart() {
     completeInstallation()
     acceptAgreement()
-    customizeIntellijIdea()
+    customizeIde()
     waitWelcomeFrameAndClose()
   }
 }
