@@ -18,7 +18,6 @@ package com.intellij.lang.jvm.actions
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.lang.jvm.JvmClass
 import com.intellij.lang.jvm.JvmModifiersOwner
-import org.jetbrains.annotations.ApiStatus
 
 /**
  * Extension Point provides language-abstracted code modifications for JVM-based languages.
@@ -30,7 +29,6 @@ import org.jetbrains.annotations.ApiStatus
  *
  * @since 2017.3
  */
-@ApiStatus.Experimental
 abstract class JvmElementActionsFactory {
 
   open fun createChangeModifierActions(target: JvmModifiersOwner, request: MemberRequest.Modifier): List<IntentionAction> = emptyList()

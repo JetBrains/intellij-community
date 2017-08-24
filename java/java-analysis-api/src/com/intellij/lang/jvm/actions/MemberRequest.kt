@@ -20,9 +20,7 @@ import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.JvmParameter
 import com.intellij.lang.jvm.JvmTypeParameter
 import com.intellij.lang.jvm.types.JvmType
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Experimental
 sealed class MemberRequest {
 
   companion object {
