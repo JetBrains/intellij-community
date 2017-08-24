@@ -141,7 +141,7 @@ public class JoinLinesHandler extends EditorActionHandler {
     CharSequence text = doc.getCharsSequence();
     JoinLinesOffsets offsets = calcJoinLinesOffsets(psiFile, doc, startLine);
 
-    if (offsets.isStartLineEndsWithComment && !offsets.isNextLineStartsWithComment) {
+    if (offsets.isStartLineEndsWithComment() && !offsets.isNextLineStartsWithComment()) {
       tryConvertEndOfLineComment(doc, offsets.elementAtStartLineEnd);
       offsets = calcJoinLinesOffsets(psiFile, doc, startLine);
     }
@@ -206,17 +206,21 @@ public class JoinLinesHandler extends EditorActionHandler {
     if (caretRestoreOffset.get() == CANNOT_JOIN) caretRestoreOffset.set(replaceStart);
 
 
-    if (offsets.isStartLineEndsWithComment && offsets.isNextLineStartsWithComment) {
+    if (offsets.isStartLineEndsWithComment() && offsets.isNextLineStartsWithComment()) {
+      boolean adjacentLineComments = false;
       if (text.charAt(end) == '*' && end < text.length() && text.charAt(end + 1) != '/') {
         end++;
         while (end < doc.getTextLength() && (text.charAt(end) == ' ' || text.charAt(end) == '\t')) end++;
       }
-      else if (text.charAt(end) == '/') {
+      else if (!offsets.isJoiningSameComment() && 
+               !(replaceStart >= 2 && text.charAt(replaceStart - 2) == '*' && text.charAt(replaceStart - 1) == '/') &&
+               text.charAt(end) == '/' && (end + 1) < text.length() && text.charAt(end + 1) == '/') {
+        adjacentLineComments = true;
         end += 2;
         while (end < doc.getTextLength() && (text.charAt(end) == ' ' || text.charAt(end) == '\t')) end++;
       }
 
-      doc.replaceString(replaceStart, end, " ");
+      doc.replaceString(replaceStart, end, adjacentLineComments || offsets.isJoiningSameComment() ? " " : "");
       return;
     }
 
@@ -246,8 +250,11 @@ public class JoinLinesHandler extends EditorActionHandler {
     int lineEndOffset;
     int lastNonSpaceOffsetInStartLine;
     int firstNonSpaceOffsetInNextLine;
-    boolean isStartLineEndsWithComment;
-    boolean isNextLineStartsWithComment;
+    PsiComment commentAtLineEnd;
+    PsiComment commentAtLineStart;
+    boolean isStartLineEndsWithComment() { return commentAtLineEnd != null; }
+    boolean isNextLineStartsWithComment() { return commentAtLineStart != null; }
+    boolean isJoiningSameComment() { return commentAtLineStart == commentAtLineEnd; }
     PsiElement elementAtStartLineEnd;
   }
 
@@ -262,7 +269,7 @@ public class JoinLinesHandler extends EditorActionHandler {
       offsets.firstNonSpaceOffsetInNextLine++;
     }
     PsiElement elementAtNextLineStart = psiFile.findElementAt(offsets.firstNonSpaceOffsetInNextLine);
-    offsets.isNextLineStartsWithComment = isCommentElement(elementAtNextLineStart);
+    offsets.commentAtLineStart = getCommentElement(elementAtNextLineStart);
 
     offsets.lastNonSpaceOffsetInStartLine = offsets.lineEndOffset;
     while (offsets.lastNonSpaceOffsetInStartLine > 0 &&
@@ -271,7 +278,7 @@ public class JoinLinesHandler extends EditorActionHandler {
     }
     int elemOffset = offsets.lastNonSpaceOffsetInStartLine > doc.getLineStartOffset(startLine) ? offsets.lastNonSpaceOffsetInStartLine - 1 : -1;
     offsets.elementAtStartLineEnd = elemOffset == -1 ? null : psiFile.findElementAt(elemOffset);
-    offsets.isStartLineEndsWithComment = isCommentElement(offsets.elementAtStartLineEnd);
+    offsets.commentAtLineEnd = getCommentElement(offsets.elementAtStartLineEnd);
     return offsets;
 
   }
@@ -300,7 +307,7 @@ public class JoinLinesHandler extends EditorActionHandler {
     }
   }
 
-  private static boolean isCommentElement(@Nullable final PsiElement element) {
-    return element != null && PsiTreeUtil.getParentOfType(element, PsiComment.class, false) != null;
+  private static PsiComment getCommentElement(@Nullable final PsiElement element) {
+    return PsiTreeUtil.getParentOfType(element, PsiComment.class, false);
   }
 }

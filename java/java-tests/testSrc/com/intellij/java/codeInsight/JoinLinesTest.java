@@ -229,6 +229,8 @@ public class JoinLinesTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testMultipleBlockComments() { doTest(); }
+
   private void doTest() {
     doTest(".java");
   }
