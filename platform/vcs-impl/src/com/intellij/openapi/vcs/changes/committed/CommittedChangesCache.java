@@ -840,12 +840,6 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     MessageBusUtil.invokeLaterIfNeededOnSyncPublisher(myProject, COMMITTED_TOPIC, listener -> listener.refreshErrorStatusChanged(e));
   }
 
-  private CommittedChangesListener getPublisher(final Consumer<CommittedChangesListener> listener) {
-    return ReadAction.compute(() -> {
-      if (myProject.isDisposed()) throw new ProcessCanceledException();
-      return myBus.syncPublisher(COMMITTED_TOPIC);
-    });
-  }
 
   public boolean isRefreshingIncomingChanges() {
     return myRefreshingIncomingChanges;
