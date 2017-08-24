@@ -55,9 +55,11 @@ public class VcsProjectLog implements Disposable {
   private final LazyVcsLogManager myLogManager = new LazyVcsLogManager();
   private int myRecreatedLogCount = 0;
 
-  public VcsProjectLog(@NotNull Project project, @NotNull VcsLogTabsProperties uiProperties) {
+  public VcsProjectLog(@NotNull Project project,
+                       @NotNull MessageBus messageBus,
+                       @NotNull VcsLogTabsProperties uiProperties) {
     myProject = project;
-    myMessageBus = project.getMessageBus();
+    myMessageBus = messageBus;
     myUiProperties = uiProperties;
   }
 
