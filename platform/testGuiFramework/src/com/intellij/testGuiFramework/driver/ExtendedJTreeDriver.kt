@@ -51,7 +51,7 @@ import javax.swing.tree.TreePath
 /**
  * To avoid confusions of parsing path from one String let's accept only splitted path into array of strings
  */
-class ExtendedJTreeDriver(robot: Robot) : JTreeDriver(robot) {
+open class ExtendedJTreeDriver(robot: Robot) : JTreeDriver(robot) {
 
   private val pathFinder = ExtendedJTreePathFinder()
   private val location = JTreeLocation()
@@ -454,7 +454,7 @@ class ExtendedJTreeDriver(robot: Robot) : JTreeDriver(robot) {
   /**
    * we are trying to find TreePath for a tree, if we met loading node (LoadingTreeNode)
    */
-  private fun matchingPathFor(tree: JTree, pathStrings: List<String>, countDownAttempts: Int = 30, isUniquePath: Boolean = true): TreePath {
+  protected fun matchingPathFor(tree: JTree, pathStrings: List<String>, countDownAttempts: Int = 30, isUniquePath: Boolean = true): TreePath {
     if (countDownAttempts == 0) throw Exception("Unable to find path($pathStrings) for tree: $tree, attempts count exceeded")
     try {
       return computeOnEdtWithTry {

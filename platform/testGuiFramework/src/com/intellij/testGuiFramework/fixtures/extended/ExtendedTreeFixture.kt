@@ -29,7 +29,7 @@ import java.util.*
 import javax.swing.JTree
 import javax.swing.tree.TreePath
 
-class ExtendedTreeFixture(val robot: Robot, val tree: JTree) : JTreeFixture(robot, tree) {
+open class ExtendedTreeFixture(val robot: Robot, val tree: JTree) : JTreeFixture(robot, tree) {
 
   val myDriver = ExtendedJTreeDriver(robot)
   val myCellReader: JTreeCellReader

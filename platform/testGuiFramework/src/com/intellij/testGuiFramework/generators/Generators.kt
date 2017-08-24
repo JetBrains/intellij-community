@@ -34,6 +34,7 @@ import com.intellij.openapi.wm.impl.WindowManagerImpl
 import com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame
 import com.intellij.testGuiFramework.cellReader.ExtendedJListCellReader
 import com.intellij.testGuiFramework.cellReader.ExtendedJTableCellReader
+import com.intellij.testGuiFramework.driver.CheckboxTreeDriver
 import com.intellij.testGuiFramework.fixtures.*
 import com.intellij.testGuiFramework.fixtures.extended.ExtendedTreeFixture
 import com.intellij.testGuiFramework.framework.GuiTestUtil
@@ -42,6 +43,7 @@ import com.intellij.testGuiFramework.generators.Utils.convertSimpleTreeItemToPat
 import com.intellij.testGuiFramework.generators.Utils.findBoundedText
 import com.intellij.testGuiFramework.generators.Utils.getCellText
 import com.intellij.testGuiFramework.generators.Utils.getJTreePath
+import com.intellij.testGuiFramework.generators.Utils.getJTreePathArray
 import com.intellij.testGuiFramework.generators.Utils.getJTreePathItemsString
 import com.intellij.testGuiFramework.generators.Utils.withRobot
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.getComponentText
@@ -65,6 +67,7 @@ import org.fest.swing.exception.ComponentLookupException
 import java.awt.Component
 import java.awt.Container
 import java.awt.Point
+import java.awt.Rectangle
 import java.awt.event.MouseEvent
 import java.io.File
 import java.net.URI
@@ -153,8 +156,26 @@ class BasicComboPopupGenerator : ComponentCodeGenerator<JList<*>> {
 
 class CheckboxTreeGenerator : ComponentCodeGenerator<CheckboxTree> {
   override fun accept(cmp: Component) = cmp is CheckboxTree
-  override fun generate(cmp: CheckboxTree, me: MouseEvent, cp: Point) = "selectFramework(\"${cmp.getClosestPathForLocation(cp.x,
-                                                                                                                           cp.y).lastPathComponent}\")"
+  private fun JTree.getPath(cp: Point): TreePath = this.getClosestPathForLocation(cp.x, cp.y)
+  private fun wasClickOnCheckBox(cmp: CheckboxTree, cp: Point): Boolean {
+    val checkboxTree = cmp
+    val treePath = cmp.getPath(cp)
+    val pathArray: List<String> = getJTreePathArray(checkboxTree, treePath)
+    return withRobot {
+      val checkboxComponent = CheckboxTreeDriver(it).getCheckboxComponent(checkboxTree, pathArray) ?: throw Exception("Checkbox component from cell renderer is null")
+      val pathBounds = checkboxTree.getPathBounds(treePath)
+      val checkboxTreeBounds = Rectangle(pathBounds.x + checkboxComponent.x, pathBounds.y + checkboxComponent.y, checkboxComponent.width, checkboxComponent.height)
+      checkboxTreeBounds.contains(cp)
+    }
+  }
+
+  override fun generate(cmp: CheckboxTree, me: MouseEvent, cp: Point): String {
+    val path = getJTreePath(cmp, cmp.getPath(cp))
+    return if (wasClickOnCheckBox(cmp, cp))
+      "checkboxTree($path).clickCheckbox($path)"
+    else
+      "checkboxTree($path).clickPath($path)"
+  }
 }
 
 class SimpleTreeGenerator : ComponentCodeGenerator<SimpleTree> {
@@ -707,7 +728,7 @@ object Utils {
       .reduceRight({ s, s1 -> "$s, $s1" })
   }
 
-  private fun getJTreePathArray(tree: JTree, path: TreePath): List<String>
+  internal fun getJTreePathArray(tree: JTree, path: TreePath): List<String>
     = withRobot { robot -> ExtendedTreeFixture(robot, tree).getPath(path) }
 
   fun <ReturnType> withRobot(robotFunction: (Robot) -> ReturnType): ReturnType {
