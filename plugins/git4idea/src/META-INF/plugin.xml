@@ -86,9 +86,7 @@
     <group id="Git.ContextMenu" class="git4idea.actions.GitMenu" popup="true" text="_Git">
       <reference ref="GitFileActions"/>
       <separator/>
-      <group id="Git.RepositoryContextMenu" popup="true" text="_Repository">
         <reference ref="GitRepositoryActions"/>
-      </group>
       <add-to-group group-id="VcsGroup" anchor="last"/>
     </group>
 
