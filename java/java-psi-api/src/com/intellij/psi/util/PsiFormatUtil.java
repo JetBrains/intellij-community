@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,9 @@ package com.intellij.psi.util;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.util.BitUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.VisibilityUtil;
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,27 +50,21 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
                                      @FormatVariableOptions int options,
                                      PsiSubstitutor substitutor,
                                      @NotNull StringBuilder buffer) {
-    if (BitUtil.isSet(options, SHOW_MODIFIERS) && !BitUtil.isSet(options, MODIFIERS_AFTER)){
+    if (BitUtil.isSet(options, SHOW_MODIFIERS) && !BitUtil.isSet(options, MODIFIERS_AFTER)) {
       formatModifiers(variable, options,buffer);
     }
-    if (BitUtil.isSet(options, SHOW_TYPE) && !BitUtil.isSet(options, TYPE_AFTER)){
+    if (BitUtil.isSet(options, SHOW_TYPE) && !BitUtil.isSet(options, TYPE_AFTER)) {
       appendSpaceIfNeeded(buffer);
       buffer.append(formatType(variable.getType(), options, substitutor));
     }
-    if (variable instanceof PsiField && BitUtil.isSet(options, SHOW_CONTAINING_CLASS)){
+    if (variable instanceof PsiField && BitUtil.isSet(options, SHOW_CONTAINING_CLASS)) {
       PsiClass aClass = ((PsiField)variable).getContainingClass();
-      if (aClass != null){
+      if (aClass != null) {
         String className = aClass.getName();
         if (className != null) {
           appendSpaceIfNeeded(buffer);
           if (BitUtil.isSet(options, SHOW_FQ_NAME)) {
-            String qName = aClass.getQualifiedName();
-            if (qName != null) {
-              buffer.append(qName);
-            }
-            else {
-              buffer.append(className);
-            }
+            buffer.append(ObjectUtils.notNull(aClass.getQualifiedName(), className));
           }
           else {
             buffer.append(className);
@@ -91,13 +85,13 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
         }
       }
     }
-    if (BitUtil.isSet(options, SHOW_TYPE) && BitUtil.isSet(options, TYPE_AFTER)){
-      if (BitUtil.isSet(options, SHOW_NAME) && variable.getName() != null){
+    if (BitUtil.isSet(options, SHOW_TYPE) && BitUtil.isSet(options, TYPE_AFTER)) {
+      if (BitUtil.isSet(options, SHOW_NAME) && variable.getName() != null) {
         buffer.append(':');
       }
       buffer.append(formatType(variable.getType(), options, substitutor));
     }
-    if (BitUtil.isSet(options, SHOW_MODIFIERS) && BitUtil.isSet(options, MODIFIERS_AFTER)){
+    if (BitUtil.isSet(options, SHOW_MODIFIERS) && BitUtil.isSet(options, MODIFIERS_AFTER)) {
       formatModifiers(variable, options,buffer);
     }
     if (BitUtil.isSet(options, SHOW_INITIALIZER)) {
@@ -141,12 +135,12 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
                                    @FormatVariableOptions int parameterOptions,
                                    int maxParametersToShow,
                                    StringBuilder buffer) {
-    if (BitUtil.isSet(options, SHOW_MODIFIERS) && !BitUtil.isSet(options, MODIFIERS_AFTER)){
+    if (BitUtil.isSet(options, SHOW_MODIFIERS) && !BitUtil.isSet(options, MODIFIERS_AFTER)) {
       formatModifiers(method, options,buffer);
     }
-    if (BitUtil.isSet(options, SHOW_TYPE) && !BitUtil.isSet(options, TYPE_AFTER)){
+    if (BitUtil.isSet(options, SHOW_TYPE) && !BitUtil.isSet(options, TYPE_AFTER)) {
       PsiType type = method.getReturnType();
-      if (type != null){
+      if (type != null) {
         appendSpaceIfNeeded(buffer);
         buffer.append(formatType(type, options, substitutor));
       }
@@ -158,13 +152,7 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
         String name = aClass.getName();
         if (name != null) {
           if (BitUtil.isSet(options, SHOW_FQ_NAME)) {
-            String qName = aClass.getQualifiedName();
-            if (qName != null) {
-              buffer.append(qName);
-            }
-            else {
-              buffer.append(name);
-            }
+            buffer.append(ObjectUtils.notNull(aClass.getQualifiedName(), name));
           }
           else {
             buffer.append(name);
@@ -197,23 +185,22 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
       }
       buffer.append(')');
     }
-    if (BitUtil.isSet(options, SHOW_TYPE) && BitUtil.isSet(options, TYPE_AFTER)){
+    if (BitUtil.isSet(options, SHOW_TYPE) && BitUtil.isSet(options, TYPE_AFTER)) {
       PsiType type = method.getReturnType();
-      if (type != null){
-        if (buffer.length() > 0){
+      if (type != null) {
+        if (buffer.length() > 0) {
           buffer.append(':');
         }
         buffer.append(formatType(type, options, substitutor));
       }
     }
-    if (BitUtil.isSet(options, SHOW_MODIFIERS) && BitUtil.isSet(options, MODIFIERS_AFTER)){
+    if (BitUtil.isSet(options, SHOW_MODIFIERS) && BitUtil.isSet(options, MODIFIERS_AFTER)) {
       formatModifiers(method, options,buffer);
     }
     if (BitUtil.isSet(options, SHOW_THROWS)) {
       String throwsText = formatReferenceList(method.getThrowsList(), options);
       if (!throwsText.isEmpty()) {
         appendSpaceIfNeeded(buffer);
-        //noinspection HardCodedStringLiteral
         buffer.append("throws ");
         buffer.append(throwsText);
       }
@@ -223,9 +210,11 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
   @NotNull
   public static String formatClass(@NotNull PsiClass aClass, @FormatClassOptions int options) {
     StringBuilder buffer = new StringBuilder();
-    if (BitUtil.isSet(options, SHOW_MODIFIERS) && !BitUtil.isSet(options, MODIFIERS_AFTER)){
+
+    if (BitUtil.isSet(options, SHOW_MODIFIERS) && !BitUtil.isSet(options, MODIFIERS_AFTER)) {
       formatModifiers(aClass, options,buffer);
     }
+
     if (BitUtil.isSet(options, SHOW_NAME)) {
       if (aClass instanceof PsiAnonymousClass && BitUtil.isSet(options, SHOW_ANONYMOUS_CLASS_VERBOSE)) {
         final PsiClassType baseClassReference = ((PsiAnonymousClass)aClass).getBaseClassType();
@@ -252,66 +241,67 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
         }
       }
     }
-    if (BitUtil.isSet(options, SHOW_MODIFIERS) && BitUtil.isSet(options, MODIFIERS_AFTER)){
+
+    if (BitUtil.isSet(options, SHOW_MODIFIERS) && BitUtil.isSet(options, MODIFIERS_AFTER)) {
       formatModifiers(aClass, options,buffer);
     }
+
     if (BitUtil.isSet(options, SHOW_EXTENDS_IMPLEMENTS)) {
-      String extendsText = formatReferenceList(aClass.getExtendsList(), options);
-      if (!extendsText.isEmpty()) {
-        appendSpaceIfNeeded(buffer);
-        //noinspection HardCodedStringLiteral
-        buffer.append("extends ");
-        buffer.append(extendsText);
+      PsiReferenceList extendsList = aClass.getExtendsList();
+      if (extendsList != null) {
+        String extendsText = formatReferenceList(extendsList, options);
+        if (!extendsText.isEmpty()) {
+          appendSpaceIfNeeded(buffer);
+          buffer.append("extends ");
+          buffer.append(extendsText);
+        }
       }
-      String implementsText = formatReferenceList(aClass.getImplementsList(), options);
-      if (!implementsText.isEmpty()) {
-        appendSpaceIfNeeded(buffer);
-        //noinspection HardCodedStringLiteral
-        buffer.append("implements ");
-        buffer.append(implementsText);
+
+      PsiReferenceList implementsList = aClass.getImplementsList();
+      if (implementsList != null) {
+        String implementsText = formatReferenceList(implementsList, options);
+        if (!implementsText.isEmpty()) {
+          appendSpaceIfNeeded(buffer);
+          buffer.append("implements ");
+          buffer.append(implementsText);
+        }
       }
     }
+
     return buffer.toString();
   }
 
+  /** @deprecated use {@link #formatModifiers(PsiModifierListOwner, int)} (to be removed in IDEA 2019) */
   public static String formatModifiers(PsiElement element, int options) throws IllegalArgumentException {
+    if (element instanceof PsiModifierListOwner) {
+      return formatModifiers((PsiModifierListOwner)element, options);
+    }
+    else {
+      throw new IllegalArgumentException();
+    }
+  }
+
+  @NotNull
+  public static String formatModifiers(@NotNull PsiModifierListOwner element, int options) {
     StringBuilder buffer = new StringBuilder();
     formatModifiers(element, options, buffer);
     return buffer.toString();
   }
 
-  private static void formatModifiers(PsiElement element, int options, StringBuilder buffer) throws IllegalArgumentException {
-    PsiModifierList list;
-    boolean isInterface = false;
-    if (element instanceof PsiVariable){
-      list = ((PsiVariable)element).getModifierList();
-    }
-    else if (element instanceof PsiMethod){
-      list = ((PsiMethod)element).getModifierList();
-    }
-    else if (element instanceof PsiClass){
-      isInterface = ((PsiClass)element).isInterface();
-      list = ((PsiClass)element).getModifierList();
-      if (list == null) return;
-    }
-    else if (element instanceof PsiClassInitializer){
-      list = ((PsiClassInitializer)element).getModifierList();
-      if (list == null) return;
-    }
-    else{
-      throw new IllegalArgumentException();
-    }
+  private static void formatModifiers(PsiModifierListOwner element, int options, StringBuilder buffer) {
+    PsiModifierList list = element.getModifierList();
     if (list == null) return;
+
     if (!BitUtil.isSet(options, SHOW_REDUNDANT_MODIFIERS)
         ? list.hasExplicitModifier(PsiModifier.PUBLIC)
         : list.hasModifierProperty(PsiModifier.PUBLIC)) {
       appendModifier(buffer, PsiModifier.PUBLIC);
     }
 
-    if (list.hasModifierProperty(PsiModifier.PROTECTED)){
+    if (list.hasModifierProperty(PsiModifier.PROTECTED)) {
       appendModifier(buffer, PsiModifier.PROTECTED);
     }
-    if (list.hasModifierProperty(PsiModifier.PRIVATE)){
+    if (list.hasModifierProperty(PsiModifier.PRIVATE)) {
       appendModifier(buffer, PsiModifier.PRIVATE);
     }
 
@@ -330,6 +320,7 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
         ? list.hasExplicitModifier(PsiModifier.STATIC)
         : list.hasModifierProperty(PsiModifier.STATIC)) appendModifier(buffer, PsiModifier.STATIC);
 
+    boolean isInterface = element instanceof PsiClass && ((PsiClass)element).isInterface();
     if (!isInterface && //cls modifier list
         (!BitUtil.isSet(options, SHOW_REDUNDANT_MODIFIERS)
          ? list.hasExplicitModifier(PsiModifier.ABSTRACT)
@@ -339,21 +330,21 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
         ? list.hasExplicitModifier(PsiModifier.FINAL)
         : list.hasModifierProperty(PsiModifier.FINAL)) appendModifier(buffer, PsiModifier.FINAL);
 
-    if (list.hasModifierProperty(PsiModifier.NATIVE) && !BitUtil.isSet(options, JAVADOC_MODIFIERS_ONLY)){
+    if (list.hasModifierProperty(PsiModifier.NATIVE) && !BitUtil.isSet(options, JAVADOC_MODIFIERS_ONLY)) {
       appendModifier(buffer, PsiModifier.NATIVE);
     }
-    if (list.hasModifierProperty(PsiModifier.SYNCHRONIZED) && !BitUtil.isSet(options, JAVADOC_MODIFIERS_ONLY)){
+    if (list.hasModifierProperty(PsiModifier.SYNCHRONIZED) && !BitUtil.isSet(options, JAVADOC_MODIFIERS_ONLY)) {
       appendModifier(buffer, PsiModifier.SYNCHRONIZED);
     }
-    if (list.hasModifierProperty(PsiModifier.STRICTFP) && !BitUtil.isSet(options, JAVADOC_MODIFIERS_ONLY)){
+    if (list.hasModifierProperty(PsiModifier.STRICTFP) && !BitUtil.isSet(options, JAVADOC_MODIFIERS_ONLY)) {
       appendModifier(buffer, PsiModifier.STRICTFP);
     }
     if (list.hasModifierProperty(PsiModifier.TRANSIENT) &&
         element instanceof PsiVariable // javac 5 puts transient attr for methods
-       ){
+       ) {
       appendModifier(buffer, PsiModifier.TRANSIENT);
     }
-    if (list.hasModifierProperty(PsiModifier.VOLATILE)){
+    if (list.hasModifierProperty(PsiModifier.VOLATILE)) {
       appendModifier(buffer, PsiModifier.VOLATILE);
     }
   }
@@ -372,7 +363,7 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
     PsiJavaCodeReferenceElement[] refs = list.getReferenceElements();
     for(int i = 0; i < refs.length; i++) {
       PsiJavaCodeReferenceElement ref = refs[i];
-      if (i > 0){
+      if (i > 0) {
         buffer.append(", ");
       }
       buffer.append(formatReference(ref, options));
@@ -468,13 +459,14 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
         if (ownerName == null) {
           ownerName = owner.getName();
         }
-      } else if (owner instanceof PsiMethod) {
+      }
+      else if (owner instanceof PsiMethod) {
         ownerName = owner.getName();
       }
       return ownerName == null ? "type parameter" : "type parameter of " + ownerName;
     }
 
-    @NonNls String packageName = psiClass.getQualifiedName();
+    String packageName = psiClass.getQualifiedName();
     packageName = packageName == null || packageName.lastIndexOf('.') <= 0 ? "" : packageName.substring(0, packageName.lastIndexOf('.'));
     if (packageName.isEmpty()) {
       packageName = "default package";

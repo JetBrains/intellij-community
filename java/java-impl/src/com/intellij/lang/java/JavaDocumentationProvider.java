@@ -138,7 +138,7 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
     }
   }
 
-  private static void generateModifiers(StringBuilder buffer, PsiElement element) {
+  private static void generateModifiers(StringBuilder buffer, PsiModifierListOwner element) {
     String modifiers = PsiFormatUtil.formatModifiers(element, PsiFormatUtilBase.JAVADOC_MODIFIERS_ONLY);
     if (modifiers.length() > 0) {
       buffer.append(modifiers);
