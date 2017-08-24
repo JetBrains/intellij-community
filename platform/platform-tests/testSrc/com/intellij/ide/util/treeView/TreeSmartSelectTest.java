@@ -75,4 +75,48 @@ public class TreeSmartSelectTest extends AbstractTreeBuilderTest {
                "   [b]\n" +
                "   [c]\n");
   }
+
+  public void testSelectionDoesntJumpTooQuickly() throws Exception {
+    doAndWaitForBuilder(() -> {
+      Node ktor = myRoot.addChild("ktor");
+      ktor.addChild("ktor-core");
+      Node ktorFeatures = ktor.addChild("ktor-features");
+      ktorFeatures.addChild("jetty-http-client");
+      Node locations = ktorFeatures.addChild("ktor-locations");
+      Node src = locations.addChild("src");
+      Node node = src.addChild("asdsd.asdas.asdas");
+      node.addChild("a");
+      node.addChild("b");
+      Node c = node.addChild("c");
+
+      Node test = locations.addChild("tests");
+      test.addChild("fooo");
+      locations.addChild("zar.txt");
+      locations.addChild("zoo.txt");
+      TreeUtil.expandAll(myTree);
+      getBuilder().select(c.myElement);
+    });
+
+    myProvider.increaseSelection(myTree);
+    myProvider.increaseSelection(myTree);
+    myProvider.increaseSelection(myTree);
+    myProvider.increaseSelection(myTree);
+    myProvider.increaseSelection(myTree);
+    assertTree("-/\n" +
+               " -ktor\n" +
+               "  ktor-core\n" +
+               "  -ktor-features\n" +
+               "   jetty-http-client\n" +
+               "   -[ktor-locations]\n" +
+               "    -[src]\n" +
+               "     -[asdsd.asdas.asdas]\n" +
+               "      [a]\n" +
+               "      [b]\n" +
+               "      [c]\n" +
+               "    -[tests]\n" +
+               "     [fooo]\n" +
+               "    [zar.txt]\n" +
+               "    [zoo.txt]\n");
+  }
+
 }
