@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.build.events;
+package com.intellij.build.events.impl;
 
+import com.intellij.build.events.Failure;
+import com.intellij.build.events.NotificationData;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
@@ -29,25 +31,35 @@ public class FailureImpl implements Failure {
   private final String myDescription;
   private final List<? extends Failure> myCauses;
   private final Throwable myError;
-
+  @Nullable
+  private final NotificationData myNotificationData;
 
   public FailureImpl(String message, Throwable error) {
-    this(message, null, Collections.emptyList(), error);
+    this(message, null, Collections.emptyList(), error, null);
+  }
+
+  public FailureImpl(String message, Throwable error, @Nullable NotificationData notificationData) {
+    this(message, null, Collections.emptyList(), error, notificationData);
   }
 
   public FailureImpl(String message, String description) {
-    this(message, description, Collections.emptyList(), null);
+    this(message, description, Collections.emptyList(), null, null);
   }
 
   public FailureImpl(String message, String description, List<? extends Failure> causes) {
-    this(message, description, causes, null);
+    this(message, description, causes, null, null);
   }
 
-  private FailureImpl(String message, String description, List<? extends Failure> causes, Throwable error) {
+  private FailureImpl(String message,
+                      String description,
+                      List<? extends Failure> causes,
+                      Throwable error,
+                      @Nullable NotificationData notificationData) {
     myMessage = message;
     myDescription = description;
     myCauses = causes;
     myError = error;
+    myNotificationData = notificationData;
   }
 
   @Nullable
@@ -71,5 +83,10 @@ public class FailureImpl implements Failure {
   @Override
   public List<? extends Failure> getCauses() {
     return myCauses;
+  }
+
+  @Nullable
+  public NotificationData getNotificationData() {
+    return myNotificationData;
   }
 }

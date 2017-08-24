@@ -16,7 +16,6 @@
 package com.intellij.build.events.impl;
 
 import com.intellij.build.events.Failure;
-import com.intellij.build.events.FailureImpl;
 import com.intellij.build.events.FailureResult;
 import org.jetbrains.annotations.Nullable;
 

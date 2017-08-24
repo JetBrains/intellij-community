@@ -109,14 +109,23 @@ public class ExternalSystemNotificationManager implements Disposable {
     if (isDisposedOrNotOpen()) {
       return;
     }
-    assert myProject != null;
     Project project = myProject;
+    assert project != null;
 
     ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(externalSystemId);
     if (!(manager instanceof ExternalSystemConfigurableAware)) {
       return;
     }
+    NotificationData notificationData = createNotification(error, externalProjectName, externalSystemId, project);
+    EditorNotifications.getInstance(project).updateAllNotifications();
+    showNotification(externalSystemId, notificationData);
+  }
 
+  @NotNull
+  public NotificationData createNotification(@NotNull Throwable error,
+                                             @NotNull String externalProjectName,
+                                             @NotNull ProjectSystemId externalSystemId,
+                                             @NotNull Project project) {
     String title =
       ExternalSystemBundle.message("notification.project.refresh.fail.title", externalSystemId.getReadableName(), externalProjectName);
     String message = ExternalSystemApiUtil.buildErrorMessage(error);
@@ -146,9 +155,7 @@ public class ExternalSystemNotificationManager implements Disposable {
       }
       extension.customize(notificationData, project, error);
     }
-
-    EditorNotifications.getInstance(project).updateAllNotifications();
-    showNotification(externalSystemId, notificationData);
+    return notificationData;
   }
 
   public boolean isNotificationActive(@NotNull Key<String> notificationKey) {

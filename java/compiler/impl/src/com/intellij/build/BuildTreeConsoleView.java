@@ -16,6 +16,7 @@
 package com.intellij.build;
 
 import com.intellij.build.events.*;
+import com.intellij.build.events.impl.FailureImpl;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
@@ -36,6 +37,8 @@ import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns;
 import com.intellij.ui.treeStructure.treetable.TreeColumnInfo;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.ui.treeStructure.treetable.TreeTableTree;
+import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.UIUtil;
@@ -54,6 +57,8 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author Vladislav.Soroka
@@ -337,7 +342,7 @@ public class BuildTreeConsoleView implements ConsoleView, BuildConsoleView {
           resultNode.setStartTime(rootElement.getStartTime());
           resultNode.setResult(rootElement.getResult());
           resultNode.setTooltip(rootElement.getTooltip());
-          rootElement.add(0, resultNode);
+          rootElement.add(resultNode);
           myBuilder.queueUpdateFrom(resultNode, false, false);
         }
       }
@@ -368,6 +373,10 @@ public class BuildTreeConsoleView implements ConsoleView, BuildConsoleView {
   }
 
   private static class DetailsHandler {
+    private static final Pattern TAG_PATTERN = Pattern.compile("<[^>]*>");
+    private static final Pattern A_PATTERN = Pattern.compile("<a ([^>]* )?href=[\"\']([^>]*)[\"\'][^>]*>");
+    private static final String A_CLOSING = "</a>";
+
     private final ThreeComponentsSplitter mySplitter;
     @Nullable
     private ExecutionNode myExecutionNode;
@@ -392,31 +401,66 @@ public class BuildTreeConsoleView implements ConsoleView, BuildConsoleView {
 
     public boolean setNode(@NotNull ExecutionNode node) {
       EventResult eventResult = node.getResult();
-      if (eventResult instanceof FailureResult) {
-        List<? extends Failure> failures = ((FailureResult)eventResult).getFailures();
-        if (!failures.isEmpty()) {
-          Failure failure = failures.get(0);
-          String text = failure.getDescription();
-          if (text == null && failure.getError() != null) {
-            text = failure.getError().getMessage();
-          }
+      if (!(eventResult instanceof FailureResult)) return false;
+      List<? extends Failure> failures = ((FailureResult)eventResult).getFailures();
+      if (failures.isEmpty()) return true;
 
-          if (text != null) {
-            myConsole.clear();
-            myConsole.print(text, ConsoleViewContentType.ERROR_OUTPUT);
-            int firstSize = mySplitter.getFirstSize();
-            int lastSize = mySplitter.getLastSize();
+      Failure failure = failures.get(0);
+      String text = ObjectUtils.chooseNotNull(failure.getDescription(), failure.getMessage());
+      if (text == null && failure.getError() != null) {
+        text = failure.getError().getMessage();
+      }
 
-            if (firstSize == 0 && lastSize == 0) {
-              int width = Math.round(mySplitter.getWidth() / 2f);
-              mySplitter.setFirstSize(width);
-            }
-            myConsole.getComponent().setVisible(true);
-            return true;
+      if (text == null) return false;
+
+      printDetails((FailureImpl)failure, text);
+      myConsole.scrollTo(0);
+      int firstSize = mySplitter.getFirstSize();
+      int lastSize = mySplitter.getLastSize();
+
+      if (firstSize == 0 && lastSize == 0) {
+        int width = Math.round(mySplitter.getWidth() / 2f);
+        mySplitter.setFirstSize(width);
+      }
+      myConsole.getComponent().setVisible(true);
+      return true;
+    }
+
+    public void printDetails(FailureImpl failure, String text) {
+      myConsole.clear();
+      String content = StringUtil.convertLineSeparators(text);
+      while (true) {
+        Matcher tagMatcher = TAG_PATTERN.matcher(content);
+        if (!tagMatcher.find()) {
+          myConsole.print(content, ConsoleViewContentType.ERROR_OUTPUT);
+          break;
+        }
+        String tagStart = tagMatcher.group();
+        myConsole.print(content.substring(0, tagMatcher.start()), ConsoleViewContentType.ERROR_OUTPUT);
+        Matcher aMatcher = A_PATTERN.matcher(tagStart);
+        if (aMatcher.matches()) {
+          final String href = aMatcher.group(2);
+          int linkEnd = content.indexOf(A_CLOSING, tagMatcher.end());
+          if (linkEnd > 0) {
+            String linkText = content.substring(tagMatcher.end(), linkEnd).replaceAll(TAG_PATTERN.pattern(), "");
+            myConsole.printHyperlink(linkText, new HyperlinkInfo() {
+              @Override
+              public void navigate(Project project) {
+                NotificationData notificationData = failure.getNotificationData();
+                if (notificationData != null) {
+                  notificationData.getListener().hyperlinkUpdate(
+                    notificationData.getNotification(),
+                    IJSwingUtilities.createHyperlinkEvent(href, myConsole.getComponent()));
+                }
+              }
+            });
+            content = content.substring(linkEnd + A_CLOSING.length());
+            continue;
           }
         }
+        myConsole.print(content.substring(tagMatcher.start(), tagMatcher.end()), ConsoleViewContentType.ERROR_OUTPUT);
+        content = content.substring(tagMatcher.end());
       }
-      return false;
     }
 
     public void setNode(@Nullable DefaultMutableTreeNode node) {

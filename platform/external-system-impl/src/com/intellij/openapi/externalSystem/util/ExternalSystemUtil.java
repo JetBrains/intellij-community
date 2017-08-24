@@ -18,8 +18,8 @@ package com.intellij.openapi.externalSystem.util;
 import com.intellij.build.SyncViewManager;
 import com.intellij.build.events.BuildEvent;
 import com.intellij.build.events.EventResult;
-import com.intellij.build.events.FailureImpl;
 import com.intellij.build.events.impl.*;
+import com.intellij.build.events.impl.FailureImpl;
 import com.intellij.build.events.impl.FailureResultImpl;
 import com.intellij.build.events.impl.SkippedResultImpl;
 import com.intellij.build.events.impl.SuccessResultImpl;
@@ -33,6 +33,8 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.rmi.RemoteUtil;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
@@ -55,6 +57,7 @@ import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMo
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemProcessingManager;
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemResolveProjectTask;
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemNotificationManager;
+import com.intellij.openapi.externalSystem.service.notification.NotificationData;
 import com.intellij.openapi.externalSystem.service.notification.NotificationSource;
 import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback;
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
@@ -90,7 +93,6 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.Semaphore;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
@@ -104,6 +106,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.doWriteAction;
+import static com.intellij.util.containers.ContainerUtil.*;
 
 /**
  * @author Denis Zhdanov
@@ -432,8 +435,36 @@ public class ExternalSystemUtil {
 
           @Override
           public void onFailure(@NotNull ExternalSystemTaskId id, @NotNull Exception e) {
-            ServiceManager.getService(project, SyncViewManager.class).onEvent(new FinishBuildEventImpl(
-              id, null, System.currentTimeMillis(), "sync failed", new FailureResultImpl(e)));
+            ExternalSystemNotificationManager notificationManager = ExternalSystemNotificationManager.getInstance(project);
+            NotificationData notificationData = notificationManager.createNotification(e, projectName, externalSystemId, project);
+            FailureResultImpl failureResult;
+            if (notificationData.isBalloonNotification()) {
+              notificationManager.showNotification(externalSystemId, notificationData);
+              failureResult = new FailureResultImpl(e);
+            }
+            else {
+              NotificationGroup group;
+              if (notificationData.getBalloonGroup() == null) {
+                ExternalProjectsView externalProjectsView =
+                  ExternalProjectsManagerImpl.getInstance(project).getExternalProjectsView(externalSystemId);
+                group = externalProjectsView instanceof ExternalProjectsViewImpl ?
+                        ((ExternalProjectsViewImpl)externalProjectsView).getNotificationGroup() : null;
+              }
+              else {
+                final NotificationGroup registeredGroup = NotificationGroup.findRegisteredGroup(notificationData.getBalloonGroup());
+                group = registeredGroup != null ? registeredGroup : NotificationGroup.balloonGroup(notificationData.getBalloonGroup());
+              }
+              if (group == null) return;
+
+              final Notification notification = group.createNotification(
+                notificationData.getTitle(), notificationData.getMessage(),
+                notificationData.getNotificationCategory().getNotificationType(), notificationData.getListener());
+              failureResult = new FailureResultImpl(list(new FailureImpl(
+                notificationData.getMessage(), e, new NotificationDataImpl(notification, notificationData.getListener(),
+                                                                           notificationData.getNavigatable()))));
+            }
+            ServiceManager.getService(project, SyncViewManager.class).onEvent(
+              new FinishBuildEventImpl(id, null, System.currentTimeMillis(), "sync failed", failureResult));
           }
 
           @Override
@@ -762,12 +793,12 @@ public class ExternalSystemUtil {
     RunnerAndConfigurationSettings settings = RunManager.getInstance(project).createRunConfiguration(name, configurationType.getFactory());
     ExternalSystemRunConfiguration runConfiguration = (ExternalSystemRunConfiguration)settings.getConfiguration();
     runConfiguration.getSettings().setExternalProjectPath(taskSettings.getExternalProjectPath());
-    runConfiguration.getSettings().setTaskNames(ContainerUtil.newArrayList(taskSettings.getTaskNames()));
-    runConfiguration.getSettings().setTaskDescriptions(ContainerUtil.newArrayList(taskSettings.getTaskDescriptions()));
+    runConfiguration.getSettings().setTaskNames(newArrayList(taskSettings.getTaskNames()));
+    runConfiguration.getSettings().setTaskDescriptions(newArrayList(taskSettings.getTaskDescriptions()));
     runConfiguration.getSettings().setVmOptions(taskSettings.getVmOptions());
     runConfiguration.getSettings().setScriptParameters(taskSettings.getScriptParameters());
     runConfiguration.getSettings().setPassParentEnvs(taskSettings.isPassParentEnvs());
-    runConfiguration.getSettings().setEnv(ContainerUtil.newHashMap(taskSettings.getEnv()));
+    runConfiguration.getSettings().setEnv(newHashMap(taskSettings.getEnv()));
     runConfiguration.getSettings().setExecutionName(taskSettings.getExecutionName());
 
     return settings;
