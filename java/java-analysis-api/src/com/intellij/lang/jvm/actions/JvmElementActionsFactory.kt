@@ -38,4 +38,6 @@ abstract class JvmElementActionsFactory {
   open fun createAddMethodActions(targetClass: JvmClass, request: MemberRequest.Method): List<IntentionAction> = emptyList()
 
   open fun createAddPropertyActions(targetClass: JvmClass, request: MemberRequest.Property): List<IntentionAction> = emptyList()
+
+  open fun createAddFieldActions(targetClass: JvmClass, request: CreateFieldRequest): List<IntentionAction> = emptyList()
 }
