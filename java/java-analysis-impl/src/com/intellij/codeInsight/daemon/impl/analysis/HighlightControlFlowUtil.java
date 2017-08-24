@@ -721,7 +721,7 @@ public class HighlightControlFlowUtil {
         String text = JavaErrorMessages.message("lambda.variable.must.be.final");
         HighlightInfo highlightInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(context).descriptionAndTooltip(text).create();
         QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createVariableAccessFromInnerClassFix(variable, lambdaExpression));
-        return highlightInfo;
+        return ErrorFixExtensionPoint.registerFixes(highlightInfo, "lambda.variable.must.be.final");
       }
     }
     return null;

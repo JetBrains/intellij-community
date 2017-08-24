@@ -335,6 +335,10 @@
     </extensionPoint>
 
     <extensionPoint name="javaModuleSystem" interface="com.intellij.psi.JavaModuleSystem"/>
+
+    <extensionPoint name="java.error.fix" beanClass="com.intellij.codeInsight.daemon.impl.analysis.ErrorFixExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.intention.IntentionAction"/>
+    </extensionPoint>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
