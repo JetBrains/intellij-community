@@ -15,6 +15,7 @@
  */
 package com.intellij.java.codeInsight.daemon.quickFix;
 
+import com.intellij.codeInsight.daemon.quickFix.ActionHint;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.Result;
@@ -24,6 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -37,6 +39,8 @@ public class CreateFieldFromUsageTest extends LightQuickFixTestCase {
   public void testAnonymousClass() { doSingleTest(); }
   public void testExpectedTypes() { doSingleTest(); }
   public void testInterface() { doSingleTest(); }
+  public void testInterfaceField() { doSingleTest(); }
+  public void testSuperInterfaceConstant() { doSingleTest(); }
   public void testMultipleTypes() { doSingleTest(); }
   public void testMultipleTypes2() { doSingleTest(); }
   public void testParametericMethod() { doSingleTest(); }
@@ -89,4 +93,8 @@ public class CreateFieldFromUsageTest extends LightQuickFixTestCase {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/createFieldFromUsage";
   }
 
+  @Override
+  protected ActionHint parseActionHintImpl(@NotNull PsiFile file, @NotNull String contents) {
+    return ActionHint.parse(file, contents, false);
+  }
 }
