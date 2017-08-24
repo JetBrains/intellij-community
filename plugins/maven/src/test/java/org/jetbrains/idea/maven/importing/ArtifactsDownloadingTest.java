@@ -28,7 +28,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class ArtifactsDownloadingTest extends ArtifactsDownloadingTestCase {
-  public void testJavadocsAndSources() throws Exception {
+  public void testJavadocsAndSources() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -53,7 +53,7 @@ public class ArtifactsDownloadingTest extends ArtifactsDownloadingTestCase {
     assertTrue(javadoc.exists());
   }
 
-  public void testIgnoringOfflineSetting() throws Exception {
+  public void testIgnoringOfflineSetting() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -91,7 +91,7 @@ public class ArtifactsDownloadingTest extends ArtifactsDownloadingTestCase {
     assertTrue(javadoc.exists());
   }
 
-  public void testDownloadingSpecificDependency() throws Exception {
+  public void testDownloadingSpecificDependency() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -124,7 +124,7 @@ public class ArtifactsDownloadingTest extends ArtifactsDownloadingTestCase {
     assertFalse(new File(getRepositoryPath(), "/junit/junit/4.0/junit-4.0-javadoc.jar").exists());
   }
 
-  public void testReturningNotFoundArtifacts() throws Exception {
+  public void testReturningNotFoundArtifacts() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -150,7 +150,7 @@ public class ArtifactsDownloadingTest extends ArtifactsDownloadingTestCase {
     assertUnorderedElementsAreEqual(unresolvedArtifacts.unresolvedDocs, new MavenId("lib", "xxx", "1"));
   }
 
-  public void testJavadocsAndSourcesForTestDeps() throws Exception {
+  public void testJavadocsAndSourcesForTestDeps() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -253,7 +253,7 @@ public class ArtifactsDownloadingTest extends ArtifactsDownloadingTestCase {
     }
   }
 
-  public void testDownloadingPlugins() throws Exception {
+  public void testDownloadingPlugins() {
     try {
       importProject("<groupId>test</groupId>" +
                     "<artifactId>project</artifactId>" +
@@ -282,7 +282,7 @@ public class ArtifactsDownloadingTest extends ArtifactsDownloadingTestCase {
     }
   }
 
-  public void testDownloadBuildExtensionsOnResolve() throws Exception {
+  public void testDownloadBuildExtensionsOnResolve() {
     File f = new File(getRepositoryPath(), "/org/apache/maven/wagon/wagon/1.0-alpha-6/wagon-1.0-alpha-6.pom");
     assertFalse(f.exists());
 

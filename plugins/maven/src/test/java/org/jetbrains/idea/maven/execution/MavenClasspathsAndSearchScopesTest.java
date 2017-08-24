@@ -159,7 +159,7 @@ public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
                             getProjectPath() + "/m4/target/classes");
   }
 
-  public void testDoNotIncludeTargetDirectoriesOfModuleDependenciesToLibraryClassesRoots() throws Exception {
+  public void testDoNotIncludeTargetDirectoriesOfModuleDependenciesToLibraryClassesRoots() {
     VirtualFile m = createModulePom("m", "<groupId>test</groupId>" +
                                           "<artifactId>m</artifactId>" +
                                           "<version>1</version>" +
@@ -755,7 +755,7 @@ public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
                             getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar");
   }
 
-  public void testLibraryScopeForTwoDependentModules() throws IOException {
+  public void testLibraryScopeForTwoDependentModules() {
     VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
                                            "<artifactId>m1</artifactId>" +
                                            "<version>1</version>" +

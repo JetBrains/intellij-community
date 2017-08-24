@@ -117,7 +117,7 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
                  StringUtil.convertLineSeparators(VfsUtil.loadText(myProjectPom)));
   }
 
-  public void testAddingManagedProjectIfNoArrgerator() throws Exception {
+  public void testAddingManagedProjectIfNoArrgerator() {
     if (!hasMavenInstallation()) return;
 
     importProject("<groupId>test</groupId>" +
@@ -134,7 +134,7 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
     assertEquals(2, myProjectsManager.getProjectsTreeForTests().getManagedFilesPaths().size());
   }
 
-  public void testDoNotAddManagedProjectIfAddingAsModuleToAggregator() throws Exception {
+  public void testDoNotAddManagedProjectIfAddingAsModuleToAggregator() {
     if (!hasMavenInstallation()) return;
 
     importProject("<groupId>test</groupId>" +

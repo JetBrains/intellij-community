@@ -30,10 +30,9 @@ import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import java.io.File;
-import java.io.IOException;
 
 public class MavenFoldersImporterTest extends MavenImportingTestCase {
-  public void testUpdatingExternallyCreatedFolders() throws Exception {
+  public void testUpdatingExternallyCreatedFolders() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
@@ -50,7 +49,7 @@ public class MavenFoldersImporterTest extends MavenImportingTestCase {
     assertNull(myProjectRoot.findChild("target"));
   }
 
-  public void testIgnoreTargetFolder() throws Exception {
+  public void testIgnoreTargetFolder() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
@@ -67,7 +66,7 @@ public class MavenFoldersImporterTest extends MavenImportingTestCase {
     }
   }
 
-  public void testUpdatingFoldersForAllTheProjects() throws Exception {
+  public void testUpdatingFoldersForAllTheProjects() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<packaging>pom</packaging>" +
@@ -107,7 +106,7 @@ public class MavenFoldersImporterTest extends MavenImportingTestCase {
     assertGeneratedSources("m2", "target/generated-sources/yyy");
   }
 
-  public void testDoesNotTouchSourceFolders() throws Exception {
+  public void testDoesNotTouchSourceFolders() {
     createStdProjectFolders();
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -126,7 +125,7 @@ public class MavenFoldersImporterTest extends MavenImportingTestCase {
     assertTestResources("project", "src/test/resources");
   }
 
-  public void testDoesNotExcludeRegisteredSources() throws Exception {
+  public void testDoesNotExcludeRegisteredSources() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
@@ -150,7 +149,7 @@ public class MavenFoldersImporterTest extends MavenImportingTestCase {
     assertExcludes("project", "target");
   }
 
-  public void testDoesNothingWithNonMavenModules() throws Exception {
+  public void testDoesNothingWithNonMavenModules() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
@@ -159,7 +158,7 @@ public class MavenFoldersImporterTest extends MavenImportingTestCase {
     updateProjectFolders(); // shouldn't throw exceptions
   }
 
-  public void testDoNotUpdateOutputFoldersWhenUpdatingExcludedFolders() throws Exception {
+  public void testDoNotUpdateOutputFoldersWhenUpdatingExcludedFolders() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
@@ -182,7 +181,7 @@ public class MavenFoldersImporterTest extends MavenImportingTestCase {
     assertTrue(compiler.getCompilerOutputUrlForTests(), compiler.getCompilerOutputUrlForTests().endsWith("my-test-classes"));
   }
 
-  public void testDoNotCommitIfFoldersWasNotChanged() throws Exception {
+  public void testDoNotCommitIfFoldersWasNotChanged() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
@@ -200,7 +199,7 @@ public class MavenFoldersImporterTest extends MavenImportingTestCase {
     assertEquals(0, count[0]);
   }
 
-  public void testCommitOnlyOnceForAllModules() throws Exception {
+  public void testCommitOnlyOnceForAllModules() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<packaging>pom</packaging>" +
@@ -240,7 +239,7 @@ public class MavenFoldersImporterTest extends MavenImportingTestCase {
     assertEquals(1, count[0]);
   }
 
-  public void testMarkSourcesAsGeneratedOnReImport() throws IOException {
+  public void testMarkSourcesAsGeneratedOnReImport() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");

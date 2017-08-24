@@ -30,31 +30,31 @@ import org.jetbrains.annotations.Nullable;
 
 public class XsltResolveTest extends TestBase {
 
-    public void testResolveSingleVariableGlobal() throws Throwable {
+    public void testResolveSingleVariableGlobal() {
         doVariableResolveTest(true);
     }
 
-    public void testResolveForwardVariable() throws Throwable {
+    public void testResolveForwardVariable() {
         doVariableResolveTest(true);
     }
 
-    public void testResolveSingleVariable() throws Throwable {
+    public void testResolveSingleVariable() {
         doVariableResolveTest(false);
     }
 
-    public void testResolveShadowedVariable() throws Throwable {
+    public void testResolveShadowedVariable() {
         doVariableResolveTest(false);
     }
 
-    public void testResolveIncludedFunction() throws Throwable {
+    public void testResolveIncludedFunction() {
         doFunctionResolveTest("included-2.xsl");
     }
 
-    public void testResolveFunction() throws Throwable {
+    public void testResolveFunction() {
         doFunctionResolveTest();
     }
 
-    public void testResolveSameName() throws Throwable {
+    public void testResolveSameName() {
         final XsltVariable variable = doVariableResolveTest(false);
 
         final XsltTemplate template = XsltCodeInsightUtil.getTemplate(variable, false);

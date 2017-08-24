@@ -4,7 +4,7 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
 
 public class ForwardBackwardParagraphActionTest extends AbstractEditorTest {
-  public void testForwardFromNonEmptyLine() throws Exception {
+  public void testForwardFromNonEmptyLine() {
     doTestForward("ab<caret>c\n" +
                   "\n" +
                   "def\n" +
@@ -16,7 +16,7 @@ public class ForwardBackwardParagraphActionTest extends AbstractEditorTest {
                   "\n");
   }
 
-  public void testForwardFromEmptyLine() throws Exception {
+  public void testForwardFromEmptyLine() {
     doTestForward("<caret>\n" +
                   "\n" +
                   "def\n" +
@@ -28,7 +28,7 @@ public class ForwardBackwardParagraphActionTest extends AbstractEditorTest {
                   "<caret>\n");
   }
 
-  public void testForwardWhenNoMoreBlankLines() throws Exception {
+  public void testForwardWhenNoMoreBlankLines() {
     doTestForward("ab<caret>c\n" +
                   "def",
 
@@ -36,7 +36,7 @@ public class ForwardBackwardParagraphActionTest extends AbstractEditorTest {
                   "def<caret>");
   }
 
-  public void testForwardWhenTargetLineContainsSpaces() throws Exception {
+  public void testForwardWhenTargetLineContainsSpaces() {
     doTestForward("<caret>abc\n" +
                   "   \n",
 
@@ -44,7 +44,7 @@ public class ForwardBackwardParagraphActionTest extends AbstractEditorTest {
                   "<caret>   \n");
   }
 
-  public void testBackwardFromNonEmptyLine() throws Exception {
+  public void testBackwardFromNonEmptyLine() {
     doTestBackward("\n" +
                    "abc\n" +
                    "\n" +
@@ -56,7 +56,7 @@ public class ForwardBackwardParagraphActionTest extends AbstractEditorTest {
                    "def");
   }
 
-  public void testBackwardFromEmptyLine() throws Exception {
+  public void testBackwardFromEmptyLine() {
     doTestBackward("\n" +
                    "abc\n" +
                    "\n" +
@@ -68,7 +68,7 @@ public class ForwardBackwardParagraphActionTest extends AbstractEditorTest {
                    "\n");
   }
 
-  public void testBackwardWhenNoMoreBlankLines() throws Exception {
+  public void testBackwardWhenNoMoreBlankLines() {
     doTestBackward("abc\n" +
                    "de<caret>f",
 
@@ -76,7 +76,7 @@ public class ForwardBackwardParagraphActionTest extends AbstractEditorTest {
                    "def");
   }
 
-  public void testBackwardWhenTargetLineContainsSpaces() throws Exception {
+  public void testBackwardWhenTargetLineContainsSpaces() {
     doTestBackward("  \n" +
                    "abc\n" +
                    "\n" +
@@ -88,7 +88,7 @@ public class ForwardBackwardParagraphActionTest extends AbstractEditorTest {
                    "\n");
   }
 
-  public void testBackwardWhenPreviousLineContainsSpaces() throws Exception {
+  public void testBackwardWhenPreviousLineContainsSpaces() {
     doTestBackward("  \n" +
                    "ab<caret>c",
 
@@ -96,7 +96,7 @@ public class ForwardBackwardParagraphActionTest extends AbstractEditorTest {
                    "<caret>abc");
   }
 
-  public void testBackwardAtLineStartWhenPreviousLineContainsSpaces() throws Exception {
+  public void testBackwardAtLineStartWhenPreviousLineContainsSpaces() {
     doTestBackward("\n" +
                    "ttt\n" +
                    "  \n" +

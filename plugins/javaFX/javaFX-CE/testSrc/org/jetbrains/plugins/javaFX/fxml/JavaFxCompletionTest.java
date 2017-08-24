@@ -34,7 +34,7 @@ public class JavaFxCompletionTest extends LightFixtureCompletionTestCase {
     return AbstractJavaFXTestCase.JAVA_FX_DESCRIPTOR;
   }
 
-  public void testAvailablePositions() throws Exception {
+  public void testAvailablePositions() {
     doTest();
   }
 
@@ -74,7 +74,7 @@ public class JavaFxCompletionTest extends LightFixtureCompletionTestCase {
     doTest("fx:script");
   }
 
-  public void testStaticPropertiesEnumValue() throws Exception {
+  public void testStaticPropertiesEnumValue() {
     doTest();
   }
 
@@ -94,7 +94,7 @@ public class JavaFxCompletionTest extends LightFixtureCompletionTestCase {
     doTest("observableArrayList");
   }
 
-  public void testVariableCompletion() throws Exception {
+  public void testVariableCompletion() {
     doTest();
   }
 
@@ -269,13 +269,13 @@ public class JavaFxCompletionTest extends LightFixtureCompletionTestCase {
     assertSameElements(myFixture.getLookupElementStrings(), "MY_TEXT", "SUPER_TEXT");
   }
 
-  public void testMultipleStylesheetsAttribute() throws Exception {
+  public void testMultipleStylesheetsAttribute() {
     myFixture.addFileToProject("mystyle.css", ".myStyle {}");
     myFixture.addFileToProject("very/deeply/located/small.css", ".small {}");
     doTest();
   }
 
-  public void testMultipleStylesheetsTag() throws Exception {
+  public void testMultipleStylesheetsTag() {
     myFixture.addFileToProject("mystyle.css", ".myStyle {}");
     myFixture.addFileToProject("very/deeply/located/small.css", ".small {}");
     doTest();

@@ -33,7 +33,7 @@ public class MavenJUnitPatcherTest extends MavenImportingTestCase {
     MavenProjectSettings.getInstance(myProject).getTestRunningSettings().setPassSystemProperties(true);
   }
 
-  public void testArgList() throws Exception {
+  public void testArgList() {
     VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
                                            "<artifactId>m1</artifactId>" +
                                            "<version>1</version>" +
@@ -65,7 +65,7 @@ public class MavenJUnitPatcherTest extends MavenImportingTestCase {
                  javaParameters.getVMParametersList().getList());
   }
 
-  public void testVmPropertiesResolve() throws Exception {
+  public void testVmPropertiesResolve() {
     VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
                                            "<artifactId>m1</artifactId>" +
                                            "<version>1</version>" +

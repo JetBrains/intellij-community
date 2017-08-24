@@ -387,19 +387,19 @@ public abstract class MavenTestCase extends UsefulTestCase {
            "</project>";
   }
 
-  protected VirtualFile createProfilesXmlOldStyle(String xml) throws IOException {
+  protected VirtualFile createProfilesXmlOldStyle(String xml) {
     return createProfilesFile(myProjectRoot, xml, true);
   }
 
-  protected VirtualFile createProfilesXmlOldStyle(String relativePath, String xml) throws IOException {
+  protected VirtualFile createProfilesXmlOldStyle(String relativePath, String xml) {
     return createProfilesFile(createProjectSubDir(relativePath), xml, true);
   }
 
-  protected VirtualFile createProfilesXml(String xml) throws IOException {
+  protected VirtualFile createProfilesXml(String xml) {
     return createProfilesFile(myProjectRoot, xml, false);
   }
 
-  protected VirtualFile createProfilesXml(String relativePath, String xml) throws IOException {
+  protected VirtualFile createProfilesXml(String relativePath, String xml) {
     return createProfilesFile(createProjectSubDir(relativePath), xml, false);
   }
 

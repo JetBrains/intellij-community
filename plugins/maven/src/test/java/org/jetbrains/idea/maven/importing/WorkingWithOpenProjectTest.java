@@ -35,7 +35,7 @@ public class WorkingWithOpenProjectTest extends MavenImportingTestCase {
                   "<version>1</version>");
   }
 
-  public void testShouldNotFailOnNewEmptyPomCreation() throws Exception {
+  public void testShouldNotFailOnNewEmptyPomCreation() {
     createModulePom("module", ""); // should not throw an exception
   }
 

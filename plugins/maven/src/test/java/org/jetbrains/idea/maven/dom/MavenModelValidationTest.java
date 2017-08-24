@@ -43,7 +43,7 @@ public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
     assertCompletionVariants(modulePom, "src", "module1", "pom.xml");
   }
 
-  public void testRelativePathDefaultValue() throws Exception {
+  public void testRelativePathDefaultValue() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>");
@@ -63,7 +63,7 @@ public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
     assertEquals(((PsiFile)elementAtCaret).getVirtualFile(), myProjectPom);
   }
 
-  public void testUnderstandingProjectSchemaWithoutNamespace() throws Exception {
+  public void testUnderstandingProjectSchemaWithoutNamespace() {
     myFixture.saveText(myProjectPom,
                      "<project>" +
                      "  <dep<caret>" +
@@ -72,7 +72,7 @@ public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
     assertCompletionVariants(myProjectPom, "dependencies", "dependencyManagement");
   }
 
-  public void testUnderstandingProfilesSchemaWithoutNamespace() throws Exception {
+  public void testUnderstandingProfilesSchemaWithoutNamespace() {
     VirtualFile profiles = createProfilesXml("<profile>" +
                                              "  <<caret>" +
                                              "</profile>");
@@ -90,7 +90,7 @@ public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
     assertCompletionVariantsInclude(settings, "id", "activation");
   }
 
-  public void testAbsentModelVersion() throws Throwable {
+  public void testAbsentModelVersion() {
     myFixture.saveText(myProjectPom,
                      "<<error descr=\"'modelVersion' child tag should be defined\">project</error> xmlns=\"http://maven.apache.org/POM/4.0.0\"" +
                      "         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"" +
@@ -100,7 +100,7 @@ public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
     checkHighlighting();
   }
 
-  public void testAbsentArtifactId() throws Throwable {
+  public void testAbsentArtifactId() {
     myFixture.saveText(myProjectPom,
                      "<<error descr=\"'artifactId' child tag should be defined\">project</error> xmlns=\"http://maven.apache.org/POM/4.0.0\"" +
                      "         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"" +
@@ -110,7 +110,7 @@ public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
     checkHighlighting();
   }
 
-  public void testUnknownModelVersion() throws Throwable {
+  public void testUnknownModelVersion() {
     myFixture.saveText(myProjectPom,
                      "<project xmlns=\"http://maven.apache.org/POM/4.0.0\"" +
                      "         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"" +
@@ -121,7 +121,7 @@ public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
     checkHighlighting();
   }
 
-  public void testEmptyValues() throws Throwable {
+  public void testEmptyValues() {
     createProjectPom("<<error>groupId</error>></groupId>" +
                      "<<error>artifactId</error>></artifactId>" +
                      "<<error>version</error>></version>");
@@ -150,7 +150,7 @@ public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
     checkHighlighting();
   }
 
-  public void testAddingProfilesXmlReadingProblemsToProjectTag() throws Exception {
+  public void testAddingProfilesXmlReadingProblemsToProjectTag() {
     myFixture.saveText(myProjectPom,
                      "<project>" +
                      "  <modelVersion>4.0.0</modelVersion>" +
@@ -203,7 +203,7 @@ public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
     checkHighlighting(myProjectPom, true, false, true);
   }
 
-  public void testAddingParentReadingProblemsToParentTag() throws Exception {
+  public void testAddingParentReadingProblemsToParentTag() {
     createModulePom("parent",
                     "<groupId>test</groupId>" +
                     "<artifactId>parent</artifactId>" +
@@ -241,7 +241,7 @@ public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
     checkHighlighting();
   }
 
-  public void testDoNotAddReadingSyntaxProblemsToProjectTag() throws Exception {
+  public void testDoNotAddReadingSyntaxProblemsToProjectTag() {
     myFixture.saveText(myProjectPom,
                      "<project>" +
                      "  <modelVersion>4.0.0</modelVersion>" +
@@ -264,7 +264,7 @@ public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
     checkHighlighting();
   }
 
-  public void testDoNotAddDependencyAndModuleProblemsToProjectTag() throws Exception {
+  public void testDoNotAddDependencyAndModuleProblemsToProjectTag() {
     myFixture.saveText(myProjectPom,
                      "<project>" +
                      "  <modelVersion>4.0.0</modelVersion>" +

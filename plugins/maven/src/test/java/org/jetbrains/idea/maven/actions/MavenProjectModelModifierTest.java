@@ -30,7 +30,6 @@ import org.jetbrains.concurrency.Promise;
 import org.jetbrains.idea.maven.dom.MavenDomWithIndicesTestCase;
 import org.jetbrains.idea.maven.importing.MavenProjectModelModifier;
 
-import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -40,7 +39,7 @@ import java.util.regex.Pattern;
  * @author nik
  */
 public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
-  public void testAddExternalLibraryDependency() throws IOException {
+  public void testAddExternalLibraryDependency() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
@@ -54,7 +53,7 @@ public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
     assertModuleLibDep("project", "Maven: junit:junit:" + version);
   }
 
-  public void testAddExternalLibraryDependencyWithEqualMinAndMaxVersions() throws IOException {
+  public void testAddExternalLibraryDependencyWithEqualMinAndMaxVersions() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
@@ -68,7 +67,7 @@ public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
     assertModuleLibDep("project", "Maven: commons-io:commons-io:2.4");
   }
 
-  public void testAddManagedLibraryDependency() throws IOException {
+  public void testAddManagedLibraryDependency() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -91,7 +90,7 @@ public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
     assertModuleLibDep("project", "Maven: commons-io:commons-io:2.4");
   }
 
-  public void testAddManagedLibraryDependencyWithDifferentScope() throws IOException {
+  public void testAddManagedLibraryDependencyWithDifferentScope() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -114,7 +113,7 @@ public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
     assertModuleLibDepScope("project", "Maven: commons-io:commons-io:2.4", DependencyScope.COMPILE);
   }
 
-  public void testAddLibraryDependencyReleaseVersion() throws IOException {
+  public void testAddLibraryDependencyReleaseVersion() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
@@ -136,7 +135,7 @@ public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
     assertNotNull(dep);
   }
 
-  public void testAddModuleDependency() throws IOException {
+  public void testAddModuleDependency() {
     createTwoModulesPom("m1", "m2");
     VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
                                            "<artifactId>m1</artifactId>" +
@@ -153,7 +152,7 @@ public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
     assertModuleModuleDeps("m1", "m2");
   }
 
-  public void testAddLibraryDependency() throws IOException {
+  public void testAddLibraryDependency() {
     createTwoModulesPom("m1", "m2");
     VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
                                            "<artifactId>m1</artifactId>" +
@@ -182,7 +181,7 @@ public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
     assertModuleLibDep("m1", libName);
   }
 
-  public void testChangeLanguageLevel() throws IOException {
+  public void testChangeLanguageLevel() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
@@ -203,7 +202,7 @@ public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
     assertEquals(LanguageLevel.JDK_1_8, EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(module));
   }
 
-  private void createTwoModulesPom(final String m1, final String m2) throws IOException {
+  private void createTwoModulesPom(final String m1, final String m2) {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<packaging>pom</packaging>" +

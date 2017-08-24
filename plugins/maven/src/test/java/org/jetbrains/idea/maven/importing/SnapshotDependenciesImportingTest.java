@@ -40,15 +40,15 @@ public class SnapshotDependenciesImportingTest extends MavenImportingTestCase {
     remoteRepoDir.mkdirs();
   }
 
-  public void testSnapshotVersionDependencyToModule() throws Exception {
+  public void testSnapshotVersionDependencyToModule() {
     performTestWithDependencyVersion("1-SNAPSHOT");
   }
 
-  public void testSnapshotRangeDependencyToModule() throws Exception {
+  public void testSnapshotRangeDependencyToModule() {
     performTestWithDependencyVersion("SNAPSHOT");
   }
 
-  private void performTestWithDependencyVersion(String version) throws Exception {
+  private void performTestWithDependencyVersion(String version) {
     if (!hasMavenInstallation()) return;
 
     createProjectPom("<groupId>test</groupId>" +

@@ -19,17 +19,17 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
 
 public abstract class AbstractMoveElementLeftRightTest extends AbstractEditorTest {
-  protected void doTestFromLeftToRight(String leftMostPosition, String... rightPositions) throws Exception {
+  protected void doTestFromLeftToRight(String leftMostPosition, String... rightPositions) {
     doTest(true, leftMostPosition);
     doTest(false, leftMostPosition, rightPositions);
   }
 
-  protected void doTestFromRightToLeft(String rightMostPosition, String... leftPositions) throws Exception {
+  protected void doTestFromRightToLeft(String rightMostPosition, String... leftPositions) {
     doTest(false, rightMostPosition);
     doTest(true, rightMostPosition, leftPositions);
   }
 
-  private void doTest(boolean moveLeft, String before, String... after) throws Exception {
+  private void doTest(boolean moveLeft, String before, String... after) {
     String current = before;
     for (String next : after) {
       doTestSingle(moveLeft, current, next);

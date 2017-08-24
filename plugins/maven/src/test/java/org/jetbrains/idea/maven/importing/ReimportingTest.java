@@ -73,7 +73,7 @@ public class ReimportingTest extends MavenImportingTestCase {
     assertModuleGroupPath("project", "group");
   }
 
-  public void testAddingNewModule() throws Exception {
+  public void testAddingNewModule() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<packaging>pom</packaging>" +
@@ -93,7 +93,7 @@ public class ReimportingTest extends MavenImportingTestCase {
     assertModules("project", "m1", "m2", "m3");
   }
 
-  public void testRemovingObsoleteModule() throws Exception {
+  public void testRemovingObsoleteModule() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<packaging>pom</packaging>" +
@@ -108,7 +108,7 @@ public class ReimportingTest extends MavenImportingTestCase {
     assertModules("project", "m1");
   }
 
-  public void testDoesNotRemoveObsoleteModuleIfUserSaysNo() throws Exception {
+  public void testDoesNotRemoveObsoleteModuleIfUserSaysNo() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<packaging>pom</packaging>" +
@@ -123,7 +123,7 @@ public class ReimportingTest extends MavenImportingTestCase {
     assertModules("project", "m1", "m2");
   }
 
-  public void testDoesNotAskUserTwiceToRemoveTheSameModule() throws Exception {
+  public void testDoesNotAskUserTwiceToRemoveTheSameModule() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<packaging>pom</packaging>" +
@@ -155,7 +155,7 @@ public class ReimportingTest extends MavenImportingTestCase {
     assertModules("project", "m1", "m2", "userModule");
   }
 
-  public void testRemovingAndCreatingModulesForAggregativeProjects() throws Exception {
+  public void testRemovingAndCreatingModulesForAggregativeProjects() {
     createModulePom("m1", "<groupId>test</groupId>" +
                           "<artifactId>m1</artifactId>" +
                           "<version>1</version>" +
@@ -175,7 +175,7 @@ public class ReimportingTest extends MavenImportingTestCase {
     assertModules("project", "m1", "m2");
   }
 
-  public void testDoNotCreateModulesForNewlyCreatedAggregativeProjectsIfNotNecessary() throws Exception {
+  public void testDoNotCreateModulesForNewlyCreatedAggregativeProjectsIfNotNecessary() {
     getMavenImporterSettings().setCreateModulesForAggregators(false);
     configConfirmationForYesAnswer();
 
@@ -198,7 +198,7 @@ public class ReimportingTest extends MavenImportingTestCase {
     assertModules("m1", "m2");
   }
 
-  public void testReimportingWithProfiles() throws Exception {
+  public void testReimportingWithProfiles() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<packaging>pom</packaging>" +
@@ -234,7 +234,7 @@ public class ReimportingTest extends MavenImportingTestCase {
     assertModules("project", "m2");
   }
 
-  public void testChangingDependencyTypeToTestJar() throws Exception {
+  public void testChangingDependencyTypeToTestJar() {
     configConfirmationForYesAnswer();
     VirtualFile m1 = createModulePom("m1", createPomXmlWithModuleDependency("jar"));
 
@@ -256,7 +256,7 @@ public class ReimportingTest extends MavenImportingTestCase {
 
   }
 
-  public void testSettingTargetLevel() throws Exception {
+  public void testSettingTargetLevel() {
     createModulePom("m1", "<groupId>test</groupId>" +
                           "<artifactId>m1</artifactId>" +
                           "<version>1</version>");
@@ -319,7 +319,7 @@ public class ReimportingTest extends MavenImportingTestCase {
            "</dependencies>";
   }
 
-  public void testReimportingWhenModuleHaveRootOfTheParent() throws Exception {
+  public void testReimportingWhenModuleHaveRootOfTheParent() {
     createProjectSubDir("m1/res");
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -348,7 +348,7 @@ public class ReimportingTest extends MavenImportingTestCase {
     assertEquals(0, counter.get());
   }
 
-  public void testParentVersionProperty() throws Exception {
+  public void testParentVersionProperty() {
     String parentPomTemplate =
                     "<groupId>test</groupId>\n" +
                     "<artifactId>project</artifactId>\n" +
@@ -400,7 +400,7 @@ public class ReimportingTest extends MavenImportingTestCase {
     assertEquals("1.7", compilerConfiguration.getBytecodeTargetLevel(getModule("m1")));
   }
 
-  public void testParentVersionProperty2() throws Exception {
+  public void testParentVersionProperty2() {
     createProjectPom("<groupId>test</groupId>\n" +
                      "<artifactId>project</artifactId>\n" +
                      "<version>1</version>\n" +

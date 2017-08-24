@@ -52,7 +52,6 @@ import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -372,7 +371,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     return ModuleRootManager.getInstance(getModule(module));
   }
 
-  protected void importProject(@NonNls String xml) throws IOException {
+  protected void importProject(@NonNls String xml) {
     createProjectPom(xml);
     importProject();
   }
@@ -393,7 +392,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     doImportProjects(true, Arrays.asList(files));
   }
 
-  protected void importProjectWithMaven3(@NonNls String xml) throws IOException {
+  protected void importProjectWithMaven3(@NonNls String xml) {
     createProjectPom(xml);
     importProjectWithMaven3();
   }
