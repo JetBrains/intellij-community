@@ -182,6 +182,10 @@ public class VcsLogManager implements Disposable {
 
   @Override
   public void dispose() {
+    // since disposing log triggers flushing indexes on disk we do not want to do it in EDT
+    // disposing of VcsLogManager is done by manually executing dispose(@Nullable Runnable callback)
+    // the above method first disposes ui in EDT, than disposes everything else in background
+    LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread());
   }
 
   private class MyFatalErrorsHandler implements FatalErrorHandler {
