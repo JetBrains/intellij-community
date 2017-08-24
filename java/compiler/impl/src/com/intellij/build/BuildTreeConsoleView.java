@@ -57,6 +57,7 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -376,6 +377,7 @@ public class BuildTreeConsoleView implements ConsoleView, BuildConsoleView {
     private static final Pattern TAG_PATTERN = Pattern.compile("<[^>]*>");
     private static final Pattern A_PATTERN = Pattern.compile("<a ([^>]* )?href=[\"\']([^>]*)[\"\'][^>]*>");
     private static final String A_CLOSING = "</a>";
+    private static final Set<String> NEW_LINES = ContainerUtil.set("<br>", "</br>", "<br/>", "<p>", "</p>", "<p/>", "<pre>", "</pre>");
 
     private final ThreeComponentsSplitter mySplitter;
     @Nullable
@@ -458,7 +460,12 @@ public class BuildTreeConsoleView implements ConsoleView, BuildConsoleView {
             continue;
           }
         }
-        myConsole.print(content.substring(tagMatcher.start(), tagMatcher.end()), ConsoleViewContentType.ERROR_OUTPUT);
+        if (NEW_LINES.contains(tagStart)) {
+          myConsole.print("\n", ConsoleViewContentType.SYSTEM_OUTPUT);
+        }
+        else {
+          myConsole.print(content.substring(tagMatcher.start(), tagMatcher.end()), ConsoleViewContentType.ERROR_OUTPUT);
+        }
         content = content.substring(tagMatcher.end());
       }
     }
