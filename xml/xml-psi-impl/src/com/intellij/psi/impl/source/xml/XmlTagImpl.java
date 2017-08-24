@@ -628,7 +628,8 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
       for (XmlAttribute attribute : getAttributes()) {
         cacheOneAttributeValue(attribute.getName(), attribute.getValue(), map);
       }
-      myAttributeValueMap = map;
+      // copy map to prevent instruction reordering by compiler
+      myAttributeValueMap = new THashMap<>(map);
     }
     return map.get(qname);
   }
