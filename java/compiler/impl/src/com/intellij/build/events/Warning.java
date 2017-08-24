@@ -13,36 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.build.events.impl;
+package com.intellij.build.events;
 
-import com.intellij.build.events.SuccessResult;
-import com.intellij.build.events.Warning;
-
-import java.util.Collections;
-import java.util.List;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
  */
-public class SuccessResultImpl implements SuccessResult {
+@ApiStatus.Experimental
+public interface Warning {
+  @NotNull
+  String getMessage();
 
-  private final boolean myUpToDate;
-
-  public SuccessResultImpl() {
-    this(false);
-  }
-
-  public SuccessResultImpl(boolean isUpToDate) {
-    myUpToDate = isUpToDate;
-  }
-
-  @Override
-  public boolean isUpToDate() {
-    return myUpToDate;
-  }
-
-  @Override
-  public List<? extends Warning> getWarnings() {
-    return Collections.emptyList();
-  }
+  @Nullable
+  String getDescription();
 }

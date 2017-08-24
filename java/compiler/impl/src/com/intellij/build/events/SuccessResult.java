@@ -15,9 +15,16 @@
  */
 package com.intellij.build.events;
 
+import org.jetbrains.annotations.ApiStatus;
+
+import java.util.List;
+
 /**
  * @author Vladislav.Soroka
  */
+@ApiStatus.Experimental
 public interface SuccessResult extends EventResult {
   boolean isUpToDate();
+
+  List<? extends Warning> getWarnings();
 }
