@@ -46,7 +46,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.AppUIUtil;
-import com.intellij.ui.ColoredTableCellRenderer;
+import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.StringBuilderSpinAllocator;
@@ -138,7 +138,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
   public abstract void processClassPrepare(DebugProcess debuggerProcess, final ReferenceType referenceType);
 
   @Override
-  public void customizeRenderer(ColoredTableCellRenderer renderer) {
+  public void customizeRenderer(SimpleColoredComponent renderer) {
     if (myXBreakpoint != null) {
       renderer.setIcon(myXBreakpoint.getType().getEnabledIcon());
     }

@@ -39,7 +39,7 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.ui.ColoredTableCellRenderer;
+import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
 import com.sun.jdi.event.LocatableEvent;
@@ -182,7 +182,7 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
   }
 
   @Override
-  public void customizeRenderer(ColoredTableCellRenderer renderer) {
+  public void customizeRenderer(SimpleColoredComponent renderer) {
     renderer.append("Capture point at " + myCapturePoint.myClassName + "." + myCapturePoint.myMethodName);
   }
 

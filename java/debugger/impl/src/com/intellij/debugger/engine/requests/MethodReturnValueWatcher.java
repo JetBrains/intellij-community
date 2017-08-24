@@ -25,7 +25,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.ui.ColoredTableCellRenderer;
+import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.util.ArrayUtil;
 import com.sun.jdi.*;
 import com.sun.jdi.event.Event;
@@ -246,7 +246,7 @@ public class MethodReturnValueWatcher implements OverheadProducer {
   }
 
   @Override
-  public void customizeRenderer(ColoredTableCellRenderer renderer) {
+  public void customizeRenderer(SimpleColoredComponent renderer) {
     renderer.setIcon(AllIcons.Debugger.WatchLastReturnValue);
     renderer.append(DebuggerBundle.message("action.watches.method.return.value.enable"));
   }

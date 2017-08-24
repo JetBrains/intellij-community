@@ -19,9 +19,7 @@ import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.ui.ColoredTableCellRenderer;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.TableUtil;
+import com.intellij.ui.*;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
@@ -136,7 +134,16 @@ public class OverheadView extends BorderLayoutPanel {
         @Override
         protected void customizeCellRenderer(JTable table, @Nullable Object value, boolean selected, boolean hasFocus, int row, int column) {
           if (value instanceof OverheadProducer) {
-            ((OverheadProducer)value).customizeRenderer(this);
+            OverheadProducer overheadProducer = (OverheadProducer)value;
+            if (!overheadProducer.isEnabled()) {
+              SimpleColoredComponent component = new SimpleColoredComponent();
+              overheadProducer.customizeRenderer(component);
+              component.iterator().forEachRemaining(f -> append(f, SimpleTextAttributes.GRAYED_ATTRIBUTES));
+              setIcon(component.getIcon());
+            }
+            else {
+              overheadProducer.customizeRenderer(this);
+            }
           }
           setTransparentIconBackground(true);
         }
@@ -144,7 +151,7 @@ public class OverheadView extends BorderLayoutPanel {
     }
   }
 
-  private static class TimingColumnInfo extends ColumnInfo<OverheadProducer, Long> {
+  private static class TimingColumnInfo extends ColumnInfo<OverheadProducer, OverheadProducer> {
     private final Function<OverheadProducer, Long> myGetter;
 
     public TimingColumnInfo(@NotNull String name, Function<OverheadProducer, Long> getter) {
@@ -152,22 +159,42 @@ public class OverheadView extends BorderLayoutPanel {
       myGetter = getter;
     }
 
+    @Nullable
+    @Override
+    public OverheadProducer valueOf(OverheadProducer aspects) {
+      return aspects;
+    }
+
     @Override
     public Class<?> getColumnClass() {
-      return Long.class;
+      return OverheadProducer.class;
     }
 
     @Nullable
     @Override
-    public Long valueOf(OverheadProducer aspects) {
-      return myGetter.apply(aspects);
+    public TableCellRenderer getRenderer(OverheadProducer producer) {
+      return new ColoredTableCellRenderer() {
+        @Override
+        protected void customizeCellRenderer(JTable table,
+                                             @Nullable Object value,
+                                             boolean selected,
+                                             boolean hasFocus,
+                                             int row,
+                                             int column) {
+          if (value instanceof OverheadProducer) {
+            OverheadProducer overheadProducer = (OverheadProducer)value;
+            append(String.valueOf(myGetter.apply(overheadProducer)),
+                   overheadProducer.isEnabled() ? SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES : SimpleTextAttributes.GRAYED_ATTRIBUTES);
+          }
+        }
+      };
     }
 
     @Nullable
     @Override
     public Comparator<OverheadProducer> getComparator() {
       return Comparator.comparing(c -> {
-        Long value = valueOf(c);
+        Long value = myGetter.apply(c);
         return value != null ? value : Long.MAX_VALUE;
       });
     }

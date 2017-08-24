@@ -15,7 +15,7 @@
  */
 package com.intellij.debugger.ui.overhead;
 
-import com.intellij.ui.ColoredTableCellRenderer;
+import com.intellij.ui.SimpleColoredComponent;
 
 /**
  * @author egor
@@ -23,5 +23,5 @@ import com.intellij.ui.ColoredTableCellRenderer;
 public interface OverheadProducer {
   boolean isEnabled();
   void setEnabled(boolean enabled);
-  void customizeRenderer(ColoredTableCellRenderer renderer);
+  void customizeRenderer(SimpleColoredComponent renderer);
 }
