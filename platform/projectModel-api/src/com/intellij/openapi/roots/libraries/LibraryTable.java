@@ -32,8 +32,10 @@ public interface LibraryTable {
   @NotNull
   Library[] getLibraries();
 
+  @NotNull
   Library createLibrary();
 
+  @NotNull
   Library createLibrary(@NonNls String name);
 
   void removeLibrary(@NotNull Library library);
@@ -44,8 +46,10 @@ public interface LibraryTable {
   @Nullable
   Library getLibraryByName(@NotNull String name);
 
+  @NotNull
   String getTableLevel();
 
+  @NotNull
   LibraryTablePresentation getPresentation();
 
   default boolean isEditable() {
@@ -68,10 +72,13 @@ public interface LibraryTable {
   void removeListener(@NotNull Listener listener);
 
   interface ModifiableModel extends Disposable {
+    @NotNull
     Library createLibrary(String name);
 
+    @NotNull
     Library createLibrary(String name, @Nullable PersistentLibraryKind type);
 
+    @NotNull 
     Library createLibrary(String name, @Nullable PersistentLibraryKind type, @Nullable ProjectModelExternalSource externalSource);
 
     void removeLibrary(@NotNull Library library);

@@ -40,7 +40,7 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.LibraryOrderEntryImpl");
   private Library myLibrary;
   @Nullable private String myLibraryName; // is non-null if myLibrary == null
-  @Nullable private String myLibraryLevel; // is non-null if myLibraryLevel == null
+  private String myLibraryLevel; // is non-null if myLibrary == null
   private boolean myExported;
   @NonNls static final String ENTRY_TYPE = JpsModuleRootModelSerializer.LIBRARY_TYPE;
   @NonNls private static final String NAME_ATTR = JpsModuleRootModelSerializer.NAME_ATTRIBUTE;
@@ -180,8 +180,8 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
   @Override
   @NotNull
   public OrderEntry cloneEntry(@NotNull RootModelImpl rootModel,
-                               ProjectRootManagerImpl projectRootManager,
-                               VirtualFilePointerManager filePointerManager) {
+                               @NotNull ProjectRootManagerImpl projectRootManager,
+                               @NotNull VirtualFilePointerManager filePointerManager) {
     ProjectRootManagerImpl rootManager = ProjectRootManagerImpl.getInstanceImpl(getRootModel().getModule().getProject());
     return new LibraryOrderEntryImpl(this, rootModel, rootManager);
   }
@@ -200,14 +200,13 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
   }
 
   @Override
-  @Nullable
+  @NotNull
   public String getLibraryLevel() {
-    if (myLibrary != null) {
-      final LibraryTable table = myLibrary.getTable();
-      return table.getTableLevel();
-    } else {
+    if (myLibrary == null) {
       return myLibraryLevel;
     }
+    LibraryTable table = myLibrary.getTable();
+    return table.getTableLevel();
   }
 
   @Override
@@ -261,7 +260,7 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
   }
 
   private class MyOrderEntryLibraryTableListener implements LibraryTable.Listener {
-    public MyOrderEntryLibraryTableListener() {
+    MyOrderEntryLibraryTableListener() {
     }
 
     @Override

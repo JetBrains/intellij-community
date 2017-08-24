@@ -507,14 +507,14 @@ public class JavaSdkImpl extends JavaSdk {
     return jdk;
   }
 
-  private static void addClasses(File file, SdkModificator sdkModificator, boolean isJre) {
+  private static void addClasses(@NotNull File file, @NotNull SdkModificator sdkModificator, boolean isJre) {
     for (VirtualFile virtualFile : findClasses(file, isJre)) {
       sdkModificator.addRoot(virtualFile, OrderRootType.CLASSES);
     }
   }
 
   @NotNull
-  private static List<VirtualFile> findClasses(File file, boolean isJre) {
+  private static List<VirtualFile> findClasses(@NotNull File file, boolean isJre) {
     List<VirtualFile> result = ContainerUtil.newArrayList();
     VirtualFileManager fileManager = VirtualFileManager.getInstance();
 

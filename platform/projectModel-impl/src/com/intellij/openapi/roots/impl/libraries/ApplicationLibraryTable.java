@@ -20,6 +20,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import org.jetbrains.annotations.NotNull;
 
 /**
  *  @author dsl
@@ -46,11 +47,13 @@ public class ApplicationLibraryTable extends LibraryTableBase {
     return ServiceManager.getService(ApplicationLibraryTable.class);
   }
 
+  @NotNull
   @Override
   public String getTableLevel() {
     return LibraryTablesRegistrar.APPLICATION_LEVEL;
   }
 
+  @NotNull
   @Override
   public LibraryTablePresentation getPresentation() {
     return GLOBAL_LIBRARY_TABLE_PRESENTATION;

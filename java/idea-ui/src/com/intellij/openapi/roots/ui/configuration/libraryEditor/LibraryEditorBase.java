@@ -49,7 +49,7 @@ public abstract class LibraryEditorBase implements LibraryEditor {
   public abstract void setType(@NotNull LibraryType<?> type);
 
   @Override
-  public void addRoots(Collection<? extends OrderRoot> roots) {
+  public void addRoots(@NotNull Collection<? extends OrderRoot> roots) {
     for (OrderRoot root : roots) {
       if (root.isJarDirectory()) {
         addJarDirectory(root.getFile(), false, root.getType());

@@ -19,7 +19,6 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectModelExternalSource;
 import com.intellij.openapi.roots.RootProvider;
 import com.intellij.openapi.roots.impl.RootProviderBaseImpl;
-import com.intellij.openapi.roots.impl.libraries.JarDirectories;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.LibraryProperties;
 import com.intellij.openapi.roots.libraries.LibraryTable;
@@ -139,7 +138,7 @@ public class JpsLibraryDelegate implements LibraryEx {
 
   @Override
   public boolean isJarDirectory(@NotNull String url) {
-    return isJarDirectory(url, JarDirectories.DEFAULT_JAR_DIRECTORY_TYPE);
+    return isJarDirectory(url, OrderRootType.CLASSES);
   }
 
   @Override

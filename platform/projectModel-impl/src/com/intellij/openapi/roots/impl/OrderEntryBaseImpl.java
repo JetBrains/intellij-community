@@ -24,7 +24,7 @@ public abstract class OrderEntryBaseImpl extends RootModelComponentBase implemen
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.OrderEntryVeryBaseImpl");
 
   private int myIndex;
-  private static int _hc = 0;
+  private static int _hc;
 
   @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
   private final int hc = _hc++;

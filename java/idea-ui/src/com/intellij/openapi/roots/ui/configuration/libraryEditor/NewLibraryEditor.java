@@ -96,8 +96,9 @@ public class NewLibraryEditor extends LibraryEditorBase {
     return myLibraryName;
   }
 
+  @NotNull
   @Override
-  public String[] getUrls(OrderRootType rootType) {
+  public String[] getUrls(@NotNull OrderRootType rootType) {
     return pointersToUrls(myRoots.get(rootType));
   }
 
@@ -109,8 +110,9 @@ public class NewLibraryEditor extends LibraryEditorBase {
     return ArrayUtil.toStringArray(urls);
   }
 
+  @NotNull
   @Override
-  public VirtualFile[] getFiles(OrderRootType rootType) {
+  public VirtualFile[] getFiles(@NotNull OrderRootType rootType) {
     List<VirtualFile> result = new ArrayList<>();
     for (LightFilePointer pointer : myRoots.get(rootType)) {
       final VirtualFile file = pointer.getFile();
@@ -130,6 +132,7 @@ public class NewLibraryEditor extends LibraryEditorBase {
     return VfsUtilCore.toVirtualFileArray(result);
   }
 
+  @NotNull
   @Override
   public String[] getExcludedRootUrls() {
     return pointersToUrls(myExcludedRoots);
@@ -141,17 +144,17 @@ public class NewLibraryEditor extends LibraryEditorBase {
   }
 
   @Override
-  public void addRoot(VirtualFile file, OrderRootType rootType) {
+  public void addRoot(@NotNull VirtualFile file, @NotNull OrderRootType rootType) {
     myRoots.putValue(rootType, new LightFilePointer(file));
   }
 
   @Override
-  public void addRoot(String url, OrderRootType rootType) {
+  public void addRoot(@NotNull String url, @NotNull OrderRootType rootType) {
     myRoots.putValue(rootType, new LightFilePointer(url));
   }
 
   @Override
-  public void addJarDirectory(VirtualFile file, boolean recursive, OrderRootType rootType) {
+  public void addJarDirectory(@NotNull VirtualFile file, boolean recursive, @NotNull OrderRootType rootType) {
     addJarDirectory(file.getUrl(), recursive, rootType);
   }
 
@@ -166,13 +169,13 @@ public class NewLibraryEditor extends LibraryEditorBase {
   }
 
   @Override
-  public void addJarDirectory(final String url, boolean recursive, OrderRootType rootType) {
+  public void addJarDirectory(@NotNull final String url, boolean recursive, @NotNull OrderRootType rootType) {
     addRoot(url, rootType);
     myJarDirectories.add(rootType, url, recursive);
   }
 
   @Override
-  public void removeRoot(String url, OrderRootType rootType) {
+  public void removeRoot(@NotNull String url, @NotNull OrderRootType rootType) {
     myRoots.remove(rootType, new LightFilePointer(url));
     Iterator<LightFilePointer> iterator = myExcludedRoots.iterator();
     while (iterator.hasNext()) {
@@ -199,12 +202,12 @@ public class NewLibraryEditor extends LibraryEditorBase {
   }
 
   @Override
-  public boolean isJarDirectory(String url, OrderRootType rootType) {
+  public boolean isJarDirectory(@NotNull String url, @NotNull OrderRootType rootType) {
     return myJarDirectories.contains(rootType, url);
   }
 
   @Override
-  public boolean isValid(String url, OrderRootType orderRootType) {
+  public boolean isValid(@NotNull String url, @NotNull OrderRootType orderRootType) {
     final Collection<LightFilePointer> pointers = myRoots.get(orderRootType);
     for (LightFilePointer pointer : pointers) {
       if (pointer.getUrl().equals(url)) {
@@ -214,13 +217,13 @@ public class NewLibraryEditor extends LibraryEditorBase {
     return false;
   }
 
-  public void applyTo(LibraryEx.ModifiableModelEx model) {
+  public void applyTo(@NotNull LibraryEx.ModifiableModelEx model) {
     model.setProperties(myProperties);
     exportRoots(model::getUrls, model::isValid, model::removeRoot, model::addRoot, model::addJarDirectory);
   }
 
 
-  public void applyTo(LibraryEditorBase editor) {
+  public void applyTo(@NotNull LibraryEditorBase editor) {
     editor.setProperties(myProperties);
     exportRoots(editor::getUrls, editor::isValid, editor::removeRoot, editor::addRoot, editor::addJarDirectory);
   }
