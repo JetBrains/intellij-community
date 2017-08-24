@@ -17,18 +17,17 @@
 package com.intellij.codeInsight.editorActions.wordSelection;
 
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.ListIterator;
 
 public class InjectedReferenceSelectioner extends AbstractWordSelectioner {
   @Override
@@ -38,14 +37,32 @@ public class InjectedReferenceSelectioner extends AbstractWordSelectioner {
 
   @Override
   public List<TextRange> select(PsiElement e, CharSequence editorText, final int cursorOffset, Editor editor) {
-    PsiReference ref = e.findReferenceAt(cursorOffset - e.getTextRange().getStartOffset());
-    if (ref == null) return Collections.emptyList();
-    JBIterable<PsiReference> it = ref instanceof PsiMultiReference ? JBIterable.of(((PsiMultiReference)ref).getReferences()) : JBIterable.of(ref);
-    return it.transform(ref1 -> {
-      TextRange base = ref1.getElement().getTextRange();
-      TextRange r = ref1.getRangeInElement().shiftRight(base.getStartOffset());
-      return r.containsOffset(cursorOffset) ? r : null;
-    }).filter(Conditions.notNull()).toList();
+    PsiElement host = PsiTreeUtil.getParentOfType(e, PsiLanguageInjectionHost.class);
+    if (host == null) return Collections.emptyList();
+
+    ArrayList<TextRange> ranges = JBIterable.of(host.getReferences())
+      .map(r -> r.getRangeInElement().shiftRight(r.getElement().getTextRange().getStartOffset()))
+      .filter(r -> r.getStartOffset() <= cursorOffset)
+      .addAllTo(ContainerUtil.newArrayList());
+    if (ranges.isEmpty()) return Collections.emptyList();
+
+    TextRange smallest = null;
+    for (TextRange r : ranges) {
+      if (!r.containsOffset(cursorOffset)) continue;
+      if (smallest == null || r.getLength() < smallest.getLength()) {
+        smallest = r;
+      }
+    }
+    if (smallest == null) return Collections.emptyList();
+
+    int endOffset = smallest.getEndOffset();
+    for (ListIterator<TextRange> it = ranges.listIterator(); it.hasNext(); ) {
+      TextRange r = it.next();
+      if (r.getEndOffset() > cursorOffset) continue;
+      it.set(TextRange.create(r.getStartOffset(), endOffset));
+    }
+
+    return ranges;
   }
 
 }
