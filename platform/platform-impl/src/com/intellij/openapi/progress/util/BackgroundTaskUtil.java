@@ -16,6 +16,7 @@
 package com.intellij.openapi.progress.util;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -216,30 +217,30 @@ public class BackgroundTaskUtil {
    */
   @NotNull
   @CalledInAny
-  public static ProgressIndicator executeOnPooledThread(@NotNull Runnable runnable, @NotNull Disposable parent) {
-    return executeOnPooledThread(indicator -> runnable.run(), parent);
+  public static ProgressIndicator executeOnPooledThread(@NotNull Disposable parent, @NotNull Runnable runnable) {
+    return executeOnPooledThread(parent, indicator -> runnable.run());
   }
 
   @NotNull
   @CalledInAny
-  public static ProgressIndicator executeOnPooledThread(@NotNull Consumer<ProgressIndicator> task, @NotNull Disposable parent) {
+  public static ProgressIndicator executeOnPooledThread(@NotNull Disposable parent, @NotNull Consumer<ProgressIndicator> task) {
     ModalityState modalityState = ModalityState.defaultModalityState();
-    return executeOnPooledThread(task, parent, modalityState);
+    return executeOnPooledThread(parent, modalityState, task);
   }
 
   @NotNull
   @CalledInAny
-  public static ProgressIndicator executeOnPooledThread(@NotNull Consumer<ProgressIndicator> task,
-                                                        @NotNull Disposable parent,
-                                                        @NotNull ModalityState modalityState) {
-    return runUnderDisposeAwareIndicator(task, parent, modalityState, true);
+  public static ProgressIndicator executeOnPooledThread(@NotNull Disposable parent,
+                                                        @NotNull ModalityState modalityState,
+                                                        @NotNull Consumer<ProgressIndicator> task) {
+    return runUnderDisposeAwareIndicator(parent, modalityState, true, task);
   }
 
   @CalledInAny
-  private static ProgressIndicator runUnderDisposeAwareIndicator(@NotNull Consumer<ProgressIndicator> task,
-                                                                 @NotNull Disposable parent,
+  private static ProgressIndicator runUnderDisposeAwareIndicator(@NotNull Disposable parent,
                                                                  @NotNull ModalityState modalityState,
-                                                                 boolean onPooledThread) {
+                                                                 boolean onPooledThread,
+                                                                 @NotNull Consumer<ProgressIndicator> task) {
     ProgressIndicator indicator = new EmptyProgressIndicator(modalityState);
 
     Disposable disposable = new Disposable() {
@@ -278,7 +279,7 @@ public class BackgroundTaskUtil {
 
   @CalledInAny
   public static void runUnderDisposeAwareIndicator(@NotNull Disposable parent, @NotNull Runnable task) {
-    runUnderDisposeAwareIndicator(indicator -> task.run(), parent, ModalityState.defaultModalityState(), false);
+    runUnderDisposeAwareIndicator(parent, ModalityState.defaultModalityState(), false, indicator -> task.run());
   }
 
   /**

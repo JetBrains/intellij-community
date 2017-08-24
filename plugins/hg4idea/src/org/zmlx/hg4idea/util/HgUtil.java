@@ -388,7 +388,7 @@ public abstract class HgUtil {
 
   @NotNull
   public static ProgressIndicator executeOnPooledThread(@NotNull Runnable runnable, @NotNull Disposable parentDisposable) {
-    return BackgroundTaskUtil.executeOnPooledThread(runnable, parentDisposable);
+    return BackgroundTaskUtil.executeOnPooledThread(parentDisposable, runnable);
   }
 
   /**

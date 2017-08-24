@@ -551,7 +551,7 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
     }
 
     public void start(@NotNull Disposable disposable) {
-      BackgroundTaskUtil.executeOnPooledThread((indicator) -> {
+      BackgroundTaskUtil.executeOnPooledThread(disposable, (indicator) -> {
         try {
           // first block is loaded in constructor
           for (int index = 1; index < myRevisions.size(); index++) {
@@ -586,7 +586,7 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
           }
           notifyUpdate();
         }
-      }, disposable);
+      });
     }
 
     @CalledInBackground

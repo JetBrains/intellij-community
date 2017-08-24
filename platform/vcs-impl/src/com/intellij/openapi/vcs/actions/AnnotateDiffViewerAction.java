@@ -163,7 +163,7 @@ public class AnnotateDiffViewerAction {
     annotator.getBackgroundableLock().lock();
     if (diffContext != null) diffContext.showProgressBar(true);
 
-    BackgroundTaskUtil.executeOnPooledThread(indicator -> {
+    BackgroundTaskUtil.executeOnPooledThread(viewer, indicator -> {
       try {
         loader.run();
       }
@@ -187,7 +187,7 @@ public class AnnotateDiffViewerAction {
           annotator.showAnnotation(loader.getResult());
         }, indicator.getModalityState());
       }
-    }, viewer);
+    });
   }
 
   @Nullable

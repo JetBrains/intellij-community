@@ -261,7 +261,7 @@ public class GitConflictResolver {
       if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED && event.getDescription().equals("resolve")) {
         notification.expire();
         Runnable task = () -> mergeNoProceed();
-        BackgroundTaskUtil.executeOnPooledThread(task, myProject);
+        BackgroundTaskUtil.executeOnPooledThread(myProject, task);
       }
     }
   }

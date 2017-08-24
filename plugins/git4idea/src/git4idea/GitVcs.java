@@ -534,7 +534,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
       Collection<VcsRoot> roots = ServiceManager.getService(myProject, VcsRootDetector.class).detect();
       new GitIntegrationEnabler(this, myGit).enable(roots);
     };
-    BackgroundTaskUtil.executeOnPooledThread(task, myProject);
+    BackgroundTaskUtil.executeOnPooledThread(myProject, task);
   }
 
   @Override
