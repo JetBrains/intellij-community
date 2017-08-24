@@ -1086,7 +1086,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       initializer.accept(canAllLocalsBeDeclaredFinal);
       if (!canAllLocalsBeDeclaredFinal.success) return false;
     }
-    if (initializer instanceof PsiMethodReferenceExpression) return true;
+    if (initializer instanceof PsiFunctionalExpression) return accessCount <= 1;
     if (initializer instanceof PsiReferenceExpression) {
       PsiVariable refVar = (PsiVariable)((PsiReferenceExpression)initializer).resolve();
       if (refVar == null) {

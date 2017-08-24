@@ -275,6 +275,10 @@ public class InlineMethodTest extends LightRefactoringTestCase {
     doTestInlineThisOnly();
   }
 
+  public void testOnLambda() {
+    doTestInlineThisOnly();
+  }
+
   public void testNonCodeUsage() {
     doTest(true);
   }
