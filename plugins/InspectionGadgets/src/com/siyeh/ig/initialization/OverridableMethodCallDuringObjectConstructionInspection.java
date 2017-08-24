@@ -20,6 +20,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.util.SmartList;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.MakeClassFinalFix;
@@ -27,7 +28,14 @@ import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 public class OverridableMethodCallDuringObjectConstructionInspection extends OverridableMethodCallDuringObjectConstructionInspectionBase {
+
+  @Override
+  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+    return true;
+  }
 
   @Override
   @NotNull
@@ -35,13 +43,15 @@ public class OverridableMethodCallDuringObjectConstructionInspection extends Ove
     final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)infos[0];
     final PsiClass callClass = ClassUtils.getContainingClass(methodCallExpression);
     final PsiMethod method = methodCallExpression.resolveMethod();
-    if (method == null || MethodUtils.isOverriddenInHierarchy(method, callClass)) {
+    if (method == null || callClass == null || MethodUtils.isOverriddenInHierarchy(method, callClass)) {
       return InspectionGadgetsFix.EMPTY_ARRAY;
     }
-    return new InspectionGadgetsFix[]{
-      new MakeClassFinalFix(callClass),
-      new MakeMethodFinalFix(method.getName())
-    };
+    final List<InspectionGadgetsFix> fixes = new SmartList<>();
+    fixes.add(new MakeClassFinalFix(callClass));
+    if (!(method instanceof PsiCompiledElement)) {
+      fixes.add(new MakeMethodFinalFix(method.getName()));
+    }
+    return fixes.toArray(InspectionGadgetsFix.EMPTY_ARRAY);
   }
 
   private static class MakeMethodFinalFix extends InspectionGadgetsFix {
@@ -74,6 +84,9 @@ public class OverridableMethodCallDuringObjectConstructionInspection extends Ove
         return;
       }
       WriteAction.run(() -> method.getModifierList().setModifierProperty(PsiModifier.FINAL, true));
+      if (method.getContainingFile() != methodExpression.getContainingFile()) {
+        method.navigate(true);
+      }
     }
 
     @Override
