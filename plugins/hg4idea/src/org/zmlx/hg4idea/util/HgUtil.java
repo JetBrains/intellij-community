@@ -13,12 +13,9 @@
 package org.zmlx.hg4idea.util;
 
 import com.intellij.dvcs.DvcsUtil;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Couple;
@@ -384,11 +381,6 @@ public abstract class HgUtil {
       filesForRoot.add(file);
     }
     return sorted;
-  }
-
-  @NotNull
-  public static ProgressIndicator executeOnPooledThread(@NotNull Runnable runnable, @NotNull Disposable parentDisposable) {
-    return BackgroundTaskUtil.executeOnPooledThread(parentDisposable, runnable);
   }
 
   /**

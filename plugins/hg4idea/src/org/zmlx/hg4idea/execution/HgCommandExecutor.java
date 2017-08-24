@@ -17,6 +17,7 @@ package org.zmlx.hg4idea.execution;
 
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -102,12 +103,12 @@ public class HgCommandExecutor {
                       @NotNull final String operation,
                       @Nullable final List<String> arguments,
                       @Nullable final HgCommandResultHandler handler) {
-    HgUtil.executeOnPooledThread(() -> {
+    BackgroundTaskUtil.executeOnPooledThread(myProject, () -> {
       HgCommandResult result = executeInCurrentThread(repo, operation, arguments);
       if (handler != null) {
         handler.process(result);
       }
-    }, myProject);
+    });
   }
 
   @Nullable

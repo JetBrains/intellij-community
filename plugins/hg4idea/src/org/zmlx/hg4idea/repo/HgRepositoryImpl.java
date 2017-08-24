@@ -231,7 +231,8 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
         myOpenedBranches = HgBranchesCommand.collectNames(branchCommandResult);
       }
 
-      HgUtil.executeOnPooledThread(() -> BackgroundTaskUtil.syncPublisher(project, HgVcs.STATUS_TOPIC).update(project, getRoot()), project);
+      BackgroundTaskUtil.executeOnPooledThread(project, ()
+        -> BackgroundTaskUtil.syncPublisher(project, HgVcs.STATUS_TOPIC).update(project, getRoot()));
     }
   }
 
