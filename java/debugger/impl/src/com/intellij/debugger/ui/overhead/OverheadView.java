@@ -16,6 +16,7 @@
 package com.intellij.debugger.ui.overhead;
 
 import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -24,7 +25,8 @@ import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.components.BorderLayoutPanel;
-import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
+import com.intellij.util.ui.update.MergingUpdateQueue;
+import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,14 +40,16 @@ import java.util.function.Function;
 /**
  * @author egor
  */
-public class OverheadView extends BorderLayoutPanel {
+public class OverheadView extends BorderLayoutPanel implements Disposable {
   @NotNull private final DebugProcessImpl myProcess;
 
   static final EnabledColumnInfo ENABLED_COLUMN = new EnabledColumnInfo();
   static final NameColumnInfo NAME_COLUMN = new NameColumnInfo();
 
-  final TableView<OverheadProducer> myTable;
-  final ListTableModel<OverheadProducer> myModel;
+  private final TableView<OverheadProducer> myTable;
+  private final ListTableModel<OverheadProducer> myModel;
+
+  private final MergingUpdateQueue myUpdateQueue;
 
   public OverheadView(@NotNull DebugProcessImpl process) {
     myProcess = process;
@@ -61,13 +65,19 @@ public class OverheadView extends BorderLayoutPanel {
     myTable = new TableView<>(myModel);
     addToCenter(ScrollPaneFactory.createScrollPane(myTable));
     TableUtil.setupCheckboxColumn(myTable.getColumnModel().getColumn(0));
-    OverheadTimings.addListener(o -> DebuggerUIUtil.invokeLater(() -> {
-      int idx = myModel.indexOf(o);
-      if (idx != -1) {
-        myModel.fireTableRowsUpdated(idx, idx);
-        return;
+
+    myUpdateQueue = new MergingUpdateQueue("OverheadView", 500, true, null, this);
+
+    OverheadTimings.addListener(o -> myUpdateQueue.queue(new Update(o) {
+      @Override
+      public void run() {
+        int idx = myModel.indexOf(o);
+        if (idx != -1) {
+          myModel.fireTableRowsUpdated(idx, idx);
+          return;
+        }
+        myModel.setItems(new ArrayList<>(OverheadTimings.getProducers(process)));
       }
-      myModel.setItems(new ArrayList<>(OverheadTimings.getProducers(process)));
     }), process);
 
     new DumbAwareAction("Toggle") {
@@ -198,5 +208,9 @@ public class OverheadView extends BorderLayoutPanel {
         return value != null ? value : Long.MAX_VALUE;
       });
     }
+  }
+
+  @Override
+  public void dispose() {
   }
 }
