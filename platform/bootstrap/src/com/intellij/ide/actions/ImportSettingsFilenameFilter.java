@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -32,16 +33,17 @@ import java.util.Set;
 public class ImportSettingsFilenameFilter implements FilenameFilter, Serializable {
   public static final String SETTINGS_JAR_MARKER = "IntelliJ IDEA Global Settings";
 
-  private final Set<String> myRelativeNamesToExtract;
+  private static final long serialVersionUID = 201708031943L;
+
+  private final String[] myRelativeNamesToExtract;
 
   public ImportSettingsFilenameFilter(@NotNull Set<String> relativeNamesToExtract) {
-    myRelativeNamesToExtract = relativeNamesToExtract;
+    myRelativeNamesToExtract = relativeNamesToExtract.toArray(ArrayUtil.EMPTY_STRING_ARRAY);
   }
 
+  @Override
   public boolean accept(File dir, String name) {
-    if (name.equals(SETTINGS_JAR_MARKER)) {
-      return false;
-    }
+    if (name.equals(SETTINGS_JAR_MARKER)) return false;
 
     File configPath = new File(PathManager.getConfigPath());
     String rPath = FileUtil.getRelativePath(configPath, new File(dir, name));
@@ -52,6 +54,7 @@ public class ImportSettingsFilenameFilter implements FilenameFilter, Serializabl
         return true;
       }
     }
+
     return false;
   }
 }

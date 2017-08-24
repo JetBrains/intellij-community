@@ -79,7 +79,13 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
         StartupActionScriptManager.executeActionScript();
       }
       catch (IOException e) {
-        Main.showMessage("Plugin Installation Error", e);
+        String message =
+          "The IDE failed to install some plugins.\n" +
+          "Most probably, this happened because of a change in a serialization format.\n" +
+          "Please try again, and if the problem persists, please report it\n" +
+          "to http://jb.gg/ide/critical-startup-errors" +
+          "\n\nThe cause: " + e.getMessage();
+        Main.showMessage("Plugin Installation Error", message, false);
       }
     }
 

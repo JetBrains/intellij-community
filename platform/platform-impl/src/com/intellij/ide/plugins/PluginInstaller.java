@@ -283,12 +283,11 @@ public class PluginInstaller {
                              @NotNull String pluginName,
                              boolean deleteFromFile,
                              @NotNull IdeaPluginDescriptor descriptor) throws IOException {
-    //noinspection HardCodedStringLiteral
+    List<StartupActionScriptManager.ActionCommand> commands = new ArrayList<>();
+
     if (fromFile.getName().endsWith(".jar")) {
       // add command to copy file to the IDEA/plugins path
-      StartupActionScriptManager.ActionCommand copyPlugin =
-        new StartupActionScriptManager.CopyCommand(fromFile, new File(PathManager.getPluginsPath() + File.separator + fromFile.getName()));
-      StartupActionScriptManager.addActionCommand(copyPlugin);
+      commands.add(new StartupActionScriptManager.CopyCommand(fromFile, new File(PathManager.getPluginsPath(), fromFile.getName())));
     }
     else {
       // add command to unzip file to the IDEA/plugins path
@@ -296,22 +295,22 @@ public class PluginInstaller {
       String dir = findFirstTopLevelDirectoryName(fromFile);
       if (dir != null) {
         unzipPath = PathManager.getPluginsPath();
-        StartupActionScriptManager.addActionCommand(new DeleteCommand(new File(unzipPath + File.separator + dir)));
+        commands.add(new DeleteCommand(new File(unzipPath, dir)));
       }
       else {
         unzipPath = PathManager.getPluginsPath() + File.separator + pluginName;
-        StartupActionScriptManager.addActionCommand(new DeleteCommand(new File(unzipPath)));
+        commands.add(new DeleteCommand(new File(unzipPath)));
       }
 
-      StartupActionScriptManager.ActionCommand unzip = new UnzipCommand(fromFile, new File(unzipPath));
-      StartupActionScriptManager.addActionCommand(unzip);
+      commands.add(new UnzipCommand(fromFile, new File(unzipPath)));
     }
 
     // add command to remove temp plugin file
     if (deleteFromFile) {
-      StartupActionScriptManager.ActionCommand deleteTemp = new DeleteCommand(fromFile);
-      StartupActionScriptManager.addActionCommand(deleteTemp);
+      commands.add(new DeleteCommand(fromFile));
     }
+
+    StartupActionScriptManager.addActionCommands(commands);
 
     fireState(descriptor, true);
   }

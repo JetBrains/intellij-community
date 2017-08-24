@@ -89,9 +89,9 @@ private class ImportSettingsAction : AnAction(), DumbAware {
     val tempFile = File(PathManager.getPluginTempPath(), saveFile.name)
     FileUtil.copy(saveFile, tempFile)
     val filenameFilter = ImportSettingsFilenameFilter(getRelativeNamesToExtract(dialog.exportableComponents))
-    StartupActionScriptManager.addActionCommand(StartupActionScriptManager.UnzipCommand(tempFile, File(configPath), filenameFilter))
-    // remove temp file
-    StartupActionScriptManager.addActionCommand(StartupActionScriptManager.DeleteCommand(tempFile))
+    StartupActionScriptManager.addActionCommands(listOf(
+      StartupActionScriptManager.UnzipCommand(tempFile, File(configPath), filenameFilter),
+      StartupActionScriptManager.DeleteCommand(tempFile)))
 
     UpdateSettings.getInstance().forceCheckForUpdateAfterRestart()
 
