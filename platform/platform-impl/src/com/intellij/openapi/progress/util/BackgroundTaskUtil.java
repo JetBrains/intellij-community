@@ -286,6 +286,8 @@ public class BackgroundTaskUtil {
    * Wraps {@link MessageBus#syncPublisher(Topic)} in a dispose check,
    * and throws a {@link ProcessCanceledException} if the project is disposed,
    * instead of throwing an assertion which would happen otherwise.
+   *
+   * @see #syncPublisher(Topic)
    */
   @CalledInAny
   @NotNull
@@ -293,6 +295,22 @@ public class BackgroundTaskUtil {
     return ReadAction.compute(() -> {
       if (project.isDisposed()) throw new ProcessCanceledException();
       return project.getMessageBus().syncPublisher(topic);
+    });
+  }
+
+  /**
+   * Wraps {@link MessageBus#syncPublisher(Topic)} in a dispose check,
+   * and throws a {@link ProcessCanceledException} if the application is disposed,
+   * instead of throwing an assertion which would happen otherwise.
+   *
+   * @see #syncPublisher(Project, Topic)
+   */
+  @CalledInAny
+  @NotNull
+  public static <L> L syncPublisher(@NotNull Topic<L> topic) throws ProcessCanceledException {
+    return ReadAction.compute(() -> {
+      if (ApplicationManager.getApplication().isDisposed()) throw new ProcessCanceledException();
+      return ApplicationManager.getApplication().getMessageBus().syncPublisher(topic);
     });
   }
 

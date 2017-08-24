@@ -19,6 +19,7 @@ import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -77,7 +78,7 @@ public class HgRemoteStatusUpdater implements HgUpdater {
         updateChangesStatusSynchronously(project, roots, myIncomingStatus, true);
         updateChangesStatusSynchronously(project, roots, myOutgoingStatus, false);
 
-        project.getMessageBus().syncPublisher(HgVcs.INCOMING_OUTGOING_CHECK_TOPIC).update();
+        BackgroundTaskUtil.syncPublisher(project, HgVcs.INCOMING_OUTGOING_CHECK_TOPIC).update();
 
         indicator.stop();
         myUpdateStarted.set(false);

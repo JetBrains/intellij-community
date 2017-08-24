@@ -20,6 +20,7 @@ import com.intellij.dvcs.repo.AsyncFilesManagerListener;
 import com.intellij.dvcs.repo.RepositoryImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
@@ -230,11 +231,7 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
         myOpenedBranches = HgBranchesCommand.collectNames(branchCommandResult);
       }
 
-      HgUtil.executeOnPooledThread(() -> {
-        if (!project.isDisposed()) {
-          project.getMessageBus().syncPublisher(HgVcs.STATUS_TOPIC).update(project, getRoot());
-        }
-      }, project);
+      HgUtil.executeOnPooledThread(() -> BackgroundTaskUtil.syncPublisher(project, HgVcs.STATUS_TOPIC).update(project, getRoot()), project);
     }
   }
 

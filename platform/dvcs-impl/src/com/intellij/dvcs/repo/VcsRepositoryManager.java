@@ -19,6 +19,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -221,7 +222,7 @@ public class VcsRepositoryManager extends AbstractProjectComponent implements Di
       finally {
         REPO_LOCK.writeLock().unlock();
       }
-      myProject.getMessageBus().syncPublisher(VCS_REPOSITORY_MAPPING_UPDATED).mappingChanged();
+      BackgroundTaskUtil.syncPublisher(myProject, VCS_REPOSITORY_MAPPING_UPDATED).mappingChanged();
     }
     finally {
       MODIFY_LOCK.unlock();

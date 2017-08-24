@@ -16,12 +16,12 @@
 package org.zmlx.hg4idea.command;
 
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.messages.MessageBus;
 import com.intellij.vcsUtil.VcsFileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgFile;
@@ -88,8 +88,7 @@ public abstract class HgCommitTypeCommand {
       executeChunked(chunkedCommits);
     }
     myRepository.update();
-    final MessageBus messageBus = myProject.getMessageBus();
-    messageBus.syncPublisher(HgVcs.REMOTE_TOPIC).update(myProject, null);
+    BackgroundTaskUtil.syncPublisher(myProject, HgVcs.REMOTE_TOPIC).update(myProject, null);
   }
 
   protected abstract void executeChunked(@NotNull List<List<String>> chunkedCommits) throws HgCommandException, VcsException;
