@@ -84,13 +84,13 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
-
     <projectTaskRunner implementation="org.jetbrains.plugins.gradle.execution.build.GradleProjectTaskRunner"/>
     <postStartupActivity implementation="org.jetbrains.plugins.gradle.service.project.GradleStartupActivity"/>
 
     <orderEnumerationHandlerFactory implementation="org.jetbrains.plugins.gradle.execution.GradleOrderEnumeratorHandler$FactoryImpl"/>
     <compileServer.plugin classpath="gradle-jps-plugin.jar"/>
     <consoleFilterProvider implementation="org.jetbrains.plugins.gradle.execution.GradleConsoleFilterProvider"/>
+    <stacktrace.fold substring="at org.gradle."/>
     <buildProcess.parametersProvider implementation="org.jetbrains.plugins.gradle.compiler.GradleBuildProcessParametersProvider"/>
 
     <resolveScopeEnlarger implementation="org.jetbrains.plugins.gradle.config.GradleBuildClasspathResolveScopeEnlarger"/>
