@@ -67,6 +67,6 @@ public abstract class AbstractSpellCheckerFixesTest extends SpellcheckerInspecti
   }
 
   private String getBeforeFile() {
-    return getTestDataPath() + File.separator + getTestName(true) + getExtension();
+    return getTestName(true) + getExtension();
   }
 }
