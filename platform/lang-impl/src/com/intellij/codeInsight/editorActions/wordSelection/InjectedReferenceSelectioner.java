@@ -53,9 +53,8 @@ public class InjectedReferenceSelectioner extends AbstractWordSelectioner {
         smallest = r;
       }
     }
-    if (smallest == null) return Collections.emptyList();
+    int endOffset = smallest == null ? cursorOffset : smallest.getEndOffset();
 
-    int endOffset = smallest.getEndOffset();
     for (ListIterator<TextRange> it = ranges.listIterator(); it.hasNext(); ) {
       TextRange r = it.next();
       if (r.getEndOffset() > cursorOffset) continue;
