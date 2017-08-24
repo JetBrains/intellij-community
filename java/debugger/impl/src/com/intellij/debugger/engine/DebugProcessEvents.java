@@ -369,8 +369,9 @@ public class DebugProcessEvents extends DebugProcessImpl {
       }
 
       @Override
-      protected void action() throws Exception {
-        StackCapturingLineBreakpoint.recreateAll(DebugProcessEvents.this);
+      protected void action() {
+        StackCapturingLineBreakpoint.deleteAll(DebugProcessEvents.this);
+        StackCapturingLineBreakpoint.createAll(DebugProcessEvents.this);
       }
     });
   }

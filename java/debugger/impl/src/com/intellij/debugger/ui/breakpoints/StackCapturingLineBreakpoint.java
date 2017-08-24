@@ -151,13 +151,17 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
       .limit(1);
   }
 
-  public static void recreateAll(DebugProcessImpl debugProcess) {
+  public static void deleteAll(DebugProcessImpl debugProcess) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     List<StackCapturingLineBreakpoint> bpts = debugProcess.getUserData(CAPTURE_BREAKPOINTS);
     if (!ContainerUtil.isEmpty(bpts)) {
       bpts.forEach(debugProcess.getRequestsManager()::deleteRequest);
       bpts.clear();
     }
+  }
+
+  public static void createAll(DebugProcessImpl debugProcess) {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
     if (Registry.is("debugger.capture.points")) {
       DebuggerSettings.getInstance().getCapturePoints().stream().filter(c -> c.myEnabled).forEach(c -> track(debugProcess, c));
     }
