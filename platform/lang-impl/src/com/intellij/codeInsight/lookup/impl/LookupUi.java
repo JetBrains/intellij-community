@@ -201,7 +201,6 @@ class LookupUi {
     });
   }
 
-  long time = 0;
   void setCalculating(final boolean calculating) {
     Runnable setVisible = () -> myIconPanel.setVisible(myLookup.isCalculating());
     if (myLookup.isCalculating()) {
@@ -211,14 +210,9 @@ class LookupUi {
     }
 
     if (calculating) {
-      if (time == 0) {
-        time = System.currentTimeMillis();
-      }
       myProcessIcon.resume();
     } else {
       myProcessIcon.suspend();
-      System.err.println("completion took " + (System.currentTimeMillis() - time) + "ms");
-      time = 0;
     }
   }
 
