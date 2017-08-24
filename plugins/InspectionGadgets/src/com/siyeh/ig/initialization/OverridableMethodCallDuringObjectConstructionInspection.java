@@ -15,10 +15,11 @@
  */
 package com.siyeh.ig.initialization;
 
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.MakeClassFinalFix;
@@ -60,20 +61,24 @@ public class OverridableMethodCallDuringObjectConstructionInspection extends Ove
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Make method final";
+      return "Make method 'final'";
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement methodName = descriptor.getPsiElement();
       final PsiElement methodExpression = methodName.getParent();
       final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)methodExpression.getParent();
       final PsiMethod method = methodCall.resolveMethod();
-      if (method == null) {
+      if (method == null || !FileModificationService.getInstance().preparePsiElementsForWrite(method)) {
         return;
       }
-      final PsiModifierList modifierList = method.getModifierList();
-      modifierList.setModifierProperty(PsiModifier.FINAL, true);
+      WriteAction.run(() -> method.getModifierList().setModifierProperty(PsiModifier.FINAL, true));
+    }
+
+    @Override
+    public boolean startInWriteAction() {
+      return false;
     }
   }
 }
