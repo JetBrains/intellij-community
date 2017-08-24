@@ -1541,30 +1541,30 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
     @Override
     public void modify(BaseRevision was, BaseRevision become) {
-      doModify(was, become, true);
+      doModify(was, become);
     }
 
     @Override
     public void plus(final BaseRevision baseRevision) {
-      doModify(baseRevision, baseRevision, true);
+      doModify(baseRevision, baseRevision);
     }
 
     @Override
     public void minus(final BaseRevision baseRevision) {
-      doModify(baseRevision, baseRevision, false);
-    }
+       myScheduler.submit(() -> {
+         AbstractVcs vcs = getVcs(baseRevision);
+         if (vcs != null) {
+           myRevisionsCache.minus(Pair.create(baseRevision.getPath(), vcs));
+         }
+         BackgroundTaskUtil.syncPublisher(myProject, VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).dirty(baseRevision.getPath());
+       });
+     }
 
-    private void doModify(BaseRevision was, BaseRevision become, boolean plus) {
+    private void doModify(BaseRevision was, BaseRevision become) {
       myScheduler.submit(() -> {
         final AbstractVcs vcs = getVcs(was);
         if (vcs != null) {
-          Pair<String, AbstractVcs> pair = Pair.create(was.getPath(), vcs);
-          if (plus) {
-            myRevisionsCache.plus(pair);
-          }
-          else {
-            myRevisionsCache.minus(pair);
-          }
+          myRevisionsCache.plus(Pair.create(was.getPath(), vcs));
         }
         BackgroundTaskUtil.syncPublisher(myProject, VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).dirty(become);
       });
