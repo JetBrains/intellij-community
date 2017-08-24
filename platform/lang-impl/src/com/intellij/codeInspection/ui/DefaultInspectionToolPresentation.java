@@ -88,7 +88,10 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
   }
 
   public void resolveProblem(@NotNull CommonProblemDescriptor descriptor) {
-    myResolvedElements.put(myProblemElements.removeValue(descriptor), descriptor);
+    RefEntity entity = myProblemElements.removeValue(descriptor);
+    if (entity != null) {
+      myResolvedElements.put(entity, descriptor);
+    }
   }
 
   public boolean isProblemResolved(@Nullable CommonProblemDescriptor descriptor) {

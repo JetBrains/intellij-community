@@ -28,6 +28,7 @@ import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.codeInspection.offline.OfflineProblemDescriptor;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.codeInspection.reference.RefModule;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ReadAction;
@@ -38,6 +39,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,6 +48,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author Dmitry Batkovich
@@ -197,7 +200,9 @@ class OfflineDescriptorResolveResult {
   private static CommonProblemDescriptor createRerunGlobalToolDescriptor(@NotNull GlobalInspectionToolWrapper wrapper,
                                                                          @Nullable RefEntity entity,
                                                                          OfflineProblemDescriptor offlineDescriptor) {
-    return new CommonProblemDescriptorImpl(new QuickFix[]{new QuickFix() {
+    
+
+    QuickFix rerunFix = new QuickFix() {
       @Nls
       @NotNull
       @Override
@@ -217,6 +222,13 @@ class OfflineDescriptorResolveResult {
         }
         RunInspectionAction.runInspection(project, wrapper.getShortName(), file, null, psiFile);
       }
-    }}, offlineDescriptor.getDescription());
+    };
+    List<String> hints = offlineDescriptor.getHints();
+    if (hints != null && entity instanceof RefModule) {
+      List<QuickFix> fixes =
+        hints.stream().map(hint -> wrapper.getTool().getQuickFix(hint)).filter(f -> f != null).collect(Collectors.toList());
+      return new ModuleProblemDescriptorImpl(ArrayUtil.append(fixes.toArray(QuickFix.EMPTY_ARRAY), rerunFix), offlineDescriptor.getDescription(), ((RefModule)entity).getModule());
+    }
+    return new CommonProblemDescriptorImpl(new QuickFix[]{rerunFix}, offlineDescriptor.getDescription());
   }
 }
