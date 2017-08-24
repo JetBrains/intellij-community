@@ -730,6 +730,8 @@ public class JavaDocInfoGenerator {
   private void generateModuleJavaDoc(StringBuilder buffer, PsiJavaModule module, boolean generatePrologueAndEpilogue) {
     if (generatePrologueAndEpilogue) generatePrologue(buffer);
 
+    generateAnnotations(buffer, module, SignaturePlace.Javadoc, true);
+
     buffer.append("<pre>module <b>").append(module.getName()).append("</b></pre>");
 
     PsiDocComment comment = module.getDocComment();
