@@ -954,18 +954,6 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     }
   }
 
-  @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{
-      new RequiredAttributesInspection(),
-      new XmlDuplicatedIdInspection(),
-      new XmlInvalidIdInspection(),
-      new CheckDtdReferencesInspection(),
-      new XmlUnboundNsPrefixInspection(),
-      new XmlPathReferenceInspection()
-    };
-  }
-
   @HighlightingFlags({HighlightingFlag.SkipExternalValidation})
   public void testXsltValidation() throws Exception {
     doTest(getFullRelativeTestName(".xsl"), true, false);
@@ -2163,6 +2151,18 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
       },
       true, false
     );
+  }
+
+  @Override
+  protected LocalInspectionTool[] configureLocalInspectionTools() {
+    return new LocalInspectionTool[]{
+      new RequiredAttributesInspection(),
+      new XmlDuplicatedIdInspection(),
+      new XmlInvalidIdInspection(),
+      new CheckDtdReferencesInspection(),
+      new XmlUnboundNsPrefixInspection(),
+      new XmlPathReferenceInspection()
+    };
   }
 
   @Override
