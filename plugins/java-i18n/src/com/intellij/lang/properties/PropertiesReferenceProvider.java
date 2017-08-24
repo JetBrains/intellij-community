@@ -61,7 +61,7 @@ public class PropertiesReferenceProvider extends PsiReferenceProvider {
     boolean propertyRefWithPrefix = false;
     boolean soft = myDefaultSoft;
 
-    if (element instanceof PsiLiteralExpression) {
+    if (element instanceof PsiLiteralExpression && !(element.getParent() instanceof PsiExpression)) {
       PsiLiteralExpression literalExpression = (PsiLiteralExpression)element;
       value = literalExpression.getValue();
 
