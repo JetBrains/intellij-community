@@ -40,6 +40,7 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
   private volatile Set<SuppressIntentionAction> myAvailableSuppressActions;
   private volatile String myPresentableName;
   private volatile Boolean myValid;
+  private volatile NodeState myPreviousState;
 
   protected SuppressableInspectionTreeNode(Object userObject, @NotNull InspectionToolPresentation presentation) {
     super(userObject);
@@ -58,6 +59,16 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
   public abstract boolean isAlreadySuppressedFromView();
 
   public abstract boolean isQuickFixAppliedFromView();
+
+  @Override
+  protected boolean isProblemCountCacheValid() {
+    NodeState currentState = calculateState();
+    if (myPreviousState == null || !currentState.equals(myPreviousState)) {
+      myPreviousState = currentState;
+      return false;
+    }
+    return true;
+  }
 
   @Override
   public int getProblemCount(boolean allowSuppressed) {
@@ -161,9 +172,40 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
         ((SuppressableInspectionTreeNode)child).dropCache(project);
       }
     }
+    myProblemLevels.drop();
   }
 
   protected boolean isExcluded() {
     return getPresentation().getContext().getView().getExcludedManager().isExcluded(this);
+  }
+
+  private static class NodeState {
+    private final boolean isValid;
+    private final boolean isSuppressed;
+    private final boolean isFixApplied;
+
+    private NodeState(boolean isValid, boolean isSuppressed, boolean isFixApplied) {
+      this.isValid = isValid;
+      this.isSuppressed = isSuppressed;
+      this.isFixApplied = isFixApplied;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      NodeState state = (NodeState)o;
+
+      if (isValid != state.isValid) return false;
+      if (isSuppressed != state.isSuppressed) return false;
+      if (isFixApplied != state.isFixApplied) return false;
+
+      return true;
+    }
+  }
+
+  protected NodeState calculateState() {
+    return new NodeState(isValid(), isAlreadySuppressedFromView(), isQuickFixAppliedFromView());
   }
 }

@@ -99,8 +99,8 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
   }
 
   @Override
-  public void visitProblemSeverities(TObjectIntHashMap<HighlightDisplayLevel> counter) {
-    if (!isExcluded() && !isQuickFixAppliedFromView() && !isAlreadySuppressedFromView()) {
+  protected void visitProblemSeverities(TObjectIntHashMap<HighlightDisplayLevel> counter) {
+    if (isValid() && !isExcluded() && !isQuickFixAppliedFromView() && !isAlreadySuppressedFromView()) {
       counter.put(myLevel, counter.get(myLevel) + 1);
     }
   }
