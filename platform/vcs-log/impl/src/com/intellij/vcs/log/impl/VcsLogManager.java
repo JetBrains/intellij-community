@@ -167,9 +167,15 @@ public class VcsLogManager implements Disposable {
     return logProviders;
   }
 
+  /**
+   * Dispose VcsLogManager and execute some activity after it.
+   *
+   * @param callback activity to run after log is disposed. Is executed in background thread. null means execution of additional activity after dispose is not required.
+   */
+  @CalledInAwt
   public void dispose(@Nullable Runnable callback) {
     LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
-    
+
     myTabsLogRefresher.closeLogTabs();
     Disposer.dispose(myTabsLogRefresher);
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
