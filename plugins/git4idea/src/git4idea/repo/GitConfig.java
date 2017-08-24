@@ -376,7 +376,7 @@ public class GitConfig {
 
     @NotNull
     private Collection<String> getPushUrls() {
-      return nonNullCollection(myRemoteBean.getPushUrl());
+      return nonNullCollection(myRemoteBean.getPushurl());
     }
 
     @NotNull
@@ -396,7 +396,7 @@ public class GitConfig {
     @Nullable String[] getFetch();
     @Nullable String[] getPush();
     @Nullable String[] getUrl();
-    @Nullable String[] getPushUrl();
+    @Nullable String[] getPushurl();
   }
 
   private static class Url {
