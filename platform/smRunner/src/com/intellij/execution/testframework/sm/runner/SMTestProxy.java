@@ -256,7 +256,7 @@ public class SMTestProxy extends AbstractTestProxy {
       if (protocolId != null) {
         String path = VirtualFileManager.extractPath(locationUrl);
         if (!DumbService.isDumb(project) || DumbService.isDumbAware(myLocator)) {
-          DumbService.getInstance(project).computeWithAlternativeResolveEnabled(() -> {
+          return DumbService.getInstance(project).computeWithAlternativeResolveEnabled(() -> {
             List<Location> locations = myLocator.getLocation(protocolId, path, myMetainfo, project, searchScope);
             return !locations.isEmpty() ? locations.get(0) : null;
           });
