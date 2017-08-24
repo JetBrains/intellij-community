@@ -18,6 +18,7 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
@@ -157,7 +158,7 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
     final boolean changed = myState.IGNORE_SPACES_IN_ANNOTATE != value;
     myState.IGNORE_SPACES_IN_ANNOTATE = value;
     if (changed) {
-      getProject().getMessageBus().syncPublisher(VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).configurationChanged(SvnVcs.getKey());
+      BackgroundTaskUtil.syncPublisher(getProject(), VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).configurationChanged(SvnVcs.getKey());
     }
   }
 

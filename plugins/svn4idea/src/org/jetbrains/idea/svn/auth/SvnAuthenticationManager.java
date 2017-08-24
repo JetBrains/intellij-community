@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
@@ -185,10 +186,8 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager
                                                          SVNAuthentication previousAuth, boolean authMayBeStored) {
       final SVNAuthentication authentication =
         myDelegate.requestClientAuthentication(kind, url, realm, errorMessage, previousAuth, authMayBeStored);
-      if (myProject != null && !myProject.isDisposed()) {
-        myProject.getMessageBus().syncPublisher(AUTHENTICATION_PROVIDER_LISTENER)
-          .requestClientAuthentication(kind, url, realm, errorMessage, previousAuth, authMayBeStored, authentication);
-      }
+      BackgroundTaskUtil.syncPublisher(myProject, AUTHENTICATION_PROVIDER_LISTENER)
+        .requestClientAuthentication(kind, url, realm, errorMessage, previousAuth, authMayBeStored, authentication);
       return authentication;
     }
 
@@ -198,10 +197,8 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager
                                           Object certificate,
                                           boolean resultMayBeStored) {
       final int result = myDelegate.acceptServerAuthentication(url, realm, certificate, resultMayBeStored);
-      if (myProject != null && !myProject.isDisposed()) {
-        myProject.getMessageBus().syncPublisher(AUTHENTICATION_PROVIDER_LISTENER)
-          .acceptServerAuthentication(url, realm, certificate, resultMayBeStored, result);
-      }
+      BackgroundTaskUtil.syncPublisher(myProject, AUTHENTICATION_PROVIDER_LISTENER)
+        .acceptServerAuthentication(url, realm, certificate, resultMayBeStored, result);
       return result;
     }
   }
