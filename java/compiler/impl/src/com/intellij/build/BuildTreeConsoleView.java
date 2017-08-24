@@ -55,6 +55,7 @@ import javax.swing.table.TableColumn;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -405,17 +406,25 @@ public class BuildTreeConsoleView implements ConsoleView, BuildConsoleView {
       EventResult eventResult = node.getResult();
       if (!(eventResult instanceof FailureResult)) return false;
       List<? extends Failure> failures = ((FailureResult)eventResult).getFailures();
-      if (failures.isEmpty()) return true;
+      if (failures.isEmpty()) return false;
+      myConsole.clear();
 
-      Failure failure = failures.get(0);
-      String text = ObjectUtils.chooseNotNull(failure.getDescription(), failure.getMessage());
-      if (text == null && failure.getError() != null) {
-        text = failure.getError().getMessage();
+      boolean hasChanged = false;
+      for (Iterator<? extends Failure> iterator = failures.iterator(); iterator.hasNext(); ) {
+        Failure failure = iterator.next();
+        String text = ObjectUtils.chooseNotNull(failure.getDescription(), failure.getMessage());
+        if (text == null && failure.getError() != null) {
+          text = failure.getError().getMessage();
+        }
+        if (text == null) continue;
+        printDetails((FailureImpl)failure, text);
+        hasChanged = true;
+        if (iterator.hasNext()) {
+          myConsole.print("\n\n", ConsoleViewContentType.NORMAL_OUTPUT);
+        }
       }
+      if (!hasChanged) return false;
 
-      if (text == null) return false;
-
-      printDetails((FailureImpl)failure, text);
       myConsole.scrollTo(0);
       int firstSize = mySplitter.getFirstSize();
       int lastSize = mySplitter.getLastSize();
@@ -429,7 +438,6 @@ public class BuildTreeConsoleView implements ConsoleView, BuildConsoleView {
     }
 
     public void printDetails(FailureImpl failure, String text) {
-      myConsole.clear();
       String content = StringUtil.convertLineSeparators(text);
       while (true) {
         Matcher tagMatcher = TAG_PATTERN.matcher(content);
