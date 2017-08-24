@@ -41,9 +41,13 @@ fun buildStubs() {
 
 
   try {
-    indexSdkAndStoreSerializedStubs("${PathManager.getHomePath()}/python/testData/empty",
-                                    File(System.getenv("PYCHARM_PERF_ENVS"), "envs/py36_64").absolutePath,
-                                    "${System.getProperty("user.dir")}/$stubsFileName")
+    val root = System.getenv(PYCHARM_PYTHONS)
+
+    for (python in File(root).listFiles()) {
+      indexSdkAndStoreSerializedStubs("${PathManager.getHomePath()}/python/testData/empty",
+                                      python.absolutePath,
+                                      "${System.getProperty("user.dir")}/$stubsFileName")
+    }
   }
   catch (e: Exception) {
     e.printStackTrace()
