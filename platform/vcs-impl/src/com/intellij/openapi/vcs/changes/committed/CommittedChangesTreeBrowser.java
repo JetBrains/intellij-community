@@ -27,6 +27,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.SplitterProportionsData;
@@ -247,7 +248,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     myDetailsView.setUseCase(useCase);
     myChangeLists = items;
     myFilteringStrategy.setFilterBase(items);
-    myProject.getMessageBus().syncPublisher(ITEMS_RELOADED).itemsReloaded();
+    BackgroundTaskUtil.syncPublisher(myProject, ITEMS_RELOADED).itemsReloaded();
     updateModel();
   }
 
@@ -505,9 +506,9 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     myFilteringStrategy.appendFilterBase(list);
 
     myChangesTree.setModel(buildTreeModel(myFilteringStrategy.filterChangeLists(myChangeLists)));
-    state.applyTo(myChangesTree, (DefaultMutableTreeNode)myChangesTree.getModel().getRoot());
+    state.applyTo(myChangesTree, myChangesTree.getModel().getRoot());
     TreeUtil.expandAll(myChangesTree);
-    myProject.getMessageBus().syncPublisher(ITEMS_RELOADED).itemsReloaded();
+    BackgroundTaskUtil.syncPublisher(myProject, ITEMS_RELOADED).itemsReloaded();
   }
 
   public static class MoreLauncher implements Runnable {
