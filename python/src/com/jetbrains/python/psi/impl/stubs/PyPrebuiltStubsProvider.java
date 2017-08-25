@@ -16,8 +16,10 @@
 package com.jetbrains.python.psi.impl.stubs;
 
 import com.google.common.hash.HashCode;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.stubs.*;
 import com.intellij.util.indexing.FileContent;
 import com.intellij.util.io.PersistentHashMap;
@@ -25,11 +27,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.IOException;
 
 /**
  * @author traff
  */
-public class PyPrebuiltStubsProvider implements PrebuiltStubsProvider {
+public class PyPrebuiltStubsProvider implements PrebuiltStubsProvider, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.psi.impl.stubs.PyPrebuiltStubsProvider");
   public static final String PREBUILT_INDEXES_PATH_PROPERTY = "prebuilt_indexes_path";
 
@@ -57,7 +60,10 @@ public class PyPrebuiltStubsProvider implements PrebuiltStubsProvider {
               return true;
             }
           };
+
         mySerializationManager = new SerializationManagerImpl(new File(indexesRoot, SDK_STUBS_STORAGE_NAME + ".names"));
+
+        Disposer.register(this, mySerializationManager);
 
         LOG.info("Using prebuilt stubs from " + myPrebuiltStubsStorage.getBaseFile().getAbsolutePath());
       }
@@ -108,5 +114,17 @@ public class PyPrebuiltStubsProvider implements PrebuiltStubsProvider {
     f = new File(path, "indexes");              // compiled binary
     if (f.exists()) return f;
     return null;
+  }
+
+  @Override
+  public void dispose() {
+    if (myPrebuiltStubsStorage != null) {
+      try {
+        myPrebuiltStubsStorage.close();
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
+    }
   }
 }
