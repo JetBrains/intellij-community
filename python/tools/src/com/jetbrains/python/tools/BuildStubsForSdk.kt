@@ -159,6 +159,8 @@ fun indexSdkAndStoreSerializedStubs(projectPath: String, sdkPath: String, stubsF
   val storage = PersistentHashMap<HashCode, SerializedStubTree>(File(stubsFilePath + ".input"),
                                                                 HashCodeDescriptor.instance, stubExternalizer)
 
+  println("Writing stubs to ${storage.baseFile.absolutePath}")
+
   val serializationManager = SerializationManagerImpl(File(stubsFilePath + ".names"))
 
   try {
