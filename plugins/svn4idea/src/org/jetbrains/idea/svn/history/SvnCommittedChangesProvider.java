@@ -382,7 +382,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
         if (file != null && changedOnServer) {
           result.add(VcsUtil.getFilePath(file));
         }
-      }, null);
+      });
 
     return result;
   }

@@ -36,7 +36,6 @@ import javax.xml.parsers.SAXParserFactory;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
@@ -59,13 +58,12 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
                        boolean reportAll,
                        boolean includeIgnored,
                        boolean collectParentExternals,
-                       @NotNull StatusConsumer handler,
-                       @Nullable Collection changeLists) throws SvnBindException {
+                       @NotNull StatusConsumer handler) throws SvnBindException {
     File base = requireExistingParent(path);
     Info infoBase = myFactory.createInfoClient().doInfo(base, revision);
     List<String> parameters = newArrayList();
 
-    putParameters(parameters, path, depth, remote, reportAll, includeIgnored, changeLists);
+    putParameters(parameters, path, depth, remote, reportAll, includeIgnored);
 
     CommandExecutor command = execute(myVcs, SvnTarget.fromFile(path), SvnCommandName.st, parameters, null);
     parseResult(path, revision, handler, base, infoBase, command);
@@ -128,15 +126,12 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
                                     @Nullable Depth depth,
                                     boolean remote,
                                     boolean reportAll,
-                                    boolean includeIgnored,
-                                    @Nullable Collection changeLists) {
+                                    boolean includeIgnored) {
     CommandUtil.put(parameters, path);
     CommandUtil.put(parameters, depth);
     CommandUtil.put(parameters, remote, "-u");
     CommandUtil.put(parameters, reportAll, "--verbose");
     CommandUtil.put(parameters, includeIgnored, "--no-ignore");
-    // TODO: Fix this check - update corresponding parameters in StatusClient
-    CommandUtil.putChangeLists(parameters, changeLists);
     parameters.add("--xml");
   }
 
@@ -207,7 +202,7 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
   @Override
   public Status doStatus(@NotNull File path, boolean remote) throws SvnBindException {
     Ref<Status> status = Ref.create();
-    doStatus(path, SVNRevision.UNDEFINED, Depth.EMPTY, remote, false, false, false, status::set, null);
+    doStatus(path, SVNRevision.UNDEFINED, Depth.EMPTY, remote, false, false, false, status::set);
     return status.get();
   }
 }

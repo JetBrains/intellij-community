@@ -105,7 +105,7 @@ public class SvnRecursiveStatusWalker {
     File ioFile = item.getPath().getIOFile();
 
     myHandler.setCurrentItem(item);
-    item.getClient().doStatus(ioFile, SVNRevision.WORKING, item.getDepth(), false, false, true, true, myHandler, null);
+    item.getClient().doStatus(ioFile, SVNRevision.WORKING, item.getDepth(), false, false, true, true, myHandler);
 
     // check if current item was already processed - not to request its status once again
     if (!myHandler.myMetCurrentItem) {

@@ -28,7 +28,6 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatusClient;
 
 import java.io.File;
-import java.util.Collection;
 
 public class SvnKitStatusClient extends BaseSvnClient implements StatusClient {
 
@@ -53,8 +52,7 @@ public class SvnKitStatusClient extends BaseSvnClient implements StatusClient {
                        boolean reportAll,
                        boolean includeIgnored,
                        boolean collectParentExternals,
-                       @NotNull final StatusConsumer handler,
-                       @Nullable Collection changeLists) throws SvnBindException {
+                       @NotNull final StatusConsumer handler) throws SvnBindException {
     try {
       return getStatusClient().doStatus(path, revision, toDepth(depth), remote, reportAll, includeIgnored, collectParentExternals,
                                         status -> {
@@ -64,7 +62,7 @@ public class SvnKitStatusClient extends BaseSvnClient implements StatusClient {
                                           catch (SvnBindException e) {
                                             throw new SvnExceptionWrapper(e);
                                           }
-                                        }, changeLists);
+                                        }, null);
     }
     catch (SVNException e) {
       throw new SvnBindException(e);
