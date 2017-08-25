@@ -103,6 +103,15 @@ public class TreeSmartSelectProvider implements SmartSelectProvider<JTree> {
         i++;
       }
     }
+
+    //in case lead selection is not leaf
+    if (paths.length == tree.getSelectionCount()) {
+      for (TreePath path : paths) {
+        tree.removeSelectionPath(path);
+      }
+      tree.addSelectionPath(leadSelection);
+      tree.setLeadSelectionPath(leadSelection);
+    }
   }
 
   private static boolean hasCommonStart(TreePath path, TreePath leadSelection, int commonStartLength) {
