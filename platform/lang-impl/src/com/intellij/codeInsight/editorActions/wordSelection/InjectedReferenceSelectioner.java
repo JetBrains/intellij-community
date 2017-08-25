@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.PsiFileReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -41,6 +42,7 @@ public class InjectedReferenceSelectioner extends AbstractWordSelectioner {
     if (host == null) return Collections.emptyList();
 
     ArrayList<TextRange> ranges = JBIterable.of(host.getReferences())
+      .filter(PsiFileReference.class)
       .map(r -> r.getRangeInElement().shiftRight(r.getElement().getTextRange().getStartOffset()))
       .filter(r -> r.getStartOffset() <= cursorOffset)
       .addAllTo(ContainerUtil.newArrayList());
@@ -53,7 +55,8 @@ public class InjectedReferenceSelectioner extends AbstractWordSelectioner {
         smallest = r;
       }
     }
-    int endOffset = smallest == null ? cursorOffset : smallest.getEndOffset();
+    if (smallest == null) return Collections.emptyList();
+    int endOffset = smallest.getEndOffset();
 
     for (ListIterator<TextRange> it = ranges.listIterator(); it.hasNext(); ) {
       TextRange r = it.next();
