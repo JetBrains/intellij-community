@@ -13,7 +13,7 @@ public class BuilderAtMethodSimplePredefined {
   static class BuilderAtMethodSimplePredefinedBuilder {
     private int myInt;
 
-    public BuilderAtMethodSimplePredefined.BuilderAtMethodSimplePredefinedBuilder myString(String myString) {
+    public BuilderAtMethodSimplePredefinedBuilder myString(String myString) {
       this.myString = myString + "something";
       return this;
     }

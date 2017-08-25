@@ -11,7 +11,7 @@ public class BuilderAtConstructorSimplePredefined {
   static class BuilderAtConstructorSimplePredefinedBuilder {
     private int myInt;
 
-    public BuilderAtConstructorSimplePredefined.BuilderAtConstructorSimplePredefinedBuilder myString(String myString) {
+    public BuilderAtConstructorSimplePredefinedBuilder myString(String myString) {
       this.myString = myString + "something";
       return this;
     }

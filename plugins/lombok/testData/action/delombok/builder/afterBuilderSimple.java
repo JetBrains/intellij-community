@@ -24,12 +24,12 @@ public class BuilderSimple {
     BuilderSimpleBuilder() {
     }
 
-    public BuilderSimple.BuilderSimpleBuilder myInt(int myInt) {
+    public BuilderSimpleBuilder myInt(int myInt) {
       this.myInt = myInt;
       return this;
     }
 
-    public BuilderSimple.BuilderSimpleBuilder myString(String myString) {
+    public BuilderSimpleBuilder myString(String myString) {
       this.myString = myString;
       return this;
     }
