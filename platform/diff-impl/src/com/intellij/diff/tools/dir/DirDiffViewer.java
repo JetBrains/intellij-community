@@ -30,7 +30,6 @@ import com.intellij.ide.diff.DirDiffSettings;
 import com.intellij.ide.diff.JarFileDiffElement;
 import com.intellij.ide.diff.VirtualFileDiffElement;
 import com.intellij.ide.highlighter.ArchiveFileType;
-import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -51,26 +50,28 @@ import java.util.Collections;
 import java.util.List;
 
 class DirDiffViewer implements FrameDiffTool.DiffViewer {
-  @NotNull private final DiffContext myContext;
-  @NotNull private final ContentDiffRequest myRequest;
 
-  @NotNull private final DirDiffPanel myDirDiffPanel;
-  @NotNull private final JPanel myPanel;
+  private final DirDiffPanel myDirDiffPanel;
+  private final JPanel myPanel;
+  private final String myHelpID;
 
-  public DirDiffViewer(@NotNull DiffContext context, @NotNull ContentDiffRequest request) {
-    UsageTrigger.trigger("diff.DirDiffViewer");
+  DirDiffViewer(@NotNull DiffContext context, @NotNull ContentDiffRequest request) {
+    this(context,
+         createDiffElement(request.getContents().get(0)),
+         createDiffElement(request.getContents().get(1)),
+         ObjectUtils.notNull(context.getUserData(DirDiffSettings.KEY), new DirDiffSettings()),
+         "reference.dialogs.diff.folder");
+  }
 
-    myContext = context;
-    myRequest = request;
-
-    List<DiffContent> contents = request.getContents();
-    DiffElement element1 = createDiffElement(contents.get(0));
-    DiffElement element2 = createDiffElement(contents.get(1));
+  DirDiffViewer(@NotNull DiffContext context,
+                @NotNull DiffElement element1,
+                @NotNull DiffElement element2,
+                @NotNull DirDiffSettings settings,
+                @Nullable String helpID) {
+    myHelpID = helpID;
 
     Project project = context.getProject();
     if (project == null) project = DefaultProjectFactory.getInstance().getDefaultProject();
-
-    DirDiffSettings settings = ObjectUtils.notNull(context.getUserData(DirDiffSettings.KEY), new DirDiffSettings());
     DirDiffTableModel model = new DirDiffTableModel(project, element1, element2, settings);
 
     myDirDiffPanel = new DirDiffPanel(model, new DirDiffWindow() {
@@ -90,7 +91,7 @@ class DirDiffViewer implements FrameDiffTool.DiffViewer {
     myPanel.add(myDirDiffPanel.getPanel(), BorderLayout.CENTER);
     DataManager.registerDataProvider(myPanel, dataId -> {
       if (PlatformDataKeys.HELP_ID.is(dataId)) {
-        return "reference.dialogs.diff.folder";
+        return myHelpID;
       }
       return myDirDiffPanel.getData(dataId);
     });

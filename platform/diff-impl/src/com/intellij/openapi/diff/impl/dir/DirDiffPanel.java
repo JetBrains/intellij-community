@@ -30,7 +30,6 @@ import com.intellij.ide.diff.DiffElement;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.dir.actions.DirDiffToolbarActions;
 import com.intellij.openapi.diff.impl.dir.actions.RefreshDirDiffAction;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -79,10 +78,10 @@ import static com.intellij.util.ArrayUtil.toObjectArray;
  */
 @SuppressWarnings({"unchecked"})
 public class DirDiffPanel implements Disposable, DataProvider {
-  private static final Logger LOG = Logger.getInstance(DirDiffPanel.class);
-
   public static final String DIVIDER_PROPERTY = "dir.diff.panel.divider.location";
+
   private static final int DIVIDER_PROPERTY_DEFAULT_VALUE = 200;
+
   private JPanel myDiffPanel;
   private JBTable myTable;
   private JPanel myComponent;
@@ -130,21 +129,22 @@ public class DirDiffPanel implements Disposable, DataProvider {
     myTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {
-        final int lastIndex = e.getLastIndex();
-        final int firstIndex = e.getFirstIndex();
-        final DirDiffElementImpl last = myModel.getElementAt(lastIndex);
-        final DirDiffElementImpl first = myModel.getElementAt(firstIndex);
+        ListSelectionModel selectionModel = (ListSelectionModel)e.getSource();
+        int lastIndex = e.getLastIndex();
+        int firstIndex = e.getFirstIndex();
+        DirDiffElementImpl last = myModel.getElementAt(lastIndex);
+        DirDiffElementImpl first = myModel.getElementAt(firstIndex);
         if (last == null || first == null) {
           update(false);
           return;
         }
-        if (last.isSeparator()) {
-          final int ind = lastIndex + ((lastIndex < firstIndex) ? 1 : -1);
-          myTable.getSelectionModel().addSelectionInterval(ind, ind);
+        if (last.isSeparator() && selectionModel.isSelectedIndex(lastIndex)) {
+          int ind = lastIndex + ((lastIndex < firstIndex) ? 1 : -1);
+          selectionModel.addSelectionInterval(ind, ind);
         }
-        else if (first.isSeparator()) {
-          final int ind = firstIndex + ((firstIndex < lastIndex) ? 1 : -1);
-          myTable.getSelectionModel().addSelectionInterval(ind, ind);
+        if (first.isSeparator() && selectionModel.isSelectedIndex(firstIndex)) {
+          int ind = firstIndex + ((firstIndex < lastIndex) ? 1 : -1);
+          selectionModel.addSelectionInterval(ind, ind);
         }
         else {
           update(false);
@@ -153,7 +153,6 @@ public class DirDiffPanel implements Disposable, DataProvider {
       }
     });
     if (model.isOperationsEnabled()) {
-
       new AnAction("Change diff operation") {
         @Override
         public void actionPerformed(AnActionEvent e) {
