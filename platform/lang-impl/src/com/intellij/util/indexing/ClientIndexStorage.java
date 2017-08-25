@@ -1,5 +1,6 @@
 package com.intellij.util.indexing;
 
+import com.intellij.cassandra.CassandraIndexTable;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;

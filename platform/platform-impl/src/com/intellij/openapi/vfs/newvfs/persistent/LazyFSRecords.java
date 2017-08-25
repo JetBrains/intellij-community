@@ -13,6 +13,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.List;
 import java.util.Map;
 import java.util.function.IntPredicate;
 import java.io.File;
@@ -61,7 +63,7 @@ public class LazyFSRecords implements IFSRecords {
     });
     recordsToLoad.add(idsToLoad.toNativeArray());
 
-    FSRecordsSource.RecordInfo[] records = mySource.loadRecords(recordsToLoad);
+    List<FSRecordsSource.RecordInfo> records = mySource.loadRecords(recordsToLoad);
     for (FSRecordsSource.RecordInfo record : records) {
       synchronized (mySink) {
         if (toSinkId(record.id) == -1) {
@@ -90,13 +92,13 @@ public class LazyFSRecords implements IFSRecords {
     if (!isDir) {
       int cId = mySink.getContentId(sinkId);
       if (cId == 0) {
-        byte[] c = mySource.getContent(publicId);
+        ByteBuffer c = mySource.getContent(publicId);
         if (c == null) {
           return;
         }
         DataOutputStream stream = mySink.writeContent(sinkId, fixedSize);
         try {
-          stream.write(c);
+          stream.write(c.array(), c.position(), c.limit() - c.position());
           stream.close();
         } catch (IOException e) {
           throw new RuntimeException(e);
@@ -131,7 +133,7 @@ public class LazyFSRecords implements IFSRecords {
         }
       }
 
-      byte[] value = mySource.readAttr(id, att.getId(), att.getVersion());
+      ByteBuffer value = mySource.readAttr(id, att.getId(), att.getVersion());
       if (value == null) {
         absentIds.add(attrId);
         DataOutputStream os = mySink.writeAttribute(sinkId, ourAbsentAttrsAttr);
@@ -148,7 +150,7 @@ public class LazyFSRecords implements IFSRecords {
       }
       else {
         DataOutputStream os = mySink.writeAttribute(sinkId, att);
-        os.write(value);
+        os.write(value.array(), value.position(), value.limit() - value.position());
         os.close();
       }
     } catch (IOException e) {
@@ -168,7 +170,7 @@ public class LazyFSRecords implements IFSRecords {
     mySink.connect(lockContext, names, fileNameCache, myAttrsList);
     FSRecordsSource.SourceInfo init = mySource.connect();
     myRoots = init.roots;
-    System.out.println("CONNECTED3" + myRoots);
+    System.out.println("CONNECTED <3" + myRoots);
     mySourceMaxId = init.maxId;
   }
 

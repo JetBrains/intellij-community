@@ -31,6 +31,7 @@ import com.intellij.util.BitUtil;
 import com.intellij.util.CompressionUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.io.*;
 import com.intellij.util.io.DataOutputStream;
@@ -47,6 +48,7 @@ import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -115,7 +117,7 @@ public class FSRecords implements IFSRecords {
   private volatile int myLocalModificationCount;
   private volatile boolean myIsDisposed;
 
-  private static final int FREE_RECORD_FLAG = 0x100;
+  public static final int FREE_RECORD_FLAG = 0x100;
   private static final int ALL_VALID_FLAGS = PersistentFS.ALL_VALID_FLAGS | FREE_RECORD_FLAG;
 
   static File defaultBasePath() {
@@ -1435,6 +1437,52 @@ public class FSRecords implements IFSRecords {
       requestRebuild(e);
     }
     return null;
+  }
+
+  public Map<String, InputStream> listAttrs(int fileId) throws IOException {
+    HashMap<String, InputStream> result = new HashMap<>();
+    checkFileIsValid(fileId);
+
+    int recordId = getAttributeRecordId(fileId);
+    if (recordId == 0) return null;
+
+    Storage storage = getAttributesStorage();
+
+    try (DataInputStream attrRefs = storage.readStream(recordId)) {
+      if (bulkAttrReadSupport) skipRecordHeader(attrRefs, RESERVED_ATTR_ID, fileId);
+
+      while (attrRefs.available() > 0) {
+        final int attIdOnPage = DataInputOutputUtil.readINT(attrRefs);
+        final int attrAddressOrSize = DataInputOutputUtil.readINT(attrRefs);
+        final String attrId = myAttributesList.getById(bulkAttrReadSupport ? attIdOnPage - FIRST_ATTR_ID_OFFSET : attIdOnPage);
+        if (inlineAttributes) {
+          if (attrAddressOrSize < MAX_SMALL_ATTR_SIZE) {
+            byte[] b = new byte[attrAddressOrSize];
+            attrRefs.readFully(b);
+            result.put(attrId, new ByteArrayInputStream(b));
+          } else {
+            int page = attrAddressOrSize - MAX_SMALL_ATTR_SIZE;
+            if (page != 0){
+              DataInputStream stream = getAttributesStorage().readStream(page);
+              if (bulkAttrReadSupport) {
+                skipRecordHeader(stream, attIdOnPage, fileId);
+              }
+              result.put(attrId, stream);
+            }
+          }
+        } else {
+          int page = attrAddressOrSize;
+          if (page != 0){
+            DataInputStream stream = getAttributesStorage().readStream(page);
+            if (bulkAttrReadSupport) {
+              skipRecordHeader(stream, attIdOnPage, fileId);
+            }
+            result.put(attrId, stream);
+          }
+        }
+      }
+    }
+    return result;
   }
 
   // should be called under r or w lock

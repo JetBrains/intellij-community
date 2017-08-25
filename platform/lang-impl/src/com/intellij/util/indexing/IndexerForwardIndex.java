@@ -16,6 +16,7 @@ package com.intellij.util.indexing;
  * limitations under the License.
  */
 
+import com.intellij.cassandra.CassandraIndexTable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.util.containers.ContainerUtil;
@@ -61,9 +62,12 @@ public class IndexerForwardIndex<K, V> implements ForwardIndex<K, V> {
 
   @Override
   public void flush() {
+    myDelegate.flush();
+  }
+
+  public void dumpToCassandra() {
     System.out.println("flushing forward index for " + myName);
     try {
-      myDelegate.flush();
       CassandraIndexTable.getInstance().bulkInsertForward(myName.toString(), 1, myDirtyKeys.stream().map(fileId -> {
         try {
           Collection<K> keys = myDelegate.getInputsIndex().get(fileId);

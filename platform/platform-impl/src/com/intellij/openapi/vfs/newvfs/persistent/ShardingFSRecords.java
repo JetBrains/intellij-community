@@ -33,15 +33,21 @@ public class ShardingFSRecords implements IFSRecords {
   private VfsDependentEnum<String> myAttrsList;
   private final Object lock = new Object();
 
-  private TIntObjectHashMap<IFSRecords> myShards = new TIntObjectHashMap<>();
+  private TIntObjectHashMap<FSRecordsShard> myShards = new TIntObjectHashMap<>();
 
   public ShardingFSRecords(Supplier<IFSRecords> shardFactory) {
     myFactory = shardFactory;
   }
 
-  private IFSRecords getShard(int recordId) {
+  public void dumpToCassandra() {
+    for (FSRecordsShard records : getShards()) {
+      records.dumpToCassandra();
+    }
+  }
+
+  private FSRecordsShard getShard(int recordId) {
     int shardId = ((recordId < 0 ? -recordId : recordId) << 24) >> 24;
-    IFSRecords shard = myShards.get(shardId);
+    FSRecordsShard shard = myShards.get(shardId);
     if (shard != null) {
       return shard;
     }
@@ -57,11 +63,11 @@ public class ShardingFSRecords implements IFSRecords {
     }
   }
 
-  private Collection<IFSRecords> getShards() {
+  public Collection<FSRecordsShard> getShards() {
     return ContainerUtil.map2List(myShards.getValues(), Function.ID);
   }
 
-  private IFSRecords getAnyShard() {
+  private FSRecordsShard getAnyShard() {
     return getShard(1);
   }
 

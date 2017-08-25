@@ -1,5 +1,6 @@
 package com.intellij.util.indexing;
 
+import com.intellij.cassandra.CassandraIndexTable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -103,6 +104,10 @@ public class IndexerIndexStorage<K, V> implements VfsAwareIndexStorage<K, V>, Bu
 
   @Override
   public void flush() throws IOException {
+    myDelegate.flush();
+  }
+
+  public void dumpToCassandra() {
     System.out.println("flushing " + myIndexId + "changedKeys: " + changedKeys.size());
     try {
       CassandraIndexTable.getInstance().bulkInsert(myIndexId.toString(), 1, 1, changedKeys.stream().map(k -> {
@@ -131,8 +136,8 @@ public class IndexerIndexStorage<K, V> implements VfsAwareIndexStorage<K, V>, Bu
     } catch (Throwable e)  {
       e.printStackTrace();
     }
-    myDelegate.flush();
     changedKeys.clear();
     System.out.println("done flushing " + myIndexId);
+
   }
 }

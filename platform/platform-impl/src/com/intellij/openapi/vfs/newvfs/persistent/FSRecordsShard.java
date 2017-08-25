@@ -26,6 +26,18 @@ public class FSRecordsShard implements IFSRecords {
     myDelegate = delegate;
   }
 
+  public IFSRecords getDelegate() {
+    return myDelegate;
+  }
+
+  public int getShardId() {
+    return myShardId;
+  }
+
+  public void dumpToCassandra() {
+    ((IndexerFSRecords)myDelegate).dumpToCassandra(myShardId);
+  }
+
   private static int removeShardId(int id) {
     return id >> 8;
   }

@@ -1,5 +1,6 @@
 package com.intellij.util.indexing;
 
+import com.intellij.cassandra.CassandraIndexTable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.impl.ForwardIndex;
 import com.intellij.util.indexing.impl.InputDataDiffBuilder;

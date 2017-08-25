@@ -42,7 +42,7 @@
     </component>
 
     <component>
-      <implementation-class>com.intellij.util.indexing.CassandraIndexTable</implementation-class>
+      <implementation-class>com.intellij.cassandra.CassandraIndexTable</implementation-class>
     </component>
 
     <component>

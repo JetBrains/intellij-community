@@ -168,11 +168,11 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     return state;
   }
 
-  public void dumpIndexToServer() {
+  public void dumpToCassandra() {
     for (ID<?, ?> id : getState().getIndexIDs()) {
       UpdatableIndex<?, ?, FileContent> index = getState().getIndex(id);
-      if (index instanceof MapReduceIndex<?, ?, ?>) {
-        //((MapReduceIndex)index).dumpToServer();
+      if (index instanceof VfsAwareMapReduceIndex) {
+        ((VfsAwareMapReduceIndex)index).dumpToCassandra();
       }
     }
   }

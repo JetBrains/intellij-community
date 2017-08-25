@@ -99,39 +99,24 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     final AtomicBoolean once = new AtomicBoolean();
     final String cachesDir = System.getProperty("caches_dir")  == null
                              ? PathManager.getSystemPath() + "/caches/" : System.getProperty("caches_dir");
-    File sinkFile = new File("/Users/jetzajac/sink");
+    File cachesDirFile = new File(cachesDir);
     myRecords = new ShardingFSRecords(() -> {
       assert !once.get();
       once.set(true);
-
-      if (indexer || true) {
-        return new FSRecords(new File(FSRecords.getCachesDir()));
+      if (indexer) {
+        return new IndexerFSRecords(new FSRecords(new File(FSRecords.getCachesDir())));
       } else {
-        FSRecords sourceRecords = new FSRecords(new File(FSRecords.getCachesDir()));
-        try {
-          File sourceNamesFile = new File(cachesDir, "names" + FSRecords.VFS_FILES_EXTENSION);
-          PagedFileStorage.StorageLockContext sourceLockContext = new PagedFileStorage.StorageLockContext(false);
-          PersistentStringEnumerator sourceNames = new PersistentStringEnumerator(sourceNamesFile, sourceLockContext);
-          FileNameCache sourceNameCache = new FileNameCache(sourceNames);
-          VfsDependentEnum<String> sourceAttrList =
-            new VfsDependentEnum<>(new File(cachesDir), "attrib", EnumeratorStringDescriptor.INSTANCE, 1, sourceRecords);
-          sourceRecords.connect(sourceLockContext, sourceNames, sourceNameCache, sourceAttrList);
-          FSRecordsSource.FSRecordsSourceImpl source = new FSRecordsSource.FSRecordsSourceImpl(sourceRecords, sourceNames);
-          FSRecords sink = new FSRecords(sinkFile);
-          return new LazyFSRecords(sinkFile, sink, source);
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
+        FSRecordsSource source = new FSRecordsSource.CassandraFSRecordsSource(1, 1);
+        FSRecords sink = new FSRecords(cachesDirFile);
+        return new LazyFSRecords(cachesDirFile, sink, source);
       }
-
     });
 
-    File namesFile = new File(sinkFile, "names" + FSRecords.VFS_FILES_EXTENSION);
+    File namesFile = new File(cachesDirFile, "names" + FSRecords.VFS_FILES_EXTENSION);
     PagedFileStorage.StorageLockContext lockContext = new PagedFileStorage.StorageLockContext(false);
     try {
       myNames = new PersistentStringEnumerator(namesFile, lockContext);
-      VfsDependentEnum<String> attrsList = new VfsDependentEnum<>(sinkFile, "attrib", EnumeratorStringDescriptor.INSTANCE, 1, myRecords);
+      VfsDependentEnum<String> attrsList = new VfsDependentEnum<>(cachesDirFile, "attrib", EnumeratorStringDescriptor.INSTANCE, 1, myRecords);
       myNamesCache = new FileNameCache(myNames);
       myRecords.connect(lockContext, myNames, myNamesCache, attrsList);
     }

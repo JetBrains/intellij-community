@@ -69,6 +69,11 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
     installMemoryModeListener();
   }
 
+  public void dumpToCassandra() {
+    ((IndexerIndexStorage)myStorage).dumpToCassandra();
+    ((IndexerForwardIndex)myForwardIndex).dumpToCassandra();
+  }
+
   @TestOnly
   public VfsAwareMapReduceIndex(@NotNull IndexExtension<Key, Value, Input> extension,
                                 @NotNull IndexStorage<Key, Value> storage,

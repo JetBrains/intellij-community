@@ -102,9 +102,9 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponentAdap
     return state;
   }
 
-  public void dumpToServer() {
+  public void dumpToCassandra() {
     for (MyIndex<?> index : getAsyncState().myIndices.values()) {
-      //index.dumpToServer();
+      index.dumpToCassandra();
     }
   }
 
