@@ -283,9 +283,6 @@ public abstract class QuickFixFactory {
   public abstract IntentionAction addMethodQualifierFix(@NotNull PsiMethodCallExpression methodCall);
 
   @NotNull
-  public abstract IntentionAction createWrapLongWithMathToIntExactFix(@Nullable PsiType type, @NotNull PsiExpression expression);
-
-  @NotNull
   public abstract IntentionAction createWrapWithOptionalFix(@Nullable PsiType type, @NotNull PsiExpression expression);
 
   @Nullable
@@ -304,5 +301,5 @@ public abstract class QuickFixFactory {
   public abstract LocalQuickFixAndIntentionActionOnPsiElement createAccessStaticViaInstanceFix(PsiReferenceExpression methodRef, JavaResolveResult result);
 
   @NotNull
-  public abstract IntentionAction createWrapStringWithFileFix(@Nullable PsiType type, @NotNull PsiExpression expression);
+  public abstract IntentionAction createWrapWithAdapterFix(@Nullable PsiType type, @NotNull PsiExpression expression);
 }

@@ -16,14 +16,24 @@
 package com.intellij.java.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
+import com.intellij.testFramework.LightProjectDescriptor;
+import org.jetbrains.annotations.NotNull;
 
-public class WrapStringWithFileFixTest extends LightQuickFixParameterizedTestCase {
+import static com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase.JAVA_9;
+
+public class WrapWithAdapterMethodCallFixTest extends LightQuickFixParameterizedTestCase {
   public void test() {
     doAllTests();
   }
 
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_9; // java.nio.file is mocked since Java 9 only
+  }
+
   @Override
   protected String getBasePath() {
-    return "/codeInsight/daemonCodeAnalyzer/quickFix/wrapStringWithFile";
+    return "/codeInsight/daemonCodeAnalyzer/quickFix/wrapAdapterCall";
   }
 }

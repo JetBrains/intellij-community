@@ -805,12 +805,6 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
-  public IntentionAction createWrapLongWithMathToIntExactFix(@Nullable PsiType type, @NotNull PsiExpression expression) {
-    return new WrapLongWithMathToIntExactFix(type, expression);
-  }
-
-  @NotNull
-  @Override
   public IntentionAction createWrapWithOptionalFix(@Nullable PsiType type, @NotNull PsiExpression expression) {
     return WrapObjectWithOptionalOfNullableFix.createFix(type, expression);
   }
@@ -885,8 +879,8 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
-  public IntentionAction createWrapStringWithFileFix(@Nullable PsiType type, @NotNull PsiExpression expression) {
-    return new WrapStringWithFileFix(type, expression);
+  public IntentionAction createWrapWithAdapterFix(@Nullable PsiType type, @NotNull PsiExpression expression) {
+    return new WrapWithAdapterMethodCallFix(type, expression);
   }
 
   @NotNull

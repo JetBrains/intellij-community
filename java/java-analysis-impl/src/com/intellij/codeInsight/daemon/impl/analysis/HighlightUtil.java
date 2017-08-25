@@ -576,10 +576,9 @@ public class HighlightUtil extends HighlightUtilBase {
       QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createAddTypeCastFix(lType, expression));
     }
     if (expression != null) {
-      QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createWrapLongWithMathToIntExactFix(lType, expression));
       QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createWrapWithOptionalFix(lType, expression));
       QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createWrapExpressionFix(lType, expression));
-      QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createWrapStringWithFileFix(lType, expression));
+      QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createWrapWithAdapterFix(lType, expression));
       AddTypeArgumentsConditionalFix.register(highlightInfo, expression, lType);
       registerCollectionToArrayFixAction(highlightInfo, rType, lType, expression);
     }
@@ -1462,7 +1461,7 @@ public class HighlightUtil extends HighlightUtilBase {
       QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createConvertSwitchToIfIntention(statement));
       if (PsiType.LONG.equals(type) || PsiType.FLOAT.equals(type) || PsiType.DOUBLE.equals(type)) {
         QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createAddTypeCastFix(PsiType.INT, expression));
-        QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createWrapLongWithMathToIntExactFix(PsiType.INT, expression));
+        QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createWrapWithAdapterFix(PsiType.INT, expression));
       }
       if (requiredLevel != null) {
         QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createIncreaseLanguageLevelFix(requiredLevel));
