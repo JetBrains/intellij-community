@@ -119,4 +119,24 @@ public class TreeSmartSelectTest extends AbstractTreeBuilderTest {
                "    [zoo.txt]\n");
   }
 
+  public void testDecreaseSimple() throws Exception {
+    doAndWaitForBuilder(() -> {
+      Node intellij = myRoot.addChild("com");
+      intellij.addChild("a");
+      intellij.addChild("b");
+      Node c = intellij.addChild("c");
+      TreeUtil.expandAll(myTree);
+      getBuilder().select(c.myElement);
+    });
+
+    myProvider.increaseSelection(myTree);
+    myProvider.increaseSelection(myTree);
+    myProvider.decreaseSelection(myTree);
+    assertTree("-/\n" +
+               " -com\n" +
+               "  [a]\n" +
+               "  [b]\n" +
+               "  [c]\n");
+
+  }
 }
