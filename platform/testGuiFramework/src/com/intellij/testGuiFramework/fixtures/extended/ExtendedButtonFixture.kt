@@ -22,9 +22,10 @@ import javax.swing.JButton
 
 class ExtendedButtonFixture(robot: Robot, button: JButton) : JButtonFixture(robot, button) {
 
-  fun waitEnabled(timeoutInSeconds: Int = 30) {
+  fun waitEnabled(timeoutInSeconds: Int = 30): ExtendedButtonFixture {
     waitUntil("Waiting $timeoutInSeconds sec until button with text ${target().text} will be enabled",
               timeoutInSeconds = timeoutInSeconds) { isEnabled }
+    return this
   }
 
   fun clickWhenEnabled(timeoutInSeconds: Int = 30) {
