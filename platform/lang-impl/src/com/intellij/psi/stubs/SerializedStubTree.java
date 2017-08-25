@@ -138,4 +138,12 @@ public class SerializedStubTree {
 
     return result;
   }
+
+  public long getByteContentLength() {
+    return myByteContentLength;
+  }
+
+  public int getCharContentLength() {
+    return myCharContentLength;
+  }
 }

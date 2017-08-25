@@ -16,9 +16,7 @@ import com.intellij.openapi.vfs.VirtualFileVisitor
 import com.intellij.psi.impl.DebugUtil
 import com.intellij.psi.stubs.*
 import com.intellij.util.indexing.FileContentImpl
-import com.intellij.util.io.PersistentEnumeratorBase
 import com.intellij.util.io.PersistentHashMap
-import com.intellij.util.io.PersistentStringEnumerator
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.psi.LanguageLevel
@@ -46,76 +44,112 @@ fun main(args: Array<String>) {
 }
 
 fun mergeStubs(paths: List<String>) {
-  val stubExternalizer = StubTreeExternalizer()
-  val stubsFilePath = "${System.getProperty("user.dir")}/$stubsFileName"
+  val app = IdeaTestApplication.getInstance()
+  val project = ProjectManager.getInstance().loadAndOpenProject("${PathManager.getHomePath()}/python/testData/empty")!!
+  // we don't need a project here, but I didn't find a better way to wait until indexes and components are initialized
 
-  val storageFile = File(stubsFilePath + ".input")
-  if (storageFile.exists()) {
-    storageFile.delete()
+  try {
+    val stubExternalizer = StubTreeExternalizer()
+    val stubsFilePath = "${System.getProperty("user.dir")}/$stubsFileName"
+
+    val storageFile = File(stubsFilePath + ".input")
+    if (storageFile.exists()) {
+      storageFile.delete()
+    }
+
+    val storage = PersistentHashMap<HashCode, SerializedStubTree>(storageFile,
+                                                                  HashCodeDescriptor.instance, stubExternalizer)
+
+    val stringEnumeratorFile = File(stubsFilePath + ".names")
+    if (stringEnumeratorFile.exists()) {
+      stringEnumeratorFile.delete()
+    }
+
+    val newSerializationManager = SerializationManagerImpl(stringEnumeratorFile)
+
+    val map = HashMap<HashCode, Int>()
+
+    println("Writing results to $stubsFilePath")
+
+    for (path in paths) {
+      println("Reading stubs from $path")
+      var count = 0
+      val fromStorageFile = File(path, stubsFileName + ".input")
+      val fromStorage = PersistentHashMap<HashCode, SerializedStubTree>(fromStorageFile,
+                                                                        HashCodeDescriptor.instance, stubExternalizer)
+
+      val serializationManager = SerializationManagerImpl(File(path, stubsFileName + ".names"))
+
+      try {
+        fromStorage.processKeysWithExistingMapping(
+          { key ->
+            count++
+            val value = fromStorage.get(key)
+
+            val stub = value.getStub(false, serializationManager)
+
+            // re-serialize stub tree to correctly enumerate strings in the new string enumerator
+            val bytes = BufferExposingByteArrayOutputStream()
+            newSerializationManager.serialize(stub, bytes)
+
+            val newStubTree = SerializedStubTree(bytes.internalBuffer, bytes.size(), null, value.byteContentLength,
+                                                 value.charContentLength)
+
+            if (storage.containsMapping(key)) {
+              if (newStubTree != storage.get(key)) { // TODO: why are they slightly different???
+                val s = storage.get(key).getStub(false, newSerializationManager)
+
+                val bytes2 = BufferExposingByteArrayOutputStream()
+                newSerializationManager.serialize(stub, bytes2)
+
+                val newStubTree2 = SerializedStubTree(bytes2.internalBuffer, bytes2.size(), null, value.byteContentLength,
+                                                      value.charContentLength)
+
+                TestCase.assertTrue(newStubTree == newStubTree2) // wtf!!! why are they equal now???
+              }
+              map.put(key, map.get(key)!! + 1)
+            }
+            else {
+              storage.put(key, newStubTree)
+              map.put(key, 1)
+            }
+            true
+          })
+
+      }
+      finally {
+        fromStorage.close()
+        Disposer.dispose(serializationManager)
+      }
+
+      println("Items in ${fromStorageFile.absolutePath}: $count")
+    }
+
+    storage.close()
+    Disposer.dispose(newSerializationManager)
+
+    val total = map.size
+
+    println("Total items in storage: $total")
+
+    for (i in 2..paths.size) {
+      val count = map.entries.stream().filter({ e -> e.value == i }).count()
+      println("Intersection between $i: ${"%.2f".format(if (total > 0) 100.0 * count / total else 0.0)}%")
+    }
   }
+  finally {
 
-  val storage = PersistentHashMap<HashCode, SerializedStubTree>(storageFile,
-                                                                HashCodeDescriptor.instance, stubExternalizer)
-
-  val enumeratorFile = File(stubsFilePath + ".names")
-  if (enumeratorFile.exists()) {
-    enumeratorFile.delete()
-  }
-  val stringEnumerator = PersistentStringEnumerator(enumeratorFile)
-
-  val map = HashMap<HashCode, Int>()
-
-  println("Writing results to $stubsFilePath")
-
-  for (path in paths) {
-    var count = 0
-    val fromStorageFile = File(path, stubsFileName + ".input")
-    val fromStorage = PersistentHashMap<HashCode, SerializedStubTree>(fromStorageFile,
-                                                                      HashCodeDescriptor.instance, stubExternalizer)
-
-    fromStorage.processKeysWithExistingMapping(
-      { key ->
-        count++
-        val value = fromStorage.get(key)
-        if (storage.containsMapping(key)) {
-          TestCase.assertEquals(value, storage.get(key))
-          map.put(key, map.get(key)!! + 1)
-        }
-        else {
-          storage.put(key, value)
-          map.put(key, 1)
-        }
-        true
-      })
-
-    val fromStringEnumeratorFile = File(path, stubsFileName + ".names")
-    val fromStringEnumerator = PersistentStringEnumerator(fromStringEnumeratorFile)
-
-    fromStringEnumerator.traverseAllRecords(object : PersistentEnumeratorBase.RecordsProcessor() {
-      override fun process(record: Int): Boolean {
-        stringEnumerator.enumerate(fromStringEnumerator.valueOf(record))
-        return true
+    UIUtil.invokeAndWaitIfNeeded(Runnable {
+      ProjectManager.getInstance().closeProject(project)
+      WriteAction.run<Throwable> {
+        Disposer.dispose(project)
+        Disposer.dispose(app)
       }
     })
 
-    fromStorage.close()
-    fromStringEnumerator.close()
-
-    println("Items in ${fromStorageFile.absolutePath}: $count")
-    println("Items in ${fromStringEnumeratorFile.absolutePath}: $count")
   }
 
-  storage.close()
-  stringEnumerator.close()
-
-  val total = map.size
-
-  println("Total items in storage: $total")
-
-  for (i in 2..paths.size) {
-    val count = map.entries.stream().filter({ e -> e.value == i }).count()
-    println("Intersection between $i: ${"%.2f".format(100.0 * count / total)}%")
-  }
+  System.exit(0)
 }
 
 fun buildStubs() {
@@ -208,6 +242,7 @@ fun indexSdkAndStoreSerializedStubs(projectPath: String, sdkPath: String, stubsF
   }
   finally {
     storage.close()
+    Disposer.dispose(serializationManager)
 
     LanguageLevel.FORCE_LANGUAGE_LEVEL = LanguageLevel.getDefault()
     UIUtil.invokeAndWaitIfNeeded(Runnable {
