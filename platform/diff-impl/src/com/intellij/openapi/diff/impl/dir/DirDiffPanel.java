@@ -153,6 +153,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
       }
     });
     if (model.isOperationsEnabled()) {
+
       new AnAction("Change diff operation") {
         @Override
         public void actionPerformed(AnActionEvent e) {
@@ -218,10 +219,13 @@ public class DirDiffPanel implements Disposable, DataProvider {
     final ActionToolbar toolbar = actionManager.createActionToolbar("DirDiff", actions, true);
     registerCustomShortcuts(actions, myTable);
     myToolBarPanel.add(toolbar.getComponent(), BorderLayout.CENTER);
-    final JBLabel label = new JBLabel("Use Space button or mouse click to change operation for the selected elements." +
-                                      " Enter to perform.", SwingConstants.CENTER);
-    label.setForeground(UIUtil.getInactiveTextColor());
-    UIUtil.applyStyle(UIUtil.ComponentStyle.MINI, label);
+    if (model.isOperationsEnabled()) {
+      final JBLabel label = new JBLabel("Use Space button or mouse click to change operation for the selected elements." +
+                                        " Enter to perform.", SwingConstants.CENTER);
+      label.setForeground(UIUtil.getInactiveTextColor());
+      UIUtil.applyStyle(UIUtil.ComponentStyle.MINI, label);
+      myFilesPanel.add(label, BorderLayout.SOUTH);
+    }
     DataManager.registerDataProvider(myFilesPanel, this);
     myTable.addMouseListener(new PopupHandler() {
       @Override
@@ -231,7 +235,6 @@ public class DirDiffPanel implements Disposable, DataProvider {
         popupMenu.show(comp, x, y);
       }
     });
-    myFilesPanel.add(label, BorderLayout.SOUTH);
     final JBLoadingPanel loadingPanel = new JBLoadingPanel(new BorderLayout(), wnd.getDisposable());
     loadingPanel.addListener(new JBLoadingPanelListener.Adapter() {
       boolean showHelp = true;
