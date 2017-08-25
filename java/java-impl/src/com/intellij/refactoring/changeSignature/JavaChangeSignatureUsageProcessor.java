@@ -351,9 +351,8 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
         PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(ref.getProject());
         PsiTryStatement tryStatement = (PsiTryStatement)elementFactory.createStatementFromText("try {} catch (Exception e) {}", null);
         PsiStatement anchor;
-        PsiElement lambdaBody = context instanceof PsiLambdaExpression ? ((PsiLambdaExpression)context).getBody() : null;
-        if (lambdaBody instanceof PsiExpression) {
-          PsiCodeBlock codeBlock = (PsiCodeBlock)((PsiLambdaExpression)RefactoringUtil.expandExpressionLambdaToCodeBlock(lambdaBody)).getBody();
+        if (context instanceof PsiLambdaExpression) {
+          PsiCodeBlock codeBlock = (PsiCodeBlock)RefactoringUtil.expandExpressionLambdaToCodeBlock((PsiLambdaExpression)context).getBody();
           LOG.assertTrue(codeBlock != null);
           anchor = codeBlock.getStatements()[0];
         }

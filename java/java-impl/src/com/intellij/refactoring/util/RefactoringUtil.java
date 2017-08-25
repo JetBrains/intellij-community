@@ -949,19 +949,18 @@ public class RefactoringUtil {
     return element instanceof PsiLoopStatement || element instanceof PsiIfStatement;
   }
 
-  public static PsiElement expandExpressionLambdaToCodeBlock(@NotNull PsiElement element) {
-    final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(element, PsiLambdaExpression.class);
-    LOG.assertTrue(lambdaExpression != null);
+  public static PsiLambdaExpression expandExpressionLambdaToCodeBlock(@NotNull PsiLambdaExpression lambdaExpression) {
     final PsiElement body = lambdaExpression.getBody();
-    LOG.assertTrue(body instanceof PsiExpression);
-    String blockText = "{";
-    blockText += PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType(lambdaExpression)) ? "" : "return ";
-    blockText +=  body.getText() + ";}";
+    if (!(body instanceof PsiExpression)) return lambdaExpression;
 
-    final String resultedLambdaText = lambdaExpression.getParameterList().getText() + "->" + blockText;
+    String newLambdaText = lambdaExpression.getParameterList().getText() + "->{";
+    if (!PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType(lambdaExpression))) newLambdaText += "return ";
+    newLambdaText += body.getText() + ";}";
+
+    final Project project = lambdaExpression.getProject();
     final PsiExpression expressionFromText =
-      JavaPsiFacade.getElementFactory(element.getProject()).createExpressionFromText(resultedLambdaText, lambdaExpression);
-    return CodeStyleManager.getInstance(element.getProject()).reformat(lambdaExpression.replace(expressionFromText));
+      JavaPsiFacade.getElementFactory(project).createExpressionFromText(newLambdaText, lambdaExpression);
+    return (PsiLambdaExpression)CodeStyleManager.getInstance(project).reformat(lambdaExpression.replace(expressionFromText));
   }
 
   /**

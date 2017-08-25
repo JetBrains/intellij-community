@@ -52,8 +52,7 @@ public class ReplaceConditionalWithIfIntention extends Intention {
   private static void replaceConditionalWithIf(PsiConditionalExpression expression) {
     final PsiElement expressionParent = expression.getParent();
     if (expressionParent instanceof PsiLambdaExpression) {
-      final PsiElement codeBlock =
-        ((PsiLambdaExpression)RefactoringUtil.expandExpressionLambdaToCodeBlock(expression)).getBody();
+      final PsiElement codeBlock = RefactoringUtil.expandExpressionLambdaToCodeBlock((PsiLambdaExpression)expressionParent).getBody();
       LOG.assertTrue(codeBlock instanceof PsiCodeBlock, codeBlock);
       final PsiStatement statement = ((PsiCodeBlock)codeBlock).getStatements()[0];
       expression = (PsiConditionalExpression)(statement instanceof PsiReturnStatement ? ((PsiReturnStatement)statement).getReturnValue() 

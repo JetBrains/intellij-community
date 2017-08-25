@@ -84,12 +84,9 @@ public class SurroundWithTryCatchFix implements IntentionAction {
     }
 
     if (myStatement instanceof PsiLambdaExpression) {
-      PsiElement body = ((PsiLambdaExpression)myStatement).getBody();
-      if (body instanceof PsiExpression) {
-        myStatement = RefactoringUtil.expandExpressionLambdaToCodeBlock(body);
-      }
+      final PsiLambdaExpression lambdaExpression = RefactoringUtil.expandExpressionLambdaToCodeBlock((PsiLambdaExpression)myStatement);
 
-      body = ((PsiLambdaExpression)myStatement).getBody();
+      final PsiElement body = lambdaExpression.getBody();
       LOG.assertTrue(body instanceof PsiCodeBlock);
       final PsiStatement[] statements = ((PsiCodeBlock)body).getStatements();
       LOG.assertTrue(statements.length == 1);

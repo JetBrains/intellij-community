@@ -99,11 +99,8 @@ public class ExtractToMethodReferenceIntention extends BaseElementAtCaretIntenti
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
     PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(element, PsiLambdaExpression.class, false);
     if (lambdaExpression != null) {
+      lambdaExpression = RefactoringUtil.expandExpressionLambdaToCodeBlock(lambdaExpression);
       PsiElement body = lambdaExpression.getBody();
-      if (body instanceof PsiExpression) {
-        lambdaExpression = (PsiLambdaExpression)RefactoringUtil.expandExpressionLambdaToCodeBlock(body);
-        body = lambdaExpression.getBody();
-      }
 
       PsiClass targetClass = PsiTreeUtil.getParentOfType(lambdaExpression, PsiClass.class);
       if (targetClass == null) return;
