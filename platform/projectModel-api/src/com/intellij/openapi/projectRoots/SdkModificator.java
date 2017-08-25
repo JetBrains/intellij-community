@@ -39,7 +39,7 @@ public interface SdkModificator {
   void setSdkAdditionalData(SdkAdditionalData data);
 
   @NotNull
-  VirtualFile[] getRoots(OrderRootType rootType);
+  VirtualFile[] getRoots(@NotNull OrderRootType rootType);
 
   void addRoot(@NotNull VirtualFile root, @NotNull OrderRootType rootType);
 

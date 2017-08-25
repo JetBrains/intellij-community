@@ -49,7 +49,7 @@ public class Src15RepositoryUseTest extends PsiTestCase {
 
     LanguageLevelProjectExtension.getInstance(myProject).setLanguageLevel(LanguageLevel.JDK_1_5);
     String root = PathManagerEx.getTestDataPath() + "/psi/repositoryUse/src15";
-    PsiTestUtil.removeAllRoots(myModule, IdeaTestUtil.getMockJdk17("mock 1.5"));
+    PsiTestUtil.removeAllRoots(myModule, IdeaTestUtil.getMockJdk17());
     PsiTestUtil.createTestProjectStructure(myProject, myModule, root, myFilesToDelete);
   }
 

@@ -37,7 +37,7 @@ public class InheritedJdkTest extends ModuleTestCase {
   }
 
   public void test1() {
-    final Sdk jdk = IdeaTestUtil.getMockJdk17("java 1.4");
+    final Sdk jdk = IdeaTestUtil.getMockJdk17();
     ApplicationManager.getApplication().runWriteAction(() -> ProjectJdkTable.getInstance().addJdk(jdk));
     final ModuleRootManager rootManager = ModuleRootManager.getInstance(myModule);
 
@@ -55,7 +55,7 @@ public class InheritedJdkTest extends ModuleTestCase {
     assertFalse("JDK is not inherited after setJdk(null)", rootManager.isSdkInherited());
     assertNull("No JDK assigned", rootManager.getSdk());
 
-    final Sdk jdk1 = IdeaTestUtil.getMockJdk17("jjj");
+    final Sdk jdk1 = IdeaTestUtil.getMockJdk17();
     ApplicationManager.getApplication().runWriteAction(() -> ProjectJdkTable.getInstance().addJdk(jdk1));
     ModuleRootModificationUtil.setModuleSdk(myModule, jdk1);
 

@@ -79,7 +79,7 @@ public abstract class MavenResolveToWorkspaceTest extends MavenImportingTestCase
 
     //assertModules("project", "moduleA", "moduleB");
 
-    WriteAction.run(() -> ProjectRootManager.getInstance(myProject).setProjectSdk(createJdk("Java 1.5")));
+    WriteAction.run(() -> ProjectRootManager.getInstance(myProject).setProjectSdk(createJdk()));
 
     MavenRunnerParameters runnerParameters = new MavenRunnerParameters(moduleB.getParent().getPath(), false, Collections.singletonList("jetty:run"), Collections.emptyMap());
     runnerParameters.setResolveToWorkspace(true);

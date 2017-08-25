@@ -36,7 +36,7 @@ public class FindUsages15Test extends PsiTestCase{
 
     LanguageLevelProjectExtension.getInstance(myJavaFacade.getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
     String root = JavaTestUtil.getJavaTestDataPath() + "/psi/search/findUsages15/" + getTestName(true);
-    PsiTestUtil.removeAllRoots(myModule, IdeaTestUtil.getMockJdk17("java 1.5"));
+    PsiTestUtil.removeAllRoots(myModule, IdeaTestUtil.getMockJdk17());
     PsiTestUtil.createTestProjectStructure(myProject, myModule, root, myFilesToDelete);
   }
 

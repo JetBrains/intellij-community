@@ -532,8 +532,8 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     return sdk;
   }
 
-  protected static Sdk createJdk(String versionName) {
-    return IdeaTestUtil.getMockJdk17(versionName);
+  protected static Sdk createJdk() {
+    return IdeaTestUtil.getMockJdk17();
   }
 
   protected static AtomicInteger configConfirmationForYesAnswer() {

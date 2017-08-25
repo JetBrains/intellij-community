@@ -15,9 +15,11 @@
  */
 package com.intellij.openapi.vfs;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author yole
  */
 public interface JarCopyingFileSystem {
-  void setNoCopyJarForPath(String pathInJar);
+  void setNoCopyJarForPath(@NotNull String pathInJar);
 }

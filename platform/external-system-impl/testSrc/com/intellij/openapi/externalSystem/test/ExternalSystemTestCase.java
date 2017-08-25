@@ -455,13 +455,13 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
   }
 
   protected Sdk setupJdkForModule(final String moduleName) {
-    final Sdk sdk = true ? JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk() : createJdk("Java 1.5");
+    final Sdk sdk = true ? JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk() : createJdk();
     ModuleRootModificationUtil.setModuleSdk(getModule(moduleName), sdk);
     return sdk;
   }
 
-  protected static Sdk createJdk(String versionName) {
-    return IdeaTestUtil.getMockJdk17(versionName);
+  protected static Sdk createJdk() {
+    return IdeaTestUtil.getMockJdk17();
   }
 
   protected Module getModule(final String name) {

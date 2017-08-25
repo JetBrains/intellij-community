@@ -41,7 +41,7 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
     super.setUp();
     myBuilder = new MavenModuleBuilder();
 
-    createJdk("Java 1.5");
+    createJdk();
     setModuleNameAndRoot("module", getProjectPath());
   }
 

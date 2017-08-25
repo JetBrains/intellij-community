@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
  */
 abstract class LibraryOrderEntryBaseImpl extends OrderEntryBaseImpl implements LibraryOrSdkOrderEntry {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.LibraryOrderEntryBaseImpl");
-  protected final ProjectRootManagerImpl myProjectRootManagerImpl;
+  final ProjectRootManagerImpl myProjectRootManagerImpl;
   @NotNull protected DependencyScope myScope = DependencyScope.COMPILE;
   @Nullable private RootProvider myCurrentlySubscribedRootProvider;
 
@@ -81,7 +81,7 @@ abstract class LibraryOrderEntryBaseImpl extends OrderEntryBaseImpl implements L
     return getRootModel().getModule();
   }
 
-  protected void updateFromRootProviderAndSubscribe() {
+  void updateFromRootProviderAndSubscribe() {
     getRootModel().makeExternalChange(() -> resubscribe(getRootProvider()));
   }
 
