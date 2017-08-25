@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.util.ArrayList;
 
 /**
  * @author Konstantin Bulenkov
@@ -71,7 +72,53 @@ public class TreeSmartSelectProvider implements SmartSelectProvider<JTree> {
 
   @Override
   public void decreaseSelection(JTree tree) {
-    //todo[kb]
+    TreePath[] paths = tree.getSelectionPaths();
+    TreePath leadSelection = tree.getLeadSelectionPath();
+
+    if (paths == null || paths.length < 2) return;
+    Object[] selected = leadSelection.getPath();
+    if (selected.length < 2) return;
+
+    int i = 0;
+    ArrayList<TreePath> toRemove = new ArrayList<>();
+    while (i < selected.length) {
+      for (TreePath path : paths) {
+        if (!hasCommonStart(path, leadSelection, i + 1)) {
+          toRemove.add(path);
+        }
+      }
+
+      if (!toRemove.isEmpty()) {
+        if (toRemove.size() == paths.length - 1 && tree.isPathSelected(leadSelection.getParentPath())) {
+          tree.removeSelectionPath(leadSelection.getParentPath());
+        } else {
+          for (TreePath path : toRemove) {
+            tree.removeSelectionPath(path);
+          }
+        }
+
+        tree.setLeadSelectionPath(leadSelection);
+        return;
+      } else {
+        i++;
+      }
+    }
+  }
+
+  private static boolean hasCommonStart(TreePath path, TreePath leadSelection, int commonStartLength) {
+    Object[] pathObjects = path.getPath();
+    if (pathObjects.length < commonStartLength) return false;
+    Object[] leadSelectionObjects = leadSelection.getPath();
+    for (int i = 0; i < pathObjects.length && i < leadSelectionObjects.length && i < commonStartLength; i++) {
+      if (pathObjects[i] == leadSelectionObjects[i]) {
+        continue;
+      }
+
+      if (pathObjects[i] == null || !pathObjects[i].equals(leadSelectionObjects[i])) {
+        return false;
+      }
+    }
+    return true;
   }
 
   @Nullable
