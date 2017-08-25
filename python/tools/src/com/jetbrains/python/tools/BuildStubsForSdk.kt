@@ -16,7 +16,9 @@ import com.intellij.openapi.vfs.VirtualFileVisitor
 import com.intellij.psi.impl.DebugUtil
 import com.intellij.psi.stubs.*
 import com.intellij.util.indexing.FileContentImpl
+import com.intellij.util.io.PersistentEnumeratorBase
 import com.intellij.util.io.PersistentHashMap
+import com.intellij.util.io.PersistentStringEnumerator
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.psi.LanguageLevel
@@ -32,8 +34,88 @@ import java.util.*
 
 val stubsFileName = SDK_STUBS_STORAGE_NAME
 
+val MERGE_STUBS_FROM_PATHS = "MERGE_STUBS_FROM_PATHS"
+
 fun main(args: Array<String>) {
-  buildStubs()
+  if (System.getenv().containsKey(MERGE_STUBS_FROM_PATHS)) {
+    mergeStubs(System.getenv(MERGE_STUBS_FROM_PATHS).split(File.pathSeparatorChar))
+  }
+  else {
+    buildStubs()
+  }
+}
+
+fun mergeStubs(paths: List<String>) {
+  val stubExternalizer = StubTreeExternalizer()
+  val stubsFilePath = "${System.getProperty("user.dir")}/$stubsFileName"
+
+  val storageFile = File(stubsFilePath + ".input")
+  if (storageFile.exists()) {
+    storageFile.delete()
+  }
+
+  val storage = PersistentHashMap<HashCode, SerializedStubTree>(storageFile,
+                                                                HashCodeDescriptor.instance, stubExternalizer)
+
+  val enumeratorFile = File(stubsFilePath + ".names")
+  if (enumeratorFile.exists()) {
+    enumeratorFile.delete()
+  }
+  val stringEnumerator = PersistentStringEnumerator(enumeratorFile)
+
+  val map = HashMap<HashCode, Int>()
+
+  println("Writing results to $stubsFilePath")
+
+  for (path in paths) {
+    var count = 0
+    val fromStorageFile = File(path, stubsFileName + ".input")
+    val fromStorage = PersistentHashMap<HashCode, SerializedStubTree>(fromStorageFile,
+                                                                      HashCodeDescriptor.instance, stubExternalizer)
+
+    fromStorage.processKeysWithExistingMapping(
+      { key ->
+        count++
+        val value = fromStorage.get(key)
+        if (storage.containsMapping(key)) {
+          TestCase.assertEquals(value, storage.get(key))
+          map.put(key, map.get(key)!! + 1)
+        }
+        else {
+          storage.put(key, value)
+          map.put(key, 1)
+        }
+        true
+      })
+
+    val fromStringEnumeratorFile = File(path, stubsFileName + ".names")
+    val fromStringEnumerator = PersistentStringEnumerator(fromStringEnumeratorFile)
+
+    fromStringEnumerator.traverseAllRecords(object : PersistentEnumeratorBase.RecordsProcessor() {
+      override fun process(record: Int): Boolean {
+        stringEnumerator.enumerate(fromStringEnumerator.valueOf(record))
+        return true
+      }
+    })
+
+    fromStorage.close()
+    fromStringEnumerator.close()
+
+    println("Items in ${fromStorageFile.absolutePath}: $count")
+    println("Items in ${fromStringEnumeratorFile.absolutePath}: $count")
+  }
+
+  storage.close()
+  stringEnumerator.close()
+
+  val total = map.size
+
+  println("Total items in storage: $total")
+
+  for (i in 2..paths.size) {
+    val count = map.entries.stream().filter({ e -> e.value == i }).count()
+    println("Intersection between $i: ${"%.2f".format(100.0 * count / total)}%")
+  }
 }
 
 fun buildStubs() {
