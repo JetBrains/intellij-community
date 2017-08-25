@@ -68,7 +68,15 @@ public class TreeSmartSelectTest extends AbstractTreeBuilderTest {
                "   [c]\n");
 
     myProvider.increaseSelection(myTree);
-    assertTree("-/\n" +
+    assertTree("-[/]\n" +
+               " -[com]\n" +
+               "  -[intellij]\n" +
+               "   [a]\n" +
+               "   [b]\n" +
+               "   [c]\n");
+
+    myProvider.increaseSelection(myTree);
+    assertTree("-[/]\n" +
                " -[com]\n" +
                "  -[intellij]\n" +
                "   [a]\n" +
@@ -139,4 +147,40 @@ public class TreeSmartSelectTest extends AbstractTreeBuilderTest {
                "  [c]\n");
 
   }
+
+  public void testIncDecFromNonLeaf() throws Exception {
+    doAndWaitForBuilder(() -> {
+      Node com = myRoot.addChild("com");
+      Node intellij = com.addChild("intellij");
+      intellij.addChild("a");
+      intellij.addChild("b");
+      com.addChild("x");
+      com.addChild("y");
+      myRoot.addChild("zzz");
+      TreeUtil.expandAll(myTree);
+      getBuilder().select(intellij.myElement);
+    });
+
+    myProvider.increaseSelection(myTree);
+    assertTree("-/\n" +
+               " -com\n" +
+               "  -[intellij]\n" +
+               "   [a]\n" +
+               "   [b]\n" +
+               "  [x]\n" +
+               "  [y]\n" +
+               " zzz\n");
+
+    myProvider.decreaseSelection(myTree);
+    myProvider.decreaseSelection(myTree);
+    assertTree("-/\n" +
+               " -com\n" +
+               "  -[intellij]\n" +
+               "   a\n" +
+               "   b\n" +
+               "  x\n" +
+               "  y\n" +
+               " zzz\n");
+  }
+
 }
