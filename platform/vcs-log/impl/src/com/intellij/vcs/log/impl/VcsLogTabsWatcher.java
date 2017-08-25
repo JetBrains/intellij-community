@@ -101,7 +101,7 @@ public class VcsLogTabsWatcher implements Disposable {
       VcsLogContentUtil.closeLogTabs(myToolWindow, StreamEx.of(myRefresher.getLogWindows())
         .select(VcsLogTab.class)
         .map(VcsLogTab::getTabName)
-        .toSet());
+        .toList());
     }
   }
 

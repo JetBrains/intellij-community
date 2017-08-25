@@ -38,6 +38,7 @@ import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -155,7 +156,8 @@ public class VcsLogContentUtil {
   public static void closeLogTabs(@NotNull ToolWindow toolWindow, @NotNull Collection<String> tabs) {
     for (String tabName : tabs) {
       Content content = toolWindow.getContentManager().findContent(tabName);
-      LOG.assertTrue(content != null, "Could not find content for tab " + tabName);
+      LOG.assertTrue(content != null, "Could not find content for tab " + tabName + "\nExisting content: " +
+                                      Arrays.toString(toolWindow.getContentManager().getContents()) + "\nTabs to close: " + tabs);
       if (content.isCloseable()) {
         ContentsUtil.closeContentTab(toolWindow.getContentManager(), content);
       }
