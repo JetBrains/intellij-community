@@ -15,20 +15,21 @@
  */
 package com.intellij.ide.diff;
 
-import com.intellij.openapi.util.Ref;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
 
 /**
  * @author lene
  *         Date: 18.10.11
  */
-public interface BackgroundOperatingDiffElement {
+public interface AsyncDiffElement {
 
-  void copyTo(DiffElement container,
-              Ref<String> errorMessage,
-              Ref<DiffElement> diffElement,
-              Runnable onFinish,
-              DiffElement target,
-              String relativePath);
+  @NotNull
+  Promise<DiffElement> copyToAsync(@NotNull DiffElement container,
+                                   @Nullable DiffElement target,
+                                   @NotNull String relativePath);
 
-  void delete(Ref<String> errorMessage, Runnable onFinish);
+  @NotNull
+  Promise<Void> deleteAsync();
 }

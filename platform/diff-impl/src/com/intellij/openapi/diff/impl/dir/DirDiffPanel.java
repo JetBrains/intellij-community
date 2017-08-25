@@ -255,7 +255,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
       }
     });
     loadingPanel.add(myComponent, BorderLayout.CENTER);
-    myTable.putClientProperty(myModel.DECORATOR, loadingPanel);
+    UIUtil.putClientProperty(myTable, DirDiffTableModel.DECORATOR_KEY, loadingPanel);
     myTable.addComponentListener(new ComponentAdapter() {
       @Override
       public void componentShown(ComponentEvent e) {
@@ -286,12 +286,12 @@ public class DirDiffPanel implements Disposable, DataProvider {
     myModel.addModelListener(new DirDiffModelListener() {
       @Override
       public void updateStarted() {
-        myFilter.setEnabled(false);
+        UIUtil.setEnabled(myFilter, false, true);
       }
 
       @Override
       public void updateFinished() {
-        myFilter.setEnabled(true);
+        UIUtil.setEnabled(myFilter, true, true);
       }
     });
     myFilter.getTextEditor().setColumns(10);
