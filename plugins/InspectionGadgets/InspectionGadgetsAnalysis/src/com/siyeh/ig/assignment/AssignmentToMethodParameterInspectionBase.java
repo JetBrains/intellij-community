@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class AssignmentToMethodParameterInspection extends BaseAssignmentToParameterInspection {
+public class AssignmentToMethodParameterInspectionBase extends BaseAssignmentToParameterInspection {
 
   @Override
   @NotNull

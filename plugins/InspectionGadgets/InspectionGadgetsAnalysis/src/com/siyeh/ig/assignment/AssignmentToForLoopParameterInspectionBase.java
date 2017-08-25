@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,22 +15,19 @@
  */
 package com.siyeh.ig.assignment;
 
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.fixes.ExtractParameterAsLocalVariableFix;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class AssignmentToForLoopParameterInspection
-  extends BaseInspection {
+public class AssignmentToForLoopParameterInspectionBase extends BaseInspection {
 
   /**
    * @noinspection PublicField for externalization purposes
@@ -40,33 +37,20 @@ public class AssignmentToForLoopParameterInspection
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "assignment.to.for.loop.parameter.display.name");
+    return InspectionGadgetsBundle.message("assignment.to.for.loop.parameter.display.name");
   }
 
   @Override
   @NotNull
   public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "assignment.to.for.loop.parameter.problem.descriptor");
+    return InspectionGadgetsBundle.message("assignment.to.for.loop.parameter.problem.descriptor");
   }
 
   @Override
   @Nullable
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(
-      InspectionGadgetsBundle.message(
-        "assignment.to.for.loop.parameter.check.foreach.option"),
-      this, "m_checkForeachParameters");
-  }
-
-  @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
-    final Boolean foreachLoop = (Boolean)infos[0];
-    if (!foreachLoop.booleanValue()) {
-      return null;
-    }
-    return new ExtractParameterAsLocalVariableFix();
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("assignment.to.for.loop.parameter.check.foreach.option"),
+                                          this, "m_checkForeachParameters");
   }
 
   @Override
@@ -175,13 +159,9 @@ public class AssignmentToForLoopParameterInspection
       registerError(expression, Boolean.TRUE);
     }
 
-    private boolean isInForStatementBody(PsiExpression expression,
-                                         PsiForStatement statement) {
+    private boolean isInForStatementBody(PsiExpression expression, PsiForStatement statement) {
       final PsiStatement body = statement.getBody();
-      if (body == null) {
-        return false;
-      }
-      return PsiTreeUtil.isAncestor(body, expression, true);
+      return body != null && PsiTreeUtil.isAncestor(body, expression, true);
     }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.fixes.ExtractParameterAsLocalVariableFix;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
@@ -33,11 +31,6 @@ public abstract class BaseAssignmentToParameterInspection extends BaseInspection
 
   @SuppressWarnings({"PublicField"})
   public boolean ignoreTransformationOfOriginalParameter = false;
-
-  @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new ExtractParameterAsLocalVariableFix();
-  }
 
   protected abstract boolean isCorrectScope(PsiElement declarationScope);
 
@@ -61,8 +54,7 @@ public abstract class BaseAssignmentToParameterInspection extends BaseInspection
         if (rhs != null && VariableAccessUtils.variableIsUsed(parameter, rhs)) {
           return;
         }
-        final IElementType tokenType =
-          expression.getOperationTokenType();
+        final IElementType tokenType = expression.getOperationTokenType();
         if (tokenType == JavaTokenType.PLUSEQ ||
             tokenType == JavaTokenType.MINUSEQ ||
             tokenType == JavaTokenType.ASTERISKEQ ||

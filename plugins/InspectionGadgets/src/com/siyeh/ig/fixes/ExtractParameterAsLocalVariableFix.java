@@ -34,8 +34,7 @@ public class ExtractParameterAsLocalVariableFix extends InspectionGadgetsFix {
   @Override
   @NotNull
   public String getFamilyName() {
-    return InspectionGadgetsBundle.message(
-      "extract.parameter.as.local.variable.quickfix");
+    return InspectionGadgetsBundle.message("extract.parameter.as.local.variable.quickfix");
   }
 
   @Override
