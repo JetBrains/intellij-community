@@ -813,7 +813,7 @@ public class XmlUtil {
       }
     }
     else {
-      final XmlAttribute[] attributes = tag.getAttributes();
+      final XmlAttribute[] attributes = tag.getAttributes().clone();
       ContainerUtil.sort(list);
       Arrays.sort(attributes, Comparator.comparing(XmlAttribute::getName));
 

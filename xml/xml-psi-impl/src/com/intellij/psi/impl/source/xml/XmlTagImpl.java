@@ -99,6 +99,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
   private volatile String myName;
   private volatile String myLocalName;
   private volatile XmlAttribute[] myAttributes;
+  private volatile XmlAttribute[] myInitialAttributes;
   private volatile TextRange[] myTextElements;
   private volatile Map<String, String> myAttributeValueMap;
   private volatile XmlTagValue myValue;
@@ -628,8 +629,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
       for (XmlAttribute attribute : getAttributes()) {
         cacheOneAttributeValue(attribute.getName(), attribute.getValue(), map);
       }
-      // copy map to prevent instruction reordering by compiler
-      myAttributeValueMap = new THashMap<>(map);
+      myAttributeValueMap = map;
     }
     return map.get(qname);
   }

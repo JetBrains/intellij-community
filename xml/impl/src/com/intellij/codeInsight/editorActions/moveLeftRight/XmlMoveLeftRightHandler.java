@@ -24,7 +24,7 @@ public class XmlMoveLeftRightHandler extends MoveElementLeftRightHandler {
   @Override
   public PsiElement[] getMovableSubElements(@NotNull PsiElement element) {
     if (element instanceof XmlTag) {
-      return ((XmlTag)element).getAttributes();
+      return ((XmlTag)element).getAttributes().clone();
     }
     return PsiElement.EMPTY_ARRAY;
   }
