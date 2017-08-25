@@ -17,15 +17,19 @@ package com.intellij.build;
 
 import com.intellij.build.events.BuildEvent;
 import com.intellij.execution.impl.ConsoleViewImpl;
+import com.intellij.execution.process.AnsiEscapeDecoder;
+import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vladislav.Soroka
  */
-public class BuildTextConsoleView extends ConsoleViewImpl implements BuildConsoleView {
+public class BuildTextConsoleView extends ConsoleViewImpl implements BuildConsoleView, AnsiEscapeDecoder.ColoredTextAcceptor {
   private final String myId;
+  private final AnsiEscapeDecoder myAnsiEscapeDecoder = new AnsiEscapeDecoder();
 
   public BuildTextConsoleView(@NotNull Project project, boolean viewer, String id) {
     super(project, viewer);
@@ -39,7 +43,12 @@ public class BuildTextConsoleView extends ConsoleViewImpl implements BuildConsol
 
   @Override
   public void onEvent(BuildEvent event) {
-    print(event.getMessage(), ConsoleViewContentType.SYSTEM_OUTPUT);
+    myAnsiEscapeDecoder.escapeText(event.getMessage(), ProcessOutputTypes.STDOUT, this);
+  }
+
+  @Override
+  public void coloredTextAvailable(@NotNull String text, @NotNull Key attributes) {
+    print(text, ConsoleViewContentType.getConsoleViewType(attributes));
   }
 }
 
