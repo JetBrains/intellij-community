@@ -33,9 +33,9 @@ import com.jetbrains.python.inspections.quickfix.PyAddPropertyForFieldQuickFix;
 import com.jetbrains.python.inspections.quickfix.PyMakePublicQuickFix;
 import com.jetbrains.python.inspections.quickfix.PyRenameElementQuickFix;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import com.jetbrains.python.testing.PyTestsSharedKt;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -43,8 +43,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 /**
  * User: ktisha
@@ -121,16 +121,22 @@ public class PyProtectedMemberInspection extends PyInspection {
         }
         final PsiElement resolvedExpression = reference.resolve();
         final PyClass resolvedClass = getClassOwner(resolvedExpression);
+
         if (resolvedExpression instanceof PyTargetExpression) {
+
           final String newName = StringUtil.trimLeading(name, '_');
           if (resolvedClass != null) {
+
             final String qFixName = resolvedClass.getProperties().containsKey(newName) ?
                               PyBundle.message("QFIX.use.property") : PyBundle.message("QFIX.add.property");
             quickFixes.add(new PyAddPropertyForFieldQuickFix(qFixName));
 
-            final Collection<String> usedNames = PyRefactoringUtil.collectUsedNames(resolvedClass);
-            if (!usedNames.contains(newName)) {
-              quickFixes.add(new PyMakePublicQuickFix());
+            final PyClassType classType = PyUtil.as(myTypeEvalContext.getType(resolvedClass), PyClassType.class);
+            if (classType != null) {
+              final Set<String> usedNames = classType.getMemberNames(true, myTypeEvalContext);
+              if (!usedNames.contains(newName)) {
+                quickFixes.add(new PyMakePublicQuickFix());
+              }
             }
           }
         }
