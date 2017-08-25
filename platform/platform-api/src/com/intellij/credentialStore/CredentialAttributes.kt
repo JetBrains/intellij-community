@@ -15,6 +15,7 @@
  */
 package com.intellij.credentialStore
 
+import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ExceptionUtil
@@ -67,7 +68,23 @@ fun Credentials?.hasOnlyUserName() = this != null && userName != null && passwor
 
 fun Credentials?.isEmpty() = this == null || (userName == null && password.isNullOrEmpty())
 
-// input will be cleared
+/**
+ * Tries to get credentials both by `newAttributes` and `oldAttributes`, and if they are available by `oldAttributes` migrates old to new,
+ * i.e. removes `oldAttributes` from the credentials store, and adds `newAttributes` instead.
+ */
+fun getAndMigrateCredentials(oldAttributes: CredentialAttributes, newAttributes: CredentialAttributes): Credentials? {
+  val safe = PasswordSafe.getInstance()
+  var credentials = safe.get(newAttributes)
+  if (credentials == null) {
+    credentials = safe.get(oldAttributes)
+    if (credentials != null) {
+      safe.set(oldAttributes, null)
+      safe.set(newAttributes, credentials)
+    }
+  }
+  return credentials
+}
+
 @JvmOverloads
 fun OneTimeString(value: ByteArray, offset: Int = 0, length: Int = value.size - offset, clearable: Boolean = false): OneTimeString {
   if (length == 0) {
