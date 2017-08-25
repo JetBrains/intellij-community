@@ -343,6 +343,24 @@ public class PyStubsTest extends PyTestCase {
     assertNotParsed(file);
   }
 
+  public void testMethodRaisesNotImplementedError() {
+    final PyFileImpl file = (PyFileImpl)getTestFile();
+    final PyClass pyClass = file.getTopLevelClasses().get(0);
+    final PyFunction[] methods = pyClass.getMethods();
+    assertEquals(1, methods.length);
+    assertEquals(true, methods[0].raisesNotImplementedError());
+    assertNotParsed(file);
+  }
+
+  public void testNotMethodRaisesNotImplementedError() {
+    final PyFileImpl file = (PyFileImpl)getTestFile();
+    final PyClass pyClass = file.getTopLevelClasses().get(0);
+    final PyFunction[] methods = pyClass.getMethods();
+    assertEquals(1, methods.length);
+    assertEquals(false, methods[0].raisesNotImplementedError());
+    assertNotParsed(file);
+  }
+
   public void testBuiltinAncestor() {
     final PyFileImpl file = (PyFileImpl) getTestFile();
     final PyClass pyClass = file.getTopLevelClasses().get(0);

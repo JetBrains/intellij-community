@@ -61,13 +61,14 @@ public class PyFunctionElementType extends PyStubElementType<PyFunctionStub, PyF
     final PyStringLiteralExpression docStringExpression = function.getDocStringExpression();
     final String typeComment = function.getTypeCommentAnnotation();
     final String annotationContent = function.getAnnotationValue();
+    final boolean raisesNotImplementedError = psi.raisesNotImplementedError();
     return new PyFunctionStubImpl(psi.getName(),
                                   PyPsiUtils.strValue(docStringExpression),
                                   message,
                                   function.isAsync(),
                                   typeComment,
                                   annotationContent,
-                                  parentStub,
+                                  raisesNotImplementedError, parentStub,
                                   getStubElementType());
   }
 
@@ -76,6 +77,7 @@ public class PyFunctionElementType extends PyStubElementType<PyFunctionStub, PyF
     dataStream.writeUTFFast(StringUtil.notNullize(stub.getDocString()));
     dataStream.writeName(stub.getDeprecationMessage());
     dataStream.writeBoolean(stub.isAsync());
+    dataStream.writeBoolean(stub.isRaisesNotImplementedError());
     dataStream.writeName(stub.getTypeComment());
     dataStream.writeName(stub.getAnnotation());
   }
@@ -86,6 +88,7 @@ public class PyFunctionElementType extends PyStubElementType<PyFunctionStub, PyF
     String docString = dataStream.readUTFFast();
     StringRef deprecationMessage = dataStream.readName();
     final boolean isAsync = dataStream.readBoolean();
+    final boolean raisesNotImplementedError = dataStream.readBoolean();
     final StringRef typeComment = dataStream.readName();
     final StringRef annotationContent = dataStream.readName();
     return new PyFunctionStubImpl(name,
@@ -94,7 +97,7 @@ public class PyFunctionElementType extends PyStubElementType<PyFunctionStub, PyF
                                   isAsync,
                                   typeComment == null ? null : typeComment.getString(),
                                   annotationContent == null ? null : annotationContent.getString(),
-                                  parentStub,
+                                  raisesNotImplementedError, parentStub,
                                   getStubElementType());
   }
 

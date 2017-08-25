@@ -22,4 +22,6 @@ public interface PyFunctionStub extends NamedStub<PyFunction>, PyAnnotationOwner
   String getDocString();
   String getDeprecationMessage();
   boolean isAsync();
+
+  boolean isRaisesNotImplementedError();
 }

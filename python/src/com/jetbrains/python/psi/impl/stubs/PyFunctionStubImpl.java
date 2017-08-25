@@ -30,14 +30,17 @@ public class PyFunctionStubImpl extends StubBase<PyFunction> implements PyFuncti
   private final boolean myAsync;
   private final String myTypeComment;
   private final String myAnnotation;
+  private final boolean myRaisesNotImplementedError;
+
+
 
   public PyFunctionStubImpl(@Nullable String name,
                             @Nullable String docString,
                             @Nullable String deprecationMessage,
                             boolean isAsync,
                             @Nullable String typeCommentContent,
-                            @Nullable String annotation, 
-                            final StubElement parent,
+                            @Nullable String annotation,
+                            boolean raisesNotImplementedError, final StubElement parent,
                             @NotNull IStubElementType stubElementType) {
     super(parent, stubElementType);
     myName = name;
@@ -46,6 +49,7 @@ public class PyFunctionStubImpl extends StubBase<PyFunction> implements PyFuncti
     myAsync = isAsync;
     myTypeComment = typeCommentContent;
     myAnnotation = annotation;
+    myRaisesNotImplementedError = raisesNotImplementedError;
   }
 
   @Nullable
@@ -81,6 +85,11 @@ public class PyFunctionStubImpl extends StubBase<PyFunction> implements PyFuncti
   @Override
   public boolean isAsync() {
     return myAsync;
+  }
+
+  @Override
+  public boolean isRaisesNotImplementedError() {
+    return myRaisesNotImplementedError;
   }
 
   @Override
