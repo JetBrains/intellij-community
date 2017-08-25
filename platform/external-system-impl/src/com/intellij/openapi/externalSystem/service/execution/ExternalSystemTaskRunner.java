@@ -22,17 +22,20 @@ import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.GenericProgramRunner;
-import com.intellij.execution.runners.RunContentBuilder;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 /**
  * @author Denis Zhdanov
  * @since 5/26/13 11:20 PM
  */
 public class ExternalSystemTaskRunner extends GenericProgramRunner {
+  public static final JComponent EMPTY_COMPONENT = new JComponent() {
+  };
 
   @NotNull
   @Override
@@ -49,6 +52,17 @@ public class ExternalSystemTaskRunner extends GenericProgramRunner {
   @Override
   protected RunContentDescriptor doExecute(@NotNull RunProfileState state, @NotNull ExecutionEnvironment env) throws ExecutionException {
     ExecutionResult executionResult = state.execute(env.getExecutor(), this);
-    return executionResult == null ? null : new RunContentBuilder(executionResult, env).showRunContent(env.getContentToReuse());
+    if (executionResult == null) {
+      return null;
+    }
+    else {
+      return new RunContentDescriptor(executionResult.getExecutionConsole(), executionResult.getProcessHandler(),
+                                      EMPTY_COMPONENT, env.getRunProfile().getName(), null) {
+        @Override
+        public boolean isHiddenContent() {
+          return true;
+        }
+      };
+    }
   }
 }

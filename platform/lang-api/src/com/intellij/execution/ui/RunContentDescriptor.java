@@ -26,6 +26,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.content.Content;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -259,5 +260,13 @@ public class RunContentDescriptor implements Disposable {
    */
   public void setRunnerLayoutUi(@Nullable RunnerLayoutUi runnerLayoutUi) {
     myRunnerLayoutUi = runnerLayoutUi;
+  }
+
+  /**
+   * return true if the content should not be shown by the {@link RunContentManager}
+   */
+  @ApiStatus.Experimental
+  public boolean isHiddenContent() {
+    return false;
   }
 }
