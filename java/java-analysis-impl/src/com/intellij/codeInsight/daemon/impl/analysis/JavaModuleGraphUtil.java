@@ -50,11 +50,16 @@ public class JavaModuleGraphUtil {
     if (element != null) {
       PsiFileSystemItem fsItem = element instanceof PsiFileSystemItem ? (PsiFileSystemItem)element : element.getContainingFile();
       if (fsItem != null) {
-        return ModuleHighlightUtil.getModuleDescriptor(fsItem);
+        return findDescriptorByFile(fsItem.getVirtualFile(), fsItem.getProject());
       }
     }
 
     return null;
+  }
+
+  @Nullable
+  public static PsiJavaModule findDescriptorByFile(@Nullable VirtualFile file, @NotNull Project project) {
+    return ModuleHighlightUtil.getModuleDescriptor(file, project);
   }
 
   @Nullable

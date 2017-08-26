@@ -210,7 +210,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     myFile = file;
     myLanguageLevel = PsiUtil.getLanguageLevel(file);
     myJavaSdkVersion = notNull(JavaVersionService.getInstance().getJavaSdkVersion(file), JavaSdkVersion.fromLanguageLevel(myLanguageLevel));
-    myJavaModule = myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_9) ? ModuleHighlightUtil.getModuleDescriptor(file) : null;
+    myJavaModule = myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_9) ? JavaModuleGraphUtil.findDescriptorByElement(file) : null;
   }
 
   @Override
