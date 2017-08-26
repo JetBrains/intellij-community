@@ -67,7 +67,7 @@ public class SvnCopyPathTracker {
     if (!myHadChanged) return null;
 
     SVNURL currentUrl = append(myRepositoryUrl, myCurrentPath);
-    File localPath = vcs.getSvnFileUrlMapping().getLocalPath(currentUrl.toDecodedString());
+    File localPath = vcs.getSvnFileUrlMapping().getLocalPath(currentUrl);
 
     if (localPath == null) {
       LOG.info("Cannot find local path for url: " + currentUrl);

@@ -213,7 +213,7 @@ public class SvnChangeProvider implements ChangeProvider {
     // handle the case when the deleted file wasn't included in the dirty scope - try searching for the local copy
     // by building a relative url
     if (!foundRename && copiedStatus.getURL() != null) {
-      File wcPath = myVcs.getSvnFileUrlMapping().getLocalPath(copyFromURL.toString());
+      File wcPath = myVcs.getSvnFileUrlMapping().getLocalPath(copyFromURL);
 
       if (wcPath != null) {
         Status status;

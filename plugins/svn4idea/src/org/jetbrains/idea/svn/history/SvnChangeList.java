@@ -51,6 +51,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
+import static org.jetbrains.idea.svn.SvnUtil.parseUrl;
+
 public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAware {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.history");
 
@@ -354,9 +356,10 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
       return myPathToChangeMapping.get(path);
     }
 
-    private FilePath localDeletedPath(@NotNull String fullPath, final boolean isDir) {
+    @Nullable
+    private FilePath localDeletedPath(@NotNull SVNURL url, final boolean isDir) {
       final SvnFileUrlMapping urlMapping = myVcs.getSvnFileUrlMapping();
-      final File file = urlMapping.getLocalPath(fullPath);
+      final File file = urlMapping.getLocalPath(url);
       if (file != null) {
         return VcsUtil.getFilePath(file.getAbsolutePath(), isDir || file.isDirectory());
       }
@@ -364,13 +367,13 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
       return null;
     }
 
-    public SvnRepositoryContentRevision createDeletedItemRevision(final String path, final boolean isBeforeRevision) {
+    public SvnRepositoryContentRevision createDeletedItemRevision(@NotNull String path, final boolean isBeforeRevision) {
       final boolean knownAsDirectory = myKnownAsDirectories.contains(path);
-      final String fullPath = myRepositoryRoot + path;
+      SVNURL url = parseUrl(myRepositoryRoot + path, false);
       if (! knownAsDirectory) {
         myWithoutDirStatus.add(Pair.create(myList.size(), isBeforeRevision));
       }
-      return SvnRepositoryContentRevision.create(myVcs, myRepositoryRoot, path, localDeletedPath(fullPath, knownAsDirectory),
+      return SvnRepositoryContentRevision.create(myVcs, myRepositoryRoot, path, localDeletedPath(url, knownAsDirectory),
                                                  getRevision(isBeforeRevision));
     }
 

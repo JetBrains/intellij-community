@@ -750,9 +750,19 @@ public class SvnUtil {
   @NotNull
   public static SVNURL parseUrl(@NotNull String url) {
     try {
-      return SVNURL.parseURIEncoded(url);
+      return createUrl(url);
     }
-    catch (SVNException e) {
+    catch (SvnBindException e) {
+      throw createIllegalArgument(e);
+    }
+  }
+
+  @NotNull
+  public static SVNURL parseUrl(@NotNull String url, boolean encoded) {
+    try {
+      return createUrl(url, encoded);
+    }
+    catch (SvnBindException e) {
       throw createIllegalArgument(e);
     }
   }
@@ -767,7 +777,8 @@ public class SvnUtil {
     }
   }
 
-  public static IllegalArgumentException createIllegalArgument(SVNException e) {
+  @NotNull
+  public static IllegalArgumentException createIllegalArgument(@NotNull Exception e) {
     IllegalArgumentException runtimeException = new IllegalArgumentException();
     runtimeException.initCause(e);
     return runtimeException;
