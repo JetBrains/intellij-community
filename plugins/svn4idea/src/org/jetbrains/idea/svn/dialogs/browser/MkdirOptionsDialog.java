@@ -21,13 +21,17 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.ui.DocumentAdapter;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.tmatesoft.svn.core.SVNException;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.SVNURL;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 
+import static com.intellij.openapi.util.text.StringUtil.isEmpty;
+import static org.jetbrains.idea.svn.SvnUtil.append;
+import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 import static org.jetbrains.idea.svn.dialogs.browser.CopyOptionsDialog.configureRecentMessagesComponent;
 
 public class MkdirOptionsDialog extends DialogWrapper {
@@ -39,19 +43,19 @@ public class MkdirOptionsDialog extends DialogWrapper {
   private ComboBox<String> myMessagesBox;
   private JPanel myMainPanel;
   private JLabel myRecentMessagesLabel;
-  private final SVNURL myOriginalURL;
+  @NotNull private final SVNURL myOriginalURL;
 
-  public MkdirOptionsDialog(Project project, SVNURL url) {
+  public MkdirOptionsDialog(Project project, @NotNull SVNURL url) {
     super(project, true);
     myOriginalURL = url;
     try {
-      myURL = url.appendPath("NewFolder", true);
+      myURL = append(url, "NewFolder");
     }
-    catch (SVNException ignore) {
+    catch (SvnBindException ignore) {
     }
     setTitle("New Remote Folder");
     init();
-    myURLLabel.setText(myURL.toString());
+    myURLLabel.setText(myURL.toDecodedString());
     myNameField.selectAll();
     myNameField.getDocument().addDocumentListener(new DocumentAdapter() {
       protected void textChanged(final DocumentEvent e) {
@@ -86,12 +90,13 @@ public class MkdirOptionsDialog extends DialogWrapper {
     return myCommitMessage.getText();
   }
 
+  @Nullable
   public SVNURL getURL() {
     if (getOKAction().isEnabled()) {
       try {
-        return SVNURL.parseURIEncoded(myURLLabel.getText());
+        return createUrl(myURLLabel.getText(), false);
       }
-      catch (SVNException ignore) {
+      catch (SvnBindException ignore) {
       }
     }
     return null;
@@ -112,17 +117,17 @@ public class MkdirOptionsDialog extends DialogWrapper {
 
   private void updateURL() {
     String newName = myNameField.getText();
-    if (newName == null || "".equals(newName)) {
-      myURLLabel.setText(myOriginalURL.toString());
+    if (isEmpty(newName)) {
+      myURLLabel.setText(myOriginalURL.toDecodedString());
       getOKAction().setEnabled(false);
       return;
     }
     try {
-      myURLLabel.setText(myOriginalURL.appendPath(newName, false).toString());
+      myURLLabel.setText(append(myOriginalURL, newName).toDecodedString());
       getOKAction().setEnabled(true);
     }
-    catch (SVNException e) {
-      myURLLabel.setText(myOriginalURL.toString());
+    catch (SvnBindException e) {
+      myURLLabel.setText(myOriginalURL.toDecodedString());
       getOKAction().setEnabled(false);
     }
   }

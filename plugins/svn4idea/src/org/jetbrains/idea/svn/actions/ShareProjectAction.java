@@ -182,7 +182,7 @@ public class ShareProjectAction extends BasicAction {
       message("share.directory.commit.message", folderName, ApplicationNamesInfo.getInstance().getFullProductName(), commitText);
     SvnTarget target = SvnTarget.fromURL(url);
 
-    progress(message("share.directory.create.dir.progress.text", url.toString()));
+    progress(message("share.directory.create.dir.progress.text", url.toDecodedString()));
 
     long revision = vcs.getFactoryFromSettings().createBrowseClient().createDirectory(target, message, false);
     return SvnTarget.fromURL(url, SVNRevision.create(revision));
