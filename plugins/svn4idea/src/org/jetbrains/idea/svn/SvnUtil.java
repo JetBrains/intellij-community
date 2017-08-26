@@ -642,6 +642,10 @@ public class SvnUtil {
     return current;
   }
 
+  public static boolean isAncestor(@NotNull SVNURL parentUrl, @NotNull SVNURL childUrl) {
+    return SVNPathUtil.isAncestor(parentUrl.toDecodedString(), childUrl.toDecodedString());
+  }
+
   public static String getRelativeUrl(@NotNull String parentUrl, @NotNull String childUrl) {
     return FileUtilRt.getRelativePath(parentUrl, childUrl, '/', true);
   }

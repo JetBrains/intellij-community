@@ -44,6 +44,7 @@ import java.io.File;
 import java.util.List;
 import java.util.Map;
 
+import static org.jetbrains.idea.svn.SvnUtil.append;
 import static org.jetbrains.idea.svn.actions.ShowPropertiesDiffAction.getPropertyList;
 
 class SvnChangeProviderContext implements StatusReceiver {
@@ -54,7 +55,7 @@ class SvnChangeProviderContext implements StatusReceiver {
   @NotNull private final List<SvnChangedFile> myDeletedFiles = ContainerUtil.newArrayList();
   // for files moved in a subtree, which were the targets of merge (for instance).
   @NotNull private final Map<String, Status> myTreeConflicted = ContainerUtil.newHashMap();
-  @NotNull private final Map<FilePath, String> myCopyFromURLs = ContainerUtil.newHashMap();
+  @NotNull private final Map<FilePath, SVNURL> myCopyFromURLs = ContainerUtil.newHashMap();
   @NotNull private final SvnVcs myVcs;
   private final SvnBranchConfigurationManager myBranchConfigurationManager;
   @NotNull private final List<File> filesToRefresh = ContainerUtil.newArrayList();
@@ -141,8 +142,8 @@ class SvnChangeProviderContext implements StatusReceiver {
    * @return the copy source url, or null if the file isn't a copy of anything
    */
   @Nullable
-  public String getParentCopyFromURL(@NotNull FilePath filePath) {
-    String result = null;
+  public SVNURL getParentCopyFromURL(@NotNull FilePath filePath) throws SvnBindException {
+    SVNURL result = null;
     FilePath parent = filePath;
 
     while (parent != null && !myCopyFromURLs.containsKey(parent)) {
@@ -150,18 +151,16 @@ class SvnChangeProviderContext implements StatusReceiver {
     }
 
     if (parent != null) {
-      String copyFromUrl = myCopyFromURLs.get(parent);
+      SVNURL copyFromUrl = myCopyFromURLs.get(parent);
 
       //noinspection ConstantConditions
-      result = parent == filePath
-               ? copyFromUrl
-               : SvnUtil.appendMultiParts(copyFromUrl, FileUtil.getRelativePath(parent.getIOFile(), filePath.getIOFile()));
+      result = parent == filePath ? copyFromUrl : append(copyFromUrl, FileUtil.getRelativePath(parent.getIOFile(), filePath.getIOFile()));
     }
 
     return result;
   }
 
-  public void addCopiedFile(@NotNull FilePath filePath, @NotNull Status status, @NotNull String copyFromURL) {
+  public void addCopiedFile(@NotNull FilePath filePath, @NotNull Status status, @NotNull SVNURL copyFromURL) {
     myCopiedFiles.add(new SvnChangedFile(filePath, status, copyFromURL));
     ContainerUtil.putIfNotNull(filePath, status.getCopyFromURL(), myCopyFromURLs);
   }
@@ -184,7 +183,7 @@ class SvnChangeProviderContext implements StatusReceiver {
       myDeletedFiles.add(new SvnChangedFile(filePath, status));
     }
     else {
-      String parentCopyFromURL = getParentCopyFromURL(filePath);
+      SVNURL parentCopyFromURL = getParentCopyFromURL(filePath);
       if (parentCopyFromURL != null) {
         addCopiedFile(filePath, status, parentCopyFromURL);
       }
