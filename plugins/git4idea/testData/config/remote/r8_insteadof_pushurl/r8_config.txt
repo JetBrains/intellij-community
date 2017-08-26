@@ -8,11 +8,11 @@ ignorecase = true
 [remote "origin"]
   fetch = +refs/heads/*:refs/remotes/origin/*
   url = github.com/JetBrains/intellij-community.git
-  pushUrl = jetbrains.com/JetBrains/intellij-community.git
+  pushurl = jetbrains.com/JetBrains/intellij-community.git
 [remote "jps"]
   fetch = +refs/heads/*:refs/remotes/jps/*
   url = github.com/JetBrains/JPS.git
-  pushUrl = jetbrains.com/JetBrains/JPS.git
+  pushurl = jetbrains.com/JetBrains/JPS.git
 
 [url "https://"]
   insteadOf =

@@ -111,7 +111,21 @@ public class GitConfigTest extends GitPlatformTest {
 
   private void doTestRemotes(String testName, File configFile, File resultFile) throws IOException {
     GitConfig config = GitConfig.read(configFile);
-    VcsTestUtil.assertEqualCollections(testName, config.parseRemotes(), readRemoteResults(resultFile));
+    // The equals() in GitRemote only compares names, not urls.
+    VcsTestUtil.assertEqualCollections(config.parseRemotes(), readRemoteResults(resultFile), (actual, expected) -> {
+      if (actual == null && expected == null) {
+        return true;
+      }
+      if (actual == null || expected == null) {
+        return false;
+      }
+
+      if (!expected.getName().equals(actual.getName())) return false;
+      if (!expected.getUrls().equals(actual.getUrls())) return false;
+      if (!expected.getPushUrls().equals(actual.getPushUrls())) return false;
+
+      return true;
+    });
   }
 
   private void doTestBranches(String testName, File configFile, File resultFile) throws IOException {
@@ -222,7 +236,12 @@ public class GitConfigTest extends GitPlatformTest {
       List<String> urls = getSpaceSeparatedStrings(info[1]);
       Collection<String> pushUrls = getSpaceSeparatedStrings(info[2]);
       List<String> fetchSpec = getSpaceSeparatedStrings(info[3]);
-      List<String> pushSpec = getSpaceSeparatedStrings(info[4]);
+        List<String> pushSpec;
+      if (info.length > 4) {
+        pushSpec = getSpaceSeparatedStrings(info[4]);
+      } else {
+        pushSpec = new ArrayList<>();
+      }
       GitRemote remote = new GitRemote(name, urls, pushUrls, fetchSpec, pushSpec);
       remotes.add(remote);
     }
