@@ -162,13 +162,17 @@ public class DeployToServerRunConfiguration<S extends ServerConfiguration, D ext
 
   @Override
   public boolean isGeneratedName() {
-    return getDeploymentSource() != null && getDeploymentConfigurator().isGeneratedConfigurationName(getName(), getDeploymentSource());
+    return getDeploymentSource() != null && getDeploymentConfiguration() != null &&
+           getDeploymentConfigurator().isGeneratedConfigurationName(getName(), getDeploymentSource(), getDeploymentConfiguration());
   }
 
   @Nullable
   @Override
   public String suggestedName() {
-    return getDeploymentSource() == null ? null : getDeploymentConfigurator().suggestConfigurationName(getDeploymentSource());
+    if (getDeploymentSource() == null || getDeploymentConfiguration() == null) {
+      return null;
+    }
+    return getDeploymentConfigurator().suggestConfigurationName(getDeploymentSource(), getDeploymentConfiguration());
   }
 
   @Override
