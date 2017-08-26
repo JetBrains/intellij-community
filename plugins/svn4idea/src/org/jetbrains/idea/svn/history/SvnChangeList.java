@@ -51,6 +51,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
+import static org.jetbrains.idea.svn.SvnUtil.getRelativeUrl;
 import static org.jetbrains.idea.svn.SvnUtil.parseUrl;
 
 public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAware {
@@ -306,15 +307,15 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
   }
 
   @Nullable
-  private FilePath getLocalPath(final String path, final NotNullFunction<File, Boolean> detector) {
+  private FilePath getLocalPath(@NotNull String path, final NotNullFunction<File, Boolean> detector) {
     if (myVcs.getProject().isDefault()) return null;
 
-    String absoluteUrl = myRepositoryRoot + path;
+    SVNURL absoluteUrl = parseUrl(myRepositoryRoot + path, false);
     final RootUrlInfo rootForUrl = myVcs.getSvnFileUrlMapping().getWcRootForUrl(absoluteUrl);
     FilePath result = null;
 
     if (rootForUrl != null) {
-      String relativePath = SvnUtil.getRelativeUrl(rootForUrl.getUrl(), absoluteUrl);
+      String relativePath = getRelativeUrl(rootForUrl.getAbsoluteUrlAsUrl(), absoluteUrl);
       File file = new File(rootForUrl.getPath(), relativePath);
       VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(file);
       result = virtualFile != null ? VcsUtil.getFilePath(virtualFile) : VcsUtil.getFilePath(file, detector.fun(file).booleanValue());
@@ -797,7 +798,7 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
         myCachedInfoLoaded = false;
         return;
       }
-      final String absoluteUrl = SVNPathUtil.append(myRepositoryRoot, commonPath);
+      SVNURL absoluteUrl = parseUrl(SVNPathUtil.append(myRepositoryRoot, commonPath), false);
       myWcRoot = urlMapping.getWcRootForUrl(absoluteUrl);
       if (myWcRoot != null) {
         myBranchUrl = SvnUtil.getBranchForUrl(myVcs, myWcRoot.getVirtualFile(), absoluteUrl);

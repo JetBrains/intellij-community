@@ -120,8 +120,8 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
   @Override
   @Nullable
   public File getLocalPath(@NotNull SVNURL url) {
-    RootUrlInfo parentInfo = getWcRootForUrl(url.toString());
-    return parentInfo != null ? new File(parentInfo.getIoFile(), getRelativeUrl(parentInfo.getAbsoluteUrl(), url.toString())) : null;
+    RootUrlInfo parentInfo = getWcRootForUrl(url);
+    return parentInfo != null ? new File(parentInfo.getIoFile(), getRelativeUrl(parentInfo.getAbsoluteUrlAsUrl(), url)) : null;
   }
 
   @Override
@@ -138,10 +138,10 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
 
   @Override
   @Nullable
-  public RootUrlInfo getWcRootForUrl(@NotNull String url) {
+  public RootUrlInfo getWcRootForUrl(@NotNull SVNURL url) {
     synchronized (myMonitor) {
       RootUrlInfo result = null;
-      String rootUrl = find(myMoreRealMapping.getUrls(), parentRootUrl -> isAncestor(parentRootUrl, url));
+      String rootUrl = find(myMoreRealMapping.getUrls(), parentRootUrl -> isAncestor(parentRootUrl, url.toString()));
 
       if (rootUrl != null) {
         result = myMoreRealMapping.byUrl(rootUrl);

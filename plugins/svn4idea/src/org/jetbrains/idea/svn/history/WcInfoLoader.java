@@ -82,7 +82,7 @@ public class WcInfoLoader {
     }
 
     // check of WC version
-    RootUrlInfo rootForUrl = myVcs.getSvnFileUrlMapping().getWcRootForUrl(url);
+    RootUrlInfo rootForUrl = myVcs.getSvnFileUrlMapping().getWcRootForUrl(info.getUrl());
     return rootForUrl != null ? createInfoWithBranches(info, rootForUrl) : null;
   }
 

@@ -475,6 +475,7 @@ public class SvnUtil {
   }
 
   @Nullable
+  @Deprecated // Required for compatibility with external plugins.
   public static SVNURL getBranchForUrl(@NotNull SvnVcs vcs, @NotNull VirtualFile vcsRoot, @NotNull String urlValue) {
     SVNURL url = null;
 
@@ -644,6 +645,10 @@ public class SvnUtil {
 
   public static boolean isAncestor(@NotNull SVNURL parentUrl, @NotNull SVNURL childUrl) {
     return SVNPathUtil.isAncestor(parentUrl.toDecodedString(), childUrl.toDecodedString());
+  }
+
+  public static String getRelativeUrl(@NotNull SVNURL parentUrl, @NotNull SVNURL childUrl) {
+    return getRelativeUrl(parentUrl.toDecodedString(), childUrl.toDecodedString());
   }
 
   public static String getRelativeUrl(@NotNull String parentUrl, @NotNull String childUrl) {

@@ -32,7 +32,7 @@ public interface SvnFileUrlMapping extends AbstractVcs.RootsConvertor {
   File getLocalPath(@NotNull SVNURL url);
 
   @Nullable
-  RootUrlInfo getWcRootForUrl(@NotNull String url);
+  RootUrlInfo getWcRootForUrl(@NotNull SVNURL url);
 
   @NotNull
   List<RootUrlInfo> getAllWcInfos();
