@@ -19,6 +19,11 @@ public class PsiAnnotationSearchUtil {
   private static final Key<String> LOMBOK_ANNOTATION_FQN_KEY = Key.create("LOMBOK_ANNOTATION_FQN");
 
   @Nullable
+  public static PsiAnnotation findAnnotation(@NotNull PsiModifierListOwner psiModifierListOwner, @NotNull String annotationFQN) {
+    return findAnnotationQuick(psiModifierListOwner.getModifierList(), annotationFQN);
+  }
+
+  @Nullable
   public static PsiAnnotation findAnnotation(@NotNull PsiModifierListOwner psiModifierListOwner, @NotNull final Class<? extends Annotation> annotationType) {
     return findAnnotationQuick(psiModifierListOwner.getModifierList(), annotationType.getName());
   }
