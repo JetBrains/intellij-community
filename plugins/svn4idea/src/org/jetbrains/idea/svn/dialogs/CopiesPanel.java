@@ -205,7 +205,7 @@ public class CopiesPanel {
                                     Messages.getWarningIcon());
               if (result == Messages.OK) {
                 // update of view will be triggered by roots changed event
-                SvnCheckoutProvider.checkout(myVcs.getProject(), new File(wcInfo.getPath()), wcInfo.getRootUrl(), SVNRevision.HEAD,
+                SvnCheckoutProvider.checkout(myVcs.getProject(), new File(wcInfo.getPath()), wcInfo.getUrl(), SVNRevision.HEAD,
                                              Depth.INFINITY, false, null, wcInfo.getFormat());
               }
             } else if (CHANGE_FORMAT.equals(e.getDescription())) {
