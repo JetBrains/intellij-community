@@ -123,8 +123,7 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
             new SVNException(SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "File ''{0}'' is not under version control", ioFile)));
           return;
         }
-        final String url = info.getURL() == null ? null : info.getURL().toString();
-
+        SVNURL url = info.getURL();
         SVNRevision endRevision = ((SvnFileRevision)revision).getRevision();
         if (SVNRevision.WORKING.equals(endRevision)) {
           endRevision = info.getRevision();
@@ -137,7 +136,7 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
         final AnnotationConsumer annotateHandler = createAnnotationHandler(progress, result);
 
         boolean calculateMergeinfo =
-          myVcs.getSvnConfiguration().isShowMergeSourcesInAnnotate() && SvnUtil.checkRepositoryVersion15(myVcs, url);
+          myVcs.getSvnConfiguration().isShowMergeSourcesInAnnotate() && SvnUtil.checkRepositoryVersion15(myVcs, url.toString());
         final MySteppedLogGetter logGetter = new MySteppedLogGetter(
           myVcs, ioFile, progress,
           myVcs.getFactory(ioFile).createHistoryClient(), endRevision, result,
@@ -380,13 +379,13 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
     private final SVNRevision myEndRevision;
     private final boolean myCalculateMergeinfo;
     private final SvnFileAnnotation myResult;
-    private final String myUrl;
+    private final SVNURL myUrl;
     private final Charset myCharset;
 
     private MySteppedLogGetter(final SvnVcs vcs, final File ioFile, final ProgressIndicator progress, final HistoryClient client,
                                final SVNRevision endRevision,
                                final SvnFileAnnotation result,
-                               final String url,
+                               SVNURL url,
                                final boolean calculateMergeinfo,
                                Charset charset) {
       myVcs = vcs;
@@ -458,7 +457,7 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
                          myProgress.setText2(SvnBundle.message("progress.text2.revision.processed", logEntry.getRevision()));
                        }
                        myResult
-                         .setRevision(logEntry.getRevision(), new SvnFileRevision(myVcs, SVNRevision.UNDEFINED, logEntry, myUrl, ""));
+                         .setRevision(logEntry.getRevision(), new SvnFileRevision(myVcs, SVNRevision.UNDEFINED, logEntry, myUrl.toString(), ""));
                      });
     }
 
