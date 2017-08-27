@@ -174,7 +174,7 @@ class ModuleGroupingTreeHelper<M: Any, N: MutableTreeNode> private constructor(
       parentNode.insert(node, parentNode.childCount)
     }
     else {
-      TreeUtil.insertNode(node, parentNode, model, nodeComparator)
+      TreeUtil.insertNode(node, parentNode, model, false, nodeComparator)
     }
   }
 

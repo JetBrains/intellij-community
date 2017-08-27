@@ -986,13 +986,13 @@ public final class TreeUtil {
   }
 
   public static <T extends MutableTreeNode> void insertNode(@NotNull T child, @NotNull T parent, @Nullable DefaultTreeModel model,
-                                                            @NotNull Comparator<? super T> comparator) {
+                                                            boolean allowDuplication, @NotNull Comparator<? super T> comparator) {
     int index = indexedBinarySearch(parent, child, comparator);
-    if (index >= 0) {
+    if (index >= 0 && !allowDuplication) {
       LOG.error("Node " + child + " is already added to " + parent);
       return;
     }
-    int insertionPoint = -(index + 1);
+    int insertionPoint = index >= 0 ? index : -(index + 1);
     if (model != null) {
       model.insertNodeInto(child, parent, insertionPoint);
     }

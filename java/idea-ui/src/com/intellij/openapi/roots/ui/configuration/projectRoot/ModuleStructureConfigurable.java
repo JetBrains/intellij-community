@@ -570,7 +570,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     }
     if (parent == null) parent = myRoot;
     MyNode node = createModuleNode(module, getModuleGrouper());
-    TreeUtil.insertNode(node, parent, getTreeModel(), getNodeComparator());
+    TreeUtil.insertNode(node, parent, getTreeModel(), false, getNodeComparator());
     selectNodeInTree(node);
     final ProjectStructureDaemonAnalyzer daemonAnalyzer = myContext.getDaemonAnalyzer();
     daemonAnalyzer.queueUpdate(new ModuleProjectStructureElement(myContext, module));

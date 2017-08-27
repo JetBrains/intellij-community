@@ -183,7 +183,7 @@ public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
   }
 
   private void insertNode(final DefaultMutableTreeNode nodeToInsert, DefaultMutableTreeNode parentNode) {
-    TreeUtil.insertNode(nodeToInsert, parentNode, (DefaultTreeModel)myTree.getModel(), NODE_COMPARATOR);
+    TreeUtil.insertNode(nodeToInsert, parentNode, (DefaultTreeModel)myTree.getModel(), false, NODE_COMPARATOR);
   }
 
   @Override
