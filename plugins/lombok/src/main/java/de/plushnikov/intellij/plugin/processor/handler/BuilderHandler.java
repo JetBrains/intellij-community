@@ -87,6 +87,7 @@ public class BuilderHandler {
   private static final String BUILDER_OBTAIN_VIA_FIELD = "field";
   private static final String BUILDER_OBTAIN_VIA_METHOD = "method";
   private static final String BUILDER_OBTAIN_VIA_STATIC = "isStatic";
+  public static final String BUILDER_OBTAIN_VIA_ANNOTATION = Builder.ObtainVia.class.getName().replace("$", ".");
 
 
   private final ToStringProcessor toStringProcessor;
@@ -119,7 +120,8 @@ public class BuilderHandler {
       final String builderClassName = getBuilderClassName(psiClass, psiAnnotation);
       result = validateBuilderClassName(builderClassName, psiAnnotation.getProject(), problemBuilder) &&
         validateExistingBuilderClass(builderClassName, psiClass, problemBuilder) &&
-        validateSingular(psiClass, problemBuilder);
+        validateSingular(psiClass, problemBuilder) &&
+        validateObtainViaAnnotations(getBuilderFields(psiClass, Collections.<PsiField>emptySet(), AccessorsInfo.EMPTY), problemBuilder);
     }
     return result;
   }
@@ -152,7 +154,7 @@ public class BuilderHandler {
   private boolean validateBuilderClassName(@NotNull String builderClassName, @NotNull Project project, @NotNull ProblemBuilder builder) {
     final PsiNameHelper psiNameHelper = PsiNameHelper.getInstance(project);
     if (!psiNameHelper.isIdentifier(builderClassName)) {
-      builder.addError("%s ist not a valid identifier", builderClassName);
+      builder.addError("%s is not a valid identifier", builderClassName);
       return false;
     }
     return true;
@@ -184,7 +186,30 @@ public class BuilderHandler {
     if (result) {
       final String builderClassName = getBuilderClassName(psiClass, psiAnnotation, psiMethod);
       result = validateBuilderClassName(builderClassName, psiAnnotation.getProject(), problemBuilder) &&
-        validateExistingBuilderClass(builderClassName, psiClass, problemBuilder);
+        validateExistingBuilderClass(builderClassName, psiClass, problemBuilder) &&
+        validateObtainViaAnnotations(getBuilderParameters(psiMethod, Collections.<PsiField>emptySet()), problemBuilder);
+    }
+    return result;
+  }
+
+  private boolean validateObtainViaAnnotations(@NotNull Collection<? extends PsiVariable> psiVaraibles, @NotNull ProblemBuilder problemBuilder) {
+    boolean result = true;
+    for (PsiVariable psiVariable : psiVaraibles) {
+      final PsiAnnotation obtainViaAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiVariable, BUILDER_OBTAIN_VIA_ANNOTATION);
+      if (null != obtainViaAnnotation) {
+        final String viaFieldName = PsiAnnotationUtil.getStringAnnotationValue(obtainViaAnnotation, BUILDER_OBTAIN_VIA_FIELD);
+        final String viaMethodName = PsiAnnotationUtil.getStringAnnotationValue(obtainViaAnnotation, BUILDER_OBTAIN_VIA_METHOD);
+        final boolean viaStaticCall = PsiAnnotationUtil.getBooleanAnnotationValue(obtainViaAnnotation, BUILDER_OBTAIN_VIA_STATIC, false);
+
+        if (StringUtils.isEmpty(viaFieldName) == StringUtils.isEmpty(viaMethodName)) {
+          problemBuilder.addError("The syntax is either @ObtainVia(field = \"fieldName\") or @ObtainVia(method = \"methodName\").");
+          result = false;
+        }
+        if (StringUtils.isEmpty(viaMethodName) && viaStaticCall) {
+          problemBuilder.addError("@ObtainVia(isStatic = true) is not valid unless 'method' has been set.");
+          result = false;
+        }
+      }
     }
     return result;
   }
@@ -330,7 +355,7 @@ public class BuilderHandler {
         methodCalls.append(accessorsInfo.removePrefix(psiVariable.getName()));
         methodCalls.append('(');
 
-        final PsiAnnotation obtainViaAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiVariable, Builder.ObtainVia.class.getName().replace("$", "."));
+        final PsiAnnotation obtainViaAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiVariable, BUILDER_OBTAIN_VIA_ANNOTATION);
         if (null != obtainViaAnnotation) {
           final String viaFieldName = PsiAnnotationUtil.getStringAnnotationValue(obtainViaAnnotation, BUILDER_OBTAIN_VIA_FIELD);
           final String viaMethodName = PsiAnnotationUtil.getStringAnnotationValue(obtainViaAnnotation, BUILDER_OBTAIN_VIA_METHOD);
