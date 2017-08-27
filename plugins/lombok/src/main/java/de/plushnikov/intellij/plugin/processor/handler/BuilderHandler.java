@@ -87,7 +87,7 @@ public class BuilderHandler {
   private static final String BUILDER_OBTAIN_VIA_FIELD = "field";
   private static final String BUILDER_OBTAIN_VIA_METHOD = "method";
   private static final String BUILDER_OBTAIN_VIA_STATIC = "isStatic";
-  public static final String BUILDER_OBTAIN_VIA_ANNOTATION = Builder.ObtainVia.class.getName().replace("$", ".");
+  private static final String BUILDER_OBTAIN_VIA_ANNOTATION = Builder.ObtainVia.class.getName().replace("$", ".");
 
 
   private final ToStringProcessor toStringProcessor;
