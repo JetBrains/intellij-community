@@ -58,13 +58,8 @@ public class WCInfo {
   }
 
   @NotNull
-  public String getRootUrl() {
-    return getUrl().toString();
-  }
-
-  @NotNull
-  public String getRepoUrl() {
-    return myRootInfo.getRepositoryUrl().toString();
+  public SVNURL getRepoUrl() {
+    return myRootInfo.getRepositoryUrl();
   }
 
   @NotNull

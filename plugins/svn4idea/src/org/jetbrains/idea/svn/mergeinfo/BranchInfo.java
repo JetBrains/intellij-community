@@ -41,6 +41,8 @@ import org.tmatesoft.svn.core.wc2.SvnTarget;
 import java.io.File;
 import java.util.*;
 
+import static org.jetbrains.idea.svn.SvnUtil.append;
+
 public class BranchInfo {
 
   private final static Logger LOG = Logger.getInstance(BranchInfo.class);
@@ -78,7 +80,7 @@ public class BranchInfo {
       return myCopyRevison.getRevision();
     }
     myCopyRevison =
-      new SvnMergeInfoCache.CopyRevison(myVcs, branchPath, myInfo.getRootInfo().getRepositoryUrl(), myBranch.getUrl(), myInfo.getRootUrl());
+      new SvnMergeInfoCache.CopyRevison(myVcs, branchPath, myInfo.getRootInfo().getRepositoryUrl(), myBranch.getUrl(), myInfo.getUrl());
     return -1;
   }
 
@@ -145,7 +147,7 @@ public class BranchInfo {
     String myTrunkPathCorrespondingToLocalBranchPath = SVNPathUtil.append(myInfo.getCurrentBranch().getUrl(), subPathUnderBranch);
 
     for (String path : list.getAffectedPaths()) {
-      String absoluteInTrunkPath = SVNPathUtil.append(myInfo.getRepoUrl(), path);
+      String absoluteInTrunkPath = SVNPathUtil.append(myInfo.getRepoUrl().toString(), path);
       SvnMergeInfoCache.MergeCheckResult mergeCheckResult;
 
       if (!absoluteInTrunkPath.startsWith(myTrunkPathCorrespondingToLocalBranchPath)) {
@@ -231,11 +233,11 @@ public class BranchInfo {
       if (mergeinfoProperty == null) {
         final String newTrunkUrl = SVNPathUtil.removeTail(trunkUrl).trim();
         final SVNURL newBranchUrl = branchUrl.removePathTail();
-        final String absoluteTrunk = SVNPathUtil.append(myInfo.getRepoUrl(), newTrunkUrl);
+        SVNURL absoluteTrunk = append(myInfo.getRepoUrl(), newTrunkUrl);
 
         result = newTrunkUrl.length() <= 1 ||
-                 newBranchUrl.toString().length() <= myInfo.getRepoUrl().length() ||
-                 newBranchUrl.toString().equals(absoluteTrunk)
+                 newBranchUrl.toString().length() <= myInfo.getRepoUrl().toString().length() ||
+                 newBranchUrl.equals(absoluteTrunk)
                  ? SvnMergeInfoCache.MergeCheckResult.NOT_MERGED
                  : goUpInRepo(revisionAsked, targetRevision, newBranchUrl, newTrunkUrl);
       }

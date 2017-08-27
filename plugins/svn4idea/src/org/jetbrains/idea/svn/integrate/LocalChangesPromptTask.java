@@ -64,7 +64,7 @@ public class LocalChangesPromptTask extends BaseMergeTask {
 
   @Nullable
   private File getLocalPath(String repositoryRelativePath) {
-    String absoluteUrl = append(myMergeContext.getWcInfo().getRepoUrl(), repositoryRelativePath);
+    String absoluteUrl = append(myMergeContext.getWcInfo().getRepoUrl().toString(), repositoryRelativePath);
     String sourceRelativePath = getRelativePath(myMergeContext.getSourceUrl(), absoluteUrl);
 
     return !isEmptyOrSpaces(sourceRelativePath) ? new File(myMergeContext.getWcInfo().getPath(), sourceRelativePath) : null;

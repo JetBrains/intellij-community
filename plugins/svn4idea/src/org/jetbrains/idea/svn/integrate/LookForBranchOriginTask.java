@@ -36,8 +36,8 @@ public class LookForBranchOriginTask extends BaseMergeTask {
   @Override
   public void run() throws VcsException {
     SVNURL repoUrl = myMergeContext.getWcInfo().getRootInfo().getRepositoryUrl();
-    String sourceUrl = myFromSource ? myMergeContext.getSourceUrl() : myMergeContext.getWcInfo().getRootUrl();
-    String targetUrl = myFromSource ? myMergeContext.getWcInfo().getRootUrl() : myMergeContext.getSourceUrl();
+    String sourceUrl = myFromSource ? myMergeContext.getSourceUrl() : myMergeContext.getWcInfo().getUrl().toString();
+    String targetUrl = myFromSource ? myMergeContext.getWcInfo().getUrl().toString() : myMergeContext.getSourceUrl();
     SvnBranchPointsCalculator.WrapperInvertor copyPoint =
       myMergeContext.getVcs().getSvnBranchPointsCalculator().calculateCopyPoint(repoUrl, sourceUrl, targetUrl);
 

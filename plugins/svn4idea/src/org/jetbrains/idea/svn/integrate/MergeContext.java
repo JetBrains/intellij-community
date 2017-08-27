@@ -22,6 +22,7 @@ import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.dialogs.WCInfo;
 
 import static org.jetbrains.idea.svn.SvnUtil.ensureStartSlash;
+import static org.jetbrains.idea.svn.SvnUtil.getRelativeUrl;
 import static org.tmatesoft.svn.core.internal.util.SVNPathUtil.getRelativePath;
 
 /**
@@ -51,8 +52,8 @@ public class MergeContext {
     mySourceUrl = sourceUrl;
     myWcInfo = wcInfo;
     myTitle = "Merge from " + myBranchName;
-    myRepositoryRelativeSourcePath = ensureStartSlash(getRelativePath(myWcInfo.getRepoUrl(), mySourceUrl));
-    myRepositoryRelativeWorkingCopyPath = ensureStartSlash(getRelativePath(myWcInfo.getRepoUrl(), myWcInfo.getRootUrl()));
+    myRepositoryRelativeSourcePath = ensureStartSlash(getRelativePath(myWcInfo.getRepoUrl().toString(), mySourceUrl));
+    myRepositoryRelativeWorkingCopyPath = ensureStartSlash(getRelativeUrl(myWcInfo.getRepoUrl(), myWcInfo.getUrl()));
   }
 
   @NotNull
