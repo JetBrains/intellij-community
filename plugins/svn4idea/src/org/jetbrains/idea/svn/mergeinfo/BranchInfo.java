@@ -77,8 +77,8 @@ public class BranchInfo {
     if (myCopyRevison != null && Comparing.equal(myCopyRevison.getPath(), branchPath)) {
       return myCopyRevison.getRevision();
     }
-    myCopyRevison = new SvnMergeInfoCache.CopyRevison(myVcs, branchPath, myInfo.getRootInfo().getRepositoryUrlUrl(), myBranch.getUrl(),
-                                                      myInfo.getRootUrl());
+    myCopyRevison =
+      new SvnMergeInfoCache.CopyRevison(myVcs, branchPath, myInfo.getRootInfo().getRepositoryUrl(), myBranch.getUrl(), myInfo.getRootUrl());
     return -1;
   }
 

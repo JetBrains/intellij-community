@@ -16,7 +16,6 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.UriUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNURL;
@@ -25,7 +24,6 @@ import java.io.File;
 
 public class RootUrlInfo implements RootUrlPair {
 
-  @NotNull private final String myRepositoryUrl;
   @NotNull private final WorkingCopyFormat myFormat;
   @NotNull private final Node myNode;
   // vcs root
@@ -43,7 +41,6 @@ public class RootUrlInfo implements RootUrlPair {
     myNode = node;
     myFormat = format;
     myRoot = root;
-    myRepositoryUrl = UriUtil.trimTrailingSlashes(node.getRepositoryRootUrl().toString());
     myType = type;
   }
 
@@ -53,12 +50,7 @@ public class RootUrlInfo implements RootUrlPair {
   }
 
   @NotNull
-  public String getRepositoryUrl() {
-    return myRepositoryUrl;
-  }
-
-  @NotNull
-  public SVNURL getRepositoryUrlUrl() {
+  public SVNURL getRepositoryUrl() {
     return myNode.getRepositoryRootUrl();
   }
 

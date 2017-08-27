@@ -201,7 +201,7 @@ public class BranchConfigurationDialog extends DialogWrapper {
     SvnBranchConfigurationNew configuration = SvnBranchConfigurationManager.getInstance(project).get(file);
     SvnBranchConfigurationNew clonedConfiguration = configuration.copy();
 
-    if (new BranchConfigurationDialog(project, clonedConfiguration, wcRoot.getRepositoryUrlUrl(), file, wcRoot.getUrl()).showAndGet()) {
+    if (new BranchConfigurationDialog(project, clonedConfiguration, wcRoot.getRepositoryUrl(), file, wcRoot.getUrl()).showAndGet()) {
       SvnBranchConfigurationManager.getInstance(project).setConfiguration(file, clonedConfiguration);
     }
   }

@@ -91,7 +91,7 @@ public class WCInfo {
 
   @NotNull
   public String getRepositoryRoot() {
-    return myRootInfo.getRepositoryUrl();
+    return myRootInfo.getRepositoryUrl().toString();
   }
 
   public boolean isIsWcRoot() {
