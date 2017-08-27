@@ -315,7 +315,7 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
     FilePath result = null;
 
     if (rootForUrl != null) {
-      String relativePath = getRelativeUrl(rootForUrl.getAbsoluteUrlAsUrl(), absoluteUrl);
+      String relativePath = getRelativeUrl(rootForUrl.getUrl(), absoluteUrl);
       File file = new File(rootForUrl.getPath(), relativePath);
       VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(file);
       result = virtualFile != null ? VcsUtil.getFilePath(virtualFile) : VcsUtil.getFilePath(file, detector.fun(file).booleanValue());

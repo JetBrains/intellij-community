@@ -63,11 +63,6 @@ public class RootUrlInfo implements RootUrlPair {
   }
 
   @NotNull
-  public SVNURL getAbsoluteUrlAsUrl() {
-    return myNode.getUrl();
-  }
-
-  @NotNull
   public WorkingCopyFormat getFormat() {
     return myFormat;
   }

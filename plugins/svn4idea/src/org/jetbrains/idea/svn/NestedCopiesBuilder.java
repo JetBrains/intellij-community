@@ -80,7 +80,7 @@ public class NestedCopiesBuilder implements StatusReceiver {
     final File ioFile = VfsUtilCore.virtualToIoFile(vf);
     final RootUrlInfo info = myMapping.getWcRootForFilePath(ioFile);
 
-    if (info != null && FileUtil.filesEqual(ioFile, info.getIoFile()) && ! info.getAbsoluteUrlAsUrl().equals(url)) {
+    if (info != null && FileUtil.filesEqual(ioFile, info.getIoFile()) && !info.getUrl().equals(url)) {
       myVcs.invokeRefreshSvnRoots();
     }
   }

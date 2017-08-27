@@ -107,7 +107,7 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
 
     if (rootUrlInfo != null) {
       try {
-        result = append(rootUrlInfo.getAbsoluteUrlAsUrl(), getRelativePath(rootUrlInfo.getPath(), file.getAbsolutePath()));
+        result = append(rootUrlInfo.getUrl(), getRelativePath(rootUrlInfo.getPath(), file.getAbsolutePath()));
       }
       catch (SvnBindException e) {
         LOG.info(e);
@@ -121,7 +121,7 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
   @Nullable
   public File getLocalPath(@NotNull SVNURL url) {
     RootUrlInfo parentInfo = getWcRootForUrl(url);
-    return parentInfo != null ? new File(parentInfo.getIoFile(), getRelativeUrl(parentInfo.getAbsoluteUrlAsUrl(), url)) : null;
+    return parentInfo != null ? new File(parentInfo.getIoFile(), getRelativeUrl(parentInfo.getUrl(), url)) : null;
   }
 
   @Override

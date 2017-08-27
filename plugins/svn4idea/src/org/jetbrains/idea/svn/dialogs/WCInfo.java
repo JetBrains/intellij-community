@@ -54,7 +54,7 @@ public class WCInfo {
 
   @NotNull
   public SVNURL getUrl() {
-    return myRootInfo.getAbsoluteUrlAsUrl();
+    return myRootInfo.getUrl();
   }
 
   @NotNull

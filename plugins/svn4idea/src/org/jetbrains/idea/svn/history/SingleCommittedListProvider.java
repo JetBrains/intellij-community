@@ -85,7 +85,7 @@ public class SingleCommittedListProvider {
       changeList = new SvnChangeList[1];
       revisionBefore = ((SvnRevisionNumber)number).getRevision();
       repositoryUrl = rootUrlInfo.getRepositoryUrlUrl();
-      svnRootUrl = rootUrlInfo.getAbsoluteUrlAsUrl();
+      svnRootUrl = rootUrlInfo.getUrl();
       svnRootLocation = new SvnRepositoryLocation(rootUrlInfo.getUrl().toString());
       repositoryRelativeUrl = SvnUtil.ensureStartSlash(SvnUtil.join(
         SvnUtil.getRelativeUrl(repositoryUrl.toDecodedString(), svnRootUrl.toDecodedString()),
