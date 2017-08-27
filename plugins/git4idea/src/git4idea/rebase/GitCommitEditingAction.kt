@@ -15,6 +15,7 @@
  */
 package git4idea.rebase
 
+import com.intellij.dvcs.repo.Repository
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.progress.ProgressManager
@@ -133,4 +134,19 @@ abstract class GitCommitEditingAction : DumbAwareAction() {
 
   private fun commitPushedToProtectedBranchError(protectedBranch: String)
     = "The commit is already pushed to protected branch '$protectedBranch'"
+
+  protected fun prohibitRebaseDuringRebase(e: AnActionEvent, operation: String) {
+    if (e.presentation.isEnabledAndVisible) {
+      val state = getRepository(e).state
+      if (state != Repository.State.NORMAL) {
+        e.presentation.isEnabled = false
+        e.presentation.description = when (state) {
+          Repository.State.REBASING -> "Can't $operation during rebase"
+          Repository.State.MERGING -> "Can't $operation during merge"
+          Repository.State.DETACHED -> "Can't $operation in detached HEAD state"
+          else -> throw IllegalStateException("Unexpected state: $state")
+        }
+      }
+    }
+  }
 }

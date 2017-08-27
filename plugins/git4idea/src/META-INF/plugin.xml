@@ -114,6 +114,8 @@
             description="Undo last commit and put its changes into selected changelist"/>
     <action id="Git.Reword.Commit" class="git4idea.rebase.GitRewordAction" text="Reword..."
             description="Change commit message" />
+    <action id="Git.Interactive.Rebase" class="git4idea.rebase.GitInteractiveRebaseAction" text="Interactively Rebase from Here..."
+            description="Show the dialog for interactive rebase which allows to squash, fixup, reorder, remove and reword commits" />
 
     <group id="Git.Log.ContextMenu">
       <separator/>
@@ -128,6 +130,7 @@
       <reference id="Git.Uncommit" />
       <separator />
       <reference id="Git.Reword.Commit" />
+      <reference id="Git.Interactive.Rebase" />
       <add-to-group group-id="Vcs.Log.ContextMenu" />
     </group>
 
