@@ -64,7 +64,7 @@ public class WCInfo {
 
   @NotNull
   public String getRepoUrl() {
-    return getRepositoryRoot();
+    return myRootInfo.getRepositoryUrl().toString();
   }
 
   @NotNull
@@ -87,11 +87,6 @@ public class WCInfo {
   @NotNull
   public WorkingCopyFormat getFormat() {
     return myRootInfo.getFormat();
-  }
-
-  @NotNull
-  public String getRepositoryRoot() {
-    return myRootInfo.getRepositoryUrl().toString();
   }
 
   public boolean isIsWcRoot() {

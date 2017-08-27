@@ -51,8 +51,8 @@ public class MergeContext {
     mySourceUrl = sourceUrl;
     myWcInfo = wcInfo;
     myTitle = "Merge from " + myBranchName;
-    myRepositoryRelativeSourcePath = ensureStartSlash(getRelativePath(myWcInfo.getRepositoryRoot(), mySourceUrl));
-    myRepositoryRelativeWorkingCopyPath = ensureStartSlash(getRelativePath(myWcInfo.getRepositoryRoot(), myWcInfo.getRootUrl()));
+    myRepositoryRelativeSourcePath = ensureStartSlash(getRelativePath(myWcInfo.getRepoUrl(), mySourceUrl));
+    myRepositoryRelativeWorkingCopyPath = ensureStartSlash(getRelativePath(myWcInfo.getRepoUrl(), myWcInfo.getRootUrl()));
   }
 
   @NotNull
