@@ -63,11 +63,6 @@ public class RootUrlInfo implements RootUrlPair {
   }
 
   @NotNull
-  public String getAbsoluteUrl() {
-    return getAbsoluteUrlAsUrl().toString();
-  }
-
-  @NotNull
   public SVNURL getAbsoluteUrlAsUrl() {
     return myNode.getUrl();
   }
@@ -100,7 +95,7 @@ public class RootUrlInfo implements RootUrlPair {
 
   @NotNull
   public String getUrl() {
-    return getAbsoluteUrl();
+    return myNode.getUrl().toString();
   }
 
   @Nullable

@@ -78,7 +78,7 @@ public class SvnExternalTest extends Svn17TestCase {
     expectedUrls.add(StringUtil.toLowerCase(myMainUrl));
 
     for (RootUrlInfo info : infos) {
-      expectedUrls.remove(StringUtil.toLowerCase(info.getAbsoluteUrl()));
+      expectedUrls.remove(StringUtil.toLowerCase(info.getUrl()));
     }
     Assert.assertTrue(expectedUrls.isEmpty());
   }
@@ -100,7 +100,7 @@ public class SvnExternalTest extends Svn17TestCase {
 
     boolean sawInner = false;
     for (RootUrlInfo info : infos) {
-      expectedUrls.remove(StringUtil.toLowerCase(info.getAbsoluteUrl()));
+      expectedUrls.remove(StringUtil.toLowerCase(info.getUrl()));
       sawInner |= NestedCopyType.inner.equals(info.getType());
     }
     Assert.assertTrue(expectedUrls.isEmpty());

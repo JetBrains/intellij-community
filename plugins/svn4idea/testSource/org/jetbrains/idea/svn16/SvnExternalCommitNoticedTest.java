@@ -132,7 +132,7 @@ public class SvnExternalCommitNoticedTest extends Svn17TestCase {
     SvnFileUrlMapping workingCopies = myVcs.getSvnFileUrlMapping();
     List<RootUrlInfo> infos = workingCopies.getAllWcInfos();
     Assert.assertEquals(1, infos.size());
-    Assert.assertEquals(myRepoUrl + "/trunk", infos.get(0).getAbsoluteUrl());
+    Assert.assertEquals(myRepoUrl + "/trunk", infos.get(0).getUrl());
 
     runInAndVerifyIgnoreOutput("switch", branchUrl, myWorkingCopyDir.getPath());
 
@@ -146,7 +146,7 @@ public class SvnExternalCommitNoticedTest extends Svn17TestCase {
     workingCopies = myVcs.getSvnFileUrlMapping();
     infos = workingCopies.getAllWcInfos();
     Assert.assertEquals(1, infos.size());
-    Assert.assertEquals(branchUrl, infos.get(0).getAbsoluteUrl());
+    Assert.assertEquals(branchUrl, infos.get(0).getUrl());
   }
 
   @Test
