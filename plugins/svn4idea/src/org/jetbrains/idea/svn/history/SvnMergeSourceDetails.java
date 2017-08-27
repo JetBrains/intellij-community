@@ -36,7 +36,6 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.util.ContentsUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.idea.svn.SvnBundle;
-import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
 
 import javax.swing.*;
@@ -203,7 +202,7 @@ public class SvnMergeSourceDetails extends MasterDetailsComponent {
       SvnChangeList list = myListsMap.get(myRevision);
       if (list == null) {
         list = (SvnChangeList)SvnVcs.getInstance(myProject).loadRevisions(myFile, myRevision.getRevisionNumber());
-        myListsMap.put(((SvnRevisionNumber) myRevision.getRevisionNumber()).getRevision().getNumber(), list);
+        myListsMap.put(myRevision.getRevision().getNumber(), list);
       }
       return list;
     }
