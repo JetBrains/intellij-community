@@ -16,7 +16,6 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
@@ -27,6 +26,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.Assert;
 import org.junit.Test;
+import org.tmatesoft.svn.core.SVNURL;
 
 import java.io.File;
 import java.util.Arrays;
@@ -34,11 +34,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static org.jetbrains.idea.svn.SvnUtil.parseUrl;
+
 public class SvnExternalTest extends Svn17TestCase {
   private ChangeListManagerImpl clManager;
   private SvnVcs myVcs;
-  private String myMainUrl;
-  private String myExternalURL;
+  private SVNURL myMainUrl;
+  private SVNURL myExternalURL;
 
   @Override
   public void setUp() throws Exception {
@@ -49,8 +51,8 @@ public class SvnExternalTest extends Svn17TestCase {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
     myVcs = SvnVcs.getInstance(myProject);
-    myMainUrl = myRepoUrl + "/root/source";
-    myExternalURL = myRepoUrl + "/root/target";
+    myMainUrl = parseUrl(myRepoUrl + "/root/source", false);
+    myExternalURL = parseUrl(myRepoUrl + "/root/target", false);
   }
 
   @Test
@@ -69,16 +71,16 @@ public class SvnExternalTest extends Svn17TestCase {
     final SvnFileUrlMapping workingCopies = myVcs.getSvnFileUrlMapping();
     final List<RootUrlInfo> infos = workingCopies.getAllWcInfos();
     Assert.assertEquals(2, infos.size());
-    final Set<String> expectedUrls = new HashSet<>();
+    Set<SVNURL> expectedUrls = new HashSet<>();
     if (myAnotherRepoUrl != null) {
-      expectedUrls.add(StringUtil.toLowerCase(myAnotherRepoUrl + "/root/target"));
+      expectedUrls.add(parseUrl(myAnotherRepoUrl + "/root/target", false));
     } else {
-      expectedUrls.add(StringUtil.toLowerCase(myExternalURL));
+      expectedUrls.add(myExternalURL);
     }
-    expectedUrls.add(StringUtil.toLowerCase(myMainUrl));
+    expectedUrls.add(myMainUrl);
 
     for (RootUrlInfo info : infos) {
-      expectedUrls.remove(StringUtil.toLowerCase(info.getUrl()));
+      expectedUrls.remove(info.getUrl());
     }
     Assert.assertTrue(expectedUrls.isEmpty());
   }
@@ -94,13 +96,13 @@ public class SvnExternalTest extends Svn17TestCase {
     final SvnFileUrlMapping workingCopies = myVcs.getSvnFileUrlMapping();
     final List<RootUrlInfo> infos = workingCopies.getAllWcInfos();
     Assert.assertEquals(2, infos.size());
-    final Set<String> expectedUrls = new HashSet<>();
-    expectedUrls.add(StringUtil.toLowerCase(myExternalURL));
-    expectedUrls.add(StringUtil.toLowerCase(myMainUrl));
+    Set<SVNURL> expectedUrls = new HashSet<>();
+    expectedUrls.add(myExternalURL);
+    expectedUrls.add(myMainUrl);
 
     boolean sawInner = false;
     for (RootUrlInfo info : infos) {
-      expectedUrls.remove(StringUtil.toLowerCase(info.getUrl()));
+      expectedUrls.remove(info.getUrl());
       sawInner |= NestedCopyType.inner.equals(info.getType());
     }
     Assert.assertTrue(expectedUrls.isEmpty());

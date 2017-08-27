@@ -62,14 +62,14 @@ public class BranchConfigurationDialog extends DialogWrapper {
                                    @NotNull SvnBranchConfigurationNew configuration,
                                    @NotNull SVNURL rootUrl,
                                    @NotNull VirtualFile root,
-                                   @NotNull String url) {
+                                   @NotNull SVNURL url) {
     super(project, true);
     myRoot = root;
     init();
     setTitle(SvnBundle.message("configure.branches.title"));
 
     if (isEmptyOrSpaces(configuration.getTrunkUrl())) {
-      configuration.setTrunkUrl(url);
+      configuration.setTrunkUrl(url.toString());
     }
 
     mySvnBranchConfigManager = SvnBranchConfigurationManager.getInstance(project).getSvnBranchConfigManager();

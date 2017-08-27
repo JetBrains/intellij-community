@@ -60,7 +60,7 @@ public class SvnMapping {
 
   public void add(@NotNull RootUrlInfo rootInfo) {
     myFile2UrlMap.put(rootInfo.getPath(), rootInfo);
-    myUrl2FileMap.put(rootInfo.getUrl(), rootInfo);
+    myUrl2FileMap.put(rootInfo.getUrl().toString(), rootInfo);
   }
 
   @NotNull

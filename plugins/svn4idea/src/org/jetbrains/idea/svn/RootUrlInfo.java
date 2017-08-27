@@ -94,8 +94,8 @@ public class RootUrlInfo implements RootUrlPair {
   }
 
   @NotNull
-  public String getUrl() {
-    return myNode.getUrl().toString();
+  public SVNURL getUrl() {
+    return myNode.getUrl();
   }
 
   @Nullable
