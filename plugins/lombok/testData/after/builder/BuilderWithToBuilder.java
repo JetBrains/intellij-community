@@ -93,15 +93,15 @@ class BuilderWithToBuilder<T> {
 		public BuilderWithToBuilder<T> build() {
 			java.util.List<T> bars;
 			switch (this.bars == null ? 0 : this.bars.size()) {
-			case 0: 
+			case 0:
 				bars = java.util.Collections.emptyList();
 				break;
 
-			case 1: 
+			case 1:
 				bars = java.util.Collections.singletonList(this.bars.get(0));
 				break;
 
-			default: 
+			default:
 				bars = java.util.Collections.unmodifiableList(new java.util.ArrayList<T>(this.bars));
 			}
 			return new BuilderWithToBuilder<T>(one, two, foo, bars);
@@ -241,7 +241,7 @@ class StaticWithToBuilder<T, K> {
 
 		@java.lang.SuppressWarnings("all")
 		@javax.annotation.Generated("lombok")
-		public StaticWithToBuilder build() {
+		public StaticWithToBuilder<Z, String> build() {
 			return StaticWithToBuilder.<Z>test(mOne, bar);
 		}
 

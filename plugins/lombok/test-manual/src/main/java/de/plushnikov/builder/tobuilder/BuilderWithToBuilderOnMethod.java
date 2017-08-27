@@ -21,7 +21,7 @@ class BuilderWithToBuilderOnMethod<T, K> {
     bean.bar = "bar";
     bean.foo = "foo";
 
-    BuilderWithToBuilderOnMethod.BuilderWithToBuilderOnMethodBuilder x = bean.toBuilder();
+    BuilderWithToBuilderOnMethod.BuilderWithToBuilderOnMethodBuilder<String> x = bean.toBuilder();
     System.out.println(x);
 
     x.mOne("builderOne");

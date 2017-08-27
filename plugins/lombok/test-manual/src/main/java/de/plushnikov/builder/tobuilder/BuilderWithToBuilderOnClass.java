@@ -1,6 +1,6 @@
 package de.plushnikov.builder.tobuilder;
 
-import java.util.Arrays;
+import java.util.Collections;
 
 @lombok.Builder(toBuilder = true)
 @lombok.experimental.Accessors(prefix = "m")
@@ -18,12 +18,12 @@ public class BuilderWithToBuilderOnClass<T> {
   }
 
   public static void main(String[] args) {
-    BuilderWithToBuilderOnClass<String> bean = new BuilderWithToBuilderOnClass<String>("mOneParam", "mTwoParam", "fooParam", Arrays.asList("barsParam1"));
+    BuilderWithToBuilderOnClass<String> bean = new BuilderWithToBuilderOnClass<String>("mOneParam", "mTwoParam", "fooParam", Collections.singletonList("barsParam1"));
     bean.mOne = "mOne";
     bean.mTwo = "mTwo";
     bean.foo = "foo";
 
-    BuilderWithToBuilderOnClass.BuilderWithToBuilderOnClassBuilder x = bean.toBuilder();
+    BuilderWithToBuilderOnClass.BuilderWithToBuilderOnClassBuilder<String> x = bean.toBuilder();
     System.out.println(x);
 
     x.one("builderOne");

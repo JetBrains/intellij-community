@@ -2,11 +2,13 @@ package de.plushnikov.intellij.plugin.processor.handler;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
@@ -18,6 +20,7 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.PsiTypeParameterListOwner;
 import com.intellij.psi.PsiVariable;
+import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.util.PsiTypesUtil;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.ShouldGenerateFullCodeBlock;
@@ -305,18 +308,53 @@ public class BuilderHandler {
 
   public void createToBuilderMethodIfNecessary(@NotNull Collection<? super PsiElement> target, @NotNull PsiClass containingClass, @Nullable PsiMethod psiMethod, @NotNull PsiClass builderPsiClass, @NotNull PsiAnnotation psiAnnotation) {
     if (PsiAnnotationUtil.getBooleanAnnotationValue(psiAnnotation, TO_BUILDER_ANNOTATION_KEY, false)) {
-      final PsiType psiTypeWithGenerics = PsiClassUtil.getTypeWithGenerics(builderPsiClass);
+
+      final PsiType psiTypeWithGenerics;
+      if (null != psiMethod) {
+        psiTypeWithGenerics = calculateResultType(psiMethod, builderPsiClass, containingClass);
+      } else {
+        psiTypeWithGenerics = PsiClassUtil.getTypeWithGenerics(builderPsiClass);
+      }
 
       final LombokLightMethodBuilder method = new LombokLightMethodBuilder(containingClass.getManager(), TO_BUILDER_METHOD_NAME)
         .withMethodReturnType(psiTypeWithGenerics)
         .withContainingClass(containingClass)
         .withNavigationElement(psiAnnotation)
         .withModifier(PsiModifier.PUBLIC);
-      addTypeParameters(builderPsiClass, psiMethod, method);
 
       method.withBody(createToBuilderMethodCodeBlock(containingClass, psiMethod, psiTypeWithGenerics));
       target.add(method);
     }
+  }
+
+  private PsiType calculateResultType(@NotNull PsiMethod psiMethod, PsiClass builderPsiClass, PsiClass psiClass) {
+    final Collection<PsiParameter> builderParameters = getBuilderParameters(psiMethod, Collections.<PsiField>emptySet());
+
+    final Collection<PsiType> types = new ArrayList<>();
+    for (PsiVariable psiVariable : builderParameters) {
+
+      final PsiAnnotation obtainViaAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiVariable, BUILDER_OBTAIN_VIA_ANNOTATION);
+      if (null != obtainViaAnnotation) {
+        final String viaFieldName = PsiAnnotationUtil.getStringAnnotationValue(obtainViaAnnotation, BUILDER_OBTAIN_VIA_FIELD);
+
+        final PsiField fieldByName = psiClass.findFieldByName(viaFieldName, false);
+        if (fieldByName != null) {
+          psiVariable = fieldByName;
+        }
+      }
+
+
+      final PsiType psiVariableType = psiVariable.getType();
+
+      if (psiVariableType instanceof PsiClassReferenceType) {
+        final PsiClass resolvedPsiVariableClass = ((PsiClassReferenceType) psiVariableType).resolve();
+        if (resolvedPsiVariableClass instanceof PsiTypeParameter) {
+          types.add(psiVariableType);
+        }
+      }
+    }
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(psiClass.getProject());
+    return factory.createType(builderPsiClass, types.toArray(new PsiType[types.size()]));
   }
 
   @NotNull
@@ -347,10 +385,6 @@ public class BuilderHandler {
 
       final StringBuilder methodCalls = new StringBuilder();
       for (PsiVariable psiVariable : builderVariables) {
-        //TODO
-//        psiVariable.getType()
-//        JavaPsiFacade.getElementFactory(project).createType(genericClass, psiTypes)
-
         methodCalls.append('.');
         methodCalls.append(accessorsInfo.removePrefix(psiVariable.getName()));
         methodCalls.append('(');
