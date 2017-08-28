@@ -35,6 +35,7 @@ import com.intellij.openapi.diff.impl.dir.actions.RefreshDirDiffAction;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -264,23 +265,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
     });
     myRootPanel.removeAll();
     myRootPanel.add(loadingPanel, BorderLayout.CENTER);
-    myFilter = new FilterComponent("dir.diff.filter", 15, false) {
-      @Override
-      public void filter() {
-        fireFilterUpdated();
-      }
-
-      @Override
-      protected void onEscape(KeyEvent e) {
-        e.consume();
-        focusTable();
-      }
-
-      @Override
-      protected JComponent getPopupLocationComponent() {
-        return UIUtil.findComponentOfType(super.getPopupLocationComponent(), JTextComponent.class);
-      }
-    };
+    myFilter = new MyFilterComponent();
 
     myModel.addModelListener(new DirDiffModelListener() {
       @Override
@@ -648,6 +633,35 @@ public class DirDiffPanel implements Disposable, DataProvider {
       int result = sourceElement != null ? sourceElement.hashCode() : 0;
       result = 31 * result + (targetElement != null ? targetElement.hashCode() : 0);
       return result;
+    }
+  }
+
+  private class MyFilterComponent extends FilterComponent {
+    public MyFilterComponent() {
+      super("dir.diff.filter", 15, false);
+
+      new DumbAwareAction() {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          userTriggeredFilter();
+        }
+      }.registerCustomShortcutSet(CommonShortcuts.ENTER, this);
+    }
+
+    @Override
+    public void filter() {
+      fireFilterUpdated();
+    }
+
+    @Override
+    protected void onEscape(@NotNull KeyEvent e) {
+      e.consume();
+      focusTable();
+    }
+
+    @Override
+    protected JComponent getPopupLocationComponent() {
+      return UIUtil.findComponentOfType(super.getPopupLocationComponent(), JTextComponent.class);
     }
   }
 }
