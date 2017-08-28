@@ -40,12 +40,7 @@ import java.util.List;
 
 public class HtmlSelectioner extends AbstractWordSelectioner {
 
-  private static final SelectWordUtil.CharCondition JAVA_IDENTIFIER_AND_HYPHEN_CONDITION = new SelectWordUtil.CharCondition() {
-    @Override
-    public boolean value(char ch) {
-      return Character.isJavaIdentifierPart(ch) || ch == '-';
-    }
-  };
+  private static final SelectWordUtil.CharCondition JAVA_IDENTIFIER_AND_HYPHEN_CONDITION = ch -> Character.isJavaIdentifierPart(ch) || ch == '-';
 
   @Override
   public boolean canSelect(PsiElement e) {
