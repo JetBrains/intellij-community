@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,22 @@
  */
 package org.jetbrains.debugger;
 
-import org.jetbrains.annotations.NotNull;
-
 /**
- * Additional interface that user visitor may implement for {@link BreakpointTarget#accept}
- * method.
+ * Defines when VM will break on exception throw (before stack unwind happened)
  */
-public interface ScriptRegExpSupportVisitor<R> extends BreakpointTarget.Visitor<R> {
-  R visitRegExp(@NotNull ScriptRegExpBreakpointTarget target);
+public enum ExceptionCatchMode {
+  /**
+   * VM always breaks when exception is being thrown
+   */
+  ALL,
+
+  /**
+   * VM breaks when exception is being thrown without try-catch that is going to catch it
+   */
+  UNCAUGHT,
+
+  /**
+   * VM doesn't break when exception is being thrown
+   */
+  NONE
 }

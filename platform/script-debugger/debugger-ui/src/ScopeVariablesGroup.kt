@@ -50,7 +50,8 @@ class ScopeVariablesGroup(val scope: Scope, parentContext: VariableContext, call
                 return@thenAsyncAccept callFrame.evaluateContext.evaluate(it)
                   .done(node) {
                     VariableImpl(RECEIVER_NAME, it.value, null)
-                    node.addChildren(XValueChildrenList.singleton(VariableView(VariableImpl(RECEIVER_NAME, it.value, null), context)), true)
+                    node.addChildren(XValueChildrenList.singleton(VariableView(
+                      VariableImpl(RECEIVER_NAME, it.value, null), context)), true)
                   }
               }
             }
