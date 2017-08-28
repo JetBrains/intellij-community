@@ -491,9 +491,13 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
   }
 
   override fun getState(): Element {
-    for (settings in idToSettings.values) {
-      if (settings.type !is UnknownConfigurationType) {
-        checkIfDependenciesAreStable(settings.configuration)
+    if (!isFirstLoadState.get()) {
+      lock.read {
+        for (settings in idToSettings.values) {
+          if (settings.type !is UnknownConfigurationType) {
+            checkIfDependenciesAreStable(settings.configuration)
+          }
+        }
       }
     }
 
@@ -1076,7 +1080,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
 
     if (configuration is CompoundRunConfiguration) {
       val children = configuration.getConfigurations(this)
-      for (otherSettings in allSettings) {
+      for (otherSettings in idToSettings.values) {
         if (!otherSettings.isTemporary) {
           continue
         }
