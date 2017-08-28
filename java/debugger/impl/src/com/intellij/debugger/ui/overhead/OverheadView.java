@@ -57,8 +57,8 @@ public class OverheadView extends BorderLayoutPanel implements Disposable {
     myModel = new ListTableModel<>(new ColumnInfo[]{
       ENABLED_COLUMN,
       NAME_COLUMN,
-      new TimingColumnInfo("hits", s -> OverheadTimings.getHits(myProcess, s)),
-      new TimingColumnInfo("time", s -> OverheadTimings.getTime(myProcess, s))},
+      new TimingColumnInfo("Hits", s -> OverheadTimings.getHits(myProcess, s)),
+      new TimingColumnInfo("Time(ms)", s -> OverheadTimings.getTime(myProcess, s))},
                                    new ArrayList<>(OverheadTimings.getProducers(process)),
                                    3, SortOrder.DESCENDING);
     myModel.setSortable(true);
@@ -123,7 +123,7 @@ public class OverheadView extends BorderLayoutPanel implements Disposable {
 
   private static class NameColumnInfo extends ColumnInfo<OverheadProducer, OverheadProducer> {
     public NameColumnInfo() {
-      super("name");
+      super("Name");
     }
 
     @Nullable
