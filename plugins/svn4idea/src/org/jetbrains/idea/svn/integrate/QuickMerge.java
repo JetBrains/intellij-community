@@ -211,7 +211,7 @@ public class QuickMerge extends BackgroundTaskGroup {
 
   private boolean supportsMergeInfo() {
     return myMergeContext.getWcInfo().getFormat().supportsMergeInfo() &&
-           checkRepositoryVersion15(myMergeContext.getVcs(), myMergeContext.getSourceUrl().toString());
+           checkRepositoryVersion15(myMergeContext.getVcs(), myMergeContext.getSourceUrl());
   }
 
   @NotNull

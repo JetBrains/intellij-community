@@ -77,7 +77,7 @@ public class WcInfoLoader {
     if (myLocation != null && !myLocation.toPresentableString().startsWith(url) && !url.startsWith(myLocation.toPresentableString())) {
       return null;
     }
-    if (!SvnUtil.checkRepositoryVersion15(myVcs, url)) {
+    if (!SvnUtil.checkRepositoryVersion15(myVcs, info.getUrl())) {
       return null;
     }
 

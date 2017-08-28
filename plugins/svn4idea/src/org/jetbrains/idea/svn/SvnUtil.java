@@ -504,14 +504,14 @@ public class SvnUtil {
     return result;
   }
 
-  public static boolean checkRepositoryVersion15(@NotNull SvnVcs vcs, @NotNull String url) {
+  public static boolean checkRepositoryVersion15(@NotNull SvnVcs vcs, @NotNull SVNURL url) {
     // Merge info tracking is supported in repositories since svn 1.5 (June 2008) - see http://subversion.apache.org/docs/release-notes/.
     // But still some users use 1.4 repositories and currently we need to know if repository supports merge info for some code flows.
 
     boolean result = false;
 
     try {
-      result = vcs.getFactory().createRepositoryFeaturesClient().supportsMergeTracking(createUrl(url));
+      result = vcs.getFactory().createRepositoryFeaturesClient().supportsMergeTracking(url);
     }
     catch (VcsException e) {
       LOG.info(e);

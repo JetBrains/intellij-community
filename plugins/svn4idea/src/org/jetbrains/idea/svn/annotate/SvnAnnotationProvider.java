@@ -138,8 +138,7 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
         // ignore mime type=true : IDEA-19562
         final AnnotationConsumer annotateHandler = createAnnotationHandler(progress, result);
 
-        boolean calculateMergeinfo =
-          myVcs.getSvnConfiguration().isShowMergeSourcesInAnnotate() && checkRepositoryVersion15(myVcs, url.toString());
+        boolean calculateMergeinfo = myVcs.getSvnConfiguration().isShowMergeSourcesInAnnotate() && checkRepositoryVersion15(myVcs, url);
         final MySteppedLogGetter logGetter = new MySteppedLogGetter(
           myVcs, ioFile, progress,
           myVcs.getFactory(ioFile).createHistoryClient(), endRevision, result,
@@ -273,8 +272,7 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
     final SvnRemoteFileAnnotation result = new SvnRemoteFileAnnotation(myVcs, contents, revisionNumber, current);
     final AnnotationConsumer annotateHandler = createAnnotationHandler(ProgressManager.getInstance().getProgressIndicator(), result);
 
-    boolean calculateMergeinfo =
-      myVcs.getSvnConfiguration().isShowMergeSourcesInAnnotate() && checkRepositoryVersion15(myVcs, wasUrl.toString());
+    boolean calculateMergeinfo = myVcs.getSvnConfiguration().isShowMergeSourcesInAnnotate() && checkRepositoryVersion15(myVcs, wasUrl);
     AnnotateClient client = myVcs.getFactory().createAnnotateClient();
     client
       .annotate(SvnTarget.fromURL(wasUrl, svnRevision), SVNRevision.create(1), svnRevision, calculateMergeinfo, getLogClientOptions(myVcs),

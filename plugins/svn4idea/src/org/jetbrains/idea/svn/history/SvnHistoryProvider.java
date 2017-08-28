@@ -296,7 +296,7 @@ public class SvnHistoryProvider
 
     protected void initSupports15() {
       assert myUrl != null;
-      mySupport15 = SvnUtil.checkRepositoryVersion15(myVcs, myUrl.toDecodedString());
+      mySupport15 = SvnUtil.checkRepositoryVersion15(myVcs, myUrl);
     }
 
     public void check() throws VcsException {
