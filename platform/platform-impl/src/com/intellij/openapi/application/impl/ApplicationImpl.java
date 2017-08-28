@@ -132,18 +132,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private boolean myLoaded;
   private static final String WAS_EVER_SHOWN = "was.ever.shown";
 
-  private static final ModalityState ANY = new ModalityState() {
-    @Override
-    public boolean dominates(@NotNull ModalityState anotherState) {
-      return false;
-    }
-
-    @Override
-    public String toString() {
-      return "ANY";
-    }
-  };
-
   static {
     IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool();
   }
@@ -714,7 +702,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @Override
   @NotNull
   public ModalityState getAnyModalityState() {
-    return ANY;
+    return AnyModalityState.ANY;
   }
 
   @Override
