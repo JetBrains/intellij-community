@@ -15,12 +15,13 @@
  */
 package com.intellij.util;
 
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.EmptyIterator;
+import com.intellij.util.containers.HashSet;
 import org.junit.Test;
 
-import java.util.ConcurrentModificationException;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
@@ -280,5 +281,88 @@ public class SmartListTest {
     assertThat(l.contains(null)).isTrue();
     assertThat(l.indexOf(42)).isEqualTo(-1);
     assertThat(l.contains(42)).isFalse();
+  }
+
+  @Test
+  public void testEqualsSelf() {
+    List<Integer> list = new SmartList<>();
+
+    assertThat(list).isEqualTo(list);
+  }
+
+  @Test
+  public void testEqualsNonListCollection() {
+    List<Integer> list = new SmartList<>();
+
+    assertThat(list).isNotEqualTo(new HashSet<>());
+  }
+
+  @Test
+  public void testEqualsEmptyList() {
+    List<Integer> list = new SmartList<>();
+
+    assertThat(list).isEqualTo(new SmartList<>());
+    assertThat(list).isEqualTo(new ArrayList<>());
+    assertThat(list).isEqualTo(new LinkedList<>());
+    assertThat(list).isEqualTo(Collections.emptyList());
+    assertThat(list).isEqualTo(Arrays.asList());
+    assertThat(list).isEqualTo(ContainerUtilRt.emptyList());
+
+    assertThat(list).isNotEqualTo(new SmartList<>(1));
+    assertThat(list).isNotEqualTo(new ArrayList<>(Collections.singletonList(1)));
+    assertThat(list).isNotEqualTo(new LinkedList<>(Collections.singletonList(1)));
+    assertThat(list).isNotEqualTo(Arrays.asList(1));
+    assertThat(list).isNotEqualTo(Collections.singletonList(1));
+  }
+
+  @Test
+  public void testEqualsListWithSingleNullableElement() {
+    List<Integer> list = new SmartList<>((Integer)null);
+
+    assertThat(list).isEqualTo(new SmartList<>((Integer)null));
+    assertThat(list).isEqualTo(new ArrayList<>(Collections.singletonList(null)));
+    assertThat(list).isEqualTo(new LinkedList<>(Collections.singletonList(null)));
+    assertThat(list).isEqualTo(Arrays.asList(new Integer[]{null}));
+    assertThat(list).isEqualTo(Collections.singletonList(null));
+
+    assertThat(list).isNotEqualTo(new SmartList<>());
+    assertThat(list).isNotEqualTo(new ArrayList<>());
+    assertThat(list).isNotEqualTo(new LinkedList<>());
+    assertThat(list).isNotEqualTo(Collections.emptyList());
+    assertThat(list).isNotEqualTo(Arrays.asList());
+    assertThat(list).isNotEqualTo(ContainerUtilRt.emptyList());
+  }
+
+  @Test
+  public void testEqualsListWithSingleNonNullElement() {
+    List<Integer> list = new SmartList<>(1);
+
+    assertThat(list).isEqualTo(new SmartList<>(new Integer(1)));
+    assertThat(list).isEqualTo(new ArrayList<>(Arrays.asList(new Integer(1))));
+    assertThat(list).isEqualTo(new LinkedList<>(Arrays.asList(new Integer(1))));
+    assertThat(list).isEqualTo(Arrays.asList(new Integer(1)));
+    assertThat(list).isEqualTo(Collections.singletonList(new Integer(1)));
+
+    assertThat(list).isNotEqualTo(new SmartList<>());
+    assertThat(list).isNotEqualTo(new ArrayList<>());
+    assertThat(list).isNotEqualTo(new LinkedList<>());
+    assertThat(list).isNotEqualTo(Collections.emptyList());
+    assertThat(list).isNotEqualTo(Arrays.asList());
+    assertThat(list).isNotEqualTo(ContainerUtilRt.emptyList());
+  }
+
+  @Test
+  public void testEqualsListWithMultipleElements() {
+    List<Integer> list = new SmartList<>(1, null, 3);
+
+    assertThat(list).isEqualTo(new SmartList<>(new Integer(1), null, new Integer(3)));
+    assertThat(list).isEqualTo(new ArrayList<>(Arrays.asList(new Integer(1), null, new Integer(3))));
+    assertThat(list).isEqualTo(new LinkedList<>(Arrays.asList(new Integer(1), null, new Integer(3))));
+    assertThat(list).isEqualTo(Arrays.asList(new Integer(1), null, new Integer(3)));
+
+    assertThat(list).isNotEqualTo(new SmartList<>(new Integer(1), new Integer(2), new Integer(3)));
+    assertThat(list).isNotEqualTo(new ArrayList<>(Arrays.asList(new Integer(1), new Integer(2), new Integer(3))));
+    assertThat(list).isNotEqualTo(new LinkedList<>(Arrays.asList(new Integer(1), new Integer(2), new Integer(3))));
+    assertThat(list).isNotEqualTo(Arrays.asList(new Integer(1), new Integer(2), new Integer(3)));
   }
 }
