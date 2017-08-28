@@ -19,12 +19,15 @@ import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
+import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
+import com.intellij.debugger.ui.overhead.OverheadProducer;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
+import com.intellij.ui.SimpleColoredComponent;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.Value;
 import org.jdom.Element;
@@ -132,5 +135,43 @@ public abstract class NodeRendererImpl implements NodeRenderer{
   @Nullable
   public String getIdLabel(Value value, DebugProcess process) {
     return value instanceof ObjectReference && isShowType() ? ValueDescriptorImpl.getIdLabel((ObjectReference)value) : null;
+  }
+
+  public boolean hasOverhead() {
+    return false;
+  }
+
+  public static class Overhead implements OverheadProducer {
+    private final NodeRendererImpl myRenderer;
+
+    public Overhead(@NotNull NodeRendererImpl renderer) {
+      myRenderer = renderer;
+    }
+
+    @Override
+    public boolean isEnabled() {
+      return myRenderer.isEnabled();
+    }
+
+    @Override
+    public void setEnabled(boolean enabled) {
+      myRenderer.setEnabled(enabled);
+      NodeRendererSettings.getInstance().fireRenderersChanged();
+    }
+
+    @Override
+    public void customizeRenderer(SimpleColoredComponent renderer) {
+      renderer.append(myRenderer.getName() + " renderer");
+    }
+
+    @Override
+    public int hashCode() {
+      return myRenderer.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      return obj instanceof CompoundTypeRenderer.Overhead && myRenderer.equals(((CompoundTypeRenderer.Overhead)obj).myRenderer);
+    }
   }
 }

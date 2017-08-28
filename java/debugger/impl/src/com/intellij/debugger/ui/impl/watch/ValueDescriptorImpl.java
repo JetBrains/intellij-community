@@ -25,6 +25,7 @@ import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.settings.NodeRendererSettings;
+import com.intellij.debugger.ui.overhead.OverheadTimings;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.NodeDescriptorNameAdjuster;
@@ -298,11 +299,17 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
 
     String label;
     if (valueException == null) {
+      long start = renderer instanceof NodeRendererImpl && ((NodeRendererImpl)renderer).hasOverhead() ? System.currentTimeMillis() : 0;
       try {
         label = renderer.calcLabel(this, context, labelListener);
       }
       catch (EvaluateException e) {
         label = setValueLabelFailed(e);
+      }
+      finally {
+        if (start > 0) {
+          OverheadTimings.add(debugProcess, new NodeRendererImpl.Overhead((NodeRendererImpl)renderer), 1, System.currentTimeMillis() - start);
+        }
       }
     }
     else {
