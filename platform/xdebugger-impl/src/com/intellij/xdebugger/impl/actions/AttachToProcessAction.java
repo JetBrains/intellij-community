@@ -94,8 +94,8 @@ public class AttachToProcessAction extends AnAction {
           localSettings.add(new LocalAttachSettings(info));
         }
 
-        List<AttachToProcessItem> localAttachItems =
-          collectAttachItems(project, localSettings, localAttachProviders); //indicator
+        List<AttachItem> localAttachItems =
+          collectLocalAttachItems(project, localSettings,/* indicator,*/ localAttachProviders);//
         List<RemoteAttachItem> remoteAttachItems = collectRemotes(project, remotes, remoteAttachProviders);
 
         List<AttachItem> attachItems = new ArrayList<>(remoteAttachItems);
@@ -166,8 +166,12 @@ public class AttachToProcessAction extends AnAction {
     List<RemoteAttachItem> currentItems = new ArrayList<>();
     for (final XAttachGroup<RemoteSettings> eachGroup : sortedGroups) {
 
-      List<Pair<RemoteSettings, XRemoteProcessListProvider>> sortedItems = new ArrayList<>(groupWithItems.get(eachGroup));
-      sortedItems.sort((a, b) -> eachGroup.compare(project, a.first, b.first, dataHolder));
+      //List<Pair<RemoteSettings, XRemoteProcessListProvider>> sortedItems = new ArrayList<>(groupWithItems.get(eachGroup));
+      //sortedItems.sort((a, b) -> eachGroup.compare(project, a.first, b.first, dataHolder));
+
+      Set<Pair<RemoteSettings, XRemoteProcessListProvider>> sortedItems =
+        new TreeSet<>((o1, o2) -> eachGroup.compare(project, o1.first, o2.first, dataHolder));
+      sortedItems.addAll(groupWithItems.get(eachGroup));
 
       boolean isFirst = true;
       for (Pair<RemoteSettings, XRemoteProcessListProvider> eachItem : sortedItems) {
@@ -208,10 +212,10 @@ public class AttachToProcessAction extends AnAction {
   }
 
   @NotNull
-  public static List<AttachToProcessItem> collectAttachItems(@NotNull final Project project,
-                                                             @NotNull List<AttachToProcessSettings> settingsList,
-                                                             //@NotNull ProgressIndicator indicator,
-                                                             @NotNull XAttachDebuggerProvider... providers) {
+  public static List<AttachItem> collectLocalAttachItems(@NotNull final Project project,
+                                                         @NotNull List<AttachToProcessSettings> settingsList,
+                                                         //@NotNull ProgressIndicator indicator,
+                                                         @NotNull XAttachDebuggerProvider... providers) {
     UserDataHolderBase dataHolder = new UserDataHolderBase();
 
     MultiMap<XAttachGroup<AttachToProcessSettings>, Pair<AttachToProcessSettings, ArrayList<XAttachDebugger<AttachToProcessSettings>>>>
@@ -234,7 +238,7 @@ public class AttachToProcessAction extends AnAction {
       }
     }
 
-    List<AttachToProcessItem> currentHistoryItems = new ArrayList<>();
+    List<AttachItem> currentHistoryItems = new ArrayList<>();
     List<HistoryItem> history = getHistory(project);
     for (int i = history.size() - 1; i >= 0; i--) {
       HistoryItem eachHistoryItem = history.get(i);
@@ -356,7 +360,7 @@ public class AttachToProcessAction extends AnAction {
     @NotNull
     XAttachGroup getGroup();
 
-    //boolean hasSubStep();
+    boolean hasSubStep();
 
     @NotNull
     List<AttachItem> getSubItems();
@@ -425,6 +429,11 @@ public class AttachToProcessAction extends AnAction {
       return myGroup;
     }
 
+    @Override
+    public boolean hasSubStep() {
+      return true;
+    }
+
     @NotNull
     @Override
     public List<AttachItem> getSubItems() {
@@ -433,14 +442,14 @@ public class AttachToProcessAction extends AnAction {
 
     @NotNull
     public List<AttachItem> getAttachItems() {
-      List<AttachToProcessSettings> settings = new ArrayList<>();
-      List<ProcessInfo> processInfo = myProcessListProvider.getProcessList();
 
+      List<AttachToProcessSettings> settings = new ArrayList<>();
+      List<ProcessInfo> processInfo = myProcessListProvider.getProcessList(myProject, mySettings);
       for (ProcessInfo info : processInfo) {
-        settings.add(new RemoteAttachSettings(info, mySettings.getInfo()));
+        settings.add(new RemoteAttachSettings(info, new RemoteSettings(mySettings.getInfo(), myProcessListProvider)));
       }
 
-      return new ArrayList<>(collectAttachItems(myProject, settings, myProviders));
+      return collectLocalAttachItems(myProject, settings, myProviders);
     }
   }
 
@@ -504,9 +513,9 @@ public class AttachToProcessAction extends AnAction {
       return myGroup;
     }
 
-    //public boolean hasSubStep() {
-    //  return !mySubItems.isEmpty();
-    //}
+    public boolean hasSubStep() {
+      return !mySubItems.isEmpty();
+    }
 
     @Nullable
     public String getSeparatorTitle() {
@@ -553,27 +562,7 @@ public class AttachToProcessAction extends AnAction {
     }
   }
 
-  //public static class AttachToLocalProcessItem extends AttachToProcessItem<LocalAttachSettings> {
-  //  public AttachToLocalProcessItem(@NotNull XAttachGroup<LocalAttachSettings> group,
-  //                                  boolean isFirstInGroup,
-  //                                  @NotNull LocalAttachSettings info,
-  //                                  @NotNull List<XAttachDebugger<LocalAttachSettings>> debuggers,
-  //                                  @NotNull UserDataHolder dataHolder) {
-  //    super(group, isFirstInGroup, group.getGroupName(), info, debuggers, 0, dataHolder);
-  //  }
-  //}
-  //
-  //public static class AttachToRemoteProcessItem extends AttachToProcessItem<RemoteAttachSettings> {
-  //  public AttachToRemoteProcessItem(@NotNull XAttachGroup<RemoteAttachSettings> group,
-  //                                   boolean isFirstInGroup,
-  //                                   @NotNull RemoteAttachSettings info,
-  //                                   @NotNull List<XAttachDebugger<RemoteAttachSettings>> debuggers,
-  //                                   @NotNull UserDataHolder dataHolder) {
-  //    super(group, isFirstInGroup, group.getGroupName(), info, debuggers, 0, dataHolder);
-  //  }
-  //}
-
-  private abstract static class MyBasePopupStep<T extends AttachItem> extends BaseListPopupStep<T> {
+  private static class MyBasePopupStep<T extends AttachItem> extends BaseListPopupStep<T> {
     @NotNull final Project myProject;
 
     public MyBasePopupStep(@NotNull Project project,
@@ -599,7 +588,9 @@ public class AttachToProcessAction extends AnAction {
     }
 
     @Override
-    public abstract PopupStep onChosen(T selectedValue, boolean finalChoice);
+    public PopupStep onChosen(T selectedValue, boolean finalChoice) {
+      return null;
+    }
   }
 
   private static class AttachListStep extends MyBasePopupStep<AttachItem> implements ListPopupStepEx<AttachItem> {
@@ -623,6 +614,11 @@ public class AttachToProcessAction extends AnAction {
     @Override
     public String getTextFor(AttachItem value) {
       return value.getText(myProject);
+    }
+
+    @Override
+    public boolean hasSubstep(AttachItem selectedValue) {
+      return selectedValue.hasSubStep();
     }
 
     @Nullable
@@ -650,7 +646,8 @@ public class AttachToProcessAction extends AnAction {
       }
 
       if (selectedValue instanceof RemoteAttachItem) {
-        return new AttachListStep(selectedValue.getSubItems(), null, myProject);
+        final AttachListStep step = new AttachListStep(selectedValue.getSubItems(), null, myProject);
+        return step;
       }
 
       return null;
@@ -666,7 +663,7 @@ public class AttachToProcessAction extends AnAction {
     private class DebuggerListStep extends MyBasePopupStep<AttachToProcessItem> {
       public DebuggerListStep(List<AttachToProcessItem> items, int selectedItem) {
         super(AttachListStep.this.myProject,
-              XDebuggerBundle.message("xdebugger.attach.toLocal.popup.selectDebugger.title"), items);
+              XDebuggerBundle.message("xdebugger.attach.popup.selectDebugger.title"), items);
         setDefaultOptionIndex(selectedItem);
       }
 
