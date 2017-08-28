@@ -18,6 +18,7 @@ package com.siyeh.ig.callMatcher;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiMethodReferenceExpression;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Contract;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -60,6 +61,7 @@ public class CallMapper<T> {
     return this;
   }
 
+  @Contract("null -> null")
   public T mapFirst(PsiMethodCallExpression call) {
     if (call == null) return null;
     List<CallHandler<T>> functions = myMap.get(call.getMethodExpression().getReferenceName());
