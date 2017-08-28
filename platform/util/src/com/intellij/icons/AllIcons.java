@@ -583,6 +583,7 @@ public class AllIcons {
     public static final Icon WarningDialog = IconLoader.getIcon("/general/warningDialog.png"); // 32x32
     public static final Icon Web = IconLoader.getIcon("/general/web.png"); // 13x13
     public static final Icon WebSettings = IconLoader.getIcon("/general/webSettings.png"); // 16x16
+    public static final Icon Hourglass = IconLoader.getIcon("/general/hourglass.png"); // 16x16
 
   }
   
