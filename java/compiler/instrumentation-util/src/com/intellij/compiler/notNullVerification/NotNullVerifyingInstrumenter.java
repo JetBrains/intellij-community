@@ -164,7 +164,7 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
     final int syntheticCount = signature == null ? 0 : hasOuterClassParameter ? 1 : Math.max(0, args.length - getSignatureParameterCount(signature));
 
     // workaround for ASM's workaround for javac bug: http://forge.ow2.org/tracker/?func=detail&aid=317788&group_id=23&atid=100023
-    final int paramAnnotationOffset = hasOuterClassParameter ? 1 : 0;
+    final int paramAnnotationOffset = signature == null ? 0 : hasOuterClassParameter ? Math.max(0, args.length - getSignatureParameterCount(signature) - 1) : 0;
 
     final Type returnType = Type.getReturnType(desc);
     final MethodVisitor v = cv.visitMethod(access, name, desc, signature, exceptions);
