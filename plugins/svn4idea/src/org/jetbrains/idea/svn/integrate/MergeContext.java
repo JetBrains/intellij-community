@@ -20,10 +20,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.dialogs.WCInfo;
+import org.tmatesoft.svn.core.SVNURL;
 
 import static org.jetbrains.idea.svn.SvnUtil.ensureStartSlash;
 import static org.jetbrains.idea.svn.SvnUtil.getRelativeUrl;
-import static org.tmatesoft.svn.core.internal.util.SVNPathUtil.getRelativePath;
 
 /**
  * @author Konstantin Kolosovsky.
@@ -34,14 +34,14 @@ public class MergeContext {
   @NotNull private final String myBranchName;
   @NotNull private final VirtualFile myRoot;
   @NotNull private final WCInfo myWcInfo;
-  @NotNull private final String mySourceUrl;
+  @NotNull private final SVNURL mySourceUrl;
   @NotNull private final SvnVcs myVcs;
   @NotNull private final String myTitle;
   @NotNull private final String myRepositoryRelativeSourcePath;
   @NotNull private final String myRepositoryRelativeWorkingCopyPath;
 
   public MergeContext(@NotNull SvnVcs vcs,
-                      @NotNull String sourceUrl,
+                      @NotNull SVNURL sourceUrl,
                       @NotNull WCInfo wcInfo,
                       @NotNull String branchName,
                       @NotNull VirtualFile root) {
@@ -52,7 +52,7 @@ public class MergeContext {
     mySourceUrl = sourceUrl;
     myWcInfo = wcInfo;
     myTitle = "Merge from " + myBranchName;
-    myRepositoryRelativeSourcePath = ensureStartSlash(getRelativePath(myWcInfo.getRepoUrl().toString(), mySourceUrl));
+    myRepositoryRelativeSourcePath = ensureStartSlash(getRelativeUrl(myWcInfo.getRepoUrl(), mySourceUrl));
     myRepositoryRelativeWorkingCopyPath = ensureStartSlash(getRelativeUrl(myWcInfo.getRepoUrl(), myWcInfo.getUrl()));
   }
 
@@ -77,7 +77,7 @@ public class MergeContext {
   }
 
   @NotNull
-  public String getSourceUrl() {
+  public SVNURL getSourceUrl() {
     return mySourceUrl;
   }
 

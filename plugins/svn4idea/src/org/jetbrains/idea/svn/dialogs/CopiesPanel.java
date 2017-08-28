@@ -26,6 +26,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -51,6 +52,7 @@ import org.jetbrains.idea.svn.branchConfig.BranchConfigurationDialog;
 import org.jetbrains.idea.svn.branchConfig.SelectBranchPopup;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
 import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.integrate.MergeContext;
 import org.jetbrains.idea.svn.integrate.QuickMerge;
 import org.jetbrains.idea.svn.integrate.QuickMergeInteractionImpl;
@@ -72,8 +74,11 @@ import java.util.*;
 import java.util.List;
 
 import static com.intellij.notification.NotificationDisplayType.STICKY_BALLOON;
+import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.map;
 import static java.util.Collections.singletonList;
+import static org.jetbrains.idea.svn.SvnUtil.append;
+import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 
 public class CopiesPanel {
 
@@ -333,18 +338,23 @@ public class CopiesPanel {
 
   private void mergeFrom(@NotNull final WCInfo wcInfo, @NotNull final VirtualFile root, @Nullable final Component mergeLabel) {
     SelectBranchPopup.showForBranchRoot(myProject, root, (project, configuration, branchUrl, revision) -> {
-      String workingCopyUrlInSelectedBranch = getCorrespondingUrlInOtherBranch(configuration, wcInfo.getUrl(), branchUrl);
-      MergeContext mergeContext = new MergeContext(myVcs, workingCopyUrlInSelectedBranch, wcInfo, SVNPathUtil.tail(branchUrl), root);
+      try {
+        SVNURL workingCopyUrlInSelectedBranch = getCorrespondingUrlInOtherBranch(configuration, wcInfo.getUrl(), branchUrl);
+        MergeContext mergeContext = new MergeContext(myVcs, workingCopyUrlInSelectedBranch, wcInfo, SVNPathUtil.tail(branchUrl), root);
 
-      new QuickMerge(mergeContext, new QuickMergeInteractionImpl(mergeContext)).execute();
+        new QuickMerge(mergeContext, new QuickMergeInteractionImpl(mergeContext)).execute();
+      }
+      catch (SvnBindException e) {
+        AbstractVcsHelper.getInstance(myProject).showError(e, "Merge from " + SVNPathUtil.tail(branchUrl));
+      }
     }, "Select branch", mergeLabel);
   }
 
   @NotNull
-  private static String getCorrespondingUrlInOtherBranch(@NotNull SvnBranchConfigurationNew configuration,
+  private static SVNURL getCorrespondingUrlInOtherBranch(@NotNull SvnBranchConfigurationNew configuration,
                                                          @NotNull SVNURL url,
-                                                         @NotNull String otherBranchUrl) {
-    return SVNPathUtil.append(otherBranchUrl, configuration.getRelativeUrl(url.toDecodedString()));
+                                                         @NotNull String otherBranchUrl) throws SvnBindException {
+    return append(createUrl(otherBranchUrl), notNull(configuration.getRelativeUrl(url.toDecodedString())));
   }
 
   @SuppressWarnings("MethodMayBeStatic")
