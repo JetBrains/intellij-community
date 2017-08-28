@@ -634,7 +634,8 @@ public class PluginManagerCore {
 
   @Nullable
   private static IdeaPluginDescriptorImpl loadDescriptorFromDir(@NotNull File file, @NotNull String fileName) {
-    File descriptorFile = new File(file, META_INF + File.separator + fileName);
+    String path = FileUtil.toSystemDependentName(META_INF + '/' + fileName);
+    File descriptorFile = new File(file, path);
     if (descriptorFile.exists()) {
       try {
         IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(file);
@@ -773,7 +774,7 @@ public class PluginManagerCore {
         if (optionalDescriptor == null && directory) {
           URL resource = PluginManagerCore.class.getClassLoader().getResource(META_INF + '/' + optionalDescriptorName);
           if (resource != null) {
-            optionalDescriptor = loadDescriptorFromResource(resource);
+            optionalDescriptor = loadDescriptorFromResource(resource, optionalDescriptorName);
           }
         }
         return optionalDescriptor;
@@ -983,20 +984,21 @@ public class PluginManagerCore {
   }
 
   private static void loadDescriptorsFromClassPath(List<IdeaPluginDescriptorImpl> result, ClassLoader loader, StartupProgress progress) {
-    Collection<URL> urls = ContainerUtil.newHashSet();
+    Map<URL, String> urls = ContainerUtil.newLinkedHashMap();
 
     String platformPrefix = System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY);
     if (platformPrefix != null) {
-      URL resource = loader.getResource(META_INF + '/' + platformPrefix + "Plugin.xml");
+      String fileName = platformPrefix + "Plugin.xml";
+      URL resource = loader.getResource(META_INF + '/' + fileName);
       if (resource != null) {
-        urls.add(resource);
+        urls.put(resource, fileName);
       }
     }
 
     try {
       Enumeration<URL> enumeration = loader.getResources(META_INF + '/' + PLUGIN_XML);
       while (enumeration.hasMoreElements()) {
-        urls.add(enumeration.nextElement());
+        urls.put(enumeration.nextElement(), PLUGIN_XML);
       }
     }
     catch (IOException e) {
@@ -1007,8 +1009,8 @@ public class PluginManagerCore {
     Collection<IdeaPluginDescriptorImpl> existingResults = ContainerUtil.newHashSet(result);
     
     int i = 0;
-    for (URL url : urls) {
-      IdeaPluginDescriptorImpl descriptor = loadDescriptorFromResource(url);
+    for (URL url : urls.keySet()) {
+      IdeaPluginDescriptorImpl descriptor = loadDescriptorFromResource(url, urls.get(url));
       if (descriptor != null && existingResults.add(descriptor)) {
         descriptor.setUseCoreClassLoader(true);
         result.add(descriptor);
@@ -1020,17 +1022,18 @@ public class PluginManagerCore {
   }
 
   @Nullable
-  private static IdeaPluginDescriptorImpl loadDescriptorFromResource(@NotNull URL resource) {
+  private static IdeaPluginDescriptorImpl loadDescriptorFromResource(@NotNull URL resource, @NotNull String fileName) {
     try {
       if (URLUtil.FILE_PROTOCOL.equals(resource.getProtocol())) {
         File descriptorFile = urlToFile(resource);
-        File pluginDir = descriptorFile.getParentFile().getParentFile();
-        return loadDescriptor(pluginDir, descriptorFile.getName());
+        File descriptorDir = new File(StringUtil.trimEnd(descriptorFile.getPath(), fileName));
+        File pluginDir = descriptorDir.getParentFile();
+        return loadDescriptor(pluginDir, fileName);
       }
       else if (URLUtil.JAR_PROTOCOL.equals(resource.getProtocol())) {
         String path = resource.getFile();
         File pluginJar = urlToFile(new URL(path.substring(0, path.indexOf(URLUtil.JAR_SEPARATOR))));
-        return loadDescriptor(pluginJar, PathUtil.getFileName(path));
+        return loadDescriptor(pluginJar, fileName);
       }
     }
     catch (Throwable e) {
