@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -5097,9 +5097,11 @@ public class AbstractTreeUi {
     });
   }
 
-  private static <V> void warnMap(String prefix, Map<Object, V> map) {
+  private <V> void warnMap(String prefix, Map<Object, V> map) {
     if (!LOG.isDebugEnabled()) return;
-    if (!SwingUtilities.isEventDispatchThread()) LOG.warn(prefix + "modified on wrong thread");
+    if (!SwingUtilities.isEventDispatchThread() && !myPassThroughMode) {
+      LOG.warn(prefix + "modified on wrong thread");
+    }
     long count = map.keySet().stream().filter(AbstractTreeUi::isNodeNull).count();
     if (count > 0) LOG.warn(prefix + "null keys: " + count + " / " + map.size());
   }
