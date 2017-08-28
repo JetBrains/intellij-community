@@ -105,7 +105,7 @@ public class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<MavenBefo
     return new MavenBeforeRunTask();
   }
 
-  public boolean configureTask(RunConfiguration runConfiguration, MavenBeforeRunTask task) {
+  public boolean configureTask(@NotNull RunConfiguration runConfiguration, @NotNull MavenBeforeRunTask task) {
     MavenEditGoalDialog dialog = new MavenEditGoalDialog(myProject);
 
     dialog.setTitle(TasksBundle.message("maven.tasks.select.goal.title"));
@@ -142,7 +142,7 @@ public class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<MavenBefo
   }
 
   @Override
-  public boolean canExecuteTask(RunConfiguration configuration, MavenBeforeRunTask task) {
+  public boolean canExecuteTask(@NotNull RunConfiguration configuration, @NotNull MavenBeforeRunTask task) {
     return task.getGoal() != null && task.getProjectPath() != null;
   }
 

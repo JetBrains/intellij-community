@@ -125,7 +125,7 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
   }
 
   @Override
-  public boolean configureTask(RunConfiguration runConfiguration, RunConfigurableBeforeRunTask task) {
+  public boolean configureTask(@NotNull RunConfiguration runConfiguration, @NotNull RunConfigurableBeforeRunTask task) {
     SelectionDialog dialog =
       new SelectionDialog(task.getSettings(), getAvailableConfigurations(runConfiguration));
     dialog.show();
@@ -159,8 +159,8 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
   }
 
   @Override
-  public boolean canExecuteTask(RunConfiguration configuration,
-                                RunConfigurableBeforeRunTask task) {
+  public boolean canExecuteTask(@NotNull RunConfiguration configuration,
+                                @NotNull RunConfigurableBeforeRunTask task) {
     RunnerAndConfigurationSettings settings = task.getSettings();
     if (settings == null) {
       return false;

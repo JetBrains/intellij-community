@@ -74,7 +74,7 @@ public class AntBeforeRunTaskProvider extends BeforeRunTaskProvider<AntBeforeRun
     return true;
   }
 
-  public boolean configureTask(RunConfiguration runConfiguration, AntBeforeRunTask task) {
+  public boolean configureTask(@NotNull RunConfiguration runConfiguration, @NotNull AntBeforeRunTask task) {
     AntBuildTarget buildTarget = findTargetToExecute(task);
     final TargetChooserDialog dlg = new TargetChooserDialog(myProject, buildTarget);
     if (dlg.showAndGet()) {
@@ -98,7 +98,7 @@ public class AntBeforeRunTaskProvider extends BeforeRunTaskProvider<AntBeforeRun
   }
 
   @Override
-  public boolean canExecuteTask(RunConfiguration configuration, AntBeforeRunTask task) {
+  public boolean canExecuteTask(@NotNull RunConfiguration configuration, @NotNull AntBeforeRunTask task) {
     return findTargetToExecute(task) != null;
   }
 

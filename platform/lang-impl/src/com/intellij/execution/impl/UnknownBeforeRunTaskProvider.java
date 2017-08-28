@@ -57,23 +57,18 @@ public class UnknownBeforeRunTaskProvider extends BeforeRunTaskProvider<UnknownB
   }
 
   @Override
-  public boolean configureTask(RunConfiguration runConfiguration, UnknownTask task) {
+  public boolean configureTask(@NotNull RunConfiguration runConfiguration, @NotNull UnknownTask task) {
     return false;
   }
 
   @Override
-  public boolean canExecuteTask(RunConfiguration configuration, UnknownTask task) {
+  public boolean canExecuteTask(@NotNull RunConfiguration configuration, @NotNull UnknownTask task) {
     return false;
   }
 
   @Override
   public boolean executeTask(DataContext context, RunConfiguration configuration, ExecutionEnvironment env, UnknownTask task) {
     return true;
-  }
-
-  @Override
-  public boolean isConfigurable() {
-    return false;
   }
 
   @Override

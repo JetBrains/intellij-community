@@ -62,12 +62,7 @@ public class CompileStepBeforeRunNoErrorCheck
   }
 
   @Override
-  public boolean configureTask(RunConfiguration runConfiguration, MakeBeforeRunTaskNoErrorCheck task) {
-    return false;
-  }
-
-  @Override
-  public boolean isConfigurable() {
+  public boolean configureTask(@NotNull RunConfiguration runConfiguration, @NotNull MakeBeforeRunTaskNoErrorCheck task) {
     return false;
   }
 
@@ -77,7 +72,7 @@ public class CompileStepBeforeRunNoErrorCheck
   }
 
   @Override
-  public boolean canExecuteTask(RunConfiguration configuration, MakeBeforeRunTaskNoErrorCheck task) {
+  public boolean canExecuteTask(@NotNull RunConfiguration configuration, @NotNull MakeBeforeRunTaskNoErrorCheck task) {
     return true;
   }
 

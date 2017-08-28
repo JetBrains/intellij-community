@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -37,7 +38,7 @@ public abstract class AbstractToolBeforeRunTaskProvider<T extends AbstractToolBe
   }
 
   @Override
-  public boolean configureTask(RunConfiguration runConfiguration, T task) {
+  public boolean configureTask(@NotNull RunConfiguration runConfiguration, @NotNull T task) {
     final ToolSelectDialog dialog = new ToolSelectDialog(runConfiguration.getProject(), task.getToolActionId(), createToolsPanel());
     if (!dialog.showAndGet()) {
       return false;
@@ -59,7 +60,7 @@ public abstract class AbstractToolBeforeRunTaskProvider<T extends AbstractToolBe
   protected abstract BaseToolsPanel createToolsPanel();
 
   @Override
-  public boolean canExecuteTask(RunConfiguration configuration, T task) {
+  public boolean canExecuteTask(@NotNull RunConfiguration configuration, @NotNull T task) {
     return task.isExecutable();
   }
 
