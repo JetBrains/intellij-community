@@ -64,7 +64,6 @@ import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -346,9 +345,7 @@ public class SvnHistoryProvider
           myFrom == null ? SVNRevision.HEAD : myFrom,
           myTo == null ? SVNRevision.create(1) : myTo,
           false, true, myShowMergeSources && mySupport15, myLimit, null,
-          new MyLogEntryHandler(myVcs, myUrl, pegRevision, relativeUrl,
-                                createConsumerAdapter(myConsumer),
-                                repoRootURL, myFile.getCharset()));
+          new MyLogEntryHandler(myVcs, myUrl, pegRevision, relativeUrl, createConsumerAdapter(myConsumer), repoRootURL));
       }
       catch (VcsException e) {
         myException = e;
@@ -410,12 +407,6 @@ public class SvnHistoryProvider
           .doLog(target, operationalFrom, myTo == null ? SVNRevision.create(1) : myTo, false, true, myShowMergeSources && mySupport15,
                  myLimit, null, handler);
       }
-      catch (SVNCancelException e) {
-        //
-      }
-      catch (SVNException e) {
-        myException = new VcsException(e);
-      }
       catch (VcsException e) {
         myException = e;
       }
@@ -474,7 +465,6 @@ public class SvnHistoryProvider
     private final ProgressIndicator myIndicator;
     protected final SvnVcs myVcs;
     protected final SvnPathThroughHistoryCorrection myLastPathCorrector;
-    private final Charset myCharset;
     protected final ThrowableConsumer<VcsFileRevision, SVNException> myResult;
     private final String myLastPath;
     private VcsFileRevision myPrevious;
@@ -492,11 +482,10 @@ public class SvnHistoryProvider
                              final SVNRevision pegRevision,
                              String lastPath,
                              final ThrowableConsumer<VcsFileRevision, SVNException> result,
-                             SVNURL repoRootURL, Charset charset) {
+                             SVNURL repoRootURL) {
       myVcs = vcs;
       myLastPathCorrector = new SvnPathThroughHistoryCorrection(lastPath);
       myLastPath = lastPath;
-      myCharset = charset;
       myIndicator = ProgressManager.getInstance().getProgressIndicator();
       myResult = result;
       myPegRevision = pegRevision;
@@ -619,7 +608,7 @@ public class SvnHistoryProvider
                                      String lastPath,
                                      final ThrowableConsumer<VcsFileRevision, SVNException> result,
                                      SVNURL repoRootURL) {
-      super(vcs, url, pegRevision, lastPath, result, repoRootURL, null);
+      super(vcs, url, pegRevision, lastPath, result, repoRootURL);
     }
 
     @Override
