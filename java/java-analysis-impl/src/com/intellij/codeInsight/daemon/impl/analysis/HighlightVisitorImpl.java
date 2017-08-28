@@ -376,6 +376,10 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
             .range(entry.getKey())
             .descriptionAndTooltip(entry.getValue()).create();
           QuickFixAction.registerQuickFixAction(info, AdjustFunctionContextFix.createFix(entry.getKey()));
+          if (entry.getKey() instanceof PsiExpression) {
+            PsiExpression expr = (PsiExpression)entry.getKey();
+            HighlightUtil.addLambdaReturnTypeFixes(info, expression, expr);
+          }
           myHolder.add(info);
         }
       }

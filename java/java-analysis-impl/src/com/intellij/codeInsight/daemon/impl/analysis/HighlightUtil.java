@@ -1479,6 +1479,19 @@ public class HighlightUtil extends HighlightUtilBase {
     return null;
   }
 
+  static void addLambdaReturnTypeFixes(HighlightInfo info, PsiLambdaExpression lambda, PsiExpression expression) {
+    PsiType type = LambdaUtil.getFunctionalInterfaceReturnType(lambda);
+    if (type != null) {
+      PsiType exprType = expression.getType();
+      if (exprType != null && TypeConversionUtil.areTypesConvertible(exprType, type)) {
+        QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createAddTypeCastFix(type, expression));
+      }
+      QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createWrapWithOptionalFix(type, expression));
+      QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createWrapExpressionFix(type, expression));
+      QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createWrapWithAdapterFix(type, expression));
+    }
+  }
+
   private enum SelectorKind { INT, ENUM, STRING }
 
   private static SelectorKind getSwitchSelectorKind(@NotNull PsiType type) {
