@@ -19,7 +19,7 @@ internal class TestExperimentDecision: ExperimentDecision {
 internal class TestRequestService : RequestService() {
 
     companion object {
-        var mock: RequestService = mock<RequestService>()
+        var mock: RequestService = mock()
     }
 
     override fun post(url: String, params: Map<String, String>) = mock.post(url, params)

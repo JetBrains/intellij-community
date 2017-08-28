@@ -42,7 +42,11 @@ fun assertNotEDT() {
     assert(!SwingUtilities.isEventDispatchThread() || isInTestMode)
 }
 
-class SenderComponent(val sender: StatisticSender, val statusHelper: WebServiceStatus) : ApplicationComponent {
+class SenderComponent(
+        private val sender: StatisticSender,
+        private val statusHelper: WebServiceStatus
+) : ApplicationComponent {
+
     private val LOG = logger<SenderComponent>()
     private val disposable = Disposer.newDisposable()
     private val alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, disposable)
@@ -81,7 +85,10 @@ interface StatisticSender {
     fun sendStatsData(url: String)
 }
 
-class StatisticSenderImpl(val requestService: RequestService, val filePathProvider: FilePathProvider): StatisticSender {
+class StatisticSenderImpl(
+        private val requestService: RequestService,
+        private val filePathProvider: FilePathProvider
+): StatisticSender {
 
     override fun sendStatsData(url: String) {
         assertNotEDT()
