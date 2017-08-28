@@ -13,7 +13,7 @@ filterBy
     after: 4
 toArray
     before: 4
-    after: 5
+    after: 6
 mappings for StreamEx.of
   direct:
     no
@@ -32,9 +32,9 @@ mappings for filterBy
     3 <- 4
 mappings for toArray
   direct:
-    4 -> 5
+    4 -> 6
   reverse:
-    4 <- 5
+    4 <- 6
 Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
 
 Process finished with exit code 0
