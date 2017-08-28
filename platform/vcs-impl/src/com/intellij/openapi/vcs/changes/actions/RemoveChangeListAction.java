@@ -33,43 +33,45 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public class RemoveChangeListAction extends AnAction implements DumbAware {
   public void update(@NotNull AnActionEvent e) {
-    ChangeList[] changeLists = e.getData(VcsDataKeys.CHANGE_LISTS);
-    boolean visible = canRemoveChangeLists(e.getProject(), changeLists);
+    ChangeList[] changeListsArray = e.getData(VcsDataKeys.CHANGE_LISTS);
+    List<ChangeList> changeLists = changeListsArray != null ? Arrays.asList(changeListsArray) : Collections.emptyList();
+
+    boolean enabled = canRemoveChangeLists(e.getProject(), changeLists);
+    boolean hasChanges = !ArrayUtil.isEmpty(e.getData(VcsDataKeys.CHANGES));
 
     Presentation presentation = e.getPresentation();
-    presentation.setEnabled(visible);
-    presentation
-      .setText(ActionsBundle.message("action.ChangesView.RemoveChangeList.text", changeLists != null && changeLists.length > 1 ? 1 : 0));
+    presentation.setEnabled(enabled);
     if (e.getPlace().equals(ActionPlaces.CHANGES_VIEW_POPUP)) {
-      presentation.setVisible(visible);
+      presentation.setVisible(enabled);
     }
-    presentation.setDescription(ArrayUtil.isEmpty(e.getData(VcsDataKeys.CHANGES)) ? presentation.getText() : getDescription(changeLists));
+
+    presentation.setText(ActionsBundle.message("action.ChangesView.RemoveChangeList.text", changeLists.size()));
+
+    if (hasChanges) {
+      boolean containsActiveChangelist =
+        ContainerUtil.exists(changeLists, l -> l instanceof LocalChangeList && ((LocalChangeList)l).isDefault());
+      presentation.setDescription(ActionsBundle.message("action.ChangesView.RemoveChangeList.description",
+                                                        containsActiveChangelist ? "another changelist" : "active one"));
+    }
+    else {
+      presentation.setDescription(presentation.getText());
+    }
   }
 
-  @NotNull
-  private static String getDescription(@Nullable ChangeList[] changeLists) {
-    return ActionsBundle.message("action.ChangesView.RemoveChangeList.description",
-                                 containsActiveChangelist(changeLists) ? "another changelist" : "active one");
-  }
-
-  private static boolean containsActiveChangelist(@Nullable ChangeList[] changeLists) {
-    if (changeLists == null) return false;
-    return ContainerUtil.exists(changeLists, l -> l instanceof LocalChangeList && ((LocalChangeList)l).isDefault());
-  }
-
-  private static boolean canRemoveChangeLists(@Nullable Project project, @Nullable ChangeList[] lists) {
-    if (project == null || lists == null || lists.length == 0) return false;
+  private static boolean canRemoveChangeLists(@Nullable Project project, @NotNull List<ChangeList> lists) {
+    if (project == null || lists.size() == 0) return false;
 
     int allChangeListsCount = ChangeListManager.getInstance(project).getChangeListsNumber();
     for(ChangeList changeList: lists) {
       if (!(changeList instanceof LocalChangeList)) return false;
       LocalChangeList localChangeList = (LocalChangeList) changeList;
       if (localChangeList.isReadOnly()) return false;
-      if (localChangeList.isDefault() && allChangeListsCount <= lists.length) return false;
+      if (localChangeList.isDefault() && allChangeListsCount <= lists.size()) return false;
     }
     return true;
   }
