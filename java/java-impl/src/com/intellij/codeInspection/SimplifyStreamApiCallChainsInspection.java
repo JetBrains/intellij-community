@@ -33,6 +33,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import com.intellij.util.ArrayUtil;
 import com.siyeh.ig.callMatcher.CallHandler;
@@ -66,6 +67,10 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
     instanceCall(CommonClassNames.JAVA_UTIL_STREAM_STREAM, "findFirst", "findAny").parameterCount(0);
   private static final CallMatcher STREAM_FILTER =
     instanceCall(CommonClassNames.JAVA_UTIL_STREAM_STREAM, "filter").parameterTypes(CommonClassNames.JAVA_UTIL_FUNCTION_PREDICATE);
+  private static final CallMatcher STREAM_FIND_FIRST =
+    instanceCall(CommonClassNames.JAVA_UTIL_STREAM_STREAM, "findFirst").parameterCount(0);
+  private static final CallMatcher STREAM_SORTED =
+    instanceCall(CommonClassNames.JAVA_UTIL_STREAM_STREAM, "sorted");
   private static final CallMatcher STREAM_MAP =
     instanceCall(CommonClassNames.JAVA_UTIL_STREAM_STREAM, "map").parameterTypes(CommonClassNames.JAVA_UTIL_FUNCTION_FUNCTION);
   private static final CallMatcher BASE_STREAM_MAP =
@@ -89,6 +94,8 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
 
   private static final CallMatcher N_COPIES =
     staticCall(CommonClassNames.JAVA_UTIL_COLLECTIONS, "nCopies").parameterTypes("int", "T");
+  private static final CallMatcher COMPARATOR_REVERSED =
+    instanceCall(CommonClassNames.JAVA_UTIL_COMPARATOR, "reversed").parameterCount(0);
 
   private static final CallMatcher STREAM_INT_MAP_TO_OBJ =
     instanceCall(CommonClassNames.JAVA_UTIL_STREAM_INT_STREAM, "mapToObj").parameterTypes("java.util.function.IntFunction");
@@ -119,7 +126,8 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
     ReplaceWithPeekFix.handler(),
     SimpleStreamOfFix.handler(),
     RangeToArrayStreamFix.handler(),
-    NCopiesToGenerateStreamFix.handler()
+    NCopiesToGenerateStreamFix.handler(),
+    SortedFirstToMinMaxFix.handler()
   ).registerAll(SimplifyMatchNegationFix.handlers());
 
   private static final Logger LOG = Logger.getInstance(SimplifyStreamApiCallChainsInspection.class);
@@ -1562,6 +1570,65 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
         if(body == null) return null;
         if (VariableAccessUtils.variableIsUsed(lambdaVar, body)) return null;
         return new NCopiesToGenerateStreamFix(CommonClassNames.JAVA_UTIL_STREAM_STREAM + ".generate(()->" + body.getText() + ").limit(" + count.getText() + ")");
+      });
+    }
+  }
+
+  static class SortedFirstToMinMaxFix implements CallChainSimplification {
+    private final String myMethodName;
+    private final String myReplacement;
+
+    SortedFirstToMinMaxFix(String methodName, String replacement) {
+      myMethodName = methodName;
+      myReplacement = replacement;
+    }
+
+
+    @Override
+    public String getName() {
+      return "Replace with " + myMethodName + "()";
+    }
+
+    @Override
+    public String getMessage() {
+      return "Can be replaced with " + myMethodName + "()";
+    }
+
+    @Override
+    public PsiElement simplify(PsiMethodCallExpression call) {
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(call.getProject());
+      return call.replace(factory.createExpressionFromText(myReplacement, call));
+    }
+
+    @NotNull
+    static CallHandler<CallChainSimplification> handler() {
+      return CallHandler.of(STREAM_FIND_FIRST, call -> {
+        PsiMethodCallExpression maybeSorted = tryCast(call.getMethodExpression().getQualifierExpression(), PsiMethodCallExpression.class);
+        if (!STREAM_SORTED.test(maybeSorted)) return null;
+        PsiExpression[] args = maybeSorted.getArgumentList().getExpressions();
+        PsiExpression qualifier = maybeSorted.getMethodExpression().getQualifierExpression();
+        if (qualifier == null) return null;
+
+        final String comparator;
+        boolean reversed = false;
+        if (args.length == 1) {
+          PsiExpression maybeComparator = args[0];
+          if (maybeComparator instanceof PsiMethodCallExpression && COMPARATOR_REVERSED.test((PsiMethodCallExpression)maybeComparator)) {
+            PsiExpression comparatorQualifier = ((PsiMethodCallExpression)maybeComparator).getMethodExpression().getQualifierExpression();
+            if(comparatorQualifier == null) return null;
+            comparator = comparatorQualifier.getText();
+            reversed = true;
+          } else {
+            PsiType comparatorType = maybeComparator.getType();
+            if (comparatorType == null || !InheritanceUtil.isInheritor(comparatorType, CommonClassNames.JAVA_UTIL_COMPARATOR)) return null;
+            comparator = maybeComparator.getText();
+          }
+        } else if (args.length == 0) {
+          comparator = "";
+        } else return null;
+
+        String methodName = reversed ? "max" : "min";
+        return new SortedFirstToMinMaxFix(methodName, qualifier.getText() + "." + methodName + "(" + comparator + ")");
       });
     }
   }
