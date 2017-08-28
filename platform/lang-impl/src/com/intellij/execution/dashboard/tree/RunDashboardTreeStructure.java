@@ -95,19 +95,16 @@ public class RunDashboardTreeStructure extends AbstractTreeStructureBase {
     }
     final List<DashboardGroupingRule> remaining = new ArrayList<>(rules);
     DashboardGroupingRule rule = remaining.remove(0);
-    Map<DashboardGroup, List<RunConfigurationNode>> groups = nodes.stream().collect(
-      HashMap::new,
-      (map, node) -> map.computeIfAbsent(rule.getGroup(node), key -> new ArrayList<>()).add(node),
-      (firstMap, secondMap) -> firstMap.forEach((key, value) -> value.addAll(secondMap.get(key)))
-    );
+    Map<Optional<DashboardGroup>, List<RunConfigurationNode>> groups = nodes.stream().collect(
+      Collectors.groupingBy(node -> Optional.ofNullable(rule.getGroup(node))));
     final List<AbstractTreeNode> result = new ArrayList<>();
     final List<AbstractTreeNode> ungroupedNodes = new ArrayList<>();
     groups.forEach((group, groupedNodes) -> {
-      if (group == null || (!rule.shouldGroupSingleNodes() && groupedNodes.size() == 1)) {
+      if (!group.isPresent() || (!rule.shouldGroupSingleNodes() && groupedNodes.size() == 1)) {
         ungroupedNodes.addAll(group(project, parent, remaining, groupedNodes));
       }
       else {
-        GroupingNode node = new GroupingNode(project, parent.getValue(), group);
+        GroupingNode node = new GroupingNode(project, parent.getValue(), group.get());
         node.addChildren(group(project, node, remaining, groupedNodes));
         result.add(node);
       }
