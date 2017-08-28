@@ -480,10 +480,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
 
         boolean resumePreferred = requestor != null && DebuggerSettings.SUSPEND_NONE.equals(requestor.getSuspendPolicy());
         boolean requestHit = false;
-        long start = 0;
-        if (requestor instanceof OverheadProducer) {
-          start = System.currentTimeMillis();
-        }
+        long start = requestor instanceof OverheadProducer && !(requestor instanceof RunToCursorBreakpoint) ? System.currentTimeMillis() : 0;
         try {
           requestHit = (requestor != null) && requestor.processLocatableEvent(this, event);
         }
@@ -501,7 +498,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
           resumePreferred = !requestHit;
         }
         finally {
-          if (requestor instanceof OverheadProducer && !(requestor instanceof RunToCursorBreakpoint)) {
+          if (start > 0) {
             OverheadTimings.add(DebugProcessEvents.this, (OverheadProducer)requestor,
                                 requestHit || requestor instanceof StackCapturingLineBreakpoint ? 1 : 0,
                                 System.currentTimeMillis() - start);
