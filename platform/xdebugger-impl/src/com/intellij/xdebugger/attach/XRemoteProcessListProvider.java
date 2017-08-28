@@ -17,8 +17,16 @@ package com.intellij.xdebugger.attach;
 
 //провайдеры для docker, ssh, vagrant его реализуют
 
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessInfo;
+import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
+import com.intellij.remote.RemoteSdkCredentials;
+import com.intellij.remote.RemoteSdkException;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -27,11 +35,15 @@ public interface XRemoteProcessListProvider {
 
   XAttachGroup<RemoteSettings> getAttachGroup();
 
-  List<ProcessInfo> getProcessList();
+  List<ProcessInfo> getProcessList(Project project, RemoteSettings settings);
 
   String getName();
 
   List<RemoteSettings> getSettingsList();
 
   int getId();
+
+  @NotNull
+  ProcessOutput execAndGetOutput(@Nullable Project project, @NotNull RemoteSdkCredentials data,
+                                 @NonNls GeneralCommandLine command) throws RemoteSdkException;
 }

@@ -16,7 +16,17 @@
 package com.intellij.xdebugger.attach;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.UserDataHolder;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 public interface XRemoteAttachDebuggerProvider extends XAttachDebuggerProvider<RemoteAttachSettings> {
   ExtensionPointName<XRemoteAttachDebuggerProvider> EP = ExtensionPointName.create("com.intellij.xdebugger.remoteAttachDebuggerProvider");
+
+  @NotNull
+  List<XAttachDebugger<RemoteAttachSettings>> getAvailableDebuggers(@NotNull Project project,
+                                                                    @NotNull RemoteAttachSettings info,
+                                                                    @NotNull UserDataHolder contextHolder);
 }

@@ -16,16 +16,15 @@
 package com.intellij.xdebugger.attach;
 
 import com.intellij.execution.process.ProcessInfo;
-import com.intellij.remote.RemoteSdkCredentials;
 import org.jetbrains.annotations.NotNull;
 
 public class RemoteAttachSettings implements AttachToProcessSettings {
   @NotNull private ProcessInfo myInfo;
-  @NotNull private RemoteSdkCredentials myCredentials;
+  @NotNull private RemoteSettings mySettings;
 
-  public RemoteAttachSettings(@NotNull ProcessInfo info, @NotNull RemoteSdkCredentials credentials) {
+  public RemoteAttachSettings(@NotNull ProcessInfo info, @NotNull RemoteSettings settings) {
     myInfo = info;
-    myCredentials = credentials;
+    mySettings = settings;
   }
 
   @NotNull
@@ -35,8 +34,8 @@ public class RemoteAttachSettings implements AttachToProcessSettings {
   }
 
   @NotNull
-  public RemoteSdkCredentials getCredentials() {
-    return myCredentials;
+  public RemoteSettings getSetting() {
+    return mySettings;
   }
 
   @NotNull
