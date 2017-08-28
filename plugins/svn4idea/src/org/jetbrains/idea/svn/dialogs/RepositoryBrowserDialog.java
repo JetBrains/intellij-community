@@ -353,7 +353,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       String url = node.getURL().toDecodedString();
 
       AbstractVcsHelper.getInstance(myProject)
-        .showFileHistory(myVCS.getVcsHistoryProvider(), VcsUtil.getFilePathOnNonLocal(url, isDirectory), myVCS, url);
+        .showFileHistory(myVCS.getVcsHistoryProvider(), VcsUtil.getFilePathOnNonLocal(url, isDirectory), myVCS);
       node.reload(false);
     }
   }
