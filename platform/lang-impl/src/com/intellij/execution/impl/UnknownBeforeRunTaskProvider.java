@@ -94,10 +94,10 @@ public class UnknownBeforeRunTaskProvider extends BeforeRunTaskProvider<UnknownB
         element.removeContent();
         final List attributes = myConfig.getAttributes();
         for (Object attribute : attributes) {
-         element.setAttribute((Attribute)((Attribute)attribute).clone());
+         element.setAttribute(((Attribute)attribute).clone());
         }
         for (Object child : myConfig.getChildren()) {
-          element.addContent((Element)((Element)child).clone());
+          element.addContent(((Element)child).clone());
         }
       }
     }
