@@ -56,21 +56,21 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
       final String type = getMemberType(myElement);
 
       if (type != null) {
-        final PsiClass psiClass = getPsiClass();
-        if (psiClass != null) {
+        final ReflectiveClass ownerClass = getOwnerClass();
+        if (ownerClass != null) {
           switch (type) {
 
             case GET_FIELD: {
-              return psiClass.findFieldByName(name, true);
+              return ownerClass.getPsiClass().findFieldByName(name, true);
             }
 
             case GET_DECLARED_FIELD: {
-              final PsiField field = psiClass.findFieldByName(name, false);
-              return isPotentiallyAccessible(field, psiClass) ? field : null;
+              final PsiField field = ownerClass.getPsiClass().findFieldByName(name, false);
+              return isPotentiallyAccessible(field, ownerClass) ? field : null;
             }
 
             case GET_METHOD: {
-              PsiMethod[] methods = psiClass.findMethodsByName(name, true);
+              PsiMethod[] methods = ownerClass.getPsiClass().findMethodsByName(name, true);
               if (methods.length > 1) {
                 methods =
                   ContainerUtil.filter(methods, method -> isRegularMethod(method) && isPublic(method))
@@ -83,10 +83,10 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
             }
 
             case GET_DECLARED_METHOD: {
-              PsiMethod[] methods = psiClass.findMethodsByName(name, false);
+              PsiMethod[] methods = ownerClass.getPsiClass().findMethodsByName(name, false);
               if (methods.length > 1) {
                 methods =
-                  ContainerUtil.filter(methods, method -> isRegularMethod(method) && isPotentiallyAccessible(method, psiClass))
+                  ContainerUtil.filter(methods, method -> isRegularMethod(method) && isPotentiallyAccessible(method, ownerClass))
                     .toArray(PsiMethod.EMPTY_ARRAY);
                 if (methods.length > 1) {
                   return findOverloadedMethod(methods);
@@ -102,7 +102,7 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
   }
 
   @Nullable
-  private PsiClass getPsiClass() {
+  private ReflectiveClass getOwnerClass() {
     return getReflectiveClass(myContext);
   }
 
@@ -111,12 +111,12 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
   public Object[] getVariants() {
     final String type = getMemberType(myElement);
     if (type != null) {
-      final PsiClass psiClass = getPsiClass();
-      if (psiClass != null) {
+      final ReflectiveClass ownerClass = getOwnerClass();
+      if (ownerClass != null) {
         switch (type) {
 
           case GET_DECLARED_FIELD:
-            return Arrays.stream(psiClass.getFields())
+            return Arrays.stream(ownerClass.getPsiClass().getFields())
               .filter(field -> field.getName() != null)
               .sorted(Comparator.comparing(PsiField::getName))
               .map(field -> lookupField(field))
@@ -124,15 +124,15 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
 
           case GET_FIELD: {
             final Set<String> uniqueNames = new THashSet<>();
-            return Arrays.stream(psiClass.getAllFields())
-              .filter(field -> isPotentiallyAccessible(field, psiClass) && field.getName() != null && uniqueNames.add(field.getName()))
+            return Arrays.stream(ownerClass.getPsiClass().getAllFields())
+              .filter(field -> isPotentiallyAccessible(field, ownerClass) && field.getName() != null && uniqueNames.add(field.getName()))
               .sorted(Comparator.comparingInt((PsiField field) -> isPublic(field) ? 0 : 1).thenComparing(PsiField::getName))
               .map(field -> withPriority(lookupField(field), isPublic(field)))
               .toArray();
           }
 
           case GET_DECLARED_METHOD:
-            return Arrays.stream(psiClass.getMethods())
+            return Arrays.stream(ownerClass.getPsiClass().getMethods())
               .filter(method -> isRegularMethod(method))
               .sorted(Comparator.comparing(PsiMethod::getName))
               .map(method -> lookupMethod(method, this))
@@ -140,10 +140,10 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
               .toArray();
 
           case GET_METHOD: {
-            return psiClass.getVisibleSignatures()
+            return ownerClass.getPsiClass().getVisibleSignatures()
               .stream()
               .map(MethodSignatureBackedByPsiMethod::getMethod)
-              .filter(method -> isRegularMethod(method) && isPotentiallyAccessible(method, psiClass))
+              .filter(method -> isRegularMethod(method) && isPotentiallyAccessible(method, ownerClass))
               .sorted(Comparator.comparingInt((PsiMethod method) -> getMethodSortOrder(method)).thenComparing(PsiMethod::getName))
               .map(method -> withPriority(lookupMethod(method, this), -getMethodSortOrder(method)))
               .filter(Objects::nonNull)
@@ -160,8 +160,8 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
    * Non-public members of superclass/superinterface can't be obtained via reflection, they need to be filtered out.
    */
   @Contract("null, _ -> false")
-  private static boolean isPotentiallyAccessible(PsiMember member, PsiClass psiClass) {
-    return member != null && (member.getContainingClass() == psiClass || isPublic(member));
+  private static boolean isPotentiallyAccessible(PsiMember member, ReflectiveClass psiClass) {
+    return member != null && (member.getContainingClass() == psiClass.getPsiClass() || isPublic(member));
   }
 
   @Nullable

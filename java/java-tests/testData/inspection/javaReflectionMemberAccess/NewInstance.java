@@ -53,7 +53,7 @@ class Vararg {
     myB1 = B.class;
   }
 
-  void foo1() {
+  void foo1() throws Exception {
     ourA.getMethod("bar", myB1);
     ourA.getMethod(<warning descr="Cannot resolve method 'bar' with specified argument types">"bar"</warning>, myB1, String.class);
   }

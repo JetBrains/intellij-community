@@ -100,7 +100,7 @@ public class JavaLangInvokeHandleSignatureInspection extends BaseJavaBatchLocalI
                                          @NotNull ProblemsHolder holder) {
     if (arguments.length == 2) {
       if (FIND_CONSTRUCTOR.equals(factoryMethodName)) {
-        final PsiClass ownerClass = getReflectiveClass(arguments[0]);
+        final ReflectiveClass ownerClass = getReflectiveClass(arguments[0]);
         if (ownerClass != null) {
           final PsiExpression typeExpression = ParenthesesUtils.stripParentheses(arguments[1]);
           checkConstructor(ownerClass, typeExpression, holder);
@@ -108,7 +108,7 @@ public class JavaLangInvokeHandleSignatureInspection extends BaseJavaBatchLocalI
       }
     }
     else if (arguments.length >= 3) {
-      final PsiClass ownerClass = getReflectiveClass(arguments[0]);
+      final ReflectiveClass ownerClass = getReflectiveClass(arguments[0]);
       if (ownerClass != null) {
         final PsiExpression nameExpression = ParenthesesUtils.stripParentheses(arguments[1]);
         final PsiExpression nameDefinition = findDefinition(nameExpression);
@@ -146,12 +146,13 @@ public class JavaLangInvokeHandleSignatureInspection extends BaseJavaBatchLocalI
     }
   }
 
-  private static void checkConstructor(@NotNull PsiClass ownerClass,
+  private static void checkConstructor(@NotNull ReflectiveClass ownerClass,
                                        @NotNull PsiExpression constructorTypeExpression,
                                        @NotNull ProblemsHolder holder) {
+    if (!ownerClass.isExact()) return;
     final ReflectiveSignature constructorSignature = composeMethodSignature(constructorTypeExpression);
     if (constructorSignature != null) {
-      final List<PsiMethod> constructors = ContainerUtil.filter(ownerClass.getMethods(), PsiMethod::isConstructor);
+      final List<PsiMethod> constructors = ContainerUtil.filter(ownerClass.getPsiClass().getMethods(), PsiMethod::isConstructor);
       List<ReflectiveSignature> validSignatures = null;
       if (constructors.isEmpty()) {
         if (!constructorSignature.equals(ReflectiveSignature.NO_ARGUMENT_CONSTRUCTOR_SIGNATURE)) {
@@ -168,7 +169,7 @@ public class JavaLangInvokeHandleSignatureInspection extends BaseJavaBatchLocalI
         final String declarationText = getConstructorDeclarationText(ownerClass, constructorSignature);
         if (declarationText != null) {
           LocalQuickFix fix = null;
-          final String ownerClassName = ownerClass.getName();
+          final String ownerClassName = ownerClass.getPsiClass().getName();
           if (ownerClassName != null) {
             fix = ReplaceSignatureQuickFix
               .createFix(constructorTypeExpression, ownerClassName, validSignatures, true, holder.isOnTheFly());
@@ -179,14 +180,15 @@ public class JavaLangInvokeHandleSignatureInspection extends BaseJavaBatchLocalI
     }
   }
 
-  private static void checkField(@NotNull PsiClass ownerClass,
+  private static void checkField(@NotNull ReflectiveClass ownerClass,
                                  @NotNull String fieldName,
                                  @NotNull PsiExpression fieldNameExpression,
                                  @NotNull PsiExpression fieldTypeExpression,
                                  boolean isStaticExpected,
                                  @NotNull PsiReferenceExpression factoryMethodExpression,
                                  @NotNull ProblemsHolder holder) {
-    final PsiField field = ownerClass.findFieldByName(fieldName, true);
+    if (!ownerClass.isExact()) return;
+    final PsiField field = ownerClass.getPsiClass().findFieldByName(fieldName, true);
     if (field == null) {
       holder.registerProblem(fieldNameExpression, InspectionsBundle.message("inspection.handle.signature.field.cannot.resolve", fieldName));
       return;
@@ -212,15 +214,15 @@ public class JavaLangInvokeHandleSignatureInspection extends BaseJavaBatchLocalI
     }
   }
 
-  private static void checkMethod(@NotNull PsiClass ownerClass,
+  private static void checkMethod(@NotNull ReflectiveClass ownerClass,
                                   @NotNull String methodName,
                                   @NotNull PsiExpression methodNameExpression,
                                   @NotNull PsiExpression methodTypeExpression,
                                   boolean isStaticExpected,
                                   @NotNull PsiReferenceExpression factoryMethodExpression,
                                   @NotNull ProblemsHolder holder) {
-
-    final PsiMethod[] methods = ownerClass.findMethodsByName(methodName, true);
+    if (!ownerClass.isExact()) return;
+    final PsiMethod[] methods = ownerClass.getPsiClass().findMethodsByName(methodName, true);
     if (methods.length == 0) {
       holder.registerProblem(methodNameExpression, JavaErrorMessages.message("cannot.resolve.method", methodName));
       return;
@@ -264,7 +266,7 @@ public class JavaLangInvokeHandleSignatureInspection extends BaseJavaBatchLocalI
     if (argumentType == null || argumentType.getType() instanceof PsiArrayType) {
       return;
     }
-    if (!argumentType.isPrimitive()) {
+    if (!argumentType.isPrimitive() && !argumentType.isExact()) {
       final String name = argumentType.getQualifiedName();
       if (JAVA_LANG_OBJECT.equals(name) || "java.io.Serializable".equals(name) || "java.lang.Cloneable".equals(name)) {
         return;
@@ -280,8 +282,8 @@ public class JavaLangInvokeHandleSignatureInspection extends BaseJavaBatchLocalI
   }
 
   @Nullable
-  private static String getConstructorDeclarationText(@NotNull PsiClass ownerClass, @NotNull ReflectiveSignature methodSignature) {
-    final String className = ownerClass.getName();
+  private static String getConstructorDeclarationText(@NotNull ReflectiveClass ownerClass, @NotNull ReflectiveSignature methodSignature) {
+    final String className = ownerClass.getPsiClass().getName();
     if (className != null) {
       return getConstructorDeclarationText(className, methodSignature);
     }
