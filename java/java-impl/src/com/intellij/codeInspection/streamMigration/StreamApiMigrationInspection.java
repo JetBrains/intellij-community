@@ -41,7 +41,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
@@ -929,7 +928,9 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     @Contract("null -> null")
     static StreamSource tryCreate(PsiLoopStatement statement) {
       if (statement instanceof PsiForStatement) {
-        return CountingLoopSource.from((PsiForStatement)statement);
+        CountingLoopSource countingLoopSource = CountingLoopSource.from((PsiForStatement)statement);
+        if(countingLoopSource != null) return countingLoopSource;
+        return InfiniteStreamSource.from((PsiForStatement)statement);
       }
       if (statement instanceof PsiForeachStatement) {
         ArrayStream source = ArrayStream.from((PsiForeachStatement)statement);
@@ -1137,6 +1138,72 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       CountingLoop loop = CountingLoop.from(forStatement);
       if (loop == null) return null;
       return new CountingLoopSource(forStatement, loop.getCounter(), loop.getInitializer(), loop.getBound(), loop.isIncluding());
+    }
+  }
+
+  /**
+   * for(int i = 0;; i + 1) // i + 1   - expression
+   */
+  static class InfiniteStreamSource extends StreamSource {
+    private final PsiExpression myInitializer;
+
+    protected InfiniteStreamSource(
+      @NotNull PsiLoopStatement loop,
+      @NotNull PsiVariable variable,
+      @NotNull PsiExpression expression,
+      @NotNull PsiExpression initializer
+    ) {
+      super(loop, variable, expression);
+      myInitializer = initializer;
+    }
+
+    @Override
+    String createReplacement() {
+      String lambda = LambdaUtil.createLambda(myVariable, myExpression);
+      return CommonClassNames.JAVA_UTIL_STREAM_INT_STREAM + ".iterate(" + myInitializer.getText() + "," + lambda + ")";
+    }
+
+    @Override
+    StreamEx<PsiExpression> expressions() {
+      return StreamEx.of(myInitializer, myExpression);
+    }
+
+    @Override
+    boolean isWriteAllowed(PsiVariable variable, PsiExpression reference) {
+      if (variable == myVariable) {
+        PsiForStatement forStatement = PsiTreeUtil.getParentOfType(variable, PsiForStatement.class);
+        if (forStatement != null) {
+          return PsiTreeUtil.isAncestor(forStatement.getUpdate(), reference, false);
+        }
+      }
+      return false;
+    }
+
+    @Override
+    boolean canReassignVariable(PsiVariable variable) {
+      return variable != myVariable;
+    }
+
+    @Nullable
+    static InfiniteStreamSource from(@NotNull PsiForStatement forStatement) {
+      if (forStatement.getCondition() != null) return null;
+      PsiStatement initialization = forStatement.getInitialization();
+      PsiDeclarationStatement initStmt = tryCast(initialization, PsiDeclarationStatement.class);
+      if (initStmt == null || initStmt.getDeclaredElements().length != 1) return null;
+      PsiLocalVariable variable = tryCast(initStmt.getDeclaredElements()[0], PsiLocalVariable.class);
+      if (variable == null) return null;
+
+      PsiExpression initializer = variable.getInitializer();
+      if (initializer == null) return null;
+      PsiStatement update = forStatement.getUpdate();
+      if (update == null) return null;
+      PsiExpressionStatement updateStmt = tryCast(update, PsiExpressionStatement.class);
+      if (!VariableAccessUtils.variableIsUsed(variable, updateStmt)) return null;
+      ReferencesSearch.search(variable, new LocalSearchScope(forStatement))
+        .forEach(reference -> PsiTreeUtil.isAncestor(variable, reference.getElement(), false) ||
+                              PsiTreeUtil.isAncestor(update, reference.getElement(), false));
+      // TODO check it is the only reference in expression
+      return new InfiniteStreamSource(forStatement, variable, updateStmt.getExpression(), initializer);
     }
   }
 }
