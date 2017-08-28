@@ -46,4 +46,9 @@ public class SpecialCasesTest extends TraceExecutionTestCase {
   public void testMapNullToValue() {
     doTest(false);
   }
+
+  // https://youtrack.jetbrains.com/issue/IDEA-178008
+  public void testToCollection() {
+    doTest(false);
+  }
 }
