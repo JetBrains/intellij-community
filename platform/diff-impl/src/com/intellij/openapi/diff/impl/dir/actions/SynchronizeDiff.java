@@ -15,12 +15,9 @@
  */
 package com.intellij.openapi.diff.impl.dir.actions;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.actionSystem.ShortcutSet;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.diff.impl.dir.DirDiffTableModel;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.containers.JBIterable;
 
 import static com.intellij.ide.diff.DirDiffOperation.*;
@@ -33,9 +30,8 @@ public class SynchronizeDiff extends DirDiffAction {
 
   public SynchronizeDiff(DirDiffTableModel model, boolean selectedOnly) {
     super(model);
-    getTemplatePresentation().setText(selectedOnly ? "Synchronize Selected" : "Synchronize All");
-    getTemplatePresentation().setIcon(selectedOnly ? AllIcons.Actions.Resume : AllIcons.Actions.Rerun);
     mySelectedOnly = selectedOnly;
+    ActionUtil.copyFrom(this, selectedOnly ? "DirDiffMenu.SynchronizeDiff" : "DirDiffMenu.SynchronizeDiff.All");
   }
 
   @Override
@@ -60,11 +56,6 @@ public class SynchronizeDiff extends DirDiffAction {
     else {
       getModel().synchronizeAll();
     }
-  }
-
-  @Override
-  public ShortcutSet getShortcut() {
-    return CustomShortcutSet.fromString(mySelectedOnly ? "ENTER" : SystemInfo.isMac ? "meta ENTER" : "control ENTER");
   }
 
   @Override

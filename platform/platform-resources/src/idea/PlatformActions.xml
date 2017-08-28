@@ -812,6 +812,9 @@
     </group>
 
     <group id="DirDiffMenu">
+      <action id="DirDiffMenu.SynchronizeDiff" class="com.intellij.openapi.actionSystem.EmptyAction" text="Synchronize Selected" icon="AllIcons.Actions.Resume"/>
+      <action id="DirDiffMenu.SynchronizeDiff.All" class="com.intellij.openapi.actionSystem.EmptyAction" text="Synchronize All" icon="AllIcons.Actions.Rerun"/>
+      <separator/>
       <action id="DirDiffMenu.SetCopyToRight" class="com.intellij.openapi.diff.impl.dir.actions.popup.SetCopyToRight" text="Set Copy to Right" icon="AllIcons.Vcs.Arrow_right"/>
       <action id="DirDiffMenu.SetCopyToLeft" class="com.intellij.openapi.diff.impl.dir.actions.popup.SetCopyToLeft" text="Set Copy to Left" icon="AllIcons.Vcs.Arrow_left"/>
       <action id="DirDiffMenu.SetDelete" class="com.intellij.openapi.diff.impl.dir.actions.popup.SetDelete" text="Set Delete" icon="AllIcons.Vcs.Remove"/>

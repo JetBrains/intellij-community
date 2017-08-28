@@ -29,8 +29,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     put("$default", new String[][] {
     { "ADD",                      "ExpandTreeNode", "Graph.ZoomIn"},
     { "BACK_SPACE",               "EditorBackSpace", "Images.Thumbnails.UpFolder"},
-    { "ENTER",                    "EditorChooseLookupItem", "NextTemplateVariable", "EditorEnter", "Images.Thumbnails.EnterAction",
-                                  "PropertyInspectorActions.EditValue", "Console.Execute", "Console.TableResult.EditValue"},
+    { "ENTER",                    "Console.Execute", "Console.TableResult.EditValue", "DirDiffMenu.SynchronizeDiff", "EditorChooseLookupItem", "EditorEnter", "Images.Thumbnails.EnterAction", "NextTemplateVariable", "PropertyInspectorActions.EditValue"},
     { "F2",                       "GotoNextError", "GuiDesigner.EditComponent", "GuiDesigner.EditGroup", "Console.TableResult.EditValue", "XDebugger.SetValue", "Arrangement.Rule.Edit", "Git.Reword.Commit"},
     { "alt ENTER",                "ShowIntentionActions", "Console.TableResult.EditValue", "DatabaseView.PropertiesAction"},
     { "F5",                       "UML.ApplyCurrentLayout", "CopyElement"},
@@ -49,7 +48,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "control ADD",              "ExpandAll", "ExpandExpandableComponent", "ExpandRegion"},
     { "control DIVIDE",           "CommentByLineComment", "Images.Editor.ActualSize"},
     { "control DOWN",             "EditorScrollDown", "EditorLookupDown"},
-    { "control ENTER",            "EditorSplitLine", "ViewSource", "Console.Execute.Multiline"},
+    { "control ENTER",            "Console.Execute.Multiline", "DirDiffMenu.SynchronizeDiff.All", "EditorSplitLine", "ViewSource"},
     { "control EQUALS",           "ExpandAll", "ExpandExpandableComponent", "ExpandRegion"},
     { "control F5",               "Refresh", "Rerun"},
     { "control D",                "EditorDuplicate", "Diff.ShowDiff", "CompareTwoFiles", "SendEOF", "FileChooser.GotoDesktop"},
