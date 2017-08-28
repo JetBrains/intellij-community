@@ -100,6 +100,10 @@ class TerminalBlock {
     return null;
   }
 
+  int getOperationCount() {
+    return myOperations.length;
+  }
+
   /**
    * @return PsiMethodCallExpression if this TerminalBlock contains single method call, null otherwise
    */
@@ -191,12 +195,14 @@ class TerminalBlock {
     }
     if(myStatements.length >= 1) {
       PsiStatement first = myStatements[0];
-      if(PsiUtil.isLanguageLevel9OrHigher(first.getContainingFile()) && first instanceof PsiIfStatement) {
+      if(PsiUtil.isLanguageLevel9OrHigher(myVariable.getContainingFile()) && first instanceof PsiIfStatement) {
         PsiIfStatement ifStatement = (PsiIfStatement)first;
         PsiExpression condition = ifStatement.getCondition();
         if(ifStatement.getElseBranch() == null && condition != null) {
           PsiStatement thenStatement = ControlFlowUtils.stripBraces(ifStatement.getThenBranch());
-          if(ControlFlowUtils.statementBreaksLoop(thenStatement, getMainLoop())) {
+          PsiStatement sourceStatement = getStreamSourceStatement();
+          if( sourceStatement instanceof PsiLoopStatement && ControlFlowUtils.statementBreaksLoop(thenStatement,
+                                                                                                  (PsiLoopStatement)sourceStatement)) {
             TakeWhileOp op = new TakeWhileOp(condition, myVariable, true);
             PsiStatement[] leftOver = Arrays.copyOfRange(myStatements, 1, myStatements.length);
             return new TerminalBlock(this, op, myVariable, leftOver);
@@ -252,7 +258,9 @@ class TerminalBlock {
       statements = Arrays.copyOfRange(myStatements, 0, count);
       tb = new TerminalBlock(myOperations, myVariable, Arrays.copyOfRange(myStatements, count, myStatements.length)).extractFilter();
     }
-    if (tb == null || !ControlFlowUtils.statementBreaksLoop(tb.getSingleStatement(), getMainLoop())) return this;
+    PsiStatement sourceStatement = getStreamSourceStatement();
+    if (tb == null || (sourceStatement instanceof PsiLoopStatement && !ControlFlowUtils.statementBreaksLoop(tb.getSingleStatement(),
+                                                                                                            (PsiLoopStatement)sourceStatement))) return this;
     FilterOp filter = tb.getLastOperation(FilterOp.class);
     if (filter == null) return this;
     PsiBinaryExpression binOp = tryCast(PsiUtil.skipParenthesizedExprDown(filter.getExpression()), PsiBinaryExpression.class);
@@ -323,7 +331,7 @@ class TerminalBlock {
     PsiExpressionList argumentList = initializer.getArgumentList();
     if (argumentList == null ||
         argumentList.getExpressions().length != 0 ||
-        ControlFlowUtils.getInitializerUsageStatus(var, getMainLoop()) == ControlFlowUtils.InitializerUsageStatus.UNKNOWN) {
+        ControlFlowUtils.getInitializerUsageStatus(var, getStreamSourceStatement()) == ControlFlowUtils.InitializerUsageStatus.UNKNOWN) {
       return null;
     }
     return var;
@@ -428,8 +436,11 @@ class TerminalBlock {
     return StreamEx.ofReversed(myOperations);
   }
 
-  PsiLoopStatement getMainLoop() {
-    return ((StreamSource)myOperations[0]).getLoop();
+  /**
+   * @return generally {@link PsiLoopStatement} - main loop
+   */
+  PsiStatement getStreamSourceStatement() {
+    return ((StreamSource)myOperations[0]).getMainStatement();
   }
 
   /**
@@ -494,7 +505,17 @@ class TerminalBlock {
 
   @NotNull
   static TerminalBlock from(StreamSource source, @NotNull PsiStatement body) {
-    return new TerminalBlock(null, source, source.myVariable, body).extractOperations().tryPeelLimit(false).tryExtractDistinct();
+    return fromStatements(source, body);
+  }
+
+  @NotNull
+  static TerminalBlock fromStatements(StreamSource source, @NotNull PsiStatement... statements) {
+    return new TerminalBlock(null, source, source.myVariable, statements).extractOperations().tryPeelLimit(false).tryExtractDistinct();
+  }
+
+  @NotNull
+  static TerminalBlock from(StreamSource source, @NotNull PsiCodeBlock block) {
+    return fromStatements(source, block.getStatements());
   }
 
   boolean dependsOn(PsiExpression qualifier) {

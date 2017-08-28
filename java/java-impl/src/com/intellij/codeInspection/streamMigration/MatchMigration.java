@@ -36,29 +36,29 @@ class MatchMigration extends BaseStreamApiMigration {
   }
 
   @Override
-  PsiElement migrate(@NotNull Project project, @NotNull PsiStatement body, @NotNull TerminalBlock tb) {
-    PsiLoopStatement loopStatement = tb.getMainLoop();
+  PsiElement migrate(@NotNull Project project, @NotNull PsiElement body, @NotNull TerminalBlock tb) {
+    PsiStatement sourceStatement = tb.getStreamSourceStatement();
     PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
     if(tb.getSingleStatement() instanceof PsiReturnStatement) {
       PsiReturnStatement returnStatement = (PsiReturnStatement)tb.getSingleStatement();
       PsiExpression value = returnStatement.getReturnValue();
       if (ExpressionUtils.isLiteral(value, Boolean.TRUE) || ExpressionUtils.isLiteral(value, Boolean.FALSE)) {
         boolean foundResult = (boolean)((PsiLiteralExpression)value).getValue();
-        PsiReturnStatement nextReturnStatement = StreamApiMigrationInspection.getNextReturnStatement(loopStatement);
+        PsiReturnStatement nextReturnStatement = StreamApiMigrationInspection.getNextReturnStatement(sourceStatement);
         if (nextReturnStatement != null) {
           PsiExpression returnValue = nextReturnStatement.getReturnValue();
           if(returnValue == null) return null;
           String methodName = foundResult ? "anyMatch" : "noneMatch";
-          String streamText = addTerminalOperation(methodName, loopStatement, tb);
-          restoreComments(loopStatement, body);
-          if (nextReturnStatement.getParent() == loopStatement.getParent()) {
+          String streamText = addTerminalOperation(methodName, sourceStatement, tb);
+          restoreComments(sourceStatement, body);
+          if (nextReturnStatement.getParent() == sourceStatement.getParent()) {
             if(!ExpressionUtils.isLiteral(returnValue, !foundResult)) {
               streamText+= (foundResult ? "||" : "&&") + ParenthesesUtils.getText(returnValue, ParenthesesUtils.AND_PRECEDENCE);
             }
-            removeLoop(loopStatement);
+            removeLoop(sourceStatement);
             return returnValue.replace(elementFactory.createExpressionFromText(streamText, nextReturnStatement));
           }
-          PsiElement result = loopStatement.replace(elementFactory.createStatementFromText("return " + streamText + ";", loopStatement));
+          PsiElement result = sourceStatement.replace(elementFactory.createStatementFromText("return " + streamText + ";", sourceStatement));
           if(!isReachable(nextReturnStatement)) {
             nextReturnStatement.delete();
           }
@@ -67,11 +67,12 @@ class MatchMigration extends BaseStreamApiMigration {
       }
     }
     PsiStatement[] statements = tb.getStatements();
-    if (!(statements.length == 1 || (statements.length == 2 && ControlFlowUtils.statementBreaksLoop(statements[1], loopStatement)))) {
+    if (!(statements.length == 1 || (sourceStatement instanceof PsiLoopStatement && statements.length == 2 && ControlFlowUtils.statementBreaksLoop(statements[1],
+                                                                                                    (PsiLoopStatement)sourceStatement)))) {
       return null;
     }
-    restoreComments(loopStatement, body);
-    String streamText = addTerminalOperation("anyMatch", loopStatement, tb);
+    restoreComments(sourceStatement, body);
+    String streamText = addTerminalOperation("anyMatch", sourceStatement, tb);
     PsiStatement statement = statements[0];
     PsiAssignmentExpression assignment = ExpressionUtils.getAssignment(statement);
     if(assignment != null) {
@@ -85,7 +86,7 @@ class MatchMigration extends BaseStreamApiMigration {
           // for(....) if(...) {flag = true; break;}
           PsiVariable var = (PsiVariable)maybeVar;
           PsiExpression initializer = var.getInitializer();
-          InitializerUsageStatus status = ControlFlowUtils.getInitializerUsageStatus(var, loopStatement);
+          InitializerUsageStatus status = ControlFlowUtils.getInitializerUsageStatus(var, sourceStatement);
           if (initializer != null && status != ControlFlowUtils.InitializerUsageStatus.UNKNOWN) {
             String replacement;
             if (ExpressionUtils.isLiteral(initializer, Boolean.FALSE) &&
@@ -99,13 +100,13 @@ class MatchMigration extends BaseStreamApiMigration {
             else {
               replacement = streamText + "?" + rValue.getText() + ":" + initializer.getText();
             }
-            return replaceInitializer(loopStatement, var, initializer, replacement, status);
+            return replaceInitializer(sourceStatement, var, initializer, replacement, status);
           }
         }
       }
     }
     String replacement = "if(" + streamText + "){" + statement.getText() + "}";
-    return loopStatement.replace(elementFactory.createStatementFromText(replacement, loopStatement));
+    return sourceStatement.replace(elementFactory.createStatementFromText(replacement, sourceStatement));
   }
 
   private static String addTerminalOperation(String methodName, @NotNull PsiElement contextElement, @NotNull TerminalBlock tb) {

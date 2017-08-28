@@ -765,7 +765,7 @@ public class ControlFlowUtils {
    */
   private static boolean isVariableReferencedBeforeLoopEntry(final ControlFlow flow,
                                                              final int start,
-                                                             final PsiLoopStatement loop,
+                                                             final PsiStatement loop,
                                                              final PsiVariable variable) {
     final int loopStart = flow.getStartOffset(loop);
     final int loopEnd = flow.getEndOffset(loop);
@@ -812,7 +812,7 @@ public class ControlFlowUtils {
    * @return initializer usage status for variable
    */
   @NotNull
-  public static InitializerUsageStatus getInitializerUsageStatus(PsiVariable var, PsiLoopStatement loop) {
+  public static InitializerUsageStatus getInitializerUsageStatus(PsiVariable var, PsiStatement loop) {
     if(!(var instanceof PsiLocalVariable) || var.getInitializer() == null) return UNKNOWN;
     if(isDeclarationJustBefore(var, loop)) return DECLARED_JUST_BEFORE;
     // Check that variable is declared in the same method or the same lambda expression

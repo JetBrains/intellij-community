@@ -34,10 +34,10 @@ class FindFirstMigration extends BaseStreamApiMigration {
   FindFirstMigration(boolean shouldWarn) {super(shouldWarn, "findFirst()");}
 
   @Override
-  PsiElement migrate(@NotNull Project project, @NotNull PsiStatement body, @NotNull TerminalBlock tb) {
+  PsiElement migrate(@NotNull Project project, @NotNull PsiElement body, @NotNull TerminalBlock tb) {
     PsiStatement statement = tb.getSingleStatement();
     PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
-    PsiLoopStatement loopStatement = tb.getMainLoop();
+    PsiStatement loopStatement = tb.getStreamSourceStatement();
     if (statement instanceof PsiReturnStatement) {
       PsiReturnStatement returnStatement = (PsiReturnStatement)statement;
       PsiExpression value = returnStatement.getReturnValue();

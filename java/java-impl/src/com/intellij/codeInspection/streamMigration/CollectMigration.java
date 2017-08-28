@@ -75,8 +75,8 @@ class CollectMigration extends BaseStreamApiMigration {
   }
 
   @Override
-  PsiElement migrate(@NotNull Project project, @NotNull PsiStatement body, @NotNull TerminalBlock tb) {
-    PsiLoopStatement loopStatement = tb.getMainLoop();
+  PsiElement migrate(@NotNull Project project, @NotNull PsiElement body, @NotNull TerminalBlock tb) {
+    PsiStatement loopStatement = tb.getStreamSourceStatement();
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     CollectTerminal terminal = extractCollectTerminal(tb, null);
     if (terminal == null) return null;
@@ -139,12 +139,12 @@ class CollectMigration extends BaseStreamApiMigration {
     CollectTerminal terminal = StreamEx.of(extractors).map(extractor -> extractor.apply(tb, call)).nonNull().findFirst().orElse(null);
     if (terminal != null) {
       if (terminal.getStatus() == ControlFlowUtils.InitializerUsageStatus.UNKNOWN) return null;
-      terminal = includePostStatements(terminal, tb.getMainLoop());
+      terminal = includePostStatements(terminal, tb.getStreamSourceStatement());
     }
     return terminal;
   }
 
-  static CollectTerminal includePostStatements(CollectTerminal terminal, PsiLoopStatement loop) {
+  static CollectTerminal includePostStatements(CollectTerminal terminal, PsiStatement loop) {
     List<BiFunction<CollectTerminal, PsiElement, CollectTerminal>> wrappers =
       Arrays.asList(SortingTerminal::tryWrap, ToArrayTerminal::tryWrap, NewListTerminal::tryWrap);
     PsiElement nextStatement = loop;
@@ -194,9 +194,9 @@ class CollectMigration extends BaseStreamApiMigration {
   abstract static class CollectTerminal {
     private final PsiLocalVariable myTargetVariable;
     private final InitializerUsageStatus myStatus;
-    final PsiLoopStatement myLoop;
+    final PsiStatement myLoop;
 
-    protected CollectTerminal(PsiLocalVariable variable, PsiLoopStatement loop, InitializerUsageStatus status) {
+    protected CollectTerminal(PsiLocalVariable variable, PsiStatement loop, InitializerUsageStatus status) {
       myTargetVariable = variable;
       myLoop = loop;
       myStatus = status;
@@ -235,7 +235,7 @@ class CollectMigration extends BaseStreamApiMigration {
     AddingTerminal(@NotNull PsiLocalVariable target,
                    PsiVariable element,
                    PsiMethodCallExpression addCall,
-                   PsiLoopStatement loop,
+                   PsiStatement loop,
                    InitializerUsageStatus status) {
       super(target, loop, hasLambdaCompatibleEmptyInitializer(target) ? status : ControlFlowUtils.InitializerUsageStatus.UNKNOWN);
       myTargetType = target.getType();
@@ -288,8 +288,8 @@ class CollectMigration extends BaseStreamApiMigration {
       PsiExpression count = tb.getCountExpression();
       PsiLocalVariable variable = extractQualifierVariable(tb, call);
       if (variable != null) {
-        InitializerUsageStatus status = getInitializerUsageStatus(variable, tb.getMainLoop());
-        AddingTerminal terminal = new AddingTerminal(variable, tb.getVariable(), call, tb.getMainLoop(), status);
+        InitializerUsageStatus status = getInitializerUsageStatus(variable, tb.getStreamSourceStatement());
+        AddingTerminal terminal = new AddingTerminal(variable, tb.getVariable(), call, tb.getStreamSourceStatement(), status);
         if (count == null) return terminal;
         // like "list.add(x); if(list.size() >= limit) break;"
         if (!(count instanceof PsiMethodCallExpression)) return null;
@@ -346,7 +346,7 @@ class CollectMigration extends BaseStreamApiMigration {
     AddingAllTerminal(PsiLocalVariable target,
                       PsiVariable element,
                       PsiMethodCallExpression addAllCall,
-                      PsiLoopStatement loop,
+                      PsiStatement loop,
                       InitializerUsageStatus status) {
       super(target, element, null, loop, status);
       myAddAllCall = addAllCall;
@@ -380,8 +380,8 @@ class CollectMigration extends BaseStreamApiMigration {
       if (collectionReference == null || tb.dependsOn(collectionReference)) return null;
       PsiLocalVariable target = tryCast(collectionReference.resolve(), PsiLocalVariable.class);
       if (target == null || StreamEx.of(args).skip(1).anyMatch(arg -> VariableAccessUtils.variableIsUsed(target, arg))) return null;
-      InitializerUsageStatus status = getInitializerUsageStatus(target, tb.getMainLoop());
-      return new AddingAllTerminal(target, tb.getVariable(), call, tb.getMainLoop(), status);
+      InitializerUsageStatus status = getInitializerUsageStatus(target, tb.getStreamSourceStatement());
+      return new AddingAllTerminal(target, tb.getVariable(), call, tb.getStreamSourceStatement(), status);
     }
   }
 
@@ -447,7 +447,7 @@ class CollectMigration extends BaseStreamApiMigration {
               PsiType valueType = PsiUtil.substituteTypeParameter(mapType, CommonClassNames.JAVA_UTIL_MAP, 1, false);
               if (valueType == null) return null;
               AddingTerminal adding = new AddingTerminal(valueType, body, tb.getVariable(), call);
-              InitializerUsageStatus status = getInitializerUsageStatus(variable, tb.getMainLoop());
+              InitializerUsageStatus status = getInitializerUsageStatus(variable, tb.getStreamSourceStatement());
               return new GroupingTerminal(adding, variable, args[0], status);
             }
           }
@@ -464,7 +464,7 @@ class CollectMigration extends BaseStreamApiMigration {
     ToMapTerminal(PsiMethodCallExpression call,
                   PsiVariable elementVariable,
                   PsiLocalVariable variable,
-                  PsiLoopStatement loop,
+                  PsiStatement loop,
                   InitializerUsageStatus status) {
       super(variable, loop, status);
       myMapUpdateCall = call;
@@ -517,8 +517,8 @@ class CollectMigration extends BaseStreamApiMigration {
       }
       PsiLocalVariable variable = extractQualifierVariable(tb, call);
       if (!hasLambdaCompatibleEmptyInitializer(variable)) return null;
-      InitializerUsageStatus status = getInitializerUsageStatus(variable, tb.getMainLoop());
-      return new ToMapTerminal(call, tb.getVariable(), variable, tb.getMainLoop(), status);
+      InitializerUsageStatus status = getInitializerUsageStatus(variable, tb.getStreamSourceStatement());
+      return new ToMapTerminal(call, tb.getVariable(), variable, tb.getStreamSourceStatement(), status);
     }
   }
 

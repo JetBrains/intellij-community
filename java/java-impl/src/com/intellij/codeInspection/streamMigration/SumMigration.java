@@ -32,7 +32,7 @@ class SumMigration extends BaseStreamApiMigration {
   SumMigration(boolean shouldWarn) {super(shouldWarn, "sum()");}
 
   @Override
-  PsiElement migrate(@NotNull Project project, @NotNull PsiStatement body, @NotNull TerminalBlock tb) {
+  PsiElement migrate(@NotNull Project project, @NotNull PsiElement body, @NotNull TerminalBlock tb) {
     PsiAssignmentExpression assignment = tb.getSingleExpression(PsiAssignmentExpression.class);
     if (assignment == null) return null;
     PsiVariable var = StreamApiMigrationInspection.extractSumAccumulator(assignment);
@@ -51,6 +51,6 @@ class SumMigration extends BaseStreamApiMigration {
         "(" + type.getCanonicalText() + ")" + ParenthesesUtils.getText(addend, ParenthesesUtils.MULTIPLICATIVE_PRECEDENCE), addend);
     }
     String stream = tb.add(new MapOp(addend, tb.getVariable(), type)).generate()+".sum()";
-    return replaceWithOperation(tb.getMainLoop(), var, stream, type, SUM_OPERATION);
+    return replaceWithOperation(tb.getStreamSourceStatement(), var, stream, type, SUM_OPERATION);
   }
 }

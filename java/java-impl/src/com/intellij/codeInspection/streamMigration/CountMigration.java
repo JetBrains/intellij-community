@@ -31,7 +31,7 @@ class CountMigration extends BaseStreamApiMigration {
   }
 
   @Override
-  PsiElement migrate(@NotNull Project project, @NotNull PsiStatement body, @NotNull TerminalBlock tb) {
+  PsiElement migrate(@NotNull Project project, @NotNull PsiElement body, @NotNull TerminalBlock tb) {
     PsiExpression expression = tb.getSingleExpression(PsiExpression.class);
     if (expression == null) {
       expression = tb.getCountExpression();
@@ -41,6 +41,6 @@ class CountMigration extends BaseStreamApiMigration {
     PsiElement element = ((PsiReferenceExpression)operand).resolve();
     if (!(element instanceof PsiLocalVariable)) return null;
     PsiLocalVariable var = (PsiLocalVariable)element;
-    return replaceWithOperation(tb.getMainLoop(), var, tb.generate() + ".count()", PsiType.LONG, SUM_OPERATION);
+    return replaceWithOperation(tb.getStreamSourceStatement(), var, tb.generate() + ".count()", PsiType.LONG, SUM_OPERATION);
   }
 }
