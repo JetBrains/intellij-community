@@ -3236,7 +3236,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     public Rectangle getTextLocation(TextHitInfo offset) {
       Point caret = logicalPositionToXY(getCaretModel().getLogicalPosition());
       Rectangle r = new Rectangle(caret, new Dimension(1, getLineHeight()));
-      Point p = getContentComponent().getLocationOnScreen();
+      Point p = getLocationOnScreen(getContentComponent());
       r.translate(p.x, p.y);
 
       return r;
@@ -3246,7 +3246,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     @Nullable
     public TextHitInfo getLocationOffset(int x, int y) {
       if (composedText != null) {
-        Point p = getContentComponent().getLocationOnScreen();
+        Point p = getLocationOnScreen(getContentComponent());
         p.x = x - p.x;
         p.y = y - p.y;
         int pos = logicalPositionToOffset(xyToLogicalPosition(p));
@@ -3255,6 +3255,21 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         }
       }
       return null;
+    }
+
+    private Point getLocationOnScreen(Component component) {
+      try {
+        return component.getLocationOnScreen();
+      }
+      catch (Exception exception) {
+        String message = component.getClass().getName();
+        while (true) {
+          if (component.isShowing()) message = "showing " + message;
+          component = component.getParent();
+          if (component == null) throw new IllegalComponentStateException(message);
+          message = component.getClass().getName() + " / " + message;
+        }
+      }
     }
 
     @Override
