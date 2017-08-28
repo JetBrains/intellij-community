@@ -230,14 +230,11 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
         return Ref.create(PyTypeUtil.toKeywordContainerType(parameter, annotationValueType));
       }
 
-      final PyType result = Optional
-        .ofNullable(parameter.getDefaultValue())
-        .map(context::getType)
-        .filter(PyNoneType.class::isInstance)
-        .map(noneType -> PyUnionType.union(annotationValueType, noneType))
-        .orElse(annotationValueType);
+      if (parameter.hasDefaultNoneValue()) {
+        return Ref.create(PyUnionType.union(annotationValueType, PyNoneType.INSTANCE));
+      }
 
-      return Ref.create(result);
+      return Ref.create(annotationValueType);
     }
 
     return null;

@@ -40,6 +40,7 @@ public class PyNamedParameterElementType extends PyStubElementType<PyNamedParame
   private static final int POSITIONAL_CONTAINER = 1;
   private static final int KEYWORD_CONTAINER = 2;
   private static final int HAS_DEFAULT_VALUE = 4;
+  private static final int HAS_DEFAULT_NONE_VALUE = 8;
 
   public PyNamedParameterElementType() {
     this("NAMED_PARAMETER");
@@ -56,7 +57,8 @@ public class PyNamedParameterElementType extends PyStubElementType<PyNamedParame
   @NotNull
   public PyNamedParameterStub createStub(@NotNull final PyNamedParameter psi, final StubElement parentStub) {
     return new PyNamedParameterStubImpl(psi.getName(), psi.isPositionalContainer(), psi.isKeywordContainer(), psi.hasDefaultValue(),
-                                        psi.getTypeCommentAnnotation(), psi.getAnnotationValue() , parentStub, getStubElementType());
+                                        psi.hasDefaultNoneValue(), psi.getTypeCommentAnnotation(), psi.getAnnotationValue() , parentStub,
+                                        getStubElementType());
   }
 
   @NotNull
@@ -72,6 +74,7 @@ public class PyNamedParameterElementType extends PyStubElementType<PyNamedParame
     if (stub.isPositionalContainer()) flags |= POSITIONAL_CONTAINER;
     if (stub.isKeywordContainer()) flags |= KEYWORD_CONTAINER;
     if (stub.hasDefaultValue()) flags |= HAS_DEFAULT_VALUE;
+    if (stub.hasDefaultNoneValue()) flags |= HAS_DEFAULT_NONE_VALUE;
     dataStream.writeByte(flags);
     dataStream.writeName(stub.getTypeComment());
     dataStream.writeName(stub.getAnnotation());
@@ -87,7 +90,8 @@ public class PyNamedParameterElementType extends PyStubElementType<PyNamedParame
                                         (flags & POSITIONAL_CONTAINER) != 0,
                                         (flags & KEYWORD_CONTAINER) != 0,
                                         (flags & HAS_DEFAULT_VALUE) != 0,
-                                        typeComment == null ? null : typeComment.getString(), 
+                                        (flags & HAS_DEFAULT_NONE_VALUE) != 0,
+                                        typeComment == null ? null : typeComment.getString(),
                                         annotation == null ? null : annotation.getString(),
                                         parentStub, getStubElementType());
   }

@@ -33,13 +33,15 @@ public class PyNamedParameterStubImpl extends StubBase<PyNamedParameter> impleme
   private final boolean myHasDefaultValue;
   private final String myTypeCommentAnnotation;
   private final String myAnnotation;
+  private final boolean myHasDefaultNoneValue;
 
   public PyNamedParameterStubImpl(String name,
                                   boolean isPositionalContainer,
                                   boolean isKeywordContainer,
                                   boolean hasDefaultValue,
+                                  boolean hasDefaultNoneValue,
                                   @Nullable String typeCommentAnnotation,
-                                  @Nullable String annotation, 
+                                  @Nullable String annotation,
                                   StubElement parent,
                                   IStubElementType stubElementType) {
     super(parent, stubElementType);
@@ -49,6 +51,7 @@ public class PyNamedParameterStubImpl extends StubBase<PyNamedParameter> impleme
     myHasDefaultValue = hasDefaultValue;
     myTypeCommentAnnotation = typeCommentAnnotation;
     myAnnotation = annotation;
+    myHasDefaultNoneValue = hasDefaultNoneValue;
   }
 
   public boolean isPositionalContainer() {
@@ -61,6 +64,11 @@ public class PyNamedParameterStubImpl extends StubBase<PyNamedParameter> impleme
 
   public boolean hasDefaultValue() {
     return myHasDefaultValue;
+  }
+
+  @Override
+  public boolean hasDefaultNoneValue() {
+    return myHasDefaultNoneValue;
   }
 
   @Nullable

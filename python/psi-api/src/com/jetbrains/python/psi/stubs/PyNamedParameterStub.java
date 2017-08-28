@@ -26,4 +26,5 @@ public interface PyNamedParameterStub extends NamedStub<PyNamedParameter>, PyAnn
   boolean isPositionalContainer();
   boolean isKeywordContainer();
   boolean hasDefaultValue();
+  boolean hasDefaultNoneValue();
 }

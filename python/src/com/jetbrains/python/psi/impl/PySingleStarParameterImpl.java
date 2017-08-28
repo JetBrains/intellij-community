@@ -57,6 +57,11 @@ public class PySingleStarParameterImpl extends PyBaseElementImpl<PySingleStarPar
   }
 
   @Override
+  public boolean hasDefaultNoneValue() {
+    return false;
+  }
+
+  @Override
   public boolean isSelf() {
     return false;
   }

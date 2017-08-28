@@ -42,6 +42,8 @@ public interface PyParameter extends PyElement {
 
   boolean hasDefaultValue();
 
+  boolean hasDefaultNoneValue();
+
   /**
    * @return true if the parameter is the 'self' parameter of an instance attribute function or a function
    * annotated with @classmethod

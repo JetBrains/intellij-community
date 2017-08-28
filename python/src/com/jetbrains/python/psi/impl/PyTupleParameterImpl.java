@@ -61,6 +61,11 @@ public class PyTupleParameterImpl extends PyBaseElementImpl<PyTupleParameterStub
   }
 
   @Override
+  public boolean hasDefaultNoneValue() {
+    return false;
+  }
+
+  @Override
   protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
     pyVisitor.visitPyTupleParameter(this);
   }

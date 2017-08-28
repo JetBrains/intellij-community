@@ -174,6 +174,15 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
     return getDefaultValue() != null;
   }
 
+  @Override
+  public boolean hasDefaultNoneValue() {
+    final PyNamedParameterStub stub = getStub();
+    if (stub != null) {
+      return stub.hasDefaultNoneValue();
+    }
+    return getDefaultValue() instanceof PyNoneLiteralExpression;
+  }
+
   @NotNull
   @Override
   public String getRepr(boolean includeDefaultValue, @Nullable TypeEvalContext context) {
