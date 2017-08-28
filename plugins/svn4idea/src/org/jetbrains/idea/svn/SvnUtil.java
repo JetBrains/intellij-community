@@ -651,7 +651,11 @@ public class SvnUtil {
     return getRelativeUrl(parentUrl.toDecodedString(), childUrl.toDecodedString());
   }
 
-  public static String getRelativeUrl(@NotNull String parentUrl, @NotNull String childUrl) {
+  public static String getRelativeUrl(@NotNull SvnTarget parent, @NotNull SvnTarget child) {
+    return getRelativeUrl(toDecodedString(parent), toDecodedString(child));
+  }
+
+  private static String getRelativeUrl(@NotNull String parentUrl, @NotNull String childUrl) {
     return FileUtilRt.getRelativePath(parentUrl, childUrl, '/', true);
   }
 

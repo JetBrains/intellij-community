@@ -191,7 +191,7 @@ public class SvnChangeProvider implements ChangeProvider {
             continue;
           }
           if (isAncestor(copyFromURL, childUrl)) {
-            String relativePath = getRelativeUrl(copyFromURL.toDecodedString(), childUrl.toDecodedString());
+            String relativePath = getRelativeUrl(copyFromURL, childUrl);
             File newPath = new File(copiedFile.getFilePath().getIOFile(), relativePath);
             FilePath newFilePath = myFactory.createFilePathOn(newPath);
             if (!context.isDeleted(newFilePath)) {

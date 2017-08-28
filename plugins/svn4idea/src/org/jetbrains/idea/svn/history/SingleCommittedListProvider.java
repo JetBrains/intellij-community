@@ -88,7 +88,7 @@ public class SingleCommittedListProvider {
       svnRootUrl = rootUrlInfo.getUrl();
       svnRootLocation = new SvnRepositoryLocation(rootUrlInfo.getUrl().toString());
       repositoryRelativeUrl = SvnUtil.ensureStartSlash(SvnUtil.join(
-        SvnUtil.getRelativeUrl(repositoryUrl.toDecodedString(), svnRootUrl.toDecodedString()),
+        SvnUtil.getRelativeUrl(repositoryUrl, svnRootUrl),
         SvnUtil.getRelativePath(rootUrlInfo.getPath(), file.getPath())));
 
       filePath = VcsUtil.getFilePath(file);
