@@ -395,8 +395,10 @@ open class ExtendedJTreeDriver(robot: Robot) : JTreeDriver(robot) {
     }
 
     private fun value(tree: JTree, modelValue: Any): String {
-      return cellReader!!.valueAt(tree, modelValue)!!
+      return eraseZeroSpaceSymbols(cellReader!!.valueAt(tree, modelValue)!!)
     }
+
+    private fun eraseZeroSpaceSymbols(string: String): String = string.replace("\u200B", "")
 
     fun replaceCellReader(newCellReader: JTreeCellReader) {
       cellReader = newCellReader
@@ -411,7 +413,6 @@ open class ExtendedJTreeDriver(robot: Robot) : JTreeDriver(robot) {
    * node that has as child LoadingNode
    */
   class LoadingNodeException(val node: Any, var treePath: TreePath?) : Exception("Meet loading node: $node")
-
 
   private fun childCount(tree: JTree, path: TreePath): Int {
     return computeOnEdt {
