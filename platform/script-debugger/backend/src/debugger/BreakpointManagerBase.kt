@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,12 @@
  */
 package org.jetbrains.debugger
 
+import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.EventDispatcher
 import com.intellij.util.SmartList
 import com.intellij.util.Url
-import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.util.containers.ContainerUtil
 import gnu.trove.TObjectHashingStrategy
 import org.jetbrains.concurrency.*

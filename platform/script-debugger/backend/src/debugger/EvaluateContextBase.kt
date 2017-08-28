@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,26 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.rpc
+package org.jetbrains.debugger
 
-const val CONNECTION_CLOSED_MESSAGE = "Connection closed"
+import org.jetbrains.concurrency.Promise
+import org.jetbrains.concurrency.thenRun
+import org.jetbrains.debugger.values.ValueManager
 
-abstract class MessageManagerBase {
-  @Volatile protected var closed = false
+abstract class EvaluateContextBase<VALUE_MANAGER : ValueManager>(val valueManager: VALUE_MANAGER) : EvaluateContext {
+  override fun withValueManager(objectGroup: String) = this
 
-  protected fun rejectIfClosed(callback: RequestCallback<*>): Boolean {
-    if (closed) {
-      callback.onError("Connection closed")
-      return true
-    }
-    return false
-  }
-
-  fun closed() {
-    closed = true
-  }
-}
-
-fun RequestCallback<*>.reject() {
-  onError(CONNECTION_CLOSED_MESSAGE)
+  override fun refreshOnDone(promise: Promise<*>) = promise.thenRun { valueManager.clearCaches() }
 }
