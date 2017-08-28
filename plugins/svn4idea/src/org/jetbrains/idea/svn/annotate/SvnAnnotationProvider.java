@@ -459,8 +459,7 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
                          myProgress.checkCanceled();
                          myProgress.setText2(SvnBundle.message("progress.text2.revision.processed", logEntry.getRevision()));
                        }
-                       myResult
-                         .setRevision(logEntry.getRevision(), new SvnFileRevision(myVcs, SVNRevision.UNDEFINED, logEntry, myUrl.toString(), ""));
+                       myResult.setRevision(logEntry.getRevision(), new SvnFileRevision(myVcs, SVNRevision.UNDEFINED, logEntry, myUrl, ""));
                      });
     }
 
