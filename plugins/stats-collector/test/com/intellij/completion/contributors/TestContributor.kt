@@ -7,7 +7,13 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 
 class TestContributor : CompletionContributor() {
 
+    companion object {
+        var isEnabled = false
+    }
+
     override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
+        if (!isEnabled) return
+
         val type = parameters.completionType
         val prefix = "EC_$type"
 

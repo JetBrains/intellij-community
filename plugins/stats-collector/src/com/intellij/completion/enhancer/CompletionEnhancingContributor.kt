@@ -1,6 +1,7 @@
 package com.intellij.completion.enhancer
 
 import com.intellij.codeInsight.completion.*
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PreloadingActivity
 import com.intellij.openapi.extensions.ExtensionPoint
 import com.intellij.openapi.extensions.Extensions
@@ -86,9 +87,12 @@ class FirstContributorPreloader : PreloadingActivity() {
 class InvocationCountEnhancingContributor : CompletionContributor() {
     companion object {
         private val MAX_INVOCATION_COUNT = 5
+        var isEnabledInTests = false
     }
 
     override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
+        if (ApplicationManager.getApplication().isUnitTestMode && !isEnabledInTests) return
+
         result.runRemainingContributors(parameters, {
             result.passResult(it)
         })

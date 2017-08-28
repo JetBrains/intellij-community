@@ -1,13 +1,13 @@
 package com.intellij.completion.contributors
 
-import com.intellij.codeInsight.completion.*
-import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.codeInsight.completion.CompletionContributorEP
+import com.intellij.codeInsight.completion.CompletionType
+import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.completion.enhancer.CompletionContributors
 import com.intellij.completion.enhancer.InvocationCountEnhancingContributor
 import com.intellij.ide.highlighter.JavaFileType
 import org.assertj.core.api.Assertions.assertThat
-
 
 class InvocationCountEnhancerTest : LightFixtureCompletionTestCase() {
 
@@ -23,6 +23,10 @@ class InvocationCountEnhancerTest : LightFixtureCompletionTestCase() {
 
     override fun setUp() {
         super.setUp()
+
+        TestContributor.isEnabled = true
+        InvocationCountEnhancingContributor.isEnabledInTests = true
+
         testContributor = CompletionContributorEP().apply {
             implementationClass = TestContributor::class.java.name
             language = "any"
@@ -46,6 +50,10 @@ class InvocationCountEnhancerTest : LightFixtureCompletionTestCase() {
     override fun tearDown() {
         CompletionContributors.remove(testContributor)
         CompletionContributors.removeFirst()
+
+        TestContributor.isEnabled = false
+        InvocationCountEnhancingContributor.isEnabledInTests = false
+
         super.tearDown()
     }
 

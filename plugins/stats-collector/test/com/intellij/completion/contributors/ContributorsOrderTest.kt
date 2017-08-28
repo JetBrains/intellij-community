@@ -3,7 +3,6 @@ package com.intellij.completion.contributors
 import com.intellij.codeInsight.completion.CompletionContributorEP
 import com.intellij.completion.enhancer.CompletionContributors
 import com.intellij.completion.enhancer.InvocationCountEnhancingContributor
-import com.intellij.openapi.extensions.Extensions
 import com.intellij.testFramework.PlatformTestCase
 import org.assertj.core.api.Assertions.assertThat
 
