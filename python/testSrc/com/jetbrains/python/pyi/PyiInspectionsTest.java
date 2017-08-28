@@ -17,6 +17,7 @@ package com.jetbrains.python.pyi;
 
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.inspections.*;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
@@ -34,9 +35,11 @@ public class PyiInspectionsTest extends PyTestCase {
     myFixture.copyDirectoryToProject("pyi/inspections/" + getTestName(true), "");
     myFixture.copyDirectoryToProject("typing", "");
     PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
-    myFixture.configureByFile(fileName);
+    final PsiFile file = myFixture.configureByFile(fileName);
     myFixture.enableInspections(inspectionClass);
     myFixture.checkHighlighting(true, false, true);
+    assertProjectFilesNotParsed(file);
+    assertSdkRootsNotParsed(file);
   }
 
   private void doPyTest(@NotNull Class<? extends LocalInspectionTool> inspectionClass) {

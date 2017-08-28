@@ -15,18 +15,19 @@
  */
 package com.jetbrains.python.inspections;
 
-import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
+import org.jetbrains.annotations.NotNull;
 
-public class PyNamedTupleInspectionTest extends PyTestCase {
+public class PyNamedTupleInspectionTest extends PyInspectionTestCase {
 
   public void testTypingNTFieldsOrder() {
     runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
   }
 
-  private void doTest() {
-    myFixture.configureByFile("inspections/PyNamedTupleInspection/" + getTestName(true) + ".py");
-    myFixture.enableInspections(PyNamedTupleInspection.class);
-    myFixture.checkHighlighting(true, false, false);
+  @NotNull
+  @Override
+  protected Class<? extends PyInspection> getInspectionClass() {
+    return PyNamedTupleInspection.class;
   }
 }

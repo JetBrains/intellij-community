@@ -15,14 +15,14 @@
  */
 package com.jetbrains.python.inspections;
 
-import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author traff
  */
-public class PyMissingTypeHintsInspectionTest extends PyTestCase {
+public class PyMissingTypeHintsInspectionTest extends PyInspectionTestCase {
   public void testPy3kAnnotations() {
     doTest(LanguageLevel.PYTHON35);
   }
@@ -41,16 +41,20 @@ public class PyMissingTypeHintsInspectionTest extends PyTestCase {
   }
   
   private void doTest(LanguageLevel languageLevel) {
-    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), languageLevel);
-    try {
-      myFixture.configureByFile("inspections/PyMissingTypeHintsInspection/" + getTestName(true) + ".py");
-      PyMissingTypeHintsInspection inspection = new PyMissingTypeHintsInspection();
-      inspection.m_onlyWhenTypesAreKnown = false;
-      myFixture.enableInspections(inspection);
-      myFixture.checkHighlighting(false, false, true);
-    }
-    finally {
-      PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), null);
-    }
+    runWithLanguageLevel(languageLevel, this::doTest);
+  }
+
+  @NotNull
+  @Override
+  protected Class<? extends PyInspection> getInspectionClass() {
+    return PyMissingTypeHintsInspection.class;
+  }
+
+  @Override
+  protected void configureInspection() {
+    PyMissingTypeHintsInspection inspection = new PyMissingTypeHintsInspection();
+    inspection.m_onlyWhenTypesAreKnown = false;
+    myFixture.enableInspections(inspection);
+    myFixture.checkHighlighting(false, false, true);
   }
 }

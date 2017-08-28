@@ -424,8 +424,8 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
   }
 
   protected VirtualFile prepareFile() {
-    myFixture.copyDirectoryToProject(getTestDirectory(false), "");
-    return myFixture.configureByFile(getTestDirectory(false) + "/" + getTestName(true) + ".py").getVirtualFile();
+    myFixture.copyDirectoryToProject(getTestDirectoryPath(), "");
+    return myFixture.configureByFile(getTestDirectoryPath() + "/" + getTestName(true) + ".py").getVirtualFile();
   }
 
   protected void doEvaluateExpressionTest(@NotNull VirtualFile mainFile, @NotNull String expression, int lineNumber) {

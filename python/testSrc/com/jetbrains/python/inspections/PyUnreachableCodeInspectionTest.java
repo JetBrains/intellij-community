@@ -15,15 +15,14 @@
  */
 package com.jetbrains.python.inspections;
 
-import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author vlan
  */
-public class PyUnreachableCodeInspectionTest extends PyTestCase {
-  private static final String TEST_DIRECTORY = "inspections/PyUnreachableCodeInspection/";
-
+public class PyUnreachableCodeInspectionTest extends PyInspectionTestCase {
   // All previous unreachable tests, feel free to split them
   public void testUnreachable() {
     runWithLanguageLevel(LanguageLevel.PYTHON26, () -> doTest());
@@ -34,9 +33,14 @@ public class PyUnreachableCodeInspectionTest extends PyTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON26, () -> doTest());
   }
 
-  private void doTest() {
-    myFixture.configureByFile(TEST_DIRECTORY + getTestName(false) + ".py");
-    myFixture.enableInspections(PyUnreachableCodeInspection.class);
-    myFixture.checkHighlighting(true, false, false);
+  @NotNull
+  @Override
+  protected Class<? extends PyInspection> getInspectionClass() {
+    return PyUnreachableCodeInspection.class;
+  }
+
+  @Override
+  protected boolean isLowerCaseTestFile() {
+    return false;
   }
 }

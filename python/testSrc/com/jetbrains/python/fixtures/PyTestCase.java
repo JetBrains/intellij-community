@@ -34,10 +34,13 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.FilePropertyPusher;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.DirectoryProjectConfigurator;
 import com.intellij.psi.*;
@@ -70,6 +73,7 @@ import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
@@ -87,9 +91,28 @@ public abstract class PyTestCase extends UsefulTestCase {
 
   protected static final PyLightProjectDescriptor ourPyDescriptor = new PyLightProjectDescriptor(PYTHON_2_MOCK_SDK);
   protected static final PyLightProjectDescriptor ourPy3Descriptor = new PyLightProjectDescriptor(PYTHON_3_MOCK_SDK);
-  private static final String PARSED_ERROR_MSG = "Operations should have been performed on stubs but caused file to be parsed";
 
   protected CodeInsightTestFixture myFixture;
+
+  protected void assertProjectFilesNotParsed(@NotNull PsiFile currentFile) {
+    assertRootNotParsed(currentFile, myFixture.getTempDirFixture().getFile("."));
+  }
+
+  protected void assertSdkRootsNotParsed(@NotNull PsiFile currentFile) {
+    final Sdk testSdk = PythonSdkType.findPythonSdk(currentFile);
+    for (VirtualFile root : testSdk.getRootProvider().getFiles(OrderRootType.CLASSES)) {
+      assertRootNotParsed(currentFile, root);
+    }
+  }
+
+  private void assertRootNotParsed(@NotNull PsiFile currentFile, @NotNull VirtualFile root) {
+    for (VirtualFile file : VfsUtil.collectChildrenRecursively(root)) {
+      final PyFile pyFile = PyUtil.as(myFixture.getPsiManager().findFile(file), PyFile.class);
+      if (pyFile != null && !pyFile.equals(currentFile)) {
+        assertNotParsed(pyFile);
+      }
+    }
+  }
 
   @Nullable
   protected static VirtualFile getVirtualFileByName(String fileName) {
@@ -198,10 +221,10 @@ public abstract class PyTestCase extends UsefulTestCase {
     }
   }
 
-
-
-  protected static void assertNotParsed(PyFile file) {
-    assertNull(PARSED_ERROR_MSG, ((PyFileImpl)file).getTreeElement());
+  protected static void assertNotParsed(PsiFile file) {
+    assertInstanceOf(file, PyFileImpl.class);
+    assertNull("Operations should have been performed on stubs but caused file to be parsed: " + file.getVirtualFile().getPath(),
+               ((PyFileImpl)file).getTreeElement());
   }
 
   /**

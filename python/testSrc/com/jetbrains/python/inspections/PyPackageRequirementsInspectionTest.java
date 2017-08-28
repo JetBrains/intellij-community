@@ -16,7 +16,7 @@
 package com.jetbrains.python.inspections;
 
 import com.intellij.openapi.projectRoots.Sdk;
-import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -25,7 +25,13 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author vlan
  */
-public class PyPackageRequirementsInspectionTest extends PyTestCase {
+public class PyPackageRequirementsInspectionTest extends PyInspectionTestCase {
+  @NotNull
+  @Override
+  protected Class<? extends PyInspection> getInspectionClass() {
+    return PyPackageRequirementsInspection.class;
+  }
+
   @Override
   public void setUp() throws Exception {
     super.setUp();
@@ -35,45 +41,41 @@ public class PyPackageRequirementsInspectionTest extends PyTestCase {
   }
 
   public void testPartiallySatisfiedRequirementsTxt() {
-    doTest("test1.py");
+    doMultiFileTest("test1.py");
   }
 
   public void testPartiallySatisfiedSetupPy() {
-    doTest("test1.py");
+    myFixture.copyDirectoryToProject(getTestDirectoryPath(), "");
+    myFixture.configureFromTempProjectFile("test1.py");
+    configureInspection();
   }
 
   public void testImportsNotInRequirementsTxt() {
-    doTest("test1.py");
+    doMultiFileTest("test1.py");
   }
 
   public void testDuplicateInstallAndTests() {
-    doTest("test1.py");
+    myFixture.copyDirectoryToProject(getTestDirectoryPath(), "");
+    myFixture.configureFromTempProjectFile("test1.py");
+    configureInspection();
   }
 
   // PY-16753
   public void testIpAddressNotInRequirements() {
-    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> doTest("test1.py"));
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> doMultiFileTest("test1.py"));
   }
 
   // PY-17422
   public void testTypingNotInRequirements() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> doTest("test1.py"));
+    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> doMultiFileTest("test1.py"));
   }
 
   // PY-11963
   public void testMismatchBetweenPackageAndRequirement() {
-    doTest("test1.py");
+    doMultiFileTest("test1.py");
   }
 
   public void testOnePackageManyPossibleRequirements() {
-    doTest("test1.py");
-  }
-
-  private void doTest(@NotNull final String filename) {
-    final String testName = getTestName(false);
-    myFixture.copyDirectoryToProject("inspections/PyPackageRequirementsInspection/" + testName, "");
-    myFixture.configureFromTempProjectFile(filename);
-    myFixture.enableInspections(PyPackageRequirementsInspection.class);
-    myFixture.checkHighlighting(true, false, true);
+    doMultiFileTest("test1.py");
   }
 }

@@ -15,28 +15,23 @@
  */
 package com.jetbrains.python.inspections;
 
-import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author vlan
  */
-public class PyTypeCheckerInspectionTest extends PyTestCase {
-  public static final String TEST_DIRECTORY = "inspections/PyTypeCheckerInspection/";
-
-  private void doTest() {
-    myFixture.copyDirectoryToProject("typing", "");
-    myFixture.configureByFile(TEST_DIRECTORY + getTestName(false) + ".py");
-    myFixture.enableInspections(PyTypeCheckerInspection.class);
-    myFixture.checkHighlighting(true, false, true);
+public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
+  @NotNull
+  @Override
+  protected Class<? extends PyInspection> getInspectionClass() {
+    return PyTypeCheckerInspection.class;
   }
 
-  private void doMultiFileTest() {
-    final String testName = getTestName(false);
-    myFixture.copyDirectoryToProject(TEST_DIRECTORY + testName, "");
-    myFixture.configureFromTempProjectFile("a.py");
-    myFixture.enableInspections(PyTypeCheckerInspection.class);
-    myFixture.checkHighlighting(true, false, false);
+  @Override
+  protected boolean isLowerCaseTestFile() {
+    return false;
   }
 
   public void testSimple() {

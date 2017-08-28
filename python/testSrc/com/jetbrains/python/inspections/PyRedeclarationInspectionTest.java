@@ -15,10 +15,11 @@
  */
 package com.jetbrains.python.inspections;
 
-import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
+import org.jetbrains.annotations.NotNull;
 
-public class PyRedeclarationInspectionTest extends PyTestCase {
+public class PyRedeclarationInspectionTest extends PyInspectionTestCase {
 
   public void testRedeclaredClass() {
     doTest();
@@ -124,11 +125,9 @@ public class PyRedeclarationInspectionTest extends PyTestCase {
     doTest();
   }
 
-  private void doTest() {
-    final String path = "inspections/PyRedeclarationInspection/" + getTestName(true) + ".py";
-
-    myFixture.configureByFile(path);
-    myFixture.enableInspections(PyRedeclarationInspection.class);
-    myFixture.checkHighlighting(true, false, true);
+  @NotNull
+  @Override
+  protected Class<? extends PyInspection> getInspectionClass() {
+    return PyRedeclarationInspection.class;
   }
 }

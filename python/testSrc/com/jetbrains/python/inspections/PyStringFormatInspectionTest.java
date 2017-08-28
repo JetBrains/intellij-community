@@ -15,14 +15,13 @@
  */
 package com.jetbrains.python.inspections;
 
-import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.fixtures.PyInspectionTestCase;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author vlan
  */
-public class PyStringFormatInspectionTest extends PyTestCase {
-  public static final String TEST_DIRECTORY = "inspections/PyStringFormatInspection/";
-
+public class PyStringFormatInspectionTest extends PyInspectionTestCase {
   public void testBasic() {
     doTest();
   }
@@ -216,9 +215,14 @@ public class PyStringFormatInspectionTest extends PyTestCase {
     doTest();
   }
 
-  private void doTest() {
-    myFixture.configureByFile(TEST_DIRECTORY + getTestName(false) + ".py");
-    myFixture.enableInspections(PyStringFormatInspection.class);
-    myFixture.checkHighlighting(true, false, true);
+  @NotNull
+  @Override
+  protected Class<? extends PyInspection> getInspectionClass() {
+    return PyStringFormatInspection.class;
+  }
+
+  @Override
+  protected boolean isLowerCaseTestFile() {
+    return false;
   }
 }
