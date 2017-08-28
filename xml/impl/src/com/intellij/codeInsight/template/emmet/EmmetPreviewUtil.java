@@ -33,7 +33,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.Producer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,28 +45,26 @@ public class EmmetPreviewUtil {
 
   @Nullable
   public static String calculateTemplateText(@NotNull Editor editor, @NotNull PsiFile file, boolean expandPrimitiveAbbreviations) {
-    if (file instanceof XmlFile) {
-      PsiDocumentManager.getInstance(file.getProject()).commitDocument(editor.getDocument());
-      CollectCustomTemplateCallback callback = new CollectCustomTemplateCallback(editor, file);
-      PsiElement context = callback.getContext();
-      ZenCodingGenerator generator = ZenCodingTemplate.findApplicableDefaultGenerator(context, false);
-      if (generator != null && generator instanceof XmlZenCodingGenerator) {
-        final String templatePrefix = new ZenCodingTemplate().computeTemplateKeyWithoutContextChecking(callback);
-        if (templatePrefix != null) {
-          try {
-            ZenCodingTemplate.expand(templatePrefix, callback, generator, Collections.emptyList(),
-                                     expandPrimitiveAbbreviations, 0);
-            TemplateImpl template = callback.getGeneratedTemplate();
-            String templateText = template != null ? template.getTemplateText() : null;
-            if (!StringUtil.isEmpty(templateText)) {
-              return template.isToReformat() ? reformatTemplateText(file, templateText) : templateText;
-            }
+    PsiDocumentManager.getInstance(file.getProject()).commitDocument(editor.getDocument());
+    CollectCustomTemplateCallback callback = new CollectCustomTemplateCallback(editor, file);
+    PsiElement context = callback.getContext();
+    ZenCodingGenerator generator = ZenCodingTemplate.findApplicableDefaultGenerator(context, false);
+    if (generator != null && generator instanceof XmlZenCodingGenerator) {
+      final String templatePrefix = new ZenCodingTemplate().computeTemplateKeyWithoutContextChecking(callback);
+      if (templatePrefix != null) {
+        try {
+          ZenCodingTemplate.expand(templatePrefix, callback, generator, Collections.emptyList(),
+                                   expandPrimitiveAbbreviations, 0);
+          TemplateImpl template = callback.getGeneratedTemplate();
+          String templateText = template != null ? template.getTemplateText() : null;
+          if (!StringUtil.isEmpty(templateText)) {
+            return template.isToReformat() ? reformatTemplateText(file, templateText) : templateText;
           }
-          catch (EmmetException e) {
-            return e.getMessage();
-          }
-          
         }
+        catch (EmmetException e) {
+          return e.getMessage();
+        }
+
       }
     }
     return null;
