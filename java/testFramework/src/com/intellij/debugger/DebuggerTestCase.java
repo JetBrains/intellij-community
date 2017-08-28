@@ -81,7 +81,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
   @Override
   protected void initApplication() throws Exception {
     super.initApplication();
-    JavaTestUtil.setupTestJDK();
+    JavaTestUtil.setupTestJDK(getTestRootDisposable());
     DebuggerSettings.getInstance().DEBUGGER_TRANSPORT = DebuggerSettings.SOCKET_TRANSPORT;
     DebuggerSettings.getInstance().SKIP_CONSTRUCTORS = false;
     DebuggerSettings.getInstance().SKIP_GETTERS      = false;

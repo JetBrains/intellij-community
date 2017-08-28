@@ -2,11 +2,13 @@ package com.jetbrains.env;
 
 import com.google.common.collect.Lists;
 import com.intellij.execution.ExecutionException;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -347,6 +349,12 @@ public abstract class PyEnvTestCase {
     myLogger = null;
   }
 
+  private Disposable myDisposable = Disposer.newDisposable();
+
+  public Disposable getTestRootDisposable() {
+    return myDisposable;
+  }
+
   /**
    * Always call parrent when overwrite
    */
@@ -354,6 +362,7 @@ public abstract class PyEnvTestCase {
   public void tearDown() {
     // We can stop message capturing even if it was not started as cleanup process.
     stopMessageCapture();
+    Disposer.dispose(myDisposable);
   }
 
   /**

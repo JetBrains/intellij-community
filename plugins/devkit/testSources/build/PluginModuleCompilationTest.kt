@@ -41,34 +41,22 @@ import java.util.*
  * @author nik
  */
 class PluginModuleCompilationTest : BaseCompilerTestCase() {
-  private var pluginSdk: Sdk? = null
 
   override fun setUpJdk() {
     super.setUpJdk()
     runWriteAction {
       val table = ProjectJdkTable.getInstance()
-      pluginSdk = table.createSdk("IDEA plugin SDK", SdkType.findInstance(IdeaJdk::class.java))
-      val modificator = pluginSdk!!.sdkModificator
+      var pluginSdk: Sdk = table.createSdk("IDEA plugin SDK", SdkType.findInstance(IdeaJdk::class.java))
+      val modificator = pluginSdk.sdkModificator
       modificator.sdkAdditionalData = Sandbox(getSandboxPath(), testProjectJdk, pluginSdk)
       val rootPath = FileUtil.toSystemIndependentName(PathManager.getJarPathForClass(FileUtilRt::class.java)!!)
       modificator.addRoot(LocalFileSystem.getInstance().refreshAndFindFileByPath(rootPath)!!, OrderRootType.CLASSES)
       modificator.commitChanges()
-      table.addJdk(pluginSdk!!)
+      table.addJdk(pluginSdk, testRootDisposable)
     }
   }
 
   private fun getSandboxPath() = "$projectBasePath/sandbox"
-
-  override fun tearDown() {
-    try {
-      if (pluginSdk != null) {
-        runWriteAction { ProjectJdkTable.getInstance().removeJdk(pluginSdk!!) }
-      }
-    }
-    finally {
-      super.tearDown()
-    }
-  }
 
   fun testMakeSimpleModule() {
     val module = setupSimplePluginProject()

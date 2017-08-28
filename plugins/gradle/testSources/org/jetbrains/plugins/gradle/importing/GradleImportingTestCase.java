@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.gradle.importing;
 
-import com.intellij.compiler.server.BuildManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
@@ -36,7 +35,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.io.PathKt;
 import org.gradle.StartParameter;
 import org.gradle.util.GradleVersion;
 import org.gradle.wrapper.GradleWrapperMain;
@@ -103,7 +101,7 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
         VirtualFile jdkHomeDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(myJdkHome));
         Sdk jdk = SdkConfigurationUtil.setupSdk(new Sdk[0], jdkHomeDir, JavaSdk.getInstance(), true, null, GRADLE_JDK_NAME);
         assertNotNull("Cannot create JDK for " + myJdkHome, jdk);
-        ProjectJdkTable.getInstance().addJdk(jdk);
+        ProjectJdkTable.getInstance().addJdk(jdk, getTestRootDisposable());
       }
     }.execute();
     myProjectSettings = new GradleProjectSettings();
@@ -120,15 +118,6 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
     }
 
     try {
-      new WriteAction() {
-        @Override
-        protected void run(@NotNull Result result) {
-          Sdk old = ProjectJdkTable.getInstance().findJdk(GRADLE_JDK_NAME);
-          if (old != null) {
-            SdkConfigurationUtil.removeSdk(old);
-          }
-        }
-      }.execute();
       Messages.setTestDialog(TestDialog.DEFAULT);
       deleteBuildSystemDirectory();
     }

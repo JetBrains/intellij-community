@@ -182,9 +182,6 @@ public class RootsChangedTest extends ModuleTestCase {
       sdkModificator.addRoot(getVirtualFile(tempDirectory), OrderRootType.CLASSES);
       sdkModificator.commitChanges();
       assertEventsCount(1);
-
-      ProjectJdkTable.getInstance().removeJdk(jdk);
-      assertEventsCount(1);
     });
   }
 

@@ -48,15 +48,7 @@ public abstract class SdkSetupNotificationTestBase extends JavaCodeInsightFixtur
   @Override
   protected void tearDown() throws Exception {
     FileEditorManagerEx.getInstanceEx(getProject()).closeAllFiles();
-    final Sdk[] jdks = ReadAction.compute(() -> ProjectJdkTable.getInstance().getAllJdks());
-    try {
-      for (Sdk jdk : jdks) {
-        WriteAction.run(() -> ProjectJdkTable.getInstance().removeJdk(jdk));
-      }
-    }
-    finally {
-      super.tearDown();
-    }
+    super.tearDown();
   }
 
   protected EditorNotificationPanel configureBySdkAndText(@Nullable Sdk sdk,
@@ -81,7 +73,7 @@ public abstract class SdkSetupNotificationTestBase extends JavaCodeInsightFixtur
     if (sdk != null) {
       final Sdk foundJdk = ReadAction.compute(() -> ProjectJdkTable.getInstance().findJdk(sdk.getName()));
       if (foundJdk == null) {
-        WriteAction.run(() -> ProjectJdkTable.getInstance().addJdk(sdk));
+        WriteAction.run(() -> ProjectJdkTable.getInstance().addJdk(sdk, getTestRootDisposable()));
       }
     }
     WriteAction.run(() -> ProjectRootManager.getInstance(getProject()).setProjectSdk(sdk));

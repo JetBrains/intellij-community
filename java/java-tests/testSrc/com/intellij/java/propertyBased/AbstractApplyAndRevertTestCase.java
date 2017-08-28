@@ -16,11 +16,7 @@
 package com.intellij.java.propertyBased;
 
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.history.Label;
-import com.intellij.history.LocalHistory;
-import com.intellij.history.LocalHistoryException;
 import com.intellij.ide.impl.ProjectUtil;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathMacros;
@@ -29,12 +25,6 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.diagnostic.DefaultLogger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -44,23 +34,20 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.testFramework.*;
-import com.intellij.util.ThrowableRunnable;
+import com.intellij.testFramework.CompilerTester;
+import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.TestDataProvider;
+import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import jetCheck.Generator;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public abstract class AbstractApplyAndRevertTestCase extends PlatformTestCase {
@@ -96,7 +83,7 @@ public abstract class AbstractApplyAndRevertTestCase extends PlatformTestCase {
     super.setUp();
     PathMacros.getInstance().setMacro("MAVEN_REPOSITORY", getDefaultMavenRepositoryPath());
     WriteAction.run(() -> {
-      ProjectJdkTable.getInstance().addJdk(JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk());
+      ProjectJdkTable.getInstance().addJdk(JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk(), getTestRootDisposable());
       Application application = ApplicationManager.getApplication();
       ((ApplicationEx)application).doNotSave(false);
       application.saveAll();

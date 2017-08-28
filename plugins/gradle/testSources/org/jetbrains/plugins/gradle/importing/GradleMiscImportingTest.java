@@ -130,25 +130,20 @@ public class GradleMiscImportingTest extends GradleImportingTestCase {
   @TargetVersions("3.4+")
   public void testJdkName() throws Exception {
     Sdk myJdk = createJdk("MyJDK");
-    edt(() -> ApplicationManager.getApplication().runWriteAction(() -> ProjectJdkTable.getInstance().addJdk(myJdk)));
-    try {
-      importProject(
-        "apply plugin: 'java'\n" +
-        "apply plugin: 'idea'\n" +
-        "idea {\n" +
-        "  module {\n" +
-        "    jdkName = 'MyJDK'\n" +
-        "  }\n" +
-        "}\n"
-      );
+    edt(() -> ApplicationManager.getApplication().runWriteAction(() -> ProjectJdkTable.getInstance().addJdk(myJdk, getTestRootDisposable())));
+    importProject(
+      "apply plugin: 'java'\n" +
+      "apply plugin: 'idea'\n" +
+      "idea {\n" +
+      "  module {\n" +
+      "    jdkName = 'MyJDK'\n" +
+      "  }\n" +
+      "}\n"
+    );
 
-      assertModules("project", "project_main", "project_test");
-      assertTrue(getSdkForModule("project_main") == myJdk);
-      assertTrue(getSdkForModule("project_test") == myJdk);
-
-    } finally {
-      edt(() -> ApplicationManager.getApplication().runWriteAction(() -> ProjectJdkTable.getInstance().removeJdk(myJdk)));
-    }
+    assertModules("project", "project_main", "project_test");
+    assertTrue(getSdkForModule("project_main") == myJdk);
+    assertTrue(getSdkForModule("project_test") == myJdk);
   }
 
   @Test

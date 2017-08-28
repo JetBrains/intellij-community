@@ -16,6 +16,7 @@
 package com.intellij.openapi.projectRoots;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.Comparing;
@@ -70,7 +71,12 @@ public abstract class ProjectJdkTable {
   @TestOnly
   public void addJdk(@NotNull Sdk jdk, @NotNull Disposable parentDisposable) {
     addJdk(jdk);
-    Disposer.register(parentDisposable, () -> WriteAction.run(() -> removeJdk(jdk)));
+    Disposer.register(parentDisposable, () -> new WriteAction() {
+      @Override
+      protected void run(@NotNull Result result) {
+        removeJdk(jdk);
+      }
+    }.execute());
   }
 
   public abstract void removeJdk(@NotNull Sdk jdk);

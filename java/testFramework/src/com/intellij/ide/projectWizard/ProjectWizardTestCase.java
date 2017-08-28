@@ -46,9 +46,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.function.Supplier;
 
 /**
@@ -57,7 +55,6 @@ import java.util.function.Supplier;
  */
 public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> extends PlatformTestCase {
   protected static final String DEFAULT_SDK = "default";
-  protected final List<Sdk> mySdks = new ArrayList<>();
   protected T myWizard;
   @Nullable
   private Project myCreatedProject;
@@ -166,9 +163,7 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
   }
 
   protected void addSdk(final Sdk sdk) {
-    ApplicationManager.getApplication().runWriteAction(() -> ProjectJdkTable.getInstance().addJdk(sdk));
-
-    mySdks.add(sdk);
+    ApplicationManager.getApplication().runWriteAction(() -> ProjectJdkTable.getInstance().addJdk(sdk, getTestRootDisposable()));
   }
 
   @Override
@@ -185,9 +180,6 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
       }
       ApplicationManager.getApplication().runWriteAction(() -> {
         ProjectRootManager.getInstance(myProjectManager.getDefaultProject()).setProjectSdk(myOldDefaultProjectSdk);
-        for (Sdk sdk : mySdks) {
-          ProjectJdkTable.getInstance().removeJdk(sdk);
-        }
       });
       SelectTemplateSettings.getInstance().setLastTemplate(null, null);
     }
@@ -237,8 +229,7 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
 
   protected Sdk createSdk(String name, SdkTypeId sdkType) {
     final Sdk sdk = ProjectJdkTable.getInstance().createSdk(name, sdkType);
-    ApplicationManager.getApplication().runWriteAction(() -> ProjectJdkTable.getInstance().addJdk(sdk));
-    mySdks.add(sdk);
+    ApplicationManager.getApplication().runWriteAction(() -> ProjectJdkTable.getInstance().addJdk(sdk, getTestRootDisposable()));
     return sdk;
   }
 }
