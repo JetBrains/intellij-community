@@ -16,6 +16,13 @@
 
 package com.intellij.psi.codeStyle;
 
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationDisplayType;
+import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationType;
+import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.components.MainConfigurationStateSplitter;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
@@ -47,6 +54,9 @@ public class ProjectCodeStyleSettingsManager extends CodeStyleSettingsManager {
   private final static Object LEGACY_SETTINGS_IMPORT_LOCK = new Object();
   private final Map<String,CodeStyleSettings> mySettingsMap = ContainerUtil.newHashMap();
 
+  private final static NotificationGroup NOTIFICATION_GROUP =
+    new NotificationGroup("Code style settings migration", NotificationDisplayType.STICKY_BALLOON, true);
+
   @SuppressWarnings("unused")
   public ProjectCodeStyleSettingsManager(Project project) {
     this();
@@ -63,6 +73,11 @@ public class ProjectCodeStyleSettingsManager extends CodeStyleSettingsManager {
           LegacyCodeStyleSettingsManager legacySettingsManager = ServiceManager.getService(project, LegacyCodeStyleSettingsManager.class);
           if (legacySettingsManager != null && legacySettingsManager.getState() != null) {
             loadState(legacySettingsManager.getState());
+            if (!project.isDefault() &&
+                !ApplicationManager.getApplication().isUnitTestMode() &&
+                !ApplicationManager.getApplication().isHeadlessEnvironment()) {
+              saveProjectAndNotify(project);
+            }
             LOG.info("Imported old project code style settings.");
           }
           else {
@@ -72,6 +87,14 @@ public class ProjectCodeStyleSettingsManager extends CodeStyleSettingsManager {
         }
       }
     }
+  }
+
+  private static void saveProjectAndNotify(@NotNull Project project) {
+    TransactionGuard.submitTransaction(project, () -> {
+      project.save();
+      Notification notification = new CodeStyleMigrationNotification(project.getName());
+      notification.notify(project);
+    });
   }
 
   @Override
@@ -139,6 +162,15 @@ public class ProjectCodeStyleSettingsManager extends CodeStyleSettingsManager {
       }
     }
     return e;
+  }
+
+  private static class CodeStyleMigrationNotification extends Notification {
+    public CodeStyleMigrationNotification(@NotNull String projectName) {
+      super(NOTIFICATION_GROUP.getDisplayId(),
+            ApplicationBundle.message("project.code.style.migration.title"),
+            ApplicationBundle.message("project.code.style.migration.message", projectName),
+            NotificationType.INFORMATION);
+    }
   }
 
   @Override
