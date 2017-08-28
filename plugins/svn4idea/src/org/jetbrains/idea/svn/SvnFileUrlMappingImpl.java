@@ -42,7 +42,6 @@ import static com.intellij.util.containers.ContainerUtil.find;
 import static com.intellij.util.containers.ContainerUtil.newArrayList;
 import static org.jetbrains.idea.svn.SvnFormatSelector.findRootAndGetFormat;
 import static org.jetbrains.idea.svn.SvnUtil.*;
-import static org.tmatesoft.svn.core.internal.util.SVNPathUtil.isAncestor;
 
 @State(name = "SvnFileUrlMappingImpl", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentStateComponent<SvnMappingSavedPart> {
@@ -141,7 +140,7 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
   public RootUrlInfo getWcRootForUrl(@NotNull SVNURL url) {
     synchronized (myMonitor) {
       RootUrlInfo result = null;
-      String rootUrl = find(myMoreRealMapping.getUrls(), parentRootUrl -> isAncestor(parentRootUrl, url.toString()));
+      SVNURL rootUrl = find(myMoreRealMapping.getUrls(), parentRootUrl -> isAncestor(parentRootUrl, url));
 
       if (rootUrl != null) {
         result = myMoreRealMapping.byUrl(rootUrl);

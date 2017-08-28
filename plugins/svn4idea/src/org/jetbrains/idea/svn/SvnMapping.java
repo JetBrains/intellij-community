@@ -19,6 +19,7 @@ import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.tmatesoft.svn.core.SVNURL;
 
 import java.util.*;
 
@@ -33,7 +34,7 @@ public class SvnMapping {
 
   @NotNull private final List<VirtualFile> myLonelyRoots = newArrayList();
   @NotNull private final TreeMap<String, RootUrlInfo> myFile2UrlMap = new TreeMap<>(FILE_PATHS_COMPARATOR);
-  @NotNull private final Map<String, RootUrlInfo> myUrl2FileMap = newHashMap();
+  @NotNull private final Map<SVNURL, RootUrlInfo> myUrl2FileMap = newHashMap();
   // no additional info. for caching only (convert roots)
   @NotNull private final ClearableLazyValue<List<VirtualFile>> myPreCalculatedUnderVcsRoots = new ClearableLazyValue<List<VirtualFile>>() {
     @NotNull
@@ -60,7 +61,7 @@ public class SvnMapping {
 
   public void add(@NotNull RootUrlInfo rootInfo) {
     myFile2UrlMap.put(rootInfo.getPath(), rootInfo);
-    myUrl2FileMap.put(rootInfo.getUrl().toString(), rootInfo);
+    myUrl2FileMap.put(rootInfo.getUrl(), rootInfo);
   }
 
   @NotNull
@@ -80,7 +81,7 @@ public class SvnMapping {
   }
 
   @NotNull
-  public Collection<String> getUrls() {
+  public Collection<SVNURL> getUrls() {
     return myUrl2FileMap.keySet();
   }
 
@@ -90,7 +91,7 @@ public class SvnMapping {
   }
 
   @Nullable
-  public RootUrlInfo byUrl(@NotNull String url) {
+  public RootUrlInfo byUrl(@NotNull SVNURL url) {
     return myUrl2FileMap.get(url);
   }
 
