@@ -71,6 +71,8 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
     instanceCall(CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM, "map").parameterCount(1);
   private static final CallMatcher STREAM_ANY_MATCH =
     instanceCall(CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM, "anyMatch").parameterCount(1);
+  private static final CallMatcher STREAM_RANGE =
+    staticCall(CommonClassNames.JAVA_UTIL_STREAM_INT_STREAM, "range").parameterCount(2);
   private static final CallMatcher STREAM_NONE_MATCH =
     instanceCall(CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM, "noneMatch").parameterCount(1);
   private static final CallMatcher STREAM_ALL_MATCH =
@@ -84,6 +86,22 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
   private static final CallMatcher STREAM_OF =
     staticCall(CommonClassNames.JAVA_UTIL_STREAM_STREAM, "of").parameterTypes("T");
 
+  private static final CallMatcher STREAM_INT_MAP_TO_OBJ =
+    instanceCall(CommonClassNames.JAVA_UTIL_STREAM_INT_STREAM, "mapToObj").parameterTypes("java.util.function.IntFunction");
+  private static final CallMatcher STREAM_INT_MAP =
+    instanceCall(CommonClassNames.JAVA_UTIL_STREAM_INT_STREAM, "map").parameterTypes("java.util.function.IntUnaryOperator");
+  private static final CallMatcher STREAM_INT_TO_DOUBLE_MAP =
+    instanceCall(CommonClassNames.JAVA_UTIL_STREAM_INT_STREAM, "mapToDouble").parameterTypes("java.util.function.IntToDoubleFunction");
+  private static final CallMatcher STREAM_INT_TO_LONG_MAP =
+    instanceCall(CommonClassNames.JAVA_UTIL_STREAM_INT_STREAM, "mapToLong").parameterTypes("java.util.function.IntToLongFunction");
+
+  private static final CallMatcher STREAM_INT_MAP_TO_ALL = anyOf(
+    STREAM_INT_MAP,
+    STREAM_INT_MAP_TO_OBJ,
+    STREAM_INT_TO_LONG_MAP,
+    STREAM_INT_TO_DOUBLE_MAP
+  );
+
   private static final CallMatcher STREAM_MATCH = anyOf(STREAM_ANY_MATCH, STREAM_NONE_MATCH, STREAM_ALL_MATCH);
 
   private static final CallMapper<CallChainSimplification> CALL_TO_FIX_MAPPER = new CallMapper<>(
@@ -95,7 +113,8 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
     ReplaceForEachMethodFix.handler(),
     RemoveBooleanIdentityFix.handler(),
     ReplaceWithPeekFix.handler(),
-    SimpleStreamOfFix.handler()
+    SimpleStreamOfFix.handler(),
+    RangeToArrayStreamFix.handler()
   ).registerAll(SimplifyMatchNegationFix.handlers());
 
   private static final Logger LOG = Logger.getInstance(SimplifyStreamApiCallChainsInspection.class);
@@ -1429,6 +1448,59 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
         PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(spliterator.getMethodExpression().getQualifierExpression());
         if (qualifier == null || (qualifier instanceof PsiThisExpression)) return null;
         return new ReplaceStreamSupportWithCollectionStreamFix(qualifier, ExpressionUtils.isLiteral(parallel, Boolean.TRUE));
+      });
+    }
+  }
+
+  static class RangeToArrayStreamFix implements CallChainSimplification {
+
+    private final @NotNull String myReplacement;
+
+    RangeToArrayStreamFix(@NotNull String replacement) {this.myReplacement = replacement;}
+
+    @Override
+    public String getName() {
+      return "Replace with Arrays.stream()";
+    }
+
+    @Override
+    public String getMessage() {
+      return "Can be replaced with Arrays.stream()";
+    }
+
+    @Override
+    public PsiElement simplify(PsiMethodCallExpression call) {
+      PsiMethodCallExpression mapCall = ExpressionUtils.getCallForQualifier(call);
+      if(mapCall == null) return null;
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(call.getProject());
+      PsiExpression replacement = factory.createExpressionFromText(myReplacement, mapCall);
+      return mapCall.replace(replacement);
+    }
+
+    @NotNull
+    static CallHandler<CallChainSimplification> handler() {
+      return CallHandler.of(STREAM_RANGE, call -> {
+        PsiExpression[] args = call.getArgumentList().getExpressions();
+        PsiMethodCallExpression maybeMap = ExpressionUtils.getCallForQualifier(call);
+        if (maybeMap == null) return null;
+        if (!STREAM_INT_MAP_TO_ALL.test(maybeMap)) return null;
+        PsiExpression arg = maybeMap.getArgumentList().getExpressions()[0];
+        PsiLambdaExpression lambda = tryCast(arg, PsiLambdaExpression.class);
+        if (lambda == null) return null;
+        PsiParameter[] parameters = lambda.getParameterList().getParameters();
+        if (parameters.length != 1) return null;
+        PsiArrayAccessExpression arrayAccess = tryCast(lambda.getBody(), PsiArrayAccessExpression.class);
+        if (arrayAccess == null) return null;
+        PsiExpression index = arrayAccess.getIndexExpression();
+
+        if (!ExpressionUtils.isReferenceTo(index, parameters[0])) return null;
+
+        PsiExpression arrayExpr = arrayAccess.getArrayExpression();
+
+        PsiExpression leftBound = args[0];
+        PsiExpression rightBound = args[1];
+        return new RangeToArrayStreamFix(
+          CommonClassNames.JAVA_UTIL_ARRAYS + ".stream(" + arrayExpr.getText() + "," + leftBound.getText() + "," + rightBound.getText() + ")");
       });
     }
   }
