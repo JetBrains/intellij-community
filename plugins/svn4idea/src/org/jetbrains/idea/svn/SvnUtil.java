@@ -684,16 +684,6 @@ public class SvnUtil {
     return result;
   }
 
-  public static SVNURL appendMultiParts(@NotNull final SVNURL base, @NotNull final String subPath) throws SVNException {
-    if (StringUtil.isEmpty(subPath)) return base;
-    final List<String> parts = StringUtil.split(subPath.replace('\\', '/'), "/", true);
-    SVNURL result = base;
-    for (String part : parts) {
-      result = result.appendPath(part, false);
-    }
-    return result;
-  }
-
   @NotNull
   public static SVNURL removePathTail(@NotNull SVNURL url) throws SvnBindException {
     return createUrl(SVNPathUtil.removeTail(url.toDecodedString()));
