@@ -1,6 +1,7 @@
 /android
 /config
 /system
+/onestudio
 .idea/saveactions_settings.xml
 .idea/shelf
 .idea/workspace.xml
