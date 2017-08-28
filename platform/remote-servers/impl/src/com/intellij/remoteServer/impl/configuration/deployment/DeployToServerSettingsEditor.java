@@ -233,7 +233,7 @@ public class DeployToServerSettingsEditor<S extends ServerConfiguration, D exten
         ui.setIcon(getServerType().getIcon());
 
         boolean failed = myTestConnectionStateA.get() == TestConnectionState.FAILED;
-        ui.append(CloudBundle.getText("remote.server.combo.auto.detected.server"),
+        ui.append(CloudBundle.getText("remote.server.combo.auto.detected.server", getServerType().getPresentableName()),
                   failed ? SimpleTextAttributes.ERROR_ATTRIBUTES : SimpleTextAttributes.REGULAR_ITALIC_ATTRIBUTES);
       }
 
@@ -249,8 +249,7 @@ public class DeployToServerSettingsEditor<S extends ServerConfiguration, D exten
       @Override
       public void onItemChosen() {
         if (myServerInstance == null) {
-          myServerInstance = RemoteServersManager.getInstance().createServer(
-            getServerType(), CloudBundle.getText("remote.server.combo.auto.detected.server"));
+          myServerInstance = RemoteServersManager.getInstance().createServer(getServerType());
           RemoteServerConnectionTester tester = new RemoteServerConnectionTester(myServerInstance);
           setTestConnectionState(TestConnectionState.IN_PROGRESS);
           myLastStartedTestConnectionMillis = System.currentTimeMillis();
