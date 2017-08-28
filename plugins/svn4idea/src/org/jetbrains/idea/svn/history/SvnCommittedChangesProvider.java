@@ -113,12 +113,6 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
   }
 
   @Override
-  @Nullable
-  public RepositoryLocation getLocationFor(@NotNull FilePath root, @Nullable String repositoryPath) {
-    return repositoryPath == null ? getLocationFor(root) : new SvnRepositoryLocation(repositoryPath);
-  }
-
-  @Override
   @NotNull
   public VcsCommittedListsZipper getZipper() {
     return myZipper;

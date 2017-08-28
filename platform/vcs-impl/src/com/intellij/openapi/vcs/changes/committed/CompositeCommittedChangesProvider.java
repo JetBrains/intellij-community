@@ -81,10 +81,6 @@ public class CompositeCommittedChangesProvider implements CommittedChangesProvid
     return null;
   }
 
-  public RepositoryLocation getLocationFor(final FilePath root, final String repositoryPath) {
-    return getLocationFor(root);
-  }
-
   @Nullable
   public VcsCommittedListsZipper getZipper() {
     throw new UnsupportedOperationException();
