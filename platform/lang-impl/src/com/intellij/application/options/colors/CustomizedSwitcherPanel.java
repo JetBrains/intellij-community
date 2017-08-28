@@ -24,100 +24,29 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
-
-class CustomizedSwitcherPanel extends JPanel implements OptionsPanelImpl.ColorDescriptionPanel {
-  private ColorSettingsPage myPage;
-
-  private PreviewPanel myPreviewPanel;
-  private ColorAndFontDescriptionPanel myColorAndFontPanel;
-  private RainbowDescriptionPanel myRainbowPanel;
-
-  private OptionsPanelImpl.ColorDescriptionPanel myActive;
+class CustomizedSwitcherPanel extends CompositeColorDescriptionPanel {
+  private final ColorSettingsPage myPage;
+  private final PreviewPanel myPreviewPanel;
 
   public CustomizedSwitcherPanel(@Nullable PreviewPanel previewPanel,
                                  @Nullable ColorSettingsPage page) {
-    super();
     myPage = page;
     myPreviewPanel = previewPanel;
 
-    myRainbowPanel = new RainbowDescriptionPanel();
-    myColorAndFontPanel = new ColorAndFontDescriptionPanel();
-
-    Dimension sizeR = myRainbowPanel.getPreferredSize();
-    Dimension sizeC = myColorAndFontPanel.getPreferredSize();
-    Dimension preferredSize = new Dimension();
-    preferredSize.setSize(Math.max(sizeR.getWidth(), sizeC.getWidth()),
-                          Math.max(sizeR.getHeight(), sizeC.getHeight()));
-    setPreferredSize(preferredSize);
-  }
-
-  @NotNull
-  @Override
-  public JComponent getPanel() {
-    return this;
-  }
-
-  @Override
-  public void resetDefault() {
-    if (myActive != null) {
-      final PaintLocker locker = new PaintLocker(this);
-      try {
-        setPreferredSize(getSize());// froze [this] size
-        remove(myActive.getPanel());
-        myActive = null;
-      }
-      finally {
-        locker.release();
-      }
-    }
+    addDescriptionPanel(new ColorAndFontDescriptionPanel(), it -> it instanceof ColorAndFontDescription);
+    addDescriptionPanel(new RainbowDescriptionPanel(), it -> it instanceof RainbowAttributeDescriptor);
   }
 
   @Override
   public void reset(@NotNull EditorSchemeAttributeDescriptor descriptor) {
-    JComponent oldPanel = myActive == null ? null : myActive.getPanel();
-    myActive = getPanelForDescriptor(descriptor);
-    JComponent newPanel = myActive == null ? null : myActive.getPanel();
-
-    if (oldPanel != newPanel) {
-      final PaintLocker locker = new PaintLocker(this);
-      try {
-        if (oldPanel != null) {
-          remove(oldPanel);
-        }
-        if (newPanel != null) {
-          setPreferredSize(null);// make [this] resizable
-          add(newPanel);
-        }
-      }
-      finally {
-        locker.release();
-      }
-    }
-    if (myActive != null) {
-      myActive.reset(descriptor);
-    }
+    super.reset(descriptor);
     updatePreviewPanel(descriptor);
   }
 
-  protected OptionsPanelImpl.ColorDescriptionPanel getPanelForDescriptor(@NotNull EditorSchemeAttributeDescriptor descriptor) {
-    if (descriptor instanceof RainbowAttributeDescriptor) {
-      return myRainbowPanel;
-    }
-    else if (descriptor instanceof ColorAndFontDescription) {
-      return myColorAndFontPanel;
-    }
-    return null;
-  }
-
-
   @Override
   public void apply(@NotNull EditorSchemeAttributeDescriptor descriptor, EditorColorsScheme scheme) {
-    if (myActive != null) {
-      myActive.apply(descriptor, scheme);
-      updatePreviewPanel(descriptor);
-    }
+    super.apply(descriptor, scheme);
+    updatePreviewPanel(descriptor);
   }
 
   protected void updatePreviewPanel(@NotNull EditorSchemeAttributeDescriptor descriptor) {
@@ -127,28 +56,5 @@ class CustomizedSwitcherPanel extends JPanel implements OptionsPanelImpl.ColorDe
       simpleEditorPreview.setupRainbow(descriptor.getScheme(), (RainbowColorSettingsPage)myPage);
       simpleEditorPreview.updateView();
     }));
-  }
-
-  @Override
-  public void addListener(@NotNull Listener listener) {
-    myRainbowPanel.addListener(listener);
-    myColorAndFontPanel.addListener(listener);
-  }
-
-  private static class PaintLocker {
-    private Container myPaintHolder;
-    private boolean myPaintState;
-
-    public PaintLocker(@NotNull JComponent component) {
-      myPaintHolder = component.getParent();
-      myPaintState = myPaintHolder.getIgnoreRepaint();
-      myPaintHolder.setIgnoreRepaint(true);
-    }
-
-    public void release() {
-      myPaintHolder.validate();
-      myPaintHolder.setIgnoreRepaint(myPaintState);
-      myPaintHolder.repaint();
-    }
   }
 }
