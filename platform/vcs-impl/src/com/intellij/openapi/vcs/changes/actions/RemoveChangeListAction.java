@@ -41,8 +41,8 @@ public class RemoveChangeListAction extends AnAction implements DumbAware {
     ChangeList[] changeListsArray = e.getData(VcsDataKeys.CHANGE_LISTS);
     List<ChangeList> changeLists = changeListsArray != null ? Arrays.asList(changeListsArray) : Collections.emptyList();
 
-    boolean enabled = canRemoveChangeLists(e.getProject(), changeLists);
     boolean hasChanges = !ArrayUtil.isEmpty(e.getData(VcsDataKeys.CHANGES));
+    boolean enabled = canRemoveChangeLists(e.getProject(), changeLists);
 
     Presentation presentation = e.getPresentation();
     presentation.setEnabled(enabled);
@@ -50,16 +50,14 @@ public class RemoveChangeListAction extends AnAction implements DumbAware {
       presentation.setVisible(enabled);
     }
 
-    presentation.setText(ActionsBundle.message("action.ChangesView.RemoveChangeList.text", changeLists.size()));
-
+    presentation.setText(ActionsBundle.message("action.ChangesView.RemoveChangeList.text.template", changeLists.size()));
     if (hasChanges) {
-      boolean containsActiveChangelist =
-        ContainerUtil.exists(changeLists, l -> l instanceof LocalChangeList && ((LocalChangeList)l).isDefault());
-      presentation.setDescription(ActionsBundle.message("action.ChangesView.RemoveChangeList.description",
-                                                        containsActiveChangelist ? "another changelist" : "active one"));
+      boolean containsActiveChangelist = ContainerUtil.exists(changeLists, l -> l instanceof LocalChangeList && ((LocalChangeList)l).isDefault());
+      presentation.setDescription(ActionsBundle.message("action.ChangesView.RemoveChangeList.description.template",
+                                                        changeLists.size(), containsActiveChangelist ? "another" : "default"));
     }
     else {
-      presentation.setDescription(presentation.getText());
+      presentation.setDescription(null);
     }
   }
 
