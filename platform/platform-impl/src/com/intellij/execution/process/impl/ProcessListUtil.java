@@ -173,6 +173,18 @@ public class ProcessListUtil {
                                                         full -> parseMacOutput(commandOnly, full)));
   }
 
+  //command = `/bin/ps -a -x -o pid,state,user,comm` on Remote
+  @Nullable
+  public static List<ProcessInfo> parseMacProcessInfos(String commandOnly, String full) {
+    List<ProcessInfo> ans = parseMacOutput(commandOnly, full);
+    return ans;
+  }
+
+  @Nullable
+  public static List<ProcessInfo> parseLinuxProcessInfos(String commandOnly, String full) {
+    return null;//parseLinuxOutput(commandOnly, full);
+  }
+
 
   @Nullable
   static List<ProcessInfo> parseMacOutput(String commandOnly, String full) {
