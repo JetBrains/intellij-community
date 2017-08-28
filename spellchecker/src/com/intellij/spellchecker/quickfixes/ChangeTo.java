@@ -34,20 +34,15 @@ import java.util.List;
 
 public class ChangeTo extends ShowSuggestions implements SpellCheckerQuickFix {
 
-  public static final String FIX_NAME = "ChangeTo";
+  public static final String FIX_NAME = SpellCheckerBundle.message("change.to");;
 
   public ChangeTo(String wordWithTypo) {
     super(wordWithTypo);
   }
 
   @NotNull
-  public String getName() {
-    return FIX_NAME;
-  }
-
-  @NotNull
   public String getFamilyName() {
-    return SpellCheckerBundle.message("change.to");
+    return FIX_NAME;
   }
 
   @NotNull

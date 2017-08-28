@@ -36,7 +36,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class RenameTo extends ShowSuggestions implements SpellCheckerQuickFix {
 
-  public static final String FIX_NAME = "RenameTo";
+  public static final String FIX_NAME =  SpellCheckerBundle.message("rename.to");
 
   public RenameTo(String wordWithTypo) {
     super(wordWithTypo);
@@ -44,11 +44,6 @@ public class RenameTo extends ShowSuggestions implements SpellCheckerQuickFix {
 
   @NotNull
   public String getFamilyName() {
-    return SpellCheckerBundle.message("rename.to");
-  }
-
-  @NotNull
-  public String getName() {
     return FIX_NAME;
   }
 
