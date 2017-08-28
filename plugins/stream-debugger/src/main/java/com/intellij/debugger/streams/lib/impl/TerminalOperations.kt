@@ -21,7 +21,7 @@ import com.intellij.debugger.streams.resolve.OptionalOrderResolver
 import com.intellij.debugger.streams.trace.CallTraceInterpreter
 import com.intellij.debugger.streams.trace.impl.handler.MatchHandler
 import com.intellij.debugger.streams.trace.impl.handler.OptionalTerminatorHandler
-import com.intellij.debugger.streams.trace.impl.handler.TerminatorHandler
+import com.intellij.debugger.streams.trace.impl.handler.ToCollectionHandler
 import com.intellij.debugger.streams.trace.impl.interpret.CollectIdentityTraceInterpreter
 import com.intellij.debugger.streams.trace.impl.interpret.OptionalTraceInterpreter
 
@@ -37,5 +37,5 @@ class OptionalResultOperation(name: String)
                           OptionalTraceInterpreter(), OptionalOrderResolver())
 
 class ToCollectionOperation(name: String)
-  : TerminalOperationBase(name, { call, _ -> TerminatorHandler(call.typeBefore) },
+  : TerminalOperationBase(name, { call, _ -> ToCollectionHandler(call.typeBefore) },
                           CollectIdentityTraceInterpreter(), IdentityResolver())
