@@ -74,7 +74,7 @@ public abstract class AbstractToolBeforeRunTaskProvider<T extends AbstractToolBe
     }
     String groupName = tool.getGroup();
     return ToolsBundle
-      .message("tools.before.run.description", StringUtil.isEmpty(groupName) ? tool.getName() : groupName + "/" + tool.getName());
+      .message("tools.before.run.description", StringUtil.isEmpty(groupName) ? tool.getName() : groupName + "/" + tool.getName()) + (!tool.isEnabled() ? " (disabled)" : "");
   }
 
   @Override

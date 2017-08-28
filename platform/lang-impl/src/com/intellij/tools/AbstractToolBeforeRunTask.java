@@ -78,6 +78,11 @@ public abstract class AbstractToolBeforeRunTask<ToolBeforeRunTask extends Abstra
   }
 
   public boolean execute(final DataContext context, final long executionId) {
+    T tool = findCorrespondingTool();
+    if (tool != null && !tool.isEnabled()) {
+      return true;
+    }
+    
     final Semaphore targetDone = new Semaphore();
     final Ref<Boolean> result = new Ref<>(false);
 
