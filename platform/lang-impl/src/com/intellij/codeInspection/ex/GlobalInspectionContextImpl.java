@@ -30,10 +30,7 @@ import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefManagerImpl;
 import com.intellij.codeInspection.reference.RefVisitor;
-import com.intellij.codeInspection.ui.DefaultInspectionToolPresentation;
-import com.intellij.codeInspection.ui.InspectionResultsView;
-import com.intellij.codeInspection.ui.InspectionToolPresentation;
-import com.intellij.codeInspection.ui.InspectionTreeState;
+import com.intellij.codeInspection.ui.*;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.concurrency.JobLauncherImpl;
 import com.intellij.concurrency.SensitiveProgressWrapper;
@@ -110,7 +107,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
 
   @NotNull
   private AnalysisUIOptions myUIOptions;
-  private InspectionTreeState myTreeState;
+  private ExpansionTreeState<InspectionTreeNode> myTreeState;
 
   public GlobalInspectionContextImpl(@NotNull Project project, @NotNull NotNullLazyValue<ContentManager> contentManager) {
     super(project);
@@ -123,7 +120,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     return myContentManager.getValue();
   }
 
-  public void setTreeState(InspectionTreeState treeState) {
+  public void setTreeState(ExpansionTreeState<InspectionTreeNode> treeState) {
     myTreeState = treeState;
   }
 
