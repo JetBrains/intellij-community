@@ -102,7 +102,7 @@ public class HtmlCompletionContributor extends CompletionContributor implements 
     final String namespace = tag.getNamespace();
     if (XmlUtil.XHTML_URI.equals(namespace) || XmlUtil.HTML_URI.equals(namespace)) {
 
-      if ("target".equals(name)) {
+      if ("target".equals(name) || "formtarget".equals(name)) {
         return TARGET;
       }
       else if ("enctype".equals(name)) {
