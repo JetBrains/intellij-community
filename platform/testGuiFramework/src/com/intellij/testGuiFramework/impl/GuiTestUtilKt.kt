@@ -113,19 +113,6 @@ object GuiTestUtilKt {
       if (!root.isLeaf()) root.children.forEach { printRecursive(it, indent + 2) }
     }
 
-//    fun getLeafs(): List<ImmutableTreeNode<Value>> {
-//
-//    }
-
-    fun deepFirstSearch(consumer: (ImmutableTreeNode<Value>) -> Unit) {
-      val stack = ArrayList<ImmutableTreeNode<Value>>()
-      assert(root != null)
-      stack.add(root!!)
-      while (stack.isNotEmpty()) {
-        val v = stack[stack.lastIndex]
-      }
-    }
-
   }
 
 
@@ -224,7 +211,7 @@ object GuiTestUtilKt {
     }, Timeout.timeout(timeoutInSeconds.toLong(), TimeUnit.SECONDS))
   }
 
-  fun <ComponentType : Component> findAllWithDFS(container: Container, clazz: Class<ComponentType>): List<ComponentType> {
+  fun <ComponentType : Component> findAllWithBFS(container: Container, clazz: Class<ComponentType>): List<ComponentType> {
     val result = LinkedList<ComponentType>()
     val queue: Queue<Component> = LinkedList()
 
@@ -262,8 +249,8 @@ object GuiTestUtilKt {
         }
       }
     })
-    if (result?.second != null) throw result!!.second!!
-    return result!!.first
+    if (result?.second != null) throw result.second!!
+    return result?.first
   }
 
 }

@@ -35,7 +35,7 @@ class CheckboxTreeDriver(robot: Robot) : ExtendedJTreeDriver(robot) {
     val rendererComponent = tree.cellRenderer.getTreeCellRendererComponent(tree, treePath.lastPathComponent, false, false, false,
                                                                            tree.getRowForPath(treePath),
                                                                            false)
-    return GuiTestUtilKt.findAllWithDFS(rendererComponent as Container, JCheckBox::class.java).firstOrNull()
+    return GuiTestUtilKt.findAllWithBFS(rendererComponent as Container, JCheckBox::class.java).firstOrNull()
   }
 
   fun clickCheckbox(tree: CheckboxTree, pathStrings: List<String>) {

@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="PyCharm Educational Edition" type="Application" factoryName="Application">
+  <configuration default="false" name="PyCharm Edu" type="Application" factoryName="Application">
     <log_file path="$PROJECT_DIR$/system/log/idea.log" checked="true" skipped="true" show_all="false" alias="idea.log" />
     <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea" />
     <option name="MAIN_CLASS_NAME" value="com.intellij.idea.Main" />

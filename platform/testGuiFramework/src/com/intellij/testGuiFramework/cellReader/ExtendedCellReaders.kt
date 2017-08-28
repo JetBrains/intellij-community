@@ -16,7 +16,7 @@
 package com.intellij.testGuiFramework.cellReader
 
 import com.intellij.testGuiFramework.framework.GuiTestUtil
-import com.intellij.testGuiFramework.impl.GuiTestUtilKt.findAllWithDFS
+import com.intellij.testGuiFramework.impl.GuiTestUtilKt.findAllWithBFS
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.components.JBList
 import org.fest.swing.cell.JComboBoxCellReader
@@ -109,12 +109,12 @@ private fun Component.findText(): String? {
     val container = this as Container
     val resultList = ArrayList<String>()
     resultList.addAll(
-      findAllWithDFS(container, JLabel::class.java)
+      findAllWithBFS(container, JLabel::class.java)
         .filter { !it.text.isNullOrEmpty() }
         .map { it.text }
     )
     resultList.addAll(
-      findAllWithDFS(container, SimpleColoredComponent::class.java)
+      findAllWithBFS(container, SimpleColoredComponent::class.java)
         .filter { !it.getText().isNullOrEmpty() }
         .map { it.getText()!! }
     )
