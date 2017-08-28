@@ -99,7 +99,6 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
   private volatile String myName;
   private volatile String myLocalName;
   private volatile XmlAttribute[] myAttributes;
-  private volatile XmlAttribute[] myInitialAttributes;
   private volatile TextRange[] myTextElements;
   private volatile Map<String, String> myAttributeValueMap;
   private volatile XmlTagValue myValue;
