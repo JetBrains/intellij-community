@@ -61,7 +61,8 @@ public class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentionActio
           !myOutTypeFilter.test(outType)) {
         return false;
       }
-      PsiType resultType = createReplacement(context, "((" + inType.getCanonicalText() + ")null)").getType();
+      PsiType resultType =
+        createReplacement(context, "((" + GenericsUtil.getVariableTypeByExpressionType(inType).getCanonicalText() + ")null)").getType();
       return resultType != null && outType.isAssignableFrom(resultType);
     }
 
