@@ -42,6 +42,13 @@ public abstract class VFileEvent {
     return myRequestor;
   }
 
+  /**
+   * Returns the file path (in system independent format) affected by this event.<br/><br/>
+   *
+   * Note that the path might be cached, thus can become out-of-date if requested later,
+   * asynchronously from the event dispatching procedure
+   * (e.g. {@code event.getPath()} can become not equal to {@code event.getFile().getPath()}).
+   */
   @NotNull
   public String getPath() {
     return myPath.getValue();
