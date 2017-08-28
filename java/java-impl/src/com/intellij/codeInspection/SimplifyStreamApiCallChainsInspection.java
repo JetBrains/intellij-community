@@ -29,6 +29,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.PsiDiamondTypeUtil;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.*;
@@ -86,6 +87,9 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
   private static final CallMatcher STREAM_OF =
     staticCall(CommonClassNames.JAVA_UTIL_STREAM_STREAM, "of").parameterTypes("T");
 
+  private static final CallMatcher N_COPIES =
+    staticCall(CommonClassNames.JAVA_UTIL_COLLECTIONS, "nCopies").parameterTypes("int", "T");
+
   private static final CallMatcher STREAM_INT_MAP_TO_OBJ =
     instanceCall(CommonClassNames.JAVA_UTIL_STREAM_INT_STREAM, "mapToObj").parameterTypes("java.util.function.IntFunction");
   private static final CallMatcher STREAM_INT_MAP =
@@ -114,7 +118,8 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
     RemoveBooleanIdentityFix.handler(),
     ReplaceWithPeekFix.handler(),
     SimpleStreamOfFix.handler(),
-    RangeToArrayStreamFix.handler()
+    RangeToArrayStreamFix.handler(),
+    NCopiesToGenerateStreamFix.handler()
   ).registerAll(SimplifyMatchNegationFix.handlers());
 
   private static final Logger LOG = Logger.getInstance(SimplifyStreamApiCallChainsInspection.class);
@@ -1501,6 +1506,62 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
         PsiExpression rightBound = args[1];
         return new RangeToArrayStreamFix(
           CommonClassNames.JAVA_UTIL_ARRAYS + ".stream(" + arrayExpr.getText() + "," + leftBound.getText() + "," + rightBound.getText() + ")");
+      });
+    }
+  }
+
+  static class NCopiesToGenerateStreamFix implements CallChainSimplification {
+
+    private final @NotNull String myReplacement;
+
+    NCopiesToGenerateStreamFix(@NotNull String replacement) {myReplacement = replacement;}
+
+    @Override
+    public String getName() {
+      return "Replace with Stream.generate()";
+    }
+
+    @Override
+    public String getMessage() {
+      return "Can be replaced with Stream.generate()";
+    }
+
+    @Override
+    public PsiElement simplify(PsiMethodCallExpression streamCall) {
+      PsiElement maybeMap = ExpressionUtils.getCallForQualifier(streamCall);
+      if(maybeMap == null) return null;
+      Project project = streamCall.getProject();
+      PsiExpression replacement = JavaPsiFacade.getElementFactory(project).createExpressionFromText(myReplacement, maybeMap);
+      PsiClassType classType = PsiType.getTypeByName(CommonClassNames.JAVA_UTIL_STREAM_STREAM, project, GlobalSearchScope.allScope(project));
+      PsiClass streamClass = classType.resolve();
+      if(streamClass == null) return null;
+      ImportUtils.addImportIfNeeded(streamClass, streamCall); // TODO Idea doesn't want to import j.u.s.Stream
+      return maybeMap.replace(replacement);
+    }
+
+    @NotNull
+    static CallHandler<CallChainSimplification> handler() {
+      return CallHandler.of(COLLECTION_STREAM, call -> {
+        PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
+        PsiMethodCallExpression maybeNCopies = tryCast(qualifier, PsiMethodCallExpression.class);
+        if(!N_COPIES.test(maybeNCopies)) return null;
+        PsiExpression[] nCopiesArgs = maybeNCopies.getArgumentList().getExpressions();
+        PsiExpression count = nCopiesArgs[0];
+        PsiExpression obj = nCopiesArgs[1];
+        if(!ExpressionUtils.isSimpleExpression(obj)) return null;
+
+        PsiMethodCallExpression maybeMap = ExpressionUtils.getCallForQualifier(call);
+        if(maybeMap == null) return null;
+        if(!BASE_STREAM_MAP.test(maybeMap)) return null;
+        PsiLambdaExpression lambda = tryCast(maybeMap.getArgumentList().getExpressions()[0], PsiLambdaExpression.class);
+        if(lambda == null) return null;
+        PsiParameter[] parameters = lambda.getParameterList().getParameters();
+        if(parameters.length != 1) return null;
+        PsiParameter lambdaVar = parameters[0];
+        PsiElement body = lambda.getBody();
+        if(body == null) return null;
+        if (VariableAccessUtils.variableIsUsed(lambdaVar, body)) return null;
+        return new NCopiesToGenerateStreamFix(CommonClassNames.JAVA_UTIL_STREAM_STREAM + ".generate(()->" + body.getText() + ").limit(" + count.getText() + ")");
       });
     }
   }
