@@ -57,8 +57,8 @@ import java.util.concurrent.Callable;
 /**
  * An base class for actions generating service classes (implementation and optionally interface) and registering new service in plugin.xml.
  */
-public abstract class NewServiceActionBase extends CreateInDirectoryActionBase implements WriteActionAware {
-  public NewServiceActionBase(String text, String description) {
+abstract class NewServiceActionBase extends CreateInDirectoryActionBase implements WriteActionAware {
+  NewServiceActionBase(String text, String description) {
     super(text, description, null);
   }
 
