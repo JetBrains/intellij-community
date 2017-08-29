@@ -1,11 +1,13 @@
 package com.intellij.completion.enhancer
 
 import com.intellij.codeInsight.completion.*
+import com.intellij.ide.plugins.PluginManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PreloadingActivity
 import com.intellij.openapi.extensions.ExtensionPoint
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.extensions.LoadingOrder
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.extensions.impl.ExtensionComponentAdapter
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.util.ReflectionUtil
@@ -69,9 +71,13 @@ object CompletionContributors {
 class FirstContributorPreloader : PreloadingActivity() {
 
     override fun preload(indicator: ProgressIndicator) {
+        val id = PluginId.findId("com.intellij.stats.completion")
+        val descriptor = PluginManager.getPlugin(id)
+
         CompletionContributorEP().apply {
             implementationClass = InvocationCountEnhancingContributor::class.java.name
             language = "any"
+            pluginDescriptor = descriptor
         }.let {
             CompletionContributors.addFirst(it)
         }
