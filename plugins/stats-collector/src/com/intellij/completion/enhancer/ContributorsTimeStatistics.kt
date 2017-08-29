@@ -8,7 +8,7 @@ import com.intellij.openapi.components.service
 import com.intellij.stats.tracking.IntervalCounter
 
 @State(name = "CompletionTimeStatistics", storages=arrayOf(Storage("completion.time.statistics")))
-class CompletionTimeStatistics: PersistentStateComponent<CompletionTimeStats> {
+class ContributorsTimeStatistics : PersistentStateComponent<CompletionTimeStats> {
 
     private var statsState: CompletionTimeStats = CompletionTimeStats()
 
@@ -21,7 +21,6 @@ class CompletionTimeStatistics: PersistentStateComponent<CompletionTimeStats> {
     }
 
     companion object {
-
         fun registerCompletionContributorsTime(languge: Language, timeTaken: Long) {
             val stats = getInstance().statsState
             stats.registerCompletionContributorsTime(languge, timeTaken)
@@ -32,8 +31,7 @@ class CompletionTimeStatistics: PersistentStateComponent<CompletionTimeStats> {
             stats.registerSecondCompletionTime(languge, timeTaken)
         }
 
-        fun getInstance() = service<CompletionTimeStatistics>()
-
+        fun getInstance() = service<ContributorsTimeStatistics>()
     }
 
 }
@@ -48,6 +46,9 @@ class CompletionTimeStats {
     @JvmField val completionIntervals = HashMap<Language, IntervalCounter>()
     @JvmField val secondCompletionIntervals = HashMap<Language, IntervalCounter>()
 
+    fun intervals(languge: Language) = completionIntervals[languge]
+    fun secondCompletionIntervals(languge: Language) = secondCompletionIntervals[languge]
+
     fun registerCompletionContributorsTime(language: Language, timeTaken: Long) {
         val counter = completionIntervals[language] ?: IntervalCounter(MIN_POWER, MAX_POWER, EXPONENT)
         counter.register(timeTaken)
@@ -59,5 +60,7 @@ class CompletionTimeStats {
         counter.register(timeTaken)
         secondCompletionIntervals[language] = counter
     }
+
+    fun languages() = (completionIntervals.keys + secondCompletionIntervals.keys).toList()
 
 }

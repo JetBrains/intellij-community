@@ -16,13 +16,13 @@ class IntervalCounter(
         values[bucket] += 1
     }
 
-    fun data(): List<IntervalData> {
+    fun intervals(): List<IntervalData> {
         return values.indices.map { interval(it) }
     }
 
     private fun interval(index: Int): IntervalData {
-        val start = Math.pow(exponent, index.toDouble())
-        val end = Math.pow(exponent, (index + 1).toDouble())
+        val start = Math.pow(exponent, minPower + index.toDouble())
+        val end = Math.pow(exponent, minPower + (index + 1).toDouble())
 
         val count = values[index]
 

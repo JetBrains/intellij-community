@@ -1,5 +1,6 @@
 package com.intellij.plugin
 
+import com.intellij.completion.enhancer.ContributorsTimeStatistics
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.keymap.KeymapUtil
@@ -7,6 +8,7 @@ import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableProvider
 import com.intellij.sorting.SortingTimeStatistics
 import com.intellij.stats.completion.experiment.WebServiceStatus
+import com.intellij.stats.tracking.IntervalCounter
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBLabel
@@ -71,6 +73,7 @@ class PluginSettingsConfigurable : Configurable {
             add(manualControlPanel)
             add(manualExperimentPanel)
             add(autoExperimentPanel)
+            add(contributorsTimingPanel())
         }
         
         updateStatus(null)
@@ -133,6 +136,28 @@ class PluginSettingsConfigurable : Configurable {
             }
         }
     }
+
+    private fun contributorsTimingPanel(): JPanel {
+        val stats = ContributorsTimeStatistics.getInstance().state
+
+        return JPanel().apply {
+            layout = BoxLayout(this, BoxLayout.Y_AXIS)
+            border = IdeBorderFactory.createEmptyBorder(5)
+
+            add(JBLabel("<html><b>Contributors Time:</b></html><br/>"))
+            stats.languages().forEach {
+                add(JBLabel("<html><b>${it.displayName}:</b></html>"))
+                add(JBLabel("<html>Initial completion</html>"))
+                stats.intervals(it)?.presentation()?.forEach {
+                    add(JBLabel(it))
+                }
+                add(JBLabel("<html>Second completion</html>"))
+                stats.secondCompletionIntervals(it)?.presentation()?.forEach {
+                    add(JBLabel(it))
+                }
+            }
+        }
+    }
     
     private fun autoExperimentStatusPanel(): JPanel {
         val status = WebServiceStatus.getInstance()
@@ -157,4 +182,11 @@ class PluginSettingsConfigurable : Configurable {
 
     override fun disposeUIResources() = Unit
     
+}
+
+
+private fun IntervalCounter.presentation(): List<String> {
+    return intervals()
+            .filter { it.count > 0 }
+            .map { ":: Inside ms interval [ ${it.intervalStart}, ${it.intervalEnd} ] happend ${it.count} times" }
 }

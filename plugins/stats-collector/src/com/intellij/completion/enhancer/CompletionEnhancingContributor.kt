@@ -107,7 +107,7 @@ class InvocationCountEnhancingContributor : CompletionContributor() {
         val end = System.currentTimeMillis()
 
         parameters.language()?.let {
-            CompletionTimeStatistics.registerCompletionContributorsTime(it, end - start)
+            ContributorsTimeStatistics.registerCompletionContributorsTime(it, end - start)
         }
 
         if (parameters.invocationCount < MAX_INVOCATION_COUNT) {
@@ -132,7 +132,7 @@ class InvocationCountEnhancingContributor : CompletionContributor() {
         val end = System.currentTimeMillis()
 
         parameters.language()?.let {
-            CompletionTimeStatistics.registerSecondCompletionContributorsTime(it, end - start)
+            ContributorsTimeStatistics.registerSecondCompletionContributorsTime(it, end - start)
         }
     }
 

@@ -27,7 +27,7 @@ class IntervalCounterTrackingTest {
         counter.register(1200)
 
 
-        val data: Map<Int, IntervalData> = counter.data().filter { it.count > 0 }.associate { it.intervalEnd.toInt() to it }
+        val data: Map<Int, IntervalData> = counter.intervals().filter { it.count > 0 }.associate { it.intervalEnd.toInt() to it }
 
         assertThat(data[128]!!.count).isEqualTo(2)
         assertThat(data[256]!!.count).isEqualTo(1)
