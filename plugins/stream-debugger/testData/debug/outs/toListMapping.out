@@ -4,19 +4,9 @@ Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socke
 ToListMapping.java:8
 Stream.of(new Object(), new Object(), new Object())
 .collect(Collectors.toList())
-Stream.of
-    before: nothing
-    after: 1,2,3
 collect
     before: 1,2,3
     after: 4,5,6
-mappings for Stream.of
-  direct:
-    no
-  reverse:
-    nothing <- 1
-    nothing <- 2
-    nothing <- 3
 mappings for collect
   direct:
     1 -> 4

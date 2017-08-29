@@ -6,9 +6,6 @@ Stream.of(1)
 .flatMapToInt(x -> Arrays.stream(new int[] {1}))
 .limit(1)
 .toArray()
-Stream.of
-    before: nothing
-    after: 1
 flatMapToInt
     before: 1
     after: 2
@@ -18,11 +15,6 @@ limit
 toArray
     before: 3
     after: 4
-mappings for Stream.of
-  direct:
-    no
-  reverse:
-    nothing <- 1
 mappings for flatMapToInt
   direct:
     1 -> 2

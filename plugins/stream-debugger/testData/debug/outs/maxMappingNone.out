@@ -5,20 +5,12 @@ MaxMappingNone.java:8
 Stream.of(1)
 .skip(1)
 .max(Comparator.comparingInt(x -> -x))
-Stream.of
-    before: nothing
-    after: 1
 skip
     before: 1
     after: nothing
 max
     before: nothing
     after: nothing
-mappings for Stream.of
-  direct:
-    no
-  reverse:
-    nothing <- 1
 mappings for skip
   direct:
     1 -> nothing

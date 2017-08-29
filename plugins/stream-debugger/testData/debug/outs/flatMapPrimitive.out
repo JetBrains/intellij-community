@@ -5,22 +5,12 @@ FlatMapPrimitive.java:7
 Stream.of(1, 5, 9)
 .flatMapToDouble(x -> DoubleStream.of(x + 1, x + 2, x + 3))
 .toArray()
-Stream.of
-    before: nothing
-    after: 1,5,9
 flatMapToDouble
     before: 1,5,9
     after: 2,3,4,6,7,8,10,11,12
 toArray
     before: 2,3,4,6,7,8,10,11,12
     after: 13,14,15,16,17,18,19,20,21
-mappings for Stream.of
-  direct:
-    no
-  reverse:
-    nothing <- 1
-    nothing <- 5
-    nothing <- 9
 mappings for flatMapToDouble
   direct:
     1 -> 2,3,4

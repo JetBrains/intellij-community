@@ -5,21 +5,12 @@ SortedSignedDoubleZeros.java:6
 DoubleStream.of(0., -0.)
 .sorted()
 .sum()
-DoubleStream.of
-    before: nothing
-    after: 1,2
 sorted
     before: 1,2
     after: 3,4
 sum
     before: 3,4
     after: nothing
-mappings for DoubleStream.of
-  direct:
-    no
-  reverse:
-    nothing <- 1
-    nothing <- 2
 mappings for sorted
   direct:
     1 -> 4

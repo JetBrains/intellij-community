@@ -7,9 +7,6 @@ Stream.generate(() -> 1)
 .filter(x -> method(x))
 .mapToInt(x -> x * 2)
 .count()
-Stream.generate
-    before: nothing
-    after: 1,5,9,13,17,21,25,29,33,37
 limit
     before: 1,5,9,13,17,21,25,29,33,37
     after: 2,6,10,14,18,22,26,30,34,38
@@ -22,20 +19,6 @@ mapToInt
 count
     before: 4,8,12,16,20,24,28,32,36,40
     after: nothing
-mappings for Stream.generate
-  direct:
-    no
-  reverse:
-    nothing <- 1
-    nothing <- 5
-    nothing <- 9
-    nothing <- 13
-    nothing <- 17
-    nothing <- 21
-    nothing <- 25
-    nothing <- 29
-    nothing <- 33
-    nothing <- 37
 mappings for limit
   direct:
     1 -> 2

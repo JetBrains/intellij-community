@@ -4,21 +4,11 @@ Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socke
 AnyMatchMappingTrue.java:6
 Stream.of(1, 2)
 .anyMatch(x -> x % 2 == 0)
-Stream.of
-    before: nothing
-    after: 1,2
 anyMatch
     before: 2
     after: 2147483647
-mappings for Stream.of
-  direct:
-    no
-  reverse:
-    nothing <- 1
-    nothing <- 2
 mappings for anyMatch
   direct:
-    1 -> nothing
     2 -> 2147483647
   reverse:
     2 <- 2147483647

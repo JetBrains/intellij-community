@@ -5,23 +5,12 @@ MapPrimitive.java:6
 LongStream.of(1, 2, 3, 4)
 .map(x -> x - 1)
 .sum()
-LongStream.of
-    before: nothing
-    after: 1,3,5,7
 map
     before: 1,3,5,7
     after: 2,4,6,8
 sum
     before: 2,4,6,8
     after: nothing
-mappings for LongStream.of
-  direct:
-    no
-  reverse:
-    nothing <- 1
-    nothing <- 3
-    nothing <- 5
-    nothing <- 7
 mappings for map
   direct:
     1 -> 2

@@ -4,19 +4,9 @@ Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socke
 NoneMatchMappingTrue.java:6
 Stream.of(1, 2, 3)
 .noneMatch(x -> x == 5)
-Stream.of
-    before: nothing
-    after: 1,2,3
 noneMatch
     before: 1,2,3
     after: 2147483647
-mappings for Stream.of
-  direct:
-    no
-  reverse:
-    nothing <- 1
-    nothing <- 2
-    nothing <- 3
 mappings for noneMatch
   direct:
     1 -> 2147483647

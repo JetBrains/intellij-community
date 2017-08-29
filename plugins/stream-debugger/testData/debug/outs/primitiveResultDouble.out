@@ -6,19 +6,9 @@ DoubleStream.of(1, 2, 3)
 .sum()
 Result type:double
 value = 6.0
-DoubleStream.of
-    before: nothing
-    after: 1,2,3
 sum
     before: 1,2,3
     after: nothing
-mappings for DoubleStream.of
-  direct:
-    no
-  reverse:
-    nothing <- 1
-    nothing <- 2
-    nothing <- 3
 mappings for sum
   direct:
     1 -> nothing

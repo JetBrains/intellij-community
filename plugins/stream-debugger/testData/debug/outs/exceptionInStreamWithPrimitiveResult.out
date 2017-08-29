@@ -7,20 +7,12 @@ IntStream.of(1, 2, 3, 4)
       throw new RuntimeException();
     })
 .reduce(0, (l, r) -> l + r)
-IntStream.of
-    before: nothing
-    after: 1
 peek
     before: 1
     after: nothing
 reduce
     before: nothing
     after: nothing
-mappings for IntStream.of
-  direct:
-    no
-  reverse:
-    nothing <- 1
 mappings for peek
   direct:
     1 -> nothing

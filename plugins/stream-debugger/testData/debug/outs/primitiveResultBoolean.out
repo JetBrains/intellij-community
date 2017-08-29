@@ -6,17 +6,9 @@ Stream.of(1)
 .anyMatch(x -> x == 2)
 Result type:boolean
 value = false
-Stream.of
-    before: nothing
-    after: 1
 anyMatch
     before: 1
     after: 2147483647
-mappings for Stream.of
-  direct:
-    no
-  reverse:
-    nothing <- 1
 mappings for anyMatch
   direct:
     1 -> 2147483647

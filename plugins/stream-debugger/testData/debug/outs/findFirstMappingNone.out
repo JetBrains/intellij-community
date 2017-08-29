@@ -4,17 +4,9 @@ Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socke
 FindFirstMappingNone.java:7
 Stream.empty()
 .findFirst()
-Stream.empty
-    before: nothing
-    after: nothing
 findFirst
     before: nothing
     after: nothing
-mappings for Stream.empty
-  direct:
-    no
-  reverse:
-    empty
 mappings for findFirst
   direct:
     empty

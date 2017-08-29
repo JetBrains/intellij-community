@@ -4,18 +4,9 @@ Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socke
 Nulls.java:6
 Stream.of(null, null)
 .count()
-Stream.of
-    before: nothing
-    after: 1,2
 count
     before: 1,2
     after: nothing
-mappings for Stream.of
-  direct:
-    no
-  reverse:
-    nothing <- 1
-    nothing <- 2
 mappings for count
   direct:
     1 -> nothing

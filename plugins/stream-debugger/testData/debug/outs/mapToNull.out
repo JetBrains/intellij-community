@@ -6,9 +6,6 @@ Stream.of(1)
 .map(x -> null)
 .filter(x -> x != null)
 .findAny()
-Stream.of
-    before: nothing
-    after: 1
 map
     before: 1
     after: 2
@@ -18,11 +15,6 @@ filter
 findAny
     before: nothing
     after: nothing
-mappings for Stream.of
-  direct:
-    no
-  reverse:
-    nothing <- 1
 mappings for map
   direct:
     1 -> 2

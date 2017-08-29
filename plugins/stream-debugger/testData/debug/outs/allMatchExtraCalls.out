@@ -7,17 +7,9 @@ Stream.of(2)
       System.out.println("called");
       return false;
     })
-Stream.of
-    before: nothing
-    after: 1
 allMatch
     before: 1
     after: 2147483647
-mappings for Stream.of
-  direct:
-    no
-  reverse:
-    nothing <- 1
 mappings for allMatch
   direct:
     1 -> 2147483647

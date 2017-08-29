@@ -5,22 +5,12 @@ DistinctEquals.java:22
 Stream.of(Id.create(), Id.create(), Id.create())
 .distinct()
 .count()
-Stream.of
-    before: nothing
-    after: 1,3,4
 distinct
     before: 1,3,4
     after: 2
 count
     before: 2
     after: nothing
-mappings for Stream.of
-  direct:
-    no
-  reverse:
-    nothing <- 1
-    nothing <- 3
-    nothing <- 4
 mappings for distinct
   direct:
     1 -> 2

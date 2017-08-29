@@ -4,17 +4,9 @@ Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socke
 FindAnyMappingNone.java:7
 Stream.empty()
 .findAny()
-Stream.empty
-    before: nothing
-    after: nothing
 findAny
     before: nothing
     after: nothing
-mappings for Stream.empty
-  direct:
-    no
-  reverse:
-    empty
 mappings for findAny
   direct:
     empty

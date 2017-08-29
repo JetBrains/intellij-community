@@ -4,17 +4,9 @@ Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socke
 ExceptionAsStreamResult.java:6
 Stream.of(new Throwable())
 .reduce(new Throwable(), (l, r) -> l)
-Stream.of
-    before: nothing
-    after: 1
 reduce
     before: 1
     after: nothing
-mappings for Stream.of
-  direct:
-    no
-  reverse:
-    nothing <- 1
 mappings for reduce
   direct:
     1 -> nothing

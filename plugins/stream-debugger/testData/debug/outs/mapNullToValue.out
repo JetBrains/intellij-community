@@ -5,20 +5,12 @@ MapNullToValue.java:7
 Stream.of(null, null)
 .map(x -> new Object())
 .findAny()
-Stream.of
-    before: nothing
-    after: 1
 map
     before: 1
     after: 2
 findAny
     before: 2
     after: 2147483646
-mappings for Stream.of
-  direct:
-    no
-  reverse:
-    nothing <- 1
 mappings for map
   direct:
     1 -> 2

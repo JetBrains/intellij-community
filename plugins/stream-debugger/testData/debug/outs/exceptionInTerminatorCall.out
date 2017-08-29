@@ -6,17 +6,9 @@ Stream.of(1, 2, 3)
 .reduce(0, (l, r) -> {
       throw new RuntimeException();
     })
-Stream.of
-    before: nothing
-    after: 1
 reduce
     before: 1
     after: nothing
-mappings for Stream.of
-  direct:
-    no
-  reverse:
-    nothing <- 1
 mappings for reduce
   direct:
     1 -> nothing

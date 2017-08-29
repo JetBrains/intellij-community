@@ -6,18 +6,9 @@ IntStream.of(1, 2)
 .count()
 Result type:long
 value = 2
-IntStream.of
-    before: nothing
-    after: 1,2
 count
     before: 1,2
     after: nothing
-mappings for IntStream.of
-  direct:
-    no
-  reverse:
-    nothing <- 1
-    nothing <- 2
 mappings for count
   direct:
     1 -> nothing

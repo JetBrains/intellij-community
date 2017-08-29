@@ -8,28 +8,12 @@ Stream
       .stream()
 .sorted()
 .collect(Collectors.toList())
-Stream
-      .of(1, 2, 3, 4, 5, 6).map(x -> x * x).collect(Collectors.toList())
-      .stream().filter(x -> x % 2 == 0).collect(Collectors.toList())
-      .stream
-    before: nothing
-    after: 1,2,3
 sorted
     before: 1,2,3
     after: 4,5,6
 collect
     before: 4,5,6
     after: 7,8,9
-mappings for Stream
-      .of(1, 2, 3, 4, 5, 6).map(x -> x * x).collect(Collectors.toList())
-      .stream().filter(x -> x % 2 == 0).collect(Collectors.toList())
-      .stream
-  direct:
-    no
-  reverse:
-    nothing <- 1
-    nothing <- 2
-    nothing <- 3
 mappings for sorted
   direct:
     1 -> 4

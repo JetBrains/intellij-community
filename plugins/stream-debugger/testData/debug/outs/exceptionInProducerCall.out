@@ -7,20 +7,12 @@ Stream.generate(() -> {
     })
 .map(Function.identity())
 .toArray()
-Stream.generate
-    before: nothing
-    after: nothing
 map
     before: nothing
     after: nothing
 toArray
     before: nothing
     after: nothing
-mappings for Stream.generate
-  direct:
-    no
-  reverse:
-    empty
 mappings for map
   direct:
     empty

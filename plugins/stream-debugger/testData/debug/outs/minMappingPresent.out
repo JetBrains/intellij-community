@@ -4,19 +4,9 @@ Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socke
 MinMappingPresent.java:8
 Stream.of(1, 2, 3)
 .min(Comparator.comparingInt(x -> -x))
-Stream.of
-    before: nothing
-    after: 1,2,3
 min
     before: 1,2,3
     after: 2147483646
-mappings for Stream.of
-  direct:
-    no
-  reverse:
-    nothing <- 1
-    nothing <- 2
-    nothing <- 3
 mappings for min
   direct:
     1 -> nothing

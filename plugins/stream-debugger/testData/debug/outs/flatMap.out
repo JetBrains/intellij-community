@@ -5,21 +5,12 @@ FlatMap.java:6
 Stream.of(1, 4)
 .flatMap(x -> Stream.of(x + 1, x + 2))
 .count()
-Stream.of
-    before: nothing
-    after: 1,4
 flatMap
     before: 1,4
     after: 2,3,5,6
 count
     before: 2,3,5,6
     after: nothing
-mappings for Stream.of
-  direct:
-    no
-  reverse:
-    nothing <- 1
-    nothing <- 4
 mappings for flatMap
   direct:
     1 -> 2,3

@@ -4,17 +4,9 @@ Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socke
 PrimitiveFindAnyMapping.java:7
 IntStream.of(1, 2)
 .findAny()
-IntStream.of
-    before: nothing
-    after: 1
 findAny
     before: 1
     after: 2147483646
-mappings for IntStream.of
-  direct:
-    no
-  reverse:
-    nothing <- 1
 mappings for findAny
   direct:
     1 -> 2147483646

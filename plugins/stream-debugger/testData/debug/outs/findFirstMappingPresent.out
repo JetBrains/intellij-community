@@ -4,17 +4,9 @@ Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socke
 FindFirstMappingPresent.java:7
 Stream.of(1, 2, 3)
 .findFirst()
-Stream.of
-    before: nothing
-    after: 1
 findFirst
     before: 1
     after: 2147483646
-mappings for Stream.of
-  direct:
-    no
-  reverse:
-    nothing <- 1
 mappings for findFirst
   direct:
     1 -> 2147483646

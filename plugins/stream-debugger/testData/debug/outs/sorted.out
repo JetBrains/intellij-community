@@ -5,33 +5,12 @@ Sorted.java:6
 Stream.of(3, 1, 2, 3, 3, 3, 3, 1, 2, 2, 3, 4, 5, 2)
 .sorted()
 .toArray()
-Stream.of
-    before: nothing
-    after: 1,2,3,4,5,6,7,8,9,10,11,12,13,14
 sorted
     before: 1,2,3,4,5,6,7,8,9,10,11,12,13,14
     after: 15,16,17,18,19,20,21,22,23,24,25,26,27,28
 toArray
     before: 15,16,17,18,19,20,21,22,23,24,25,26,27,28
     after: 29,30,31,32,33,34,35,36,37,38,39,40,41,42
-mappings for Stream.of
-  direct:
-    no
-  reverse:
-    nothing <- 1
-    nothing <- 2
-    nothing <- 3
-    nothing <- 4
-    nothing <- 5
-    nothing <- 6
-    nothing <- 7
-    nothing <- 8
-    nothing <- 9
-    nothing <- 10
-    nothing <- 11
-    nothing <- 12
-    nothing <- 13
-    nothing <- 14
 mappings for sorted
   direct:
     1 -> 21

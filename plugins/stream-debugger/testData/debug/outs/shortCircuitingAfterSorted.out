@@ -5,22 +5,12 @@ ShortCircuitingAfterSorted.java:6
 Stream.of(3, 2, 1)
 .sorted()
 .findFirst()
-Stream.of
-    before: nothing
-    after: 1,2,3
 sorted
     before: 1,2,3
     after: 4
 findFirst
     before: 4
     after: 2147483646
-mappings for Stream.of
-  direct:
-    no
-  reverse:
-    nothing <- 1
-    nothing <- 2
-    nothing <- 3
 mappings for sorted
   direct:
     1 -> nothing

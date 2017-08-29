@@ -5,21 +5,12 @@ PrimitiveFindFirstMapping.java:7
 IntStream.of(1, 2)
 .skip(2)
 .findAny()
-IntStream.of
-    before: nothing
-    after: 1,2
 skip
     before: 1,2
     after: nothing
 findAny
     before: nothing
     after: nothing
-mappings for IntStream.of
-  direct:
-    no
-  reverse:
-    nothing <- 1
-    nothing <- 2
 mappings for skip
   direct:
     1 -> nothing

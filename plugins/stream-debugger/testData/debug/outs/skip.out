@@ -5,22 +5,12 @@ Skip.java:6
 Stream.of(1, 2, 3)
 .skip(2)
 .count()
-Stream.of
-    before: nothing
-    after: 1,2,3
 skip
     before: 1,2,3
     after: 4
 count
     before: 4
     after: nothing
-mappings for Stream.of
-  direct:
-    no
-  reverse:
-    nothing <- 1
-    nothing <- 2
-    nothing <- 3
 mappings for skip
   direct:
     1 -> nothing

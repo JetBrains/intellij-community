@@ -5,23 +5,12 @@ FilterPrimitive.java:6
 LongStream.of(1, 2, 3, 4)
 .filter(x -> x % 2 == 0)
 .count()
-LongStream.of
-    before: nothing
-    after: 1,2,4,5
 filter
     before: 1,2,4,5
     after: 3,6
 count
     before: 3,6
     after: nothing
-mappings for LongStream.of
-  direct:
-    no
-  reverse:
-    nothing <- 1
-    nothing <- 2
-    nothing <- 4
-    nothing <- 5
 mappings for filter
   direct:
     1 -> nothing
