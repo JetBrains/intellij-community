@@ -31,6 +31,7 @@ import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.ui.JBColor;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.frame.*;
@@ -60,6 +61,7 @@ import java.util.stream.Collectors;
  */
 public class CollectionTree extends XDebuggerTree implements TraceContainer {
   private static final TreePath[] EMPTY_PATHS = new TreePath[0];
+  private static final Map<Integer, Color> COLORS_CACHE = new HashMap<>();
 
   private final NodeManagerImpl myNodeManager;
   private final Project myProject;
@@ -115,7 +117,7 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
             final ValueDescriptorImpl descriptor = ((JavaValue)container).getDescriptor();
             evaluationContext.getDebugProcess().getManagerThread().schedule(new DebuggerCommandImpl() {
               @Override
-              protected void action() throws Exception {
+              protected void action() {
                 final Value value = descriptor.getValue();
                 ApplicationManager.getApplication().invokeLater(() -> {
                   final List<TraceElement> trace = map2TraceElement.get(value);
@@ -172,7 +174,14 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
   @Nullable
   @Override
   public Color getFileColorForPath(@NotNull TreePath path) {
-    return isPathHighlighted(path) ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeBackground();
+    if (isPathHighlighted(path)) {
+      final Color background = UIUtil.getTreeSelectionBackground(true);
+      return COLORS_CACHE.computeIfAbsent(background.getRGB(), rgb -> new JBColor(
+        new Color(background.getRed(), background.getGreen(), background.getBlue(), 75),
+        new Color(background.getRed(), background.getGreen(), background.getBlue(), 150)));
+    }
+
+    return UIUtil.getTreeBackground();
   }
 
   @Override
