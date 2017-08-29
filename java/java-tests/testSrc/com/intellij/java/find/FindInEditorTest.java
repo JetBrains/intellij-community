@@ -22,11 +22,16 @@ import com.intellij.find.impl.livePreview.LivePreviewController;
 import com.intellij.find.impl.livePreview.SearchResults;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
+import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.testFramework.fixtures.EditorMouseFixture;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
+import java.awt.*;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 
@@ -55,6 +60,12 @@ public class FindInEditorTest extends LightCodeInsightTestCase {
     myOutputStream = null;
     myLivePreviewController = null;
     super.tearDown();
+  }
+
+  @Override
+  // disabling execution of tests in command/write action
+  protected void runTest() throws Throwable {
+    doRunTest();
   }
 
   private void initFind() {
@@ -112,6 +123,35 @@ public class FindInEditorTest extends LightCodeInsightTestCase {
     myFindModel.setReplaceState(true);
     myLivePreviewController.performReplace();
     checkResults();
+  }
+
+  public void testUndoingReplaceBringsChangePlaceIntoView() {
+    configureFromText("abc\n\n\n\n\nabc\n");
+    myEditor.putUserData(TextEditorProvider.TREAT_AS_SHOWN, Boolean.TRUE); // make undo scroll editor in tests
+    EditorTestUtil.setEditorVisibleSize(myEditor, 100, 3);
+    executeAction(IdeActions.ACTION_EDITOR_TEXT_END_WITH_SELECTION);
+    
+    EditorTestUtil.testUndoInEditor(myEditor, () -> {
+      initFind();
+      myFindModel.setReplaceState(true);
+      myFindModel.setGlobal(false);
+      myFindModel.setStringToFind("abc");
+      myFindModel.setStringToReplace("def");
+
+      myLivePreviewController.performReplace();
+      myLivePreviewController.performReplace();
+
+      executeAction(IdeActions.ACTION_UNDO);
+      executeAction(IdeActions.ACTION_UNDO);
+
+      checkResultByText("abc\n\n\n\n\nabc\n");
+      checkOffsetIsVisible(myEditor, 0);
+    });
+  }
+
+  private static void checkOffsetIsVisible(@NotNull Editor editor, int offset) {
+    Point point = editor.offsetToXY(offset);
+    assertTrue(editor.getScrollingModel().getVisibleAreaOnScrollingFinished().contains(point));
   }
 
   private static void invokeFind() {
