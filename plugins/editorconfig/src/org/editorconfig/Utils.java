@@ -38,7 +38,7 @@ public class Utils {
     for (OutPair outPair : outPairs) {
       if (outPair.getKey().equals(key)) {
         String val = outPair.getVal();
-        return "none".equals(val) ? "" : val;
+        return "none".equals(val) || "unset".equals(val) ? "" : val;
       }
     }
     return "";
