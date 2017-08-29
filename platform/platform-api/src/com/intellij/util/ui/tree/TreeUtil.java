@@ -694,7 +694,7 @@ public final class TreeUtil {
       row--;
     }
     Object root = tree.getModel().getRoot();
-    if (root != null) {
+    if (root != null && !tree.isRootVisible()) {
       tree.expandPath(new TreePath(root));
     }
     if (leadSelectionPath != null) {
