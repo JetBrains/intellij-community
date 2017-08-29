@@ -256,7 +256,7 @@ abstract class NewServiceActionBase extends CreateInDirectoryActionBase implemen
      */
     boolean createInterfaceAndImplementation(String interfaceName, String implementationName, XmlFile pluginXml) {
       return doCreateService(() -> {
-        PsiClass createdInterface = DevkitActionsUtil.createSingleClass(interfaceName, myServiceInterfaceTemplateName, myDirectory, null);
+        PsiClass createdInterface = DevkitActionsUtil.createSingleClass(interfaceName, myServiceInterfaceTemplateName, myDirectory);
 
         String interfaceShortName = createdInterface.getName();
         String implementationDirRelativePackage = StringUtil.getPackageName(implementationName);
@@ -285,7 +285,7 @@ abstract class NewServiceActionBase extends CreateInDirectoryActionBase implemen
     boolean createOnlyImplementation(String onlyImplementationName, XmlFile pluginXml) {
       return doCreateService(() -> {
         PsiClass createdOnlyImplementation = DevkitActionsUtil.createSingleClass(
-          onlyImplementationName, myServiceOnlyImplementationTemplateName, myDirectory, null);
+          onlyImplementationName, myServiceOnlyImplementationTemplateName, myDirectory);
 
         patchPluginXml(null, createdOnlyImplementation, pluginXml);
 

@@ -33,6 +33,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
@@ -95,8 +96,12 @@ public final class DevkitActionsUtil {
     return null;
   }
 
+  public static PsiClass createSingleClass(String name, String classTemplateName, PsiDirectory directory) {
+    return createSingleClass(name, classTemplateName, directory, Collections.emptyMap());
+  }
+
   public static PsiClass createSingleClass(String name, String classTemplateName, PsiDirectory directory,
-                                           @Nullable Map<String, String> properties) {
+                                           @NotNull Map<String, String> properties) {
     if (name.contains(".")) {
       String[] names = name.split("\\.");
       for (int i = 0; i < names.length - 1; i++) {
@@ -105,9 +110,6 @@ public final class DevkitActionsUtil {
       name = names[names.length - 1];
     }
 
-    if (properties == null) {
-      properties = Collections.emptyMap();
-    }
     return JavaDirectoryService.getInstance().createClass(directory, name, classTemplateName, false, properties);
   }
 
