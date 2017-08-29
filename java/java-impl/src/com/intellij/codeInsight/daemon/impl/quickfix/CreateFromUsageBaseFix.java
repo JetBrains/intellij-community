@@ -253,11 +253,12 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
     return null;
   }
 
-  public static PsiSubstitutor getTargetSubstitutor (PsiElement element) {
+  @NotNull
+  public static PsiSubstitutor getTargetSubstitutor(@Nullable PsiElement element) {
     if (element instanceof PsiNewExpression) {
-      JavaResolveResult result = ((PsiNewExpression)element).getClassOrAnonymousClassReference().advancedResolve(false);
-      PsiSubstitutor substitutor = result.getSubstitutor();
-      return substitutor == null ? PsiSubstitutor.EMPTY : substitutor;
+      PsiJavaCodeReferenceElement reference = ((PsiNewExpression)element).getClassOrAnonymousClassReference();
+      JavaResolveResult result = reference == null ? JavaResolveResult.EMPTY : reference.advancedResolve(false);
+      return result.getSubstitutor();
     }
 
     PsiExpression qualifier = getQualifier(element);
