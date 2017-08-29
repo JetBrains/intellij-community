@@ -18,12 +18,10 @@ package org.jetbrains.idea.devkit.testAssistant;
 import com.intellij.ide.presentation.Presentation;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileSystem;
-import com.intellij.openapi.vfs.VirtualFileWithId;
+import com.intellij.openapi.vfs.*;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.devkit.testAssistant.vfs.TestDataGroupFileSystem;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -63,13 +61,13 @@ public class TestDataGroupVirtualFile extends VirtualFile {
   @NotNull
   @Override
   public VirtualFileSystem getFileSystem() {
-    return LocalFileSystem.getInstance();
+    return TestDataGroupFileSystem.getTestDataGroupFileSystem();
   }
 
   @NotNull
   @Override
   public String getPath() {
-    return myBeforeFile.getPath();
+    return TestDataGroupFileSystem.getPath(myBeforeFile, myAfterFile);
   }
 
   @Override
