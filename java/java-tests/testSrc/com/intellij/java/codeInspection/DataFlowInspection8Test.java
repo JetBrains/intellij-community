@@ -117,6 +117,10 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
     doTest();
   }
 
+  public void testNullArgumentIfMethodExecutionFailsAnyway() {
+    doTest();
+  }
+
   public void testNullableArrayComponent() {
     setupCustomAnnotations();
     DataFlowInspection inspection = new DataFlowInspection();
