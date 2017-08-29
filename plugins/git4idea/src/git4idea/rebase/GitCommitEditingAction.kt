@@ -60,7 +60,7 @@ abstract class GitCommitEditingAction : DumbAwareAction() {
       return
     }
 
-    // editing merge commit is not allowed
+    // editing merge commit or root commit is not allowed
     val parents = commit.parents.size
     if (parents != 1) {
       e.presentation.isEnabled = false
