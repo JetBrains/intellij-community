@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -92,12 +92,13 @@ public class MoveElementLeftRightActionHandler extends EditorWriteActionHandler 
       for (MoveElementLeftRightHandler handler : handlers) {
         PsiElement[] elementList = handler.getMovableSubElements(element);
         if (elementList.length > 1) {
-          Arrays.sort(elementList, BY_OFFSET);
-          PsiElement first = elementList[0];
-          PsiElement last = elementList[elementList.length - 1];
+          PsiElement[] elements = elementList.clone();
+          Arrays.sort(elements, BY_OFFSET);
+          PsiElement first = elements[0];
+          PsiElement last = elements[elements.length - 1];
           if (rangeStart >= first.getTextRange().getStartOffset() && rangeEnd <= last.getTextRange().getEndOffset() &&
               (rangeStart >= first.getTextRange().getEndOffset() || rangeEnd <= last.getTextRange().getStartOffset())) {
-            return elementList;
+            return elements;
           }
         }
       }
