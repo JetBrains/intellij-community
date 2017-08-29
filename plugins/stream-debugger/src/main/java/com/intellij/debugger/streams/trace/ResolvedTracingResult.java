@@ -17,9 +17,7 @@ package com.intellij.debugger.streams.trace;
 
 import com.intellij.debugger.streams.resolve.ResolvedStreamChain;
 import com.intellij.debugger.streams.wrapper.StreamChain;
-import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vitaliy.Bibaev

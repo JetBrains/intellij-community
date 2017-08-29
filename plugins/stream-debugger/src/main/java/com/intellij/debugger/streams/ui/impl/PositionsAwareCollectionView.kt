@@ -37,21 +37,19 @@ open class PositionsAwareCollectionView(header: String,
     })
   }
 
-  fun addValuesPositionsListener(listener: ValuesPositionsListener): Unit = myDispatcher.addListener(listener)
+  fun addValuesPositionsListener(listener: ValuesPositionsListener) = myDispatcher.addListener(listener)
 
-  private fun updateValues(): Unit {
-    var changed: Boolean = false
+  private fun updateValues() {
+    var changed = false
     val visibleRect = instancesTree.visibleRect
     for (value in values) {
       val rect = instancesTree.getRectByValue(value.traceElement)
-      if (rect == null) {
-        changed = value.invalidate(changed)
+      changed = if (rect == null) {
+        value.invalidate(changed)
       }
       else {
-        changed = value.set(changed,
-                            rect.y + rect.height / 2 - visibleRect.y,
-                            visibleRect.intersects(rect),
-                            instancesTree.isHighlighted(value.traceElement))
+        value.set(changed, rect.y + rect.height / 2 - visibleRect.y,
+                  visibleRect.intersects(rect), instancesTree.isHighlighted(value.traceElement))
       }
     }
 

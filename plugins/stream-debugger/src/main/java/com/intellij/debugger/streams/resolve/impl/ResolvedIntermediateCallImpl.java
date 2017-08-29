@@ -16,7 +16,6 @@
 package com.intellij.debugger.streams.resolve.impl;
 
 import com.intellij.debugger.streams.resolve.ResolvedStreamCall;
-import com.intellij.debugger.streams.trace.BidirectionalAwareState;
 import com.intellij.debugger.streams.trace.NextAwareState;
 import com.intellij.debugger.streams.trace.PrevAwareState;
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall;

@@ -15,7 +15,6 @@
  */
 package com.intellij.debugger.streams.ui.impl;
 
-import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.streams.trace.TraceElement;
 import com.intellij.debugger.streams.ui.TraceContainer;
 import com.intellij.debugger.streams.ui.ValuesSelectionListener;
@@ -23,7 +22,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollPane;
-import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;

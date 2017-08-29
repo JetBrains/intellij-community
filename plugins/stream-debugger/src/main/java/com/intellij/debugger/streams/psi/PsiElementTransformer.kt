@@ -22,7 +22,7 @@ import com.intellij.psi.PsiElementVisitor
  * @author Vitaliy.Bibaev
  */
 interface PsiElementTransformer {
-  fun transform(element: PsiElement): Unit
+  fun transform(element: PsiElement)
 
   abstract class Base: PsiElementTransformer {
     override fun transform(element: PsiElement) {

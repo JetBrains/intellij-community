@@ -65,11 +65,11 @@ abstract class LibrarySupportBase(override val description: Library,
     }
   }
 
-  protected fun addIntermediateOperationsSupport(vararg operations: IntermediateOperation): Unit {
+  protected fun addIntermediateOperationsSupport(vararg operations: IntermediateOperation) {
     operations.forEach { mySupportedIntermediateOperations[it.name] = it }
   }
 
-  protected fun addTerminationOperationsSupport(vararg operations: TerminalOperation): Unit {
+  protected fun addTerminationOperationsSupport(vararg operations: TerminalOperation) {
     operations.forEach { mySupportedTerminalOperations[it.name] = it }
   }
 

@@ -99,24 +99,22 @@ object LambdaToAnonymousTransformer : PsiElementTransformer.Base() {
   private fun getBodyText(lambda: PsiLambdaExpression): String? {
     var blockText: String?
     val body = lambda.body
-    if (body is PsiExpression) {
-      val returnType = LambdaUtil.getFunctionalInterfaceReturnType(lambda)
-      blockText = "{"
-      blockText += if (PsiType.VOID == returnType) "" else "return "
-      blockText += body.text + ";}"
-    }
-    else if (body != null) {
-      blockText = body.text
-    }
-    else {
-      blockText = null
+    when {
+      body is PsiExpression -> {
+        val returnType = LambdaUtil.getFunctionalInterfaceReturnType(lambda)
+        blockText = "{"
+        blockText += if (PsiType.VOID == returnType) "" else "return "
+        blockText += body.text + ";}"
+      }
+      body != null -> blockText = body.text
+      else -> blockText = null
     }
     return blockText
   }
 
   private fun qualifyThisExpressions(lambdaExpression: PsiLambdaExpression,
                                      psiElementFactory: PsiElementFactory,
-                                     blockFromText: PsiCodeBlock): Unit {
+                                     blockFromText: PsiCodeBlock) {
     ChangeContextUtil.encodeContextInfo(blockFromText, true)
     val thisClass = RefactoringChangeUtil.getThisClass(lambdaExpression)
     val thisClassName = if (thisClass != null && thisClass !is PsiSyntheticClass) thisClass.name else null
@@ -146,14 +144,10 @@ object LambdaToAnonymousTransformer : PsiElementTransformer.Base() {
         }
       })
       for (expression in replacements) {
-        if (expression is PsiSuperExpression) {
-          expression.replace(psiElementFactory.createExpressionFromText(thisClassName + "." + expression.getText(), expression))
-        }
-        else if (expression is PsiMethodCallExpression) {
-          expression.methodExpression.qualifierExpression = thisAccessExpr
-        }
-        else {
-          LOG.error("Unexpected expression")
+        when (expression) {
+          is PsiSuperExpression -> expression.replace(psiElementFactory.createExpressionFromText(thisClassName + "." + expression.getText(), expression))
+          is PsiMethodCallExpression -> expression.methodExpression.qualifierExpression = thisAccessExpr
+          else -> LOG.error("Unexpected expression")
         }
       }
     }

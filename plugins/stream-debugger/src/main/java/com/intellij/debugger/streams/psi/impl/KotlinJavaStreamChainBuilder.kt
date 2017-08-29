@@ -58,7 +58,7 @@ class KotlinJavaStreamChainBuilder : KotlinChainBuilderBase(KotlinChainTransform
           if (StreamApiUtil.isProducerStreamCall(current)) {
             break
           }
-          current = myPreviousCalls.get(current)
+          current = myPreviousCalls[current]
         }
 
         Collections.reverse(chain)

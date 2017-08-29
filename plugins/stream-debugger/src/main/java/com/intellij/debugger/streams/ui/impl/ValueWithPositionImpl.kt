@@ -50,7 +50,7 @@ data class ValueWithPositionImpl(override val traceElement: TraceElement) : Valu
   fun updateToInvalid(): Boolean =
     updateProperties(INVALID_POSITION, DEFAULT_VISIBLE_VALUE, DEFAULT_HIGHLIGHTING_VALUE)
 
-  fun setInvalid(): Unit =
+  fun setInvalid() =
     setProperties(INVALID_POSITION, DEFAULT_VISIBLE_VALUE, DEFAULT_HIGHLIGHTING_VALUE)
 
   fun updateProperties(position: Int, isVisible: Boolean, isHighlighted: Boolean): Boolean {
@@ -59,7 +59,7 @@ data class ValueWithPositionImpl(override val traceElement: TraceElement) : Valu
     return changed
   }
 
-  fun setProperties(position: Int, isVisible: Boolean, isHighlighted: Boolean): Unit {
+  fun setProperties(position: Int, isVisible: Boolean, isHighlighted: Boolean) {
     myPosition = position
     myIsHighlighted = isHighlighted
     myIsVisible = isVisible

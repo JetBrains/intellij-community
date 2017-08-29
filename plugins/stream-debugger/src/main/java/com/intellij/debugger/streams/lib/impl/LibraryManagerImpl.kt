@@ -37,8 +37,7 @@ class LibraryManagerImpl(project: Project) : LibraryManager {
   override fun isPackageSupported(packageName: String): Boolean = mySupportedPackages.contains(packageName)
 
   override fun getLibraryByPackage(packageName: String): LibrarySupport {
-    val library = myLibraries.find { packageName.startsWith(it.description.packageName) }
+    return myLibraries.find { packageName.startsWith(it.description.packageName) }
                   ?: throw LibraryNotSupportedException("Such library is not supported: $packageName")
-    return library
   }
 }

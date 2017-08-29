@@ -79,8 +79,8 @@ abstract class KotlinChainBuilderBase(private val transformer: ChainTransformer.
   protected abstract class ExistenceChecker : MyTreeVisitor() {
     private var myIsFound: Boolean = false
     fun isFound(): Boolean = myIsFound
-    fun reset(): Unit = setFound(false)
-    protected fun fireElementFound(): Unit = setFound(true)
+    fun reset() = setFound(false)
+    protected fun fireElementFound() = setFound(true)
 
     private fun setFound(value: Boolean) {
       myIsFound = value
