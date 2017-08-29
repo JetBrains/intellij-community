@@ -51,7 +51,7 @@ public class PivotalTrackerRepository extends BaseRepositoryImpl {
 
   {
     if (StringUtil.isEmpty(getUrl())) {
-      setUrl("http://www.pivotaltracker.com");
+      setUrl("https://www.pivotaltracker.com");
     }
   }
 
@@ -292,6 +292,7 @@ public class PivotalTrackerRepository extends BaseRepositoryImpl {
   @Override
   protected void configureHttpMethod(final HttpMethod method) {
     method.addRequestHeader("X-TrackerToken", myAPIKey);
+    //method.setFollowRedirects(true);
   }
 
   public String getProjectId() {
@@ -383,5 +384,13 @@ public class PivotalTrackerRepository extends BaseRepositoryImpl {
   @Override
   protected int getFeatures() {
     return super.getFeatures() | BASIC_HTTP_AUTHORIZATION | STATE_UPDATING;
+  }
+
+  @Override
+  public void setUrl(String url) {
+    if (url.startsWith("http:")) {
+      url = "https:" + StringUtil.trimStart(url, "http:");
+    }
+    super.setUrl(url);
   }
 }
