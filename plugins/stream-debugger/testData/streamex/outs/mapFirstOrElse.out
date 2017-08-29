@@ -5,22 +5,12 @@ MapFirstOrElse.java:8
 StreamEx.of(1, 2, 3)
 .mapFirstOrElse(x -> 10, x -> 20)
 .max(Integer::compareTo)
-StreamEx.of
-    before: nothing
-    after: 1,3,5
 mapFirstOrElse
     before: 1,3,5
     after: 2,4,6
 max
     before: 2,4,6
     after: 2147483646
-mappings for StreamEx.of
-  direct:
-    no
-  reverse:
-    nothing <- 1
-    nothing <- 3
-    nothing <- 5
 mappings for mapFirstOrElse
   direct:
     1 -> 2

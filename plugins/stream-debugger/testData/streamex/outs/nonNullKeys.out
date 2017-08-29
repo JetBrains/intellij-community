@@ -5,22 +5,12 @@ NonNullKeys.java:8
 EntryStream.of(1, 1, 2, 4, null, 9)
 .nonNullKeys()
 .count()
-EntryStream.of
-    before: nothing
-    after: 1,3,5
 nonNullKeys
     before: 1,3,5
     after: 2,4
 count
     before: 2,4
     after: nothing
-mappings for EntryStream.of
-  direct:
-    no
-  reverse:
-    nothing <- 1
-    nothing <- 3
-    nothing <- 5
 mappings for nonNullKeys
   direct:
     1 -> 2

@@ -5,22 +5,12 @@ FlatMapToEntry.java:15
 StreamEx.of(1, 2, 3)
 .flatMapToEntry(FlatMapToEntry::toMap)
 .count()
-StreamEx.of
-    before: nothing
-    after: 1,3,5
 flatMapToEntry
     before: 1,3,5
     after: 2,4,6
 count
     before: 2,4,6
     after: nothing
-mappings for StreamEx.of
-  direct:
-    no
-  reverse:
-    nothing <- 1
-    nothing <- 3
-    nothing <- 5
 mappings for flatMapToEntry
   direct:
     1 -> 2

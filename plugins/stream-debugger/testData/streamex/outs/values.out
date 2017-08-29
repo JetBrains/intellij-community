@@ -6,9 +6,6 @@ EntryStream.of(1, 1, 2, 4, 3, 9)
 .values()
 .mapToInt(Integer::intValue)
 .sum()
-EntryStream.of
-    before: nothing
-    after: 1,4,7
 values
     before: 1,4,7
     after: 2,5,8
@@ -18,13 +15,6 @@ mapToInt
 sum
     before: 3,6,9
     after: nothing
-mappings for EntryStream.of
-  direct:
-    no
-  reverse:
-    nothing <- 1
-    nothing <- 4
-    nothing <- 7
 mappings for values
   direct:
     1 -> 2

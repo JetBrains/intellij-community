@@ -5,26 +5,12 @@ IntervalMap.java:8
 StreamEx.of(1, 2, 4, 6, 7, 9, 10)
 .intervalMap((l, r) -> l % 2 == r % 2, (l, r) -> l + r)
 .forEach(System.out::println)
-StreamEx.of
-    before: nothing
-    after: 1,2,4,5,6,8,9
 intervalMap
     before: 1,2,4,5,6,8,9
     after: 3,7,10,11
 forEach
     before: 3,7,10,11
     after: nothing
-mappings for StreamEx.of
-  direct:
-    no
-  reverse:
-    nothing <- 1
-    nothing <- 2
-    nothing <- 4
-    nothing <- 5
-    nothing <- 6
-    nothing <- 8
-    nothing <- 9
 mappings for intervalMap
   direct:
     1 -> 3

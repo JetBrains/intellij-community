@@ -5,22 +5,12 @@ MapLast.java:8
 IntStreamEx.of(1, 2, 3)
 .mapLast(x -> 30)
 .sum()
-IntStreamEx.of
-    before: nothing
-    after: 1,2,4
 mapLast
     before: 1,2,4
     after: 3,5,6
 sum
     before: 3,5,6
     after: nothing
-mappings for IntStreamEx.of
-  direct:
-    no
-  reverse:
-    nothing <- 1
-    nothing <- 2
-    nothing <- 4
 mappings for mapLast
   direct:
     1 -> 3

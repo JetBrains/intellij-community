@@ -5,22 +5,12 @@ Invert.java:8
 EntryStream.of(1, 1, 2, 4, 3, 9)
 .invert()
 .count()
-EntryStream.of
-    before: nothing
-    after: 1,3,5
 invert
     before: 1,3,5
     after: 2,4,6
 count
     before: 2,4,6
     after: nothing
-mappings for EntryStream.of
-  direct:
-    no
-  reverse:
-    nothing <- 1
-    nothing <- 3
-    nothing <- 5
 mappings for invert
   direct:
     1 -> 2

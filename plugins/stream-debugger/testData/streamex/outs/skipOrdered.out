@@ -5,21 +5,12 @@ SkipOrdered.java:8
 IntStreamEx.of(1, 2)
 .skipOrdered(1)
 .sum()
-IntStreamEx.of
-    before: nothing
-    after: 1,2
 skipOrdered
     before: 1,2
     after: 3
 sum
     before: 3
     after: nothing
-mappings for IntStreamEx.of
-  direct:
-    no
-  reverse:
-    nothing <- 1
-    nothing <- 2
 mappings for skipOrdered
   direct:
     1 -> nothing

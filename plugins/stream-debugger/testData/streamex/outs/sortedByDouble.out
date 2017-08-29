@@ -5,22 +5,12 @@ SortedByDouble.java:8
 StreamEx.of(10, 1, 2)
 .sortedByDouble(Integer::doubleValue)
 .forEach(System.out::println)
-StreamEx.of
-    before: nothing
-    after: 1,2,3
 sortedByDouble
     before: 1,2,3
     after: 4,5,6
 forEach
     before: 4,5,6
     after: nothing
-mappings for StreamEx.of
-  direct:
-    no
-  reverse:
-    nothing <- 1
-    nothing <- 2
-    nothing <- 3
 mappings for sortedByDouble
   direct:
     1 -> 6

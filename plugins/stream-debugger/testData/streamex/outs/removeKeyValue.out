@@ -5,22 +5,12 @@ RemoveKeyValue.java:8
 EntryStream.of(1, 1, 2, 4, 3, 9)
 .removeKeyValue((k, v) -> v < 7)
 .count()
-EntryStream.of
-    before: nothing
-    after: 1,2,3
 removeKeyValue
     before: 1,2,3
     after: 4
 count
     before: 4
     after: nothing
-mappings for EntryStream.of
-  direct:
-    no
-  reverse:
-    nothing <- 1
-    nothing <- 2
-    nothing <- 3
 mappings for removeKeyValue
   direct:
     1 -> nothing

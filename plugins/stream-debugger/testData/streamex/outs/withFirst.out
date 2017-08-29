@@ -5,22 +5,12 @@ WithFirst.java:8
 StreamEx.of(10., 2., 3.)
 .withFirst((first, other) -> first * other)
 .count()
-StreamEx.of
-    before: nothing
-    after: 1,3,5
 withFirst
     before: 1,3,5
     after: 2,4,6
 count
     before: 2,4,6
     after: nothing
-mappings for StreamEx.of
-  direct:
-    no
-  reverse:
-    nothing <- 1
-    nothing <- 3
-    nothing <- 5
 mappings for withFirst
   direct:
     1 -> 2

@@ -5,22 +5,12 @@ ZipWithSameSizes.java:10
 StreamEx.of(1, 2, 3)
 .zipWith(Stream.of(1, 3, 9))
 .count()
-StreamEx.of
-    before: nothing
-    after: 1,3,5
 zipWith
     before: 1,3,5
     after: 2,4,6
 count
     before: 2,4,6
     after: nothing
-mappings for StreamEx.of
-  direct:
-    no
-  reverse:
-    nothing <- 1
-    nothing <- 3
-    nothing <- 5
 mappings for zipWith
   direct:
     1 -> 2

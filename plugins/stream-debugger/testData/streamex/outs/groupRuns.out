@@ -5,25 +5,12 @@ GroupRuns.java:8
 StreamEx.of(1, 2, 2, 3, 5, 7)
 .groupRuns((l, r) -> l % 2 == r % 2)
 .count()
-StreamEx.of
-    before: nothing
-    after: 1,2,4,5,7,8
 groupRuns
     before: 1,2,4,5,7,8
     after: 3,6,9
 count
     before: 3,6,9
     after: nothing
-mappings for StreamEx.of
-  direct:
-    no
-  reverse:
-    nothing <- 1
-    nothing <- 2
-    nothing <- 4
-    nothing <- 5
-    nothing <- 7
-    nothing <- 8
 mappings for groupRuns
   direct:
     1 -> 3

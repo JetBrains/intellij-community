@@ -5,22 +5,12 @@ FlatMapToValue.java:9
 EntryStream.of(1, 1, 2, 4, 3, 9)
 .flatMapToValue((k, v) -> StreamEx.of(k, k + 1))
 .count()
-EntryStream.of
-    before: nothing
-    after: 1,4,7
 flatMapToValue
     before: 1,4,7
     after: 2,3,5,6,8,9
 count
     before: 2,3,5,6,8,9
     after: nothing
-mappings for EntryStream.of
-  direct:
-    no
-  reverse:
-    nothing <- 1
-    nothing <- 4
-    nothing <- 7
 mappings for flatMapToValue
   direct:
     1 -> 2,3

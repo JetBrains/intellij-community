@@ -5,22 +5,12 @@ MapLastOrElse.java:10
 StreamEx.of(1, 2, 3)
 .mapLastOrElse(x -> 30, x -> x - 1)
 .min(Integer::compareTo)
-StreamEx.of
-    before: nothing
-    after: 1,2,4
 mapLastOrElse
     before: 1,2,4
     after: 3,5,6
 min
     before: 3,5,6
     after: 2147483646
-mappings for StreamEx.of
-  direct:
-    no
-  reverse:
-    nothing <- 1
-    nothing <- 2
-    nothing <- 4
 mappings for mapLastOrElse
   direct:
     1 -> 3

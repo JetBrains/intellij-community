@@ -5,23 +5,12 @@ AtLeast.java:8
 IntStreamEx.of(1, 2, 3, 4)
 .atLeast(3)
 .sum()
-IntStreamEx.of
-    before: nothing
-    after: 1,2,3,5
 atLeast
     before: 1,2,3,5
     after: 4,6
 sum
     before: 4,6
     after: nothing
-mappings for IntStreamEx.of
-  direct:
-    no
-  reverse:
-    nothing <- 1
-    nothing <- 2
-    nothing <- 3
-    nothing <- 5
 mappings for atLeast
   direct:
     1 -> nothing

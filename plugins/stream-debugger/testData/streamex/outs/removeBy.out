@@ -5,23 +5,12 @@ RemoveBy.java:8
 StreamEx.of(1, 2, 3, 4)
 .removeBy(x -> x * x, 16)
 .forEach(System.out::print)
-StreamEx.of
-    before: nothing
-    after: 1,3,5,7
 removeBy
     before: 1,3,5,7
     after: 2,4,6
 forEach
     before: 2,4,6
     after: nothing
-mappings for StreamEx.of
-  direct:
-    no
-  reverse:
-    nothing <- 1
-    nothing <- 3
-    nothing <- 5
-    nothing <- 7
 mappings for removeBy
   direct:
     1 -> 2

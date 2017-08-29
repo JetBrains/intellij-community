@@ -5,20 +5,12 @@ AppendToEmpty.java:8
 StreamEx.empty()
 .append(1)
 .count()
-StreamEx.empty
-    before: nothing
-    after: nothing
 append
     before: nothing
     after: 1
 count
     before: 1
     after: nothing
-mappings for StreamEx.empty
-  direct:
-    no
-  reverse:
-    empty
 mappings for append
   direct:
     empty

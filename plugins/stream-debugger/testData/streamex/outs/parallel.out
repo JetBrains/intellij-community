@@ -5,22 +5,12 @@ Parallel.java:11
 StreamEx.of(1, 2, 3)
 .parallel((ForkJoinPool) Executors.newWorkStealingPool())
 .count()
-StreamEx.of
-    before: nothing
-    after: 1,3,5
 parallel
     before: 1,3,5
     after: 2,4,6
 count
     before: 2,4,6
     after: nothing
-mappings for StreamEx.of
-  direct:
-    no
-  reverse:
-    nothing <- 1
-    nothing <- 3
-    nothing <- 5
 mappings for parallel
   direct:
     1 -> 2

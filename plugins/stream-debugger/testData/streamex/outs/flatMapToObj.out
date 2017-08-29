@@ -5,22 +5,12 @@ FlatMapToObj.java:9
 LongStreamEx.of(1, 2, 3)
 .flatMapToObj(x -> StreamEx.of(x, x + 1))
 .count()
-LongStreamEx.of
-    before: nothing
-    after: 1,4,7
 flatMapToObj
     before: 1,4,7
     after: 2,3,5,6,8,9
 count
     before: 2,3,5,6,8,9
     after: nothing
-mappings for LongStreamEx.of
-  direct:
-    no
-  reverse:
-    nothing <- 1
-    nothing <- 4
-    nothing <- 7
 mappings for flatMapToObj
   direct:
     1 -> 2,3

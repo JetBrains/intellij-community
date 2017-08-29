@@ -5,22 +5,12 @@ FlatCollection.java:10
 StreamEx.of(1, 2, 3)
 .flatCollection(x -> Arrays.asList(new Integer[]{x + 1, x + 2, x + 3}))
 .count()
-StreamEx.of
-    before: nothing
-    after: 1,5,9
 flatCollection
     before: 1,5,9
     after: 2,3,4,6,7,8,10,11,12
 count
     before: 2,3,4,6,7,8,10,11,12
     after: nothing
-mappings for StreamEx.of
-  direct:
-    no
-  reverse:
-    nothing <- 1
-    nothing <- 5
-    nothing <- 9
 mappings for flatCollection
   direct:
     1 -> 2,3,4

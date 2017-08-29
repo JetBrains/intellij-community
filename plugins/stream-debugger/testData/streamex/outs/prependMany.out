@@ -5,21 +5,12 @@ PrependMany.java:10
 StreamEx.of(1, 2)
 .prepend(Stream.of(3, 4, 5))
 .count()
-StreamEx.of
-    before: nothing
-    after: 4,6
 prepend
     before: 4,6
     after: 1,2,3,5,7
 count
     before: 1,2,3,5,7
     after: nothing
-mappings for StreamEx.of
-  direct:
-    no
-  reverse:
-    nothing <- 4
-    nothing <- 6
 mappings for prepend
   direct:
     4 -> 5

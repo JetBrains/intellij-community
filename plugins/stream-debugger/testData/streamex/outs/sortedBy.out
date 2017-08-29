@@ -5,22 +5,12 @@ SortedBy.java:8
 StreamEx.of(1, 2, 10)
 .sortedBy(Object::toString)
 .forEach(System.out::println)
-StreamEx.of
-    before: nothing
-    after: 1,2,3
 sortedBy
     before: 1,2,3
     after: 4,5,6
 forEach
     before: 4,5,6
     after: nothing
-mappings for StreamEx.of
-  direct:
-    no
-  reverse:
-    nothing <- 1
-    nothing <- 2
-    nothing <- 3
 mappings for sortedBy
   direct:
     1 -> 4

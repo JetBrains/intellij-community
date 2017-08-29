@@ -5,25 +5,12 @@ DistinctAtLeast.java:8
 StreamEx.of(1, 2, 3, 2, 3, 2)
 .distinct(3)
 .count()
-StreamEx.of
-    before: nothing
-    after: 1,2,3,4,5,6
 distinct
     before: 1,2,3,4,5,6
     after: 7
 count
     before: 7
     after: nothing
-mappings for StreamEx.of
-  direct:
-    no
-  reverse:
-    nothing <- 1
-    nothing <- 2
-    nothing <- 3
-    nothing <- 4
-    nothing <- 5
-    nothing <- 6
 mappings for distinct
   direct:
     1 -> nothing

@@ -5,26 +5,12 @@ RunLengths.java:8
 StreamEx.of(1, 2, 2, 3, 2, 2, 4)
 .runLengths()
 .count()
-StreamEx.of
-    before: nothing
-    after: 1,2,4,5,7,9,10
 runLengths
     before: 1,2,4,5,7,9,10
     after: 3,6,8,11,12
 count
     before: 3,6,8,11,12
     after: nothing
-mappings for StreamEx.of
-  direct:
-    no
-  reverse:
-    nothing <- 1
-    nothing <- 2
-    nothing <- 4
-    nothing <- 5
-    nothing <- 7
-    nothing <- 9
-    nothing <- 10
 mappings for runLengths
   direct:
     1 -> 3

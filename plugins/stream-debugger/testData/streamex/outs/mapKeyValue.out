@@ -5,22 +5,12 @@ MapKeyValue.java:23
 EntryStream.of(1, 1, 2, 4, 3, 9)
 .mapKeyValue((k, v) -> k + v)
 .max(Integer::compareTo)
-EntryStream.of
-    before: nothing
-    after: 1,3,5
 mapKeyValue
     before: 1,3,5
     after: 2,4,6
 max
     before: 2,4,6
     after: 2147483646
-mappings for EntryStream.of
-  direct:
-    no
-  reverse:
-    nothing <- 1
-    nothing <- 3
-    nothing <- 5
 mappings for mapKeyValue
   direct:
     1 -> 2

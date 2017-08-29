@@ -5,23 +5,12 @@ Greater.java:10
 DoubleStreamEx.of(1., 2., 3., 4.)
 .greater(2)
 .min()
-DoubleStreamEx.of
-    before: nothing
-    after: 1,2,3,5
 greater
     before: 1,2,3,5
     after: 4,6
 min
     before: 4,6
     after: 2147483646
-mappings for DoubleStreamEx.of
-  direct:
-    no
-  reverse:
-    nothing <- 1
-    nothing <- 2
-    nothing <- 3
-    nothing <- 5
 mappings for greater
   direct:
     1 -> nothing

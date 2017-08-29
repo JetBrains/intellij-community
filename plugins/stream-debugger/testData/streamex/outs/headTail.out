@@ -5,23 +5,12 @@ HeadTail.java:8
 StreamEx.of(1, 2, 3, 4)
 .headTail((head, tail) -> tail, () -> StreamEx.of(0))
 .count()
-StreamEx.of
-    before: nothing
-    after: 1,2,4,6
 headTail
     before: 1,2,4,6
     after: 3,5,7
 count
     before: 3,5,7
     after: nothing
-mappings for StreamEx.of
-  direct:
-    no
-  reverse:
-    nothing <- 1
-    nothing <- 2
-    nothing <- 4
-    nothing <- 6
 mappings for headTail
   direct:
     1 -> nothing

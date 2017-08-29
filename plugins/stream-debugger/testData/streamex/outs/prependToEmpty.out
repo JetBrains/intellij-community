@@ -5,20 +5,12 @@ PrependToEmpty.java:8
 StreamEx.empty()
 .prepend(1)
 .count()
-StreamEx.empty
-    before: nothing
-    after: nothing
 prepend
     before: nothing
     after: 1
 count
     before: 1
     after: nothing
-mappings for StreamEx.empty
-  direct:
-    no
-  reverse:
-    empty
 mappings for prepend
   direct:
     empty

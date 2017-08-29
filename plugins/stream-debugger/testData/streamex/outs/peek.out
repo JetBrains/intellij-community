@@ -10,9 +10,6 @@ StreamEx.of(1, 2, 3)
 .peekValues(System.out::print)
 .peekKeyValue((k, v) -> System.out.println("(" + k + " -> " + v + ")"))
 .count()
-StreamEx.of
-    before: nothing
-    after: 1,3,10
 peekFirst
     before: 1,3,10
     after: 2,4,11
@@ -34,13 +31,6 @@ peekKeyValue
 count
     before: 9,16,21
     after: nothing
-mappings for StreamEx.of
-  direct:
-    no
-  reverse:
-    nothing <- 1
-    nothing <- 3
-    nothing <- 10
 mappings for peekFirst
   direct:
     1 -> 2

@@ -5,25 +5,12 @@ NonNull.java:9
 StreamEx.of(array)
 .nonNull()
 .count()
-StreamEx.of
-    before: nothing
-    after: 1,3,5,7,9,10
 nonNull
     before: 1,3,5,7,9,10
     after: 2,4,6,8
 count
     before: 2,4,6,8
     after: nothing
-mappings for StreamEx.of
-  direct:
-    no
-  reverse:
-    nothing <- 1
-    nothing <- 3
-    nothing <- 5
-    nothing <- 7
-    nothing <- 9
-    nothing <- 10
 mappings for nonNull
   direct:
     1 -> 2

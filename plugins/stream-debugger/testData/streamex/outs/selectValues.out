@@ -5,22 +5,12 @@ SelectValues.java:8
 EntryStream.of(1, 1, 2, 4L, 3, new Object())
 .selectValues(Long.class)
 .count()
-EntryStream.of
-    before: nothing
-    after: 1,2,4
 selectValues
     before: 1,2,4
     after: 3
 count
     before: 3
     after: nothing
-mappings for EntryStream.of
-  direct:
-    no
-  reverse:
-    nothing <- 1
-    nothing <- 2
-    nothing <- 4
 mappings for selectValues
   direct:
     1 -> nothing

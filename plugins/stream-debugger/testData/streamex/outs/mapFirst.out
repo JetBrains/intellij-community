@@ -5,22 +5,12 @@ MapFirst.java:8
 IntStreamEx.of(1, 2, 3)
 .mapFirst(x -> 10)
 .sum()
-IntStreamEx.of
-    before: nothing
-    after: 1,3,5
 mapFirst
     before: 1,3,5
     after: 2,4,6
 sum
     before: 2,4,6
     after: nothing
-mappings for IntStreamEx.of
-  direct:
-    no
-  reverse:
-    nothing <- 1
-    nothing <- 3
-    nothing <- 5
 mappings for mapFirst
   direct:
     1 -> 2

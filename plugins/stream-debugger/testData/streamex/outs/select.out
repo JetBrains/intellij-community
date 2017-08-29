@@ -5,24 +5,12 @@ Select.java:24
 StreamEx.of(objects)
 .select(Long.class)
 .count()
-StreamEx.of
-    before: nothing
-    after: 1,2,3,4,6
 select
     before: 1,2,3,4,6
     after: 5
 count
     before: 5
     after: nothing
-mappings for StreamEx.of
-  direct:
-    no
-  reverse:
-    nothing <- 1
-    nothing <- 2
-    nothing <- 3
-    nothing <- 4
-    nothing <- 6
 mappings for select
   direct:
     1 -> nothing

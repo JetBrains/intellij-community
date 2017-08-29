@@ -5,22 +5,12 @@ CollapseKeys.java:10
 EntryStream.of(1, 1, 2, 4, 3, 9)
 .collapseKeys(Collectors.toList())
 .count()
-EntryStream.of
-    before: nothing
-    after: 1,2,4
 collapseKeys
     before: 1,2,4
     after: 3,5,6
 count
     before: 3,5,6
     after: nothing
-mappings for EntryStream.of
-  direct:
-    no
-  reverse:
-    nothing <- 1
-    nothing <- 2
-    nothing <- 4
 mappings for collapseKeys
   direct:
     1 -> 3

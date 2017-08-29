@@ -5,23 +5,12 @@ Chain.java:10
 StreamEx.of(1, 2, 3, 4)
 .chain(x -> dividable(x, 3))
 .count()
-StreamEx.of
-    before: nothing
-    after: 1,2,3,5
 chain
     before: 1,2,3,5
     after: 4
 count
     before: 4
     after: nothing
-mappings for StreamEx.of
-  direct:
-    no
-  reverse:
-    nothing <- 1
-    nothing <- 2
-    nothing <- 3
-    nothing <- 5
 mappings for chain
   direct:
     1 -> nothing

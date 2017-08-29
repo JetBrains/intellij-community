@@ -5,21 +5,12 @@ Elements.java:9
 IntStreamEx.of(1, 3)
 .elements(array)
 .sum()
-IntStreamEx.of
-    before: nothing
-    after: 1,3
 elements
     before: 1,3
     after: 2,4
 sum
     before: 2,4
     after: nothing
-mappings for IntStreamEx.of
-  direct:
-    no
-  reverse:
-    nothing <- 1
-    nothing <- 3
 mappings for elements
   direct:
     1 -> 2
