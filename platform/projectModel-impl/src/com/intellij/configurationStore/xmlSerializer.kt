@@ -167,7 +167,11 @@ private val serializer = object : XmlSerializerImpl.XmlSerializerBase() {
       try {
         binding.init(originalType, this)
       }
-      catch (e: XmlSerializationException) {
+      catch (e: RuntimeException) {
+        map.remove(key)
+        throw e
+      }
+      catch (e: Error) {
         map.remove(key)
         throw e
       }

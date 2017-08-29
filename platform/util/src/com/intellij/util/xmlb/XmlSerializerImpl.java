@@ -132,7 +132,11 @@ public final class XmlSerializerImpl {
         try {
           binding.init(originalType, this);
         }
-        catch (XmlSerializationException e) {
+        catch (RuntimeException e) {
+          map.remove(key);
+          throw e;
+        }
+        catch (Error e) {
           map.remove(key);
           throw e;
         }
