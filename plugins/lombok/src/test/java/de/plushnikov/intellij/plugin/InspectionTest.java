@@ -50,14 +50,6 @@ public class InspectionTest extends InspectionTestCase {
     doTest();
   }
 
-  public void testBuilderRightType() throws Exception {
-    doTest();
-  }
-
-  public void testBuilderInvalidIdentifier() throws Exception {
-    doTest();
-  }
-
   public void testDelegateConcreteType() throws Exception {
     doTest();
   }

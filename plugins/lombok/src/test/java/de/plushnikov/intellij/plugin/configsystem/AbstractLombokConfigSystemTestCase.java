@@ -1,5 +1,7 @@
 package de.plushnikov.intellij.plugin.configsystem;
 
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
 import de.plushnikov.intellij.plugin.AbstractLombokParsingTestCase;
 
 import java.io.IOException;
@@ -13,5 +15,16 @@ public abstract class AbstractLombokConfigSystemTestCase extends AbstractLombokP
     myFixture.copyFileToProject(getBasePath() + "/" + subPath + "/lombok.config", "lombok.config");
 
     doTest(fullFileName, subPath + "/after/" + fileName);
+  }
+
+  protected void doTest(final String beforeFileName, final String afterFileName) throws IOException {
+    final PsiFile psiDelombokFile = loadToPsiFile(afterFileName);
+    final PsiFile psiLombokFile = loadToPsiFile(beforeFileName);
+
+    if (!(psiLombokFile instanceof PsiJavaFile) || !(psiDelombokFile instanceof PsiJavaFile)) {
+      fail("The test file type is not supported");
+    }
+
+    compareFiles((PsiJavaFile) psiLombokFile, (PsiJavaFile) psiDelombokFile);
   }
 }

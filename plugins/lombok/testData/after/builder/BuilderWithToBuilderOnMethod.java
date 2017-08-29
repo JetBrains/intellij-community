@@ -43,7 +43,7 @@ class BuilderWithToBuilderOnMethod<T, K> {
 
 		@java.lang.SuppressWarnings("all")
 		@javax.annotation.Generated("lombok")
-		public BuilderWithToBuilderOnMethod build() {
+		public BuilderWithToBuilderOnMethod<Z, String> build() {
 			return BuilderWithToBuilderOnMethod.<Z>test(one, bar);
 		}
 

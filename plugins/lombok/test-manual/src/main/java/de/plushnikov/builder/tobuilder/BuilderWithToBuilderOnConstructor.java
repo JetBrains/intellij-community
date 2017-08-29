@@ -19,7 +19,7 @@ class BuilderWithToBuilderOnConstructor<T> {
     bean.mTwo = "mTwo";
     bean.foo = "foo";
 
-    BuilderWithToBuilderOnConstructor.BuilderWithToBuilderOnConstructorBuilder x = bean.toBuilder();
+    BuilderWithToBuilderOnConstructor.BuilderWithToBuilderOnConstructorBuilder<String> x = bean.toBuilder();
     System.out.println(x);
 
     x.mOne("builderOne");

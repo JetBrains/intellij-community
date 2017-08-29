@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<problems>
-  <problem>
-    <file>Test.java</file>
-    <line>1</line>
-    <description>invalid^identifier is not a valid identifier</description>
-  </problem>
-</problems>
