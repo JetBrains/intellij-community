@@ -15,12 +15,12 @@
  */
 package com.jetbrains.python.inspections;
 
-import com.intellij.testFramework.TestDataPath;
-import com.jetbrains.python.fixtures.PyTestCase;
+import com.intellij.psi.PsiFile;
+import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
+import org.jetbrains.annotations.NotNull;
 
-@TestDataPath("$CONTENT_ROOT/../testData/inspections/PyProtectedMemberInspection")
-public class PyProtectedMemberInspectionTest extends PyTestCase {
+public class PyProtectedMemberInspectionTest extends PyInspectionTestCase {
 
   public void testTruePositive() {
     doTest();
@@ -60,36 +60,29 @@ public class PyProtectedMemberInspectionTest extends PyTestCase {
   }
 
   public void testAnnotation() {
-    setLanguageLevel(LanguageLevel.PYTHON34);
-    PyProtectedMemberInspection inspection = new PyProtectedMemberInspection();
-    inspection.ignoreAnnotations = true;
-    myFixture.configureByFile(getTestName(true) + ".py");
-    myFixture.checkHighlighting(false, false, true);
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> {
+      setLanguageLevel(LanguageLevel.PYTHON34);
+      PyProtectedMemberInspection inspection = new PyProtectedMemberInspection();
+      inspection.ignoreAnnotations = true;
+      myFixture.enableInspections(inspection);
+      final PsiFile currentFile = myFixture.configureByFile(getTestFilePath());
+      myFixture.checkHighlighting(isWarning(), isInfo(), isWeakWarning());
+      assertSdkRootsNotParsed(currentFile);
+    });
   }
 
   //PY-14234
   public void testImportFromTheSamePackage() {
-    String path = getTestName(true);
-    myFixture.copyDirectoryToProject(path + "/my_package", "./my_package");
-    myFixture.configureByFile("/my_package/my_public_module.py");
-    myFixture.enableInspections(PyProtectedMemberInspection.class);
-    myFixture.checkHighlighting(false, false, true);
+    doMultiFileTest("my_package/my_public_module.py");
   }
 
   public void testModule() {
-    myFixture.configureByFiles(getTestName(true) + ".py", "tmp.py");
-    myFixture.enableInspections(PyProtectedMemberInspection.class);
-    myFixture.checkHighlighting(false, false, true);
+    doMultiFileTest();
   }
 
-  private void doTest() {
-    myFixture.configureByFile(getTestName(true) + ".py");
-    myFixture.enableInspections(PyProtectedMemberInspection.class);
-    myFixture.checkHighlighting(false, false, true);
-  }
-
+  @NotNull
   @Override
-  protected String getTestDataPath() {
-    return super.getTestDataPath() + "/inspections/PyProtectedMemberInspection/";
+  protected Class<? extends PyInspection> getInspectionClass() {
+    return PyProtectedMemberInspection.class;
   }
 }
