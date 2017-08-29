@@ -274,7 +274,6 @@ public class TestPackage extends TestObject {
 
   private static boolean hasSingleConstructor(Class<?> aClass) {
     Constructor<?>[] constructors = aClass.getConstructors();
-    return constructors.length == 0 || 
-           constructors.length == 1 && constructors[0].getParameterTypes().length == 0;
+    return constructors.length == 1 && constructors[0].getParameterTypes().length == 0;
   }
 }
