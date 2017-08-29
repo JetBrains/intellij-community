@@ -1,4 +1,4 @@
-package com.intellij.stats.interval
+package com.intellij.stats.tracking
 
 data class IntervalData(val intervalStart: Double, val intervalEnd: Double, val count: Int)
 
@@ -12,7 +12,7 @@ class IntervalCounter(
 
     fun register(value: Long) {
         val log = roundedLog(value)
-        val bucket = Math.min(maxPower, Math.max(minPower, log)) - minPower
+        val bucket = Math.min(maxPower - 1, Math.max(minPower, log.toInt())) - minPower
         values[bucket] += 1
     }
 
@@ -21,17 +21,17 @@ class IntervalCounter(
     }
 
     private fun interval(index: Int): IntervalData {
-        val start = Math.pow(exponent, (index - 1).toDouble())
-        val end = Math.pow(exponent, index.toDouble())
+        val start = Math.pow(exponent, index.toDouble())
+        val end = Math.pow(exponent, (index + 1).toDouble())
 
         val count = values[index]
 
         return IntervalData(start, end, count)
     }
 
-    private fun roundedLog(time: Long): Int {
+    private fun roundedLog(time: Long): Double {
         val dTime = time.toDouble()
-        return (Math.log(dTime) / Math.log(exponent)).toInt()
+        return (Math.log(dTime) / Math.log(exponent))
     }
 
 }
