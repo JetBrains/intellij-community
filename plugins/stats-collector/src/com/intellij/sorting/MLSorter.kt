@@ -155,7 +155,7 @@ private data class ItemRankInfo(val positionBefore: Int, val mlRank: Double?, va
 
 typealias WeightedElement = Pair<LookupElement, Double>
 
-private fun CompletionParameters.language(): Language? {
+fun CompletionParameters.language(): Language? {
     val offset = editor.caretModel.offset
     return  PsiUtilCore.getLanguageAtOffset(originalFile, offset)
 }

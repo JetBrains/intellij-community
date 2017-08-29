@@ -10,6 +10,7 @@ import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.extensions.impl.ExtensionComponentAdapter
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.sorting.language
 import com.intellij.util.ReflectionUtil
 import org.picocontainer.ComponentAdapter
 
@@ -99,12 +100,22 @@ class InvocationCountEnhancingContributor : CompletionContributor() {
     override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
         if (ApplicationManager.getApplication().isUnitTestMode && !isEnabledInTests) return
 
+        val start = System.currentTimeMillis()
         result.runRemainingContributors(parameters, {
             result.passResult(it)
         })
+        val end = System.currentTimeMillis()
 
-        if (parameters.invocationCount > MAX_INVOCATION_COUNT) return
+        parameters.language()?.let {
+            CompletionTimeStatistics.registerCompletionContributorsTime(it, end - start)
+        }
 
+        if (parameters.invocationCount < MAX_INVOCATION_COUNT) {
+            startMaxInvocationCountCompletion(parameters, result)
+        }
+    }
+
+    private fun startMaxInvocationCountCompletion(parameters: CompletionParameters, result: CompletionResultSet) {
         val updatedParams = parameters
                 .withInvocationCount(MAX_INVOCATION_COUNT)
                 .withType(parameters.completionType)
@@ -112,11 +123,17 @@ class InvocationCountEnhancingContributor : CompletionContributor() {
         val sorter = CompletionSorter.emptySorter()
         val newResultSet = result.withRelevanceSorter(sorter)
 
+        val start = System.currentTimeMillis()
         CompletionService
                 .getCompletionService()
                 .getVariantsFromContributors(updatedParams, this, {
                     newResultSet.consume(it.lookupElement)
                 })
+        val end = System.currentTimeMillis()
+
+        parameters.language()?.let {
+            CompletionTimeStatistics.registerSecondCompletionContributorsTime(it, end - start)
+        }
     }
 
 }
