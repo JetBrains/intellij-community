@@ -289,12 +289,16 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       myHolder.add(AnnotationsHighlightUtil.checkMemberValueType(value, returnType));
     }
 
-    PsiTypeElement returnTypeElement = method.getReturnTypeElement();
-    myHolder.add(AnnotationsHighlightUtil.checkValidAnnotationType(method.getReturnType(), returnTypeElement));
-    final PsiClass aClass = method.getContainingClass();
-    if (returnTypeElement != null && aClass != null) {
-      myHolder.add(AnnotationsHighlightUtil.checkCyclicMemberType(returnTypeElement, aClass));
+    PsiTypeElement typeElement = method.getReturnTypeElement();
+    if (typeElement != null) {
+      myHolder.add(AnnotationsHighlightUtil.checkValidAnnotationType(returnType, typeElement));
     }
+
+    PsiClass aClass = method.getContainingClass();
+    if (typeElement != null && aClass != null) {
+      myHolder.add(AnnotationsHighlightUtil.checkCyclicMemberType(typeElement, aClass));
+    }
+
     myHolder.add(AnnotationsHighlightUtil.checkClashesWithSuperMethods(method));
 
     if (!myHolder.hasErrorResults() && aClass != null) {

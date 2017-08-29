@@ -325,7 +325,7 @@ public class AnnotationsHighlightUtil {
   }
 
   @Nullable
-  static HighlightInfo checkValidAnnotationType(PsiType type, final PsiTypeElement typeElement) {
+  static HighlightInfo checkValidAnnotationType(PsiType type, PsiTypeElement typeElement) {
     if (type != null && type.accept(AnnotationReturnTypeVisitor.INSTANCE).booleanValue()) {
       return null;
     }
@@ -459,9 +459,8 @@ public class AnnotationsHighlightUtil {
 
   @Nullable
   static HighlightInfo checkCyclicMemberType(PsiTypeElement typeElement, PsiClass aClass) {
-    LOG.assertTrue(aClass.isAnnotationType());
     PsiType type = typeElement.getType();
-    final Set<PsiClass> checked = new HashSet<>();
+    Set<PsiClass> checked = new HashSet<>();
     if (cyclicDependencies(aClass, type, checked, aClass.getManager())) {
       String description = JavaErrorMessages.message("annotation.cyclic.element.type");
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(description).create();
