@@ -73,7 +73,7 @@ public abstract class SdkSetupNotificationTestBase extends JavaCodeInsightFixtur
     if (sdk != null) {
       final Sdk foundJdk = ReadAction.compute(() -> ProjectJdkTable.getInstance().findJdk(sdk.getName()));
       if (foundJdk == null) {
-        WriteAction.run(() -> ProjectJdkTable.getInstance().addJdk(sdk, getTestRootDisposable()));
+        WriteAction.run(() -> ProjectJdkTable.getInstance().addJdk(sdk, myFixture.getProjectDisposable()));
       }
     }
     WriteAction.run(() -> ProjectRootManager.getInstance(getProject()).setProjectSdk(sdk));

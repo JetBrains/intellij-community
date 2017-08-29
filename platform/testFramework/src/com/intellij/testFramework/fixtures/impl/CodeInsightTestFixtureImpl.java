@@ -1969,8 +1969,12 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     }
   }
 
+  @NotNull
+  public Disposable getProjectDisposable() {
+    return myProjectFixture.getTestRootDisposable();
+  }
+
   //<editor-fold desc="Deprecated stuff.">
-  @SuppressWarnings("unused")
   @Deprecated
   public static GlobalInspectionContextForTests createGlobalContextForTool(@NotNull AnalysisScope scope,
                                                                            @NotNull final Project project,

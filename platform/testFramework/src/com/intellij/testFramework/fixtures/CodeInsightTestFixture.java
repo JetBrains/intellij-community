@@ -28,6 +28,7 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Document;
@@ -601,4 +602,9 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   List<Crumb> getBreadcrumbsAtCaret();
 
   void saveText(@NotNull VirtualFile file, @NotNull String text);
+
+  @NotNull
+  default Disposable getProjectDisposable() {
+    return getProject();
+  }
 }

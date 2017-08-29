@@ -59,6 +59,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
@@ -130,6 +131,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   private static TestCase ourTestCase;
   public static Thread ourTestThread;
   private static LightProjectDescriptor ourProjectDescriptor;
+  private static Sdk[] myOldSdks;
 
   private ThreadTracker myThreadTracker;
 
@@ -296,6 +298,9 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     assertNull("Previous test " + ourTestCase + " hasn't called tearDown(). Probably overridden without super call.", ourTestCase);
     IdeaLogger.ourErrorsOccurred = null;
     ApplicationManager.getApplication().assertIsDispatchThread();
+
+    myOldSdks = ProjectJdkTable.getInstance().getAllJdks();
+
     boolean reusedProject = true;
     if (ourProject == null || ourProjectDescriptor == null || !ourProjectDescriptor.equals(descriptor)) {
       initProject(descriptor);
@@ -381,6 +386,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       this::checkForSettingsDamage,
       () -> doTearDown(project, ourApplication),
       () -> checkEditorsReleased(),
+      () -> checkForJdkTableLeaks(myOldSdks),
       super::tearDown,
       () -> myThreadTracker.checkLeak(),
       () -> InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project),
@@ -388,7 +394,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     ).run();
   }
 
-  public static void doTearDown(@NotNull Project project, @NotNull IdeaTestApplication application) throws Exception {
+  public static void doTearDown(@NotNull Project project, @NotNull IdeaTestApplication application) {
     new RunAll().
       append(() -> ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue()).
       append(() -> CodeStyleSettingsManager.getInstance(project).dropTemporarySettings()).
