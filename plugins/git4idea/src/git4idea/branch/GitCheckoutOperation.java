@@ -87,7 +87,7 @@ class GitCheckoutOperation extends GitBranchOperation {
         final GitRepository repository = next();
         VirtualFile root = repository.getRoot();
 
-        Collection<Change> changes = GitChangeUtils.getDiff(repository, HEAD, myStartPointReference);
+        Collection<Change> changes = GitChangeUtils.getDiff(repository, HEAD, myStartPointReference, false);
 
         GitLocalChangesWouldBeOverwrittenDetector localChangesDetector =
           new GitLocalChangesWouldBeOverwrittenDetector(root, GitLocalChangesWouldBeOverwrittenDetector.Operation.CHECKOUT);

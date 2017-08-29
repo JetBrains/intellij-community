@@ -85,7 +85,7 @@ public class GitResetOperation {
         String target = entry.getValue().asString();
         GitLocalChangesWouldBeOverwrittenDetector detector = new GitLocalChangesWouldBeOverwrittenDetector(root, RESET);
 
-        Collection<Change> changes = GitChangeUtils.getDiffWithWorkingTree(repository, target);
+        Collection<Change> changes = GitChangeUtils.getDiffWithWorkingTree(repository, target, false);
 
         GitCommandResult result = myGit.reset(repository, myMode, target, detector);
         if (!result.success() && detector.wasMessageDetected()) {

@@ -80,7 +80,7 @@ class GitMergeOperation extends GitBranchOperation {
         LOG.info("next repository: " + repository);
         VirtualFile root = repository.getRoot();
 
-        Collection<Change> changes = GitChangeUtils.getDiff(repository, HEAD, myBranchToMerge);
+        Collection<Change> changes = GitChangeUtils.getDiff(repository, HEAD, myBranchToMerge, false);
 
         GitLocalChangesWouldBeOverwrittenDetector localChangesDetector =
           new GitLocalChangesWouldBeOverwrittenDetector(root, GitLocalChangesWouldBeOverwrittenDetector.Operation.MERGE);

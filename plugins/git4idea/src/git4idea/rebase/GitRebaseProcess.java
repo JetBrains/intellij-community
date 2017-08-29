@@ -172,14 +172,14 @@ public class GitRebaseProcess {
     Collection<Change> changes = new ArrayList<>();
     String branch = params.getBranch();
     if (branch != null) {
-      Collection<Change> changesFromCheckout = GitChangeUtils.getDiff(repository, HEAD, branch);
+      Collection<Change> changesFromCheckout = GitChangeUtils.getDiff(repository, HEAD, branch, false);
       if (changesFromCheckout == null) return null;
       changes.addAll(changesFromCheckout);
     }
 
     String rev1 = coalesce(params.getNewBase(), branch, HEAD);
     String rev2 = params.getUpstream();
-    Collection<Change> changesFromRebase = GitChangeUtils.getDiff(repository, rev1, rev2);
+    Collection<Change> changesFromRebase = GitChangeUtils.getDiff(repository, rev1, rev2, false);
     if (changesFromRebase == null) return null;
 
     changes.addAll(changesFromRebase);
