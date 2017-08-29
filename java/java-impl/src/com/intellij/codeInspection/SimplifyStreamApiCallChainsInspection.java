@@ -1485,9 +1485,7 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
     public PsiElement simplify(PsiMethodCallExpression call) {
       PsiMethodCallExpression mapCall = ExpressionUtils.getCallForQualifier(call);
       if(mapCall == null) return null;
-      PsiElementFactory factory = JavaPsiFacade.getElementFactory(call.getProject());
-      PsiExpression replacement = factory.createExpressionFromText(myReplacement, mapCall);
-      return mapCall.replace(replacement);
+      return new CommentTracker().replaceAndRestoreComments(mapCall, myReplacement);
     }
 
     @NotNull
@@ -1539,12 +1537,11 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
       PsiElement maybeMap = ExpressionUtils.getCallForQualifier(streamCall);
       if(maybeMap == null) return null;
       Project project = streamCall.getProject();
-      PsiExpression replacement = JavaPsiFacade.getElementFactory(project).createExpressionFromText(myReplacement, maybeMap);
       PsiClassType classType = PsiType.getTypeByName(CommonClassNames.JAVA_UTIL_STREAM_STREAM, project, GlobalSearchScope.allScope(project));
       PsiClass streamClass = classType.resolve();
       if(streamClass == null) return null;
       ImportUtils.addImportIfNeeded(streamClass, streamCall); // TODO Idea doesn't want to import j.u.s.Stream
-      return maybeMap.replace(replacement);
+      return new CommentTracker().replaceAndRestoreComments(maybeMap, myReplacement);
     }
 
     @NotNull
@@ -1596,8 +1593,7 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
 
     @Override
     public PsiElement simplify(PsiMethodCallExpression call) {
-      PsiElementFactory factory = JavaPsiFacade.getElementFactory(call.getProject());
-      return call.replace(factory.createExpressionFromText(myReplacement, call));
+      return new CommentTracker().replaceAndRestoreComments(call, myReplacement);
     }
 
     @NotNull

@@ -197,22 +197,21 @@ public class ReplaceInefficientStreamCountInspection extends BaseJavaBatchLocalI
           replaceSimpleCount(countCall, qualifierCall);
           break;
         case ANY_MATCH:
-          replaceFilterCountComparison(countCall, qualifierCall);
+          replaceFilterCountComparison(qualifierCall);
           break;
       }
     }
 
-    private static void replaceFilterCountComparison(PsiMethodCallExpression countCall, PsiMethodCallExpression filterCall) {
+    private static void replaceFilterCountComparison(PsiMethodCallExpression filterCall) {
       if(!STREAM_FILTER.test(filterCall)) return;
       PsiBinaryExpression comparison = extractComparisonWithZero(filterCall);
       if(comparison == null) return;
-      PsiElementFactory factory = JavaPsiFacade.getElementFactory(countCall.getProject());
       String filterText = filterCall.getArgumentList().getExpressions()[0].getText();
       PsiExpression filterQualifier = filterCall.getMethodExpression().getQualifierExpression();
       if(filterQualifier == null) return;
       String base = filterQualifier.getText();
-      PsiExpression expression = factory.createExpressionFromText(base + ".anyMatch(" + filterText + ")", countCall);
-      comparison.replace(expression);
+      CommentTracker ct = new CommentTracker();
+      ct.replaceAndRestoreComments(comparison, base + ".anyMatch(" + filterText + ")");
     }
 
     private static void replaceSimpleCount(PsiMethodCallExpression countCall, PsiMethodCallExpression qualifierCall) {
