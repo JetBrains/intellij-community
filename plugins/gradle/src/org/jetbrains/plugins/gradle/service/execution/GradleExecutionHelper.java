@@ -54,6 +54,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -500,7 +501,7 @@ public class GradleExecutionHelper {
       buf.append('[');
       for (Iterator<String> iterator = testIncludePatterns.iterator(); iterator.hasNext(); ) {
         String pattern = iterator.next();
-        buf.append('\"').append(pattern).append('\"');
+        buf.append('\'').append(pattern).append('\'');
         if (iterator.hasNext()) {
           buf.append(',');
         }
@@ -513,7 +514,7 @@ public class GradleExecutionHelper {
           LOG.warn("Can't get test filter init script template");
           return;
         }
-        String script = FileUtil.loadTextAndClose(stream).replaceFirst(Pattern.quote("${TEST_NAME_INCLUDES}"), buf.toString());
+        String script = FileUtil.loadTextAndClose(stream).replaceFirst(Pattern.quote("${TEST_NAME_INCLUDES}"), Matcher.quoteReplacement(buf.toString()));
         final File tempFile = writeToFileGradleInitScript(script, "ijtestinit");
         ContainerUtil.addAll(args, GradleConstants.INIT_SCRIPT_CMD_OPTION, tempFile.getAbsolutePath());
       }
