@@ -3258,18 +3258,20 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     private Point getLocationOnScreen(Component component) {
-      try {
-        return component.getLocationOnScreen();
-      }
-      catch (Exception exception) {
-        String message = component.getClass().getName();
-        while (true) {
-          if (component.isShowing()) message = "showing " + message;
-          component = component.getParent();
-          if (component == null) throw new IllegalComponentStateException(message);
-          message = component.getClass().getName() + " / " + message;
+      Point location = new Point();
+      SwingUtilities.convertPointToScreen(location, component);
+      if (LOG.isDebugEnabled() && !component.isShowing()) {
+        Class<?> type = component.getClass();
+        Component parent = component.getParent();
+        while (parent != null && !parent.isShowing()) {
+          type = parent.getClass();
+          parent = parent.getParent();
         }
+        String message = type.getName() + " is not showing";
+        if (parent != null) message += " on visible  " + parent.getClass().getName();
+        LOG.debug(message);
       }
+      return location;
     }
 
     @Override
