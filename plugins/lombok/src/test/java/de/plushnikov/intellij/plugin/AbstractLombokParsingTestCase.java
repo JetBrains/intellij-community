@@ -59,25 +59,35 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
   }
 
   public void doTest(final boolean lowercaseFirstLetter) throws IOException {
-    final String fileName = getTestName(lowercaseFirstLetter).replace('$', '/') + ".java";
-    final String beforeFileName = "before/" + fileName;
-    final String afterFileName = "after/" + fileName;
-    doTest(beforeFileName, afterFileName);
+    doTest(getTestName(lowercaseFirstLetter));
   }
 
-  protected void doTest(final String beforeFileName, final String afterFileName) throws IOException {
-    final PsiFile psiDelombokFile = loadToPsiFile(afterFileName);
-    final PsiFile psiLombokFile = loadToPsiFile(beforeFileName);
+  public void doTest(String testName) throws IOException {
+    compareFiles(loadBeforeLombokFile(testName), loadAfterDeLombokFile(testName));
+  }
 
-    if (!(psiLombokFile instanceof PsiJavaFile) || !(psiDelombokFile instanceof PsiJavaFile)) {
+  protected PsiJavaFile loadBeforeLombokFile(String testName) {
+    return getPsiJavaFile(testName, "before");
+  }
+
+  protected PsiJavaFile loadAfterDeLombokFile(String testName) {
+    return getPsiJavaFile(testName, "after");
+  }
+
+  @NotNull
+  private PsiJavaFile getPsiJavaFile(String testName, String type) {
+    final String fileName = testName.replace('$', '/') + ".java";
+    final String beforeFileName = type + "/" + fileName;
+    final PsiFile psiFile = loadToPsiFile(beforeFileName);
+    if (!(psiFile instanceof PsiJavaFile)) {
       fail("The test file type is not supported");
     }
+    return (PsiJavaFile) psiFile;
+  }
 
-    final PsiJavaFile beforeFile = (PsiJavaFile) psiLombokFile;
-    final PsiJavaFile afterFile = (PsiJavaFile) psiDelombokFile;
-
-    PsiClass[] beforeClasses = beforeFile.getClasses();
-    PsiClass[] afterClasses = afterFile.getClasses();
+  protected void compareFiles(PsiJavaFile beforeLombokFile, PsiJavaFile afterDelombokFile) {
+    PsiClass[] beforeClasses = beforeLombokFile.getClasses();
+    PsiClass[] afterClasses = afterDelombokFile.getClasses();
 
     compareClasses(beforeClasses, afterClasses);
   }

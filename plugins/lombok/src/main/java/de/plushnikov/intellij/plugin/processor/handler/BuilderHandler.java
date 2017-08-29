@@ -21,7 +21,6 @@ import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.PsiTypeParameterListOwner;
 import com.intellij.psi.PsiVariable;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
-import com.intellij.psi.util.PsiTypesUtil;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.ShouldGenerateFullCodeBlock;
 import de.plushnikov.intellij.plugin.processor.clazz.ToStringProcessor;
@@ -256,23 +255,19 @@ public class BuilderHandler {
 
   @NotNull
   public String getBuilderClassName(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @Nullable PsiMethod psiMethod) {
-    String builderClassName = PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, ANNOTATION_BUILDER_CLASS_NAME);
-    if (StringUtil.isEmptyOrSpaces(builderClassName)) {
-      final PsiClass psiBuilderClass;
-      if (null != psiMethod && !psiMethod.isConstructor()) {
-        final PsiType psiMethodReturnType = psiMethod.getReturnType();
-        if (PsiType.VOID.equals(psiMethodReturnType)) {
-          return StringUtil.capitalize(PsiType.VOID.getCanonicalText()) + BUILDER_CLASS_NAME;
-        } else {
-          final PsiClass psiMethodReturnClass = PsiTypesUtil.getPsiClass(psiMethodReturnType);
-          psiBuilderClass = null == psiMethodReturnClass ? psiClass : psiMethodReturnClass;
-        }
-      } else {
-        psiBuilderClass = psiClass;
-      }
-      return StringUtil.capitalize(psiBuilderClass.getName()) + BUILDER_CLASS_NAME;
+    final String builderClassName = PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, ANNOTATION_BUILDER_CLASS_NAME);
+    if (!StringUtil.isEmptyOrSpaces(builderClassName)) {
+      return builderClassName;
     }
-    return builderClassName;
+
+    String rootBuilderClassName = psiClass.getName();
+    if (null != psiMethod && !psiMethod.isConstructor()) {
+      final PsiType psiMethodReturnType = psiMethod.getReturnType();
+      if (null != psiMethodReturnType) {
+        rootBuilderClassName = PsiNameHelper.getQualifiedClassName(psiMethodReturnType.getPresentableText(), false);
+      }
+    }
+    return StringUtil.capitalize(rootBuilderClassName + BUILDER_CLASS_NAME);
   }
 
   private boolean hasMethod(@NotNull PsiClass psiClass, String builderMethodName) {

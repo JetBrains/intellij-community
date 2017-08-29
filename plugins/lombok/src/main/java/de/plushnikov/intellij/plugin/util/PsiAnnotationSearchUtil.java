@@ -7,6 +7,7 @@ import com.intellij.psi.PsiAnnotationOwner;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.impl.source.SourceJavaCodeReference;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,11 +31,51 @@ public class PsiAnnotationSearchUtil {
 
   @Nullable
   public static PsiAnnotation findAnnotation(@NotNull PsiModifierListOwner psiModifierListOwner, @NotNull final Class<? extends Annotation>... annotationTypes) {
+    if (annotationTypes.length == 1) {
+      return findAnnotation(psiModifierListOwner, annotationTypes[0]);
+    }
+
     final String[] qualifiedNames = new String[annotationTypes.length];
     for (int i = 0; i < annotationTypes.length; i++) {
       qualifiedNames[i] = annotationTypes[i].getName();
     }
     return findAnnotationQuick(psiModifierListOwner.getModifierList(), qualifiedNames);
+  }
+
+  @Nullable
+  private static PsiAnnotation findAnnotationQuick(@Nullable PsiAnnotationOwner annotationOwner, @NotNull String qualifiedName) {
+    if (annotationOwner == null) {
+      return null;
+    }
+
+    PsiAnnotation[] annotations = annotationOwner.getAnnotations();
+    if (annotations.length == 0) {
+      return null;
+    }
+
+    final String shortName = StringUtil.getShortName(qualifiedName);
+
+    for (PsiAnnotation annotation : annotations) {
+      PsiJavaCodeReferenceElement referenceElement = annotation.getNameReferenceElement();
+      if (null != referenceElement) {
+        if (shortName.equals(referenceElement.getReferenceName())) {
+
+          if (referenceElement.isQualified() && referenceElement instanceof SourceJavaCodeReference) {
+            String possibleFullQualifiedName = ((SourceJavaCodeReference) referenceElement).getClassNameText();
+            if (qualifiedName.equals(possibleFullQualifiedName)) {
+              return annotation;
+            }
+          }
+
+          final String annotationQualifiedName = getAndCacheFQN(annotation);
+          if (qualifiedName.equals(annotationQualifiedName)) {
+            return annotation;
+          }
+        }
+      }
+    }
+
+    return null;
   }
 
   @Nullable
@@ -54,24 +95,39 @@ public class PsiAnnotationSearchUtil {
     }
 
     for (PsiAnnotation annotation : annotations) {
-      PsiJavaCodeReferenceElement referenceElement = annotation.getNameReferenceElement();
-      if (referenceElement != null && ArrayUtil.find(shortNames, referenceElement.getReferenceName()) > -1) {
+      final PsiJavaCodeReferenceElement referenceElement = annotation.getNameReferenceElement();
+      if (null != referenceElement) {
+        if (ArrayUtil.find(shortNames, referenceElement.getReferenceName()) > -1) {
 
-        String annotationQualifiedName = annotation.getCopyableUserData(LOMBOK_ANNOTATION_FQN_KEY);
-        if (null == annotationQualifiedName) {
-          annotationQualifiedName = annotation.getQualifiedName();
-          if (null != annotationQualifiedName && annotationQualifiedName.indexOf('.') > -1) {
-            annotation.putCopyableUserData(LOMBOK_ANNOTATION_FQN_KEY, annotationQualifiedName);
+          if (referenceElement.isQualified() && referenceElement instanceof SourceJavaCodeReference) {
+            final String possibleFullQualifiedName = ((SourceJavaCodeReference) referenceElement).getClassNameText();
+
+            if (ArrayUtil.find(qualifiedNames, possibleFullQualifiedName) > -1) {
+              return annotation;
+            }
           }
-        }
 
-        if (ArrayUtil.find(qualifiedNames, annotationQualifiedName) > -1) {
-          return annotation;
+          final String annotationQualifiedName = getAndCacheFQN(annotation);
+          if (ArrayUtil.find(qualifiedNames, annotationQualifiedName) > -1) {
+            return annotation;
+          }
         }
       }
     }
 
     return null;
+  }
+
+  @Nullable
+  private static String getAndCacheFQN(PsiAnnotation annotation) {
+    String annotationQualifiedName = annotation.getCopyableUserData(LOMBOK_ANNOTATION_FQN_KEY);
+    if (null == annotationQualifiedName) {
+      annotationQualifiedName = annotation.getQualifiedName();
+      if (null != annotationQualifiedName && annotationQualifiedName.indexOf('.') > -1) {
+        annotation.putCopyableUserData(LOMBOK_ANNOTATION_FQN_KEY, annotationQualifiedName);
+      }
+    }
+    return annotationQualifiedName;
   }
 
   public static boolean isAnnotatedWith(@NotNull PsiModifierListOwner psiModifierListOwner, @NotNull final Class<? extends Annotation> annotationType) {
