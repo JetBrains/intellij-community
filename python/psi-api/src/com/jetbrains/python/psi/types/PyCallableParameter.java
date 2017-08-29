@@ -50,6 +50,9 @@ public interface PyCallableParameter {
 
   boolean hasDefaultValue();
 
+  @Nullable
+  String getDefaultValueText();
+
   boolean isPositionalContainer();
 
   boolean isKeywordContainer();

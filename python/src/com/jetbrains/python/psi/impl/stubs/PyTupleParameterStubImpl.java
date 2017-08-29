@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.psi.stubs.StubElement;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyTupleParameter;
 import com.jetbrains.python.psi.stubs.PyTupleParameterStub;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Implementation does nothing but marking the element type. 
@@ -28,13 +29,23 @@ import com.jetbrains.python.psi.stubs.PyTupleParameterStub;
  */
 public class PyTupleParameterStubImpl extends StubBase<PyTupleParameter>  implements PyTupleParameterStub {
   private final boolean myHasDefaultValue;
+  @Nullable
+  private final String myDefaultValueText;
 
-  protected PyTupleParameterStubImpl(boolean hasDefaultValue, StubElement parent) {
+  protected PyTupleParameterStubImpl(boolean hasDefaultValue, @Nullable String defaultValueText, StubElement parent) {
     super(parent, PyElementTypes.TUPLE_PARAMETER);
     myHasDefaultValue = hasDefaultValue;
+    myDefaultValueText = defaultValueText;
   }
 
+  @Override
   public boolean hasDefaultValue() {
     return myHasDefaultValue;
+  }
+
+  @Nullable
+  @Override
+  public String getDefaultValueText() {
+    return myDefaultValueText;
   }
 }

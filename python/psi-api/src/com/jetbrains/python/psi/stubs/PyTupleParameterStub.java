@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,13 @@ package com.jetbrains.python.psi.stubs;
 
 import com.intellij.psi.stubs.StubElement;
 import com.jetbrains.python.psi.PyTupleParameter;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Tuple parameter stub, collects nested parameters from stubs.
  */
 public interface PyTupleParameterStub extends StubElement<PyTupleParameter> {
   boolean hasDefaultValue();
+  @Nullable
+  String getDefaultValueText();
 }

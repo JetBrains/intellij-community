@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
+import com.intellij.util.io.StringRef;
 import com.jetbrains.python.psi.PyStubElementType;
 import com.jetbrains.python.psi.PyTupleParameter;
 import com.jetbrains.python.psi.impl.PyTupleParameterImpl;
@@ -37,27 +38,34 @@ public class PyTupleParameterElementType extends PyStubElementType<PyTupleParame
     super("TUPLE_PARAMETER");
   }
 
+  @Override
   @NotNull
   public PsiElement createElement(@NotNull final ASTNode node) {
     return new PyTupleParameterImpl(node);
   }
 
+  @Override
   public PyTupleParameter createPsi(@NotNull PyTupleParameterStub stub) {
     return new PyTupleParameterImpl(stub);
   }
 
+  @Override
   @NotNull
   public PyTupleParameterStub createStub(@NotNull PyTupleParameter psi, StubElement parentStub) {
-    return new PyTupleParameterStubImpl(psi.hasDefaultValue(), parentStub);
+    return new PyTupleParameterStubImpl(psi.hasDefaultValue(), psi.getDefaultValueText(), parentStub);
   }
 
+  @Override
   @NotNull
   public PyTupleParameterStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
-    boolean hasDefaultValue = dataStream.readBoolean();
-    return new PyTupleParameterStubImpl(hasDefaultValue, parentStub);
+    final boolean hasDefaultValue = dataStream.readBoolean();
+    final StringRef defaultValueText = dataStream.readName();
+    return new PyTupleParameterStubImpl(hasDefaultValue, defaultValueText == null ? null : defaultValueText.getString(), parentStub);
   }
 
+  @Override
   public void serialize(@NotNull PyTupleParameterStub stub, @NotNull StubOutputStream dataStream) throws IOException {
     dataStream.writeBoolean(stub.hasDefaultValue());
+    dataStream.writeName(stub.getDefaultValueText());
   }
 }

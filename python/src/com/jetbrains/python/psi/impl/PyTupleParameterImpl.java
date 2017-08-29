@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.stubs.PyTupleParameterStub;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents a tuple parameter as stubbed element.
@@ -36,14 +37,20 @@ public class PyTupleParameterImpl extends PyBaseElementImpl<PyTupleParameterStub
     super(stub, PyElementTypes.TUPLE_PARAMETER);
   }
 
+  @Override
+  @Nullable
   public PyNamedParameter getAsNamed() {
     return null;  // we're not named
   }
 
+  @Override
+  @NotNull
   public PyTupleParameter getAsTuple() {
     return this;
   }
 
+  @Override
+  @Nullable
   public PyExpression getDefaultValue() {
     ASTNode[] nodes = getNode().getChildren(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens());
     if (nodes.length > 0) {
@@ -52,6 +59,7 @@ public class PyTupleParameterImpl extends PyBaseElementImpl<PyTupleParameterStub
     return null;
   }
 
+  @Override
   public boolean hasDefaultValue() {
     final PyTupleParameterStub stub = getStub();
     if (stub != null) {
@@ -61,8 +69,13 @@ public class PyTupleParameterImpl extends PyBaseElementImpl<PyTupleParameterStub
   }
 
   @Override
-  public boolean hasDefaultNoneValue() {
-    return false;
+  @Nullable
+  public String getDefaultValueText() {
+    final PyTupleParameterStub stub = getStub();
+    if (stub != null) {
+      return stub.getDefaultValueText();
+    }
+    return ParamHelper.getDefaultValueText(getDefaultValue());
   }
 
   @Override
@@ -70,6 +83,7 @@ public class PyTupleParameterImpl extends PyBaseElementImpl<PyTupleParameterStub
     pyVisitor.visitPyTupleParameter(this);
   }
 
+  @Override
   @NotNull
   public PyParameter[] getContents() {
     return getStubOrPsiChildren(PythonDialectsTokenSetProvider.INSTANCE.getParameterTokens(), new PyParameter[0]);
@@ -81,6 +95,7 @@ public class PyTupleParameterImpl extends PyBaseElementImpl<PyTupleParameterStub
   }
 
   @Override
+  @NotNull
   public ItemPresentation getPresentation() {
     return new PyElementPresentation(this);
   }

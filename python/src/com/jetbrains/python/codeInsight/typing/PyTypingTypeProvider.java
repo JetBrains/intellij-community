@@ -230,7 +230,8 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
         return Ref.create(PyTypeUtil.toKeywordContainerType(parameter, annotationValueType));
       }
 
-      if (parameter.hasDefaultNoneValue()) {
+      final String defaultValue = parameter.getDefaultValueText();
+      if (PyNames.NONE.equals(defaultValue) || PyNames.ELLIPSIS.equals(defaultValue)) {
         return Ref.create(PyUnionType.union(annotationValueType, PyNoneType.INSTANCE));
       }
 

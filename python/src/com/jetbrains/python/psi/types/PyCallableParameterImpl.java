@@ -112,6 +112,13 @@ public class PyCallableParameterImpl implements PyCallableParameter {
     return myElement == null ? myDefaultValue != null : myElement.hasDefaultValue();
   }
 
+  @Nullable
+  @Override
+  public String getDefaultValueText() {
+    if (myElement != null) return myElement.getDefaultValueText();
+    return myDefaultValue == null ? null : myDefaultValue.getText();
+  }
+
   @Override
   public boolean isPositionalContainer() {
     final PyNamedParameter namedParameter = PyUtil.as(myElement, PyNamedParameter.class);
@@ -148,21 +155,19 @@ public class PyCallableParameterImpl implements PyCallableParameter {
         sb.append(PythonDocumentationProvider.getTypeDescription(argumentType, context));
       }
 
-      final PyExpression defaultValue = getDefaultValue();
+      final String defaultValue = getDefaultValueText();
       if (defaultValueShouldBeIncluded(includeDefaultValue, defaultValue, argumentType)) {
-        final Pair<String, String> quotes = defaultValue instanceof PyStringLiteralExpression
-                                            ? PyStringLiteralUtil.getQuotes(defaultValue.getText())
-                                            : null;
+        final Pair<String, String> quotes = PyStringLiteralUtil.getQuotes(defaultValue);
 
         sb.append("=");
         if (quotes != null) {
-          final String value = ((PyStringLiteralExpression)defaultValue).getStringValue();
+          final String value = defaultValue.substring(quotes.getFirst().length(), defaultValue.length() - quotes.getSecond().length());
           sb.append(quotes.getFirst());
           StringUtil.escapeStringCharacters(value.length(), value, sb);
           sb.append(quotes.getSecond());
         }
         else {
-          sb.append(PyUtil.getReadableRepr(defaultValue, true));
+          sb.append(defaultValue);
         }
       }
 
@@ -208,11 +213,11 @@ public class PyCallableParameterImpl implements PyCallableParameter {
   }
 
   private static boolean defaultValueShouldBeIncluded(boolean includeDefaultValue,
-                                                      @Nullable PyExpression defaultValue,
+                                                      @Nullable String defaultValue,
                                                       @Nullable PyType type) {
     if (!includeDefaultValue || defaultValue == null) return false;
 
     // In case of `None` default value, it will be listed in the type as `Optional[...]` or `Union[..., None, ...]`
-    return type == null || !PyNames.NONE.equals(defaultValue.getText());
+    return type == null || !PyNames.NONE.equals(defaultValue);
   }
 }
