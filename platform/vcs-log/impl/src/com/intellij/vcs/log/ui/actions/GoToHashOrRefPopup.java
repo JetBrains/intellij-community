@@ -66,9 +66,9 @@ public class GoToHashOrRefPopup {
   @Nullable private Future myFuture;
   @Nullable private VcsRef mySelectedRef;
 
-  public GoToHashOrRefPopup(@NotNull final Project project,
+  public GoToHashOrRefPopup(@NotNull Project project,
                             @NotNull VcsLogRefs variants,
-                            Collection<VirtualFile> roots,
+                            @NotNull Collection<VirtualFile> roots,
                             @NotNull Function<String, Future> onSelectedHash,
                             @NotNull Function<VcsRef, Future> onSelectedRef,
                             @NotNull VcsLogColorManager colorManager,
