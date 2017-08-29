@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,10 +93,16 @@ public class FavoritesListNode extends AbstractTreeNode<String> {
         continue;
       }
       try {
-        final String className = pair.getData().getSecond();
-
+        ClassLoader loader;
+        if (abstractUrl instanceof AbstractUrlFavoriteAdapter) {
+          FavoriteNodeProvider provider = ((AbstractUrlFavoriteAdapter)abstractUrl).getNodeProvider();
+          loader = provider.getClass().getClassLoader();
+        } else {
+          loader = FavoritesListNode.class.getClass().getClassLoader();
+        }
+        String className = pair.getData().getSecond();
         @SuppressWarnings("unchecked")
-        final Class<? extends AbstractTreeNode> nodeClass = (Class<? extends AbstractTreeNode>)Class.forName(className);
+        final Class<? extends AbstractTreeNode> nodeClass = (Class<? extends AbstractTreeNode>)loader.loadClass(className);
 
         final AbstractTreeNode node = ProjectViewNode
           .createTreeNode(nodeClass, project, path[path.length - 1], FavoritesManager.getInstance(project).getViewSettings());
