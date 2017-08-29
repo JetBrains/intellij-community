@@ -23,7 +23,6 @@ import org.jetbrains.annotations.Nullable;
  * Tuple parameter stub, collects nested parameters from stubs.
  */
 public interface PyTupleParameterStub extends StubElement<PyTupleParameter> {
-  boolean hasDefaultValue();
   @Nullable
   String getDefaultValueText();
 }

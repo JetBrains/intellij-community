@@ -39,7 +39,6 @@ import java.io.IOException;
 public class PyNamedParameterElementType extends PyStubElementType<PyNamedParameterStub, PyNamedParameter> {
   private static final int POSITIONAL_CONTAINER = 1;
   private static final int KEYWORD_CONTAINER = 2;
-  private static final int HAS_DEFAULT_VALUE = 4;
 
   public PyNamedParameterElementType() {
     this("NAMED_PARAMETER");
@@ -58,9 +57,8 @@ public class PyNamedParameterElementType extends PyStubElementType<PyNamedParame
   @Override
   @NotNull
   public PyNamedParameterStub createStub(@NotNull final PyNamedParameter psi, final StubElement parentStub) {
-    return new PyNamedParameterStubImpl(psi.getName(), psi.isPositionalContainer(), psi.isKeywordContainer(), psi.hasDefaultValue(),
-                                        psi.getDefaultValueText(), psi.getTypeCommentAnnotation(), psi.getAnnotationValue() , parentStub,
-                                        getStubElementType());
+    return new PyNamedParameterStubImpl(psi.getName(), psi.isPositionalContainer(), psi.isKeywordContainer(), psi.getDefaultValueText(),
+                                        psi.getTypeCommentAnnotation(), psi.getAnnotationValue(), parentStub, getStubElementType());
   }
 
   @Override
@@ -77,7 +75,6 @@ public class PyNamedParameterElementType extends PyStubElementType<PyNamedParame
     byte flags = 0;
     if (stub.isPositionalContainer()) flags |= POSITIONAL_CONTAINER;
     if (stub.isKeywordContainer()) flags |= KEYWORD_CONTAINER;
-    if (stub.hasDefaultValue()) flags |= HAS_DEFAULT_VALUE;
     dataStream.writeByte(flags);
     dataStream.writeName(stub.getDefaultValueText());
     dataStream.writeName(stub.getTypeComment());
@@ -95,7 +92,6 @@ public class PyNamedParameterElementType extends PyStubElementType<PyNamedParame
     return new PyNamedParameterStubImpl(name,
                                         (flags & POSITIONAL_CONTAINER) != 0,
                                         (flags & KEYWORD_CONTAINER) != 0,
-                                        (flags & HAS_DEFAULT_VALUE) != 0,
                                         defaultValueText == null ? null : defaultValueText.getString(),
                                         typeComment == null ? null : typeComment.getString(),
                                         annotation == null ? null : annotation.getString(),

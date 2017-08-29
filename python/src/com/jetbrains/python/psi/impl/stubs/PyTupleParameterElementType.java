@@ -52,20 +52,18 @@ public class PyTupleParameterElementType extends PyStubElementType<PyTupleParame
   @Override
   @NotNull
   public PyTupleParameterStub createStub(@NotNull PyTupleParameter psi, StubElement parentStub) {
-    return new PyTupleParameterStubImpl(psi.hasDefaultValue(), psi.getDefaultValueText(), parentStub);
+    return new PyTupleParameterStubImpl(psi.getDefaultValueText(), parentStub);
   }
 
   @Override
   @NotNull
   public PyTupleParameterStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
-    final boolean hasDefaultValue = dataStream.readBoolean();
     final StringRef defaultValueText = dataStream.readName();
-    return new PyTupleParameterStubImpl(hasDefaultValue, defaultValueText == null ? null : defaultValueText.getString(), parentStub);
+    return new PyTupleParameterStubImpl(defaultValueText == null ? null : defaultValueText.getString(), parentStub);
   }
 
   @Override
   public void serialize(@NotNull PyTupleParameterStub stub, @NotNull StubOutputStream dataStream) throws IOException {
-    dataStream.writeBoolean(stub.hasDefaultValue());
     dataStream.writeName(stub.getDefaultValueText());
   }
 }

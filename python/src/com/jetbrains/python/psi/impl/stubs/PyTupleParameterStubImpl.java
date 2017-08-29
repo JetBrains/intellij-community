@@ -28,19 +28,12 @@ import org.jetbrains.annotations.Nullable;
  * Date: Jul 6, 2009 1:33:08 AM
  */
 public class PyTupleParameterStubImpl extends StubBase<PyTupleParameter>  implements PyTupleParameterStub {
-  private final boolean myHasDefaultValue;
   @Nullable
   private final String myDefaultValueText;
 
-  protected PyTupleParameterStubImpl(boolean hasDefaultValue, @Nullable String defaultValueText, StubElement parent) {
+  protected PyTupleParameterStubImpl(@Nullable String defaultValueText, StubElement parent) {
     super(parent, PyElementTypes.TUPLE_PARAMETER);
-    myHasDefaultValue = hasDefaultValue;
     myDefaultValueText = defaultValueText;
-  }
-
-  @Override
-  public boolean hasDefaultValue() {
-    return myHasDefaultValue;
   }
 
   @Nullable
