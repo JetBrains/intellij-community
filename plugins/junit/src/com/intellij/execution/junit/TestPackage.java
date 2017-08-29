@@ -244,22 +244,22 @@ public class TestPackage extends TestObject {
       Class<? extends Annotation> testClass = (Class<? extends Annotation>)Class.forName("org.junit.Test", true, classLoader);
 
       return aClass -> {
+        //annotation
+        if (aClass.isAnnotationPresent(runWithClass)) {
+          return true;
+        }
         //junit 3
         if (testCaseClass.isAssignableFrom(aClass)) {
           return hasSingleConstructor(aClass);
         }
         else {
-          //annotation
-          if (aClass.isAnnotationPresent(runWithClass)) {
-            return true;
-          }
-          else {
-            //junit 4 & suite
-            for (Method method : aClass.getMethods()) {
-              if (Modifier.isStatic(method.getModifiers()) && "suite".equals(method.getName()) ||
-                  method.isAnnotationPresent(testClass)) {
-                return hasSingleConstructor(aClass);
-              }
+          //junit 4 & suite
+          for (Method method : aClass.getMethods()) {
+            if (Modifier.isStatic(method.getModifiers()) && "suite".equals(method.getName())) {
+              return true;
+            }
+            if (method.isAnnotationPresent(testClass)) {
+              return hasSingleConstructor(aClass);
             }
           }
         }
@@ -274,6 +274,7 @@ public class TestPackage extends TestObject {
 
   private static boolean hasSingleConstructor(Class<?> aClass) {
     Constructor<?>[] constructors = aClass.getConstructors();
-    return constructors.length == 1 && constructors[0].getParameterTypes().length == 0;
+    return constructors.length == 0 || 
+           constructors.length == 1 && constructors[0].getParameterTypes().length == 0;
   }
 }
