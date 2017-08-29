@@ -81,15 +81,15 @@ public class SearchRequestCollector {
         searchScope instanceof GlobalSearchScope &&
         ((searchContext & UsageSearchContext.IN_CODE) != 0 || searchContext == UsageSearchContext.ANY)) {
       for (ScopeOptimizer optimizer : CODE_USAGE_SCOPE_OPTIMIZER_EP_NAME.getExtensions()) {
-        final GlobalSearchScope optimizedCodeUsageSearchScope = optimizer.getScopeToExclude(searchTarget);
-        if (optimizedCodeUsageSearchScope != null) {
+        final SearchScope restrictedCodeUsageSearchScope = optimizer.getScopeToRestrict(searchTarget);
+        if (restrictedCodeUsageSearchScope != null) {
           short exceptCodeSearchContext = searchContext == UsageSearchContext.ANY
                                           ? UsageSearchContext.IN_COMMENTS |
                                             UsageSearchContext.IN_STRINGS |
                                             UsageSearchContext.IN_FOREIGN_LANGUAGES |
                                             UsageSearchContext.IN_PLAIN_TEXT
                                           : (short)(searchContext ^ UsageSearchContext.IN_CODE);
-          GlobalSearchScope searchCodeUsageEffectiveScope = ((GlobalSearchScope)searchScope).intersectWith(GlobalSearchScope.notScope(optimizedCodeUsageSearchScope));
+          SearchScope searchCodeUsageEffectiveScope = searchScope.intersectWith(restrictedCodeUsageSearchScope);
           requests = ContainerUtil.list(new PsiSearchRequest(searchCodeUsageEffectiveScope, word, UsageSearchContext.IN_CODE, caseSensitive, containerName, processor),
                                         new PsiSearchRequest(searchScope, word, exceptCodeSearchContext, caseSensitive, containerName, processor));
           break;

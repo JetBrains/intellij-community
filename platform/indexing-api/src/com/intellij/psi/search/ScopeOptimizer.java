@@ -35,6 +35,17 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface ScopeOptimizer {
 
+  /**
+   * Please use {@link ScopeOptimizer#getScopeToRestrict(PsiElement)} instead
+   */
+  @Deprecated
   @Nullable("is null when given optimizer can't provide a scope to exclude")
   GlobalSearchScope getScopeToExclude(@NotNull PsiElement element);
+
+  @Nullable("is null when given optimizer can't provide a scope to restrict")
+  default SearchScope getScopeToRestrict(@NotNull PsiElement element) {
+    GlobalSearchScope scopeToExclude = getScopeToExclude(element);
+
+    return scopeToExclude == null ? null : GlobalSearchScope.notScope(scopeToExclude);
+  }
 }

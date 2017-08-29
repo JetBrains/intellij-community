@@ -89,9 +89,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     }
     for (ScopeOptimizer optimizer : USE_SCOPE_OPTIMIZER_EP_NAME.getExtensions()) {
       ProgressManager.checkCanceled();
-      final GlobalSearchScope scopeToExclude = optimizer.getScopeToExclude(element);
-      if (scopeToExclude != null) {
-        scope = scope.intersectWith(GlobalSearchScope.notScope(scopeToExclude));
+      final SearchScope scopeToRestrict = optimizer.getScopeToRestrict(element);
+      if (scopeToRestrict != null) {
+        scope = scope.intersectWith(scopeToRestrict);
       }
     }
     return scope;
