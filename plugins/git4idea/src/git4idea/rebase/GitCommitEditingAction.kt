@@ -15,9 +15,10 @@
  */
 package git4idea.rebase
 
-import com.intellij.dvcs.repo.Repository
+import com.intellij.dvcs.repo.Repository.State.*
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.Messages
@@ -34,6 +35,7 @@ import git4idea.GitUtil.getRepositoryManager
  */
 abstract class GitCommitEditingAction : DumbAwareAction() {
 
+  private val LOG = logger<GitCommitEditingAction>()
   private val COMMIT_NOT_IN_HEAD = "The commit is not in the current branch"
 
   override fun update(e: AnActionEvent) {
@@ -138,13 +140,15 @@ abstract class GitCommitEditingAction : DumbAwareAction() {
   protected fun prohibitRebaseDuringRebase(e: AnActionEvent, operation: String) {
     if (e.presentation.isEnabledAndVisible) {
       val state = getRepository(e).state
-      if (state != Repository.State.NORMAL) {
-        e.presentation.isEnabled = false
-        e.presentation.description = when (state) {
-          Repository.State.REBASING -> "Can't $operation during rebase"
-          Repository.State.MERGING -> "Can't $operation during merge"
-          Repository.State.DETACHED -> "Can't $operation in detached HEAD state"
-          else -> throw IllegalStateException("Unexpected state: $state")
+      if (state == NORMAL || state == DETACHED) return
+
+      e.presentation.isEnabled = false
+      e.presentation.description = when (state) {
+        REBASING -> "Can't $operation during rebase"
+        MERGING -> "Can't $operation during merge"
+        else -> {
+          LOG.error(IllegalStateException("Unexpected state: $state"))
+          "Can't $operation during $state"
         }
       }
     }
