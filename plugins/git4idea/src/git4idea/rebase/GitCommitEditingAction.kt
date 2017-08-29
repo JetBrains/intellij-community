@@ -137,10 +137,11 @@ abstract class GitCommitEditingAction : DumbAwareAction() {
   private fun commitPushedToProtectedBranchError(protectedBranch: String)
     = "The commit is already pushed to protected branch '$protectedBranch'"
 
-  protected fun prohibitRebaseDuringRebase(e: AnActionEvent, operation: String) {
+  protected fun prohibitRebaseDuringRebase(e: AnActionEvent, operation: String, allowRebaseIfHeadCommit: Boolean = false) {
     if (e.presentation.isEnabledAndVisible) {
       val state = getRepository(e).state
       if (state == NORMAL || state == DETACHED) return
+      if (state == REBASING && allowRebaseIfHeadCommit && isHeadCommit(e)) return
 
       e.presentation.isEnabled = false
       e.presentation.description = when (state) {
@@ -152,5 +153,9 @@ abstract class GitCommitEditingAction : DumbAwareAction() {
         }
       }
     }
+  }
+
+  protected fun isHeadCommit(e: AnActionEvent): Boolean {
+    return getSelectedCommit(e).id.asString() == getRepository(e).currentRevision
   }
 }
