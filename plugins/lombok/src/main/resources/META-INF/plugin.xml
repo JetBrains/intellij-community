@@ -262,6 +262,7 @@
 		<ul>
 		<li>0.15
 				<ol>
+            <li>Fixed #134: Add suppot for toBuilder = true</li>
             <li>Fixed #145: Overriding builder() method for @Builder shows false compilation error</li>
             <li>Fixed #162: @Data/@XConstructor bug with default constructor</li>
             <li>Improved #260: Handling val - Inferred Type is Object</li>

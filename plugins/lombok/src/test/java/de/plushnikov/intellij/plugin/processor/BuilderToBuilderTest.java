@@ -31,25 +31,4 @@ public class BuilderToBuilderTest extends AbstractLombokParsingTestCase {
     doTest(true);
   }
 
-//  public void testBuilderTime() throws InvocationTargetException, IllegalAccessException {
-//    final String testName = "builder$BuilderWithToBuilderOnMethod";
-//    final PsiJavaFile beforeLombokFile = loadBeforeLombokFile(testName);
-//    final PsiJavaFile afterDelombokFile = loadAfterDeLombokFile(testName);
-//
-//    final PsiClass[] beforeLombokFileClasses = beforeLombokFile.getClasses();
-//
-//    final Method clearUserDataMethod = ReflectionUtil.getDeclaredMethod(UserDataHolderBase.class, "clearUserData");
-//    for (int i = 0; i < 20; i++) {
-//      compareFiles(beforeLombokFile, afterDelombokFile);
-//      clearUserDataMethod.invoke(beforeLombokFileClasses[0]);
-//    }
-//
-////    PlatformTestUtil.startPerformanceTest("Test Performance", 100, new ThrowableRunnable() {
-////      @Override
-////      public void run() throws Throwable {
-////        compareFiles(beforeLombokFile, afterDelombokFile);
-////        clearUserDataMethod.invoke(beforeLombokFileClasses[0]);
-////      }
-////    }).useLegacyScaling().attempts(3).assertTiming();
-//  }
 }
