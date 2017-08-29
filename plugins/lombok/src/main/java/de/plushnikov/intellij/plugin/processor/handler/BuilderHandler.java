@@ -305,7 +305,7 @@ public class BuilderHandler {
 
     LombokLightClassBuilder builderClass = createBuilderClass(psiClass, psiMethod, builderClassName,
       psiMethod.isConstructor() || psiMethod.hasModifierProperty(PsiModifier.STATIC), psiAnnotation);
-    builderClass.withConstructors(createConstructors(builderClass, psiAnnotation));
+    builderClass.withMethods(createConstructors(builderClass, psiAnnotation));
 
     final Collection<PsiParameter> builderParameters = getBuilderParameters(psiMethod, Collections.<PsiField>emptySet());
     final PsiSubstitutor builderSubstitutor = getBuilderSubstitutor(psiClass, builderClass);
@@ -320,7 +320,7 @@ public class BuilderHandler {
     final String builderClassName = getBuilderClassName(psiClass, psiAnnotation);
 
     LombokLightClassBuilder builderClass = createBuilderClass(psiClass, psiClass, builderClassName, true, psiAnnotation);
-    builderClass.withConstructors(createConstructors(builderClass, psiAnnotation));
+    builderClass.withMethods(createConstructors(builderClass, psiAnnotation));
 
     final AccessorsInfo accessorsInfo = AccessorsInfo.build(psiClass);
     final Collection<PsiField> psiFields = getBuilderFields(psiClass, Collections.<PsiField>emptySet(), accessorsInfo);
@@ -391,8 +391,7 @@ public class BuilderHandler {
   private LombokLightClassBuilder createBuilderClass(@NotNull PsiClass psiClass, @NotNull PsiTypeParameterListOwner psiTypeParameterListOwner, @NotNull String builderClassName, final boolean isStatic, @NotNull PsiAnnotation psiAnnotation) {
     final String builderClassQualifiedName = psiClass.getQualifiedName() + "." + builderClassName;
 
-    final Project project = psiClass.getProject();
-    final LombokLightClassBuilder classBuilder = new LombokLightClassBuilder(project, builderClassName, builderClassQualifiedName)
+    final LombokLightClassBuilder classBuilder = new LombokLightClassBuilder(psiClass, builderClassName, builderClassQualifiedName)
       .withContainingClass(psiClass)
       .withNavigationElement(psiAnnotation)
       .withParameterTypes(psiTypeParameterListOwner instanceof PsiMethod && ((PsiMethod) psiTypeParameterListOwner).isConstructor() ? psiClass.getTypeParameterList() : psiTypeParameterListOwner.getTypeParameterList())

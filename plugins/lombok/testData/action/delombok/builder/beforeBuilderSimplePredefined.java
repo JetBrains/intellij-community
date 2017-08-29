@@ -6,7 +6,7 @@ public class BuilderSimplePreDefined {
   static class BuilderSimplePreDefinedBuilder {
     private int myInt;
 
-    public BuilderSimplePreDefined.BuilderSimplePreDefinedBuilder myString(String myString) {
+    public BuilderSimplePreDefinedBuilder myString(String myString) {
       this.myString = myString + "something";
       return this;
     }

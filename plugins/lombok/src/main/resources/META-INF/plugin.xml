@@ -262,6 +262,7 @@
 		<ul>
 		<li>0.15
 				<ol>
+            <li>Fixed #145: Overriding builder() method for @Builder shows false compilation error</li>
             <li>Fixed #162: @Data/@XConstructor bug with default constructor</li>
             <li>Improved #260: Handling val - Inferred Type is Object</li>
             <li>Fixed #290: Getter and FieldDefaults with parameter AccessLevel in Enum shows "cannot access"</li>

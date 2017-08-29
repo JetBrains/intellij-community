@@ -74,6 +74,6 @@ class BuilderInstanceMethod<T> {
 	@java.lang.SuppressWarnings("all")
 	@javax.annotation.Generated("lombok")
 	public StringBuilder builder() {
-		return new StringBuilder();
+		return new BuilderInstanceMethod.StringBuilder();
 	}
 }

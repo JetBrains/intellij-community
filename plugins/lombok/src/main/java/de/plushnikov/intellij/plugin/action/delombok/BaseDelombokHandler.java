@@ -26,6 +26,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import de.plushnikov.intellij.plugin.processor.AbstractProcessor;
 import de.plushnikov.intellij.plugin.processor.ShouldGenerateFullCodeBlock;
+import de.plushnikov.intellij.plugin.psi.LombokLightClassBuilder;
 import de.plushnikov.intellij.plugin.settings.ProjectSettings;
 import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
 import org.jetbrains.annotations.NotNull;
@@ -75,7 +76,10 @@ public class BaseDelombokHandler {
 
     if (processInnerClasses) {
       for (PsiClass innerClass : allInnerClasses) {
-        invoke(project, innerClass, processInnerClasses);
+        //skip our self generated classes
+        if (!(innerClass instanceof LombokLightClassBuilder)) {
+          invoke(project, innerClass, processInnerClasses);
+        }
       }
     }
     deleteAnnotations(processedAnnotations);

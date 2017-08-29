@@ -19,7 +19,7 @@ public class BuilderSimplePreDefined {
     BuilderSimplePreDefinedBuilder() {
     }
 
-    public BuilderSimplePreDefined.BuilderSimplePreDefinedBuilder myString(String myString) {
+    public BuilderSimplePreDefinedBuilder myString(String myString) {
       this.myString = myString + "something";
       return this;
     }

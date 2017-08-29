@@ -25,12 +25,12 @@ public class BuilderAtMethodSimple {
     BuilderAtMethodSimpleBuilder() {
     }
 
-    public BuilderAtMethodSimple.BuilderAtMethodSimpleBuilder myInt(int myInt) {
+    public BuilderAtMethodSimpleBuilder myInt(int myInt) {
       this.myInt = myInt;
       return this;
     }
 
-    public BuilderAtMethodSimple.BuilderAtMethodSimpleBuilder myString(String myString) {
+    public BuilderAtMethodSimpleBuilder myString(String myString) {
       this.myString = myString;
       return this;
     }
