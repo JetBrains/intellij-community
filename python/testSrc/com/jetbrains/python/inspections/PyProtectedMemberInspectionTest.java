@@ -80,6 +80,10 @@ public class PyProtectedMemberInspectionTest extends PyInspectionTestCase {
     doMultiFileTest();
   }
 
+  public void testClassInAnotherModule() {
+    doMultiFileTest();
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
