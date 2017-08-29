@@ -945,7 +945,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
       }
       parent.createAndAddChildren(childrenAdded);
       if (ApplicationManager.getApplication().isUnitTestMode() && !ApplicationInfoImpl.isInStressTest()) {
-        long count = Arrays.stream(parentChildrenIds.toArray()).mapToObj(this::findFileById).map(VirtualFile::getName).distinct().count();
+        long count = Arrays.stream(parentChildrenIds.toArray()).mapToObj(this::findFileById).filter(Objects::nonNull).map(VirtualFile::getName).distinct().count();
         assert count == parentChildrenIds.size();
       }
       FSRecords.updateList(parentId, parentChildrenIds.toArray());
