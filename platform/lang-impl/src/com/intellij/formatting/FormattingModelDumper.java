@@ -68,7 +68,7 @@ public class FormattingModelDumper {
   }
 
   private static String getBlockText(final Block block) {
-    if (block instanceof ASTBlock) {
+    if (block instanceof ASTBlock && ((ASTBlock)block).getNode() != null) {
       return ((ASTBlock)block).getNode().getText();
     }
     else {
@@ -78,7 +78,7 @@ public class FormattingModelDumper {
 
   private static void dumpBlock(final Block block, final StringBuilder builder) {
     builder.append("<block ");
-    if (block instanceof ASTBlock) {
+    if (block instanceof ASTBlock && ((ASTBlock)block).getNode() != null) {
       builder.append(((ASTBlock)block).getNode().getElementType());
     }
     else {
