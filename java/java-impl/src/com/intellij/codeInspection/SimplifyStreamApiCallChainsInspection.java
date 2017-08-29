@@ -1507,6 +1507,12 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
         if (!ExpressionUtils.isReferenceTo(index, parameters[0])) return null;
 
         PsiExpression arrayExpr = arrayAccess.getArrayExpression();
+        PsiType arrayType = arrayExpr.getType();
+        if (arrayType == null) return null;
+        PsiType type = arrayType.getDeepComponentType();
+        if (type instanceof PsiPrimitiveType && !(type.equals(PsiType.INT) || type.equals(PsiType.LONG) || type.equals(PsiType.DOUBLE))) {
+          return null;
+        }
 
         PsiExpression leftBound = args[0];
         PsiExpression rightBound = args[1];
