@@ -274,7 +274,7 @@ public class PyOverrideImplementUtil {
       }
     }
 
-    if (PyNames.TYPES_INSTANCE_TYPE.equals(baseClass.getQualifiedName()) || raisesNotImplementedError(baseFunction) || implement) {
+    if (PyNames.TYPES_INSTANCE_TYPE.equals(baseClass.getQualifiedName()) || baseFunction.raisesNotImplementedError() || implement) {
       statementBody.append(PyNames.PASS);
     }
     else {
@@ -316,12 +316,7 @@ public class PyOverrideImplementUtil {
     return pyFunctionBuilder;
   }
 
-  public static boolean raisesNotImplementedError(@NotNull PyFunction function) {
-    PyStatementList statementList = function.getStatementList();
-    IfVisitor visitor = new IfVisitor();
-    statementList.accept(visitor);
-    return !visitor.hasReturnInside && visitor.raiseNotImplemented;
-  }
+
 
   // TODO find a better place for this logic
   private static String getReferenceText(PyClass fromClass, PyClass toClass) {
@@ -349,7 +344,7 @@ public class PyOverrideImplementUtil {
         cls.findClassAttribute(methodName, false, context) != null) {
       return false;
     }
-    return PyUtil.isDecoratedAsAbstract(method) || raisesNotImplementedError(method);
+    return PyUtil.isDecoratedAsAbstract(method) || method.raisesNotImplementedError();
   }
 
   /**
@@ -371,30 +366,5 @@ public class PyOverrideImplementUtil {
     return Lists.newArrayList(functions.values());
   }
 
-  private static class IfVisitor extends PyRecursiveElementVisitor {
-    private boolean hasReturnInside;
-    private boolean raiseNotImplemented;
 
-    @Override
-    public void visitPyReturnStatement(PyReturnStatement node) {
-      hasReturnInside = true;
-    }
-
-    @Override
-    public void visitPyRaiseStatement(PyRaiseStatement node) {
-      final PyExpression[] expressions = node.getExpressions();
-      if (expressions.length > 0) {
-        final PyExpression firstExpression = expressions[0];
-        if (firstExpression instanceof PyCallExpression) {
-          final PyExpression callee = ((PyCallExpression)firstExpression).getCallee();
-          if (callee != null && callee.getText().equals(PyNames.NOT_IMPLEMENTED_ERROR)) {
-            raiseNotImplemented = true;
-          }
-        }
-        else if (firstExpression.getText().equals(PyNames.NOT_IMPLEMENTED_ERROR)) {
-          raiseNotImplemented = true;
-        }
-      }
-    }
-  }
 }

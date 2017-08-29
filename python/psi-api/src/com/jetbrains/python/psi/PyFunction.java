@@ -103,6 +103,8 @@ public interface PyFunction extends PsiNamedElement, StubBasedPsiElement<PyFunct
   @Nullable
   PyAnnotation getAnnotation();
 
+  boolean raisesNotImplementedError();
+
   /**
    * Searches for function attributes.
    * See <a href="http://legacy.python.org/dev/peps/pep-0232/">PEP-0232</a>

@@ -615,6 +615,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
     return getTypeCommentAnnotationFromStubOrPsi(this);
   }
 
+
   @NotNull
   @Override
   public SearchScope getUseScope() {
@@ -736,6 +737,53 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       ArrayUtil.contains(functionName, PyNames.AITER, PyNames.ANEXT, PyNames.AENTER, PyNames.AEXIT, PyNames.CALL) ||
       !PyNames.getBuiltinMethods(languageLevel).containsKey(functionName)
     );
+  }
+
+  @Override
+  public boolean raisesNotImplementedError() {
+    PyFunctionStub stub = getStub();
+    if (stub != null) {
+      return stub.isRaisesNotImplementedError();
+    }
+    else {
+      return raisesNotImplementedErrorFromAst();
+    }
+  }
+
+  private boolean raisesNotImplementedErrorFromAst() {
+    class IfVisitor extends PyRecursiveElementVisitor {
+      private boolean hasReturnInside;
+      private boolean raiseNotImplemented;
+
+      @Override
+      public void visitPyReturnStatement(PyReturnStatement node) {
+        hasReturnInside = true;
+      }
+
+      @Override
+      public void visitPyRaiseStatement(PyRaiseStatement node) {
+        final PyExpression[] expressions = node.getExpressions();
+        if (expressions.length > 0) {
+          final PyExpression firstExpression = expressions[0];
+          if (firstExpression instanceof PyCallExpression) {
+            final PyExpression callee = ((PyCallExpression)firstExpression).getCallee();
+            if (callee != null && callee.getText().equals(PyNames.NOT_IMPLEMENTED_ERROR)) {
+              raiseNotImplemented = true;
+            }
+          }
+          else if (firstExpression.getText().equals(PyNames.NOT_IMPLEMENTED_ERROR)) {
+            raiseNotImplemented = true;
+          }
+        }
+      }
+    }
+    if (this.getContainingClass() == null) {
+      return false;
+    }
+    PyStatementList statementList = getStatementList();
+    IfVisitor visitor = new IfVisitor();
+    statementList.accept(visitor);
+    return !visitor.hasReturnInside && visitor.raiseNotImplemented;
   }
 
   @Nullable

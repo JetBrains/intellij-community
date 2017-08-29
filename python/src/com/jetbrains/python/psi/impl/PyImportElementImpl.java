@@ -180,19 +180,15 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
     };
   }
 
+  @Override
+  public String getName() {
+    return getVisibleName();
+  }
+
   @NotNull
   public Iterable<PyElement> iterateNames() {
-    PyElement ret = getAsNameElement();
-    if (ret == null) {
-      final PyReferenceExpression importReference = getImportReferenceExpression();
-      if (importReference != null) {
-        ret = PyPsiUtils.getFirstQualifier(importReference);
-      }
-    }
-    if (ret == null) {
-      return EmptyIterable.getInstance();
-    }
-    return Collections.singleton(ret);
+    final String visibleName = getVisibleName();
+    return visibleName != null ? Collections.singletonList(this) : Collections.emptyList();
   }
 
   @NotNull
