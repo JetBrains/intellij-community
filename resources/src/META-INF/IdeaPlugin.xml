@@ -713,7 +713,7 @@
     <localInspection groupPath="Java" language="JAVA" suppressId="removal" shortName="MarkedForRemoval"
                      key="inspection.marked.for.removal.display.name" bundle="messages.InspectionsBundle"
                      groupKey="group.names.code.maturity.issues" groupBundle="messages.InspectionsBundle"
-                     enabledByDefault="true" level="WARNING" implementationClass="com.intellij.codeInspection.deprecation.MarkedForRemovalInspection"/>
+                     enabledByDefault="true" level="ERROR" implementationClass="com.intellij.codeInspection.deprecation.MarkedForRemovalInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="DeprecatedIsStillUsed" displayName="Deprecated member is still used"
                      groupKey="group.names.code.maturity.issues" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.DeprecatedIsStillUsedInspection" />

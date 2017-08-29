@@ -746,6 +746,12 @@
           <option name="EFFECT_TYPE" value="3"/>
         </value>
       </option>
+      <option name="MARKED_FOR_REMOVAL_ATTRIBUTES">
+        <value>
+          <option name="EFFECT_COLOR" value="ff0000"/>
+          <option name="EFFECT_TYPE" value="3"/>
+        </value>
+      </option>
 
       <option name="XML_PROLOGUE">
         <value>
@@ -1522,6 +1528,13 @@
           <option name="EFFECT_TYPE" value="3" />
         </value>
       </option>
+      <option name="MARKED_FOR_REMOVAL_ATTRIBUTES">
+        <value>
+          <option name="EFFECT_COLOR" value="bc3f3c" deuteranopia="e57132" protanopia="e57132"/>
+          <option name="EFFECT_TYPE" value="3"/>
+        </value>
+      </option>
+
       <option name="DIFF_CONFLICT">
         <value>
           <option name="BACKGROUND" value="45302b" deuteranopia="453900" protanopia="453900"/>

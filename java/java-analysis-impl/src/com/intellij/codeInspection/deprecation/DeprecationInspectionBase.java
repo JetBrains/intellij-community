@@ -22,14 +22,16 @@ import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.infos.MethodCandidateInfo;
-import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,6 +39,7 @@ import java.util.Arrays;
 import java.util.List;
 
 abstract class DeprecationInspectionBase extends BaseJavaBatchLocalInspectionTool {
+  public boolean IGNORE_IN_SAME_OUTERMOST_CLASS;
 
   @Override
   public boolean isEnabledByDefault() {
@@ -49,20 +52,28 @@ abstract class DeprecationInspectionBase extends BaseJavaBatchLocalInspectionToo
     private final boolean myIgnoreAbstractDeprecatedOverrides;
     private final boolean myIgnoreImportStatements;
     private final boolean myIgnoreMethodsOfDeprecated;
+    private final boolean myIgnoreInSameOutermostClass;
     private final boolean myForRemoval;
+    private final ProblemHighlightType myHighlightType;
 
     DeprecationElementVisitor(@NotNull ProblemsHolder holder,
                               boolean ignoreInsideDeprecated,
                               boolean ignoreAbstractDeprecatedOverrides,
                               boolean ignoreImportStatements,
                               boolean ignoreMethodsOfDeprecated,
-                              boolean forRemoval) {
+                              boolean ignoreInSameOutermostClass,
+                              boolean forRemoval,
+                              @Nullable HighlightSeverity severity) {
       myHolder = holder;
       myIgnoreInsideDeprecated = ignoreInsideDeprecated;
       myIgnoreAbstractDeprecatedOverrides = ignoreAbstractDeprecatedOverrides;
       myIgnoreImportStatements = ignoreImportStatements;
       myIgnoreMethodsOfDeprecated = ignoreMethodsOfDeprecated;
+      myIgnoreInSameOutermostClass = ignoreInSameOutermostClass;
       myForRemoval = forRemoval;
+      myHighlightType = forRemoval && severity == HighlightSeverity.ERROR
+                        ? ProblemHighlightType.LIKE_MARKED_FOR_REMOVAL
+                        : ProblemHighlightType.LIKE_DEPRECATED;
     }
 
     @Override
@@ -70,7 +81,7 @@ abstract class DeprecationInspectionBase extends BaseJavaBatchLocalInspectionToo
       JavaResolveResult result = reference.advancedResolve(true);
       PsiElement resolved = result.getElement();
       checkDeprecated(resolved, reference.getReferenceNameElement(), null, myIgnoreInsideDeprecated, myIgnoreImportStatements,
-                      myIgnoreMethodsOfDeprecated, myHolder, myForRemoval);
+                      myIgnoreMethodsOfDeprecated, myIgnoreInSameOutermostClass, myHolder, myForRemoval, myHighlightType);
     }
 
     @Override
@@ -81,7 +92,7 @@ abstract class DeprecationInspectionBase extends BaseJavaBatchLocalInspectionToo
       if (importReference != null) {
         PsiElement resolved = importReference.resolve();
         checkDeprecated(resolved, importReference.getReferenceNameElement(), null, myIgnoreInsideDeprecated,
-                        false, true, myHolder, myForRemoval);
+                        false, true, myIgnoreInSameOutermostClass, myHolder, myForRemoval, myHighlightType);
       }
     }
 
@@ -115,7 +126,7 @@ abstract class DeprecationInspectionBase extends BaseJavaBatchLocalInspectionToo
         if (constructor != null && expression.getClassOrAnonymousClassReference() != null) {
           if (expression.getClassReference() == null && constructor.getParameterList().getParametersCount() == 0) return;
           checkDeprecated(constructor, expression.getClassOrAnonymousClassReference(), null, myIgnoreInsideDeprecated,
-                          myIgnoreImportStatements, true, myHolder, myForRemoval);
+                          myIgnoreImportStatements, true, myIgnoreInSameOutermostClass, myHolder, myForRemoval, myHighlightType);
         }
       }
     }
@@ -125,7 +136,8 @@ abstract class DeprecationInspectionBase extends BaseJavaBatchLocalInspectionToo
       MethodSignatureBackedByPsiMethod methodSignature = MethodSignatureBackedByPsiMethod.create(method, PsiSubstitutor.EMPTY);
       if (!method.isConstructor()) {
         List<MethodSignatureBackedByPsiMethod> superMethodSignatures = method.findSuperMethodSignaturesIncludingStatic(true);
-        checkMethodOverridesDeprecated(methodSignature, superMethodSignatures, myIgnoreAbstractDeprecatedOverrides, myHolder, myForRemoval);
+        checkMethodOverridesDeprecated(methodSignature, superMethodSignatures, myIgnoreAbstractDeprecatedOverrides, myHolder, myForRemoval,
+                                       myHighlightType);
       }
       else {
         checkImplicitCallToSuper(method);
@@ -155,9 +167,8 @@ abstract class DeprecationInspectionBase extends BaseJavaBatchLocalInspectionToo
       String description =
         JavaErrorMessages.message(myForRemoval ? "marked.for.removal.default.constructor" : "deprecated.default.constructor",
                                   superClass.getQualifiedName());
-      ProblemHighlightType type =
-        asDeprecated && !myForRemoval ? ProblemHighlightType.LIKE_DEPRECATED : ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
-      myHolder.registerProblem(nameIdentifier, description, type);
+      ProblemHighlightType type = asDeprecated ? myHighlightType : ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
+      myHolder.registerProblem(nameIdentifier, getDescription(description, myForRemoval, myHighlightType), type);
     }
 
     @Override
@@ -190,8 +201,7 @@ abstract class DeprecationInspectionBase extends BaseJavaBatchLocalInspectionToo
             PsiImplUtil.isDeprecatedByAnnotation((PsiJavaModule)target)) {
           String description = JavaErrorMessages.message(myForRemoval ? "marked.for.removal.symbol" : "deprecated.symbol",
                                                          HighlightMessageUtil.getSymbolName(target));
-          ProblemHighlightType type = myForRemoval ? ProblemHighlightType.GENERIC_ERROR_OR_WARNING : ProblemHighlightType.LIKE_DEPRECATED;
-          myHolder.registerProblem(refElement, description, type);
+          myHolder.registerProblem(refElement, getDescription(description, myForRemoval, myHighlightType), myHighlightType);
         }
       }
     }
@@ -207,7 +217,8 @@ abstract class DeprecationInspectionBase extends BaseJavaBatchLocalInspectionToo
   //@top
   static void checkMethodOverridesDeprecated(MethodSignatureBackedByPsiMethod methodSignature,
                                              List<MethodSignatureBackedByPsiMethod> superMethodSignatures,
-                                             boolean ignoreAbstractDeprecatedOverrides, ProblemsHolder holder, boolean forRemoval) {
+                                             boolean ignoreAbstractDeprecatedOverrides, ProblemsHolder holder,
+                                             boolean forRemoval, @NotNull ProblemHighlightType highlightType) {
     PsiMethod method = methodSignature.getMethod();
     PsiElement methodName = method.getNameIdentifier();
     if (methodName == null) return;
@@ -220,8 +231,7 @@ abstract class DeprecationInspectionBase extends BaseJavaBatchLocalInspectionToo
       if (superMethod.isDeprecated() && isMarkedForRemoval(superMethod, forRemoval)) {
         String description = JavaErrorMessages.message(forRemoval ? "overrides.marked.for.removal.method" : "overrides.deprecated.method",
                                                        HighlightMessageUtil.getSymbolName(aClass, PsiSubstitutor.EMPTY));
-        ProblemHighlightType type = forRemoval ? ProblemHighlightType.GENERIC_ERROR_OR_WARNING : ProblemHighlightType.LIKE_DEPRECATED;
-        holder.registerProblem(methodName, description, type);
+        holder.registerProblem(methodName, getDescription(description, forRemoval, highlightType), highlightType);
       }
     }
   }
@@ -232,16 +242,21 @@ abstract class DeprecationInspectionBase extends BaseJavaBatchLocalInspectionToo
                               boolean ignoreInsideDeprecated,
                               boolean ignoreImportStatements,
                               boolean ignoreMethodsOfDeprecated,
+                              boolean ignoreInSameOutermostClass,
                               ProblemsHolder holder,
-                              boolean forRemoval) {
-    if (!(refElement instanceof PsiDocCommentOwner) || !isMarkedForRemoval((PsiDocCommentOwner)refElement, forRemoval)) {
+                              boolean forRemoval,
+                              @NotNull ProblemHighlightType highlightType) {
+    if (!(refElement instanceof PsiDocCommentOwner) ||
+        !isMarkedForRemoval((PsiDocCommentOwner)refElement, forRemoval) ||
+        isInSameOutermostClass(refElement, elementToHighlight, ignoreInSameOutermostClass)) {
       return;
     }
 
     if (!((PsiDocCommentOwner)refElement).isDeprecated()) {
       if (!ignoreMethodsOfDeprecated) {
         checkDeprecated(((PsiDocCommentOwner)refElement).getContainingClass(), elementToHighlight, rangeInElement,
-                        ignoreInsideDeprecated, ignoreImportStatements, false, holder, forRemoval);
+                        ignoreInsideDeprecated, ignoreImportStatements, false, ignoreInSameOutermostClass,
+                        holder, forRemoval, highlightType);
       }
       return;
     }
@@ -260,12 +275,26 @@ abstract class DeprecationInspectionBase extends BaseJavaBatchLocalInspectionToo
     String description = JavaErrorMessages.message(forRemoval ? "marked.for.removal.symbol" : "deprecated.symbol",
                                                    HighlightMessageUtil.getSymbolName(refElement, PsiSubstitutor.EMPTY));
 
-    ProblemHighlightType type = forRemoval ? ProblemHighlightType.GENERIC_ERROR_OR_WARNING : ProblemHighlightType.LIKE_DEPRECATED;
-    holder.registerProblem(elementToHighlight, description, type, rangeInElement);
+    holder.registerProblem(elementToHighlight, getDescription(description, forRemoval, highlightType), highlightType, rangeInElement);
   }
 
-  private static boolean isMarkedForRemoval(PsiModifierListOwner superMethod, boolean forRemoval) {
-    return isMarkedForRemoval(superMethod) == forRemoval;
+  private static boolean isMarkedForRemoval(PsiModifierListOwner element, boolean forRemoval) {
+    return isMarkedForRemoval(element) == forRemoval;
+  }
+
+  private static boolean isInSameOutermostClass(PsiElement refElement, PsiElement elementToHighlight, boolean ignoreInSameOutermostClass) {
+    if (!ignoreInSameOutermostClass) {
+      return false;
+    }
+    PsiClass outermostClass = CachedValuesManager.getCachedValue(
+      refElement,
+      () -> new CachedValueProvider.Result<>(getOutermostClass(refElement), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT));
+    return outermostClass != null && outermostClass == getOutermostClass(elementToHighlight);
+  }
+
+  private static PsiClass getOutermostClass(PsiElement element) {
+    PsiElement maybeClass = PsiTreeUtil.findFirstParent(element, e -> e instanceof PsiClass && e.getParent() instanceof PsiFile);
+    return maybeClass instanceof PsiClass ? (PsiClass)maybeClass : null;
   }
 
   private static boolean isMarkedForRemoval(@Nullable PsiModifierListOwner element) {
@@ -282,5 +311,19 @@ abstract class DeprecationInspectionBase extends BaseJavaBatchLocalInspectionToo
       result = JavaConstantExpressionEvaluator.computeConstantExpression((PsiExpression)value, false);
     }
     return result instanceof Boolean && ((Boolean)result);
+  }
+
+  protected static void addSameOutermostClassCheckBox(MultipleCheckboxOptionsPanel panel) {
+    panel.addCheckbox("Ignore in the same outermost class", "IGNORE_IN_SAME_OUTERMOST_CLASS");
+  }
+
+  private static String getDescription(String description, boolean forRemoval, ProblemHighlightType highlightType) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      ProblemHighlightType defaultType = forRemoval ? ProblemHighlightType.LIKE_MARKED_FOR_REMOVAL : ProblemHighlightType.LIKE_DEPRECATED;
+      if (highlightType != defaultType) {
+        return description + "(" + highlightType + ")";
+      }
+    }
+    return description;
   }
 }

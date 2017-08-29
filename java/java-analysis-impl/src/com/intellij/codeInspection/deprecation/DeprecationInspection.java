@@ -16,13 +16,12 @@
 package com.intellij.codeInspection.deprecation;
 
 import com.intellij.codeInspection.DeprecationUtil;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import org.intellij.lang.annotations.Pattern;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,7 +46,7 @@ public class DeprecationInspection extends DeprecationInspectionBase {
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new DeprecationElementVisitor(holder, IGNORE_INSIDE_DEPRECATED, IGNORE_ABSTRACT_DEPRECATED_OVERRIDES,
                                          IGNORE_IMPORT_STATEMENTS, IGNORE_METHODS_OF_DEPRECATED,
-                                         false);
+                                         IGNORE_IN_SAME_OUTERMOST_CLASS, false, null);
   }
 
   @Override
@@ -82,6 +81,7 @@ public class DeprecationInspection extends DeprecationInspectionBase {
     panel.addCheckbox("Ignore inside non-static imports", "IGNORE_IMPORT_STATEMENTS");
     panel.addCheckbox("<html>Ignore overrides of deprecated abstract methods from non-deprecated supers</html>", "IGNORE_ABSTRACT_DEPRECATED_OVERRIDES");
     panel.addCheckbox("Ignore members of deprecated classes", IGNORE_METHODS_OF_DEPRECATED_NAME);
+    addSameOutermostClassCheckBox(panel);
     return panel;
   }
 
@@ -89,6 +89,7 @@ public class DeprecationInspection extends DeprecationInspectionBase {
                                      PsiElement elementToHighlight,
                                      @Nullable TextRange rangeInElement,
                                      ProblemsHolder holder) {
-    checkDeprecated(refElement, elementToHighlight, rangeInElement, false, false, true, holder, false);
+    checkDeprecated(refElement, elementToHighlight, rangeInElement, false, false, true, false, holder, false,
+                    ProblemHighlightType.LIKE_DEPRECATED);
   }
 }
