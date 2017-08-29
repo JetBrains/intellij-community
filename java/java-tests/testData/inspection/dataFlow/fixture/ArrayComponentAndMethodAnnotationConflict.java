@@ -19,9 +19,9 @@ class FooImpl implements Foo {
       return null;
     }
     else if (Math.random() > 0.5) {
-      @NotNull Object @Nullable [] arr1 = new Object[]{null, new Object(), Math.random() > 0.5 ? new Object() : null};
+      @NotNull Object @Nullable [] arr1 = new Object[]{<warning descr="'null' is assigned to a variable that is annotated with @NotNull">null</warning>, new Object(), <warning descr="Expression 'Math.random() > 0.5 ? new Object() : null' might evaluate to null but is assigned to a variable that is annotated with @NotNull">Math.random() > 0.5 ? new Object() : null</warning>};
       @NotNull Object @Nullable [] arr2 = {<warning descr="'null' is assigned to a variable that is annotated with @NotNull">null</warning>, new Object(), <warning descr="Expression 'Math.random() > 0.5 ? new Object() : null' might evaluate to null but is assigned to a variable that is annotated with @NotNull">Math.random() > 0.5 ? new Object() : null</warning>};
-      return new Object[]{null, new Object(), Math.random() > 0.5 ? new Object() : null};
+      return new Object[]{<warning descr="'null' is assigned to a variable that is annotated with @NotNull">null</warning>, new Object(), <warning descr="Expression 'Math.random() > 0.5 ? new Object() : null' might evaluate to null but is assigned to a variable that is annotated with @NotNull">Math.random() > 0.5 ? new Object() : null</warning>};
     }
     return new @NotNull Object @Nullable []{<warning descr="'null' is assigned to a variable that is annotated with @NotNull">null</warning>, new Object(), <warning descr="Expression 'Math.random() > 0.5 ? new Object() : null' might evaluate to null but is assigned to a variable that is annotated with @NotNull">Math.random() > 0.5 ? new Object() : null</warning>};
   }

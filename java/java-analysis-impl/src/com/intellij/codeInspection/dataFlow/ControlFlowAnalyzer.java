@@ -34,6 +34,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
 import com.siyeh.ig.numeric.UnnecessaryExplicitNumericCastInspection;
 import com.siyeh.ig.psiutils.CountingLoop;
+import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.Contract;
@@ -1014,18 +1015,20 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     startElement(expression);
     PsiType type = expression.getType();
     PsiType componentType = type instanceof PsiArrayType ? ((PsiArrayType)type).getComponentType() : null;
-    processArrayInitializers(expression, componentType);
+    processArrayInitializers(expression, componentType, DfaPsiUtil.getTypeNullability(componentType));
     pushUnknown();
     finishElement(expression);
   }
 
-  private void processArrayInitializers(@NotNull PsiArrayInitializerExpression expression, PsiType componentType) {
+  private void processArrayInitializers(@NotNull PsiArrayInitializerExpression expression,
+                                        @Nullable PsiType componentType,
+                                        @NotNull Nullness componentNullability) {
     PsiExpression[] initializers = expression.getInitializers();
     for (PsiExpression initializer : initializers) {
       initializer.accept(this);
       if (componentType != null) {
         generateBoxingUnboxingInstructionFor(initializer, componentType);
-        if (DfaPsiUtil.getTypeNullability(componentType) == Nullness.NOT_NULL) {
+        if (componentNullability == Nullness.NOT_NULL) {
           addInstruction(new CheckNotNullInstruction(initializer, NullabilityProblem.assigningToNotNull));
         }
       }
@@ -1536,7 +1539,14 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       }
       final PsiArrayInitializerExpression arrayInitializer = expression.getArrayInitializer();
       if (arrayInitializer != null) {
-        processArrayInitializers(arrayInitializer, ((PsiArrayType)type).getComponentType());
+        Nullness nullability = DfaPsiUtil.getTypeNullability(((PsiArrayType)type).getComponentType());
+        if(nullability == Nullness.UNKNOWN) {
+          PsiType expectedType = ExpectedTypeUtils.findExpectedType(expression, false);
+          if(expectedType instanceof PsiArrayType) {
+            nullability = DfaPsiUtil.getTypeNullability(((PsiArrayType)expectedType).getComponentType());
+          }
+        }
+        processArrayInitializers(arrayInitializer, ((PsiArrayType)type).getComponentType(), nullability);
       }
       addConditionalRuntimeThrow();
       addInstruction(new MethodCallInstruction(expression, null, Collections.emptyList()));
