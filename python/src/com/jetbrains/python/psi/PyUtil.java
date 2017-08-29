@@ -1863,7 +1863,7 @@ public class PyUtil {
     return false;
   }
 
-  private static boolean isStringLiteral(PyStatement stmt) {
+  public static boolean isStringLiteral(@Nullable PyStatement stmt) {
     if (stmt instanceof PyExpressionStatement) {
       final PyExpression expr = ((PyExpressionStatement)stmt).getExpression();
       if (expr instanceof PyStringLiteralExpression) {

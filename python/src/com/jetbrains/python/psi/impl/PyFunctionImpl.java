@@ -738,6 +738,39 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
     );
   }
 
+  @Override
+  public boolean onlyRaisesNotImplementedError() {
+    final PyFunctionStub stub = getStub();
+    if (stub != null) {
+      return stub.onlyRaisesNotImplementedError();
+    }
+
+    final PyStatement[] statements = getStatementList().getStatements();
+    return statements.length == 1 && isRaiseNotImplementedError(statements[0]) ||
+           statements.length == 2 && PyUtil.isStringLiteral(statements[0]) && isRaiseNotImplementedError(statements[1]);
+  }
+
+  private static boolean isRaiseNotImplementedError(@NotNull PyStatement statement) {
+    final PyExpression raisedExpression = Optional
+      .ofNullable(as(statement, PyRaiseStatement.class))
+      .map(PyRaiseStatement::getExpressions)
+      .filter(expressions -> expressions.length == 1)
+      .map(expressions -> expressions[0])
+      .orElse(null);
+
+    if (raisedExpression instanceof PyCallExpression) {
+      final PyExpression callee = ((PyCallExpression)raisedExpression).getCallee();
+      if (callee != null && callee.getText().equals(PyNames.NOT_IMPLEMENTED_ERROR)) {
+        return true;
+      }
+    }
+    else if (raisedExpression != null && raisedExpression.getText().equals(PyNames.NOT_IMPLEMENTED_ERROR)) {
+      return true;
+    }
+
+    return false;
+  }
+
   @Nullable
   private static Modifier getModifierFromStub(@NotNull PyFunctionStub stub) {
     return JBIterable
