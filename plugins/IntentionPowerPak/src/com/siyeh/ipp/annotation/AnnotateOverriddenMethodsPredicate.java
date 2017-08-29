@@ -16,15 +16,16 @@
 package com.siyeh.ipp.annotation;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.search.searches.OverridingMethodsSearch;
-import com.siyeh.ig.psiutils.DeclarationSearchUtils;
+import com.siyeh.ig.JavaOverridingMethodUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
-import java.util.Collection;
+import java.util.Iterator;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 class AnnotateOverriddenMethodsPredicate implements PsiElementPredicate {
-
   @Override
   public boolean satisfiedBy(PsiElement element) {
     if (!(element instanceof PsiAnnotation)) {
@@ -65,20 +66,27 @@ class AnnotateOverriddenMethodsPredicate implements PsiElementPredicate {
       parameterIndex = -1;
       method = (PsiMethod)grandParent;
     }
-    if (DeclarationSearchUtils.isTooExpensiveToSearch(method, true)) {
-      // skip expensive check and just offer the intention when it might not be needed
-      return true;
-    }
-    final Collection<PsiMethod> overridingMethods =
-      OverridingMethodsSearch.search(method).findAll();
-    if (overridingMethods.isEmpty()) {
-      return false;
-    }
-    for (PsiMethod overridingMethod : overridingMethods) {
+
+    String annotationShortName = StringUtil.getShortName(annotationName);
+    Predicate<PsiMethod> preFilter = m -> {
+      if (parameterIndex == -1) {
+        return !JavaOverridingMethodUtil.containsAnnotationWithName(m, annotationShortName);
+      }
+      else {
+        PsiModifierListOwner parameter = (PsiModifierListOwner)m.getParameters()[parameterIndex];
+        return !JavaOverridingMethodUtil.containsAnnotationWithName(parameter, annotationShortName);
+      }
+    };
+    Stream<PsiMethod> overridenMethods = JavaOverridingMethodUtil.getOverridingMethodsIfCheapEnough(method, null, preFilter);
+    // skip expensive check and just offer the intention when it might not be needed
+    if (overridenMethods == null) return true;
+
+    Iterator<PsiMethod> it = overridenMethods.iterator();
+    while (it.hasNext()) {
+      PsiMethod overridingMethod = it.next();
       if (parameterIndex == -1) {
         final PsiAnnotation foundAnnotation =
-          AnnotationUtil.findAnnotation(overridingMethod,
-                                        annotationName);
+          AnnotationUtil.findAnnotation(overridingMethod, annotationName);
         if (foundAnnotation == null) {
           return true;
         }
@@ -89,8 +97,7 @@ class AnnotateOverriddenMethodsPredicate implements PsiElementPredicate {
         final PsiParameter[] parameters = parameterList.getParameters();
         final PsiParameter parameter = parameters[parameterIndex];
         final PsiAnnotation foundAnnotation =
-          AnnotationUtil.findAnnotation(parameter,
-                                        annotationName);
+          AnnotationUtil.findAnnotation(parameter, annotationName);
         if (foundAnnotation == null) {
           return true;
         }
