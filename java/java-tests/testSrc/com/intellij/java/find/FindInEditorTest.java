@@ -24,7 +24,6 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.testFramework.fixtures.EditorMouseFixture;
@@ -127,7 +126,6 @@ public class FindInEditorTest extends LightCodeInsightTestCase {
 
   public void testUndoingReplaceBringsChangePlaceIntoView() {
     configureFromText("abc\n\n\n\n\nabc\n");
-    myEditor.putUserData(TextEditorProvider.TREAT_AS_SHOWN, Boolean.TRUE); // make undo scroll editor in tests
     EditorTestUtil.setEditorVisibleSize(myEditor, 100, 3);
     executeAction(IdeActions.ACTION_EDITOR_TEXT_END_WITH_SELECTION);
     
