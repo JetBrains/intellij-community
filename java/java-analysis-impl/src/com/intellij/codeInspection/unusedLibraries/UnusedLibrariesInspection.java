@@ -100,7 +100,9 @@ public class UnusedLibrariesInspection extends GlobalInspectionTool {
 
       final List<CommonProblemDescriptor> result = new ArrayList<>();
       for (OrderEntry entry : moduleRootManager.getOrderEntries()) {
-        if (entry instanceof LibraryOrderEntry && !((LibraryOrderEntry)entry).isExported()) {
+        if (entry instanceof LibraryOrderEntry && 
+            !((LibraryOrderEntry)entry).isExported() && 
+            ((LibraryOrderEntry)entry).getScope() != DependencyScope.RUNTIME) {
           final Set<VirtualFile> files = new HashSet<>(Arrays.asList(((LibraryOrderEntry)entry).getRootFiles(OrderRootType.CLASSES)));
           boolean allRootsUnused = usedRoots == null || !files.removeAll(usedRoots);
           if (allRootsUnused) {
