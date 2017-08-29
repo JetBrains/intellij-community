@@ -524,10 +524,19 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
   private void checkFontRenderContext(FontRenderContext context) {
     FontRenderContext oldContext = myFontRenderContext;
     setFontRenderContext(context);
-    if (!myFontRenderContext.equals(oldContext)) {
+    if (!areEqualContexts(myFontRenderContext, oldContext)) {
       myTextLayoutCache.resetToDocumentSize(false);
       invalidateFoldRegionLayouts();
     }
+  }
+
+  private static boolean areEqualContexts(FontRenderContext c1, FontRenderContext c2) {
+    if (c1 == c2) return true;
+    if (c1 == null || c2 == null) return false;
+    // We ignore fractional metrics aspect of contexts, because we assume it's not changing during editor's lifecycle.
+    // And it has different values for component graphics (OFF) and component's font metrics (DEFAULT), causing
+    // unnecessary layout cache resets.
+    return c1.getTransform().equals(c2.getTransform()) && c1.getAntiAliasingHint().equals(c2.getAntiAliasingHint());
   }
 
   LineLayout getFoldRegionLayout(FoldRegion foldRegion) {
