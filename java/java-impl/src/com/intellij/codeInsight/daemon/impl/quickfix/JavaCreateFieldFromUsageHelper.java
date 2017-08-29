@@ -40,7 +40,7 @@ public class JavaCreateFieldFromUsageHelper extends CreateFieldFromUsageHelper {
                                     Editor editor,
                                     PsiElement context,
                                     boolean createConstantField,
-                                    PsiSubstitutor substitutor) {
+                                    @NotNull PsiSubstitutor substitutor) {
     Project project = field.getProject();
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
 
