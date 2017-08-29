@@ -40,6 +40,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 public class MissingOverrideAnnotationInspection extends BaseJavaBatchLocalInspectionTool implements CleanupLocalInspectionTool{
@@ -134,16 +135,8 @@ public class MissingOverrideAnnotationInspection extends BaseJavaBatchLocalInspe
 
         GlobalSearchScope scope = getLanguageLevelScope(minimal, project);
         if (scope == null) return;
-        Stream<PsiMethod> overridingMethods = JavaOverridingMethodUtil
-          .getOverridingMethodsIfCheapEnough(method, scope, m -> {
-          for (PsiAnnotation annotation : m.getModifierList().getAnnotations()) {
-            PsiJavaCodeReferenceElement ref = annotation.getNameReferenceElement();
-            if (ref != null && OVERRIDE_SHORT_NAME.equals(ref.getReferenceName())) {
-              return false;
-            }
-          }
-          return true;
-        });
+        Predicate<PsiMethod> preFilter = m -> !JavaOverridingMethodUtil.containsAnnotationWithName(m, OVERRIDE_SHORT_NAME);
+        Stream<PsiMethod> overridingMethods = JavaOverridingMethodUtil.getOverridingMethodsIfCheapEnough(method, scope, preFilter);
         if (overridingMethods == null) return;
         result.hierarchyAnnotated = ThreeState.fromBoolean(!overridingMethods.findAny().isPresent());
       }

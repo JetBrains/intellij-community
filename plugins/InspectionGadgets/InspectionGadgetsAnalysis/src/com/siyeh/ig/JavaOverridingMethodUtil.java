@@ -17,7 +17,7 @@ package com.siyeh.ig;
 
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiMethod;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopeUtil;
@@ -73,5 +73,18 @@ public class JavaOverridingMethodUtil {
     }
 
     return methods.stream().filter(candidate -> PsiSuperMethodUtil.isSuperMethod(candidate, method));
+  }
+
+  public static boolean containsAnnotationWithName(@NotNull PsiModifierListOwner modifierListOwner, @NotNull String shortAnnotationName) {
+    PsiModifierList list = modifierListOwner.getModifierList();
+    if (list != null) {
+      for (PsiAnnotation annotation : list.getAnnotations()) {
+        PsiJavaCodeReferenceElement ref = annotation.getNameReferenceElement();
+        if (ref != null && shortAnnotationName.equals(ref.getReferenceName())) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 }
