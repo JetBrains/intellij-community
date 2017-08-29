@@ -60,6 +60,8 @@ public interface RunDashboardManager {
 
   void setShowConfigurations(boolean value);
 
+  float getContentProportion();
+
   @Nullable
   RunDashboardAnimator getAnimator();
 

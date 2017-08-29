@@ -72,6 +72,7 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
   private static final String MESSAGE_CARD = "message";
   private static final String CONTENT_CARD = "content";
 
+  private final Splitter mySplitter;
   private final JPanel myTreePanel;
   private final Tree myTree;
   private final CardLayout myDetailsPanelLayout;
@@ -116,16 +117,18 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
     myToolbar = createToolbar();
     add(myToolbar, BorderLayout.WEST);
 
-    Splitter splitter = new OnePixelSplitter(false, 0.3f);
+    final RunDashboardManager dashboardManager = RunDashboardManager.getInstance(myProject);
+
+    mySplitter = new OnePixelSplitter(false, dashboardManager.getContentProportion());
     myTreePanel = new JPanel(new BorderLayout());
     myTreePanel.add(ScrollPaneFactory.createScrollPane(myTree, SideBorder.LEFT), BorderLayout.CENTER);
-    splitter.setFirstComponent(myTreePanel);
+    mySplitter.setFirstComponent(myTreePanel);
     myDetailsPanelLayout = new CardLayout();
     myDetailsPanel = new JPanel(myDetailsPanelLayout);
     myMessagePanel = new JBPanelWithEmptyText().withEmptyText(ExecutionBundle.message("run.dashboard.empty.selection.message"));
     myDetailsPanel.add(MESSAGE_CARD, myMessagePanel);
-    splitter.setSecondComponent(myDetailsPanel);
-    add(splitter, BorderLayout.CENTER);
+    mySplitter.setSecondComponent(myDetailsPanel);
+    add(mySplitter, BorderLayout.CENTER);
 
     myContentManager = contentManager;
     myContentManagerListener = new ContentManagerAdapter() {
@@ -248,7 +251,7 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
 
     new TreeSpeedSearch(myTree, TreeSpeedSearch.NODE_DESCRIPTOR_TOSTRING, true);
 
-    setTreeVisible(RunDashboardManager.getInstance(myProject).isShowConfigurations());
+    setTreeVisible(dashboardManager.isShowConfigurations());
   }
 
   private void setTreeVisible(boolean visible) {
@@ -423,6 +426,10 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
   @NotNull
   public RunDashboardAnimator getAnimator() {
     return myAnimator;
+  }
+
+  public float getContentProportion() {
+    return mySplitter.getProportion();
   }
 
   private class GroupAction extends ToggleAction implements DumbAware {

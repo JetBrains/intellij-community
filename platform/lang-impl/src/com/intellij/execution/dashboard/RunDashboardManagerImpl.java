@@ -59,10 +59,13 @@ import java.util.stream.Collectors;
   storages = @Storage(StoragePathMacros.WORKSPACE_FILE)
 )
 public class RunDashboardManagerImpl implements RunDashboardManager, PersistentStateComponent<RunDashboardManagerImpl.State> {
+  private static final float DEFAULT_CONTENT_PROPORTION = 0.3f;
+
   @NotNull private final Project myProject;
   @NotNull private final ContentManager myContentManager;
   @NotNull private final List<DashboardGrouper> myGroupers;
   private boolean myShowConfigurations = true;
+  private float myContentProportion = DEFAULT_CONTENT_PROPORTION;
 
   private RunDashboardContent myDashboardContent;
   private Content myToolWindowContent;
@@ -241,6 +244,11 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
   }
 
   @Override
+  public float getContentProportion() {
+    return myContentProportion;
+  }
+
+  @Override
   public RunDashboardAnimator getAnimator() {
     if (myDashboardContent == null) return null;
 
@@ -351,6 +359,10 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
       .filter(grouper -> !grouper.getRule().isAlwaysEnabled())
       .map(grouper -> new RuleState(grouper.getRule().getName(), grouper.isEnabled()))
       .collect(Collectors.toList());
+    if (myDashboardContent != null) {
+      myContentProportion = myDashboardContent.getContentProportion();
+    }
+    state.contentProportion = myContentProportion;
     return state;
   }
 
@@ -364,10 +376,12 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
         }
       }
     });
+    myContentProportion = state.contentProportion;
   }
 
   static class State {
     public List<RuleState> ruleStates = new ArrayList<>();
+    public float contentProportion = DEFAULT_CONTENT_PROPORTION;
   }
 
   private static class RuleState {
