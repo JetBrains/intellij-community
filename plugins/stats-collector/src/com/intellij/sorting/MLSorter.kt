@@ -59,7 +59,7 @@ class MLSorter : CompletionFinalSorter() {
     
     private fun hasUnknownFeatures(items: Iterable<LookupElement>) = items.any {
         val score = cachedScore[it]
-        score == null || score.mlRank == null
+        score?.mlRank == null
     }
 
     override fun sort(items: MutableIterable<LookupElement>, parameters: CompletionParameters): Iterable<LookupElement> {
