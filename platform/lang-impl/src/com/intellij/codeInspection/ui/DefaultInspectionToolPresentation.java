@@ -511,8 +511,9 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
                 isFound = true;
                 final LocalQuickFixWrapper quickFixAction = result.get(fix.getFamilyName());
                 LOG.assertTrue(getFixClass(fix).equals(getFixClass(quickFixAction.getFix())),
-                               "QuickFix-es with the same getFamilyName() should be the same class instances. " +
-                               "Please assign reported exception for the fix \"" + fix.getClass().getName() + "\" developer");
+                               "QuickFix-es with the same family name (" + fix.getFamilyName() + ") should be the same class instances. " +
+                               "Please assign reported exception for the inspection \"" + myToolWrapper.getTool().getClass() + "\" (\"" +
+                               myToolWrapper.getShortName() + "\") developer");
                 try {
                   quickFixAction.setText(StringUtil.escapeMnemonics(fix.getFamilyName()));
                 }
