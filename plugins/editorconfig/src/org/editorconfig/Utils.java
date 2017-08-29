@@ -37,7 +37,8 @@ public class Utils {
   public static String configValueForKey(List<OutPair> outPairs, String key) {
     for (OutPair outPair : outPairs) {
       if (outPair.getKey().equals(key)) {
-        return outPair.getVal();
+        String val = outPair.getVal();
+        return "none".equals(val) ? "" : val;
       }
     }
     return "";
