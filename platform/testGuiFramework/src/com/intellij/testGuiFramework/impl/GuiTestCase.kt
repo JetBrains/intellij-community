@@ -33,12 +33,12 @@ import com.intellij.testGuiFramework.framework.IdeTestApplication.getTestScreens
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.findBoundedComponentByText
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.getComponentText
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.isTextComponent
+import com.intellij.testGuiFramework.impl.GuiTestUtilKt.typeMatcher
 import com.intellij.testGuiFramework.launcher.system.SystemInfo.isMac
 import com.intellij.ui.CheckboxTree
 import com.intellij.ui.HyperlinkLabel
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.util.net.HttpConfigurable
-import org.fest.swing.core.GenericTypeMatcher
 import org.fest.swing.core.SmartWaitRobot
 import org.fest.swing.exception.ActionFailedException
 import org.fest.swing.exception.ComponentLookupException
@@ -738,13 +738,6 @@ open class GuiTestCase : GuiTestBase() {
     Pause.pause(object : Condition(condition) {
       override fun test() = testFunction()
     }, Timeout.timeout(timeoutSeconds, TimeUnit.SECONDS))
-  }
-
-  private fun <ComponentType : Component?> typeMatcher(componentTypeClass: Class<ComponentType>,
-                                                       matcher: (ComponentType) -> Boolean): GenericTypeMatcher<ComponentType> {
-    return object : GenericTypeMatcher<ComponentType>(componentTypeClass) {
-      override fun isMatching(component: ComponentType): Boolean = matcher(component)
-    }
   }
 
   inline fun <ExtendingType> ExtendingType.flags(flagCheckFunction: ExtendingType.() -> Boolean): Boolean {

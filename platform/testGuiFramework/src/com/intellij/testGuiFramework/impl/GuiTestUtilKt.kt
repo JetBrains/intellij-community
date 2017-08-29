@@ -16,7 +16,9 @@
 package com.intellij.testGuiFramework.impl
 
 import com.intellij.openapi.util.Ref
+import com.intellij.testGuiFramework.framework.GuiTestUtil
 import org.fest.swing.core.ComponentMatcher
+import org.fest.swing.core.GenericTypeMatcher
 import org.fest.swing.core.Robot
 import org.fest.swing.edt.GuiActionRunner
 import org.fest.swing.edt.GuiQuery
@@ -230,6 +232,17 @@ object GuiTestUtilKt {
 
     return result
 
+  }
+
+  fun <ComponentType : Component?> waitUntilGone(robot: Robot, timeoutInSeconds: Int = 30, root: Container? = null, matcher: GenericTypeMatcher<ComponentType>) {
+    return GuiTestUtil.waitUntilGone(robot, root, timeoutInSeconds, matcher)
+  }
+
+  fun <ComponentType : Component?> typeMatcher(componentTypeClass: Class<ComponentType>,
+                                                       matcher: (ComponentType) -> Boolean): GenericTypeMatcher<ComponentType> {
+    return object : GenericTypeMatcher<ComponentType>(componentTypeClass) {
+      override fun isMatching(component: ComponentType): Boolean = matcher(component)
+    }
   }
 
 

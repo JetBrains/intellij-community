@@ -713,16 +713,32 @@ public final class GuiTestUtil {
    * Waits until no components match the given criteria under the given root
    */
   public static <T extends Component> void waitUntilGone(@NotNull final Robot robot,
-                                                         @NotNull final Container root,
+                                                         @Nullable final Container root,
                                                          @NotNull final GenericTypeMatcher<T> matcher) {
     Pause.pause(new Condition("Find component using " + matcher.toString()) {
       @Override
       public boolean test() {
-        Collection<T> allFound = robot.finder().findAll(root, matcher);
+        Collection<T> allFound = (root == null) ? robot.finder().findAll(matcher) : robot.finder().findAll(root, matcher);
         return allFound.isEmpty();
       }
     }, SHORT_TIMEOUT);
   }
+
+  /**
+   * Waits until no components match the given criteria under the given root
+   */
+  public static <T extends Component> void waitUntilGone(@NotNull final Robot robot,
+                                                         @Nullable final Container root, int timeoutInSeconds,
+                                                         @NotNull final GenericTypeMatcher<T> matcher) {
+    Pause.pause(new Condition("Find component using " + matcher.toString()) {
+      @Override
+      public boolean test() {
+        Collection<T> allFound = (root == null) ? robot.finder().findAll(matcher) : robot.finder().findAll(root, matcher);
+        return allFound.isEmpty();
+      }
+    }, timeout(timeoutInSeconds, SECONDS));
+  }
+
 
   @Nullable
   public static String getSystemPropertyOrEnvironmentVariable(@NotNull String name) {
