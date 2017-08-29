@@ -47,7 +47,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.List;
 
 import static com.intellij.openapi.vcs.VcsNotifier.STANDARD_NOTIFICATION;
 import static com.intellij.util.ObjectUtils.notNull;
@@ -72,12 +71,12 @@ public class GitUncommitAction extends GitCommitEditingAction {
       }
 
       // support undo only for the last commit in the branch
-      DataPack dataPack = (DataPack)dataPackBase;
-      VcsShortCommitDetails commit = notNull(getLog(e)).getSelectedShortDetails().get(0);
-      int commitIndex = getLogData(e).getCommitIndex(commit.getId(), commit.getRoot());
-      List<Integer> children = dataPack.getPermanentGraph().getChildren(commitIndex);
-      if (!children.isEmpty()) {
-        e.getPresentation().setEnabledAndVisible(false);
+      if (isHeadCommit(e)) {
+        e.getPresentation().setEnabled(true);
+      }
+      else {
+        e.getPresentation().setEnabled(false);
+        e.getPresentation().setDescription("The selected commit is not the last in the current branch");
       }
     }
   }
