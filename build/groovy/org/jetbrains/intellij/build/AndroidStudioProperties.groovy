@@ -146,7 +146,6 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       withModule("chunkio", "pixelprobe.jar")
       withModule("pixelprobe", "pixelprobe.jar")
 
-      withModule("assetstudio", "sdk-tools.jar")
       withModule("binary-resources", "sdk-tools.jar")
       withModule("analyzer", "sdk-tools.jar")
       withModule("ddmlib", "sdk-tools.jar")

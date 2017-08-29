@@ -256,7 +256,6 @@ class CommunityRepositoryModules {
       withModule("sherpa-ui", "constraint-layout.jar")
       withModule("pixelprobe", "pixalprobe.jar")
       withModule("manifest-merger", "manifest-merger.jar")
-      withModule("assetstudio", "sdk-tools.jar")
       withModule("ddmlib", "sdk-tools.jar")
       withModule("dvlib", "sdk-tools.jar")
       withModule("draw9patch", "sdk-tools.jar")
