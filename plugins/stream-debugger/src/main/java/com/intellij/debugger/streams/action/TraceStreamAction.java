@@ -41,7 +41,6 @@ import com.intellij.xdebugger.XDebuggerManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -68,10 +67,10 @@ public class TraceStreamAction extends AnAction {
     final XDebugSession session = getCurrentSession(e);
     final PsiElement element = session == null ? null : myPositionResolver.getNearestElementToBreakpoint(session);
     if (element != null) {
-      final List<StreamChain> chains = new ArrayList<>();
-      myBuilders.stream()
+      final List<StreamChain> chains = myBuilders.stream()
         .filter(builder -> builder.isChainExists(element))
-        .forEach(builder -> chains.addAll(builder.build(element)));
+        .flatMap(builder -> builder.build(element).stream())
+        .collect(Collectors.toList());
       if (chains.isEmpty()) {
         LOG.warn("stream chain is not built");
         return;
