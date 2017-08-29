@@ -98,7 +98,7 @@ public class FavoritesListNode extends AbstractTreeNode<String> {
           FavoriteNodeProvider provider = ((AbstractUrlFavoriteAdapter)abstractUrl).getNodeProvider();
           loader = provider.getClass().getClassLoader();
         } else {
-          loader = FavoritesListNode.class.getClass().getClassLoader();
+          loader = FavoritesListNode.class.getClassLoader();
         }
         String className = pair.getData().getSecond();
         @SuppressWarnings("unchecked")
