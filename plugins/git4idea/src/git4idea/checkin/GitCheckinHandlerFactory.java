@@ -50,6 +50,7 @@ import git4idea.crlf.GitCrlfDialog;
 import git4idea.crlf.GitCrlfProblemsDetector;
 import git4idea.crlf.GitCrlfUtil;
 import git4idea.i18n.GitBundle;
+import git4idea.rebase.GitRebaseUtils;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
@@ -362,7 +363,7 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
         if (repository == null) {
           continue;
         }
-        if (!repository.isOnBranch()) {
+        if (!repository.isOnBranch() && !GitRebaseUtils.isInteractiveRebaseInProgress(repository)) {
           return new DetachedRoot(root, repository.isRebaseInProgress());
         }
       }
