@@ -26,8 +26,6 @@ import com.intellij.diagnostic.logging.LogConfigurationPanel;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultDebugExecutor;
-import com.intellij.execution.process.AnsiEscapeDecoder;
-import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
@@ -37,10 +35,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter;
+import com.intellij.openapi.externalSystem.model.task.*;
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemTaskExecutionEvent;
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemExecuteTaskTask;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
@@ -51,11 +46,7 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.DirectoryIndex;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.util.io.StreamUtil;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -244,7 +235,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
       final ExternalSystemExecuteTaskTask task = new ExternalSystemExecuteTaskTask(myProject, mySettings, jvmAgentSetup);
       copyUserDataTo(task);
 
-      final MyProcessHandler processHandler = new MyProcessHandler(task);
+      final ExternalSystemProcessHandler processHandler = new ExternalSystemProcessHandler(task);
       Class<? extends BuildProgressListener> progressListenerClazz = task.getUserData(PROGRESS_LISTENER_KEY);
       final BuildProgressListener progressListener = progressListenerClazz != null
                                                      ? ServiceManager.getService(myProject, progressListenerClazz)
@@ -336,69 +327,6 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
         task.execute(ArrayUtil.prepend(taskListener, ExternalSystemTaskNotificationListener.EP_NAME.getExtensions()));
       });
       return new DefaultExecutionResult(null, processHandler);
-    }
-  }
-
-  private static class MyProcessHandler extends ProcessHandler implements AnsiEscapeDecoder.ColoredTextAcceptor {
-    private final ExternalSystemExecuteTaskTask myTask;
-    private final AnsiEscapeDecoder myAnsiEscapeDecoder = new AnsiEscapeDecoder();
-    @Nullable
-    private OutputStream myProcessInput;
-
-    public MyProcessHandler(ExternalSystemExecuteTaskTask task) {
-      myTask = task;
-      try {
-        PipedInputStream inputStream = new PipedInputStream();
-        myProcessInput = new PipedOutputStream(inputStream);
-        task.putUserData(RUN_INPUT_KEY, inputStream);
-      }
-      catch (IOException e) {
-        LOG.warn("Unable to setup process input", e);
-      }
-    }
-
-    @Override
-    public void notifyTextAvailable(@NotNull final String text, @NotNull final Key outputType) {
-      myAnsiEscapeDecoder.escapeText(text, outputType, this);
-    }
-
-    @Override
-    protected void destroyProcessImpl() {
-      myTask.cancel();
-      closeInput();
-    }
-
-    @Override
-    protected void detachProcessImpl() {
-      notifyProcessDetached();
-      closeInput();
-    }
-
-    @Override
-    public boolean detachIsDefault() {
-      return false;
-    }
-
-    @Nullable
-    @Override
-    public OutputStream getProcessInput() {
-      return myProcessInput;
-    }
-
-    @Override
-    public void notifyProcessTerminated(int exitCode) {
-      super.notifyProcessTerminated(exitCode);
-      closeInput();
-    }
-
-    @Override
-    public void coloredTextAvailable(@NotNull String text, @NotNull Key attributes) {
-      super.notifyTextAvailable(text, attributes);
-    }
-
-    private void closeInput() {
-      StreamUtil.closeStream(myProcessInput);
-      myProcessInput = null;
     }
   }
 }

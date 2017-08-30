@@ -16,12 +16,14 @@
 package com.intellij.build;
 
 import com.intellij.build.events.*;
+import com.intellij.execution.actions.StopProcessAction;
 import com.intellij.execution.console.DuplexConsoleView;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ThreeComponentsSplitter;
@@ -164,16 +166,31 @@ public abstract class AbstractViewManager implements BuildProgressListener, Disp
           listModel.addElement(buildInfo);
         }
 
+        ProcessHandler processHandler = ((StartBuildEvent)event).getProcessHandler();
         DuplexConsoleView<BuildConsoleView, BuildConsoleView> view = myViewMap.computeIfAbsent(buildInfo, info -> {
           BuildTextConsoleView textConsoleView = new BuildTextConsoleView(myProject, false, "CONSOLE");
+          textConsoleView.setConsoleActionsProvider(actions -> {
+            final DefaultActionGroup actionGroup = new DefaultActionGroup();
+            if (processHandler != null) {
+              actionGroup.add(new StopProcessAction("Stop", "Stop", processHandler));
+            }
+            actionGroup.addSeparator();
+            actionGroup.addAll(actions);
+            if (actions.length > 0) {
+              actionGroup.addSeparator();
+            }
+            return new AnAction[]{actionGroup};
+          });
           final DuplexConsoleView<BuildConsoleView, BuildConsoleView> duplexConsoleView =
             new DuplexConsoleView<>(textConsoleView, new BuildTreeConsoleView(myProject));
           duplexConsoleView.setDisableSwitchConsoleActionOnProcessEnd(false);
           if(isConsoleEnabledByDefault()) {
             duplexConsoleView.enableConsole(true);
           }
-          ProcessHandler processHandler = ((StartBuildEvent)event).getProcessHandler();
           if (processHandler != null) {
+            if (!processHandler.isStartNotified()) {
+              processHandler.startNotify();
+            }
             textConsoleView.attachToProcess(processHandler);
             Consumer<BuildConsoleView> attachedConsoleConsumer = ((StartBuildEvent)event).getAttachedConsoleConsumer();
             if (attachedConsoleConsumer != null) {

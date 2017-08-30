@@ -91,6 +91,8 @@
     <compileServer.plugin classpath="gradle-jps-plugin.jar"/>
     <consoleFilterProvider implementation="org.jetbrains.plugins.gradle.execution.GradleConsoleFilterProvider"/>
     <stacktrace.fold substring="at org.gradle."/>
+    <stacktrace.fold substring="at org.jetbrains.plugins.gradle."/>
+    <stacktrace.fold substring="at com.intellij.openapi.externalSystem."/>
     <buildProcess.parametersProvider implementation="org.jetbrains.plugins.gradle.compiler.GradleBuildProcessParametersProvider"/>
 
     <resolveScopeEnlarger implementation="org.jetbrains.plugins.gradle.config.GradleBuildClasspathResolveScopeEnlarger"/>

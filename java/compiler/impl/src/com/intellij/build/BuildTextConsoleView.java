@@ -20,8 +20,10 @@ import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.process.AnsiEscapeDecoder;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -30,6 +32,8 @@ import org.jetbrains.annotations.NotNull;
 public class BuildTextConsoleView extends ConsoleViewImpl implements BuildConsoleView, AnsiEscapeDecoder.ColoredTextAcceptor {
   private final String myId;
   private final AnsiEscapeDecoder myAnsiEscapeDecoder = new AnsiEscapeDecoder();
+  @NotNull
+  private Function<AnAction[], AnAction[]> myConsoleActionsProvider = actions -> actions;
 
   public BuildTextConsoleView(@NotNull Project project, boolean viewer, String id) {
     super(project, viewer);
@@ -49,6 +53,16 @@ public class BuildTextConsoleView extends ConsoleViewImpl implements BuildConsol
   @Override
   public void coloredTextAvailable(@NotNull String text, @NotNull Key attributes) {
     print(text, ConsoleViewContentType.getConsoleViewType(attributes));
+  }
+
+  public void setConsoleActionsProvider(@NotNull Function<AnAction[], AnAction[]> consoleActionsProvider) {
+    myConsoleActionsProvider = consoleActionsProvider;
+  }
+
+  @NotNull
+  @Override
+  public AnAction[] createConsoleActions() {
+    return myConsoleActionsProvider.fun(super.createConsoleActions());
   }
 }
 

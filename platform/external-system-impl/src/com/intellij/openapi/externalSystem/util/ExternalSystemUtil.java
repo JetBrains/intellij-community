@@ -30,6 +30,7 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.rmi.RemoteUtil;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
@@ -52,6 +53,7 @@ import com.intellij.openapi.externalSystem.model.task.*;
 import com.intellij.openapi.externalSystem.model.task.event.*;
 import com.intellij.openapi.externalSystem.service.ImportCanceledException;
 import com.intellij.openapi.externalSystem.service.execution.AbstractExternalSystemTaskConfigurationType;
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemProcessHandler;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemProcessingManager;
@@ -397,9 +399,7 @@ public class ExternalSystemUtil {
             @Override
             public void cancel() {
               super.cancel();
-
-              ApplicationManager.getApplication().executeOnPooledThread(
-                (Runnable)() -> myTask.cancel(ExternalSystemTaskNotificationListener.EP_NAME.getExtensions()));
+              cancellImport();
             }
           });
         }
@@ -422,18 +422,25 @@ public class ExternalSystemUtil {
           return;
         }
 
+        final ExternalSystemProcessHandler processHandler = new ExternalSystemProcessHandler(myTask) {
+          @Override
+          protected void destroyProcessImpl() {
+            cancellImport();
+            closeInput();
+          }
+        };
         ExternalSystemTaskNotificationListenerAdapter taskListener = new ExternalSystemTaskNotificationListenerAdapter() {
 
           @Override
           public void onStart(@NotNull ExternalSystemTaskId id, String workingDir) {
             long eventTime = System.currentTimeMillis();
             ServiceManager.getService(project, SyncViewManager.class).onEvent(
-              new StartBuildEventImpl(id, projectName, eventTime, "syncing..."));
+              new StartBuildEventImpl(id, projectName, eventTime, "syncing...").withProcessHandler(processHandler, null));
           }
 
           @Override
           public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut) {
-            ServiceManager.getService(project, SyncViewManager.class).onEvent(new OutputBuildEventImpl(id, text, stdOut));
+            processHandler.notifyTextAvailable(text, stdOut ? ProcessOutputTypes.STDOUT : ProcessOutputTypes.STDERR);
           }
 
           @Override
@@ -483,12 +490,17 @@ public class ExternalSystemUtil {
             }
             ServiceManager.getService(project, SyncViewManager.class).onEvent(
               new FinishBuildEventImpl(id, null, System.currentTimeMillis(), "sync failed", failureResult));
+            String exceptionMessage = ExceptionUtil.getMessage(e);
+            String text = exceptionMessage == null ? e.toString() : exceptionMessage;
+            processHandler.notifyTextAvailable(text + '\n', ProcessOutputTypes.STDERR);
+            processHandler.notifyProcessTerminated(1);
           }
 
           @Override
           public void onSuccess(@NotNull ExternalSystemTaskId id) {
             ServiceManager.getService(project, SyncViewManager.class).onEvent(new FinishBuildEventImpl(
               id, null, System.currentTimeMillis(), "synced successfully", new SuccessResultImpl()));
+            processHandler.notifyProcessTerminated(0);
           }
 
           @Override
@@ -530,6 +542,11 @@ public class ExternalSystemUtil {
         if (callback != null) {
           callback.onFailure(message, extractDetails(error));
         }
+      }
+
+      public void cancellImport() {
+        ApplicationManager.getApplication().executeOnPooledThread(
+          (Runnable)() -> myTask.cancel(ExternalSystemTaskNotificationListener.EP_NAME.getExtensions()));
       }
     };
 
