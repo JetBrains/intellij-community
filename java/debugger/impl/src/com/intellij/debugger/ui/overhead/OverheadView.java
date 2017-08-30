@@ -27,6 +27,7 @@ import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,6 +51,7 @@ public class OverheadView extends BorderLayoutPanel implements Disposable {
   private final ListTableModel<OverheadProducer> myModel;
 
   private final MergingUpdateQueue myUpdateQueue;
+  private Runnable myBouncer;
 
   public OverheadView(@NotNull DebugProcessImpl process) {
     myProcess = process;
@@ -68,17 +70,30 @@ public class OverheadView extends BorderLayoutPanel implements Disposable {
 
     myUpdateQueue = new MergingUpdateQueue("OverheadView", 500, true, null, this);
 
-    OverheadTimings.addListener(o -> myUpdateQueue.queue(new Update(o) {
-      @Override
-      public void run() {
-        int idx = myModel.indexOf(o);
-        if (idx != -1) {
-          myModel.fireTableRowsUpdated(idx, idx);
-          return;
-        }
-        myModel.setItems(new ArrayList<>(OverheadTimings.getProducers(process)));
-      }
-    }), process);
+    OverheadTimings.addListener(new OverheadTimings.OverheadTimingsListener() {
+                                  @Override
+                                  public void timingAdded(OverheadProducer o) {
+                                    myUpdateQueue.queue(new Update(o) {
+                                      @Override
+                                      public void run() {
+                                        int idx = myModel.indexOf(o);
+                                        if (idx != -1) {
+                                          myModel.fireTableRowsUpdated(idx, idx);
+                                          return;
+                                        }
+                                        myModel.setItems(new ArrayList<>(OverheadTimings.getProducers(process)));
+                                      }
+                                    });
+                                  }
+
+                                  @Override
+                                  public void excessiveOverheadDetected() {
+                                    if (myBouncer != null) {
+                                      DebuggerUIUtil.invokeLater(myBouncer);
+                                    }
+                                  }
+                                }
+      , process);
 
     new DumbAwareAction("Toggle") {
       @Override
@@ -212,5 +227,9 @@ public class OverheadView extends BorderLayoutPanel implements Disposable {
 
   @Override
   public void dispose() {
+  }
+
+  public void setBouncer(Runnable bouncer) {
+    myBouncer = bouncer;
   }
 }

@@ -17,13 +17,13 @@ package com.intellij.debugger.ui.overhead;
 
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.util.EventDispatcher;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.EventListener;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -34,6 +34,27 @@ public class OverheadTimings {
 
   private final EventDispatcher<OverheadTimingsListener> myEventDispatcher = EventDispatcher.create(OverheadTimingsListener.class);
   private final Map<OverheadProducer, Timings> myMap = new ConcurrentHashMap<>();
+
+  @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
+  private final List<Pair<Long, Timings>> myLast10Elements = new LinkedList<Pair<Long, Timings>>() {
+    @Override
+    public boolean add(Pair<Long, Timings> o) {
+      if (size() > 10) {
+        removeFirst();
+      }
+      boolean res = super.add(o);
+      if (isExcessive()) {
+        myEventDispatcher.getMulticaster().excessiveOverheadDetected();
+      }
+      return res;
+    }
+
+    private boolean isExcessive() {
+      if (size() < 5) return false;
+      long totalTime = StreamEx.of(this).map(p -> p.getSecond().myTime).nonNull().mapToLong(l -> l).sum();
+      return totalTime > (getLast().first - getFirst().first);
+    }
+  };
 
   public static Long getTime(DebugProcess process, OverheadProducer producer) {
     Timings timings = getTimings(process).myMap.get(producer);
@@ -51,7 +72,9 @@ public class OverheadTimings {
 
   public static void add(DebugProcess process, OverheadProducer producer, long hits, @Nullable Long overhead) {
     OverheadTimings timings = getTimings(process);
-    timings.myMap.merge(producer, new Timings(hits, overhead), (old, value) -> {
+    Timings newTiming = new Timings(hits, overhead);
+    timings.myLast10Elements.add(Pair.create(System.currentTimeMillis(), newTiming));
+    timings.myMap.merge(producer, newTiming, (old, value) -> {
       Long newTime = old.myTime;
       if (value.myTime != null) {
         newTime += value.myTime;
@@ -87,5 +110,7 @@ public class OverheadTimings {
 
   public interface OverheadTimingsListener extends EventListener {
     void timingAdded(OverheadProducer producer);
+
+    void excessiveOverheadDetected();
   }
 }
