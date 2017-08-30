@@ -206,6 +206,25 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
         return group;
       }
 
+      @Override
+      public void beforeReloaded(@NotNull SchemeManager<TemplateGroup> schemeManager) {
+        for (TemplateGroup group : schemeManager.getAllSchemes()) {
+          schemeManager.removeScheme(group);
+        }
+        myTemplates.clear();
+        myDefaultTemplates.clear();
+      }
+
+      @Override
+      public void reloaded(@NotNull SchemeManager<TemplateGroup> schemeManager, @NotNull Collection<? extends TemplateGroup> groups) {
+        for (TemplateGroup group : groups) {
+          for (TemplateImpl template : group.getElements()) {
+            addTemplateImpl(template);
+          }
+        }
+        loadDefaultLiveTemplates();
+      }
+
       @NotNull
       @Override
       public SchemeState getState(@NotNull TemplateGroup template) {

@@ -133,7 +133,8 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
       }
 
       @Override
-      public void reloaded(@NotNull SchemeManager<EditorColorsScheme> schemeManager) {
+      public void reloaded(@NotNull SchemeManager<EditorColorsScheme> schemeManager,
+                           @NotNull Collection<? extends EditorColorsScheme> schemes) {
         initEditableDefaultSchemesCopies();
         initEditableBundledSchemesCopies();
       }

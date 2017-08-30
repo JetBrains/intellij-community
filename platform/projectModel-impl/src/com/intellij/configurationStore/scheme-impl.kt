@@ -89,12 +89,6 @@ abstract class LazySchemeProcessor<SCHEME : Scheme, MUTABLE_SCHEME : SCHEME>(pri
   open fun isSchemeDefault(scheme: MUTABLE_SCHEME, digest: ByteArray) = false
 
   open fun isSchemeEqualToBundled(scheme: MUTABLE_SCHEME) = false
-
-  /**
-   * May be called from any thread - EDT is not guaranteed.
-   */
-  open fun reloaded(schemeManager: SchemeManager<SCHEME>) {
-  }
 }
 
 class DigestOutputStream(val digest: MessageDigest) : OutputStream() {

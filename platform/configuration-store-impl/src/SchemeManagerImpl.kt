@@ -377,12 +377,10 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
   }
 
   override fun reload() {
+    processor.beforeReloaded(this)
     // we must not remove non-persistent (e.g. predefined) schemes, because we cannot load it (obviously)
     removeExternalizableSchemes()
-
-    loadSchemes()
-
-    (processor as? LazySchemeProcessor)?.reloaded(this)
+    processor.reloaded(this, loadSchemes())
   }
 
   private fun removeExternalizableSchemes() {

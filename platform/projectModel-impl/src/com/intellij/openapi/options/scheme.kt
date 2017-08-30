@@ -92,4 +92,16 @@ abstract class SchemeProcessor<SCHEME : Scheme, MUTABLE_SCHEME: SCHEME> {
    */
   @Suppress("KDocUnresolvedReference")
   open fun getState(scheme: SCHEME) = SchemeState.POSSIBLY_CHANGED
+
+  /**
+   * May be called from any thread - EDT is not guaranteed.
+   */
+  open fun beforeReloaded(schemeManager: SchemeManager<SCHEME>) {
+  }
+
+  /**
+   * May be called from any thread - EDT is not guaranteed.
+   */
+  open fun reloaded(schemeManager: SchemeManager<SCHEME>, schemes: Collection<SCHEME>) {
+  }
 }
