@@ -949,18 +949,17 @@ public class RefactoringUtil {
     return element instanceof PsiLoopStatement || element instanceof PsiIfStatement;
   }
 
-  public static PsiLambdaExpression expandExpressionLambdaToCodeBlock(@NotNull PsiLambdaExpression lambdaExpression) {
+  public static PsiCodeBlock expandExpressionLambdaToCodeBlock(@NotNull PsiLambdaExpression lambdaExpression) {
     final PsiElement body = lambdaExpression.getBody();
-    if (!(body instanceof PsiExpression)) return lambdaExpression;
+    if (!(body instanceof PsiExpression)) return (PsiCodeBlock)body;
 
-    String newLambdaText = lambdaExpression.getParameterList().getText() + "->{";
+    String newLambdaText = "{";
     if (!PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType(lambdaExpression))) newLambdaText += "return ";
     newLambdaText += body.getText() + ";}";
 
     final Project project = lambdaExpression.getProject();
-    final PsiExpression expressionFromText =
-      JavaPsiFacade.getElementFactory(project).createExpressionFromText(newLambdaText, lambdaExpression);
-    return (PsiLambdaExpression)CodeStyleManager.getInstance(project).reformat(lambdaExpression.replace(expressionFromText));
+    final PsiCodeBlock codeBlock = JavaPsiFacade.getElementFactory(project).createCodeBlockFromText(newLambdaText, lambdaExpression);
+    return (PsiCodeBlock)CodeStyleManager.getInstance(project).reformat(body.replace(codeBlock));
   }
 
   /**
