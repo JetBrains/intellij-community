@@ -160,6 +160,17 @@ public class ClsJavaModuleImpl extends ClsRepositoryPsiElement<PsiJavaModuleStub
   @NotNull
   @Override
   public PsiElement getNavigationElement() {
+    PsiElement parent = getParent();
+    if (parent instanceof PsiClassOwner) {
+      PsiElement file = parent.getNavigationElement();
+      if (file != parent && file instanceof PsiJavaFile) {
+        PsiJavaModule module = ((PsiJavaFile)file).getModuleDeclaration();
+        if (module != null) {
+          return module;
+        }
+      }
+    }
+
     return getNameIdentifier();
   }
 
