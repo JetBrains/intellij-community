@@ -51,7 +51,8 @@ public class PyDocReference extends PyReferenceImpl {
 
   @Override
   public HighlightSeverity getUnresolvedHighlightSeverity(TypeEvalContext context) {
-    return HighlightSeverity.WARNING;
+    final HighlightSeverity severity = super.getUnresolvedHighlightSeverity(context);
+    return severity != null ? HighlightSeverity.WARNING : null;
   }
 
   @NotNull
