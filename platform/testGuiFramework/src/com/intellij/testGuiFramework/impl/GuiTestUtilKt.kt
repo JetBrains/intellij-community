@@ -266,6 +266,19 @@ object GuiTestUtilKt {
     return result?.first
   }
 
+  fun ensureCreateHasDone(guiTestCase: GuiTestCase) {
+    try {
+      com.intellij.testGuiFramework.impl.GuiTestUtilKt.waitUntilGone(robot = guiTestCase.myRobot,
+                                                                     matcher = com.intellij.testGuiFramework.impl.GuiTestUtilKt.typeMatcher(
+                                                                       com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame::class.java) { it.isShowing })
+    }
+    catch (timeoutError: WaitTimedOutError) {
+      with(guiTestCase) {
+        welcomeFrame { button("Create").clickWhenEnabled() }
+      }
+    }
+  }
+
 }
 
 fun main(args: Array<String>) {
