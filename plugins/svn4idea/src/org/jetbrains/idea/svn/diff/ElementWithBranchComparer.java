@@ -96,7 +96,7 @@ public abstract class ElementWithBranchComparer {
   protected void beforeCompare() {
   }
 
-  protected abstract void compare() throws SVNException, VcsException;
+  protected abstract void compare() throws VcsException;
 
   protected abstract void showResult();
 

@@ -135,7 +135,7 @@ public class ApplyPatchMergeRequest extends MergeRequest implements ApplyPatchRe
     if (applyContent != null) {
       new WriteCommandAction.Simple(myProject) {
         @Override
-        protected void run() throws Throwable {
+        protected void run() {
           myResultContent.getDocument().setText(applyContent);
         }
       }.execute();

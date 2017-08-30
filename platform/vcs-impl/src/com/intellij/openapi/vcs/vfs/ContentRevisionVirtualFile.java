@@ -63,7 +63,7 @@ public class ContentRevisionVirtualFile extends AbstractVcsVirtualFile {
   }
 
   @NotNull
-  public byte[] contentsToByteArray() throws IOException {
+  public byte[] contentsToByteArray() {
     if (myContentLoadFailed || myProcessingBeforeContentsChange) {
       return ArrayUtil.EMPTY_BYTE_ARRAY;
     }

@@ -230,7 +230,7 @@ public class GithubCreatePullRequestWorker {
     }
   }
 
-  private void doLoadForksFromSettings(@NotNull ProgressIndicator indicator) throws IOException {
+  private void doLoadForksFromSettings(@NotNull ProgressIndicator indicator) {
     GithubFullPath savedRepo = GithubProjectSettings.getInstance(myProject).getCreatePullRequestDefaultRepo();
     if (savedRepo != null) {
       doAddFork(savedRepo, null, indicator);

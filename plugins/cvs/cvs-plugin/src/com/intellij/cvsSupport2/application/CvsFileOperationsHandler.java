@@ -85,7 +85,7 @@ public class CvsFileOperationsHandler implements LocalFileOperationsHandler {
   }
 
   @Nullable
-  public File copy(final VirtualFile file, final VirtualFile toDir, final String copyName) throws IOException {
+  public File copy(final VirtualFile file, final VirtualFile toDir, final String copyName) {
     return null;
   }
 
@@ -110,7 +110,7 @@ public class CvsFileOperationsHandler implements LocalFileOperationsHandler {
     return true;
   }
 
-  private static void copyDirectoryStructure(final VirtualFile file, final File newFile) throws IOException {
+  private static void copyDirectoryStructure(final VirtualFile file, final File newFile) {
     for(VirtualFile child: file.getChildren()) {
       final File newChild = new File(newFile, child.getName());
       if (child.isDirectory()) {
@@ -124,11 +124,11 @@ public class CvsFileOperationsHandler implements LocalFileOperationsHandler {
     }
   }
 
-  public boolean createFile(final VirtualFile dir, final String name) throws IOException {
+  public boolean createFile(final VirtualFile dir, final String name) {
     return false;
   }
 
-  public boolean createDirectory(final VirtualFile dir, final String name) throws IOException {
+  public boolean createDirectory(final VirtualFile dir, final String name) {
     return false;
   }
 

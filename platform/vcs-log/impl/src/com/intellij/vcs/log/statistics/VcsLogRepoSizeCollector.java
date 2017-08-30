@@ -45,7 +45,7 @@ public class VcsLogRepoSizeCollector extends AbstractProjectsUsagesCollector {
 
   @NotNull
   @Override
-  public Set<UsageDescriptor> getProjectUsages(@NotNull Project project) throws CollectUsagesException {
+  public Set<UsageDescriptor> getProjectUsages(@NotNull Project project) {
     VcsProjectLog projectLog = VcsProjectLog.getInstance(project);
     VcsLogData logData = projectLog.getDataManager();
     if (logData != null) {

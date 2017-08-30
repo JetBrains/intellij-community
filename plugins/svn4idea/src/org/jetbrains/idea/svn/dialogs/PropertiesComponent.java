@@ -146,17 +146,17 @@ public class PropertiesComponent extends JPanel {
   private static void collectProperties(@NotNull SvnVcs vcs, @NotNull File file, @NotNull final Map<String, String> props) {
     try {
       PropertyConsumer handler = new PropertyConsumer() {
-        public void handleProperty(File path, PropertyData property) throws SVNException {
+        public void handleProperty(File path, PropertyData property) {
           final PropertyValue value = property.getValue();
           if (value != null) {
             props.put(property.getName(), PropertyValue.toString(property.getValue()));
           }
         }
 
-        public void handleProperty(SVNURL url, PropertyData property) throws SVNException {
+        public void handleProperty(SVNURL url, PropertyData property) {
         }
 
-        public void handleProperty(long revision, PropertyData property) throws SVNException {
+        public void handleProperty(long revision, PropertyData property) {
         }
       };
       vcs.getFactory(file).createPropertyClient().list(SvnTarget.fromFile(file, SVNRevision.UNDEFINED), SVNRevision.WORKING, Depth.EMPTY,

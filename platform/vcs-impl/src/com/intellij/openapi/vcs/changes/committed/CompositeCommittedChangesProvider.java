@@ -91,14 +91,14 @@ public class CompositeCommittedChangesProvider implements CommittedChangesProvid
   }
 
   public List<CommittedChangeList> getCommittedChanges(CompositeCommittedChangesProvider.CompositeChangeBrowserSettings settings,
-                                                       RepositoryLocation location, final int maxCount) throws VcsException {
+                                                       RepositoryLocation location, final int maxCount) {
     throw new UnsupportedOperationException();
   }
 
   public void loadCommittedChanges(CompositeChangeBrowserSettings settings,
                                    RepositoryLocation location,
                                    int maxCount,
-                                   AsynchConsumer<CommittedChangeList> consumer) throws VcsException {
+                                   AsynchConsumer<CommittedChangeList> consumer) {
     throw new UnsupportedOperationException();
   }
 

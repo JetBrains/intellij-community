@@ -146,7 +146,7 @@ public class ShowPropertiesDiffAction extends AnAction implements DumbAware {
   }
 
   @NotNull
-  private static SVNRevision getBeforeRevisionValue(@NotNull Change change) throws SVNException {
+  private static SVNRevision getBeforeRevisionValue(@NotNull Change change) {
     ContentRevision beforeRevision = change.getBeforeRevision();
     if (beforeRevision != null) {
       return ((SvnRevisionNumber)beforeRevision.getRevisionNumber()).getRevision();
@@ -157,7 +157,7 @@ public class ShowPropertiesDiffAction extends AnAction implements DumbAware {
   }
 
   @NotNull
-  private static SVNRevision getAfterRevisionValue(@NotNull Change change) throws SVNException {
+  private static SVNRevision getAfterRevisionValue(@NotNull Change change) {
     ContentRevision afterRevision = change.getAfterRevision();
     if (afterRevision != null) {
       // CurrentContentRevision will be here, for instance, if invoked from changes dialog for "Compare with Branch" action
@@ -269,15 +269,15 @@ public class ShowPropertiesDiffAction extends AnAction implements DumbAware {
     }
 
     return new PropertyConsumer() {
-      public void handleProperty(final File path, final PropertyData property) throws SVNException {
+      public void handleProperty(final File path, final PropertyData property) {
         registerProperty(property);
       }
 
-      public void handleProperty(final SVNURL url, final PropertyData property) throws SVNException {
+      public void handleProperty(final SVNURL url, final PropertyData property) {
         registerProperty(property);
       }
 
-      public void handleProperty(final long revision, final PropertyData property) throws SVNException {
+      public void handleProperty(final long revision, final PropertyData property) {
         // revision properties here
       }
 

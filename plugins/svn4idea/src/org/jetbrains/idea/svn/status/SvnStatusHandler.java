@@ -206,7 +206,7 @@ public class SvnStatusHandler extends DefaultHandler {
   }
 
   @Override
-  public void endElement(String uri, String localName, String qName) throws SAXException {
+  public void endElement(String uri, String localName, String qName) {
     //
   }
 
@@ -280,7 +280,7 @@ public class SvnStatusHandler extends DefaultHandler {
     }
 
     @Override
-    protected void updateStatus(Attributes attributes, PortableStatus status, Lock.Builder lock) throws SAXException {
+    protected void updateStatus(Attributes attributes, PortableStatus status, Lock.Builder lock) {
     }
 
     @Override
@@ -302,7 +302,7 @@ public class SvnStatusHandler extends DefaultHandler {
     }
 
     @Override
-    protected void updateStatus(Attributes attributes, PortableStatus status, Lock.Builder lock) throws SAXException {
+    protected void updateStatus(Attributes attributes, PortableStatus status, Lock.Builder lock) {
     }
 
     @Override
@@ -324,7 +324,7 @@ public class SvnStatusHandler extends DefaultHandler {
     }
 
     @Override
-    protected void updateStatus(Attributes attributes, PortableStatus status, Lock.Builder lock) throws SAXException {
+    protected void updateStatus(Attributes attributes, PortableStatus status, Lock.Builder lock) {
     }
 
     @Override
@@ -351,7 +351,7 @@ public class SvnStatusHandler extends DefaultHandler {
     }
 
     @Override
-    protected void updateStatus(Attributes attributes, PortableStatus status, Lock.Builder lock) throws SAXException {
+    protected void updateStatus(Attributes attributes, PortableStatus status, Lock.Builder lock) {
       final String revision = attributes.getValue("revision");
       if (!StringUtil.isEmpty(revision)) {
         status.setCommittedRevision(SVNRevision.create(Long.valueOf(revision)));
@@ -403,7 +403,7 @@ public class SvnStatusHandler extends DefaultHandler {
     }
 
     @Override
-    protected void updateStatus(Attributes attributes, PortableStatus status, Lock.Builder lock) throws SAXException {
+    protected void updateStatus(Attributes attributes, PortableStatus status, Lock.Builder lock) {
     }
 
     @Override
@@ -427,7 +427,7 @@ public class SvnStatusHandler extends DefaultHandler {
     }
 
     @Override
-    protected void updateStatus(Attributes attributes, PortableStatus status, Lock.Builder lock) throws SAXException {
+    protected void updateStatus(Attributes attributes, PortableStatus status, Lock.Builder lock) {
     }
 
     @Override
@@ -450,7 +450,7 @@ public class SvnStatusHandler extends DefaultHandler {
     }
 
     @Override
-    protected void updateStatus(Attributes attributes, PortableStatus status, Lock.Builder lock) throws SAXException {
+    protected void updateStatus(Attributes attributes, PortableStatus status, Lock.Builder lock) {
     }
 
     @Override
@@ -473,7 +473,7 @@ public class SvnStatusHandler extends DefaultHandler {
     }
 
     @Override
-    protected void updateStatus(Attributes attributes, PortableStatus status, Lock.Builder lock) throws SAXException {
+    protected void updateStatus(Attributes attributes, PortableStatus status, Lock.Builder lock) {
     }
 
     @Override
@@ -496,7 +496,7 @@ public class SvnStatusHandler extends DefaultHandler {
     }
 
     @Override
-    protected void updateStatus(Attributes attributes, PortableStatus status, Lock.Builder lock) throws SAXException {
+    protected void updateStatus(Attributes attributes, PortableStatus status, Lock.Builder lock) {
     }
 
     @Override
@@ -758,7 +758,7 @@ and no "mod4" under
     }
 
     @Override
-    protected void updateStatus(Attributes attributes, PortableStatus status, Lock.Builder lock) throws SAXException {
+    protected void updateStatus(Attributes attributes, PortableStatus status, Lock.Builder lock) {
     }
 
     @Override
@@ -811,7 +811,7 @@ and no "mod4" under
 
     public abstract void preEffect(final DataCallback callback);
 
-    public boolean startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
+    public boolean startElement(String uri, String localName, String qName, Attributes attributes) {
       if (myAwaitedChildrenMultiple.contains(qName)) {
         return true;
       }

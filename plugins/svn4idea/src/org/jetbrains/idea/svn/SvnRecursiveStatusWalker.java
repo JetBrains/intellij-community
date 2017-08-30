@@ -230,11 +230,11 @@ public class SvnRecursiveStatusWalker {
   public ProgressTracker createEventHandler() {
     return new ProgressTracker() {
       @Override
-      public void consume(ProgressEvent event) throws SVNException {
+      public void consume(ProgressEvent event) {
       }
 
       @Override
-      public void checkCancelled() throws SVNCancelException {
+      public void checkCancelled() {
         SvnRecursiveStatusWalker.this.checkCanceled();
       }
     };

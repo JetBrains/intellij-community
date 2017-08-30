@@ -390,14 +390,14 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
           uploadDeletedRenamedChildren();
           ContainerUtil.removeDuplicates(myDetailedList);
         }
-        catch (SVNException | VcsException e) {
+        catch (VcsException e) {
           LOG.info(e);
         }
       }
       return myDetailedList;
     }
 
-    private void doRemoteDetails() throws SVNException, SvnBindException {
+    private void doRemoteDetails() throws SvnBindException {
       for (Pair<Integer, Boolean> idxData : myWithoutDirStatus) {
         final Change sourceChange = myDetailedList.get(idxData.first.intValue());
         final SvnRepositoryContentRevision revision = (SvnRepositoryContentRevision)

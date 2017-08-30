@@ -278,11 +278,11 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   @Override
-  protected void start() throws VcsException {
+  protected void start() {
   }
 
   @Override
-  protected void shutdown() throws VcsException {
+  protected void shutdown() {
   }
 
   @Override

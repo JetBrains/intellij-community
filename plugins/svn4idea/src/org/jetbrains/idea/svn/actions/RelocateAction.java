@@ -50,7 +50,7 @@ public class RelocateAction extends BasicAction {
   }
 
   @Override
-  protected void perform(@NotNull SvnVcs vcs, @NotNull VirtualFile file, @NotNull DataContext context) throws VcsException {
+  protected void perform(@NotNull SvnVcs vcs, @NotNull VirtualFile file, @NotNull DataContext context) {
     Info info = vcs.getInfo(file);
     if (info == null) {
       LOG.info("Could not get info for " + file);
@@ -85,7 +85,7 @@ public class RelocateAction extends BasicAction {
   }
 
   @Override
-  protected void batchPerform(@NotNull SvnVcs vcs, @NotNull VirtualFile[] files, @NotNull DataContext context) throws VcsException {
+  protected void batchPerform(@NotNull SvnVcs vcs, @NotNull VirtualFile[] files, @NotNull DataContext context) {
   }
 
   protected boolean isBatchAction() {

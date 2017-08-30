@@ -170,7 +170,7 @@ public class MergeFromTheirsResolver extends BackgroundTaskGroup {
   }
 
   @CalledInAwt
-  private void selectPatchesInApplyPatchDialog(@NotNull Consumer<VcsException> callback) throws VcsException {
+  private void selectPatchesInApplyPatchDialog(@NotNull Consumer<VcsException> callback) {
     LocalChangeList changeList = ChangeListManager.getInstance(myVcs.getProject()).getChangeList(myChange);
     TreeConflictApplyTheirsPatchExecutor patchExecutor = new TreeConflictApplyTheirsPatchExecutor(myVcs, myBaseForPatch);
     ApplyPatchDifferentiatedDialog dialog = new ApplyPatchDifferentiatedDialog(

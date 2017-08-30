@@ -223,7 +223,7 @@ public class GitVFSListener extends VcsVFSListener {
     Set<File> toRefresh = newHashSet();
     performBackgroundOperation(filesToMove.keySet(), "Moving Files...", new LongOperationPerRootExecutor() {
       @Override
-      public void execute(@NotNull VirtualFile root, @NotNull List<FilePath> files) throws VcsException {
+      public void execute(@NotNull VirtualFile root, @NotNull List<FilePath> files) {
         for (FilePath file : files) {
           GitHandler h = new GitSimpleHandler(myProject, root, GitCommand.MV);
           MovedFileInfo info = filesToMove.get(file);

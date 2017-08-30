@@ -27,7 +27,6 @@ import org.zmlx.hg4idea.action.HgCommandResultNotifier;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 
 import javax.swing.event.HyperlinkEvent;
-import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -156,11 +155,6 @@ public final class HgErrorUtil {
   }
 
   public static void markDirtyAndHandleErrors(Project project, VirtualFile repository) {
-    try {
-      HgUtil.markDirectoryDirty(project, repository);
-    }
-    catch (InvocationTargetException | InterruptedException e) {
-      handleException(project, e);
-    }
+    HgUtil.markDirectoryDirty(project, repository);
   }
 }

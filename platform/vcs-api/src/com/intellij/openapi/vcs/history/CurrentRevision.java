@@ -53,7 +53,7 @@ public class CurrentRevision implements VcsFileRevision {
     return new Date(myFile.getTimeStamp());
   }
 
-  public byte[] getContent() throws IOException, VcsException {
+  public byte[] getContent() {
     try {
       Document document = ReadAction.compute(() -> FileDocumentManager.getInstance().getDocument(myFile));
       if (document != null) {

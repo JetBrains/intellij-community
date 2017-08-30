@@ -347,12 +347,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     boolean transactionSupported = transactionProvider != null;
 
     if (transactionSupported) {
-      try {
-        transactionProvider.startTransaction(vcsParameters);
-      }
-      catch (VcsException e) {
-        return Collections.singletonList(e);
-      }
+      transactionProvider.startTransaction(vcsParameters);
     }
 
     runnable.run(exceptions);

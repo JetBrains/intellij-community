@@ -106,7 +106,7 @@ public class SvnKitCheckoutClient extends BaseSvnClient implements CheckoutClien
   }
 
   @Override
-  public List<WorkingCopyFormat> getSupportedFormats() throws VcsException {
+  public List<WorkingCopyFormat> getSupportedFormats() {
     return SUPPORTED_FORMATS;
   }
 }

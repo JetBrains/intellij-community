@@ -84,22 +84,22 @@ public class SvnDiffEditor implements ISVNEditor {
     return new DiffContentRevision(path, myTarget, myTargetRevision);
   }
 
-  public void targetRevision(long revision) throws SVNException {
+  public void targetRevision(long revision) {
   }
-  public void openRoot(long revision) throws SVNException {
+  public void openRoot(long revision) {
   }
 
-  public void deleteEntry(String path, long revision) throws SVNException {
+  public void deleteEntry(String path, long revision) {
     // deleted - null for target, existing for source.
     Change change = createChange(path, FileStatus.DELETED);
     myChanges.put(path, change);
   }
 
-  public void absentDir(String path) throws SVNException {
+  public void absentDir(String path) {
   }
-  public void absentFile(String path) throws SVNException {
+  public void absentFile(String path) {
   }
-  public void addDir(String path, String copyFromPath, long copyFromRevision) throws SVNException {
+  public void addDir(String path, String copyFromPath, long copyFromRevision) {
     FileStatus status = FileStatus.ADDED;
     if (myChanges.containsKey(path) && myChanges.get(path).getFileStatus() == FileStatus.DELETED) {
       // replaced file
@@ -127,14 +127,14 @@ public class SvnDiffEditor implements ISVNEditor {
                       status);
   }
 
-  public void openDir(String path, long revision) throws SVNException {
+  public void openDir(String path, long revision) {
   }
-  public void changeDirProperty(final String name, final SVNPropertyValue value) throws SVNException {
+  public void changeDirProperty(final String name, final SVNPropertyValue value) {
   }
-  public void closeDir() throws SVNException {
+  public void closeDir() {
   }
 
-  public void addFile(String path, String copyFromPath, long copyFromRevision) throws SVNException {
+  public void addFile(String path, String copyFromPath, long copyFromRevision) {
     FileStatus status = FileStatus.ADDED;
     if (myChanges.containsKey(path) && myChanges.get(path).getFileStatus() == FileStatus.DELETED) {
       // replaced file
@@ -145,30 +145,30 @@ public class SvnDiffEditor implements ISVNEditor {
     myChanges.put(path, change);
   }
 
-  public void openFile(String path, long revision) throws SVNException {
+  public void openFile(String path, long revision) {
     Change change = createChange(path, FileStatus.MODIFIED);
     myChanges.put(path, change);
   }
 
-  public void changeFileProperty(final String path, final String propertyName, final SVNPropertyValue propertyValue) throws SVNException {
+  public void changeFileProperty(final String path, final String propertyName, final SVNPropertyValue propertyValue) {
   }
-  public void closeFile(String path, String textChecksum) throws SVNException {
-  }
-
-  public void abortEdit() throws SVNException {
+  public void closeFile(String path, String textChecksum) {
   }
 
-  public void applyTextDelta(String path, String baseChecksum) throws SVNException {
+  public void abortEdit() {
   }
 
-  public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException {
+  public void applyTextDelta(String path, String baseChecksum) {
+  }
+
+  public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) {
     return null;
   }
 
-  public void textDeltaEnd(String path) throws SVNException {
+  public void textDeltaEnd(String path) {
   }
 
-  public SVNCommitInfo closeEdit() throws SVNException {
+  public SVNCommitInfo closeEdit() {
     return null;
   }
 

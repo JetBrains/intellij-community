@@ -100,7 +100,7 @@ public class VcsGeneralConfigurationPanel {
                               ShowFilePathAction.getFileManagerName() + " after creation:");
   }
 
-  public void apply() throws ConfigurationException {
+  public void apply() {
 
     VcsConfiguration settings = VcsConfiguration.getInstance(myProject);
 

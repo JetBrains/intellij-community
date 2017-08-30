@@ -237,12 +237,7 @@ public class SvnHistoryProvider
       logLoader = new LocalLoader(myVcs, committedPath, from, to, limit, peg, showMergeSources);
     }
 
-    try {
-      logLoader.preliminary();
-    }
-    catch (SVNException e) {
-      throw new VcsException(e);
-    }
+    logLoader.preliminary();
     logLoader.check();
     if (showMergeSources) {
       logLoader.initSupports15();
@@ -308,7 +303,7 @@ public class SvnHistoryProvider
       if (myException != null) throw myException;
     }
 
-    protected abstract void preliminary() throws SVNException;
+    protected abstract void preliminary();
 
     protected abstract void load();
   }
@@ -321,7 +316,7 @@ public class SvnHistoryProvider
     }
 
     @Override
-    protected void preliminary() throws SVNException {
+    protected void preliminary() {
       myInfo = myVcs.getInfo(myFile.getIOFile());
       if (myInfo == null || myInfo.getRepositoryRootURL() == null) {
         myException = new VcsException("File " + myFile.getPath() + " is not under version control");
@@ -354,12 +349,6 @@ public class SvnHistoryProvider
                                 createConsumerAdapter(myConsumer),
                                 repoRootURL, myFile.getCharset()));
       }
-      catch (SVNCancelException e) {
-        //
-      }
-      catch (SVNException e) {
-        myException = new VcsException(e);
-      }
       catch (VcsException e) {
         myException = e;
       }
@@ -385,7 +374,7 @@ public class SvnHistoryProvider
     }
 
     @Override
-    protected void preliminary() throws SVNException {
+    protected void preliminary() {
       myUrl = myFile.getPath().replace('\\', '/');
     }
 
@@ -433,7 +422,7 @@ public class SvnHistoryProvider
       }
     }
 
-    private void loadBackwards(SVNURL svnurl) throws SVNException, VcsException {
+    private void loadBackwards(SVNURL svnurl) throws VcsException {
       // this method is called when svnurl does not exist in latest repository revision - thus concrete old revision is used for "info"
       // command to get repository url
       Info info = myVcs.getInfo(svnurl, myPeg, myPeg);
@@ -504,8 +493,7 @@ public class SvnHistoryProvider
                              final SVNRevision pegRevision,
                              String lastPath,
                              final ThrowableConsumer<VcsFileRevision, SVNException> result,
-                             SVNURL repoRootURL, Charset charset)
-      throws SVNException, VcsException {
+                             SVNURL repoRootURL, Charset charset) {
       myVcs = vcs;
       myLastPathCorrector = new SvnPathThroughHistoryCorrection(lastPath);
       myLastPath = lastPath;
@@ -631,8 +619,7 @@ public class SvnHistoryProvider
                                      final SVNRevision pegRevision,
                                      String lastPath,
                                      final ThrowableConsumer<VcsFileRevision, SVNException> result,
-                                     SVNURL repoRootURL)
-      throws VcsException, SVNException {
+                                     SVNURL repoRootURL) {
       super(vcs, url, pegRevision, lastPath, result, repoRootURL, null);
     }
 

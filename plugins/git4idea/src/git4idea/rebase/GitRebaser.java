@@ -188,7 +188,7 @@ public class GitRebaser {
    * NB: If there are merges in the unpushed commits being reordered, a conflict would happen. The calling code should probably
    * prohibit reordering merge commits.
    */
-  public boolean reoderCommitsIfNeeded(@NotNull final VirtualFile root, @NotNull String parentCommit, @NotNull List<String> olderCommits) throws VcsException {
+  public boolean reoderCommitsIfNeeded(@NotNull final VirtualFile root, @NotNull String parentCommit, @NotNull List<String> olderCommits) {
     List<String> allCommits = new ArrayList<>(); //TODO
     if (olderCommits.isEmpty() || olderCommits.size() == allCommits.size()) {
       LOG.info("Nothing to reorder. olderCommits: " + olderCommits + " allCommits: " + allCommits);
@@ -369,11 +369,11 @@ public class GitRebaser {
       return params;
     }
 
-    @Override protected boolean proceedIfNothingToMerge() throws VcsException {
+    @Override protected boolean proceedIfNothingToMerge() {
       return myRebaser.continueRebase(myRoot);
     }
 
-    @Override protected boolean proceedAfterAllMerged() throws VcsException {
+    @Override protected boolean proceedAfterAllMerged() {
       return myRebaser.continueRebase(myRoot);
     }
   }

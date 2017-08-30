@@ -499,7 +499,7 @@ public class GitRebaseProcess {
 
     @CalledInBackground
     @Override
-    protected boolean proceedAfterAllMerged() throws VcsException {
+    protected boolean proceedAfterAllMerged() {
       if (myCalledFromNotification) {
         retry(GitRebaseUtils.CONTINUE_PROGRESS_TITLE);
       }
@@ -507,7 +507,7 @@ public class GitRebaseProcess {
     }
 
     @Override
-    protected boolean proceedIfNothingToMerge() throws VcsException {
+    protected boolean proceedIfNothingToMerge() {
       myWasNothingToMerge = true;
       return true;
     }

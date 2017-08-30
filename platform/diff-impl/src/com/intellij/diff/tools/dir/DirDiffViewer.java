@@ -185,12 +185,12 @@ class DirDiffViewer implements FrameDiffTool.DiffViewer {
         }
 
         @Override
-        public DiffElement[] getChildren() throws IOException {
+        public DiffElement[] getChildren() {
           return EMPTY_ARRAY;
         }
 
         @Override
-        public byte[] getContent() throws IOException {
+        public byte[] getContent() {
           return null;
         }
 

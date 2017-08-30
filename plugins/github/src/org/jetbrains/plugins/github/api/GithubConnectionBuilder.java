@@ -145,7 +145,7 @@ class GithubConnectionBuilder {
     }
 
     @Override
-    public void process(HttpRequest request, HttpContext context) throws HttpException, IOException {
+    public void process(HttpRequest request, HttpContext context) throws HttpException {
       CredentialsProvider provider = (CredentialsProvider)context.getAttribute(HttpClientContext.CREDS_PROVIDER);
       Credentials credentials = provider.getCredentials(myBasicAuthScope);
       if (credentials != null) {

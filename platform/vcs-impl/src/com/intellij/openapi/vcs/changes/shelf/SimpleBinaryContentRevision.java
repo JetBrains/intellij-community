@@ -41,7 +41,7 @@ public abstract class SimpleBinaryContentRevision implements BinaryContentRevisi
 
   @Nullable
   @Override
-  public String getContent() throws VcsException {
+  public String getContent() {
     throw new IllegalStateException();
   }
 

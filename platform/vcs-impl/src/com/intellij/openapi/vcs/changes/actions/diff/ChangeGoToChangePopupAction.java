@@ -172,7 +172,7 @@ public abstract class ChangeGoToChangePopupAction<Chain extends DiffRequestChain
 
       @Nullable
       @Override
-      public String getContent() throws VcsException {
+      public String getContent() {
         return null;
       }
 

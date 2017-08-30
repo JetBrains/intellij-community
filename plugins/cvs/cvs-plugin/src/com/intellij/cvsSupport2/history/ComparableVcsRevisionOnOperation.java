@@ -49,7 +49,7 @@ public class ComparableVcsRevisionOnOperation implements VcsFileRevision {
     return myOperation.isDeleted();
   }
 
-  public byte[] getContent() throws IOException, VcsException {
+  public byte[] getContent() {
     LOG.assertTrue(myOperation.isLoaded());
     return myOperation.getFileBytes();
   }

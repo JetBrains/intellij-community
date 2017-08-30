@@ -36,7 +36,7 @@ public class AdminReaderForLightFiles implements IAdminReader{
     myFileToEntryMap = fileToEntryMap;
   }
 
-  public Collection getEntries(DirectoryObject directoryObject, ICvsFileSystem cvsFileSystem) throws IOException {
+  public Collection getEntries(DirectoryObject directoryObject, ICvsFileSystem cvsFileSystem) {
     String path = directoryObject.getPath();
     if (StringUtil.startsWithChar(path, '/')) path = path.substring(1);
     return collectEntriesForPath(new File(path));
@@ -59,7 +59,7 @@ public class AdminReaderForLightFiles implements IAdminReader{
         return false;
     }
 
-    public Entry getEntry(AbstractFileObject fileObject, ICvsFileSystem cvsFileSystem) throws IOException {
+    public Entry getEntry(AbstractFileObject fileObject, ICvsFileSystem cvsFileSystem) {
     String path = fileObject.getPath();
     if (StringUtil.startsWithChar(path, '/')) path = path.substring(1);
     return getEntryForPath(new File(path));
@@ -73,7 +73,7 @@ public class AdminReaderForLightFiles implements IAdminReader{
     return null;
   }
 
-  public String getRepositoryForDirectory(DirectoryObject directoryObject, String repository, ICvsFileSystem cvsFileSystem) throws IOException {
+  public String getRepositoryForDirectory(DirectoryObject directoryObject, String repository, ICvsFileSystem cvsFileSystem) {
     String path = directoryObject.getPath();
     if (StringUtil.startsWithChar(path, '/')) path = path.substring(1);
     return repository + path.replace(File.separatorChar, '/');

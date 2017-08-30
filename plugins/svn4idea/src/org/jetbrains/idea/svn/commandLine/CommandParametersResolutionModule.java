@@ -37,7 +37,7 @@ public class CommandParametersResolutionModule extends BaseCommandRuntimeModule 
   }
 
   @Override
-  public void onStart(@NotNull Command command) throws SvnBindException {
+  public void onStart(@NotNull Command command) {
     if (command.getRepositoryUrl() == null) {
       command.setRepositoryUrl(resolveRepositoryUrl(command));
     }

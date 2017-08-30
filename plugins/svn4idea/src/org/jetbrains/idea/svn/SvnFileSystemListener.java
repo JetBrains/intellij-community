@@ -150,7 +150,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
   }
 
   @Nullable
-  public File copy(final VirtualFile file, final VirtualFile toDir, final String copyName) throws IOException {
+  public File copy(final VirtualFile file, final VirtualFile toDir, final String copyName) {
     startOperation(file);
 
     SvnVcs vcs = getVCS(toDir);
@@ -234,7 +234,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
     }
   }
 
-  public boolean move(VirtualFile file, VirtualFile toDir) throws IOException {
+  public boolean move(VirtualFile file, VirtualFile toDir) {
     startOperation(file);
 
     File srcFile = getIOFile(file);
@@ -264,7 +264,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
     }
   }
 
-  public boolean rename(VirtualFile file, String newName) throws IOException {
+  public boolean rename(VirtualFile file, String newName) {
     startOperation(file);
 
     File srcFile = getIOFile(file);
@@ -443,13 +443,13 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
   }
 
 
-  public boolean createFile(VirtualFile dir, String name) throws IOException {
+  public boolean createFile(VirtualFile dir, String name) {
     startOperation(dir);
 
     return createItem(dir, name, false, false);
   }
 
-  public boolean createDirectory(VirtualFile dir, String name) throws IOException {
+  public boolean createDirectory(VirtualFile dir, String name) {
     startOperation(dir);
 
     return createItem(dir, name, true, false);
@@ -469,7 +469,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
    * <p/>
    * deleted: do nothing, return true (strange)
    */
-  public boolean delete(VirtualFile file) throws IOException {
+  public boolean delete(VirtualFile file) {
     startOperation(file);
 
     final SvnVcs vcs = getVCS(file);

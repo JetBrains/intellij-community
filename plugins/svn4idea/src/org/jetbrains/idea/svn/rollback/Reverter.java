@@ -216,7 +216,7 @@ public class Reverter {
                                                         @NotNull final UnversionedAndNotTouchedFilesGroupCollector collector) {
     return new PropertyConsumer() {
       @Override
-      public void handleProperty(File path, PropertyData property) throws SVNException {
+      public void handleProperty(File path, PropertyData property) {
         final ThroughRenameInfo info = collector.findToFile(VcsUtil.getFilePath(path), null);
         if (info != null) {
           if (!properties.containsKey(info.getTo())) {
@@ -227,11 +227,11 @@ public class Reverter {
       }
 
       @Override
-      public void handleProperty(SVNURL url, PropertyData property) throws SVNException {
+      public void handleProperty(SVNURL url, PropertyData property) {
       }
 
       @Override
-      public void handleProperty(long revision, PropertyData property) throws SVNException {
+      public void handleProperty(long revision, PropertyData property) {
       }
     };
   }

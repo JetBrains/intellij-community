@@ -39,5 +39,5 @@ public interface ChangeDiffRequestProvider {
   @NotNull
   DiffRequest process(@NotNull ChangeDiffRequestProducer presentable,
                       @NotNull UserDataHolder context,
-                      @NotNull ProgressIndicator indicator) throws DiffRequestProducerException, ProcessCanceledException;
+                      @NotNull ProgressIndicator indicator) throws ProcessCanceledException;
 }

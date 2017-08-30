@@ -158,17 +158,17 @@ public class SvnKitPropertyClient extends BaseSvnClient implements PropertyClien
     final PropertyData[] result = new PropertyData[1];
     ISVNPropertyHandler handler = new ISVNPropertyHandler() {
       @Override
-      public void handleProperty(File path, SVNPropertyData property) throws SVNException {
+      public void handleProperty(File path, SVNPropertyData property) {
         handle(property);
       }
 
       @Override
-      public void handleProperty(SVNURL url, SVNPropertyData property) throws SVNException {
+      public void handleProperty(SVNURL url, SVNPropertyData property) {
         handle(property);
       }
 
       @Override
-      public void handleProperty(long revision, SVNPropertyData property) throws SVNException {
+      public void handleProperty(long revision, SVNPropertyData property) {
         handle(property);
       }
 

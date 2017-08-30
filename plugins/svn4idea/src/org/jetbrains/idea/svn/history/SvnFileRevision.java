@@ -141,7 +141,7 @@ public class SvnFileRevision implements VcsFileRevision {
     return myMergeSources;
   }
 
-  public byte[] loadContent() throws IOException, VcsException {
+  public byte[] loadContent() throws VcsException {
     ContentLoader loader = new ContentLoader(myURL, myRevision, myPegRevision);
     if (ApplicationManager.getApplication().isDispatchThread() &&
         !myRevision.isLocal()) {

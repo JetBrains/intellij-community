@@ -127,7 +127,7 @@ public abstract class ApplicationStarterBase extends ApplicationStarterEx {
   }
 
   @Nullable
-  public static VirtualFile findFile(@NotNull String path, @Nullable String currentDirectory) throws IOException {
+  public static VirtualFile findFile(@NotNull String path, @Nullable String currentDirectory) {
     File file = getFile(path, currentDirectory);
     VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
     if (virtualFile == null) {

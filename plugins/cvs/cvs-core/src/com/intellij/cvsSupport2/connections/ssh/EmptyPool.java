@@ -62,7 +62,7 @@ public class EmptyPool implements ConnectionPoolI {
       return myRepository;
     }
 
-    public void verify(IStreamLogger streamLogger) throws AuthenticationException {
+    public void verify(IStreamLogger streamLogger) {
     }
 
     public void open(IStreamLogger streamLogger) throws AuthenticationException {
@@ -77,7 +77,7 @@ public class EmptyPool implements ConnectionPoolI {
       }
     }
 
-    public void close() throws IOException {
+    public void close() {
       try {
         mySession.close();
       }

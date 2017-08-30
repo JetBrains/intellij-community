@@ -64,7 +64,7 @@ public class SshSessionConnection implements IConnection {
     return myRepository;
   }
 
-  public void verify(IStreamLogger streamLogger) throws AuthenticationException {
+  public void verify(IStreamLogger streamLogger) {
   }
 
   public void open(IStreamLogger streamLogger) throws AuthenticationException {
@@ -80,7 +80,7 @@ public class SshSessionConnection implements IConnection {
     myState = LifeStages.CREATED;
   }
 
-  public void close() throws IOException {
+  public void close() {
     myState = LifeStages.CLOSING;
     SshLogger.debug("session set to closing; closing streams...");
     try {

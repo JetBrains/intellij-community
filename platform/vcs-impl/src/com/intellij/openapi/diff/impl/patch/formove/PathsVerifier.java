@@ -241,7 +241,7 @@ public class PathsVerifier<BinaryType extends FilePatch> {
       return true;
     }
 
-    protected boolean check() throws IOException {
+    protected boolean check() {
       final VirtualFile beforeFile = myBaseMapper.getFile(myPatch, myBeforeName);
       if (! checkExistsAndValid(beforeFile, myBeforeName)) {
         return false;

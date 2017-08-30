@@ -154,11 +154,11 @@ public class SvnKitDiffClient extends BaseSvnClient implements DiffClient {
       final SVNReporter17 reporter17 =
         new SVNReporter17(myTarget2.getFile(), new SVNWCContext(myVcs.getSvnKitManager().getSvnOptions(), new ISVNEventHandler() {
           @Override
-          public void handleEvent(SVNEvent event, double progress) throws SVNException {
+          public void handleEvent(SVNEvent event, double progress) {
           }
 
           @Override
-          public void checkCancelled() throws SVNCancelException {
+          public void checkCancelled() {
           }
         }), false, true, SVNDepth.INFINITY, false, false, true, false, SVNDebugLog.getDefaultLog());
       SVNRepository repository = null;

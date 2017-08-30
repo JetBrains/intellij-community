@@ -119,7 +119,7 @@ public class GeneralSettingsPanel implements ConfigurableUi<SvnConfiguration> {
   }
 
   @Override
-  public void apply(@NotNull SvnConfiguration configuration) throws ConfigurationException {
+  public void apply(@NotNull SvnConfiguration configuration) {
     configuration.setConfigurationDirParameters(!myUseCustomConfigurationDirectory.isSelected(), myConfigurationDirectoryText.getText());
 
     final SvnVcs vcs17 = SvnVcs.getInstance(myProject);

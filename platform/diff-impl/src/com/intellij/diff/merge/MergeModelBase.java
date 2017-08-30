@@ -284,13 +284,13 @@ public abstract class MergeModelBase<S extends MergeModelBase.State> implements 
     }
 
     @Override
-    public final void undo() throws UnexpectedUndoException {
+    public final void undo() {
       MergeModelBase model = myModelRef.get();
       if (model != null && myUndo) restoreStates(model);
     }
 
     @Override
-    public final void redo() throws UnexpectedUndoException {
+    public final void redo() {
       MergeModelBase model = myModelRef.get();
       if (model != null && !myUndo) restoreStates(model);
     }

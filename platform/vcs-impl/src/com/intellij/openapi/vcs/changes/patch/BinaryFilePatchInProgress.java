@@ -42,7 +42,7 @@ public class BinaryFilePatchInProgress extends CommonBinaryFilePatchInProgress<B
     return new SimpleBinaryContentRevision(newFilePath) {
       @Nullable
       @Override
-      public byte[] getBinaryContent() throws VcsException {
+      public byte[] getBinaryContent() {
         return myPatch.getAfterContent();
       }
     };

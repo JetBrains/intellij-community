@@ -60,7 +60,7 @@ public class FileWithBranchComparer extends ElementWithBranchComparer {
   }
 
   @Override
-  protected void compare() throws SVNException, VcsException {
+  protected void compare() throws VcsException {
     remoteTitleBuilder.append(myElementUrl);
     content.set(SvnUtil.getFileContents(myVcs, SvnTarget.fromURL(myElementUrl), SVNRevision.HEAD, SVNRevision.UNDEFINED));
     success.set(true);

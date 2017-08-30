@@ -411,7 +411,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager
       }
     }
 
-    public void saveAuthentication(final SVNAuthentication auth, final String kind, final String realm) throws SVNException {
+    public void saveAuthentication(final SVNAuthentication auth, final String kind, final String realm) {
       try {
         wrapNativeCall(() -> {
           final Boolean fromInteractive = ourJustEntered.get();
@@ -577,7 +577,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager
     }
   }
 
-  public ISVNProxyManager getProxyManager(SVNURL url) throws SVNException {
+  public ISVNProxyManager getProxyManager(SVNURL url) {
     SSLExceptionsHelper.addInfo("Accessing URL: " + url.toString());
     ourThreadLocalProvider.set(myProvider);
     // in proxy creation, we need proxy information from common proxy. but then we should forbid common proxy to intercept
@@ -1161,7 +1161,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager
     }
 
     @Override
-    public char[] getKeyringPassword(final String keyringName) throws SVNException {
+    public char[] getKeyringPassword(final String keyringName) {
       final String message = keyringName != null ? SvnBundle.message("gnome.keyring.prompt.named", keyringName)
                                                  : SvnBundle.message("gnome.keyring.prompt.nameless");
       final Ref<String> result = Ref.create();

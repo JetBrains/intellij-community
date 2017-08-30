@@ -133,7 +133,7 @@ public class HgLogProvider implements VcsLogProvider {
   }
 
   @NotNull
-  private Set<VcsRef> readAllRefs(@NotNull VirtualFile root) throws VcsException {
+  private Set<VcsRef> readAllRefs(@NotNull VirtualFile root) {
     if (myProject.isDisposed()) {
       return Collections.emptySet();
     }
@@ -308,7 +308,7 @@ public class HgLogProvider implements VcsLogProvider {
 
   @Nullable
   @Override
-  public VcsUser getCurrentUser(@NotNull VirtualFile root) throws VcsException {
+  public VcsUser getCurrentUser(@NotNull VirtualFile root) {
     String userName = HgConfig.getInstance(myProject, root).getNamedConfig("ui", "username");
     //order of variables to identify hg username see at mercurial/ui.py
     if (userName == null) {

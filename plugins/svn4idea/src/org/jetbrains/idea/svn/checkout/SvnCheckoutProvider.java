@@ -269,7 +269,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
       myFilter = filter;
     }
 
-    public boolean accept(final File file) throws SVNException {
+    public boolean accept(final File file) {
       final VirtualFile vf = myLfs.findFileByIoFile(file);
       return vf != null && myFilter.accept(vf);
     }

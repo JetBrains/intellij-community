@@ -136,7 +136,7 @@ public class NetworkSettingsPanel implements ConfigurableUi<SvnConfiguration> {
   }
 
   @Override
-  public void apply(@NotNull SvnConfiguration configuration) throws ConfigurationException {
+  public void apply(@NotNull SvnConfiguration configuration) {
     configuration.setIsUseDefaultProxy(myUseCommonProxy.isSelected());
     configuration.setSshConnectionTimeout(((SpinnerNumberModel)mySSHConnectionTimeout.getModel()).getNumber().longValue() * 1000);
     configuration.setSshReadTimeout(((SpinnerNumberModel)mySSHReadTimeout.getModel()).getNumber().longValue() * 1000);

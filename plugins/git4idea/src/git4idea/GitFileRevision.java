@@ -135,7 +135,7 @@ public class GitFileRevision extends VcsFileRevisionEx implements Comparable<Vcs
     return myBranch;
   }
 
-  public synchronized byte[] loadContent() throws IOException, VcsException {
+  public synchronized byte[] loadContent() throws VcsException {
     VirtualFile root = getRoot();
     return GitFileUtils.getFileContent(myProject, root, myRevision.getRev(), VcsFileUtil.relativePath(root, myPath));
   }
@@ -144,7 +144,7 @@ public class GitFileRevision extends VcsFileRevisionEx implements Comparable<Vcs
     return myRoot != null ? myRoot : GitUtil.getGitRoot(myPath);
   }
 
-  public synchronized byte[] getContent() throws IOException, VcsException {
+  public synchronized byte[] getContent() throws VcsException {
     return loadContent();
   }
 

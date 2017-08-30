@@ -140,17 +140,17 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
 
     list(SvnTarget.fromFile(file), null, Depth.EMPTY, new PropertyConsumer() {
       @Override
-      public void handleProperty(File path, PropertyData property) throws SVNException {
+      public void handleProperty(File path, PropertyData property) {
         // null indicates property will be deleted
         result.put(property.getName(), null);
       }
 
       @Override
-      public void handleProperty(SVNURL url, PropertyData property) throws SVNException {
+      public void handleProperty(SVNURL url, PropertyData property) {
       }
 
       @Override
-      public void handleProperty(long revision, PropertyData property) throws SVNException {
+      public void handleProperty(long revision, PropertyData property) {
       }
     });
 
@@ -208,17 +208,17 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
     final PropertyData[] data = new PropertyData[1];
     PropertyConsumer handler = new PropertyConsumer() {
       @Override
-      public void handleProperty(File path, PropertyData property) throws SVNException {
+      public void handleProperty(File path, PropertyData property) {
         data[0] = property;
       }
 
       @Override
-      public void handleProperty(SVNURL url, PropertyData property) throws SVNException {
+      public void handleProperty(SVNURL url, PropertyData property) {
         data[0] = property;
       }
 
       @Override
-      public void handleProperty(long revision, PropertyData property) throws SVNException {
+      public void handleProperty(long revision, PropertyData property) {
         data[0] = property;
       }
     };

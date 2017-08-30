@@ -106,8 +106,7 @@ public abstract class HgUtil {
     return tempFile;
   }
 
-  public static void markDirectoryDirty(final Project project, final VirtualFile file)
-    throws InvocationTargetException, InterruptedException {
+  public static void markDirectoryDirty(final Project project, final VirtualFile file) {
     VfsUtil.markDirtyAndRefresh(true, true, false, file);
     VcsDirtyScopeManager.getInstance(project).dirDirtyRecursively(file);
   }

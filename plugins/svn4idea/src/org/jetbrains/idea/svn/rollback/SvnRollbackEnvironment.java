@@ -131,7 +131,7 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
     mySvnVcs.getFactory(path).createRevertClient().revert(Collections.singletonList(path), Depth.allOrFiles(recursive), null);
   }
 
-  private boolean is17OrGreaterCopy(@NotNull File file, @NotNull Info info) throws VcsException {
+  private boolean is17OrGreaterCopy(@NotNull File file, @NotNull Info info) {
     WorkingCopy copy = mySvnVcs.getRootsToWorkingCopies().getMatchingCopy(info.getURL());
 
     return copy != null ? copy.is17Copy() : mySvnVcs.getWorkingCopyFormat(file).isOrGreater(WorkingCopyFormat.ONE_DOT_SEVEN);

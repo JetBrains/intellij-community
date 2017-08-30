@@ -236,7 +236,7 @@ public class SvnMergeSourceDetails extends MasterDetailsComponent {
       return false;
     }
 
-    public void apply() throws ConfigurationException {
+    public void apply() {
     }
 
     public void reset() {

@@ -83,13 +83,13 @@ public class SvnContentRevision extends SvnBaseContentRevision implements ByteBa
         return ContentRevisionCache.getOrLoadCurrentAsBytes(myVcs.getProject(), myFile, myVcs.getKeyInstanceMethod(),
                                                             new CurrentRevisionProvider() {
                                                               @Override
-                                                              public VcsRevisionNumber getCurrentRevision() throws VcsException {
+                                                              public VcsRevisionNumber getCurrentRevision() {
                                                                 return getRevisionNumber();
                                                               }
 
                                                               @Override
                                                               public Pair<VcsRevisionNumber, byte[]> get()
-                                                                throws VcsException, IOException {
+                                                                throws VcsException {
                                                                 return Pair.create(getRevisionNumber(), getUpToDateBinaryContent());
                                                               }
                                                             }).getSecond();

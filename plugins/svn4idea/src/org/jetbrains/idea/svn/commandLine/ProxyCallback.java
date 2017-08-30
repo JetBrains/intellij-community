@@ -50,7 +50,7 @@ public class ProxyCallback extends AuthCallbackCase {
   }
 
   @Override
-  boolean getCredentials(String errText) throws SvnBindException {
+  boolean getCredentials(String errText) {
     boolean result = false;
 
     if (myUrl == null) {

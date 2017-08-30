@@ -111,7 +111,7 @@ public class HgUpdateEnvironment implements UpdateEnvironment {
       return true;
     }
 
-    public void apply() throws ConfigurationException {
+    public void apply() {
       updateDialog.applyTo(updateConfiguration);
     }
 

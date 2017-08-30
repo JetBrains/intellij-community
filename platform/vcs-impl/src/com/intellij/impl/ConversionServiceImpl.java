@@ -188,7 +188,7 @@ public class ConversionServiceImpl extends ConversionService {
     return false;
   }
 
-  private static List<ConversionRunner> getSortedConverters(final ConversionContextImpl context) throws CannotConvertException {
+  private static List<ConversionRunner> getSortedConverters(final ConversionContextImpl context) {
     final CachedConversionResult conversionResult = loadCachedConversionResult(context.getProjectFile());
     final Map<String, Long> oldMap = conversionResult.myProjectFilesTimestamps;
     Map<String, Long> newMap = getProjectFilesMap(context);

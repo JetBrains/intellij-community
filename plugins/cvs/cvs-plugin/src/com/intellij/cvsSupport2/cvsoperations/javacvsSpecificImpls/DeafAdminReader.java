@@ -37,7 +37,7 @@ public class DeafAdminReader implements IAdminReader{
     return false;
   }
 
-  public Entry getEntry(AbstractFileObject fileObject, ICvsFileSystem cvsFileSystem) throws IOException {
+  public Entry getEntry(AbstractFileObject fileObject, ICvsFileSystem cvsFileSystem) {
     return null;
   }
 
@@ -45,11 +45,11 @@ public class DeafAdminReader implements IAdminReader{
     return false;
   }
 
-  public Collection getEntries(DirectoryObject directoryObject, ICvsFileSystem cvsFileSystem) throws IOException {
+  public Collection getEntries(DirectoryObject directoryObject, ICvsFileSystem cvsFileSystem) {
     return null;
   }
 
-  public String getRepositoryForDirectory(DirectoryObject directoryObject, String repository, ICvsFileSystem cvsFileSystem) throws IOException {
+  public String getRepositoryForDirectory(DirectoryObject directoryObject, String repository, ICvsFileSystem cvsFileSystem) {
     return repository + directoryObject.getPath();
   }
 
