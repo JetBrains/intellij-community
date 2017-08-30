@@ -28,10 +28,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.impl.MouseGestureManager;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationInfo;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -95,7 +92,8 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
                       ActionManagerEx actionManager,
                       DataManager dataManager,
                       Application application) {
-    super(applicationInfoEx.getFullApplicationName());
+    super(ApplicationNamesInfo.getInstance().getFullProductName());
+
     myRootPane = createRootPane(actionManager, dataManager, application);
     setRootPane(myRootPane);
     setBackground(UIUtil.getPanelBackground());
@@ -254,7 +252,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
 
       Builder builder = new Builder().append(title).append(fileTitle);
       if (!SystemInfo.isMac || builder.isEmpty()) {
-        builder = builder.append(((ApplicationInfoEx)ApplicationInfo.getInstance()).getFullApplicationName());
+        builder = builder.append(ApplicationNamesInfo.getInstance().getFullProductName());
       }
       frame.setTitle(builder.toString());
     }
@@ -553,8 +551,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
         builder.append(" - ");
       }
 
-      final String applicationName = ((ApplicationInfoEx)ApplicationInfo.getInstance()).getFullApplicationName();
-      builder.append(applicationName);
+      builder.append(ApplicationNamesInfo.getInstance().getFullProductName());
 
       return builder.toString();
     }
