@@ -456,7 +456,7 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
 
   @Override
   public synchronized boolean hasReportedProblems() {
-    return !myContents.isEmpty();
+    return !myContents.isEmpty() || !myModulesProblems.isEmpty();
   }
 
   @Override
