@@ -22,9 +22,8 @@ import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.lang.java.request.CreateFieldFromUsage;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.lang.jvm.actions.JvmElementActionFactories;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -94,7 +93,7 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
   private static Collection<IntentionAction> createVariableActions(@NotNull PsiReferenceExpression refExpr) {
     final Collection<IntentionAction> result = new ArrayList<>();
 
-    if (ApplicationManager.getApplication().isUnitTestMode() || Registry.is("ide.interlanguage.fixes")) {
+    if (JvmElementActionFactories.useInterlaguageActions()) {
       result.addAll(CreateFieldFromUsage.generateActions(refExpr));
       if (!refExpr.isQualified()) {
         result.add(new CreateLocalFromUsageFix(refExpr));
