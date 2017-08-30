@@ -70,7 +70,7 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
   private final SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> myResolvedElements = createBidiMap();
   private final SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> myExcludedElements = createBidiMap();
 
-  protected final Map<String, Set<RefEntity>> myContents = new HashMap<>(1); // guarded by this
+  protected final Map<String, Set<RefEntity>> myContents = Collections.synchronizedMap(new HashMap<String, Set<RefEntity>>(1)); // keys can be null
   private final Set<RefModule> myModulesProblems = Collections.synchronizedSet(ContainerUtil.newIdentityTroveSet());
 
   private DescriptorComposer myComposer;
@@ -487,7 +487,7 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
 
   @NotNull
   @Override
-  public synchronized Map<String, Set<RefEntity>> getContent() {
+  public Map<String, Set<RefEntity>> getContent() {
     return myContents;
   }
 
