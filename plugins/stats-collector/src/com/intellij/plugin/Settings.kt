@@ -138,7 +138,7 @@ class PluginSettingsConfigurable : Configurable {
     }
 
     private fun contributorsTimingPanel(): JPanel {
-        val stats = ContributorsTimeStatistics.getInstance().state
+        val stats = ContributorsTimeStatistics.getInstance()
 
         return JPanel().apply {
             layout = BoxLayout(this, BoxLayout.Y_AXIS)
