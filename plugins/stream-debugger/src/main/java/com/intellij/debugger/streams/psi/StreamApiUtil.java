@@ -22,12 +22,8 @@ import com.intellij.psi.util.InheritanceUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.kotlin.idea.caches.resolve.ResolutionUtils;
 import org.jetbrains.kotlin.js.descriptorUtils.DescriptorUtilsKt;
 import org.jetbrains.kotlin.psi.KtCallExpression;
-import org.jetbrains.kotlin.resolve.calls.callUtil.CallUtilKt;
-import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall;
-import org.jetbrains.kotlin.resolve.scopes.receivers.ReceiverValue;
 import org.jetbrains.kotlin.types.KotlinType;
 
 /**
@@ -75,29 +71,13 @@ public class StreamApiUtil {
   private static boolean checkCallSupported(@NotNull KtCallExpression expression,
                                             boolean shouldSupportReceiver,
                                             boolean shouldSupportResult) {
-    final KotlinType receiverType = getReceiverType(expression);
-    final KotlinType resultType = getResultType(expression);
+    final KotlinType receiverType = KotlinPsiUtilKt.receiverType(expression);
+    final KotlinType resultType = KotlinPsiUtilKt.resolveType(expression);
 
     final LibraryManager manager = LibraryManager.getInstance(expression.getProject());
     return (receiverType == null || // there is no producer or producer is a static method
             shouldSupportReceiver == isSupportedType(receiverType, manager)) &&
            shouldSupportResult == isSupportedType(resultType, manager);
-  }
-
-  @Nullable
-  private static KotlinType getReceiverType(@NotNull KtCallExpression expression) {
-    final ResolvedCall<?> resolvedCall = CallUtilKt.getResolvedCall(expression, ResolutionUtils.analyze(expression));
-    if (resolvedCall != null) {
-      final ReceiverValue dispatchReceiver = resolvedCall.getDispatchReceiver();
-      return dispatchReceiver == null ? null : dispatchReceiver.getType();
-    }
-
-    return null;
-  }
-
-  @Nullable
-  private static KotlinType getResultType(@NotNull KtCallExpression expression) {
-    return ResolutionUtils.analyze(expression).getType(expression);
   }
 
   private static boolean isSupportedType(@Nullable KotlinType type, @NotNull LibraryManager manager) {

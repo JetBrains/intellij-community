@@ -15,10 +15,7 @@
  */
 package com.intellij.debugger.streams.psi.impl
 
-import com.intellij.debugger.streams.psi.ChainTransformer
-import com.intellij.debugger.streams.psi.callName
-import com.intellij.debugger.streams.psi.getPackage
-import com.intellij.debugger.streams.psi.resolveType
+import com.intellij.debugger.streams.psi.*
 import com.intellij.debugger.streams.trace.impl.handler.type.GenericType
 import com.intellij.debugger.streams.wrapper.CallArgument
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
@@ -46,12 +43,13 @@ class KotlinChainTransformerImpl : ChainTransformer.Kotlin {
     for (call in callChain.subList(0, callChain.size - 1)) {
       intermediateCalls += IntermediateStreamCallImpl(call.callName(), call.valueArguments.map { it.toCallArgument() },
                                                       GenericType.OBJECT, GenericType.OBJECT, call.textRange,
-                                                      call.resolveType().getPackage(false))
+                                                      call.receiverType()!!.getPackage(false))
     }
 
     val terminationsPsiCall = callChain.last()
     val terminationCall = TerminatorStreamCallImpl(terminationsPsiCall.callName(), emptyList(), GenericType.OBJECT, GenericType.OBJECT,
-                                                   terminationsPsiCall.textRange, terminationsPsiCall.resolveType().getPackage(false))
+                                                   terminationsPsiCall.textRange,
+                                                   terminationsPsiCall.receiverType()!!.getPackage(false))
 
     return StreamChainImpl(qualifier, intermediateCalls, terminationCall, context)
   }

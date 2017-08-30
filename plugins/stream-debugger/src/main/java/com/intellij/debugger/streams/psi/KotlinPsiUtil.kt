@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.js.descriptorUtils.getJetTypeFqName
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtValueArgument
+import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
 import org.jetbrains.kotlin.types.KotlinType
 
 /**
@@ -35,3 +36,8 @@ fun KtValueArgument.resolveType(): KotlinType = getArgumentExpression()!!.resolv
 fun KotlinType.getPackage(withGenerics: Boolean): String = StringUtil.getPackageName(getJetTypeFqName(withGenerics))
 
 fun KtCallExpression.callName(): String = this.calleeExpression!!.text
+
+fun KtCallExpression.receiverType(): KotlinType? {
+  val resolvedCall = getResolvedCall(analyze())
+  return resolvedCall?.dispatchReceiver?.type
+}
