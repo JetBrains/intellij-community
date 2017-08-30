@@ -34,9 +34,13 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.rmi.RemoteUtil;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.icons.AllIcons;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.components.ServiceManager;
@@ -430,12 +434,30 @@ public class ExternalSystemUtil {
           }
         };
         ExternalSystemTaskNotificationListenerAdapter taskListener = new ExternalSystemTaskNotificationListenerAdapter() {
-
           @Override
           public void onStart(@NotNull ExternalSystemTaskId id, String workingDir) {
             long eventTime = System.currentTimeMillis();
+            AnAction rerunImportAction = new AnAction() {
+              @Override
+              public void update(@NotNull AnActionEvent e) {
+                super.update(e);
+                Presentation p = e.getPresentation();
+                p.setEnabled(processHandler.isProcessTerminated());
+              }
+              @Override
+              public void actionPerformed(AnActionEvent e) {
+                refreshProject(externalProjectPath, importSpec);
+              }
+            };
+            String systemId = id.getProjectSystemId().getReadableName();
+            rerunImportAction.getTemplatePresentation().setText(ExternalSystemBundle.message("action.refresh.project.text", systemId));
+            rerunImportAction.getTemplatePresentation().setDescription(ExternalSystemBundle.message("action.refresh.project.description", systemId));
+            rerunImportAction.getTemplatePresentation().setIcon(AllIcons.Actions.Refresh);
             ServiceManager.getService(project, SyncViewManager.class).onEvent(
-              new StartBuildEventImpl(id, projectName, eventTime, "syncing...").withProcessHandler(processHandler, null));
+              new StartBuildEventImpl(id, projectName, eventTime, "syncing...")
+                .withProcessHandler(processHandler, null)
+                .withRerunAction(rerunImportAction)
+            );
           }
 
           @Override

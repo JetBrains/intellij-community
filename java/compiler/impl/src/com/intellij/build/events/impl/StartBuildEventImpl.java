@@ -18,6 +18,7 @@ package com.intellij.build.events.impl;
 import com.intellij.build.BuildConsoleView;
 import com.intellij.build.events.StartBuildEvent;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,6 +32,8 @@ public class StartBuildEventImpl extends StartEventImpl implements StartBuildEve
   @Nullable
   private ProcessHandler myProcessHandler;
   private Consumer<BuildConsoleView> myAttachedConsoleConsumer;
+  @Nullable
+  private AnAction myRerunAction;
 
   public StartBuildEventImpl(@NotNull Object eventId,
                              @NotNull String buildTitle,
@@ -53,6 +56,12 @@ public class StartBuildEventImpl extends StartEventImpl implements StartBuildEve
 
   @Nullable
   @Override
+  public AnAction getRerunAction() {
+    return myRerunAction;
+  }
+
+  @Nullable
+  @Override
   public Consumer<BuildConsoleView> getAttachedConsoleConsumer() {
     return myAttachedConsoleConsumer;
   }
@@ -61,6 +70,11 @@ public class StartBuildEventImpl extends StartEventImpl implements StartBuildEve
                                                 @Nullable Consumer<BuildConsoleView> attachedConsoleConsumer) {
     myProcessHandler = processHandler;
     myAttachedConsoleConsumer = attachedConsoleConsumer;
+    return this;
+  }
+
+  public StartBuildEventImpl withRerunAction(@Nullable AnAction anAction) {
+    myRerunAction = anAction;
     return this;
   }
 }

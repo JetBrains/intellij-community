@@ -171,6 +171,10 @@ public abstract class AbstractViewManager implements BuildProgressListener, Disp
           BuildTextConsoleView textConsoleView = new BuildTextConsoleView(myProject, false, "CONSOLE");
           textConsoleView.setConsoleActionsProvider(actions -> {
             final DefaultActionGroup actionGroup = new DefaultActionGroup();
+            AnAction rerunAction = ((StartBuildEvent)event).getRerunAction();
+            if(rerunAction != null) {
+              actionGroup.add(rerunAction);
+            }
             if (processHandler != null) {
               actionGroup.add(new StopProcessAction("Stop", "Stop", processHandler));
             }

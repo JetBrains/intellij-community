@@ -29,13 +29,20 @@ import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
-import com.intellij.openapi.externalSystem.model.task.*;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter;
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemTaskExecutionEvent;
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemExecuteTaskTask;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
@@ -46,7 +53,10 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.DirectoryIndex;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -63,7 +73,9 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 
 import static com.intellij.openapi.externalSystem.util.ExternalSystemUtil.convert;
 
@@ -265,9 +277,31 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
           public void onStart(@NotNull ExternalSystemTaskId id, String workingDir) {
             if (progressListener != null) {
               long eventTime = System.currentTimeMillis();
+              AnAction rerunTaskAction = new AnAction() {
+                @Override
+                public void update(@NotNull AnActionEvent e) {
+                  super.update(e);
+                  Presentation p = e.getPresentation();
+                  p.setEnabled(processHandler.isProcessTerminated());
+                }
+
+                @Override
+                public void actionPerformed(AnActionEvent e) {
+                  try {
+                    MyRunnableState.this.execute(executor, runner);
+                  }
+                  catch (ExecutionException ex) {
+                    LOG.warn(ex);
+                  }
+                }
+              };
+              rerunTaskAction.getTemplatePresentation().setText("Rerun");
+              rerunTaskAction.getTemplatePresentation().setDescription("Rerun");
+              rerunTaskAction.getTemplatePresentation().setIcon(AllIcons.Actions.Restart);
               progressListener.onEvent(
                 new StartBuildEventImpl(id, executionName, eventTime, "running...")
-                  .withProcessHandler(processHandler, view -> processHandler.notifyTextAvailable(greeting, ProcessOutputTypes.SYSTEM)));
+                  .withProcessHandler(processHandler, view -> processHandler.notifyTextAvailable(greeting, ProcessOutputTypes.SYSTEM))
+                  .withRerunAction(rerunTaskAction));
             }
           }
 

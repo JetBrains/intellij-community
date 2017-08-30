@@ -17,6 +17,7 @@ package com.intellij.build.events;
 
 import com.intellij.build.BuildConsoleView;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
@@ -30,6 +31,9 @@ public interface StartBuildEvent extends StartEvent {
 
   @Nullable
   ProcessHandler getProcessHandler();
+
+  @Nullable
+  AnAction getRerunAction();
 
   @Nullable
   Consumer<BuildConsoleView> getAttachedConsoleConsumer();
