@@ -75,12 +75,13 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
 
 
   @Nullable
-  public static ZenCodingGenerator findApplicableDefaultGenerator(@NotNull PsiElement context, boolean wrapping) {
+  public static ZenCodingGenerator findApplicableDefaultGenerator(@NotNull CustomTemplateCallback callback, boolean wrapping) {
+    PsiElement context = callback.getContext();
     if (!context.isValid()) {
       return null;
     }
     for (ZenCodingGenerator generator : ZenCodingGenerator.getInstances()) {
-      if (generator.isMyContext(context, wrapping) && generator.isAppliedByDefault(context)) {
+      if (generator.isMyContext(callback, wrapping) && generator.isAppliedByDefault(callback.getContext())) {
         return generator;
       }
     }
@@ -122,7 +123,7 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
 
   @Override
   public void expand(@NotNull String key, @NotNull CustomTemplateCallback callback) {
-    ZenCodingGenerator defaultGenerator = findApplicableDefaultGenerator(callback.getContext(), false);
+    ZenCodingGenerator defaultGenerator = findApplicableDefaultGenerator(callback, false);
     if (defaultGenerator == null) {
       LOG.error("Cannot find defaultGenerator for key `" + key +"` at " + callback.getEditor().getCaretModel().getOffset() + " offset", 
                 AttachmentFactory.createAttachment(callback.getEditor().getDocument()));
@@ -137,11 +138,12 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
   }
 
   @Nullable
-  private static ZenCodingGenerator findApplicableGenerator(ZenCodingNode node, PsiElement context, boolean wrapping) {
+  private static ZenCodingGenerator findApplicableGenerator(ZenCodingNode node, CustomTemplateCallback callback, boolean wrapping) {
     ZenCodingGenerator defaultGenerator = null;
     ZenCodingGenerator[] generators = ZenCodingGenerator.getInstances();
+    PsiElement context = callback.getContext();
     for (ZenCodingGenerator generator : generators) {
-      if (generator.isMyContext(context, wrapping) && generator.isAppliedByDefault(context)) {
+      if (generator.isMyContext(callback, wrapping) && generator.isAppliedByDefault(context)) {
         defaultGenerator = generator;
         break;
       }
@@ -150,7 +152,7 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
       FilterNode filterNode = (FilterNode)node;
       String suffix = filterNode.getFilter();
       for (ZenCodingGenerator generator : generators) {
-        if (generator.isMyContext(context, wrapping)) {
+        if (generator.isMyContext(callback, wrapping)) {
           if (suffix != null && suffix.equals(generator.getSuffix())) {
             return generator;
           }
@@ -207,7 +209,7 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
     }
 
     PsiElement context = callback.getContext();
-    ZenCodingGenerator generator = ObjectUtils.notNull(findApplicableGenerator(node, context, false), defaultGenerator);
+    ZenCodingGenerator generator = ObjectUtils.notNull(findApplicableGenerator(node, callback, false), defaultGenerator);
     List<ZenCodingFilter> filters = getFilters(node, context);
     filters.addAll(extraFilters);
 
@@ -293,7 +295,7 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
   }
   
   public static boolean checkTemplateKey(String inputString, CustomTemplateCallback callback) {
-    ZenCodingGenerator generator = findApplicableDefaultGenerator(callback.getContext(), true);
+    ZenCodingGenerator generator = findApplicableDefaultGenerator(callback, true);
     if (generator == null) {
       int offset = callback.getEditor().getCaretModel().getOffset();
       LOG.error("Emmet is disabled for context for file " + callback.getFileType().getName() + " in offset: " + offset,
@@ -304,24 +306,19 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
   }
 
   @Override
-  public boolean isApplicable(PsiFile file, int offset, boolean wrapping) {
-    if (file == null) {
-      return false;
-    }
-    PsiElement element = CustomTemplateCallback.getContext(file, offset);
-    final ZenCodingGenerator applicableGenerator = findApplicableDefaultGenerator(element, wrapping);
+  public boolean isApplicable(@NotNull CustomTemplateCallback callback, int offset, boolean wrapping) {
+    final ZenCodingGenerator applicableGenerator = findApplicableDefaultGenerator(callback, wrapping);
     return applicableGenerator != null && applicableGenerator.isEnabled();
   }
 
   @Override
-  public boolean hasCompletionItem(@NotNull PsiFile file, int offset) {
-    PsiElement element = CustomTemplateCallback.getContext(file, offset);
-    final ZenCodingGenerator applicableGenerator = findApplicableDefaultGenerator(element, false);
+  public boolean hasCompletionItem(@NotNull CustomTemplateCallback callback, int offset) {
+    final ZenCodingGenerator applicableGenerator = findApplicableDefaultGenerator(callback, false);
     return applicableGenerator != null && applicableGenerator.isEnabled() && applicableGenerator.hasCompletionItem();
   }
 
   public static void doWrap(@NotNull final String abbreviation, @NotNull final CustomTemplateCallback callback) {
-    final ZenCodingGenerator defaultGenerator = findApplicableDefaultGenerator(callback.getContext(), true);
+    final ZenCodingGenerator defaultGenerator = findApplicableDefaultGenerator(callback, true);
     assert defaultGenerator != null;
     ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().executeCommand(callback.getProject(), () -> callback.getEditor().getCaretModel().runForEachCaret(new CaretAction() {
       @Override
@@ -332,7 +329,7 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
           ZenCodingNode node = parse(abbreviation, callback, defaultGenerator, selection);
           assert node != null;
           PsiElement context = callback.getContext();
-          ZenCodingGenerator generator = findApplicableGenerator(node, context, true);
+          ZenCodingGenerator generator = findApplicableGenerator(node, callback, true);
           List<ZenCodingFilter> filters = getFilters(node, context);
 
           EditorModificationUtil.deleteSelectedText(callback.getEditor());
@@ -362,7 +359,7 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
 
   @Override
   public String computeTemplateKey(@NotNull CustomTemplateCallback callback) {
-    ZenCodingGenerator generator = findApplicableDefaultGenerator(callback.getContext(), false);
+    ZenCodingGenerator generator = findApplicableDefaultGenerator(callback, false);
     if (generator == null) return null;
     return generator.computeTemplateKey(callback);
   }
@@ -382,9 +379,9 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
     int offset = parameters.getOffset();
     Editor editor = parameters.getEditor();
 
-    ZenCodingGenerator generator = findApplicableDefaultGenerator(CustomTemplateCallback.getContext(file, offset), false);
+    final CollectCustomTemplateCallback callback = new CollectCustomTemplateCallback(editor, file);
+    ZenCodingGenerator generator = findApplicableDefaultGenerator(callback, false);
     if (generator != null && generator.hasCompletionItem()) {
-      final CollectCustomTemplateCallback callback = new CollectCustomTemplateCallback(editor, file);
 
       final String templatePrefix = computeTemplateKeyWithoutContextChecking(callback);
 

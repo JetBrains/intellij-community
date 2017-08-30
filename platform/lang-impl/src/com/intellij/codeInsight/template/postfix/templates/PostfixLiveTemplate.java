@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -161,14 +161,16 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
   }
 
   @Override
-  public boolean isApplicable(PsiFile file, int offset, boolean wrapping) {
+  public boolean isApplicable(@NotNull CustomTemplateCallback callback, int offset, boolean wrapping) {
     PostfixTemplatesSettings settings = PostfixTemplatesSettings.getInstance();
-    if (wrapping || file == null || settings == null || !settings.isPostfixTemplatesEnabled()) {
+    if (wrapping || settings == null || !settings.isPostfixTemplatesEnabled()) {
       return false;
     }
-    Language language = PsiUtilCore.getLanguageAtOffset(file, offset);
+    PsiFile contextFile = callback.getFile();
+    Language language = PsiUtilCore.getLanguageAtOffset(contextFile, offset);
+    String fileText = contextFile.getText();
     for (PostfixTemplateProvider provider : LanguagePostfixTemplate.LANG_EP.allForLanguage(language)) {
-      if (StringUtil.isNotEmpty(computeTemplateKeyWithoutContextChecking(provider, file.getText(), offset + 1))) {
+      if (StringUtil.isNotEmpty(computeTemplateKeyWithoutContextChecking(provider, fileText, offset + 1))) {
         return true;
       }
     }
@@ -198,7 +200,7 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
   }
 
   @Override
-  public boolean hasCompletionItem(@NotNull PsiFile file, int offset) {
+  public boolean hasCompletionItem(@NotNull CustomTemplateCallback callback, int offset) {
     return true;
   }
 

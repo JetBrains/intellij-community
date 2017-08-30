@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -301,7 +301,8 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
   public static boolean isApplicable(@NotNull CustomLiveTemplate customLiveTemplate,
                                      @NotNull Editor editor,
                                      @NotNull PsiFile file, boolean wrapping) {
-    return customLiveTemplate.isApplicable(file, CustomTemplateCallback.getOffset(editor), wrapping);
+    CustomTemplateCallback callback = new CustomTemplateCallback(editor, file);
+    return customLiveTemplate.isApplicable(callback, callback.getOffset(), wrapping);
   }
 
   private static int getArgumentOffset(int caretOffset, String argument, CharSequence text) {
