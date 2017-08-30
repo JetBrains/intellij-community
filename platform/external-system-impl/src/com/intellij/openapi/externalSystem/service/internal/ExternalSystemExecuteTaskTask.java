@@ -162,6 +162,6 @@ public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
   }
 
   private static List<String> parseCmdParameters(@Nullable String cmdArgsLine) {
-    return cmdArgsLine != null ? ParametersListUtil.parse(cmdArgsLine) : ContainerUtil.newArrayList();
+    return cmdArgsLine != null ? ParametersListUtil.parse(cmdArgsLine, false, true) : ContainerUtil.newArrayList();
   }
 }

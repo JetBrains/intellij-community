@@ -82,7 +82,7 @@ public class TestClassGradleConfigurationProducer extends GradleTestRunConfigura
     configuration.getSettings().setExternalProjectPath(projectPath);
     configuration.getSettings().setTaskNames(tasksToRun);
     configuration.getSettings()
-      .setScriptParameters(String.format("--tests %s", testClass.getQualifiedName()));
+      .setScriptParameters(String.format("--tests %s", getRuntimeQualifiedName(testClass)));
     configuration.setName(testClass.getName());
 
     JavaRunConfigurationExtensionManager.getInstance().extendCreatedConfiguration(configuration, contextLocation);
@@ -184,11 +184,21 @@ public class TestClassGradleConfigurationProducer extends GradleTestRunConfigura
 
     StringBuilder buf = new StringBuilder();
     for (PsiClass aClass : containingClasses) {
-      buf.append(String.format("--tests %s ", aClass.getQualifiedName()));
+      buf.append(String.format("--tests %s ", getRuntimeQualifiedName(aClass)));
     }
 
     configuration.getSettings().setScriptParameters(buf.toString());
     configuration.setName(StringUtil.join(containingClasses, aClass -> aClass.getName(), "|"));
     return true;
+  }
+
+  public static String getRuntimeQualifiedName(PsiClass psiClass) {
+    PsiElement parent = psiClass.getParent();
+    if (parent instanceof PsiClass) {
+      return getRuntimeQualifiedName((PsiClass)parent) + "$" + psiClass.getName();
+    }
+    else {
+      return psiClass.getQualifiedName();
+    }
   }
 }
