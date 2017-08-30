@@ -205,6 +205,11 @@ public class GitRebaseUtils {
     return null;
   }
 
+  public static boolean isInteractiveRebaseInProgress(@NotNull GitRepository repository) {
+    File rebaseDir = getRebaseDir(repository.getProject(), repository.getRoot());
+    return rebaseDir != null && new File(rebaseDir, "interactive").exists();
+  }
+
   /**
    * Get rebase directory
    *
