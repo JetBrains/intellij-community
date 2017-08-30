@@ -146,7 +146,7 @@ public class LineStatusTrackerRevertAutoTest extends BaseLineStatusTrackerTestCa
     int count = 0;
     while (true) {
       if (count > maxIterations) throw new Exception("Revert loop detected");
-      List<Range> ranges = myTracker.getRanges();
+      List<? extends Range> ranges = myTracker.getRanges();
       if (ranges.isEmpty()) break;
       int index = myRng.nextInt(ranges.size());
       Range range = ranges.get(index);

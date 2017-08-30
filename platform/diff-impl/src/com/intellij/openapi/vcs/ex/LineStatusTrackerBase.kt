@@ -36,7 +36,7 @@ import java.util.*
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 
-abstract class LineStatusTrackerBase {
+abstract class LineStatusTrackerBase<R : Range> {
   protected val application: Application = ApplicationManager.getApplication()
 
   open val project: Project?
@@ -77,8 +77,10 @@ abstract class LineStatusTrackerBase {
 
   open val virtualFile: VirtualFile? get() = null
 
+  abstract protected fun Block.toRange(): R
 
-  fun getRanges(): List<Range>? {
+
+  fun getRanges(): List<R>? {
     application.assertReadAccessAllowed()
     LOCK.read {
       if (!isValid()) return null
@@ -254,7 +256,7 @@ abstract class LineStatusTrackerBase {
   }
 
 
-  fun findRange(range: Range): Range? = findBlock(range)?.toRange()
+  fun findRange(range: Range): R? = findBlock(range)?.toRange()
 
   protected fun findBlock(range: Range): Block? {
     LOCK.read {
@@ -271,7 +273,7 @@ abstract class LineStatusTrackerBase {
     }
   }
 
-  fun getNextRange(line: Int): Range? {
+  fun getNextRange(line: Int): R? {
     LOCK.read {
       if (!isValid()) return null
       for (block in blocks) {
@@ -283,7 +285,7 @@ abstract class LineStatusTrackerBase {
     }
   }
 
-  fun getPrevRange(line: Int): Range? {
+  fun getPrevRange(line: Int): R? {
     LOCK.read {
       if (!isValid()) return null
       for (block in blocks.reversed()) {
@@ -295,7 +297,7 @@ abstract class LineStatusTrackerBase {
     }
   }
 
-  fun getRangeForLine(line: Int): Range? {
+  fun getRangeForLine(line: Int): R? {
     LOCK.read {
       if (!isValid()) return null
       for (block in blocks) {
@@ -396,8 +398,6 @@ abstract class LineStatusTrackerBase {
       if (data == null) data = Data()
       return data as Data
     }
-
-    private fun Block.toRange(): Range = Range(this.start, this.end, this.vcsStart, this.vcsEnd, this.innerRanges)
 
     @JvmStatic protected val Block.start: Int get() = range.start2
     @JvmStatic protected val Block.end: Int get() = range.end2

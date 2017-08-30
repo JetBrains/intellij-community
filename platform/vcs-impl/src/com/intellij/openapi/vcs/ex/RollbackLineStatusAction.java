@@ -58,7 +58,7 @@ public class RollbackLineStatusAction extends DumbAwareAction {
     rollback(tracker, editor, null);
   }
 
-  private static boolean isSomeChangeSelected(@NotNull Editor editor, @NotNull LineStatusTrackerBase tracker) {
+  private static boolean isSomeChangeSelected(@NotNull Editor editor, @NotNull LineStatusTrackerBase<?> tracker) {
     List<Caret> carets = editor.getCaretModel().getAllCarets();
     if (carets.size() != 1) return true;
     Caret caret = carets.get(0);
@@ -70,7 +70,7 @@ public class RollbackLineStatusAction extends DumbAwareAction {
     return tracker.getRangeForLine(caret.getLogicalPosition().line) != null;
   }
 
-  public static void rollback(@NotNull LineStatusTrackerBase tracker, @Nullable Editor editor, @Nullable Range range) {
+  public static void rollback(@NotNull LineStatusTrackerBase<?> tracker, @Nullable Editor editor, @Nullable Range range) {
     assert editor != null || range != null;
 
     if (range != null) {

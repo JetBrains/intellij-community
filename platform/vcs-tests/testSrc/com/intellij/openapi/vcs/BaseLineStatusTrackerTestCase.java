@@ -83,12 +83,12 @@ public abstract class BaseLineStatusTrackerTestCase extends LightPlatformTestCas
   }
 
   protected void compareRanges() throws FilesTooBigForDiffException {
-    List<Range> expected = RangesBuilder.createRanges(myDocument, myUpToDateDocument);
-    List<Range> actual = myTracker.getRanges();
+    List<? extends Range> expected = RangesBuilder.createRanges(myDocument, myUpToDateDocument);
+    List<? extends Range> actual = myTracker.getRanges();
     assertEqualRanges(expected, actual);
   }
 
-  public static void assertEqualRanges(List<Range> expected, List<Range> actual) {
+  public static void assertEqualRanges(List<? extends Range> expected, List<? extends Range> actual) {
     UsefulTestCase.assertOrderedEquals("", actual, expected, (r1, r2) -> {
       return r1.getLine1() == r2.getLine1() &&
              r1.getLine2() == r2.getLine2() &&
@@ -127,7 +127,7 @@ public abstract class BaseLineStatusTrackerTestCase extends LightPlatformTestCas
   }
 
   protected void checkCantTrim() {
-    List<Range> ranges = myTracker.getRanges();
+    List<? extends Range> ranges = myTracker.getRanges();
     for (Range range : ranges) {
       if (range.getType() != Range.MODIFIED) continue;
 
@@ -146,14 +146,14 @@ public abstract class BaseLineStatusTrackerTestCase extends LightPlatformTestCas
   }
 
   protected void checkCantMerge() {
-    List<Range> ranges = myTracker.getRanges();
+    List<? extends Range> ranges = myTracker.getRanges();
     for (int i = 0; i < ranges.size() - 1; i++) {
       assertFalse(ranges.get(i).getLine2() == ranges.get(i + 1).getLine1());
     }
   }
 
   protected void checkInnerRanges() {
-    List<Range> ranges = myTracker.getRanges();
+    List<? extends Range> ranges = myTracker.getRanges();
 
     for (Range range : ranges) {
       List<Range.InnerRange> innerRanges = range.getInnerRanges();

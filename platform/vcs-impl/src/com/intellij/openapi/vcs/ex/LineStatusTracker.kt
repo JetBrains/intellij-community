@@ -29,6 +29,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
+import com.intellij.openapi.vcs.ex.DocumentTracker.Block
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.CalledInAwt
 import java.awt.Graphics
@@ -40,7 +41,7 @@ class LineStatusTracker private constructor(override val project: Project,
                                             document: Document,
                                             override val virtualFile: VirtualFile,
                                             mode: Mode
-) : LineStatusTrackerBase(project, document) {
+) : LineStatusTrackerBase<Range>(project, document) {
   enum class Mode {
     DEFAULT, SMART, SILENT
   }
@@ -48,6 +49,7 @@ class LineStatusTracker private constructor(override val project: Project,
   private val vcsDirtyScopeManager: VcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(project)
 
   override val renderer: MyLineStatusMarkerRenderer = MyLineStatusMarkerRenderer(this)
+  override fun Block.toRange(): Range = Range(this.start, this.end, this.vcsStart, this.vcsEnd, this.innerRanges)
 
   var mode: Mode = mode
     set(value) {

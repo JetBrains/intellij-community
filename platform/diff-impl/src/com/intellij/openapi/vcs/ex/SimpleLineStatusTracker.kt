@@ -18,12 +18,14 @@ package com.intellij.openapi.vcs.ex
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.ex.DocumentTracker.Block
 import com.intellij.openapi.vfs.VirtualFile
 
 class SimpleLineStatusTracker(project: Project?,
                               document: Document,
                               rendererBuilder: (SimpleLineStatusTracker) -> LineStatusMarkerRenderer
-) : LineStatusTrackerBase(project, document) {
+) : LineStatusTrackerBase<Range>(project, document) {
   override val renderer: LineStatusMarkerRenderer = rendererBuilder(this)
   override val virtualFile: VirtualFile? = FileDocumentManager.getInstance().getFile(document)
+  override fun Block.toRange(): Range = Range(this.start, this.end, this.vcsStart, this.vcsEnd, this.innerRanges)
 }

@@ -18,11 +18,11 @@ package com.intellij.openapi.vcs.ex
 internal typealias LstRange = com.intellij.openapi.vcs.ex.Range
 internal typealias LstInnerRange = com.intellij.openapi.vcs.ex.Range.InnerRange
 
-class Range(val line1: Int,
-            val line2: Int,
-            val vcsLine1: Int,
-            val vcsLine2: Int,
-            val innerRanges: List<InnerRange>?) {
+open class Range(val line1: Int,
+                 val line2: Int,
+                 val vcsLine1: Int,
+                 val vcsLine2: Int,
+                 val innerRanges: List<InnerRange>?) {
   constructor(line1: Int, line2: Int, vcsLine1: Int, vcsLine2: Int) : this(line1, line2, vcsLine1, vcsLine2, null)
   constructor(range: Range) : this(range.line1, range.line2, range.vcsLine1, range.vcsLine2)
 

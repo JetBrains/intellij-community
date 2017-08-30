@@ -102,7 +102,7 @@ class VcsAwareFormatChangedTextUtil extends FormatChangedTextUtil {
   private static ChangedRangesInfo getCachedChangedLines(@NotNull Project project, @NotNull Document document) {
     LineStatusTracker tracker = LineStatusTrackerManager.getInstance(project).getLineStatusTracker(document);
     if (tracker != null) {
-      List<Range> ranges = tracker.getRanges();
+      List<? extends Range> ranges = tracker.getRanges();
       if (ranges != null) {
         return getChangedTextRanges(document, ranges);
       }
@@ -140,7 +140,7 @@ class VcsAwareFormatChangedTextUtil extends FormatChangedTextUtil {
   }
 
   @NotNull
-  private static ChangedRangesInfo getChangedTextRanges(@NotNull Document document, @NotNull List<Range> changedRanges) {
+  private static ChangedRangesInfo getChangedTextRanges(@NotNull Document document, @NotNull List<? extends Range> changedRanges) {
     final List<TextRange> ranges = ContainerUtil.newArrayList();
     final List<TextRange> insertedRanges = ContainerUtil.newArrayList();
     
