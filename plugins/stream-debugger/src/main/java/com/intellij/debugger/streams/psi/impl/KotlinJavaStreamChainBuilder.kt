@@ -21,6 +21,7 @@ import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.js.descriptorUtils.getJetTypeFqName
 import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import java.util.*
 
 /**
@@ -34,7 +35,9 @@ class KotlinJavaStreamChainBuilder : KotlinChainBuilderBase(KotlinChainTransform
   private class MyExistenceChecker : ExistenceChecker() {
     override fun visitCallExpression(expression: KtCallExpression) {
       // TODO: make the check more sophisticated
-      val name = expression.analyze().getType(expression)!!.getJetTypeFqName(false)
+      val type = expression.analyze().getType(expression) ?: return
+
+      val name = type.getJetTypeFqName(false)
       if (LibraryManager.getInstance(expression.project).isPackageSupported(StringUtil.getPackageName(name))) {
         fireElementFound()
       }
@@ -44,8 +47,25 @@ class KotlinJavaStreamChainBuilder : KotlinChainBuilderBase(KotlinChainTransform
   private class MyBuilderVisitor : ChainBuilder() {
     private val myTerminationCalls = mutableSetOf<KtCallExpression>()
     private val myPreviousCalls = mutableMapOf<KtCallExpression, KtCallExpression>()
+
     override fun visitCallExpression(expression: KtCallExpression) {
       super.visitCallExpression(expression)
+      if (!myPreviousCalls.containsKey(expression) && StreamApiUtil.isStreamCall(expression)) {
+        updateCallTree(expression)
+      }
+    }
+
+    private fun updateCallTree(expression: KtCallExpression) {
+      if (StreamApiUtil.isTerminationStreamCall(expression)) {
+        myTerminationCalls.add(expression)
+      }
+
+      val parent = expression.parent as? KtDotQualifiedExpression ?: return
+      val parentCall = (parent.receiverExpression as? KtDotQualifiedExpression)?.selectorExpression
+      if (parentCall is KtCallExpression && StreamApiUtil.isStreamCall(parentCall)) {
+        myPreviousCalls.put(expression, parentCall)
+        updateCallTree(parentCall)
+      }
     }
 
     override fun chains(): List<List<KtCallExpression>> {

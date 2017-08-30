@@ -41,7 +41,7 @@ abstract class KotlinChainBuilderBase(private val transformer: ChainTransformer.
 
   override fun build(startElement: PsiElement): List<StreamChain> {
     val visitor = createChainsBuilder()
-    var element = getLatestElementInScope(startElement)
+    var element = getLatestElementInScope(PsiUtil.ignoreWhiteSpaces(startElement))
     while (element != null) {
       element.accept(visitor)
       element = getLatestElementInScope(toUpperLevel(element))
