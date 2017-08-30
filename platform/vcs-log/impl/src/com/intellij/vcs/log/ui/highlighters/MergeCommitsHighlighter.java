@@ -15,15 +15,14 @@
  */
 package com.intellij.vcs.log.ui.highlighters;
 
-import com.intellij.openapi.editor.colors.EditorColorsUtil;
+import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogData;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
-
 public class MergeCommitsHighlighter implements VcsLogHighlighter {
-
+  public static final JBColor MERGE_COMMIT_FOREGROUND = new JBColor(Gray._128, Gray._96);
   @NotNull private final VcsLogUi myLogUi;
 
   public MergeCommitsHighlighter(@NotNull VcsLogUi logUi) {
@@ -34,10 +33,7 @@ public class MergeCommitsHighlighter implements VcsLogHighlighter {
   @Override
   public VcsCommitStyle getStyle(@NotNull VcsShortCommitDetails details, boolean isSelected) {
     if (isSelected || !myLogUi.isHighlighterEnabled(Factory.ID)) return VcsCommitStyle.DEFAULT;
-    if (details.getParents().size() >= 2) {
-      Color color = EditorColorsUtil.getGlobalOrDefaultColor(VcsLogColors.MERGED_COMMIT);
-      return VcsCommitStyleFactory.foreground(color);
-    }
+    if (details.getParents().size() >= 2) return VcsCommitStyleFactory.foreground(MERGE_COMMIT_FOREGROUND);
     return VcsCommitStyle.DEFAULT;
   }
 

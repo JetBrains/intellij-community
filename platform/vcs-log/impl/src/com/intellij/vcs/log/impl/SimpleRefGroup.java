@@ -15,7 +15,6 @@
  */
 package com.intellij.vcs.log.impl;
 
-import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -67,17 +66,16 @@ public class SimpleRefGroup implements RefGroup {
       Map.Entry<VcsRefType, Collection<VcsRef>> firstItem =
         ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(referencesByType.entrySet()));
       boolean multiple = firstItem.getValue().size() > 1;
-      Color color = EditorColorsUtil.getGlobalOrDefaultColor(firstItem.getKey().getBgColorKey());
+      Color color = firstItem.getKey().getBackgroundColor();
       return multiple ? Arrays.asList(color, color) : Collections.singletonList(color);
     }
     else {
       List<Color> colorsList = ContainerUtil.newArrayList();
       for (VcsRefType type : referencesByType.keySet()) {
-        Color color = EditorColorsUtil.getGlobalOrDefaultColor(type.getBgColorKey());
         if (referencesByType.get(type).size() > 1) {
-          colorsList.add(color);
+          colorsList.add(type.getBackgroundColor());
         }
-        colorsList.add(color);
+        colorsList.add(type.getBackgroundColor());
       }
       return colorsList;
     }

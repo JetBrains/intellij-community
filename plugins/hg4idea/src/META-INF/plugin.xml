@@ -32,7 +32,6 @@
     <logProvider implementation="org.zmlx.hg4idea.log.HgLogProvider"/>
     <vcs.taskHandler implementation="org.zmlx.hg4idea.HgTaskHandler"/>
     <vcs.ignoredFilesHolder implementation="org.zmlx.hg4idea.provider.HgIgnoredFileHolder$Provider"/>
-    <vcsColorsProvider implementation="org.zmlx.hg4idea.HgColors"/>
 
     <applicationService serviceInterface="org.zmlx.hg4idea.HgGlobalSettings"
                         serviceImplementation="org.zmlx.hg4idea.HgGlobalSettings"/>
