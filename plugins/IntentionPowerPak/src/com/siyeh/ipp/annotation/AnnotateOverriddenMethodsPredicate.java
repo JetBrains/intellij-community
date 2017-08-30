@@ -16,6 +16,7 @@
 package com.siyeh.ipp.annotation;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.lang.jvm.JvmParameter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.siyeh.ig.JavaOverridingMethodUtil;
@@ -73,7 +74,11 @@ class AnnotateOverriddenMethodsPredicate implements PsiElementPredicate {
         return !JavaOverridingMethodUtil.containsAnnotationWithName(m, annotationShortName);
       }
       else {
-        PsiModifierListOwner parameter = (PsiModifierListOwner)m.getParameters()[parameterIndex];
+        JvmParameter[] parameters = m.getParameters();
+        if (parameters.length <= parameterIndex) {
+          return false;
+        }
+        PsiModifierListOwner parameter = (PsiModifierListOwner)parameters[parameterIndex];
         return !JavaOverridingMethodUtil.containsAnnotationWithName(parameter, annotationShortName);
       }
     };
