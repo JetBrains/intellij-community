@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.messages.MessageBus;
 import org.editorconfig.configmanagement.DocumentSettingsManager;
+import org.editorconfig.configmanagement.EditorSettingsManager;
 import org.editorconfig.configmanagement.EncodingManager;
 import org.editorconfig.configmanagement.LineEndingsManager;
 import org.jetbrains.annotations.NotNull;
@@ -31,9 +32,11 @@ public class ConfigProjectComponent implements StartupActivity, DumbAware {
     DocumentSettingsManager documentSettingsManager = new DocumentSettingsManager(project);
     EncodingManager encodingManager = new EncodingManager(project);
     LineEndingsManager lineEndingsManager = new LineEndingsManager(project);
+    EditorSettingsManager editorSettingsManager = new EditorSettingsManager(project);
     bus.connect().subscribe(AppTopics.FILE_DOCUMENT_SYNC, encodingManager);
     bus.connect().subscribe(AppTopics.FILE_DOCUMENT_SYNC, documentSettingsManager);
     bus.connect().subscribe(AppTopics.FILE_DOCUMENT_SYNC, lineEndingsManager);
+    editorFactory.addEditorFactoryListener(editorSettingsManager, project);
     VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileListener() {
       @Override
       public void fileCreated(@NotNull VirtualFileEvent event) {
@@ -58,6 +61,7 @@ public class ConfigProjectComponent implements StartupActivity, DumbAware {
             SettingsProviderComponent.getInstance().incModificationCount();
             for (Editor editor : editorFactory.getAllEditors()) {
               if (editor.isDisposed()) continue;
+              editorSettingsManager.applyEditorSettings(editor);
               ((EditorEx)editor).reinitSettings();
             }
           }
