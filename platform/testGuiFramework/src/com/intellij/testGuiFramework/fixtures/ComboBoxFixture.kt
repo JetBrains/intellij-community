@@ -15,8 +15,10 @@
  */
 package com.intellij.testGuiFramework.fixtures
 
+import com.intellij.testGuiFramework.impl.GuiTestUtilKt.waitUntil
 import org.fest.swing.core.Robot
 import org.fest.swing.exception.ComponentLookupException
+import org.fest.swing.exception.LocationUnavailableException
 import org.fest.swing.fixture.JComboBoxFixture
 import javax.swing.JButton
 import javax.swing.JComboBox
@@ -27,6 +29,22 @@ class ComboBoxFixture(robot: Robot, comboBox: JComboBox<*>) : JComboBoxFixture(r
     val arrowButton = target().components.filter { it is JButton }.firstOrNull() ?: throw ComponentLookupException("Unable to find bounded arrow button for a combobox")
     robot().click(arrowButton)
     return this
+  }
+
+  //We are waiting for a item to be shown in dropdown list. It is necessary for a async comboboxes
+  fun selectItem(itemName: String, timeoutInSeconds: Int = 30) {
+    waitUntil("item '$itemName' be appeared in dropdown list", timeoutInSeconds) {
+      try {
+        super.selectItem(itemName)
+        true
+      } catch (e: Exception) {
+        when(e) {
+          is LocationUnavailableException -> false
+          is IndexOutOfBoundsException -> false
+          else -> throw e
+        }
+      }
+    }
   }
 
 }
