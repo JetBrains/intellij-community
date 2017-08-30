@@ -137,6 +137,7 @@ open class GuiTestCase : GuiTestBase() {
 
   @Throws(InvocationTargetException::class, InterruptedException::class)
   override fun tearDown() {
+    closeAllProjects()
     super.tearDown()
   }
 

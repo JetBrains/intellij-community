@@ -77,7 +77,7 @@ import static org.junit.Assert.*;
 
 @RunWith(GuiTestLocalRunner.class)
 public abstract class GuiTestBase {
-  protected Robot myRobot;
+  public Robot myRobot;
 
   private final Logger LOG = Logger.getInstance(GuiTestBase.class);
 
