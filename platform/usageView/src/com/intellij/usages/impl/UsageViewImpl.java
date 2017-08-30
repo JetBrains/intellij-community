@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1088,34 +1088,19 @@ public class UsageViewImpl implements UsageView {
 
   @Override
   public void removeUsage(@NotNull Usage usage) {
-    final UsageNode node = myUsageNodes.remove(usage);
-    if (node != NULL_NODE && node != null && !myPresentation.isDetachedMode()) {
-      UIUtil.invokeLaterIfNeeded(() -> {
-        if (isDisposed) return;
-        DefaultTreeModel treeModel = (DefaultTreeModel)myTree.getModel();
-        treeModel.removeNodeFromParent(node);
-        ((GroupNode)myTree.getModel().getRoot()).removeUsage(node, treeModel);
-      });
-    }
+    removeUsagesBulk(Collections.singleton(usage));
   }
 
   @Override
   public void removeUsagesBulk(@NotNull Collection<Usage> usages) {
     Set<UsageNode> nodes = usagesToNodes(usages.stream()).collect(Collectors.toSet());
+    usages.forEach(u -> myUsageNodes.remove(u));
+
     if (!nodes.isEmpty() && !myPresentation.isDetachedMode()) {
       UIUtil.invokeLaterIfNeeded(() -> {
         if (isDisposed) return;
         DefaultTreeModel treeModel = (DefaultTreeModel)myTree.getModel();
-        for (UsageNode node : nodes) {
-          MutableTreeNode parent = (MutableTreeNode)node.getParent();
-          int childIndex = parent == null ? -1 : parent.getIndex(node);
-          if (childIndex != -1) {
-            parent.remove(childIndex);
-          }
-        }
-        ((GroupNode)myTree.getModel().getRoot()).removeUsagesBulk(nodes, treeModel);
-
-        treeModel.reload();
+        ((GroupNode)treeModel.getRoot()).removeUsagesBulk(nodes, treeModel);
       });
     }
   }

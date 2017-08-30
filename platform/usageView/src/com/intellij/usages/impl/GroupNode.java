@@ -25,11 +25,13 @@ import com.intellij.usages.rules.MergeableUsage;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreeNode;
 import java.util.*;
 
@@ -160,8 +162,10 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
     ApplicationManager.getApplication().assertIsDispatchThread();
     int removed = 0;
     synchronized (this) {
+      List<MutableTreeNode> removedNodes = new SmartList<>();
       for (UsageNode usage : usages) {
         if (myChildren.remove(usage)) {
+          removedNodes.add(usage);
           removed++;
         }
       }
@@ -171,13 +175,16 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
           int delta = groupNode.removeUsagesBulk(usages, treeModel);
           if (delta > 0) {
             if (groupNode.getRecursiveUsageCount() == 0) {
-              treeModel.removeNodeFromParent(groupNode);
               myChildren.remove(groupNode);
+              removedNodes.add(groupNode);
             }
             removed += delta;
             if (removed == usages.size()) break;
           }
         }
+      }
+      if (myChildren.size() > 0) {
+        removeNodesFromParent(treeModel, this, removedNodes);
       }
     }
 
@@ -189,6 +196,32 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
     }
 
     return removed;
+  }
+
+  /**
+   * Implementation of javax.swing.tree.DefaultTreeModel#removeNodeFromParent(javax.swing.tree.MutableTreeNode) for multiple nodes.
+   * Fires a single event, or does nothing when nodes is empty.
+   * @param treeModel  to fire the treeNodesRemoved event on
+   * @param parent  the parent
+   * @param nodes  must all be children of parent
+   */
+  private static void removeNodesFromParent(@NotNull DefaultTreeModel treeModel, @NotNull GroupNode parent,
+                                            @NotNull List<MutableTreeNode> nodes) {
+    int count = nodes.size();
+    if (count == 0) {
+      return;
+    }
+    ObjectIntHashMap<MutableTreeNode> ordering = new ObjectIntHashMap<>(count);
+    for (MutableTreeNode node : nodes) {
+      ordering.put(node, parent.getIndex(node));
+    }
+    Collections.sort(nodes, Comparator.comparingInt(ordering::get)); // need ascending order
+    int[] indices = ordering.getValues();
+    Arrays.sort(indices);
+    for (int i = count - 1; i >= 0; i--) {
+      parent.remove(indices[i]);
+    }
+    treeModel.nodesWereRemoved(parent, indices, nodes.toArray());
   }
 
   @NotNull
