@@ -22,16 +22,20 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
+import com.jetbrains.python.codeInsight.stdlib.PyStdlibDocumentationLinkProvider;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.console.PydevDocumentationProvider;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
@@ -50,9 +54,14 @@ import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.select.Elements;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Collections;
 import java.util.List;
 
@@ -96,7 +105,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
         summary = docString.getSummary();
       }
       return $(cat.toString()).add(describeDecorators(func, LSame2, ", ", LSame1)).add(describeFunction(func, LSame2, LSame1))
-                              .toString() + "\n" + summary;
+               .toString() + "\n" + summary;
     }
     else if (element instanceof PyClass) {
       final PyClass cls = (PyClass)element;
@@ -442,7 +451,56 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
 
   @Override
   public String fetchExternalDocumentation(Project project, PsiElement element, List<String> docUrls) {
-    return null;
+    final Module module = ModuleUtilCore.findModuleForPsiElement(element);
+    if (module != null && !PyDocumentationSettings.getInstance(module).isRenderExternalDocumentation()) return null;
+    return ApplicationManager.getApplication().runReadAction((Computable<String>)() -> {
+      PsiFileSystemItem file = element instanceof PsiFileSystemItem ? (PsiFileSystemItem)element : element.getContainingFile();
+      if (file == null) return null;
+      if (PyNames.INIT_DOT_PY.equals(file.getName())) {
+        file = file.getParent();
+        assert file != null;
+      }
+      final Sdk sdk = PyBuiltinCache.findSdkForFile(file);
+      if (sdk == null) {
+        return null;
+      }
+
+      final QualifiedName moduleQName = QualifiedNameFinder.findCanonicalImportPath(element, element);
+      if (moduleQName == null) {
+        return null;
+      }
+      PsiNamedElement namedElement = (element instanceof PsiNamedElement && !(element instanceof PsiFileSystemItem))
+                                     ? (PsiNamedElement)element
+                                     : null;
+      if (namedElement instanceof PyFunction && PyNames.INIT.equals(namedElement.getName())) {
+        final PyClass containingClass = ((PyFunction)namedElement).getContainingClass();
+        if (containingClass != null) {
+          namedElement = containingClass;
+        }
+      }
+      final PyStdlibDocumentationLinkProvider stdlibDocumentationLinkProvider =
+        Extensions.findExtension(PythonDocumentationLinkProvider.EP_NAME, PyStdlibDocumentationLinkProvider.class);
+      final String url = stdlibDocumentationLinkProvider.getExternalDocumentationUrl(element, element);
+      if (url == null) {
+        return null;
+      }
+
+      try {
+        final Document document = Jsoup.parse(new URL(url), 1000);
+        final String elementId = namedElement != null ? moduleQName + "." + namedElement.getName() : "module-" + moduleQName;
+        document.select("a.headerlink").remove();
+        final Elements parents = document.getElementsByAttributeValue("id", elementId).parents();
+        if (parents.isEmpty()) {
+          return document.toString();
+        }
+        return parents.get(0).toString();
+      }
+      catch (MalformedURLException ignored) {
+      }
+      catch (IOException ignored) {
+      }
+      return null;
+    });
   }
 
   @Override

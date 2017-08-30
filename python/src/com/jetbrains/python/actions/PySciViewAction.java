@@ -26,6 +26,8 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.options.FontSize;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -35,6 +37,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.console.PythonConsoleToolWindow;
+import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.run.PythonConfigurationType;
 import com.jetbrains.python.run.PythonRunConfiguration;
 import org.jetbrains.annotations.NotNull;
@@ -78,12 +81,21 @@ public class PySciViewAction extends ToggleAction implements DumbAware {
       showDocumentationToolwindow(project, element);
       showDataViewAsToolwindow(project);
       showCommandLineInRunConfiguration(project, true);
+      renderExternalDocumentation(element, true);
     }
     else {
       hideConsoleToolwindow(project);
       restoreDocumentationPopup(project);
       hideDataViewer(project);
       showCommandLineInRunConfiguration(project, false);
+      renderExternalDocumentation(element, false);
+    }
+  }
+
+  private static void renderExternalDocumentation(PsiElement element, boolean render) {
+    final Module module = ModuleUtilCore.findModuleForPsiElement(element);
+    if (module != null) {
+      PyDocumentationSettings.getInstance(module).setRenderExternalDocumentation(render);
     }
   }
 
