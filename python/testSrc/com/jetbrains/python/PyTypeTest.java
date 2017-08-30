@@ -2307,6 +2307,22 @@ public class PyTypeTest extends PyTestCase {
     );
   }
 
+  public void testNoneLiteral() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON30,
+      () -> doTest("None",
+                   "expr = None")
+    );
+  }
+
+  public void testEllipsis() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON30,
+      () -> doTest("Any",
+                   "expr = ...")
+    );
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());
