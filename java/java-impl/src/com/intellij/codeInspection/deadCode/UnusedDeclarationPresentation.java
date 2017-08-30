@@ -478,7 +478,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
   }
 
   @Override
-  public void updateContent() {
+  public synchronized void updateContent() {
     getTool().checkForReachableRefs(getContext());
     myContents.clear();
     final UnusedSymbolLocalInspectionBase localInspectionTool = getTool().getSharedLocalInspectionTool();
@@ -553,11 +553,6 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
       }
     }
     return false;
-  }
-
-  @Override
-  public boolean hasReportedProblems() {
-    return !myContents.isEmpty() || super.hasReportedProblems();
   }
 
   @Override
