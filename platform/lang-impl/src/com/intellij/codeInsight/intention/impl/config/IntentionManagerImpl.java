@@ -19,6 +19,7 @@ package com.intellij.codeInsight.intention.impl.config;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.CleanupOnScopeIntention;
 import com.intellij.codeInsight.daemon.impl.EditCleanupProfileIntentionAction;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionBean;
 import com.intellij.codeInsight.intention.IntentionManager;
@@ -198,20 +199,20 @@ public class IntentionManagerImpl extends IntentionManager implements Disposable
     }
 
     if (toolWrapper instanceof LocalInspectionToolWrapper) {
-      Class aClass = action.getClass();
+      FileModifier fix = action;
       if (action instanceof QuickFixWrapper) {
-        aClass = ((QuickFixWrapper)action).getFix().getClass();
+        fix = ((QuickFixWrapper)action).getFix();
       }
-      return new CleanupInspectionIntention(toolWrapper, aClass, action.getText());
+      return new CleanupInspectionIntention(toolWrapper, fix, action.getText());
     }
     else if (toolWrapper instanceof GlobalInspectionToolWrapper) {
       GlobalInspectionTool wrappedTool = ((GlobalInspectionToolWrapper)toolWrapper).getTool();
       if (wrappedTool instanceof GlobalSimpleInspectionTool && (action instanceof LocalQuickFix || action instanceof QuickFixWrapper)) {
-        Class aClass = action.getClass();
+        FileModifier fix = action;
         if (action instanceof QuickFixWrapper) {
-          aClass = ((QuickFixWrapper)action).getFix().getClass();
+          fix = ((QuickFixWrapper)action).getFix();
         }
-        return new CleanupInspectionIntention(toolWrapper, aClass, action.getText());
+        return new CleanupInspectionIntention(toolWrapper, fix, action.getText());
       }
     }
     else {

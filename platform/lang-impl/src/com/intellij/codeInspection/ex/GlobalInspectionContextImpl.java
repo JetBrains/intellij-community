@@ -1033,7 +1033,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     
     Runnable runnable = () -> {
       if (!FileModificationService.getInstance().preparePsiElementsForWrite(files)) return;
-      CleanupInspectionIntention.applyFixesNoSort(getProject(), "Code Cleanup", descriptors, null);
+      CleanupInspectionIntention.applyFixesNoSort(getProject(), "Code Cleanup", descriptors, null, false);
       if (postRunnable != null) {
         postRunnable.run();
       }

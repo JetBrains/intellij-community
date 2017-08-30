@@ -123,6 +123,11 @@ public class LocalQuickFixWrapper extends QuickFixAction {
   }
 
   @Override
+  protected boolean startInWriteAction() {
+    return myFix.startInWriteAction();
+  }
+
+  @Override
   protected void performFixesInBatch(@NotNull Project project,
                                      @NotNull CommonProblemDescriptor[] descriptors,
                                      @NotNull GlobalInspectionContextImpl context,

@@ -19,6 +19,7 @@ package com.intellij.codeInspection.actions;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.EmptyIntentionAction;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
@@ -36,6 +37,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SequentialModalProgressTask;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,12 +49,12 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
   private final static Logger LOG = Logger.getInstance(CleanupInspectionIntention.class);
 
   private final InspectionToolWrapper myToolWrapper;
-  private final Class myQuickfixClass;
+  private final FileModifier myQuickfix;
   private final String myText;
 
-  public CleanupInspectionIntention(@NotNull InspectionToolWrapper toolWrapper, @NotNull Class quickFixClass, String text) {
+  public CleanupInspectionIntention(@NotNull InspectionToolWrapper toolWrapper, @NotNull FileModifier quickFix, String text) {
     myToolWrapper = toolWrapper;
-    myQuickfixClass = quickFixClass;
+    myQuickfix = quickFix;
     myText = text;
   }
 
@@ -79,7 +81,7 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
 
     if (!descriptions.isEmpty() && !FileModificationService.getInstance().preparePsiElementForWrite(file)) return;
 
-    final AbstractPerformFixesTask fixesTask = applyFixes(project, "Apply Fixes", descriptions, myQuickfixClass);
+    final AbstractPerformFixesTask fixesTask = applyFixes(project, "Apply Fixes", descriptions, myQuickfix.getClass(), myQuickfix.startInWriteAction());
 
     if (!fixesTask.isApplicableFixFound()) {
       HintManager.getInstance().showErrorHint(editor, "Unfortunately '" + myText + "' is currently not available for batch mode\n User interaction is required for each problem found");
@@ -89,15 +91,17 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
   public static AbstractPerformFixesTask applyFixes(@NotNull Project project,
                                                     @NotNull String presentationText,
                                                     @NotNull List<ProblemDescriptor> descriptions,
-                                                    @Nullable Class quickfixClass) {
+                                                    @Nullable Class quickfixClass,
+                                                             boolean startInWriteAction) {
     sortDescriptions(descriptions);
-    return applyFixesNoSort(project, presentationText, descriptions, quickfixClass);
+    return applyFixesNoSort(project, presentationText, descriptions, quickfixClass, startInWriteAction);
   }
 
   public static AbstractPerformFixesTask applyFixesNoSort(@NotNull Project project,
                                                           @NotNull String presentationText,
                                                           @NotNull List<ProblemDescriptor> descriptions,
-                                                          @Nullable Class quickfixClass) {
+                                                          @Nullable Class quickfixClass,
+                                                                    boolean startInWriteAction) {
 
     final boolean isBatch = quickfixClass != null && BatchQuickFix.class.isAssignableFrom(quickfixClass);
     final AbstractPerformFixesTask fixesTask = isBatch ?
@@ -105,8 +109,17 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
                                                new PerformFixesTask(project, descriptions.toArray(ProblemDescriptor.EMPTY_ARRAY), quickfixClass);
     CommandProcessor.getInstance().executeCommand(project, () -> {
       CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
-      ((ApplicationImpl)ApplicationManager.getApplication())
-        .runWriteActionWithProgressInDispatchThread(presentationText, project, null, null, fixesTask::doRun);
+      if (quickfixClass != null && startInWriteAction) {
+        ((ApplicationImpl)ApplicationManager.getApplication())
+          .runWriteActionWithProgressInDispatchThread(presentationText, project, null, null, fixesTask::doRun);
+      }
+      else {
+        final SequentialModalProgressTask progressTask =
+          new SequentialModalProgressTask(project, presentationText, true);
+        progressTask.setMinIterationTime(200);
+        progressTask.setTask(fixesTask);
+        ProgressManager.getInstance().run(progressTask);
+      }
     }, presentationText, null);
     return fixesTask;
   }
@@ -117,7 +130,7 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
 
   @Override
   public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
-    return myQuickfixClass != EmptyIntentionAction.class &&
+    return myQuickfix.getClass() != EmptyIntentionAction.class &&
            editor != null &&
            !(myToolWrapper instanceof LocalInspectionToolWrapper && ((LocalInspectionToolWrapper)myToolWrapper).isUnfair());
   }
