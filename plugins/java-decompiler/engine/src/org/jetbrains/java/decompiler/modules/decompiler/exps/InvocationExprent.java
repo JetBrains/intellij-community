@@ -61,6 +61,7 @@ public class InvocationExprent extends Exprent {
   private String name;
   private String classname;
   private boolean isStatic;
+  private boolean canIgnoreBoxing = true;
   private int functype = TYP_GENERAL;
   private Exprent instance;
   private MethodDescriptor descriptor;
@@ -84,7 +85,6 @@ public class InvocationExprent extends Exprent {
     name = cn.elementname;
     classname = cn.classname;
     this.bootstrapArguments = bootstrapArguments;
-
     switch (opcode) {
       case CodeConstants.opc_invokestatic:
         invocationTyp = INVOKE_STATIC;
@@ -155,6 +155,7 @@ public class InvocationExprent extends Exprent {
     name = expr.getName();
     classname = expr.getClassname();
     isStatic = expr.isStatic();
+    canIgnoreBoxing = expr.canIgnoreBoxing;
     functype = expr.getFunctype();
     instance = expr.getInstance();
     if (instance != null) {
@@ -217,8 +218,12 @@ public class InvocationExprent extends Exprent {
 
     tracer.addMapping(bytecode);
 
+    if (instance instanceof InvocationExprent) {
+      ((InvocationExprent) instance).markUsingBoxingResult();
+    }
+
     if (isStatic) {
-      if (isBoxingCall()) {
+      if (isBoxingCall() && canIgnoreBoxing) {
         // process general "boxing" calls, e.g. 'Object[] data = { true }' or 'Byte b = 123'
         // here 'byte' and 'short' values do not need an explicit narrowing type cast
         ExprProcessor.getCastedExprent(lstParameters.get(0), descriptor.params[0], buf, indent, false, false, false, tracer);
@@ -439,6 +444,10 @@ public class InvocationExprent extends Exprent {
     }
 
     return false;
+  }
+
+  public void markUsingBoxingResult() {
+    canIgnoreBoxing = false;
   }
 
   // TODO: move to CodeConstants ???
