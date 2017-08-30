@@ -19,7 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class EditorSettingsManager extends FileDocumentManagerAdapter {
+public class DocumentSettingsManager extends FileDocumentManagerAdapter {
   // Handles the following EditorConfig settings:
   public static final String trimTrailingWhitespaceKey = "trim_trailing_whitespace";
   public static final String insertFinalNewlineKey = "insert_final_newline";
@@ -43,7 +43,7 @@ public class EditorSettingsManager extends FileDocumentManagerAdapter {
 
   private final Project myProject;
 
-  public EditorSettingsManager(Project project) {
+  public DocumentSettingsManager(Project project) {
     myProject = project;
   }
 

@@ -15,7 +15,7 @@ import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.messages.MessageBus;
-import org.editorconfig.configmanagement.EditorSettingsManager;
+import org.editorconfig.configmanagement.DocumentSettingsManager;
 import org.editorconfig.configmanagement.EncodingManager;
 import org.editorconfig.configmanagement.LineEndingsManager;
 import org.jetbrains.annotations.NotNull;
@@ -28,11 +28,11 @@ public class ConfigProjectComponent implements StartupActivity, DumbAware {
     // Register project-level config managers
     final EditorFactory editorFactory = EditorFactory.getInstance();
     MessageBus bus = project.getMessageBus();
-    EditorSettingsManager editorSettingsManager = new EditorSettingsManager(project);
+    DocumentSettingsManager documentSettingsManager = new DocumentSettingsManager(project);
     EncodingManager encodingManager = new EncodingManager(project);
     LineEndingsManager lineEndingsManager = new LineEndingsManager(project);
     bus.connect().subscribe(AppTopics.FILE_DOCUMENT_SYNC, encodingManager);
-    bus.connect().subscribe(AppTopics.FILE_DOCUMENT_SYNC, editorSettingsManager);
+    bus.connect().subscribe(AppTopics.FILE_DOCUMENT_SYNC, documentSettingsManager);
     bus.connect().subscribe(AppTopics.FILE_DOCUMENT_SYNC, lineEndingsManager);
     VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileListener() {
       @Override

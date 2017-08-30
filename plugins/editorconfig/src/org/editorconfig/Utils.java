@@ -19,7 +19,7 @@ import com.intellij.psi.search.FileTypeIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.LineSeparator;
 import org.editorconfig.configmanagement.EditorConfigIndentOptionsProvider;
-import org.editorconfig.configmanagement.EditorSettingsManager;
+import org.editorconfig.configmanagement.DocumentSettingsManager;
 import org.editorconfig.configmanagement.EncodingManager;
 import org.editorconfig.configmanagement.LineEndingsManager;
 import org.editorconfig.core.EditorConfig.OutPair;
@@ -96,13 +96,13 @@ public class Utils {
   }
 
   private static String getEndOfFile() {
-    return EditorSettingsManager.insertFinalNewlineKey + "=" + EditorSettingsExternalizable.getInstance().isEnsureNewLineAtEOF() + "\n";
+    return DocumentSettingsManager.insertFinalNewlineKey + "=" + EditorSettingsExternalizable.getInstance().isEnsureNewLineAtEOF() + "\n";
   }
 
   private static String getTrailingSpaces() {
     final String spaces = EditorSettingsExternalizable.getInstance().getStripTrailingSpaces();
-    if (EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE.equals(spaces)) return EditorSettingsManager.trimTrailingWhitespaceKey + "=false\n";
-    if (EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE.equals(spaces)) return EditorSettingsManager.trimTrailingWhitespaceKey + "=true\n";
+    if (EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE.equals(spaces)) return DocumentSettingsManager.trimTrailingWhitespaceKey + "=false\n";
+    if (EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE.equals(spaces)) return DocumentSettingsManager.trimTrailingWhitespaceKey + "=true\n";
     return "";
   }
 
