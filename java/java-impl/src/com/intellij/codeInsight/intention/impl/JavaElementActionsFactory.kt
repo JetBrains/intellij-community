@@ -20,6 +20,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.AddConstructorFix
 import com.intellij.codeInsight.daemon.impl.quickfix.ModifierFix
 import com.intellij.codeInsight.intention.AbstractIntentionAction
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.lang.java.JavaLanguage
 import com.intellij.lang.java.actions.CreateEnumConstantAction
 import com.intellij.lang.java.actions.CreateFieldAction
 import com.intellij.lang.java.actions.toJavaClassOrNull
@@ -46,12 +47,13 @@ class JavaElementActionsFactory(
   override fun createChangeModifierActions(target: JvmModifiersOwner, request: MemberRequest.Modifier): List<IntentionAction> = with(
     request) {
     val declaration = target as PsiModifierListOwner
+    if (declaration.language != JavaLanguage.INSTANCE) return@with emptyList()
     listOf(ModifierFix(declaration.modifierList, renderer.render(modifier), shouldPresent, false))
   }
 
   override fun createAddConstructorActions(targetClass: JvmClass, request: MemberRequest.Constructor): List<IntentionAction> =
     with(request) {
-      val targetClass = materializer.materialize(targetClass)
+      val targetClass = targetClass.toJavaClassOrNull() ?: return emptyList()
       val factory = JVMElementFactories.getFactory(targetClass.language, targetClass.project)!!
       listOf(AddConstructorFix(targetClass, request.parameters.mapIndexed { i, it ->
         factory.createParameter(it.name ?: "arg$i", materializer.materialize(it.type), targetClass)
@@ -66,7 +68,7 @@ class JavaElementActionsFactory(
 
   override fun createAddPropertyActions(targetClass: JvmClass, request: MemberRequest.Property): List<IntentionAction> {
     with(request) {
-      val psiClass = materializer.materialize(targetClass)
+      val psiClass = targetClass.toJavaClassOrNull() ?: return emptyList()
       val propertyType = materializer.materialize(propertyType)
       if (getterRequired && setterRequired)
         return listOf<IntentionAction>(
@@ -90,7 +92,7 @@ class JavaElementActionsFactory(
 
   private fun createAddMethodAction(psiClass: JvmClass, request: MemberRequest.Method): IntentionAction? {
     with(request) {
-      val psiClass = materializer.materialize(psiClass)
+      val psiClass = psiClass.toJavaClassOrNull() ?: return null
       val signatureString = with(renderer) {
         val paramsString = parameters.mapIndexed { i, t -> "${render(t.type)} ${t.name ?: "arg$i"}" }.joinToString()
         val modifiersString = (annotations.map { render(it) } + modifiers.map { render(it) }).joinToString(" ")

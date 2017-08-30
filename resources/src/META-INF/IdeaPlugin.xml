@@ -513,9 +513,6 @@
     <projectService serviceInterface="com.intellij.codeInsight.javadoc.JavaDocCodeStyle"
                     serviceImplementation="com.intellij.codeInsight.javadoc.JavaDocCodeStyleImpl"/>
 
-    <applicationService serviceInterface="com.intellij.lang.jvm.actions.JvmElementActionsFactoryFallback"
-                        serviceImplementation="com.intellij.codeInsight.intention.impl.ElementActionsFactoryUastFallback"/>
-
     <applicationService serviceImplementation="com.intellij.codeInsight.intention.impl.JavaElementRenderer"/>
 
     <applicationService serviceImplementation="com.intellij.codeInsight.intention.impl.JavaElementMaterializer"/>
@@ -2021,6 +2018,7 @@
     <metaLanguage implementation="com.intellij.uast.UastMetaLanguage"/>
     <smartPointer.anchorProvider implementation="com.intellij.uast.UastElementAnchorProvider"/>
     <lang.jvm.actions.jvmElementActionsFactory implementation="com.intellij.codeInsight.intention.impl.JavaElementActionsFactory"/>
+    <lang.jvm.actions.jvmElementActionsFactory implementation="com.intellij.codeInsight.intention.impl.UastJvmElementFactory"/>
 
     <deadCode implementation="com.intellij.codeInspection.java19modules.Java9ModuleEntryPoint"/>
 
