@@ -2557,4 +2557,90 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                      "}";
     assertEquals(2, findMatchesCount(source3, "t$.'_t"));
   }
+
+  public void testSearchTypes() {
+    String source1 = "import java.util.*;" +
+                     "class X {" +
+                     "  void x() {" +
+                     "    ArrayList<String> fooList = new ArrayList<>();\n" +
+                     "    ArrayList<Integer> barList = new ArrayList<>();\n" +
+                     "    someStuff(fooList); // find this!\n" +
+                     "    someStuff(barList); // don't find this one\n" +
+                     "    someStuff(Collections.singletonList(1)); // also match this one\n" +
+                     "  }" +
+                     "  void someStuff(Iterable<?> param) {}" +
+                     "}";
+    assertEquals(3, findMatchesCount(source1, "'_Instance?.'_MethodCall:[regex( someStuff )]('_Parameter:[exprtype( *List )])"));
+    assertEquals(3, findMatchesCount(source1, "'_Instance?.'_MethodCall:[regex( someStuff )]('_Parameter:[exprtype( *java\\.util\\.List )])"));
+    assertEquals(1, findMatchesCount(source1, "'_Instance?.'_MethodCall:[regex( someStuff )]('_Parameter:[exprtype( *List<String> )])"));
+    assertEquals(1, findMatchesCount(source1, "'_Instance?.'_MethodCall:[regex( someStuff )]('_Parameter:[exprtype( *java\\.util\\.List<java\\.lang\\.String> )])"));
+    assertEquals(2, findMatchesCount(source1, "'_Instance?.'_MethodCall:[regex( someStuff )]('_Parameter:[exprtype( *List<Integer> )])"));
+    assertEquals(2, findMatchesCount(source1, "'_Instance?.'_MethodCall:[regex( someStuff )]('_Parameter:[exprtype( *java\\.util\\.List<java\\.lang\\.Integer> )])"));
+
+    String source2 = "class X {" +
+                     "  String sss[][];" +
+                     "  String ss[];" +
+                     "  void x() {" +
+                     "    System.out.println(sss);" +
+                     "  }" +
+                     "}";
+    assertEquals(1, findMatchesCount(source2, "'_x:[exprtype( String\\[\\]\\[\\] )]"));
+    assertEquals(1, findMatchesCount(source2, "'_x:[exprtype( java\\.lang\\.String\\[\\]\\[\\] )]"));
+
+    String source3 = "import java.util.*;" +
+                     "class X {" +
+                     "  void x(Map.Entry<String, Integer> map) {" +
+                     "    System.out.println(map);" +
+                     "  }" +
+                     "}";
+    assertEquals(1, findMatchesCount(source3, "'_x:[exprtype( Map\\.Entry<String,Integer> )]"));
+    assertEquals(1, findMatchesCount(source3, "'_x:[exprtype( Entry<String,Integer> )]"));
+    assertEquals(1, findMatchesCount(source3, "'_x:[exprtype( Map\\.Entry )]"));
+    assertEquals(1, findMatchesCount(source3, "'_x:[exprtype( Entry )]"));
+    assertEquals(1, findMatchesCount(source3, "'_x:[exprtype( java\\.util\\.Map\\.Entry )]"));
+    assertEquals(1, findMatchesCount(source3, "'_x:[exprtype( java\\.util\\.Map\\.Entry<java\\.lang\\.String,java\\.lang\\.Integer> )]"));
+
+    String source4 = "import java.util.*;" +
+                     "class X {" +
+                     "  void x() {" +
+                     "    new AbstractList<String>() {" +
+                     "      @Override" +
+                     "      public int size() {" +
+                     "        return 0;" +
+                     "      }" +
+                     "      @Override" +
+                     "      public String get(int index) {" +
+                     "        return null;" +
+                     "      }\n" +
+                     "    };" +
+                     "  }" +
+                     "}";
+    assertEquals(1, findMatchesCount(source4, "'x:[exprtype( *List )]"));
+    assertEquals(1, findMatchesCount(source4, "'x:[exprtype( *List<String> )]"));
+    assertEquals(1, findMatchesCount(source4, "'x:[exprtype( AbstractList )]"));
+    assertEquals(1, findMatchesCount(source4, "'x:[exprtype( AbstractList<String> )]"));
+    assertEquals(0, findMatchesCount(source4, "'x:[exprtype( AbstractList<Integer> )]"));
+
+    String source5 = "class X {" +
+                     "  void x() {" +
+                     "    new UnknownStranger<Johnny5>() {};" +
+                     "  }" +
+                     "}";
+    assertEquals(1, findMatchesCount(source5, "'x:[exprtype( UnknownStranger )]"));
+    assertEquals(1, findMatchesCount(source5, "'x:[exprtype( UnknownStranger<Johnny5> )]"));
+
+    String source6 = "class X {" +
+                     "  List<List<String>> list;" +
+                     "  List<Garbage> list2;" +
+                     "  List<Garbage> list3;" +
+                     "  void x() {" +
+                     "    System.out.println(list);" +
+                     "    System.out.println(list2);" +
+                     "    System.out.println(list3);" +
+                     "  }" +
+                     "}";
+    assertEquals(3, findMatchesCount(source6, "'x:[exprtype( List )]"));
+    assertEquals(1, findMatchesCount(source6, "'x:[exprtype( List<List<String>> )]"));
+    assertEquals(2, findMatchesCount(source6, "'x:[exprtype( List<Garbage> )]"));
+  }
 }
