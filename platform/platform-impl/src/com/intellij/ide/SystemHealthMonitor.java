@@ -151,7 +151,7 @@ public class SystemHealthMonitor implements ApplicationComponent {
   private void checkSignalBlocking() {
     if (SystemInfo.isUnix && JnaLoader.isLoaded()) {
       try {
-        LibC lib = (LibC)Native.loadLibrary("c", LibC.class);
+        LibC lib = Native.loadLibrary("c", LibC.class);
         Memory buf = new Memory(1024);
         if (lib.sigaction(LibC.SIGINT, null, buf) == 0) {
           long handler = Native.POINTER_SIZE == 8 ? buf.getLong(0) : buf.getInt(0);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -426,7 +426,7 @@ public class DateFormatUtil {
   }
 
   private static boolean getWindowsFormats(DateFormat[] formats) {
-    Kernel32 kernel32 = (Kernel32)Native.loadLibrary("Kernel32", Kernel32.class);
+    Kernel32 kernel32 = Native.loadLibrary("Kernel32", Kernel32.class);
     int dataSize = 128, rv;
     Memory data = new Memory(dataSize);
 
