@@ -68,6 +68,7 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
   protected final SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> myProblemElements = createBidiMap();
   protected final SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> mySuppressedElements = createBidiMap();
   private final SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> myResolvedElements = createBidiMap();
+  private final SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> myExcludedElements = createBidiMap();
 
   protected final Map<String, Set<RefEntity>> myContents = Collections.synchronizedMap(new HashMap<String, Set<RefEntity>>(1)); // keys can be null
   private final Set<RefModule> myModulesProblems = Collections.synchronizedSet(ContainerUtil.newIdentityTroveSet());
@@ -78,13 +79,6 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
   public DefaultInspectionToolPresentation(@NotNull InspectionToolWrapper toolWrapper, @NotNull GlobalInspectionContextImpl context) {
     myToolWrapper = toolWrapper;
     myContext = context;
-  }
-
-  public void resolveElement(@NotNull RefEntity entity) {
-    CommonProblemDescriptor[] removed = myProblemElements.remove(entity);
-    if (removed != null) {
-      myResolvedElements.put(entity, removed);
-    }
   }
 
   public void resolveProblem(@NotNull CommonProblemDescriptor descriptor) {
@@ -152,6 +146,36 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
       return level.getSeverity();
     }
     return null;
+  }
+
+  @Override
+  public boolean isExcluded(@NotNull CommonProblemDescriptor descriptor) {
+    return myExcludedElements.containsValue(descriptor);
+  }
+
+  @Override
+  public boolean isExcluded(@NotNull RefEntity entity) {
+    return Comparing.equal(myExcludedElements.get(entity), myProblemElements.get(entity));
+  }
+
+  @Override
+  public void amnesty(@NotNull RefEntity element) {
+    myExcludedElements.remove(element);
+  }
+
+  @Override
+  public void exclude(@NotNull RefEntity element) {
+    myExcludedElements.put(element, myProblemElements.getOrDefault(element, CommonProblemDescriptor.EMPTY_ARRAY));
+  }
+
+  @Override
+  public void amnesty(@NotNull CommonProblemDescriptor descriptor) {
+    myExcludedElements.removeValue(descriptor);
+  }
+
+  @Override
+  public void exclude(@NotNull CommonProblemDescriptor descriptor) {
+    myExcludedElements.put(myProblemElements.getKeyFor(descriptor), descriptor);
   }
 
   protected String getSeverityDelegateName() {
@@ -432,7 +456,7 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
 
   @Override
   public boolean hasReportedProblems() {
-    return !myProblemElements.isEmpty();
+    return !myContents.isEmpty();
   }
 
   @Override
@@ -445,7 +469,7 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
   protected void updateProblemElements() {
     final Collection<RefEntity> elements = getProblemElements().keys();
     for (RefEntity element : elements) {
-      if (getContext().getUIOptions().FILTER_RESOLVED_ITEMS && (isProblemResolved(element) || isSuppressed(element))) continue;
+      if (getContext().getUIOptions().FILTER_RESOLVED_ITEMS && (isProblemResolved(element) || isSuppressed(element) || isExcluded(element))) continue;
       if (element instanceof RefModule) {
         myModulesProblems.add((RefModule)element);
       }

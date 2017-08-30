@@ -175,10 +175,6 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
     myProblemLevels.drop();
   }
 
-  protected boolean isExcluded() {
-    return getPresentation().getContext().getView().getExcludedManager().isExcluded(this);
-  }
-
   private static class NodeState {
     private final boolean isValid;
     private final boolean isSuppressed;

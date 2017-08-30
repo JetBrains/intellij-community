@@ -145,6 +145,7 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
       content = null; //GC it
       InspectionToolPresentation presentation = context.getPresentation(toolWrapper);
       for (RefEntity refEntity : presentation.getResolvedElements()) {
+        //TODO
         if (refEntity instanceof RefElement) {
           excludeProblem(refEntity.getExternalName(), current);
         }

@@ -80,6 +80,35 @@ public class RefElementNode extends SuppressableInspectionTreeNode {
   }
 
   @Override
+  public boolean isExcluded() {
+    RefEntity element = getElement();
+    if (isLeaf() && element != null) {
+      return getPresentation().isExcluded(element);
+    }
+    return super.isExcluded();
+  }
+
+  @Override
+  public void excludeElement() {
+    RefEntity element = getElement();
+    if (isLeaf() && element != null) {
+      getPresentation().exclude(element);
+      return;
+    }
+    super.excludeElement();
+  }
+
+  @Override
+  public void amnestyElement() {
+    RefEntity element = getElement();
+    if (isLeaf() && element != null) {
+      getPresentation().amnesty(element);
+      return;
+    }
+    super.amnestyElement();
+  }
+
+  @Override
   public void add(MutableTreeNode newChild) {
     checkHasDescriptorUnder(newChild);
     super.add(newChild);

@@ -62,8 +62,6 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
   @NotNull
   Map<String, Set<RefEntity>> getContent();
 
-  void resolveElement(@NotNull RefEntity entity);
-
   void resolveProblem(@NotNull CommonProblemDescriptor descriptor);
 
   boolean isProblemResolved(@Nullable CommonProblemDescriptor descriptor);
@@ -127,4 +125,15 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
   @Nullable
   HighlightSeverity getSeverity(@NotNull RefElement element);
 
+  boolean isExcluded(@NotNull CommonProblemDescriptor descriptor);
+
+  boolean isExcluded(@NotNull RefEntity entity);
+
+  void amnesty(@NotNull RefEntity element);
+
+  void exclude(@NotNull RefEntity element);
+
+  void amnesty(@NotNull CommonProblemDescriptor descriptor);
+
+  void exclude(@NotNull CommonProblemDescriptor descriptor);
 }

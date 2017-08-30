@@ -120,7 +120,6 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
   private final ExclusionHandler<InspectionTreeNode> myExclusionHandler;
   private EditorEx myPreviewEditor;
   private InspectionTreeLoadingProgressAware myLoadingProgressPreview;
-  private final ExcludedInspectionTreeNodesManager myExcludedInspectionTreeNodesManager;
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
   private final InspectionViewSuppressActionHolder mySuppressActionHolder = new InspectionViewSuppressActionHolder();
 
@@ -134,9 +133,6 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     myScope = globalInspectionContext.getCurrentScope();
     myGlobalInspectionContext = globalInspectionContext;
     myProvider = provider;
-    myExcludedInspectionTreeNodesManager = new ExcludedInspectionTreeNodesManager(provider instanceof OfflineInspectionRVContentProvider,
-                                                                                  isSingleInspectionRun());
-
     myTree = new InspectionTree(globalInspectionContext, this);
     initTreeListeners();
 
@@ -160,17 +156,17 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
 
       @Override
       public boolean isNodeExcluded(@NotNull InspectionTreeNode node) {
-        return node.isExcluded(myExcludedInspectionTreeNodesManager);
+        return node.isExcluded();
       }
 
       @Override
       public void excludeNode(@NotNull InspectionTreeNode node) {
-        node.excludeElement(myExcludedInspectionTreeNodesManager);
+        node.excludeElement();
       }
 
       @Override
       public void includeNode(@NotNull InspectionTreeNode node) {
-        node.amnestyElement(myExcludedInspectionTreeNodesManager);
+        node.amnestyElement();
       }
 
       @Override
@@ -297,7 +293,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
       @Override
       @Nullable
       protected Navigatable createDescriptorForNode(DefaultMutableTreeNode node) {
-        if (node instanceof InspectionTreeNode && ((InspectionTreeNode)node).isExcluded(myExcludedInspectionTreeNodesManager)) {
+        if (node instanceof InspectionTreeNode && ((InspectionTreeNode)node).isExcluded()) {
           return null;
         }
         if (node instanceof RefElementNode) {
@@ -661,11 +657,6 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     return mySuppressActionHolder;
   }
 
-  @NotNull
-  public ExcludedInspectionTreeNodesManager getExcludedManager() {
-    return myExcludedInspectionTreeNodesManager;
-  }
-
   @Nullable
   public String getCurrentProfileName() {
     return myInspectionProfile == null ? null : myInspectionProfile.getDisplayName();
@@ -778,10 +769,6 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
       boolean singleInspectionRun = isSingleInspectionRun();
       for (Tools currentTools : tools) {
         InspectionToolWrapper defaultToolWrapper = currentTools.getDefaultState().getTool();
-        if (myGlobalInspectionContext.getUIOptions().FILTER_RESOLVED_ITEMS &&
-            myExcludedInspectionTreeNodesManager.containsInspectionNode(defaultToolWrapper)) {
-          continue;
-        }
         final HighlightDisplayKey key = HighlightDisplayKey.find(defaultToolWrapper.getShortName());
         for (ScopeToolState state : myProvider.getTools(currentTools)) {
           InspectionToolWrapper toolWrapper = state.getTool();

@@ -41,7 +41,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeWillExpandListener;
 import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.ExpandVetoException;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.util.*;
@@ -52,7 +51,6 @@ public class InspectionTree extends Tree {
   private static final Logger LOG = Logger.getInstance(InspectionTree.class);
 
   @NotNull private final GlobalInspectionContextImpl myContext;
-  @NotNull private final ExcludedInspectionTreeNodesManager myExcludedManager;
   @NotNull private InspectionTreeState myState = new InspectionTreeState();
   private boolean myQueueUpdate;
 
@@ -61,7 +59,6 @@ public class InspectionTree extends Tree {
     Project project = context.getProject();
     setModel(new DefaultTreeModel(new InspectionRootNode(project, new InspectionTreeUpdater(view))));
     myContext = context;
-    myExcludedManager = view.getExcludedManager();
 
     setCellRenderer(new InspectionTreeCellRenderer(view));
     setRootVisible(false);
@@ -342,7 +339,7 @@ public class InspectionTree extends Tree {
 
   private boolean isNodeValidAndIncluded(ProblemDescriptionNode node, boolean allowResolved, boolean allowSuppressed) {
     return node.isValid() && (allowResolved ||
-                              (!node.isExcluded(myExcludedManager) &&
+                              (!node.isExcluded() &&
                                (!node.isAlreadySuppressedFromView() || (allowSuppressed && !node.getAvailableSuppressActions().isEmpty())) &&
                                !node.isQuickFixAppliedFromView()));
   }
@@ -373,13 +370,13 @@ public class InspectionTree extends Tree {
 
   private class ExpandListener implements TreeWillExpandListener {
     @Override
-    public void treeWillExpand(TreeExpansionEvent event) throws ExpandVetoException {
+    public void treeWillExpand(TreeExpansionEvent event) {
       final InspectionTreeNode node = (InspectionTreeNode)event.getPath().getLastPathComponent();
       myState.getExpandedUserObjects().add(node.getUserObject());
     }
 
     @Override
-    public void treeWillCollapse(TreeExpansionEvent event) throws ExpandVetoException {
+    public void treeWillCollapse(TreeExpansionEvent event) {
       InspectionTreeNode node = (InspectionTreeNode)event.getPath().getLastPathComponent();
       myState.getExpandedUserObjects().remove(node.getUserObject());
     }
