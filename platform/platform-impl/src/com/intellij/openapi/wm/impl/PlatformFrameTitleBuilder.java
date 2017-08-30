@@ -43,9 +43,9 @@ public class PlatformFrameTitleBuilder extends FrameTitleBuilder {
   @Override
   public String getFileTitle(@NotNull Project project, @NotNull VirtualFile file) {
     String fileTitle = EditorTabbedContainer.calcTabTitle(project, file);
-
-    VirtualFile parent = file.getParent();
-    if (parent == null || !fileTitle.endsWith(file.getPresentableName())) return fileTitle;
+    if (!fileTitle.endsWith(file.getPresentableName()) || file.getParent() == null) {
+      return fileTitle;
+    }
 
     return ProjectUtilCore.displayUrlRelativeToProject(file, file.getPresentableUrl(), project, true, false);
   }

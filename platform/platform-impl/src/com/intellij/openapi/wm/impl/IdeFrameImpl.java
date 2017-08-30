@@ -213,12 +213,12 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
   }
 
   @Override
-  public void setFrameTitle(final String text) {
+  public void setFrameTitle(String text) {
     super.setTitle(text);
   }
 
   @Override
-  public void setFileTitle(@Nullable final String fileTitle, @Nullable File file) {
+  public void setFileTitle(@Nullable String fileTitle, @Nullable File file) {
     myFileTitle = fileTitle;
     myCurrentFile = file;
     updateTitle();
@@ -233,7 +233,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
     updateTitle(this, myTitle, myFileTitle, myCurrentFile);
   }
 
-  public static void updateTitle(JFrame frame, final String title, final String fileTitle, final File currentFile) {
+  public static void updateTitle(@NotNull JFrame frame, @Nullable String title, @Nullable String fileTitle, @Nullable File currentFile) {
     if (myUpdatingTitle) return;
 
     try {

@@ -105,7 +105,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     };
     KeymapManager.getInstance().addKeymapManagerListener(keymapListener, this);
   }
-  
+
   public FileEditorManagerImpl getManager() {
     return myManager;
   }
@@ -400,27 +400,25 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     }
   }
 
-  void updateFileName(@Nullable final VirtualFile updatedFile) {
-    final EditorWindow[] windows = getWindows();
-    for (int i = 0; i != windows.length; ++ i) {
-      for (VirtualFile file : windows[i].getFiles()) {
+  void updateFileName(@Nullable VirtualFile updatedFile) {
+    for (EditorWindow window : getWindows()) {
+      for (VirtualFile file : window.getFiles()) {
         if (updatedFile == null || file.getName().equals(updatedFile.getName())) {
-          windows[i].updateFileName(file);
+          window.updateFileName(file);
         }
       }
     }
 
     Project project = myManager.getProject();
-
-    final IdeFrame frame = getFrame(project);
+    IdeFrame frame = getFrame(project);
     if (frame != null) {
-      VirtualFile file = getCurrentFile();
-
-      File ioFile = file == null ? null : new File(file.getPresentableUrl());
       String fileTitle = null;
+      File ioFile = null;
+
+      VirtualFile file = getCurrentFile();
       if (file != null) {
-        fileTitle = DumbService.isDumb(project) ? file.getName()
-                                                : FrameTitleBuilder.getInstance().getFileTitle(project, file);
+        ioFile = new File(file.getPresentableUrl());
+        fileTitle = DumbService.isDumb(project) ? file.getName() : FrameTitleBuilder.getInstance().getFileTitle(project, file);
       }
 
       frame.setFileTitle(fileTitle, ioFile);
