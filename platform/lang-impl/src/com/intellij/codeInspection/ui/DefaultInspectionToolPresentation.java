@@ -456,7 +456,7 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
 
   @Override
   public boolean hasReportedProblems() {
-    return !myContents.isEmpty();
+    return !myProblemElements.isEmpty();
   }
 
   @Override
