@@ -15,8 +15,12 @@
  */
 package com.intellij.build.events.impl;
 
+import com.intellij.build.BuildConsoleView;
 import com.intellij.build.events.StartBuildEvent;
+import com.intellij.execution.process.ProcessHandler;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
@@ -24,6 +28,9 @@ import org.jetbrains.annotations.NotNull;
 public class StartBuildEventImpl extends StartEventImpl implements StartBuildEvent {
 
   private final String myBuildTitle;
+  @Nullable
+  private ProcessHandler myProcessHandler;
+  private Consumer<BuildConsoleView> myAttachedConsoleConsumer;
 
   public StartBuildEventImpl(@NotNull Object eventId,
                              @NotNull String buildTitle,
@@ -36,5 +43,24 @@ public class StartBuildEventImpl extends StartEventImpl implements StartBuildEve
   @Override
   public String getBuildTitle() {
     return myBuildTitle;
+  }
+
+  @Nullable
+  @Override
+  public ProcessHandler getProcessHandler() {
+    return myProcessHandler;
+  }
+
+  @Nullable
+  @Override
+  public Consumer<BuildConsoleView> getAttachedConsoleConsumer() {
+    return myAttachedConsoleConsumer;
+  }
+
+  public StartBuildEventImpl withProcessHandler(@Nullable ProcessHandler processHandler,
+                                                @Nullable Consumer<BuildConsoleView> attachedConsoleConsumer) {
+    myProcessHandler = processHandler;
+    myAttachedConsoleConsumer = attachedConsoleConsumer;
+    return this;
   }
 }

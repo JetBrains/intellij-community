@@ -34,4 +34,9 @@ public class TasksViewManager extends AbstractViewManager {
   protected boolean isTabbedView() {
     return true;
   }
+
+  @Override
+  protected boolean isConsoleEnabledByDefault() {
+    return true;
+  }
 }

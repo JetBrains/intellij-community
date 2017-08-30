@@ -15,7 +15,11 @@
  */
 package com.intellij.build.events;
 
+import com.intellij.build.BuildConsoleView;
+import com.intellij.execution.process.ProcessHandler;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
@@ -23,4 +27,10 @@ import org.jetbrains.annotations.ApiStatus;
 @ApiStatus.Experimental
 public interface StartBuildEvent extends StartEvent {
   String getBuildTitle();
+
+  @Nullable
+  ProcessHandler getProcessHandler();
+
+  @Nullable
+  Consumer<BuildConsoleView> getAttachedConsoleConsumer();
 }

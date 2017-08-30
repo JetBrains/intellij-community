@@ -17,6 +17,7 @@ package com.intellij.build;
 
 import com.intellij.build.events.*;
 import com.intellij.execution.console.DuplexConsoleView;
+import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
@@ -32,6 +33,7 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.impl.ContentImpl;
 import com.intellij.util.Alarm;
+import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -163,13 +165,23 @@ public abstract class AbstractViewManager implements BuildProgressListener, Disp
         }
 
         DuplexConsoleView<BuildConsoleView, BuildConsoleView> view = myViewMap.computeIfAbsent(buildInfo, info -> {
+          BuildTextConsoleView textConsoleView = new BuildTextConsoleView(myProject, false, "CONSOLE");
           final DuplexConsoleView<BuildConsoleView, BuildConsoleView> duplexConsoleView =
-            new DuplexConsoleView<>(new BuildTextConsoleView(myProject, false, "CONSOLE"),
-                                    new BuildTreeConsoleView(myProject));
+            new DuplexConsoleView<>(textConsoleView, new BuildTreeConsoleView(myProject));
           duplexConsoleView.setDisableSwitchConsoleActionOnProcessEnd(false);
+          if(isConsoleEnabledByDefault()) {
+            duplexConsoleView.enableConsole(true);
+          }
+          ProcessHandler processHandler = ((StartBuildEvent)event).getProcessHandler();
+          if (processHandler != null) {
+            textConsoleView.attachToProcess(processHandler);
+            Consumer<BuildConsoleView> attachedConsoleConsumer = ((StartBuildEvent)event).getAttachedConsoleConsumer();
+            if (attachedConsoleConsumer != null) {
+              attachedConsoleConsumer.consume(textConsoleView);
+            }
+          }
           Disposer.register(myThreeComponentsSplitter, duplexConsoleView);
           if (isTabbedView()) {
-
             final JComponent consoleComponent = new JPanel(new BorderLayout());
             consoleComponent.add(duplexConsoleView, BorderLayout.CENTER);
             DefaultActionGroup toolbarActions = new DefaultActionGroup();
@@ -300,6 +312,10 @@ public abstract class AbstractViewManager implements BuildProgressListener, Disp
         }
       });
     }
+  }
+
+  protected boolean isConsoleEnabledByDefault() {
+    return false;
   }
 
   @Override
