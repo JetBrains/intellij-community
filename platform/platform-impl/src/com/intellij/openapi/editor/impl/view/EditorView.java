@@ -517,14 +517,15 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
     }
   }
 
-  private void setFontRenderContext(FontRenderContext context) {
-    myFontRenderContext = context == null ? FontInfo.getFontRenderContext(myEditor.getContentComponent()) : context;
+  private boolean setFontRenderContext(FontRenderContext context) {
+    FontRenderContext contextToSet = context == null ? FontInfo.getFontRenderContext(myEditor.getContentComponent()) : context;
+    if (areEqualContexts(myFontRenderContext, contextToSet)) return false;
+    myFontRenderContext = contextToSet;
+    return true;
   }
 
   private void checkFontRenderContext(FontRenderContext context) {
-    FontRenderContext oldContext = myFontRenderContext;
-    setFontRenderContext(context);
-    if (!areEqualContexts(myFontRenderContext, oldContext)) {
+    if (setFontRenderContext(context)) {
       myTextLayoutCache.resetToDocumentSize(false);
       invalidateFoldRegionLayouts();
     }
