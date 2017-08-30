@@ -327,4 +327,61 @@ public class SmartList<E> extends AbstractList<E> implements RandomAccess {
   public boolean contains(Object o) {
     return indexOf(o) >= 0;
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == this) {
+      return true;
+    }
+
+    if (!(o instanceof List)) {
+      return false;
+    }
+
+    if (o instanceof SmartList) {
+      return equalsWithSmartList((SmartList)o);
+    }
+
+    if (o instanceof ArrayList) {
+      return equalsWithArrayList((ArrayList)o);
+    }
+
+    return super.equals(o);
+  }
+
+  private boolean equalsWithSmartList(SmartList that) {
+    if (mySize != that.mySize) {
+      return false;
+    }
+
+    if (mySize == 1) {
+      return myElem == null ? that.myElem == null : myElem.equals(that.myElem);
+    }
+
+    return compareOneByOne(that);
+  }
+
+  private boolean equalsWithArrayList(ArrayList that) {
+    if (mySize != that.size()) {
+      return false;
+    }
+
+    if (mySize == 1) {
+      Object o = that.get(0);
+      return myElem == null ? o == null : myElem.equals(o);
+    }
+
+    return compareOneByOne(that);
+  }
+
+  private boolean compareOneByOne(List that) {
+    for (int i = 0; i < mySize; i++) {
+      E o1 = get(i);
+      Object o2 = that.get(i);
+      if (o1 == null ? o2 != null : !o1.equals(o2)) {
+        return false;
+      }
+    }
+    return true;
+  }
 }
