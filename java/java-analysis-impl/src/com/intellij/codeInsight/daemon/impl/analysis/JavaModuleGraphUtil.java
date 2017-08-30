@@ -21,9 +21,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.java.stubs.index.JavaModuleNameIndex;
 import com.intellij.psi.impl.light.LightJavaModule;
 import com.intellij.psi.impl.source.PsiJavaModuleReference;
 import com.intellij.psi.search.FilenameIndex;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.containers.ContainerUtil;
@@ -145,17 +148,16 @@ public class JavaModuleGraphUtil {
       Result.create(buildRequiresGraph(project), OUT_OF_CODE_BLOCK_MODIFICATION_COUNT));
   }
 
-  // Starting from source modules, collects all module dependencies in the project.
-  // The resulting graph is used for tracing readability and checking package conflicts.
+  // Collects all module dependencies in the project. The resulting graph is used for tracing readability and checking package conflicts.
   private static RequiresGraph buildRequiresGraph(Project project) {
     MultiMap<PsiJavaModule, PsiJavaModule> relations = MultiMap.create();
     Set<String> transitiveEdges = ContainerUtil.newTroveSet();
-    for (Module module : ModuleManager.getInstance(project).getModules()) {
-      Collection<VirtualFile> files = FilenameIndex.getVirtualFilesByName(project, MODULE_INFO_FILE, module.getModuleScope());
-      Optional.ofNullable(ContainerUtil.getFirstItem(files))
-        .map(PsiManager.getInstance(project)::findFile)
-        .map(f -> f instanceof PsiJavaFile ? ((PsiJavaFile)f).getModuleDeclaration() : null)
-        .ifPresent(m -> visit(m, relations, transitiveEdges));
+    JavaModuleNameIndex index = JavaModuleNameIndex.getInstance();
+    GlobalSearchScope scope = ProjectScope.getAllScope(project);
+    for (String key : index.getAllKeys(project)) {
+      for (PsiJavaModule module : index.get(key, project, scope)) {
+        visit(module, relations, transitiveEdges);
+      }
     }
 
     Graph<PsiJavaModule> graph = GraphGenerator.generate(new ChameleonGraph<>(relations, true));

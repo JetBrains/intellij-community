@@ -74,20 +74,22 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
   private val ERR = ErrorWithFixes("-")
 
   private fun checkAccess(target: PsiFileSystemItem, place: PsiFileSystemItem, packageName: String, quick: Boolean): ErrorWithFixes? {
-    val targetModule = JavaModuleGraphUtil.findDescriptorByElement(target)
-    val useModule = JavaModuleGraphUtil.findDescriptorByElement(place)
+    val targetModule = JavaModuleGraphUtil.findDescriptorByElement(target)?.originalElement as PsiJavaModule?
+    val useModule = JavaModuleGraphUtil.findDescriptorByElement(place)?.originalElement as PsiJavaModule?
 
     if (targetModule != null) {
-      if (targetModule.originalElement == useModule?.originalElement) {
+      if (targetModule == useModule) {
         return null
       }
       if (useModule == null && targetModule.containingFile?.virtualFile?.fileSystem !is JrtFileSystem) {
         return null  // a target is not on the mandatory module path
       }
       if (!(targetModule is LightJavaModule || JavaModuleGraphUtil.exports(targetModule, packageName, useModule))) {
-        return if (quick) ERR
-          else if (useModule == null) ErrorWithFixes(JavaErrorMessages.message("module.access.from.unnamed", packageName, targetModule.name))
-          else ErrorWithFixes(JavaErrorMessages.message("module.access.from.named", packageName, targetModule.name, useModule.name))
+        return when {
+          quick -> ERR
+          useModule == null -> ErrorWithFixes(JavaErrorMessages.message("module.access.from.unnamed", packageName, targetModule.name))
+          else -> ErrorWithFixes(JavaErrorMessages.message("module.access.from.named", packageName, targetModule.name, useModule.name))
+        }
       }
       if (useModule == null) {
         return null
