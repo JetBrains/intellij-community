@@ -133,7 +133,6 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   public boolean CHECK_FILES_UP_TO_DATE_BEFORE_COMMIT = false;
 
   public boolean REFORMAT_BEFORE_PROJECT_COMMIT = false;
-  public boolean REFORMAT_BEFORE_FILE_COMMIT = false;
 
   public boolean REARRANGE_BEFORE_PROJECT_COMMIT = false;
 

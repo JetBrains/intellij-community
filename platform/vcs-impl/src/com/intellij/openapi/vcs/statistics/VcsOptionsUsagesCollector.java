@@ -62,7 +62,6 @@ public class VcsOptionsUsagesCollector extends AbstractProjectsUsagesCollector {
     usages.add(getBooleanUsage("commit.before.optimize.imports", configuration.OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT));
     usages.add(getBooleanUsage("commit.before.check.files.up.to.date", configuration.CHECK_FILES_UP_TO_DATE_BEFORE_COMMIT));
     usages.add(getBooleanUsage("commit.before.reformat.project", configuration.REFORMAT_BEFORE_PROJECT_COMMIT));
-    usages.add(getBooleanUsage("commit.before.reformat.file", configuration.REFORMAT_BEFORE_FILE_COMMIT));
     usages.add(getBooleanUsage("commit.before.rearrange", configuration.REARRANGE_BEFORE_PROJECT_COMMIT));
 
     usages.add(getBooleanUsage("commit.clear.initial.comment", configuration.CLEAR_INITIAL_COMMIT_MESSAGE));
