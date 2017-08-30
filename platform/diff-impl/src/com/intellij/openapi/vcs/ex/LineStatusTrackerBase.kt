@@ -43,7 +43,7 @@ abstract class LineStatusTrackerBase {
   // read access allowed from EDT or while holding LOCK
   private val LOCK = Any()
 
-  val project: Project?
+  open val project: Project?
 
   val document: Document
   val vcsDocument: Document

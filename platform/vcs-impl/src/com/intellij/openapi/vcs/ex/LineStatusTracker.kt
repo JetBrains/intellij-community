@@ -40,7 +40,7 @@ import java.awt.event.MouseEvent
 import java.util.*
 import javax.swing.JPanel
 
-class LineStatusTracker private constructor(project: Project,
+class LineStatusTracker private constructor(override val project: Project,
                                             document: Document,
                                             override val virtualFile: VirtualFile,
                                             mode: Mode
@@ -98,12 +98,12 @@ class LineStatusTracker private constructor(project: Project,
   override fun fireFileUnchanged() {
     if (GeneralSettings.getInstance().isSaveOnFrameDeactivation) {
       // later to avoid saving inside document change event processing.
-      TransactionGuard.getInstance().submitTransactionLater(project!!, Runnable {
+      TransactionGuard.getInstance().submitTransactionLater(project, Runnable {
         FileDocumentManager.getInstance().saveDocument(document)
         val ranges = getRanges()
         if (ranges == null || ranges.isEmpty()) {
           // file was modified, and now it's not -> dirty local change
-          vcsDirtyScopeManager.fileDirty(virtualFile);
+          vcsDirtyScopeManager.fileDirty(virtualFile)
         }
       })
     }
