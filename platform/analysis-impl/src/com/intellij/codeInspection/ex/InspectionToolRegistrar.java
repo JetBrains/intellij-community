@@ -23,13 +23,11 @@ import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Supplier;
 
 /**
@@ -55,7 +53,9 @@ public class InspectionToolRegistrar implements Supplier<List<InspectionToolWrap
     List<Supplier<InspectionToolWrapper>> factories = new ArrayList<>();
     registerTools(providers, factories);
     boolean isInternal = ApplicationManager.getApplication().isInternal();
+    Map<String, InspectionEP> shortNames = new THashMap<>();
     for (LocalInspectionEP ep : LocalInspectionEP.LOCAL_INSPECTION.getExtensions()) {
+      checkForDuplicateShortName(ep, shortNames);
       if (!isInternal && ep.isInternal) {
         continue;
       }
@@ -63,6 +63,7 @@ public class InspectionToolRegistrar implements Supplier<List<InspectionToolWrap
       factories.add(() -> new LocalInspectionToolWrapper(ep));
     }
     for (InspectionEP ep : InspectionEP.GLOBAL_INSPECTION.getExtensions()) {
+      checkForDuplicateShortName(ep, shortNames);
       if (!isInternal && ep.isInternal) {
         continue;
       }
@@ -70,6 +71,16 @@ public class InspectionToolRegistrar implements Supplier<List<InspectionToolWrap
       factories.add(() -> new GlobalInspectionToolWrapper(ep));
     }
     myInspectionToolFactories.addAll(factories);
+  }
+
+  private static void checkForDuplicateShortName(InspectionEP ep, Map<String, InspectionEP> shortNames) {
+    final String shortName = ep.getShortName();
+    final InspectionEP duplicate = shortNames.put(shortName, ep);
+    if (duplicate != null) {
+      LOG.error("Short name '" + shortName + "' is not unique\n" +
+                "class '" + ep.instantiateTool().getClass().getCanonicalName() + "' in " + ep.getPluginDescriptor() +
+                "\nand\nclass'" + duplicate.instantiateTool().getClass().getCanonicalName() + "' in " + duplicate.getPluginDescriptor() + "\nconflict");
+    }
   }
 
   @NotNull
