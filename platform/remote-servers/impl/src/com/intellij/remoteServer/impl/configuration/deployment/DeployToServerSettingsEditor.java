@@ -69,6 +69,7 @@ public class DeployToServerSettingsEditor<S extends ServerConfiguration, D exten
     myProject = project;
 
     myServerCombo = new WithAutoDetectCombo<>(type);
+    Disposer.register(this, myServerCombo);
     myServerCombo.addChangeListener(e -> updateDeploymentSettingsEditor());
 
     mySourceListModel = new SortedComboBoxModel<>((o1, o2) -> o1.getPresentableName().compareToIgnoreCase(o2.getPresentableName()));
@@ -276,7 +277,7 @@ public class DeployToServerSettingsEditor<S extends ServerConfiguration, D exten
         }
       }
 
-      private void connectionTested(boolean wasConnected, String errorStatus) {
+      private void connectionTested(boolean wasConnected, @SuppressWarnings("unused") String errorStatus) {
         assert myLastStartedTestConnectionMillis > 0;
         waitABit(2000);
 
@@ -286,8 +287,10 @@ public class DeployToServerSettingsEditor<S extends ServerConfiguration, D exten
         if (wasConnected) {
           setTestConnectionState(TestConnectionState.SUCCESSFUL);
           UIUtil.invokeLaterIfNeeded(() -> {
-            RemoteServersManager.getInstance().addServer(testedServer);
-            refillModel(testedServer);
+            if (!Disposer.isDisposed(WithAutoDetectCombo.this)) {
+              RemoteServersManager.getInstance().addServer(testedServer);
+              refillModel(testedServer);
+            }
           });
         }
         else {
