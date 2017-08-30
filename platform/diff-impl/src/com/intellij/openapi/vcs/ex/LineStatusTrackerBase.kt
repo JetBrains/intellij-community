@@ -134,7 +134,7 @@ abstract class LineStatusTrackerBase {
     synchronized(LOCK) {
       destroyRanges()
       try {
-        myRanges = RangesBuilder.createRanges(document, vcsDocument, isDetectWhitespaceChangedLines()).map(::RangeImpl)
+        myRanges = createRanges(document, vcsDocument, isDetectWhitespaceChangedLines()).map(::RangeImpl)
         for (range in myRanges) {
           installHighlighter(range)
         }
@@ -524,7 +524,7 @@ abstract class LineStatusTrackerBase {
     val lines = DiffUtil.getLines(document, changedLine1, changedLine2)
     val vcsLines = DiffUtil.getLines(vcsDocument, vcsLine1, vcsLine2)
 
-    return RangesBuilder.createRanges(lines, vcsLines, changedLine1, vcsLine1, isDetectWhitespaceChangedLines()).map(::RangeImpl)
+    return createRanges(lines, vcsLines, changedLine1, vcsLine1, isDetectWhitespaceChangedLines()).map(::RangeImpl)
   }
 
   private fun shiftRanges(rangesAfterChange: List<RangeImpl>, shift: Int) {

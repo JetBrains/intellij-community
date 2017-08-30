@@ -13,171 +13,143 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.vcs.ex;
+@file:JvmName("RangesBuilder")
 
-import com.intellij.diff.comparison.ByLine;
-import com.intellij.diff.comparison.ComparisonPolicy;
-import com.intellij.diff.comparison.DiffTooBigException;
-import com.intellij.diff.comparison.TrimUtil;
-import com.intellij.diff.comparison.iterables.DiffIterableUtil;
-import com.intellij.diff.comparison.iterables.FairDiffIterable;
-import com.intellij.diff.util.DiffUtil;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.progress.DumbProgressIndicator;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vcs.ex.Range.InnerRange;
-import com.intellij.util.diff.FilesTooBigForDiffException;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+package com.intellij.openapi.vcs.ex
 
-import java.util.ArrayList;
-import java.util.List;
+import com.intellij.diff.comparison.ByLine
+import com.intellij.diff.comparison.ComparisonPolicy
+import com.intellij.diff.comparison.DiffTooBigException
+import com.intellij.diff.comparison.expand
+import com.intellij.diff.comparison.iterables.DiffIterableUtil
+import com.intellij.diff.util.DiffUtil
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.progress.DumbProgressIndicator
+import com.intellij.openapi.vcs.ex.Range.InnerRange
+import com.intellij.util.diff.FilesTooBigForDiffException
+import java.util.*
 
-public class RangesBuilder {
-  private static final Logger LOG = Logger.getInstance(RangesBuilder.class);
+@JvmOverloads
+@Throws(FilesTooBigForDiffException::class)
+fun createRanges(current: Document, vcs: Document, innerWhitespaceChanges: Boolean = false): List<Range> {
+  return createRanges(DiffUtil.getLines(current), DiffUtil.getLines(vcs), 0, 0, innerWhitespaceChanges)
+}
 
-  @NotNull
-  public static List<Range> createRanges(@NotNull Document current, @NotNull Document vcs) throws FilesTooBigForDiffException {
-    return createRanges(current, vcs, false);
+@Throws(FilesTooBigForDiffException::class)
+fun createRanges(current: List<String>,
+                 vcs: List<String>,
+                 currentShift: Int,
+                 vcsShift: Int,
+                 innerWhitespaceChanges: Boolean): List<Range> {
+  try {
+    return if (innerWhitespaceChanges) {
+      createRangesSmart(current, vcs, currentShift, vcsShift)
+    }
+    else {
+      createRangesSimple(current, vcs, currentShift, vcsShift)
+    }
+  }
+  catch (e: DiffTooBigException) {
+    throw FilesTooBigForDiffException()
   }
 
-  @NotNull
-  public static List<Range> createRanges(@NotNull Document current, @NotNull Document vcs, boolean innerWhitespaceChanges)
-    throws FilesTooBigForDiffException {
-    return createRanges(DiffUtil.getLines(current), DiffUtil.getLines(vcs), 0, 0, innerWhitespaceChanges);
+}
+
+@Throws(DiffTooBigException::class)
+private fun createRangesSimple(current: List<String>,
+                               vcs: List<String>,
+                               currentShift: Int,
+                               vcsShift: Int): List<Range> {
+  val iterable = ByLine.compare(vcs, current, ComparisonPolicy.DEFAULT, DumbProgressIndicator.INSTANCE)
+
+  val result = ArrayList<Range>()
+  for (range in iterable.iterateChanges()) {
+    val vcsLine1 = vcsShift + range.start1
+    val vcsLine2 = vcsShift + range.end1
+    val currentLine1 = currentShift + range.start2
+    val currentLine2 = currentShift + range.end2
+
+    result.add(Range(currentLine1, currentLine2, vcsLine1, vcsLine2))
+  }
+  return result
+}
+
+@Throws(DiffTooBigException::class)
+private fun createRangesSmart(current: List<String>,
+                              vcs: List<String>,
+                              currentShift: Int,
+                              vcsShift: Int): List<Range> {
+  val iwIterable = ByLine.compare(vcs, current, ComparisonPolicy.IGNORE_WHITESPACES, DumbProgressIndicator.INSTANCE)
+
+  val rangeBuilder = RangeBuilder(current, vcs, currentShift, vcsShift)
+
+  for (range in iwIterable.iterateUnchanged()) {
+    val count = range.end1 - range.start1
+    for (i in 0..count - 1) {
+      val vcsIndex = range.start1 + i
+      val currentIndex = range.start2 + i
+      if (vcs[vcsIndex] == current[currentIndex]) {
+        rangeBuilder.markEqual(vcsIndex, currentIndex)
+      }
+    }
   }
 
-  @NotNull
-  public static List<Range> createRanges(@NotNull List<String> current,
-                                         @NotNull List<String> vcs,
-                                         int currentShift,
-                                         int vcsShift,
-                                         boolean innerWhitespaceChanges) throws FilesTooBigForDiffException {
+  return rangeBuilder.finish()
+}
+
+private class RangeBuilder(private val myCurrent: List<String>,
+                           private val myVcs: List<String>,
+                           private val myCurrentShift: Int,
+                           private val myVcsShift: Int) : DiffIterableUtil.ChangeBuilderBase(myVcs.size, myCurrent.size) {
+
+  private val myResult = ArrayList<Range>()
+
+  fun finish(): List<Range> {
+    doFinish()
+    return myResult
+  }
+
+  override fun addChange(vcsStart: Int, currentStart: Int, vcsEnd: Int, currentEnd: Int) {
+    val range = expand(myVcs, myCurrent, vcsStart, currentStart, vcsEnd, currentEnd)
+    if (range.isEmpty) return
+
+    val innerRanges = calcInnerRanges(range)
+    val newRange = Range(range.start2 + myCurrentShift, range.end2 + myCurrentShift,
+                         range.start1 + myVcsShift, range.end1 + myVcsShift, innerRanges)
+
+    myResult.add(newRange)
+  }
+
+  private fun calcInnerRanges(blockRange: com.intellij.diff.util.Range): List<InnerRange>? {
     try {
-      if (innerWhitespaceChanges) {
-        return createRangesSmart(current, vcs, currentShift, vcsShift);
+      val vcs = myVcs.subList(blockRange.start1, blockRange.end1)
+      val current = myCurrent.subList(blockRange.start2, blockRange.end2)
+
+      val result = ArrayList<InnerRange>()
+      val iwIterable = ByLine.compare(vcs, current, ComparisonPolicy.IGNORE_WHITESPACES, DumbProgressIndicator.INSTANCE)
+      for (pair in DiffIterableUtil.iterateAll(iwIterable)) {
+        val range = pair.first
+        val equals = pair.second
+
+        val type = if (equals) Range.EQUAL else getChangeType(range.start1, range.end1, range.start2, range.end2)
+        result.add(InnerRange(range.start2, range.end2,
+                              type))
       }
-      else {
-        return createRangesSimple(current, vcs, currentShift, vcsShift);
-      }
+      result.trimToSize()
+      return result
     }
-    catch (DiffTooBigException e) {
-      throw new FilesTooBigForDiffException();
+    catch (e: DiffTooBigException) {
+      return null
     }
+
   }
+}
 
-  @NotNull
-  private static List<Range> createRangesSimple(@NotNull List<String> current,
-                                                @NotNull List<String> vcs,
-                                                int currentShift,
-                                                int vcsShift) throws DiffTooBigException {
-    FairDiffIterable iterable = ByLine.compare(vcs, current, ComparisonPolicy.DEFAULT, DumbProgressIndicator.INSTANCE);
-
-    List<Range> result = new ArrayList<>();
-    for (com.intellij.diff.util.Range range : iterable.iterateChanges()) {
-      int vcsLine1 = vcsShift + range.start1;
-      int vcsLine2 = vcsShift + range.end1;
-      int currentLine1 = currentShift + range.start2;
-      int currentLine2 = currentShift + range.end2;
-
-      result.add(new Range(currentLine1, currentLine2, vcsLine1, vcsLine2));
-    }
-    return result;
-  }
-
-  @NotNull
-  private static List<Range> createRangesSmart(@NotNull List<String> current,
-                                               @NotNull List<String> vcs,
-                                               int currentShift,
-                                               int vcsShift) throws DiffTooBigException {
-    FairDiffIterable iwIterable = ByLine.compare(vcs, current, ComparisonPolicy.IGNORE_WHITESPACES, DumbProgressIndicator.INSTANCE);
-
-    RangeBuilder rangeBuilder = new RangeBuilder(current, vcs, currentShift, vcsShift);
-
-    for (com.intellij.diff.util.Range range : iwIterable.iterateUnchanged()) {
-      int count = range.end1 - range.start1;
-      for (int i = 0; i < count; i++) {
-        int vcsIndex = range.start1 + i;
-        int currentIndex = range.start2 + i;
-        if (vcs.get(vcsIndex).equals(current.get(currentIndex))) {
-          rangeBuilder.markEqual(vcsIndex, currentIndex);
-        }
-      }
-    }
-
-    return rangeBuilder.finish();
-  }
-
-  private static class RangeBuilder extends DiffIterableUtil.ChangeBuilderBase {
-    @NotNull private final List<String> myCurrent;
-    @NotNull private final List<String> myVcs;
-    private final int myCurrentShift;
-    private final int myVcsShift;
-
-    @NotNull private final List<Range> myResult = new ArrayList<>();
-
-    public RangeBuilder(@NotNull List<String> current,
-                        @NotNull List<String> vcs,
-                        int currentShift,
-                        int vcsShift) {
-      super(vcs.size(), current.size());
-      myCurrent = current;
-      myVcs = vcs;
-      myCurrentShift = currentShift;
-      myVcsShift = vcsShift;
-    }
-
-    @NotNull
-    public List<Range> finish() {
-      doFinish();
-      return myResult;
-    }
-
-    @Override
-    protected void addChange(int vcsStart, int currentStart, int vcsEnd, int currentEnd) {
-      com.intellij.diff.util.Range range = TrimUtil.expand(myVcs, myCurrent, vcsStart, currentStart, vcsEnd, currentEnd);
-      if (range.isEmpty()) return;
-
-      List<InnerRange> innerRanges = calcInnerRanges(range);
-      Range newRange = new Range(range.start2 + myCurrentShift, range.end2 + myCurrentShift,
-                                 range.start1 + myVcsShift, range.end1 + myVcsShift, innerRanges);
-
-      myResult.add(newRange);
-    }
-
-    @Nullable
-    private List<InnerRange> calcInnerRanges(@NotNull com.intellij.diff.util.Range blockRange) {
-      try {
-        List<String> vcs = myVcs.subList(blockRange.start1, blockRange.end1);
-        List<String> current = myCurrent.subList(blockRange.start2, blockRange.end2);
-
-        ArrayList<InnerRange> result = new ArrayList<>();
-        FairDiffIterable iwIterable = ByLine.compare(vcs, current, ComparisonPolicy.IGNORE_WHITESPACES, DumbProgressIndicator.INSTANCE);
-        for (Pair<com.intellij.diff.util.Range, Boolean> pair : DiffIterableUtil.iterateAll(iwIterable)) {
-          com.intellij.diff.util.Range range = pair.first;
-          Boolean equals = pair.second;
-
-          byte type = equals ? Range.EQUAL : getChangeType(range.start1, range.end1, range.start2, range.end2);
-          result.add(new InnerRange(range.start2 , range.end2 ,
-                                    type));
-        }
-        result.trimToSize();
-        return result;
-      }
-      catch (DiffTooBigException e) {
-        return null;
-      }
-    }
-  }
-
-  private static byte getChangeType(int vcsStart, int vcsEnd, int currentStart, int currentEnd) {
-    int deleted = vcsEnd - vcsStart;
-    int inserted = currentEnd - currentStart;
-    if (deleted > 0 && inserted > 0) return Range.MODIFIED;
-    if (deleted > 0) return Range.DELETED;
-    if (inserted > 0) return Range.INSERTED;
-    LOG.error("Unknown change type");
-    return Range.EQUAL;
-  }
+private fun getChangeType(vcsStart: Int, vcsEnd: Int, currentStart: Int, currentEnd: Int): Byte {
+  val deleted = vcsEnd - vcsStart
+  val inserted = currentEnd - currentStart
+  if (deleted > 0 && inserted > 0) return Range.MODIFIED
+  if (deleted > 0) return Range.DELETED
+  if (inserted > 0) return Range.INSERTED
+  return Range.EQUAL
 }
