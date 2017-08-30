@@ -53,6 +53,7 @@ import com.intellij.openapi.wm.impl.status.*;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.ui.*;
 import com.intellij.ui.mac.MacMainFrameDecorator;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor;
 import org.jetbrains.annotations.NotNull;
@@ -97,11 +98,10 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
     setRootPane(myRootPane);
     setBackground(UIUtil.getPanelBackground());
     AppUIUtil.updateWindowIcon(this);
-    final Dimension size = ScreenUtil.getMainScreenBounds().getSize();
 
+    Dimension size = ScreenUtil.getMainScreenBounds().getSize();
     size.width = Math.min(1400, size.width - 20);
     size.height= Math.min(1000, size.height - 40);
-
     setSize(size);
     setLocationRelativeTo(null);
 
@@ -111,7 +111,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
     setupCloseAction();
     MnemonicHelper.init(this);
 
-    myBalloonLayout = new BalloonLayoutImpl(myRootPane, new Insets(8, 8, 8, 8));
+    myBalloonLayout = new BalloonLayoutImpl(myRootPane, JBUI.insets(8));
 
     // to show window thumbnail under Macs
     // http://lists.apple.com/archives/java-dev/2009/Dec/msg00240.html
@@ -132,19 +132,14 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
     PowerSupplyKit.checkPowerSupply();
   }
 
-  protected IdeRootPane createRootPane(ActionManagerEx actionManager,
-                                       DataManager dataManager,
-                                       Application application) {
+  protected IdeRootPane createRootPane(ActionManagerEx actionManager, DataManager dataManager, Application application) {
     return new IdeRootPane(actionManager, dataManager, application, this);
   }
 
   @NotNull
   @Override
   public Insets getInsets() {
-    if (SystemInfo.isMac && isInFullScreen()) {
-      return new Insets(0, 0, 0, 0);
-    }
-    return super.getInsets();
+    return SystemInfo.isMac && isInFullScreen() ? JBUI.emptyInsets() : super.getInsets();
   }
 
   @Override
@@ -161,6 +156,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
   }
 
   @Override
+  @SuppressWarnings({"SSBasedInspection", "deprecation"})
   public void show() {
     super.show();
     SwingUtilities.invokeLater(() -> setFocusableWindowState(true));
@@ -219,10 +215,6 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
   @Override
   public void setFrameTitle(final String text) {
     super.setTitle(text);
-  }
-
-  public void setFileTitle(final String fileTitle) {
-    setFileTitle(fileTitle, null);
   }
 
   @Override
@@ -326,7 +318,10 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
 
       if (myRootPane != null) {
         myRootPane.installNorthComponents(project);
-        project.getMessageBus().connect().subscribe(StatusBar.Info.TOPIC, myRootPane.getStatusBar());
+        StatusBar statusBar = myRootPane.getStatusBar();
+        if (statusBar != null) {
+          project.getMessageBus().connect().subscribe(StatusBar.Info.TOPIC, statusBar);
+        }
       }
 
       installDefaultProjectStatusBarWidgets(myProject);
@@ -390,6 +385,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
       statusBar.removeWidget(readOnlyAttributePanel.ID());
       statusBar.removeWidget(insertOverwritePanel.ID());
 
+      //noinspection deprecation
       ((StatusBarEx)statusBar).removeCustomIndicationComponents();
     });
   }
@@ -482,7 +478,6 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
 
   @Override
   public Rectangle suggestChildFrameBounds() {
-    //todo [kirillk] a dummy implementation
     final Rectangle b = getBounds();
     b.x += 100;
     b.width -= 200;
