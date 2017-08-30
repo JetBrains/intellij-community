@@ -184,6 +184,8 @@ public abstract class AbstractViewManager implements BuildProgressListener, Disp
           final DuplexConsoleView<BuildConsoleView, BuildConsoleView> duplexConsoleView =
             new DuplexConsoleView<>(textConsoleView, new BuildTreeConsoleView(myProject));
           duplexConsoleView.setDisableSwitchConsoleActionOnProcessEnd(false);
+          duplexConsoleView.getSwitchConsoleActionPresentation().setIcon(AllIcons.Actions.ChangeView);
+          duplexConsoleView.getSwitchConsoleActionPresentation().setText("Toggle tree/text mode");
           if(isConsoleEnabledByDefault()) {
             duplexConsoleView.enableConsole(true);
           }
