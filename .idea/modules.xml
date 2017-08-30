@@ -3,7 +3,6 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/plugins/ByteCodeViewer/ByteCodeViewer.iml" filepath="$PROJECT_DIR$/plugins/ByteCodeViewer/ByteCodeViewer.iml" group="plugins" />
-      <module fileurl="file://$PROJECT_DIR$/python/educational-python/Edu-Python/Edu-Python.iml" filepath="$PROJECT_DIR$/python/educational-python/Edu-Python/Edu-Python.iml" group="python/educational/educational-python" />
       <module fileurl="file://$PROJECT_DIR$/plugins/IntelliLang/IntelliLang.iml" filepath="$PROJECT_DIR$/plugins/IntelliLang/IntelliLang.iml" group="plugins/IntelliLang" />
       <module fileurl="file://$PROJECT_DIR$/plugins/IntelliLang/IntelliLang-java.iml" filepath="$PROJECT_DIR$/plugins/IntelliLang/IntelliLang-java.iml" group="plugins/IntelliLang" />
       <module fileurl="file://$PROJECT_DIR$/python/IntelliLang-python/IntelliLang-python.iml" filepath="$PROJECT_DIR$/python/IntelliLang-python/IntelliLang-python.iml" group="python" />
@@ -92,7 +91,6 @@
       <module fileurl="file://$PROJECT_DIR$/platform/editor-ui-api/editor-ui-api.iml" filepath="$PROJECT_DIR$/platform/editor-ui-api/editor-ui-api.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/editor-ui-ex/editor-ui-ex.iml" filepath="$PROJECT_DIR$/platform/editor-ui-ex/editor-ui-ex.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/plugins/editorconfig/editorconfig.iml" filepath="$PROJECT_DIR$/plugins/editorconfig/editorconfig.iml" group="plugins" />
-      <module fileurl="file://$PROJECT_DIR$/python/educational-core/educational-core.iml" filepath="$PROJECT_DIR$/python/educational-core/educational-core.iml" group="python/educational/educational-core" />
       <module fileurl="file://$PROJECT_DIR$/python/educational-python/educational-python.iml" filepath="$PROJECT_DIR$/python/educational-python/educational-python.iml" group="python/educational" />
       <module fileurl="file://$PROJECT_DIR$/java/execution/impl/execution-impl.iml" filepath="$PROJECT_DIR$/java/execution/impl/execution-impl.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/java/execution/openapi/execution-openapi.iml" filepath="$PROJECT_DIR$/java/execution/openapi/execution-openapi.iml" group="java" />
