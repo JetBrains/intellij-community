@@ -40,10 +40,6 @@ public class SimplifyForEachInspection extends BaseJavaBatchLocalInspectionTool 
     CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM, "forEachOrdered").parameterCount(1);
   private static final CallMatcher STREAM_FOREACH =
     CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM, "forEach", "forEachOrdered").parameterCount(1);
-  private static final CallMatcher FOREACH = CallMatcher.anyOf(
-      STREAM_FOREACH,
-      ITERABLE_FOREACH
-    );
 
 
   @Nls
@@ -136,11 +132,13 @@ public class SimplifyForEachInspection extends BaseJavaBatchLocalInspectionTool 
   @Nullable
   static PsiLambdaExpression extractLambdaFromForEach(PsiMethodCallExpression call) {
     PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
-    if (qualifier == null ||
-        !FOREACH.test(call) ||
-        !InheritanceUtil.isInheritor(qualifier.getType(), CommonClassNames.JAVA_UTIL_COLLECTION)) return null;
+    if (qualifier == null || !(STREAM_FOREACH.test(call) || isCollectionForEach(call, qualifier))) return null;
     PsiExpression arg = call.getArgumentList().getExpressions()[0];
     return tryCast(PsiUtil.skipParenthesizedExprDown(arg), PsiLambdaExpression.class);
+  }
+
+  private static boolean isCollectionForEach(PsiMethodCallExpression call, PsiExpression qualifier) {
+    return ITERABLE_FOREACH.test(call) && InheritanceUtil.isInheritor(qualifier.getType(), CommonClassNames.JAVA_UTIL_COLLECTION);
   }
 
   static class LightExpressionStatement extends LightElement implements PsiExpressionStatement {
