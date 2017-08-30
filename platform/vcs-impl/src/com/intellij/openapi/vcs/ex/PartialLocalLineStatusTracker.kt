@@ -31,6 +31,7 @@ import com.intellij.openapi.vcs.ex.DocumentTracker.Block
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker.LocalRange
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.CalledInAwt
 import java.awt.Color
 import java.awt.Graphics
 import java.awt.Point
@@ -45,13 +46,63 @@ class PartialLocalLineStatusTracker(project: Project,
   override val renderer = MyLineStatusMarkerRenderer(this)
 
   private val defaultMarker: ChangeListMarker
+  private var currentMarker: ChangeListMarker? = null
 
   init {
     defaultMarker = ChangeListMarker(changeListManager.defaultChangeList)
+
+    documentTracker.addListener(MyLineTrackerListener())
+    assert(blocks.isEmpty())
   }
 
   override fun Block.toRange(): LocalRange = LocalRange(this.start, this.end, this.vcsStart, this.vcsEnd, this.innerRanges,
-                                                        (this.marker ?: defaultMarker).changelistId)
+                                                        this.marker.changelistId)
+
+
+  @CalledInAwt
+  fun setBaseRevision(vcsContent: CharSequence, changelistId: String?) {
+    currentMarker = if (changelistId != null) ChangeListMarker(changelistId) else null
+    try {
+      setBaseRevision(vcsContent)
+    }
+    finally {
+      currentMarker = null
+    }
+  }
+
+  private inner class MyLineTrackerListener : DocumentTracker.Listener {
+    override fun onRangeAdded(block: Block) {
+      if (block.ourData.marker == null) { // do not override markers, that are set via other methods of this listener
+        block.marker = defaultMarker
+      }
+    }
+
+    override fun onRangeRefreshed(before: Block, after: List<Block>) {
+      val marker = before.marker
+      for (block in after) {
+        block.marker = marker
+      }
+    }
+
+    override fun onRangesChanged(before: List<Block>, after: Block) {
+      val affectedMarkers = before.map { it.marker }.distinct()
+
+      val _currentMarker = currentMarker
+      if (affectedMarkers.isEmpty() && _currentMarker != null) {
+        after.marker = _currentMarker
+      }
+      else if (affectedMarkers.size == 1) {
+        after.marker = affectedMarkers.single()
+      }
+      else {
+        after.marker = defaultMarker
+      }
+    }
+
+    override fun onRangeShifted(before: Block, after: Block) {
+      after.marker = before.marker
+    }
+  }
 
 
   protected class MyLineStatusMarkerRenderer(override val tracker: PartialLocalLineStatusTracker) :
@@ -144,8 +195,8 @@ class PartialLocalLineStatusTracker(project: Project,
   override fun createBlockData(): BlockData = MyBlockData()
   override val Block.ourData: MyBlockData get() = getBlockData(this) as MyBlockData
 
-  private var Block.marker: ChangeListMarker?
-    get() = this.ourData.marker
+  private var Block.marker: ChangeListMarker
+    get() = this.ourData.marker!! // can be null in MyLineTrackerListener, until `onBlockAdded` is called
     set(value) {
       this.ourData.marker = value
     }
