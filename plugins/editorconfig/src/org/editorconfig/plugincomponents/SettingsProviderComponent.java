@@ -7,20 +7,24 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootModificationTracker;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.util.CachedValueImpl;
 import org.editorconfig.Utils;
 import org.editorconfig.core.EditorConfig;
 import org.editorconfig.core.EditorConfig.OutPair;
 import org.editorconfig.core.EditorConfigException;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class SettingsProviderComponent {
+public class SettingsProviderComponent extends SimpleModificationTracker {
+  private static final Key<CachedValue<List<OutPair>>> CACHED_PAIRS = Key.create("editorconfig.cached.pairs");
   private EditorConfig editorConfig;
 
   public SettingsProviderComponent() {
@@ -31,19 +35,27 @@ public class SettingsProviderComponent {
     return ServiceManager.getService(SettingsProviderComponent.class);
   }
 
-  public List<OutPair> getOutPairs(Project project, String filePath) {
-    if (filePath == null) return Collections.emptyList();
+  public List<OutPair> getOutPairs(Project project, VirtualFile file) {
+    CachedValue<List<OutPair>> cache = file.getUserData(CACHED_PAIRS);
+    if (cache == null) {
+      cache = new CachedValueImpl<>(() -> {
+        final String filePath = Utils.getFilePath(project, file);
+        if (filePath == null) return CachedValueProvider.Result.create(Collections.emptyList(), this);
 
-    final List<OutPair> outPairs;
-    try {
-      final Set<String> rootDirs = getRootDirs(project);
-      outPairs = editorConfig.getProperties(filePath, rootDirs);
-      return outPairs;
+        final List<OutPair> outPairs;
+        try {
+          final Set<String> rootDirs = getRootDirs(project);
+          outPairs = editorConfig.getProperties(filePath, rootDirs);
+          return CachedValueProvider.Result.create(outPairs, this);
+        }
+        catch (EditorConfigException error) {
+          Utils.invalidConfigMessage(project, error.getMessage(), "", filePath);
+          return CachedValueProvider.Result.create(Collections.emptyList(), this);
+        }
+      });
+      file.putUserData(CACHED_PAIRS, cache);
     }
-    catch (EditorConfigException error) {
-      Utils.invalidConfigMessage(project, error.getMessage(), "", filePath);
-      return new ArrayList<>();
-    }
+    return cache.getValue();
   }
 
   public Set<String> getRootDirs(final Project project) {

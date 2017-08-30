@@ -59,8 +59,7 @@ public class EncodingManager extends FileDocumentManagerAdapter {
     // Prevent "setEncoding" calling "saveAll" from causing an endless loop
     isApplyingSettings = true;
     try {
-      final String filePath = Utils.getFilePath(myProject, file);
-      final List<OutPair> outPairs = SettingsProviderComponent.getInstance().getOutPairs(myProject, filePath);
+      final List<OutPair> outPairs = SettingsProviderComponent.getInstance().getOutPairs(myProject, file);
       final EncodingProjectManager encodingProjectManager = EncodingProjectManager.getInstance(myProject);
       final String charset = Utils.configValueForKey(outPairs, charsetKey);
       if (!charset.isEmpty()) {
@@ -69,7 +68,7 @@ public class EncodingManager extends FileDocumentManagerAdapter {
           if (Comparing.equal(newCharset, file.getCharset())) return;
           encodingProjectManager.setEncoding(file, newCharset);
         } else {
-          Utils.invalidConfigMessage(myProject, charset, charsetKey, filePath);
+          Utils.invalidConfigMessage(myProject, charset, charsetKey, file.getCanonicalPath());
         }
       }
     } finally {
