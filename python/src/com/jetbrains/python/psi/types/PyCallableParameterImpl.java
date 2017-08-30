@@ -19,7 +19,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.PyNames;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -156,7 +155,7 @@ public class PyCallableParameterImpl implements PyCallableParameter {
       }
 
       final String defaultValue = getDefaultValueText();
-      if (defaultValueShouldBeIncluded(includeDefaultValue, defaultValue, argumentType)) {
+      if (includeDefaultValue && defaultValue != null) {
         final Pair<String, String> quotes = PyStringLiteralUtil.getQuotes(defaultValue);
 
         sb.append("=");
@@ -210,14 +209,5 @@ public class PyCallableParameterImpl implements PyCallableParameter {
   @Override
   public int hashCode() {
     return Objects.hash(myName, Ref.deref(myType), myElement);
-  }
-
-  private static boolean defaultValueShouldBeIncluded(boolean includeDefaultValue,
-                                                      @Nullable String defaultValue,
-                                                      @Nullable PyType type) {
-    if (!includeDefaultValue || defaultValue == null) return false;
-
-    // In case of `None` default value, it will be listed in the type as `Optional[...]` or `Union[..., None, ...]`
-    return type == null || !PyNames.NONE.equals(defaultValue);
   }
 }
