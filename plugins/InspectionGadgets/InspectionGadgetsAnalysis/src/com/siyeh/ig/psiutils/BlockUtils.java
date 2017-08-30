@@ -18,6 +18,7 @@ package com.siyeh.ig.psiutils;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Tagir Valeev
@@ -93,5 +94,29 @@ public class BlockUtils {
       sibling.delete();
     }
     return result;
+  }
+
+  @Nullable
+  public static PsiElement getBody(PsiElement element) {
+    if (element instanceof PsiLoopStatement) {
+      final PsiStatement loopBody = ((PsiLoopStatement)element).getBody();
+      return loopBody instanceof PsiBlockStatement ? ((PsiBlockStatement)loopBody).getCodeBlock() : loopBody;
+    }
+    else if (element instanceof PsiParameterListOwner) {
+      return ((PsiParameterListOwner)element).getBody();
+    }
+    else if (element instanceof PsiSynchronizedStatement) {
+      return ((PsiSynchronizedStatement)element).getBody();
+    }
+    else if (element instanceof PsiSwitchStatement) {
+      return ((PsiSwitchStatement)element).getBody();
+    }
+    else if (element instanceof PsiClassInitializer) {
+      return ((PsiClassInitializer)element).getBody();
+    }
+    else if (element instanceof PsiCatchSection) {
+      return ((PsiCatchSection)element).getCatchBlock();
+    }
+    throw new AssertionError("can't get body from " + element);
   }
 }

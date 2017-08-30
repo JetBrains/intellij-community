@@ -15,19 +15,23 @@
  */
 package com.siyeh.ig.fixes;
 
+import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.search.PsiElementProcessor.CollectFilteredElements;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.Query;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.BlockUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
+import com.siyeh.ipp.psiutils.HighlightUtil;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Collection;
 
 public class ExtractParameterAsLocalVariableFix extends InspectionGadgetsFix {
 
@@ -54,157 +58,90 @@ public class ExtractParameterAsLocalVariableFix extends InspectionGadgetsFix {
     }
     final PsiParameter parameter = (PsiParameter)target;
     final PsiElement declarationScope = parameter.getDeclarationScope();
-    final PsiElement body;
-    if (declarationScope instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod)declarationScope;
-      body = method.getBody();
+    if (declarationScope instanceof PsiLambdaExpression) {
+      RefactoringUtil.expandExpressionLambdaToCodeBlock((PsiLambdaExpression)declarationScope);
     }
-    else if (declarationScope instanceof PsiCatchSection) {
-      final PsiCatchSection catchSection = (PsiCatchSection)declarationScope;
-      body = catchSection.getCatchBlock();
-    }
-    else if (declarationScope instanceof PsiLoopStatement) {
-      final PsiLoopStatement forStatement = (PsiLoopStatement)declarationScope;
-      final PsiStatement forBody = forStatement.getBody();
-      if (forBody instanceof PsiBlockStatement) {
-        final PsiBlockStatement blockStatement = (PsiBlockStatement)forBody;
-        body = blockStatement.getCodeBlock();
+    else if (declarationScope instanceof PsiForeachStatement) {
+      final PsiStatement body = ((PsiForeachStatement)declarationScope).getBody();
+      if (body == null) {
+        return;
       }
-      else {
-        body = forBody;
-      }
+      BlockUtils.expandSingleStatementToBlockStatement(body);
     }
-    else if (declarationScope instanceof PsiLambdaExpression) {
-      final PsiLambdaExpression lambdaExpression = (PsiLambdaExpression)declarationScope;
-      body = lambdaExpression.getBody();
-    }
-    else {
-      return;
-    }
+    final PsiElement body = BlockUtils.getBody(declarationScope);
     if (body == null) {
       return;
     }
-    final String parameterName = parameterReference.getText();
+    assert body instanceof PsiCodeBlock;
+    final String parameterName = parameter.getName();
+    final PsiExpression rhs = parameterReference.isValid() ? getRightSideIfLeftSideOfSimpleAssignment(parameterReference, body) : null;
+    assert parameterName != null;
     final JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(project);
-    final String variableName = javaCodeStyleManager.suggestUniqueVariableName(parameterName, parameterReference, true);
-    final Query<PsiReference> search = ReferencesSearch.search(parameter, new LocalSearchScope(body));
-    final PsiReference reference = search.findFirst();
-    if (reference == null) {
-      return;
+    final String variableName = javaCodeStyleManager.suggestUniqueVariableName(parameterName, body, true);
+    final String initializerText = (rhs == null) ? parameterName : rhs.getText();
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+    PsiDeclarationStatement newStatement = (PsiDeclarationStatement)
+      factory.createStatementFromText(parameter.getType().getCanonicalText() + ' ' + variableName + '=' + initializerText + ';', body);
+    final CollectFilteredElements<PsiReferenceExpression> collector = new CollectFilteredElements<>(
+      e -> e instanceof PsiReferenceExpression && ((PsiReferenceExpression)e).resolve() == parameter);
+    final PsiCodeBlock codeBlock = (PsiCodeBlock)body;
+    PsiStatement anchor = null;
+    for (PsiStatement statement : codeBlock.getStatements()) {
+      if (anchor == null) {
+        if (rhs == null && !JavaHighlightUtil.isSuperOrThisCall(statement, true, true)) {
+          anchor = statement;
+          PsiTreeUtil.processElements(statement, collector);
+        }
+        else if (statement.getTextRange().contains(parameterReference.getTextRange())) {
+          anchor = statement;
+        }
+      }
+      else {
+        PsiTreeUtil.processElements(statement, collector);
+      }
     }
-    final PsiElement referenceElement = reference.getElement();
-    if (!(referenceElement instanceof PsiReferenceExpression)) {
-      return;
-    }
-    final PsiReferenceExpression firstReference = (PsiReferenceExpression)referenceElement;
-    final PsiElement[] children = body.getChildren();
-    final int startIndex;
-    final int endIndex;
-    if (body instanceof PsiCodeBlock) {
-      startIndex = 1;
-      endIndex = children.length - 1;
-    }
-    else {
-      startIndex = 0;
-      endIndex = children.length;
-    }
-    boolean newDeclarationCreated = false;
-    final StringBuilder buffer = new StringBuilder();
-    for (int i = startIndex; i < endIndex; i++) {
-      final PsiElement child = children[i];
-      newDeclarationCreated |= replaceVariableName(child, firstReference, variableName, parameterName, buffer);
-    }
-    if (body instanceof PsiExpression) { // expression lambda
-      buffer.insert(0, "return ");
-      buffer.append(';');
-    }
-    final String replacementText;
-    if (newDeclarationCreated) {
-      replacementText = "{" + buffer + '}';
-    }
-    else {
-      final PsiType type = parameter.getType();
-      final String className = type.getCanonicalText();
-      replacementText = '{' + className + ' ' + variableName + " = " + parameterName + ';' + buffer + '}';
-    }
-    final PsiCodeBlock block = JavaPsiFacade.getElementFactory(project).createCodeBlockFromText(replacementText, declarationScope);
-    body.replace(block);
-    CodeStyleManager.getInstance(project).reformat(declarationScope);
+    assert anchor != null;
+    newStatement = (PsiDeclarationStatement)(rhs == null
+                                             ? codeBlock.addBefore(newStatement, anchor)
+                                             : anchor.replace(newStatement));
+    replaceReferences(collector.getCollection(), variableName, body);
+    final PsiLocalVariable variable = (PsiLocalVariable)newStatement.getDeclaredElements()[0];
+    HighlightUtil.showRenameTemplate(body, variable);
   }
 
-  /**
-   * @return true, if a declaration was introduced, false otherwise
-   */
-  private static boolean replaceVariableName(
-    PsiElement element, PsiReferenceExpression firstReference,
-    String newName, String originalName, StringBuilder out) {
-    if (element instanceof PsiReferenceExpression) {
-      final PsiReferenceExpression referenceExpression =
-        (PsiReferenceExpression)element;
-      if (element.equals(firstReference) &&
-          isLeftSideOfSimpleAssignment(referenceExpression)) {
-        final PsiType type = firstReference.getType();
-        if (type != null) {
-          out.append(type.getCanonicalText());
-          out.append(' ');
-          out.append(newName);
-          return true;
-        }
-      }
-      final String text = element.getText();
-      if (text.equals(originalName)) {
-        out.append(newName);
-        return false;
-      }
+  private static void replaceReferences(Collection<PsiReferenceExpression> collection, String newVariableName, PsiElement context) {
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.getProject());
+    final PsiReferenceExpression newReference = (PsiReferenceExpression)factory.createExpressionFromText(newVariableName, context);
+    for (PsiReferenceExpression reference : collection) {
+      reference.replace(newReference);
     }
-    final PsiElement[] children = element.getChildren();
-    if (children.length == 0) {
-      final String text = element.getText();
-      out.append(text);
-    }
-    else {
-      boolean result = false;
-      for (final PsiElement child : children) {
-        if (result) {
-          out.append(child.getText());
-        }
-        else {
-          result = replaceVariableName(child, firstReference,
-                                       newName, originalName, out);
-        }
-      }
-      return result;
-    }
-    return false;
   }
 
-  private static boolean isLeftSideOfSimpleAssignment(
-    PsiReferenceExpression reference) {
+  private static PsiExpression getRightSideIfLeftSideOfSimpleAssignment(PsiReferenceExpression reference, PsiElement block) {
     if (reference == null) {
-      return false;
+      return null;
     }
-    final PsiElement parent = reference.getParent();
+    final PsiElement parent = ParenthesesUtils.getParentSkipParentheses(reference);
     if (!(parent instanceof PsiAssignmentExpression)) {
-      return false;
+      return null;
     }
-    final PsiAssignmentExpression assignmentExpression =
-      (PsiAssignmentExpression)parent;
-    final IElementType tokenType =
-      assignmentExpression.getOperationTokenType();
+    final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
+    final IElementType tokenType = assignmentExpression.getOperationTokenType();
     if (!JavaTokenType.EQ.equals(tokenType)) {
-      return false;
+      return null;
     }
-    final PsiExpression lExpression =
-      assignmentExpression.getLExpression();
+    final PsiExpression lExpression = ParenthesesUtils.stripParentheses(assignmentExpression.getLExpression());
     if (!reference.equals(lExpression)) {
-      return false;
+      return null;
     }
-    final PsiExpression rExpression =
-      assignmentExpression.getRExpression();
-    if (rExpression instanceof PsiAssignmentExpression) {
-      return false;
+    final PsiExpression rExpression = assignmentExpression.getRExpression();
+    if (ParenthesesUtils.stripParentheses(rExpression) instanceof PsiAssignmentExpression) {
+      return null;
     }
     final PsiElement grandParent = parent.getParent();
-    return grandParent instanceof PsiExpressionStatement;
+    if (!(grandParent instanceof PsiExpressionStatement) || grandParent.getParent() != block) {
+      return null;
+    }
+    return rExpression;
   }
 }
