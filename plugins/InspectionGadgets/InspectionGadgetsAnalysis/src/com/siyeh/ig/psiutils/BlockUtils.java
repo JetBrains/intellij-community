@@ -16,6 +16,8 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Tagir Valeev
@@ -31,31 +33,24 @@ public class BlockUtils {
    */
   public static PsiStatement addBefore(PsiStatement anchor, PsiStatement... newStatements) {
     if (newStatements.length == 0) throw new IllegalArgumentException();
-    PsiElement oldStatement = anchor;
+    PsiStatement oldStatement = anchor;
     PsiElement parent = oldStatement.getParent();
     while (parent instanceof PsiLabeledStatement) {
-      oldStatement = parent;
+      oldStatement = (PsiStatement)parent;
       parent = oldStatement.getParent();
     }
     if (newStatements.length == 1 && oldStatement instanceof PsiEmptyStatement) {
       return (PsiStatement)oldStatement.replace(newStatements[0]);
     }
-    PsiElement result = null;
-    if (parent instanceof PsiCodeBlock) {
-      for (PsiStatement statement : newStatements) {
-        result = parent.addBefore(statement, oldStatement);
-      }
+    if (!(parent instanceof PsiCodeBlock)) {
+      final PsiBlockStatement block = expandSingleStatementToBlockStatement(oldStatement);
+      final PsiCodeBlock codeBlock = (PsiCodeBlock)block.getFirstChild();
+      parent = codeBlock;
+      oldStatement = codeBlock.getStatements()[0];
     }
-    else {
-      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(anchor.getProject());
-      final PsiBlockStatement newBlockStatement = (PsiBlockStatement)factory.createStatementFromText("{}", oldStatement);
-      final PsiElement codeBlock = newBlockStatement.getCodeBlock();
-      for (PsiStatement newStatement : newStatements) {
-        codeBlock.add(newStatement);
-      }
-      codeBlock.add(oldStatement);
-      final PsiStatement[] statements = ((PsiBlockStatement)oldStatement.replace(newBlockStatement)).getCodeBlock().getStatements();
-      result = statements[statements.length - 2];
+    PsiElement result = null;
+    for (PsiStatement statement : newStatements) {
+      result = parent.addBefore(statement, oldStatement);
     }
     return (PsiStatement)result;
   }
@@ -68,24 +63,35 @@ public class BlockUtils {
    * @return added physical statement
    */
   public static PsiStatement addAfter(PsiStatement anchor, PsiStatement newStatement) {
-    PsiElement oldStatement = anchor;
+    PsiStatement oldStatement = anchor;
     PsiElement parent = oldStatement.getParent();
     while (parent instanceof PsiLabeledStatement) {
-      oldStatement = parent;
+      oldStatement = (PsiStatement)parent;
       parent = oldStatement.getParent();
     }
-    final PsiElement result;
-    if (parent instanceof PsiCodeBlock) {
-      result = parent.addAfter(newStatement, oldStatement);
+    if (!(parent instanceof PsiCodeBlock)) {
+      final PsiBlockStatement block = expandSingleStatementToBlockStatement(oldStatement);
+      final PsiCodeBlock codeBlock = (PsiCodeBlock)block.getFirstChild();
+      parent = codeBlock;
+      oldStatement = codeBlock.getStatements()[0];
     }
-    else {
-      PsiElementFactory factory = JavaPsiFacade.getElementFactory(anchor.getProject());
-      final PsiBlockStatement newBlockStatement = (PsiBlockStatement)factory.createStatementFromText("{}", oldStatement);
-      final PsiElement codeBlock = newBlockStatement.getCodeBlock();
-      codeBlock.add(oldStatement);
-      codeBlock.add(newStatement);
-      result = ((PsiBlockStatement)oldStatement.replace(newBlockStatement)).getCodeBlock().getStatements()[1];
+    return (PsiStatement)parent.addAfter(newStatement, oldStatement);
+  }
+
+  public static PsiBlockStatement expandSingleStatementToBlockStatement(@NotNull PsiStatement body) {
+    if (body instanceof PsiBlockStatement) {
+      return (PsiBlockStatement)body;
     }
-    return (PsiStatement)result;
+    final PsiBlockStatement blockStatement = (PsiBlockStatement)
+      JavaPsiFacade.getElementFactory(body.getProject()).createStatementFromText("{}", body);
+    if (!(body instanceof PsiEmptyStatement)) {
+      blockStatement.getFirstChild().add(body);
+    }
+    final PsiBlockStatement result = (PsiBlockStatement)body.replace(blockStatement);
+    final PsiElement sibling = result.getNextSibling();
+    if (sibling instanceof PsiWhiteSpace && PsiUtil.isJavaToken(sibling.getNextSibling(), JavaTokenType.ELSE_KEYWORD)) {
+      sibling.delete();
+    }
+    return result;
   }
 }
