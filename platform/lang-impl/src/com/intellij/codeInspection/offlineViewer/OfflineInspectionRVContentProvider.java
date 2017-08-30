@@ -143,6 +143,15 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
     if (context.getUIOptions().FILTER_RESOLVED_ITEMS) {
       final Map<String, Set<OfflineProblemDescriptor>> current = new HashMap<>(content);
       content = null; //GC it
+      Map<OfflineProblemDescriptor, OfflineDescriptorResolveResult> resolvedDescriptors = myResolvedDescriptor.get(toolWrapper.getShortName());
+      resolvedDescriptors.forEach((descriptor, descriptorResolveResult) -> {
+        if (descriptorResolveResult.isExcluded()) {
+          RefEntity entity = descriptorResolveResult.getResolvedEntity();
+          if (entity != null) {
+            excludeProblem(entity.getExternalName(), current);
+          }
+        }
+      });
       InspectionToolPresentation presentation = context.getPresentation(toolWrapper);
       for (RefEntity refEntity : presentation.getResolvedElements()) {
         //TODO

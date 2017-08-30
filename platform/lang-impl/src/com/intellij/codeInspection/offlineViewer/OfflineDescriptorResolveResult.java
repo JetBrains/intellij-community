@@ -55,8 +55,9 @@ import java.util.stream.Collectors;
  */
 class OfflineDescriptorResolveResult {
   private static final Logger LOG = Logger.getInstance(OfflineDescriptorResolveResult.class);
-  private RefEntity myResolvedEntity;
-  private CommonProblemDescriptor myResolvedDescriptor;
+  private final RefEntity myResolvedEntity;
+  private final CommonProblemDescriptor myResolvedDescriptor;
+  private volatile boolean myExcluded;
 
   public OfflineDescriptorResolveResult(RefEntity resolvedEntity, CommonProblemDescriptor resolvedDescriptor) {
     myResolvedEntity = resolvedEntity;
@@ -71,6 +72,14 @@ class OfflineDescriptorResolveResult {
   @Nullable
   public CommonProblemDescriptor getResolvedDescriptor() {
     return myResolvedDescriptor;
+  }
+
+  public boolean isExcluded() {
+    return myExcluded;
+  }
+
+  public void setExcluded(boolean excluded) {
+    myExcluded = excluded;
   }
 
   @NotNull
