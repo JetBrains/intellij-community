@@ -15,7 +15,6 @@ package org.zmlx.hg4idea.util;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -129,9 +128,5 @@ public final class HgErrorUtil {
   public static void handleException(@Nullable Project project, @NotNull String title, @NotNull Exception e) {
     LOG.info(e);
     new HgCommandResultNotifier(project).notifyError(null, title, e.getMessage());
-  }
-
-  public static void markDirtyAndHandleErrors(Project project, VirtualFile repository) {
-    HgUtil.markDirectoryDirty(project, repository);
   }
 }

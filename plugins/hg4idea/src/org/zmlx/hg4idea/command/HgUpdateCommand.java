@@ -33,6 +33,7 @@ import org.zmlx.hg4idea.execution.HgPromptCommandExecutor;
 import org.zmlx.hg4idea.provider.update.HgConflictResolver;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.util.HgErrorUtil;
+import org.zmlx.hg4idea.util.HgUtil;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -163,7 +164,7 @@ public class HgUpdateCommand {
                                 HgVcsMessages.message("hg4idea.update.warning.merge.conflicts", repository.getPath()));
     }
     getRepositoryManager(project).updateRepository(repository);
-    HgErrorUtil.markDirtyAndHandleErrors(project, repository);
+    HgUtil.markDirectoryDirty(project, repository);
     return success;
   }
 }
