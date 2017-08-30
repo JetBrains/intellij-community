@@ -16,16 +16,48 @@
 package com.intellij.debugger.streams.psi.impl
 
 import com.intellij.debugger.streams.psi.ChainTransformer
+import com.intellij.debugger.streams.psi.callName
+import com.intellij.debugger.streams.psi.getPackage
+import com.intellij.debugger.streams.psi.resolveType
+import com.intellij.debugger.streams.trace.impl.handler.type.GenericType
+import com.intellij.debugger.streams.wrapper.CallArgument
+import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
 import com.intellij.debugger.streams.wrapper.StreamChain
+import com.intellij.debugger.streams.wrapper.impl.*
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.js.descriptorUtils.getJetTypeFqName
 import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtValueArgument
+import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiverOrThis
+import org.jetbrains.kotlin.types.typeUtil.supertypes
 
 /**
  * @author Vitaliy.Bibaev
  */
 class KotlinChainTransformerImpl : ChainTransformer.Kotlin {
   override fun transform(callChain: List<KtCallExpression>, context: PsiElement): StreamChain {
-    assert(!callChain.isEmpty())
-    TODO()
+    val firstCall = callChain.first()
+    val qualifiedExpression = firstCall.getQualifiedExpressionForReceiverOrThis()
+    firstCall.analyze().getType(firstCall)!!.supertypes()
+    val qualifier = QualifierExpressionImpl(qualifiedExpression.text, qualifiedExpression.textRange, GenericType.OBJECT)
+
+    val intermediateCalls = mutableListOf<IntermediateStreamCall>()
+    for (call in callChain.subList(0, callChain.size - 1)) {
+      intermediateCalls += IntermediateStreamCallImpl(call.callName(), call.valueArguments.map { it.toCallArgument() },
+                                                      GenericType.OBJECT, GenericType.OBJECT, call.textRange,
+                                                      call.resolveType().getPackage(false))
+    }
+
+    val terminationsPsiCall = callChain.last()
+    val terminationCall = TerminatorStreamCallImpl(terminationsPsiCall.callName(), emptyList(), GenericType.OBJECT, GenericType.OBJECT,
+                                                   terminationsPsiCall.textRange, terminationsPsiCall.resolveType().getPackage(false))
+
+    return StreamChainImpl(qualifier, intermediateCalls, terminationCall, context)
+  }
+
+  private fun KtValueArgument.toCallArgument(): CallArgument {
+    val argExpression = getArgumentExpression()!!
+    return CallArgumentImpl(argExpression.resolveType().getJetTypeFqName(true), argExpression.text)
   }
 }
