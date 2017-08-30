@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,20 +80,18 @@ public class SearchRequestCollector {
     if (searchTarget != null &&
         searchScope instanceof GlobalSearchScope &&
         ((searchContext & UsageSearchContext.IN_CODE) != 0 || searchContext == UsageSearchContext.ANY)) {
-      for (ScopeOptimizer optimizer : CODE_USAGE_SCOPE_OPTIMIZER_EP_NAME.getExtensions()) {
-        final SearchScope restrictedCodeUsageSearchScope = optimizer.getScopeToRestrict(searchTarget);
-        if (restrictedCodeUsageSearchScope != null) {
-          short exceptCodeSearchContext = searchContext == UsageSearchContext.ANY
-                                          ? UsageSearchContext.IN_COMMENTS |
-                                            UsageSearchContext.IN_STRINGS |
-                                            UsageSearchContext.IN_FOREIGN_LANGUAGES |
-                                            UsageSearchContext.IN_PLAIN_TEXT
-                                          : (short)(searchContext ^ UsageSearchContext.IN_CODE);
-          SearchScope searchCodeUsageEffectiveScope = searchScope.intersectWith(restrictedCodeUsageSearchScope);
-          requests = ContainerUtil.list(new PsiSearchRequest(searchCodeUsageEffectiveScope, word, UsageSearchContext.IN_CODE, caseSensitive, containerName, processor),
-                                        new PsiSearchRequest(searchScope, word, exceptCodeSearchContext, caseSensitive, containerName, processor));
-          break;
-        }
+
+      final SearchScope restrictedCodeUsageSearchScope = ScopeOptimizer.calculateScopeToRestrict(CODE_USAGE_SCOPE_OPTIMIZER_EP_NAME.getExtensions(), searchTarget);
+      if (restrictedCodeUsageSearchScope != null) {
+        short exceptCodeSearchContext = searchContext == UsageSearchContext.ANY
+                                        ? UsageSearchContext.IN_COMMENTS |
+                                          UsageSearchContext.IN_STRINGS |
+                                          UsageSearchContext.IN_FOREIGN_LANGUAGES |
+                                          UsageSearchContext.IN_PLAIN_TEXT
+                                        : (short)(searchContext ^ UsageSearchContext.IN_CODE);
+        SearchScope searchCodeUsageEffectiveScope = searchScope.intersectWith(restrictedCodeUsageSearchScope);
+        requests = ContainerUtil.list(new PsiSearchRequest(searchCodeUsageEffectiveScope, word, UsageSearchContext.IN_CODE, caseSensitive, containerName, processor),
+                                      new PsiSearchRequest(searchScope, word, exceptCodeSearchContext, caseSensitive, containerName, processor));
       }
     }
     if (requests == null) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,9 @@ package com.intellij.psi.search;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
+import java.util.stream.Stream;
 
 /**
  * A general interface to perform PsiElement's search scope optimization. The interface should be used only for optimization purposes.
@@ -49,5 +52,15 @@ public interface ScopeOptimizer {
     GlobalSearchScope scopeToExclude = getScopeToExclude(element);
 
     return scopeToExclude == null ? null : GlobalSearchScope.notScope(scopeToExclude);
+  }
+
+  @Nullable
+  static SearchScope calculateScopeToRestrict(@NotNull ScopeOptimizer[] optimizers, @NotNull PsiElement element) {
+    return Stream
+      .of(optimizers)
+      .map(optimizer -> optimizer.getScopeToRestrict(element))
+      .filter(Objects::nonNull)
+      .reduce((s1, s2) -> s1.intersectWith(s2))
+      .orElse(null);
   }
 }

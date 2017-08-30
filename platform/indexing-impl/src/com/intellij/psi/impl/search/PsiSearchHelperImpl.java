@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,12 +87,10 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         scope = scope.union(additionalScope);
       }
     }
-    for (ScopeOptimizer optimizer : USE_SCOPE_OPTIMIZER_EP_NAME.getExtensions()) {
-      ProgressManager.checkCanceled();
-      final SearchScope scopeToRestrict = optimizer.getScopeToRestrict(element);
-      if (scopeToRestrict != null) {
-        scope = scope.intersectWith(scopeToRestrict);
-      }
+
+    SearchScope scopeToRestrict = ScopeOptimizer.calculateScopeToRestrict(USE_SCOPE_OPTIMIZER_EP_NAME.getExtensions(), element);
+    if (scopeToRestrict != null) {
+      scope = scope.intersectWith(scopeToRestrict);
     }
     return scope;
   }
