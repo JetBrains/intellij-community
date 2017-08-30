@@ -26,25 +26,33 @@ import javax.swing.JComboBox
 class ComboBoxFixture(robot: Robot, comboBox: JComboBox<*>) : JComboBoxFixture(robot, comboBox) {
 
   fun expand(): ComboBoxFixture {
-    val arrowButton = target().components.filter { it is JButton }.firstOrNull() ?: throw ComponentLookupException("Unable to find bounded arrow button for a combobox")
+    val arrowButton = target().components.filter { it is JButton }.firstOrNull() ?: throw ComponentLookupException(
+      "Unable to find bounded arrow button for a combobox")
     robot().click(arrowButton)
     return this
   }
 
   //We are waiting for a item to be shown in dropdown list. It is necessary for a async comboboxes
   fun selectItem(itemName: String, timeoutInSeconds: Int = 30) {
-    waitUntil("item '$itemName' be appeared in dropdown list", timeoutInSeconds) {
-      try {
-        super.selectItem(itemName)
-        true
-      } catch (e: Exception) {
-        when(e) {
-          is LocationUnavailableException -> false
-          is IndexOutOfBoundsException -> false
-          else -> throw e
-        }
+    waitUntil("item '$itemName' will be appeared in dropdown list", timeoutInSeconds) { doSelectItem({ super.selectItem(itemName) }) }
+  }
+
+  //We are waiting for a item to be shown in dropdown list. It is necessary for a async comboboxes
+  fun selectItem(itemIndex: Int, timeoutInSeconds: Int = 30) {
+    waitUntil("item with index $itemIndex will be appeared in dropdown list", timeoutInSeconds) { doSelectItem({ super.selectItem(itemIndex) }) }
+  }
+
+  private fun doSelectItem(selectItemFunction: () -> Unit): Boolean {
+    return try {
+      selectItemFunction()
+      true
+    }
+    catch (e: Exception) {
+      when (e) {
+        is LocationUnavailableException -> false
+        is IndexOutOfBoundsException -> false
+        else -> throw e
       }
     }
   }
-
 }
