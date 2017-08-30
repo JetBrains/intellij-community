@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.search;
 
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,6 +59,7 @@ public interface ScopeOptimizer {
   static SearchScope calculateScopeToRestrict(@NotNull ScopeOptimizer[] optimizers, @NotNull PsiElement element) {
     return Stream
       .of(optimizers)
+      .peek(optimizer -> ProgressManager.checkCanceled())
       .map(optimizer -> optimizer.getScopeToRestrict(element))
       .filter(Objects::nonNull)
       .reduce((s1, s2) -> s1.intersectWith(s2))
