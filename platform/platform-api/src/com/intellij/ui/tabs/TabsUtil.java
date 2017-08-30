@@ -15,16 +15,18 @@
  */
 package com.intellij.ui.tabs;
 
+import com.intellij.ide.util.PropertiesComponent;
+
 import javax.swing.*;
 
 /**
  * @author pegov
  */
 public class TabsUtil {
-  public static final int TAB_VERTICAL_PADDING = 2;
-  public static final int TABS_BORDER = 1;
+  public static final int TAB_VERTICAL_PADDING = PropertiesComponent.getInstance().getInt("TAB_VERTICAL_PADDING", 2);
+  public static final int TABS_BORDER = PropertiesComponent.getInstance().getInt("TABS_BORDER", 1);
   
-  public static final int ACTIVE_TAB_UNDERLINE_HEIGHT = 4;
+  public static final int ACTIVE_TAB_UNDERLINE_HEIGHT = PropertiesComponent.getInstance().getInt("ACTIVE_TAB_UNDERLINE_HEIGHT", 4);
 
   private TabsUtil() {
   }
