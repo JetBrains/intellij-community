@@ -31,9 +31,9 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -437,7 +437,10 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     }
 
     while (!semaphore.waitFor(10)) {
-      ProgressManager.checkCanceled();
+      if (indicator != null && indicator.isCanceled()) {
+        // don't use `checkCanceled` because some smart devs might suppress PCE and end up with a deadlock like IDEA-177788
+        throw new ProcessCanceledException();
+      }
     }
   }
 
