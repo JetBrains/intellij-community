@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
@@ -32,20 +33,15 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.impl.UsagePreviewPanel;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 import java.util.stream.Collectors;
 
-class ProblemPreviewEditorPresentation {
+public class ProblemPreviewEditorPresentation {
   private final static int VIEW_ADDITIONAL_OFFSET = 4;
 
   static void setupFoldingsForNonProblemRanges(@NotNull EditorEx editor, @NotNull InspectionResultsView view) {
-    final Document doc = editor.getDocument();
-    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(view.getProject());
-    if (documentManager.isUncommited(doc)) {
-      WriteAction.run(() -> documentManager.commitDocument(doc));
-    }
-    final SortedSet<PreviewEditorFoldingRegion> foldingRegions = new TreeSet<>(Comparator.comparing(x -> x.startLine));
-    foldingRegions.add(new PreviewEditorFoldingRegion(0, doc.getLineCount()));
     List<UsageInfo> usages = Arrays.stream(view.getTree().getAllValidSelectedDescriptors())
       .filter(ProblemDescriptorBase.class::isInstance)
       .map(ProblemDescriptorBase.class::cast)
@@ -58,7 +54,19 @@ class ProblemPreviewEditorPresentation {
         return range == null ? new UsageInfo(psi) : new UsageInfo(psi, range.getStartOffset(), range.getEndOffset());
       })
       .collect(Collectors.toList());
+    setupFoldingsForNonProblemRanges(editor, view, usages, view.getProject());
+  }
 
+
+  public static void setupFoldingsForNonProblemRanges(@NotNull EditorEx editor, @NotNull Container editorContainer,
+                                                      @NotNull List<UsageInfo> usages, @NotNull Project project) {
+    final Document doc = editor.getDocument();
+    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+    if (documentManager.isUncommited(doc)) {
+      WriteAction.run(() -> documentManager.commitDocument(doc));
+    }
+    final SortedSet<PreviewEditorFoldingRegion> foldingRegions = new TreeSet<>(Comparator.comparing(x -> x.startLine));
+    foldingRegions.add(new PreviewEditorFoldingRegion(0, doc.getLineCount()));
     boolean isUpdated = false;
     for (UsageInfo usage : usages) {
       if (usage == null) {
@@ -70,16 +78,16 @@ class ProblemPreviewEditorPresentation {
       setupFoldings(editor, foldingRegions);
     }
 
-    highlightProblems(editor, view, usages);
+    highlightProblems(editor, editorContainer, usages, project);
   }
 
-  private static void highlightProblems(EditorEx editor, InspectionResultsView view, List<UsageInfo> usages) {
+  private static void highlightProblems(EditorEx editor, Container editorContainer, List<UsageInfo> usages, @NotNull Project project) {
     List<UsageInfo> validUsages = usages.stream().filter(Objects::nonNull).collect(Collectors.toList());
-    PsiDocumentManager.getInstance(view.getProject()).performLaterWhenAllCommitted(() -> {
+    PsiDocumentManager.getInstance(project).performLaterWhenAllCommitted(() -> {
       if (!editor.isDisposed()) {
-        view.invalidate();
-        view.validate();
-        UsagePreviewPanel.highlight(validUsages, editor, view.getProject(), false, HighlighterLayer.SELECTION);
+        editorContainer.invalidate();
+        editorContainer.validate();
+        UsagePreviewPanel.highlight(validUsages, editor, project, false, HighlighterLayer.SELECTION);
         if (validUsages.size() == 1) {
           final PsiElement element = validUsages.get(0).getElement();
           if (element != null) {
