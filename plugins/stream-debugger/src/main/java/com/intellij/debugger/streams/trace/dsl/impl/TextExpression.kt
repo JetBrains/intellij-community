@@ -13,12 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.debugger.streams.trace.dsl
+package com.intellij.debugger.streams.trace.dsl.impl
+
+import com.intellij.debugger.streams.trace.dsl.Expression
 
 /**
  * @author Vitaliy.Bibaev
  */
-interface Lambda : Expression {
-  val variableName: String
-  val body: CodeBlock
+class TextExpression(private val myText: String) : Expression {
+  override fun call(callName: String, vararg args: Expression): Expression {
+    return TextExpression("$myText.$callName${args.joinToString(", ", "(", ")")}")
+  }
+
+  override fun toCode(): String = myText
 }

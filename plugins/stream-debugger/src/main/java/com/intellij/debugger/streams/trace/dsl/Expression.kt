@@ -18,6 +18,6 @@ package com.intellij.debugger.streams.trace.dsl
 /**
  * @author Vitaliy.Bibaev
  */
-interface Expression : Convertable {
-  fun call(callName: String): Statement
+interface Expression : Statement {
+  fun call(callName: String, vararg args: Expression): Expression
 }

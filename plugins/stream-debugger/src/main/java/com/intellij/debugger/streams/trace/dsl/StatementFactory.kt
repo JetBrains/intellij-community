@@ -23,7 +23,11 @@ package com.intellij.debugger.streams.trace.dsl
 interface StatementFactory {
   fun createEmptyCompositeCodeBlock(): CompositeCodeBlock
 
+  fun createEmptyCodeBlock(): CodeBlock
+
   fun createVariableDeclaration(variable: Variable, mutable: Boolean): VariableDeclaration
+
+  fun createVariableDeclaration(variable: Variable, init: Expression, isMutable: Boolean): VariableDeclaration
 
   fun createEmptyForLoopBody(iterateVariable: Variable): ForLoopBody
 
@@ -37,11 +41,15 @@ interface StatementFactory {
 
   fun createVariable(type: String, name: String): Variable
 
-  fun createVariableDeclaration(variable: Variable, init: Expression, isMutable: Boolean): Variable
-
   fun and(left: Expression, right: Expression): Expression
 
   fun equals(left: Expression, right: Expression): Expression
 
   fun same(left: Expression, right: Expression): Expression
+
+  fun createIfBranch(condition: Expression, codeBlock: CodeBlock): Statement
+
+  fun createElseStatement(block: CodeBlock): Statement
+
+  fun createElseIfStatement(condition: Expression, block: CodeBlock): Statement
 }

@@ -15,10 +15,16 @@
  */
 package com.intellij.debugger.streams.trace.dsl
 
+import com.intellij.debugger.streams.trace.impl.handler.type.GenericType
+
 /**
  * @author Vitaliy.Bibaev
  */
-interface Lambda : Expression {
-  val variableName: String
-  val body: CodeBlock
+interface MapVariable {
+  val keyType: GenericType
+  val valueType: GenericType
+
+  fun get(key: Expression): Expression
+  fun put(key: Expression, newValue: Expression): Expression
+  fun contains(key: Expression): Expression
 }
