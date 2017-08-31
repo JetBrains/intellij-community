@@ -106,7 +106,7 @@ public class ScratchProjectViewPane extends ProjectViewPane {
       };
     for (RootType rootId : RootType.getAllRootIds()) {
       if (rootId.isHidden()) continue;
-      rootId.registerTreeUpdater(myProject, builder);
+      rootId.registerTreeUpdater(myProject, builder, builder::queueUpdate);
     }
     return builder;
   }
