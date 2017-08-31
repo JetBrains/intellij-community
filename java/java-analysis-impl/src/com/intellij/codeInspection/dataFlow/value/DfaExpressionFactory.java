@@ -143,7 +143,9 @@ public class DfaExpressionFactory {
       }
 
       if (DfaValueFactory.isEffectivelyUnqualified(refExpr) || isStaticFinalConstantWithoutInitializationHacks(var)) {
-        if (isFieldDereferenceBeforeInitialization(refExpr) && !(refExpr.getType() instanceof PsiPrimitiveType)) {
+        if (!PsiUtil.isAccessedForWriting(refExpr) &&
+            isFieldDereferenceBeforeInitialization(refExpr) &&
+            !(refExpr.getType() instanceof PsiPrimitiveType)) {
           return myFactory.getConstFactory().getNull();
         }
 
@@ -236,11 +238,17 @@ public class DfaExpressionFactory {
     }
     PsiClass aClass = Objects.requireNonNull(referrer.getContainingClass());
     if (referrer instanceof PsiMethod) {
+      boolean isStatic = referrer.hasModifier(JvmModifier.STATIC);
       for (PsiField field : aClass.getFields()) {
+        if (field.hasModifier(JvmModifier.STATIC) != isStatic) continue;
         PsiExpression initializer = field.getInitializer();
-        if (ExpressionUtils.isMatchingChildAlwaysExecuted(initializer, e -> e instanceof PsiMethodCallExpression &&
-                                                                            ((PsiMethodCallExpression)e).getMethodExpression()
-                                                                              .isReferenceTo(referrer))) {
+        Predicate<PsiExpression> callToMethod = (PsiExpression e) -> {
+          if (!(e instanceof PsiMethodCallExpression)) return false;
+          PsiMethodCallExpression call = (PsiMethodCallExpression)e;
+          return call.getMethodExpression().isReferenceTo(referrer) &&
+                 (isStatic || DfaValueFactory.isEffectivelyUnqualified(call.getMethodExpression()));
+        };
+        if (ExpressionUtils.isMatchingChildAlwaysExecuted(initializer, callToMethod)) {
           // current method is definitely called from some field initialization
           return field.getTextOffset();
         }

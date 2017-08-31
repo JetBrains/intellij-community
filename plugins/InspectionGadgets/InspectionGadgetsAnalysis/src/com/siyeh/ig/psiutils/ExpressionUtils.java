@@ -1069,6 +1069,12 @@ public class ExpressionUtils {
           super.visitPolyadicExpression(expression);
         }
       }
+
+      @Override
+      public void visitClass(PsiClass aClass) {}
+
+      @Override
+      public void visitLambdaExpression(PsiLambdaExpression expression) {}
     });
     return result.get();
   }
