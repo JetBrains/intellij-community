@@ -99,6 +99,9 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     else if (element instanceof Group) {
       annotateGroup((Group)element, holder);
     }
+    else if (element instanceof Component) {
+      annotateComponent((Component) element, holder);
+    }
 
     if (element instanceof GenericDomValue) {
       final GenericDomValue domValue = (GenericDomValue)element;
@@ -159,6 +162,12 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
                            "<extensionPoint> does not have <with> tags to specify the types of class fields",
                            new AddWithTagFix());
     }
+
+    Module module = extensionPoint.getModule();
+    if (ComponentModuleRegistrationChecker.isIdeaPlatformModule(module)) {
+      ComponentModuleRegistrationChecker.checkProperModule(extensionPoint, holder);
+    }
+
   }
 
   private static void annotateExtensions(Extensions extensions, DomElementAnnotationHolder holder) {
@@ -281,7 +290,20 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
         }
       }
     }
+
+    Module module = extension.getModule();
+    if (ComponentModuleRegistrationChecker.isIdeaPlatformModule(module)) {
+      ComponentModuleRegistrationChecker.checkProperXmlFileForExtension(extension, holder);
+    }
   }
+
+  private static void annotateComponent(Component component, DomElementAnnotationHolder holder) {
+    Module module = component.getModule();
+    if (ComponentModuleRegistrationChecker.isIdeaPlatformModule(module)) {
+      ComponentModuleRegistrationChecker.checkProperXmlFileForClass(component, holder, component.getImplementationClass().getValue());
+    }
+  }
+
 
   private static void annotateVendor(Vendor vendor, DomElementAnnotationHolder holder) {
     highlightNotUsedAnymore(vendor.getLogo(), holder);
