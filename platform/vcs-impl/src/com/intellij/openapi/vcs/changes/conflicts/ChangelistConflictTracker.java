@@ -30,6 +30,7 @@ import com.intellij.openapi.util.ZipperUpdater;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotifications;
@@ -146,7 +147,7 @@ public class ChangelistConflictTracker {
   }
 
   private void checkOneFile(VirtualFile file, LocalChangeList defaultList) {
-    if (file == null) {
+    if (file == null || !shouldDetectConflictsFor(file)) {
       return;
     }
     LocalChangeList changeList = myChangeListManager.getChangeList(file);
@@ -180,6 +181,10 @@ public class ChangelistConflictTracker {
   public boolean isFromActiveChangelist(VirtualFile file) {
     LocalChangeList changeList = myChangeListManager.getChangeList(file);
     return changeList == null || changeList.isDefault();
+  }
+
+  private boolean shouldDetectConflictsFor(@NotNull VirtualFile file) {
+    return !LineStatusTrackerManager.getInstance(myProject).arePartialChangelistsEnabled(file);
   }
 
   private void clearChanges(Collection<Change> changes) {
@@ -267,7 +272,8 @@ public class ChangelistConflictTracker {
     String path = file.getPath();
     Conflict conflict = myConflicts.get(path);
     if (conflict != null && !conflict.ignored) {
-      if (isFromActiveChangelist(file)) {
+      if (!shouldDetectConflictsFor(file) ||
+          isFromActiveChangelist(file)) {
         myConflicts.remove(path);
         return false;
       }

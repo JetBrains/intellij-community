@@ -294,7 +294,7 @@ class LineStatusTrackerManager(
 
   }
 
-  private fun arePartialChangelistsEnabled(virtualFile: VirtualFile): Boolean {
+  override fun arePartialChangelistsEnabled(virtualFile: VirtualFile): Boolean {
     if (!partialChangeListsEnabled) return false
     if (getTrackingMode() == LineStatusTracker.Mode.SILENT) return false
 
