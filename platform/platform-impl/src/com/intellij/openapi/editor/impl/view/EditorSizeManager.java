@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.impl.CaretModelImpl;
 import com.intellij.openapi.editor.impl.EditorDocumentPriorities;
 import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.editor.impl.FoldingModelImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
 import com.intellij.openapi.editor.impl.softwrap.mapping.IncrementalCacheUpdateEvent;
 import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapAwareDocumentParsingListenerAdapter;
@@ -76,7 +77,7 @@ class EditorSizeManager extends InlayModel.SimpleAdapter implements PrioritizedD
   private boolean myDirty; // true if we cannot calculate preferred size now because soft wrap model was invalidated after editor 
                            // became hidden. myLineWidths contents is irrelevant in such a state. Previously calculated preferred size
                            // is kept until soft wraps will be recalculated and size calculations will become possible
-  
+
   private final List<TextRange> myDeferredRanges = new ArrayList<>();
   
   private final SoftWrapAwareDocumentParsingListenerAdapter mySoftWrapChangeListener = new SoftWrapAwareDocumentParsingListenerAdapter() {
@@ -306,11 +307,12 @@ class EditorSizeManager extends InlayModel.SimpleAdapter implements PrioritizedD
   int getVisualLineWidth(VisualLinesIterator visualLinesIterator, boolean allowQuickCalculation) {
     assert !visualLinesIterator.atEnd();
     int visualLine = visualLinesIterator.getVisualLine();
-    int cached = myLineWidths.get(visualLine);
+    boolean useCache = shouldUseLineWidthCache();
+    int cached = useCache ? myLineWidths.get(visualLine) : UNKNOWN_WIDTH;
     if (cached != UNKNOWN_WIDTH && (cached >= 0 || allowQuickCalculation)) return Math.abs(cached);
     Ref<Boolean> evaluatedQuick = Ref.create(Boolean.FALSE);
     int width = calculateLineWidth(visualLinesIterator, allowQuickCalculation ? () -> evaluatedQuick.set(Boolean.TRUE) : null);
-    myLineWidths.set(visualLine, evaluatedQuick.get() ? -width : width);
+    if (useCache) myLineWidths.set(visualLine, evaluatedQuick.get() ? -width : width);
     return width;
   }
 
@@ -340,7 +342,7 @@ class EditorSizeManager extends InlayModel.SimpleAdapter implements PrioritizedD
     }
     return (int)x;
   }
-  
+
   void reset() {
     assert !myDocument.isInBulkUpdate();
     doInvalidateRange(0, myDocument.getTextLength());
@@ -361,7 +363,24 @@ class EditorSizeManager extends InlayModel.SimpleAdapter implements PrioritizedD
       doInvalidateRange(startOffset, endOffset);
     }
   }
-  
+
+  private boolean shouldUseLineWidthCache() {
+    if (myView.getEditor().isPurePaintingMode()) return false;
+
+    FoldingModelImpl model = myView.getEditor().getFoldingModel();
+    if (model.isFoldingEnabled()) return true;
+
+    model.setFoldingEnabled(true);
+    FoldRegion[] regions;
+    try {
+      regions = model.fetchTopLevel();
+    }
+    finally {
+      model.setFoldingEnabled(false);
+    }
+    return regions == null || regions.length == 0;
+  }
+
   private void doInvalidateRange(int startOffset, int endOffset) {
     if (checkDirty()) return;
     myWidthInPixels = -1;
