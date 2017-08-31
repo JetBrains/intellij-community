@@ -26,6 +26,7 @@ import com.intellij.vcs.log.graph.utils.Flags;
 import com.intellij.vcs.log.graph.utils.IntList;
 import com.intellij.vcs.log.graph.utils.impl.CompressedIntList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -87,12 +88,11 @@ public class PermanentLinearGraphImpl implements LinearGraph {
   }
 
   @Override
+  @Nullable
   public Integer getNodeIndex(int nodeId) {
     if (nodeId >= 0 && nodeId < nodesCount()) {
       return nodeId;
     }
-    else {
-      return null;
-    }
+    return null;
   }
 }
