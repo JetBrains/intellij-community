@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.externalSystem.test;
 
-import com.intellij.compiler.CompilerTestUtil;
 import com.intellij.compiler.artifacts.ArtifactsTestUtil;
 import com.intellij.compiler.impl.ModuleCompileScope;
 import com.intellij.compiler.server.BuildManager;
@@ -119,8 +118,6 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
     if (!allowedRoots.isEmpty()) {
       VfsRootAccess.allowRootAccess(myTestFixture.getTestRootDisposable(), ArrayUtil.toStringArray(allowedRoots));
     }
-
-    CompilerTestUtil.enableExternalCompiler();
   }
 
   protected void collectAllowedRoots(List<String> roots) {
@@ -170,7 +167,6 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
   public void tearDown() throws Exception {
     try {
       EdtTestUtil.runInEdtAndWait(() -> {
-        CompilerTestUtil.disableExternalCompiler(myProject);
         tearDownFixtures();
       });
       myProject = null;

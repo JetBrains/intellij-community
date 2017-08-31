@@ -130,7 +130,7 @@ public class GradleMiscImportingTest extends GradleImportingTestCase {
   @TargetVersions("3.4+")
   public void testJdkName() throws Exception {
     Sdk myJdk = createJdk("MyJDK");
-    edt(() -> ApplicationManager.getApplication().runWriteAction(() -> ProjectJdkTable.getInstance().addJdk(myJdk, getTestRootDisposable())));
+    edt(() -> ApplicationManager.getApplication().runWriteAction(() -> ProjectJdkTable.getInstance().addJdk(myJdk, myProject)));
     importProject(
       "apply plugin: 'java'\n" +
       "apply plugin: 'idea'\n" +

@@ -101,7 +101,7 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
         VirtualFile jdkHomeDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(myJdkHome));
         Sdk jdk = SdkConfigurationUtil.setupSdk(new Sdk[0], jdkHomeDir, JavaSdk.getInstance(), true, null, GRADLE_JDK_NAME);
         assertNotNull("Cannot create JDK for " + myJdkHome, jdk);
-        ProjectJdkTable.getInstance().addJdk(jdk, myProject);
+        ProjectJdkTable.getInstance().addJdk(jdk);
       }
     }.execute();
     myProjectSettings = new GradleProjectSettings();
@@ -115,6 +115,15 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
     if (myJdkHome == null) {
       //super.setUp() wasn't called
       return;
+    }
+    Sdk jdk = ProjectJdkTable.getInstance().findJdk(GRADLE_JDK_NAME);
+    if(jdk != null) {
+      new WriteAction() {
+        @Override
+        protected void run(@NotNull Result result) {
+          ProjectJdkTable.getInstance().removeJdk(jdk);
+        }
+      }.execute();
     }
 
     try {
