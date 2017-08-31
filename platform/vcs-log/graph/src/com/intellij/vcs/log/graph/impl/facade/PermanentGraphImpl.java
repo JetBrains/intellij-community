@@ -66,9 +66,18 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
       () -> BekSorter.createBekMap(myPermanentLinearGraph, myPermanentGraphLayout, myPermanentCommitsInfo.getTimestampGetter()));
   }
 
+  /**
+   * Create new instance of PermanentGraph.
+   *
+   * @param graphCommits      topologically sorted list of commits in the graph
+   * @param graphColorManager color manager for the graph
+   * @param branchesCommitId  commit ids of all the branch heads
+   * @param <CommitId>        commit identificator type
+   * @return new instance of PermanentGraph
+   */
   @NotNull
   public static <CommitId> PermanentGraphImpl<CommitId> newInstance(@NotNull List<? extends GraphCommit<CommitId>> graphCommits,
-                                                                    @NotNull final GraphColorManager<CommitId> graphColorManager,
+                                                                    @NotNull GraphColorManager<CommitId> graphColorManager,
                                                                     @NotNull Set<CommitId> branchesCommitId) {
     PermanentLinearGraphBuilder<CommitId> permanentLinearGraphBuilder = PermanentLinearGraphBuilder.newInstance(graphCommits);
     NotLoadedCommitsIdsGenerator<CommitId> idsGenerator = new NotLoadedCommitsIdsGenerator<>();
