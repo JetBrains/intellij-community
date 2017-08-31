@@ -17,15 +17,22 @@ package com.intellij.openapi.editor;
 
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
-@TestDataPath("$CONTENT_ROOT/testData/editor/painting")
-public class EditorPaintingTest extends EditorPaintingTestCase {
+@TestDataPath("$CONTENT_ROOT/testData/editor/painting/right")
+public class RightAlignedEditorPaintingTest extends EditorPaintingTestCase {
+  @Override
+  protected void initText(@NotNull String fileText) {
+    super.initText(fileText);
+    ((EditorImpl)myEditor).setHorizontalTextAlignment(EditorImpl.TEXT_ALIGNMENT_RIGHT);
+  }
 
   public void testWholeLineHighlighterAtDocumentEnd() throws Exception {
     initText("foo");
@@ -45,32 +52,32 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
     addRangeHighlighter(2, 3, HighlighterLayer.ERROR, Color.black, null);
     checkResult();
   }
-  
+
   public void testCaretRowWinsOverSyntaxEvenInPresenceOfHighlighter() throws Exception {
     initText("foo");
     setUniformEditorHighlighter(new TextAttributes(null, Color.red, null, null, Font.PLAIN));
     addRangeHighlighter(0, 3, 0, null, Color.blue);
     checkResult();
   }
-  
+
   public void testEmptyBorderInEmptyDocument() throws Exception {
     initText("");
     addBorderHighlighter(0, 0, HighlighterLayer.WARNING, Color.red);
     checkResult();
   }
-  
+
   public void testPrefixWithEmptyText() throws Exception {
     initText("");
     ((EditorEx)myEditor).setPrefixTextAndAttributes(">", new TextAttributes(Color.blue, Color.gray, null, null, Font.PLAIN));
     checkResult();
   }
-  
+
   public void testBorderAtLastLine() throws Exception {
     initText("a\nbc");
     addBorderHighlighter(3, 4, HighlighterLayer.WARNING, Color.red);
     checkResult();
   }
-  
+
   public void testFoldedRegionShownOnlyWithBorder() throws Exception {
     initText("abc");
     addCollapsedFoldRegion(0, 3, "...");
@@ -100,5 +107,27 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
     myEditor.getInlayModel().addInlineElement(6, new MyInlayRenderer());
     addBorderHighlighter(0, 7, 0, Color.red);
     checkResult();
+  }
+
+  public void testSelectionInsideLine() throws Exception {
+    initText("first line\nsecond line");
+    myEditor.getSelectionModel().setSelection(6, 12);
+    checkResult();
+  }
+
+  public void testCaretAfterEmptyLine() throws Exception {
+    initText("\nsecond line<caret>");
+    checkResult();
+  }
+
+  public void testCaretOnEmptyLine() throws Exception {
+    initText("<caret>\n    second line");
+    checkResult();
+  }
+
+  @NotNull
+  @Override
+  protected String getTestDataPath() {
+    return super.getTestDataPath() + "/right";
   }
 }

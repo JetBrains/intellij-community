@@ -18,6 +18,7 @@ package com.intellij.openapi.editor.impl.view;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.FoldingModelImpl;
@@ -26,6 +27,7 @@ import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
 import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.awt.geom.Point2D;
 import java.util.List;
 
@@ -255,7 +257,31 @@ class EditorCoordinateMapper {
   }
 
   private float getStartX(int line) {
-    return myView.getInsets().left + (line == 0 ? myView.getPrefixTextWidthInPixels() : 0);
+    return myView.getEditor().isRightAligned() ?
+           getRightAlignmentLineStartX(line) :
+           myView.getInsets().left + (line == 0 ? myView.getPrefixTextWidthInPixels() : 0);
+  }
+
+  float getRightAlignmentLineStartX(int visualLine) {
+    checkRightAlignment();
+    EditorImpl editor = myView.getEditor();
+    int max = getRightAlignmentMarginX();
+    float shift = visualLine == 0 ? myView.getPrefixTextWidthInPixels() : 0;
+    if (visualLine >= editor.getVisibleLineCount()) return max - shift;
+    int lineWidth = myView.getSizeManager().getVisualLineWidth(new VisualLinesIterator(editor, visualLine), false);
+    return Math.max(max - lineWidth, 0);
+  }
+
+  int getRightAlignmentMarginX() {
+    checkRightAlignment();
+    EditorImpl editor = myView.getEditor();
+    JScrollBar vsb = editor.getScrollPane().getVerticalScrollBar();
+    int vsbWidth = vsb != null && editor.getVerticalScrollbarOrientation() == EditorEx.VERTICAL_SCROLLBAR_RIGHT ? vsb.getWidth() : 0;
+    return editor.getContentComponent().getWidth() - myView.getInsets().right - editor.getSettings().getLineCursorWidth() - vsbWidth;
+  }
+
+  private void checkRightAlignment() {
+    if (!myView.getEditor().isRightAligned()) throw new IllegalStateException("Editor is not right-aligned");
   }
 
   @NotNull
@@ -267,7 +293,7 @@ class EditorCoordinateMapper {
     if (visualLine < myView.getEditor().getVisibleLineCount()) {
       int visualLineStartOffset = visualLineToOffset(visualLine);
       int maxOffset = 0;
-      for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView, visualLineStartOffset, false)) {
+      for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView, visualLineStartOffset, false, true)) {
         if (px <= fragment.getStartX()) {
           if (fragment.getStartVisualColumn() == 0) {
             return new VisualPosition(visualLine, 0);
@@ -316,7 +342,7 @@ class EditorCoordinateMapper {
     if (visualLine < myView.getEditor().getVisibleLineCount()) {
       int visualLineStartOffset = visualLineToOffset(visualLine);
       int maxOffset = 0;
-      for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView, visualLineStartOffset, false)) {
+      for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView, visualLineStartOffset, false, true)) {
         int startVisualColumn = fragment.getStartVisualColumn();
         if (column < startVisualColumn || column == startVisualColumn && !pos.leansRight) {
           break;
@@ -349,7 +375,7 @@ class EditorCoordinateMapper {
     float x = getStartX(logicalLine);
     if (myDocument.getTextLength() > 0) {
       boolean firstFragment = true;
-      for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView, offset, beforeSoftWrap)) {
+      for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView, offset, beforeSoftWrap, true)) {
         if (firstFragment && offset == visualLineStartOffset && !leanTowardsLargerOffsets) {
           x = fragment.getStartX();
           break;

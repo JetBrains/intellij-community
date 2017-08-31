@@ -127,6 +127,14 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
     return myLogicalPositionCache;
   }
 
+  float getRightAlignmentLineStartX(int visualLine) {
+    return myMapper.getRightAlignmentLineStartX(visualLine);
+  }
+
+  int getRightAlignmentMarginX() {
+    return myMapper.getRightAlignmentMarginX();
+  }
+
   @Override
   public void dispose() {
     myEditor.getScrollingModel().removeVisibleAreaListener(this);
@@ -303,19 +311,21 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
 
   public int getMaxWidthInRange(int startOffset, int endOffset) {
     assertIsDispatchThread();
-    return getMaxWidthInLineRange(offsetToVisualLine(startOffset, false), offsetToVisualLine(endOffset, true));
+    int startVisualLine = offsetToVisualLine(startOffset, false);
+    int endVisualLine = offsetToVisualLine(endOffset, true);
+    return getMaxTextWidthInLineRange(startVisualLine, endVisualLine) + getInsets().left;
   }
 
   /**
    * If {@code quickEvaluationListener} is provided, quick approximate size evaluation becomes enabled, listener will be invoked
    * if approximation will in fact be used during width calculation.
    */
-  int getMaxWidthInLineRange(int startVisualLine, int endVisualLine) {
+  int getMaxTextWidthInLineRange(int startVisualLine, int endVisualLine) {
     myEditor.getSoftWrapModel().prepareToMapping();
     int maxWidth = 0;
     VisualLinesIterator iterator = new VisualLinesIterator(myEditor, startVisualLine);
     while (!iterator.atEnd() && iterator.getVisualLine() <= endVisualLine) {
-      int width = mySizeManager.getVisualLineWidth(iterator, null);
+      int width = mySizeManager.getVisualLineWidth(iterator, false);
       maxWidth = Math.max(maxWidth, width);
       iterator.advance();
     }

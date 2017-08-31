@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
@@ -403,7 +404,7 @@ public class IterationState {
       RangeHighlighterEx highlighter = myCurrentHighlighters.get(i);
       if (myReverseIteration ?
           getAlignedStartOffset(highlighter) >= myStartOffset :
-          fileEnd && highlighter.getTargetArea() == HighlighterTargetArea.LINES_IN_RANGE ? 
+          fileEnd && highlighter.getTargetArea() == HighlighterTargetArea.LINES_IN_RANGE ?
           getAlignedEndOffset(highlighter) < myStartOffset :
           getAlignedEndOffset(highlighter) <= myStartOffset) {
         myCurrentHighlighters.remove(i);
@@ -645,21 +646,28 @@ public class IterationState {
 
   @NotNull
   public TextAttributes getPastLineEndBackgroundAttributes() {
-    myMergedAttributes.setBackgroundColor(myEditor.getSoftWrapModel().getSoftWrap(myStartOffset) != null ? getBreakBackgroundColor(true) : 
+    myMergedAttributes.setBackgroundColor(hasSoftWrap() ? getBreakBackgroundColor(true) :
+                                          isEditorRightAligned() && myLastBackgroundColor != null ? myLastBackgroundColor :
                                           myCurrentBackgroundColor);
     return myMergedAttributes;
   }
-  
+
   @NotNull
   public TextAttributes getBeforeLineStartBackgroundAttributes() {
-    return new TextAttributes(null, getBreakBackgroundColor(false), null, null, Font.PLAIN);
+    return isEditorRightAligned() && !hasSoftWrap() ?
+           getBreakAttributes() :
+           new TextAttributes(null, getBreakBackgroundColor(false), null, null, Font.PLAIN);
   }
 
   private Color getBreakBackgroundColor(boolean lineEnd) {
     return Comparing.equal(myCurrentBackgroundColor, myLastBackgroundColor) ? myCurrentBackgroundColor : 
-           isInCaretRow(!myCaretData.caretRowStartsWithSoftWrap || !lineEnd, 
+           isInCaretRow(!myCaretData.caretRowStartsWithSoftWrap || !lineEnd,
                         myCaretData.caretRowEndsWithSoftWrap && lineEnd) && myCaretRowAttributes != null ?
            myCaretRowAttributes.getBackgroundColor() : myDefaultBackground;
+  }
+
+  private boolean hasSoftWrap() {
+    return myEditor.getSoftWrapModel().getSoftWrap(myStartOffset) != null;
   }
 
   private int alignOffset(int offset) {
@@ -672,6 +680,10 @@ public class IterationState {
 
   private int getAlignedEndOffset(RangeHighlighterEx highlighter) {
     return alignOffset(highlighter.getAffectedAreaEndOffset());
+  }
+
+  private boolean isEditorRightAligned() {
+    return myEditor instanceof EditorImpl && ((EditorImpl)myEditor).isRightAligned();
   }
 
   private static class LayerComparator implements Comparator<RangeHighlighterEx> {
