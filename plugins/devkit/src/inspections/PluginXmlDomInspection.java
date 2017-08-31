@@ -102,6 +102,9 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     else if (element instanceof Group) {
       annotateGroup((Group)element, holder);
     }
+    else if (element instanceof Component) {
+      annotateComponent((Component) element, holder);
+    }
     else if (element instanceof Component.Project) {
       annotateProjectComponent((Component.Project)element, holder);
     }
@@ -174,6 +177,12 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
       holder.createProblem(
         qualifiedName, DevKitBundle.message("inspections.plugin.xml.invalid.ep.qualified.name", qualifiedName.getValue()));
     }
+
+    Module module = extensionPoint.getModule();
+    if (ComponentModuleRegistrationChecker.isIdeaPlatformModule(module)) {
+      ComponentModuleRegistrationChecker.checkProperModule(extensionPoint, holder);
+    }
+
   }
 
   private static boolean isValidEpName(GenericAttributeValue<String> nameAttrValue) {
@@ -307,7 +316,20 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
         }
       }
     }
+
+    Module module = extension.getModule();
+    if (ComponentModuleRegistrationChecker.isIdeaPlatformModule(module)) {
+      ComponentModuleRegistrationChecker.checkProperXmlFileForExtension(extension, holder);
+    }
   }
+
+  private static void annotateComponent(Component component, DomElementAnnotationHolder holder) {
+    Module module = component.getModule();
+    if (ComponentModuleRegistrationChecker.isIdeaPlatformModule(module)) {
+      ComponentModuleRegistrationChecker.checkProperXmlFileForClass(component, holder, component.getImplementationClass().getValue());
+    }
+  }
+
 
   private static void annotateVendor(Vendor vendor, DomElementAnnotationHolder holder) {
     //noinspection deprecation
