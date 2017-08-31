@@ -31,9 +31,11 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibDocumentationLinkProvider;
 import com.jetbrains.python.console.PydevConsoleRunner;
@@ -547,9 +549,23 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
   public PsiElement getCustomDocumentationElement(@NotNull Editor editor,
                                                   @NotNull PsiFile file,
                                                   @Nullable PsiElement contextElement) {
-    if (contextElement != null &&
-        PythonDialectsTokenSetProvider.INSTANCE.getKeywordTokens().contains(contextElement.getNode().getElementType())) {
-      return contextElement;
+    if (contextElement != null) {
+      final IElementType elementType = contextElement.getNode().getElementType();
+      if (PythonDialectsTokenSetProvider.INSTANCE.getKeywordTokens().contains(elementType)) {
+        return contextElement;
+      }
+      if (PyTokenTypes.LPAR == elementType || PyTokenTypes.RPAR == elementType) {
+        final PyCallExpression expression = PsiTreeUtil.getParentOfType(contextElement, PyCallExpression.class);
+        if (expression != null) {
+          final PyExpression callee = expression.getCallee();
+          if (callee != null) {
+            final PsiReference reference = callee.getReference();
+            if (reference != null) {
+              return reference.resolve();
+            }
+          }
+        }
+      }
     }
     return super.getCustomDocumentationElement(editor, file, contextElement);
   }
