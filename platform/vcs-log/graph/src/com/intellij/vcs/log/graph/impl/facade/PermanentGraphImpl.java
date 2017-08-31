@@ -41,6 +41,30 @@ import java.util.Map;
 import java.util.Set;
 
 public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, PermanentGraphInfo<CommitId> {
+  @NotNull private final PermanentCommitsInfoImpl<CommitId> myPermanentCommitsInfo;
+  @NotNull private final PermanentLinearGraphImpl myPermanentLinearGraph;
+  @NotNull private final GraphLayoutImpl myPermanentGraphLayout;
+  @NotNull private final Set<Integer> myBranchNodeIds;
+
+  @NotNull private final Supplier<BekIntMap> myBekIntMap;
+
+  @NotNull private final GraphColorManager<CommitId> myGraphColorManager;
+  @NotNull private final ReachableNodes myReachableNodes;
+
+  public PermanentGraphImpl(@NotNull PermanentLinearGraphImpl permanentLinearGraph,
+                            @NotNull GraphLayoutImpl permanentGraphLayout,
+                            @NotNull PermanentCommitsInfoImpl<CommitId> permanentCommitsInfo,
+                            @NotNull GraphColorManager<CommitId> graphColorManager,
+                            @NotNull Set<CommitId> branchesCommitId) {
+    myPermanentGraphLayout = permanentGraphLayout;
+    myPermanentCommitsInfo = permanentCommitsInfo;
+    myPermanentLinearGraph = permanentLinearGraph;
+    myGraphColorManager = graphColorManager;
+    myBranchNodeIds = permanentCommitsInfo.convertToNodeIds(branchesCommitId);
+    myReachableNodes = new ReachableNodes(LinearGraphUtils.asLiteLinearGraph(permanentLinearGraph));
+    myBekIntMap = Suppliers.memoize(
+      () -> BekSorter.createBekMap(myPermanentLinearGraph, myPermanentGraphLayout, myPermanentCommitsInfo.getTimestampGetter()));
+  }
 
   @NotNull
   public static <CommitId> PermanentGraphImpl<CommitId> newInstance(@NotNull List<? extends GraphCommit<CommitId>> graphCommits,
@@ -61,29 +85,6 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
 
     return new PermanentGraphImpl<>(linearGraph, permanentGraphLayout, commitIdPermanentCommitsInfo, graphColorManager,
                                     branchesCommitId);
-  }
-
-  @NotNull private final PermanentCommitsInfoImpl<CommitId> myPermanentCommitsInfo;
-  @NotNull private final PermanentLinearGraphImpl myPermanentLinearGraph;
-  @NotNull private final GraphLayoutImpl myPermanentGraphLayout;
-  @NotNull private final GraphColorManager<CommitId> myGraphColorManager;
-  @NotNull private final Set<Integer> myBranchNodeIds;
-  @NotNull private final ReachableNodes myReachableNodes;
-  @NotNull private final Supplier<BekIntMap> myBekIntMap;
-
-  public PermanentGraphImpl(@NotNull PermanentLinearGraphImpl permanentLinearGraph,
-                            @NotNull GraphLayoutImpl permanentGraphLayout,
-                            @NotNull PermanentCommitsInfoImpl<CommitId> permanentCommitsInfo,
-                            @NotNull GraphColorManager<CommitId> graphColorManager,
-                            @NotNull Set<CommitId> branchesCommitId) {
-    myPermanentGraphLayout = permanentGraphLayout;
-    myPermanentCommitsInfo = permanentCommitsInfo;
-    myPermanentLinearGraph = permanentLinearGraph;
-    myGraphColorManager = graphColorManager;
-    myBranchNodeIds = permanentCommitsInfo.convertToNodeIds(branchesCommitId);
-    myReachableNodes = new ReachableNodes(LinearGraphUtils.asLiteLinearGraph(permanentLinearGraph));
-    myBekIntMap = Suppliers.memoize(
-      () -> BekSorter.createBekMap(myPermanentLinearGraph, myPermanentGraphLayout, myPermanentCommitsInfo.getTimestampGetter()));
   }
 
   @NotNull
