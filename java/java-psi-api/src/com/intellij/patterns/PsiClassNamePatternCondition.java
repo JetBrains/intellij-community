@@ -20,31 +20,26 @@ import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.function.BiPredicate;
+public class PsiClassNamePatternCondition extends PatternCondition<PsiClass> {
 
-abstract public class PsiClassNamePatternCondition extends PatternCondition<PsiClass> {
+  private final ElementPattern<String> stringPattern;
 
-  public static PsiClassNamePatternCondition accepting(BiPredicate<String, ProcessingContext> condition) {
-    return new PsiClassNamePatternCondition() {
-      @Override
-      public boolean accepts(String qualifiedName, ProcessingContext context) {
-        return condition.test(qualifiedName, context);
-      }
-    };
+  public PsiClassNamePatternCondition(ElementPattern<String> pattern) {
+    this("withQualifiedName", pattern);
   }
 
-  public PsiClassNamePatternCondition() {
-    this("withQualifiedName");
-  }
-
-  public PsiClassNamePatternCondition(@Nullable String debugMethodName) {
+  public PsiClassNamePatternCondition(@Nullable String debugMethodName, ElementPattern<String> pattern) {
     super(debugMethodName);
+    stringPattern = pattern;
   }
 
   @Override
-  public final boolean accepts(@NotNull PsiClass aClass, ProcessingContext context) {
-    return accepts(aClass.getQualifiedName(), context);
+  public boolean accepts(@NotNull PsiClass aClass, ProcessingContext context) {
+    return stringPattern.accepts(aClass.getQualifiedName(), context);
   }
 
-  public abstract boolean accepts(String qualifiedName, ProcessingContext context);
+  @SuppressWarnings("unused") //Used in Kotlin
+  public ElementPattern<String> getStringPattern() {
+    return stringPattern;
+  }
 }

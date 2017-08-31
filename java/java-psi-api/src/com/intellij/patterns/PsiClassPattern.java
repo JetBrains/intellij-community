@@ -21,6 +21,8 @@ import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import static com.intellij.patterns.StandardPatterns.string;
+
 /**
  * @author peter
  */
@@ -102,10 +104,10 @@ public class PsiClassPattern extends PsiMemberPattern<PsiClass, PsiClassPattern>
   }
 
   public PsiClassPattern withQualifiedName(@NonNls @NotNull final String qname) {
-    return with(PsiClassNamePatternCondition.accepting((qualifiedName, context) -> qname.equals(qualifiedName)));
+    return with(new PsiClassNamePatternCondition(string().equalTo(qname)));
   }
 
   public PsiClassPattern withQualifiedName(@NonNls @NotNull final ElementPattern<String> qname) {
-    return with(PsiClassNamePatternCondition.accepting((qualifiedName, context) -> qname.accepts(qualifiedName, context)));
+    return with(new PsiClassNamePatternCondition(qname));
   }
 }
