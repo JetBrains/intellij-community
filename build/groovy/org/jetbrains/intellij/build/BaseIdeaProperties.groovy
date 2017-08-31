@@ -18,12 +18,8 @@ abstract class BaseIdeaProperties extends ProductProperties {
     "debugger-openapi",
     "dom-openapi",
     "execution-openapi",
-    "java-analysis-api",
-    "java-indexing-api",
-    "java-psi-api",
     "jsp-openapi",
     "jsp-base-openapi",
-    "openapi",
     "remote-servers-java-api",
     "testFramework-java"
   ]
@@ -34,10 +30,6 @@ abstract class BaseIdeaProperties extends ProductProperties {
     "execution-impl",
     "external-system-impl",
     "idea-ui",
-    "java-analysis-impl",
-    "java-indexing-impl",
-    "java-impl",
-    "java-psi-impl",
     "java-structure-view",
     "jsp-spi",
     "manifest",
@@ -72,6 +64,8 @@ abstract class BaseIdeaProperties extends ProductProperties {
     productLayout.additionalPlatformJars.
       putAll("javac2.jar", ["javac2", "forms-compiler", "forms_rt", "instrumentation-util", "instrumentation-util-8", "javac-ref-scanner-8"])
     productLayout.additionalPlatformJars.putAll("annotations-java8.jar", ["annotations-common", "annotations-java8"])
+    productLayout.additionalPlatformJars.putAll("java-api.jar", ["java-analysis-api", "java-indexing-api", "java-psi-api", "openapi"])
+    productLayout.additionalPlatformJars.putAll("java-impl.jar", ["java-analysis-impl", "java-indexing-impl", "java-psi-impl", "java-impl"])
 
     productLayout.platformLayoutCustomizer = { PlatformLayout layout ->
       layout.customize {
