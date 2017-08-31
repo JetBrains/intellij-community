@@ -15,31 +15,39 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiArrayType;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ConversionResult;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-public class GrNumberConverter extends GrTypeConverter {
-
-  @Override
-  public boolean isApplicableTo(@NotNull ApplicableTo position) {
-    return position != ApplicableTo.METHOD_PARAMETER;
-  }
-
+/**
+ * @author Maxim.Medvedev
+ */
+public class GrListToArrayTypeConverter extends GrTypeConverter {
   @Nullable
   @Override
   public ConversionResult isConvertibleEx(@NotNull PsiType targetType,
                                           @NotNull PsiType actualType,
                                           @NotNull GroovyPsiElement context,
                                           @NotNull ApplicableTo currentPosition) {
-    if (PsiUtil.isCompileStatic(context)) return null;
-    if (TypesUtil.isNumericType(targetType) && TypesUtil.isNumericType(actualType)) {
-      return ConversionResult.OK;
-    }
+    if (!(targetType instanceof PsiArrayType) || !InheritanceUtil.isInheritor(actualType, CommonClassNames.JAVA_UTIL_COLLECTION)) return null;
+
+    final PsiType lComponentType = ((PsiArrayType)targetType).getComponentType();
+    final PsiType rComponentType = PsiUtil.substituteTypeParameter(actualType, CommonClassNames.JAVA_UTIL_COLLECTION, 0, false);
+
+    if (rComponentType == null) return ConversionResult.OK;
+    if (TypesUtil.isAssignableByParameter(lComponentType, rComponentType, context)) return ConversionResult.OK;
     return null;
+  }
+
+  @Override
+  public boolean isApplicableTo(@NotNull ApplicableTo position) {
+    return position == ApplicableTo.ASSIGNMENT;
   }
 }

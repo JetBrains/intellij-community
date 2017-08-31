@@ -28,6 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 
 class DefaultListOrMapTypeCalculator : GrTypeCalculator<GrListOrMap> {
@@ -94,7 +95,7 @@ class DefaultListOrMapTypeCalculator : GrTypeCalculator<GrListOrMap> {
             (initializer.argument.type as? GrTupleType)?.componentTypes?.toList()
           }
           else {
-            initializer.type?.let { listOf(it) }
+            TypesUtil.boxPrimitiveType(initializer.type, initializer.manager, initializer.resolveScope)?.let { listOf(it) }
           }
         }
       }

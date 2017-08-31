@@ -434,8 +434,7 @@ class ResolveMethodTest extends GroovyResolveTestCase {
     myFixture.addClass("package java.math; public class BigDecimal {}")
     PsiReference ref = configureByFile("unboxBigDecimal/A.groovy")
     PsiElement resolved = ref.resolve()
-    assertTrue(resolved instanceof PsiMethod)
-    assertEquals(PsiType.DOUBLE, ((PsiMethod)resolved).returnType)
+    assertNull(resolved)
   }
 
   void testGrvy1157() {

@@ -23,6 +23,7 @@ import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ConversionResult;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isCompileStatic;
@@ -31,22 +32,27 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isCompileStatic
  * @author Maxim.Medvedev
  */
 public class GrContainerTypeConverter extends GrTypeConverter {
+  @Nullable
   @Override
-  public boolean isAllowedInMethodCall() {
-    return false;
+  public ConversionResult isConvertibleEx(@NotNull PsiType targetType,
+                                          @NotNull PsiType actualType,
+                                          @NotNull GroovyPsiElement context,
+                                          @NotNull ApplicableTo currentPosition) {
+    if (!isCollectionOrArray(targetType) || !isCollectionOrArray(actualType)) return null;
+
+    if (isCompileStatic(context)) return null;
+
+    final PsiType lComponentType = extractComponentType(targetType);
+    final PsiType rComponentType = extractComponentType(actualType);
+
+    if (lComponentType == null || rComponentType == null) return ConversionResult.OK;
+    if (TypesUtil.isAssignableByParameter(lComponentType, rComponentType, context)) return ConversionResult.OK;
+    return null;
   }
 
   @Override
-  public Boolean isConvertible(@NotNull PsiType lType, @NotNull PsiType rType, @NotNull GroovyPsiElement context) {
-    if (!isCollectionOrArray(lType) || !isCollectionOrArray(rType)) return null;
-    if (isCompileStatic(context)) return null;
-
-    final PsiType lComponentType = extractComponentType(lType);
-    final PsiType rComponentType = extractComponentType(rType);
-
-    if (lComponentType == null || rComponentType == null) return Boolean.TRUE;
-    if (TypesUtil.isAssignableByMethodCallConversion(lComponentType, rComponentType, context)) return Boolean.TRUE;
-    return null;
+  public boolean isApplicableTo(@NotNull ApplicableTo position) {
+    return position != ApplicableTo.METHOD_PARAMETER;
   }
 
   @Nullable

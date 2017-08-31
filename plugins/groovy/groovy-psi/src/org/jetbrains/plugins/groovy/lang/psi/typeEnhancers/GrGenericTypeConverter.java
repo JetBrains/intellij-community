@@ -55,7 +55,7 @@ public class GrGenericTypeConverter extends GrTypeConverter {
     if (!(ltype instanceof PsiClassType && rtype instanceof PsiClassType)) {
       return null;
     }
-    if (isCompileStatic(context) && position == ApplicableTo.RETURN_VALUE) return null;
+    if (isCompileStatic(context) ) return null;
     PsiClass lclass = ((PsiClassType)ltype).resolve();
     PsiClass rclass = ((PsiClassType)rtype).resolve();
 

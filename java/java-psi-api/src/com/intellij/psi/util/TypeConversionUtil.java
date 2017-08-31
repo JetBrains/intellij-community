@@ -464,6 +464,9 @@ public class TypeConversionUtil {
   public static boolean isNumericType(PsiType type) {
     return type != null && isNumericType(getTypeRank(type));
   }
+  public static boolean isIntegralNumberType(PsiType type) {
+    return type != null && getTypeRank(type) <= LONG_RANK;
+  }
 
   /**
    * @return 1..MAX_NUMERIC_TYPE if type is primitive numeric type,

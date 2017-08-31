@@ -267,6 +267,14 @@ public class TypesUtil implements TypeConstants {
     return canAssign(targetType, actualType, context, ApplicableTo.METHOD_PARAMETER) == ConversionResult.OK;
   }
 
+  public static boolean isAssignableByParameter(@Nullable PsiType targetType,
+                                               @Nullable PsiType actualType,
+                                               @NotNull PsiElement context) {
+
+    if (targetType == null || actualType == null) return false;
+    return canAssign(targetType, actualType, context, ApplicableTo.GENERIC_PARAMETER) == ConversionResult.OK;
+  }
+
   @Nullable
   private static ConversionResult areTypesConvertible(@NotNull PsiType targetType,
                                                       @NotNull PsiType actualType,
@@ -291,9 +299,6 @@ public class TypesUtil implements TypeConstants {
       return !(lType instanceof PsiPrimitiveType);
     }
 
-    PsiManager manager = context.getManager();
-    GlobalSearchScope scope = context.getResolveScope();
-
     if (rType instanceof GrTraitType) {
       for (PsiType type : ((GrTraitType)rType).getConjuncts()) {
         if (isAssignableWithoutConversions(lType, type, context)) return true;
@@ -305,21 +310,8 @@ public class TypesUtil implements TypeConstants {
       return true;
     }
 
-    if (isNumericType(lType) && isNumericType(rType)) {
-      lType = unboxPrimitiveTypeWrapper(lType);
-      if (isClassType(lType, GroovyCommonClassNames.JAVA_MATH_BIG_DECIMAL)) lType = PsiType.DOUBLE;
-      rType = unboxPrimitiveTypeWrapper(rType);
-      if (isClassType(rType, GroovyCommonClassNames.JAVA_MATH_BIG_DECIMAL)) rType = PsiType.DOUBLE;
-    }
-    else {
-      rType = boxPrimitiveType(rType, manager, scope);
-      lType = boxPrimitiveType(lType, manager, scope);
-    }
-
-    if (rType instanceof GrMapType || rType instanceof GrTupleType) {
-      Boolean result = isAssignableForNativeTypes(lType, (PsiClassType)rType, context);
-      if (result != null && result.booleanValue()) return true;
-    }
+    lType = optionalUnbox(lType);
+    rType = optionalUnbox(rType);
 
     if (rType instanceof GrClosureType) {
       if (canMakeClosureRaw(lType)) {
@@ -341,47 +333,6 @@ public class TypesUtil implements TypeConstants {
     if (parameter instanceof PsiWildcardType) return true;
 
     return false;
-  }
-
-  @Nullable
-  private static Boolean isAssignableForNativeTypes(@NotNull PsiType lType,
-                                                    @NotNull PsiClassType rType,
-                                                    @NotNull PsiElement context) {
-    if (!(lType instanceof PsiClassType)) return null;
-    final PsiClassType.ClassResolveResult leftResult = ((PsiClassType)lType).resolveGenerics();
-    final PsiClassType.ClassResolveResult rightResult = rType.resolveGenerics();
-    final PsiClass leftClass = leftResult.getElement();
-    PsiClass rightClass = rightResult.getElement();
-    if (rightClass == null || leftClass == null) return null;
-
-    if (!InheritanceUtil.isInheritorOrSelf(rightClass, leftClass, true)) return Boolean.FALSE;
-
-    PsiSubstitutor rightSubstitutor = rightResult.getSubstitutor();
-
-    if (!leftClass.hasTypeParameters()) return Boolean.TRUE;
-    PsiSubstitutor leftSubstitutor = leftResult.getSubstitutor();
-
-    if (!leftClass.getManager().areElementsEquivalent(leftClass, rightClass)) {
-      rightSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(leftClass, rightClass, rightSubstitutor);
-      rightClass = leftClass;
-    }
-    else if (!rightClass.hasTypeParameters()) return Boolean.TRUE;
-
-    Iterator<PsiTypeParameter> li = PsiUtil.typeParametersIterator(leftClass);
-    Iterator<PsiTypeParameter> ri = PsiUtil.typeParametersIterator(rightClass);
-    while (li.hasNext()) {
-      if (!ri.hasNext()) return Boolean.FALSE;
-      PsiTypeParameter lp = li.next();
-      PsiTypeParameter rp = ri.next();
-      final PsiType typeLeft = leftSubstitutor.substitute(lp);
-      if (typeLeft == null) continue;
-      final PsiType typeRight = rightSubstitutor.substituteWithBoundsPromotion(rp);
-      if (typeRight == null) {
-        return Boolean.TRUE;
-      }
-      if (!isAssignableWithoutConversions(typeLeft, typeRight, context)) return Boolean.FALSE;
-    }
-    return Boolean.TRUE;
   }
 
   @NotNull
@@ -406,8 +357,23 @@ public class TypesUtil implements TypeConstants {
     return type instanceof PsiPrimitiveType && TypeConversionUtil.isNumericType(type);
   }
 
+  public static boolean isIntegralNumberType(@Nullable PsiType type) {
+    if (type instanceof PsiClassType) {
+      int rank = TYPE_TO_RANK.get(getQualifiedName(type));
+      return rank > 0 && rank <= BIG_INTEGER_RANK;
+    }
+
+    return type instanceof PsiPrimitiveType && TypeConversionUtil.isIntegralNumberType(type);
+  }
+
   public static PsiType unboxPrimitiveTypeWrapperAndEraseGenerics(PsiType result) {
     return TypeConversionUtil.erasure(unboxPrimitiveTypeWrapper(result));
+  }
+
+  @NotNull
+  public static PsiType optionalUnbox(@NotNull PsiType type) {
+    PsiType unboxed = unboxPrimitiveTypeWrapper(type);
+    return unboxed == null ? type : unboxed;
   }
 
   @Contract("null -> null")

@@ -442,4 +442,29 @@ class SomeClass {
   '''
   }
 
+  void testArrayListInitializerCoercion() {
+    testHighlighting '''\
+import groovy.transform.CompileStatic
+
+@CompileStatic
+class SomeClass {
+    def foo() {
+        String[] m  = ["str"]
+    }
+}
+  '''
+  }
+
+  void testArrayEmptyListInitializerCoercion() {
+    testHighlighting ''' 
+import groovy.transform.CompileStatic
+
+@CompileStatic
+class SomeClass {
+    def foo() {
+        String[] m  = []
+    }
+}
+  '''
+  }
 }
