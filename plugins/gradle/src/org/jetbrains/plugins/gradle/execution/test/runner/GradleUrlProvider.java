@@ -48,7 +48,8 @@ public class GradleUrlProvider implements SMTestLocator {
 
     final String className = extractFullClassName(path);
     if (className == null) return Collections.emptyList();
-    final PsiClass testClass = JavaPsiFacade.getInstance(project).findClass(className, GlobalSearchScope.allScope(project));
+    final PsiClass testClass =
+      JavaPsiFacade.getInstance(project).findClass(className.replace('$', '.'), GlobalSearchScope.allScope(project));
     if (testClass == null) return Collections.emptyList();
 
     final String methodName = extractMethodName(path);
