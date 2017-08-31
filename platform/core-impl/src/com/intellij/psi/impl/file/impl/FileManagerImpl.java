@@ -577,10 +577,6 @@ public class FileManagerImpl implements FileManager {
 
   @Override
   public void reloadFromDisk(@NotNull PsiFile file) {
-    reloadFromDisk(file, false);
-  }
-
-  void reloadFromDisk(@NotNull PsiFile file, boolean ignoreDocument) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     VirtualFile vFile = file.getVirtualFile();
     assert vFile != null;
@@ -588,23 +584,27 @@ public class FileManagerImpl implements FileManager {
     if (file instanceof PsiBinaryFile) return;
     FileDocumentManager fileDocumentManager = myFileDocumentManager;
     Document document = fileDocumentManager.getCachedDocument(vFile);
-    if (document != null && !ignoreDocument){
+    if (document != null) {
       fileDocumentManager.reloadFromDisk(document);
     }
     else {
-      FileViewProvider latestProvider = createFileViewProvider(vFile, false);
-      PsiFile psi = latestProvider.getPsi(latestProvider.getBaseLanguage());
-      if (psi instanceof PsiLargeFile || psi instanceof PsiBinaryFile) {
-        forceReload(vFile);
-        return;
-      }
+      reloadPsiAfterTextChange(file, vFile);
+    }
+  }
 
-      FileViewProvider viewProvider = file.getViewProvider();
-      if (viewProvider instanceof SingleRootFileViewProvider) {
-        ((SingleRootFileViewProvider)viewProvider).onContentReload();
-      } else {
-        LOG.error("Invalid view provider: " + viewProvider + " of " + viewProvider.getClass());
-      }
+  void reloadPsiAfterTextChange(@NotNull PsiFile file, @NotNull VirtualFile vFile) {
+    FileViewProvider latestProvider = createFileViewProvider(vFile, false);
+    PsiFile psi = latestProvider.getPsi(latestProvider.getBaseLanguage());
+    if (psi instanceof PsiLargeFile || psi instanceof PsiBinaryFile) {
+      forceReload(vFile);
+      return;
+    }
+
+    FileViewProvider viewProvider = file.getViewProvider();
+    if (viewProvider instanceof SingleRootFileViewProvider) {
+      ((SingleRootFileViewProvider)viewProvider).onContentReload();
+    } else {
+      LOG.error("Invalid view provider: " + viewProvider + " of " + viewProvider.getClass());
     }
   }
 }

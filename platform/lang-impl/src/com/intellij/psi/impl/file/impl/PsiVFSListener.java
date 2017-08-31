@@ -701,7 +701,7 @@ public class PsiVFSListener implements VirtualFileListener {
               if (FileDocumentManagerImpl.recomputeFileTypeIfNecessary(file)) {
                 myFileManager.forceReload(file);
               } else {
-                myFileManager.reloadFromDisk(psiFile, true); // important to ignore document which might appear already!
+                myFileManager.reloadPsiAfterTextChange(psiFile, file);
               }
             }
           }
@@ -718,7 +718,7 @@ public class PsiVFSListener implements VirtualFileListener {
       ApplicationManager.getApplication().runWriteAction(new ExternalChangeAction() {
         @Override
         public void run() {
-          myFileManager.reloadFromDisk(psiFile, true);
+          myFileManager.reloadPsiAfterTextChange(psiFile, file);
         }
       });
     }
