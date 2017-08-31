@@ -441,11 +441,10 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
   }
 
   public Object getData(String dataId) {
-    List selectedItems = myDualView.getSelection();
-    VcsFileRevision firstSelectedRevision = selectedItems.isEmpty() ? null : ((TreeNodeOnVcsRevision)selectedItems.get(0)).getRevision();
-
     if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
-      if (selectedItems.size() != 1) return null;
+      VcsFileRevision[] selectedRevisions = getSelectedRevisions();
+      if (selectedRevisions.length != 1) return null;
+      VcsFileRevision firstSelectedRevision = ArrayUtil.getFirstElement(selectedRevisions);
       if (!myHistorySession.isContentAvailable(firstSelectedRevision)) {
         return null;
       }
@@ -461,7 +460,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
       return myVcs.getProject();
     }
     else if (VcsDataKeys.VCS_FILE_REVISION.is(dataId)) {
-      return firstSelectedRevision;
+      return ArrayUtil.getFirstElement(getSelectedRevisions());
     }
     else if (VcsDataKeys.VCS_NON_LOCAL_HISTORY_SESSION.is(dataId)) {
       return !myHistorySession.hasLocalSource();
@@ -479,8 +478,9 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
       return getChanges();
     }
     else if (VcsDataKeys.VCS_VIRTUAL_FILE.is(dataId)) {
-      if (firstSelectedRevision == null) return null;
-      return createVirtualFileForRevision(firstSelectedRevision);
+      VcsFileRevision[] selectedRevisions = getSelectedRevisions();
+      if (selectedRevisions.length == 0) return null;
+      return createVirtualFileForRevision(ArrayUtil.getFirstElement(selectedRevisions));
     }
     else if (VcsDataKeys.FILE_PATH.is(dataId)) {
       return myFilePath;
