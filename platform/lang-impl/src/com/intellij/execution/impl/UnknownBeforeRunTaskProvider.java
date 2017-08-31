@@ -84,12 +84,12 @@ public class UnknownBeforeRunTaskProvider extends BeforeRunTaskProvider<UnknownB
     }
 
     @Override
-    public void readExternal(Element element) {
+    public void readExternal(@NotNull Element element) {
       myConfig = element;
     }
 
     @Override
-    public void writeExternal(Element element) {
+    public void writeExternal(@NotNull Element element) {
       if (myConfig != null) {
         element.removeContent();
         final List attributes = myConfig.getAttributes();

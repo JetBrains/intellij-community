@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,18 +46,16 @@ public abstract class BeforeRunTask<T extends BeforeRunTask> implements Cloneabl
     myIsEnabled = isEnabled;
   }
 
-  public void writeExternal(Element element) {
+  public void writeExternal(@NotNull Element element) {
     element.setAttribute("enabled", String.valueOf(myIsEnabled));
   }
 
-  public void readExternal(Element element) {
+  public void readExternal(@NotNull Element element) {
     String attribValue = element.getAttributeValue("enabled");
     if (attribValue == null) {
       attribValue = element.getAttributeValue("value"); // maintain compatibility with old format
     }
-    if (attribValue == null)
-      attribValue = "true";
-    myIsEnabled = Boolean.valueOf(attribValue).booleanValue();
+    myIsEnabled = attribValue == null || Boolean.parseBoolean(attribValue);
   }
 
   //Task may aggregate several items or targets to do (e.g. BuildArtifactsBeforeRunTask)

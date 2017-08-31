@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,7 +51,7 @@ public abstract class AbstractToolBeforeRunTask<ToolBeforeRunTask extends Abstra
   }
 
   @Override
-  public void writeExternal(Element element) {
+  public void writeExternal(@NotNull Element element) {
     super.writeExternal(element);
     if (myToolActionId != null) {
       element.setAttribute(ACTION_ID_ATTRIBUTE, myToolActionId);
@@ -59,7 +59,7 @@ public abstract class AbstractToolBeforeRunTask<ToolBeforeRunTask extends Abstra
   }
 
   @Override
-  public void readExternal(Element element) {
+  public void readExternal(@NotNull Element element) {
     super.readExternal(element);
     myToolActionId = element.getAttributeValue(ACTION_ID_ATTRIBUTE);
   }

@@ -291,7 +291,7 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
     }
 
     @Override
-    public void writeExternal(Element element) {
+    public void writeExternal(@NotNull Element element) {
       super.writeExternal(element);
       if (myConfigurationName != null && myConfigurationType != null) {
         element.setAttribute("run_configuration_name", myConfigurationName);
@@ -304,7 +304,7 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
     }
 
     @Override
-    public void readExternal(Element element) {
+    public void readExternal(@NotNull Element element) {
       super.readExternal(element);
 
       myConfigurationName = element.getAttributeValue("run_configuration_name");
