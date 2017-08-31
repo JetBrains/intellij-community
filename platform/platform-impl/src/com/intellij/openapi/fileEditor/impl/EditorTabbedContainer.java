@@ -35,6 +35,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.fileEditor.impl.text.FileDropHandler;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.ShadowAction;
@@ -397,7 +398,9 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
 
   @NotNull
   public static String calcTabTitle(@NotNull Project project, @NotNull VirtualFile file) {
-    for (EditorTabTitleProvider provider : Extensions.getExtensions(EditorTabTitleProvider.EP_NAME)) {
+    List<EditorTabTitleProvider> providers =
+      DumbService.getInstance(project).filterByDumbAwareness(Extensions.getExtensions(EditorTabTitleProvider.EP_NAME));
+    for (EditorTabTitleProvider provider : providers) {
       final String result = provider.getEditorTabTitle(project, file);
       if (result != null) {
         return result;

@@ -31,7 +31,6 @@ import com.intellij.openapi.keymap.KeymapManagerListener;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.*;
@@ -418,7 +417,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
       VirtualFile file = getCurrentFile();
       if (file != null) {
         ioFile = new File(file.getPresentableUrl());
-        fileTitle = DumbService.isDumb(project) ? file.getName() : FrameTitleBuilder.getInstance().getFileTitle(project, file);
+        fileTitle = FrameTitleBuilder.getInstance().getFileTitle(project, file);
       }
 
       frame.setFileTitle(fileTitle, ioFile);
