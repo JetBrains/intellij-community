@@ -24,10 +24,8 @@ import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
 import com.intellij.vcs.log.graph.api.elements.GraphNode;
 import com.intellij.vcs.log.graph.utils.Flags;
 import com.intellij.vcs.log.graph.utils.IntList;
-import com.intellij.vcs.log.graph.utils.impl.BitSetFlags;
 import com.intellij.vcs.log.graph.utils.impl.CompressedIntList;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
 
@@ -44,11 +42,6 @@ public class PermanentLinearGraphImpl implements LinearGraph {
     mySimpleNodes = simpleNodes;
     myNodeToEdgeIndex = CompressedIntList.newInstance(nodeToEdgeIndex);
     myLongEdges = CompressedIntList.newInstance(longEdges);
-  }
-
-  @TestOnly
-  public PermanentLinearGraphImpl() {
-    this(new BitSetFlags(0), new int[0], new int[0]);
   }
 
   @Override
