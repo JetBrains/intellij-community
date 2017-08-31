@@ -383,7 +383,6 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
   }
 
   private static class MyQueryable implements Queryable {
-
     private final TabInfo myTab;
 
     MyQueryable(TabInfo tab) {
@@ -396,7 +395,8 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     }
   }
 
-  public static String calcTabTitle(final Project project, final VirtualFile file) {
+  @NotNull
+  public static String calcTabTitle(@NotNull Project project, @NotNull VirtualFile file) {
     for (EditorTabTitleProvider provider : Extensions.getExtensions(EditorTabTitleProvider.EP_NAME)) {
       final String result = provider.getEditorTabTitle(project, file);
       if (result != null) {
@@ -406,13 +406,16 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
 
     return file.getPresentableName();
   }
-  public static String calcFileName(final Project project,final  VirtualFile file) {
+
+  @NotNull
+  public static String calcFileName(@NotNull Project project, @NotNull VirtualFile file) {
     for (EditorTabTitleProvider provider : Extensions.getExtensions(EditorTabTitleProvider.EP_NAME)) {
       final String result = provider.getEditorTabTitle(project, file);
       if (result != null) {
         return result;
       }
     }
+
     return UniqueVFilePathBuilder.getInstance().getUniqueVirtualFilePath(project, file);
   }
 
@@ -707,7 +710,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
       return myPinned;
     }
   }
-  
+
   private final class MyTransferHandler extends TransferHandler {
     private final FileDropHandler myFileDropHandler = new FileDropHandler(null);
 
