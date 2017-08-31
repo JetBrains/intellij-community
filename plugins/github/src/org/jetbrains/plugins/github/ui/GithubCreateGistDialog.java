@@ -40,6 +40,7 @@ public class GithubCreateGistDialog extends DialogWrapper {
     myGithubCreateGistPanel.setAnonymous(settings.isAnonymousGist());
     myGithubCreateGistPanel.setPrivate(settings.isPrivateGist());
     myGithubCreateGistPanel.setOpenInBrowser(settings.isOpenInBrowserGist());
+    myGithubCreateGistPanel.setCopyURLToClipboard(settings.isCopyURLToClipboardGist());
 
     if (editor != null) {
       if (file != null) {
@@ -83,6 +84,7 @@ public class GithubCreateGistDialog extends DialogWrapper {
     final GithubSettings settings = GithubSettings.getInstance();
     settings.setAnonymousGist(myGithubCreateGistPanel.isAnonymous());
     settings.setOpenInBrowserGist(myGithubCreateGistPanel.isOpenInBrowser());
+    settings.setCopyURLToClipboardGist(myGithubCreateGistPanel.isCopyURLToClipboard());
     settings.setPrivateGist(myGithubCreateGistPanel.isPrivate());
     super.doOKAction();
   }
@@ -112,5 +114,9 @@ public class GithubCreateGistDialog extends DialogWrapper {
 
   public boolean isOpenInBrowser() {
     return myGithubCreateGistPanel.isOpenInBrowser();
+  }
+
+  public boolean isCopyURLToClipboard() {
+    return myGithubCreateGistPanel.isCopyURLToClipboard();
   }
 }

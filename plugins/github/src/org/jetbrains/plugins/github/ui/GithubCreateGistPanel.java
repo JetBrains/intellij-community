@@ -29,6 +29,7 @@ public class GithubCreateGistPanel {
   private JPanel myPanel;
   private JCheckBox myAnonymousCheckBox;
   private JCheckBox myOpenInBrowserCheckBox;
+  private JCheckBox myCopyURLToClipboardCheckBox;
   private JTextField myFileNameField;
   private JLabel myFileNameLabel;
 
@@ -50,6 +51,10 @@ public class GithubCreateGistPanel {
     return myOpenInBrowserCheckBox.isSelected();
   }
 
+  public boolean isCopyURLToClipboard() {
+    return myCopyURLToClipboardCheckBox.isSelected();
+  }
+
   public void setPrivate(final boolean isPrivate){
     myPrivateCheckBox.setSelected(isPrivate);
   }
@@ -60,6 +65,10 @@ public class GithubCreateGistPanel {
 
   public void setOpenInBrowser(final boolean openInBrowser) {
     myOpenInBrowserCheckBox.setSelected(openInBrowser);
+  }
+
+  public void setCopyURLToClipboard(final boolean copyURLToClipboard) {
+    myCopyURLToClipboardCheckBox.setSelected(copyURLToClipboard);
   }
 
   public void showFileNameField(@NotNull String filename) {

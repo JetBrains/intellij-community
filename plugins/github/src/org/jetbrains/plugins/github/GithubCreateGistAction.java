@@ -40,6 +40,9 @@ import org.jetbrains.plugins.github.api.requests.GithubGistRequest.FileContent;
 import org.jetbrains.plugins.github.ui.GithubCreateGistDialog;
 import org.jetbrains.plugins.github.util.*;
 
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -128,6 +131,12 @@ public class GithubCreateGistAction extends DumbAwareAction {
         }
         if (dialog.isOpenInBrowser()) {
           BrowserUtil.browse(url.get());
+        }
+        if (dialog.isCopyURLToClipboard()) {
+          StringSelection stringSelection = new StringSelection(url.get());
+
+          Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+          clipboard.setContents(stringSelection, null);
         }
         else {
           GithubNotifications.showInfoURL(project, "Gist Created Successfully", "Your gist url", url.get());
