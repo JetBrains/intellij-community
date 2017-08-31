@@ -79,7 +79,7 @@ public class PyDocumentationBuilder {
     myBody = new ChainIterable<>();
     myEpilog = new ChainIterable<>();
 
-    myResult.add(myProlog).addWith(TagCode, myBody).add(myEpilog); // pre-assemble; then add stuff to individual cats as needed
+    myResult.add(myProlog).addWith(TagCode.withAttribute("class", "descclassname"), myBody).add(myEpilog); // pre-assemble; then add stuff to individual cats as needed
     myResult = wrapInTag("html", wrapInTag("body", myResult));
     myReassignmentChain = new ChainIterable<>();
   }
