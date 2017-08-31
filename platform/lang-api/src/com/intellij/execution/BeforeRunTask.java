@@ -16,6 +16,7 @@
 
 package com.intellij.execution;
 
+import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.util.Key;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -27,6 +28,9 @@ import org.jetbrains.annotations.NotNull;
 public abstract class BeforeRunTask<T extends BeforeRunTask> implements Cloneable {
   @NotNull
   protected final Key<T> myProviderId;
+
+  // cannot be set to true by default, because RunManager.getHardcodedBeforeRunTasks creates before run task for each provider
+  // and some providers set enabled to true in the constructor to indicate, that before run task should be added to RC by default (on create)
   private boolean myIsEnabled;
 
   protected BeforeRunTask(@NotNull Key<T> providerId) {
@@ -47,7 +51,12 @@ public abstract class BeforeRunTask<T extends BeforeRunTask> implements Cloneabl
   }
 
   public void writeExternal(@NotNull Element element) {
-    element.setAttribute("enabled", String.valueOf(myIsEnabled));
+    if (this instanceof PersistentStateComponent) {
+      ((PersistentStateComponent)this).getState();
+    }
+    else {
+      element.setAttribute("enabled", String.valueOf(myIsEnabled));
+    }
   }
 
   public void readExternal(@NotNull Element element) {

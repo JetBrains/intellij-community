@@ -119,15 +119,24 @@ fun PersistentStateComponent<*>.deserializeAndLoadState(element: Element) {
   (this as PersistentStateComponent<Any>).loadState(state)
 }
 
+fun PersistentStateComponent<*>.serializeStateInto(element: Element) {
+  state?.let { serializeObjectInto(it, element) }
+}
+
+@Deprecated("")
 fun <T : Any> T.serializeInto(target: Element) {
-  if (this is Element) {
-    val iterator = children.iterator()
+  serializeObjectInto(this, target)
+}
+
+fun serializeObjectInto(o: Any, target: Element) {
+  if (o is Element) {
+    val iterator = o.children.iterator()
     for (child in iterator) {
       iterator.remove()
       target.addContent(child)
     }
 
-    val attributeIterator = attributes.iterator()
+    val attributeIterator = o.attributes.iterator()
     for (attribute in attributeIterator) {
       attributeIterator.remove()
       target.setAttribute(attribute)
@@ -135,8 +144,8 @@ fun <T : Any> T.serializeInto(target: Element) {
     return
   }
 
-  val binding = serializer.getClassBinding(javaClass)
-  (binding as BeanBinding).serializeInto(this, target, null)
+  val binding = serializer.getClassBinding(o.javaClass)
+  (binding as BeanBinding).serializeInto(o, target, getDefaultSerializationFilter())
 }
 
 private val serializer = object : XmlSerializerImpl.XmlSerializerBase() {
