@@ -37,6 +37,7 @@ import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessExtension;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Iconable;
@@ -212,7 +213,7 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
     }
   }
 
-  public static class FilePresentation implements FileIconProvider, EditorTabTitleProvider {
+  public static class FilePresentation implements FileIconProvider, EditorTabTitleProvider, DumbAware {
 
     @Nullable
     @Override
