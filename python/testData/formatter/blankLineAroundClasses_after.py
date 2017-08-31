@@ -1,5 +1,4 @@
 class Adjunct:
-
     def apply(self, right, arg):
         pass
 

@@ -837,6 +837,7 @@ public class PyFormatterTest extends PyTestCase {
 
   // PY-19705
   public void testBlankLinesAroundFirstMethod() {
+    getPythonCodeStyleSettings().BLANK_LINES_BEFORE_FIRST_METHOD = 1;
     doTest();
   }
 

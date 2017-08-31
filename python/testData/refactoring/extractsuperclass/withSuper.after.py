@@ -1,5 +1,4 @@
 class Suppa(object):
-
     def foo(self):
         print "bar"
 

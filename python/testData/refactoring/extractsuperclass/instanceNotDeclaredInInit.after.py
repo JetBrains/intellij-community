@@ -1,5 +1,4 @@
 class Parent(object):
-
     def __init__(self):
         self.eggs = 12
 

@@ -737,7 +737,7 @@ public class PyBlock implements ASTBlock {
         if (myNode.getElementType() == PyElementTypes.CLASS_DECLARATION) {
           final PyStatement[] statements = ((PyStatementList)psi2).getStatements();
           if (statements.length > 0 && statements[0] instanceof PyFunction) {
-            return getBlankLinesForOption(settings.BLANK_LINES_AROUND_METHOD);
+            return getBlankLinesForOption(pySettings.BLANK_LINES_BEFORE_FIRST_METHOD);
           }
         }
         if (childType1 == PyTokenTypes.COLON && needLineBreakInStatement()) {
@@ -816,9 +816,9 @@ public class PyBlock implements ASTBlock {
   }
 
   @NotNull
-  private Spacing getBlankLinesForOption(int option) {
-    final int blankLines = option + 1;
-    return Spacing.createSpacing(0, 0, blankLines,
+  private Spacing getBlankLinesForOption(int minBlankLines) {
+    final int lineFeeds = minBlankLines + 1;
+    return Spacing.createSpacing(0, 0, lineFeeds,
                                  myContext.getSettings().KEEP_LINE_BREAKS,
                                  myContext.getSettings().KEEP_BLANK_LINES_IN_DECLARATIONS);
   }
