@@ -17,6 +17,7 @@ package com.jetbrains.python.intentions;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.psi.PsiFile;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
@@ -51,10 +52,7 @@ public class  PyIntentionTest extends PyTestCase {
   }
 
   private void doTest(String hint) {
-    myFixture.configureByFile("intentions/" + getTestName(true) + ".py");
-    final IntentionAction action = myFixture.findSingleIntention(hint);
-    myFixture.launchAction(action);
-    myFixture.checkResultByFile("intentions/" + getTestName(true) + "_after.py");
+    doTest(hint, false);
   }
 
   private void doTest(String hint, LanguageLevel languageLevel) {
@@ -68,8 +66,9 @@ public class  PyIntentionTest extends PyTestCase {
   }
 
   private void doTest(String hint, boolean ignoreWhiteSpaces) {
-    myFixture.configureByFile("intentions/" + getTestName(true) + ".py");
+    final PsiFile file = myFixture.configureByFile("intentions/" + getTestName(true) + ".py");
     final IntentionAction action = myFixture.findSingleIntention(hint);
+    assertSdkRootsNotParsed(file);
     myFixture.launchAction(action);
     myFixture.checkResultByFile("intentions/" + getTestName(true) + "_after.py", ignoreWhiteSpaces);
   }
@@ -80,9 +79,10 @@ public class  PyIntentionTest extends PyTestCase {
    * @param hint
    */
   private void doNegativeTest(String hint) {
-    myFixture.configureByFile("intentions/" + getTestName(true) + ".py");
+    final PsiFile file = myFixture.configureByFile("intentions/" + getTestName(true) + ".py");
     List<IntentionAction> ints = myFixture.filterAvailableIntentions(hint);
     assertEmpty(ints);
+    assertSdkRootsNotParsed(file);
   }
 
   public void testConvertDictComp() {
