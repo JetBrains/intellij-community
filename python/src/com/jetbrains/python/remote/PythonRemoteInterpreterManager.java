@@ -16,6 +16,7 @@
 package com.jetbrains.python.remote;
 
 import com.google.common.base.Function;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.ParamsGroup;
@@ -163,6 +164,13 @@ public abstract class PythonRemoteInterpreterManager {
   public abstract Pair<Supplier<String>, JPanel> createServerBrowserForm(@NotNull final Sdk remoteSdk)
     throws ExecutionException, InterruptedException;
 
+
+  public abstract ListenableFuture<Boolean> uploadHelpersAsync(@Nullable Sdk sdk,
+                                                               @Nullable Project project,
+                                                               @Nullable Component component,
+                                                               @NotNull RemoteSdkCredentials credentials);
+
+
   /**
    * Short-cut to get {@link PyProjectSynchronizer} for sdk or null if sdk does not have any
    */
@@ -247,4 +255,13 @@ public abstract class PythonRemoteInterpreterManager {
   }
 
   public abstract void runVagrant(@NotNull String vagrantFolder, @Nullable String machineName) throws ExecutionException;
+
+  /**
+   * @author traff
+   */
+  public static class PyHelpersNotReadyException extends RuntimeException {
+    public PyHelpersNotReadyException(Throwable cause) {
+      super("Python helpers are not copied yet to the remote host. Please wait until remote interpreter initialization finishes.", cause);
+    }
+  }
 }
