@@ -18,7 +18,6 @@ package com.intellij.ide.ui.laf.intellij;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI;
 import com.intellij.openapi.ui.ErrorBorderCapable;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ColorPanel;
 import com.intellij.ui.Gray;
 import com.intellij.util.ui.JBUI;
@@ -83,8 +82,7 @@ public class MacIntelliJTextBorder implements Border, UIResource, ErrorBorderCap
   public void paint(Component c, Graphics2D g2, int width, int height, int arc) {
     clipForBorder(c, g2, width, height);
 
-    Object eop = ((JComponent)c).getClientProperty("JComponent.error.outline");
-    if (Registry.is("ide.inplace.errors.outline") && Boolean.parseBoolean(String.valueOf(eop))) {
+    if (((JComponent)c).getClientProperty("JComponent.error.outline") == Boolean.TRUE) {
       DarculaUIUtil.paintErrorBorder(g2, width, height, arc, isSymmetric(), isFocused(c));
     } else if (isFocused(c)) {
       DarculaUIUtil.paintFocusBorder(g2, width, height, arc, isSymmetric());

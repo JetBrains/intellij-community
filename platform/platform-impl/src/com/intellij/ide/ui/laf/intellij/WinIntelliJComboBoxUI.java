@@ -18,7 +18,6 @@ package com.intellij.ide.ui.laf.intellij;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.PopupMenuListenerAdapter;
 import com.intellij.util.ui.JBDimension;
@@ -42,6 +41,9 @@ import java.awt.event.*;
 import java.awt.geom.Path2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.ACTIVE_ERROR_COLOR;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.INACTIVE_ERROR_COLOR;
 
 /**
  * @author Konstantin Bulenkov
@@ -428,11 +430,14 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
     Graphics2D g2 = (Graphics2D)g.create();
 
     try {
-      g2.translate(x, y);
-
       checkFocus();
-      if (Registry.is("ide.inplace.errors.outline") && comboBox.getClientProperty("JComponent.error.outline") == Boolean.TRUE) {
-        DarculaUIUtil.paintErrorBorder(g2, width, height, 0, true, hasFocus);
+
+      Rectangle r = new Rectangle(x, y, width, height);
+      int bw = 1;
+
+      if (comboBox.getClientProperty("JComponent.error.outline") == Boolean.TRUE) {
+        g2.setColor(hasFocus ? ACTIVE_ERROR_COLOR : INACTIVE_ERROR_COLOR);
+        bw = 2;
       } else if (comboBox.isEnabled()) {
         if (comboBox.isEditable()) {
           if (hasFocus) {
@@ -449,20 +454,21 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
             g2.setColor(UIManager.getColor("Button.intellij.native.borderColor"));
           }
         }
+        JBInsets.removeFrom(r, JBUI.insets(1));
       } else {
         g2.setColor(UIManager.getColor("Button.intellij.native.borderColor"));
 
         float alpha = comboBox.isEditable() ? 0.35f : 0.47f;
         g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+
+        JBInsets.removeFrom(r, JBUI.insets(1));
       }
 
       Path2D border = new Path2D.Double(Path2D.WIND_EVEN_ODD);
-      Rectangle outerRect = new Rectangle(width, height);
-      JBInsets.removeFrom(outerRect, JBUI.insets(1));
-      border.append(outerRect, false);
+      border.append(r, false);
 
-      Rectangle innerRect = new Rectangle(outerRect);
-      JBInsets.removeFrom(innerRect, JBUI.insets(1));
+      Rectangle innerRect = new Rectangle(r);
+      JBInsets.removeFrom(innerRect, JBUI.insets(bw));
       border.append(innerRect, false);
       g2.fill(border);
     } finally {

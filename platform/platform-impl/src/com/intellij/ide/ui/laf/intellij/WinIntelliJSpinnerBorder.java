@@ -16,6 +16,7 @@
 package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaSpinnerBorder;
+import com.intellij.openapi.ui.ErrorBorderCapable;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 
@@ -23,7 +24,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Path2D;
 
-public class WinIntelliJSpinnerBorder extends DarculaSpinnerBorder {
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.ACTIVE_ERROR_COLOR;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.INACTIVE_ERROR_COLOR;
+
+public class WinIntelliJSpinnerBorder extends DarculaSpinnerBorder implements ErrorBorderCapable {
   @Override
   public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
     if (!(c instanceof JSpinner)) return;
@@ -32,26 +36,30 @@ public class WinIntelliJSpinnerBorder extends DarculaSpinnerBorder {
     Graphics2D g2 = (Graphics2D)g.create();
     try {
       Rectangle r = new Rectangle(x, y, width, height);
-      JBInsets.removeFrom(r, JBUI.insets(1, 1, 1, WinIntelliJSpinnerUI.BUTTON_WIDTH - 1));
 
-      boolean hover = spinner.getClientProperty(WinIntelliJSpinnerUI.HOVER_PROPERTY) == Boolean.TRUE;
-      if (c.isEnabled()) {
-
+      int bw = 1;
+      if (spinner.getClientProperty("JComponent.error.outline") == Boolean.TRUE) {
+        g2.setColor(c.hasFocus() ? ACTIVE_ERROR_COLOR : INACTIVE_ERROR_COLOR);
+        bw = 2;
+      } else if (c.isEnabled()) {
+        boolean hover = spinner.getClientProperty(WinIntelliJSpinnerUI.HOVER_PROPERTY) == Boolean.TRUE;
         if (DarculaSpinnerBorder.isFocused(c)) {
           g2.setColor(UIManager.getColor("TextField.focusedBorderColor"));
         } else {
           g2.setColor(UIManager.getColor(hover ? "TextField.hoverBorderColor" : "TextField.borderColor"));
         }
+        JBInsets.removeFrom(r, JBUI.insets(1, 1, 1, WinIntelliJSpinnerUI.BUTTON_WIDTH - 1));
       } else {
         g2.setColor(UIManager.getColor("Button.intellij.native.borderColor"));
         g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.35f));
+        JBInsets.removeFrom(r, JBUI.insets(1, 1, 1, WinIntelliJSpinnerUI.BUTTON_WIDTH - 1));
       }
 
       Path2D border = new Path2D.Double(Path2D.WIND_EVEN_ODD);
       border.append(r, false);
 
       Rectangle innerRect = new Rectangle(r);
-      JBInsets.removeFrom(innerRect, JBUI.insets(1));
+      JBInsets.removeFrom(innerRect, JBUI.insets(bw));
       border.append(innerRect, false);
 
       g2.fill(border);

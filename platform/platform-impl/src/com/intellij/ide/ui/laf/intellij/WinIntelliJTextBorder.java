@@ -15,10 +15,8 @@
  */
 package com.intellij.ide.ui.laf.intellij;
 
-import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder;
 import com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ColorPanel;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -27,6 +25,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Path2D;
 
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.ACTIVE_ERROR_COLOR;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.INACTIVE_ERROR_COLOR;
 import static com.intellij.ide.ui.laf.intellij.WinIntelliJTextFieldUI.HOVER_PROPERTY;
 import static com.intellij.ide.ui.laf.intellij.WinIntelliJTextFieldUI.adjustInWrapperRect;
 
@@ -46,7 +46,8 @@ public class WinIntelliJTextBorder extends DarculaTextBorder {
 
   @Override
   public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-    if (((JComponent)c).getClientProperty("JTextField.Search.noBorderRing") == Boolean.TRUE) return;
+    JComponent jc = (JComponent)c;
+    if (jc.getClientProperty("JTextField.Search.noBorderRing") == Boolean.TRUE) return;
 
     Graphics2D g2 = (Graphics2D)g.create();
     try {
@@ -54,19 +55,19 @@ public class WinIntelliJTextBorder extends DarculaTextBorder {
 
       adjustInWrapperRect(r, c);
 
-      JBInsets.removeFrom(r, JBUI.insets(1));
-
-      Object eop = ((JComponent)c).getClientProperty("JComponent.error.outline");
-      if (Registry.is("ide.inplace.errors.outline") && Boolean.parseBoolean(String.valueOf(eop))) {
-        DarculaUIUtil.paintErrorBorder(g2, r.width, r.height, 0, true, c.hasFocus());
+      int bw = 1;
+      if (jc.getClientProperty("JComponent.error.outline") == Boolean.TRUE) {
+        g2.setColor(c.hasFocus() ? ACTIVE_ERROR_COLOR : INACTIVE_ERROR_COLOR);
+        bw = 2;
       } else {
         //boolean editable = !(c instanceof JTextComponent) || ((JTextComponent)c).isEditable();
-        JComponent jc = (JComponent)c;
         if (c.hasFocus()) {
           g2.setColor(UIManager.getColor("TextField.focusedBorderColor"));
-        } else if (jc.getClientProperty(HOVER_PROPERTY) == Boolean.TRUE) {
+        }
+        else if (jc.getClientProperty(HOVER_PROPERTY) == Boolean.TRUE) {
           g2.setColor(UIManager.getColor("TextField.hoverBorderColor"));
-        } else{
+        }
+        else {
           g2.setColor(UIManager.getColor(jc.isEnabled() ? "TextField.borderColor" : "Button.intellij.native.borderColor"));
         }
 
@@ -74,18 +75,20 @@ public class WinIntelliJTextBorder extends DarculaTextBorder {
           g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.47f));
         }
 
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
-
-        Path2D border = new Path2D.Double(Path2D.WIND_EVEN_ODD);
-        border.append(r, false);
-
-        Rectangle innerRect = new Rectangle(r);
-        JBInsets.removeFrom(innerRect, JBUI.insets(1));
-        border.append(innerRect, false);
-
-        g2.fill(border);
+        JBInsets.removeFrom(r, JBUI.insets(1));
       }
+
+      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+      g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
+
+      Path2D border = new Path2D.Double(Path2D.WIND_EVEN_ODD);
+      border.append(r, false);
+
+      Rectangle innerRect = new Rectangle(r);
+      JBInsets.removeFrom(innerRect, JBUI.insets(bw));
+      border.append(innerRect, false);
+
+      g2.fill(border);
     } finally {
       g2.dispose();
     }
