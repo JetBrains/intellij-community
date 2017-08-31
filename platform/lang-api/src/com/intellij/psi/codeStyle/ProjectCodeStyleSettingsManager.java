@@ -16,10 +16,13 @@
 
 package com.intellij.psi.codeStyle;
 
+import com.intellij.ide.BrowserUtil;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
@@ -170,6 +173,18 @@ public class ProjectCodeStyleSettingsManager extends CodeStyleSettingsManager {
             ApplicationBundle.message("project.code.style.migration.title"),
             ApplicationBundle.message("project.code.style.migration.message", projectName),
             NotificationType.INFORMATION);
+      addAction(new ShowMoreInfoAction());
+    }
+  }
+
+  private static class ShowMoreInfoAction extends AnAction {
+    public ShowMoreInfoAction() {
+      super("More info");
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      BrowserUtil.open("https://confluence.jetbrains.com/display/IDEADEV/New+project+code+style+settings+format+in+2017.3");
     }
   }
 
