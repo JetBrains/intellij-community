@@ -58,21 +58,23 @@ public class CompareRevisionsAction implements AnActionExtensionProvider {
     VcsHistorySession historySession = e.getData(VcsDataKeys.HISTORY_SESSION);
     FilePath filePath = e.getData(VcsDataKeys.FILE_PATH);
     VcsHistoryProvider provider = e.getData(VcsDataKeys.HISTORY_PROVIDER);
-    if (revisions == null || historySession == null || filePath == null || provider == null) {
-      e.getPresentation().setEnabled(false);
-      return;
-    }
 
-    if (revisions.length == 1) {
-      e.getPresentation().setEnabled(historySession.isContentAvailable(revisions[0]) &&
-                                     e.getData(FileHistoryPanelImpl.PREVIOUS_REVISION_FOR_DIFF) != null);
+    boolean isEnabled;
+    if (revisions == null || historySession == null || filePath == null || provider == null) {
+      isEnabled = false;
+    }
+    else if (revisions.length == 1) {
+      isEnabled = historySession.isContentAvailable(revisions[0]) &&
+                  e.getData(FileHistoryPanelImpl.PREVIOUS_REVISION_FOR_DIFF) != null;
     }
     else if (revisions.length == 2) {
-      e.getPresentation().setEnabled(historySession.isContentAvailable(revisions[0]) &&
-                                     historySession.isContentAvailable(revisions[revisions.length - 1]));
+      isEnabled = historySession.isContentAvailable(revisions[0]) &&
+                  historySession.isContentAvailable(revisions[revisions.length - 1]);
     }
     else {
-      e.getPresentation().setEnabled(false);
+      isEnabled = false;
     }
+
+    e.getPresentation().setEnabled(isEnabled);
   }
 }
