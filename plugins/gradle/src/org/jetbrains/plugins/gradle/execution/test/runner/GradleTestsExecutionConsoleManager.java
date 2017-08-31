@@ -71,14 +71,12 @@ public class GradleTestsExecutionConsoleManager
                                                             @NotNull final ExternalSystemRunConfiguration configuration,
                                                             @NotNull final Executor executor,
                                                             @NotNull final ExecutionEnvironment env,
-                                                            @NotNull final ProcessHandler processHandler) throws ExecutionException {
+                                                            @NotNull final ProcessHandler processHandler) {
     final GradleConsoleProperties consoleProperties = new GradleConsoleProperties(configuration, executor);
     String testFrameworkName = configuration.getSettings().getExternalSystemId().getReadableName();
     String splitterPropertyName = SMTestRunnerConnectionUtil.getSplitterPropertyName(testFrameworkName);
     final GradleTestsExecutionConsole consoleView = new GradleTestsExecutionConsole(consoleProperties, splitterPropertyName);
-    consoleView.initTaskExecutionView(project, processHandler, task.getId());
     SMTestRunnerConnectionUtil.initConsoleView(consoleView, testFrameworkName);
-    consoleView.attachToProcess(processHandler);
 
     final TestTreeView testTreeView = consoleView.getResultsViewer().getTreeView();
     if (testTreeView != null) {

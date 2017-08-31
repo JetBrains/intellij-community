@@ -15,13 +15,19 @@
  */
 package com.intellij.build.events.impl;
 
-import com.intellij.build.BuildConsoleView;
 import com.intellij.build.events.StartBuildEvent;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.ui.ConsoleView;
+import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.util.Consumer;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author Vladislav.Soroka
@@ -31,9 +37,13 @@ public class StartBuildEventImpl extends StartEventImpl implements StartBuildEve
   private final String myBuildTitle;
   @Nullable
   private ProcessHandler myProcessHandler;
-  private Consumer<BuildConsoleView> myAttachedConsoleConsumer;
+  private Consumer<ConsoleView> myAttachedConsoleConsumer;
+  @NotNull
+  private List<AnAction> myRestartActions = new SmartList<>();
   @Nullable
-  private AnAction myRerunAction;
+  private ExecutionConsole myExecutionConsole;
+  @Nullable
+  private ExecutionEnvironment myExecutionEnvironment;
 
   public StartBuildEventImpl(@NotNull Object eventId,
                              @NotNull String buildTitle,
@@ -56,25 +66,52 @@ public class StartBuildEventImpl extends StartEventImpl implements StartBuildEve
 
   @Nullable
   @Override
-  public AnAction getRerunAction() {
-    return myRerunAction;
+  public ExecutionEnvironment getExecutionEnvironment() {
+    return myExecutionEnvironment;
+  }
+
+  @NotNull
+  @Override
+  public AnAction[] getRestartActions() {
+    return myRestartActions.toArray(new AnAction[myRestartActions.size()]);
   }
 
   @Nullable
   @Override
-  public Consumer<BuildConsoleView> getAttachedConsoleConsumer() {
+  public ExecutionConsole getExecutionConsole() {
+    return myExecutionConsole;
+  }
+
+  @Nullable
+  @Override
+  public Consumer<ConsoleView> getAttachedConsoleConsumer() {
     return myAttachedConsoleConsumer;
   }
 
   public StartBuildEventImpl withProcessHandler(@Nullable ProcessHandler processHandler,
-                                                @Nullable Consumer<BuildConsoleView> attachedConsoleConsumer) {
+                                                @Nullable Consumer<ConsoleView> attachedConsoleConsumer) {
     myProcessHandler = processHandler;
     myAttachedConsoleConsumer = attachedConsoleConsumer;
     return this;
   }
 
-  public StartBuildEventImpl withRerunAction(@Nullable AnAction anAction) {
-    myRerunAction = anAction;
+  public StartBuildEventImpl withRestartAction(@Nullable AnAction anAction) {
+    myRestartActions.add(anAction);
+    return this;
+  }
+
+  public StartBuildEventImpl withRestartActions(AnAction... actions) {
+    myRestartActions.addAll(Arrays.asList(actions));
+    return this;
+  }
+
+  public StartBuildEventImpl withConsoleView(ExecutionConsole executionConsole) {
+    myExecutionConsole = executionConsole;
+    return this;
+  }
+
+  public StartBuildEventImpl withExecutionEnvironment(ExecutionEnvironment env) {
+    myExecutionEnvironment = env;
     return this;
   }
 }

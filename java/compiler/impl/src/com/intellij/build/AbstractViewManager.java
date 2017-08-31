@@ -19,12 +19,13 @@ import com.intellij.build.events.*;
 import com.intellij.execution.actions.StopProcessAction;
 import com.intellij.execution.console.DuplexConsoleView;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ThreeComponentsSplitter;
 import com.intellij.openapi.util.Disposer;
@@ -34,15 +35,13 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.impl.ContentImpl;
-import com.intellij.util.Alarm;
-import com.intellij.util.Consumer;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -70,7 +69,7 @@ public abstract class AbstractViewManager implements BuildProgressListener, Disp
   @Nullable
   private final JBList<BuildInfo> myBuildsList;
   private final Map<Object, BuildInfo> myBuildsMap;
-  private final Map<BuildInfo, DuplexConsoleView<BuildConsoleView, BuildConsoleView>> myViewMap;
+  private final Map<BuildInfo, DuplexConsoleView<BuildConsoleView, ConsoleView>> myViewMap;
   private volatile Content myContent;
   private volatile DefaultActionGroup myToolbarActions;
 
@@ -132,7 +131,7 @@ public abstract class AbstractViewManager implements BuildProgressListener, Disp
             }
           }
           if (shouldBeCleared) {
-            for (DuplexConsoleView<BuildConsoleView, BuildConsoleView> view : myViewMap.values()) {
+            for (DuplexConsoleView<BuildConsoleView, ConsoleView> view : myViewMap.values()) {
               view.clear();
               Disposer.dispose(view);
             }
@@ -167,40 +166,25 @@ public abstract class AbstractViewManager implements BuildProgressListener, Disp
         }
 
         ProcessHandler processHandler = ((StartBuildEvent)event).getProcessHandler();
-        DuplexConsoleView<BuildConsoleView, BuildConsoleView> view = myViewMap.computeIfAbsent(buildInfo, info -> {
-          BuildTextConsoleView textConsoleView = new BuildTextConsoleView(myProject, false, "CONSOLE");
-          textConsoleView.setConsoleActionsProvider(actions -> {
-            final DefaultActionGroup actionGroup = new DefaultActionGroup();
-            AnAction rerunAction = ((StartBuildEvent)event).getRerunAction();
-            if(rerunAction != null) {
-              actionGroup.add(rerunAction);
-            }
-            if (processHandler != null) {
-              actionGroup.add(new StopProcessAction("Stop", "Stop", processHandler));
-            }
-            actionGroup.addSeparator();
-            actionGroup.addAll(actions);
-            if (actions.length > 0) {
-              actionGroup.addSeparator();
-            }
-            return new AnAction[]{actionGroup};
-          });
-          final DuplexConsoleView<BuildConsoleView, BuildConsoleView> duplexConsoleView =
-            new DuplexConsoleView<>(textConsoleView, new BuildTreeConsoleView(myProject));
+        DuplexConsoleView<BuildConsoleView, ConsoleView> view = myViewMap.computeIfAbsent(buildInfo, info -> {
+          ExecutionConsole executionConsole = ((StartBuildEvent)event).getExecutionConsole();
+          if (executionConsole == null) {
+            executionConsole = new BuildTextConsoleView(myProject);
+          }
+          final DuplexConsoleView<BuildConsoleView, ConsoleView> duplexConsoleView =
+            new BuildDuplexConsoleView(executionConsole, ((StartBuildEvent)event));
           duplexConsoleView.setDisableSwitchConsoleActionOnProcessEnd(false);
           duplexConsoleView.getSwitchConsoleActionPresentation().setIcon(AllIcons.Actions.ChangeView);
-          duplexConsoleView.getSwitchConsoleActionPresentation().setText("Toggle tree/text mode");
-          if(isConsoleEnabledByDefault()) {
-            duplexConsoleView.enableConsole(true);
-          }
+          duplexConsoleView.getSwitchConsoleActionPresentation().setText("Toggle view");
+          duplexConsoleView.enableConsole(!isConsoleEnabledByDefault());
           if (processHandler != null) {
             if (!processHandler.isStartNotified()) {
               processHandler.startNotify();
             }
-            textConsoleView.attachToProcess(processHandler);
-            Consumer<BuildConsoleView> attachedConsoleConsumer = ((StartBuildEvent)event).getAttachedConsoleConsumer();
+            ((ConsoleView)executionConsole).attachToProcess(processHandler);
+            Consumer<ConsoleView> attachedConsoleConsumer = ((StartBuildEvent)event).getAttachedConsoleConsumer();
             if (attachedConsoleConsumer != null) {
-              attachedConsoleConsumer.consume(textConsoleView);
+              attachedConsoleConsumer.consume((ConsoleView)executionConsole);
             }
           }
           Disposer.register(myThreeComponentsSplitter, duplexConsoleView);
@@ -235,8 +219,8 @@ public abstract class AbstractViewManager implements BuildProgressListener, Disp
           myBuildsList.setSelectedIndex(0);
           myThreeComponentsSplitter.repaint();
 
-          for (DuplexConsoleView<BuildConsoleView, BuildConsoleView> consoleView : myViewMap.values()) {
-            BuildConsoleView buildConsoleView = consoleView.getSecondaryConsoleView();
+          for (DuplexConsoleView<BuildConsoleView, ConsoleView> consoleView : myViewMap.values()) {
+            BuildConsoleView buildConsoleView = consoleView.getPrimaryConsoleView();
             if (buildConsoleView instanceof BuildTreeConsoleView) {
               ((BuildTreeConsoleView)buildConsoleView).hideRootNode();
             }
@@ -263,12 +247,18 @@ public abstract class AbstractViewManager implements BuildProgressListener, Disp
 
     runnables.add(() -> {
       final BuildInfo buildInfo = myBuildsMap.get(event.getId());
-      DuplexConsoleView<BuildConsoleView, BuildConsoleView> view = myViewMap.get(buildInfo);
+      DuplexConsoleView<BuildConsoleView, ConsoleView> view = myViewMap.get(buildInfo);
       if (event instanceof OutputBuildEvent) {
-        view.getPrimaryConsoleView().onEvent(event);
+        ConsoleView consoleView = view.getSecondaryConsoleView();
+        if (consoleView instanceof BuildConsoleView) {
+          ((BuildConsoleView)consoleView).onEvent(event);
+        }
+        else {
+          consoleView.print(event.getMessage(), ConsoleViewContentType.NORMAL_OUTPUT);
+        }
       }
       else {
-        view.getSecondaryConsoleView().onEvent(event);
+        view.getPrimaryConsoleView().onEvent(event);
       }
     });
 
@@ -285,7 +275,7 @@ public abstract class AbstractViewManager implements BuildProgressListener, Disp
               BuildInfo selectedBuild = myBuildsList.getSelectedValue();
               if (selectedBuild == null) return;
 
-              DuplexConsoleView<BuildConsoleView, BuildConsoleView> view = myViewMap.get(selectedBuild);
+              DuplexConsoleView<BuildConsoleView, ConsoleView> view = myViewMap.get(selectedBuild);
               JComponent lastComponent = myThreeComponentsSplitter.getLastComponent();
               if (view != null && lastComponent != view.getComponent()) {
                 myThreeComponentsSplitter.setLastComponent(view.getComponent());
@@ -399,6 +389,67 @@ public abstract class AbstractViewManager implements BuildProgressListener, Disp
         return AllIcons.Process.State.YellowStr;
       }
       return AllIcons.Process.State.GreenOK;
+    }
+  }
+
+  private class BuildDuplexConsoleView extends DuplexConsoleView<BuildConsoleView, ConsoleView> implements DataProvider {
+    private final ExecutionConsole myExecutionConsole;
+    private final StartBuildEvent myEvent;
+
+    public BuildDuplexConsoleView(ExecutionConsole executionConsole, StartBuildEvent event) {
+      super(new BuildTreeConsoleView(AbstractViewManager.this.myProject), (ConsoleView)executionConsole);
+      myExecutionConsole = executionConsole;
+      myEvent = event;
+    }
+
+    @NotNull
+    @Override
+    public AnAction[] createConsoleActions() {
+      final DefaultActionGroup textActionGroup = new DefaultActionGroup() {
+        @Override
+        public void update(AnActionEvent e) {
+          super.update(e);
+          e.getPresentation().setVisible(!BuildDuplexConsoleView.this.isPrimaryConsoleEnabled());
+        }
+      };
+      final AnAction[] consoleActions = ((ConsoleView)myExecutionConsole).createConsoleActions();
+      for (AnAction anAction : consoleActions) {
+        textActionGroup.add(anAction);
+      }
+
+      final List<AnAction> anActions = ContainerUtil.newArrayList();
+      final DefaultActionGroup actionGroup = new DefaultActionGroup();
+      AnAction[] restartActions = myEvent.getRestartActions();
+      for (AnAction anAction : restartActions) {
+        actionGroup.add(anAction);
+      }
+      if (myEvent.getProcessHandler() != null) {
+        actionGroup.add(new StopProcessAction("Stop", "Stop", myEvent.getProcessHandler()));
+      }
+      actionGroup.addSeparator();
+      AnAction[] actions = super.createConsoleActions();
+      actionGroup.addAll(actions);
+      if (actions.length > 0) {
+        actionGroup.addSeparator();
+      }
+      anActions.add(actionGroup);
+      anActions.add(textActionGroup);
+      return ArrayUtil.toObjectArray(anActions, AnAction.class);
+    }
+
+    @Nullable
+    @Override
+    public Object getData(String dataId) {
+      Object data = super.getData(dataId);
+      if (data != null) return data;
+      if (LangDataKeys.RUN_PROFILE.is(dataId)) {
+        ExecutionEnvironment environment = myEvent.getExecutionEnvironment();
+        return environment == null ? null : environment.getRunProfile();
+      }
+      if (LangDataKeys.EXECUTION_ENVIRONMENT.is(dataId)) {
+        return myEvent.getExecutionEnvironment();
+      }
+      return null;
     }
   }
 }

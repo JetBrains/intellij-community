@@ -25,10 +25,14 @@ import com.intellij.build.events.impl.SuccessResultImpl;
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
+import com.intellij.execution.console.DuplexConsoleView;
 import com.intellij.execution.executors.DefaultDebugExecutor;
+import com.intellij.execution.impl.ConsoleViewImpl;
+import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -36,13 +40,14 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.editor.FoldingModel;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
+import com.intellij.openapi.externalSystem.execution.ExternalSystemExecutionConsoleManager;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter;
+import com.intellij.openapi.externalSystem.model.task.*;
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemTaskExecutionEvent;
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemExecuteTaskTask;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
@@ -53,10 +58,7 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.DirectoryIndex;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -65,6 +67,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.net.NetUtils;
+import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.xmlb.Accessor;
 import com.intellij.util.xmlb.SerializationFilter;
@@ -248,6 +251,14 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
       copyUserDataTo(task);
 
       final ExternalSystemProcessHandler processHandler = new ExternalSystemProcessHandler(task);
+      final ExternalSystemExecutionConsoleManager<ExternalSystemRunConfiguration, ExecutionConsole, ProcessHandler>
+        consoleManager = getConsoleManagerFor(task);
+
+      final ExecutionConsole consoleView =
+        consoleManager.attachExecutionConsole(task, myProject, myConfiguration, executor, myEnv, processHandler);
+      AnAction[] restartActions = consoleManager.getRestartActions(consoleView);
+
+      Disposer.register(myProject, consoleView);
       Class<? extends BuildProgressListener> progressListenerClazz = task.getUserData(PROGRESS_LISTENER_KEY);
       final BuildProgressListener progressListener = progressListenerClazz != null
                                                      ? ServiceManager.getService(myProject, progressListenerClazz)
@@ -300,8 +311,14 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
               rerunTaskAction.getTemplatePresentation().setIcon(AllIcons.Actions.Restart);
               progressListener.onEvent(
                 new StartBuildEventImpl(id, executionName, eventTime, "running...")
-                  .withProcessHandler(processHandler, view -> processHandler.notifyTextAvailable(greeting, ProcessOutputTypes.SYSTEM))
-                  .withRerunAction(rerunTaskAction));
+                  .withProcessHandler(processHandler, view -> {
+                    processHandler.notifyTextAvailable(greeting, ProcessOutputTypes.SYSTEM);
+                    foldGreetingOrFarewell(consoleView, greeting, true);
+                  })
+                  .withRestartAction(rerunTaskAction)
+                  .withRestartActions(restartActions)
+                  .withConsoleView(consoleView)
+                  .withExecutionEnvironment(myEnv));
             }
           }
 
@@ -311,7 +328,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
               processHandler.notifyTextAvailable("\r", ProcessOutputTypes.SYSTEM);
               myResetGreeting = false;
             }
-            processHandler.notifyTextAvailable(text, stdOut ? ProcessOutputTypes.STDOUT : ProcessOutputTypes.STDERR);
+            consoleManager.onOutput(consoleView, processHandler, text, stdOut ? ProcessOutputTypes.STDOUT : ProcessOutputTypes.STDERR);
           }
 
           @Override
@@ -355,12 +372,71 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
                 ExternalSystemBundle.message("run.text.ended.single.task", endDateTime, mySettings.toString());
             }
             processHandler.notifyTextAvailable(farewell, ProcessOutputTypes.SYSTEM);
+            foldGreetingOrFarewell(consoleView, farewell, false);
             processHandler.notifyProcessTerminated(0);
           }
         };
         task.execute(ArrayUtil.prepend(taskListener, ExternalSystemTaskNotificationListener.EP_NAME.getExtensions()));
       });
       return new DefaultExecutionResult(null, processHandler);
+    }
+  }
+
+  @NotNull
+  private static ExternalSystemExecutionConsoleManager<ExternalSystemRunConfiguration, ExecutionConsole, ProcessHandler>
+  getConsoleManagerFor(@NotNull ExternalSystemTask task) {
+    for (ExternalSystemExecutionConsoleManager executionConsoleManager : ExternalSystemExecutionConsoleManager.EP_NAME.getExtensions()) {
+      if (executionConsoleManager.isApplicableFor(task)) {
+        //noinspection unchecked
+        return executionConsoleManager;
+      }
+    }
+
+    return new DefaultExternalSystemExecutionConsoleManager();
+  }
+
+  private static void foldGreetingOrFarewell(ExecutionConsole consoleView, String text, boolean isGreeting) {
+    int limit = 100;
+    if (text.length() < limit) {
+      return;
+    }
+    final ConsoleViewImpl consoleViewImpl;
+    if (consoleView instanceof ConsoleViewImpl) {
+      consoleViewImpl = (ConsoleViewImpl)consoleView;
+    }
+    else if (consoleView instanceof DuplexConsoleView) {
+      DuplexConsoleView duplexConsoleView = (DuplexConsoleView)consoleView;
+      if (duplexConsoleView.getPrimaryConsoleView() instanceof ConsoleViewImpl) {
+        consoleViewImpl = (ConsoleViewImpl)duplexConsoleView.getPrimaryConsoleView();
+      }
+      else if (duplexConsoleView.getSecondaryConsoleView() instanceof ConsoleViewImpl) {
+        consoleViewImpl = (ConsoleViewImpl)duplexConsoleView.getSecondaryConsoleView();
+      }
+      else {
+        consoleViewImpl = null;
+      }
+    }
+    else {
+      consoleViewImpl = null;
+    }
+    if (consoleViewImpl != null) {
+      consoleViewImpl.performWhenNoDeferredOutput(() -> {
+        if(!ApplicationManager.getApplication().isDispatchThread()) return;
+
+        Document document = consoleViewImpl.getEditor().getDocument();
+        int line = isGreeting ? 0 : document.getLineCount() - 2;
+        if (CharArrayUtil.regionMatches(document.getCharsSequence(), document.getLineStartOffset(line), text)) {
+          final FoldingModel foldingModel = consoleViewImpl.getEditor().getFoldingModel();
+          foldingModel.runBatchFoldingOperation(() -> {
+            FoldRegion region = foldingModel.addFoldRegion(document.getLineStartOffset(line),
+                                                           document.getLineEndOffset(line),
+                                                           StringUtil.trimLog(text, limit));
+            if (region != null) {
+              region.setExpanded(false);
+            }
+          });
+        }
+      });
     }
   }
 }

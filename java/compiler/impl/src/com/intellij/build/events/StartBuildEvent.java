@@ -15,11 +15,14 @@
  */
 package com.intellij.build.events;
 
-import com.intellij.build.BuildConsoleView;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.ui.ConsoleView;
+import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -33,8 +36,14 @@ public interface StartBuildEvent extends StartEvent {
   ProcessHandler getProcessHandler();
 
   @Nullable
-  AnAction getRerunAction();
+  ExecutionEnvironment getExecutionEnvironment();
+
+  @NotNull
+  AnAction[] getRestartActions();
 
   @Nullable
-  Consumer<BuildConsoleView> getAttachedConsoleConsumer();
+  ExecutionConsole getExecutionConsole();
+
+  @Nullable
+  Consumer<ConsoleView> getAttachedConsoleConsumer();
 }

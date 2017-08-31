@@ -456,7 +456,7 @@ public class ExternalSystemUtil {
             ServiceManager.getService(project, SyncViewManager.class).onEvent(
               new StartBuildEventImpl(id, projectName, eventTime, "syncing...")
                 .withProcessHandler(processHandler, null)
-                .withRerunAction(rerunImportAction)
+                .withRestartAction(rerunImportAction)
             );
           }
 

@@ -108,7 +108,6 @@
                               order="last"/>
     <runConfigurationExtension implementation="org.jetbrains.plugins.gradle.execution.ProgramRunConfigurationExtension"/>
 
-    <externalSystemExecutionConsoleManager implementation="org.jetbrains.plugins.gradle.execution.GradleExecutionConsoleManager" order="last"/>
     <externalSystemExecutionConsoleManager implementation="org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsoleManager"/>
     <externalSystemWorkspaceContributor implementation="org.jetbrains.plugins.gradle.service.project.GradleWorkspaceContributor"/>
     <projectImportProvider implementation="org.jetbrains.plugins.gradle.service.project.wizard.GradleProjectImportProvider"/>
