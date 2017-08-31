@@ -101,7 +101,7 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
         VirtualFile jdkHomeDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(myJdkHome));
         Sdk jdk = SdkConfigurationUtil.setupSdk(new Sdk[0], jdkHomeDir, JavaSdk.getInstance(), true, null, GRADLE_JDK_NAME);
         assertNotNull("Cannot create JDK for " + myJdkHome, jdk);
-        ProjectJdkTable.getInstance().addJdk(jdk, getTestRootDisposable());
+        ProjectJdkTable.getInstance().addJdk(jdk, myProject);
       }
     }.execute();
     myProjectSettings = new GradleProjectSettings();
