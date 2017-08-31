@@ -41,6 +41,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.JdkBundle;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.ui.UIUtil;
 import com.sun.jna.Library;
 import com.sun.jna.Memory;
 import com.sun.jna.Native;
@@ -78,6 +79,7 @@ public class SystemHealthMonitor implements ApplicationComponent {
     checkReservedCodeCacheSize();
     checkIBus();
     checkSignalBlocking();
+    checkHiDPIMode();
     startDiskSpaceMonitoring();
   }
 
@@ -163,6 +165,14 @@ public class SystemHealthMonitor implements ApplicationComponent {
       catch (Throwable t) {
         LOG.warn(t);
       }
+    }
+  }
+
+  private void checkHiDPIMode() {
+    // if switched from JRE-HiDPI to IDE-HiDPI
+    boolean switchedHiDPIMode = SystemInfo.isJetBrainsJvm && "true".equalsIgnoreCase(System.getProperty("sun.java2d.uiScale.enabled")) && !UIUtil.isJreHiDPIEnabled();
+    if (SystemInfo.isWindows && (switchedHiDPIMode || RemoteDesktopService.isRemoteSession())) {
+      showNotification(new KeyHyperlinkAdapter("ide.set.hidpi.mode"));
     }
   }
 
