@@ -684,8 +684,9 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
       virtualFile.putUserData(MUST_RECOMPUTE_FILE_TYPE, Boolean.TRUE);
     }
 
-    if(ourConflictsSolverEnabled)
+    if (ourConflictsSolverEnabled) {
       myConflictResolver.beforeContentChange(event);
+    }
   }
 
   public static boolean recomputeFileTypeIfNecessary(@NotNull VirtualFile virtualFile) {
