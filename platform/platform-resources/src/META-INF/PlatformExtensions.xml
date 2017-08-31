@@ -369,7 +369,6 @@
     </projectConfigurable>
 
     <bundledKeymapProvider implementation="com.intellij.openapi.keymap.impl.DefaultBundledKeymaps"/>
-    <!-- <checkinHandlerFactory implementation="com.intellij.openapi.vcs.CheckRemoteStatusCheckinHandlerFactory"/> -->
 
     <keymapExtension implementation="com.intellij.ide.actions.ToolWindowKeymapExtension"/>
 

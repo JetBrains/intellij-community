@@ -60,7 +60,6 @@ public class VcsOptionsUsagesCollector extends AbstractProjectsUsagesCollector {
     usages.add(getBooleanUsage("commit.before.check.todo", configuration.CHECK_NEW_TODO));
     usages.add(getBooleanUsage("commit.before.check.non.empty.comment", configuration.FORCE_NON_EMPTY_COMMENT));
     usages.add(getBooleanUsage("commit.before.optimize.imports", configuration.OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT));
-    usages.add(getBooleanUsage("commit.before.check.files.up.to.date", configuration.CHECK_FILES_UP_TO_DATE_BEFORE_COMMIT));
     usages.add(getBooleanUsage("commit.before.reformat.project", configuration.REFORMAT_BEFORE_PROJECT_COMMIT));
     usages.add(getBooleanUsage("commit.before.rearrange", configuration.REARRANGE_BEFORE_PROJECT_COMMIT));
 
