@@ -37,6 +37,7 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
@@ -126,12 +127,18 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
 
   @Override
   public void select(PsiElement element, final boolean requestFocus) {
+    PsiUtilCore.ensureValid(element);
     PsiElement toSelect = null;
     for (TreeStructureProvider provider : getProvidersDumbAware()) {
       if (provider instanceof SelectableTreeStructureProvider) {
         toSelect = ((SelectableTreeStructureProvider) provider).getTopLevelElement(element);
       }
-      if (toSelect != null) break;
+      if (toSelect != null) {
+        if (!toSelect.isValid()) {
+          throw new PsiInvalidElementAccessException(toSelect, "Returned by " + provider);
+        }
+        break;
+      }
     }
 
     toSelect = findElementToSelect(element, toSelect);
