@@ -300,6 +300,14 @@ public class PyQuickDocTest extends LightMarkedTestCase {
     checkByHTML(myProvider.generateDoc(element, originalElement));
   }
 
+  public void testDocstring() {
+    Map<String, PsiElement> marks = loadTest();
+    final PsiElement originalElement = marks.get("<the_ref>");
+
+    final PsiElement element = myProvider.getCustomDocumentationElement(myFixture.getEditor(), myFile, originalElement);
+    checkByHTML(myProvider.generateDoc(element, originalElement));
+  }
+
   public void testReferenceToMethodQualifiedWithInstance() {
     checkHTMLOnly();
   }
