@@ -401,6 +401,12 @@ public class RemoteDebugger implements ProcessDebugger {
   }
 
   @Override
+  public void setNextStatement(String threadId, int line, String functionName) {
+    final SetNextStatementCommand command = new SetNextStatementCommand(this, threadId, line, functionName);
+    execute(command);
+  }
+
+  @Override
   public void setTempBreakpoint(@NotNull String type, @NotNull String file, int line) {
     final SetBreakpointCommand command =
       new SetBreakpointCommand(this, type, file, line);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,25 +21,29 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.impl.DebuggerSupport;
+import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.actions.DebuggerActionHandler;
 import com.intellij.xdebugger.impl.actions.XDebuggerActionBase;
 import com.intellij.xdebugger.impl.actions.XDebuggerSuspendedActionHandler;
 import org.jetbrains.annotations.NotNull;
 
+public class PySetNextStatementAction extends XDebuggerActionBase {
+  private final XDebuggerSuspendedActionHandler mySetNextStatementActionHandler;
 
-public class PyStepIntoMyCodeAction extends XDebuggerActionBase {
-  private final XDebuggerSuspendedActionHandler myStepIntoMyCodeHandler;
+  public PySetNextStatementAction() {
 
-  public PyStepIntoMyCodeAction() {
-    super();
-    myStepIntoMyCodeHandler = new XDebuggerSuspendedActionHandler() {
+    mySetNextStatementActionHandler = new XDebuggerSuspendedActionHandler() {
       @Override
-      protected void perform(@NotNull final XDebugSession session, final DataContext dataContext) {
+      protected void perform(@NotNull XDebugSession session, DataContext dataContext) {
         final XDebugProcess debugProcess = session.getDebugProcess();
         if (debugProcess instanceof PyDebugProcess) {
           PyDebugProcess pyDebugProcess = (PyDebugProcess)debugProcess;
-          pyDebugProcess.startStepIntoMyCode(debugProcess.getSession().getSuspendContext());
+          XSourcePosition position = XDebuggerUtilImpl.getCaretPosition(session.getProject(), dataContext);
+          if (position != null) {
+            pyDebugProcess.setNextStatement(debugProcess.getSession().getSuspendContext(), position);
+          }
         }
       }
 
@@ -53,7 +57,7 @@ public class PyStepIntoMyCodeAction extends XDebuggerActionBase {
   @NotNull
   @Override
   protected DebuggerActionHandler getHandler(@NotNull DebuggerSupport debuggerSupport) {
-    return myStepIntoMyCodeHandler;
+    return mySetNextStatementActionHandler;
   }
 
   @Override

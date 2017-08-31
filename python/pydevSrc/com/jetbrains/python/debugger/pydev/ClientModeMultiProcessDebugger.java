@@ -325,6 +325,11 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
   }
 
   @Override
+  public void setNextStatement(String threadId, int line, String functionName) {
+    debugger(threadId).setNextStatement(threadId, line, functionName);
+  }
+
+  @Override
   public void setTempBreakpoint(@NotNull String type, @NotNull String file, int line) {
     for (ProcessDebugger d : allDebuggers()) {
       d.setTempBreakpoint(type, file, line);

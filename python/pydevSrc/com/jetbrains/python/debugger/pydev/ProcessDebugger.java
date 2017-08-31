@@ -34,7 +34,14 @@ public interface ProcessDebugger {
   // todo: don't generate temp variables for qualified expressions - just split 'em
   XValueChildrenList loadVariable(String threadId, String frameId, PyDebugValue var) throws PyDebuggerException;
 
-  ArrayChunk loadArrayItems(String threadId, String frameId, PyDebugValue var, int rowOffset, int colOffset, int rows, int cols, String format) throws PyDebuggerException;
+  ArrayChunk loadArrayItems(String threadId,
+                            String frameId,
+                            PyDebugValue var,
+                            int rowOffset,
+                            int colOffset,
+                            int rows,
+                            int cols,
+                            String format) throws PyDebuggerException;
 
   void loadReferrers(String threadId, String frameId, PyReferringObjectsValue var, PyDebugCallback<XValueChildrenList> callback);
 
@@ -72,6 +79,8 @@ public interface ProcessDebugger {
 
   void resumeOrStep(String threadId, ResumeOrStepCommand.Mode mode);
 
+  void setNextStatement(String threadId, int line, String functionName);
+
   void setTempBreakpoint(@NotNull String type, @NotNull String file, int line);
 
   void removeTempBreakpoint(@NotNull String file, int line);
@@ -95,5 +104,4 @@ public interface ProcessDebugger {
   void removeExceptionBreakpoint(ExceptionBreakpointCommandFactory factory);
 
   void suspendOtherThreads(PyThreadInfo thread);
-
 }
