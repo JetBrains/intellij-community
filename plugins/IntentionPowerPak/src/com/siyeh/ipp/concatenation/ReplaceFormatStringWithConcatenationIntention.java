@@ -90,17 +90,12 @@ public class ReplaceFormatStringWithConcatenationIntention extends Intention {
     final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)element;
     final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
     final PsiExpression[] arguments = argumentList.getExpressions();
-    final String replacementExpression;
-    if (ExpressionUtils.hasStringType(arguments[0])) {
-      replacementExpression = buildReplacementExpression(arguments, 0);
-    }
-    else {
-      replacementExpression = buildReplacementExpression(arguments, 1);
-    }
+    final String replacementExpression =
+      ExpressionUtils.hasStringType(arguments[0]) ? buildReplacementExpression(arguments, 0) : buildReplacementExpression(arguments, 1);
     PsiReplacementUtil.replaceExpression(methodCallExpression, replacementExpression);
   }
 
-  public String buildReplacementExpression(PsiExpression[] arguments, int indexOfFormatString) {
+  public static String buildReplacementExpression(PsiExpression[] arguments, int indexOfFormatString) {
     final StringBuilder builder = new StringBuilder();
     String value = (String)ExpressionUtils.computeConstantExpression(arguments[indexOfFormatString]);
     assert value != null;
@@ -113,7 +108,10 @@ public class ReplaceFormatStringWithConcatenationIntention extends Intention {
         if (builder.length() > 0) {
           builder.append('+');
         }
-        builder.append('"').append(value.substring(start, end)).append("\"+");
+        builder.append('"').append(value.substring(start, end)).append('"');
+      }
+      if (builder.length() > 0) {
+        builder.append('+');
       }
       count++;
       final PsiExpression argument = arguments[indexOfFormatString + count];
