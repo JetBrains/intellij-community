@@ -835,8 +835,8 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
   private static boolean isConstantOfType(PsiElement element, PsiPrimitiveType... types) {
     PsiElement resolved = element instanceof PsiReferenceExpression ? ((PsiReferenceExpression)element).resolve() : null;
     if (!(resolved instanceof PsiField)) return false;
-    PsiField field = (PsiField)resolved;
-    return field.hasModifierProperty(PsiModifier.FINAL) && field.hasModifierProperty(PsiModifier.STATIC) &&
+    PsiVariable field = (PsiVariable)resolved;
+    return field.hasModifierProperty(PsiModifier.STATIC) && PsiUtil.isCompileTimeConstant(field) &&
            ArrayUtil.contains(field.getType(), types);
   }
 
