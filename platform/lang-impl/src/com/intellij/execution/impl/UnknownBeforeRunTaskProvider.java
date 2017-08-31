@@ -67,7 +67,7 @@ public class UnknownBeforeRunTaskProvider extends BeforeRunTaskProvider<UnknownB
   }
 
   @Override
-  public boolean executeTask(DataContext context, RunConfiguration configuration, ExecutionEnvironment env, UnknownTask task) {
+  public boolean executeTask(DataContext context, @NotNull RunConfiguration configuration, @NotNull ExecutionEnvironment env, @NotNull UnknownTask task) {
     return true;
   }
 

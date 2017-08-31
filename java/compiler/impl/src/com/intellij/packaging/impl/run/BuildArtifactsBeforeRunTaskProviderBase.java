@@ -121,9 +121,9 @@ public abstract class BuildArtifactsBeforeRunTaskProviderBase<T extends BuildArt
   }
 
   public boolean executeTask(DataContext context,
-                             RunConfiguration configuration,
-                             final ExecutionEnvironment env,
-                             final T task) {
+                             @NotNull RunConfiguration configuration,
+                             @NotNull final ExecutionEnvironment env,
+                             @NotNull final T task) {
     final Ref<Boolean> result = Ref.create(false);
     final Semaphore finished = new Semaphore();
 

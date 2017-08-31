@@ -86,7 +86,7 @@ public abstract class AbstractToolBeforeRunTaskProvider<T extends AbstractToolBe
   }
 
   @Override
-  public boolean executeTask(DataContext context, RunConfiguration configuration, ExecutionEnvironment env, T task) {
+  public boolean executeTask(DataContext context, @NotNull RunConfiguration configuration, @NotNull ExecutionEnvironment env, @NotNull T task) {
     if (!task.isExecutable()) {
       return false;
     }

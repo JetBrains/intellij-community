@@ -71,7 +71,7 @@ public abstract class BeforeRunTaskProvider<T extends BeforeRunTask> {
     return true;
   }
 
-  public abstract boolean executeTask(DataContext context, RunConfiguration configuration, ExecutionEnvironment env, T task);
+  public abstract boolean executeTask(DataContext context, @NotNull RunConfiguration configuration, @NotNull ExecutionEnvironment env, @NotNull T task);
 
   /**
    *

@@ -106,9 +106,9 @@ public abstract class ExternalSystemBeforeRunTaskProvider extends BeforeRunTaskP
 
   @Override
   public boolean executeTask(DataContext context,
-                             RunConfiguration configuration,
-                             ExecutionEnvironment env,
-                             ExternalSystemBeforeRunTask beforeRunTask) {
+                             @NotNull RunConfiguration configuration,
+                             @NotNull ExecutionEnvironment env,
+                             @NotNull ExternalSystemBeforeRunTask beforeRunTask) {
 
     final ExternalSystemTaskExecutionSettings executionSettings = beforeRunTask.getTaskExecutionSettings();
 

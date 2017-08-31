@@ -172,9 +172,9 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
 
   @Override
   public boolean executeTask(final DataContext dataContext,
-                             RunConfiguration configuration,
-                             final ExecutionEnvironment env,
-                             RunConfigurableBeforeRunTask task) {
+                             @NotNull RunConfiguration configuration,
+                             @NotNull final ExecutionEnvironment env,
+                             @NotNull RunConfigurableBeforeRunTask task) {
     RunnerAndConfigurationSettings settings = task.getSettings();
     if (settings == null) {
       return true; // ignore missing configurations: IDEA-155476 Run/debug silently fails when 'Run another configuration' step is broken

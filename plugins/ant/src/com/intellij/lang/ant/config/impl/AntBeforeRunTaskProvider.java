@@ -102,7 +102,7 @@ public class AntBeforeRunTaskProvider extends BeforeRunTaskProvider<AntBeforeRun
     return findTargetToExecute(task) != null;
   }
 
-  public boolean executeTask(DataContext context, RunConfiguration configuration, ExecutionEnvironment env, AntBeforeRunTask task) {
+  public boolean executeTask(DataContext context, @NotNull RunConfiguration configuration, @NotNull ExecutionEnvironment env, @NotNull AntBeforeRunTask task) {
     final AntBuildTarget target = findTargetToExecute(task);
     if (target != null) {
       return AntConfigurationImpl.executeTargetSynchronously(context, target);

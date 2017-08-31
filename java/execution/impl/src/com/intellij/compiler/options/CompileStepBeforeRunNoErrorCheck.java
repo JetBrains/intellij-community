@@ -68,9 +68,9 @@ public class CompileStepBeforeRunNoErrorCheck
 
   @Override
   public boolean executeTask(DataContext context,
-                             RunConfiguration configuration,
-                             ExecutionEnvironment env,
-                             MakeBeforeRunTaskNoErrorCheck task) {
+                             @NotNull RunConfiguration configuration,
+                             @NotNull ExecutionEnvironment env,
+                             @NotNull MakeBeforeRunTaskNoErrorCheck task) {
     return CompileStepBeforeRun.doMake(myProject, configuration, env, true);
   }
 

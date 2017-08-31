@@ -17,13 +17,17 @@ package com.intellij.ide.browsers
 
 import com.intellij.execution.BeforeRunTask
 import com.intellij.execution.BeforeRunTaskProvider
+import com.intellij.execution.ExecutionListener
+import com.intellij.execution.ExecutionManager
 import com.intellij.execution.configurations.RunConfiguration
+import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.ui.components.CheckBox
 import com.intellij.ui.components.dialog
@@ -91,11 +95,31 @@ internal class LaunchBrowserBeforeRunTaskProvider : BeforeRunTaskProvider<Launch
     return modificationCount != state.modificationCount
   }
 
-  override fun executeTask(context: DataContext?,
-                           configuration: RunConfiguration?,
-                           env: ExecutionEnvironment?,
-                           task: LaunchBrowserBeforeRunTask?): Boolean {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+  override fun executeTask(context: DataContext?, configuration: RunConfiguration, env: ExecutionEnvironment, task: LaunchBrowserBeforeRunTask): Boolean {
+    val disposable = Disposer.newDisposable()
+    Disposer.register(env.project, disposable)
+    val executionId = env.executionId
+    env.project.messageBus.connect(disposable).subscribe(ExecutionManager.EXECUTION_TOPIC, object: ExecutionListener {
+      override fun processNotStarted(executorId: String, env: ExecutionEnvironment) {
+        Disposer.dispose(disposable)
+      }
+
+      override fun processStarted(executorId: String, env: ExecutionEnvironment, handler: ProcessHandler) {
+        if (env.executionId != executionId) {
+          return
+        }
+
+        Disposer.dispose(disposable)
+
+        val settings = StartBrowserSettings()
+        settings.browser = task.state.browser
+        settings.isStartJavaScriptDebugger = task.state.withDebugger
+        settings.url = task.state.url
+        settings.isSelected = true
+        BrowserStarter(configuration, settings, handler).start()
+      }
+    })
+    return true
   }
 }
 

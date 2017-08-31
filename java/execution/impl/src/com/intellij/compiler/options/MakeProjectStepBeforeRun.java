@@ -63,7 +63,7 @@ public class MakeProjectStepBeforeRun extends BeforeRunTaskProvider<MakeProjectS
     return AllIcons.Actions.Compile;
   }
 
-  public boolean executeTask(DataContext context, final RunConfiguration configuration, final ExecutionEnvironment env, MakeProjectBeforeRunTask task) {
+  public boolean executeTask(DataContext context, @NotNull final RunConfiguration configuration, @NotNull final ExecutionEnvironment env, @NotNull MakeProjectBeforeRunTask task) {
     return CompileStepBeforeRun.doMake(myProject, configuration, env, false, true);
   }
 
