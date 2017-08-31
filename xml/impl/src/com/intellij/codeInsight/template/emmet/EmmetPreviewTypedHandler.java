@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +16,32 @@
 package com.intellij.codeInsight.template.emmet;
 
 import com.intellij.application.options.emmet.EmmetOptions;
-import com.intellij.codeInsight.editorActions.TypedHandlerDelegate;
+import com.intellij.codeInsight.template.impl.editorActions.TypedActionHandlerBase;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.actionSystem.TypedActionHandler;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class EmmetPreviewTypedHandler extends TypedHandlerDelegate {
+public class EmmetPreviewTypedHandler extends TypedActionHandlerBase {
+  public EmmetPreviewTypedHandler(@Nullable TypedActionHandler originalHandler) {
+    super(originalHandler);
+  }
+
   @Override
-  public Result charTyped(char c, @NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
+  public void execute(@NotNull Editor editor, char charTyped, @NotNull DataContext dataContext) {
+    if (myOriginalHandler != null) myOriginalHandler.execute(editor, charTyped, dataContext);
     if (EmmetOptions.getInstance().isPreviewEnabled()) {
+      Project project = CommonDataKeys.PROJECT.getData(dataContext);
+      PsiFile file = project == null ? null : PsiUtilBase.getPsiFileInEditor(editor, project);
+      if (file == null) return;
+
       EmmetPreviewHint existingBalloon = EmmetPreviewHint.getExistingHint(editor);
       if (existingBalloon == null) {
         String templateText = EmmetPreviewUtil.calculateTemplateText(editor, file, false);
@@ -37,7 +51,5 @@ public class EmmetPreviewTypedHandler extends TypedHandlerDelegate {
         }
       }
     }
-
-    return super.charTyped(c, project, editor, file);
   }
 }
