@@ -944,6 +944,7 @@ public class ExtractMethodProcessor implements MatchProvider {
         String varName = myOutputVariable != null ? myOutputVariable.getName() : "x";
         varName = declareVariableAtMethodCallLocation(varName, myReturnType instanceof PsiPrimitiveType ? ((PsiPrimitiveType)myReturnType).getBoxedType(myCodeFragmentMember) : myReturnType);
         addToMethodCallLocation(myElementFactory.createStatementFromText("if (" + varName + " != null) return " + varName + ";", null));
+        declareVariableReusedAfterCall(myOutputVariable);
       }
       else if (myGenerateConditionalExit) {
         PsiIfStatement ifStatement = (PsiIfStatement)myElementFactory.createStatementFromText("if (a) b;", null);
@@ -1879,6 +1880,19 @@ public class ExtractMethodProcessor implements MatchProvider {
     myAnchor = myCodeFragmentMember;
     while (!myAnchor.getParent().equals(myTargetClass)) {
       myAnchor = myAnchor.getParent();
+    }
+  }
+
+  private void declareVariableReusedAfterCall(PsiVariable variable) {
+    if (variable != null &&
+        variable.getName() != null &&
+        isDeclaredInside(variable) &&
+        myControlFlowWrapper.getUsedVariables().contains(variable) &&
+        !myControlFlowWrapper.needVariableValueAfterEnd(variable)) {
+
+      PsiDeclarationStatement declaration =
+        myElementFactory.createVariableDeclarationStatement(variable.getName(), variable.getType(), null);
+      addToMethodCallLocation(declaration);
     }
   }
 

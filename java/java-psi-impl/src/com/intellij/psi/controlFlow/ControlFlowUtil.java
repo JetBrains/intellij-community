@@ -1729,15 +1729,13 @@ public class ControlFlowUtil {
     }
 
     public CopyOnWriteList(Collection<VariableInfo> infos) {
-      list = new LinkedList<>(infos);
+      list = new SmartList<>(infos);
     }
 
     public CopyOnWriteList addAll(CopyOnWriteList addList) {
       CopyOnWriteList newList = new CopyOnWriteList();
       List<VariableInfo> list = getList();
-      for (final VariableInfo variableInfo : list) {
-        newList.list.add(variableInfo);
-      }
+      newList.list.addAll(list);
       List<VariableInfo> toAdd = addList.getList();
       for (final VariableInfo variableInfo : toAdd) {
         if (!newList.list.contains(variableInfo)) {

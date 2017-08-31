@@ -147,7 +147,7 @@ public class ControlFlowWrapper {
     return myExitStatements;
   }
 
-  public boolean isVariableUsedAfterEnd(PsiVariable variable) {
+  public boolean needVariableValueAfterEnd(PsiVariable variable) {
     return ControlFlowUtil.needVariableValueAt(variable, myControlFlow, myFlowEnd);
   }
 

@@ -846,7 +846,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
         }
 
         PsiVariable[] usedVariables = myOutputVariables;
-        if (generatesConditionalExit() && myOutputVariable != null && !myControlFlowWrapper.isVariableUsedAfterEnd(myOutputVariable)) {
+        if (generatesConditionalExit() && myOutputVariable != null && !myControlFlowWrapper.needVariableValueAfterEnd(myOutputVariable)) {
           usedVariables = ArrayUtil.remove(usedVariables, myOutputVariable);
         }
         Collection<ControlFlowUtil.VariableInfo> reassigned = myControlFlowWrapper.getInitializedTwice();
