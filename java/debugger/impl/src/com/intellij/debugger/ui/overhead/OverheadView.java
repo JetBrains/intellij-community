@@ -209,7 +209,8 @@ public class OverheadView extends BorderLayoutPanel implements Disposable {
                                              int column) {
           if (value instanceof OverheadProducer) {
             OverheadProducer overheadProducer = (OverheadProducer)value;
-            append(String.valueOf(myGetter.apply(overheadProducer)),
+            Long val = myGetter.apply(overheadProducer);
+            append(val != null ? String.valueOf(val) : "",
                    overheadProducer.isEnabled() ? SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES : SimpleTextAttributes.GRAYED_ATTRIBUTES);
           }
         }
