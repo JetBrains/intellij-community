@@ -16,7 +16,6 @@
 package com.intellij.testGuiFramework.impl
 
 import com.intellij.ide.GeneralSettings
-import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.ui.ComponentWithBrowseButton
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.FileUtil
@@ -746,35 +745,4 @@ open class GuiTestCase : GuiTestBase() {
       return flagCheckFunction()
     }
   }
-  /**
-   *@timeout in seconds to wait for the text in run window
-   */
-  fun waitForTextInRunWindow(text: String, windowId: String = "Run") {
-    ideFrame {
-      toolwindow(id = windowId) {
-        content {
-          pause("Wait for $text in run window") { isRunWindowContainsText(text) }
-        }
-        waitForBackgroundTasksToFinish()
-      }
-    }
-  }
-
-  /**
-   * Is run window contains @text
-   */
-  private fun CustomToolWindowFixture.ContentFixture.isRunWindowContainsText(text: String): Boolean {
-    val outputText = getRunWindowText()
-    if (outputText!!.contains(text)) {
-      return true
-    }
-    return false
-  }
-
-  private fun CustomToolWindowFixture.ContentFixture.getRunWindowText(): String? {
-    val consoleEditor = waitUntilFound(getContent().component as Container, EditorComponentImpl::class.java,
-                                       10) { it is EditorComponentImpl }
-    return GuiTestUtilKt.computeOnEdt { consoleEditor.editor.document.text }
-  }
-
 }
