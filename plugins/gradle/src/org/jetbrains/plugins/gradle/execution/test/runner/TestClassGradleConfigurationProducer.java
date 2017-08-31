@@ -129,7 +129,7 @@ public class TestClassGradleConfigurationProducer extends GradleTestRunConfigura
     if(i == -1) return false;
 
     String str = scriptParameters.substring(i + "--tests ".length()).trim() + ' ';
-    return str.startsWith(testClass.getQualifiedName() + ' ') && !str.contains("--tests");
+    return str.startsWith(getRuntimeQualifiedName(testClass) + ' ') && !str.contains("--tests");
   }
 
   @Override
