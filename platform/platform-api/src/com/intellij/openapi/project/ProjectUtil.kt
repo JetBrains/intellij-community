@@ -55,7 +55,7 @@ fun calcRelativeToProjectPath(file: VirtualFile, project: Project?, includeFileP
   val url = if (includeFilePath) {
     file.presentableUrl
   }
-  else if (includeUniqueFilePath) {
+  else if (includeUniqueFilePath && project != null) {
     UniqueVFilePathBuilder.getInstance().getUniqueVirtualFilePath(project, file)
   }
   else {
