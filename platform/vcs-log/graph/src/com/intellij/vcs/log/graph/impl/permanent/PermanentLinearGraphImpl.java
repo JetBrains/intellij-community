@@ -32,13 +32,13 @@ import java.util.List;
 import static com.intellij.vcs.log.graph.api.elements.GraphEdgeType.USUAL;
 
 public class PermanentLinearGraphImpl implements LinearGraph {
-  private final Flags mySimpleNodes;
+  @NotNull private final Flags mySimpleNodes;
 
   // myNodeToEdgeIndex.length = nodesCount() + 1.
-  private final IntList myNodeToEdgeIndex;
-  private final IntList myLongEdges;
+  @NotNull private final IntList myNodeToEdgeIndex;
+  @NotNull private final IntList myLongEdges;
 
-  /*package*/ PermanentLinearGraphImpl(Flags simpleNodes, int[] nodeToEdgeIndex, int[] longEdges) {
+  /*package*/ PermanentLinearGraphImpl(@NotNull Flags simpleNodes, int[] nodeToEdgeIndex, int[] longEdges) {
     mySimpleNodes = simpleNodes;
     myNodeToEdgeIndex = CompressedIntList.newInstance(nodeToEdgeIndex);
     myLongEdges = CompressedIntList.newInstance(longEdges);
