@@ -113,23 +113,10 @@ class CompletionAssertions {
     return new Attachment(originalFile.getViewProvider().getVirtualFile().getPath(), fileCopy.getText());
   }
 
-  static void assertFinalOffsets(PsiFile originalFile, CompletionContext context, PsiFile injected) {
-    if (context.getStartOffset() >= context.file.getTextLength()) {
-      String msg = "start outside the file; file=" + context.file + " " + context.file.getTextLength();
-      msg += "; injected=" + (injected != null);
-      msg += "; original " + originalFile + " " + originalFile.getTextLength();
-      throw new AssertionError(msg);
-    }
-    assert context.getStartOffset() >= 0 : "start < 0";
-  }
-
-  static void assertInjectedOffsets(int hostStartOffset,
-                                    InjectedLanguageManager injectedLanguageManager,
-                                    PsiFile injected,
-                                    DocumentWindow documentWindow) {
+  static void assertInjectedOffsets(int hostStartOffset, PsiFile injected, DocumentWindow documentWindow) {
     assert documentWindow != null : "no DocumentWindow for an injected fragment";
 
-    TextRange host = injectedLanguageManager.injectedToHost(injected, injected.getTextRange());
+    TextRange host = InjectedLanguageManager.getInstance(injected.getProject()).injectedToHost(injected, injected.getTextRange());
     assert hostStartOffset >= host.getStartOffset() : "startOffset before injected";
     assert hostStartOffset <= host.getEndOffset() : "startOffset after injected";
   }

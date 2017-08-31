@@ -512,21 +512,22 @@ public class CodeCompletionHandlerBase {
     CompletionAssertions.assertHostInfo(hostCopyOffsets.getFile(), hostCopyOffsets.getOffsets());
 
     int hostStartOffset = hostCopyOffsets.getOffsets().getOffset(CompletionInitializationContext.START_OFFSET);
+    OffsetsInFile result = hostCopyOffsets;
     OffsetsInFile translatedOffsets = hostCopyOffsets.toInjectedIfAny(hostStartOffset);
-
-    InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(originalFile.getProject());
-    PsiFile injected = translatedOffsets == hostCopyOffsets ? null : translatedOffsets.getFile();
-    if (injected != null) {
+    if (translatedOffsets != hostCopyOffsets) {
+      PsiFile injected = translatedOffsets.getFile();
       if (injected instanceof PsiFileImpl) {
         ((PsiFileImpl)injected).setOriginalFile(originalFile);
       }
       DocumentWindow documentWindow = InjectedLanguageUtil.getDocumentWindow(injected);
-      CompletionAssertions.assertInjectedOffsets(hostStartOffset, injectedLanguageManager, injected, documentWindow);
+      CompletionAssertions.assertInjectedOffsets(hostStartOffset, injected, documentWindow);
+
+      if (injected.getTextRange().contains(translatedOffsets.getOffsets().getOffset(CompletionInitializationContext.START_OFFSET))) {
+        result = translatedOffsets;
+      }
     }
 
-    CompletionContext context = new CompletionContext(translatedOffsets.getFile(), translatedOffsets.getOffsets());
-    CompletionAssertions.assertFinalOffsets(originalFile, context, injected);
-    return context;
+    return new CompletionContext(result.getFile(), result.getOffsets());
   }
 
   protected void lookupItemSelected(final CompletionProgressIndicator indicator, @NotNull final LookupElement item, final char completionChar,
