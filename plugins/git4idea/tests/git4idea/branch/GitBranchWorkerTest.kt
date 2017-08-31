@@ -927,7 +927,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
     return notification
   }
 
-  private open class TestUiHandler : GitBranchUiHandler {
+  open class TestUiHandler : GitBranchUiHandler {
     override fun getProgressIndicator(): ProgressIndicator {
       return EmptyProgressIndicator()
     }

@@ -15,14 +15,38 @@
  */
 package git4idea.branch
 
-import com.intellij.tasks.context.WorkingContextManager
+import com.intellij.openapi.vcs.BranchChangeListener
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import git4idea.repo.GitRepository
 import git4idea.test.GitPlatformTest
 import junit.framework.TestCase
 
 class GitBranchContextTest: GitPlatformTest() {
 
-  fun testContextManager() {
-    val contextManager = WorkingContextManager.getInstance(project)
-    TestCase.assertNotNull(contextManager)
+  private lateinit var myRepositories: List<GitRepository>
+
+  public override fun setUp() {
+    super.setUp()
+
+    myRepositories = listOf(createRepository(myProjectPath))
+  }
+
+  fun testBranchListener() {
+    var didChange = 0
+    class Listener: BranchChangeListener {
+      override fun branchDidChange(branchName: String?) {
+        didChange++
+      }
+
+      override fun branchWillChange(branchName: String?) {
+
+      }
+    }
+
+    myProject.messageBus.connect().subscribe(ProjectLevelVcsManager.VCS_BRANCH_CHANGED, Listener())
+
+    val worker = GitBranchWorker(myProject, myGit, GitBranchWorkerTest.TestUiHandler())
+    worker.checkoutNewBranch("foo", myRepositories)
+    TestCase.assertEquals(1, didChange)
   }
 }

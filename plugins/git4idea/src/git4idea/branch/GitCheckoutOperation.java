@@ -129,7 +129,7 @@ class GitCheckoutOperation extends GitBranchOperation {
       if (wereSuccessful()) {
         if (!wereSkipped()) {
           notifySuccess();
-          updateRecentBranch();
+          updateRecentBranch(myNewBranch);
         }
         else {
           String mentionSuccess = getSuccessMessage() + GitUtil.mention(getSuccessfulRepositories(), 4);
@@ -140,7 +140,7 @@ class GitCheckoutOperation extends GitBranchOperation {
                                                            mentionSkipped +
                                                            "<br><a href='rollback'>Rollback</a>",
                                                            new RollbackOperationNotificationListener());
-          updateRecentBranch();
+          updateRecentBranch(myNewBranch);
         }
       }
       else {
