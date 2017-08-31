@@ -20,7 +20,6 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
-import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.roots.LanguageLevelModuleExtensionImpl;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -174,9 +173,12 @@ public class IdeaTestUtil extends PlatformTestUtil {
     ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
     final Sdk sdk = rootManager.getSdk();
     final String oldVersionString = sdk.getVersionString();
-    ((ProjectJdkImpl)sdk).setVersionString(testVersion.getDescription());
+
+    // hack
+    ((SdkModificator)sdk).setVersionString(testVersion.getDescription());
+
     assert JavaSdk.getInstance().getVersion(sdk) == testVersion;
-    Disposer.register(parentDisposable, () -> ((ProjectJdkImpl)sdk).setVersionString(oldVersionString));
+    Disposer.register(parentDisposable, () -> ((SdkModificator)sdk).setVersionString(oldVersionString));
   }
 
 
