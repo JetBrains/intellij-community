@@ -60,7 +60,7 @@ public class OverheadView extends BorderLayoutPanel implements Disposable {
       ENABLED_COLUMN,
       NAME_COLUMN,
       new TimingColumnInfo("Hits", s -> OverheadTimings.getHits(myProcess, s)),
-      new TimingColumnInfo("Time(ms)", s -> OverheadTimings.getTime(myProcess, s))},
+      new TimingColumnInfo("Time (ms)", s -> OverheadTimings.getTime(myProcess, s))},
                                    new ArrayList<>(OverheadTimings.getProducers(process)),
                                    3, SortOrder.DESCENDING);
     myModel.setSortable(true);
