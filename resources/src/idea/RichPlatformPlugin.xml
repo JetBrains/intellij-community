@@ -176,14 +176,17 @@
                     serviceImplementation="com.intellij.task.impl.ProjectTaskManagerImpl"/>
 
     <projectService serviceInterface="com.intellij.build.BuildContentManager"
-                    serviceImplementation="com.intellij.build.BuildContentManagerImpl"/>
+                    serviceImplementation="com.intellij.build.BuildContentManagerImpl"
+                    testServiceImplementation="com.intellij.build.internal.DummyBuildContentManager"/>
 
     <projectService serviceInterface="com.intellij.build.BuildViewManager"
                     serviceImplementation="com.intellij.build.BuildViewManager"/>
     <projectService serviceInterface="com.intellij.build.SyncViewManager"
-                    serviceImplementation="com.intellij.build.SyncViewManager"/>
+                    serviceImplementation="com.intellij.build.SyncViewManager"
+                    testServiceImplementation="com.intellij.build.internal.DummySyncViewManager"/>
     <projectService serviceInterface="com.intellij.build.TasksViewManager"
-                    serviceImplementation="com.intellij.build.TasksViewManager"/>
+                    serviceImplementation="com.intellij.build.TasksViewManager"
+                    testServiceImplementation="com.intellij.build.internal.DummyTasksViewManager"/>
 
     <projectService serviceInterface="com.intellij.execution.runners.ExecutionEnvironmentProvider"
                     serviceImplementation="com.intellij.task.impl.ExecutionEnvironmentProviderImpl"/>
