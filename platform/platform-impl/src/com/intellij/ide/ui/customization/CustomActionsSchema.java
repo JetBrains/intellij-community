@@ -165,6 +165,9 @@ public class CustomActionsSchema implements PersistentStateComponent<Element> {
 
   @Override
   public void loadState(Element element) {
+    myIdToActionGroup.clear();
+    myActions.clear();
+    myIconCustomizations.clear();
     DefaultJDOMExternalizer.readExternal(this, element);
     Element schElement = element;
     final String activeName = element.getAttributeValue(ACTIVE);
