@@ -87,6 +87,8 @@ public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase
   public void testNotNullAnnotationChecksInChildClassMethods() { doTest(); }
 
   public void testGetterSetterProblems() throws Exception{ doTest(); }
+  public void testNonTrivialGettersSetters() { doTest(); }
+
   public void testOverriddenMethods() throws Exception{
     myInspection.REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true;
     doTest();
