@@ -204,8 +204,14 @@ idea.fatal.error.notification=disabled
     def sourceFile = BuildContextImpl.findApplicationInfoInSources(buildContext.project, buildContext.productProperties, buildContext.messages)
     def targetFile = new File(buildContext.paths.temp, sourceFile.name)
     def date = ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ofPattern("uuuuMMddHHmm"))
+
+    def buildTypeId = System.getProperty('teamcity.buildType.id')
+    def buildId = System.getProperty('teamcity.build.id')
+    def builtinPluginsUrl = buildId && buildTypeId ? "http://buildserver.labs.intellij.net/repository/download/$buildTypeId/$buildId:id/${buildContext.productProperties.productCode}-plugins/plugins.xml?guest=1" : ""
+
     BuildUtils.copyAndPatchFile(sourceFile.path, targetFile.path,
-                                ["BUILD_NUMBER": buildContext.fullBuildNumber, "BUILD_DATE": date, "BUILD": buildContext.buildNumber])
+                                ["BUILD_NUMBER": buildContext.fullBuildNumber, "BUILD_DATE": date, "BUILD": buildContext.buildNumber,
+                                "BUILTIN_PLUGINS_URL": builtinPluginsUrl])
     return targetFile
   }
 
@@ -267,10 +273,30 @@ idea.fatal.error.notification=disabled
   }
 
   private compileModulesForDistribution(DistributionJARsBuilder distributionJARsBuilder) {
-    def moduleNames = buildContext.productProperties.productLayout.includedPluginModules + distributionJARsBuilder.platformModules +
+    def bundledPlugins = buildContext.productProperties.productLayout.bundledPluginModules as Set<String>
+    def moduleNames = buildContext.productProperties.productLayout.getIncludedPluginModules(bundledPlugins) +
+                      distributionJARsBuilder.platformModules +
                       buildContext.productProperties.additionalModulesToCompile +
                       (buildContext.proprietaryBuildTools.scrambleTool?.additionalModulesToCompile ?: [])
     compileModules(moduleNames, buildContext.productProperties.modulesToCompileTests)
+
+    def productLayout = buildContext.productProperties.productLayout
+
+    def providedModulesFilePath = "${buildContext.paths.artifacts}/${buildContext.productProperties.productCode}-builtinModules.json"
+    buildProvidedModulesList(providedModulesFilePath, productLayout.mainModules, productLayout.licenseFilesToBuildSearchableOptions)
+    def pluginsToPublish = distributionJARsBuilder.getPluginsByModules(buildContext.productProperties.productLayout.pluginModulesToPublish)
+    if (buildContext.productProperties.productLayout.buildAllCompatiblePlugins) {
+      if (!buildContext.options.buildStepsToSkip.contains(BuildOptions.PROVIDED_MODULES_LIST_STEP)) {
+        pluginsToPublish = new PluginsCollector(buildContext, providedModulesFilePath).collectCompatiblePluginsToPublish().findAll {
+          !buildContext.productProperties.productLayout.compatiblePluginsToIgnore.contains(it.mainModule)
+        }
+      }
+      else {
+        buildContext.messages.info("Skipping collecting compatible plugins because PROVIDED_MODULES_LIST_STEP was skipped")
+      }
+    }
+    compileModules(pluginsToPublish.collect { it.moduleJars.values()  }.flatten() as List<String>)
+    distributionJARsBuilder.pluginsToPublish.addAll(pluginsToPublish)
   }
 
   @Override
@@ -391,7 +417,16 @@ idea.fatal.error.notification=disabled
     checkPluginModules(layout.bundledPluginModules, "productProperties.productLayout.bundledPluginModules", optionalModules)
     checkPluginModules(layout.pluginModulesToPublish, "productProperties.productLayout.pluginModulesToPublish", optionalModules)
 
-    if (layout.prepareCustomPluginRepositoryForPublishedPlugins && layout.pluginModulesToPublish.isEmpty()) {
+    if (!layout.pluginModulesToPublish.isEmpty() && layout.buildAllCompatiblePlugins && buildContext.shouldBuildDistributions()) {
+      buildContext.messages.warning("layout.buildAllCompatiblePlugins option is enabled. Value of layout.pluginModulesToPublish property " +
+                                    "will be ignored ($layout.pluginModulesToPublish)")
+    }
+    if (!buildContext.shouldBuildDistributions() && layout.buildAllCompatiblePlugins) {
+      buildContext.messages.warning("Distribution is not going to build. Hence all compatible plugins won't be built despite " +
+                                    "layout.buildAllCompatiblePlugins option is enabled. layout.pluginModulesToPublish will be used ($layout.pluginModulesToPublish)")
+    }
+    if (layout.prepareCustomPluginRepositoryForPublishedPlugins && layout.pluginModulesToPublish.isEmpty() &&
+        !layout.buildAllCompatiblePlugins) {
       buildContext.messages.error("productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins option is enabled but no pluginModulesToPublish are specified")
     }
 
@@ -403,7 +438,7 @@ idea.fatal.error.notification=disabled
     checkModules([layout.searchableOptionsModule], "productProperties.productLayout.searchableOptionsModule")
     checkModules(layout.pluginModulesWithRestrictedCompatibleBuildRange, "productProperties.productLayout.pluginModulesWithRestrictedCompatibleBuildRange")
     checkProjectLibraries(layout.projectLibrariesToUnpackIntoMainJar, "productProperties.productLayout.projectLibrariesToUnpackIntoMainJar")
-    nonTrivialPlugins.findAll {layout.enabledPluginModules.contains(it.mainModule)}.each { plugin ->
+    nonTrivialPlugins.findAll {layout.bundledPluginModules.contains(it.mainModule)}.each { plugin ->
       checkModules(plugin.moduleJars.values() - plugin.optionalModules, "'$plugin.mainModule' plugin")
       checkModules(plugin.moduleExcludes.keySet(), "'$plugin.mainModule' plugin")
       checkProjectLibraries(plugin.includedProjectLibraries, "'$plugin.mainModule' plugin")

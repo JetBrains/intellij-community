@@ -15,7 +15,7 @@
 
   <editor background-url="/idea_logo_welcome.png"/>
 
-  <plugins url="http://plugins.jetbrains.com/"/>
+  <plugins url="http://plugins.jetbrains.com/" builtin-url="__BUILTIN_PLUGINS_URL__"/>
   <update-urls check="http://www.jetbrains.com/updates/updates.xml"
                patches="http://download.jetbrains.com/idea/"/>
 

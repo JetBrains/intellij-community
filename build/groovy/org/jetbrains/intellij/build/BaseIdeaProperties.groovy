@@ -101,6 +101,9 @@ abstract class BaseIdeaProperties extends ProductProperties {
 
     additionalModulesToCompile = ["jps-standalone-builder"]
     modulesToCompileTests = ["jps-builders"]
+    productLayout.buildAllCompatiblePlugins = true
+    productLayout.compatiblePluginsToIgnore = ['python-plugin', 'ruby-plugin-bundle', 'python-community-plugin-resources', 'AWS']
+    productLayout.prepareCustomPluginRepositoryForPublishedPlugins = true
   }
 
   @Override
