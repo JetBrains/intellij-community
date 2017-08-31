@@ -172,12 +172,18 @@ public class PluginDescriptorStructureUtil {
   @NotNull
   private static String toHumanReadableName(@NotNull String tagName) {
     String result;
-    if (tagName.contains("-")) {
-      result = Joiner.on(" ").join(tagName.split("-"));
+    if (tagName.contains("-") || tagName.contains(".")) {
+      result = Joiner.on(" ").join(tagName.split("[-.]"));
     } else {
       result = StringUtil.splitCamelCase(tagName);
     }
-    return StringUtil.capitalizeWords(result, true);
+
+    result = StringUtil.capitalizeWords(result, true)
+      .replaceAll("Psi", "PSI")
+      .replaceAll("Sdk", "SDK")
+      .replaceAll("Junit", "JUnit");
+
+    return result;
   }
 
   @Nullable
