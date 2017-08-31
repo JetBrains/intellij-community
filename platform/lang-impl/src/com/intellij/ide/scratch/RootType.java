@@ -15,9 +15,9 @@
  */
 package com.intellij.ide.scratch;
 
-import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -118,7 +118,7 @@ public abstract class RootType {
     return false;
   }
 
-  public void registerTreeUpdater(@NotNull Project project, @NotNull AbstractTreeBuilder builder) {
+  public void registerTreeUpdater(@NotNull Project project, @NotNull Disposable disposable, @NotNull Runnable onUpdate) {
   }
 
 }
