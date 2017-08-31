@@ -217,7 +217,7 @@ class ExternalProjectServiceTest extends AbstractExternalSystemTest {
         VirtualFile jdkHomeDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(myJdkHome))
         Sdk jdk = SdkConfigurationUtil.setupSdk(new Sdk[0], jdkHomeDir, JavaSdk.getInstance(), true, null, myJdkName)
         assertNotNull("Cannot create JDK for " + myJdkHome, jdk)
-        ProjectJdkTable.getInstance().addJdk(jdk, testRootDisposable)
+        ProjectJdkTable.getInstance().addJdk(jdk, testFixture.project)
       }
     }.execute()
 
