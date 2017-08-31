@@ -69,6 +69,7 @@ public class OverheadView extends BorderLayoutPanel implements Disposable {
     TableUtil.setupCheckboxColumn(myTable.getColumnModel().getColumn(0));
 
     myUpdateQueue = new MergingUpdateQueue("OverheadView", 500, true, null, this);
+    myUpdateQueue.setPassThrough(false); // disable passthrough in tests
 
     OverheadTimings.addListener(new OverheadTimings.OverheadTimingsListener() {
                                   @Override
