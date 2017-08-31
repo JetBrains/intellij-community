@@ -34,6 +34,14 @@ class PyCharmEduProperties extends PyCharmPropertiesBase {
       fileset(file: "$context.paths.communityHome/LICENSE.txt")
       fileset(file: "$context.paths.communityHome/NOTICE.txt")
     }
+
+    def files = new File("$pythonCommunityPath/educational-python/resources/").listFiles(new FilenameFilter() {
+      @Override
+      boolean accept(File dir, String name) {
+        return name.matches("EduTools-[0-9.]+-[0-9.]+-[0-9.]+.zip")
+      }
+    })
+    context.ant.unzip(src: files[0], dest: "$targetDirectory/plugins/")
   }
 
   @Override
