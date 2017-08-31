@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.codeInspection.dataFlow.SpecialField;
@@ -34,10 +35,13 @@ import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
+import java.util.Objects;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
 /**
@@ -167,38 +171,82 @@ public class DfaExpressionFactory {
   }
 
   private static boolean isFieldDereferenceBeforeInitialization(PsiReferenceExpression ref) {
-    PsiField placeField = PsiTreeUtil.getParentOfType(ref, PsiField.class, true, PsiClass.class, PsiLambdaExpression.class);
-    if (placeField == null) return false;
+    PsiMember placeMember = PsiTreeUtil.getParentOfType(ref, PsiMember.class, true, PsiClass.class, PsiLambdaExpression.class);
+    if (placeMember == null) return false;
 
-    PsiClass placeClass = placeField.getContainingClass();
+    PsiClass placeClass = placeMember.getContainingClass();
     PsiElement target = ref.resolve();
     if (target instanceof PsiField) {
       PsiField targetField = (PsiField)target;
-      if (placeClass != null && placeClass == targetField.getContainingClass() && targetField.getInitializer() == null) {
-        if (!targetField.hasModifier(JvmModifier.FINAL)) return true;
-        
-        if (!placeField.hasModifier(JvmModifier.STATIC) && targetField.hasModifier(JvmModifier.STATIC)) {
+      if (placeClass != null && placeClass == targetField.getContainingClass()) {
+        if (!placeMember.hasModifier(JvmModifier.STATIC) && targetField.hasModifier(JvmModifier.STATIC)) {
           return false;
         }
 
-        return !isWrittenInClassInitializer(placeClass, targetField, ref.getTextRange().getStartOffset());
+        return getAccessOffset(placeMember) < getWriteOffset(targetField);
       }
     }
     return false;
   }
 
-  private static boolean isWrittenInClassInitializer(PsiClass placeClass, PsiField field, int beforeOffset) {
-    for (PsiReference reference : ReferencesSearch.search(field, new LocalSearchScope(placeClass)).findAll()) {
-      if (reference instanceof PsiReferenceExpression) {
-        PsiReferenceExpression expr = (PsiReferenceExpression)reference;
-        if (PsiUtil.isAccessedForWriting(expr) &&
-            PsiTreeUtil.getParentOfType(expr, PsiClassInitializer.class) != null &&
-            (expr).getTextRange().getStartOffset() < beforeOffset) {
-          return true;
+  private static int getWriteOffset(PsiField target) {
+    // Final field: written either in field initializer or in class initializer block which directly writes this field
+    // Non-final field: written either in field initializer, in class initializer which directly writes this field or calls any method,
+    //    or in other field initializer which directly writes this field or calls any method
+    boolean isFinal = target.hasModifier(JvmModifier.FINAL);
+    int offset = Integer.MAX_VALUE;
+    if (target.getInitializer() != null) {
+      offset = target.getInitializer().getTextOffset();
+      if (isFinal) return offset;
+    }
+    PsiClass aClass = Objects.requireNonNull(target.getContainingClass());
+    PsiClassInitializer[] initializers = aClass.getInitializers();
+    Predicate<PsiElement> writesToTarget = element -> !ReferencesSearch.search(target, new LocalSearchScope(element))
+      .forEach(e -> !(e instanceof PsiExpression) || !PsiUtil.isAccessedForWriting((PsiExpression)e));
+    Predicate<PsiElement> hasSideEffectCall = element -> !PsiTreeUtil.findChildrenOfType(element, PsiMethodCallExpression.class).stream()
+      .map(PsiMethodCallExpression::resolveMethod).allMatch(method -> method != null && ControlFlowAnalyzer.isPure(method));
+    for (PsiClassInitializer initializer : initializers) {
+      if (initializer.hasModifier(JvmModifier.STATIC) != target.hasModifier(JvmModifier.STATIC)) continue;
+      if (!isFinal && hasSideEffectCall.test(initializer)) {
+        // non-final field could be written indirectly (via method call), so assume it's written in the first applicable initializer
+        offset = Math.min(offset, initializer.getTextOffset());
+        break;
+      }
+      if (writesToTarget.test(initializer)) {
+        offset = Math.min(offset, initializer.getTextOffset());
+        if (isFinal) return offset;
+        break;
+      }
+    }
+    if (!isFinal) {
+      for (PsiField field : aClass.getFields()) {
+        if (field.hasModifier(JvmModifier.STATIC) != target.hasModifier(JvmModifier.STATIC)) continue;
+        if (PsiTreeUtil.findChildOfType(field.getInitializer(), PsiCall.class) != null || writesToTarget.test(field)) {
+          offset = Math.min(offset, field.getTextOffset());
+          break;
         }
       }
     }
-    return false;
+    return offset;
+  }
+
+  private static int getAccessOffset(PsiMember referrer) {
+    if (referrer instanceof PsiField) {
+      return referrer.getTextOffset();
+    }
+    PsiClass aClass = Objects.requireNonNull(referrer.getContainingClass());
+    if (referrer instanceof PsiMethod) {
+      for (PsiField field : aClass.getFields()) {
+        PsiExpression initializer = field.getInitializer();
+        if (ExpressionUtils.isMatchingChildAlwaysExecuted(initializer, e -> e instanceof PsiMethodCallExpression &&
+                                                                            ((PsiMethodCallExpression)e).getMethodExpression()
+                                                                              .isReferenceTo(referrer))) {
+          // current method is definitely called from some field initialization
+          return field.getTextOffset();
+        }
+      }
+    }
+    return Integer.MAX_VALUE; // accessed after initialization or at unknown moment
   }
 
   @Nullable

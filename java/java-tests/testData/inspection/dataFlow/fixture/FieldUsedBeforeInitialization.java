@@ -33,3 +33,45 @@ class MixedFieldTest {
   static final String FOO;
   static { FOO = ""; }
 }
+
+class FieldInitLoop {
+  static final String ABC = "xyz"+bar();
+  static final String XYZ = "foo".toLowerCase();
+
+  static String bar() {
+    // bar() is invoked from ABC initializer before XYZ initializer
+    return XYZ.<warning descr="Method invocation 'trim' may produce 'java.lang.NullPointerException'">trim</warning>();
+  }
+}
+
+class FieldInitLoopCompileTime {
+  static final String ABC = "xyz"+bar();
+  static final String XYZ = "foo"+"bar";
+
+  static String bar() {
+    // No warning as XYZ initialized with precomputed constant before class initialization
+    return XYZ.trim();
+  }
+}
+
+class FieldInitNoLoop {
+  static final String XYZ = "foo".toLowerCase();
+  static final String ABC = bar();
+
+  static String bar() {
+    return XYZ.trim();
+  }
+}
+
+class NonFinalNotInitialized {
+  String x;
+  String y = x.<warning descr="Method invocation 'trim' may produce 'java.lang.NullPointerException'">trim</warning>();
+}
+
+class NonFinalInitialized {
+  String x;
+  {
+    x = "  foo  ";
+  }
+  String y = x.trim();
+}
