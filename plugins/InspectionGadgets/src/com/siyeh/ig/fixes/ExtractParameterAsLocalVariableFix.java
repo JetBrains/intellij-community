@@ -105,8 +105,10 @@ public class ExtractParameterAsLocalVariableFix extends InspectionGadgetsFix {
                                              ? codeBlock.addBefore(newStatement, anchor)
                                              : anchor.replace(newStatement));
     replaceReferences(collector.getCollection(), variableName, body);
-    final PsiLocalVariable variable = (PsiLocalVariable)newStatement.getDeclaredElements()[0];
-    HighlightUtil.showRenameTemplate(body, variable);
+    if (isOnTheFly()) {
+      final PsiLocalVariable variable = (PsiLocalVariable)newStatement.getDeclaredElements()[0];
+      HighlightUtil.showRenameTemplate(body, variable);
+    }
   }
 
   private static void replaceReferences(Collection<PsiReferenceExpression> collection, String newVariableName, PsiElement context) {
