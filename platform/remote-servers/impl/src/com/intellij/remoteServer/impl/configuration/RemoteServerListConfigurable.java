@@ -20,6 +20,7 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -212,6 +213,14 @@ public class RemoteServerListConfigurable extends MasterDetailsComponent impleme
   @Nullable
   public RemoteServer<?> getLastSelectedServer() {
     return myLastSelectedServer;
+  }
+
+  @Override
+  protected void reInitWholePanelIfNeeded() {
+    super.reInitWholePanelIfNeeded();
+    if (myWholePanel.getBorder() == null) {
+      myWholePanel.setBorder(JBUI.Borders.emptyLeft(10));
+    }
   }
 
   private List<NamedConfigurable<RemoteServer<?>>> getConfiguredServers() {
