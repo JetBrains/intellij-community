@@ -77,7 +77,7 @@ public final class TreeUtil {
   @Nullable
   public static <T> T findObjectInPath(@Nullable TreePath path, @NotNull Class<T> clazz) {
     for (TreePath p = path; p != null; p = p.getParentPath()) {
-      Object o = p.getLastPathComponent();
+      Object o = getUserObject(p.getLastPathComponent());
       if (clazz.isInstance(o)) return (T)o;
     }
     return null;
