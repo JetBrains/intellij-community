@@ -18,5 +18,5 @@ package com.intellij.util.containers;
 import org.jetbrains.annotations.Nullable;
 
 public interface Predicate<T> {
-  boolean apply(@Nullable T input);
+  boolean apply(T input);
 }
