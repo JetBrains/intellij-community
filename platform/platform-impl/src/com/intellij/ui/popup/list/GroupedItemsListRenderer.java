@@ -67,7 +67,7 @@ public class GroupedItemsListRenderer<E> extends GroupedElementsRenderer.List im
 
   protected final JComponent layoutComponent(JComponent middleItemComponent) {
     myNextStepLabel = new JLabel();
-    myNextStepLabel.setOpaque(true);
+    myNextStepLabel.setOpaque(false);
     return JBUI.Panels.simplePanel(middleItemComponent)
       .addToRight(myNextStepLabel)
       .withBorder(getDefaultItemComponentBorder());
