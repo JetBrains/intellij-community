@@ -46,6 +46,7 @@ public class GradleTestsExecutionConsole extends SMTRunnerConsoleView {
 
   @Override
   public void dispose() {
+    testsMap.clear();
     super.dispose();
   }
 
