@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,9 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.ClickListener;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.LayeredIcon;
+import com.intellij.util.IconUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.xdebugger.XDebuggerBundle;
@@ -86,6 +88,8 @@ public abstract class XDebuggerEditorBase {
     myHistoryId = historyId;
     mySourcePosition = sourcePosition;
 
+    myChooseFactory.setHorizontalTextPosition(SwingConstants.LEFT);
+    myChooseFactory.setIconTextGap(0);
     myChooseFactory.setToolTipText(XDebuggerBundle.message("xdebugger.evaluate.language.hint"));
     myChooseFactory.setBorder(JBUI.Borders.empty(0, 3, 0, 3));
     new ClickListener() {
@@ -228,14 +232,22 @@ public abstract class XDebuggerEditorBase {
     //myChooseFactory.setEnabled(many && languages.contains(language));
 
     if (language != null && language.getAssociatedFileType() != null) {
-      LayeredIcon icon = JBUI.scale(new LayeredIcon(2));
-      icon.setIcon(language.getAssociatedFileType().getIcon(), 0);
-      icon.setIcon(AllIcons.General.Dropdown, 1, 3, 0);
-      myChooseFactory.setIcon(icon);
+      Icon dropdownIcon = AllIcons.General.Dropdown;
+      int width = dropdownIcon.getIconWidth();
+      dropdownIcon = IconUtil.cropIcon(dropdownIcon, new Rectangle(width / 2, 0, width - width / 2, dropdownIcon.getIconHeight()));
+      LayeredIcon icon = JBUI.scale(new LayeredIcon(1));
+      icon.setIcon(dropdownIcon, 0, 0, -5);
+      myChooseFactory.setIcon(IconUtil.desaturate(icon));
+      myChooseFactory.setText(language.getDisplayName());
+      myChooseFactory.setForeground(JBColor.darkGray);
       myChooseFactory.setDisabledIcon(IconLoader.getDisabledIcon(icon));
     }
 
     doSetText(text);
+  }
+
+  public void setEnabled(boolean enable) {
+    myChooseFactory.setEnabled(enable);
   }
 
   public abstract XExpression getExpression();
