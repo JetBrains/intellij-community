@@ -53,7 +53,8 @@ public class ServerTaskExecutorImpl implements ServerTaskExecutor {
       }
       catch (Throwable e) {
         LOG.info(e);
-        callback.errorOccurred(e.getMessage());
+        String message = e.getMessage();
+        callback.errorOccurred(message != null ? message : e.getClass().getName());
       }
     });
   }
