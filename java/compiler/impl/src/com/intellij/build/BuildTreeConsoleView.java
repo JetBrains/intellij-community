@@ -23,17 +23,17 @@ import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ThreeComponentsSplitter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SideBorder;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.SimpleTreeBuilder;
 import com.intellij.ui.treeStructure.SimpleTreeStructure;
@@ -52,6 +52,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.CompoundBorder;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -418,13 +419,25 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     @Nullable
     private ExecutionNode myExecutionNode;
     private final ConsoleView myConsole;
+    private final JPanel myPanel;
 
     public DetailsHandler(Project project,
                           TreeTableTree tree,
                           ThreeComponentsSplitter threeComponentsSplitter) {
       myConsole = TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole();
       mySplitter = threeComponentsSplitter;
-      myConsole.getComponent().setVisible(false);
+      myPanel = new JPanel(new BorderLayout());
+      JComponent consoleComponent = myConsole.getComponent();
+      AnAction[] consoleActions = myConsole.createConsoleActions();
+      consoleComponent.setFocusable(true);
+      final Color editorBackground = EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground();
+      consoleComponent.setBorder(new CompoundBorder(IdeBorderFactory.createBorder(SideBorder.RIGHT | SideBorder.TOP),
+                                                    new SideBorder(editorBackground, SideBorder.LEFT)));
+      myPanel.add(consoleComponent, BorderLayout.CENTER);
+      final ActionToolbar toolbar = ActionManager.getInstance()
+        .createActionToolbar("BuildResults", new DefaultActionGroup(consoleActions), false);
+      myPanel.add(toolbar.getComponent(), BorderLayout.EAST);
+      myPanel.setVisible(false);
       tree.addTreeSelectionListener(new TreeSelectionListener() {
         @Override
         public void valueChanged(TreeSelectionEvent e) {
@@ -467,7 +480,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
         int width = Math.round(mySplitter.getWidth() / 2f);
         mySplitter.setFirstSize(width);
       }
-      myConsole.getComponent().setVisible(true);
+      myPanel.setVisible(true);
       return true;
     }
 
@@ -522,15 +535,15 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       }
 
       myExecutionNode = null;
-      myConsole.getComponent().setVisible(false);
+      myPanel.setVisible(false);
     }
 
     public JComponent getComponent() {
-      return myConsole.getComponent();
+      return myPanel;
     }
 
     public void clear() {
-      myConsole.getComponent().setVisible(false);
+      myPanel.setVisible(false);
       myConsole.clear();
     }
   }
