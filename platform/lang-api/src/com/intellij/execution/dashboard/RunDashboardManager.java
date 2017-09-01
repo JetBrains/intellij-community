@@ -31,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author konstantin.aleev
@@ -66,6 +67,11 @@ public interface RunDashboardManager {
   RunDashboardAnimator getAnimator();
 
   boolean isShowInDashboard(@NotNull RunConfiguration runConfiguration);
+
+  @NotNull
+  Set<String> getTypes();
+
+  void setTypes(Set<String> types);
 
   @Nullable
   RunDashboardContributor getContributor(@NotNull ConfigurationType type);
