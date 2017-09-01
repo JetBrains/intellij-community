@@ -90,6 +90,10 @@ public class SubstitutedExpressionEvaluationHelper {
                 Collection<PsiExpression> realValues = DfaUtil.getCachedVariableValues(psiVariable, o);
                 values = realValues == null ? DfaPsiUtil.getVariableAssignmentsInFile(psiVariable, true, o) : realValues;
               }
+              else if (dfaOption == Configuration.DfaOption.RESOLVE) {
+                PsiExpression initializer = psiVariable.getInitializer();
+                values = ContainerUtil.createMaybeSingletonList(initializer);
+              }
               else {
                 values = Collections.emptyList();
               }
