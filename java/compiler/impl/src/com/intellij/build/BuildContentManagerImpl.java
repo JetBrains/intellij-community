@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
+import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
@@ -57,7 +58,7 @@ public class BuildContentManagerImpl implements BuildContentManager {
   private void init(Project project) {
     final Runnable runnable = () -> {
       ToolWindow toolWindow = ToolWindowManager.getInstance(project)
-        .registerToolWindow("Build", true, ToolWindowAnchor.BOTTOM, project, true);
+        .registerToolWindow(ToolWindowId.BUILD, true, ToolWindowAnchor.BOTTOM, project, true);
       toolWindow.getComponent().putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, "true");
       toolWindow.setIcon(AllIcons.Actions.Compile);
       myToolWindow = toolWindow;

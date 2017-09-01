@@ -26,6 +26,7 @@ public interface ToolWindowId {
   String ANT_BUILD = UIBundle.message("tool.window.name.ant.build");
   String DEBUG = UIBundle.message("tool.window.name.debug");
   String RUN = UIBundle.message("tool.window.name.run");
+  String BUILD = UIBundle.message("tool.window.name.build");
   String FIND = UIBundle.message("tool.window.name.find");
   String CVS = UIBundle.message("tool.window.name.cvs");
   String HIERARCHY = UIBundle.message("tool.window.name.hierarchy");

@@ -130,7 +130,7 @@ public class TestsUIUtil {
 
     TestStatusListener.notifySuiteFinished(root, properties.getProject());
 
-    final String testRunDebugId = properties.isDebug() ? ToolWindowId.DEBUG : ToolWindowId.RUN;
+    final String windowId = properties.getWindowId();
     final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
 
     final String title = testResultPresentation.getTitle();
@@ -138,8 +138,8 @@ public class TestsUIUtil {
     final String balloonText = testResultPresentation.getBalloonText();
     final MessageType type = testResultPresentation.getType();
 
-    if (!Comparing.strEqual(toolWindowManager.getActiveToolWindowId(), testRunDebugId)) {
-      toolWindowManager.notifyByBalloon(testRunDebugId, type, balloonText, null, null);
+    if (!Comparing.strEqual(toolWindowManager.getActiveToolWindowId(), windowId)) {
+      toolWindowManager.notifyByBalloon(windowId, type, balloonText, null, null);
     }
 
     NOTIFICATION_GROUP.createNotification(balloonText, type).notify(project);
