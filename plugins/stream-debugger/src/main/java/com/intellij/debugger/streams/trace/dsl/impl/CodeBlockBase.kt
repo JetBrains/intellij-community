@@ -29,10 +29,30 @@ abstract class CodeBlockBase(private val myFactory: StatementFactory) : Composit
     return declaration.variable
   }
 
+  override fun declare(variable: Variable, init: Expression, isMutable: Boolean): Variable {
+    val declaration = myFactory.createVariableDeclaration(variable, init, isMutable)
+    addStatement(declaration)
+    return declaration.variable
+  }
+
   override fun forLoop(initialization: VariableDeclaration, condition: Expression, afterThought: Expression, init: ForLoopBody.() -> Unit) {
     val loopBody = myFactory.createEmptyForLoopBody(initialization.variable)
     loopBody.init()
     addStatement(myFactory.createForLoop(initialization, condition, afterThought, loopBody))
+  }
+
+  override fun ifBranch(condition: Expression, init: CodeBlock.() -> Unit): IfBranch {
+    val ifBody = myFactory.createEmptyCodeBlock()
+    ifBody.init()
+    val branch = myFactory.createIfBranch(condition, ifBody)
+    addStatement(branch)
+    return branch
+  }
+
+  override fun call(receiver: Expression, methodName: String, vararg args: Expression): Expression {
+    val call = receiver.call(methodName, *args)
+    addStatement(call)
+    return call
   }
 
   override fun forEachLoop(iterateVariable: Variable, collection: Expression, init: ForLoopBody.() -> Unit) {
@@ -44,4 +64,7 @@ abstract class CodeBlockBase(private val myFactory: StatementFactory) : Composit
   override fun addStatement(statement: Statement) {
     myStatements += statement
   }
+
+  protected val statements: List<Statement>
+    get() = myStatements
 }
