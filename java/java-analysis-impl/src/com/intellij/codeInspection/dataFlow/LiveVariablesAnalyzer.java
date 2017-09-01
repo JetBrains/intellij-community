@@ -148,7 +148,7 @@ public class LiveVariablesAnalyzer {
           set.or(liveVars);
           return set;
         } else {
-          result.put((FinishElementInstruction)instruction, liveVars);
+          result.put((FinishElementInstruction)instruction, (BitSet)liveVars.clone());
         }
       }
 
