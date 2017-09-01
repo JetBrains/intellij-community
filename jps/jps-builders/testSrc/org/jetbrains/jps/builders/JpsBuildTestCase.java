@@ -47,6 +47,8 @@ import org.jetbrains.jps.indices.impl.IgnoredFileIndexImpl;
 import org.jetbrains.jps.indices.impl.ModuleExcludeIndexImpl;
 import org.jetbrains.jps.model.*;
 import org.jetbrains.jps.model.java.*;
+import org.jetbrains.jps.model.java.compiler.JavaCompilers;
+import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.library.JpsTypedLibrary;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
@@ -229,6 +231,8 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
       allPathVariables.put(PathMacroUtil.APPLICATION_HOME_DIR, PathManager.getHomePath());
       allPathVariables.putAll(getAdditionalPathVariables());
       JpsProjectLoader.loadProject(myProject, allPathVariables, fullProjectPath);
+      final JpsJavaCompilerConfiguration config = JpsJavaExtensionService.getInstance().getCompilerConfiguration(myProject);
+      config.getCompilerOptions(JavaCompilers.JAVAC_ID).PREFER_TARGET_JDK_COMPILER = false;
     }
     catch (IOException e) {
       throw new RuntimeException(e);
