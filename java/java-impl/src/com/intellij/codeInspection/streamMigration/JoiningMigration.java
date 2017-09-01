@@ -26,6 +26,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.siyeh.ig.callMatcher.CallMatcher;
@@ -37,6 +38,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.BiFunction;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil.isEffectivelyFinal;
@@ -53,12 +55,12 @@ public class JoiningMigration extends BaseStreamApiMigration {
   }
 
   @Override
-  PsiElement migrate(@NotNull Project project, @NotNull PsiStatement body, @NotNull TerminalBlock tb) {
+  PsiElement migrate(@NotNull Project project, @NotNull PsiElement body, @NotNull TerminalBlock tb) {
     JoiningTerminal terminal = extractTerminal(tb, null);
     if(terminal == null) return null;
 
     TerminalBlock block = terminal.getTerminalBlock();
-    PsiLoopStatement loopStatement = block.getMainLoop();
+    PsiStatement loopStatement = block.getStreamSourceStatement();
     String stream = terminal.generateStreamCode();
     restoreComments(loopStatement, body);
     PsiLocalVariable builder = terminal.getBuilder();
@@ -171,10 +173,22 @@ public class JoiningMigration extends BaseStreamApiMigration {
       }
     }
 
-    private static boolean canBeMadeNonFinal(@NotNull PsiLocalVariable variable, @NotNull PsiLoopStatement loop) {
-      NavigatablePsiElement loopBound = PsiTreeUtil.getParentOfType(loop, PsiMember.class, PsiLambdaExpression.class);
-      return ReferencesSearch.search(variable)
-        .forEach(reference -> PsiTreeUtil.getParentOfType(reference.getElement(), PsiMember.class, PsiLambdaExpression.class) == loopBound);
+    private static boolean canBeMadeNonFinal(@NotNull PsiLocalVariable variable, @NotNull PsiStatement sourceStatement) {
+      NavigatablePsiElement loopBound = PsiTreeUtil.getParentOfType(sourceStatement, PsiMember.class, PsiLambdaExpression.class);
+
+      Predicate<PsiReference> referenceBoundPredicate;
+      if (sourceStatement instanceof PsiLoopStatement) {
+        referenceBoundPredicate =
+          (reference) -> PsiTreeUtil.getParentOfType(reference.getElement(), PsiMember.class, PsiLambdaExpression.class) == loopBound;
+      }
+      else {
+        referenceBoundPredicate = (reference) -> {
+          PsiLambdaExpression lambda = PsiTreeUtil.getParentOfType(reference.getElement(), PsiLambdaExpression.class);
+          return PsiTreeUtil.getParentOfType(lambda, PsiMember.class, PsiLambdaExpression.class) == loopBound;
+        };
+      }
+      return ReferencesSearch.search(variable).forEach((Processor<PsiReference>)reference -> referenceBoundPredicate.test(reference)) &&
+             FinalUtils.canBeFinal(variable);
     }
 
     String generateTerminal() {
@@ -197,6 +211,11 @@ public class JoiningMigration extends BaseStreamApiMigration {
     }
 
     String generateIntermediate() {
+      if (TypeUtils.isJavaLangString(myLoopVariable.getType()) &&
+          myMainJoinParts.size() == 1 &&
+          myMainJoinParts.get(0) instanceof PsiReferenceExpression) {
+        return "";
+      }
       PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myLoopVariable.getProject());
       String joinTransformation = getExpressionText(myMainJoinParts);
       PsiExpression mapping = elementFactory.createExpressionFromText(joinTransformation, myLoopVariable);
@@ -664,12 +683,13 @@ public class JoiningMigration extends BaseStreamApiMigration {
         if(declarations == null) return null;
         PsiMethodCallExpression beforeLoopAppend = getCallBeforeStatement(firstAppendSuccessor, targetBuilder, APPEND, declarations);
 
-        if(!canBeMadeNonFinal(targetBuilder, terminalBlock.getMainLoop())) return null;
+
+        if (!canBeMadeNonFinal(targetBuilder, terminalBlock.getStreamSourceStatement())) return null;
 
         List<PsiElement> refs = StreamEx.of(ReferencesSearch.search(targetBuilder).findAll())
           .map(PsiReference::getElement)
           .remove(e -> PsiTreeUtil.isAncestor(targetBuilder, e, false) ||
-                       PsiTreeUtil.isAncestor(terminalBlock.getMainLoop(), e, false))
+                       PsiTreeUtil.isAncestor(terminalBlock.getStreamSourceStatement(), e, false))
           .toList();
 
         allowedReferencePlaces.add(afterLoopAppend);
@@ -732,7 +752,7 @@ public class JoiningMigration extends BaseStreamApiMigration {
         if (mainJoinParts == null || mainJoinParts.isEmpty()) return null;
         PsiLocalVariable targetBuilder = extractStringBuilder(statements.get(0));
         if (targetBuilder == null) return null;
-        PsiLoopStatement loop = terminalBlock.getMainLoop();
+        PsiStatement loop = terminalBlock.getStreamSourceStatement();
         PrefixSuffixContext context =
           PrefixSuffixContext.extractAndVerifyRefs(loop, loop, targetBuilder, terminalBlock, emptyList(), new HashSet<>(emptyList()));
         if (context == null) return null;
@@ -776,7 +796,7 @@ public class JoiningMigration extends BaseStreamApiMigration {
 
         List<PsiExpression> mainJoinParts = extractJoinParts(withoutCondition);
         if (mainJoinParts == null) return null;
-        PsiLoopStatement loop = terminalBlock.getMainLoop();
+        PsiStatement loop = terminalBlock.getStreamSourceStatement();
         PrefixSuffixContext context =
           PrefixSuffixContext.extractAndVerifyRefs(loop, loop, targetBuilder, terminalBlock, emptyList(), new HashSet<>(emptyList()));
         if (context == null) return null;
@@ -846,7 +866,7 @@ public class JoiningMigration extends BaseStreamApiMigration {
 
         PsiLocalVariable targetBuilder = extractStringBuilder(firstIterationStatements.get(0));
         if (targetBuilder == null) return null;
-        PsiLoopStatement loop = terminalBlock.getMainLoop();
+        PsiStatement loop = terminalBlock.getStreamSourceStatement();
         PrefixSuffixContext context =
           PrefixSuffixContext.extractAndVerifyRefs(loop, loop, targetBuilder, terminalBlock, singletonList(boolVar),
                                                    new HashSet<>(emptyList()));
@@ -896,7 +916,7 @@ public class JoiningMigration extends BaseStreamApiMigration {
         List<PsiExpression> mainJoinParts = joinData.getMainJoinParts();
         List<PsiExpression> delimiterJoinParts = joinData.getDelimiterJoinParts();
 
-        PsiLoopStatement loop = terminalBlock.getMainLoop();
+        PsiStatement loop = terminalBlock.getStreamSourceStatement();
 
         PsiIfStatement ifStatement = tryCast(PsiTreeUtil.skipWhitespacesAndCommentsForward(loop), PsiIfStatement.class);
         if(ifStatement == null) return null;
@@ -1019,7 +1039,7 @@ public class JoiningMigration extends BaseStreamApiMigration {
         PsiLocalVariable targetBuilder = extractStringBuilder(mainStatements.get(0));
         if (targetBuilder == null) return null;
 
-        PsiLoopStatement loop = terminalBlock.getMainLoop();
+        PsiStatement loop = terminalBlock.getStreamSourceStatement();
         PrefixSuffixContext context =
           PrefixSuffixContext.extractAndVerifyRefs(loop, loop, targetBuilder, terminalBlock, singletonList(delimiterVar),
                                                    new HashSet<>(emptyList()));
@@ -1103,7 +1123,7 @@ public class JoiningMigration extends BaseStreamApiMigration {
 
         PsiLocalVariable targetBuilder = extractStringBuilder(firstIterationStatements.get(0));
         if (targetBuilder == null) return null;
-        PsiLoopStatement loop = terminalBlock.getMainLoop();
+        PsiStatement loop = terminalBlock.getStreamSourceStatement();
         PrefixSuffixContext context =
           PrefixSuffixContext.extractAndVerifyRefs(loop, loop, targetBuilder, terminalBlock, emptyList(), new HashSet<>(emptyList()));
         if (context == null) return null;
@@ -1180,7 +1200,7 @@ public class JoiningMigration extends BaseStreamApiMigration {
         JoinData joinData = JoinData.extractLeftDelimiter(joinParts);
         List<PsiExpression> delimiterJoinParts = joinData.getDelimiterJoinParts();
         if (delimiterJoinParts.isEmpty()) return null;
-        PsiLoopStatement loop = terminalBlock.getMainLoop();
+        PsiStatement loop = terminalBlock.getStreamSourceStatement();
         PsiLocalVariable variable = tryCast(terminalBlock.getVariable(), PsiLocalVariable.class);
         if (variable == null) return null;
         PsiLocalVariable targetBuilder = extractStringBuilder(statements.get(0));

@@ -57,8 +57,8 @@ class ForEachMigration extends BaseStreamApiMigration {
   }
 
   @Override
-  PsiElement migrate(@NotNull Project project, @NotNull PsiStatement body, @NotNull TerminalBlock tb) {
-    PsiLoopStatement loopStatement = tb.getMainLoop();
+  PsiElement migrate(@NotNull Project project, @NotNull PsiElement body, @NotNull TerminalBlock tb) {
+    PsiStatement loopStatement = tb.getStreamSourceStatement();
     restoreComments(loopStatement, body);
 
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);

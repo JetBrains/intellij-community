@@ -35,7 +35,7 @@ public class ToArrayMigration extends BaseStreamApiMigration {
   }
 
   @Override
-  PsiElement migrate(@NotNull Project project, @NotNull PsiStatement body, @NotNull TerminalBlock tb) {
+  PsiElement migrate(@NotNull Project project, @NotNull PsiElement body, @NotNull TerminalBlock tb) {
     PsiLocalVariable arrayVariable = StreamApiMigrationInspection.extractArray(tb);
     if(arrayVariable == null) return null;
     PsiAssignmentExpression assignment = tb.getSingleExpression(PsiAssignmentExpression.class);
@@ -50,7 +50,7 @@ public class ToArrayMigration extends BaseStreamApiMigration {
     if(loop == null) return null;
     PsiArrayType arrayType = tryCast(initializer.getType(), PsiArrayType.class);
     if(arrayType == null) return null;
-    InitializerUsageStatus status = ControlFlowUtils.getInitializerUsageStatus(arrayVariable, tb.getMainLoop());
+    InitializerUsageStatus status = ControlFlowUtils.getInitializerUsageStatus(arrayVariable, tb.getStreamSourceStatement());
     if(status == ControlFlowUtils.InitializerUsageStatus.UNKNOWN) return null;
     PsiType componentType = arrayType.getComponentType();
     String supplier;
@@ -61,6 +61,6 @@ public class ToArrayMigration extends BaseStreamApiMigration {
     }
     MapOp mapping = new MapOp(rValue, tb.getVariable(), assignment.getType());
     String replacementText = loop.withBound(dimension).createReplacement() + mapping.createReplacement() + ".toArray(" + supplier + ")";
-    return replaceInitializer(tb.getMainLoop(), arrayVariable, initializer, replacementText, status);
+    return replaceInitializer(tb.getStreamSourceStatement(), arrayVariable, initializer, replacementText, status);
   }
 }

@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class PsiClassNamePatternCondition extends PatternCondition<PsiClass> {
 
-  private final ElementPattern<String> stringPattern;
+  private final ElementPattern<String> namePattern;
 
   public PsiClassNamePatternCondition(ElementPattern<String> pattern) {
     this("withQualifiedName", pattern);
@@ -30,16 +30,16 @@ public class PsiClassNamePatternCondition extends PatternCondition<PsiClass> {
 
   public PsiClassNamePatternCondition(@Nullable String debugMethodName, ElementPattern<String> pattern) {
     super(debugMethodName);
-    stringPattern = pattern;
+    namePattern = pattern;
   }
 
   @Override
   public boolean accepts(@NotNull PsiClass aClass, ProcessingContext context) {
-    return stringPattern.accepts(aClass.getQualifiedName(), context);
+    return namePattern.accepts(aClass.getQualifiedName(), context);
   }
 
   @SuppressWarnings("unused") //Used in Kotlin
-  public ElementPattern<String> getStringPattern() {
-    return stringPattern;
+  public ElementPattern<String> getNamePattern() {
+    return namePattern;
   }
 }

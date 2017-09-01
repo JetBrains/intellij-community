@@ -21,30 +21,33 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.SimplifyStreamApiCallChainsInspection;
 import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.StreamSource;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiLoopStatement;
-import com.intellij.psi.PsiStatement;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import static com.intellij.util.ObjectUtils.tryCast;
 
 /**
  * @author Tagir Valeev
  */
 class MigrateToStreamFix implements LocalQuickFix {
   private BaseStreamApiMigration myMigration;
+  @Nullable private final String myCustomName;
 
-  protected MigrateToStreamFix(BaseStreamApiMigration migration) {
+  protected MigrateToStreamFix(BaseStreamApiMigration migration, @Nullable String customName) {
     myMigration = migration;
+    myCustomName = customName;
   }
 
   @Nls
   @NotNull
   @Override
   public String getName() {
-    return "Replace with "+myMigration.getReplacement();
+    return myCustomName!= null? myCustomName: "Replace with "+myMigration.getReplacement();
   }
 
   @SuppressWarnings("DialogTitleCapitalization")
@@ -63,11 +66,29 @@ class MigrateToStreamFix implements LocalQuickFix {
       PsiStatement body = loopStatement.getBody();
       if(body == null || source == null) return;
       TerminalBlock tb = TerminalBlock.from(source, body);
-      PsiElement result = myMigration.migrate(project, body, tb);
-      if(result != null) {
-        tb.operations().forEach(StreamApiMigrationInspection.Operation::cleanUp);
-        simplifyAndFormat(project, result);
-      }
+      migrate(project, body, tb);
+    } else if(element instanceof PsiExpressionStatement) {
+      PsiMethodCallExpression call = tryCast(((PsiExpressionStatement)element).getExpression(), PsiMethodCallExpression.class);
+      if(call == null) return;
+
+      PsiLambdaExpression lambda = SimplifyForEachInspection.extractLambdaFromForEach(call);
+      if (lambda == null) return;
+      PsiElement lambdaBody = lambda.getBody();
+      SimplifyForEachInspection.ExistingStreamSource
+        source = SimplifyForEachInspection.ExistingStreamSource.extractSource(call, lambda);
+      if(source == null) return;
+      TerminalBlock terminalBlock = SimplifyForEachInspection.extractTerminalBlock(lambdaBody, source);
+      if (terminalBlock == null) return;
+
+      migrate(project, lambdaBody, terminalBlock);
+    }
+  }
+
+  private void migrate(@NotNull Project project, PsiElement block, TerminalBlock tb) {
+    PsiElement result = myMigration.migrate(project, block, tb);
+    if(result != null) {
+      tb.operations().forEach(StreamApiMigrationInspection.Operation::cleanUp);
+      simplifyAndFormat(project, result);
     }
   }
 

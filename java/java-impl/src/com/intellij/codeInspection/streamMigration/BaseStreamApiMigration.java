@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Tagir Valeev
  */
 abstract class BaseStreamApiMigration {
-  private final boolean myShouldWarn;
+  private boolean myShouldWarn;
   private final String myReplacement;
 
   protected BaseStreamApiMigration(boolean shouldWarn, String replacement) {
@@ -40,19 +40,23 @@ abstract class BaseStreamApiMigration {
     return myReplacement;
   }
 
-  abstract PsiElement migrate(@NotNull Project project, @NotNull PsiStatement body, @NotNull TerminalBlock tb);
+  abstract PsiElement migrate(@NotNull Project project, @NotNull PsiElement body, @NotNull TerminalBlock tb);
 
   public boolean isShouldWarn() {
     return myShouldWarn;
   }
 
-  static PsiElement replaceWithOperation(PsiLoopStatement loopStatement,
+  public void setShouldWarn(boolean shouldWarn) {
+    myShouldWarn = shouldWarn;
+  }
+
+  static PsiElement replaceWithOperation(PsiStatement loopStatement,
                                          PsiVariable var,
                                          String streamText,
                                          PsiType expressionType,
                                          OperationReductionMigration.ReductionOperation reductionOperation) {
     PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(loopStatement.getProject());
-    restoreComments(loopStatement, loopStatement.getBody());
+    restoreComments(loopStatement, loopStatement instanceof PsiLoopStatement? ((PsiLoopStatement)loopStatement).getBody(): loopStatement);
     InitializerUsageStatus status = ControlFlowUtils.getInitializerUsageStatus(var, loopStatement);
     if (status != InitializerUsageStatus.UNKNOWN) {
       PsiExpression initializer = var.getInitializer();
@@ -67,7 +71,7 @@ abstract class BaseStreamApiMigration {
                                                       loopStatement));
   }
 
-  static PsiElement replaceInitializer(PsiLoopStatement loopStatement,
+  static PsiElement replaceInitializer(PsiStatement loopStatement,
                                        PsiVariable var,
                                        PsiExpression initializer,
                                        String replacement,
@@ -90,11 +94,11 @@ abstract class BaseStreamApiMigration {
 
 
   @Nullable
-  static PsiElement replaceWithFindExtremum(@NotNull PsiLoopStatement loopStatement,
+  static PsiElement replaceWithFindExtremum(@NotNull PsiStatement loopStatement,
                                             @NotNull PsiVariable extremumHolder,
                                             @NotNull String streamText,
                                             @Nullable PsiVariable keyExtremum) {
-    restoreComments(loopStatement, loopStatement.getBody());
+    restoreComments(loopStatement, loopStatement instanceof PsiLoopStatement? ((PsiLoopStatement)loopStatement).getBody(): loopStatement);
     if(keyExtremum != null) {
       keyExtremum.delete();
     }
@@ -102,14 +106,16 @@ abstract class BaseStreamApiMigration {
     return replaceInitializer(loopStatement, extremumHolder, extremumHolder.getInitializer(), streamText, status);
   }
 
-  static void restoreComments(PsiLoopStatement loopStatement, PsiStatement body) {
-    final PsiElement parent = loopStatement.getParent();
-    for (PsiElement comment : PsiTreeUtil.findChildrenOfType(body, PsiComment.class)) {
-      parent.addBefore(comment, loopStatement);
+  static void restoreComments(PsiStatement statement, PsiElement body) {
+    if(statement instanceof PsiLoopStatement || statement instanceof PsiExpressionStatement) {
+      final PsiElement parent = statement.getParent();
+      for (PsiElement comment : PsiTreeUtil.findChildrenOfType(body, PsiComment.class)) {
+        parent.addBefore(comment, statement);
+      }
     }
   }
 
-  static void removeLoop(@NotNull PsiLoopStatement statement) {
+  static void removeLoop(@NotNull PsiStatement statement) {
     PsiElement parent = statement.getParent();
     if (parent instanceof PsiLabeledStatement) {
       parent.delete();

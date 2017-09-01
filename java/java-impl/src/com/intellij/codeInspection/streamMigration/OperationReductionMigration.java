@@ -40,7 +40,7 @@ public class OperationReductionMigration extends BaseStreamApiMigration {
   }
 
   @Override
-  PsiElement migrate(@NotNull Project project, @NotNull PsiStatement body, @NotNull TerminalBlock tb) {
+  PsiElement migrate(@NotNull Project project, @NotNull PsiElement body, @NotNull TerminalBlock tb) {
     PsiAssignmentExpression assignment = tb.getSingleExpression(PsiAssignmentExpression.class);
     if (assignment == null) return null;
     PsiVariable var = StreamApiMigrationInspection.extractAccumulator(assignment, myReductionOperation.getCompoundAssignmentOp());
@@ -71,7 +71,7 @@ public class OperationReductionMigration extends BaseStreamApiMigration {
                     + String.format(Locale.ENGLISH, ".reduce(%s, (%s, %s) -> %s %s %s)",
                                     identity, leftOperand, rightOperand, leftOperand,
                                     myReductionOperation.getOperation(), rightOperand);
-    return replaceWithOperation(tb.getMainLoop(), var, stream, type, myReductionOperation);
+    return replaceWithOperation(tb.getStreamSourceStatement(), var, stream, type, myReductionOperation);
   }
 
   static class ReductionOperation {

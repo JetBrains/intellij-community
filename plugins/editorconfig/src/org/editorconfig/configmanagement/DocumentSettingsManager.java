@@ -72,7 +72,10 @@ public class DocumentSettingsManager extends FileDocumentManagerAdapter {
 
   private <T> void applyConfigValueToUserData(VirtualFile file, Key<T> userDataKey, String editorConfigKey,
                                               String configValue, Map<String, T> configMap) {
-    if (configValue.isEmpty()) return;
+    if (configValue.isEmpty()) {
+      file.putUserData(userDataKey, null);
+      return;
+    }
 
     final T data = configMap.get(configValue);
     if (data == null) {

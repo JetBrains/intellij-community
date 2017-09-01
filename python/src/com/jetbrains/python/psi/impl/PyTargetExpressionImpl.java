@@ -588,6 +588,10 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
         }
       }
     }
+    final PyImportElement importElement = PsiTreeUtil.getParentOfType(this, PyImportElement.class);
+    if (importElement != null) {
+      return importElement.getImportReferenceExpression();
+    }
     return null;
   }
 
