@@ -29,7 +29,6 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.TabbedContent;
 import com.intellij.util.Consumer;
 import com.intellij.util.ContentUtilEx;
-import com.intellij.util.ContentsUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
@@ -155,12 +154,9 @@ public class VcsLogContentUtil {
 
   public static void closeLogTabs(@NotNull ToolWindow toolWindow, @NotNull Collection<String> tabs) {
     for (String tabName : tabs) {
-      Content content = toolWindow.getContentManager().findContent(tabName);
-      LOG.assertTrue(content != null, "Could not find content for tab " + tabName + "\nExisting content: " +
-                                      Arrays.toString(toolWindow.getContentManager().getContents()) + "\nTabs to close: " + tabs);
-      if (content.isCloseable()) {
-        ContentsUtil.closeContentTab(toolWindow.getContentManager(), content);
-      }
+      boolean closed = ContentUtilEx.closeContentTab(toolWindow.getContentManager(), tabName);
+      LOG.assertTrue(closed, "Could not find content component for tab " + tabName + "\nExisting content: " +
+                             Arrays.toString(toolWindow.getContentManager().getContents()) + "\nTabs to close: " + tabs);
     }
   }
 }
