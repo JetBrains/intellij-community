@@ -18,6 +18,7 @@ package com.intellij.execution.impl
 import com.intellij.execution.*
 import com.intellij.execution.configuration.ConfigurationFactoryEx
 import com.intellij.execution.configurations.*
+import com.intellij.execution.dashboard.RunDashboardManager
 import com.intellij.execution.impl.RunConfigurable.Companion.collectNodesRecursively
 import com.intellij.execution.impl.RunConfigurableNodeKind.*
 import com.intellij.icons.AllIcons
@@ -31,6 +32,7 @@ import com.intellij.openapi.options.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.LabeledComponent.create
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Pair
@@ -40,11 +42,13 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance
 import com.intellij.ui.*
 import com.intellij.ui.RowsDnDSupport.RefinedDropSupport.Position.*
+import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.labels.ActionLink
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.IconUtil
 import com.intellij.util.PlatformIcons
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.HashMap
 import com.intellij.util.containers.nullize
 import com.intellij.util.ui.*
@@ -52,13 +56,11 @@ import com.intellij.util.ui.tree.TreeUtil
 import gnu.trove.THashSet
 import gnu.trove.TObjectIntHashMap
 import net.miginfocom.swing.MigLayout
-import java.awt.BorderLayout
-import java.awt.FlowLayout
-import java.awt.GridBagConstraints
-import java.awt.GridBagLayout
+import java.awt.*
 import java.awt.event.KeyEvent
 import java.util.*
 import java.util.function.ToIntFunction
+import java.util.stream.Collectors
 import javax.swing.*
 import javax.swing.border.EmptyBorder
 import javax.swing.event.DocumentEvent
@@ -96,6 +98,9 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
   private var toolbarDecorator: ToolbarDecorator? = null
   private var isFolderCreating: Boolean = false
   private val toolbarAddAction = MyToolbarAddAction()
+  private val runDashboardTypes = ContainerUtil.newHashSet<String>()
+  private val hiddenRunDashboardTypesList = RunDashboardTypesList(myProject)
+  private val shownRunDashboardTypesList = RunDashboardTypesList(myProject)
 
   companion object {
     fun collectNodesRecursively(parentNode: DefaultMutableTreeNode,
@@ -484,9 +489,13 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
       }
       settingsPanel.add(createSettingsPanel(), grid.nextLine().next())
 
+      val settingsWrapper = JPanel(BorderLayout())
+      settingsWrapper.add(settingsPanel, BorderLayout.WEST)
+      settingsWrapper.add(Box.createGlue(), BorderLayout.CENTER)
+
       val wrapper = JPanel(BorderLayout())
-      wrapper.add(settingsPanel, BorderLayout.WEST)
-      wrapper.add(Box.createGlue(), BorderLayout.CENTER)
+      wrapper.add(createRunDashboardTypesPanel(), BorderLayout.CENTER)
+      wrapper.add(settingsWrapper, BorderLayout.SOUTH)
 
       rightPanel.add(wrapper, BorderLayout.SOUTH)
     }
@@ -529,7 +538,7 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
     val bottomPanel = JPanel(GridBagLayout())
     val g = GridBag()
 
-    bottomPanel.add(confirmation, g.nextLine().coverLine())
+    bottomPanel.add(confirmation, g.nextLine().insets(JBUI.insets(10, 0, 0, 0)).anchor(GridBagConstraints.WEST))
     bottomPanel.add(create(recentsLimit, ExecutionBundle.message("temporary.configurations.limit"), BorderLayout.WEST),
                     g.nextLine().insets(JBUI.insets(10, 0, 0, 0)).anchor(GridBagConstraints.WEST))
 
@@ -542,6 +551,82 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
       isModified = !Comparing.equal(confirmation.isSelected, confirmation.getClientProperty(INITIAL_VALUE_KEY))
     }
     return bottomPanel
+  }
+
+  private fun createRunDashboardTypesPanel(): JComponent {
+    updateRunDashboardTypes()
+
+    val buttonsPanel = JPanel(VerticalFlowLayout())
+    buttonsPanel.add(JButton(ExecutionBundle.message("run.dashboard.configurable.show")).apply {
+      addActionListener { changeRunDashboardTypes(false, true) }
+    })
+    buttonsPanel.add(JButton(ExecutionBundle.message("run.dashboard.configurable.hide")).apply {
+      addActionListener { changeRunDashboardTypes(false, false) }
+    })
+    buttonsPanel.add(JButton(ExecutionBundle.message("run.dashboard.configurable.show.all")).apply {
+      addActionListener { changeRunDashboardTypes(true, true) }
+    })
+    buttonsPanel.add(JButton(ExecutionBundle.message("run.dashboard.configurable.hide.all")).apply {
+      addActionListener { changeRunDashboardTypes(true, false) }
+    })
+
+    val gridBag = GridBag().setDefaultWeightX(0, 0.5).setDefaultWeightX(1, 0.0).setDefaultWeightX(2, 0.5)
+    val treesPanel = JPanel(GridBagLayout())
+
+    val hiddenLabel = JBLabel(ExecutionBundle.message("run.dashboard.configurable.hidden.label"))
+    val shownLabel = JBLabel(ExecutionBundle.message("run.dashboard.configurable.shown.label"))
+    val hiddenSize = hiddenLabel.minimumSize
+    val shownSize = shownLabel.minimumSize
+    if (hiddenSize.width < shownSize.width) {
+      val size = Dimension(shownSize.width, hiddenSize.height)
+      hiddenLabel.minimumSize = size
+      hiddenLabel.preferredSize = size
+      hiddenLabel.maximumSize = size
+    }
+    else {
+      val size = Dimension(hiddenSize.width, shownSize.height)
+      shownLabel.minimumSize = size
+      shownLabel.preferredSize = size
+      shownLabel.maximumSize = size
+    }
+    treesPanel.add(hiddenLabel, gridBag.nextLine().next().anchor(GridBagConstraints.WEST))
+    treesPanel.add(shownLabel, gridBag.next().next().anchor(GridBagConstraints.WEST))
+
+    treesPanel.add(hiddenRunDashboardTypesList.component, gridBag.nextLine().next().weighty(1.0).fillCell())
+    treesPanel.add(buttonsPanel, gridBag.next().anchor(GridBagConstraints.CENTER))
+    treesPanel.add(shownRunDashboardTypesList.component, gridBag.next().weighty(1.0).fillCell())
+
+    return treesPanel
+  }
+
+  private fun updateRunDashboardTypes() {
+    hiddenRunDashboardTypesList.updateModel(runDashboardTypes, false)
+    shownRunDashboardTypesList.updateModel(runDashboardTypes, true)
+
+    val hiddenSize = hiddenRunDashboardTypesList.component.preferredSize
+    val shownSize = shownRunDashboardTypesList.component.preferredSize
+    if (hiddenSize.width < shownSize.width) {
+      hiddenRunDashboardTypesList.component.preferredSize = Dimension(shownSize.width, hiddenSize.height)
+    }
+    else {
+      shownRunDashboardTypesList.component.preferredSize = Dimension(hiddenSize.width, shownSize.height)
+    }
+  }
+
+  private fun changeRunDashboardTypes(all: Boolean, show: Boolean) {
+    val list = if (show) hiddenRunDashboardTypesList else shownRunDashboardTypesList
+    val types = if (all) list.allTypes else list.selectedTypes
+    val ids = types.stream().map(ConfigurationType::getId).collect(Collectors.toSet<String>())
+    if (show) {
+      runDashboardTypes.addAll(ids)
+    }
+    else {
+      runDashboardTypes.removeAll(ids)
+    }
+
+    updateRunDashboardTypes()
+
+    isModified = !Comparing.equal(runDashboardTypes, RunDashboardManager.getInstance(myProject).types)
   }
 
   private val selectedConfigurationType: ConfigurationType?
@@ -587,6 +672,9 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
     confirmation.isSelected = config.isRestartRequiresConfirmation
     confirmation.putClientProperty(INITIAL_VALUE_KEY, confirmation.isSelected)
 
+    runDashboardTypes.clear()
+    runDashboardTypes.addAll(RunDashboardManager.getInstance(myProject).types)
+
     for (each in additionalSettings) {
       each.first.reset()
     }
@@ -621,6 +709,11 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
         manager.checkRecentsLimit()
       }
       manager.config.isRestartRequiresConfirmation = confirmation.isSelected
+
+      val dashboardManager = RunDashboardManager.getInstance(myProject)
+      if (!Comparing.equal(runDashboardTypes, dashboardManager.types)) {
+        dashboardManager.types = runDashboardTypes
+      }
 
       for (configurable in storedComponents.values) {
         if (configurable.isModified) {
