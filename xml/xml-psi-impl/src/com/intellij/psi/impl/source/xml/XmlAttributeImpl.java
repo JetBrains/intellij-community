@@ -310,8 +310,9 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, Hi
   public PsiElement setName(@NotNull final String nameText) throws IncorrectOperationException {
     final ASTNode name = XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(this);
     final String oldName = name.getText();
+    final String oldValue = getValue();
     final PomModel model = PomManager.getModel(getProject());
-    final XmlAttribute attribute = XmlElementFactory.getInstance(getProject()).createAttribute(nameText, "", this);
+    final XmlAttribute attribute = XmlElementFactory.getInstance(getProject()).createAttribute(nameText, oldValue, this);
     final ASTNode newName = XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild((ASTNode)attribute);
     final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
     model.runTransaction(new PomTransactionBase(getParent(), aspect) {
@@ -321,9 +322,13 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, Hi
         PsiFile file = getContainingFile();
         XmlChangeSet xmlAspectChangeSet = new XmlAspectChangeSetImpl(model, file instanceof XmlFile ? (XmlFile)file : null);
         xmlAspectChangeSet.add(new XmlAttributeSetImpl(getParent(), oldName, null));
-        xmlAspectChangeSet.add(new XmlAttributeSetImpl(getParent(), nameText, getValue()));
+        xmlAspectChangeSet.add(new XmlAttributeSetImpl(getParent(), nameText, oldValue));
         event.registerChangeSet(model.getModelAspect(XmlAspect.class), xmlAspectChangeSet);
-        CodeEditUtil.replaceChild(XmlAttributeImpl.this, name, newName);
+        if (oldValue.isEmpty()) {
+          CodeEditUtil.replaceChild(XmlAttributeImpl.this, name, newName);
+        } else {
+          CodeEditUtil.replaceChild(getTreeParent(), XmlAttributeImpl.this, attribute.getNode());
+        }
         return event;
       }
     });
