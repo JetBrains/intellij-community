@@ -13,11 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.debugger.streams.trace.dsl
+package com.intellij.debugger.streams.trace.dsl.impl
+
+import com.intellij.debugger.streams.trace.dsl.*
 
 /**
+ * TODO: Add ability to add braces at the beginning and at the end
+ *
  * @author Vitaliy.Bibaev
  */
-interface ForLoopBody : CodeBlock {
-  val variable: Variable
+abstract class LineSeparatedCodeBlock(statementFactory: StatementFactory, private val endLine: String = "")
+  : CodeBlockBase(statementFactory) {
+  override fun toCode(): String {
+    val body = statements
+    return body.joinToString("$endLine\n") { it.toCode() }
+  }
 }

@@ -20,4 +20,11 @@ package com.intellij.debugger.streams.trace.dsl
  */
 interface Expression : Statement {
   fun call(callName: String, vararg args: Expression): Expression
+
+  object Empty : Expression {
+    // TODO: looks really strange
+    override fun call(callName: String, vararg args: Expression): Expression = this
+
+    override fun toCode(): String = ""
+  }
 }

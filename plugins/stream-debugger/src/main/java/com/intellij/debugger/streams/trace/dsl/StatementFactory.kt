@@ -25,7 +25,7 @@ interface StatementFactory {
 
   fun createEmptyCodeBlock(): CodeBlock
 
-  fun createVariableDeclaration(variable: Variable, mutable: Boolean): VariableDeclaration
+  fun createVariableDeclaration(variable: Variable, isMutable: Boolean): VariableDeclaration
 
   fun createVariableDeclaration(variable: Variable, init: Expression, isMutable: Boolean): VariableDeclaration
 
@@ -47,7 +47,7 @@ interface StatementFactory {
 
   fun same(left: Expression, right: Expression): Expression
 
-  fun createIfBranch(condition: Expression, codeBlock: CodeBlock): Statement
+  fun createIfBranch(condition: Expression, codeBlock: CodeBlock): IfBranch
 
   fun createElseStatement(block: CodeBlock): Statement
 

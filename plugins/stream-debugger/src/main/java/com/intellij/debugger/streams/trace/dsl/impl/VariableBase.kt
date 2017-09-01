@@ -13,11 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.debugger.streams.trace.dsl
+package com.intellij.debugger.streams.trace.dsl.impl
+
+import com.intellij.debugger.streams.trace.dsl.Expression
+import com.intellij.debugger.streams.trace.dsl.Variable
 
 /**
  * @author Vitaliy.Bibaev
  */
-interface ForLoopBody : CodeBlock {
-  val variable: Variable
+class VariableImpl(override val type: String, override val name: String) : Variable {
+  override fun call(callName: String, vararg args: Expression): Expression =
+    TextExpression("$name.(${args.joinToString(", ") { it.toCode() }})")
 }
