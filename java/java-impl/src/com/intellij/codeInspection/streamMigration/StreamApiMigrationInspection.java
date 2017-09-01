@@ -1293,7 +1293,8 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       ReferencesSearch.search(variable, new LocalSearchScope(forStatement))
         .forEach(reference -> PsiTreeUtil.isAncestor(variable, reference.getElement(), false) ||
                               PsiTreeUtil.isAncestor(update, reference.getElement(), false));
-      // TODO check it is the only reference in expression
+      ReferencesSearch.search(variable, new LocalSearchScope(update))
+        .forEach(reference -> reference.getElement() == variable);
       return new InfiniteStreamSource(forStatement, variable, updateStmt.getExpression(), initializer);
     }
   }

@@ -5,7 +5,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 class Test {
-  public void test(String[] array) {
+  public void test(int[] array) {
     Arrays.stream(array).sorted().<caret>findFirst();
   }
 }
