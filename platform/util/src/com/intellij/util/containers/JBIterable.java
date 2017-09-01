@@ -80,6 +80,21 @@ public abstract class JBIterable<E> implements Iterable<E> {
   }
 
   /**
+   * Lambda-friendly construction method.
+   */
+  @NotNull
+  public static <E> JBIterable<E> create(@Nullable final Producer<Iterator<E>> producer) {
+    if (producer == null) return empty();
+    return new JBIterable<E>() {
+      @NotNull
+      @Override
+      public Iterator<E> iterator() {
+        return producer.produce();
+      }
+    };
+  }
+
+  /**
    * Returns a {@code JBIterable} that wraps {@code iterable}, or {@code iterable} itself if it
    * is already a {@code JBIterable}.
    */
@@ -373,10 +388,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
   /**
    * Returns a {@code JBIterable} that applies {@code function} to each element of this
    * iterable and concatenates the produced iterables in one.
-   * <p/>
-   * <p>The returned iterable's iterator supports {@code remove()} if an underlying iterable's
-   * iterator does. After a successful {@code remove()} call, this iterable no longer
-   * contains the corresponding element.
+   * Nulls are supported and silently skipped.
    */
   @NotNull
   public <T> JBIterable<T> flatten(@NotNull final Function<? super E, ? extends Iterable<? extends T>> function) {
@@ -497,7 +509,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
   }
 
   /**
-   * Synonym for transform()
+   * Synonym for transform().
    *
    * @see JBIterable#transform(Function)
    */
@@ -507,9 +519,20 @@ public abstract class JBIterable<E> implements Iterable<E> {
   }
 
   /**
-   * "Maps" and "flattens" this iterable.
+   * Synonym for map(..).filter(o -> o != null).
    *
    * @see JBIterable#transform(Function)
+   */
+  @NotNull
+  public final <T> JBIterable<T> mapNotNull(@NotNull Function<? super E, T> function) {
+    return transform(function).filter(Conditions.<T>notNull());
+  }
+
+  /**
+   * "Maps" and "flattens" this iterable.
+   *
+   * @see JBIterable#map(Function)
+   * @see JBIterable#flatten(Function)
    */
   @NotNull
   public final <T> JBIterable<T> flatMap(Function<? super E, ? extends Iterable<? extends T>> function) {
@@ -625,6 +648,13 @@ public abstract class JBIterable<E> implements Iterable<E> {
   }
 
   /**
+   * Determines whether this iterable is not empty.
+   */
+  public final boolean isNotEmpty() {
+    return !isEmpty();
+  }
+
+  /**
    * Returns an {@code List} containing all of the elements from this iterable in
    * proper sequence.
    */
@@ -649,8 +679,23 @@ public abstract class JBIterable<E> implements Iterable<E> {
    * appears.
    */
   @NotNull
-  public final <V> Map<E, V> toMap(Convertor<E, V> valueFunction) {
-    return Collections.unmodifiableMap(ContainerUtil.newMapFromKeys(iterator(), valueFunction));
+  public final <V> Map<E, V> toMap(Convertor<E, V> toValue) {
+    Map<E, V> map = ContainerUtil.newLinkedHashMap();
+    for (E e : this) map.put(e, toValue.convert(e));
+    return map.isEmpty() ? Collections.<E, V>emptyMap() : Collections.unmodifiableMap(map);
+  }
+
+  /**
+   * Returns an {@code Map} for which the elements of this {@code JBIterable} are the values in
+   * the same order, mapped to values by the given function. If this iterable contains duplicate
+   * elements, the returned map will contain each distinct element once in the order it first
+   * appears.
+   */
+  @NotNull
+  public final <K> Map<K, E> toReverseMap(Convertor<E, K> toKey) {
+    Map<K, E> map = ContainerUtil.newLinkedHashMap();
+    for (E e : this) map.put(toKey.convert(e), e);
+    return map.isEmpty() ? Collections.<K, E>emptyMap() : Collections.unmodifiableMap(map);
   }
 
   /**
