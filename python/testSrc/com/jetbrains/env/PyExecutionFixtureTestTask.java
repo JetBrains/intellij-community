@@ -3,14 +3,17 @@ package com.jetbrains.env;
 import com.google.common.collect.Lists;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.ide.util.projectWizard.EmptyModuleBuilder;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.builders.ModuleFixtureBuilder;
@@ -170,6 +173,11 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
 
   public void tearDown() throws Exception {
     if (myFixture != null) {
+      EdtTestUtil.runInEdtAndWait(() -> {
+        for (Sdk sdk : ProjectJdkTable.getInstance().getSdksOfType(PythonSdkType.getInstance())) {
+          WriteAction.run(() -> ProjectJdkTable.getInstance().removeJdk(sdk));
+        }
+      });
       myFixture.tearDown();
       myFixture = null;
     }
