@@ -17,24 +17,27 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Predicate;
 
 /**
  * @author Gregory.Shrago
@@ -189,6 +192,98 @@ public class DfaUtil {
     }
 
     return Nullness.UNKNOWN;
+  }
+
+  static DfaValue getPossiblyNonInitializedValue(@NotNull DfaValueFactory factory, @NotNull PsiField target, @NotNull PsiElement context) {
+    PsiMember placeMember = PsiTreeUtil.getParentOfType(context, PsiMember.class, false, PsiClass.class, PsiLambdaExpression.class);
+    PsiType type = target.getType();
+    if (placeMember == null || type instanceof PsiPrimitiveType && !(placeMember instanceof PsiField)) return null;
+
+    PsiClass placeClass = placeMember.getContainingClass();
+    if (placeClass != null && placeClass == target.getContainingClass()) {
+      if (!placeMember.hasModifier(JvmModifier.STATIC) && target.hasModifier(JvmModifier.STATIC)) {
+        return null;
+      }
+
+      if(getAccessOffset(placeMember) >= getWriteOffset(target)) {
+        return null;
+      }
+      return placeMember instanceof PsiField
+             ? factory.getConstFactory().createFromValue(PsiTypesUtil.getDefaultValue(type), type, null)
+             : factory.createTypeValue(type, Nullness.NULLABLE);
+    }
+    return null;
+  }
+
+  private static int getWriteOffset(PsiField target) {
+    // Final field: written either in field initializer or in class initializer block which directly writes this field
+    // Non-final field: written either in field initializer, in class initializer which directly writes this field or calls any method,
+    //    or in other field initializer which directly writes this field or calls any method
+    boolean isFinal = target.hasModifier(JvmModifier.FINAL);
+    int offset = Integer.MAX_VALUE;
+    if (target.getInitializer() != null) {
+      offset = target.getInitializer().getTextOffset();
+      if (isFinal) return offset;
+    }
+    PsiClass aClass = Objects.requireNonNull(target.getContainingClass());
+    PsiClassInitializer[] initializers = aClass.getInitializers();
+    Predicate<PsiElement> writesToTarget = element -> !ReferencesSearch.search(target, new LocalSearchScope(element))
+      .forEach(e -> !(e instanceof PsiExpression) || !PsiUtil.isAccessedForWriting((PsiExpression)e));
+    Predicate<PsiElement> hasSideEffectCall = element -> !PsiTreeUtil.findChildrenOfType(element, PsiMethodCallExpression.class).stream()
+      .map(PsiMethodCallExpression::resolveMethod).allMatch(method -> method != null && ControlFlowAnalyzer.isPure(method));
+    for (PsiClassInitializer initializer : initializers) {
+      if (initializer.hasModifier(JvmModifier.STATIC) != target.hasModifier(JvmModifier.STATIC)) continue;
+      if (!isFinal && hasSideEffectCall.test(initializer)) {
+        // non-final field could be written indirectly (via method call), so assume it's written in the first applicable initializer
+        offset = Math.min(offset, initializer.getTextOffset());
+        break;
+      }
+      if (writesToTarget.test(initializer)) {
+        offset = Math.min(offset, initializer.getTextOffset());
+        if (isFinal) return offset;
+        break;
+      }
+    }
+    if (!isFinal) {
+      for (PsiField field : aClass.getFields()) {
+        if (field.hasModifier(JvmModifier.STATIC) != target.hasModifier(JvmModifier.STATIC)) continue;
+        if (hasSideEffectCall.test(field.getInitializer()) || writesToTarget.test(field)) {
+          offset = Math.min(offset, field.getTextOffset());
+          break;
+        }
+      }
+    }
+    return offset;
+  }
+
+  private static int getAccessOffset(PsiMember referrer) {
+    if (referrer instanceof PsiField) {
+      return referrer.getTextOffset();
+    }
+    PsiClass aClass = Objects.requireNonNull(referrer.getContainingClass());
+    if (referrer instanceof PsiMethod) {
+      boolean isStatic = referrer.hasModifier(JvmModifier.STATIC);
+      for (PsiField field : aClass.getFields()) {
+        if (field.hasModifier(JvmModifier.STATIC) != isStatic) continue;
+        PsiExpression initializer = field.getInitializer();
+        Predicate<PsiExpression> callToMethod = (PsiExpression e) -> {
+          if (!(e instanceof PsiMethodCallExpression)) return false;
+          PsiMethodCallExpression call = (PsiMethodCallExpression)e;
+          return call.getMethodExpression().isReferenceTo(referrer) &&
+                 (isStatic || DfaValueFactory.isEffectivelyUnqualified(call.getMethodExpression()));
+        };
+        if (ExpressionUtils.isMatchingChildAlwaysExecuted(initializer, callToMethod)) {
+          // current method is definitely called from some field initialization
+          return field.getTextOffset();
+        }
+      }
+    }
+    return Integer.MAX_VALUE; // accessed after initialization or at unknown moment
+  }
+
+  public static boolean hasInitializationHacks(@NotNull PsiField field) {
+    PsiClass containingClass = field.getContainingClass();
+    return containingClass != null && System.class.getName().equals(containingClass.getQualifiedName());
   }
 
   private static class ValuableInstructionVisitor extends StandardInstructionVisitor {

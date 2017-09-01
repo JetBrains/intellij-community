@@ -17,7 +17,9 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.instructions.*;
+import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
+import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
@@ -26,9 +28,11 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashSet;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -102,6 +106,12 @@ public class DataFlowRunner {
       final ControlFlow flow = new ControlFlowAnalyzer(myValueFactory, psiBlock, ignoreAssertions, myInlining).buildControlFlow();
       if (flow == null) return RunnerResult.NOT_APPLICABLE;
       int[] loopNumber = LoopAnalyzer.calcInLoop(flow);
+
+      Map<DfaVariableValue, DfaValue> initialValues = StreamEx.of(flow.accessedVariables())
+        .mapToEntry(var -> makeInitialValue(var, psiBlock)).nonNullValues().toMap();
+      for (DfaMemoryState state : initialStates) {
+        initialValues.forEach(state::setVarValue);
+      }
 
       int endOffset = flow.getInstructionCount();
       myInstructions = flow.getInstructions();
@@ -207,6 +217,14 @@ public class DataFlowRunner {
       LOG.error(psiBlock.getText(), e);
       return RunnerResult.ABORTED;
     }
+  }
+
+  @Nullable
+  private static DfaValue makeInitialValue(DfaVariableValue var, PsiElement block) {
+    if(var.getQualifier() != null) return null;
+    PsiField field = ObjectUtils.tryCast(var.getPsiVariable(), PsiField.class);
+    if (field == null || DfaUtil.hasInitializationHacks(field)) return null;
+    return DfaUtil.getPossiblyNonInitializedValue(var.getFactory(), field, block);
   }
 
   private static boolean containsState(Collection<DfaMemoryState> processed,

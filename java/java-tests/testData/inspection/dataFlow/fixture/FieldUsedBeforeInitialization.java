@@ -54,6 +54,15 @@ class FieldInitLoopCompileTime {
   }
 }
 
+class FieldInitLoopOk {
+  static final String STR = getStr();
+
+  static String getStr() {
+    if(STR != null) return STR.trim();
+    return "FOO".toLowerCase();
+  }
+}
+
 class FieldInitNoLoop {
   static final String XYZ = "foo".toLowerCase();
   static final String ABC = bar();
@@ -74,4 +83,17 @@ class NonFinalInitialized {
     x = "  foo  ";
   }
   String y = x.trim();
+}
+
+class NonFinalAssignedInside {
+  String x;
+  // Should warn on the first trim
+  String y = x.trim()+(x = " foo ").trim();
+  String z = x.trim();
+}
+
+class NonFinalAssignedInside2 {
+  String x;
+  String y = (x = " foo ").trim() + x.trim();
+  String z = x.trim();
 }

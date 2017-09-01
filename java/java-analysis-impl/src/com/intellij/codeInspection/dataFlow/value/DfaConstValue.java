@@ -84,6 +84,7 @@ public class DfaConstValue extends DfaValue {
     public DfaConstValue createFromValue(Object value, final PsiType type, @Nullable PsiVariable constant) {
       if (value == Boolean.TRUE) return dfaTrue;
       if (value == Boolean.FALSE) return dfaFalse;
+      if (value == null) return dfaNull;
 
       if (TypeConversionUtil.isNumericType(type) && !TypeConversionUtil.isFloatOrDoubleType(type)) {
         value = TypeConversionUtil.computeCastTo(value, PsiType.LONG);

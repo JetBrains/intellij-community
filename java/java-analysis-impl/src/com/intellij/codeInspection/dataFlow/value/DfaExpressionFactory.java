@@ -16,11 +16,10 @@
 package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
+import com.intellij.codeInspection.dataFlow.DfaUtil;
 import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.codeInspection.dataFlow.SpecialField;
-import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
@@ -29,19 +28,13 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.impl.light.LightVariableBuilder;
-import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PropertyUtil;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
-import java.util.Objects;
-import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
 /**
@@ -143,12 +136,6 @@ public class DfaExpressionFactory {
       }
 
       if (DfaValueFactory.isEffectivelyUnqualified(refExpr) || isStaticFinalConstantWithoutInitializationHacks(var)) {
-        if (!PsiUtil.isAccessedForWriting(refExpr) &&
-            isFieldDereferenceBeforeInitialization(refExpr) &&
-            !(refExpr.getType() instanceof PsiPrimitiveType)) {
-          return myFactory.getConstFactory().getNull();
-        }
-
         return myFactory.getVarFactory().createVariableValue(var, refExpr.getType(), false, null);
       }
 
@@ -163,98 +150,8 @@ public class DfaExpressionFactory {
   }
 
   private static boolean isStaticFinalConstantWithoutInitializationHacks(PsiModifierListOwner var) {
-    if (var instanceof PsiField && var.hasModifierProperty(PsiModifier.FINAL) && var.hasModifierProperty(PsiModifier.STATIC)) {
-      PsiClass containingClass = ((PsiField)var).getContainingClass();
-      if (containingClass != null && !System.class.getName().equals(containingClass.getQualifiedName())) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private static boolean isFieldDereferenceBeforeInitialization(PsiReferenceExpression ref) {
-    PsiMember placeMember = PsiTreeUtil.getParentOfType(ref, PsiMember.class, true, PsiClass.class, PsiLambdaExpression.class);
-    if (placeMember == null) return false;
-
-    PsiClass placeClass = placeMember.getContainingClass();
-    PsiElement target = ref.resolve();
-    if (target instanceof PsiField) {
-      PsiField targetField = (PsiField)target;
-      if (placeClass != null && placeClass == targetField.getContainingClass()) {
-        if (!placeMember.hasModifier(JvmModifier.STATIC) && targetField.hasModifier(JvmModifier.STATIC)) {
-          return false;
-        }
-
-        return getAccessOffset(placeMember) < getWriteOffset(targetField);
-      }
-    }
-    return false;
-  }
-
-  private static int getWriteOffset(PsiField target) {
-    // Final field: written either in field initializer or in class initializer block which directly writes this field
-    // Non-final field: written either in field initializer, in class initializer which directly writes this field or calls any method,
-    //    or in other field initializer which directly writes this field or calls any method
-    boolean isFinal = target.hasModifier(JvmModifier.FINAL);
-    int offset = Integer.MAX_VALUE;
-    if (target.getInitializer() != null) {
-      offset = target.getInitializer().getTextOffset();
-      if (isFinal) return offset;
-    }
-    PsiClass aClass = Objects.requireNonNull(target.getContainingClass());
-    PsiClassInitializer[] initializers = aClass.getInitializers();
-    Predicate<PsiElement> writesToTarget = element -> !ReferencesSearch.search(target, new LocalSearchScope(element))
-      .forEach(e -> !(e instanceof PsiExpression) || !PsiUtil.isAccessedForWriting((PsiExpression)e));
-    Predicate<PsiElement> hasSideEffectCall = element -> !PsiTreeUtil.findChildrenOfType(element, PsiMethodCallExpression.class).stream()
-      .map(PsiMethodCallExpression::resolveMethod).allMatch(method -> method != null && ControlFlowAnalyzer.isPure(method));
-    for (PsiClassInitializer initializer : initializers) {
-      if (initializer.hasModifier(JvmModifier.STATIC) != target.hasModifier(JvmModifier.STATIC)) continue;
-      if (!isFinal && hasSideEffectCall.test(initializer)) {
-        // non-final field could be written indirectly (via method call), so assume it's written in the first applicable initializer
-        offset = Math.min(offset, initializer.getTextOffset());
-        break;
-      }
-      if (writesToTarget.test(initializer)) {
-        offset = Math.min(offset, initializer.getTextOffset());
-        if (isFinal) return offset;
-        break;
-      }
-    }
-    if (!isFinal) {
-      for (PsiField field : aClass.getFields()) {
-        if (field.hasModifier(JvmModifier.STATIC) != target.hasModifier(JvmModifier.STATIC)) continue;
-        if (PsiTreeUtil.findChildOfType(field.getInitializer(), PsiCall.class) != null || writesToTarget.test(field)) {
-          offset = Math.min(offset, field.getTextOffset());
-          break;
-        }
-      }
-    }
-    return offset;
-  }
-
-  private static int getAccessOffset(PsiMember referrer) {
-    if (referrer instanceof PsiField) {
-      return referrer.getTextOffset();
-    }
-    PsiClass aClass = Objects.requireNonNull(referrer.getContainingClass());
-    if (referrer instanceof PsiMethod) {
-      boolean isStatic = referrer.hasModifier(JvmModifier.STATIC);
-      for (PsiField field : aClass.getFields()) {
-        if (field.hasModifier(JvmModifier.STATIC) != isStatic) continue;
-        PsiExpression initializer = field.getInitializer();
-        Predicate<PsiExpression> callToMethod = (PsiExpression e) -> {
-          if (!(e instanceof PsiMethodCallExpression)) return false;
-          PsiMethodCallExpression call = (PsiMethodCallExpression)e;
-          return call.getMethodExpression().isReferenceTo(referrer) &&
-                 (isStatic || DfaValueFactory.isEffectivelyUnqualified(call.getMethodExpression()));
-        };
-        if (ExpressionUtils.isMatchingChildAlwaysExecuted(initializer, callToMethod)) {
-          // current method is definitely called from some field initialization
-          return field.getTextOffset();
-        }
-      }
-    }
-    return Integer.MAX_VALUE; // accessed after initialization or at unknown moment
+    return (var instanceof PsiField && var.hasModifierProperty(PsiModifier.FINAL) && var.hasModifierProperty(PsiModifier.STATIC)) &&
+           !DfaUtil.hasInitializationHacks((PsiField)var);
   }
 
   @Nullable
