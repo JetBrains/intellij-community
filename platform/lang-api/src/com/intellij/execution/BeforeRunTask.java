@@ -50,6 +50,9 @@ public abstract class BeforeRunTask<T extends BeforeRunTask> implements Cloneabl
     myIsEnabled = isEnabled;
   }
 
+  /**
+   * @deprecated Use PersistentStateComponent (see LaunchBrowserBeforeRunTask for example).
+   */
   public void writeExternal(@NotNull Element element) {
     if (this instanceof PersistentStateComponent) {
       ((PersistentStateComponent)this).getState();
@@ -59,6 +62,9 @@ public abstract class BeforeRunTask<T extends BeforeRunTask> implements Cloneabl
     }
   }
 
+  /**
+   * @deprecated Use PersistentStateComponent (see LaunchBrowserBeforeRunTask for example).
+   */
   public void readExternal(@NotNull Element element) {
     String attribValue = element.getAttributeValue("enabled");
     if (attribValue == null) {
