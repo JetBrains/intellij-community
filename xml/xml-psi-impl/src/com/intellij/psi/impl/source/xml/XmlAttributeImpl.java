@@ -16,6 +16,7 @@
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.PomManager;
@@ -324,10 +325,11 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, Hi
         xmlAspectChangeSet.add(new XmlAttributeSetImpl(getParent(), oldName, null));
         xmlAspectChangeSet.add(new XmlAttributeSetImpl(getParent(), nameText, oldValue));
         event.registerChangeSet(model.getModelAspect(XmlAspect.class), xmlAspectChangeSet);
-        if (oldValue.isEmpty()) {
-          CodeEditUtil.replaceChild(XmlAttributeImpl.this, name, newName);
-        } else {
+        if (!oldValue.isEmpty() && getLanguage().isKindOf(HTMLLanguage.INSTANCE)) {
           CodeEditUtil.replaceChild(getTreeParent(), XmlAttributeImpl.this, attribute.getNode());
+        }
+        else {
+          CodeEditUtil.replaceChild(XmlAttributeImpl.this, name, newName);
         }
         return event;
       }
