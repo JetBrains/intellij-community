@@ -177,6 +177,11 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
     }
   }
 
+  @NotNull
+  protected State getStateInner() {
+    return myState;
+  }
+
   @Override
   public void loadState(final State state) {
     state.makePathsSystemIndependent();
