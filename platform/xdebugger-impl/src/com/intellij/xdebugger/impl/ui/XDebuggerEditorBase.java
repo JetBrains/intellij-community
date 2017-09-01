@@ -23,23 +23,30 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.ClickListener;
+import com.intellij.ui.Expandable;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LayeredIcon;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XExpression;
@@ -56,16 +63,22 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.lang.ref.WeakReference;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import static java.awt.event.InputEvent.CTRL_MASK;
+import static java.util.Collections.singletonList;
+import static javax.swing.KeyStroke.getKeyStroke;
+
 /**
  * @author nik
  */
-public abstract class XDebuggerEditorBase {
+public abstract class XDebuggerEditorBase implements Expandable {
   private final Project myProject;
   private final XDebuggerEditorsProvider myDebuggerEditorsProvider;
   @NotNull private final EvaluationMode myMode;
@@ -75,6 +88,9 @@ public abstract class XDebuggerEditorBase {
   @Nullable private PsiElement myContext;
 
   private final JLabel myChooseFactory = new JLabel();
+  private final JLabel myExpandButton = new JLabel(AllIcons.General.ExpandComponent);
+  private JBPopup myExpandedPopup;
+
   private WeakReference<ListPopup> myPopup;
 
   protected XDebuggerEditorBase(final Project project,
@@ -110,6 +126,28 @@ public abstract class XDebuggerEditorBase {
         return false;
       }
     }.installOn(myChooseFactory);
+
+    // setup expand button
+    myExpandButton.setToolTipText(KeymapUtil.createTooltipText("Expand", "ExpandExpandableComponent"));
+    myExpandButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+    new ClickListener() {
+      @Override
+      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
+        expand();
+        return true;
+      }
+    }.installOn(myExpandButton);
+    myExpandButton.addMouseListener(new MouseAdapter() {
+      @Override
+      public void mouseEntered(MouseEvent e) {
+        myExpandButton.setIcon(AllIcons.General.ExpandComponentHover);
+      }
+
+      @Override
+      public void mouseExited(MouseEvent e) {
+        myExpandButton.setIcon(AllIcons.General.ExpandComponent);
+      }
+    });
   }
 
   private ListPopup createLanguagePopup() {
@@ -143,7 +181,7 @@ public abstract class XDebuggerEditorBase {
     }
   }
 
-  protected JPanel decorate(JComponent component, boolean multiline, boolean showEditor) {
+  protected JComponent decorate(JComponent component, boolean multiline, boolean showEditor) {
     BorderLayoutPanel panel = JBUI.Panels.simplePanel();
 
     JPanel factoryPanel = JBUI.Panels.simplePanel();
@@ -171,6 +209,13 @@ public abstract class XDebuggerEditorBase {
     BorderLayoutPanel panel = JBUI.Panels.simplePanel(component);
     panel.setBackground(component.getBackground());
     panel.addToRight(myChooseFactory);
+    return panel;
+  }
+
+  protected JComponent addExpand(JComponent component) {
+    BorderLayoutPanel panel = JBUI.Panels.simplePanel(component);
+    panel.setBackground(component.getBackground());
+    panel.addToRight(myExpandButton);
     return panel;
   }
 
@@ -382,5 +427,68 @@ public abstract class XDebuggerEditorBase {
       }
     };
     dialog.show();
+  }
+
+  protected void prepareEditor(Editor editor) {
+    editor.getContentComponent().putClientProperty(Expandable.class, this);
+  }
+
+  @Override
+  public void expand() {
+    if (myExpandedPopup != null || !getComponent().isEnabled()) return;
+
+    XDebuggerExpressionEditor editor =
+      new XDebuggerExpressionEditor(myProject, myDebuggerEditorsProvider, "evaluateCodeFragment", mySourcePosition,
+                                    getExpression(), true, true, false) {
+        @Override
+        protected JComponent decorate(JComponent component, boolean multiline, boolean showEditor) {
+          return component;
+        }
+      };
+
+    JComponent component = editor.getComponent();
+    component.setPreferredSize(new Dimension(getComponent().getWidth(), 100));
+
+    myExpandedPopup = JBPopupFactory.getInstance()
+      .createComponentPopupBuilder(component, editor.getPreferredFocusedComponent())
+      .setFocusable(true)
+      .setResizable(true)
+      .setRequestFocus(true)
+      .setLocateByContent(true)
+      .setCancelOnWindowDeactivation(false)
+      .setKeyboardActions(singletonList(Pair.create(event -> {
+        collapse();
+        Window window = UIUtil.getWindow(getComponent());
+        if (window != null) {
+          window.dispatchEvent(
+            new KeyEvent(getComponent(), KeyEvent.KEY_PRESSED, System.currentTimeMillis(), CTRL_MASK, KeyEvent.VK_ENTER, '\r'));
+        }
+      }, getKeyStroke(KeyEvent.VK_ENTER, CTRL_MASK))))
+      .setCancelCallback(() -> {
+        Editor baseEditor = getEditor();
+        if (baseEditor != null) {
+          WriteAction.run(() -> baseEditor.getDocument().setText(editor.getExpression().getExpression()));
+          copyCaretPosition(editor.getEditor(), baseEditor);
+        }
+        myExpandedPopup = null;
+        return true;
+      }).createPopup();
+    myExpandedPopup.show(new RelativePoint(getComponent(), new Point(0, 0)));
+    copyCaretPosition(getEditor(), editor.getEditor());
+    prepareEditor(editor.getEditor());
+    editor.requestFocusInEditor();
+  }
+
+  private static void copyCaretPosition(@Nullable Editor source, @Nullable Editor destination) {
+    if (source != null && destination != null) {
+      destination.getCaretModel().moveToOffset(source.getCaretModel().getOffset());
+    }
+  }
+
+  @Override
+  public void collapse() {
+    if (myExpandedPopup != null) {
+      myExpandedPopup.cancel();
+    }
   }
 }
