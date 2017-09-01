@@ -64,6 +64,7 @@ public class DelegateMethodsTest extends LightCodeInsightTestCase {
   public void testSingleField() { doTest(); }
   public void testInsideLambdaWithNonInferredTypeParameters() { doTest(); }
   public void testTypeUseAnnotationsInReturnType() { doTest(); }
+  public void testTypeUseAnnotationsInArrayParameter() { doTest(); }
   public void testPreserveEllipsisType() { doTest(); }
 
   private void doTest() {
