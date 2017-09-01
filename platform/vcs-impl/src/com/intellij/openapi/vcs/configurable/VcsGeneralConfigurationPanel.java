@@ -34,7 +34,6 @@ import java.util.List;
 
 public class VcsGeneralConfigurationPanel {
 
-  private JCheckBox myForceNonEmptyComment;
   private JCheckBox myShowReadOnlyStatusDialog;
 
   private JRadioButton myShowDialogOnAddingFile;
@@ -57,10 +56,7 @@ public class VcsGeneralConfigurationPanel {
   Map<VcsShowOptionsSettingImpl, JCheckBox> myPromptOptions = new LinkedHashMap<>();
   private JPanel myRemoveConfirmationPanel;
   private JPanel myAddConfirmationPanel;
-  private JCheckBox myCbOfferToMoveChanges;
-  private JComboBox myFailedCommitChangelistCombo;
   private JComboBox myOnPatchCreation;
-  private JCheckBox myClearInitialCommitMessage;
   private JCheckBox myReloadContext;
   private ButtonGroup myEmptyChangelistRemovingGroup;
 
@@ -101,11 +97,7 @@ public class VcsGeneralConfigurationPanel {
 
     VcsConfiguration settings = VcsConfiguration.getInstance(myProject);
 
-    settings.FORCE_NON_EMPTY_COMMENT = myForceNonEmptyComment.isSelected();
-    settings.CLEAR_INITIAL_COMMIT_MESSAGE = myClearInitialCommitMessage.isSelected();
-    settings.OFFER_MOVE_TO_ANOTHER_CHANGELIST_ON_PARTIAL_COMMIT = myCbOfferToMoveChanges.isSelected();
     settings.REMOVE_EMPTY_INACTIVE_CHANGELISTS = getSelected(myEmptyChangelistRemovingGroup);
-    settings.MOVE_TO_FAILED_COMMIT_CHANGELIST = getFailedCommitConfirm();
     settings.RELOAD_CONTEXT = myReloadContext.isSelected();
 
     for (VcsShowOptionsSettingImpl setting : myPromptOptions.keySet()) {
@@ -132,14 +124,6 @@ public class VcsGeneralConfigurationPanel {
       return true;
     } else {
       return false;
-    }
-  }
-
-  private VcsShowConfirmationOption.Value getFailedCommitConfirm() {
-    switch(myFailedCommitChangelistCombo.getSelectedIndex()) {
-      case 0: return VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY;
-      case 1: return VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY;
-      default: return VcsShowConfirmationOption.Value.SHOW_CONFIRMATION;
     }
   }
 
@@ -177,23 +161,10 @@ public class VcsGeneralConfigurationPanel {
   public boolean isModified() {
 
     VcsConfiguration settings = VcsConfiguration.getInstance(myProject);
-    if (settings.FORCE_NON_EMPTY_COMMENT != myForceNonEmptyComment.isSelected()){
-      return true;
-    }
-    if (settings.CLEAR_INITIAL_COMMIT_MESSAGE != myClearInitialCommitMessage.isSelected()){
-      return true;
-    }
-    if (settings.OFFER_MOVE_TO_ANOTHER_CHANGELIST_ON_PARTIAL_COMMIT != myCbOfferToMoveChanges.isSelected()){
-      return true;
-    }
     if (settings.REMOVE_EMPTY_INACTIVE_CHANGELISTS != getSelected(myEmptyChangelistRemovingGroup)){
       return true;
     }
     if (settings.RELOAD_CONTEXT != myReloadContext.isSelected()) return true;
-
-    if (!Comparing.equal(getFailedCommitConfirm(), settings.MOVE_TO_FAILED_COMMIT_CHANGELIST)) {
-      return true;
-    }
 
     if (getReadOnlyStatusHandler().getState().SHOW_DIALOG != myShowReadOnlyStatusDialog.isSelected()) {
       return true;
@@ -212,25 +183,12 @@ public class VcsGeneralConfigurationPanel {
 
   public void reset() {
     VcsConfiguration settings = VcsConfiguration.getInstance(myProject);
-    myForceNonEmptyComment.setSelected(settings.FORCE_NON_EMPTY_COMMENT);
-    myClearInitialCommitMessage.setSelected(settings.CLEAR_INITIAL_COMMIT_MESSAGE);
-    myCbOfferToMoveChanges.setSelected(settings.OFFER_MOVE_TO_ANOTHER_CHANGELIST_ON_PARTIAL_COMMIT);
     myReloadContext.setSelected(settings.RELOAD_CONTEXT);
     VcsShowConfirmationOption.Value value = settings.REMOVE_EMPTY_INACTIVE_CHANGELISTS;
     UIUtil.setSelectedButton(myEmptyChangelistRemovingGroup, value == VcsShowConfirmationOption.Value.SHOW_CONFIRMATION
                                                              ? 0
                                                              : value == VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY ? 2 : 1);
     myShowReadOnlyStatusDialog.setSelected(getReadOnlyStatusHandler().getState().SHOW_DIALOG);
-    if (settings.MOVE_TO_FAILED_COMMIT_CHANGELIST == VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY) {
-      myFailedCommitChangelistCombo.setSelectedIndex(0);
-    }
-    else if (settings.MOVE_TO_FAILED_COMMIT_CHANGELIST == VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY) {
-      myFailedCommitChangelistCombo.setSelectedIndex(1);
-    }
-    else {
-      myFailedCommitChangelistCombo.setSelectedIndex(2);
-    }
-
     for (VcsShowOptionsSettingImpl setting : myPromptOptions.keySet()) {
       myPromptOptions.get(setting).setSelected(setting.getValue());
     }
