@@ -81,3 +81,4 @@ TabFolder 1.0 1.0.1
 ssh 1.0 1.0.1
 "Log4j Plugin" 1.1.2 1.1.1  1.1.0 1.0.1 1.0
 nix-idea 0.2.0.1
+com.basisjs 0.1.3 0.1.4.1 0.1.5
