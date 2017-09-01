@@ -463,6 +463,24 @@ class TerminalBlock {
     return block;
   }
 
+
+  /**
+   * method replaces continue statement (without labels) to return statement
+   * @param factory factory to use to create new element if necessary
+   */
+  void replaceContinueWithReturn(PsiElementFactory factory) {
+    for (int i = 0, length = myStatements.length; i < length; i++) {
+      PsiStatement statement = myStatements[i];
+      if(statement instanceof PsiContinueStatement) {
+        myStatements[i] = factory.createStatementFromText("return;", null);
+        continue;
+      }
+      StreamEx.ofTree(statement, (PsiElement s) -> StreamEx.of(s.getChildren()))
+        .select(PsiContinueStatement.class)
+        .forEach(stmt -> stmt.replace(factory.createStatementFromText("return;", null)));
+    }
+  }
+
   String generate() {
     return generate(false);
   }

@@ -41,7 +41,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
@@ -509,8 +508,9 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       }
       Collection<PsiStatement> exitPoints = tb.findExitPoints(controlFlow);
       if (exitPoints == null) return null;
-      if ((exitPoints.isEmpty()) &&
-          nonFinalVariables.isEmpty()) {
+      boolean onlyNonLabeledContinue = StreamEx.of(exitPoints).allMatch(statement -> statement instanceof PsiContinueStatement &&
+                                                                ((PsiContinueStatement)statement).getLabelIdentifier() == null);
+      if (onlyNonLabeledContinue && nonFinalVariables.isEmpty()) {
         boolean shouldWarn = SUGGEST_FOREACH &&
                              (REPLACE_TRIVIAL_FOREACH ||
                               tb.hasOperations() ||

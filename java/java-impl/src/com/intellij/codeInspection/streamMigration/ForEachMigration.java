@@ -84,6 +84,8 @@ class ForEachMigration extends BaseStreamApiMigration {
       return loopStatement.replace(factory.createStatementFromText(callText, loopStatement));
     }
 
+    tb.replaceContinueWithReturn(factory);
+
     String stream = tb.generate(true) + "." + getReplacement() + "(";
     PsiElement block = tb.convertToElement(factory);
 
