@@ -25,6 +25,7 @@
     <orderEntry type="library" name="xmlgraphics-commons" level="project" />
     <orderEntry type="library" name="batik" level="project" />
     <orderEntry type="library" name="lz4-java" level="project" />
+    <orderEntry type="library" name="commons-compress" level="project" />
   </component>
   <component name="copyright">
     <Base>
