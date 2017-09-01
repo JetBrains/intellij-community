@@ -146,8 +146,9 @@ public class LiveVariablesAnalyzer {
         BitSet set = result.get(instruction);
         if (set != null) {
           set.or(liveVars);
-          return set;
-        } else {
+          return (BitSet)set.clone();
+        }
+        else if (!liveVars.isEmpty()) {
           result.put((FinishElementInstruction)instruction, (BitSet)liveVars.clone());
         }
       }
