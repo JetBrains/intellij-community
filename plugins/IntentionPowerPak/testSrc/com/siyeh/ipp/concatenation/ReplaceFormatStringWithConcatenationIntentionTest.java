@@ -72,4 +72,12 @@ public class ReplaceFormatStringWithConcatenationIntentionTest extends IPPTestCa
            "  }" +
            "}");
   }
+
+  public void testPercentAtTheEnd() {
+    doTestIntentionNotAvailable("class X {" +
+           "  String x() {" +
+           "    String.format(/*_Replace 'String.format()' with concatenation*/\"nope%\", 1);" +
+           "  }" +
+           "}");
+  }
 }

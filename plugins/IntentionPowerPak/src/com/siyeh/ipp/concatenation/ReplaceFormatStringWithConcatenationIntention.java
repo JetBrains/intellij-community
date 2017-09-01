@@ -64,15 +64,13 @@ public class ReplaceFormatStringWithConcatenationIntention extends Intention {
     int index = string.indexOf('%');
     final int length = string.length();
     int count = 0;
-    while (index >= 0) {
+    while (index >= 0 && length > index + 1) {
       final char c = string.charAt(index + 1);
-      if (length > index + 1) {
-        if (c == 's') {
-          count++;
-        }
-        else if (c != '%') {
-          return -1;
-        }
+      if (c == 's') {
+        count++;
+      }
+      else if (c != '%') {
+        return -1;
       }
       index = string.indexOf('%', index + 1);
     }
