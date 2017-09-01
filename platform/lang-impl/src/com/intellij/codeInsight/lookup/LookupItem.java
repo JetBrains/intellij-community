@@ -155,6 +155,11 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
   }
 
   public void setAttribute(Object key, Object value){
+    if (value == null && myAttributes != null) {
+      myAttributes.remove(key);
+      return;
+    }
+
     if (myAttributes == null){
       myAttributes = new HashMap<>(5);
     }
