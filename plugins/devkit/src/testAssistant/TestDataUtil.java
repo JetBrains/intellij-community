@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.DevKitBundle;
 
 import javax.swing.*;
 import java.io.File;
@@ -76,7 +77,7 @@ public class TestDataUtil {
           return parent.createChildData(this, file.getName());
         }
         catch (IOException e) {
-          Messages.showErrorDialog(project, e.getMessage(), "Create Testdata File"); //TODO externalize
+          Messages.showErrorDialog(project, e.getMessage(), DevKitBundle.message("testdata.create.dialog.title"));
           return null;
         }
       }
@@ -89,9 +90,8 @@ public class TestDataUtil {
       new OpenFileDescriptor(project, file).navigate(true);
     }
     else {
-      //TODO externalize
-      int rc = Messages.showYesNoDialog(project, "The referenced testdata file " + path + " does not exist. Would you like to create it?",
-                                        "Create Testdata File", Messages.getQuestionIcon());
+      int rc = Messages.showYesNoDialog(project, DevKitBundle.message("testdata.file.doesn.not.exist", path),
+                                        DevKitBundle.message("testdata.create.dialog.title"), Messages.getQuestionIcon());
       if (rc == Messages.YES) {
         VirtualFile vFile = createFileByName(project, path);
         new OpenFileDescriptor(project, vFile).navigate(true);

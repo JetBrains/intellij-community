@@ -89,13 +89,10 @@ public class TestDataNavigationHandler implements GutterIconNavigationHandler<Ps
     filePaths.sort((path1, path2) -> PathUtil.getFileName(path1).compareToIgnoreCase(PathUtil.getFileName(path2)));
 
     List<TestDataNavigationElement> elementsToDisplay = getElementsToDisplay(project, filePaths);
-
-    //TODO review - why "Create Missing Files" option is added only when there're two files?
-    if (filePaths.size() == 2) {
-      VirtualFile file1 = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePaths.get(0));
-      VirtualFile file2 = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePaths.get(1));
-      if (file1 == null || file2 == null) {
+    for (String path : filePaths) {
+      if (LocalFileSystem.getInstance().refreshAndFindFileByPath(path) == null) {
         elementsToDisplay.add(TestDataNavigationElementFactory.createForCreateMissingFilesOption(filePaths));
+        break;
       }
     }
 

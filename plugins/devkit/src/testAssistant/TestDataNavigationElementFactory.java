@@ -19,6 +19,7 @@ import com.google.common.collect.ImmutableList;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -27,13 +28,14 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.DevKitBundle;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class TestDataNavigationElementFactory {
+  private static final int CREATE_MISSING_FILES_WITHOUT_CONFIRMATION_LIMIT = 3;
+
   private TestDataNavigationElementFactory() {
   }
 
@@ -62,15 +64,26 @@ public class TestDataNavigationElementFactory {
 
     @Override
     public void performAction(@NotNull Project project) {
-      for (String name : myFilePaths) {
-        if (LocalFileSystem.getInstance().refreshAndFindFileByPath(name) == null) {
-          TestDataUtil.createFileByName(project, name);
+      Set<String> filePathsToCreate = new HashSet<>();
+      for (String path : myFilePaths) {
+        if (LocalFileSystem.getInstance().refreshAndFindFileByPath(path) == null) {
+          filePathsToCreate.add(path);
         }
       }
-      TestDataGroupVirtualFile testDataGroup = TestDataUtil.getTestDataGroup(myFilePaths);
-      if (testDataGroup != null) {
-        new OpenFileDescriptor(project, testDataGroup).navigate(true);
+
+      if (filePathsToCreate.size() > CREATE_MISSING_FILES_WITHOUT_CONFIRMATION_LIMIT) {
+        int code = Messages.showOkCancelDialog(
+          project, DevKitBundle.message("testdata.confirm.create.missing.files.dialog.message", StringUtil.join(filePathsToCreate, "\n")),
+          DevKitBundle.message("testdata.create.missing.files"), Messages.getQuestionIcon());
+        if (code != Messages.OK) {
+          return;
+        }
       }
+
+      filePathsToCreate.forEach(path -> {
+        VirtualFile file = TestDataUtil.createFileByName(project, path);
+        new OpenFileDescriptor(project, file).navigate(true);
+      });
     }
 
     @Override
@@ -81,8 +94,8 @@ public class TestDataNavigationElementFactory {
     @NotNull
     @Override
     public List<Pair<String, SimpleTextAttributes>> getTitleFragments() {
-      //TODO externalize
-      return Collections.singletonList(new Pair<>("Create Missing Files", SimpleTextAttributes.REGULAR_ITALIC_ATTRIBUTES));
+      return Collections.singletonList(new Pair<>(
+        DevKitBundle.message("testdata.create.missing.files"), SimpleTextAttributes.REGULAR_ITALIC_ATTRIBUTES));
     }
   }
 
