@@ -248,7 +248,7 @@ public class RootsChangedTest extends ModuleTestCase {
       rootModelB.addLibraryEntry(libraryA);
       rootModelA.addInvalidLibrary("Q", libraryTable.getTableLevel());
       rootModelB.addInvalidLibrary("Q", libraryTable.getTableLevel());
-      ModifiableRootModel[] rootModels = new ModifiableRootModel[]{rootModelA, rootModelB};
+      ModifiableRootModel[] rootModels = {rootModelA, rootModelB};
       if (rootModels.length > 0) {
         ModifiableModelCommitter.multiCommit(rootModels, ModuleManager.getInstance(rootModels[0].getProject()).getModifiableModel());
       }
@@ -317,7 +317,7 @@ public class RootsChangedTest extends ModuleTestCase {
       final Library libraryQ = libraryTable.createLibrary("Q");
       assertEventsCount(0);
 
-      ModifiableRootModel[] rootModels = new ModifiableRootModel[]{rootModelA, rootModelB};
+      ModifiableRootModel[] rootModels = {rootModelA, rootModelB};
       if (rootModels.length > 0) {
         ModifiableModelCommitter.multiCommit(rootModels, ModuleManager.getInstance(rootModels[0].getProject()).getModifiableModel());
       }
@@ -337,8 +337,8 @@ public class RootsChangedTest extends ModuleTestCase {
   }
 
   private static class MyModuleRootListener implements ModuleRootListener {
-    private int beforeCount = 0;
-    private int afterCount = 0;
+    private int beforeCount;
+    private int afterCount;
 
     @Override
     public void beforeRootsChange(ModuleRootEvent event) {
