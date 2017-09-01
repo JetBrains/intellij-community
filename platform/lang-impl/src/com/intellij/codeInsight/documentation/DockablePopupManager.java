@@ -47,7 +47,6 @@ import java.awt.*;
 
 public abstract class DockablePopupManager<T extends JComponent & Disposable> {
   protected ToolWindow myToolWindow;
-  private boolean myAutoUpdateDocumentation = PropertiesComponent.getInstance().isTrueValue(getAutoUpdateEnabledProperty());
   private Runnable myAutoUpdateRequest;
   @NotNull protected final Project myProject;
 
@@ -119,7 +118,7 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
     new UiNotifyConnector(component, new Activatable() {
       @Override
       public void showNotify() {
-        restartAutoUpdate(myAutoUpdateDocumentation);
+        restartAutoUpdate(PropertiesComponent.getInstance().getBoolean(getAutoUpdateEnabledProperty()));
       }
 
       @Override
@@ -144,13 +143,12 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
                                            AllIcons.General.AutoscrollFromSource) {
       @Override
       public boolean isSelected(AnActionEvent e) {
-        return myAutoUpdateDocumentation;
+        return PropertiesComponent.getInstance().getBoolean(getAutoUpdateEnabledProperty());
       }
 
       @Override
       public void setSelected(AnActionEvent e, boolean state) {
         PropertiesComponent.getInstance().setValue(getAutoUpdateEnabledProperty(), state);
-        myAutoUpdateDocumentation = state;
         restartAutoUpdate(state);
       }
     };
@@ -222,7 +220,7 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
   }
 
 
-  protected void restorePopupBehavior() {
+  public void restorePopupBehavior() {
     if (myToolWindow != null) {
       PropertiesComponent.getInstance().setValue(getShowInToolWindowProperty(), Boolean.FALSE.toString());
       ToolWindowManagerEx toolWindowManagerEx = ToolWindowManagerEx.getInstanceEx(myProject);

@@ -47,6 +47,7 @@ public class PyDocumentationSettings implements PersistentStateComponent<PyDocum
 
   @NotNull private DocStringFormat myDocStringFormat = DEFAULT_DOCSTRING_FORMAT;
   private boolean myAnalyzeDoctest = true;
+  private boolean myRenderExternalDocumentation;
 
   public boolean isNumpyFormat(PsiFile file) {
     return isFormat(file, DocStringFormat.NUMPY);
@@ -115,6 +116,14 @@ public class PyDocumentationSettings implements PersistentStateComponent<PyDocum
 
   public void setAnalyzeDoctest(boolean analyze) {
     myAnalyzeDoctest = analyze;
+  }
+
+  public boolean isRenderExternalDocumentation() {
+    return myRenderExternalDocumentation;
+  }
+
+  public void setRenderExternalDocumentation(boolean renderExternalDocumentation) {
+    myRenderExternalDocumentation = renderExternalDocumentation;
   }
 
   @Override

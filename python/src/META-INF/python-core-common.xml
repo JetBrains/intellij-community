@@ -809,6 +809,10 @@
       <keyboard-shortcut keymap="NetBeans 6.5" first-keystroke="ctrl alt E" replace-all="true"/>
     </action>
 
+    <action id="PyRunFileInConsole" class="com.jetbrains.python.actions.PyRunFileInConsoleAction">
+      <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="ExecuteInPyConsoleAction"/>
+    </action>
+
     <action id="NewPythonFile" class="com.jetbrains.python.actions.CreatePythonFileAction">
       <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewXml"/>
     </action>
@@ -860,12 +864,22 @@
       <add-to-group group-id="DebugMainMenu" relative-to-action="StepInto" anchor="after"/>
       <add-to-group group-id="XDebugger.ToolWindow.TopToolbar" relative-to-action="StepInto" anchor="after"/>
     </action>
+
+    <action id="PySciView" class="com.jetbrains.python.actions.PySciViewAction">
+      <add-to-group group-id="ViewMenu" anchor="before" relative-to-action="ToggleFullScreenGroup"/>
+    </action>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij.spellchecker">
     <support language="Python" implementationClass="com.jetbrains.python.spellchecker.PythonSpellcheckerStrategy"/>
     <bundledDictionaryProvider implementation="com.jetbrains.python.spellchecker.PythonBundledDictionaryProvider"/>
   </extensions>
+
+  <project-components>
+    <component>
+      <implementation-class>com.jetbrains.python.actions.PySciProjectComponent</implementation-class>
+    </component>
+  </project-components>
 
   <application-components>
     <component>

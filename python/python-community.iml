@@ -26,6 +26,15 @@
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="module" module-name="xml-openapi" />
     <orderEntry type="module" module-name="vcs-api" />
+    <orderEntry type="module-library">
+      <library name="org.jsoup:jsoup:1.10.3" type="repository">
+        <properties maven-id="org.jsoup:jsoup:1.10.3" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jsoup/jsoup/1.10.3/jsoup-1.10.3.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
   </component>
 </module>
-
