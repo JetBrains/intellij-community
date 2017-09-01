@@ -5,6 +5,6 @@ import java.util.*;
 public class Main {
   private void test() {
     List<String> other = new ArrayList<>();
-    other.stream().forEachOrdered<caret>(s -> {if(s.length() > 2) System.out.println(s);});
+    other.stream().forEachOrdere<caret>d(s -> {if(s.length() > 2) System.out.println(s);});
   }
 }

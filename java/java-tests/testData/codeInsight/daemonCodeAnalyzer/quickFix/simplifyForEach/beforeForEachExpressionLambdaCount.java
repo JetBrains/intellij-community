@@ -6,6 +6,6 @@ public class Main {
   private void test() {
     List<String> strs = new ArrayList<>();
     int count = 0;
-    strs.stream().forEach<caret>(x -> count++)
+    strs.stream().forEac<caret>h(x -> count++)
   }
 }
