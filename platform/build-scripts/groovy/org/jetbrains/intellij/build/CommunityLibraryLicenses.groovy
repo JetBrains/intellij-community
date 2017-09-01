@@ -224,6 +224,8 @@ class CommunityLibraryLicenses {
                        url: "http://code.google.com/p/json-path/", licenseUrl: "http://apache.org/licenses/LICENSE-2.0"),
     new LibraryLicense(name: "json-smart", libraryName: "json-smart-1.1.1.jar", version: "1.1.1", license: "Apache 2.0",
                        url: "http://code.google.com/p/json-smart/", licenseUrl: "http://apache.org/licenses/LICENSE-2.0"),
+    new LibraryLicense(name: "jsoup", libraryName: "jsoup-1.10.3.jar", version: "1.10.3", license: "MIT",
+                       url: "http://jsoup.org", licenseUrl: "http://jsoup.org/license"),
     new LibraryLicense(name: "jsr305", libraryName: "jsr305", version: "snapshot", license: "BSD", url: "http://code.google.com/p/jsr-305/",
                        licenseUrl: "http://code.google.com/p/jsr-305/source/browse/trunk/ri/LICENSE"),
     new LibraryLicense(name: "Jsr305", version: "1.3.9", license: "New BSD", url: "http://code.google.com/p/jsr-305/",
