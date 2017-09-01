@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -281,19 +281,17 @@ public class GenerateMembersUtil {
     final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
 
     try {
-      final PsiMethod resultMethod = createMethod(factory, sourceMethod, target);
+      PsiMethod resultMethod = createMethod(factory, sourceMethod, target);
       copyModifiers(sourceMethod.getModifierList(), resultMethod.getModifierList());
-      final PsiSubstitutor collisionResolvedSubstitutor =
+      PsiSubstitutor collisionResolvedSubstitutor =
         substituteTypeParameters(factory, target, sourceMethod.getTypeParameterList(), resultMethod.getTypeParameterList(), substitutor, sourceMethod);
       substituteReturnType(PsiManager.getInstance(project), resultMethod, sourceMethod.getReturnType(), collisionResolvedSubstitutor);
       substituteParameters(factory, codeStyleManager, sourceMethod.getParameterList(), resultMethod.getParameterList(), collisionResolvedSubstitutor, target);
       copyDocComment(sourceMethod, resultMethod, factory);
       GlobalSearchScope scope = sourceMethod.getResolveScope();
-      final List<PsiClassType> thrownTypes = ExceptionUtil.collectSubstituted(collisionResolvedSubstitutor, sourceMethod.getThrowsList().getReferencedTypes(),
-                                                                              scope);
+      List<PsiClassType> thrownTypes = ExceptionUtil.collectSubstituted(collisionResolvedSubstitutor, sourceMethod.getThrowsList().getReferencedTypes(), scope);
       if (target instanceof PsiClass) {
-        final PsiMethod[] methods = ((PsiClass)target).findMethodsBySignature(sourceMethod, true);
-        for (PsiMethod psiMethod : methods) {
+        for (PsiMethod psiMethod : ((PsiClass)target).findMethodsBySignature(sourceMethod, true)) {
           if (psiMethod != null && psiMethod != sourceMethod && !MethodSignatureUtil.isSuperMethod(psiMethod, sourceMethod)) {
             PsiClass aSuper = psiMethod.getContainingClass();
             if (aSuper != null && aSuper != target) {
@@ -322,7 +320,7 @@ public class GenerateMembersUtil {
                                                          @Nullable PsiElement target,
                                                          @Nullable PsiTypeParameterList sourceTypeParameterList,
                                                          @Nullable PsiTypeParameterList targetTypeParameterList,
-                                                         @NotNull PsiSubstitutor substitutor, 
+                                                         @NotNull PsiSubstitutor substitutor,
                                                          @NotNull PsiMethod sourceMethod) {
     if (sourceTypeParameterList == null || targetTypeParameterList == null || PsiUtil.isRawSubstitutor(sourceMethod, substitutor)) {
       return substitutor;
@@ -386,7 +384,7 @@ public class GenerateMembersUtil {
   @NotNull
   private static PsiTypeParameter substituteTypeParameter(final @NotNull JVMElementFactory factory,
                                                           @NotNull PsiTypeParameter typeParameter,
-                                                          final @NotNull PsiSubstitutor substitutor, 
+                                                          final @NotNull PsiSubstitutor substitutor,
                                                           @NotNull final PsiMethod sourceMethod) {
     final PsiElement copy = typeParameter.copy();
     final Map<PsiElement, PsiElement> replacementMap = new HashMap<>();
@@ -464,7 +462,7 @@ public class GenerateMembersUtil {
   private static void substituteThrows(@NotNull JVMElementFactory factory,
                                        @NotNull PsiReferenceList targetThrowsList,
                                        @NotNull PsiSubstitutor substitutor,
-                                       @NotNull PsiMethod sourceMethod, 
+                                       @NotNull PsiMethod sourceMethod,
                                        List<PsiClassType> thrownTypes) {
     for (PsiClassType thrownType : thrownTypes) {
       targetThrowsList.add(factory.createReferenceElementByType((PsiClassType)substituteType(substitutor, thrownType, sourceMethod)));
@@ -522,7 +520,7 @@ public class GenerateMembersUtil {
       return true;
     }
     final String typeName = JavaCodeStyleManagerImpl.getTypeName(parameterType);
-    return typeName != null && 
+    return typeName != null &&
            NameUtil.getSuggestionsByName(typeName, "", "", false, false, parameterType instanceof PsiArrayType).contains(paramName);
   }
 
@@ -564,7 +562,7 @@ public class GenerateMembersUtil {
       int right = rBrace != null ? rBrace.getStartOffsetInParent() : body.getTextLength();
       emptyTemplate = StringUtil.isEmptyOrSpaces(body.getText().substring(left, right));
     }
-    
+
     if (overridden == null) {
       if (emptyTemplate) {
         CreateFromUsageUtils.setupMethodBody(method, containingClass);
@@ -624,21 +622,25 @@ public class GenerateMembersUtil {
 
   //custom getters/setters
   public static String suggestGetterName(PsiField field) {
-    final PsiMethod prototype = generateGetterPrototype(field);
-    return prototype != null ? prototype.getName() : PropertyUtil.suggestGetterName(field);
+    return generateGetterPrototype(field).getName();
   }
 
   public static String suggestGetterName(String name, PsiType type, Project project) {
-    return suggestGetterName(JavaPsiFacade.getElementFactory(project).createField(name, type instanceof PsiEllipsisType ? ((PsiEllipsisType)type).toArrayType() : type));
+    if (type instanceof PsiEllipsisType) {
+      type = ((PsiEllipsisType)type).toArrayType();
+    }
+    return suggestGetterName(JavaPsiFacade.getElementFactory(project).createField(name, type));
   }
 
   public static String suggestSetterName(PsiField field) {
-    final PsiMethod prototype = generateSetterPrototype(field);
-    return prototype != null ? prototype.getName() : PropertyUtil.suggestSetterName(field);
+    return generateSetterPrototype(field).getName();
   }
 
   public static String suggestSetterName(String name, PsiType type, Project project) {
-    return suggestSetterName(JavaPsiFacade.getElementFactory(project).createField(name, type instanceof PsiEllipsisType ? ((PsiEllipsisType)type).toArrayType() : type));
+    if (type instanceof PsiEllipsisType) {
+      type = ((PsiEllipsisType)type).toArrayType();
+    }
+    return suggestSetterName(JavaPsiFacade.getElementFactory(project).createField(name, type));
   }
 
   public static PsiMethod generateGetterPrototype(@NotNull PsiField field) {
