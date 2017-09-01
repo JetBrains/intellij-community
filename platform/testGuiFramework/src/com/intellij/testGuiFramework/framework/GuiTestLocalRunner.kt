@@ -38,7 +38,9 @@ import kotlin.reflect.KClass
 
 
 class GuiTestLocalRunner @Throws(InitializationError::class)
-constructor(testClass: Class<*>) : BlockJUnit4ClassRunner(testClass) {
+  constructor(testClass: Class<*>, val ide: Ide?) : BlockJUnit4ClassRunner(testClass) {
+
+  constructor(testClass: Class<*>): this(testClass, null)
 
   val SERVER_LOG = org.apache.log4j.Logger.getLogger("#com.intellij.testGuiFramework.framework.GuiTestLocalRunner")!!
   val criticalError = Ref<Boolean>(false)
@@ -67,8 +69,10 @@ constructor(testClass: Class<*>) : BlockJUnit4ClassRunner(testClass) {
     val server = JUnitServerHolder.getServer()
 
     try {
-      if (!server.isConnected())
-        runIdeLocally(port = server.getPort(), ide = getIdeFromAnnotation(this@GuiTestLocalRunner.testClass.javaClass))
+      if (!server.isConnected()) {
+        val localIde = ide ?: getIdeFromAnnotation(this@GuiTestLocalRunner.testClass.javaClass)
+        runIdeLocally(port = server.getPort(), ide = localIde)
+      }
       val jUnitTestContainer = JUnitTestContainer(method.declaringClass, method.name)
       server.send(TransportMessage(MessageType.RUN_TEST, jUnitTestContainer))
     }
@@ -147,7 +151,5 @@ constructor(testClass: Class<*>) : BlockJUnit4ClassRunner(testClass) {
       return Ide(ideType, 0, 0)
     }
   }
-
-
 }
 

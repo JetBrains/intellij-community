@@ -37,6 +37,8 @@ import java.net.URL;
  *         Date: 9/28/11
  */
 public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E extends InspectionEP> {
+  public static final InspectionToolWrapper[] EMPTY_ARRAY = new InspectionToolWrapper[0];
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.InspectionToolWrapper");
 
   protected T myTool;

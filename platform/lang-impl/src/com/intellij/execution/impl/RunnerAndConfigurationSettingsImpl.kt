@@ -17,7 +17,7 @@ package com.intellij.execution.impl
 
 import com.intellij.configurationStore.SerializableScheme
 import com.intellij.configurationStore.deserializeAndLoadState
-import com.intellij.configurationStore.serializeInto
+import com.intellij.configurationStore.serializeStateInto
 import com.intellij.execution.*
 import com.intellij.execution.configurations.*
 import com.intellij.execution.runners.ProgramRunner
@@ -282,7 +282,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
 
   private fun serializeConfigurationInto(configuration: RunConfiguration, element: Element) {
     if (configuration is PersistentStateComponent<*>) {
-      configuration.state!!.serializeInto(element)
+      configuration.serializeStateInto(element)
     }
     else {
       configuration.writeExternal(element)

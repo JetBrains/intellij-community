@@ -62,30 +62,15 @@ public class CompileStepBeforeRunNoErrorCheck
   }
 
   @Override
-  public boolean configureTask(RunConfiguration runConfiguration, MakeBeforeRunTaskNoErrorCheck task) {
-    return false;
-  }
-
-  @Override
-  public boolean isConfigurable() {
-    return false;
-  }
-
-  @Override
   public String getName() {
     return ExecutionBundle.message("before.launch.compile.step.no.error.check");
   }
 
   @Override
-  public boolean canExecuteTask(RunConfiguration configuration, MakeBeforeRunTaskNoErrorCheck task) {
-    return true;
-  }
-
-  @Override
   public boolean executeTask(DataContext context,
-                             RunConfiguration configuration,
-                             ExecutionEnvironment env,
-                             MakeBeforeRunTaskNoErrorCheck task) {
+                             @NotNull RunConfiguration configuration,
+                             @NotNull ExecutionEnvironment env,
+                             @NotNull MakeBeforeRunTaskNoErrorCheck task) {
     return CompileStepBeforeRun.doMake(myProject, configuration, env, true);
   }
 

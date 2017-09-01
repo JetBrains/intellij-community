@@ -60,6 +60,7 @@ import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.VfsTestUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -196,10 +197,10 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     }
     finally {
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-      VirtualFile file = FileDocumentManager.getInstance().getFile(e.getDocument());
+      VirtualFile file = ObjectUtils.notNull(FileDocumentManager.getInstance().getFile(e.getDocument()));
       FileEditorManager.getInstance(getProject()).closeFile(file);
       VfsTestUtil.deleteFile(file);
-      VirtualFile file2 = FileDocumentManager.getInstance().getFile(e2.getDocument());
+      VirtualFile file2 = ObjectUtils.notNull(FileDocumentManager.getInstance().getFile(e2.getDocument()));
       FileEditorManager.getInstance(getProject()).closeFile(file2);
       VfsTestUtil.deleteFile(file2);
     }

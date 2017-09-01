@@ -106,16 +106,7 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
     return !(configuration instanceof RemoteConfiguration) && configuration instanceof RunProfileWithCompileBeforeLaunchOption;
   }
 
-  public boolean configureTask(RunConfiguration runConfiguration, MakeBeforeRunTask task) {
-    return false;
-  }
-
-  @Override
-  public boolean canExecuteTask(RunConfiguration configuration, MakeBeforeRunTask task) {
-    return true;
-  }
-
-  public boolean executeTask(DataContext context, final RunConfiguration configuration, final ExecutionEnvironment env, MakeBeforeRunTask task) {
+  public boolean executeTask(DataContext context, @NotNull final RunConfiguration configuration, @NotNull final ExecutionEnvironment env, @NotNull MakeBeforeRunTask task) {
     return doMake(myProject, configuration, env, false);
   }
 
@@ -185,10 +176,6 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
     }
 
     return result.get();
-  }
-
-  public boolean isConfigurable() {
-    return false;
   }
 
   @Nullable

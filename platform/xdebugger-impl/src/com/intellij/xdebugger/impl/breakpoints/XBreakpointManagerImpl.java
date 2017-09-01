@@ -387,7 +387,7 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
   }
 
   @Override
-  public void loadState(final BreakpointManagerState state) {
+  public void loadState(@NotNull BreakpointManagerState state) {
     myBreakpointsDialogSettings = state.getBreakpointsDialogProperties();
 
     myAllBreakpoints.clear();

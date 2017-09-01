@@ -40,9 +40,7 @@ class GuiTestSuite(suiteClass: Class<*>, val builder: RunnerBuilder) : Suite(sui
       //let's start IDE to complete installation, import configs and etc before running tests
       if (myFirstStart) firstStart()
       val testClass = runner.description.testClass
-      //check that ide types are equal
-      check(GuiTestLocalRunner.getIdeFromAnnotation(testClass).ideType.javaClass == myIde.ideType.javaClass)
-      val guiTestLocalRunner = GuiTestLocalRunner(testClass)
+      val guiTestLocalRunner = GuiTestLocalRunner(testClass, myIde)
       super.runChild(guiTestLocalRunner, notifier)
     }
     catch (e: Exception) {
@@ -57,7 +55,6 @@ class GuiTestSuite(suiteClass: Class<*>, val builder: RunnerBuilder) : Suite(sui
     GuiTestLocalLauncher.firstStartIdeLocally(myIde, myFirstStartClassName)
     myFirstStart = false
   }
-
 
 
 }

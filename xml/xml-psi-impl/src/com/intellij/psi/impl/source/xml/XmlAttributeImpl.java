@@ -16,7 +16,9 @@
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.PomManager;
 import com.intellij.pom.PomModel;
@@ -34,6 +36,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.util.XmlUtil;
@@ -310,11 +313,12 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, Hi
   public PsiElement setName(@NotNull final String nameText) throws IncorrectOperationException {
     final ASTNode name = XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(this);
     final String oldName = name.getText();
-    final String oldValue = getValue();
+    final String oldValue = ObjectUtils.notNull(getValue(), "");
     final PomModel model = PomManager.getModel(getProject());
     final XmlAttribute attribute = XmlElementFactory.getInstance(getProject()).createAttribute(nameText, oldValue, this);
     final ASTNode newName = XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild((ASTNode)attribute);
     final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
+    final Ref<XmlAttribute> replaced = Ref.create(this);
     model.runTransaction(new PomTransactionBase(getParent(), aspect) {
       @Override
       public PomModelEvent runInner() {
@@ -324,15 +328,17 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, Hi
         xmlAspectChangeSet.add(new XmlAttributeSetImpl(getParent(), oldName, null));
         xmlAspectChangeSet.add(new XmlAttributeSetImpl(getParent(), nameText, oldValue));
         event.registerChangeSet(model.getModelAspect(XmlAspect.class), xmlAspectChangeSet);
-        if (oldValue.isEmpty()) {
-          CodeEditUtil.replaceChild(XmlAttributeImpl.this, name, newName);
-        } else {
+        if (!oldValue.isEmpty() && getLanguage().isKindOf(HTMLLanguage.INSTANCE)) {
           CodeEditUtil.replaceChild(getTreeParent(), XmlAttributeImpl.this, attribute.getNode());
+          replaced.set(attribute);
+        }
+        else {
+          CodeEditUtil.replaceChild(XmlAttributeImpl.this, name, newName);
         }
         return event;
       }
     });
-    return this;
+    return replaced.get();
   }
 
   @Override

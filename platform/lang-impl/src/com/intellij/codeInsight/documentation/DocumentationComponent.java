@@ -250,6 +250,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       @Override
       public void setDocument(Document doc) {
         super.setDocument(doc);
+        doc.putProperty("IgnoreCharsetDirective", Boolean.TRUE);
         if (doc instanceof StyledDocument) {
           doc.putProperty("imageCache", myImageProvider);
         }

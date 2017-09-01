@@ -48,7 +48,7 @@ class JBZipOutputStream {
 
   private final CRC32 crc = new CRC32();
 
-  long written = 0;
+  private long writtenOnDisk = 0;
 
   /**
    * The encoding to use for filenames and the file comment.
@@ -93,8 +93,7 @@ class JBZipOutputStream {
   public JBZipOutputStream(JBZipFile file, long currentCDOffset) throws IOException {
     myFile = file;
     raf = myFile.archive;
-    written = currentCDOffset;
-    raf.seek(currentCDOffset);
+    writtenOnDisk = currentCDOffset;
   }
 
   /**
@@ -129,12 +128,12 @@ class JBZipOutputStream {
    * @since 1.1
    */
   public void finish() throws IOException {
-    long cdOffset = written;
+    long cdOffset = getWritten();
     final List<JBZipEntry> entries = myFile.getEntries();
     for (int i = 0, entriesSize = entries.size(); i < entriesSize; i++) {
       writeCentralFileHeader(entries.get(i));
     }
-    long cdLength = written - cdOffset;
+    long cdLength = getWritten() - cdOffset;
     writeCentralDirectoryEnd(cdLength, cdOffset);
     flushBuffer();
     def.end();
@@ -209,7 +208,7 @@ class JBZipOutputStream {
    * @since 1.1
    */
   protected void writeLocalFileHeader(JBZipEntry ze) throws IOException {
-    ze.setHeaderOffset(written);
+    ze.setHeaderOffset(getWritten());
 
     writeOut(LFH_SIG);
 
@@ -376,11 +375,16 @@ class JBZipOutputStream {
     if (myBuffer.size() > 8192) {
       flushBuffer();
     }
-    written += length;
+  }
+
+  void ensureFlushed(long end) throws IOException {
+    if (end > writtenOnDisk) flushBuffer();
   }
 
   private void flushBuffer() throws IOException {
+    raf.seek(writtenOnDisk);
     raf.write(myBuffer.getInternalBuffer(), 0, myBuffer.size());
+    writtenOnDisk += myBuffer.size();
     myBuffer.reset();
   }
 
@@ -422,5 +426,9 @@ class JBZipOutputStream {
     entry.setCompressedSize(outputBytesLength);
     writeLocalFileHeader(entry);
     writeOut(outputBytes, 0, outputBytesLength);
+  }
+
+  long getWritten() {
+    return writtenOnDisk + myBuffer.size();
   }
 }

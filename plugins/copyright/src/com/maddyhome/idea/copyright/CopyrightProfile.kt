@@ -16,7 +16,7 @@
 package com.maddyhome.idea.copyright
 
 import com.intellij.configurationStore.SerializableScheme
-import com.intellij.configurationStore.serializeInto
+import com.intellij.configurationStore.serializeObjectInto
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.options.ExternalizableScheme
 import com.intellij.util.xmlb.annotations.OptionTag
@@ -36,7 +36,7 @@ class CopyrightProfile @JvmOverloads constructor(profileName: String? = null) : 
   // ugly name to preserve compatibility
   // must be not private because otherwise binding is not created for private accessor
   @get:OptionTag("myName")
-  internal var profileName by string()
+  private var profileName by string()
 
   var notice by string(DEFAULT_COPYRIGHT_NOTICE)
   var keyword by string(EntityUtil.encode("Copyright"))
@@ -61,7 +61,7 @@ class CopyrightProfile @JvmOverloads constructor(profileName: String? = null) : 
 
   override fun writeScheme(): Element {
     val element = Element("copyright")
-    serializeInto(element)
+    serializeObjectInto(this, element)
     return element
   }
 }

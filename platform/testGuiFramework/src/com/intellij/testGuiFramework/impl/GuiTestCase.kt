@@ -122,7 +122,6 @@ open class GuiTestCase : GuiTestBase() {
   val screenshotTaker = ScreenshotTaker()
   var pathToSaveScreenshots = getTestScreenshotDirPath()
 
-
   val settingsTitle: String = if (isMac()) "Preferences" else "Settings"
   val defaultSettingsTitle: String = if (isMac()) "Default Preferences" else "Default Settings"
   val slash: String = File.separator
@@ -137,6 +136,7 @@ open class GuiTestCase : GuiTestBase() {
 
   @Throws(InvocationTargetException::class, InterruptedException::class)
   override fun tearDown() {
+    closeAllProjects()
     super.tearDown()
   }
 
@@ -713,10 +713,10 @@ open class GuiTestCase : GuiTestBase() {
     return "@${uiScaleVal}x"
   }
 
-  protected fun <ComponentType : Component> waitUntilFound(container: Container?,
-                                                           componentClass: Class<ComponentType>,
-                                                           timeout: Long,
-                                                           matcher: (ComponentType) -> Boolean): ComponentType {
+  fun <ComponentType : Component> waitUntilFound(container: Container?,
+                                                 componentClass: Class<ComponentType>,
+                                                 timeout: Long,
+                                                 matcher: (ComponentType) -> Boolean): ComponentType {
     return GuiTestUtil.waitUntilFound(myRobot, container, typeMatcher(componentClass) { matcher(it) }, timeout.toFestTimeout())
   }
 
@@ -745,5 +745,4 @@ open class GuiTestCase : GuiTestBase() {
       return flagCheckFunction()
     }
   }
-
 }

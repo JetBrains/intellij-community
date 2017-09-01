@@ -455,7 +455,7 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
     for (ModuleExtension extension : myExtensions) {
       if (extension instanceof PersistentStateComponent) {
         //noinspection ConstantConditions
-        XmlSerializer.serializeInto(((PersistentStateComponent)extension).getState(), element);
+        XmlSerializer.serializeStateInto(((PersistentStateComponent)extension), element);
       }
       else {
         //noinspection deprecation
