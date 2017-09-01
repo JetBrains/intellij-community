@@ -18,6 +18,7 @@ package com.intellij.psi.impl.source.xml;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.PomManager;
 import com.intellij.pom.PomModel;
@@ -317,6 +318,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, Hi
     final XmlAttribute attribute = XmlElementFactory.getInstance(getProject()).createAttribute(nameText, oldValue, this);
     final ASTNode newName = XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild((ASTNode)attribute);
     final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
+    final Ref<XmlAttribute> replaced = Ref.create(this);
     model.runTransaction(new PomTransactionBase(getParent(), aspect) {
       @Override
       public PomModelEvent runInner() {
@@ -328,6 +330,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, Hi
         event.registerChangeSet(model.getModelAspect(XmlAspect.class), xmlAspectChangeSet);
         if (!oldValue.isEmpty() && getLanguage().isKindOf(HTMLLanguage.INSTANCE)) {
           CodeEditUtil.replaceChild(getTreeParent(), XmlAttributeImpl.this, attribute.getNode());
+          replaced.set(attribute);
         }
         else {
           CodeEditUtil.replaceChild(XmlAttributeImpl.this, name, newName);
@@ -335,7 +338,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, Hi
         return event;
       }
     });
-    return this;
+    return replaced.get();
   }
 
   @Override

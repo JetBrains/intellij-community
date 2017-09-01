@@ -449,7 +449,7 @@ public class GenerationNode extends UserDataHolderBase {
         String attributeName = defaultAttribute.getName();
         if (attributeName.length() > 1) {
           if (isImpliedAttribute(attributeName)) {
-            defaultAttribute.setName(attributeName.substring(1));
+            defaultAttribute = (XmlAttribute)defaultAttribute.setName(attributeName.substring(1));
           }
           final String oldValue = defaultAttribute.getValue();
           if (oldValue != null && StringUtil.containsChar(oldValue, '|')) {
