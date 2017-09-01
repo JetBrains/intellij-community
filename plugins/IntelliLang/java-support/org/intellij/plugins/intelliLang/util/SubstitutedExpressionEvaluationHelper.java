@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 
 /**
@@ -40,56 +41,61 @@ public class SubstitutedExpressionEvaluationHelper {
   private final PsiConstantEvaluationHelper myHelper;
   private final Configuration myConfiguration;
 
-  public SubstitutedExpressionEvaluationHelper(final Project project) {
+  public SubstitutedExpressionEvaluationHelper(Project project) {
     myHelper = JavaPsiFacade.getInstance(project).getConstantEvaluationHelper();
     myConfiguration = Configuration.getInstance();
   }
 
-  public Object computeExpression(final PsiExpression e, final List<PsiExpression> uncomputables) {
-    return computeExpression(e, myConfiguration.getAdvancedConfiguration().getDfaOption(), myConfiguration.getAdvancedConfiguration().isIncludeUncomputablesAsLiterals(), uncomputables);
+  public Object computeExpression(PsiExpression e, List<PsiExpression> uncomputables) {
+    return computeExpression(
+      e, myConfiguration.getAdvancedConfiguration().getDfaOption(),
+      myConfiguration.getAdvancedConfiguration().isIncludeUncomputablesAsLiterals(), uncomputables);
   }
 
-  public Object computeExpression(final PsiExpression e, final Configuration.DfaOption dfaOption, final boolean includeUncomputablesAsLiterals, final List<PsiExpression> uncomputables) {
-    final ConcurrentMap<PsiElement, Object> map = ContainerUtil.newConcurrentMap();
+  public Object computeExpression(PsiExpression e,
+                                  Configuration.DfaOption dfaOption,
+                                  boolean includeUncomputablesAsLiterals,
+                                  List<PsiExpression> uncomputables) {
+    ConcurrentMap<PsiElement, Object> map = ContainerUtil.newConcurrentMap();
     //if (true) return myHelper.computeConstantExpression(e, false);
     return myHelper.computeExpression(e, false, new PsiConstantEvaluationHelper.AuxEvaluator() {
       @Nullable
-      public Object computeExpression(final PsiExpression o, final PsiConstantEvaluationHelper.AuxEvaluator auxEvaluator) {
+      public Object computeExpression(PsiExpression o, PsiConstantEvaluationHelper.AuxEvaluator auxEvaluator) {
         PsiType resolvedType = null;
         if (o instanceof PsiMethodCallExpression) {
-          final PsiMethodCallExpression c = (PsiMethodCallExpression)o;
-          final PsiMethod m = (PsiMethod)c.getMethodExpression().resolve();
-          final PsiType returnType = m != null? m.getReturnType() : null;
+          PsiMethodCallExpression c = (PsiMethodCallExpression)o;
+          PsiMethod m = (PsiMethod)c.getMethodExpression().resolve();
+          PsiType returnType = m != null ? m.getReturnType() : null;
           if (returnType != null && !PsiType.VOID.equals(returnType)) {
             // find substitution
-            final Object substituted = calcSubstituted(m);
+            Object substituted = calcSubstituted(m);
             if (substituted != null) return substituted;
           }
           resolvedType = returnType;
         }
         else if (o instanceof PsiReferenceExpression) {
-          final PsiElement resolved = ((PsiReferenceExpression)o).resolve();
+          PsiElement resolved = ((PsiReferenceExpression)o).resolve();
           if (resolved instanceof PsiModifierListOwner) {
             // find substitution
-            final Object substituted = calcSubstituted((PsiModifierListOwner)resolved);
+            Object substituted = calcSubstituted((PsiModifierListOwner)resolved);
             if (substituted != null) return substituted;
             if (resolved instanceof PsiVariable) {
-              final PsiVariable psiVariable = (PsiVariable)resolved;
+              PsiVariable psiVariable = (PsiVariable)resolved;
               resolvedType = psiVariable.getType();
-              final Collection<PsiExpression> values;
+              Collection<PsiExpression> values;
               if (dfaOption == Configuration.DfaOption.ASSIGNMENTS) {
                 values = DfaPsiUtil.getVariableAssignmentsInFile(psiVariable, true, o);
               }
               else if (dfaOption == Configuration.DfaOption.DFA) {
-                final Collection<PsiExpression> realValues = DfaUtil.getCachedVariableValues(psiVariable, o);
-                values = realValues == null? DfaPsiUtil.getVariableAssignmentsInFile(psiVariable, true, o) : realValues;
+                Collection<PsiExpression> realValues = DfaUtil.getCachedVariableValues(psiVariable, o);
+                values = realValues == null ? DfaPsiUtil.getVariableAssignmentsInFile(psiVariable, true, o) : realValues;
               }
               else {
                 values = Collections.emptyList();
               }
               // return the first computed value as far as we do not support multiple injection
               for (PsiExpression value : values) {
-                final Object computedValue = auxEvaluator.computeExpression(value, this);
+                Object computedValue = auxEvaluator.computeExpression(value, this);
                 if (computedValue != null) {
                   return computedValue;
                 }
@@ -100,9 +106,9 @@ public class SubstitutedExpressionEvaluationHelper {
         if (uncomputables != null) uncomputables.add(o);
         if (includeUncomputablesAsLiterals) {
           if (resolvedType != null) {
-            if (PsiPrimitiveType.DOUBLE.isAssignableFrom(resolvedType)) return 1; // magic number!
+            if (PsiType.DOUBLE.isAssignableFrom(resolvedType)) return 1; // magic number!
           }
-          final StringBuilder sb = new StringBuilder();
+          StringBuilder sb = new StringBuilder();
           o.accept(new PsiRecursiveElementWalkingVisitor() {
             @Override
             public void visitElement(PsiElement element) {
@@ -119,7 +125,7 @@ public class SubstitutedExpressionEvaluationHelper {
         return null;
       }
 
-      public ConcurrentMap<PsiElement, Object> getCacheMap(final boolean overflow) {
+      public ConcurrentMap<PsiElement, Object> getCacheMap(boolean overflow) {
         return map;
         //return PsiManager.getInstance(project).getCachedValuesManager().getCachedValue(project, COMPUTED_MAP_KEY, PROVIDER, false);
       }
@@ -127,12 +133,9 @@ public class SubstitutedExpressionEvaluationHelper {
   }
 
   @Nullable
-  private Object calcSubstituted(final PsiModifierListOwner owner) {
-    final PsiAnnotation annotation = AnnotationUtil.findAnnotation(owner, myConfiguration.getAdvancedConfiguration().getSubstAnnotationPair().second);
-    if (annotation != null) {
-      return AnnotationUtilEx.calcAnnotationValue(annotation, "value");
-    }
-    return null;
+  private Object calcSubstituted(PsiModifierListOwner owner) {
+    Set<String> substAnnos = myConfiguration.getAdvancedConfiguration().getSubstAnnotationPair().second;
+    PsiAnnotation annotation = AnnotationUtil.findAnnotation(owner, substAnnos);
+    return annotation != null ? AnnotationUtilEx.calcAnnotationValue(annotation, "value") : null;
   }
-
 }
