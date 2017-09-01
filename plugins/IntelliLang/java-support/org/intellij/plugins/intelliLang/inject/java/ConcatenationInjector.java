@@ -67,7 +67,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
 
   }
 
-  public void getLanguagesToInject(@NotNull final MultiHostRegistrar registrar, @NotNull PsiElement... operands) {
+  public void getLanguagesToInject(@NotNull MultiHostRegistrar registrar, @NotNull PsiElement... operands) {
     if (operands.length == 0) return;
     boolean hasLiteral = false;
     InjectedLanguage tempInjectedLanguage = null;
@@ -84,8 +84,8 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
       }
     }
     if (!hasLiteral) return;
-    final Language tempLanguage = tempInjectedLanguage == null ? null : tempInjectedLanguage.getLanguage();
-    final PsiFile finalContainingFile = containingFile;
+    Language tempLanguage = tempInjectedLanguage == null ? null : tempInjectedLanguage.getLanguage();
+    PsiFile finalContainingFile = containingFile;
     InjectionProcessor injectionProcessor = new InjectionProcessor(myConfiguration, mySupport, operands) {
       @Override
       protected void processInjection(Language language,
@@ -135,24 +135,24 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
     }
 
     public void processInjections() {
-      final PsiElement firstOperand = myOperands[0];
-      final PsiElement topBlock = PsiUtil.getTopLevelEnclosingCodeBlock(firstOperand, null);
-      final LocalSearchScope searchScope = new LocalSearchScope(new PsiElement[]{topBlock instanceof PsiCodeBlock
+      PsiElement firstOperand = myOperands[0];
+      PsiElement topBlock = PsiUtil.getTopLevelEnclosingCodeBlock(firstOperand, null);
+      LocalSearchScope searchScope = new LocalSearchScope(new PsiElement[]{topBlock instanceof PsiCodeBlock
                                                                                  ? topBlock : firstOperand.getContainingFile()}, "", true);
-      final THashSet<PsiModifierListOwner> visitedVars = new THashSet<>();
-      final ArrayList<PsiElement> places = new ArrayList<>(5);
+      THashSet<PsiModifierListOwner> visitedVars = new THashSet<>();
+      ArrayList<PsiElement> places = new ArrayList<>(5);
       places.add(firstOperand);
       class MyAnnoVisitor implements AnnotationUtilEx.AnnotatedElementVisitor {
         public boolean visitMethodParameter(PsiExpression expression, PsiCall psiCallExpression) {
-          final PsiExpressionList list = psiCallExpression.getArgumentList();
+          PsiExpressionList list = psiCallExpression.getArgumentList();
           assert list != null;
-          final int index = ArrayUtil.indexOf(list.getExpressions(), expression);
-          final String methodName;
+          int index = ArrayUtil.indexOf(list.getExpressions(), expression);
+          String methodName;
           if (psiCallExpression instanceof PsiMethodCallExpression) {
-            final String referenceName = ((PsiMethodCallExpression)psiCallExpression).getMethodExpression().getReferenceName();
+            String referenceName = ((PsiMethodCallExpression)psiCallExpression).getMethodExpression().getReferenceName();
             if ("super".equals(referenceName) || "this".equals(referenceName)) { // constructor call
-              final PsiClass psiClass = PsiTreeUtil.getParentOfType(psiCallExpression, PsiClass.class, true);
-              final PsiClass psiTargetClass = "super".equals(referenceName)? psiClass == null ? null : psiClass.getSuperClass() : psiClass;
+              PsiClass psiClass = PsiTreeUtil.getParentOfType(psiCallExpression, PsiClass.class, true);
+              PsiClass psiTargetClass = "super".equals(referenceName)? psiClass == null ? null : psiClass.getSuperClass() : psiClass;
               methodName = psiTargetClass == null? null : psiTargetClass.getName();
             }
             else {
@@ -160,7 +160,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
             }
           }
           else if (psiCallExpression instanceof PsiNewExpression) {
-            final PsiJavaCodeReferenceElement classRef = ((PsiNewExpression)psiCallExpression).getClassOrAnonymousClassReference();
+            PsiJavaCodeReferenceElement classRef = ((PsiNewExpression)psiCallExpression).getClassOrAnonymousClassReference();
             methodName = classRef == null ? null : classRef.getReferenceName();
           }
           else if (psiCallExpression instanceof PsiEnumConstant) {
@@ -171,9 +171,9 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
             methodName = null;
           }
           if (methodName != null && index >= 0 && areThereInjectionsWithName(methodName, false)) {
-            final PsiMethod method = psiCallExpression.resolveMethod();
+            PsiMethod method = psiCallExpression.resolveMethod();
             if (method != null) {
-              final PsiParameter[] parameters = method.getParameterList().getParameters();
+              PsiParameter[] parameters = method.getParameterList().getParameters();
               if (index < parameters.length) {
                 process(parameters[index], method, index);
               }
@@ -196,9 +196,9 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
           if (variable == null) return;
           if (myConfiguration.getAdvancedConfiguration().getDfaOption() != Configuration.DfaOption.OFF && visitedVars.add(variable)) {
             ReferencesSearch.search(variable, searchScope).forEach(psiReference -> {
-              final PsiElement element = psiReference.getElement();
+              PsiElement element = psiReference.getElement();
               if (element instanceof PsiExpression) {
-                final PsiExpression refExpression = (PsiExpression)element;
+                PsiExpression refExpression = (PsiExpression)element;
                 places.add(refExpression);
                 if (!myUnparsable) {
                   myUnparsable = checkUnparsableReference(refExpression);
@@ -225,11 +225,11 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
         }
 
         public boolean visitAnnotationParameter(PsiNameValuePair nameValuePair, PsiAnnotation psiAnnotation) {
-          final String paramName = nameValuePair.getName();
-          final String methodName = paramName != null ? paramName : PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME;
+          String paramName = nameValuePair.getName();
+          String methodName = paramName != null ? paramName : PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME;
           if (areThereInjectionsWithName(methodName, false)) {
-            final PsiReference reference = nameValuePair.getReference();
-            final PsiElement element = reference == null ? null : reference.resolve();
+            PsiReference reference = nameValuePair.getReference();
+            PsiElement element = reference == null ? null : reference.resolve();
             if (element instanceof PsiMethod) {
               process((PsiMethod)element, (PsiMethod)element, -1);
             }
@@ -239,17 +239,17 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
 
         public boolean visitReference(PsiReferenceExpression expression) {
           if (myConfiguration.getAdvancedConfiguration().getDfaOption() == Configuration.DfaOption.OFF) return true;
-          final PsiElement e = expression.resolve();
+          PsiElement e = expression.resolve();
           if (e instanceof PsiVariable) {
             if (e instanceof PsiParameter) {
-              final PsiParameter p = (PsiParameter)e;
-              final PsiElement declarationScope = p.getDeclarationScope();
-              final PsiMethod method = declarationScope instanceof PsiMethod ? (PsiMethod)declarationScope : null;
-              final PsiParameterList parameterList = method == null ? null : method.getParameterList();
+              PsiParameter p = (PsiParameter)e;
+              PsiElement declarationScope = p.getDeclarationScope();
+              PsiMethod method = declarationScope instanceof PsiMethod ? (PsiMethod)declarationScope : null;
+              PsiParameterList parameterList = method == null ? null : method.getParameterList();
               // don't check catchblock parameters & etc.
               if (!(parameterList == null || parameterList != e.getParent()) &&
                   areThereInjectionsWithName(method.getName(), false)) {
-                final int parameterIndex = parameterList.getParameterIndex((PsiParameter)e);
+                int parameterIndex = parameterList.getParameterIndex((PsiParameter)e);
                 process((PsiModifierListOwner)e, method, parameterIndex);
               }
             }
@@ -274,7 +274,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
         return;
       }
       while (!places.isEmpty() && !myShouldStop) {
-        final PsiElement curPlace = places.remove(0);
+        PsiElement curPlace = places.remove(0);
         AnnotationUtilEx.visitAnnotatedElements(curPlace, visitor);
       }
     }
@@ -284,7 +284,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
       return false;
     }
 
-    private void process(final PsiModifierListOwner owner, PsiMethod method, int paramIndex) {
+    private void process(PsiModifierListOwner owner, PsiMethod method, int paramIndex) {
       if (!processAnnotationInjections(owner)) {
         myShouldStop = true;
       }
@@ -298,14 +298,14 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
       }
     }
 
-    private boolean processAnnotationInjections(final PsiModifierListOwner annoElement) {
+    private boolean processAnnotationInjections(PsiModifierListOwner annoElement) {
       if (annoElement instanceof PsiParameter) {
-        final PsiElement scope = ((PsiParameter)annoElement).getDeclarationScope();
+        PsiElement scope = ((PsiParameter)annoElement).getDeclarationScope();
         if (scope instanceof PsiMethod && !areThereInjectionsWithName(((PsiNamedElement)scope).getName(), true)) {
           return true;
         }
       }
-      final PsiAnnotation[] annotations =
+      PsiAnnotation[] annotations =
         AnnotationUtilEx.getAnnotationFrom(annoElement, myConfiguration.getAdvancedConfiguration().getLanguageAnnotationPair(), true);
       if (annotations.length > 0) {
         return processAnnotationInjectionInner(annoElement, annotations);
@@ -314,10 +314,10 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
     }
 
     protected boolean processAnnotationInjectionInner(PsiModifierListOwner owner, PsiAnnotation[] annotations) {
-      final String id = AnnotationUtilEx.calcAnnotationValue(annotations, "value");
-      final String prefix = AnnotationUtilEx.calcAnnotationValue(annotations, "prefix");
-      final String suffix = AnnotationUtilEx.calcAnnotationValue(annotations, "suffix");
-      final BaseInjection injection = new BaseInjection(JavaLanguageInjectionSupport.JAVA_SUPPORT_ID);
+      String id = AnnotationUtilEx.calcAnnotationValue(annotations, "value");
+      String prefix = AnnotationUtilEx.calcAnnotationValue(annotations, "prefix");
+      String suffix = AnnotationUtilEx.calcAnnotationValue(annotations, "suffix");
+      BaseInjection injection = new BaseInjection(JavaLanguageInjectionSupport.JAVA_SUPPORT_ID);
       if (prefix != null) injection.setPrefix(prefix);
       if (suffix != null) injection.setSuffix(suffix);
       if (id != null) injection.setInjectedLanguageId(id);
@@ -341,14 +341,14 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
       Language language = InjectorUtils.getLanguage(injection);
       if (language == null) return;
 
-      final boolean separateFiles = !injection.isSingleFile() && StringUtil.isNotEmpty(injection.getValuePattern());
+      boolean separateFiles = !injection.isSingleFile() && StringUtil.isNotEmpty(injection.getValuePattern());
 
-      final Ref<Boolean> unparsableRef = Ref.create(myUnparsable);
-      final List<Object> objects = ContextComputationProcessor.collectOperands(injection.getPrefix(), injection.getSuffix(), unparsableRef, myOperands);
+      Ref<Boolean> unparsableRef = Ref.create(myUnparsable);
+      List<Object> objects = ContextComputationProcessor.collectOperands(injection.getPrefix(), injection.getSuffix(), unparsableRef, myOperands);
       if (objects.isEmpty()) return;
-      final List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> result =
+      List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> result =
         new ArrayList<>();
-      final int len = objects.size();
+      int len = objects.size();
       for (int i = 0; i < len; i++) {
         String curPrefix = null;
         Object o = objects.get(i);
@@ -362,7 +362,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
         if (o instanceof PsiLanguageInjectionHost) {
           curHost = (PsiLanguageInjectionHost)o;
           if (i == len - 2) {
-            final Object next = objects.get(i + 1);
+            Object next = objects.get(i + 1);
             if (next instanceof String) {
               i++;
               curSuffix = (String)next;
@@ -380,7 +380,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
                                       textRange));
           }
           else {
-            final List<TextRange> injectedArea = injection.getInjectedArea(curHost);
+            List<TextRange> injectedArea = injection.getInjectedArea(curHost);
             for (int j = 0, injectedAreaSize = injectedArea.size(); j < injectedAreaSize; j++) {
               TextRange textRange = injectedArea.get(j);
               TextRange.assertProperRange(textRange, injection);
@@ -416,11 +416,11 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
     }
   }
 
-  private static boolean checkUnparsableReference(final PsiExpression refExpression) {
-    final PsiElement parent = refExpression.getParent();
+  private static boolean checkUnparsableReference(PsiExpression refExpression) {
+    PsiElement parent = refExpression.getParent();
     if (parent instanceof PsiAssignmentExpression) {
-      final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
-      final IElementType operation = assignmentExpression.getOperationTokenType();
+      PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
+      IElementType operation = assignmentExpression.getOperationTokenType();
       if (assignmentExpression.getLExpression() == refExpression && JavaTokenType.PLUSEQ.equals(operation)) {
         return true;
       }
