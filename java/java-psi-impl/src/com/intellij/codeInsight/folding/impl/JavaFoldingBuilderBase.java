@@ -39,10 +39,7 @@ import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PropertyUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.util.*;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -108,7 +105,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
     if (statements.length == 0) return false;
 
     PsiStatement statement = statements[0];
-    if (PropertyUtil.isSimplePropertyGetter(method)) {
+    if (PropertyUtilBase.isSimplePropertyGetter(method)) {
       if (statement instanceof PsiReturnStatement) {
         return ((PsiReturnStatement)statement).getReturnValue() instanceof PsiReferenceExpression;
       }
@@ -127,7 +124,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
         return lhs instanceof PsiReferenceExpression &&
                rhs instanceof PsiReferenceExpression &&
                !((PsiReferenceExpression)rhs).isQualified() &&
-               PropertyUtil.isSimplePropertySetter(method); // last check because it can perform long return type resolve
+               PropertyUtilBase.isSimplePropertySetter(method); // last check because it can perform long return type resolve
       }
     }
     return false;
