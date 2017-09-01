@@ -50,10 +50,12 @@ public class TestDataGroupVirtualFile extends VirtualFile {
     return prefix + "." + myBeforeFile.getExtension();
   }
 
+  @NotNull
   public VirtualFile getBeforeFile() {
     return myBeforeFile;
   }
 
+  @NotNull
   public VirtualFile getAfterFile() {
     return myAfterFile;
   }
