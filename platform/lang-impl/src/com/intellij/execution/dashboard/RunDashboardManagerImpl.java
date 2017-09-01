@@ -24,6 +24,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -80,14 +81,13 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
       .sorted(DashboardGroupingRule.PRIORITY_COMPARATOR)
       .map(DashboardGrouper::new)
       .collect(Collectors.toList());
-
-    if (isDashboardEnabled()) {
-      initToolWindowListeners();
-    }
   }
 
   private static boolean isDashboardEnabled() {
-    return Registry.is("ide.run.dashboard") && RunDashboardContributor.EP_NAME.getExtensions().length > 0;
+    return Registry.is("ide.run.dashboard") &&
+           (Registry.is("ide.run.dashboard.types.configuration") ||
+            ApplicationManager.getApplication().isInternal() ||
+            RunDashboardContributor.EP_NAME.getExtensions().length > 0);
   }
 
   private void initToolWindowListeners() {
@@ -185,6 +185,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
     toolWindow.getContentManager().addContent(myToolWindowContent);
     toolWindow.setDefaultContentUiType(ToolWindowContentUiType.COMBO);
     toolWindow.setContentUiType(ToolWindowContentUiType.COMBO, null);
+    initToolWindowListeners();
   }
 
   @Override
@@ -259,6 +260,12 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
     if (myTypes.contains(runConfiguration.getType().getId())) {
       RunDashboardContributor contributor = getContributor(runConfiguration.getType());
       return contributor == null || contributor.isShowInDashboard(runConfiguration);
+    }
+    else {
+      if (!Registry.is("ide.run.dashboard.types.configuration") && !ApplicationManager.getApplication().isInternal()) {
+        RunDashboardContributor contributor = getContributor(runConfiguration.getType());
+        return contributor != null && contributor.isShowInDashboard(runConfiguration);
+      }
     }
 
     return false;

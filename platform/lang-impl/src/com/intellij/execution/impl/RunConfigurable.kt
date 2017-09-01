@@ -37,6 +37,7 @@ import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.Trinity
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance
@@ -493,11 +494,16 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
       settingsWrapper.add(settingsPanel, BorderLayout.WEST)
       settingsWrapper.add(Box.createGlue(), BorderLayout.CENTER)
 
-      val wrapper = JPanel(BorderLayout())
-      wrapper.add(createRunDashboardTypesPanel(), BorderLayout.CENTER)
-      wrapper.add(settingsWrapper, BorderLayout.SOUTH)
+      if (Registry.`is`("ide.run.dashboard.types.configuration") || ApplicationManager.getApplication().isInternal) {
+        val wrapper = JPanel(BorderLayout())
+        wrapper.add(createRunDashboardTypesPanel(), BorderLayout.CENTER)
+        wrapper.add(settingsWrapper, BorderLayout.SOUTH)
 
-      rightPanel.add(wrapper, BorderLayout.SOUTH)
+        rightPanel.add(wrapper, BorderLayout.SOUTH)
+      }
+      else {
+        rightPanel.add(settingsWrapper, BorderLayout.SOUTH)
+      }
     }
     rightPanel.revalidate()
     rightPanel.repaint()
