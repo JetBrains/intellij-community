@@ -34,7 +34,7 @@ public class CommandLineUtil {
 
   private static final Pattern WIN_BACKSLASHES_PRECEDING_QUOTE = Pattern.compile("(\\\\+)(?=\"|$)");
   private static final Pattern WIN_CARET_SPECIAL = Pattern.compile("[&<>()@^|!%]");
-  private static final Pattern WIN_QUOTE_SPECIAL = Pattern.compile("[ \t\\r\\n\"*?\\[{}~()\']");  // + glob [*?] + Cygwin glob [*?\[{}~] + [()']
+  private static final Pattern WIN_QUOTE_SPECIAL = Pattern.compile("[ \t\"*?\\[{}~()\']");  // + glob [*?] + Cygwin glob [*?\[{}~] + [()']
   private static final Pattern WIN_QUIET_COMMAND = Pattern.compile("((?:@\\s*)++)(.*)", Pattern.CASE_INSENSITIVE);
 
   private static final char Q = '\"';
@@ -464,8 +464,12 @@ public class CommandLineUtil {
   @NotNull
   @Contract(pure = true)
   public static String escapeParameterOnWindows(@NotNull String parameter, boolean isWinShell) {
-    if (parameter.isEmpty()) return QQ;
-    return isWinShell ? escapeParameter(parameter, new QuoteFlag(false), 1, true) : backslashEscapeQuotes(parameter);
+    String s = convertLineSeparators(parameter, "");
+    if (s.isEmpty()) return QQ;
+    boolean hadLineBreaks = !s.equals(parameter);
+    String result = isWinShell ? escapeParameter(s, new QuoteFlag(hadLineBreaks), 1, true) : backslashEscapeQuotes(s);
+    if (hadLineBreaks) result = quote(result, Q);
+    return result;
   }
 
   @NotNull

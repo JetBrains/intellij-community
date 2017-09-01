@@ -66,8 +66,6 @@ public class GeneralCommandLineTest {
     "\"quoted-slash\\\"",
     "\"quoted-two-slashes\\\\\"",
     "some\ttab",
-    "new\nline",
-    "\nnew\nline\n",
     "^% % %%% %\"%%",
     //"%PATH%",
     "^",
