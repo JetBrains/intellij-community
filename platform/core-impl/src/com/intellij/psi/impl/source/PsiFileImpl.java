@@ -763,11 +763,14 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   }
 
   private boolean mayReloadStub() {
+    if (getTreeElement() != null || useStrongRefs()) {
+      return false;
+    }
     StubTreeLoader loader = StubTreeLoader.getInstance();
     if (loader != null && loader.isStubReloadingProhibited()) {
       return false;
     }
-    return getTreeElement() == null && !useStrongRefs() && !hasUnbindableCachedPsi();
+    return !hasUnbindableCachedPsi();
   }
 
   private boolean hasUnbindableCachedPsi() {
