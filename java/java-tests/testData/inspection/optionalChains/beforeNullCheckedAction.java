@@ -1,4 +1,4 @@
-// "Replace 'orElse(null)' with 'orElse(new Person("noname", 0))'" "true"
+// "Replace null check with ifPresent()" "true"
 
 import java.util.*;
 
@@ -28,6 +28,8 @@ public class Main {
       new Person("Kelly", 12)
     );
     Person maxPerson = personList.stream().filter(p -> p.getAge() > 13).max(Comparator.comparingInt(Person::getAge)).<caret>orElse(null);
-    return maxPerson != null? maxPerson : new Person("noname", 0);
+    if(maxPerson != null) {
+      System.out.println(maxPerson);
+    }
   }
 }

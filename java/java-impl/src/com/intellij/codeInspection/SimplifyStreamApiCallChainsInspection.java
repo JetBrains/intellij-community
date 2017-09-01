@@ -83,8 +83,6 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
     instanceCall(CommonClassNames.JAVA_LANG_BOOLEAN, "equals").parameterCount(1);
   private static final CallMatcher STREAM_OF =
     staticCall(CommonClassNames.JAVA_UTIL_STREAM_STREAM, "of").parameterTypes("T");
-  private static final CallMatcher OR_ELSE =
-    instanceCall(CommonClassNames.JAVA_UTIL_OPTIONAL, "orElse").parameterCount(1);
 
   private static final CallMatcher STREAM_MATCH = anyOf(STREAM_ANY_MATCH, STREAM_NONE_MATCH, STREAM_ALL_MATCH);
 
@@ -97,8 +95,7 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
     ReplaceForEachMethodFix.handler(),
     RemoveBooleanIdentityFix.handler(),
     ReplaceWithPeekFix.handler(),
-    SimpleStreamOfFix.handler(),
-    OrElseReturnStreamFix.handler()
+    SimpleStreamOfFix.handler()
   ).registerAll(SimplifyMatchNegationFix.handlers());
 
   private static final Logger LOG = Logger.getInstance(SimplifyStreamApiCallChainsInspection.class);
@@ -1434,77 +1431,5 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
         return new ReplaceStreamSupportWithCollectionStreamFix(qualifier, ExpressionUtils.isLiteral(parallel, Boolean.TRUE));
       });
     }
-  }
-
-  private static class OrElseReturnStreamFix implements CallChainSimplification {
-
-    @NotNull private final PsiLocalVariable myReturnVar;
-    @NotNull private final PsiExpression myReturnExpr;
-    @NotNull private final PsiExpression myOrElseArgument;
-    @NotNull private final PsiMethodCallExpression myOrElseCall;
-    @NotNull private final PsiExpression myDefaultExpression;
-
-    public OrElseReturnStreamFix(@NotNull PsiLocalVariable returnVar,
-                                 @NotNull PsiExpression returnExpr,
-                                 @NotNull PsiExpression orElseArgument,
-                                 @NotNull PsiMethodCallExpression orElseCall,
-                                 @NotNull PsiExpression defaultExpression) {
-      myReturnVar = returnVar;
-      myReturnExpr = returnExpr;
-      myOrElseArgument = orElseArgument;
-      myOrElseCall = orElseCall;
-      myDefaultExpression = defaultExpression;
-    }
-
-    @Override
-    public String getName() {
-      return "Replace 'orElse(null)' with 'orElse(" + myDefaultExpression.getText() + ")'";
-    }
-
-    @Override
-    public String getMessage() {
-      return "Can be replaced with 'orElse(" + myDefaultExpression.getText() + ")'";
-    }
-
-    @Override
-    public PsiElement simplify(PsiMethodCallExpression element) {
-      myOrElseArgument.replace(myDefaultExpression);
-      myReturnExpr.replace(myOrElseCall);
-      myReturnVar.delete();
-      return myOrElseCall.getParent();
-    }
-
-    @NotNull
-    static CallHandler<CallChainSimplification> handler() {
-      return CallHandler.of(OR_ELSE, call -> {
-        PsiExpression orElseArgument = call.getArgumentList().getExpressions()[0];
-        if (!ExpressionUtils.isNullLiteral(orElseArgument)) return null;
-        PsiLocalVariable returnVar = PsiTreeUtil.getParentOfType(call, PsiLocalVariable.class, true);
-        if(returnVar == null) return null;
-        PsiReturnStatement returnStatement = tryCast(PsiTreeUtil.skipWhitespacesForward(returnVar.getParent()), PsiReturnStatement.class);
-        if (returnStatement == null) return null;
-        PsiExpression returnExpr = returnStatement.getReturnValue();
-        if (returnExpr == null) return null;
-        PsiConditionalExpression ternary = tryCast(PsiUtil.skipParenthesizedExprDown(returnExpr), PsiConditionalExpression.class);
-        if (ternary == null) return null;
-        PsiExpression condition = ternary.getCondition();
-        PsiExpression thenExpr = ternary.getThenExpression();
-        PsiExpression elseExpr = ternary.getElseExpression();
-        if (thenExpr == null || elseExpr == null) return null;
-        PsiVariable nullChecked = ExpressionUtils.getVariableFromNullComparison(condition, true);
-        boolean inverted = false;
-        if (nullChecked == null) {
-          nullChecked = ExpressionUtils.getVariableFromNullComparison(condition, false);
-          if (nullChecked == null) return null;
-          inverted = true;
-        }
-        if (!nullChecked.equals(returnVar) || !ExpressionUtils.isReferenceTo(inverted ? thenExpr : elseExpr, returnVar)) return null;
-        PsiExpression defaultExpression = inverted ? elseExpr : thenExpr;
-        if (VariableAccessUtils.variableIsUsed(returnVar, defaultExpression)) return null;
-        //if(SideEffectChecker.mayHaveSideEffects(defaultExpression)) return null; // new expressions not allowed
-        return new OrElseReturnStreamFix(returnVar, returnExpr, orElseArgument, call, defaultExpression);
-      });
-    }
-
   }
 }

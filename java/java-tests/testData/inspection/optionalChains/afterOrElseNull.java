@@ -1,4 +1,4 @@
-// "Replace 'orElse(null)' with 'orElse(new Person("noname", 0))'" "true"
+// "Replace null check with orElseGet(new Person(...))" "true"
 
 import java.util.*;
 
@@ -27,6 +27,6 @@ public class Main {
       new Person("James", 25),
       new Person("Kelly", 12)
     );
-      return personList.stream().filter(p -> p.getAge() > 13).max(Comparator.comparingInt(Person::getAge)).orElse(new Person("noname", 0));
+      return personList.stream().filter(p -> p.getAge() > 13).max(Comparator.comparingInt(Person::getAge)).orElseGet(() -> new Person("noname", 0));
   }
 }
