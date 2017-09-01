@@ -23,4 +23,6 @@ public interface Expandable {
   void expand();
 
   void collapse();
+
+  boolean isExpanded();
 }

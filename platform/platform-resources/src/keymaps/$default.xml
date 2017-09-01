@@ -212,6 +212,7 @@
     <keyboard-shortcut first-keystroke="control EQUALS"/>
   </action>
   <action id="ExpandExpandableComponent">
+    <keyboard-shortcut first-keystroke="shift ENTER"/>
     <keyboard-shortcut first-keystroke="control ADD"/>
     <keyboard-shortcut first-keystroke="control EQUALS"/>
   </action>
@@ -444,6 +445,7 @@
     <keyboard-shortcut first-keystroke="control MINUS"/>
   </action>
   <action id="CollapseExpandableComponent">
+    <keyboard-shortcut first-keystroke="shift ENTER"/>
     <keyboard-shortcut first-keystroke="control SUBTRACT"/>
     <keyboard-shortcut first-keystroke="control MINUS"/>
   </action>

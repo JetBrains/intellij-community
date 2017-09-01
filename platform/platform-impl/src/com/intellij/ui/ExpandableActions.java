@@ -18,7 +18,7 @@ package com.intellij.ui;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 import java.util.function.Consumer;
 
 import static com.intellij.openapi.actionSystem.PlatformDataKeys.CONTEXT_COMPONENT;
@@ -44,8 +44,9 @@ public abstract class ExpandableActions extends DumbAwareAction {
 
   @Override
   public void update(AnActionEvent event) {
+    boolean expected = this instanceof Collapse;
     Expandable expandable = getExpandable(event);
-    event.getPresentation().setEnabled(expandable != null);
+    event.getPresentation().setEnabled(expandable != null && expandable.isExpanded() == expected);
   }
 
   @Override

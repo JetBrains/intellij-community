@@ -34,7 +34,10 @@ import javax.swing.*;
 import javax.swing.event.AncestorListener;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ComponentListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.Arrays;
 import java.util.List;
 
@@ -113,6 +116,11 @@ public class ExpandableTextField extends ExtendableTextField implements Expandab
   @Override
   public void collapse() {
     if (popup != null) popup.cancel();
+  }
+
+  @Override
+  public boolean isExpanded() {
+    return popup != null;
   }
 
   @Override
