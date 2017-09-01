@@ -165,6 +165,7 @@ class CompilationContextImpl implements CompilationContext {
       unpackCompiledClasses(messages, ant, classesOutput, options)
       outputDirectoriesToKeep.add(classesDirName)
     }
+    messages.info("Incremental compilation: " + options.incrementalCompilation)
     if (options.incrementalCompilation) {
       outputDirectoriesToKeep.add(dataDirName)
       outputDirectoriesToKeep.add(classesDirName)
