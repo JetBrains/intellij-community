@@ -25,120 +25,107 @@ import com.intellij.lang.jvm.JvmClassKind
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.CreateFieldRequest
 import com.intellij.lang.jvm.actions.EP_NAME
-import com.intellij.openapi.project.Project
 import com.intellij.psi.*
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager
-import com.intellij.psi.codeStyle.JavaCodeStyleSettings
-import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.psi.util.PsiTreeUtil.getParentOfType
 import com.intellij.psi.util.PsiUtil.resolveClassInClassTypeOnly
 import com.intellij.psi.util.parentOfType
-import com.intellij.psi.util.parentsOfType
-import com.intellij.util.VisibilityUtil
-import java.util.*
-import kotlin.collections.LinkedHashSet
 
 fun generateActions(ref: PsiReferenceExpression): List<IntentionAction> {
-  ref.referenceName ?: return emptyList()
+  if (ref.referenceName == null) return emptyList()
+  val fieldRequests = CreateFieldRequests(ref).collectRequests()
   val extensions = EP_NAME.extensions
-  return generateRequests(ref).flatMap { (clazz, request) ->
+  return fieldRequests.flatMap { (clazz, request) ->
     extensions.flatMap { ext ->
       ext.createAddFieldActions(clazz, request)
     }
   }
 }
 
-private fun generateRequests(ref: PsiReferenceExpression): List<Pair<JvmClass, CreateFieldRequest>> {
-  val (instanceContext, staticContext) = collectTargets(ref) ?: return emptyList()
+private class CreateFieldRequests(val myRef: PsiReferenceExpression) {
 
-  val instanceFieldRequests = instanceContext.filter {
-    it.classKind !in STATIC_ONLY
-  }.map {
-    it to generateRequest(ref, it, false)
-  }
-  val staticFieldRequests = staticContext.map {
-    it to generateRequest(ref, it, true)
+  private val requests = LinkedHashMap<JvmClass, CreateFieldRequest>()
+
+  fun collectRequests(): Map<JvmClass, CreateFieldRequest> {
+    doCollectRequests()
+    return requests
   }
 
-  return instanceFieldRequests + staticFieldRequests
+  private fun doCollectRequests() {
+    val qualifier = myRef.qualifierExpression
+
+    if (qualifier != null) {
+      val instanceClass = resolveClassInClassTypeOnly(qualifier.type)
+      if (instanceClass != null) {
+        processHierarchy(instanceClass)
+      }
+      else {
+        val staticClass = (qualifier as? PsiJavaCodeReferenceElement)?.resolve() as? PsiClass
+        if (staticClass != null) {
+          processClass(staticClass, true)
+        }
+      }
+    }
+    else {
+      val baseClass = extractBaseClassFromSwitchStatement()
+      if (baseClass != null) {
+        processHierarchy(baseClass)
+      }
+      else {
+        processOuterAndImported()
+      }
+    }
+  }
+
+  private fun extractBaseClassFromSwitchStatement(): PsiClass? {
+    val parent = myRef.parent as? PsiSwitchLabelStatement ?: return null
+    val switchStatement = parent.parentOfType<PsiSwitchStatement>() ?: return null
+    return resolveClassInClassTypeOnly(switchStatement.expression?.type)
+  }
+
+  private fun processHierarchy(baseClass: PsiClass) {
+    for (clazz in hierarchy(baseClass)) {
+      processClass(clazz, false)
+    }
+  }
+
+  private fun processOuterAndImported() {
+    val inStaticContext = myRef.isInStaticContext()
+    for (outerClass in collectOuterClasses(myRef)) {
+      processClass(outerClass, inStaticContext)
+    }
+    for (imported in collectOnDemandImported(myRef)) {
+      processClass(imported, true)
+    }
+  }
+
+  private fun processClass(target: JvmClass, staticContext: Boolean) {
+    if (!staticContext && target.classKind in STATIC_ONLY) return
+    val modifiers = mutableSetOf<JvmModifier>()
+
+    if (staticContext) {
+      modifiers += JvmModifier.STATIC
+    }
+
+    if (shouldCreateFinalField(myRef, target)) {
+      modifiers += JvmModifier.FINAL
+    }
+
+    val ownerClass = myRef.parentOfType<PsiClass>()
+    val visibility = computeVisibility(myRef.project, ownerClass, target)
+    if (visibility != null) {
+      modifiers += visibility
+    }
+
+    val request = CreateFieldFromJavaUsageRequest(
+      modifiers = modifiers,
+      reference = myRef,
+      useAnchor = target.toJavaClassOrNull() == ownerClass,
+      constant = false
+    )
+    requests[target] = request
+  }
 }
 
 private val STATIC_ONLY = arrayOf(JvmClassKind.INTERFACE, JvmClassKind.ANNOTATION)
-
-private fun generateRequest(ref: PsiReferenceExpression, target: JvmClass, static: Boolean): CreateFieldRequest {
-  val modifiers = mutableSetOf<JvmModifier>()
-
-  if (static) {
-    modifiers += JvmModifier.STATIC
-  }
-
-  if (shouldCreateFinalField(ref, target)) {
-    modifiers += JvmModifier.FINAL
-  }
-
-  val ownerClass = getParentOfType(ref, PsiClass::class.java)
-  val visibility = computeVisibility(ref.project, ownerClass, target)
-  if (visibility != null) {
-    modifiers += visibility
-  }
-
-  return CreateFieldFromJavaUsageRequest(
-    modifiers = modifiers,
-    reference = ref,
-    useAnchor = target.toJavaClassOrNull() == ownerClass,
-    constant = false
-  )
-}
-
-private typealias Couple<T> = Pair<T, T>
-
-private fun collectTargets(ref: PsiReferenceExpression): Couple<List<JvmClass>>? {
-  var baseClass: PsiClass? = null
-  var inStaticContext = false
-  val qualifier: PsiExpression? = ref.qualifierExpression
-
-  if (qualifier == null) {
-    val parent = ref.parent
-    if (parent is PsiSwitchLabelStatement) {
-      val switchStatement = getParentOfType(parent, PsiSwitchStatement::class.java)
-      if (switchStatement != null) {
-        baseClass = resolveClassInClassTypeOnly(switchStatement.expression?.type)
-      }
-    }
-    if (baseClass == null) {
-      return collectOuterAndImported(ref)
-    }
-  }
-  else {
-    baseClass = resolveClassInClassTypeOnly(qualifier.type)
-    if (baseClass == null) {
-      inStaticContext = true
-      baseClass = (qualifier as? PsiJavaCodeReferenceElement)?.resolve() as? PsiClass
-    }
-  }
-  baseClass ?: return null
-  if (inStaticContext) {
-    return Pair(emptyList(), listOf(baseClass))
-  }
-  val hierarchy = hierarchy(baseClass).filter { it !is PsiTypeParameter }
-  return Pair(hierarchy, emptyList())
-}
-
-private fun collectOuterAndImported(place: PsiElement): Couple<List<JvmClass>> {
-  val inStaticContext = place.parentOfType<PsiMember>()?.hasModifierProperty(PsiModifier.STATIC) ?: false
-  val outerClasses = collectOuterClasses(place)
-  val importedClasses = collectOnDemandImported(place)
-  return if (inStaticContext) Pair(emptyList(), outerClasses + importedClasses) else Pair(outerClasses, importedClasses)
-}
-
-private fun collectOuterClasses(place: PsiElement): List<JvmClass> {
-  val result = mutableListOf<PsiClass>()
-  for (clazz in place.parentsOfType<PsiClass>()) {
-    result.add(clazz)
-    if (clazz.hasModifierProperty(PsiModifier.STATIC)) break
-  }
-  return result
-}
 
 /**
  * Given unresolved unqualified reference,
@@ -155,41 +142,7 @@ private fun collectOnDemandImported(place: PsiElement): List<JvmClass> {
   return onDemandImports.mapNotNull { it.resolveTargetClass() }
 }
 
-private fun hierarchy(clazz: PsiClass): Collection<PsiClass> {
-  val result = LinkedHashSet<PsiClass>()
-  val queue = LinkedList<PsiClass>()
-  queue.add(clazz)
-  while (queue.isNotEmpty()) {
-    val current = queue.removeFirst()
-    if (result.add(current)) {
-      queue.addAll(current.supers)
-    }
-  }
-  return result
-}
-
 private fun shouldCreateFinalField(ref: PsiReferenceExpression, targetClass: JvmClass): Boolean {
   val javaClass = targetClass.toJavaClassOrNull() ?: return false
   return CreateFieldFromUsageFix.shouldCreateFinalMember(ref, javaClass)
-}
-
-private fun computeVisibility(project: Project, ownerClass: PsiClass?, targetClass: JvmClass): JvmModifier? {
-  if (targetClass.classKind == JvmClassKind.INTERFACE || targetClass.classKind == JvmClassKind.ANNOTATION) return JvmModifier.PUBLIC
-  if (ownerClass != null) {
-    targetClass.toJavaClassOrNull()?.let { javaClass ->
-      if (javaClass == ownerClass || PsiTreeUtil.isAncestor(javaClass, ownerClass, false)) {
-        return JvmModifier.PRIVATE
-      }
-    }
-  }
-  val setting = CodeStyleSettingsManager.getSettings(project).getCustomSettings(JavaCodeStyleSettings::class.java).VISIBILITY
-  if (setting == VisibilityUtil.ESCALATE_VISIBILITY) {
-    return null // TODO
-  }
-  else if (setting == PsiModifier.PACKAGE_LOCAL) {
-    return JvmModifier.PACKAGE_LOCAL
-  }
-  else {
-    return JvmModifier.valueOf(setting.toUpperCase())
-  }
 }
