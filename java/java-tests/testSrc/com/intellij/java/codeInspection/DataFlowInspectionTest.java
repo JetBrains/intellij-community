@@ -22,6 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -167,6 +168,7 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   private void checkIntentionResult(String hint) {
     myFixture.launchAction(myFixture.findSingleIntention(hint));
     myFixture.checkResultByFile(getTestName(false) + "_after.java");
+    PsiTestUtil.checkPsiMatchesTextIgnoringNonCode(getFile());
   }
 
   public void testReportConstantReferences_OverloadedCall() {

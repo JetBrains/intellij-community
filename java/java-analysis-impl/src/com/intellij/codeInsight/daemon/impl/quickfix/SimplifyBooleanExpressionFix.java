@@ -225,9 +225,10 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
     return name != null && PsiResolveHelper.SERVICE.getInstance(declaration.getProject()).resolveAccessibleReferencedVariable(name, parent) != null;
   }
 
-  private static PsiCodeBlock wrapWithCodeBlock(PsiStatement replacement) {
-    PsiCodeBlock newBlock = JavaPsiFacade.getElementFactory(replacement.getProject()).createCodeBlock();
-    newBlock.add(replacement);
+  private static PsiBlockStatement wrapWithCodeBlock(PsiStatement replacement) {
+    PsiBlockStatement newBlock = (PsiBlockStatement)
+      JavaPsiFacade.getElementFactory(replacement.getProject()).createStatementFromText("{}", null);
+    newBlock.getCodeBlock().add(replacement);
     return newBlock;
   }
 

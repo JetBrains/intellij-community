@@ -234,8 +234,8 @@ public class PsiTestUtil {
     return Objects.requireNonNull(file.getManager().findFile(copy));
   }
 
-  public static void checkPsiMatchesTextIgnoringWhitespace(PsiFile file) {
-    compareFromAllRoots(file, f -> DebugUtil.psiTreeToString(f, true));
+  public static void checkPsiMatchesTextIgnoringNonCode(PsiFile file) {
+    compareFromAllRoots(file, f -> DebugUtil.psiToStringIgnoringNonCode(f));
   }
 
   public static void addLibrary(Module module, String libPath) {
