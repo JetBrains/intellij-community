@@ -16,6 +16,7 @@
 package com.intellij.openapi.externalSystem.service.execution;
 
 import com.intellij.build.BuildProgressListener;
+import com.intellij.build.BuildViewManager;
 import com.intellij.build.TasksViewManager;
 import com.intellij.build.events.BuildEvent;
 import com.intellij.build.events.impl.FailureResultImpl;
@@ -28,11 +29,14 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.console.DuplexConsoleView;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.impl.ConsoleViewImpl;
+import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.FakeRerunAction;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ExecutionConsole;
+import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -76,6 +80,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -157,7 +162,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
 
   @Nullable
   @Override
-  public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) throws ExecutionException {
+  public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) {
     MyRunnableState runnableState =
       new MyRunnableState(mySettings, getProject(), DefaultDebugExecutor.EXECUTOR_ID.equals(executor.getId()), this, env);
     copyUserDataTo(runnableState);
@@ -188,6 +193,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
     @NotNull private final Project myProject;
     @NotNull private final ExternalSystemRunConfiguration myConfiguration;
     @NotNull private final ExecutionEnvironment myEnv;
+    @Nullable private RunContentDescriptor myContentDescriptor;
 
     private final int myDebugPort;
 
@@ -288,36 +294,16 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
           public void onStart(@NotNull ExternalSystemTaskId id, String workingDir) {
             if (progressListener != null) {
               long eventTime = System.currentTimeMillis();
-              AnAction rerunTaskAction = new AnAction() {
-                @Override
-                public void update(@NotNull AnActionEvent e) {
-                  super.update(e);
-                  Presentation p = e.getPresentation();
-                  p.setEnabled(processHandler.isProcessTerminated());
-                }
-
-                @Override
-                public void actionPerformed(AnActionEvent e) {
-                  try {
-                    MyRunnableState.this.execute(executor, runner);
-                  }
-                  catch (ExecutionException ex) {
-                    LOG.warn(ex);
-                  }
-                }
-              };
-              rerunTaskAction.getTemplatePresentation().setText("Rerun");
-              rerunTaskAction.getTemplatePresentation().setDescription("Rerun");
-              rerunTaskAction.getTemplatePresentation().setIcon(AllIcons.Actions.Restart);
+              AnAction rerunTaskAction = new MyTaskRerunAction(progressListener, myEnv, myContentDescriptor);
               progressListener.onEvent(
                 new StartBuildEventImpl(id, executionName, eventTime, "running...")
                   .withProcessHandler(processHandler, view -> {
-                    processHandler.notifyTextAvailable(greeting, ProcessOutputTypes.SYSTEM);
+                    processHandler.notifyTextAvailable(greeting + "\n\n", ProcessOutputTypes.SYSTEM);
                     foldGreetingOrFarewell(consoleView, greeting, true);
                   })
+                  .withContentDescriptorSupplier(() -> myContentDescriptor)
                   .withRestartAction(rerunTaskAction)
                   .withRestartActions(restartActions)
-                  .withConsoleView(consoleView)
                   .withExecutionEnvironment(myEnv));
             }
           }
@@ -371,14 +357,18 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
               farewell =
                 ExternalSystemBundle.message("run.text.ended.single.task", endDateTime, mySettings.toString());
             }
-            processHandler.notifyTextAvailable(farewell, ProcessOutputTypes.SYSTEM);
+            processHandler.notifyTextAvailable(farewell + "\n", ProcessOutputTypes.SYSTEM);
             foldGreetingOrFarewell(consoleView, farewell, false);
             processHandler.notifyProcessTerminated(0);
           }
         };
         task.execute(ArrayUtil.prepend(taskListener, ExternalSystemTaskNotificationListener.EP_NAME.getExtensions()));
       });
-      return new DefaultExecutionResult(null, processHandler);
+      return new DefaultExecutionResult(consoleView, processHandler);
+    }
+
+    public void setContentDescriptor(@Nullable RunContentDescriptor contentDescriptor) {
+      myContentDescriptor = contentDescriptor;
     }
   }
 
@@ -437,6 +427,51 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
           });
         }
       });
+    }
+  }
+
+  private static class MyTaskRerunAction extends FakeRerunAction {
+    private final BuildProgressListener myProgressListener;
+    private final RunContentDescriptor myContentDescriptor;
+    private final ExecutionEnvironment myEnvironment;
+
+    public MyTaskRerunAction(BuildProgressListener progressListener,
+                             ExecutionEnvironment environment,
+                             RunContentDescriptor contentDescriptor) {
+      myProgressListener = progressListener;
+      myContentDescriptor = contentDescriptor;
+      myEnvironment = environment;
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent event) {
+      Presentation presentation = event.getPresentation();
+      ExecutionEnvironment environment = getEnvironment(event);
+      if (environment != null) {
+        presentation.setText(ExecutionBundle.message("rerun.configuration.action.name",
+                                                     StringUtil.escapeMnemonics(environment.getRunProfile().getName())));
+        Icon icon = ExecutionManagerImpl.isProcessRunning(getDescriptor(event))
+                    ? AllIcons.Actions.Restart
+                    : myProgressListener instanceof BuildViewManager
+                      ? AllIcons.Actions.Compile
+                      : environment.getExecutor().getIcon();
+        presentation.setIcon(icon);
+        presentation.setEnabled(isEnabled(event));
+        return;
+      }
+
+      presentation.setEnabled(false);
+    }
+
+    @Nullable
+    @Override
+    protected RunContentDescriptor getDescriptor(AnActionEvent event) {
+      return myContentDescriptor != null ? myContentDescriptor : super.getDescriptor(event);
+    }
+
+    @Override
+    protected ExecutionEnvironment getEnvironment(@NotNull AnActionEvent event) {
+      return myEnvironment;
     }
   }
 }

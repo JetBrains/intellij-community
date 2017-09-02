@@ -18,12 +18,14 @@ package com.intellij.build.events;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.ConsoleView;
-import com.intellij.execution.ui.ExecutionConsole;
+import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.function.Supplier;
 
 /**
  * @author Vladislav.Soroka
@@ -42,7 +44,7 @@ public interface StartBuildEvent extends StartEvent {
   AnAction[] getRestartActions();
 
   @Nullable
-  ExecutionConsole getExecutionConsole();
+  Supplier<RunContentDescriptor> getContentDescriptorSupplier();
 
   @Nullable
   Consumer<ConsoleView> getAttachedConsoleConsumer();

@@ -267,11 +267,6 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
   }
 
   @Override
-  public String getViewId() {
-    return "TREE";
-  }
-
-  @Override
   public void onEvent(BuildEvent event) {
     ExecutionNode parentNode = event.getParentId() == null ? null : nodesMap.get(event.getParentId());
     ExecutionNode currentNode = nodesMap.get(event.getId());

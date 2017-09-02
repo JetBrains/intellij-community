@@ -15,13 +15,14 @@
  */
 package com.intellij.build;
 
-import com.intellij.execution.ui.ConsoleView;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.ui.ComponentContainer;
 import org.jetbrains.annotations.ApiStatus;
 
 /**
  * @author Vladislav.Soroka
  */
 @ApiStatus.Experimental
-public interface BuildConsoleView extends ConsoleView, BuildProgressListener {
-  String getViewId();
+public interface BuildConsoleView extends ComponentContainer, BuildProgressListener {
+  AnAction[] createConsoleActions();
 }

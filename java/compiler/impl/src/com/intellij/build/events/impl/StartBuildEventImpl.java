@@ -19,7 +19,7 @@ import com.intellij.build.events.StartBuildEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.ConsoleView;
-import com.intellij.execution.ui.ExecutionConsole;
+import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Supplier;
 
 /**
  * @author Vladislav.Soroka
@@ -41,9 +42,9 @@ public class StartBuildEventImpl extends StartEventImpl implements StartBuildEve
   @NotNull
   private List<AnAction> myRestartActions = new SmartList<>();
   @Nullable
-  private ExecutionConsole myExecutionConsole;
-  @Nullable
   private ExecutionEnvironment myExecutionEnvironment;
+  @Nullable
+  private Supplier<RunContentDescriptor> myContentDescriptorSupplier;
 
   public StartBuildEventImpl(@NotNull Object eventId,
                              @NotNull String buildTitle,
@@ -78,8 +79,8 @@ public class StartBuildEventImpl extends StartEventImpl implements StartBuildEve
 
   @Nullable
   @Override
-  public ExecutionConsole getExecutionConsole() {
-    return myExecutionConsole;
+  public Supplier<RunContentDescriptor> getContentDescriptorSupplier() {
+    return myContentDescriptorSupplier;
   }
 
   @Nullable
@@ -105,13 +106,13 @@ public class StartBuildEventImpl extends StartEventImpl implements StartBuildEve
     return this;
   }
 
-  public StartBuildEventImpl withConsoleView(ExecutionConsole executionConsole) {
-    myExecutionConsole = executionConsole;
+  public StartBuildEventImpl withExecutionEnvironment(ExecutionEnvironment env) {
+    myExecutionEnvironment = env;
     return this;
   }
 
-  public StartBuildEventImpl withExecutionEnvironment(ExecutionEnvironment env) {
-    myExecutionEnvironment = env;
+  public StartBuildEventImpl withContentDescriptorSupplier(Supplier<RunContentDescriptor> contentDescriptorSupplier) {
+    myContentDescriptorSupplier = contentDescriptorSupplier;
     return this;
   }
 }

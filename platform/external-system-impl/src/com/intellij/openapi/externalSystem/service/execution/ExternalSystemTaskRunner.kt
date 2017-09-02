@@ -22,6 +22,7 @@ import com.intellij.execution.configurations.RunnerSettings
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.GenericProgramRunner
+import com.intellij.execution.runners.RunContentBuilder
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants
 import javax.swing.JComponent
@@ -41,12 +42,22 @@ class ExternalSystemTaskRunner : GenericProgramRunner<RunnerSettings>() {
 
   @Throws(ExecutionException::class)
   override fun doExecute(state: RunProfileState, environment: ExecutionEnvironment): RunContentDescriptor? {
-    val executionResult = state.execute(environment.executor, this) ?: return null
+    if (state !is ExternalSystemRunConfiguration.MyRunnableState) return null
 
-    return object : RunContentDescriptor(executionResult.executionConsole, executionResult.processHandler,
-                                         EMPTY_COMPONENT, environment.runProfile.name, null) {
-      override fun isHiddenContent() = true
+    val executionResult = state.execute(environment.executor, this) ?: return null
+    val runContentDescriptor = RunContentBuilder(executionResult, environment).showRunContent(environment.contentToReuse) ?: return null
+
+    state.setContentDescriptor(runContentDescriptor)
+    val descriptor = object : RunContentDescriptor(runContentDescriptor.executionConsole, runContentDescriptor.processHandler,
+                                                   runContentDescriptor.component, runContentDescriptor.displayName,
+                                                   runContentDescriptor.icon, runContentDescriptor.activationCallback,
+                                                   runContentDescriptor.restartActions) {
+      override fun isHiddenContent(): Boolean {
+        return true
+      }
     }
+    descriptor.runnerLayoutUi = runContentDescriptor.runnerLayoutUi
+    return descriptor
   }
 
   companion object {

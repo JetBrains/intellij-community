@@ -567,8 +567,7 @@ public class ExternalSystemUtil {
       }
 
       public void cancellImport() {
-        ApplicationManager.getApplication().executeOnPooledThread(
-          (Runnable)() -> myTask.cancel(ExternalSystemTaskNotificationListener.EP_NAME.getExtensions()));
+        myTask.cancel(ExternalSystemTaskNotificationListener.EP_NAME.getExtensions());
       }
     };
 

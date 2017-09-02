@@ -39,11 +39,6 @@ public class BuildTextConsoleView extends ConsoleViewImpl implements BuildConsol
   }
 
   @Override
-  public String getViewId() {
-    return "console";
-  }
-
-  @Override
   public void onEvent(BuildEvent event) {
     myAnsiEscapeDecoder.escapeText(event.getMessage(), ProcessOutputTypes.STDOUT, this);
   }
