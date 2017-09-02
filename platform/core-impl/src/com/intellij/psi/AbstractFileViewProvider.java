@@ -135,7 +135,7 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
 
   @Override
   @NotNull
-  public final CharSequence getContents() {
+  public CharSequence getContents() {
     return getContent().getText();
   }
 
