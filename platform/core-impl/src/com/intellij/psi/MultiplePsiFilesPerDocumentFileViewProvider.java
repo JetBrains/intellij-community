@@ -53,7 +53,7 @@ public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends Abstra
 
   @Override
   @NotNull
-  public final List<PsiFile> getAllFiles() {
+  public List<PsiFile> getAllFiles() {
     final List<PsiFile> roots = new ArrayList<>();
     for (Language language : getLanguages()) {
       PsiFile psi = getPsi(language);
