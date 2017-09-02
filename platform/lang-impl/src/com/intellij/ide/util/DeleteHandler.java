@@ -39,10 +39,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.WritingAccessProvider;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
@@ -62,6 +59,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 public class DeleteHandler {
   private DeleteHandler() {
@@ -191,6 +189,9 @@ public class DeleteHandler {
     }
 
     CommandProcessor.getInstance().executeCommand(project, () -> NonProjectFileWritingAccessProvider.disableChecksDuring(() -> {
+      SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(project);
+      List<SmartPsiElementPointer> pointers = ContainerUtil.map(elements, smartPointerManager::createSmartPsiElementPointer);
+      
       Collection<PsiElement> directories = ContainerUtil.newSmartList();
       for (PsiElement e : elements) {
         if (e instanceof PsiFileSystemItem && e.getParent() != null) {
@@ -207,8 +208,10 @@ public class DeleteHandler {
         CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
       }
 
-      for (final PsiElement elementToDelete : elements) {
-        if (!elementToDelete.isValid()) continue; //was already deleted
+      for (SmartPsiElementPointer pointer : pointers) {
+        PsiElement elementToDelete = pointer.getElement();
+        if (elementsToDelete == null) continue; //was already deleted
+
         if (elementToDelete instanceof PsiDirectory) {
           VirtualFile virtualFile = ((PsiDirectory)elementToDelete).getVirtualFile();
           if (virtualFile.isInLocalFileSystem() && !virtualFile.is(VFileProperty.SYMLINK)) {
