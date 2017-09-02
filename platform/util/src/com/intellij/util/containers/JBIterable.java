@@ -519,13 +519,14 @@ public abstract class JBIterable<E> implements Iterable<E> {
   }
 
   /**
-   * Synonym for map(..).filter(o -> o != null).
+   * Synonym for map(..).filter(notNull()).
    *
-   * @see JBIterable#transform(Function)
+   * @see JBIterable#map(Function)
+   * @see JBIterable#filter(Condition)
    */
   @NotNull
-  public final <T> JBIterable<T> mapNotNull(@NotNull Function<? super E, T> function) {
-    return transform(function).filter(Conditions.<T>notNull());
+  public final <T> JBIterable<T> filterMap(@NotNull Function<? super E, T> function) {
+    return map(function).filter(Conditions.<T>notNull());
   }
 
   /**
