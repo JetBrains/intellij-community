@@ -187,7 +187,7 @@ public class ContentUtilEx extends ContentsUtil {
   @Nullable
   private static JComponent findContentComponent(@NotNull TabbedContent tabbedContent, @NotNull String fullTabName) {
     for (Pair<String, JComponent> tab : tabbedContent.getTabs()) {
-      if (fullTabName.equals(getFullName(tabbedContent.getTitlePrefix(), tab.getFirst()))) {
+      if (fullTabName.equals(getFullName(tabbedContent.getTitlePrefix(), tab.first))) {
         return tab.second;
       }
     }
