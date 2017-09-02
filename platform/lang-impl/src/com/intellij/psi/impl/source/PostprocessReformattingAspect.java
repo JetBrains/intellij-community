@@ -619,7 +619,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
     if (document == null) {
       return;
     }
-    for (final FileElement fileElement : ((SingleRootFileViewProvider)key).getKnownTreeRoots()) {
+    for (final FileElement fileElement : ((AbstractFileViewProvider)key).getKnownTreeRoots()) {
       fileElement.acceptTree(new RecursiveTreeElementWalkingVisitor() {
         @Override
         protected void visitNode(TreeElement element) {

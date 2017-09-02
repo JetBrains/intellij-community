@@ -38,7 +38,6 @@ import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
-import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -92,20 +91,9 @@ public class FileManagerImpl implements FileManager {
   }
 
   public static void clearPsiCaches(@NotNull FileViewProvider provider) {
-    if (provider instanceof SingleRootFileViewProvider) {
-      for (PsiFile root : ((SingleRootFileViewProvider)provider).getCachedPsiFiles()) {
-        if (root instanceof PsiFileImpl) {
-          ((PsiFileImpl)root).clearCaches();
-        }
-      }
-    } else {
-      for (Language language : provider.getLanguages()) {
-        final PsiFile psi = provider.getPsi(language);
-        if (psi instanceof PsiFileImpl) {
-          ((PsiFileImpl)psi).clearCaches();
-        }
-      }
-    }
+    List<PsiFile> psiFiles = provider instanceof AbstractFileViewProvider? ((AbstractFileViewProvider)provider).getCachedPsiFiles()
+                                                                         : provider.getAllFiles();
+    psiFiles.forEach(PsiFile::clearCaches);
   }
 
   public void forceReload(@NotNull VirtualFile vFile) {
@@ -450,8 +438,8 @@ public class FileManagerImpl implements FileManager {
   }
 
   private void markInvalidated(@NotNull FileViewProvider viewProvider) {
-    if (viewProvider instanceof SingleRootFileViewProvider) {
-      ((SingleRootFileViewProvider)viewProvider).markInvalidated();
+    if (viewProvider instanceof AbstractFileViewProvider) {
+      ((AbstractFileViewProvider)viewProvider).markInvalidated();
     }
     VirtualFile virtualFile = viewProvider.getVirtualFile();
     Document document = FileDocumentManager.getInstance().getCachedDocument(virtualFile);
@@ -465,8 +453,8 @@ public class FileManagerImpl implements FileManager {
   PsiFile getCachedPsiFileInner(@NotNull VirtualFile file) {
     FileViewProvider fileViewProvider = myVFileToViewProviderMap.get(file);
     if (fileViewProvider == null) fileViewProvider = file.getUserData(myPsiHardRefKey);
-    return fileViewProvider instanceof SingleRootFileViewProvider
-           ? ((SingleRootFileViewProvider)fileViewProvider).getCachedPsi(fileViewProvider.getBaseLanguage()) : null;
+    return fileViewProvider instanceof AbstractFileViewProvider
+           ? ((AbstractFileViewProvider)fileViewProvider).getCachedPsi(fileViewProvider.getBaseLanguage()) : null;
   }
 
   @NotNull
@@ -474,8 +462,8 @@ public class FileManagerImpl implements FileManager {
   public List<PsiFile> getAllCachedFiles() {
     List<PsiFile> files = new ArrayList<>();
     for (FileViewProvider provider : myVFileToViewProviderMap.values()) {
-      if (provider instanceof SingleRootFileViewProvider) {
-        ContainerUtil.addIfNotNull(files, ((SingleRootFileViewProvider)provider).getCachedPsi(provider.getBaseLanguage()));
+      if (provider instanceof AbstractFileViewProvider) {
+        ContainerUtil.addIfNotNull(files, ((AbstractFileViewProvider)provider).getCachedPsi(provider.getBaseLanguage()));
       }
     }
     return files;
@@ -601,8 +589,8 @@ public class FileManagerImpl implements FileManager {
     }
 
     FileViewProvider viewProvider = file.getViewProvider();
-    if (viewProvider instanceof SingleRootFileViewProvider) {
-      ((SingleRootFileViewProvider)viewProvider).onContentReload();
+    if (viewProvider instanceof AbstractFileViewProvider) {
+      ((AbstractFileViewProvider)viewProvider).onContentReload();
     } else {
       LOG.error("Invalid view provider: " + viewProvider + " of " + viewProvider.getClass());
     }

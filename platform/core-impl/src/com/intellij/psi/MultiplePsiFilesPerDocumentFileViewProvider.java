@@ -39,12 +39,12 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
-public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends SingleRootFileViewProvider {
+public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends AbstractFileViewProvider {
   private final ConcurrentMap<Language, PsiFileImpl> myRoots = ContainerUtil.newConcurrentMap(1, 0.75f, 1);
   private MultiplePsiFilesPerDocumentFileViewProvider myOriginal = null;
 
   public MultiplePsiFilesPerDocumentFileViewProvider(PsiManager manager, VirtualFile virtualFile, boolean eventSystemEnabled) {
-    super(manager, virtualFile, eventSystemEnabled, Language.ANY);
+    super(manager, virtualFile, eventSystemEnabled, virtualFile.getFileType());
   }
 
   @Override
@@ -53,7 +53,7 @@ public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends Single
 
   @Override
   @NotNull
-  public List<PsiFile> getAllFiles() {
+  public final List<PsiFile> getAllFiles() {
     final List<PsiFile> roots = new ArrayList<>();
     for (Language language : getLanguages()) {
       PsiFile psi = getPsi(language);
@@ -67,7 +67,7 @@ public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends Single
     return roots;
   }
 
-  protected void removeFile(final Language language) {
+  protected final void removeFile(final Language language) {
     PsiFileImpl file = myRoots.remove(language);
     if (file != null) {
       file.markInvalidated();
@@ -103,19 +103,18 @@ public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends Single
   }
 
 
-  @Override
-  public PsiFile getCachedPsi(@NotNull Language target) {
+  public final PsiFile getCachedPsi(@NotNull Language target) {
     return myRoots.get(target);
   }
 
   @Override
-  public List<PsiFile> getCachedPsiFiles() {
+  public final List<PsiFile> getCachedPsiFiles() {
     return ContainerUtil.mapNotNull(myRoots.keySet(), (NullableFunction<Language, PsiFile>)language -> getCachedPsi(language));
   }
 
   @NotNull
   @Override
-  public List<FileElement> getKnownTreeRoots() {
+  public final List<FileElement> getKnownTreeRoots() {
     List<FileElement> files = new ArrayList<>(myRoots.size());
     for (PsiFile file : myRoots.values()) {
       final FileElement treeElement = ((PsiFileImpl)file).getTreeElement();
@@ -134,6 +133,7 @@ public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends Single
     documentManager.commitAllDocuments();
     for (PsiFile root : roots) {
       Document document = documentManager.getDocument(root);
+      assert document != null;
       PsiDocumentManagerBase.checkConsistency(root, document);
       assert root.getText().equals(document.getText());
     }
@@ -207,7 +207,7 @@ public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends Single
   }
 
   @Override
-  public void markInvalidated() {
+  public final void markInvalidated() {
     for (PsiFileImpl file : myRoots.values()) {
       file.markInvalidated();
     }

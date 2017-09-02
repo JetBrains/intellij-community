@@ -377,8 +377,8 @@ public class PsiVFSListener implements VirtualFileListener {
 
     final FileViewProvider oldFileViewProvider = myFileManager.findCachedViewProvider(vFile);
     final PsiFile oldPsiFile;
-    if (oldFileViewProvider instanceof SingleRootFileViewProvider) {
-      oldPsiFile = ((SingleRootFileViewProvider)oldFileViewProvider).getCachedPsi(oldFileViewProvider.getBaseLanguage());
+    if (oldFileViewProvider instanceof AbstractFileViewProvider) {
+      oldPsiFile = ((AbstractFileViewProvider)oldFileViewProvider).getCachedPsi(oldFileViewProvider.getBaseLanguage());
     }
     else {
       oldPsiFile = null;

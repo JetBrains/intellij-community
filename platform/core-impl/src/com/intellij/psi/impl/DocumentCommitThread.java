@@ -768,7 +768,7 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
                   "; viewProvider=" + viewProvider + " of " + viewProvider.getClass() +
                   "; language=" + file.getLanguage() +
                   "; vFile=" + vFile + " of " + vFile.getClass() +
-                  "; free-threaded=" + SingleRootFileViewProvider.isFreeThreaded(viewProvider));
+                  "; free-threaded=" + AbstractFileViewProvider.isFreeThreaded(viewProvider));
       }
 
       doActualPsiChange(file, diffLog);
