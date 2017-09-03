@@ -36,10 +36,10 @@ public interface BuildContentManager {
 
   void selectContent(final String tabName);
 
-  void addTabbedContent(@NotNull JComponent contentComponent,
-                        @NotNull String groupPrefix,
-                        @NotNull String tabName,
-                        boolean select,
-                        @Nullable Icon icon,
-                        @Nullable Disposable childDisposable);
+  Content addTabbedContent(@NotNull JComponent contentComponent,
+                           @NotNull String groupPrefix,
+                           @NotNull String tabName,
+                           boolean select,
+                           @Nullable Icon icon,
+                           @Nullable Disposable childDisposable);
 }

@@ -15,10 +15,12 @@
  */
 package com.intellij.build;
 
+import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -29,16 +31,17 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.TabbedContent;
 import com.intellij.util.ContentUtilEx;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.beans.PropertyChangeEvent;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import static com.intellij.util.ContentUtilEx.getFullName;
 
 /**
  * @author Vladislav.Soroka
@@ -50,6 +53,7 @@ public class BuildContentManagerImpl implements BuildContentManager {
   private static final String[] ourPresetOrder = {Build, Sync};
   private ToolWindow myToolWindow;
   private final List<Runnable> myPostponedRunnables = new ArrayList<>();
+  private Map<Content, Pair<Icon, AtomicInteger>> liveContentsMap = ContainerUtil.newConcurrentMap();
 
   public BuildContentManagerImpl(Project project) {
     init(project);
@@ -165,23 +169,45 @@ public class BuildContentManagerImpl implements BuildContentManager {
   }
 
   @Override
-  public void addTabbedContent(@NotNull JComponent contentComponent,
-                               @NotNull String groupPrefix,
-                               @NotNull String tabName,
-                               boolean select,
-                               @Nullable Icon icon,
-                               @Nullable Disposable childDisposable) {
-    runWhenInitialized(() -> {
-      ContentManager contentManager = myToolWindow.getContentManager();
-      ContentUtilEx.addTabbedContent(contentManager, contentComponent, groupPrefix, tabName, select, childDisposable);
-      if (icon != null) {
-        TabbedContent tabbedContent = ContentUtilEx.findTabbedContent(contentManager, groupPrefix);
-        if (tabbedContent != null) {
-          tabbedContent.putUserData(ToolWindow.SHOW_CONTENT_ICON, Boolean.TRUE);
-          tabbedContent.setIcon(icon);
-        }
+  public Content addTabbedContent(@NotNull JComponent contentComponent,
+                                  @NotNull String groupPrefix,
+                                  @NotNull String tabName,
+                                  boolean select,
+                                  @Nullable Icon icon,
+                                  @Nullable Disposable childDisposable) {
+    ContentManager contentManager = myToolWindow.getContentManager();
+    ContentUtilEx.addTabbedContent(contentManager, contentComponent, groupPrefix, tabName, select, childDisposable);
+    Content content = contentManager.findContent(getFullName(groupPrefix, tabName));
+    if (icon != null) {
+      TabbedContent tabbedContent = ContentUtilEx.findTabbedContent(contentManager, groupPrefix);
+      if (tabbedContent != null) {
+        tabbedContent.putUserData(ToolWindow.SHOW_CONTENT_ICON, Boolean.TRUE);
+        tabbedContent.setIcon(icon);
       }
-    });
+    }
+    return content;
+  }
+
+  public void startBuildNotified(Content content) {
+    Pair<Icon, AtomicInteger> pair = liveContentsMap.computeIfAbsent(content, c -> Pair.pair(c.getIcon(), new AtomicInteger(0)));
+    pair.second.incrementAndGet();
+    content.setIcon(ExecutionUtil.getLiveIndicator(pair.first));
+    myToolWindow.setIcon(ExecutionUtil.getLiveIndicator(AllIcons.Actions.Compile));
+    content.putUserData(ToolWindow.SHOW_CONTENT_ICON, Boolean.TRUE);
+  }
+
+  public void finishBuildNotified(Content content) {
+    Pair<Icon, AtomicInteger> pair = liveContentsMap.get(content);
+    if (pair.second.decrementAndGet() == 0) {
+      content.setIcon(pair.first);
+      if (pair.first == null) {
+        content.putUserData(ToolWindow.SHOW_CONTENT_ICON, Boolean.FALSE);
+      }
+      liveContentsMap.remove(content);
+      if (liveContentsMap.isEmpty()) {
+        myToolWindow.setIcon(AllIcons.Actions.Compile);
+      }
+    }
   }
 
   private void setIdLabelHidden(boolean hide) {

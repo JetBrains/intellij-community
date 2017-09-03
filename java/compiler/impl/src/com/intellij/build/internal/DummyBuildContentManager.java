@@ -18,6 +18,7 @@ package com.intellij.build.internal;
 import com.intellij.build.BuildContentManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.ui.content.Content;
+import com.intellij.ui.content.impl.ContentImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,11 +45,12 @@ public class DummyBuildContentManager implements BuildContentManager {
   }
 
   @Override
-  public void addTabbedContent(@NotNull JComponent contentComponent,
-                               @NotNull String groupPrefix,
-                               @NotNull String tabName,
-                               boolean select,
-                               @Nullable Icon icon,
-                               @Nullable Disposable childDisposable) {
+  public Content addTabbedContent(@NotNull JComponent contentComponent,
+                                  @NotNull String groupPrefix,
+                                  @NotNull String tabName,
+                                  boolean select,
+                                  @Nullable Icon icon,
+                                  @Nullable Disposable childDisposable) {
+    return new ContentImpl(contentComponent, tabName, false);
   }
 }

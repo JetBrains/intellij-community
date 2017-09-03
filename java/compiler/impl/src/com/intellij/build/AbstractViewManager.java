@@ -25,6 +25,7 @@ import com.intellij.execution.ui.*;
 import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.actions.PinActiveTabAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
@@ -37,7 +38,6 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.impl.ContentImpl;
-import com.intellij.ui.content.tabs.PinToolwindowTabAction;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
@@ -239,9 +239,9 @@ public abstract class AbstractViewManager implements BuildProgressListener, Disp
             consoleComponent.add(buildView, BorderLayout.CENTER);
             DefaultActionGroup toolbarActions = new DefaultActionGroup();
             consoleComponent.add(ActionManager.getInstance().createActionToolbar(
-              "", toolbarActions, false).getComponent(), BorderLayout.WEST);
+              "BuildView", toolbarActions, false).getComponent(), BorderLayout.WEST);
             toolbarActions.addAll(buildView.createConsoleActions());
-            myBuildContentManager.addTabbedContent(
+            myContent = myBuildContentManager.addTabbedContent(
               consoleComponent, getViewName(), buildInfo.title + ", " + DateFormatUtil.formatDateTime(System.currentTimeMillis()) + " ",
               true, AllIcons.CodeStyle.Gear, buildView);
           }
@@ -277,6 +277,8 @@ public abstract class AbstractViewManager implements BuildProgressListener, Disp
         }
         myProgressWatcher.addBuild(buildInfo);
         //view.getPrimaryView().print("\r", ConsoleViewContentType.SYSTEM_OUTPUT);
+
+        ((BuildContentManagerImpl)myBuildContentManager).startBuildNotified(myContent);
       }
       else {
         if (event instanceof FinishBuildEvent) {
@@ -284,6 +286,7 @@ public abstract class AbstractViewManager implements BuildProgressListener, Disp
           buildInfo.message = event.getMessage();
           buildInfo.result = ((FinishBuildEvent)event).getResult();
           myProgressWatcher.stopBuild(buildInfo);
+          ((BuildContentManagerImpl)myBuildContentManager).finishBuildNotified(myContent);
         }
         else {
           buildInfo.statusMessage = event.getMessage();
@@ -349,7 +352,7 @@ public abstract class AbstractViewManager implements BuildProgressListener, Disp
           consoleComponent.add(myThreeComponentsSplitter, BorderLayout.CENTER);
           myToolbarActions = new DefaultActionGroup();
           consoleComponent.add(ActionManager.getInstance().createActionToolbar(
-            "", myToolbarActions, false).getComponent(), BorderLayout.WEST);
+            "BuildView", myToolbarActions, false).getComponent(), BorderLayout.WEST);
 
           myContent = new ContentImpl(consoleComponent, getViewName(), true);
           myContent.setCloseable(false);
@@ -472,7 +475,7 @@ public abstract class AbstractViewManager implements BuildProgressListener, Disp
             }
           }
           else if (!(anAction instanceof FakeRerunAction ||
-                     anAction instanceof PinToolwindowTabAction ||
+                     anAction instanceof PinActiveTabAction ||
                      anAction instanceof CloseAction)) {
             consoleActionGroup.add(anAction);
           }
