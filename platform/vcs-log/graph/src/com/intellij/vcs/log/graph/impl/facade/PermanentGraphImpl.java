@@ -72,7 +72,7 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
    * @param graphCommits      topologically sorted list of commits in the graph
    * @param graphColorManager color manager for the graph
    * @param branchesCommitId  commit ids of all the branch heads
-   * @param <CommitId>        commit identificator type
+   * @param <CommitId>        commit id type
    * @return new instance of PermanentGraph
    */
   @NotNull
