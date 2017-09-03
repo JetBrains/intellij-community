@@ -33,7 +33,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.SearchTextField;
-import com.intellij.ui.SearchTextFieldWithStoredHistory;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
@@ -454,7 +453,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     }
   }
 
-  private static class TextFilterField extends SearchTextFieldWithStoredHistory {
+  private static class TextFilterField extends SearchTextField {
     @NotNull private final TextFilterModel myTextFilterModel;
 
     public TextFilterField(@NotNull TextFilterModel model) {
