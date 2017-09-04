@@ -1044,8 +1044,17 @@ public class ControlFlowUtil {
         boolean isNormal = nextOffset <= endOffset && !isReturn && (nextOffset == endOffset || canCompleteNormally[nextOffset]);
         if (isNormal && nextOffset == endOffset) {
           PsiElement element = flow.getElement(offset);
-          if (element instanceof PsiBreakStatement || element instanceof PsiContinueStatement) {
-            isNormal = false;
+          if (element instanceof PsiBreakStatement) {
+            PsiStatement exitedStatement = ((PsiBreakStatement)element).findExitedStatement();
+            if (exitedStatement == null || flow.getStartOffset(exitedStatement) < startOffset) {
+              isNormal = false;
+            }
+          }
+          else if (element instanceof PsiContinueStatement) {
+            PsiStatement continuedStatement = ((PsiContinueStatement)element).findContinuedStatement();
+            if (continuedStatement == null || flow.getStartOffset(continuedStatement) < startOffset) {
+              isNormal = false;
+            }
           }
         }
         canCompleteNormally[offset] |= isNormal;

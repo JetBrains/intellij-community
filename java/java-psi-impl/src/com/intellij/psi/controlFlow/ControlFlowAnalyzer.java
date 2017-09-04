@@ -885,7 +885,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
           if (((PsiSwitchLabelStatement)aStatement).isDefaultCase()) {
             defaultLabel = (PsiSwitchLabelStatement)aStatement;
           }
-          Instruction instruction = new ConditionalGoToInstruction(0, statement.getExpression());
+          Instruction instruction = new ConditionalGoToInstruction(0, expr);
           myCurrentFlow.addInstruction(instruction);
           addElementOffsetLater(aStatement, true);
         }
