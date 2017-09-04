@@ -222,7 +222,7 @@ public class DfaUtil {
     boolean isFinal = target.hasModifier(JvmModifier.FINAL);
     int offset = Integer.MAX_VALUE;
     if (target.getInitializer() != null) {
-      offset = target.getInitializer().getTextOffset();
+      offset = target.getInitializer().getTextRange().getStartOffset();
       if (isFinal) return offset;
     }
     PsiClass aClass = Objects.requireNonNull(target.getContainingClass());
@@ -235,11 +235,11 @@ public class DfaUtil {
       if (initializer.hasModifier(JvmModifier.STATIC) != target.hasModifier(JvmModifier.STATIC)) continue;
       if (!isFinal && hasSideEffectCall.test(initializer)) {
         // non-final field could be written indirectly (via method call), so assume it's written in the first applicable initializer
-        offset = Math.min(offset, initializer.getTextOffset());
+        offset = Math.min(offset, initializer.getTextRange().getStartOffset());
         break;
       }
       if (writesToTarget.test(initializer)) {
-        offset = Math.min(offset, initializer.getTextOffset());
+        offset = Math.min(offset, initializer.getTextRange().getStartOffset());
         if (isFinal) return offset;
         break;
       }
@@ -248,7 +248,7 @@ public class DfaUtil {
       for (PsiField field : aClass.getFields()) {
         if (field.hasModifier(JvmModifier.STATIC) != target.hasModifier(JvmModifier.STATIC)) continue;
         if (hasSideEffectCall.test(field.getInitializer()) || writesToTarget.test(field)) {
-          offset = Math.min(offset, field.getTextOffset());
+          offset = Math.min(offset, field.getTextRange().getStartOffset());
           break;
         }
       }
@@ -258,7 +258,7 @@ public class DfaUtil {
 
   private static int getAccessOffset(PsiMember referrer) {
     if (referrer instanceof PsiField) {
-      return referrer.getTextOffset();
+      return referrer.getTextRange().getStartOffset();
     }
     PsiClass aClass = Objects.requireNonNull(referrer.getContainingClass());
     if (referrer instanceof PsiMethod) {
@@ -274,7 +274,7 @@ public class DfaUtil {
         };
         if (ExpressionUtils.isMatchingChildAlwaysExecuted(initializer, callToMethod)) {
           // current method is definitely called from some field initialization
-          return field.getTextOffset();
+          return field.getTextRange().getStartOffset();
         }
       }
     }
