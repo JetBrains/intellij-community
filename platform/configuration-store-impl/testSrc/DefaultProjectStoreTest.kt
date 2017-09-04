@@ -7,7 +7,6 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.refreshVfs
 import com.intellij.testFramework.*
@@ -100,7 +99,7 @@ internal class DefaultProjectStoreTest {
       createProjectAndUseInLoadComponentStateMode(tempDirManager, directoryBased = true) {
         val component = TestComponent()
         it.stateStore.initComponent(component, true)
-        assertThat(JDOMUtil.writeElement(component.state)).isEqualTo(JDOMUtil.writeElement(defaultTestComponent.state))
+        assertThat(component.state).isEqualTo(defaultTestComponent.state)
       }
     }
     finally {
