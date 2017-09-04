@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -40,8 +41,6 @@ import org.jetbrains.plugins.github.api.requests.GithubGistRequest.FileContent;
 import org.jetbrains.plugins.github.ui.GithubCreateGistDialog;
 import org.jetbrains.plugins.github.util.*;
 
-import java.awt.Toolkit;
-import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -135,8 +134,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
         if (dialog.isCopyURLToClipboard()) {
           StringSelection stringSelection = new StringSelection(url.get());
 
-          Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-          clipboard.setContents(stringSelection, null);
+          CopyPasteManager.getInstance().setContents(stringSelection);
         }
         else {
           GithubNotifications.showInfoURL(project, "Gist Created Successfully", "Your gist url", url.get());
