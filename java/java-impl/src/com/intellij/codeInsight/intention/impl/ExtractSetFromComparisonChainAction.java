@@ -239,6 +239,7 @@ public class ExtractSetFromComparisonChainAction extends PsiElementBaseIntention
     Pair<String, String> prefixSuffix = comparisons.stream().map(cmp -> cmp.myConstantRepresentation).collect(
       MoreCollectors.pairing(MoreCollectors.commonPrefix(), MoreCollectors.commonSuffix(), Pair::create));
     StreamEx.of(prefixSuffix.first, prefixSuffix.second).flatMap(str -> StreamEx.split(str, "\\W+").limit(3))
+      .map(str -> str.replaceFirst("^_+", "").replaceFirst("_+$", ""))
       .filter(str -> str.length() >= 3 && StringUtil.isJavaIdentifier(str))
       .flatMap(str -> StreamEx.of(manager.suggestVariableName(VariableKind.STATIC_FINAL_FIELD, str, null, null).names))
       .limit(5)
