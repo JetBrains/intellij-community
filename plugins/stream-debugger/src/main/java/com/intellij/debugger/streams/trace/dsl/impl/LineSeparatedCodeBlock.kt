@@ -26,6 +26,10 @@ abstract class LineSeparatedCodeBlock(statementFactory: StatementFactory, privat
   : CodeBlockBase(statementFactory) {
   override fun toCode(): String {
     val body = statements
-    return body.joinToString("$endLine\n") { it.toCode() }
+    if (statements.isEmpty()) {
+      return ""
+    }
+
+    return body.joinToString("$endLine\n", postfix = "$endLine\n") { it.toCode() }
   }
 }
