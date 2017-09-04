@@ -627,7 +627,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     add(RegExHelpPopup.createRegExLink("<html><body><b>?</b></body></html>", myCbRegularExpressions, LOG), "gapright " + (16-cbGapLeft));
     add(myCbFileFilter);
     add(myFileMaskField, "gapright 16, w 80, wmax 80, wmin 80");
-    if (Registry.is("ide.find.as.popup.allow.pin")) {
+    if (Registry.is("ide.find.as.popup.allow.pin") || ApplicationManager.getApplication().isInternal()) {
       myIsPinned.set(UISettings.getInstance().getPinFindInPath());
       JPanel twoButtons = new JPanel(new GridLayout(1, 2, 4, 0));
       twoButtons.add(myFilterContextButton);
