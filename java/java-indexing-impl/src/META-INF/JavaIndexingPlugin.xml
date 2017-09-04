@@ -15,19 +15,19 @@
   -->
 <idea-plugin>
   <extensionPoints>
-    <extensionPoint name="allOverridingMethodsSearch" interface="com.intellij.util.QueryExecutor"/>
-    <extensionPoint name="java.shortNamesCache" area="IDEA_PROJECT" interface="com.intellij.psi.search.PsiShortNamesCache"/>
-    <extensionPoint name="hierarchy.indexer" interface="com.intellij.psi.stubsHierarchy.StubHierarchyIndexer"/>
-    <extensionPoint name="classesWithAnnotatedMembersSearch" interface="com.intellij.util.QueryExecutor"/>
-    <extensionPoint name="allClassesSearch" interface="com.intellij.util.QueryExecutor"/>
-    <extensionPoint name="overridingMethodsSearch" interface="com.intellij.util.QueryExecutor"/>
-    <extensionPoint name="methodReferencesSearch" interface="com.intellij.util.QueryExecutor"/>
-    <extensionPoint name="directClassInheritorsSearch" interface="com.intellij.util.QueryExecutor"/>
-    <extensionPoint name="classInheritorsSearch" interface="com.intellij.util.QueryExecutor"/>
-    <extensionPoint name="annotatedElementsSearch" interface="com.intellij.util.QueryExecutor"/>
-    <extensionPoint name="annotatedPackagesSearch" interface="com.intellij.util.QueryExecutor"/>
-    <extensionPoint name="functionalExpressionSearch" interface="com.intellij.util.QueryExecutor"/>
-    <extensionPoint name="customPropertyScopeProvider" interface="com.intellij.psi.impl.search.CustomPropertyScopeProvider"/>
+    <extensionPoint qualifiedName="com.intellij.allOverridingMethodsSearch" interface="com.intellij.util.QueryExecutor"/>
+    <extensionPoint qualifiedName="com.intellij.java.shortNamesCache" area="IDEA_PROJECT" interface="com.intellij.psi.search.PsiShortNamesCache"/>
+    <extensionPoint qualifiedName="com.intellij.hierarchy.indexer" interface="com.intellij.psi.stubsHierarchy.StubHierarchyIndexer"/>
+    <extensionPoint qualifiedName="com.intellij.classesWithAnnotatedMembersSearch" interface="com.intellij.util.QueryExecutor"/>
+    <extensionPoint qualifiedName="com.intellij.allClassesSearch" interface="com.intellij.util.QueryExecutor"/>
+    <extensionPoint qualifiedName="com.intellij.overridingMethodsSearch" interface="com.intellij.util.QueryExecutor"/>
+    <extensionPoint qualifiedName="com.intellij.methodReferencesSearch" interface="com.intellij.util.QueryExecutor"/>
+    <extensionPoint qualifiedName="com.intellij.directClassInheritorsSearch" interface="com.intellij.util.QueryExecutor"/>
+    <extensionPoint qualifiedName="com.intellij.classInheritorsSearch" interface="com.intellij.util.QueryExecutor"/>
+    <extensionPoint qualifiedName="com.intellij.annotatedElementsSearch" interface="com.intellij.util.QueryExecutor"/>
+    <extensionPoint qualifiedName="com.intellij.annotatedPackagesSearch" interface="com.intellij.util.QueryExecutor"/>
+    <extensionPoint qualifiedName="com.intellij.functionalExpressionSearch" interface="com.intellij.util.QueryExecutor"/>
+    <extensionPoint qualifiedName="com.intellij.customPropertyScopeProvider" interface="com.intellij.psi.impl.search.CustomPropertyScopeProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

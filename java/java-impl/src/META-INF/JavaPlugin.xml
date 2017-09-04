@@ -34,73 +34,73 @@
   </project-components>
 
   <extensionPoints>
-    <extensionPoint name="methodImplementor"
+    <extensionPoint qualifiedName="com.intellij.methodImplementor"
                     interface="com.intellij.codeInsight.MethodImplementor"/>
 
-    <extensionPoint name="javaExpressionSurrounder"
+    <extensionPoint qualifiedName="com.intellij.javaExpressionSurrounder"
                     interface="com.intellij.codeInsight.generation.surroundWith.JavaExpressionSurrounder"/>
 
-    <extensionPoint name="unscrambleSupport" interface="com.intellij.unscramble.UnscrambleSupport"/>
+    <extensionPoint qualifiedName="com.intellij.unscrambleSupport" interface="com.intellij.unscramble.UnscrambleSupport"/>
 
-    <extensionPoint name="java.refactoring.chainCallExtractor" interface="com.intellij.refactoring.chainCall.ChainCallExtractor"/>
-    <extensionPoint name="java.inspection.bulkMethodInfo" interface="com.intellij.codeInspection.bulkOperation.BulkMethodInfoProvider"/>
-    <extensionPoint name="documentationDelegateProvider" interface="com.intellij.codeInsight.javadoc.DocumentationDelegateProvider"/>
-    <extensionPoint name="codeInsight.externalLibraryResolver" interface="com.intellij.codeInsight.daemon.quickFix.ExternalLibraryResolver"/>
-    <extensionPoint name="refactoring.moveClassHandler" interface="com.intellij.refactoring.move.moveClassesOrPackages.MoveClassHandler"/>
-    <extensionPoint name="refactoring.moveAllClassesInFileHandler"
+    <extensionPoint qualifiedName="com.intellij.java.refactoring.chainCallExtractor" interface="com.intellij.refactoring.chainCall.ChainCallExtractor"/>
+    <extensionPoint qualifiedName="com.intellij.java.inspection.bulkMethodInfo" interface="com.intellij.codeInspection.bulkOperation.BulkMethodInfoProvider"/>
+    <extensionPoint qualifiedName="com.intellij.documentationDelegateProvider" interface="com.intellij.codeInsight.javadoc.DocumentationDelegateProvider"/>
+    <extensionPoint qualifiedName="com.intellij.codeInsight.externalLibraryResolver" interface="com.intellij.codeInsight.daemon.quickFix.ExternalLibraryResolver"/>
+    <extensionPoint qualifiedName="com.intellij.refactoring.moveClassHandler" interface="com.intellij.refactoring.move.moveClassesOrPackages.MoveClassHandler"/>
+    <extensionPoint qualifiedName="com.intellij.refactoring.moveAllClassesInFileHandler"
                     interface="com.intellij.refactoring.move.moveClassesOrPackages.MoveAllClassesInFileHandler"/>
-    <extensionPoint name="refactoring.moveClassToInnerHandler"
+    <extensionPoint qualifiedName="com.intellij.refactoring.moveClassToInnerHandler"
                     interface="com.intellij.refactoring.move.moveClassesOrPackages.MoveClassToInnerHandler"/>
-    <extensionPoint name="projectModelModifier" interface="com.intellij.openapi.roots.JavaProjectModelModifier"
+    <extensionPoint qualifiedName="com.intellij.projectModelModifier" interface="com.intellij.openapi.roots.JavaProjectModelModifier"
                     area="IDEA_PROJECT"/>
-    <extensionPoint name="library.dependencyScopeSuggester" interface="com.intellij.openapi.roots.LibraryDependencyScopeSuggester"/>
-    <extensionPoint name="getterSetterProvider" interface="com.intellij.codeInsight.generation.GetterSetterPrototypeProvider"/>
-    <extensionPoint name="generation.toStringClassFilter" interface="org.jetbrains.generate.tostring.GenerateToStringClassFilter"/>
-    <extensionPoint name="refactoring.introduceParameterMethodUsagesProcessor" interface="com.intellij.refactoring.introduceParameter.IntroduceParameterMethodUsagesProcessor"/>
-    <extensionPoint name="safeDelete.importSearcher"
+    <extensionPoint qualifiedName="com.intellij.library.dependencyScopeSuggester" interface="com.intellij.openapi.roots.LibraryDependencyScopeSuggester"/>
+    <extensionPoint qualifiedName="com.intellij.getterSetterProvider" interface="com.intellij.codeInsight.generation.GetterSetterPrototypeProvider"/>
+    <extensionPoint qualifiedName="com.intellij.generation.toStringClassFilter" interface="org.jetbrains.generate.tostring.GenerateToStringClassFilter"/>
+    <extensionPoint qualifiedName="com.intellij.refactoring.introduceParameterMethodUsagesProcessor" interface="com.intellij.refactoring.introduceParameter.IntroduceParameterMethodUsagesProcessor"/>
+    <extensionPoint qualifiedName="com.intellij.safeDelete.importSearcher"
                     interface="com.intellij.refactoring.safeDelete.ImportSearcher"/>
-    <extensionPoint name="predefinedMigrationMapProvider"
+    <extensionPoint qualifiedName="com.intellij.predefinedMigrationMapProvider"
                     interface="com.intellij.refactoring.migration.PredefinedMigrationProvider"/>
-    <extensionPoint name="generateAccessorProvider"
+    <extensionPoint qualifiedName="com.intellij.generateAccessorProvider"
                     interface="com.intellij.util.NotNullFunction"/>
-    <extensionPoint name="overrideImplementsAnnotationsHandler"
+    <extensionPoint qualifiedName="com.intellij.overrideImplementsAnnotationsHandler"
                     interface="com.intellij.codeInsight.generation.OverrideImplementsAnnotationsHandler"/>
-    <extensionPoint name="conversion.rule"
+    <extensionPoint qualifiedName="com.intellij.conversion.rule"
                     interface="com.intellij.refactoring.typeMigration.rules.TypeConversionRule"/>
-    <extensionPoint name="repositoryLibrary" beanClass="com.intellij.jarRepository.RepositoryLibraryDefinition"/>
+    <extensionPoint qualifiedName="com.intellij.repositoryLibrary" beanClass="com.intellij.jarRepository.RepositoryLibraryDefinition"/>
 
-    <extensionPoint name="encapsulateFields.Helper" beanClass="com.intellij.lang.LanguageExtensionPoint">
+    <extensionPoint qualifiedName="com.intellij.encapsulateFields.Helper" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.refactoring.encapsulateFields.EncapsulateFieldHelper"/>
     </extensionPoint>
-    <extensionPoint name="refactoring.moveInnerClassUsagesHandler" beanClass="com.intellij.lang.LanguageExtensionPoint">
+    <extensionPoint qualifiedName="com.intellij.refactoring.moveInnerClassUsagesHandler" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.refactoring.move.moveInner.MoveInnerClassUsagesHandler"/>
     </extensionPoint>
-    <extensionPoint name="testGenerator"
+    <extensionPoint qualifiedName="com.intellij.testGenerator"
                     beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.testIntegration.createTest.TestGenerator"/>
     </extensionPoint>
-    <extensionPoint name="refactoring.moveMemberHandler" beanClass="com.intellij.lang.LanguageExtensionPoint">
+    <extensionPoint qualifiedName="com.intellij.refactoring.moveMemberHandler" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.refactoring.move.moveMembers.MoveMemberHandler"/>
     </extensionPoint>
-    <extensionPoint name="refactoring.moveInnerHandler" beanClass="com.intellij.lang.LanguageExtensionPoint">
+    <extensionPoint qualifiedName="com.intellij.refactoring.moveInnerHandler" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.refactoring.move.moveInner.MoveInnerHandler"/>
     </extensionPoint>
-    <extensionPoint name="constructorBodyGenerator"
+    <extensionPoint qualifiedName="com.intellij.constructorBodyGenerator"
                     beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.generation.ConstructorBodyGenerator"/>
     </extensionPoint>
-    <extensionPoint name="codeInsight.createFieldFromUsageHelper" beanClass="com.intellij.lang.LanguageExtensionPoint">
+    <extensionPoint qualifiedName="com.intellij.codeInsight.createFieldFromUsageHelper" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.daemon.impl.quickfix.CreateFieldFromUsageHelper"/>
     </extensionPoint>
 
-    <extensionPoint name="hierarchy.referenceProcessor" interface="com.intellij.ide.hierarchy.call.CallReferenceProcessor"/>
-    <extensionPoint name="refactoring.pullUpHelperFactory" beanClass="com.intellij.lang.LanguageExtensionPoint">
+    <extensionPoint qualifiedName="com.intellij.hierarchy.referenceProcessor" interface="com.intellij.ide.hierarchy.call.CallReferenceProcessor"/>
+    <extensionPoint qualifiedName="com.intellij.refactoring.pullUpHelperFactory" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.refactoring.memberPullUp.PullUpHelperFactory"/>
     </extensionPoint>
-    <extensionPoint name="refactoring.safeDelete.JavaSafeDeleteDelegate" beanClass="com.intellij.lang.LanguageExtensionPoint">
+    <extensionPoint qualifiedName="com.intellij.refactoring.safeDelete.JavaSafeDeleteDelegate" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.refactoring.safeDelete.JavaSafeDeleteDelegate"/>
     </extensionPoint>
-    <extensionPoint name="debuggerClassFilterProvider" interface="com.intellij.ui.classFilter.DebuggerClassFilterProvider"/>
+    <extensionPoint qualifiedName="com.intellij.debuggerClassFilterProvider" interface="com.intellij.ui.classFilter.DebuggerClassFilterProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

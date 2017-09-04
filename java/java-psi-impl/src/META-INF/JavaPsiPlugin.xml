@@ -15,35 +15,35 @@
   -->
 <idea-plugin>
   <extensionPoints>
-    <extensionPoint name="codeStyle.ReferenceAdjuster" beanClass="com.intellij.lang.LanguageExtensionPoint">
+    <extensionPoint qualifiedName="com.intellij.codeStyle.ReferenceAdjuster" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.psi.codeStyle.ReferenceAdjuster"/>
     </extensionPoint>
 
-    <extensionPoint name="javaModuleSystem" interface="com.intellij.psi.JavaModuleSystem"/>
-    <extensionPoint name="custom.exception.handler" interface="com.intellij.codeInsight.CustomExceptionHandler"/>
-    <extensionPoint name="lang.psiTypeAnnotationModifier" interface="com.intellij.psi.augment.TypeAnnotationModifier"/>
-    <extensionPoint name="lang.psiAugmentProvider" interface="com.intellij.psi.augment.PsiAugmentProvider"/>
-    <extensionPoint name="psi.clsCustomNavigationPolicy" interface="com.intellij.psi.impl.compiled.ClsCustomNavigationPolicy"/>
-    <extensionPoint name="psi.classFileDecompiler" interface="com.intellij.psi.compiled.ClassFileDecompilers$Decompiler"/>
-    <extensionPoint name="jvm.elementProvider" area="IDEA_PROJECT" interface="com.intellij.lang.jvm.facade.JvmElementProvider"/>
-    <extensionPoint name="java.elementFinder" area="IDEA_PROJECT" interface="com.intellij.psi.PsiElementFinder"/>
-    <extensionPoint name="classTypePointerFactory" interface="com.intellij.psi.ClassTypePointerFactory"/>
-    <extensionPoint name="customJavadocTagProvider" interface="com.intellij.psi.javadoc.CustomJavadocTagProvider"/>
-    <extensionPoint name="javadocTagInfo" area="IDEA_PROJECT" interface="com.intellij.psi.javadoc.JavadocTagInfo"/>
-    <extensionPoint name="importFilter" interface="com.intellij.codeInsight.ImportFilter"/>
-    <extensionPoint name="javaMainMethodProvider" interface="com.intellij.codeInsight.runner.JavaMainMethodProvider"/>
-    <extensionPoint name="superMethodsSearch" interface="com.intellij.util.QueryExecutor"/>
-    <extensionPoint name="deepestSuperMethodsSearch" interface="com.intellij.util.QueryExecutor"/>
-    <extensionPoint name="generation.topLevelFactory" beanClass="com.intellij.lang.LanguageExtensionPoint">
+    <extensionPoint qualifiedName="com.intellij.javaModuleSystem" interface="com.intellij.psi.JavaModuleSystem"/>
+    <extensionPoint qualifiedName="com.intellij.custom.exception.handler" interface="com.intellij.codeInsight.CustomExceptionHandler"/>
+    <extensionPoint qualifiedName="com.intellij.lang.psiTypeAnnotationModifier" interface="com.intellij.psi.augment.TypeAnnotationModifier"/>
+    <extensionPoint qualifiedName="com.intellij.lang.psiAugmentProvider" interface="com.intellij.psi.augment.PsiAugmentProvider"/>
+    <extensionPoint qualifiedName="com.intellij.psi.clsCustomNavigationPolicy" interface="com.intellij.psi.impl.compiled.ClsCustomNavigationPolicy"/>
+    <extensionPoint qualifiedName="com.intellij.psi.classFileDecompiler" interface="com.intellij.psi.compiled.ClassFileDecompilers$Decompiler"/>
+    <extensionPoint qualifiedName="com.intellij.jvm.elementProvider" area="IDEA_PROJECT" interface="com.intellij.lang.jvm.facade.JvmElementProvider"/>
+    <extensionPoint qualifiedName="com.intellij.java.elementFinder" area="IDEA_PROJECT" interface="com.intellij.psi.PsiElementFinder"/>
+    <extensionPoint qualifiedName="com.intellij.classTypePointerFactory" interface="com.intellij.psi.ClassTypePointerFactory"/>
+    <extensionPoint qualifiedName="com.intellij.customJavadocTagProvider" interface="com.intellij.psi.javadoc.CustomJavadocTagProvider"/>
+    <extensionPoint qualifiedName="com.intellij.javadocTagInfo" area="IDEA_PROJECT" interface="com.intellij.psi.javadoc.JavadocTagInfo"/>
+    <extensionPoint qualifiedName="com.intellij.importFilter" interface="com.intellij.codeInsight.ImportFilter"/>
+    <extensionPoint qualifiedName="com.intellij.javaMainMethodProvider" interface="com.intellij.codeInsight.runner.JavaMainMethodProvider"/>
+    <extensionPoint qualifiedName="com.intellij.superMethodsSearch" interface="com.intellij.util.QueryExecutor"/>
+    <extensionPoint qualifiedName="com.intellij.deepestSuperMethodsSearch" interface="com.intellij.util.QueryExecutor"/>
+    <extensionPoint qualifiedName="com.intellij.generation.topLevelFactory" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.psi.JVMElementFactoryProvider"/>
     </extensionPoint>
-    <extensionPoint name="expressionConverter" beanClass="com.intellij.lang.LanguageExtensionPoint">
+    <extensionPoint qualifiedName="com.intellij.expressionConverter" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.psi.impl.ExpressionConverter"/>
     </extensionPoint>
-    <extensionPoint name="constantExpressionEvaluator" beanClass="com.intellij.lang.LanguageExtensionPoint">
+    <extensionPoint qualifiedName="com.intellij.constantExpressionEvaluator" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.psi.impl.ConstantExpressionEvaluator"/>
     </extensionPoint>
-    <extensionPoint name="annotationSupport" beanClass="com.intellij.lang.LanguageExtensionPoint">
+    <extensionPoint qualifiedName="com.intellij.annotationSupport" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.psi.PsiAnnotationSupport"/>
     </extensionPoint>
   </extensionPoints>
