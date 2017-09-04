@@ -15,6 +15,8 @@
  */
 package com.jetbrains.python.psi.impl;
 
+import com.intellij.ProjectTopics;
+import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
 import com.intellij.openapi.application.ApplicationManager;
@@ -31,10 +33,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.JdkOrderEntry;
-import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.FilePropertyPusher;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl;
@@ -259,10 +258,21 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
       @Override
       public void performInDumbMode(@NotNull ProgressIndicator indicator) {
         if (project.isDisposed()) return;
+        final PerformanceWatcher.Snapshot snapshot = PerformanceWatcher.takeSnapshot();
         final List<Runnable> tasks = ReadAction.compute(() -> getRootUpdateTasks(project, sdks));
         PushedFilePropertiesUpdaterImpl.invokeConcurrentlyIfPossible(tasks);
+        if (!ApplicationManager.getApplication().isUnitTestMode()) {
+          snapshot.logResponsivenessSinceCreation("Pushing Python language level to " + tasks.size() + " roots in " + sdks.size() +
+                                                  " SDKs");
+        }
       }
     };
+    project.getMessageBus().connect(task).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+      @Override
+      public void rootsChanged(ModuleRootEvent event) {
+        DumbService.getInstance(project).cancelTask(task);
+      }
+    });
     dumbService.queueTask(task);
   }
 
