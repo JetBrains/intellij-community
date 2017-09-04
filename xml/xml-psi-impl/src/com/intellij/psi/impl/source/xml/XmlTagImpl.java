@@ -1128,7 +1128,9 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
       if (treePrev != null &&
           treeNext != null &&
           treePrev.getElementType() == XmlElementType.XML_TEXT &&
-          treeNext.getElementType() == XmlElementType.XML_TEXT) {
+          treeNext.getElementType() == XmlElementType.XML_TEXT && 
+          !TreeUtil.containsOuterLanguageElements(treePrev) && 
+          !TreeUtil.containsOuterLanguageElements(treeNext)) {
         final XmlText prevText = (XmlText)treePrev.getPsi();
         final XmlText nextText = (XmlText)treeNext.getPsi();
 

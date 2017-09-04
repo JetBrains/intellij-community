@@ -51,7 +51,6 @@ import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade;
 import com.intellij.psi.impl.source.codeStyle.IndentHelperImpl;
 import com.intellij.psi.impl.source.tree.*;
-import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.text.CharArrayUtil;
@@ -211,16 +210,9 @@ public class PostprocessReformattingAspect implements PomModelAspect {
       }
 
       private void checkForOuters(PsiFile containingFile, TreeElement affectedChild) {
-        affectedChild.acceptTree(new RecursiveTreeElementWalkingVisitor() {
-          @Override
-          protected void visitNode(TreeElement element) {
-            if (element instanceof OuterLanguageElement) {
-              containingFile.putUserData(REPARSE_PENDING, true);
-              return;
-            }
-            super.visitNode(element);
-          }
-        });
+        if (TreeUtil.containsOuterLanguageElements(affectedChild)) {
+          containingFile.putUserData(REPARSE_PENDING, true);
+        }
       }
     });
   }
