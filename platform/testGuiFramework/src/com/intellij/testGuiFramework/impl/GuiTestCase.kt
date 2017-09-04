@@ -594,11 +594,11 @@ open class GuiTestCase : GuiTestBase() {
                                                                                                                      timeout.toFestTimeout())
 
   private fun actionButton(container: Container, actionName: String, timeout: Long): ActionButtonFixture {
-    try {
-      return ActionButtonFixture.findByText(actionName, myRobot, container, timeout.toFestTimeout())
+    return try {
+      ActionButtonFixture.findByText(actionName, myRobot, container, timeout.toFestTimeout())
     }
     catch (componentLookupException: ComponentLookupException) {
-      return ActionButtonFixture.findByActionId(actionName, myRobot, container, timeout.toFestTimeout())
+      ActionButtonFixture.findByActionId(actionName, myRobot, container, timeout.toFestTimeout())
     }
   }
 

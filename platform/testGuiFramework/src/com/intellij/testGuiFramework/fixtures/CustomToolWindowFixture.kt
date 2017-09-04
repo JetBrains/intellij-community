@@ -17,11 +17,13 @@ package com.intellij.testGuiFramework.fixtures
 
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
+import com.intellij.testGuiFramework.impl.GuiTestUtilKt
 import com.intellij.ui.content.Content
 import com.intellij.util.ui.UIUtil.findComponentOfType
 import com.intellij.util.ui.UIUtil.findComponentsOfType
 import junit.framework.Assert.assertNotNull
 import org.fest.swing.core.Robot
+import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.util.TextMatcher
 import javax.swing.JComponent
 
@@ -41,17 +43,28 @@ class CustomToolWindowFixture(val toolWindowId: String, val ideFrame: IdeFrameFi
     fun getContent() = myContent
   }
 
-  fun selectedContent() : ContentFixture {
+  private fun selectedContent() : ContentFixture {
     val content = super.getSelectedContent()
     assertNotNull(content)
     return ContentFixture(this, myRobot, content!!)
   }
 
-  fun findContent(tabName: String): ContentFixture {
-    selectContent(tabName)
-    val content = getContent(tabName)
-    assertNotNull(content)
-    return ContentFixture(this, myRobot, content!!)
+  private fun findContent(tabName: String, timeoutInSeconds: Int): ContentFixture {
+    selectContentWithTimeout(tabName, timeoutInSeconds)
+    val content = getContent(tabName) ?: throw ComponentLookupException("Unable to find content with a tab name: \"$tabName\" for a toolwindow with id: \"$toolWindowId\"")
+    return ContentFixture(this, myRobot, content)
+  }
+
+  private fun selectContentWithTimeout(tabName: String, timeoutInSeconds: Int) {
+    GuiTestUtilKt.waitUntil("content with a tab name '$tabName' is appeared for a toolwindow with id: \"$toolWindowId\"", timeoutInSeconds) {
+      try {
+        selectContent(tabName)
+        true
+      } catch (componentLookupException: ComponentLookupException) {
+        false
+      }
+    }
+
   }
 
   fun findContent(tabNameMatcher: TextMatcher): ContentFixture {
@@ -62,8 +75,8 @@ class CustomToolWindowFixture(val toolWindowId: String, val ideFrame: IdeFrameFi
 
   /**----------EXTENSION FUNCTIONS FOR GuiTestCase APi----------**/
 
-  fun content(tabName: String, func: ContentFixture.() -> Unit) {
-    func.invoke(findContent(tabName))
+  fun content(tabName: String, timeoutInSeconds: Int = 30, func: ContentFixture.() -> Unit) {
+    func.invoke(findContent(tabName, timeoutInSeconds))
   }
 
   fun content(func: ContentFixture.() -> Unit) {

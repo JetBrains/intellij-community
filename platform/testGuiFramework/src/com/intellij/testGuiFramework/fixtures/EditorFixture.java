@@ -446,27 +446,28 @@ public class EditorFixture {
   }
 
   /**
-   * Moves the caret to the start of the given line number (0-based).
+   * Moves the caret to the start of the given visual line number.
    *
    * @param lineNumber the line number.
    */
   @NotNull
   public EditorFixture moveToLine(final int lineNumber) {
-    assertThat(lineNumber).isGreaterThanOrEqualTo(0);
-    execute(new GuiTask() {
+    assertThat(lineNumber).isGreaterThanOrEqualTo(1);
+    Integer offset = execute(new GuiQuery<Integer>() {
       @Override
-      protected void executeInEDT() throws Throwable {
-        // TODO: Do this via mouse clicks!
+      protected Integer executeInEDT() throws Throwable {
         FileEditorManager manager = FileEditorManager.getInstance(myFrame.getProject());
         Editor editor = manager.getSelectedTextEditor();
         if (editor != null) {
           Document document = editor.getDocument();
-          int offset = document.getLineStartOffset(lineNumber);
-          editor.getCaretModel().moveToOffset(offset);
-          editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+          return document.getLineStartOffset(lineNumber - 1);
+        }
+        else {
+          throw new Exception("Editor is null");
         }
       }
     });
+    moveTo(offset);
     return this;
   }
 
