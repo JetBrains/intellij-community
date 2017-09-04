@@ -72,10 +72,11 @@ public class StubTextInconsistencyException extends RuntimeException implements 
   public static void checkStubTextConsistency(@NotNull PsiFile file) throws StubTextInconsistencyException {
     PsiUtilCore.ensureValid(file);
 
-    if (!(file instanceof PsiFileImpl) || ((PsiFileImpl)file).getElementTypeForStubBuilder() == null) return;
-
     FileViewProvider viewProvider = file.getViewProvider();
     if (viewProvider instanceof FreeThreadedFileViewProvider) return;
+
+    PsiFile bindingRoot = viewProvider.getStubBindingRoot();
+    if (!(bindingRoot instanceof PsiFileImpl) || ((PsiFileImpl)bindingRoot).getElementTypeForStubBuilder() == null) return;
 
     List<PsiFileStub> fromText = restoreStubsFromText(viewProvider);
 
