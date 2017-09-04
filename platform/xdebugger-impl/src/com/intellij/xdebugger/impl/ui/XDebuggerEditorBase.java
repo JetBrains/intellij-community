@@ -492,4 +492,9 @@ public abstract class XDebuggerEditorBase implements Expandable {
       myExpandedPopup.cancel();
     }
   }
+
+  @Override
+  public boolean isExpanded() {
+    return myExpandedPopup != null;
+  }
 }
