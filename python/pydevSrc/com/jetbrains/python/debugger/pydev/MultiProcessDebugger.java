@@ -7,6 +7,8 @@ import com.google.common.collect.Sets;
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
@@ -360,8 +362,11 @@ public class MultiProcessDebugger implements ProcessDebugger {
   }
 
   @Override
-  public void setNextStatement(String threadId, int line, String functionName) {
-    debugger(threadId).setNextStatement(threadId, line, functionName);
+  public boolean setNextStatement(String threadId,
+                                  XSourcePosition sourcePosition,
+                                  String functionName,
+                                  Editor editor) {
+    return debugger(threadId).setNextStatement(threadId, sourcePosition, functionName, editor);
   }
 
   @Override

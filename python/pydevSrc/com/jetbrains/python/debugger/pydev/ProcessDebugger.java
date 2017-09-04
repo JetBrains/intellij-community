@@ -1,5 +1,7 @@
 package com.jetbrains.python.debugger.pydev;
 
+import com.intellij.openapi.editor.Editor;
+import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
@@ -79,7 +81,7 @@ public interface ProcessDebugger {
 
   void resumeOrStep(String threadId, ResumeOrStepCommand.Mode mode);
 
-  void setNextStatement(String threadId, int line, String functionName);
+  boolean setNextStatement(String threadId, XSourcePosition sourcePosition, String functionName, Editor editor);
 
   void setTempBreakpoint(@NotNull String type, @NotNull String file, int line);
 

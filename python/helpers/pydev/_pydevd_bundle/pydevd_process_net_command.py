@@ -129,7 +129,7 @@ def process_net_command(py_db, cmd_id, seq, text):
                 thread_id, line, func_name = text.split('\t', 2)
                 t = pydevd_find_thread_by_id(thread_id)
                 if t:
-                    int_cmd = InternalSetNextStatementThread(thread_id, cmd_id, line, func_name)
+                    int_cmd = InternalSetNextStatementThread(thread_id, cmd_id, line, func_name, seq)
                     py_db.post_internal_command(int_cmd, thread_id)
                 elif thread_id.startswith('__frame__:'):
                     sys.stderr.write("Can't set next statement in tasklet: %s\n" % (thread_id,))

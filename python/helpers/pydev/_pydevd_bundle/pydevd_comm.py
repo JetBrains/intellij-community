@@ -837,6 +837,13 @@ class NetCommandFactory:
         except:
             return self.make_error_message(0, get_exception_traceback_str())
 
+    def make_set_next_stmnt_status_message(self, seq, is_success, exception_msg):
+        try:
+            message = str(is_success) + '\t' + exception_msg
+            return NetCommand(CMD_SET_NEXT_STATEMENT, int(seq), message)
+        except:
+            return self.make_error_message(0, get_exception_traceback_str())
+
     def make_exit_message(self):
         try:
             net = NetCommand(CMD_EXIT, 0, '')
@@ -964,10 +971,11 @@ class InternalStepThread(InternalThreadCommand):
 # InternalSetNextStatementThread
 #=======================================================================================================================
 class InternalSetNextStatementThread(InternalThreadCommand):
-    def __init__(self, thread_id, cmd_id, line, func_name):
+    def __init__(self, thread_id, cmd_id, line, func_name, seq=0):
         self.thread_id = thread_id
         self.cmd_id = cmd_id
         self.line = line
+        self.seq = seq
 
         if IS_PY2:
             if isinstance(func_name, unicode):
@@ -983,6 +991,7 @@ class InternalSetNextStatementThread(InternalThreadCommand):
             t.additional_info.pydev_next_line = int(self.line)
             t.additional_info.pydev_func_name = self.func_name
             t.additional_info.pydev_state = STATE_RUN
+            t.additional_info.pydev_message = str(self.seq)
 
 
 #=======================================================================================================================

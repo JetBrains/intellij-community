@@ -799,24 +799,36 @@ class PyDB:
                 if curr_func_name in ('?', '<module>'):
                     curr_func_name = ''
 
-                if curr_func_name == info.pydev_func_name:
-                    line = info.pydev_next_line
-                    if frame.f_lineno == line:
-                        stop = True
-                    else :
-                        if frame.f_trace is None:
-                            frame.f_trace = self.trace_dispatch
-                        frame.f_lineno = line
-                        frame.f_trace = None
-                        stop = True
+                response_msg = ""
+                try:
+                    if curr_func_name == info.pydev_func_name:
+                        line = info.pydev_next_line
+                        if frame.f_lineno == line:
+                            stop = True
+                        else:
+                            if frame.f_trace is None:
+                                frame.f_trace = self.trace_dispatch
+                            frame.f_lineno = line
+                            frame.f_trace = None
+                            stop = True
+                except ValueError as e:
+                    response_msg = "%s" % e
+                    info.pydev_state = STATE_SUSPEND
+                    info.pydev_step_cmd = None
+                finally:
+                    seq = info.pydev_message
+                    cmd = self.cmd_factory.make_set_next_stmnt_status_message(seq, stop, response_msg)
+                    self.writer.add_command(cmd)
+
                 if stop:
                     info.pydev_state = STATE_SUSPEND
                     cmd = self.cmd_factory.make_thread_run_message(get_thread_id(thread), info.pydev_step_cmd)
                     self.writer.add_command(cmd)
                     thread.stop_reason = CMD_THREAD_SUSPEND
-                    self.do_wait_suspend(thread, frame, event, arg, "trace")
-                    return
 
+                # return to the suspend state and wait for other command
+                self.do_wait_suspend(thread, frame, event, arg, "trace")
+                return
 
         elif info.pydev_step_cmd == CMD_STEP_RETURN:
             back_frame = frame.f_back

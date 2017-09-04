@@ -18,6 +18,8 @@ package com.jetbrains.python.debugger;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
@@ -28,6 +30,7 @@ import com.intellij.xdebugger.impl.actions.DebuggerActionHandler;
 import com.intellij.xdebugger.impl.actions.XDebuggerActionBase;
 import com.intellij.xdebugger.impl.actions.XDebuggerSuspendedActionHandler;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class PySetNextStatementAction extends XDebuggerActionBase {
   private final XDebuggerSuspendedActionHandler mySetNextStatementActionHandler;
@@ -41,8 +44,9 @@ public class PySetNextStatementAction extends XDebuggerActionBase {
         if (debugProcess instanceof PyDebugProcess) {
           PyDebugProcess pyDebugProcess = (PyDebugProcess)debugProcess;
           XSourcePosition position = XDebuggerUtilImpl.getCaretPosition(session.getProject(), dataContext);
+          Editor editor = getEditor(session.getProject(), dataContext);
           if (position != null) {
-            pyDebugProcess.setNextStatement(debugProcess.getSession().getSuspendContext(), position);
+            pyDebugProcess.setNextStatement(debugProcess.getSession().getSuspendContext(), position, editor);
           }
         }
       }
@@ -52,6 +56,15 @@ public class PySetNextStatementAction extends XDebuggerActionBase {
         return super.isEnabled(project, event) && PyDebugSupportUtils.isPythonConfigurationSelected(project);
       }
     };
+  }
+
+  @Nullable
+  private static Editor getEditor(@NotNull Project project, DataContext context) {
+    Editor editor = CommonDataKeys.EDITOR.getData(context);
+    if (editor == null) {
+      return FileEditorManager.getInstance(project).getSelectedTextEditor();
+    }
+    return editor;
   }
 
   @NotNull
