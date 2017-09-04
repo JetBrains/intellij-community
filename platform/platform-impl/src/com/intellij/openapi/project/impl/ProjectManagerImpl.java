@@ -429,9 +429,11 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     };
 
     if (!loadProjectUnderProgress(project, process)) {
-      closeProject(project, false, false, false, true);
-      WriteAction.run(() -> Disposer.dispose(project));
-      notifyProjectOpenFailed();
+      GuiUtils.invokeLaterIfNeeded(() -> {
+        closeProject(project, false, false, false, true);
+        WriteAction.run(() -> Disposer.dispose(project));
+        notifyProjectOpenFailed();
+      }, ModalityState.defaultModalityState());
       return false;
     }
 
