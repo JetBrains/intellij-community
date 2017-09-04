@@ -286,7 +286,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   @Override
   @Nullable
-  public AbstractVcs getVcsFor(final FilePath file) {
+  public AbstractVcs getVcsFor(@NotNull FilePath file) {
     final VirtualFile vFile = ChangesUtil.findValidParentAccurately(file);
     return ReadAction.compute(() -> {
       if (!ApplicationManager.getApplication().isUnitTestMode() && !myProject.isInitialized()) return null;
@@ -315,11 +315,11 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   @Override
   @Nullable
-  public VcsRoot getVcsRootObjectFor(final VirtualFile file) {
+  public VcsRoot getVcsRootObjectFor(@Nullable VirtualFile file) {
+    if (file == null) return null;
     final VcsDirectoryMapping mapping = myMappings.getMappingFor(file);
-    if (mapping == null) {
-      return null;
-    }
+    if (mapping == null) return null;
+
     final String directory = mapping.getDirectory();
     final AbstractVcs vcs = findVcsByName(mapping.getVcs());
     if (directory.isEmpty()) {
@@ -330,25 +330,19 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   @Override
   @Nullable
-  public VirtualFile getVcsRootFor(final FilePath file) {
-    if (myProject.isDisposed()) return null;
+  public VirtualFile getVcsRootFor(@Nullable FilePath file) {
+    if (file == null || myProject.isDisposed()) return null;
+
     VirtualFile vFile = ChangesUtil.findValidParentAccurately(file);
-    if (vFile != null) {
-      return getVcsRootFor(vFile);
-    }
-    return null;
+    return vFile != null ? getVcsRootFor(vFile) : null;
   }
 
   @Override
-  public VcsRoot getVcsRootObjectFor(final FilePath file) {
-    if (myProject.isDisposed()) {
-      return null;
-    }
+  public VcsRoot getVcsRootObjectFor(@Nullable FilePath file) {
+    if (file == null || myProject.isDisposed()) return null;
+
     VirtualFile vFile = ChangesUtil.findValidParentAccurately(file);
-    if (vFile != null) {
-      return getVcsRootObjectFor(vFile);
-    }
-    return null;
+    return vFile != null ? getVcsRootObjectFor(vFile) : null;
   }
 
   public void unregisterVcs(@NotNull AbstractVcs vcs) {
