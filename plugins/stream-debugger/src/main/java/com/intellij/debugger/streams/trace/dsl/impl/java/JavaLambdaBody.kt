@@ -13,11 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.debugger.streams.trace.dsl
+package com.intellij.debugger.streams.trace.dsl.impl.java
+
+import com.intellij.debugger.streams.trace.dsl.LambdaBody
+import com.intellij.debugger.streams.trace.dsl.StatementFactory
 
 /**
  * @author Vitaliy.Bibaev
  */
-interface LambdaBody : CodeBlock {
-  val argName: String
+class JavaLambdaBody(statementFactory: StatementFactory, override val argName: String) : JavaCodeBlock(statementFactory), LambdaBody {
+  override fun toCode(): String = if (isExpression()) statements.first().toCode() else super.toCode()
+
+  fun isExpression(): Boolean = statements.size == 1
 }
