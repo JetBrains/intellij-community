@@ -402,13 +402,11 @@ public abstract class XDebuggerEditorBase implements Expandable {
         init();
       }
 
-      @Nullable
       @Override
       protected String getDimensionServiceKey() {
         return "#xdebugger.code.fragment.editor";
       }
 
-      @Nullable
       @Override
       protected JComponent createCenterPanel() {
         JPanel component = inputComponent.getMainComponent();
