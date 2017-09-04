@@ -24,7 +24,7 @@ class TextExpression(private val myText: String) : Expression {
   override fun call(callName: String, vararg args: Expression): Expression =
     TextExpression("$myText.$callName${args.joinToString(", ", "(", ")")}")
 
-  override fun toString(): String = toCode()
+  override fun toString(): String = toCode(0)
 
-  override fun toCode(): String = myText
+  override fun toCode(indent: Int): String = myText
 }

@@ -19,5 +19,7 @@ package com.intellij.debugger.streams.trace.dsl
  * @author Vitaliy.Bibaev
  */
 interface Convertable {
-  fun toCode(): String
+  fun toCode(indent: Int = 0): String
+
+  fun String.withIndent(indent: Int): String = "  ".repeat(indent) + this
 }

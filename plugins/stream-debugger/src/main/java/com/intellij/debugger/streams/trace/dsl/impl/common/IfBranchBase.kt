@@ -34,7 +34,9 @@ abstract class IfBranchBase(protected val condition: Expression,
     val block = statementFactory.createEmptyCodeBlock()
     block.init()
     val elseIfStatement = statementFactory.createIfBranch(condition, block)
-    elseBlock = elseIfStatement
+    val codeBlock = statementFactory.createEmptyCompositeCodeBlock()
+    codeBlock.addStatement(elseIfStatement)
+    elseBlock = codeBlock
     return elseIfStatement
   }
 }

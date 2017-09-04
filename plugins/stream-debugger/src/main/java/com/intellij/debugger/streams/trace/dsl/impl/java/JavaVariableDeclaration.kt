@@ -25,10 +25,10 @@ import com.intellij.debugger.streams.trace.dsl.VariableDeclaration
 class JavaVariableDeclaration(override val variable: Variable,
                               override val isMutable: Boolean,
                               private val init: Expression) : VariableDeclaration {
-  override fun toCode(): String {
+  override fun toCode(indent: Int): String {
     val modifier = if (!isMutable) "final " else ""
     val initCode = init.toCode()
     val right = if (initCode.trim().isEmpty()) "" else " = $initCode"
-    return "$modifier${variable.type} ${variable.name}$right"
+    return "$modifier${variable.type} ${variable.name}$right".withIndent(indent)
   }
 }

@@ -26,8 +26,8 @@ import com.intellij.debugger.streams.trace.dsl.Variable
 class JavaForEachLoop(private val iterateVariable: Variable,
                       private val collection: Expression,
                       private val loopBody: ForLoopBody) : Statement {
-  override fun toCode(): String =
-    "for (${iterateVariable.type} ${iterateVariable.name} : ${collection.toCode()}) {" +
-    "  ${loopBody.toCode()}" +
+  override fun toCode(indent: Int): String =
+    "for (${iterateVariable.type} ${iterateVariable.name} : ${collection.toCode(0)}) {\n" +
+    loopBody.toCode(indent + 1) +
     "}"
 }

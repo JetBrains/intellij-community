@@ -22,5 +22,5 @@ interface Variable : Expression {
   val type: String
   val name: String
 
-  override fun toCode(): String = name
+  override fun toCode(indent: Int): String = name.withIndent(indent)
 }

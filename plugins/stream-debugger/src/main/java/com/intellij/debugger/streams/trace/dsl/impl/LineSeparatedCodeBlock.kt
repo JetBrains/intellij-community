@@ -24,12 +24,12 @@ import com.intellij.debugger.streams.trace.dsl.*
  */
 abstract class LineSeparatedCodeBlock(statementFactory: StatementFactory, private val endLine: String = "")
   : CodeBlockBase(statementFactory) {
-  override fun toCode(): String {
+  override fun toCode(indent: Int): String {
     val body = statements
     if (statements.isEmpty()) {
       return ""
     }
 
-    return body.joinToString("$endLine\n", postfix = "$endLine\n") { it.toCode() }
+    return body.joinToString("$endLine\n", postfix = "$endLine\n") { it.toCode(indent).withIndent(indent) }
   }
 }

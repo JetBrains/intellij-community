@@ -25,6 +25,6 @@ interface Expression : Statement {
     // TODO: looks really strange
     override fun call(callName: String, vararg args: Expression): Expression = this
 
-    override fun toCode(): String = ""
+    override fun toCode(indent: Int): String = ""
   }
 }
