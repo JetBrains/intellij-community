@@ -94,7 +94,7 @@ public class TestClassCollector {
                 }
               }
               catch (Throwable e) {
-                LOG.error("error processing: " + fName, e);
+                LOG.error("error processing: " + fName + " of " + baseDir.toString(), e);
               }
             }
             return result;
