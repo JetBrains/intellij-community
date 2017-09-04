@@ -648,11 +648,11 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
       FileElement treeElement = derefTreeElement();
       if (treeElement != null) {
-        setTreeElementPointer(null);
         treeElement.detachFromFile();
         DebugUtil.onInvalidated(treeElement);
       }
       updateTrees(myTrees.clearStub("onContentReload"));
+      setTreeElementPointer(null);
     }
     finally {
       DebugUtil.finishPsiModification();
