@@ -18,6 +18,7 @@ package com.intellij.build;
 import com.intellij.execution.console.ConsoleHistoryController;
 import com.intellij.execution.console.LanguageConsoleView;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -50,14 +51,17 @@ public class CompositeView<S extends ComponentContainer, T extends ComponentCont
   private final S myPrimaryView;
   @NotNull
   private final T mySecondaryView;
+  private final String mySelectionStateKey;
+  private final boolean myPrimaryViewEnabledByDefault;
   private boolean myPrimary;
   @NotNull
   private final SwitchViewAction mySwitchViewAction;
 
-  public CompositeView(@NotNull S primaryView, @NotNull T secondaryView) {
+  public CompositeView(@NotNull S primaryView, @NotNull T secondaryView, String selectionStateKey, boolean isPrimaryViewEnabledByDefault) {
     super(new CardLayout());
     myPrimaryView = primaryView;
     mySecondaryView = secondaryView;
+    mySelectionStateKey = selectionStateKey;
 
     add(myPrimaryView.getComponent(), PRIMARY_PANEL);
     add(mySecondaryView.getComponent(), SECONDARY_PANEL);
@@ -65,7 +69,8 @@ public class CompositeView<S extends ComponentContainer, T extends ComponentCont
     mySwitchViewAction = new SwitchViewAction();
 
     myPrimary = true;
-    enableView(true);
+    myPrimaryViewEnabledByDefault = isPrimaryViewEnabledByDefault;
+    enableView(getStoredState());
 
     Disposer.register(this, myPrimaryView);
     Disposer.register(this, mySecondaryView);
@@ -133,6 +138,19 @@ public class CompositeView<S extends ComponentContainer, T extends ComponentCont
     return consoleView instanceof DataProvider ? ((DataProvider)consoleView).getData(dataId) : null;
   }
 
+  private void setStoredState(boolean primary) {
+    if (mySelectionStateKey != null) {
+      PropertiesComponent.getInstance().setValue(mySelectionStateKey, primary, myPrimaryViewEnabledByDefault);
+    }
+  }
+
+  private boolean getStoredState() {
+    if (mySelectionStateKey == null) {
+      return false;
+    }
+    return PropertiesComponent.getInstance().getBoolean(mySelectionStateKey, myPrimaryViewEnabledByDefault);
+  }
+
   private class SwitchViewAction extends ToggleAction implements DumbAware {
     public SwitchViewAction() {
       super("Toggle view", null,
@@ -147,6 +165,7 @@ public class CompositeView<S extends ComponentContainer, T extends ComponentCont
     @Override
     public void setSelected(final AnActionEvent event, final boolean flag) {
       enableView(!flag);
+      setStoredState(!flag);
       ApplicationManager.getApplication().invokeLater(() -> update(event));
     }
   }
