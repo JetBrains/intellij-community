@@ -22,6 +22,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.psi.*;
 
+import static com.jetbrains.python.psi.PyUtil.as;
+
 /**
  * @author yole
  */
@@ -57,6 +59,18 @@ public class HighlightingAnnotator extends PyAnnotator {
     if (keywordNode != null) {
       Annotation annotation = getHolder().createInfoAnnotation(keywordNode, null);
       annotation.setTextAttributes(PyHighlighter.PY_KEYWORD_ARGUMENT);
+    }
+  }
+
+  @Override
+  public void visitPyCallExpression(PyCallExpression node) {
+    final PyReferenceExpression callee = as(node.getCallee(), PyReferenceExpression.class);
+    if (callee != null) {
+      final ASTNode functionName = callee.getNameElement();
+      if (functionName != null) {
+        final Annotation annotation = getHolder().createInfoAnnotation(functionName, null);
+        annotation.setTextAttributes(PyHighlighter.PY_FUNCTION_CALL);
+      }
     }
   }
 }

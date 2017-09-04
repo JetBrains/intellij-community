@@ -1,0 +1,5 @@
+<info descr="null">func</info>()
+mod.Class.<info descr="null">method</info>()
+<info descr="null">chained</info>().<info descr="null">calls</info>()
+(foo or bar)()
+<info descr="null"><info descr="null">len</info></info>(xs)

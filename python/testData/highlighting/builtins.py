@@ -5,7 +5,7 @@
 # predefined decl: green bold
 # predefined usage: yellow bold
 
-<info descr="null" type="INFORMATION" foreground="0x00ff00" background="0x000000" effectcolor="0xffffff" effecttype="BOXED" fonttype="1">len</info>("")
+<info descr="null" type="INFORMATION" foreground="0x00ff00" background="0x000000" effectcolor="0xffffff" effecttype="BOXED" fonttype="1"><info>len</info></info>("")
 len = [] # redefine
 len # no highlight
 
