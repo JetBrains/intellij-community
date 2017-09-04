@@ -87,11 +87,13 @@ public abstract class PsiTreeChangePreprocessorBase implements PsiTreeChangePrep
   protected final boolean isOutOfCodeBlockChangeEvent(@NotNull PsiTreeChangeEventImpl event) {
     switch (event.getCode()) {
       case BEFORE_PROPERTY_CHANGE:
-      case BEFORE_CHILD_MOVEMENT:
       case BEFORE_CHILD_ADDITION:
+      case BEFORE_CHILD_MOVEMENT:
+        return false;
+        
       case BEFORE_CHILD_REMOVAL:
       case BEFORE_CHILD_REPLACEMENT:
-        return false;
+        return _containsStructuralElements(event.getChild()) || _containsStructuralElements(event.getOldChild());
 
       case BEFORE_CHILDREN_CHANGE:
       case CHILDREN_CHANGED:

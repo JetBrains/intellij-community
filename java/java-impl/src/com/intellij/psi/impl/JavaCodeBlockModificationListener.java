@@ -15,11 +15,12 @@
  */
 package com.intellij.psi.impl;
 
-import com.intellij.openapi.util.Conditions;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl.PsiEventType;
 import com.intellij.psi.impl.source.jsp.jspXml.JspDirective;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
@@ -60,7 +61,7 @@ public class JavaCodeBlockModificationListener extends PsiTreeChangePreprocessor
 
   @Override
   protected boolean containsStructuralElements(@NotNull PsiElement element) {
-    return hasClassesInside(element);
+    return mayHaveJavaStructureInside(element);
   }
 
   @Override
@@ -68,7 +69,7 @@ public class JavaCodeBlockModificationListener extends PsiTreeChangePreprocessor
     Set<PsiElement> changedChildren = getChangedChildren(event);
 
     PsiModificationTrackerImpl tracker = (PsiModificationTrackerImpl)myPsiManager.getModificationTracker();
-    if (!changedChildren.isEmpty() && changedChildren.stream().anyMatch(JavaCodeBlockModificationListener::hasClassesInside)) {
+    if (!changedChildren.isEmpty() && changedChildren.stream().anyMatch(JavaCodeBlockModificationListener::mayHaveJavaStructureInside)) {
       tracker.incCounter();
     }
 
@@ -91,12 +92,24 @@ public class JavaCodeBlockModificationListener extends PsiTreeChangePreprocessor
     if (code == PsiEventType.CHILD_ADDED || code == PsiEventType.CHILD_REMOVED || code == PsiEventType.CHILD_REPLACED) {
       return StreamEx.of(event.getOldChild(), event.getChild(), event.getNewChild()).nonNull().toSet();
     }
+    if (code == PsiEventType.BEFORE_CHILD_REMOVAL || code == PsiEventType.BEFORE_CHILD_REPLACEMENT) {
+      return StreamEx.of(event.getOldChild(), event.getChild()).nonNull().toSet();
+    }
+    if (code == PsiEventType.BEFORE_CHILDREN_CHANGE && !event.isGenericChange()) {
+      PsiElement parent = event.getParent();
+      if (!(parent instanceof PsiFileSystemItem) && !TreeUtil.isCollapsedChameleon(parent.getNode())) {
+        return ContainerUtil.newHashSet(parent.getChildren());
+      }
+    }
     return Collections.emptySet();
   }
 
-  private static boolean hasClassesInside(@NotNull PsiElement element) {
-    return !SyntaxTraverser.psiTraverser(element).traverse()
-      .filter(Conditions.instanceOf(PsiClass.class, PsiLambdaExpression.class)).isEmpty();
+  private static boolean mayHaveJavaStructureInside(@NotNull PsiElement root) {
+    return !SyntaxTraverser.psiTraverser(root)
+      .expand(e -> !TreeUtil.isCollapsedChameleon(e.getNode()))
+      .traverse()
+      .filter(e -> e instanceof PsiClass || e instanceof PsiLambdaExpression || TreeUtil.isCollapsedChameleon(e.getNode()))
+      .isEmpty();
   }
 
 }
