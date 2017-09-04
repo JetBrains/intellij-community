@@ -1,0 +1,4 @@
+final List objects = getObjects();
+for (Object object : objects) {
+  object.toString();
+};
