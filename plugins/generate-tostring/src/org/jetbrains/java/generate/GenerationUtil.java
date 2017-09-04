@@ -23,11 +23,13 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.NameUtil;
-import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
@@ -205,10 +207,7 @@ public class GenerationUtil {
         // information to keep as it is to avoid breaking compatibility with prior releases
         vc.put("classname", useFullyQualifiedName ? ce.getQualifiedName() : ce.getName());
         vc.put("FQClassname", ce.getQualifiedName());
-        PsiType type = RefactoringChangeUtil.createThisExpression(clazz.getManager(), clazz).getType();
-        if (type != null) {
-          vc.put("classSignature", type.getPresentableText());
-        }
+        vc.put("classSignature", ce.getName() + (clazz.hasTypeParameters() ? "<" + StringUtil.join(clazz.getTypeParameters(), param -> param.getName(),", ") + ">": ""));
       }
 
       if (member != null) {
