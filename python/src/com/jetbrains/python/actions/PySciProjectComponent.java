@@ -36,6 +36,7 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ui.UIUtil;
@@ -75,12 +76,14 @@ public class PySciProjectComponent extends AbstractProjectComponent implements P
 
   @Override
   public void projectOpened() {
+    final VirtualFile baseDir = myProject.getBaseDir();
+    if (baseDir == null) return;
     if (myState.PY_SCI_VIEW) {
       StartupManager.getInstance(myProject).runWhenProjectIsInitialized(() -> {
         EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
         scheme.setColor(COLOR_KEY, UIUtil.getEditorPaneBackground());
 
-        final PsiDirectory directory = PsiManager.getInstance(myProject).findDirectory(myProject.getBaseDir());
+        final PsiDirectory directory = PsiManager.getInstance(myProject).findDirectory(baseDir);
         if (directory != null) {
           DocumentationManager.getInstance(myProject).showJavaDocInfo(directory, directory);
         }
@@ -88,7 +91,7 @@ public class PySciProjectComponent extends AbstractProjectComponent implements P
     }
     else if (!myState.PY_SCI_VIEW_SUGGESTED) {
       StartupManager.getInstance(myProject).runWhenProjectIsInitialized(() -> {
-        final PsiDirectory directory = PsiManager.getInstance(myProject).findDirectory(myProject.getBaseDir());
+        final PsiDirectory directory = PsiManager.getInstance(myProject).findDirectory(baseDir);
         if (directory != null) {
           final Module module = ModuleUtilCore.findModuleForPsiElement(directory);
           if (module != null) {
