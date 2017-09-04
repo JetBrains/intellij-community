@@ -890,6 +890,31 @@
       <add-to-group group-id="VcsGroups" anchor="first"/>
     </group>
 
+    <group id="Vcs.Operations.Popup">
+      <group id="Vcs.Operations.Popup.VcsAware" class="com.intellij.openapi.vcs.actions.VcsQuickListPopupAction$VcsAware">
+        <group id="Vcs.Operations.Popup.VcsNameSeparator" class="com.intellij.openapi.vcs.actions.VcsQuickListPopupAction$VcsNameSeparator"/>
+        <reference id="ChangesView.AddUnversioned"/>
+        <reference id="CheckinProject"/>
+        <reference id="CheckinFiles"/>
+        <reference id="ChangesView.Revert"/>
+        <separator/>
+        <reference id="Vcs.ShowTabbedFileHistory"/>
+        <reference id="Annotate"/>
+        <reference id="Compare.SameVersion"/>
+        <reference id="ChangesView.Move"/>
+      </group>
+      <separator/>
+      <group id="Vcs.Operations.Popup.Vcs.Providers"
+             class="com.intellij.openapi.vcs.actions.VcsQuickListPopupAction$Providers"/>
+      <group id="Vcs.Operations.Popup.NonVcsAware" class="com.intellij.openapi.vcs.actions.VcsQuickListPopupAction$NonVcsAware">
+        <reference id="Start.Use.Vcs"/>
+        <reference id="Vcs.Checkout"/>
+      </group>
+      <separator text="Local History"/>
+      <reference id="LocalHistory.ShowHistory"/>
+      <reference id="LocalHistory.PutLabel"/>
+    </group>
+
     <group id="TestTreePopupMenu">
       <reference ref="RunContextGroup"/>
       <reference ref="EditSource"/>
