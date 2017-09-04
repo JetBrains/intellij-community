@@ -77,7 +77,14 @@ public final class PythonUnitTestUtil {
     return file.getTopLevelFunctions().stream().anyMatch(o -> isTestFunction(o, testCaseClassRequired, context));
   }
 
-
+  /**
+   * @deprecated this method is short-cut for backward compatibility only. Use {@link #isTestClass(PyClass, ThreeState, TypeEvalContext)}
+   * instead
+   */
+  @Deprecated
+  public static boolean isTestCaseClass(@NotNull final PyClass cls, @Nullable final TypeEvalContext context) {
+    return isTestClass(cls, ThreeState.YES, context);
+  }
 
   public static boolean isTestClass(@NotNull final PyClass cls,
                                     @NotNull final ThreeState testCaseClassRequired,
