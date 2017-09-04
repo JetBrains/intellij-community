@@ -18,6 +18,7 @@ package com.intellij.codeInspection.dataFlow.inliner;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
@@ -195,16 +196,7 @@ public class StreamChainInliner implements CallInliner {
     @Override
     protected void pushInitialValue(CFGBuilder builder) {
       PsiType type = myCall.getType();
-      Object value = null;
-      if (PsiType.INT.equals(type)) {
-        value = 0;
-      }
-      else if (PsiType.LONG.equals(type)) {
-        value = 0L;
-      }
-      else if (PsiType.DOUBLE.equals(type)) {
-        value = 0.0;
-      }
+      Object value = PsiTypesUtil.getDefaultValue(type);
       builder.push(builder.getFactory().getConstFactory().createFromValue(value, type, null));
     }
 
