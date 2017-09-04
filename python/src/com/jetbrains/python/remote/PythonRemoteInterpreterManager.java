@@ -168,7 +168,7 @@ public abstract class PythonRemoteInterpreterManager {
   public abstract ListenableFuture<Boolean> uploadHelpersAsync(@Nullable Sdk sdk,
                                                                @Nullable Project project,
                                                                @Nullable Component component,
-                                                               @NotNull RemoteSdkCredentials credentials);
+                                                               @NotNull RemoteSdkCredentials credentials, boolean uploadOnSnapshot);
 
 
   /**
