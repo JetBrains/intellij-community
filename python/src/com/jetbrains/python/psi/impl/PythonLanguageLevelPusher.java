@@ -17,7 +17,6 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -26,6 +25,9 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.DumbModeTask;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -35,6 +37,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.FilePropertyPusher;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
+import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -42,7 +45,6 @@ import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.util.FileContentUtil;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.messages.MessageBus;
@@ -62,7 +64,6 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 
 /**
@@ -72,8 +73,6 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
   public static final Key<LanguageLevel> PYTHON_LANGUAGE_LEVEL = Key.create("PYTHON_LANGUAGE_LEVEL");
 
   private final Map<Module, Sdk> myModuleSdks = ContainerUtil.createWeakMap();
-
-  private final ExecutorService myExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("PythonLanguageLevelPusher pool", 1);
 
   public static void pushLanguageLevel(final Project project) {
     PushedFilePropertiesUpdater.getInstance(project).pushAll(new PythonLanguageLevelPusher());
@@ -255,21 +254,20 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
   }
 
   private void updateSdkLanguageLevels(@NotNull Project project, @NotNull Set<Sdk> sdks) {
-    final Application application = ApplicationManager.getApplication();
-    application.assertReadAccessAllowed();
-    final List<UpdateRootTask> tasks = getRootUpdateTasks(project, sdks);
-    for (UpdateRootTask task : tasks) {
-      if (application.isUnitTestMode()) {
-        task.run();
+    final DumbService dumbService = DumbService.getInstance(project);
+    final DumbModeTask task = new DumbModeTask() {
+      @Override
+      public void performInDumbMode(@NotNull ProgressIndicator indicator) {
+        if (project.isDisposed()) return;
+        final List<Runnable> tasks = ReadAction.compute(() -> getRootUpdateTasks(project, sdks));
+        PushedFilePropertiesUpdaterImpl.invokeConcurrentlyIfPossible(tasks);
       }
-      else {
-        myExecutor.submit(task);
-      }
-    }
+    };
+    dumbService.queueTask(task);
   }
 
-  private List<UpdateRootTask> getRootUpdateTasks(@NotNull Project project, @NotNull Set<Sdk> sdks) {
-    final List<UpdateRootTask> results = new ArrayList<>();
+  private List<Runnable> getRootUpdateTasks(@NotNull Project project, @NotNull Set<Sdk> sdks) {
+    final List<Runnable> results = new ArrayList<>();
     for (Sdk sdk : sdks) {
       final LanguageLevel languageLevel = PythonSdkType.getLanguageLevelForSdk(sdk);
       for (VirtualFile root : sdk.getRootProvider().getFiles(OrderRootType.CLASSES)) {
