@@ -25,6 +25,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -78,6 +79,7 @@ public class PySciProjectComponent extends AbstractProjectComponent implements P
   public void projectOpened() {
     final VirtualFile baseDir = myProject.getBaseDir();
     if (baseDir == null) return;
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
     if (myState.PY_SCI_VIEW) {
       StartupManager.getInstance(myProject).runWhenProjectIsInitialized(() -> {
         EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
