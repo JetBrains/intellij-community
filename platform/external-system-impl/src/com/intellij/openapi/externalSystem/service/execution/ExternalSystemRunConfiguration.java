@@ -114,9 +114,18 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
 
   @Override
   public ExternalSystemRunConfiguration clone() {
-    ExternalSystemRunConfiguration result = (ExternalSystemRunConfiguration)super.clone();
-    result.mySettings = mySettings.clone();
-    return result;
+    final Element element = new Element("toClone");
+    try {
+      writeExternal(element);
+      RunConfiguration configuration = getFactory().createTemplateConfiguration(getProject());
+      configuration.setName(getName());
+      configuration.readExternal(element);
+      return (ExternalSystemRunConfiguration)configuration;
+    }
+    catch (InvalidDataException | WriteExternalException e) {
+      LOG.error(e);
+      return null;
+    }
   }
 
   @Override
