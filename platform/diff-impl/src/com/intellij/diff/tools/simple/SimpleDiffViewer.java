@@ -63,6 +63,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   @NotNull private final StatusPanel myStatusPanel;
 
   @NotNull private final List<SimpleDiffChange> myDiffChanges = new ArrayList<>();
+  @NotNull private final List<SimpleDiffChange> myNonResolvedDiffChanges = new ArrayList<>();
   @NotNull private final List<SimpleDiffChange> myInvalidDiffChanges = new ArrayList<>();
   private boolean myIsContentsEqual;
 
@@ -199,7 +200,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
       boolean isContentsEqual = (lineFragments == null || lineFragments.isEmpty()) &&
                                 StringUtil.equals(texts[0], texts[1]);
 
-      return apply(new CompareData(lineFragments, isContentsEqual));
+      return apply(new CompareData(lineFragments, null, isContentsEqual));
     }
     catch (DiffTooBigException e) {
       return applyNotification(DiffNotifications.createDiffTooBig());
@@ -214,7 +215,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   }
 
   @NotNull
-  private Runnable apply(@NotNull final CompareData data) {
+  protected Runnable apply(@NotNull final CompareData data) {
     return () -> {
       myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
 
@@ -232,12 +233,16 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
         for (int i = 0; i < fragments.size(); i++) {
           LineFragment fragment = fragments.get(i);
           LineFragment previousFragment = i != 0 ? fragments.get(i - 1) : null;
+          boolean isResolved = data.isResolved(i);
 
-          myDiffChanges.add(new SimpleDiffChange(this, fragment, previousFragment));
+          SimpleDiffChange change = new SimpleDiffChange(this, fragment, previousFragment, isResolved);
+
+          myDiffChanges.add(change);
+          if (!change.isResolved()) myNonResolvedDiffChanges.add(change);
         }
       }
 
-      myFoldingModel.install(fragments, myRequest, getFoldingModelSettings());
+      myFoldingModel.install(myNonResolvedDiffChanges, myRequest, getFoldingModelSettings());
 
       myInitialScrollHelper.onRediff();
 
@@ -247,7 +252,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   }
 
   @NotNull
-  private Runnable applyNotification(@Nullable final JComponent notification) {
+  protected Runnable applyNotification(@Nullable final JComponent notification) {
     return () -> {
       clearDiffPresentation();
       myFoldingModel.destroy();
@@ -272,6 +277,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
       change.destroyHighlighter();
     }
     myDiffChanges.clear();
+    myNonResolvedDiffChanges.clear();
 
     for (SimpleDiffChange change : myInvalidDiffChanges) {
       change.destroyHighlighter();
@@ -313,7 +319,8 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
 
   @CalledInAwt
   protected boolean doScrollToChange(@NotNull ScrollToPolicy scrollToPolicy) {
-    SimpleDiffChange targetChange = scrollToPolicy.select(myDiffChanges);
+    SimpleDiffChange targetChange = scrollToPolicy.select(myNonResolvedDiffChanges);
+    if (targetChange == null) targetChange = scrollToPolicy.select(myDiffChanges);
     if (targetChange == null) return false;
 
     doScrollToChange(targetChange, false);
@@ -433,7 +440,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     @NotNull
     @Override
     protected List<SimpleDiffChange> getChanges() {
-      return myDiffChanges;
+      return myNonResolvedDiffChanges;
     }
 
     @NotNull
@@ -758,7 +765,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
       for (SimpleDiffChange diffChange : myDiffChanges) {
         if (!handler.process(diffChange.getStartLine(Side.LEFT), diffChange.getEndLine(Side.LEFT),
                              diffChange.getStartLine(Side.RIGHT), diffChange.getEndLine(Side.RIGHT),
-                             diffChange.getDiffType().getColor(getEditor1()))) {
+                             diffChange.getDiffType().getColor(getEditor1()), diffChange.isResolved())) {
           return;
         }
       }
@@ -780,12 +787,14 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     }
   }
 
-  private static class CompareData {
+  protected static class CompareData {
     @Nullable private final List<LineFragment> myFragments;
+    @Nullable private final BitSet myAreResolved;
     private final boolean myIsContentsEqual;
 
-    public CompareData(@Nullable List<LineFragment> fragments, boolean isContentsEqual) {
+    public CompareData(@Nullable List<LineFragment> fragments, @Nullable BitSet areResolved, boolean isContentsEqual) {
       myFragments = fragments;
+      myAreResolved = areResolved;
       myIsContentsEqual = isContentsEqual;
     }
 
@@ -796,6 +805,10 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
 
     public boolean isContentsEqual() {
       return myIsContentsEqual;
+    }
+
+    public boolean isResolved(int i) {
+      return myAreResolved != null && myAreResolved.get(i);
     }
   }
 
@@ -819,15 +832,16 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
       super(toObjectArray(editors, EditorEx.class), disposable);
     }
 
-    public void install(@Nullable final List<LineFragment> fragments,
+    public void install(@NotNull List<SimpleDiffChange> changes,
                         @NotNull UserDataHolder context,
-                        @NotNull FoldingModelSupport.Settings settings) {
-      Iterator<int[]> it = map(fragments, fragment -> new int[]{
-        fragment.getStartLine1(),
-        fragment.getEndLine1(),
-        fragment.getStartLine2(),
-        fragment.getEndLine2()
+                        @NotNull Settings settings) {
+      Iterator<int[]> it = map(changes, change -> new int[]{
+        change.getStartLine(Side.LEFT),
+        change.getEndLine(Side.LEFT),
+        change.getStartLine(Side.RIGHT),
+        change.getEndLine(Side.RIGHT),
       });
+
       install(it, context, settings);
     }
 
