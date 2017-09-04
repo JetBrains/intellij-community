@@ -310,7 +310,7 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
   }
 
   @Override
-  public final long getModificationStamp() {
+  public long getModificationStamp() {
     return getContent().getModificationStamp();
   }
 
