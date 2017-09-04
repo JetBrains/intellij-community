@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,18 +26,25 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 
 public class TypeExpression extends Expression {
-  private final LinkedHashSet<SmartTypePointer> myItems;
+  private final LinkedHashSet<SmartTypePointer> myItems = new LinkedHashSet<>();
 
-  public TypeExpression(final Project project, PsiType[] types) {
+  public TypeExpression(@NotNull Project project, @NotNull PsiType[] types) {
     final SmartTypePointerManager manager = SmartTypePointerManager.getInstance(project);
-    myItems = new LinkedHashSet<>();
-    for (final PsiType type : types) {
+    for (PsiType type : types) {
+      myItems.add(manager.createSmartTypePointer(type));
+    }
+  }
+
+  public TypeExpression(@NotNull Project project, @NotNull Iterable<PsiType> types) {
+    final SmartTypePointerManager manager = SmartTypePointerManager.getInstance(project);
+    for (PsiType type : types) {
       myItems.add(manager.createSmartTypePointer(type));
     }
   }
