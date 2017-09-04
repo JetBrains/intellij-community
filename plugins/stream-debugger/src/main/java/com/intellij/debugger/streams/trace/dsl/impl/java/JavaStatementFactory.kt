@@ -17,6 +17,7 @@ package com.intellij.debugger.streams.trace.dsl.impl.java
 
 import com.intellij.debugger.streams.trace.dsl.*
 import com.intellij.debugger.streams.trace.dsl.impl.TextExpression
+import com.intellij.debugger.streams.trace.dsl.impl.VariableImpl
 
 /**
  * @author Vitaliy.Bibaev
@@ -26,40 +27,31 @@ class JavaStatementFactory : StatementFactory {
 
   override fun createEmptyCodeBlock(): CodeBlock = JavaCodeBlock(this)
 
-  override fun createVariableDeclaration(variable: Variable, isMutable: Boolean): VariableDeclaration {
-    return JavaVariableDeclaration(variable, isMutable, Expression.Empty)
-  }
+  override fun createVariableDeclaration(variable: Variable, isMutable: Boolean): VariableDeclaration =
+    JavaVariableDeclaration(variable, isMutable, Expression.Empty)
 
-  override fun createVariableDeclaration(variable: Variable, init: Expression, isMutable: Boolean): VariableDeclaration {
-    return JavaVariableDeclaration(variable, isMutable, init)
-  }
+  override fun createVariableDeclaration(variable: Variable, init: Expression, isMutable: Boolean): VariableDeclaration =
+    JavaVariableDeclaration(variable, isMutable, init)
 
-  override fun createEmptyForLoopBody(iterateVariable: Variable): ForLoopBody {
-    return JavaForLoopBody(this, iterateVariable)
-  }
+  override fun createEmptyForLoopBody(iterateVariable: Variable): ForLoopBody = JavaForLoopBody(this, iterateVariable)
 
-  override fun createForEachLoop(iterateVariable: Variable, collection: Expression, loopBody: ForLoopBody): Statement {
-    return JavaForEachLoop(iterateVariable, collection, loopBody)
-  }
+  override fun createForEachLoop(iterateVariable: Variable, collection: Expression, loopBody: ForLoopBody): Statement =
+    JavaForEachLoop(iterateVariable, collection, loopBody)
 
   override fun createForLoop(initialization: VariableDeclaration,
                              condition: Expression,
                              afterThought: Expression,
-                             loopBody: ForLoopBody): Statement {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-  }
+                             loopBody: ForLoopBody): Statement =
+    JavaForLoop(initialization, condition, afterThought, loopBody)
 
-  override fun createEmptyLambdaBody(argName: String): LambdaBody {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-  }
+  override fun createEmptyLambdaBody(argName: String): LambdaBody = JavaLambdaBody(this, argName)
 
   override fun createLambda(argName: String, lambdaBody: LambdaBody): Lambda {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    assert(lambdaBody is JavaLambdaBody)
+    return JavaLambda(argName, lambdaBody as JavaLambdaBody)
   }
 
-  override fun createVariable(type: String, name: String): Variable {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-  }
+  override fun createVariable(type: String, name: String): Variable = VariableImpl(type, name)
 
   override fun and(left: Expression, right: Expression): Expression = TextExpression("${left.toCode()} $$ ${right.toCode()}")
 
@@ -68,7 +60,5 @@ class JavaStatementFactory : StatementFactory {
 
   override fun same(left: Expression, right: Expression): Expression = TextExpression("${left.toCode()} == ${right.toCode()}")
 
-  override fun createIfBranch(condition: Expression, thenBlock: CodeBlock): IfBranch {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-  }
+  override fun createIfBranch(condition: Expression, thenBlock: CodeBlock): IfBranch = JavaIfBranch(condition, thenBlock, this)
 }
