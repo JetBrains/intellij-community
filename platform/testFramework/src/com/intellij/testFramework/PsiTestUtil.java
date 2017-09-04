@@ -430,9 +430,13 @@ public class PsiTestUtil {
       StubTextInconsistencyException.checkStubTextConsistency(file);
     }
     catch (StubTextInconsistencyException e) {
-      Assert.assertEquals("Re-created from text:\n" + e.getStubsFromText(), "Stubs from PSI structure:\n" + e.getStubsFromPsi());
-      throw e;
+      compareStubTexts(e);
     }
+  }
+
+  public static void compareStubTexts(@NotNull StubTextInconsistencyException e) {
+    Assert.assertEquals("Re-created from text:\n" + e.getStubsFromText(), "Stubs from PSI structure:\n" + e.getStubsFromPsi());
+    throw e;
   }
 
   public static void checkPsiStructureWithCommit(@NotNull PsiFile psiFile, Consumer<PsiFile> checker) {

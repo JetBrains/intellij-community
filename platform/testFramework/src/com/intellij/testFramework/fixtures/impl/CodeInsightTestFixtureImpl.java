@@ -107,6 +107,7 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.UsageSearchContext;
+import com.intellij.psi.stubs.StubTextInconsistencyException;
 import com.intellij.psi.stubs.StubUpdatingIndex;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesProcessor;
@@ -1882,8 +1883,14 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     handler.setClearReadOnlyInTests(true);
     AtomicBoolean result = new AtomicBoolean();
     try {
-      ApplicationManager.getApplication().invokeLater(
-        () -> result.set(ShowIntentionActionsHandler.chooseActionAndInvoke(file, editor, action, actionText)));
+      ApplicationManager.getApplication().invokeLater(() -> {
+        try {
+          result.set(ShowIntentionActionsHandler.chooseActionAndInvoke(file, editor, action, actionText));
+        }
+        catch (StubTextInconsistencyException e) {
+          PsiTestUtil.compareStubTexts(e);
+        } 
+      });
       UIUtil.dispatchAllInvocationEvents();
       checkPsiTextConsistency(project, vFile);
     }
