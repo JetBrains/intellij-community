@@ -32,6 +32,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
@@ -53,7 +54,7 @@ import java.util.List;
  */
 public class ExpressionInputComponent extends EvaluationInputComponent {
   private final XDebuggerExpressionEditor myExpressionEditor;
-  private final JPanel myMainPanel = JBUI.Panels.simplePanel();
+  private final ExpressionInputForm myMainForm = new ExpressionInputForm();
 
   public ExpressionInputComponent(final @NotNull Project project,
                                   @NotNull XDebuggerEditorsProvider editorsProvider,
@@ -63,10 +64,16 @@ public class ExpressionInputComponent extends EvaluationInputComponent {
                                   @NotNull Disposable parentDisposable,
                                   boolean showHelp) {
     super(XDebuggerBundle.message("xdebugger.dialog.title.evaluate.expression"));
+    BorderLayoutPanel expressionPanel = JBUI.Panels.simplePanel();
     //myMainPanel.add(new JLabel(XDebuggerBundle.message("xdebugger.evaluate.label.expression")), BorderLayout.WEST);
     myExpressionEditor = new XDebuggerExpressionEditor(project, editorsProvider, historyId, sourcePosition,
-                                                       expression != null ? expression : XExpressionImpl.EMPTY_EXPRESSION, false, true, false);
-    myMainPanel.add(myExpressionEditor.getComponent(), BorderLayout.CENTER);
+                                                       expression != null ? expression : XExpressionImpl.EMPTY_EXPRESSION, false, true, false) {
+      @Override
+      protected JComponent decorate(JComponent component, boolean multiline, boolean showEditor) {
+        return component;
+      }
+    };
+    expressionPanel.add(myExpressionEditor.getComponent(), BorderLayout.CENTER);
     JButton historyButton = new FixedSizeButton(myExpressionEditor.getComponent());
     historyButton.setIcon(AllIcons.General.MessageHistory);
     historyButton.setToolTipText(XDebuggerBundle.message("xdebugger.evaluate.history.hint"));
@@ -76,20 +83,23 @@ public class ExpressionInputComponent extends EvaluationInputComponent {
         showHistory();
       }
     });
-    myMainPanel.add(historyButton, BorderLayout.EAST);
+    expressionPanel.add(historyButton, BorderLayout.EAST);
     final JBLabel help = new JBLabel(XDebuggerBundle.message("xdebugger.evaluate.addtowatches.hint",
                                                              KeymapUtil.getKeystrokeText(XDebuggerEvaluationDialog.ADD_WATCH_KEYSTROKE)),
                                      SwingConstants.RIGHT);
     help.setBorder(JBUI.Borders.empty(2, 0, 6, 0));
     help.setComponentStyle(UIUtil.ComponentStyle.SMALL);
     help.setFontColor(UIUtil.FontColor.BRIGHTER);
-    myMainPanel.add(help, BorderLayout.SOUTH);
+    expressionPanel.add(help, BorderLayout.SOUTH);
     help.setVisible(showHelp);
 
     if (expression != null) {
       myExpressionEditor.setExpression(expression);
     }
     myExpressionEditor.selectAll();
+
+    myMainForm.addExpressionComponent(expressionPanel);
+    myMainForm.addLanguageComponent(myExpressionEditor.getLanguageChooser());
 
     new AnAction("XEvaluateDialog.ShowHistory") {
       @Override
@@ -101,7 +111,7 @@ public class ExpressionInputComponent extends EvaluationInputComponent {
       public void update(AnActionEvent e) {
         e.getPresentation().setEnabled(LookupManager.getActiveLookup(myExpressionEditor.getEditor()) == null);
       }
-    }.registerCustomShortcutSet(CustomShortcutSet.fromString("DOWN"), myMainPanel, parentDisposable);
+    }.registerCustomShortcutSet(CustomShortcutSet.fromString("DOWN"), myMainForm.getMainPanel(), parentDisposable);
   }
 
   private void showHistory() {
@@ -133,11 +143,11 @@ public class ExpressionInputComponent extends EvaluationInputComponent {
   @Override
   public void addComponent(JPanel contentPanel, JPanel resultPanel) {
     contentPanel.add(resultPanel, BorderLayout.CENTER);
-    contentPanel.add(myMainPanel, BorderLayout.NORTH);
+    contentPanel.add(myMainForm.getMainPanel(), BorderLayout.NORTH);
   }
 
   public JPanel getMainComponent() {
-    return myMainPanel;
+    return myMainForm.getMainPanel();
   }
 
   @NotNull
