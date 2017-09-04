@@ -26,9 +26,9 @@ class JavaVariableDeclaration(override val variable: Variable,
                               override val isMutable: Boolean,
                               private val init: Expression) : VariableDeclaration {
   override fun toCode(): String {
-    val modifier = if (isMutable) "final" else ""
+    val modifier = if (!isMutable) "final " else ""
     val initCode = init.toCode()
-    val right = if (initCode.trim().isEmpty()) "" else "= $initCode"
-    return "$modifier ${variable.type} ${variable.name} $right"
+    val right = if (initCode.trim().isEmpty()) "" else " = $initCode"
+    return "$modifier${variable.type} ${variable.name}$right"
   }
 }
