@@ -215,6 +215,10 @@ public class CustomActionsSchema implements PersistentStateComponent<Element> {
     });
   }
 
+  public void clearFirstLoadState() {
+    isFirstLoadState = false;
+  }
+
   public static void setCustomizationSchemaForCurrentProjects() {
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
       IdeFrameImpl frame = WindowManagerEx.getInstanceEx().getFrame(project);
