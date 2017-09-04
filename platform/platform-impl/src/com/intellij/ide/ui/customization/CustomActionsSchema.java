@@ -30,10 +30,7 @@ import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil;
 import com.intellij.openapi.keymap.impl.ui.Group;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -41,6 +38,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.util.ImageLoader;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBImageIcon;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -68,7 +66,7 @@ public class CustomActionsSchema implements PersistentStateComponent<Element> {
 
   private final Map<String, ActionGroup> myIdToActionGroup = new HashMap<>();
 
-  private final List<Pair> myIdToNameList = new ArrayList<>();
+  private final List<Couple<String>> myIdToNameList = new ArrayList<>();
 
   @NonNls private static final String GROUP = "group";
   private static final Logger LOG = Logger.getInstance(CustomActionsSchema.class);
@@ -76,29 +74,27 @@ public class CustomActionsSchema implements PersistentStateComponent<Element> {
   private boolean isFirstLoadState = true;
 
   public CustomActionsSchema() {
-    myIdToNameList.add(new Pair(IdeActions.GROUP_MAIN_MENU, ActionsTreeUtil.MAIN_MENU_TITLE));
-    myIdToNameList.add(new Pair(IdeActions.GROUP_MAIN_TOOLBAR, ActionsTreeUtil.MAIN_TOOLBAR));
-    myIdToNameList.add(new Pair(IdeActions.GROUP_EDITOR_POPUP, ActionsTreeUtil.EDITOR_POPUP));
-    myIdToNameList.add(new Pair(IdeActions.GROUP_EDITOR_GUTTER, "Editor Gutter Popup Menu"));
-    myIdToNameList.add(new Pair(IdeActions.GROUP_EDITOR_TAB_POPUP, ActionsTreeUtil.EDITOR_TAB_POPUP));
-    myIdToNameList.add(new Pair(IdeActions.GROUP_PROJECT_VIEW_POPUP, ActionsTreeUtil.PROJECT_VIEW_POPUP));
-    myIdToNameList.add(new Pair(IdeActions.GROUP_SCOPE_VIEW_POPUP, "Scope View Popup Menu"));
-    myIdToNameList.add(new Pair(IdeActions.GROUP_FAVORITES_VIEW_POPUP, ActionsTreeUtil.FAVORITES_POPUP));
-    myIdToNameList.add(new Pair(IdeActions.GROUP_COMMANDER_POPUP, ActionsTreeUtil.COMMANDER_POPUP));
-    myIdToNameList.add(new Pair(IdeActions.GROUP_J2EE_VIEW_POPUP, ActionsTreeUtil.J2EE_POPUP));
-    myIdToNameList.add(new Pair(IdeActions.GROUP_NAVBAR_POPUP, "Navigation Bar"));
-    myIdToNameList.add(new Pair("NavBarToolBar", "Navigation Bar Toolbar"));
+    myIdToNameList.add(Couple.of(IdeActions.GROUP_MAIN_MENU, ActionsTreeUtil.MAIN_MENU_TITLE));
+    myIdToNameList.add(Couple.of(IdeActions.GROUP_MAIN_TOOLBAR, ActionsTreeUtil.MAIN_TOOLBAR));
+    myIdToNameList.add(Couple.of(IdeActions.GROUP_EDITOR_POPUP, ActionsTreeUtil.EDITOR_POPUP));
+    myIdToNameList.add(Couple.of(IdeActions.GROUP_EDITOR_GUTTER, "Editor Gutter Popup Menu"));
+    myIdToNameList.add(Couple.of(IdeActions.GROUP_EDITOR_TAB_POPUP, ActionsTreeUtil.EDITOR_TAB_POPUP));
+    myIdToNameList.add(Couple.of(IdeActions.GROUP_PROJECT_VIEW_POPUP, ActionsTreeUtil.PROJECT_VIEW_POPUP));
+    myIdToNameList.add(Couple.of(IdeActions.GROUP_SCOPE_VIEW_POPUP, "Scope View Popup Menu"));
+    myIdToNameList.add(Couple.of(IdeActions.GROUP_FAVORITES_VIEW_POPUP, ActionsTreeUtil.FAVORITES_POPUP));
+    myIdToNameList.add(Couple.of(IdeActions.GROUP_COMMANDER_POPUP, ActionsTreeUtil.COMMANDER_POPUP));
+    myIdToNameList.add(Couple.of(IdeActions.GROUP_J2EE_VIEW_POPUP, ActionsTreeUtil.J2EE_POPUP));
+    myIdToNameList.add(Couple.of(IdeActions.GROUP_NAVBAR_POPUP, "Navigation Bar"));
+    myIdToNameList.add(Couple.of("NavBarToolBar", "Navigation Bar Toolbar"));
 
+    ArrayList<Couple<String>> extList = ContainerUtil.newArrayList();
     CustomizableActionGroupProvider.CustomizableActionGroupRegistrar registrar =
-      new CustomizableActionGroupProvider.CustomizableActionGroupRegistrar() {
-        @Override
-        public void addCustomizableActionGroup(@NotNull String groupId, @NotNull String groupTitle) {
-          myIdToNameList.add(new Pair(groupId, groupTitle));
-        }
-      };
+      (groupId, groupTitle) -> extList.add(Couple.of(groupId, groupTitle));
     for (CustomizableActionGroupProvider provider : CustomizableActionGroupProvider.EP_NAME.getExtensions()) {
       provider.registerGroups(registrar);
     }
+    Collections.sort(extList, (o1, o2) -> StringUtil.naturalCompare(o1.second, o2.second));
+    myIdToNameList.addAll(extList);
   }
 
   public static CustomActionsSchema getInstance() {
@@ -253,11 +249,11 @@ public class CustomActionsSchema implements PersistentStateComponent<Element> {
   }
 
   public AnAction getCorrectedAction(String id) {
-    if (! myIdToNameList.contains(new Pair(id, ""))){
+    if (! myIdToNameList.contains(Couple.of(id, ""))){
       return ActionManager.getInstance().getAction(id);
     }
     if (myIdToActionGroup.get(id) == null) {
-      for (Pair pair : myIdToNameList) {
+      for (Couple<String> pair : myIdToNameList) {
         if (pair.first.equals(id)){
           final ActionGroup actionGroup = (ActionGroup)ActionManager.getInstance().getAction(id);
           if (actionGroup != null) { //J2EE/Commander plugin was disabled
@@ -271,7 +267,7 @@ public class CustomActionsSchema implements PersistentStateComponent<Element> {
 
   public void fillActionGroups(DefaultMutableTreeNode root){
     final ActionManager actionManager = ActionManager.getInstance();
-    for (Pair pair : myIdToNameList) {
+    for (Couple<String> pair : myIdToNameList) {
       final ActionGroup actionGroup = (ActionGroup)actionManager.getAction(pair.first);
       if (actionGroup != null) { //J2EE/Commander plugin was disabled
         root.add(ActionsTreeUtil.createNode(ActionsTreeUtil.createGroup(actionGroup, pair.second, null, null, true, null, false)));
@@ -377,26 +373,6 @@ public class CustomActionsSchema implements PersistentStateComponent<Element> {
     final IdeFrameImpl frame = WindowManagerEx.getInstanceEx().getFrame(null);
     if (frame != null) {
       frame.updateView();
-    }
-  }
-
-  private static class Pair {
-    String first;
-    String second;
-
-    public Pair(final String first, final String second) {
-      this.first = first;
-      this.second = second;
-    }
-
-
-
-    public int hashCode() {
-      return first.hashCode();
-    }
-
-    public boolean equals(Object obj) {
-      return obj instanceof Pair && first.equals(((Pair)obj).first);
     }
   }
 
