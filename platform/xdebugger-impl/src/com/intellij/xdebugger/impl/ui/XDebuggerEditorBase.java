@@ -107,6 +107,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
     myChooseFactory.setHorizontalTextPosition(SwingConstants.LEFT);
     myChooseFactory.setIconTextGap(0);
     myChooseFactory.setToolTipText(XDebuggerBundle.message("xdebugger.evaluate.language.hint"));
+    myChooseFactory.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
     myChooseFactory.setBorder(JBUI.Borders.empty(0, 3));
     new ClickListener() {
       @Override
