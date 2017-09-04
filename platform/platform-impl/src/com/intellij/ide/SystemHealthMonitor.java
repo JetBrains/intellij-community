@@ -218,7 +218,13 @@ public class SystemHealthMonitor implements ApplicationComponent {
               .show(new RelativePoint(component, new Point(rect.x + 30, rect.y + rect.height - 10)), Balloon.Position.above);
           }
 
-          Notification notification = LOG_GROUP.createNotification(message, NotificationType.WARNING);
+          Notification notification = LOG_GROUP.createNotification("", message, NotificationType.WARNING,
+            new NotificationListener.Adapter() {
+              @Override
+              protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
+                adapter.hyperlinkActivated(e);
+              }
+            });
           notification.setImportant(true);
           Notifications.Bus.notify(notification);
         });
