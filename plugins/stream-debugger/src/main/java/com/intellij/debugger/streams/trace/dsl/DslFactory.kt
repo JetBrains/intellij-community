@@ -23,6 +23,8 @@ import com.intellij.debugger.streams.trace.dsl.impl.TextExpression
 interface DslFactory {
   fun lambda(argName: String, init: LambdaBody.(Expression) -> Unit): Lambda
 
+  fun variable(type: String, name: String): Variable
+
   operator fun Variable.unaryPlus(): Variable
 
   operator fun String.unaryPlus(): TextExpression

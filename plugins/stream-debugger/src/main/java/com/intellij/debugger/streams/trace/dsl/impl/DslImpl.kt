@@ -25,6 +25,8 @@ class DslImpl(override val statementFactory: StatementFactory) : Dsl {
 
   private val myBody: CompositeCodeBlock = statementFactory.createEmptyCompositeCodeBlock()
 
+  override fun variable(type: String, name: String): Variable = statementFactory.createVariable(type, name)
+
   override fun lambda(argName: String, init: LambdaBody.(Expression) -> Unit): Lambda {
     val lambdaBody = statementFactory.createEmptyLambdaBody(argName)
     lambdaBody.init(+argName)
@@ -46,7 +48,9 @@ class DslImpl(override val statementFactory: StatementFactory) : Dsl {
   override fun ifBranch(condition: Expression, init: CodeBlock.() -> Unit): IfBranch {
     val block = statementFactory.createEmptyCodeBlock()
     block.init()
-    return statementFactory.createIfBranch(condition, block)
+    val ifBranch = statementFactory.createIfBranch(condition, block)
+    myBody.addStatement(ifBranch)
+    return ifBranch
   }
 
   override fun Variable.unaryPlus(): Variable = declare(this, false)
