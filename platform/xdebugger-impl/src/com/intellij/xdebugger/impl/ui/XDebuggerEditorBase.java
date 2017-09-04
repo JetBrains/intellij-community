@@ -107,7 +107,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
     myChooseFactory.setHorizontalTextPosition(SwingConstants.LEFT);
     myChooseFactory.setIconTextGap(0);
     myChooseFactory.setToolTipText(XDebuggerBundle.message("xdebugger.evaluate.language.hint"));
-    myChooseFactory.setBorder(JBUI.Borders.empty(0, 3, 0, 3));
+    myChooseFactory.setBorder(JBUI.Borders.empty(0, 3));
     new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent e, int clickCount) {
@@ -130,6 +130,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
     // setup expand button
     myExpandButton.setToolTipText(KeymapUtil.createTooltipText("Expand", "ExpandExpandableComponent"));
     myExpandButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+    myExpandButton.setBorder(JBUI.Borders.empty(0, 3));
     new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent e, int clickCount) {
