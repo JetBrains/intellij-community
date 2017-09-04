@@ -45,6 +45,9 @@ class DslImpl(override val statementFactory: StatementFactory) : Dsl {
     return declaration.variable
   }
 
+  override fun declaration(variable: Variable, init: Expression, isMutable: Boolean): VariableDeclaration =
+    statementFactory.createVariableDeclaration(variable, init, isMutable)
+
   override fun ifBranch(condition: Expression, init: CodeBlock.() -> Unit): IfBranch {
     val block = statementFactory.createEmptyCodeBlock()
     block.init()
