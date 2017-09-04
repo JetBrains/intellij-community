@@ -51,7 +51,7 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
   private Function<Document, Document> myDocumentProcessor = Function.identity();
 
   public XDebuggerExpressionComboBox(@NotNull Project project, @NotNull XDebuggerEditorsProvider debuggerEditorsProvider, @Nullable @NonNls String historyId,
-                                     @Nullable XSourcePosition sourcePosition, boolean showEditor) {
+                                     @Nullable XSourcePosition sourcePosition, boolean showEditor, boolean languageInside) {
     super(project, debuggerEditorsProvider, EvaluationMode.EXPRESSION, historyId, sourcePosition);
     myComboBox = new ComboBox<>(100);
     myComboBox.setFocusCycleRoot(true);
@@ -87,7 +87,7 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
     Dimension minimumSize = new Dimension(myComboBox.getMinimumSize());
     minimumSize.width = 100;
     myComboBox.setMinimumSize(minimumSize);
-    initEditor(showEditor);
+    initEditor(showEditor, languageInside);
     fillComboBox();
     myComponent = JBUI.Panels.simplePanel(myComboBox);
   }
@@ -125,8 +125,8 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
     super.setEnabled(enable);
   }
 
-  private void initEditor(boolean showMultiline) {
-    myEditor = new XDebuggerComboBoxEditor(showMultiline);
+  private void initEditor(boolean showMultiline, boolean languageInside) {
+    myEditor = new XDebuggerComboBoxEditor(showMultiline, languageInside);
     myComboBox.setEditor(myEditor);
     //myEditor.setItem(myExpression);
     myComboBox.setRenderer(new EditorComboBoxRenderer(myEditor));
@@ -193,7 +193,7 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
     private final JComponent myPanel;
     private final EditorComboBoxEditor myDelegate;
 
-    public XDebuggerComboBoxEditor(boolean showMultiline) {
+    public XDebuggerComboBoxEditor(boolean showMultiline, boolean languageInside) {
       myDelegate = new EditorComboBoxEditor(getProject(), getEditorsProvider().getFileType()) {
         @Override
         protected void onEditorCreate(EditorEx editor) {
@@ -202,7 +202,10 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
         }
       };
       myDelegate.getEditorComponent().setFontInheritedFromLAF(false);
-      JComponent comp = addChooser(myDelegate.getEditorComponent());
+      JComponent comp = myDelegate.getEditorComponent();
+      if (languageInside) {
+        comp = addChooser(comp);
+      }
       if (showMultiline) {
         comp = addExpand(comp);
       }

@@ -220,6 +220,10 @@ public abstract class XDebuggerEditorBase implements Expandable {
     return panel;
   }
 
+  public JComponent getLanguageChooser() {
+    return myChooseFactory;
+  }
+
   public void setContext(@Nullable PsiElement context) {
     if (myContext != context) {
       myContext = context;
