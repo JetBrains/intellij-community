@@ -1,4 +1,4 @@
-# IntelliJ IDEA Community Edition
+# IntelliJ IDEA Community Edition [![official JetBrains project](http://jb.gg/badges/official.svg)](https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub)
 ### Building and Running from the IDE
 To develop IntelliJ IDEA, you can use either IntelliJ IDEA Community Edition or IntelliJ IDEA Ultimate not older than 2017.2.1. To build and run the code:
 * Run **getPlugins.sh** / **getPlugins.bat** from the project root directory to check out additional modules.
