@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.InfoCommandRepositoryProvider;
@@ -26,6 +26,8 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
+
+import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 
 /**
  * @author Konstantin Kolosovsky.
@@ -73,6 +75,8 @@ public class CommandParametersResolutionModule extends BaseCommandRuntimeModule 
 
   @NotNull
   public static File getDefaultWorkingDirectory(@NotNull Project project) {
-    return !project.isDefault() ? VfsUtilCore.virtualToIoFile(project.getBaseDir()) : CommandUtil.getHomeDirectory();
+    VirtualFile baseDir = project.getBaseDir();
+
+    return baseDir != null ? virtualToIoFile(baseDir) : CommandUtil.getHomeDirectory();
   }
 }
