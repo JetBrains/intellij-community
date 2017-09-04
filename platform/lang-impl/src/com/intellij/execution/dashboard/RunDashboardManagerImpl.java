@@ -48,6 +48,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
@@ -192,8 +193,16 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
   public List<Pair<RunnerAndConfigurationSettings, RunContentDescriptor>> getRunConfigurations() {
     List<Pair<RunnerAndConfigurationSettings, RunContentDescriptor>> result = new ArrayList<>();
 
+    Predicate<? super RunnerAndConfigurationSettings> filter;
+    if (Registry.is("ide.run.dashboard.types.configuration") || ApplicationManager.getApplication().isInternal()) {
+      filter = runConfiguration -> myTypes.contains(runConfiguration.getType().getId());
+    }
+    else {
+      filter = runConfiguration -> getContributor(runConfiguration.getType()) != null;
+    }
+
     List<RunnerAndConfigurationSettings> configurations = RunManager.getInstance(myProject).getAllSettings().stream()
-      .filter(runConfiguration -> myTypes.contains(runConfiguration.getType().getId()))
+      .filter(filter)
       .collect(Collectors.toList());
 
     //noinspection ConstantConditions ???
@@ -257,18 +266,18 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
 
   @Override
   public boolean isShowInDashboard(@NotNull RunConfiguration runConfiguration) {
-    if (myTypes.contains(runConfiguration.getType().getId())) {
-      RunDashboardContributor contributor = getContributor(runConfiguration.getType());
-      return contributor == null || contributor.isShowInDashboard(runConfiguration);
+    if (Registry.is("ide.run.dashboard.types.configuration") || ApplicationManager.getApplication().isInternal()) {
+      if (myTypes.contains(runConfiguration.getType().getId())) {
+        RunDashboardContributor contributor = getContributor(runConfiguration.getType());
+        return contributor == null || contributor.isShowInDashboard(runConfiguration);
+      }
+
+      return false;
     }
     else {
-      if (!Registry.is("ide.run.dashboard.types.configuration") && !ApplicationManager.getApplication().isInternal()) {
-        RunDashboardContributor contributor = getContributor(runConfiguration.getType());
-        return contributor != null && contributor.isShowInDashboard(runConfiguration);
-      }
+      RunDashboardContributor contributor = getContributor(runConfiguration.getType());
+      return contributor != null && contributor.isShowInDashboard(runConfiguration);
     }
-
-    return false;
   }
 
   @Override
