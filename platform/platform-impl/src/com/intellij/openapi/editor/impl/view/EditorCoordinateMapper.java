@@ -349,7 +349,7 @@ class EditorCoordinateMapper {
         }
         int endColumn = fragment.getEndVisualColumn();
         if (column < endColumn || column == endColumn && !pos.leansRight) {
-          return new Point2D.Float(fragment.visualColumnToX(column), y);
+          return new Point2D.Double(fragment.visualColumnToX(column), y);
         }
         x = fragment.getEndX();
         lastColumn = endColumn;
@@ -361,7 +361,7 @@ class EditorCoordinateMapper {
       }
     }
     int additionalShift = column <= lastColumn ? 0 : (column - lastColumn) * myView.getPlainSpaceWidth();
-    return new Point2D.Float(x + additionalShift, y);
+    return new Point2D.Double(x + additionalShift, y);
   }
 
   @NotNull
@@ -395,6 +395,6 @@ class EditorCoordinateMapper {
         }
       }
     }
-    return new Point2D.Float(x, y);
+    return new Point2D.Double(x, y);
   }
 }
