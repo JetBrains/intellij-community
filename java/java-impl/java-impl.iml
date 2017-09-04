@@ -24,7 +24,6 @@
     <orderEntry type="module" module-name="xml" />
     <orderEntry type="module" module-name="java-runtime" />
     <orderEntry type="module" module-name="lang-impl" exported="" />
-    <orderEntry type="module" module-name="compiler-openapi" />
     <orderEntry type="module" module-name="jsp-openapi" />
     <orderEntry type="module" module-name="jsp-spi" />
     <orderEntry type="module" module-name="execution-openapi" />

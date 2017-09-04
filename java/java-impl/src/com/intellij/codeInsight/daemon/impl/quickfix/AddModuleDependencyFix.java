@@ -6,7 +6,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.application.options.ModuleListCellRenderer;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.actions.AddImportAction;
-import com.intellij.compiler.ModuleCompilerUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -23,6 +23,7 @@ import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.util.PointersKt;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.modules.CircularModulesUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -134,7 +135,7 @@ class AddModuleDependencyFix extends OrderEntryFix {
 
   private void addDependencyOnModule(Project project, Editor editor, @Nullable Module module) {
     if (module == null) return;
-    Couple<Module> circularModules = ModuleCompilerUtil.addingDependencyFormsCircularity(myCurrentModule, module);
+    Couple<Module> circularModules = CircularModulesUtil.addingDependencyFormsCircularity(myCurrentModule, module);
     if (circularModules == null || showCircularWarning(project, circularModules, module)) {
       JavaProjectModelModificationService.getInstance(project).addDependency(myCurrentModule, module, myScope, myExported);
 
