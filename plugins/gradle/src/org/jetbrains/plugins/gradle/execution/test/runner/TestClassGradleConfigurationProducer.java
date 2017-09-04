@@ -82,7 +82,7 @@ public class TestClassGradleConfigurationProducer extends GradleTestRunConfigura
     configuration.getSettings().setExternalProjectPath(projectPath);
     configuration.getSettings().setTaskNames(tasksToRun);
     configuration.getSettings()
-      .setScriptParameters(String.format("--tests %s", getRuntimeQualifiedName(testClass)));
+      .setScriptParameters(String.format("--tests %s*", getRuntimeQualifiedName(testClass)));
     configuration.setName(testClass.getName());
 
     JavaRunConfigurationExtensionManager.getInstance().extendCreatedConfiguration(configuration, contextLocation);
@@ -129,7 +129,7 @@ public class TestClassGradleConfigurationProducer extends GradleTestRunConfigura
     if(i == -1) return false;
 
     String str = scriptParameters.substring(i + "--tests ".length()).trim() + ' ';
-    return str.startsWith(getRuntimeQualifiedName(testClass) + ' ') && !str.contains("--tests");
+    return str.startsWith(getRuntimeQualifiedName(testClass) + "* ") && !str.contains("--tests");
   }
 
   @Override
@@ -184,7 +184,7 @@ public class TestClassGradleConfigurationProducer extends GradleTestRunConfigura
 
     StringBuilder buf = new StringBuilder();
     for (PsiClass aClass : containingClasses) {
-      buf.append(String.format("--tests %s ", getRuntimeQualifiedName(aClass)));
+      buf.append(String.format("--tests %s* ", getRuntimeQualifiedName(aClass)));
     }
 
     configuration.getSettings().setScriptParameters(buf.toString());
