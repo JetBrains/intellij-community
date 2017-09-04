@@ -17,14 +17,18 @@ package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.FocusCommand;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.Alarm;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -33,6 +37,7 @@ import java.awt.event.AWTEventListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.KeyEvent;
 import java.util.Arrays;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -47,6 +52,7 @@ public class Windows {
     private Consumer<String> floatingWindowHandler;
     private Consumer<String> windowedWindowHandler;
     private Consumer<String> deactivationShortcutHandler;
+    private ActionManager myActionManager;
 
     private ToolWindowProvider(Signal signal) {
       mySignal = signal;
@@ -74,6 +80,11 @@ public class Windows {
 
     public ToolWindowProvider handleDeactivatingShortcut(Consumer<String> deactivationShortcutHandler) {
       this.deactivationShortcutHandler = deactivationShortcutHandler;
+      return this;
+    }
+
+    public ToolWindowProvider withEscAction(ActionManager actionManager) {
+      myActionManager = actionManager;
       return this;
     }
 
