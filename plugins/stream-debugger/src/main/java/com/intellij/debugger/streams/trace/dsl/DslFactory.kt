@@ -27,8 +27,6 @@ interface DslFactory {
 
   fun declaration(variable: Variable, init: Expression, isMutable: Boolean): VariableDeclaration
 
-  operator fun Variable.unaryPlus(): Variable
-
   operator fun String.unaryPlus(): TextExpression
 
   fun and(left: Expression, right: Expression): Expression

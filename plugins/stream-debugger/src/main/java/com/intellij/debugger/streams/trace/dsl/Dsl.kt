@@ -20,6 +20,7 @@ package com.intellij.debugger.streams.trace.dsl
  */
 interface Dsl : DslFactory, CodeBlock {
   val NULL: Expression
+  val THIS: Expression
 
   val statementFactory: StatementFactory
 

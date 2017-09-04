@@ -20,10 +20,10 @@ import com.intellij.debugger.streams.trace.dsl.*
 /**
  * @author Vitaliy.Bibaev
  */
-class DslImpl(override val statementFactory: StatementFactory) : Dsl {
+class DslImpl(override val statementFactory: StatementFactory) : Dsl, CodeBlock by statementFactory.createEmptyCompositeCodeBlock() {
   override val NULL: Expression = TextExpression("null")
 
-  private val myBody: CompositeCodeBlock = statementFactory.createEmptyCompositeCodeBlock()
+  override val THIS: Expression = TextExpression("this")
 
   override fun variable(type: String, name: String): Variable = statementFactory.createVariable(type, name)
 
@@ -33,46 +33,8 @@ class DslImpl(override val statementFactory: StatementFactory) : Dsl {
     return statementFactory.createLambda(argName, lambdaBody)
   }
 
-  override fun declare(variable: Variable, isMutable: Boolean): Variable {
-    val declaration = statementFactory.createVariableDeclaration(variable, isMutable)
-    myBody.addStatement(declaration)
-    return declaration.variable
-  }
-
-  override fun declare(variable: Variable, init: Expression, isMutable: Boolean): Variable {
-    val declaration = statementFactory.createVariableDeclaration(variable, init, isMutable)
-    myBody.addStatement(declaration)
-    return declaration.variable
-  }
-
   override fun declaration(variable: Variable, init: Expression, isMutable: Boolean): VariableDeclaration =
     statementFactory.createVariableDeclaration(variable, init, isMutable)
 
-  override fun ifBranch(condition: Expression, init: CodeBlock.() -> Unit): IfBranch {
-    val block = statementFactory.createEmptyCodeBlock()
-    block.init()
-    val ifBranch = statementFactory.createIfBranch(condition, block)
-    myBody.addStatement(ifBranch)
-    return ifBranch
-  }
-
-  override fun Variable.unaryPlus(): Variable = declare(this, false)
-
   override fun String.unaryPlus(): TextExpression = TextExpression(this)
-
-  override fun call(receiver: Expression, methodName: String, vararg args: Expression): Expression {
-    val call = receiver.call(methodName, *args)
-    myBody.addStatement(call)
-    return call
-  }
-
-  override fun forEachLoop(iterateVariable: Variable, collection: Expression, init: ForLoopBody.() -> Unit) {
-    myBody.forEachLoop(iterateVariable, collection, init)
-  }
-
-  override fun forLoop(initialization: VariableDeclaration, condition: Expression, afterThought: Expression, init: ForLoopBody.() -> Unit) {
-    myBody.forLoop(initialization, condition, afterThought, init)
-  }
-
-  override fun toCode(): String = myBody.toCode()
 }

@@ -30,4 +30,8 @@ interface CodeBlock : Statement {
   fun ifBranch(condition: Expression, init: CodeBlock.() -> Unit): IfBranch
 
   fun call(receiver: Expression, methodName: String, vararg args: Expression): Expression
+
+  operator fun Variable.unaryPlus(): Variable
+
+  operator fun Expression.unaryPlus()
 }

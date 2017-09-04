@@ -21,9 +21,10 @@ import com.intellij.debugger.streams.trace.dsl.Expression
  * @author Vitaliy.Bibaev
  */
 class TextExpression(private val myText: String) : Expression {
-  override fun call(callName: String, vararg args: Expression): Expression {
-    return TextExpression("$myText.$callName${args.joinToString(", ", "(", ")")}")
-  }
+  override fun call(callName: String, vararg args: Expression): Expression =
+    TextExpression("$myText.$callName${args.joinToString(", ", "(", ")")}")
+
+  override fun toString(): String = toCode()
 
   override fun toCode(): String = myText
 }

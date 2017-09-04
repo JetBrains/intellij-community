@@ -24,4 +24,6 @@ import com.intellij.debugger.streams.trace.dsl.Variable
 class VariableImpl(override val type: String, override val name: String) : Variable {
   override fun call(callName: String, vararg args: Expression): Expression =
     TextExpression("$name.(${args.joinToString(", ") { it.toCode() }})")
+
+  override fun toString(): String = toCode()
 }
