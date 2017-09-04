@@ -93,18 +93,15 @@ public class PySciProjectComponent extends AbstractProjectComponent implements P
     }
     else if (!myState.PY_SCI_VIEW_SUGGESTED) {
       StartupManager.getInstance(myProject).runWhenProjectIsInitialized(() -> {
-        final PsiDirectory directory = PsiManager.getInstance(myProject).findDirectory(baseDir);
-        if (directory != null) {
-          final Module module = ModuleUtilCore.findModuleForPsiElement(directory);
-          if (module != null) {
-            final Sdk sdk = PythonSdkType.findPythonSdk(module);
-            if (sdk != null) {
-              final List<PyPackage> packages = PyPackageUtil.refreshAndGetPackagesModally(sdk);
-              final PyPackage numpy = PyPackageUtil.findPackage(packages, "numpy");
+        final Module module = ModuleUtilCore.findModuleForFile(baseDir, myProject);
+        if (module != null) {
+          final Sdk sdk = PythonSdkType.findPythonSdk(module);
+          if (sdk != null) {
+            final List<PyPackage> packages = PyPackageUtil.refreshAndGetPackagesModally(sdk);
+            final PyPackage numpy = PyPackageUtil.findPackage(packages, "numpy");
 
-              if (numpy != null) {
-                showInspectionAdvertisement(myProject);
-              }
+            if (numpy != null) {
+              showInspectionAdvertisement(myProject);
             }
           }
         }
