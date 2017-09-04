@@ -193,9 +193,11 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
   @SuppressWarnings("FieldCanBeLocal")
   private static String BLANK_LINES_SETTINGS_PREVIEW = "import os\n" +
                                                        "class C(object):\n" +
+                                                       "    import sys\n" +
                                                        "    x = 1\n" +
                                                        "    def foo(self):\n" +
-                                                       "        pass";
+                                                       "        import platform\n" +
+                                                       "        print(platform.processor())";
   @SuppressWarnings("FieldCanBeLocal")
   private static String WRAP_SETTINGS_PREVIEW = "from module import foo, bar, baz, quux\n" +
                                                 "\n" +
