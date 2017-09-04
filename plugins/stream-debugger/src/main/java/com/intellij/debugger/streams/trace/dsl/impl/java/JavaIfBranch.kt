@@ -25,16 +25,16 @@ import com.intellij.debugger.streams.trace.dsl.impl.common.IfBranchBase
 class JavaIfBranch(condition: Expression, codeBlock: CodeBlock, statementFactory: JavaStatementFactory)
   : IfBranchBase(condition, codeBlock, statementFactory) {
   override fun toCode(indent: Int): String {
-    var elseCode = ""
     val elseBlockVar = elseBlock
-    if (elseBlockVar != null) {
-      elseCode = "else { \n" +
-                 elseBlockVar.toCode(indent + 1) +
+    val ifThen = "if(${condition.toCode(0)}) {\n" +
+                 thenBlock.toCode(indent + 1) +
                  "}".withIndent(indent)
+    if (elseBlockVar != null) {
+      return ifThen + " else { \n" +
+             elseBlockVar.toCode(indent + 1) +
+             "}".withIndent(indent)
     }
 
-    return "if(${condition.toCode(0)}) {\n".withIndent(indent) +
-           thenBlock.toCode(indent + 1) +
-           "} $elseCode".withIndent(indent)
+    return ifThen
   }
 }

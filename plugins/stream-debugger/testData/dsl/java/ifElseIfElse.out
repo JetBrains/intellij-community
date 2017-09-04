@@ -1,7 +1,7 @@
 if(false) {
   this.success();
 } else { 
-    if(true) {
+  if(true) {
     this.failSuccess();
   } else { 
     this.failFail();
