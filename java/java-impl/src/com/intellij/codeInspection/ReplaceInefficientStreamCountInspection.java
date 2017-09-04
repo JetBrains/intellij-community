@@ -211,6 +211,7 @@ public class ReplaceInefficientStreamCountInspection extends BaseJavaBatchLocalI
       if(filterQualifier == null) return;
       String base = filterQualifier.getText();
       CommentTracker ct = new CommentTracker();
+      ct.markUnchanged(filterQualifier);
       ct.replaceAndRestoreComments(comparison, base + ".anyMatch(" + filterText + ")");
     }
 

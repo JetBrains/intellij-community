@@ -1233,7 +1233,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
   }
 
   /**
-   * for(int i = 0;; i + 1) // i + 1   - expression
+   * for(int i = 0;; i = i + 1) // i + 1   - expression
    */
   static class InfiniteStreamSource extends StreamSource {
     private final PsiExpression myInitializer;
@@ -1250,7 +1250,23 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
 
     @Override
     String createReplacement() {
-      String lambda = LambdaUtil.createLambda(myVariable, myExpression);
+      boolean positive = false;
+      boolean incrementOrDecrement = false;
+      if (myExpression instanceof PsiPrefixExpression) {
+        IElementType tokenType = ((PsiPrefixExpression)myExpression).getOperationTokenType();
+        positive = tokenType == JavaTokenType.PLUSPLUS;
+        incrementOrDecrement = true;
+      }
+      else if (myExpression instanceof PsiPostfixExpression) {
+        IElementType tokenType = ((PsiPostfixExpression)myExpression).getOperationTokenType();
+        positive = tokenType == JavaTokenType.PLUSPLUS;
+        incrementOrDecrement = true;
+      }
+      String lambda = incrementOrDecrement
+               ? positive
+                 ? myVariable.getName() + "->" + myVariable.getName() + "+1"
+                 : myVariable.getName() + "->" + myVariable.getName() + "-1"
+               : LambdaUtil.createLambda(myVariable, myExpression);
       return CommonClassNames.JAVA_UTIL_STREAM_INT_STREAM + ".iterate(" + myInitializer.getText() + "," + lambda + ")";
     }
 
@@ -1288,14 +1304,37 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       if (initializer == null) return null;
       PsiStatement update = forStatement.getUpdate();
       if (update == null) return null;
-      PsiExpressionStatement updateStmt = tryCast(update, PsiExpressionStatement.class);
-      if (!VariableAccessUtils.variableIsUsed(variable, updateStmt)) return null;
-      ReferencesSearch.search(variable, new LocalSearchScope(forStatement))
-        .forEach(reference -> PsiTreeUtil.isAncestor(variable, reference.getElement(), false) ||
-                              PsiTreeUtil.isAncestor(update, reference.getElement(), false));
-      ReferencesSearch.search(variable, new LocalSearchScope(update))
-        .forEach(reference -> reference.getElement() == variable);
-      return new InfiniteStreamSource(forStatement, variable, updateStmt.getExpression(), initializer);
+      PsiExpressionStatement exprStmt = tryCast(update, PsiExpressionStatement.class);
+      if (exprStmt == null) return null;
+      PsiExpression expression = exprStmt.getExpression();
+      final PsiExpression updateExpr;
+      if (expression instanceof PsiAssignmentExpression) {
+        PsiAssignmentExpression assignment = (PsiAssignmentExpression)expression;
+        updateExpr = assignment.getRExpression();
+        if (!ExpressionUtils.isReferenceTo(assignment.getLExpression(), variable)) return null;
+        if (updateExpr == null) return null;
+        if (!VariableAccessUtils.variableIsUsed(variable, updateExpr)) return null;
+      }
+      else if (expression instanceof PsiPrefixExpression) {
+        IElementType tokenType = ((PsiPrefixExpression)expression).getOperationTokenType();
+        if (tokenType != JavaTokenType.PLUSPLUS && tokenType != JavaTokenType.MINUSMINUS) return null;
+        updateExpr = expression;
+      }
+      else if (expression instanceof PsiPostfixExpression) {
+        IElementType tokenType = ((PsiPostfixExpression)expression).getOperationTokenType();
+        if (tokenType != JavaTokenType.PLUSPLUS && tokenType != JavaTokenType.MINUSMINUS) return null;
+        updateExpr = expression;
+      }
+      else {
+        return null;
+      }
+
+      if (!ReferencesSearch.search(variable, new LocalSearchScope(update))
+        .forEach(reference -> reference.getElement() instanceof PsiExpression &&
+                              ExpressionUtils.isReferenceTo((PsiExpression)reference.getElement(), variable))) {
+        return null;
+      }
+      return new InfiniteStreamSource(forStatement, variable, updateExpr, initializer);
     }
   }
 }

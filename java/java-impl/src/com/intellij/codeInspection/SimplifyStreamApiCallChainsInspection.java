@@ -1530,8 +1530,7 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
       if(maybeMap == null) return null;
       Project project = streamCall.getProject();
       PsiElement result = new CommentTracker().replaceAndRestoreComments(maybeMap, myReplacement);
-      JavaCodeStyleManager.getInstance(project).shortenClassReferences(result);
-      return result;
+      return JavaCodeStyleManager.getInstance(project).shortenClassReferences(result);
     }
 
     @NotNull
@@ -1554,13 +1553,13 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
         PsiParameter lambdaVar = parameters[0];
         PsiExpression body = tryCast(lambda.getBody(), PsiExpression.class);
         if (body == null || body.getType() == null) return null;
-        String utilClass = getUtilClassName(maybeMap);
+        String streamClass = getStreamClassName(maybeMap);
         if (VariableAccessUtils.variableIsUsed(lambdaVar, body)) return null;
-        return new NCopiesToGenerateStreamFix(utilClass + ".generate(()->" + body.getText() + ").limit(" + count.getText() + ")");
+        return new NCopiesToGenerateStreamFix(streamClass + ".generate(()->" + body.getText() + ").limit(" + count.getText() + ")");
       });
     }
 
-    private static String getUtilClassName(@NotNull PsiMethodCallExpression call) {
+    private static String getStreamClassName(@NotNull PsiMethodCallExpression call) {
       String name = MethodCallUtils.getMethodName(call);
       if (name == null) return CommonClassNames.JAVA_UTIL_STREAM_STREAM;
       switch (name) {
