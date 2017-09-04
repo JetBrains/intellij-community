@@ -68,23 +68,7 @@ class JavaStatementFactory : StatementFactory {
 
   override fun same(left: Expression, right: Expression): Expression = TextExpression("${left.toCode()} == ${right.toCode()}")
 
-  override fun createIfBranch(condition: Expression, codeBlock: CodeBlock): IfBranch {
+  override fun createIfBranch(condition: Expression, thenBlock: CodeBlock): IfBranch {
     TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-  }
-
-  override fun createElseStatement(block: CodeBlock): Statement {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-  }
-
-  override fun createElseIfStatement(condition: Expression, block: CodeBlock): Statement {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-  }
-
-  private inner class JavaForEachLoop(iterateVariable: Variable,
-                                      collection: Expression,
-                                      loopBody: ForLoopBody) : Statement {
-    override fun toCode(): String {
-      TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
   }
 }

@@ -47,9 +47,5 @@ interface StatementFactory {
 
   fun same(left: Expression, right: Expression): Expression
 
-  fun createIfBranch(condition: Expression, codeBlock: CodeBlock): IfBranch
-
-  fun createElseStatement(block: CodeBlock): Statement
-
-  fun createElseIfStatement(condition: Expression, block: CodeBlock): Statement
+  fun createIfBranch(condition: Expression, thenBlock: CodeBlock): IfBranch
 }

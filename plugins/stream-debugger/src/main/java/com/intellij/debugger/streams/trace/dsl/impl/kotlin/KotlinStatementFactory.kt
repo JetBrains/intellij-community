@@ -29,7 +29,7 @@ class KotlinStatementFactory : StatementFactory {
     TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
   }
 
-  override fun createVariableDeclaration(variable: Variable, mutable: Boolean): VariableDeclaration {
+  override fun createVariableDeclaration(variable: Variable, isMutable: Boolean): VariableDeclaration {
     TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
   }
 
@@ -76,15 +76,7 @@ class KotlinStatementFactory : StatementFactory {
     TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
   }
 
-  override fun createIfBranch(condition: Expression, codeBlock: CodeBlock): IfBranch {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-  }
-
-  override fun createElseStatement(block: CodeBlock): Statement {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-  }
-
-  override fun createElseIfStatement(condition: Expression, block: CodeBlock): Statement {
+  override fun createIfBranch(condition: Expression, thenBlock: CodeBlock): IfBranch {
     TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
   }
 }
