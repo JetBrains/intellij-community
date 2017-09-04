@@ -46,7 +46,7 @@ class EditorSettingsStatisticsCollector extends UsagesCollector {
 
   @NotNull
   @Override
-  public Set<UsageDescriptor> getUsages() throws CollectUsagesException {
+  public Set<UsageDescriptor> getUsages() {
     Set<UsageDescriptor> set = new HashSet<>();
     
     EditorSettingsExternalizable es = EditorSettingsExternalizable.getInstance();
@@ -121,6 +121,7 @@ class EditorSettingsStatisticsCollector extends UsagesCollector {
     addBoolIfDiffers(set, cis, cisDefault, s -> s.HIGHLIGHT_SCOPE, "scopeHighlight");
     addBoolIfDiffers(set, cis, cisDefault, s -> s.HIGHLIGHT_IDENTIFIER_UNDER_CARET, "identifierUnderCaretHighlight");
     addBoolIfDiffers(set, cis, cisDefault, s -> s.ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY, "autoAddImports");
+    addBoolIfDiffers(set, cis, cisDefault, s -> s.SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION, "completionHints");
     
     return set;
   }
