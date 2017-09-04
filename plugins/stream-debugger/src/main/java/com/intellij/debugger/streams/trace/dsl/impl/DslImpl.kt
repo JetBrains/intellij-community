@@ -44,29 +44,9 @@ class DslImpl(override val statementFactory: StatementFactory) : Dsl {
   }
 
   override fun ifBranch(condition: Expression, init: CodeBlock.() -> Unit): IfBranch {
-    val codeBlock = statementFactory.createEmptyCodeBlock()
-    codeBlock.init()
-    val ifStatement = statementFactory.createIfBranch(condition, codeBlock)
-    myBody.addStatement(ifStatement)
-    return object : IfBranch {
-      override fun elseBranch(init: CodeBlock.() -> Unit) {
-        val block = statementFactory.createEmptyCodeBlock()
-        block.init()
-        myBody.addStatement(statementFactory.createElseStatement(block))
-      }
-
-      override fun elseIfBranch(condition: Expression, init: CodeBlock.() -> Unit): IfBranch {
-        val block = statementFactory.createEmptyCodeBlock()
-        block.init()
-        val elseIfStatement = statementFactory.createElseIfStatement(condition, block)
-        myBody.addStatement(elseIfStatement)
-        // TODO: possible bug - wrong toCode implementation
-        return this
-      }
-
-      override fun toCode(): String = ifStatement.toCode()
-
-    }
+    val block = statementFactory.createEmptyCodeBlock()
+    block.init()
+    return statementFactory.createIfBranch(condition, block)
   }
 
   override fun Variable.unaryPlus(): Variable = declare(this, false)
