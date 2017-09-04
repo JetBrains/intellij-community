@@ -56,12 +56,7 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
   protected boolean isAvailableImpl(int offset) {
     if (!super.isAvailableImpl(offset)) return false;
     if(myReferenceExpression.isQualified()) return false;
-    PsiElement scope = PsiTreeUtil.getParentOfType(myReferenceExpression, PsiModifierListOwner.class);
-    if (scope instanceof PsiAnonymousClass) {
-      scope = PsiTreeUtil.getParentOfType(scope, PsiModifierListOwner.class, true);
-    }
-    return scope instanceof PsiMethod || scope instanceof PsiClassInitializer ||
-           scope instanceof PsiLocalVariable;
+    return PsiTreeUtil.getParentOfType(myReferenceExpression, PsiCodeBlock.class) != null;
   }
 
   @Override
