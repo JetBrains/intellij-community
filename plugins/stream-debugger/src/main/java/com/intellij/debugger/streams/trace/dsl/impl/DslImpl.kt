@@ -53,7 +53,11 @@ class DslImpl(override val statementFactory: StatementFactory) : Dsl {
 
   override fun String.unaryPlus(): TextExpression = TextExpression(this)
 
-  override fun call(receiver: Expression, methodName: String, vararg args: Expression): Expression = receiver.call(methodName, *args)
+  override fun call(receiver: Expression, methodName: String, vararg args: Expression): Expression {
+    val call = receiver.call(methodName, *args)
+    myBody.addStatement(call)
+    return call
+  }
 
   override fun forEachLoop(iterateVariable: Variable, collection: Expression, init: ForLoopBody.() -> Unit) {
     myBody.forEachLoop(iterateVariable, collection, init)
