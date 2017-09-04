@@ -859,7 +859,8 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       reportActionError(pluginId, "unexpected name of element \"" + element.getName() + "\"");
       return;
     }
-    Separator separator = Separator.getInstance();
+    String text = element.getAttributeValue(TEXT_ATTR_NAME);
+    Separator separator = text != null ? new Separator(text) : Separator.getInstance();
     if (parentGroup != null) {
       parentGroup.add(separator, this);
     }

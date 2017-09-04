@@ -17,6 +17,7 @@
 package org.jetbrains.idea.devkit.dom;
 
 import com.intellij.ide.presentation.Presentation;
+import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.psi.PsiClass;
 import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NotNull;
@@ -93,7 +94,7 @@ public interface Group extends Actions, ActionOrGroup {
 	 * @return the value of the separator child.
 	 */
 	@NotNull
-	List<GenericDomValue<String>> getSeparators();
+	List<Separator> getSeparators();
 
 
 	/**
