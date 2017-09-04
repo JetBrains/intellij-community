@@ -141,7 +141,7 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
 
   @Override
   @NotNull
-  public final VirtualFile getVirtualFile() {
+  public VirtualFile getVirtualFile() {
     return myVirtualFile;
   }
 
