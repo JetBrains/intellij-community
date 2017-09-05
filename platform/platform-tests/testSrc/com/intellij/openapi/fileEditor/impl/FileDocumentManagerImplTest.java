@@ -663,8 +663,8 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
     List<Future> futures = new ArrayList<>();
     for (VirtualFile file : files) {
       assertNull(fdm.getCachedDocument(file));
-      for (int i = 0; i < 30; i++) {
-        futures.add(ApplicationManager.getApplication().executeOnPooledThread((Runnable)() -> ReadAction.run(() -> {
+      for (int i = 0; i < 2; i++) {
+        futures.add(ApplicationManager.getApplication().executeOnPooledThread(() -> ReadAction.run(() -> {
           Document document = fdm.getDocument(file);
           assertEquals(file, fdm.getFile(document));
         })));

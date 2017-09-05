@@ -598,7 +598,7 @@ public class LaterInvocatorTest extends PlatformTestCase {
   public void testDispatchInvocationEventsVsInvokeLaterFromBgThreadRace() {
     Application app = ApplicationManager.getApplication();
     app.invokeAndWait(() -> {
-      for (int i = 0; i < 1000; i++) {
+      for (int i = 0; i < 20; i++) {
         AtomicBoolean executed = new AtomicBoolean();
         app.executeOnPooledThread(() -> app.invokeLater(EmptyRunnable.INSTANCE));
         app.invokeLater(() -> executed.set(true));
