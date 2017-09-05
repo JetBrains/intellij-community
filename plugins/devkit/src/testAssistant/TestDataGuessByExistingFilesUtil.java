@@ -219,7 +219,6 @@ public class TestDataGuessByExistingFilesUtil {
         if (moreRelevantPath(current, previousDescriptor, psiClass)) {
           descriptorsByFileNames.put(name, current);
         }
-        break;
       }
     }
     return new TestDataDescriptor(descriptorsByFileNames.values(), possibleFileName);

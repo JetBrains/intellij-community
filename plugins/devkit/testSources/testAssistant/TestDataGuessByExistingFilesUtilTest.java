@@ -20,6 +20,7 @@ import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.PsiTestUtil;
@@ -61,6 +62,17 @@ public class TestDataGuessByExistingFilesUtilTest extends TestDataPathTestCase {
   public void testGetTestName() {
     String result = TestDataGuessByExistingFilesUtil.getTestName("testTestName");
     assertEquals("TestName", result);
+  }
+
+  public void testMoreRelevantFiles() {
+    PsiMethod testMethod = getTestMethod("TestMoreRelevant.java",
+                                         "Test/testdata_file.txt", "TestMore/testdata_file.txt", "TestMoreRelevant/testdata_file.txt");
+    PsiClass testClass = (PsiClass)testMethod.getParent();
+
+    List<String> result = TestDataGuessByExistingFilesUtil.suggestTestDataFiles("testdata_file", null, testClass);
+    assertEquals(result.toString(), 1, result.size());
+    String resultPath = result.get(0);
+    assertTrue(resultPath, resultPath.endsWith("TestMoreRelevant/testdata_file.txt"));
   }
 
   public void testCollectTestDataByExistingFilesBeforeAndAfter() {
