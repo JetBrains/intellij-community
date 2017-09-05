@@ -61,7 +61,7 @@ interface Breakpoint {
    * Be aware! V8 doesn't provide reliable debugger API, so, sometimes actual locations is empty - in this case this methods return "true".
    * V8 debugger doesn't report about resolved breakpoint if it is happened after initial breakpoint set. So, you cannot trust "actual locations".
    */
-  open fun isActualLineCorrect() = true
+  fun isActualLineCorrect() = true
 }
 
 /**
