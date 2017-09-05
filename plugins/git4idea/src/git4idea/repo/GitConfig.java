@@ -376,7 +376,7 @@ public class GitConfig {
 
     @NotNull
     private Collection<String> getPushUrls() {
-      return nonNullCollection(myRemoteBean.getPushUrl());
+      return nonNullCollection(myRemoteBean.getPushurl());
     }
 
     @NotNull
@@ -396,7 +396,7 @@ public class GitConfig {
     @Nullable String[] getFetch();
     @Nullable String[] getPush();
     @Nullable String[] getUrl();
-    @Nullable String[] getPushUrl();
+    @Nullable String[] getPushurl();
   }
 
   private static class Url {
@@ -411,19 +411,19 @@ public class GitConfig {
     @Nullable
     // null means to entry, i.e. nothing to substitute. Empty string means substituting everything
     public String getInsteadOf() {
-      return myUrlBean.getInsteadOf();
+      return myUrlBean.getInsteadof();
     }
 
     @Nullable
     // null means to entry, i.e. nothing to substitute. Empty string means substituting everything
     public String getPushInsteadOf() {
-      return myUrlBean.getPushInsteadOf();
+      return myUrlBean.getPushinsteadof();
     }
   }
 
   private interface UrlBean {
-    @Nullable String getInsteadOf();
-    @Nullable String getPushInsteadOf();
+    @Nullable String getInsteadof();
+    @Nullable String getPushinsteadof();
   }
   
   private static class BranchConfig {

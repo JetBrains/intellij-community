@@ -34,7 +34,10 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
+import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 import static git4idea.test.GitExecutor.git;
+import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
 
 public class GitConfigTest extends GitPlatformTest {
 
@@ -87,8 +90,35 @@ public class GitConfigTest extends GitPlatformTest {
     assertSingleRemoteInConfig();
   }
 
+  public void test_config_options_are_case_insensitive() {
+    createRepository();
+    addRemote("git@github.com:foo/bar.git");
+    String pushUrl = "git@github.com:foo/push.git";
+    git("config remote.origin.pushurl " + pushUrl);
+
+    GitConfig config = readConfig();
+    GitRemote remote = getFirstItem(config.parseRemotes());
+    assertNotNull(remote);
+    assertSameElements("pushurl parsed incorrectly", remote.getPushUrls(), singletonList(pushUrl));
+  }
+
+  public void test_config_values_are_case_sensitive() {
+    createRepository();
+    String expectedName = "ORIGIN";
+    addRemote(expectedName, "git@github.com:foo/bar.git");
+
+    GitConfig config = readConfig();
+    GitRemote remote = getFirstItem(config.parseRemotes());
+    assertNotNull(remote);
+    assertEquals("Remote name is incorrect", expectedName, remote.getName());
+  }
+
   private static void addRemote(@NotNull String url) {
-    git("remote add origin " + url);
+    addRemote("origin", url);
+  }
+
+  private static void addRemote(@NotNull String name, @NotNull String url) {
+    git(String.format("remote add %s %s", name, url));
   }
 
   private void createRepository() {
@@ -97,15 +127,20 @@ public class GitConfigTest extends GitPlatformTest {
 
   private static void assertSingleRemote(@NotNull Collection<GitRemote> remotes) {
     assertEquals(1, remotes.size());
-    GitRemote remote = ContainerUtil.getFirstItem(remotes);
+    GitRemote remote = getFirstItem(remotes);
     assertNotNull(remote);
     assertEquals("origin", remote.getName());
     assertEquals("git@github.com:foo/bar.git", remote.getFirstUrl());
   }
 
-  private void assertSingleRemoteInConfig() {
+  @NotNull
+  private GitConfig readConfig() {
     File gitDir = new File(myProjectPath, ".git");
-    Collection<GitRemote> remotes = GitConfig.read(new File(gitDir, "config")).parseRemotes();
+    return GitConfig.read(new File(gitDir, "config"));
+  }
+
+  private void assertSingleRemoteInConfig() {
+    Collection<GitRemote> remotes = readConfig().parseRemotes();
     assertSingleRemote(remotes);
   }
 
@@ -233,11 +268,11 @@ public class GitConfigTest extends GitPlatformTest {
     if (StringUtil.isEmptyOrSpaces(line)) {
       return Collections.emptyList();
     }
-    return Arrays.asList(line.split(" "));
+    return asList(line.split(" "));
   }
 
   private static List<String> getSingletonOrEmpty(String[] array, int i) {
-    return array.length < i + 1 ? Collections.emptyList() : Collections.singletonList(array[i]);
+    return array.length < i + 1 ? Collections.emptyList() : singletonList(array[i]);
   }
 
   private static class TestSpec {
