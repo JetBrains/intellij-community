@@ -118,7 +118,7 @@ private fun Component.findText(): String? {
         .filter { !it.getText().isNullOrEmpty() }
         .map { it.getText()!! }
     )
-    return resultList.filter { !it.isNullOrEmpty() }.firstOrNull()
+    return resultList.firstOrNull { !it.isEmpty() }
   }
   catch (ignored: ComponentLookupException) {
     return null

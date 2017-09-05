@@ -447,11 +447,20 @@ open class GuiTestCase : GuiTestBase() {
   //*********FIXTURES METHODS FOR IDEFRAME WITHOUT ROBOT and TARGET
 
   /**
-   * Context function for IdeFrame: get current editor and creates EditorFixture instance as receiver object. Code block after
+   * Context function for IdeFrame: get current editor and create EditorFixture instance as a receiver object. Code block after
    * it call methods on the receiver object (EditorFixture instance).
    */
   fun IdeFrameFixture.editor(func: EditorFixture.() -> Unit) {
     func(this.editor)
+  }
+
+  /**
+   * Context function for IdeFrame: get the tab with specific opened file and create EditorFixture instance as a receiver object. Code block after
+   * it call methods on the receiver object (EditorFixture instance).
+   */
+  fun IdeFrameFixture.editor(tabName: String, func: EditorFixture.() -> Unit) {
+    val editorFixture = this.editor.selectTab(tabName)
+    func(editorFixture)
   }
 
   /**
@@ -720,7 +729,7 @@ open class GuiTestCase : GuiTestBase() {
     return GuiTestUtil.waitUntilFound(myRobot, container, typeMatcher(componentClass) { matcher(it) }, timeout.toFestTimeout())
   }
 
-  protected fun <Fixture, ComponentType : Component> waitUntilFoundFixture(container: Container?,
+  fun <Fixture, ComponentType : Component> waitUntilFoundFixture(container: Container?,
                                                                            componentClass: Class<ComponentType>,
                                                                            timeout: Long,
                                                                            matcher: (ComponentType) -> Pair<Boolean, Fixture>): Fixture {
