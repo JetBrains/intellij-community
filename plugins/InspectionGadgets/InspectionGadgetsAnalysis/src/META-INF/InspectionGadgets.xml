@@ -1016,10 +1016,6 @@
     <localInspection groupPath="Java" language="JAVA" shortName="StaticImport" bundle="com.siyeh.InspectionGadgetsBundle" key="static.import.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.imports" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.imports.StaticImportInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="UnusedImport" bundle="com.siyeh.InspectionGadgetsBundle" key="unused.import.display.name" runForWholeFile="true"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.imports" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.imports.UnusedImportInspection"/>
-
     <!--group.names.inheritance.issues-->
     <localInspection groupPath="Java" language="JAVA" shortName="AbstractClassExtendsConcreteClass" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="abstract.class.extends.concrete.class.display.name" groupBundle="messages.InspectionsBundle"

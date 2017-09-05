@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>X.java</file>
+    <line>1</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused import</problem_class>
+    <description>Unused import &lt;code&gt;import java.util.ArrayList;/**/&lt;/code&gt; #loc</description>
+  </problem>
+</problems>

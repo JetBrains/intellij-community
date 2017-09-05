@@ -19,7 +19,6 @@ import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
-import com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
@@ -29,6 +28,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
 import org.jetbrains.annotations.NotNull;
 
 public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
@@ -38,12 +38,13 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     enableInspectionTool(new UnusedDeclarationInspection());
+    enableInspectionTool(new UnusedImportInspection());
   }
 
   @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{new UncheckedWarningLocalInspection(), new UnusedImportLocalInspection()};
+    return new LocalInspectionTool[]{new UncheckedWarningLocalInspection()};
   }
 
   @Override

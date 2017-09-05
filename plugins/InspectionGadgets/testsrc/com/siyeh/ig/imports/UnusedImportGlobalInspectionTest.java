@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,30 +15,35 @@
  */
 package com.siyeh.ig.imports;
 
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.intellij.analysis.AnalysisScope;
+import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
+import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.testFramework.InspectionTestUtil;
+import com.intellij.testFramework.InspectionsKt;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.impl.GlobalInspectionContextForTests;
 
-public class UnusedImportInspectionTest extends LightInspectionTestCase {
+import java.io.File;
+import java.util.Collections;
+
+public class UnusedImportGlobalInspectionTest extends LightCodeInsightFixtureTestCase {
+  @Override
+  protected String getTestDataPath() {
+    return PathManagerEx.getCommunityHomePath() + "/plugins/InspectionGadgets/test/com/siyeh/igtest/imports/globalInspection";
+  }
 
   public void testInnerClassImport() {
-    addEnvironmentClass("package pkg;" +
-                        "interface Action {" +
-                        "    interface SuperInnerInterface {}" +
-                        "}");
-    addEnvironmentClass("package pkg;" +
-                        "class ConceteAction implements Action {" +
-                        "    interface SubInnerInterface {}" +
-                        "}");
-    doTest("package pkg;" +
-           "import pkg.Action.SuperInnerInterface;" +
-           "import pkg.ConceteAction.*;" +
-           "class Main {" +
-           "    SubInnerInterface innerClass;" +
-           "    void k()  {" +
-           "        new SuperInnerInterface() { };" +
-           "    }" +
-           "}");
-    doTest("package pkg;" +
+    myFixture.addClass("package pkg;" +
+                       "interface Action {" +
+                       "    interface SuperInnerInterface {}" +
+                       "}");
+    myFixture.addClass("package pkg;" +
+                       "class ConceteAction implements Action {" +
+                       "    interface SubInnerInterface {}" +
+                       "}");
+     doTest("package pkg;" +
            "/*Unused import 'import pkg.Action.SuperInnerInterface;'*/import pkg.Action.SuperInnerInterface;/**/" +
            "import static pkg.ConceteAction.*;" +
            "class Main {" +
@@ -50,10 +55,10 @@ public class UnusedImportInspectionTest extends LightInspectionTestCase {
   }
 
   public void testShadowedImports() {
-    addEnvironmentClass("package java.util; public class HashTable {}");
-    addEnvironmentClass("package java.util; public class List {}");
-    addEnvironmentClass("package java.awt; public class List { public static final int ABORT = 1; }");
-    addEnvironmentClass("package java.awt; public class Component {}");
+    myFixture.addClass("package java.util; public class HashTable {}");
+    myFixture.addClass("package java.util; public class List {}");
+    myFixture.addClass("package java.awt; public class List { public static final int ABORT = 1; }");
+    myFixture.addClass("package java.awt; public class Component {}");
     doTest("package test;" +
            "import java.util.*;" +
            "import java.awt.*;" +
@@ -101,14 +106,14 @@ public class UnusedImportInspectionTest extends LightInspectionTestCase {
   }
 
   public void testStaticImportOnDemandConflict1() {
-    addEnvironmentClass("package a;" +
-                        "public class Parent {" +
-                        "  public static final int FOOBAR = 1;" +
-                        "  public static class FooBar {}" +
-                        "}");
-    addEnvironmentClass("package a;" +
-                        "public class FooBar {" +
-                        "}");
+    myFixture.addClass("package a;" +
+                       "public class Parent {" +
+                       "  public static final int FOOBAR = 1;" +
+                       "  public static class FooBar {}" +
+                       "}");
+    myFixture.addClass("package a;" +
+                       "public class FooBar {" +
+                       "}");
     doTest("package b;\n" +
            "import a.*;\n" +
            "import a.FooBar;\n" +
@@ -123,14 +128,14 @@ public class UnusedImportInspectionTest extends LightInspectionTestCase {
   }
 
   public void testStaticImportOnDemandConflict2() {
-    addEnvironmentClass("package a;" +
-                        "public class Parent {" +
-                        "  public static final int FOOBAR = 1;" +
-                        "  public static class FooBar {}" +
-                        "}");
-    addEnvironmentClass("package a;" +
-                        "public class FooBar {" +
-                        "}");
+    myFixture.addClass("package a;" +
+                       "public class Parent {" +
+                       "  public static final int FOOBAR = 1;" +
+                       "  public static class FooBar {}" +
+                       "}");
+    myFixture.addClass("package a;" +
+                       "public class FooBar {" +
+                       "}");
     doTest("package b;\n" +
            "import a.*;\n" +
            "import static a.Parent.*;\n" +
@@ -145,13 +150,13 @@ public class UnusedImportInspectionTest extends LightInspectionTestCase {
   }
 
   public void testInherited() {
-    addEnvironmentClass("package a;" +
-                        "class GrandParent {" +
-                        "  public static final int FOOBAR = 1;" +
-                        "}");
-    addEnvironmentClass("package a;" +
-                        "public class Parent extends GrandParent {" +
-                        "}");
+    myFixture.addClass("package a;" +
+                       "class GrandParent {" +
+                       "  public static final int FOOBAR = 1;" +
+                       "}");
+    myFixture.addClass("package a;" +
+                       "public class Parent extends GrandParent {" +
+                       "}");
     doTest("package b;\n" +
            "import static a.Parent.*;\n" +
            "class Main {\n" +
@@ -160,7 +165,7 @@ public class UnusedImportInspectionTest extends LightInspectionTestCase {
            "    }\n" +
            "}");
   }
-  
+
   public void testNoWarning() {
     doTest("import java.util.List;" +
            "import java.util.ArrayList;" +
@@ -174,7 +179,7 @@ public class UnusedImportInspectionTest extends LightInspectionTestCase {
   }
 
   public void testInnerClassAndMethod() {
-    addEnvironmentClass("package one; public class X { public class Inner {} public static void method() {}}");
+    myFixture.addClass("package one; public class X { public class Inner {} public static void method() {}}");
     doTest("package one;" +
            "import static one.X.*; " +
            "import one.X.*;" +
@@ -195,7 +200,7 @@ public class UnusedImportInspectionTest extends LightInspectionTestCase {
   }
 
   public void testNoWarn() {
-    addEnvironmentClass("package java.awt; public class List extends Component {}");
+    myFixture.addClass("package java.awt; public class List extends Component {}");
     doTest("import javax.swing.*;\n" +
            "import java.awt.*;\n" +
            "import java.util.*;\n" +
@@ -220,7 +225,7 @@ public class UnusedImportInspectionTest extends LightInspectionTestCase {
   }
 
   public void testConflictInSamePackage() {
-    addEnvironmentClass("package a; public class List {}");
+    myFixture.addClass("package a; public class List {}");
     doTest("package a;" +
            "import java.util.List;" +
            "import java.util.*;" +
@@ -238,8 +243,16 @@ public class UnusedImportInspectionTest extends LightInspectionTestCase {
            "}}");
   }
 
-  @Override
-  protected LocalInspectionTool getInspection() {
-    return new UnusedImportInspection();
+  private void doTest(String classText) {
+    myFixture.addClass(classText);
+
+    GlobalInspectionToolWrapper toolWrapper = new GlobalInspectionToolWrapper(new UnusedImportInspection());
+    AnalysisScope scope = new AnalysisScope(myFixture.getProject());
+    GlobalInspectionContextForTests globalContext =
+      InspectionsKt.createGlobalContextForTool(scope, getProject(), Collections.<InspectionToolWrapper<?, ?>>singletonList(toolWrapper));
+
+    InspectionTestUtil.runTool(toolWrapper, scope, globalContext);
+    InspectionTestUtil.compareToolResults(globalContext, toolWrapper, false, new File(getTestDataPath(), getTestName(false)).getPath());
   }
+
 }

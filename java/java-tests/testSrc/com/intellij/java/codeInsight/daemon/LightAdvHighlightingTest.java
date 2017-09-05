@@ -31,7 +31,6 @@ import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.sillyAssignment.SillyAssignmentInspection;
 import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
 import com.intellij.codeInspection.unneededThrows.RedundantThrowsDeclarationLocalInspection;
-import com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageAnnotators;
@@ -62,6 +61,7 @@ import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -87,6 +87,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     super.setUp();
     myUnusedDeclarationInspection = new UnusedDeclarationInspection(isUnusedInspectionRequired());
     enableInspectionTool(myUnusedDeclarationInspection);
+    enableInspectionTool(new UnusedImportInspection());
     setLanguageLevel(LanguageLevel.JDK_1_4);
   }
 
@@ -102,7 +103,6 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
       new AccessStaticViaInstance(),
       new DeprecationInspection(),
       new RedundantThrowsDeclarationLocalInspection(),
-      new UnusedImportLocalInspection(),
       new UncheckedWarningLocalInspection()
     };
   }

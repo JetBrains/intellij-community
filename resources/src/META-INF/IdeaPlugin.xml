@@ -651,6 +651,9 @@
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.declaration.redundancy"
                      enabledByDefault="true" level="WARNING" displayName="Redundant 'requires' statement in module-info"
                      implementationClass="com.intellij.codeInspection.java19modules.Java9RedundantRequiresStatementInspection"/>
+    <globalInspection groupPath="Java" language="JAVA" shortName="UNUSED_IMPORT" bundle="messages.InspectionsBundle" key="unused.import.display.name"
+                      groupBundle="messages.InspectionsBundle" groupKey="group.names.imports" enabledByDefault="true" level="WARNING"
+                      implementationClass="com.intellij.codeInspection.unusedImport.UnusedImportInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ConstantConditions" bundle="messages.InspectionsBundle" key="inspection.data.flow.display.name"
                      groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.dataFlow.DataFlowInspection"/>
@@ -758,10 +761,6 @@
     <globalInspection shortName="RedundantSuppression" bundle="messages.InspectionsBundle" key="inspection.redundant.suppression.name"
                       groupKey="inspection.general.tools.group.name" enabledByDefault="false" level="WARNING"
                       implementationClass="com.intellij.codeInspection.RedundantSuppressInspection"/>
-
-    <localInspection groupPath="Java" language="JAVA" shortName="UNUSED_IMPORT" displayName="Unused import (editor light)" groupKey="group.names.imports" groupBundle="messages.InspectionsBundle" enabledByDefault="true"
-                     level="WARNING" implementationClass="com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection" unfair="true"/>
-
     <localInspection groupPath="Java" language="JAVA" suppressId="unchecked" shortName="UNCHECKED_WARNING" displayName="Unchecked warning" groupKey="group.names.compiler.issues" groupBundle="messages.InspectionsBundle"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection" />
