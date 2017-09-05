@@ -519,7 +519,7 @@
         <separator/>
         <action id="HelpTopics" class="com.intellij.ide.actions.HelpTopicsAction" icon="AllIcons.Actions.Help"/>
         <action id="OnlineDocAction" class="com.intellij.ide.actions.OnlineDocAction"/>
-        <action id="Help.KeymapReference" class="com.intellij.ide.actions.RefCardAction" icon="AllIcons.General.DefaultKeymap"/>
+        <action id="Help.KeymapReference" class="com.intellij.ide.actions.RefCardAction"/>
         <action id="Help.JetBrainsTV" class="com.intellij.ide.actions.JetBrainsTvAction"/>
         <action id="ShowTips" class="com.intellij.ide.actions.ShowTipsAction"/>
         <separator/>
@@ -734,6 +734,7 @@
       </group>
       <separator/>
       <action internal="true" id="ReloadProjectAction" class="com.intellij.internal.ReloadProjectAction"/>
+      <action internal="true" id="ShowMainMenu" class="com.intellij.internal.ui.ShowMainMenuAction"/>
       <action id="DumbMode" internal="true" class="com.intellij.internal.ToggleDumbModeAction" text="Dumb Mode"/>
       <action id="LaggingMode" internal="true" class="com.intellij.internal.ToggleLaggingModeAction" text="Lagging mode"/>
       <separator/>
