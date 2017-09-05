@@ -183,6 +183,7 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
     if (output.getExitCode() != 0) {
       LOG.warn("Failed to get list of conda packages");
       LOG.warn(StringUtil.join(command, " "));
+      LOG.warn(output.getStderr());
       return;
     }
     CONDA_PACKAGES.clear();
