@@ -200,7 +200,7 @@ public class RegistryValue {
       each.afterValueChanged(this);
     }
 
-    if (!isChangedFromDefault()) {
+    if (!isChangedFromDefault() && !isRestartRequired()) {
       myRegistry.getUserProperties().remove(myKey);
     }
 
