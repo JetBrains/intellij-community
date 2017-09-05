@@ -17,12 +17,14 @@ package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.actions.AbstractToggleUseSoftWrapsAction;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -456,7 +458,11 @@ public abstract class XDebuggerEditorBase implements Expandable {
         Editor baseEditor = getEditor();
         if (baseEditor != null) {
           WriteAction.run(() -> baseEditor.getDocument().setText(expressionEditor.getExpression().getExpression()));
-          copyCaretPosition(expressionEditor.getEditor(), baseEditor);
+          Editor newEditor = expressionEditor.getEditor();
+          if (newEditor != null) {
+            copyCaretPosition(newEditor, baseEditor);
+            PropertiesComponent.getInstance().setValue(SOFT_WRAPS_KEY, newEditor.getSoftWrapModel().isSoftWrappingEnabled());
+          }
         }
         myExpandedPopup = null;
         return true;
@@ -487,6 +493,8 @@ public abstract class XDebuggerEditorBase implements Expandable {
     EditorEx editor = (EditorEx)expressionEditor.getEditor();
     copyCaretPosition(getEditor(), editor);
     prepareEditor(editor);
+    editor.getSettings().setUseSoftWraps(isUseSoftWraps());
+    editor.setContextMenuGroupId("XDebugger.Evaluate.Code.Fragment.Editor.Popup");
 
     ErrorStripeEditorCustomization.DISABLED.customize(editor);
     // TODO: copied from ExpandableTextField
@@ -558,6 +566,20 @@ public abstract class XDebuggerEditorBase implements Expandable {
     @Override
     public Color getForeground() {
       return isEnabled() ? ENABLED_COLOR : DISABLED_COLOR;
+    }
+  }
+
+  private static final String SOFT_WRAPS_KEY = "XDebuggerExpressionEditor_Use_Soft_Wraps";
+
+  public boolean isUseSoftWraps() {
+    return PropertiesComponent.getInstance().getBoolean(SOFT_WRAPS_KEY);
+  }
+
+  public void setUseSoftWraps(boolean use) {
+    PropertiesComponent.getInstance().setValue(SOFT_WRAPS_KEY, use);
+    Editor editor = getEditor();
+    if (editor != null) {
+      AbstractToggleUseSoftWrapsAction.toggleSoftWraps(editor, null, use);
     }
   }
 }
