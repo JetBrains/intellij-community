@@ -1175,6 +1175,10 @@ public class EditorFixture {
   }
 
 
+  public EditorNotificationPanelFixture notificationPanel() {
+    return EditorNotificationPanelFixture.Companion.findEditorNotificationPanel(robot, myFrame, 30);
+  }
+
   /**
    * Common editor actions, invokable via {@link #invokeAction(EditorAction)}
    */
