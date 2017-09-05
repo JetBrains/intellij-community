@@ -488,11 +488,19 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     @Override
     protected void selectChange(@NotNull Wrapper change) {
       DefaultMutableTreeNode root = (DefaultMutableTreeNode)myView.getModel().getRoot();
-      DefaultMutableTreeNode node = TreeUtil.findNodeWithObject(root, change.getUserObject());
+      DefaultMutableTreeNode node = findChangeInTree(root, change);
       if (node != null) {
         TreePath path = TreeUtil.getPathFromRoot(node);
         TreeUtil.selectPath(myView, path, false);
       }
+    }
+
+    private DefaultMutableTreeNode findChangeInTree(@NotNull DefaultMutableTreeNode root, @NotNull Wrapper change) {
+      Object userObject = change.getUserObject();
+      if (userObject instanceof ChangeListChange) {
+        return TreeUtil.findNode(root, node -> ChangeListChange.HASHING_STRATEGY.equals(node.getUserObject(), userObject));
+      }
+      return TreeUtil.findNodeWithObject(root, userObject);
     }
 
     @NotNull

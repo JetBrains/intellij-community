@@ -274,7 +274,14 @@ public class ChangeListWorker {
       else {
         PartialChangeTracker tracker = getChangeTrackerFor(change);
         if (tracker != null) {
-          result.addAll(getAffectedLists(tracker));
+          Set<ListData> affectedLists = getAffectedLists(tracker);
+          if (change instanceof ChangeListChange) {
+            String changeListId = ((ChangeListChange)change).getChangeListId();
+            ContainerUtil.addIfNotNull(result, ContainerUtil.find(affectedLists, partialList -> partialList.id.equals(changeListId)));
+          }
+          else {
+            result.addAll(affectedLists);
+          }
         }
       }
     }

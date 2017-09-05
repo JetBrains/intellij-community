@@ -30,9 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultTreeModel;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class LocalChangesBrowser extends ChangesBrowserBase implements Disposable {
   @NotNull private final ToggleChangeDiffAction myToggleChangeDiffAction;
@@ -77,7 +75,26 @@ public class LocalChangesBrowser extends ChangesBrowserBase implements Disposabl
 
 
   public void setIncludedChanges(@NotNull Collection<? extends Change> changes) {
-    myViewer.setIncludedChanges(changes);
+    List<Change> changesToInclude = new ArrayList<>(changes);
+
+    Set<Change> otherChanges = new HashSet<>();
+    for (Change change : changes) {
+      if (!(change instanceof ChangeListChange)) {
+        otherChanges.add(change);
+      }
+    }
+
+    // include all related ChangeListChange by a simple Change
+    if (!otherChanges.isEmpty()) {
+      for (Change change : getAllChanges()) {
+        if (change instanceof ChangeListChange &&
+            otherChanges.contains(change)) {
+          changesToInclude.add(change);
+        }
+      }
+    }
+
+    myViewer.setIncludedChanges(changesToInclude);
   }
 
   public List<Change> getAllChanges() {

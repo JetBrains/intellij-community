@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeListChange;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.HierarchicalFilePathComparator;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -75,7 +76,21 @@ public class ChangesComparator {
 
     @Override
     public int compare(Change o1, Change o2) {
-      return comparePaths(ChangesUtil.getFilePath(o1), ChangesUtil.getFilePath(o2), myFlattened);
+      int delta = comparePaths(ChangesUtil.getFilePath(o1), ChangesUtil.getFilePath(o2), myFlattened);
+      if (delta != 0) return delta;
+
+      if (o1 instanceof ChangeListChange || o2 instanceof ChangeListChange) {
+        if (o1 instanceof ChangeListChange && o2 instanceof ChangeListChange) {
+          String changeList1 = ((ChangeListChange)o1).getChangeListName();
+          String changeList2 = ((ChangeListChange)o2).getChangeListName();
+          return changeList1.compareToIgnoreCase(changeList2);
+        }
+        else {
+          return o1 instanceof ChangeListChange ? 1 : -1;
+        }
+      }
+
+      return 0;
     }
   }
 }
