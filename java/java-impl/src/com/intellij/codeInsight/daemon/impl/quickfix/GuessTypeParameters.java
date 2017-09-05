@@ -26,7 +26,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -72,36 +71,28 @@ public class GuessTypeParameters {
         return;
       }
 
-      PsiElementFactory factory = JavaPsiFacade.getInstance(myProject).getElementFactory();
       PsiType type = info.getType();
       PsiType defaultType = info.getDefaultType();
-      try {
-        PsiTypeElement inplaceTypeElement = ((PsiVariable)factory.createVariableDeclarationStatement("foo", type, null).getDeclaredElements()[0]).getTypeElement();
-
-        PsiSubstitutor rawingSubstitutor = getRawingSubstitutor (myProject, context, targetClass);
-        int substitionResult = hasNullSubstitutions(substitutor) ? SUBSTITUTED_NONE : substituteToTypeParameters(typeElement, type, substitutor, builder, rawingSubstitutor, true);
-        if (substitionResult != SUBSTITUTED_NONE) {
-          if (substitionResult == SUBSTITUTED_IN_PARAMETERS) {
-            PsiJavaCodeReferenceElement refElement = typeElement.getInnermostComponentReferenceElement();
-            LOG.assertTrue(refElement != null && refElement.getReferenceNameElement() != null);
-            type = getComponentType(type);
-            LOG.assertTrue(type != null);
-            defaultType = getComponentType(defaultType);
-            LOG.assertTrue(defaultType != null);
-            ExpectedTypeInfo info1 = ExpectedTypesProvider.createInfo(((PsiClassType)defaultType).rawType(),
-                                                                 TYPE_STRICTLY,
-                                                                 ((PsiClassType)defaultType).rawType(),
-                                                                 info.getTailType());
-            MyTypeVisitor visitor = new MyTypeVisitor(manager, scope);
-            builder.replaceElement(refElement.getReferenceNameElement(),
-                                   new TypeExpression(myProject, ExpectedTypesProvider.processExpectedTypes(new ExpectedTypeInfo[]{info1}, visitor, myProject)));
-          }
-
-          return;
+      PsiSubstitutor rawingSubstitutor = getRawingSubstitutor(myProject, context, targetClass);
+      int substitionResult = hasNullSubstitutions(substitutor) ? SUBSTITUTED_NONE : substituteToTypeParameters(typeElement, type, substitutor, builder, rawingSubstitutor, true);
+      if (substitionResult != SUBSTITUTED_NONE) {
+        if (substitionResult == SUBSTITUTED_IN_PARAMETERS) {
+          PsiJavaCodeReferenceElement refElement = typeElement.getInnermostComponentReferenceElement();
+          LOG.assertTrue(refElement != null && refElement.getReferenceNameElement() != null);
+          type = getComponentType(type);
+          LOG.assertTrue(type != null);
+          defaultType = getComponentType(defaultType);
+          LOG.assertTrue(defaultType != null);
+          ExpectedTypeInfo info1 = ExpectedTypesProvider.createInfo(((PsiClassType)defaultType).rawType(),
+                                                                    TYPE_STRICTLY,
+                                                                    ((PsiClassType)defaultType).rawType(),
+                                                                    info.getTailType());
+          MyTypeVisitor visitor = new MyTypeVisitor(manager, scope);
+          builder.replaceElement(refElement.getReferenceNameElement(),
+                                 new TypeExpression(myProject, ExpectedTypesProvider.processExpectedTypes(new ExpectedTypeInfo[]{info1}, visitor, myProject)));
         }
-      }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
+
+        return;
       }
     }
 
