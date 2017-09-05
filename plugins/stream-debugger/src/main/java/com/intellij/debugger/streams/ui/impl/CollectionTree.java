@@ -156,7 +156,7 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
       final Color background = UIUtil.getTreeSelectionBackground(true);
       return COLORS_CACHE.computeIfAbsent(background.getRGB(), rgb -> new JBColor(
         new Color(background.getRed(), background.getGreen(), background.getBlue(), 75),
-        new Color(background.getRed(), background.getGreen(), background.getBlue(), 150)));
+        new Color(background.getRed(), background.getGreen(), background.getBlue(), 100)));
     }
 
     return UIUtil.getTreeBackground();
