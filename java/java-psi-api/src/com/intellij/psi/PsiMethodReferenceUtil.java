@@ -16,14 +16,12 @@
 package com.intellij.psi;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.util.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PsiMethodReferenceUtil {
-  private static final Logger LOG = Logger.getInstance(PsiMethodReferenceUtil.class);
 
   public static boolean isSecondSearchPossible(PsiType[] parameterTypes,
                                                QualifierResolveResult qualifierResolveResult,
@@ -71,20 +69,18 @@ public class PsiMethodReferenceUtil {
     }
   }
 
-  public static boolean isReturnTypeCompatible(PsiMethodReferenceExpression expression,
-                                               JavaResolveResult result,
-                                               PsiType functionalInterfaceType) {
-    return isReturnTypeCompatible(expression, result, functionalInterfaceType, null);
+  public static boolean isReturnTypeCompatible(PsiMethodReferenceExpression expression, PsiType functionalInterfaceType) {
+    return isReturnTypeCompatible(expression, functionalInterfaceType, null);
   }
 
   /**
    * Returns actual return type of method reference (not the expected one)
    *
    * @param expression a method reference to get the return type of
-   * @param result the result of method reference resolution
    * @return an actual method reference return type
    */
-  public static PsiType getMethodReferenceReturnType(PsiMethodReferenceExpression expression, JavaResolveResult result) {
+  public static PsiType getMethodReferenceReturnType(PsiMethodReferenceExpression expression) {
+    JavaResolveResult result = expression.advancedResolve(false);
     PsiSubstitutor subst = result.getSubstitutor();
 
     PsiType methodReturnType = null;
@@ -127,7 +123,6 @@ public class PsiMethodReferenceUtil {
   }
 
   private static boolean isReturnTypeCompatible(PsiMethodReferenceExpression expression,
-                                                JavaResolveResult result,
                                                 PsiType functionalInterfaceType,
                                                 Ref<String> errorMessage) {
     final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
@@ -139,7 +134,7 @@ public class PsiMethodReferenceUtil {
         return true;
       }
 
-      PsiType methodReturnType = getMethodReferenceReturnType(expression, result);
+      PsiType methodReturnType = getMethodReferenceReturnType(expression);
       if (methodReturnType == null || PsiType.VOID.equals(methodReturnType)) {
         return false;
       }
@@ -362,9 +357,9 @@ public class PsiMethodReferenceUtil {
     return null;
   }
 
-  public static String checkReturnType(PsiMethodReferenceExpression expression, JavaResolveResult result, PsiType functionalInterfaceType) {
+  public static String checkReturnType(PsiMethodReferenceExpression expression, PsiType functionalInterfaceType) {
     final Ref<String> errorMessage = Ref.create();
-    if (!isReturnTypeCompatible(expression, result, functionalInterfaceType, errorMessage)) {
+    if (!isReturnTypeCompatible(expression, functionalInterfaceType, errorMessage)) {
       return errorMessage.get();
     }
     return null;

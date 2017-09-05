@@ -1432,7 +1432,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     }
 
     if (!myHolder.hasErrorResults()) {
-      final String badReturnTypeMessage = PsiMethodReferenceUtil.checkReturnType(expression, result, functionalInterfaceType);
+      final String badReturnTypeMessage = PsiMethodReferenceUtil.checkReturnType(expression, functionalInterfaceType);
       if (badReturnTypeMessage != null) {
         HighlightInfo info =
           HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(badReturnTypeMessage).create();
