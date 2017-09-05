@@ -39,6 +39,8 @@ import java.util.List;
 import java.util.Set;
 
 public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
+  @Nullable private volatile List<PyPackage> mySideCache = null;
+
   public static final String PYTHON = "python";
   public boolean useConda = true;
 
@@ -140,12 +142,16 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
   @NotNull
   @Override
   protected List<PyPackage> collectPackages() throws ExecutionException {
+    final List<PyPackage> pipPackages = super.collectPackages();
+    final ProcessOutput output = getCondaOutput("list", Lists.newArrayList("-e"));
+    final Set<PyPackage> condaPackages = Sets.newConcurrentHashSet(parseCondaToolOutput(output.getStdout()));
+
     if (useConda) {
-      final ProcessOutput output = getCondaOutput("list", Lists.newArrayList("-e"));
-      final Set<PyPackage> packages = Sets.newConcurrentHashSet(parseCondaToolOutput(output.getStdout()));
-      return Lists.newArrayList(packages);
+      mySideCache = pipPackages;
+      return Lists.newArrayList(condaPackages);
     }
     else {
+      mySideCache = Lists.newArrayList(condaPackages);
       return super.collectPackages();
     }
   }
@@ -210,4 +216,15 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
     return (binary != null) ? binary : binaryFallback;
   }
 
+  @Nullable
+  @Override
+  public List<PyPackage> getPackages() {
+    final List<PyPackage> packagesCache = mySideCache;
+    if (packagesCache == null) return null;
+    final List<PyPackage> packages = Lists.newArrayList(packagesCache);
+    final List<PyPackage> condaPackages = super.getPackages();
+    if (condaPackages == null) return null;
+    packages.addAll(condaPackages);
+    return Collections.unmodifiableList(packages);
+  }
 }
