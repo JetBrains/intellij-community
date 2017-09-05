@@ -18,5 +18,5 @@ package com.intellij.openapi.components.impl.stores
 import org.jetbrains.annotations.SystemIndependent
 
 interface ModuleStore {
-  fun setPath(@SystemIndependent path: String, isNew: Boolean)
+  fun setPath(path: @SystemIndependent String, isNew: Boolean)
 }
