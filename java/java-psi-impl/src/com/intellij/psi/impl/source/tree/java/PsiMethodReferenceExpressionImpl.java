@@ -430,7 +430,7 @@ public class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<Functio
       return false;
     }
 
-    return PsiMethodReferenceUtil.isReturnTypeCompatible(this, left);
+    return PsiMethodReferenceUtil.isReturnTypeCompatible(this, result, left);
   }
 
   @Nullable
