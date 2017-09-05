@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,7 +61,7 @@ public class PropertiesReferenceProvider extends PsiReferenceProvider {
     boolean propertyRefWithPrefix = false;
     boolean soft = myDefaultSoft;
 
-    if (element instanceof PsiLiteralExpression && !(element.getParent() instanceof PsiExpression)) {
+    if (element instanceof PsiLiteralExpression && canBePropertyKeyRef(element)) {
       PsiLiteralExpression literalExpression = (PsiLiteralExpression)element;
       value = literalExpression.getValue();
 
@@ -105,4 +105,20 @@ public class PropertiesReferenceProvider extends PsiReferenceProvider {
     return PsiTreeUtil.getChildOfAnyType(element, OuterLanguageElement.class,JspXmlTagBase.class) == null;
   }
 
+  private static boolean canBePropertyKeyRef(PsiElement element) {
+    PsiElement parent = element.getParent();
+    if (parent instanceof PsiExpression) {
+      if ((parent instanceof PsiConditionalExpression)) {
+        PsiExpression elseExpr = ((PsiConditionalExpression)parent).getElseExpression();
+        PsiExpression thenExpr = ((PsiConditionalExpression)parent).getThenExpression();
+        return (element == thenExpr || element == elseExpr) && canBePropertyKeyRef(parent);
+      }
+      else {
+        return false;
+      }
+    } else {
+      return true;
+    }
+
+  }
 }
