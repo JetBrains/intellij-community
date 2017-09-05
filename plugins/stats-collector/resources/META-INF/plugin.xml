@@ -16,7 +16,7 @@
   <depends>com.intellij.modules.lang</depends>
   <depends>com.intellij.modules.platform</depends>
   
-  <idea-version since-build="171.0"/>
+  <idea-version since-build="172.0"/>
 
   <extensions defaultExtensionNs="com.intellij">
     
