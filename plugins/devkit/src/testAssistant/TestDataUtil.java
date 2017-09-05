@@ -59,6 +59,9 @@ public class TestDataUtil {
       return null;
     }
     int commonPrefixLength = StringUtil.commonPrefixLength(file1.getName(), file2.getName());
+    if (commonPrefixLength == 0) {
+      return null;
+    }
     if (file1.getName().substring(commonPrefixLength).toLowerCase().contains("after")) {
       return new TestDataGroupVirtualFile(file2, file1);
     }
