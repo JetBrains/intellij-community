@@ -17,14 +17,12 @@ package com.intellij.debugger.streams.ui.impl
 
 import com.intellij.debugger.streams.ui.LinkedValuesMapping
 import com.intellij.debugger.streams.ui.ValueWithPosition
+import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBUI
-import java.awt.BasicStroke
-import java.awt.BorderLayout
-import java.awt.Graphics
-import java.awt.Graphics2D
+import java.awt.*
 import javax.swing.JPanel
 import javax.swing.SwingConstants
 
@@ -38,6 +36,7 @@ class MappingPane(name: String,
   companion object {
     val SELECTED_LINK_COLOR: JBColor = JBColor.BLUE
     val REGULAR_LINK_COLOR: JBColor = JBColor.GRAY
+    val REGULAR_LINK_COLOR_BRIGHT = ColorUtil.withAlpha(REGULAR_LINK_COLOR, 0.25)!!
 
     val STROKE = BasicStroke(JBUI.scale(1.toFloat()))
   }
@@ -57,20 +56,40 @@ class MappingPane(name: String,
         g.stroke = STROKE
 
         val config = GraphicsUtil.setupAAPainting(g)
-        drawLines(g, REGULAR_LINK_COLOR)
-        drawLines(g, SELECTED_LINK_COLOR)
+
+        if (isSelectedExist()) {
+          drawLines(g, REGULAR_LINK_COLOR_BRIGHT, false)
+          drawLines(g, SELECTED_LINK_COLOR, true)
+        }
+        else {
+          drawLines(g, REGULAR_LINK_COLOR, false)
+        }
+
         config.restore()
       }
     }
 
-    private fun drawLines(g: Graphics2D, color: JBColor) {
+    private fun isSelectedExist(): Boolean {
+      for (value in beforeValues) {
+        val linkedValues = mapping.getLinkedValues(value) ?: continue
+        val exists = linkedValues
+          .asSequence()
+          .filter { needToHighlight(value, it) }
+          .any()
+        if (exists) return true
+      }
+
+      return false
+    }
+
+    private fun drawLines(g: Graphics2D, color: Color, highlighted: Boolean) {
       val x1 = x
       val x2 = x + width
       g.color = color
       for (value in beforeValues) {
         val linkedValues = mapping.getLinkedValues(value) ?: continue
         for (nextValue in linkedValues) {
-          if (needToDraw(value, nextValue) && getLineColor(value, nextValue) == color) {
+          if (needToDraw(value, nextValue) && highlighted == needToHighlight(value, nextValue)) {
             val y1 = value.position
             val y2 = nextValue.position
 
@@ -82,12 +101,6 @@ class MappingPane(name: String,
 
     private fun needToDraw(left: ValueWithPosition, right: ValueWithPosition): Boolean = left.isVisible || right.isVisible
 
-    private fun getLineColor(left: ValueWithPosition, right: ValueWithPosition): JBColor {
-      if (left.isHighlighted && right.isHighlighted) {
-        return SELECTED_LINK_COLOR
-      }
-
-      return REGULAR_LINK_COLOR
-    }
+    private fun needToHighlight(left: ValueWithPosition, right: ValueWithPosition): Boolean = left.isHighlighted && right.isHighlighted
   }
 }
