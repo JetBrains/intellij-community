@@ -31,6 +31,7 @@ import com.intellij.psi.util.PsiUtilCore
 import com.intellij.stats.completion.experiment.WebServiceStatus
 import com.jetbrains.completion.ranker.features.FeatureUtils
 import com.jetbrains.completion.ranker.features.LookupElementInfo
+import java.util.*
 
 
 @Suppress("DEPRECATION")
@@ -43,7 +44,7 @@ class MLSorter : CompletionFinalSorter() {
 
     private val webServiceStatus = WebServiceStatus.getInstance()
     private val ranker = Ranker.getInstance()
-    private val cachedScore = mutableMapOf<LookupElement, ItemRankInfo>()
+    private val cachedScore: MutableMap<LookupElement, ItemRankInfo> = IdentityHashMap()
 
     override fun getRelevanceObjects(items: MutableIterable<LookupElement>): Map<LookupElement, List<Pair<String, Any>>> {
         if (cachedScore.isEmpty()) {
