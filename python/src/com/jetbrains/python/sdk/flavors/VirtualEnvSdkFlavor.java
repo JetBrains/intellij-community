@@ -92,6 +92,10 @@ public class VirtualEnvSdkFlavor extends CPythonSdkFlavor {
     List<VirtualFile> roots = new ArrayList<>();
     final VirtualFile userHome = LocalFileSystem.getInstance().findFileByPath(SystemProperties.getUserHome().replace('\\','/'));
     if (userHome != null) {
+      final VirtualFile condaHidden = userHome.findChild(".conda");
+      if (condaHidden != null) {
+        addEnvsFolder(roots, condaHidden);
+      }
       for (String root : CONDA_DEFAULT_ROOTS) {
         VirtualFile condaFolder = userHome.findChild(root);
         addEnvsFolder(roots, condaFolder);
