@@ -52,9 +52,7 @@ class ExternalSystemTaskRunner : GenericProgramRunner<RunnerSettings>() {
                                                    runContentDescriptor.component, runContentDescriptor.displayName,
                                                    runContentDescriptor.icon, runContentDescriptor.activationCallback,
                                                    runContentDescriptor.restartActions) {
-      override fun isHiddenContent(): Boolean {
-        return true
-      }
+      override fun isHiddenContent(): Boolean = true
     }
     descriptor.runnerLayoutUi = runContentDescriptor.runnerLayoutUi
     return descriptor
