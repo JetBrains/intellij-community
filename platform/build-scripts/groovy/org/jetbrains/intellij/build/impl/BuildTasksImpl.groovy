@@ -205,13 +205,14 @@ idea.fatal.error.notification=disabled
     def targetFile = new File(buildContext.paths.temp, sourceFile.name)
     def date = ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ofPattern("uuuuMMddHHmm"))
 
-    def buildTypeId = System.getProperty('teamcity.buildType.id')
-    def buildId = System.getProperty('teamcity.build.id')
-    def builtinPluginsUrl = buildId && buildTypeId ? "http://buildserver.labs.intellij.net/repository/download/$buildTypeId/$buildId:id/${buildContext.productProperties.productCode}-plugins/plugins.xml?guest=1" : ""
-
+    def artifactsServer = buildContext.proprietaryBuildTools.artifactsServer
+    def builtinPluginsRepoUrl = ""
+    if (artifactsServer != null && buildContext.productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins) {
+      builtinPluginsRepoUrl = artifactsServer.urlToArtifact("${buildContext.productProperties.productCode}-plugins/plugins.xml")
+    }
     BuildUtils.copyAndPatchFile(sourceFile.path, targetFile.path,
                                 ["BUILD_NUMBER": buildContext.fullBuildNumber, "BUILD_DATE": date, "BUILD": buildContext.buildNumber,
-                                "BUILTIN_PLUGINS_URL": builtinPluginsUrl])
+                                "BUILTIN_PLUGINS_URL": builtinPluginsRepoUrl ?: ""])
     return targetFile
   }
 

@@ -18,6 +18,7 @@
 
 package org.jetbrains.intellij.build
 
+import com.intellij.util.SystemProperties
 import org.jetbrains.intellij.build.impl.PlatformLayout
 
 import java.util.function.Consumer
@@ -103,7 +104,7 @@ abstract class BaseIdeaProperties extends ProductProperties {
     modulesToCompileTests = ["jps-builders"]
     productLayout.buildAllCompatiblePlugins = true
     productLayout.compatiblePluginsToIgnore = ['python-plugin', 'ruby-plugin-bundle', 'python-community-plugin-resources', 'AWS']
-    productLayout.prepareCustomPluginRepositoryForPublishedPlugins = true
+    productLayout.prepareCustomPluginRepositoryForPublishedPlugins = SystemProperties.getBooleanProperty('intellij.build.prepare.plugin.repository', false)
   }
 
   @Override
