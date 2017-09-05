@@ -215,7 +215,7 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
   @NotNull
   private static String formatArguments(@NotNull List<CallArgument> args) {
     return StreamEx.of(args)
-      .map(x -> StringUtil.shortenTextWithEllipsis(x.getText(), 30, 5, THREE_DOTS))
+      .map(x -> StringUtil.shortenTextWithEllipsis(x.getText().replaceAll("\\s", ""), 30, 5, THREE_DOTS))
       .joining(", ", "(", ")");
   }
 
