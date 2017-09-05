@@ -258,7 +258,7 @@ public class CreateFromUsageUtils {
 
     GlobalSearchScope resolveScope = method.getResolveScope();
 
-    GuessTypeParameters guesser = new GuessTypeParameters(project, JavaPsiFacade.getElementFactory(project));
+    GuessTypeParameters guesser = new GuessTypeParameters(project, JavaPsiFacade.getElementFactory(project), builder, substitutor);
 
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(psiManager);
     final PsiClass containingClass = method.getContainingClass();
@@ -298,8 +298,7 @@ public class CreateFromUsageUtils {
       ExpectedTypeInfo info = ExpectedTypesProvider.createInfo(argType, ExpectedTypeInfo.TYPE_OR_SUPERTYPE, argType, TailType.NONE);
 
       PsiElement context = PsiTreeUtil.getParentOfType(contextElement, PsiClass.class, PsiMethod.class);
-      guesser.setupTypeElement(parameter.getTypeElement(), new ExpectedTypeInfo[]{info},
-                               substitutor, builder, context, containingClass);
+      guesser.setupTypeElement(parameter.getTypeElement(), new ExpectedTypeInfo[]{info}, context, containingClass);
 
       Expression expression = new ParameterNameExpression(names);
       builder.replaceElement(parameter.getNameIdentifier(), expression);

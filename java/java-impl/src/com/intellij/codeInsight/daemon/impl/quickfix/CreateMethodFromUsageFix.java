@@ -237,8 +237,8 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
     CreateFromUsageUtils.setupMethodParameters(method, builder, context, substitutor, arguments);
     final PsiTypeElement returnTypeElement = method.getReturnTypeElement();
     if (returnTypeElement != null) {
-      new GuessTypeParameters(project, JavaPsiFacade.getInstance(project).getElementFactory())
-        .setupTypeElement(returnTypeElement, expectedTypes, substitutor, builder, context, targetClass);
+      new GuessTypeParameters(project, JavaPsiFacade.getInstance(project).getElementFactory(), builder, substitutor)
+        .setupTypeElement(returnTypeElement, expectedTypes, context, targetClass);
     }
     PsiCodeBlock body = method.getBody();
     builder.setEndVariableAfter(shouldBeAbstract || body == null ? method : body.getLBrace());

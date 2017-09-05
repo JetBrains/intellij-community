@@ -49,8 +49,9 @@ public class JavaCreateFieldFromUsageHelper extends CreateFieldFromUsageHelper {
     if (!(expectedTypes instanceof ExpectedTypeInfo[])) {
       expectedTypes = ExpectedTypeInfo.EMPTY_ARRAY;
     }
-    new GuessTypeParameters(project, factory).setupTypeElement(field.getTypeElement(), (ExpectedTypeInfo[])expectedTypes, substitutor, builder,
-                                                               context, targetClass);
+    new GuessTypeParameters(project, factory, builder, substitutor).setupTypeElement(
+      field.getTypeElement(), (ExpectedTypeInfo[])expectedTypes, context, targetClass
+    );
 
     if (createConstantField) {
       field.setInitializer(factory.createExpressionFromText("0", null));
