@@ -830,9 +830,23 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   private void updateVarStateOnComparison(@NotNull DfaVariableValue dfaVar, DfaValue value) {
     if (!isUnknownState(dfaVar)) {
-      if (value instanceof DfaConstValue && ((DfaConstValue)value).getValue() == null) {
-        setVariableState(dfaVar, getVariableState(dfaVar).withFact(DfaFactType.CAN_BE_NULL, true));
-      } else if (isNotNull(value) && !isNotNull(dfaVar)) {
+      if (value instanceof DfaConstValue) {
+        Object constValue = ((DfaConstValue)value).getValue();
+        if (constValue == null) {
+          setVariableState(dfaVar, getVariableState(dfaVar).withFact(DfaFactType.CAN_BE_NULL, true));
+          return;
+        }
+        if (constValue instanceof PsiVariable) {
+          DfaValue typeValue = myFactory.createTypeValue(((PsiVariable)constValue).getType(), Nullness.NOT_NULL);
+          if (typeValue instanceof DfaTypeValue) {
+            DfaVariableState state = getVariableState(dfaVar).withInstanceofValue((DfaTypeValue)typeValue);
+            if (state != null) {
+              setVariableState(dfaVar, state);
+            }
+          }
+        }
+      }
+      if (isNotNull(value) && !isNotNull(dfaVar)) {
         setVariableState(dfaVar, getVariableState(dfaVar).withoutFact(DfaFactType.CAN_BE_NULL));
         applyRelation(dfaVar, myFactory.getConstFactory().getNull(), true);
       }
@@ -981,8 +995,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   private static boolean preserveConstantDistinction(final Object c1, final Object c2) {
-    return c1 == null && c2 instanceof PsiEnumConstant ||
-           c2 == null && c1 instanceof PsiEnumConstant;
+    return c1 == null && c2 instanceof PsiVariable ||
+           c2 == null && c1 instanceof PsiVariable;
   }
 
   private boolean areCompatibleConstants(int i1, int i2) {

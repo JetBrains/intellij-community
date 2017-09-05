@@ -1078,4 +1078,14 @@ public class ExpressionUtils {
     });
     return result.get();
   }
+
+  /**
+   * @param expression expression to test
+   * @return true if the expression return value is a new object which is guaranteed to be distinct from any other object created
+   * in the program.
+   */
+  @Contract("null -> false")
+  public static boolean isNewObject(@Nullable PsiExpression expression) {
+    return expression != null && nonStructuralChildren(expression).allMatch(PsiNewExpression.class::isInstance);
+  }
 }

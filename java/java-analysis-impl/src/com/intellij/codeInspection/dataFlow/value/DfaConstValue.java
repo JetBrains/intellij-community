@@ -16,9 +16,12 @@
 
 package com.intellij.codeInspection.dataFlow.value;
 
+import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,9 +65,12 @@ public class DfaConstValue extends DfaValue {
           DfaConstValue unboxed = createFromValue(boo, PsiType.BOOLEAN, variable);
           return myFactory.getBoxedFactory().createBoxed(unboxed);
         }
-        PsiExpression initializer = variable.getInitializer();
+        PsiExpression initializer = PsiUtil.skipParenthesizedExprDown(variable.getInitializer());
         if (initializer instanceof PsiLiteralExpression && initializer.textMatches(PsiKeyword.NULL)) {
           return dfaNull;
+        }
+        if (variable instanceof PsiField && variable.hasModifier(JvmModifier.STATIC) && ExpressionUtils.isNewObject(initializer)) {
+          return createFromValue(variable, type, variable);
         }
         return null;
       }

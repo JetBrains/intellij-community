@@ -29,6 +29,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.impl.light.LightVariableBuilder;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -75,11 +76,11 @@ public class DfaExpressionFactory {
 
     if (expression instanceof PsiArrayAccessExpression) {
       PsiExpression arrayExpression = ((PsiArrayAccessExpression)expression).getArrayExpression();
-      DfaValue qualifier = getExpressionDfaValue(arrayExpression);
-      if (qualifier instanceof DfaVariableValue) {
+      DfaVariableValue qualifier = getQualifierVariable(arrayExpression);
+      if (qualifier != null) {
         PsiVariable indexVar = getArrayIndexVariable(((PsiArrayAccessExpression)expression).getIndexExpression());
         if (indexVar != null) {
-          return myFactory.getVarFactory().createVariableValue(indexVar, expression.getType(), false, (DfaVariableValue)qualifier);
+          return myFactory.getVarFactory().createVariableValue(indexVar, expression.getType(), false, qualifier);
         }
       }
       PsiType type = expression.getType();
@@ -132,21 +133,47 @@ public class DfaExpressionFactory {
     if (!var.hasModifierProperty(PsiModifier.VOLATILE)) {
       if (var instanceof PsiVariable && var.hasModifierProperty(PsiModifier.FINAL) && !PsiUtil.isAccessedForWriting(refExpr)) {
         DfaValue constValue = myFactory.getConstFactory().create((PsiVariable)var);
-        if (constValue != null) return constValue;
+        if (constValue != null && !maybeUninitializedConstant(constValue, refExpr, var)) return constValue;
       }
 
       if (DfaValueFactory.isEffectivelyUnqualified(refExpr) || isStaticFinalConstantWithoutInitializationHacks(var)) {
         return myFactory.getVarFactory().createVariableValue(var, refExpr.getType(), false, null);
       }
 
-      DfaValue qualifierValue = getExpressionDfaValue(refExpr.getQualifierExpression());
-      if (qualifierValue instanceof DfaVariableValue) {
-        return myFactory.getVarFactory().createVariableValue(var, refExpr.getType(), false, (DfaVariableValue)qualifierValue);
+      DfaVariableValue qualifier = getQualifierVariable(refExpr.getQualifierExpression());
+      if (qualifier != null) {
+        return myFactory.getVarFactory().createVariableValue(var, refExpr.getType(), false, qualifier);
       }
     }
 
     PsiType type = refExpr.getType();
     return myFactory.createTypeValue(type, DfaPsiUtil.getElementNullability(type, var));
+  }
+
+  private DfaVariableValue getQualifierVariable(PsiExpression qualifierExpression) {
+    DfaValue qualifierValue = getExpressionDfaValue(qualifierExpression);
+    DfaVariableValue qualifier = null;
+    if (qualifierValue instanceof DfaVariableValue) {
+      qualifier = (DfaVariableValue)qualifierValue;
+    }
+    else if (qualifierValue instanceof DfaConstValue) {
+      Object constValue = ((DfaConstValue)qualifierValue).getValue();
+      if (constValue instanceof PsiVariable) {
+        qualifier = myFactory.getVarFactory().createVariableValue((PsiVariable)constValue, false);
+      }
+    }
+    return qualifier;
+  }
+
+  private static boolean maybeUninitializedConstant(DfaValue constValue,
+                                                    @NotNull PsiReferenceExpression refExpr,
+                                                    PsiModifierListOwner var) {
+    // If static final field is referred from the same or inner/nested class,
+    // we consider that it might be uninitialized yet as some class initializers may call its methods or
+    // even instantiate objects of this class and call their methods
+    if(!(constValue instanceof DfaConstValue) || ((DfaConstValue)constValue).getValue() != var) return false;
+    if(!(var instanceof PsiField) || var instanceof PsiEnumConstant) return false;
+    return PsiTreeUtil.getTopmostParentOfType(refExpr, PsiClass.class) == PsiTreeUtil.getTopmostParentOfType(var, PsiClass.class);
   }
 
   private static boolean isStaticFinalConstantWithoutInitializationHacks(PsiModifierListOwner var) {
