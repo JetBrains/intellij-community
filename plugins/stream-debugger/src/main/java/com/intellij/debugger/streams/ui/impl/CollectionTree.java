@@ -42,14 +42,12 @@ import com.intellij.xdebugger.impl.ui.tree.nodes.RestorableStateNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.sun.jdi.Value;
-import icons.StreamDebuggerIcons;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.JavaDebuggerEditorsProvider;
 
-import javax.swing.*;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.*;
@@ -84,26 +82,6 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
     final XValueNodeImpl root = new XValueNodeImpl(this, null, "root", new MyRootValue(values, evaluationContext));
     setRoot(root, false);
     root.setLeaf(false);
-
-    setCellRenderer(new TraceTreeCellRenderer() {
-      @Override
-      public void customizeCellRenderer(@NotNull JTree tree,
-                                        Object value,
-                                        boolean selected,
-                                        boolean expanded,
-                                        boolean leaf,
-                                        int row,
-                                        boolean hasFocus) {
-        super.customizeCellRenderer(tree, value, selected, expanded, leaf, row, hasFocus);
-        if (value instanceof XValueNodeImpl) {
-          final XValueNodeImpl node = (XValueNodeImpl)value;
-          final TreePath path = node.getPath();
-          if (isPathHighlighted(path)) {
-            setIcon(StreamDebuggerIcons.VALUE_HIGHLIGHTED_ICON);
-          }
-        }
-      }
-    });
 
     final Map<Value, List<TraceElement>> map2TraceElement = StreamEx.of(traceElements).groupingBy(TraceElement::getValue);
 
