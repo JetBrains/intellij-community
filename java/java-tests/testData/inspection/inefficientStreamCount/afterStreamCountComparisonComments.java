@@ -6,6 +6,6 @@ class Test {
   long cnt() {
       /*c*/
       /*d*/
-      return Arrays.asList('ds', 'e', 'fe')./*a*/stream(/*b*/).anyMatch(s -> s.length() > 1);
+      return Arrays.asList("ds", "e", "fe")./*a*/stream(/*b*/).anyMatch(s -> s.length() > 1);
   }
 }
