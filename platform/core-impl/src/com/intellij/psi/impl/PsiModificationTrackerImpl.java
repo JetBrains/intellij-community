@@ -60,7 +60,7 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTr
   private final Listener myPublisher;
 
   public PsiModificationTrackerImpl(Project project) {
-    final MessageBus bus = project.getMessageBus();
+    MessageBus bus = project.getMessageBus();
     myPublisher = bus.syncPublisher(TOPIC);
     bus.connect().subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
       private void doIncCounter() {
@@ -80,11 +80,11 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTr
   }
 
   public void incCounter() {
-    incCounterInner(true, true);
+    incCountersInner(7);
   }
 
   public void incOutOfCodeBlockModificationCounter() {
-    incCounterInner(false, true);
+    incCountersInner(3);
   }
 
   private void fireEvent() {
@@ -92,14 +92,10 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTr
     myPublisher.modificationCountChanged();
   }
 
-  private void incCounterInner(boolean main, boolean codeBlock) {
-    if (main) {
-      myModificationCount.incModificationCount();
-    }
-    if (codeBlock) {
-      myOutOfCodeBlockModificationTracker.incModificationCount();
-      myJavaStructureModificationTracker.incModificationCount();
-    }
+  private void incCountersInner(int bits) {
+    if ((bits & 0x1) != 0) myModificationCount.incModificationCount();
+    if ((bits & 0x2) != 0) myOutOfCodeBlockModificationTracker.incModificationCount();
+    if ((bits & 0x4) != 0) myJavaStructureModificationTracker.incModificationCount();
     fireEvent();
   }
 
@@ -117,8 +113,7 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTr
       code == CHILD_MOVED ? event.getOldParent() instanceof PsiDirectory || event.getNewParent() instanceof PsiDirectory :
       event.getParent() instanceof PsiDirectory;
 
-    incCounterInner(true, outOfCodeBlock);
-    fireEvent();
+    incCountersInner(outOfCodeBlock ? 7 : 1);
   }
 
   public static boolean canAffectPsi(@NotNull PsiTreeChangeEventImpl event) {
@@ -217,7 +212,7 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTr
       @Override
       public void incModificationCount() {
         if (value.asBoolean()) super.incModificationCount();
-        else fallback.incModificationCount();
+        //else fallback.incModificationCount();
       }
     };
   }
