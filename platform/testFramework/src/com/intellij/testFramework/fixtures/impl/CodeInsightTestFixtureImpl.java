@@ -508,7 +508,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   public void testInspection(@NotNull String testDir, @NotNull InspectionToolWrapper toolWrapper) {
-    VirtualFile sourceDir = copyDirectoryToProject(new File(testDir, "src").getPath(), "src");
+    VirtualFile sourceDir = copyDirectoryToProject(new File(testDir, "src").getPath(), "");
     PsiDirectory psiDirectory = getPsiManager().findDirectory(sourceDir);
     assertNotNull(psiDirectory);
 
