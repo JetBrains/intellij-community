@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
+import com.intellij.codeInsight.ExpectedTypeInfo.*;
 import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.intention.impl.TypeExpression;
 import com.intellij.codeInsight.template.TemplateBuilder;
@@ -26,6 +27,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,6 +35,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
+import static com.intellij.codeInsight.ExpectedTypeInfo.*;
+import static com.intellij.util.containers.ContainerUtil.map;
 
 /**
  * @author ven
@@ -49,31 +54,6 @@ public class GuessTypeParameters {
     myFactory = factory;
   }
 
-  private List<PsiType> matchingTypeParameters (PsiType[] paramVals, PsiTypeParameter[] params, ExpectedTypeInfo info) {
-    PsiType type = info.getType();
-    int kind = info.getKind();
-
-    List<PsiType> result = new ArrayList<>();
-    for (int i = 0; i < paramVals.length; i++) {
-      PsiType val = paramVals[i];
-      if (val != null) {
-        switch (kind) {
-          case ExpectedTypeInfo.TYPE_STRICTLY:
-            if (val.equals(type)) result.add(myFactory.createType(params[i]));
-            break;
-          case ExpectedTypeInfo.TYPE_OR_SUBTYPE:
-            if (type.isAssignableFrom(val)) result.add(myFactory.createType(params[i]));
-            break;
-          case ExpectedTypeInfo.TYPE_OR_SUPERTYPE:
-            if (val.isAssignableFrom(type)) result.add(myFactory.createType(params[i]));
-            break;
-        }
-      }
-    }
-
-    return result;
-  }
-
   public void setupTypeElement (PsiTypeElement typeElement, ExpectedTypeInfo[] infos, PsiSubstitutor substitutor,
                                 TemplateBuilder builder, @Nullable PsiElement context, PsiClass targetClass) {
     LOG.assertTrue(typeElement.isValid());
@@ -88,8 +68,9 @@ public class GuessTypeParameters {
       PsiType[] vals = map.values().toArray(PsiType.createArray(map.size()));
       PsiTypeParameter[] params = map.keySet().toArray(new PsiTypeParameter[map.size()]);
 
-      List<PsiType> types = matchingTypeParameters(vals, params, info);
-      if (!types.isEmpty()) {
+      final List<PsiTypeParameter> matchedParameters = matchingTypeParameters(substitutor, info.getType(), info.getKind());
+      if (!matchedParameters.isEmpty()) {
+        final List<PsiType> types = map(matchedParameters, it -> myFactory.createType(it));
         ContainerUtil.addAll(types, ExpectedTypesProvider.processExpectedTypes(infos, new MyTypeVisitor(manager, scope), myProject));
         builder.replaceElement(typeElement, new TypeExpression(myProject, types.toArray(PsiType.createArray(types.size()))));
         return;
@@ -112,7 +93,7 @@ public class GuessTypeParameters {
               defaultType = getComponentType(defaultType);
               LOG.assertTrue(defaultType != null);
               ExpectedTypeInfo info1 = ExpectedTypesProvider.createInfo(((PsiClassType)defaultType).rawType(),
-                                                                   ExpectedTypeInfo.TYPE_STRICTLY,
+                                                                   TYPE_STRICTLY,
                                                                    ((PsiClassType)defaultType).rawType(),
                                                                    info.getTailType());
               MyTypeVisitor visitor = new MyTypeVisitor(manager, scope);
@@ -222,6 +203,36 @@ public class GuessTypeParameters {
     @Override
     public PsiType visitCapturedWildcardType(PsiCapturedWildcardType capturedWildcardType) {
       return capturedWildcardType.getUpperBound().accept(this);
+    }
+  }
+
+  /**
+   * @return list of type parameters which match expected type after substitution
+   */
+  @NotNull
+  private static List<PsiTypeParameter> matchingTypeParameters(@NotNull PsiSubstitutor substitutor,
+                                                               @NotNull PsiType expectedType,
+                                                               @Type int kind) {
+    final List<PsiTypeParameter> result = new SmartList<>();
+    for (Map.Entry<PsiTypeParameter, PsiType> entry : substitutor.getSubstitutionMap().entrySet()) {
+      final PsiType typeArgument = entry.getValue();
+      if (typeArgument != null && matches(typeArgument, expectedType, kind)) {
+        result.add(entry.getKey());
+      }
+    }
+    return result;
+  }
+
+  private static boolean matches(@NotNull PsiType type, @NotNull PsiType expectedType, @Type int kind) {
+    switch (kind) {
+      case TYPE_STRICTLY:
+        return type.equals(expectedType);
+      case TYPE_OR_SUBTYPE:
+        return expectedType.isAssignableFrom(type);
+      case TYPE_OR_SUPERTYPE:
+        return type.isAssignableFrom(expectedType);
+      default:
+        return false;
     }
   }
 }
