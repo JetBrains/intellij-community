@@ -25,6 +25,7 @@ import com.intellij.ui.EditorComboBoxEditor;
 import com.intellij.ui.EditorComboBoxRenderer;
 import com.intellij.ui.EditorTextField;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.EvaluationMode;
@@ -113,7 +114,7 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
   public void setEnabled(boolean enable) {
     if (enable == myComboBox.isEnabled()) return;
 
-    myComboBox.setEnabled(enable);
+    UIUtil.setEnabled(myComponent, enable, true);
     //myComboBox.setEditable(enable);
 
     if (enable) {

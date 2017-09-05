@@ -87,7 +87,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
   private int myHistoryIndex = -1;
   @Nullable private PsiElement myContext;
 
-  private final JLabel myChooseFactory = new JLabel();
+  private final LanguageChooser myLanguageChooser = new LanguageChooser();
   private final JLabel myExpandButton = new JLabel(AllIcons.General.ExpandComponent);
   private JBPopup myExpandedPopup;
 
@@ -104,15 +104,10 @@ public abstract class XDebuggerEditorBase implements Expandable {
     myHistoryId = historyId;
     mySourcePosition = sourcePosition;
 
-    myChooseFactory.setHorizontalTextPosition(SwingConstants.LEFT);
-    myChooseFactory.setIconTextGap(0);
-    myChooseFactory.setToolTipText(XDebuggerBundle.message("xdebugger.evaluate.language.hint"));
-    myChooseFactory.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-    myChooseFactory.setBorder(JBUI.Borders.empty(0, 3));
     new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent e, int clickCount) {
-        if (myChooseFactory.isEnabled()) {
+        if (myLanguageChooser.isEnabled()) {
           ListPopup oldPopup = SoftReference.dereference(myPopup);
           if (oldPopup != null && !oldPopup.isDisposed()) {
             oldPopup.cancel();
@@ -120,13 +115,13 @@ public abstract class XDebuggerEditorBase implements Expandable {
             return true;
           }
           ListPopup popup = createLanguagePopup();
-          popup.showUnderneathOf(myChooseFactory);
+          popup.showUnderneathOf(myLanguageChooser);
           myPopup = new WeakReference<>(popup);
           return true;
         }
         return false;
       }
-    }.installOn(myChooseFactory);
+    }.installOn(myLanguageChooser);
 
     // setup expand button
     myExpandButton.setToolTipText(KeymapUtil.createTooltipText("Expand", "ExpandExpandableComponent"));
@@ -187,7 +182,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
     BorderLayoutPanel panel = JBUI.Panels.simplePanel();
 
     JPanel factoryPanel = JBUI.Panels.simplePanel();
-    factoryPanel.add(myChooseFactory, multiline ? BorderLayout.NORTH : BorderLayout.CENTER);
+    factoryPanel.add(myLanguageChooser, multiline ? BorderLayout.NORTH : BorderLayout.CENTER);
     panel.add(factoryPanel, BorderLayout.WEST);
 
     if (!multiline && showEditor) {
@@ -210,7 +205,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
   protected JComponent addChooser(JComponent component) {
     BorderLayoutPanel panel = JBUI.Panels.simplePanel(component);
     panel.setBackground(component.getBackground());
-    panel.addToRight(myChooseFactory);
+    panel.addToRight(myLanguageChooser);
     return panel;
   }
 
@@ -222,7 +217,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
   }
 
   public JComponent getLanguageChooser() {
-    return myChooseFactory;
+    return myLanguageChooser;
   }
 
   public void setContext(@Nullable PsiElement context) {
@@ -277,28 +272,20 @@ public abstract class XDebuggerEditorBase implements Expandable {
     boolean many = languages.size() > 1;
 
     if (language != null) {
-      myChooseFactory.setVisible(many);
+      myLanguageChooser.setVisible(many);
     }
-    myChooseFactory.setVisible(myChooseFactory.isVisible() || many);
+    myLanguageChooser.setVisible(myLanguageChooser.isVisible() || many);
     //myChooseFactory.setEnabled(many && languages.contains(language));
 
     if (language != null && language.getAssociatedFileType() != null) {
-      Icon dropdownIcon = AllIcons.General.Dropdown;
-      int width = dropdownIcon.getIconWidth();
-      dropdownIcon = IconUtil.cropIcon(dropdownIcon, new Rectangle(width / 2, 0, width - width / 2, dropdownIcon.getIconHeight()));
-      LayeredIcon icon = JBUI.scale(new LayeredIcon(1));
-      icon.setIcon(dropdownIcon, 0, 0, -5);
-      myChooseFactory.setIcon(IconUtil.desaturate(icon));
-      myChooseFactory.setText(language.getDisplayName());
-      myChooseFactory.setForeground(JBColor.darkGray);
-      myChooseFactory.setDisabledIcon(IconLoader.getDisabledIcon(icon));
+      myLanguageChooser.setText(language.getDisplayName());
     }
 
     doSetText(text);
   }
 
   public void setEnabled(boolean enable) {
-    myChooseFactory.setEnabled(enable);
+    myLanguageChooser.setEnabled(enable);
   }
 
   public abstract XExpression getExpression();
@@ -499,5 +486,31 @@ public abstract class XDebuggerEditorBase implements Expandable {
   @Override
   public boolean isExpanded() {
     return myExpandedPopup != null;
+  }
+
+  private static class LanguageChooser extends JLabel {
+    @SuppressWarnings("UseJBColor")
+    static final Color ENABLED_COLOR = new Color(0x787878);
+    static final Color DISABLED_COLOR = new JBColor(0xB2B2B2, 0x5C5D5F);
+
+    public LanguageChooser() {
+      setHorizontalTextPosition(SwingConstants.LEFT);
+      setIconTextGap(0);
+      setToolTipText(XDebuggerBundle.message("xdebugger.evaluate.language.hint"));
+      setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+      setBorder(JBUI.Borders.emptyRight(2));
+      Icon dropdownIcon = AllIcons.General.Dropdown;
+      int width = dropdownIcon.getIconWidth();
+      dropdownIcon = IconUtil.cropIcon(dropdownIcon, new Rectangle(width / 2, 0, width - width / 2, dropdownIcon.getIconHeight()));
+      LayeredIcon icon = JBUI.scale(new LayeredIcon(1));
+      icon.setIcon(dropdownIcon, 0, 0, -5);
+      setIcon(icon);
+      setDisabledIcon(IconLoader.getDisabledIcon(icon));
+    }
+
+    @Override
+    public Color getForeground() {
+      return isEnabled() ? ENABLED_COLOR : DISABLED_COLOR;
+    }
   }
 }
