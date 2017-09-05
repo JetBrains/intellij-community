@@ -19,6 +19,7 @@ import com.google.common.base.Joiner;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -203,7 +204,21 @@ public class PluginDescriptorStructureUtil {
       location = toShortName(firstNotNullAttribute(
         tag, "instance", "class", "implementation", "implementationClass", "interface", "interfaceClass"));
     }
+    if (location != null) {
+      return location;
+    }
 
-    return location;
+    XmlAttribute[] attributes = tag.getAttributes();
+    if (attributes.length == 1) {
+      String onlyValue = attributes[0].getValue();
+      if (onlyValue != null) {
+        if (StringUtil.countChars(onlyValue, '.') > 2) {
+          return toShortName(onlyValue);
+        }
+        return onlyValue;
+      }
+    }
+
+    return null;
   }
 }
