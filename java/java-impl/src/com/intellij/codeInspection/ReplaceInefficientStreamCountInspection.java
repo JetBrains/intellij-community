@@ -49,7 +49,8 @@ public class ReplaceInefficientStreamCountInspection extends BaseJavaBatchLocalI
   private static final CallMapper<CountFix> FIX_MAPPER = new CallMapper<CountFix>()
     .register(COLLECTION_STREAM, call -> new CountFix(SimplificationMode.COLLECTION_SIZE))
     .register(STREAM_FLAT_MAP, call -> doesFlatMapCallCollectionStream(call) ? new CountFix(SimplificationMode.SUM) : null)
-    .register(STREAM_FILTER, call -> extractComparisonWithZero(call) != null ? new CountFix(SimplificationMode.ANY_MATCH) : null);
+    .register(STREAM_FILTER, call -> extractComparisonWithZero(call) != null ? new CountFix(SimplificationMode.ANY_MATCH) : null)
+    .register(STREAM_FILTER, call -> extractComparisonWithZeroEq(call) != null ? new CountFix(SimplificationMode.NONE_MATCH) : null);
 
   private static final Logger LOG = Logger.getInstance(ReplaceInefficientStreamCountInspection.class);
 
@@ -85,19 +86,38 @@ public class ReplaceInefficientStreamCountInspection extends BaseJavaBatchLocalI
   }
 
   @Nullable
-  static PsiBinaryExpression extractComparisonWithZero(PsiMethodCallExpression filterCall) {
+  private static PsiBinaryExpression extractComparisonWithZero(PsiMethodCallExpression filterCall) {
+    PsiBinaryExpression binary = extractBinary(filterCall);
+    if (binary == null) return null;
+    IElementType tokenType = binary.getOperationTokenType();
+    if(ExpressionUtils.isZero(binary.getLOperand()) && (tokenType == JavaTokenType.LT || tokenType == JavaTokenType.NE) ||
+       ExpressionUtils.isZero(binary.getROperand()) && (tokenType == JavaTokenType.GT || tokenType == JavaTokenType.NE)) {
+      return binary;
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PsiBinaryExpression extractComparisonWithZeroEq(PsiMethodCallExpression filterCall) {
+    PsiBinaryExpression binary = extractBinary(filterCall);
+    if (binary == null) return null;
+    IElementType tokenType = binary.getOperationTokenType();
+    if(ExpressionUtils.isZero(binary.getLOperand()) && tokenType == JavaTokenType.EQEQ ||
+       ExpressionUtils.isZero(binary.getROperand()) && tokenType == JavaTokenType.EQEQ) {
+      return binary;
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PsiBinaryExpression extractBinary(PsiMethodCallExpression filterCall) {
     PsiMethodCallExpression countCall = ExpressionUtils.getCallForQualifier(filterCall);
     if(countCall == null) return null;
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(countCall.getParent());
     if(parent == null) return null;
     PsiBinaryExpression binary = ObjectUtils.tryCast(parent, PsiBinaryExpression.class);
     if(binary == null) return null;
-    IElementType tokenType = binary.getOperationTokenType();
-    if(ExpressionUtils.isZero(binary.getLOperand()) && tokenType.equals(JavaTokenType.LT) ||
-           ExpressionUtils.isZero(binary.getROperand()) && tokenType.equals(JavaTokenType.GT)) {
-      return binary;
-    }
-    return null;
+    return binary;
   }
 
   static boolean doesFlatMapCallCollectionStream(PsiMethodCallExpression flatMapCall) {
@@ -139,7 +159,8 @@ public class ReplaceInefficientStreamCountInspection extends BaseJavaBatchLocalI
   private enum SimplificationMode {
     SUM("Replace Stream.flatMap().count() with Stream.mapToLong().sum()", "Stream.flatMap().count() can be replaced with Stream.mapToLong().sum()"),
     COLLECTION_SIZE("Replace Collection.stream().count() with Collection.size()", "Collection.stream().count() can be replaced with Collection.size()"),
-    ANY_MATCH("Replace Stream().filter().count() > 0 with stream.anyMatch()", "Stream().filter().count() > 0 can be replaced with stream.anyMatch()");
+    ANY_MATCH("Replace Stream().filter().count() > 0 with stream.anyMatch()", "Stream().filter().count() > 0 can be replaced with stream.anyMatch()"),
+    NONE_MATCH("Replace Stream().filter().count() == 0 with stream.noneMatch()", "Stream().filter().count() == 0 can be replaced with stream.noneMatch()");
 
     private final String myName;
     private final String myMessage;
@@ -189,7 +210,6 @@ public class ReplaceInefficientStreamCountInspection extends BaseJavaBatchLocalI
       PsiMethodCallExpression qualifierCall = getQualifierMethodCall(countCall);
       if (qualifierCall == null) return;
       switch (mySimplificationMode) {
-
         case SUM:
           replaceFlatMap(countName, qualifierCall);
           break;
@@ -197,14 +217,17 @@ public class ReplaceInefficientStreamCountInspection extends BaseJavaBatchLocalI
           replaceSimpleCount(countCall, qualifierCall);
           break;
         case ANY_MATCH:
-          replaceFilterCountComparison(qualifierCall);
+          replaceFilterCountComparison(qualifierCall, true);
+          break;
+        case NONE_MATCH:
+          replaceFilterCountComparison(qualifierCall, false);
           break;
       }
     }
 
-    private static void replaceFilterCountComparison(PsiMethodCallExpression filterCall) {
+    private static void replaceFilterCountComparison(PsiMethodCallExpression filterCall, boolean isAnyMatch) {
       if(!STREAM_FILTER.test(filterCall)) return;
-      PsiBinaryExpression comparison = extractComparisonWithZero(filterCall);
+      PsiBinaryExpression comparison = isAnyMatch? extractComparisonWithZero(filterCall) : extractComparisonWithZeroEq(filterCall);
       if(comparison == null) return;
       String filterText = filterCall.getArgumentList().getExpressions()[0].getText();
       PsiExpression filterQualifier = filterCall.getMethodExpression().getQualifierExpression();
@@ -212,7 +235,7 @@ public class ReplaceInefficientStreamCountInspection extends BaseJavaBatchLocalI
       String base = filterQualifier.getText();
       CommentTracker ct = new CommentTracker();
       ct.markUnchanged(filterQualifier);
-      ct.replaceAndRestoreComments(comparison, base + ".anyMatch(" + filterText + ")");
+      ct.replaceAndRestoreComments(comparison, base + "." + (isAnyMatch? "anyMatch" : "noneMatch") + "(" + filterText + ")");
     }
 
     private static void replaceSimpleCount(PsiMethodCallExpression countCall, PsiMethodCallExpression qualifierCall) {
