@@ -20,6 +20,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -31,8 +32,8 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PairConsumer;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.CalledInAny;
@@ -40,41 +41,11 @@ import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class BackgroundTaskUtil {
   private static final Logger LOG = Logger.getInstance(BackgroundTaskUtil.class);
-
-  /**
-   * Executor to perform <i>possibly</i> long operation on pooled thread.
-   * If computation was performed within given time frame,
-   * the computed callback will be executed synchronously (avoiding unnecessary <tt>invokeLater()</tt>).
-   * In this case, {@code onSlowAction} will not be executed at all.
-   * <ul>
-   * <li> If the computation is fast, execute callback synchronously.
-   * <li> If the computation is slow, execute <tt>onSlowAction</tt> synchronously. When the computation is completed, execute callback in EDT.
-   * </ul><p>
-   * It can be used to reduce blinking when background task might be completed fast.<br>
-   * A Simple approach:
-   * <pre>
-   * onSlowAction.run() // show "Loading..."
-   * executeOnPooledThread({
-   *   Runnable callback = backgroundTask(); // some background computations
-   *   invokeLater(callback); // apply changes
-   * });
-   * </pre>
-   * will lead to "Loading..." visible between current moment and execution of invokeLater() event.
-   * This period can be very short and looks like 'jumping' if background operation is fast.
-   */
-  @NotNull
-  @CalledInAwt
-  public static ProgressIndicator executeAndTryWait(@NotNull Function<ProgressIndicator, /*@NotNull*/ Runnable> backgroundTask,
-                                                    @Nullable Runnable onSlowAction,
-                                                    long waitMillis) {
-    return executeAndTryWait(backgroundTask, onSlowAction, waitMillis, false);
-  }
 
   @NotNull
   @CalledInAwt
@@ -100,11 +71,7 @@ public class BackgroundTaskUtil {
     else {
       Pair<Runnable, ProgressIndicator> pair = computeInBackgroundAndTryWait(
         backgroundTask,
-        (callback, indicator) -> {
-          ApplicationManager.getApplication().invokeLater(() -> {
-            finish(callback, indicator);
-          }, modality);
-        },
+        (callback, indicator) -> ApplicationManager.getApplication().invokeLater(() -> finish(callback, indicator), modality),
         modality,
         waitMillis);
 
@@ -176,28 +143,26 @@ public class BackgroundTaskUtil {
    */
   @NotNull
   @CalledInAny
-  public static <T> Pair<T, ProgressIndicator> computeInBackgroundAndTryWait(@NotNull Function<ProgressIndicator, T> task,
-                                                                             @NotNull PairConsumer<T, ProgressIndicator> asyncCallback,
-                                                                             @NotNull ModalityState modality,
-                                                                             long waitMillis) {
+  private static <T> Pair<T, ProgressIndicator> computeInBackgroundAndTryWait(@NotNull Function<ProgressIndicator, T> task,
+                                                                              @NotNull PairConsumer<T, ProgressIndicator> asyncCallback,
+                                                                              @NotNull ModalityState modality,
+                                                                              long waitMillis) {
     ProgressIndicator indicator = new EmptyProgressIndicator(modality);
 
     Helper<T> helper = new Helper<>();
 
     indicator.start();
-    ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      ProgressManager.getInstance().executeProcessUnderProgress(() -> {
-        try {
-          T result = task.fun(indicator);
-          if (!helper.setResult(result)) {
-            asyncCallback.consume(result, indicator);
-          }
+    ApplicationManager.getApplication().executeOnPooledThread(() -> ProgressManager.getInstance().executeProcessUnderProgress(() -> {
+      try {
+        T result = task.fun(indicator);
+        if (!helper.setResult(result)) {
+          asyncCallback.consume(result, indicator);
         }
-        finally {
-          indicator.stop();
-        }
-      }, indicator);
-    });
+      }
+      finally {
+        indicator.stop();
+      }
+    }, indicator));
 
     T result = null;
     if (helper.await(waitMillis)) {
@@ -218,76 +183,51 @@ public class BackgroundTaskUtil {
   @NotNull
   @CalledInAny
   public static ProgressIndicator executeOnPooledThread(@NotNull Disposable parent, @NotNull Runnable runnable) {
-    return executeOnPooledThread(parent, indicator -> runnable.run());
-  }
-
-  @NotNull
-  @CalledInAny
-  public static ProgressIndicator executeOnPooledThread(@NotNull Disposable parent, @NotNull Consumer<ProgressIndicator> task) {
     ModalityState modalityState = ModalityState.defaultModalityState();
-    return executeOnPooledThread(parent, modalityState, task);
-  }
-
-  @NotNull
-  @CalledInAny
-  public static ProgressIndicator executeOnPooledThread(@NotNull Disposable parent,
-                                                        @NotNull ModalityState modalityState,
-                                                        @NotNull Consumer<ProgressIndicator> task) {
-    return runUnderDisposeAwareIndicator(parent, modalityState, true, task);
+    return runUnderDisposeAwareIndicator(runnable, parent, modalityState, true);
   }
 
   @CalledInAny
-  private static ProgressIndicator runUnderDisposeAwareIndicator(@NotNull Disposable parent,
+  private static ProgressIndicator runUnderDisposeAwareIndicator(@NotNull Runnable task,
+                                                                 @NotNull Disposable parent,
                                                                  @NotNull ModalityState modalityState,
-                                                                 boolean onPooledThread,
-                                                                 @NotNull Consumer<ProgressIndicator> task) {
+                                                                 boolean onPooledThread) {
     ProgressIndicator indicator = new EmptyProgressIndicator(modalityState);
+    indicator.start();
 
-    Disposable disposable = new Disposable() {
-      @Override
-      public void dispose() {
-        if (indicator.isRunning()) indicator.cancel();
+    CompletableFuture<?> future;
+    if (onPooledThread) {
+      future = CompletableFuture.runAsync(()->ProgressManager.getInstance().runProcess(task, indicator),
+                                          AppExecutorUtil.getAppExecutorService());
+    }
+    else {
+      task.run();
+      future = CompletableFuture.completedFuture(null);
+    }
+    Disposable disposable = () -> {
+      if (indicator.isRunning()) indicator.cancel();
+      try {
+        future.get(1, TimeUnit.SECONDS);
+      }
+      catch (InterruptedException | ExecutionException | TimeoutException e) {
+        LOG.error(e);
       }
     };
 
-    try {
-      Disposer.register(parent, disposable);
-    }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-      indicator.cancel();
-      return indicator;
-    }
-
-    indicator.start();
-
-    Runnable underProgress = () -> ProgressManager.getInstance().executeProcessUnderProgress(() -> {
-      try {
-        task.consume(indicator);
-      }
-      finally {
-        indicator.stop();
-        Disposer.dispose(disposable);
-      }
-    }, indicator);
-
-    if (onPooledThread) ApplicationManager.getApplication().executeOnPooledThread(underProgress);
-    else underProgress.run();
-
+    future.whenComplete((o, e) -> Disposer.dispose(disposable));
+    Disposer.register(parent, disposable);
     return indicator;
   }
 
   @CalledInAny
   public static void runUnderDisposeAwareIndicator(@NotNull Disposable parent, @NotNull Runnable task) {
-    runUnderDisposeAwareIndicator(parent, ModalityState.defaultModalityState(), false, indicator -> task.run());
+    runUnderDisposeAwareIndicator(task, parent, ModalityState.defaultModalityState(), false);
   }
 
   /**
    * Wraps {@link MessageBus#syncPublisher(Topic)} in a dispose check,
    * and throws a {@link ProcessCanceledException} if the project is disposed,
    * instead of throwing an assertion which would happen otherwise.
-   *
-   * @see #syncPublisher(Topic)
    */
   @CalledInAny
   @NotNull

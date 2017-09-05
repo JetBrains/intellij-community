@@ -44,6 +44,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.localVcs.UpToDateLineNumberProvider;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -163,7 +164,7 @@ public class AnnotateDiffViewerAction {
     annotator.getBackgroundableLock().lock();
     if (diffContext != null) diffContext.showProgressBar(true);
 
-    BackgroundTaskUtil.executeOnPooledThread(viewer, indicator -> {
+    BackgroundTaskUtil.executeOnPooledThread(viewer, () -> {
       try {
         loader.run();
       }
@@ -185,7 +186,7 @@ public class AnnotateDiffViewerAction {
           if (viewer.isDisposed()) return;
 
           annotator.showAnnotation(loader.getResult());
-        }, indicator.getModalityState());
+        }, ProgressManager.getGlobalProgressIndicator().getModalityState());
       }
     });
   }
