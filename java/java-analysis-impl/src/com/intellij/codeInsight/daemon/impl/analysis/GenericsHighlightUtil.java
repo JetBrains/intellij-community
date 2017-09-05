@@ -1234,7 +1234,7 @@ public class GenericsHighlightUtil {
     PsiElement parent = list.getParent();
     if (parent instanceof PsiClass) {
       PsiClass klass = (PsiClass)parent;
-      if (klass.hasTypeParameters() && klass.getExtendsList() == list) {
+      if (PsiUtil.typeParametersIterator(klass).hasNext() && klass.getExtendsList() == list) {
         PsiClass throwableClass = null;
         for (PsiJavaCodeReferenceElement refElement : list.getReferenceElements()) {
           PsiElement resolved = refElement.resolve();
