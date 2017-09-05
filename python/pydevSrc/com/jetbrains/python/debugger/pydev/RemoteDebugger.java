@@ -407,7 +407,7 @@ public class RemoteDebugger implements ProcessDebugger {
                                   XSourcePosition sourcePosition,
                                   String functionName,
                                   Editor editor) {
-    final SetNextStatementCommand command = new SetNextStatementCommand(this, threadId, sourcePosition.getLine(), functionName, editor);
+    final SetNextStatementCommand command = new SetNextStatementCommand(this, threadId, sourcePosition, functionName, editor);
     execute(command);
     return command.isSucceeded();
   }

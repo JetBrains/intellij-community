@@ -544,18 +544,15 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     passToCurrentThread(context, ResumeOrStepCommand.Mode.STEP_INTO_MY_CODE);
   }
 
-  public void setNextStatement(@Nullable XSuspendContext context, XSourcePosition sourcePosition, Editor editor) {
+  public void startSetNextStatement(@Nullable XSuspendContext context, XSourcePosition sourcePosition, Editor editor) {
     if (!checkCanPerformCommands()) return;
+    getSession().sessionResumed();
+    dropFrameCaches();
     if (isConnected()) {
       String threadId = threadIdBeforeResumeOrStep(context);
       for (PyThreadInfo suspendedThread : mySuspendedThreads) {
         if (threadId == null || threadId.equals(suspendedThread.getId())) {
-          boolean success = myDebugger.setNextStatement(threadId, sourcePosition, getFunctionName(sourcePosition), editor);
-          if (success) {
-            // resume if only there was a success!
-            getSession().sessionResumed();
-            dropFrameCaches();
-          }
+          myDebugger.setNextStatement(threadId, sourcePosition, getFunctionName(sourcePosition), editor);
           break;
         }
       }

@@ -820,10 +820,11 @@ class PyDB:
                     cmd = self.cmd_factory.make_set_next_stmnt_status_message(seq, stop, response_msg)
                     self.writer.add_command(cmd)
 
+                cmd = self.cmd_factory.make_thread_run_message(get_thread_id(thread), info.pydev_step_cmd)
+                self.writer.add_command(cmd)
+
                 if stop:
                     info.pydev_state = STATE_SUSPEND
-                    cmd = self.cmd_factory.make_thread_run_message(get_thread_id(thread), info.pydev_step_cmd)
-                    self.writer.add_command(cmd)
                     thread.stop_reason = CMD_THREAD_SUSPEND
 
                 # return to the suspend state and wait for other command

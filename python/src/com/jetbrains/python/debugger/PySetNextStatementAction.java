@@ -46,7 +46,7 @@ public class PySetNextStatementAction extends XDebuggerActionBase {
           XSourcePosition position = XDebuggerUtilImpl.getCaretPosition(session.getProject(), dataContext);
           Editor editor = getEditor(session.getProject(), dataContext);
           if (position != null) {
-            pyDebugProcess.setNextStatement(debugProcess.getSession().getSuspendContext(), position, editor);
+            pyDebugProcess.startSetNextStatement(debugProcess.getSession().getSuspendContext(), position, editor);
           }
         }
       }
