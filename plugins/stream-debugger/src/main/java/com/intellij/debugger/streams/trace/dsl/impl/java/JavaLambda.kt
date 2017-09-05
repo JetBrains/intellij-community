@@ -29,7 +29,7 @@ class JavaLambda(override val variableName: String, override val body: JavaLambd
 
   private fun JavaLambdaBody.convert(indent: Int): String =
     if (isExpression()) this.toCode(0)
-    else "{" +
+    else "{\n" +
          this.toCode(indent + 1) +
          "}".withIndent(indent)
 }
