@@ -336,7 +336,7 @@ public class RemoteDebugger implements ProcessDebugger {
       try {
         command.execute();
       }
-      catch (PyDebuggerException e) {
+      catch (Exception e) {
         LOG.error(e);
       }
       finally {
