@@ -62,6 +62,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -69,12 +70,6 @@ import java.lang.ref.WeakReference;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-
-import static com.intellij.openapi.keymap.KeymapUtil.createTooltipText;
-import static java.awt.event.InputEvent.CTRL_MASK;
-import static java.util.Collections.singletonList;
-import static javax.swing.KeyStroke.getKeyStroke;
-import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS;
 
 /**
  * @author nik
@@ -448,14 +443,14 @@ public abstract class XDebuggerEditorBase implements Expandable {
       .setRequestFocus(true)
       .setLocateByContent(true)
       .setCancelOnWindowDeactivation(false)
-      .setKeyboardActions(singletonList(Pair.create(event -> {
+      .setKeyboardActions(Collections.singletonList(Pair.create(event -> {
         collapse();
         Window window = UIUtil.getWindow(getComponent());
         if (window != null) {
           window.dispatchEvent(
-            new KeyEvent(getComponent(), KeyEvent.KEY_PRESSED, System.currentTimeMillis(), CTRL_MASK, KeyEvent.VK_ENTER, '\r'));
+            new KeyEvent(getComponent(), KeyEvent.KEY_PRESSED, System.currentTimeMillis(), InputEvent.CTRL_MASK, KeyEvent.VK_ENTER, '\r'));
         }
-      }, getKeyStroke(KeyEvent.VK_ENTER, CTRL_MASK))))
+      }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.CTRL_MASK))))
       .setCancelCallback(() -> {
         Editor baseEditor = getEditor();
         if (baseEditor != null) {
@@ -474,9 +469,9 @@ public abstract class XDebuggerEditorBase implements Expandable {
     ErrorStripeEditorCustomization.DISABLED.customize(editor);
     // TODO: copied from ExpandableTextField
     JScrollPane pane = editor.getScrollPane();
-    pane.setVerticalScrollBarPolicy(VERTICAL_SCROLLBAR_ALWAYS);
+    pane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
     pane.getVerticalScrollBar().add(JBScrollBar.LEADING, new JLabel(AllIcons.General.CollapseComponent) {{
-      setToolTipText(createTooltipText("Collapse", "CollapseExpandableComponent"));
+      setToolTipText(KeymapUtil.createTooltipText("Collapse", "CollapseExpandableComponent"));
       setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
       setBorder(JBUI.Borders.empty(5, 0, 5, 5));
       addMouseListener(new MouseAdapter() {
