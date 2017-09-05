@@ -119,16 +119,9 @@ public class FacetModelImpl extends FacetModelBase implements ModifiableFacetMod
   }
 
   @Override
-  public void addListener(@NotNull final Listener listener, @Nullable Disposable parentDisposable) {
+  public void addListener(@NotNull final Listener listener, @NotNull Disposable parentDisposable) {
     myListeners.add(listener);
-    if (parentDisposable != null) {
-      Disposer.register(parentDisposable, new Disposable() {
-        @Override
-        public void dispose() {
-          myListeners.remove(listener);
-        }
-      });
-    }
+    Disposer.register(parentDisposable, () -> myListeners.remove(listener));
   }
 
   @Override

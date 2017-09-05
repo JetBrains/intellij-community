@@ -102,7 +102,7 @@ public class Facet<C extends FacetConfiguration> extends UserDataHolderBase impl
     return super.hashCode();
   }
 
-  @SuppressWarnings({"EqualsWhichDoesntCheckParameterClass"})
+  @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
   public final boolean equals(Object obj) {
     return super.equals(obj);
   }
@@ -113,7 +113,7 @@ public class Facet<C extends FacetConfiguration> extends UserDataHolderBase impl
   }
 
   /**
-   * Use {@link com.intellij.facet.ModifiableFacetModel#rename} to rename facets
+   * Use {@link ModifiableFacetModel#rename} to rename facets
    */
   final void setName(@NotNull final String name) {
     myName = name;
