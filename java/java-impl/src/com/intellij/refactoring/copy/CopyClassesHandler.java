@@ -84,6 +84,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
       final PsiFile containingFile = navigationElement.getContainingFile();
       if (!(containingFile instanceof PsiClassOwner &&
             JavaProjectRootsUtil.isOutsideJavaSourceRoot(containingFile))) {
+        if (PsiPackage.PACKAGE_INFO_CLS_FILE.equals(containingFile.getName())) continue;
         PsiClass[] topLevelClasses = getTopLevelClasses(element);
         if (topLevelClasses == null) {
           if (element instanceof PsiDirectory) {
