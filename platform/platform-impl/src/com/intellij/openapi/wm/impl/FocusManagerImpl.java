@@ -488,7 +488,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
     AtomicBoolean immediate = new AtomicBoolean(true);
     doWhenFocusSettlesDown(() -> {
       if (immediate.get()) {
-        runnable.run();
+        flushRequest(runnable);
         return;
       }
 
