@@ -19,16 +19,14 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -425,7 +423,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
     if (myExpandedPopup != null || !getComponent().isEnabled()) return;
 
     XDebuggerExpressionEditor expressionEditor =
-      new XDebuggerExpressionEditor(myProject, myDebuggerEditorsProvider, "evaluateCodeFragment", mySourcePosition,
+      new XDebuggerExpressionEditor(myProject, myDebuggerEditorsProvider, myHistoryId, mySourcePosition,
                                     getExpression(), true, true, false) {
         @Override
         protected JComponent decorate(JComponent component, boolean multiline, boolean showEditor) {
@@ -443,6 +441,9 @@ public abstract class XDebuggerEditorBase implements Expandable {
       .setRequestFocus(true)
       .setLocateByContent(true)
       .setCancelOnWindowDeactivation(false)
+      .setAdText(XDebuggerBundle.message("xdebugger.evaluate.history.navigate.ad",
+                                         DebuggerUIUtil.getActionShortcutText(IdeActions.ACTION_NEXT_OCCURENCE),
+                                         DebuggerUIUtil.getActionShortcutText(IdeActions.ACTION_PREVIOUS_OCCURENCE)))
       .setKeyboardActions(Collections.singletonList(Pair.create(event -> {
         collapse();
         Window window = UIUtil.getWindow(getComponent());
@@ -460,6 +461,27 @@ public abstract class XDebuggerEditorBase implements Expandable {
         myExpandedPopup = null;
         return true;
       }).createPopup();
+
+    ShortcutSet shortcut = ActionManager.getInstance().getAction(IdeActions.ACTION_NEXT_OCCURENCE).getShortcutSet();
+    if (shortcut != null) {
+      new DumbAwareAction() {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e) {
+          expressionEditor.goForward();
+        }
+      }.registerCustomShortcutSet(shortcut, component, myExpandedPopup);
+    }
+
+    shortcut = ActionManager.getInstance().getAction(IdeActions.ACTION_PREVIOUS_OCCURENCE).getShortcutSet();
+    if (shortcut != null) {
+      new DumbAwareAction() {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e) {
+          expressionEditor.goBackward();
+        }
+      }.registerCustomShortcutSet(shortcut, component, myExpandedPopup);
+    }
+
     myExpandedPopup.show(new RelativePoint(getComponent(), new Point(0, 0)));
 
     EditorEx editor = (EditorEx)expressionEditor.getEditor();
