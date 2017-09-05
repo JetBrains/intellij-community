@@ -23,9 +23,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -845,6 +843,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
       }
 
       HeavyProcessLatch.INSTANCE.prioritizeUiActivity();
+      ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
 
       compositeRef.set(window.findFileComposite(file));
       boolean newEditor = compositeRef.isNull();
@@ -956,7 +955,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
       }
     };
 
-    UIUtil.invokeAndWaitIfNeeded(runnable);
+    ApplicationManager.getApplication().invokeAndWait(runnable);
 
     EditorWithProviderComposite composite = compositeRef.get();
     return Pair.create(composite == null ? EMPTY_EDITOR_ARRAY : composite.getEditors(),
@@ -1031,7 +1030,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
             runnable.run();
             done.setDone();
           }
-        });
+        }, ModalityState.current());
         return done;
       }
     });

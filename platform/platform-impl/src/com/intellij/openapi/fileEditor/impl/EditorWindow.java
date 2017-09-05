@@ -22,6 +22,8 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.TransactionGuardImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -285,6 +287,8 @@ public class EditorWindow {
       }
       finally {
         editorManager.removeSelectionRecord(file, this);
+
+        ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
 
         editorManager.notifyPublisher(() -> {
           final Project project = editorManager.getProject();
@@ -1194,6 +1198,8 @@ public class EditorWindow {
   }
 
   public void clear() {
+    ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
+    
     FileEditorManagerImpl manager = getManager();
     FileEditorManagerListener.Before beforePublisher = 
       manager.getProject().getMessageBus().syncPublisher(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER);
