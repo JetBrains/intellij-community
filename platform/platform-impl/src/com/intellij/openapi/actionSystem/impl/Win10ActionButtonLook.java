@@ -16,6 +16,7 @@
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
+import com.intellij.ui.Gray;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 
@@ -39,10 +40,10 @@ public class Win10ActionButtonLook extends ActionButtonLook {
   private static Color getBackgroundColorForState(int state) {
     switch (state) {
       case POPPED:
-        return UIManager.getColor("Button.intellij.native.focusedBackgroundColor");
+        return Gray.xE8;
       case PUSHED:
       case SELECTED:
-        return UIManager.getColor("Button.intellij.native.pressedBackgroundColor");
+        return Gray.xDB;
       default:
         return UIManager.getColor("Button.background");
     }
@@ -78,10 +79,10 @@ public class Win10ActionButtonLook extends ActionButtonLook {
   private static Color getBorderColorForState(int state) {
     switch (state) {
       case POPPED:
-        return UIManager.getColor("Button.intellij.native.focusedBorderColor");
+        return Gray.xCC;
       case PUSHED:
       case SELECTED:
-        return UIManager.getColor("Button.intellij.native.pressedBorderColor");
+        return Gray.xC4;
       default:
         return UIManager.getColor("Button.intellij.native.borderColor");
     }
