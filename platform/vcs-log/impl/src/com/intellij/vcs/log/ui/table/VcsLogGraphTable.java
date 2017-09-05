@@ -93,6 +93,8 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   private static final int MAX_DEFAULT_AUTHOR_COLUMN_WIDTH = 300;
   private static final int MAX_ROWS_TO_CALC_WIDTH = 1000;
 
+  public static final String LOADING_COMMITS_TEXT = "Loading commits...";
+
   @NotNull private final AbstractVcsLogUi myUi;
   @NotNull private final VcsLogData myLogData;
   @NotNull private final MyDummyTableCellEditor myDummyEditor = new MyDummyTableCellEditor();
@@ -885,12 +887,14 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     @Override
     public void progressStarted() {
       myText = getEmptyText().getText();
-      getEmptyText().setText("Loading History...");
+      getEmptyText().setText(LOADING_COMMITS_TEXT);
     }
 
     @Override
     public void progressStopped() {
-      getEmptyText().setText(myText);
+      if (getEmptyText().getText().equals(LOADING_COMMITS_TEXT)) {
+        getEmptyText().setText(myText);
+      }
     }
   }
 
