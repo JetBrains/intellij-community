@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.infos.MethodCandidateInfo;
@@ -145,6 +146,20 @@ public class PsiDiamondTypeUtil {
     return typeText;
   }
 
+  private static boolean isAugmented(PsiExpression expression) {
+    PsiElement gParent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
+    PsiTypeElement typeElement = null;
+    if (gParent instanceof PsiVariable) {
+      typeElement = ((PsiVariable)gParent).getTypeElement();
+    }
+    else if (gParent instanceof PsiReturnStatement) {
+      PsiMethod method = PsiTreeUtil.getParentOfType(gParent, PsiMethod.class);
+      LOG.assertTrue(method != null);
+      typeElement = method.getReturnTypeElement();
+    }
+    return typeElement != null && PsiAugmentProvider.getInferredType(typeElement) != null;
+  }
+  
   public static boolean areTypeArgumentsRedundant(PsiType[] typeArguments,
                                                   PsiExpression expression,
                                                   boolean constructorRef,
@@ -154,6 +169,9 @@ public class PsiDiamondTypeUtil {
       final PsiElement copy;
       final PsiType typeByParent = PsiTypesUtil.getExpectedTypeByParent(expression);
       if (typeByParent != null) {
+        if (isAugmented(expression)) {
+          return false;
+        }
         final String arrayInitializer = "new " + typeByParent.getCanonicalText() + "[]{0}";
         final Project project = expression.getProject();
         final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
