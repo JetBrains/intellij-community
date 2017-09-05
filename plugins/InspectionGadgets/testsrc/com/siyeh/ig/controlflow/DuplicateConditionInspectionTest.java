@@ -17,7 +17,7 @@ public class DuplicateConditionInspectionTest extends LightInspectionTestCase {
   @Override
   protected InspectionProfileEntry getInspection() {
     DuplicateConditionInspection inspection = new DuplicateConditionInspection();
-    inspection.ignoreMethodCalls = getTestName(false).contains("NoSideEffect");
+    inspection.ignoreSideEffectConditions = getTestName(false).contains("NoSideEffect");
     return inspection;
   }
 }

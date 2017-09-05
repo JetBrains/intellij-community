@@ -5,8 +5,8 @@ Reports on any duplicate conditions among different branches of an
 desired semantics, duplicate conditions usually represent programmer oversight.
 <!-- tooltip end -->
 <p>
-Use the checkbox below to let this inspection ignore conditions containing method calls. Some method calls may return a different value
-on an identical invocation.
+Use the checkbox below to let this inspection ignore conditions which may produce side effects.
+Unchecking this checkbox may lead to some false-positives, e.g. when the same method call returns different values on subsequent invocations.
 <p>
 
 </body>
