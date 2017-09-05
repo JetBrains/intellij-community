@@ -63,8 +63,8 @@ public class GroovyCreateFieldFromUsageHelper extends CreateFieldFromUsageHelper
       builder.replaceElement(typeElement, expr);
     }
     else if (expectedTypes instanceof ExpectedTypeInfo[]) {
-      new GuessTypeParameters(factory).setupTypeElement(field.getTypeElement(), (ExpectedTypeInfo[])expectedTypes, substitutor, builder,
-                                                        context, targetClass);
+      new GuessTypeParameters(project, factory).setupTypeElement(field.getTypeElement(), (ExpectedTypeInfo[])expectedTypes, substitutor, builder,
+                                                                 context, targetClass);
     }
     if (createConstantField) {
       field.setInitializerGroovy(factory.createExpressionFromText("0", null));

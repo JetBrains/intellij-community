@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -37,10 +38,14 @@ import java.util.Map;
  * @author ven
   */
 public class GuessTypeParameters {
-  private final JVMElementFactory myFactory;
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.GuessTypeParameters"); 
 
-  public GuessTypeParameters(JVMElementFactory factory) {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.GuessTypeParameters");
+
+  private final Project myProject;
+  private final JVMElementFactory myFactory;
+
+  public GuessTypeParameters(@NotNull Project project, @NotNull JVMElementFactory factory) {
+    myProject = project;
     myFactory = factory;
   }
 
@@ -76,7 +81,6 @@ public class GuessTypeParameters {
 
     PsiManager manager = typeElement.getManager();
     GlobalSearchScope scope = typeElement.getResolveScope();
-    Project project = manager.getProject();
 
     if (infos.length == 1 && substitutor != null && substitutor != PsiSubstitutor.EMPTY) {
       ExpectedTypeInfo info = infos[0];
@@ -86,18 +90,18 @@ public class GuessTypeParameters {
 
       List<PsiType> types = matchingTypeParameters(vals, params, info);
       if (!types.isEmpty()) {
-        ContainerUtil.addAll(types, ExpectedTypesProvider.processExpectedTypes(infos, new MyTypeVisitor(manager, scope), project));
-        builder.replaceElement(typeElement, new TypeExpression(project, types.toArray(PsiType.createArray(types.size()))));
+        ContainerUtil.addAll(types, ExpectedTypesProvider.processExpectedTypes(infos, new MyTypeVisitor(manager, scope), myProject));
+        builder.replaceElement(typeElement, new TypeExpression(myProject, types.toArray(PsiType.createArray(types.size()))));
         return;
       }
       else {
-        PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+        PsiElementFactory factory = JavaPsiFacade.getInstance(myProject).getElementFactory();
         PsiType type = info.getType();
         PsiType defaultType = info.getDefaultType();
         try {
           PsiTypeElement inplaceTypeElement = ((PsiVariable)factory.createVariableDeclarationStatement("foo", type, null).getDeclaredElements()[0]).getTypeElement();
 
-          PsiSubstitutor rawingSubstitutor = getRawingSubstitutor (context, targetClass);
+          PsiSubstitutor rawingSubstitutor = getRawingSubstitutor (myProject, context, targetClass);
           int substitionResult = substituteToTypeParameters(typeElement, inplaceTypeElement, vals, params, builder, rawingSubstitutor, true);
           if (substitionResult != SUBSTITUTED_NONE) {
             if (substitionResult == SUBSTITUTED_IN_PARAMETERS) {
@@ -113,7 +117,7 @@ public class GuessTypeParameters {
                                                                    info.getTailType());
               MyTypeVisitor visitor = new MyTypeVisitor(manager, scope);
               builder.replaceElement(refElement.getReferenceNameElement(),
-                                     new TypeExpression(project, ExpectedTypesProvider.processExpectedTypes(new ExpectedTypeInfo[]{info1}, visitor, project)));
+                                     new TypeExpression(myProject, ExpectedTypesProvider.processExpectedTypes(new ExpectedTypeInfo[]{info1}, visitor, myProject)));
             }
 
             return;
@@ -125,12 +129,12 @@ public class GuessTypeParameters {
       }
     }
 
-    PsiType[] types = infos.length == 0 ? new PsiType[] {typeElement.getType()} : ExpectedTypesProvider.processExpectedTypes(infos, new MyTypeVisitor(manager, scope), project);
+    PsiType[] types = infos.length == 0 ? new PsiType[] {typeElement.getType()} : ExpectedTypesProvider.processExpectedTypes(infos, new MyTypeVisitor(manager, scope), myProject);
     builder.replaceElement(typeElement,
-                           new TypeExpression(project, types));
+                           new TypeExpression(myProject, types));
   }
 
-  private static PsiSubstitutor getRawingSubstitutor(PsiElement context, PsiClass targetClass) {
+  private static PsiSubstitutor getRawingSubstitutor(Project project, PsiElement context, PsiClass targetClass) {
     if (context == null || targetClass == null) return PsiSubstitutor.EMPTY;
 
     PsiTypeParameterListOwner currContext = PsiTreeUtil.getParentOfType(context, PsiTypeParameterListOwner.class);
@@ -138,7 +142,7 @@ public class GuessTypeParameters {
     PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
     while (currContext != null && !manager.areElementsEquivalent(currContext, targetClass)) {
       PsiTypeParameter[] typeParameters = currContext.getTypeParameters();
-      substitutor = JavaPsiFacade.getInstance(context.getProject()).getElementFactory().createRawSubstitutor(substitutor, typeParameters);
+      substitutor = JavaPsiFacade.getInstance(project).getElementFactory().createRawSubstitutor(substitutor, typeParameters);
       currContext = currContext.getContainingClass();
     }
 
@@ -175,13 +179,12 @@ public class GuessTypeParameters {
     }
 
     if (!types.isEmpty()) {
-      Project project = typeElement.getProject();
       PsiType substituted = rawingSubstitutor.substitute(type);
       if (!CommonClassNames.JAVA_LANG_OBJECT.equals(substituted.getCanonicalText()) && (toplevel || substituted.equals(type))) {
         types.add(substituted);
       }
 
-      builder.replaceElement(typeElement, new TypeExpression(project, types.toArray(PsiType.createArray(types.size()))));
+      builder.replaceElement(typeElement, new TypeExpression(myProject, types.toArray(PsiType.createArray(types.size()))));
       return toplevel ? SUBSTITUTED_IN_REF : SUBSTITUTED_IN_PARAMETERS;
     }
 

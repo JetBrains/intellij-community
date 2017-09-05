@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -237,7 +237,7 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
     CreateFromUsageUtils.setupMethodParameters(method, builder, context, substitutor, arguments);
     final PsiTypeElement returnTypeElement = method.getReturnTypeElement();
     if (returnTypeElement != null) {
-      new GuessTypeParameters(JavaPsiFacade.getInstance(project).getElementFactory())
+      new GuessTypeParameters(project, JavaPsiFacade.getInstance(project).getElementFactory())
         .setupTypeElement(returnTypeElement, expectedTypes, substitutor, builder, context, targetClass);
     }
     PsiCodeBlock body = method.getBody();

@@ -247,15 +247,18 @@ public class CreateFromUsageUtils {
   static void setupMethodParameters(final PsiMethod method, final TemplateBuilder builder, final PsiElement contextElement,
                                     final PsiSubstitutor substitutor, final List<Pair<PsiExpression, PsiType>> arguments)
     throws IncorrectOperationException {
-    PsiManager psiManager = method.getManager();
-    JVMElementFactory factory = JVMElementFactories.getFactory(method.getLanguage(), method.getProject());
+
+    final PsiManager psiManager = method.getManager();
+    final Project project = psiManager.getProject();
+
+    JVMElementFactory factory = JVMElementFactories.getFactory(method.getLanguage(), project);
     if (factory == null) return;
 
     PsiParameterList parameterList = method.getParameterList();
 
     GlobalSearchScope resolveScope = method.getResolveScope();
 
-    GuessTypeParameters guesser = new GuessTypeParameters(JavaPsiFacade.getElementFactory(method.getProject()));
+    GuessTypeParameters guesser = new GuessTypeParameters(project, JavaPsiFacade.getElementFactory(project));
 
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(psiManager);
     final PsiClass containingClass = method.getContainingClass();
@@ -266,7 +269,7 @@ public class CreateFromUsageUtils {
       PsiExpression exp = arg.first;
 
       PsiType argType = exp == null ? arg.second : RefactoringUtil.getTypeByExpression(exp);
-      SuggestedNameInfo suggestedInfo = JavaCodeStyleManager.getInstance(psiManager.getProject()).suggestVariableName(
+      SuggestedNameInfo suggestedInfo = JavaCodeStyleManager.getInstance(project).suggestVariableName(
         VariableKind.PARAMETER, null, exp, argType);
       @NonNls String[] names = suggestedInfo.names; //TODO: callback about used name
 
