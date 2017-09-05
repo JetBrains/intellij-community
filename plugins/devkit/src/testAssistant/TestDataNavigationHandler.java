@@ -19,8 +19,8 @@ import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.awt.RelativePoint;
@@ -85,10 +85,9 @@ public class TestDataNavigationHandler implements GutterIconNavigationHandler<Ps
    * @param point point where the popup will be shown.
    */
   private static void showNavigationPopup(Project project, List<String> filePaths, RelativePoint point) {
-    ContainerUtil.removeDuplicates(filePaths);
-    filePaths.sort((path1, path2) -> PathUtil.getFileName(path1).compareToIgnoreCase(PathUtil.getFileName(path2)));
-
     List<TestDataNavigationElement> elementsToDisplay = getElementsToDisplay(project, filePaths);
+
+    // if at least one file doesn't exist add "Create missing files" element
     for (String path : filePaths) {
       if (LocalFileSystem.getInstance().refreshAndFindFileByPath(path) == null) {
         elementsToDisplay.add(TestDataNavigationElementFactory.createForCreateMissingFilesOption(filePaths));
@@ -117,11 +116,22 @@ public class TestDataNavigationHandler implements GutterIconNavigationHandler<Ps
   }
 
   private static List<TestDataNavigationElement> getElementsToDisplay(Project project, List<String> filePaths) {
+    ContainerUtil.removeDuplicates(filePaths);
+
+    filePaths.sort((path1, path2) -> {
+      String name1 = PathUtil.getFileName(path1);
+      String name2 = PathUtil.getFileName(path2);
+      name1 = StringUtil.trimStart(name1, "before");
+      name2 = StringUtil.trimStart(name2, "before");
+      name1 = StringUtil.trimStart(name1, "after");
+      name2 = StringUtil.trimStart(name2, "after");
+      return name1.compareToIgnoreCase(name2);
+    });
+
     List<TestDataNavigationElement> result = new ArrayList<>();
     for (ListIterator<String> iterator = filePaths.listIterator(); iterator.hasNext(); ) {
       String path = iterator.next();
 
-      //FIXME it's not guaranteed that even in sorted list of file paths group files will be placed one after another
       // check if there's a testdata group
       if (iterator.hasNext()) {
         String nextPath = iterator.next();
