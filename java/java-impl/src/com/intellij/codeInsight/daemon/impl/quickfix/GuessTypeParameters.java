@@ -83,7 +83,7 @@ public class GuessTypeParameters {
         PsiTypeElement inplaceTypeElement = ((PsiVariable)factory.createVariableDeclarationStatement("foo", type, null).getDeclaredElements()[0]).getTypeElement();
 
         PsiSubstitutor rawingSubstitutor = getRawingSubstitutor (myProject, context, targetClass);
-        int substitionResult = substituteToTypeParameters(typeElement, inplaceTypeElement, vals, params, builder, rawingSubstitutor, true);
+        int substitionResult = hasNullSubstitutions(substitutor) ? SUBSTITUTED_NONE : substituteToTypeParameters(typeElement, inplaceTypeElement, vals, params, builder, rawingSubstitutor, true);
         if (substitionResult != SUBSTITUTED_NONE) {
           if (substitionResult == SUBSTITUTED_IN_PARAMETERS) {
             PsiJavaCodeReferenceElement refElement = typeElement.getInnermostComponentReferenceElement();
@@ -152,7 +152,6 @@ public class GuessTypeParameters {
     List<PsiType> types = new ArrayList<>();
     for (int i = 0; i < paramVals.length; i++) {
       PsiType val = paramVals[i];
-      if (val == null) return SUBSTITUTED_NONE;
       if (type.equals(val)) {
         types.add(myFactory.createType(params[i]));
       }
@@ -233,5 +232,12 @@ public class GuessTypeParameters {
       default:
         return false;
     }
+  }
+
+  private static boolean hasNullSubstitutions(@NotNull PsiSubstitutor substitutor) {
+    for (PsiType type : substitutor.getSubstitutionMap().values()) {
+      if (type == null) return true;
+    }
+    return false;
   }
 }
