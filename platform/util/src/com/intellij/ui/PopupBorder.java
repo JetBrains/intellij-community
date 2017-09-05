@@ -42,6 +42,12 @@ public interface PopupBorder extends Border {
       border.setActive(active);
       return border;
     }
+
+    public static PopupBorder createColored(Color color) {
+      PopupBorder border = new BaseBorder(true, color, color);
+      border.setActive(true);
+      return border;
+    }
   }
 
   class BaseBorder implements PopupBorder {

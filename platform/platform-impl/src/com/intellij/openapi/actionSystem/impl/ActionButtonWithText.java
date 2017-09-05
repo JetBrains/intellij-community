@@ -15,10 +15,12 @@
  */
 package com.intellij.openapi.actionSystem.impl;
 
+import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.BitUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBInsets;
@@ -118,7 +120,12 @@ public class ActionButtonWithText extends ActionButton {
 
   @Override
   void updateToolTipText() {
-    setToolTipText(myPresentation.getDescription());
+    String description = myPresentation.getDescription();
+    if (Registry.is("ide.helptooltip.enabled")) {
+      new HelpTooltip().setDescription(description).installOn(this);
+    } else {
+      setToolTipText(description);
+    }
   }
 
   public void paintComponent(Graphics g) {
