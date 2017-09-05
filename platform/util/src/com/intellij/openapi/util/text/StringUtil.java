@@ -3134,6 +3134,16 @@ public class StringUtil extends StringUtilRt {
         return false;
     }
 
+  /**
+   * Inserts a space before each word in a camelCased string.
+   * "myClass" -> "my Class", "MyClass" -> "My Class", "MyXML" -> "My XML".
+   */
+  @NotNull
+  @Contract(pure = true)
+  public static String[] splitCamelCase(@NotNull String s) {
+    return s.split("(?<=[A-Z])(?=[A-Z][a-z])|(?<=[^A-Z])(?=[A-Z])|(?<=[A-Za-z])(?=[^A-Za-z])");
+  }
+
 
   private static final Pattern UNICODE_CHAR = Pattern.compile("\\\\u[0-9a-eA-E]{4}");
 
