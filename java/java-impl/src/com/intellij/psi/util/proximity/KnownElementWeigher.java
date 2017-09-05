@@ -17,6 +17,7 @@ package com.intellij.psi.util.proximity;
 
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.JdkUtils;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -56,7 +57,7 @@ public class KnownElementWeigher extends ProximityWeigher {
       return -1;
     }
 
-    if (!SdkOrLibraryWeigher.isJdkElement(element, project)) {
+    if (JdkUtils.getJdkForElement(element) == null) {
       return 0;
     }
 

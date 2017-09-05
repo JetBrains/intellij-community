@@ -46,6 +46,7 @@
     <extensionPoint qualifiedName="com.intellij.annotationSupport" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.psi.PsiAnnotationSupport"/>
     </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.testFramework" interface="com.intellij.testIntegration.TestFramework"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

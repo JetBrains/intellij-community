@@ -128,8 +128,6 @@
                     interface="com.intellij.openapi.compiler.util.InspectionValidator"
                     area="IDEA_PROJECT"/>
 
-    <extensionPoint name="testFramework" interface="com.intellij.testIntegration.TestFramework"/>
-
     <extensionPoint name="projectTaskRunner" interface="com.intellij.task.ProjectTaskRunner"/>
 
     <extensionPoint name="debuggerEditorTextProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" >
@@ -345,6 +343,15 @@
     <projectService serviceInterface="org.jetbrains.uast.UastContext" serviceImplementation="org.jetbrains.uast.UastContext"/>
 
     <scratch.rootType implementation="com.intellij.execution.jshell.JShellRootType"/>
+
+    <intentionAction>
+      <className>com.intellij.testIntegration.createTest.GenerateMissedTestsAction</className>
+      <category>Java/Declaration</category>
+    </intentionAction>
+    <intentionAction>
+      <className>com.intellij.testIntegration.createTest.CreateTestAction</className>
+      <category>Java/Declaration</category>
+    </intentionAction>
 
   </extensions>
 
