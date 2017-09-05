@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.ui.Gray;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -86,5 +87,9 @@ public class Win10ActionButtonLook extends ActionButtonLook {
       default:
         return UIManager.getColor("Button.intellij.native.borderColor");
     }
+  }
+
+  @Override public boolean isValid() {
+    return UIUtil.isUnderWin10LookAndFeel();
   }
 }
