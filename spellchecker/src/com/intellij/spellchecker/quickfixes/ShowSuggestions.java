@@ -17,7 +17,7 @@ package com.intellij.spellchecker.quickfixes;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.impl.EditorComponentImpl;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiElement;
@@ -28,7 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.List;
 
 
@@ -58,19 +57,10 @@ public abstract class ShowSuggestions implements LocalQuickFix, Iconable {
 
   @Nullable
   protected Editor getEditor(PsiElement element, @NotNull Project project) {
-    Editor editor = getEditorFromFocus();
-    if (editor == null) {
+    Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
+    if (InjectedLanguageUtil.findInjectionHost(element) != null) {
       editor = InjectedLanguageUtil.openEditorFor(element.getContainingFile(), project);
     }
     return editor;
-  }
-
-  @Nullable
-  private static Editor getEditorFromFocus() {
-    final Component c = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-    if (c instanceof EditorComponentImpl) {
-      return ((EditorComponentImpl)c).getEditor();
-    }
-    return null;
   }
 }
