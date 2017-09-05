@@ -208,4 +208,5 @@
     <keyboard-shortcut first-keystroke="shift control alt UP"/>
   </action>
   <action id="CopyElement"/>
+  <action id="Rerun"/>
 </keymap>
