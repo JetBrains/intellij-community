@@ -158,20 +158,32 @@ public class GuessTypeParameters {
       return toplevel ? SUBSTITUTED_IN_REF : SUBSTITUTED_IN_PARAMETERS;
     }
 
-    boolean substituted = false;
-    PsiJavaCodeReferenceElement ref = typeElement.getInnermostComponentReferenceElement();
-    PsiJavaCodeReferenceElement inplaceRef = inplaceTypeElement.getInnermostComponentReferenceElement();
-    if (ref != null) {
-      LOG.assertTrue(inplaceRef != null);
-      PsiTypeElement[] innerTypeElements = ref.getParameterList().getTypeParameterElements();
-      PsiTypeElement[] inplaceInnerTypeElements = inplaceRef.getParameterList().getTypeParameterElements();
-      for (int i = 0; i < innerTypeElements.length; i++) {
-        substituted |= substituteToTypeParameters(innerTypeElements[i], inplaceInnerTypeElements[i], substitutor, builder,
-                                                  rawingSubstitutor, false) != SUBSTITUTED_NONE;
-      }
-    }
+    final PsiTypeElement[] innerTypeElements = typeArguments(typeElement);
+    if (innerTypeElements == null) return SUBSTITUTED_NONE;
 
+    final PsiTypeElement[] inplaceInnerTypeElements = typeArguments(inplaceTypeElement);
+    if (inplaceInnerTypeElements == null) return SUBSTITUTED_NONE;
+
+    boolean substituted = false;
+    for (int i = 0; i < innerTypeElements.length; i++) {
+      substituted |= substituteToTypeParameters(innerTypeElements[i], inplaceInnerTypeElements[i], substitutor, builder,
+                                                rawingSubstitutor, false) != SUBSTITUTED_NONE;
+    }
     return substituted ? SUBSTITUTED_IN_PARAMETERS : SUBSTITUTED_NONE;
+  }
+
+  @Nullable
+  private static PsiTypeElement[] typeArguments(@NotNull PsiTypeElement typeElement) {
+    // Foo<String, Bar>[][][] -> Foo<String, Bar>
+    // Foo<String, Bar> -> Foo<String, Bar>
+    final PsiJavaCodeReferenceElement unwrappedRef = typeElement.getInnermostComponentReferenceElement();
+    if (unwrappedRef == null) return null;
+
+    // Foo<String, Bar> -> <String, Bar>
+    final PsiReferenceParameterList typeArgumentList = unwrappedRef.getParameterList();
+    if (typeArgumentList == null) return null;
+
+    return typeArgumentList.getTypeParameterElements();
   }
 
   public static class MyTypeVisitor extends PsiTypeVisitor<PsiType> {
