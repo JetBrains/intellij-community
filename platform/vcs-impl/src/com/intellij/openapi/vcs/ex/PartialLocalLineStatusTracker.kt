@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.ex
 
 import com.intellij.diff.util.Side
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.command.CommandEvent
@@ -40,6 +41,7 @@ import com.intellij.openapi.vcs.ex.DocumentTracker.Block
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker.LocalRange
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.CalledInAwt
@@ -121,9 +123,13 @@ class PartialLocalLineStatusTracker(project: Project,
     affectedChangeLists.clear()
     affectedChangeLists.addAll(newIds)
 
-    if (notifyChangeListManager && oldIds != newIds) {
-      // It's OK to call this under documentTracker.writeLock, as this method will not grab CLM lock.
-      changeListManager.notifyChangelistsChanged()
+    if (oldIds != newIds) {
+      if (notifyChangeListManager) {
+        // It's OK to call this under documentTracker.writeLock, as this method will not grab CLM lock.
+        changeListManager.notifyChangelistsChanged()
+      }
+
+      eventDispatcher.multicaster.onChangelistsChange()
     }
   }
 
@@ -136,6 +142,8 @@ class PartialLocalLineStatusTracker(project: Project,
     finally {
       currentMarker = null
     }
+
+    if (isValid()) eventDispatcher.multicaster.onBecomingValid()
   }
 
 
@@ -316,6 +324,10 @@ class PartialLocalLineStatusTracker(project: Project,
 
     override fun afterExplicitChange() {
       updateAffectedChangeLists()
+    }
+
+    override fun onUnfreeze(side: Side) {
+      if (isValid()) eventDispatcher.multicaster.onBecomingValid()
     }
   }
 
@@ -527,6 +539,23 @@ class PartialLocalLineStatusTracker(project: Project,
           tracker.restoreState(states)
         }
       }
+    }
+  }
+
+
+  private val eventDispatcher = EventDispatcher.create(Listener::class.java)
+
+  fun addListener(listener: Listener, disposable: Disposable) {
+    eventDispatcher.addListener(listener, disposable)
+  }
+
+  interface Listener : EventListener {
+    @CalledInAwt
+    fun onBecomingValid() {
+    }
+
+    @CalledInAwt
+    fun onChangelistsChange() {
     }
   }
 

@@ -45,8 +45,11 @@ public class MoveChangesLineStatusAction extends LineStatusActionBase {
   }
 
   public static void moveToAnotherChangelist(@NotNull PartialLocalLineStatusTracker tracker, @NotNull Editor editor) {
+    moveToAnotherChangelist(tracker, DiffUtil.getSelectedLines(editor));
+  }
+
+  public static void moveToAnotherChangelist(@NotNull PartialLocalLineStatusTracker tracker, @NotNull BitSet selectedLines) {
     Project project = tracker.getProject();
-    BitSet selectedLines = DiffUtil.getSelectedLines(editor);
 
     List<PartialLocalLineStatusTracker.LocalRange> ranges = tracker.getRangesForLines(selectedLines);
     if (ranges == null || ranges.isEmpty()) return;
