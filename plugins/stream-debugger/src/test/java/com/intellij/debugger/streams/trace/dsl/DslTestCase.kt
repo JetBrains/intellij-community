@@ -148,7 +148,7 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
     }
   }
 
-  fun testNestedAssigment() {
+  fun testNestedAssignment() {
     doTest {
       val a = declare(variable("int", "a"), true)
       ifBranch(+"true") {
