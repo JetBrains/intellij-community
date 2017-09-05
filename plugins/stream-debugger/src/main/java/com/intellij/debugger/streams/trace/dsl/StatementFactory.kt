@@ -15,6 +15,8 @@
  */
 package com.intellij.debugger.streams.trace.dsl
 
+import com.intellij.debugger.streams.trace.dsl.impl.AssignmentStatement
+
 /**
  * Contains language-dependent logic
  *
@@ -48,4 +50,6 @@ interface StatementFactory {
   fun same(left: Expression, right: Expression): Expression
 
   fun createIfBranch(condition: Expression, thenBlock: CodeBlock): IfBranch
+
+  fun createAssignmentStatement(variable: Variable, expression: Expression): AssignmentStatement
 }

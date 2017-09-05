@@ -16,6 +16,7 @@
 package com.intellij.debugger.streams.trace.dsl.impl.java
 
 import com.intellij.debugger.streams.trace.dsl.*
+import com.intellij.debugger.streams.trace.dsl.impl.AssignmentStatement
 import com.intellij.debugger.streams.trace.dsl.impl.TextExpression
 import com.intellij.debugger.streams.trace.dsl.impl.VariableImpl
 
@@ -61,4 +62,7 @@ class JavaStatementFactory : StatementFactory {
   override fun same(left: Expression, right: Expression): Expression = TextExpression("${left.toCode()} == ${right.toCode()}")
 
   override fun createIfBranch(condition: Expression, thenBlock: CodeBlock): IfBranch = JavaIfBranch(condition, thenBlock, this)
+
+  override fun createAssignmentStatement(variable: Variable, expression: Expression): AssignmentStatement =
+    JavaAssignmentStatement(variable, expression)
 }

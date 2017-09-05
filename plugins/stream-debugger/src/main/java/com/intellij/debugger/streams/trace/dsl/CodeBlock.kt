@@ -15,6 +15,8 @@
  */
 package com.intellij.debugger.streams.trace.dsl
 
+import com.intellij.debugger.streams.trace.dsl.impl.AssignmentStatement
+
 /**
  * @author Vitaliy.Bibaev
  */
@@ -34,4 +36,6 @@ interface CodeBlock : Statement {
   operator fun Variable.unaryPlus(): Variable
 
   operator fun Expression.unaryPlus()
+
+  fun Variable.assign(expression: Expression): AssignmentStatement
 }

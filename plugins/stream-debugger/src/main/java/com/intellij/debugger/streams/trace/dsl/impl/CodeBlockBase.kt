@@ -66,6 +66,12 @@ abstract class CodeBlockBase(private val myFactory: StatementFactory) : Composit
     addStatement(myFactory.createForEachLoop(iterateVariable, collection, loopBody))
   }
 
+  override fun Variable.assign(expression: Expression): AssignmentStatement {
+    val assignmentStatement = myFactory.createAssignmentStatement(this, expression)
+    addStatement(assignmentStatement)
+    return assignmentStatement
+  }
+
   override fun addStatement(statement: Statement) {
     myStatements += statement
   }

@@ -16,6 +16,7 @@
 package com.intellij.debugger.streams.trace.dsl.impl.kotlin
 
 import com.intellij.debugger.streams.trace.dsl.*
+import com.intellij.debugger.streams.trace.dsl.impl.AssignmentStatement
 
 /**
  * @author Vitaliy.Bibaev
@@ -77,6 +78,10 @@ class KotlinStatementFactory : StatementFactory {
   }
 
   override fun createIfBranch(condition: Expression, thenBlock: CodeBlock): IfBranch {
+    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+  }
+
+  override fun createAssignmentStatement(variable: Variable, expression: Expression): AssignmentStatement {
     TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
   }
 }
