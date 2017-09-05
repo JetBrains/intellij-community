@@ -23,10 +23,14 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProvider;
+import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,11 +57,7 @@ public class MergedChangeDiffRequestProvider implements ChangeDiffRequestProvide
   public DiffRequest process(@NotNull ChangeDiffRequestProducer presentable,
                              @NotNull UserDataHolder context,
                              @NotNull ProgressIndicator indicator) throws ProcessCanceledException, DiffRequestProducerException {
-    Change change = presentable.getChange();
-    List<Change> sourceChanges = ((MergedChange)change).getSourceChanges();
-    SimpleDiffRequest request = createRequest(presentable.getProject(), sourceChanges.get(0), sourceChanges.get(1), context, indicator);
-    request.putUserData(DiffUserDataKeys.THREESIDE_DIFF_WITH_RESULT, true);
-    return request;
+    return new MyProducer(presentable.getProject(), (MergedChange)presentable.getChange()).process(context, indicator);
   }
 
   @NotNull
@@ -112,5 +112,50 @@ public class MergedChangeDiffRequestProvider implements ChangeDiffRequestProvide
                                  ChangeDiffRequestProducer.createContent(project, rightRevision, context, indicator),
                                  getRevisionTitle(leftRevision, leftTitle),
                                  getRevisionTitle(rightRevision, rightTitle));
+  }
+
+  public static class MyProducer implements ChangeDiffRequestChain.Producer {
+    @Nullable private final Project myProject;
+    @NotNull private final MergedChange myMergedChange;
+
+    public MyProducer(@Nullable Project project, @NotNull MergedChange mergedChange) {
+      myProject = project;
+      assert mergedChange.getSourceChanges().size() == 2;
+      myMergedChange = mergedChange;
+    }
+
+    @NotNull
+    @Override
+    public DiffRequest process(@NotNull UserDataHolder context, @NotNull ProgressIndicator indicator)
+      throws DiffRequestProducerException, ProcessCanceledException {
+      List<Change> sourceChanges = myMergedChange.getSourceChanges();
+      SimpleDiffRequest request = createRequest(myProject, sourceChanges.get(0), sourceChanges.get(1), context, indicator);
+      request.putUserData(DiffUserDataKeys.THREESIDE_DIFF_WITH_RESULT, true);
+      return request;
+    }
+
+    @NotNull
+    @Override
+    public String getName() {
+      return getRequestTitle(myMergedChange);
+    }
+
+    @NotNull
+    @Override
+    public FilePath getFilePath() {
+      return ChangesUtil.getFilePath(myMergedChange);
+    }
+
+    @NotNull
+    @Override
+    public FileStatus getFileStatus() {
+      return myMergedChange.getFileStatus();
+    }
+
+    @Nullable
+    @Override
+    public Object getPopupTag() {
+      return null;
+    }
   }
 }

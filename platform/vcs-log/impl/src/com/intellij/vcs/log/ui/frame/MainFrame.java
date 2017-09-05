@@ -9,8 +9,6 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
-import com.intellij.openapi.vcs.changes.committed.CommittedChangesBrowser;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLoadingPanel;
@@ -64,7 +62,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   @NotNull private final DetailsPanel myDetailsPanel;
   @NotNull private final Splitter myDetailsSplitter;
   @NotNull private final JComponent myToolbar;
-  @NotNull private final CommittedChangesBrowser myChangesBrowser;
+  @NotNull private final VcsLogChangesBrowser myChangesBrowser;
   @NotNull private final Splitter myChangesBrowserSplitter;
   @NotNull private final SearchTextField myTextFilter;
   @NotNull private final MainVcsLogUiProperties myUiProperties;
@@ -90,19 +88,11 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     PopupHandler.installPopupHandler(myGraphTable, VcsLogActionPlaces.POPUP_ACTION_GROUP, VcsLogActionPlaces.VCS_LOG_TABLE_PLACE);
     myDetailsPanel = new DetailsPanel(logData, ui.getColorManager(), this);
 
-    myChangesBrowser = new CommittedChangesBrowser(project) {
-      @NotNull
-      @Override
-      protected List<AnAction> createToolbarActions() {
-        return ContainerUtil.append(
-          super.createToolbarActions(),
-          ActionManager.getInstance().getAction(VcsLogActionPlaces.VCS_LOG_SHOW_DETAILS_ACTION)
-        );
-      }
-    };
-    myChangesBrowser.getViewerScrollPane().setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
+    myChangesBrowser = new VcsLogChangesBrowser(project, myUiProperties, (hash, root) -> {
+      int index = myLogData.getCommitIndex(hash, root);
+      return myLogData.getMiniDetailsGetter().getCommitData(index, Collections.singleton(index));
+    }, this);
     myChangesBrowser.getDiffAction().registerCustomShortcutSet(myChangesBrowser.getDiffAction().getShortcutSet(), getGraphTable());
-    myChangesBrowser.getViewer().setEmptyText("");
     myChangesLoadingPane = new JBLoadingPanel(new BorderLayout(), this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
     myChangesLoadingPane.add(myChangesBrowser);
 
@@ -271,26 +261,17 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
     @Override
     protected void onEmptySelection() {
-      myChangesBrowser.setChangesToDisplay(Collections.emptyList());
-      myChangesBrowser.getViewer().setEmptyText("No commits selected");
+      myChangesBrowser.setSelectedDetails(Collections.emptyList());
     }
 
     @Override
     protected void onDetailsLoaded(@NotNull List<VcsFullCommitDetails> detailsList) {
-      List<Change> changes = ContainerUtil.newArrayList();
-      List<VcsFullCommitDetails> detailsListReversed = ContainerUtil.reverse(detailsList);
-      for (VcsFullCommitDetails details : detailsListReversed) {
-        changes.addAll(details.getChanges());
-      }
-      changes = CommittedChangesTreeBrowser.zipChanges(changes);
-      myChangesBrowser.setChangesToDisplay(changes);
+      myChangesBrowser.setSelectedDetails(detailsList);
     }
 
     @Override
     protected void onSelection(@NotNull int[] selection) {
-      // just reset and wait for details to be loaded
-      myChangesBrowser.setChangesToDisplay(Collections.emptyList());
-      myChangesBrowser.getViewer().setEmptyText("");
+      myChangesBrowser.resetSelectedDetails();
     }
 
     @Override
