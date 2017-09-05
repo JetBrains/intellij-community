@@ -23,6 +23,7 @@ import com.intellij.ide.projectView.SelectableTreeStructureProvider;
 import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.projectView.impl.ProjectViewPane;
+import com.intellij.ide.scratch.ScratchFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbService;
@@ -31,6 +32,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -117,7 +119,8 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
     return index.getContentRootForFile(vFile, false) != null ||
            index.isInLibraryClasses(vFile) ||
            index.isInLibrarySource(vFile) ||
-           Comparing.equal(vFile.getParent(), myProject.getBaseDir());
+           Comparing.equal(vFile.getParent(), myProject.getBaseDir()) ||
+           Registry.is("ide.scratch.in.project.view") && vFile.getFileType() == ScratchFileType.INSTANCE;
   }
 
   public String getSubIdPresentableName(String subId) {

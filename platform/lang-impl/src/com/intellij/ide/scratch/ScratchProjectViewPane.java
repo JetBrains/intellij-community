@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.scratch;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.impl.ProjectViewSelectInTarget;
 import com.intellij.ide.projectView.*;
@@ -27,6 +28,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -154,6 +156,16 @@ public class ScratchProjectViewPane extends ProjectViewPane {
     return virtualFile == null ? null : PsiManager.getInstance(project).findDirectory(virtualFile);
   }
 
+  @Override
+  public boolean isInitiallyVisible() {
+    return !Registry.is("ide.scratch.in.project.view");
+  }
+
+  @NotNull
+  public static AbstractTreeNode createRootNode(@NotNull Project project, @NotNull ViewSettings settings) {
+    return new MyProjectNode(project, settings);
+  }
+
   private static class MyTreeStructure extends ProjectTreeStructure {
 
     MyTreeStructure(final Project project) {
@@ -162,7 +174,7 @@ public class ScratchProjectViewPane extends ProjectViewPane {
 
     @Override
     protected AbstractTreeNode createRoot(Project project, ViewSettings settings) {
-      return new MyProjectNode(project);
+      return createRootNode(project, settings);
     }
 
     @Nullable
@@ -173,9 +185,14 @@ public class ScratchProjectViewPane extends ProjectViewPane {
 
   }
 
-  private static class MyProjectNode extends AbstractTreeNode<Project> {
-    MyProjectNode(Project project) {
-      super(project, project);
+  private static class MyProjectNode extends ProjectViewNode<String> {
+    MyProjectNode(Project project, ViewSettings settings) {
+      super(project, "Scratches and Consoles", settings);
+    }
+
+    @Override
+    public boolean contains(@NotNull VirtualFile file) {
+      return file.getFileType() == ScratchFileType.INSTANCE;
     }
 
     @NotNull
@@ -184,7 +201,7 @@ public class ScratchProjectViewPane extends ProjectViewPane {
       List<AbstractTreeNode> list = ContainerUtil.newArrayList();
       for (RootType rootId : RootType.getAllRootIds()) {
         if (rootId.isHidden()) continue;
-        MyRootNode e = new MyRootNode(getProject(), rootId);
+        MyRootNode e = new MyRootNode(getProject(), rootId, getSettings());
         if (e.getDirectory() == null) continue;
         list.add(e);
       }
@@ -193,13 +210,20 @@ public class ScratchProjectViewPane extends ProjectViewPane {
 
     @Override
     protected void update(PresentationData presentation) {
+      presentation.setPresentableText(getValue());
+      presentation.setIcon(AllIcons.Nodes.Folder);
     }
   }
 
-  private static class MyRootNode extends AbstractTreeNode<RootType> {
+  private static class MyRootNode extends ProjectViewNode<RootType> {
 
-    MyRootNode(Project project, RootType type) {
-      super(project, type);
+    MyRootNode(Project project, RootType type, ViewSettings settings) {
+      super(project, type, settings);
+    }
+
+    @Override
+    public boolean contains(@NotNull VirtualFile file) {
+      return ScratchFileService.getInstance().getRootType(file) == getValue();
     }
 
     @NotNull
