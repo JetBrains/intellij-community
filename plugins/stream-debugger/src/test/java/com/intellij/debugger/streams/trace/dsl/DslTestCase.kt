@@ -141,6 +141,24 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
     }
   }
 
+  fun testAssignment() {
+    doTest {
+      val a = declare(variable("int", "a"), true)
+      a.assign(+"100")
+    }
+  }
+
+  fun testNestedAssigment() {
+    doTest {
+      val a = declare(variable("int", "a"), true)
+      ifBranch(+"true") {
+        a.assign(+"100")
+      }.elseBranch {
+        a.assign(+"200")
+      }
+    }
+  }
+
   private fun doTest(block: Dsl.() -> Unit) {
     dsl.block()
     check()
