@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.impl;
 
+import com.intellij.diff.DiffContentFactoryImpl;
 import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -25,10 +26,13 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.nio.charset.Charset;
 
 /**
  * @author yole
@@ -201,7 +205,21 @@ public class VcsFileStatusProvider implements FileStatusProvider, VcsBaseContent
     public String loadContent() {
       String content;
       try {
-        content = myContentRevision.getContent();
+        if (myContentRevision instanceof ByteBackedContentRevision) {
+          byte[] revisionContent = ((ByteBackedContentRevision)myContentRevision).getContentAsBytes();
+          FilePath filePath = myContentRevision.getFile();
+
+          if (revisionContent != null) {
+            Charset charset = DiffContentFactoryImpl.guessCharset(revisionContent, filePath);
+            content = CharsetToolkit.decodeString(revisionContent, charset);
+          }
+          else {
+            content = null;
+          }
+        }
+        else {
+          content = myContentRevision.getContent();
+        }
       }
       catch (VcsException ex) {
         content = null;
