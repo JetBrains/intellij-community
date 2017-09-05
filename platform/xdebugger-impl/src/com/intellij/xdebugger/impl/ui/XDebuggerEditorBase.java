@@ -26,6 +26,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
@@ -39,11 +40,9 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.reference.SoftReference;
-import com.intellij.ui.ClickListener;
-import com.intellij.ui.Expandable;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.LayeredIcon;
+import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.JBScrollBar;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -71,9 +70,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.openapi.keymap.KeymapUtil.createTooltipText;
 import static java.awt.event.InputEvent.CTRL_MASK;
 import static java.util.Collections.singletonList;
 import static javax.swing.KeyStroke.getKeyStroke;
+import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS;
 
 /**
  * @author nik
@@ -428,7 +429,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
   public void expand() {
     if (myExpandedPopup != null || !getComponent().isEnabled()) return;
 
-    XDebuggerExpressionEditor editor =
+    XDebuggerExpressionEditor expressionEditor =
       new XDebuggerExpressionEditor(myProject, myDebuggerEditorsProvider, "evaluateCodeFragment", mySourcePosition,
                                     getExpression(), true, true, false) {
         @Override
@@ -437,11 +438,11 @@ public abstract class XDebuggerEditorBase implements Expandable {
         }
       };
 
-    JComponent component = editor.getComponent();
+    JComponent component = expressionEditor.getComponent();
     component.setPreferredSize(new Dimension(getComponent().getWidth(), 100));
 
     myExpandedPopup = JBPopupFactory.getInstance()
-      .createComponentPopupBuilder(component, editor.getPreferredFocusedComponent())
+      .createComponentPopupBuilder(component, expressionEditor.getPreferredFocusedComponent())
       .setFocusable(true)
       .setResizable(true)
       .setRequestFocus(true)
@@ -458,16 +459,45 @@ public abstract class XDebuggerEditorBase implements Expandable {
       .setCancelCallback(() -> {
         Editor baseEditor = getEditor();
         if (baseEditor != null) {
-          WriteAction.run(() -> baseEditor.getDocument().setText(editor.getExpression().getExpression()));
-          copyCaretPosition(editor.getEditor(), baseEditor);
+          WriteAction.run(() -> baseEditor.getDocument().setText(expressionEditor.getExpression().getExpression()));
+          copyCaretPosition(expressionEditor.getEditor(), baseEditor);
         }
         myExpandedPopup = null;
         return true;
       }).createPopup();
     myExpandedPopup.show(new RelativePoint(getComponent(), new Point(0, 0)));
-    copyCaretPosition(getEditor(), editor.getEditor());
-    prepareEditor(editor.getEditor());
-    editor.requestFocusInEditor();
+
+    EditorEx editor = (EditorEx)expressionEditor.getEditor();
+    copyCaretPosition(getEditor(), editor);
+    prepareEditor(editor);
+
+    ErrorStripeEditorCustomization.DISABLED.customize(editor);
+    // TODO: copied from ExpandableTextField
+    JScrollPane pane = editor.getScrollPane();
+    pane.setVerticalScrollBarPolicy(VERTICAL_SCROLLBAR_ALWAYS);
+    pane.getVerticalScrollBar().add(JBScrollBar.LEADING, new JLabel(AllIcons.General.CollapseComponent) {{
+      setToolTipText(createTooltipText("Collapse", "CollapseExpandableComponent"));
+      setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+      setBorder(JBUI.Borders.empty(5, 0, 5, 5));
+      addMouseListener(new MouseAdapter() {
+        @Override
+        public void mouseEntered(MouseEvent event) {
+          setIcon(AllIcons.General.CollapseComponentHover);
+        }
+
+        @Override
+        public void mouseExited(MouseEvent event) {
+          setIcon(AllIcons.General.CollapseComponent);
+        }
+
+        @Override
+        public void mousePressed(MouseEvent event) {
+          collapse();
+        }
+      });
+    }});
+
+    expressionEditor.requestFocusInEditor();
   }
 
   private static void copyCaretPosition(@Nullable Editor source, @Nullable Editor destination) {
