@@ -17,6 +17,8 @@ package com.jetbrains.python.validation;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.Annotation;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.highlighting.PyHighlighter;
@@ -68,8 +70,10 @@ public class HighlightingAnnotator extends PyAnnotator {
     if (callee != null) {
       final ASTNode functionName = callee.getNameElement();
       if (functionName != null) {
-        final Annotation annotation = getHolder().createInfoAnnotation(functionName, null);
-        annotation.setTextAttributes(PyHighlighter.PY_FUNCTION_CALL);
+        final TextAttributesKey attrKey = callee.isQualified() ? PyHighlighter.PY_METHOD_CALL : PyHighlighter.PY_FUNCTION_CALL;
+        final String message = ApplicationManager.getApplication().isUnitTestMode() ? attrKey.getExternalName() : null;
+        final Annotation annotation = getHolder().createInfoAnnotation(functionName, message);
+        annotation.setTextAttributes(attrKey);
       }
     }
   }
