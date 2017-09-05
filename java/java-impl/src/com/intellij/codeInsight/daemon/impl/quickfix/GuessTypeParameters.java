@@ -79,7 +79,7 @@ public class GuessTypeParameters {
         PsiTypeElement inplaceTypeElement = ((PsiVariable)factory.createVariableDeclarationStatement("foo", type, null).getDeclaredElements()[0]).getTypeElement();
 
         PsiSubstitutor rawingSubstitutor = getRawingSubstitutor (myProject, context, targetClass);
-        int substitionResult = hasNullSubstitutions(substitutor) ? SUBSTITUTED_NONE : substituteToTypeParameters(typeElement, inplaceTypeElement, substitutor, builder, rawingSubstitutor, true);
+        int substitionResult = hasNullSubstitutions(substitutor) ? SUBSTITUTED_NONE : substituteToTypeParameters(typeElement, type, substitutor, builder, rawingSubstitutor, true);
         if (substitionResult != SUBSTITUTED_NONE) {
           if (substitionResult == SUBSTITUTED_IN_PARAMETERS) {
             PsiJavaCodeReferenceElement refElement = typeElement.getInnermostComponentReferenceElement();
@@ -138,19 +138,17 @@ public class GuessTypeParameters {
   private static final int SUBSTITUTED_IN_PARAMETERS = 2;
 
   private int substituteToTypeParameters(PsiTypeElement typeElement,
-                                         PsiTypeElement inplaceTypeElement,
+                                         PsiType expectedType,
                                          PsiSubstitutor substitutor,
                                          TemplateBuilder builder,
                                          PsiSubstitutor rawingSubstitutor,
                                          boolean toplevel) {
-    PsiType type = inplaceTypeElement.getType();
-
-    final List<PsiTypeParameter> matchedParameters = matchingTypeParameters(substitutor, type, TYPE_STRICTLY);
+    final List<PsiTypeParameter> matchedParameters = matchingTypeParameters(substitutor, expectedType, TYPE_STRICTLY);
     if (!matchedParameters.isEmpty()) {
       List<PsiType> types = new SmartList<>(map(matchedParameters, it -> myFactory.createType(it)));
 
-      PsiType substituted = rawingSubstitutor.substitute(type);
-      if (!CommonClassNames.JAVA_LANG_OBJECT.equals(substituted.getCanonicalText()) && (toplevel || substituted.equals(type))) {
+      PsiType substituted = rawingSubstitutor.substitute(expectedType);
+      if (!CommonClassNames.JAVA_LANG_OBJECT.equals(substituted.getCanonicalText()) && (toplevel || substituted.equals(expectedType))) {
         types.add(substituted);
       }
 
@@ -161,12 +159,12 @@ public class GuessTypeParameters {
     final PsiTypeElement[] innerTypeElements = typeArguments(typeElement);
     if (innerTypeElements == null) return SUBSTITUTED_NONE;
 
-    final PsiTypeElement[] inplaceInnerTypeElements = typeArguments(inplaceTypeElement);
-    if (inplaceInnerTypeElements == null) return SUBSTITUTED_NONE;
+    final PsiType[] expectedTypeArguments = typeArguments(expectedType);
+    if (expectedTypeArguments == null) return SUBSTITUTED_NONE;
 
     boolean substituted = false;
     for (int i = 0; i < innerTypeElements.length; i++) {
-      substituted |= substituteToTypeParameters(innerTypeElements[i], inplaceInnerTypeElements[i], substitutor, builder,
+      substituted |= substituteToTypeParameters(innerTypeElements[i], expectedTypeArguments[i], substitutor, builder,
                                                 rawingSubstitutor, false) != SUBSTITUTED_NONE;
     }
     return substituted ? SUBSTITUTED_IN_PARAMETERS : SUBSTITUTED_NONE;
@@ -184,6 +182,12 @@ public class GuessTypeParameters {
     if (typeArgumentList == null) return null;
 
     return typeArgumentList.getTypeParameterElements();
+  }
+
+  @Nullable
+  private static PsiType[] typeArguments(@NotNull PsiType type) {
+    PsiClassType unwrappedType = getComponentType(type);
+    return unwrappedType == null ? null : unwrappedType.getParameters();
   }
 
   public static class MyTypeVisitor extends PsiTypeVisitor<PsiType> {
