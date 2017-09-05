@@ -188,8 +188,7 @@ public class SystemHealthMonitor implements ApplicationComponent {
   private void checkHiDPIMode() {
     // if switched from JRE-HiDPI to IDE-HiDPI
     boolean switchedHiDPIMode = SystemInfo.isJetBrainsJvm && "true".equalsIgnoreCase(System.getProperty("sun.java2d.uiScale.enabled")) && !UIUtil.isJreHiDPIEnabled();
-    boolean defaultScreenIsHiDPI = JBUI.sysScale() > 1.0;
-    if (SystemInfo.isWindows && ((switchedHiDPIMode && defaultScreenIsHiDPI) || RemoteDesktopService.isRemoteSession())) {
+    if (SystemInfo.isWindows && ((switchedHiDPIMode && JBUI.isHiDPI(JBUI.sysScale())) || RemoteDesktopService.isRemoteSession())) {
       showNotification(new KeyHyperlinkAdapter("ide.set.hidpi.mode"));
     }
   }
