@@ -88,9 +88,15 @@ class DistributionJARsBuilder {
         }
       }
       productLayout.platformApiModules.each {
-        withModule(it, "openapi.jar")
+        withModule(it, "platform-api.jar")
       }
       productLayout.platformImplementationModules.each {
+        withModule(it, "platform-impl.jar")
+      }
+      productLayout.productApiModules.each {
+        withModule(it, "openapi.jar")
+      }
+      productLayout.productImplementationModules.each {
         withModule(it, productLayout.mainJarName)
       }
       productLayout.moduleExcludes.entrySet().each {
