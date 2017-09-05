@@ -17,6 +17,8 @@
 package com.intellij.completion.enhancer
 
 import com.intellij.codeInsight.completion.*
+import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PreloadingActivity
@@ -27,6 +29,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.extensions.impl.ExtensionComponentAdapter
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.sorting.language
+import com.intellij.stats.completion.prefixLength
 import com.intellij.util.ReflectionUtil
 import org.picocontainer.ComponentAdapter
 
@@ -111,6 +114,7 @@ class InvocationCountEnhancingContributor : CompletionContributor() {
     companion object {
         private val MAX_INVOCATION_COUNT = 5
         var isEnabledInTests = false
+        var charsTypedToPerformSecondCompletionRun = 1
     }
 
     override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
@@ -126,7 +130,9 @@ class InvocationCountEnhancingContributor : CompletionContributor() {
             ContributorsTimeStatistics.getInstance().registerCompletionContributorsTime(it, end - start)
         }
 
-        if (parameters.invocationCount < MAX_INVOCATION_COUNT) {
+        val lookup = LookupManager.getActiveLookup(parameters.editor) as LookupImpl? ?: return
+        val typedChars = lookup.prefixLength()
+        if (parameters.invocationCount < MAX_INVOCATION_COUNT && typedChars > charsTypedToPerformSecondCompletionRun) {
             startMaxInvocationCountCompletion(parameters, result)
         }
     }

@@ -29,6 +29,7 @@ import com.intellij.plugin.ManualExperimentControl
 import com.intellij.plugin.ManualMlSorting
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.stats.completion.experiment.WebServiceStatus
+import com.intellij.stats.completion.prefixLength
 import com.jetbrains.completion.ranker.features.FeatureUtils
 import com.jetbrains.completion.ranker.features.LookupElementInfo
 import java.util.*
@@ -121,7 +122,7 @@ class MLSorter : CompletionFinalSorter() {
                                 lookup: LookupImpl,
                                 relevanceObjects: Map<LookupElement, List<Pair<String, Any?>>>): Iterable<LookupElement>?
     {
-        val prefixLength = lookup.prefixLenght()
+        val prefixLength = lookup.prefixLength()
         return items
                 .mapIndexed { index, lookupElement ->
                     val relevance = relevanceObjects[lookupElement] ?: emptyList()
@@ -175,11 +176,4 @@ typealias WeightedElement = Pair<LookupElement, Double>
 fun CompletionParameters.language(): Language? {
     val offset = editor.caretModel.offset
     return  PsiUtilCore.getLanguageAtOffset(originalFile, offset)
-}
-
-
-fun LookupImpl.prefixLenght(): Int {
-    val lookupOriginalStart = this.lookupOriginalStart
-    val caretOffset = this.editor.caretModel.offset
-    return if (lookupOriginalStart < 0) 0 else caretOffset - lookupOriginalStart + 1
 }

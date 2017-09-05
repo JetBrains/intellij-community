@@ -28,6 +28,7 @@ import org.assertj.core.api.Assertions.assertThat
 class InvocationCountEnhancerTest : LightFixtureCompletionTestCase() {
 
     private lateinit var testContributor: CompletionContributorEP
+    private var beforeCharTyped = 0
     private val text = """
                 class Test {
                   public void check() {
@@ -42,6 +43,8 @@ class InvocationCountEnhancerTest : LightFixtureCompletionTestCase() {
 
         TestContributor.isEnabled = true
         InvocationCountEnhancingContributor.isEnabledInTests = true
+        beforeCharTyped = InvocationCountEnhancingContributor.charsTypedToPerformSecondCompletionRun
+        InvocationCountEnhancingContributor.charsTypedToPerformSecondCompletionRun = 0
 
         testContributor = CompletionContributorEP().apply {
             implementationClass = TestContributor::class.java.name
@@ -69,6 +72,7 @@ class InvocationCountEnhancerTest : LightFixtureCompletionTestCase() {
 
         TestContributor.isEnabled = false
         InvocationCountEnhancingContributor.isEnabledInTests = false
+        InvocationCountEnhancingContributor.charsTypedToPerformSecondCompletionRun = beforeCharTyped
 
         super.tearDown()
     }

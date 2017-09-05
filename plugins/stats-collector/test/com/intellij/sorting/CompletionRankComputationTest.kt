@@ -25,6 +25,7 @@ import com.intellij.sorting.Samples.classNameCompletion
 import com.intellij.sorting.Samples.classText
 import com.intellij.sorting.Samples.methodCompletion
 import com.intellij.stats.completion.experiment.WebServiceStatus
+import com.intellij.stats.completion.prefixLength
 import org.assertj.core.api.Assertions.assertThat
 
 
@@ -63,16 +64,16 @@ class CompletionOrderTest : LightFixtureCompletionTestCase() {
         val lookup = myFixture.lookup as LookupImpl
         assertThat(lookup.items.size > 0)
 
-        lookup.checkMlRanking(ranker, lookup.prefixLenght())
+        lookup.checkMlRanking(ranker, lookup.prefixLength())
 
         myFixture.type('t')
-        lookup.checkMlRanking(ranker, lookup.prefixLenght())
+        lookup.checkMlRanking(ranker, lookup.prefixLength())
 
         myFixture.type('e')
-        lookup.checkMlRanking(ranker, lookup.prefixLenght())
+        lookup.checkMlRanking(ranker, lookup.prefixLength())
 
         myFixture.type('s')
-        lookup.checkMlRanking(ranker, lookup.prefixLenght())
+        lookup.checkMlRanking(ranker, lookup.prefixLength())
     }
 
 }
