@@ -822,6 +822,7 @@ class PyDB:
 
                 cmd = self.cmd_factory.make_thread_run_message(get_thread_id(thread), info.pydev_step_cmd)
                 self.writer.add_command(cmd)
+                info.pydev_step_cmd = None
 
                 if stop:
                     info.pydev_state = STATE_SUSPEND
