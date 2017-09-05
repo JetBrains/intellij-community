@@ -202,6 +202,9 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTr
 
   @NotNull
   private static SimpleModificationTracker wrapped(RegistryValue value, SimpleModificationTracker fallback) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return new SimpleModificationTracker();
+    }
     return new SimpleModificationTracker() {
       @Override
       public long getModificationCount() {
