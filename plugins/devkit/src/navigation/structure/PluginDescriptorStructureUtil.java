@@ -17,6 +17,7 @@ package org.jetbrains.idea.devkit.navigation.structure;
 
 import com.google.common.base.Joiner;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NonNls;
@@ -120,15 +121,17 @@ public class PluginDescriptorStructureUtil {
     }
 
     String tagName = tag.getLocalName();
-    if (tagName.equalsIgnoreCase("extensions") || tagName.equalsIgnoreCase("extensionPoints")) {
-      return AllIcons.Nodes.Plugin;
+    if (tagName.equalsIgnoreCase("action")) {
+      String iconPath = tag.getAttributeValue("icon");
+      if (iconPath != null) {
+        Icon icon = IconLoader.findIcon(iconPath);
+        if (icon != null) {
+          return icon;
+        }
+      }
     }
-    if (tagName.equalsIgnoreCase("actions") || tagName.equalsIgnoreCase("group") || tagName.equalsIgnoreCase("project-components") ||
-        tagName.equalsIgnoreCase("application-components") || tagName.equalsIgnoreCase("module-components")) {
+    if (tagName.equalsIgnoreCase("group")) {
       return AllIcons.Actions.GroupByPackage;
-    }
-    if (tagName.equalsIgnoreCase("add-to-group")) {
-      return AllIcons.General.Add;
     }
 
     return AllIcons.Nodes.Tag;
