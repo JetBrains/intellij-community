@@ -32,7 +32,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -64,9 +63,6 @@ public class GuessTypeParameters {
 
     if (infos.length == 1 && substitutor != null && substitutor != PsiSubstitutor.EMPTY) {
       ExpectedTypeInfo info = infos[0];
-      Map<PsiTypeParameter, PsiType> map = substitutor.getSubstitutionMap();
-      PsiType[] vals = map.values().toArray(PsiType.createArray(map.size()));
-      PsiTypeParameter[] params = map.keySet().toArray(new PsiTypeParameter[map.size()]);
 
       final List<PsiTypeParameter> matchedParameters = matchingTypeParameters(substitutor, info.getType(), info.getKind());
       if (!matchedParameters.isEmpty()) {
@@ -83,7 +79,7 @@ public class GuessTypeParameters {
         PsiTypeElement inplaceTypeElement = ((PsiVariable)factory.createVariableDeclarationStatement("foo", type, null).getDeclaredElements()[0]).getTypeElement();
 
         PsiSubstitutor rawingSubstitutor = getRawingSubstitutor (myProject, context, targetClass);
-        int substitionResult = hasNullSubstitutions(substitutor) ? SUBSTITUTED_NONE : substituteToTypeParameters(typeElement, inplaceTypeElement, vals, params, builder, rawingSubstitutor, true);
+        int substitionResult = hasNullSubstitutions(substitutor) ? SUBSTITUTED_NONE : substituteToTypeParameters(typeElement, inplaceTypeElement, substitutor, builder, rawingSubstitutor, true);
         if (substitionResult != SUBSTITUTED_NONE) {
           if (substitionResult == SUBSTITUTED_IN_PARAMETERS) {
             PsiJavaCodeReferenceElement refElement = typeElement.getInnermostComponentReferenceElement();
@@ -141,23 +137,18 @@ public class GuessTypeParameters {
   private static final int SUBSTITUTED_IN_REF = 1;
   private static final int SUBSTITUTED_IN_PARAMETERS = 2;
 
-  private int substituteToTypeParameters (PsiTypeElement typeElement,
-                                          PsiTypeElement inplaceTypeElement,
-                                          PsiType[] paramVals,
-                                          PsiTypeParameter[] params,
-                                          TemplateBuilder builder,
-                                          PsiSubstitutor rawingSubstitutor,
-                                          boolean toplevel) {
+  private int substituteToTypeParameters(PsiTypeElement typeElement,
+                                         PsiTypeElement inplaceTypeElement,
+                                         PsiSubstitutor substitutor,
+                                         TemplateBuilder builder,
+                                         PsiSubstitutor rawingSubstitutor,
+                                         boolean toplevel) {
     PsiType type = inplaceTypeElement.getType();
-    List<PsiType> types = new ArrayList<>();
-    for (int i = 0; i < paramVals.length; i++) {
-      PsiType val = paramVals[i];
-      if (type.equals(val)) {
-        types.add(myFactory.createType(params[i]));
-      }
-    }
 
-    if (!types.isEmpty()) {
+    final List<PsiTypeParameter> matchedParameters = matchingTypeParameters(substitutor, type, TYPE_STRICTLY);
+    if (!matchedParameters.isEmpty()) {
+      List<PsiType> types = new SmartList<>(map(matchedParameters, it -> myFactory.createType(it)));
+
       PsiType substituted = rawingSubstitutor.substitute(type);
       if (!CommonClassNames.JAVA_LANG_OBJECT.equals(substituted.getCanonicalText()) && (toplevel || substituted.equals(type))) {
         types.add(substituted);
@@ -175,7 +166,7 @@ public class GuessTypeParameters {
       PsiTypeElement[] innerTypeElements = ref.getParameterList().getTypeParameterElements();
       PsiTypeElement[] inplaceInnerTypeElements = inplaceRef.getParameterList().getTypeParameterElements();
       for (int i = 0; i < innerTypeElements.length; i++) {
-        substituted |= substituteToTypeParameters(innerTypeElements[i], inplaceInnerTypeElements[i], paramVals, params, builder,
+        substituted |= substituteToTypeParameters(innerTypeElements[i], inplaceInnerTypeElements[i], substitutor, builder,
                                                   rawingSubstitutor, false) != SUBSTITUTED_NONE;
       }
     }
