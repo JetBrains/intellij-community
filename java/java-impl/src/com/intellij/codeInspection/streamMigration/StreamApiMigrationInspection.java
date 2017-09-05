@@ -1237,36 +1237,72 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
    */
   static class InfiniteStreamSource extends StreamSource {
     private final PsiExpression myInitializer;
+    private @Nullable final IElementType myOpType;
 
+    /**
+     * @param type if not null, equivalent form of update is: variable type= expression;
+     */
     protected InfiniteStreamSource(
       @NotNull PsiLoopStatement loop,
       @NotNull PsiVariable variable,
       @NotNull PsiExpression expression,
-      @NotNull PsiExpression initializer
-    ) {
+      @NotNull PsiExpression initializer,
+      @Nullable IElementType type) {
       super(loop, variable, expression);
       myInitializer = initializer;
+      myOpType = type;
+    }
+
+    private static String getOperationSign(IElementType op) {
+      if (op == JavaTokenType.AND) {
+        return "&";
+      }
+      else if (op == JavaTokenType.ASTERISK) {
+        return "*";
+      }
+      else if (op == JavaTokenType.DIV) {
+        return "/";
+      }
+      else if (op == JavaTokenType.GTGT) {
+        return ">>";
+      }
+      else if (op == JavaTokenType.GTGTGT) {
+        return ">>>";
+      }
+      else if (op == JavaTokenType.LTLT) {
+        return "<<";
+      }
+      else if (op == JavaTokenType.MINUS) {
+        return "-";
+      }
+      else if (op == JavaTokenType.OR) {
+        return "|";
+      }
+      else if (op == JavaTokenType.PERC) {
+        return "%";
+      }
+      else if (op == JavaTokenType.PLUS) {
+        return "+";
+      }
+      else if (op == JavaTokenType.XOR) {
+        return "^";
+      }
+      return null;
     }
 
     @Override
     String createReplacement() {
-      boolean positive = false;
-      boolean incrementOrDecrement = false;
-      if (myExpression instanceof PsiPrefixExpression) {
-        IElementType tokenType = ((PsiPrefixExpression)myExpression).getOperationTokenType();
-        positive = tokenType == JavaTokenType.PLUSPLUS;
-        incrementOrDecrement = true;
+      String lambda;
+      if (myOpType != null) {
+        String expressionText = ParenthesesUtils.getPrecedence(myExpression) > ParenthesesUtils.getPrecedenceForOperator(myOpType)
+                         ? "(" + myExpression.getText() + ")"
+                         : myExpression.getText();
+        lambda = myVariable.getName() + "->" + myVariable.getName() + getOperationSign(myOpType) + expressionText;
       }
-      else if (myExpression instanceof PsiPostfixExpression) {
-        IElementType tokenType = ((PsiPostfixExpression)myExpression).getOperationTokenType();
-        positive = tokenType == JavaTokenType.PLUSPLUS;
-        incrementOrDecrement = true;
+      else {
+        lambda = LambdaUtil.createLambda(myVariable, myExpression);
       }
-      String lambda = incrementOrDecrement
-               ? positive
-                 ? myVariable.getName() + "->" + myVariable.getName() + "+1"
-                 : myVariable.getName() + "->" + myVariable.getName() + "-1"
-               : LambdaUtil.createLambda(myVariable, myExpression);
+
       return CommonClassNames.JAVA_UTIL_STREAM_INT_STREAM + ".iterate(" + myInitializer.getText() + "," + lambda + ")";
     }
 
@@ -1308,8 +1344,10 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       if (exprStmt == null) return null;
       PsiExpression expression = exprStmt.getExpression();
       final PsiExpression updateExpr;
+      IElementType op;
       if (expression instanceof PsiAssignmentExpression) {
         PsiAssignmentExpression assignment = (PsiAssignmentExpression)expression;
+        op = TypeConversionUtil.convertEQtoOperation(assignment.getOperationTokenType());
         updateExpr = assignment.getRExpression();
         if (!ExpressionUtils.isReferenceTo(assignment.getLExpression(), variable)) return null;
         if (updateExpr == null) return null;
@@ -1318,12 +1356,16 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       else if (expression instanceof PsiPrefixExpression) {
         IElementType tokenType = ((PsiPrefixExpression)expression).getOperationTokenType();
         if (tokenType != JavaTokenType.PLUSPLUS && tokenType != JavaTokenType.MINUSMINUS) return null;
-        updateExpr = expression;
+        op = getOperation(tokenType);
+        if (op == null) return null;
+        updateExpr = JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText("1", null);
       }
       else if (expression instanceof PsiPostfixExpression) {
         IElementType tokenType = ((PsiPostfixExpression)expression).getOperationTokenType();
         if (tokenType != JavaTokenType.PLUSPLUS && tokenType != JavaTokenType.MINUSMINUS) return null;
-        updateExpr = expression;
+        op = getOperation(tokenType);
+        if (op == null) return null;
+        updateExpr = JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText("1", null);
       }
       else {
         return null;
@@ -1334,7 +1376,20 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
                               ExpressionUtils.isReferenceTo((PsiExpression)reference.getElement(), variable))) {
         return null;
       }
-      return new InfiniteStreamSource(forStatement, variable, updateExpr, initializer);
+      return new InfiniteStreamSource(forStatement, variable, updateExpr, initializer, op);
+    }
+
+    @Nullable
+    private static IElementType getOperation(IElementType tokenType) {
+      if (tokenType == JavaTokenType.PLUSPLUS) {
+        return JavaTokenType.PLUS;
+      }
+      else if (tokenType == JavaTokenType.MINUSMINUS) {
+        return JavaTokenType.MINUS;
+      }
+      else {
+        return null;
+      }
     }
   }
 }
