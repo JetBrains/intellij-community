@@ -40,7 +40,7 @@ import java.util.stream.Stream;
 public interface ScopeOptimizer {
 
   /**
-   * Please use {@link ScopeOptimizer#getScopeToRestrict(PsiElement)} instead
+   * Please use {@link ScopeOptimizer#getRestrictedUseScope(PsiElement)} instead
    */
   @Deprecated
   @Nullable("is null when given optimizer can't provide a scope to exclude")
@@ -49,18 +49,18 @@ public interface ScopeOptimizer {
   }
 
   @Nullable("is null when given optimizer can't provide a scope to restrict")
-  default SearchScope getScopeToRestrict(@NotNull PsiElement element) {
+  default SearchScope getRestrictedUseScope(@NotNull PsiElement element) {
     GlobalSearchScope scopeToExclude = getScopeToExclude(element);
 
     return scopeToExclude == null ? null : GlobalSearchScope.notScope(scopeToExclude);
   }
 
   @Nullable
-  static SearchScope calculateScopeToRestrict(@NotNull ScopeOptimizer[] optimizers, @NotNull PsiElement element) {
+  static SearchScope calculateOverallRestrictedUseScope(@NotNull ScopeOptimizer[] optimizers, @NotNull PsiElement element) {
     return Stream
       .of(optimizers)
       .peek(optimizer -> ProgressManager.checkCanceled())
-      .map(optimizer -> optimizer.getScopeToRestrict(element))
+      .map(optimizer -> optimizer.getRestrictedUseScope(element))
       .filter(Objects::nonNull)
       .reduce((s1, s2) -> s1.intersectWith(s2))
       .orElse(null);

@@ -88,7 +88,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       }
     }
 
-    SearchScope scopeToRestrict = ScopeOptimizer.calculateScopeToRestrict(USE_SCOPE_OPTIMIZER_EP_NAME.getExtensions(), element);
+    SearchScope scopeToRestrict = ScopeOptimizer.calculateOverallRestrictedUseScope(USE_SCOPE_OPTIMIZER_EP_NAME.getExtensions(), element);
     if (scopeToRestrict != null) {
       scope = scope.intersectWith(scopeToRestrict);
     }

@@ -81,7 +81,7 @@ public class SearchRequestCollector {
         searchScope instanceof GlobalSearchScope &&
         ((searchContext & UsageSearchContext.IN_CODE) != 0 || searchContext == UsageSearchContext.ANY)) {
 
-      final SearchScope restrictedCodeUsageSearchScope = ScopeOptimizer.calculateScopeToRestrict(CODE_USAGE_SCOPE_OPTIMIZER_EP_NAME.getExtensions(), searchTarget);
+      final SearchScope restrictedCodeUsageSearchScope = ScopeOptimizer.calculateOverallRestrictedUseScope(CODE_USAGE_SCOPE_OPTIMIZER_EP_NAME.getExtensions(), searchTarget);
       if (restrictedCodeUsageSearchScope != null) {
         short exceptCodeSearchContext = searchContext == UsageSearchContext.ANY
                                         ? UsageSearchContext.IN_COMMENTS |
