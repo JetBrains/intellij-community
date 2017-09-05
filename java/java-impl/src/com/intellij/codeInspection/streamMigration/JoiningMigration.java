@@ -361,7 +361,7 @@ public class JoiningMigration extends BaseStreamApiMigration {
     private static List<PsiExpression> extractJoinParts(@Nullable PsiExpression expression) {
       List<PsiExpression> joinParts = new ArrayList<>();
       if (expression == null) return joinParts;
-      return !tryExtractJoinPart(expression, joinParts) ? null : joinParts;
+      return tryExtractJoinPart(expression, joinParts) ? joinParts : null;
     }
 
     /**
@@ -431,9 +431,23 @@ public class JoiningMigration extends BaseStreamApiMigration {
       return true;
     }
 
-    @Nullable
-    private static PsiExpression extractStringBuilderInitializer(PsiExpression construction) {
-      PsiNewExpression newExpression = tryCast(PsiUtil.skipParenthesizedExprDown(construction), PsiNewExpression.class);
+    @Nullable("when failed to extract join parts from initializer statement")
+    private static List<PsiExpression> extractStringBuilderInitializer(PsiExpression construction) {
+      List<PsiExpression> joinParts = new ArrayList<>();
+      PsiExpression expression = construction;
+      PsiMethodCallExpression current = tryCast(construction, PsiMethodCallExpression.class);
+      while(current != null) {
+        if (APPEND.test(current)) {
+          joinParts.add(current.getArgumentList().getExpressions()[0]);
+        }
+        else {
+          return null;
+        }
+        expression = current.getMethodExpression().getQualifierExpression();
+        current = MethodCallUtils.getQualifierMethodCall(current);
+      }
+
+      PsiNewExpression newExpression = tryCast(PsiUtil.skipParenthesizedExprDown(expression), PsiNewExpression.class);
       if (newExpression == null) return null;
       final PsiJavaCodeReferenceElement classReference = newExpression.getClassReference();
       if (classReference == null) return null;
@@ -447,11 +461,16 @@ public class JoiningMigration extends BaseStreamApiMigration {
       final PsiExpressionList argumentList = newExpression.getArgumentList();
       if (argumentList == null) return null;
       final PsiExpression[] arguments = argumentList.getExpressions();
-      if (arguments.length != 1) return null;
-      final PsiExpression argument = arguments[0];
-      final PsiType argumentType = argument.getType();
-      if (PsiType.INT.equals(argumentType)) return null;
-      return argument;
+      if (arguments.length != 0) {
+        if(arguments.length != 1) return null;
+        final PsiExpression argument = arguments[0];
+        final PsiType argumentType = argument.getType();
+        if (!PsiType.INT.equals(argumentType)) {
+          joinParts.add(argument);
+        }
+      }
+      Collections.reverse(joinParts);
+      return joinParts;
     }
 
     @Nullable
@@ -569,12 +588,7 @@ public class JoiningMigration extends BaseStreamApiMigration {
       }
       else {
         int rSize = computeConstantIntExpression(condition.getROperand());
-        if (rSize >= 0) {
-          return extractLength(lOperand, relation, rSize, targetBuilder);
-        }
-        else {
-          return null;
-        }
+        return rSize >= 0 ? extractLength(lOperand, relation, rSize, targetBuilder) : null;
       }
     }
 
@@ -681,12 +695,11 @@ public class JoiningMigration extends BaseStreamApiMigration {
           if (newAfterLoopAppend == null) return null;
           afterLoopAppend = newAfterLoopAppend;
         }
-        PsiExpression builderStrInitializer = extractStringBuilderInitializer(targetBuilder.getInitializer());
+        List<PsiExpression> builderStrInitializers = extractStringBuilderInitializer(targetBuilder.getInitializer());
+        if(builderStrInitializers == null) return null;
         List<PsiExpression> prefixJoinParts = extractJoinParts(beforeLoopAppend);
         if (prefixJoinParts == null) return null;
-        if (builderStrInitializer != null) {
-          prefixJoinParts.add(0, builderStrInitializer);
-        }
+        prefixJoinParts.addAll(0, builderStrInitializers);
         if (prefixJoinParts.stream().anyMatch(joinPart -> SideEffectChecker.mayHaveSideEffects(joinPart))) return null;
         if (afterLoopAppend != null && VariableAccessUtils.variableIsUsed(targetBuilder, afterLoopAppend.getArgumentList())) return null;
         List<PsiExpression> suffixJoinParts = extractJoinParts(afterLoopAppend);
