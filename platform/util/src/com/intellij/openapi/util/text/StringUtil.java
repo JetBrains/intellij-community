@@ -3135,8 +3135,8 @@ public class StringUtil extends StringUtilRt {
     }
 
   /**
-   * Inserts a space before each word in a camelCased string.
-   * "myClass" -> "my Class", "MyClass" -> "My Class", "MyXML" -> "My XML".
+   * Splits a camelCased string by words.
+   * "myClass" -> [my,Class], "MyClass" -> [My,Class], "MyXML" -> [My,XML].
    */
   @NotNull
   @Contract(pure = true)
