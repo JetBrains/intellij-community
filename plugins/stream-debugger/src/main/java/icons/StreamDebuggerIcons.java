@@ -24,6 +24,5 @@ import javax.swing.*;
  */
 public interface StreamDebuggerIcons {
   Icon RUN_STREAM_DEBUG_ACTION= IconLoader.getIcon("stream_debugger.png");
-  Icon VALUE_HIGHLIGHTED_ICON = IconLoader.getIcon("value_highlighting.png");
   Icon STREAM_CALL_TAB_ICON = IconLoader.getIcon("tab.png");
 }
