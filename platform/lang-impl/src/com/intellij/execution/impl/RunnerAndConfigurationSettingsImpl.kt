@@ -24,16 +24,20 @@ import com.intellij.execution.runners.ProgramRunner
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.impl.BasePathMacroManager
+import com.intellij.openapi.components.impl.ProjectPathMacroManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionException
 import com.intellij.openapi.options.Scheme
 import com.intellij.openapi.options.SchemeState
 import com.intellij.openapi.util.*
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.PathUtilRt
 import com.intellij.util.SmartList
 import gnu.trove.THashMap
 import gnu.trove.THashSet
 import org.jdom.Element
+import org.jetbrains.jps.model.serialization.PathMacroUtil
 import java.util.*
 
 private val LOG = logger<RunnerAndConfigurationSettings>()
@@ -277,7 +281,20 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
         PathMacroManager.getInstance(it).collapsePathsRecursively(element)
       }
     }
-    PathMacroManager.getInstance(configuration.project).collapsePathsRecursively(element)
+    val project = configuration.project
+    val macroManager = PathMacroManager.getInstance(project)
+
+    // https://youtrack.jetbrains.com/issue/IDEA-178510
+    val projectParentPath = project.basePath?.let { PathUtilRt.getParentPath(it) }
+    if (!projectParentPath.isNullOrEmpty()) {
+      val replacePathMap = (macroManager as? ProjectPathMacroManager)?.replacePathMap
+      if (replacePathMap != null) {
+        replacePathMap.addReplacement(projectParentPath, '$' + PathMacroUtil.PROJECT_DIR_MACRO_NAME + "$/..", true)
+        BasePathMacroManager.collapsePaths(element, true, replacePathMap)
+        return
+      }
+    }
+    PathMacroManager.getInstance(project).collapsePathsRecursively(element)
   }
 
   private fun serializeConfigurationInto(configuration: RunConfiguration, element: Element) {
