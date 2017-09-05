@@ -18,6 +18,7 @@ package com.intellij.internal.psiView.stubtree;
 import com.intellij.ide.util.treeView.TreeVisitor;
 import com.intellij.internal.psiView.ViewerPsiBasedTree;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -25,6 +26,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.StubBuilder;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.stubs.*;
@@ -53,10 +55,11 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-import static com.intellij.internal.psiView.PsiViewerDialog.LOG;
 import static com.intellij.internal.psiView.PsiViewerDialog.initTree;
 
 public class StubViewerPsiBasedTree implements ViewerPsiBasedTree {
+
+  public static final Logger LOG = Logger.getInstance("#com.intellij.internal.psiView.PsiViewerDialog");
 
   private static final Key<Object> PSI_ELEMENT_SELECTION_REQUESTOR = Key.create("SelectionRequester");
 
@@ -167,8 +170,8 @@ public class StubViewerPsiBasedTree implements ViewerPsiBasedTree {
       stub = tree.getRoot();
     }
     else if (rootElement instanceof PsiFileImpl) {
-      IStubFileElementType builder = ((PsiFileImpl)rootElement).getElementTypeForStubBuilder();
-      stub = builder == null ? null : builder.getBuilder().buildStubTree((PsiFile)rootElement);
+      StubBuilder stubBuilder = getStubBuilder((PsiFileImpl)rootElement);
+      stub = stubBuilder == null ? null : stubBuilder.buildStubTree((PsiFile)rootElement);
     }
     if (stub == null) {
       LightVirtualFile file = new LightVirtualFile("stub", rootElement.getLanguage(), textToParse);
@@ -183,6 +186,12 @@ public class StubViewerPsiBasedTree implements ViewerPsiBasedTree {
       }
     }
     return stub;
+  }
+
+  @Nullable
+  private static StubBuilder getStubBuilder(@NotNull PsiFileImpl rootElement) {
+    IStubFileElementType builder = rootElement.getElementTypeForStubBuilder();
+    return builder == null ? null : builder.getBuilder();
   }
 
   public void selectNodeFromPsi(@Nullable PsiElement element) {
@@ -268,24 +277,37 @@ public class StubViewerPsiBasedTree implements ViewerPsiBasedTree {
 
 
   public void fillTreeForStub(@NotNull PsiFileWithStubSupport file, @NotNull StubTree tree) {
+    StubBuilder builder = file instanceof PsiFileImpl ? getStubBuilder(((PsiFileImpl)file)) : null;
+    if (builder == null) return;
+
     final Iterator<StubElement<?>> stubs = tree.getPlainList().iterator();
     final StubElement<?> root = stubs.next();
     final ASTNode ast = file.getNode();
     myNodeToStubs.put(ast, root);
 
-    findTreeForStub(ast, stubs);
+    findTreeForStub(builder, ast, stubs);
+    
+    if (stubs.hasNext()) {
+      LOG.error("Stub mismatch, unprocessed stubs " + stubs.next());
+    }
   }
 
-  private void findTreeForStub(ASTNode tree, final Iterator<StubElement<?>> stubs) {
+  private void findTreeForStub(StubBuilder builder, ASTNode tree, final Iterator<StubElement<?>> stubs) {
     final IElementType type = tree.getElementType();
 
     if (type instanceof IStubElementType && ((IStubElementType)type).shouldCreateStub(tree)) {
+      if (!stubs.hasNext()) {
+        LOG.error("Stub mismatch, " + type);
+      }
       final StubElement curStub = stubs.next();
       myNodeToStubs.put(tree, curStub);
     }
 
+
     for (ASTNode node : tree.getChildren(null)) {
-      findTreeForStub(node, stubs);
+      if (!builder.skipChildProcessingWhenBuildingStubs(tree, node)) {
+        findTreeForStub(builder, node, stubs);
+      }
     }
   }
 }
