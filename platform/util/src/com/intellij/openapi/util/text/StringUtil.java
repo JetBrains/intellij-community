@@ -3143,13 +3143,13 @@ public class StringUtil extends StringUtilRt {
   }
 
   /**
-   * Inserts a space before each word in a camelCased string.
-   * "myClass" -> "my Class", "MyClass" -> "My Class", "MyXML" -> "My XML".
+   * Splits a camelCased string by words.
+   * "myClass" -> [my,Class], "MyClass" -> [My,Class], "MyXML" -> [My,XML].
    */
   @NotNull
   @Contract(pure = true)
-  public static String splitCamelCase(@NotNull String s) {
-    return s.replaceAll("(?<=[A-Z])(?=[A-Z][a-z])|(?<=[^A-Z])(?=[A-Z])|(?<=[A-Za-z])(?=[^A-Za-z])", " ");
+  public static String[] splitCamelCase(@NotNull String s) {
+    return s.split("(?<=[A-Z])(?=[A-Z][a-z])|(?<=[^A-Z])(?=[A-Z])|(?<=[A-Za-z])(?=[^A-Za-z])");
   }
 
 

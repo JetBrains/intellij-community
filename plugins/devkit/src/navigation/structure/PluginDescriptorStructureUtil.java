@@ -179,7 +179,7 @@ public class PluginDescriptorStructureUtil {
     if (tagName.contains("-") || tagName.contains(".")) {
       result = Joiner.on(" ").join(tagName.split("[-.]"));
     } else {
-      result = StringUtil.splitCamelCase(tagName);
+      result = StringUtil.join(StringUtil.splitCamelCase(tagName), " ");
     }
 
     result = StringUtil.capitalizeWords(result, true)
