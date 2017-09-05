@@ -54,38 +54,35 @@ import java.util.List;
 
 @State(name = "com.intellij.ide.ui.customization.CustomActionsSchema", storages = @Storage("customization.xml"))
 public class CustomActionsSchema implements PersistentStateComponent<Element> {
+  private static final Logger LOG = Logger.getInstance(CustomActionsSchema.class);
+
   @NonNls private static final String ACTIONS_SCHEMA = "custom_actions_schema";
   @NonNls private static final String ACTIVE = "active";
   @NonNls private static final String ELEMENT_ACTION = "action";
   @NonNls private static final String ATTRIBUTE_ID = "id";
   @NonNls private static final String ATTRIBUTE_ICON = "icon";
+  @NonNls private static final String GROUP = "group";
 
   private final Map<String, String> myIconCustomizations = new HashMap<>();
-
-  private List<ActionUrl> myActions = new ArrayList<>();
-
+  private final Map<String, String> myIdToName = new LinkedHashMap<>();
   private final Map<String, ActionGroup> myIdToActionGroup = new HashMap<>();
 
-  private final List<Couple<String>> myIdToNameList = new ArrayList<>();
-
-  @NonNls private static final String GROUP = "group";
-  private static final Logger LOG = Logger.getInstance(CustomActionsSchema.class);
-
+  private List<ActionUrl> myActions = new ArrayList<>();
   private boolean isFirstLoadState = true;
 
   public CustomActionsSchema() {
-    myIdToNameList.add(Couple.of(IdeActions.GROUP_MAIN_MENU, ActionsTreeUtil.MAIN_MENU_TITLE));
-    myIdToNameList.add(Couple.of(IdeActions.GROUP_MAIN_TOOLBAR, ActionsTreeUtil.MAIN_TOOLBAR));
-    myIdToNameList.add(Couple.of(IdeActions.GROUP_EDITOR_POPUP, ActionsTreeUtil.EDITOR_POPUP));
-    myIdToNameList.add(Couple.of(IdeActions.GROUP_EDITOR_GUTTER, "Editor Gutter Popup Menu"));
-    myIdToNameList.add(Couple.of(IdeActions.GROUP_EDITOR_TAB_POPUP, ActionsTreeUtil.EDITOR_TAB_POPUP));
-    myIdToNameList.add(Couple.of(IdeActions.GROUP_PROJECT_VIEW_POPUP, ActionsTreeUtil.PROJECT_VIEW_POPUP));
-    myIdToNameList.add(Couple.of(IdeActions.GROUP_SCOPE_VIEW_POPUP, "Scope View Popup Menu"));
-    myIdToNameList.add(Couple.of(IdeActions.GROUP_FAVORITES_VIEW_POPUP, ActionsTreeUtil.FAVORITES_POPUP));
-    myIdToNameList.add(Couple.of(IdeActions.GROUP_COMMANDER_POPUP, ActionsTreeUtil.COMMANDER_POPUP));
-    myIdToNameList.add(Couple.of(IdeActions.GROUP_J2EE_VIEW_POPUP, ActionsTreeUtil.J2EE_POPUP));
-    myIdToNameList.add(Couple.of(IdeActions.GROUP_NAVBAR_POPUP, "Navigation Bar"));
-    myIdToNameList.add(Couple.of("NavBarToolBar", "Navigation Bar Toolbar"));
+    myIdToName.put(IdeActions.GROUP_MAIN_MENU, ActionsTreeUtil.MAIN_MENU_TITLE);
+    myIdToName.put(IdeActions.GROUP_MAIN_TOOLBAR, ActionsTreeUtil.MAIN_TOOLBAR);
+    myIdToName.put(IdeActions.GROUP_EDITOR_POPUP, ActionsTreeUtil.EDITOR_POPUP);
+    myIdToName.put(IdeActions.GROUP_EDITOR_GUTTER, "Editor Gutter Popup Menu");
+    myIdToName.put(IdeActions.GROUP_EDITOR_TAB_POPUP, ActionsTreeUtil.EDITOR_TAB_POPUP);
+    myIdToName.put(IdeActions.GROUP_PROJECT_VIEW_POPUP, ActionsTreeUtil.PROJECT_VIEW_POPUP);
+    myIdToName.put(IdeActions.GROUP_SCOPE_VIEW_POPUP, "Scope View Popup Menu");
+    myIdToName.put(IdeActions.GROUP_FAVORITES_VIEW_POPUP, ActionsTreeUtil.FAVORITES_POPUP);
+    myIdToName.put(IdeActions.GROUP_COMMANDER_POPUP, ActionsTreeUtil.COMMANDER_POPUP);
+    myIdToName.put(IdeActions.GROUP_J2EE_VIEW_POPUP, ActionsTreeUtil.J2EE_POPUP);
+    myIdToName.put(IdeActions.GROUP_NAVBAR_POPUP, "Navigation Bar");
+    myIdToName.put("NavBarToolBar", "Navigation Bar Toolbar");
 
     ArrayList<Couple<String>> extList = ContainerUtil.newArrayList();
     CustomizableActionGroupProvider.CustomizableActionGroupRegistrar registrar =
@@ -94,7 +91,9 @@ public class CustomActionsSchema implements PersistentStateComponent<Element> {
       provider.registerGroups(registrar);
     }
     Collections.sort(extList, (o1, o2) -> StringUtil.naturalCompare(o1.second, o2.second));
-    myIdToNameList.addAll(extList);
+    for (Couple<String> couple : extList) {
+      myIdToName.put(couple.first, couple.second);
+    }
   }
 
   public static CustomActionsSchema getInstance() {
@@ -122,8 +121,8 @@ public class CustomActionsSchema implements PersistentStateComponent<Element> {
     myIconCustomizations.clear();
 
     for (ActionUrl actionUrl : result.myActions) {
-      final ActionUrl url = new ActionUrl(new ArrayList<>(actionUrl.getGroupPath()), actionUrl.getComponent(),
-                                          actionUrl.getActionType(), actionUrl.getAbsolutePosition());
+      ActionUrl url = new ActionUrl(new ArrayList<>(actionUrl.getGroupPath()), actionUrl.getComponent(),
+                                    actionUrl.getActionType(), actionUrl.getAbsolutePosition());
       url.setInitialPosition(actionUrl.getInitialPosition());
       myActions.add(url);
     }
@@ -166,7 +165,7 @@ public class CustomActionsSchema implements PersistentStateComponent<Element> {
     myIconCustomizations.clear();
     DefaultJDOMExternalizer.readExternal(this, element);
     Element schElement = element;
-    final String activeName = element.getAttributeValue(ACTIVE);
+    String activeName = element.getAttributeValue(ACTIVE);
     if (activeName != null) {
       for (Element toolbarElement : element.getChildren(ACTIONS_SCHEMA)) {
         for (Object o : toolbarElement.getChildren("option")) {
@@ -192,12 +191,12 @@ public class CustomActionsSchema implements PersistentStateComponent<Element> {
     for (Element action : element.getChildren(ELEMENT_ACTION)) {
       String actionId = action.getAttributeValue(ATTRIBUTE_ID);
       String iconPath = action.getAttributeValue(ATTRIBUTE_ICON);
-      if (actionId != null){
+      if (actionId != null) {
         myIconCustomizations.put(actionId, iconPath);
       }
     }
 
-    final boolean reload = !isFirstLoadState;
+    boolean reload = !isFirstLoadState;
     if (isFirstLoadState) {
       isFirstLoadState = false;
     }
@@ -249,46 +248,45 @@ public class CustomActionsSchema implements PersistentStateComponent<Element> {
   }
 
   public AnAction getCorrectedAction(String id) {
-    if (! myIdToNameList.contains(Couple.of(id, ""))){
+    if (!myIdToName.containsKey(id)) {
       return ActionManager.getInstance().getAction(id);
     }
-    if (myIdToActionGroup.get(id) == null) {
-      for (Couple<String> pair : myIdToNameList) {
-        if (pair.first.equals(id)){
-          final ActionGroup actionGroup = (ActionGroup)ActionManager.getInstance().getAction(id);
-          if (actionGroup != null) { //J2EE/Commander plugin was disabled
-            myIdToActionGroup.put(id, CustomizationUtil.correctActionGroup(actionGroup, this, pair.second, pair.second));
-          }
-        }
-      }
+    ActionGroup existing = myIdToActionGroup.get(id);
+    if (existing != null) return existing;
+    ActionGroup actionGroup = (ActionGroup)ActionManager.getInstance().getAction(id);
+    if (actionGroup != null) { // if a plugin is disabled
+      String name = myIdToName.get(id);
+      ActionGroup corrected = CustomizationUtil.correctActionGroup(actionGroup, this, name, name);
+      myIdToActionGroup.put(id, corrected);
+      return corrected;
     }
-    return myIdToActionGroup.get(id);
+    return null;
   }
 
-  public void fillActionGroups(DefaultMutableTreeNode root){
-    final ActionManager actionManager = ActionManager.getInstance();
-    for (Couple<String> pair : myIdToNameList) {
-      final ActionGroup actionGroup = (ActionGroup)actionManager.getAction(pair.first);
+  public void fillActionGroups(DefaultMutableTreeNode root) {
+    ActionManager actionManager = ActionManager.getInstance();
+    for (String id : myIdToName.keySet()) {
+      ActionGroup actionGroup = (ActionGroup)actionManager.getAction(id);
       if (actionGroup != null) { //J2EE/Commander plugin was disabled
-        root.add(ActionsTreeUtil.createNode(ActionsTreeUtil.createGroup(actionGroup, pair.second, null, null, true, null, false)));
+        root.add(ActionsTreeUtil.createNode(ActionsTreeUtil.createGroup(actionGroup, myIdToName.get(id), null, null, true, null, false)));
       }
     }
   }
 
 
   public boolean isCorrectActionGroup(ActionGroup group, String defaultGroupName) {
-    if (myActions.isEmpty()){
+    if (myActions.isEmpty()) {
       return false;
     }
 
-    final String text = group.getTemplatePresentation().getText();
+    String text = group.getTemplatePresentation().getText();
     if (!StringUtil.isEmpty(text)) {
       for (ActionUrl url : myActions) {
         if (url.getGroupPath().contains(text) || url.getGroupPath().contains(defaultGroupName)) {
           return true;
         }
         if (url.getComponent() instanceof Group) {
-          final Group urlGroup = (Group)url.getComponent();
+          Group urlGroup = (Group)url.getComponent();
           String id = urlGroup.getName() != null ? urlGroup.getName() : urlGroup.getId();
           if (id == null || id.equals(text) || id.equals(defaultGroupName)) {
             return true;
@@ -300,19 +298,19 @@ public class CustomActionsSchema implements PersistentStateComponent<Element> {
     return true;
   }
 
-  public List<ActionUrl> getChildActions(final ActionUrl url) {
+  public List<ActionUrl> getChildActions(ActionUrl url) {
     ArrayList<ActionUrl> result = new ArrayList<>();
-    final ArrayList<String> groupPath = url.getGroupPath();
+    ArrayList<String> groupPath = url.getGroupPath();
     for (ActionUrl actionUrl : myActions) {
       int index = 0;
-      if (groupPath.size() <= actionUrl.getGroupPath().size()){
-        while (index < groupPath.size()){
-          if (!Comparing.equal(groupPath.get(index), actionUrl.getGroupPath().get(index))){
+      if (groupPath.size() <= actionUrl.getGroupPath().size()) {
+        while (index < groupPath.size()) {
+          if (!Comparing.equal(groupPath.get(index), actionUrl.getGroupPath().get(index))) {
             break;
           }
           index++;
         }
-        if (index == groupPath.size()){
+        if (index == groupPath.size()) {
           result.add(actionUrl);
         }
       }
@@ -329,7 +327,7 @@ public class CustomActionsSchema implements PersistentStateComponent<Element> {
   }
 
   public String getIconPath(String actionId) {
-    final String path = myIconCustomizations.get(actionId);
+    String path = myIconCustomizations.get(actionId);
     return path == null ? "" : path;
   }
 
@@ -348,10 +346,10 @@ public class CustomActionsSchema implements PersistentStateComponent<Element> {
   private void initActionIcons() {
     ActionManager actionManager = ActionManager.getInstance();
     for (String actionId : myIconCustomizations.keySet()) {
-      final AnAction anAction = actionManager.getAction(actionId);
+      AnAction anAction = actionManager.getAction(actionId);
       if (anAction != null) {
         Icon icon;
-        final String iconPath = myIconCustomizations.get(actionId);
+        String iconPath = myIconCustomizations.get(actionId);
         if (iconPath != null && new File(FileUtil.toSystemDependentName(iconPath)).exists()) {
           Image image = null;
           try {
@@ -370,19 +368,20 @@ public class CustomActionsSchema implements PersistentStateComponent<Element> {
         anAction.setDefaultIcon(false);
       }
     }
-    final IdeFrameImpl frame = WindowManagerEx.getInstanceEx().getFrame(null);
+    IdeFrameImpl frame = WindowManagerEx.getInstanceEx().getFrame(null);
     if (frame != null) {
       frame.updateView();
     }
   }
 
   private static class ActionUrlComparator implements Comparator<ActionUrl> {
-    public static ActionUrlComparator INSTANCE = new ActionUrlComparator();
-    private static final int DELETED = 1;
+    static final ActionUrlComparator INSTANCE = new ActionUrlComparator();
+    static int DELETED = 1;
+
     @Override
     public int compare(ActionUrl u1, ActionUrl u2) {
-      final int w1 = getEquivalenceClass(u1);
-      final int w2 = getEquivalenceClass(u2);
+      int w1 = getEquivalenceClass(u1);
+      int w2 = getEquivalenceClass(u2);
       if (w1 != w2) {
         return w1 - w2; // deleted < added < others
       }
