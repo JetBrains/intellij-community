@@ -59,8 +59,4 @@ class ExternalSystemTaskRunner : GenericProgramRunner<RunnerSettings>() {
     descriptor.runnerLayoutUi = runContentDescriptor.runnerLayoutUi
     return descriptor
   }
-
-  companion object {
-    val EMPTY_COMPONENT: JComponent = object : JComponent() {}
-  }
 }
