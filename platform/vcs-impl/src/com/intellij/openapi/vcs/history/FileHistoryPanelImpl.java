@@ -657,7 +657,8 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     }
 
     @Override
-    public TableCellRenderer getCustomizedRenderer(@NotNull TreeNodeOnVcsRevision revision, @NotNull TableCellRenderer renderer) {
+    public TableCellRenderer getCustomizedRenderer(TreeNodeOnVcsRevision revision, TableCellRenderer renderer) {
+      if (renderer == null) return null;
       if (renderer instanceof BaseHistoryCellRenderer) {
         ((BaseHistoryCellRenderer)renderer).setCurrentRevision(isCurrentRevision(revision));
       } else {
