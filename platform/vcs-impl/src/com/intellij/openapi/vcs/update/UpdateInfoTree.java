@@ -223,6 +223,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
   }
 
   private void updateTreeModel() {
+    if (Disposer.isDisposed(this)) return;
     myRoot.rebuild(myVcsConfiguration.UPDATE_GROUP_BY_PACKAGES, getScopeFilter(), myVcsConfiguration.UPDATE_FILTER_BY_SCOPE);
     if (myTreeModel != null) {
       myTreeModel.reload();
@@ -381,6 +382,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
     final boolean hasEmptyCaches = CommittedChangesCache.getInstance(myProject).hasEmptyCaches();
 
     ApplicationManager.getApplication().invokeLater(() -> {
+      if (Disposer.isDisposed(this)) return;
       if (myLoadingChangeListsLabel != null) {
         remove(myLoadingChangeListsLabel);
         myLoadingChangeListsLabel = null;
