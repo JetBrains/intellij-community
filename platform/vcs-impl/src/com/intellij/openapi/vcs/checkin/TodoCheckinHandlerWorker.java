@@ -66,7 +66,6 @@ public class TodoCheckinHandlerWorker {
 
   private final Collection<Change> myChanges;
   private final TodoFilter myTodoFilter;
-  private final boolean myIncludePattern;
   private final PsiManager myPsiManager;
   private final PsiTodoSearchHelper mySearchHelper;
 
@@ -76,11 +75,9 @@ public class TodoCheckinHandlerWorker {
   private final MyEditedFileProcessor myEditedFileProcessor;
 
 
-  public TodoCheckinHandlerWorker(final Project project, final Collection<Change> changes, final TodoFilter todoFilter,
-                                  final boolean includePattern) {
+  public TodoCheckinHandlerWorker(final Project project, final Collection<Change> changes, final TodoFilter todoFilter) {
     myChanges = changes;
     myTodoFilter = todoFilter;
-    myIncludePattern = includePattern;
     myPsiManager = PsiManager.getInstance(project);
     mySearchHelper = PsiTodoSearchHelper.SERVICE.getInstance(project);
     myAddedOrEditedTodos = new ArrayList<>();
