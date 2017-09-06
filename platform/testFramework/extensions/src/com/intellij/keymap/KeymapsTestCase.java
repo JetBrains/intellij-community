@@ -172,7 +172,6 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "control COMMA",            "GotoClass", "GotoChangedFile"},
     { "control F1",               "ExternalJavaDoc", "ShowErrorDescription"},
     { "control F10",              "Android.HotswapChanges", "RunToCursor", "javaee.UpdateRunningApplication", "liveedit.UpdateRunningApplication"},
-    { "control F5",               "Rerun", "Run"},
     { "control N",                "FileChooser.NewFolder", "Generate", },
     { "control P",                "FileChooser.TogglePathShowing", "Print"},
     { "control alt F",            "ReformatCode", "IntroduceField"},
