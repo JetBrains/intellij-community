@@ -19,6 +19,7 @@ import com.intellij.codeInsight.controlflow.impl.ConditionalInstructionImpl;
 import com.intellij.codeInsight.controlflow.impl.ControlFlowImpl;
 import com.intellij.codeInsight.controlflow.impl.InstructionImpl;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -107,7 +108,7 @@ public class ControlFlowBuilder {
    * @param pendingScope Scope for instruction
    * @param instruction  "Last" pending instruction
    */
-  public void addPendingEdge(@Nullable final PsiElement pendingScope, final Instruction instruction) {
+  public void addPendingEdge(@Nullable final PsiElement pendingScope, @Nullable final Instruction instruction) {
     if (instruction == null) {
       return;
     }
@@ -203,7 +204,22 @@ public class ControlFlowBuilder {
     return new ControlFlowImpl(result.toArray(new Instruction[result.size()]));
   }
 
+  @Nullable
+  public Instruction getPrevInstruction(@Nullable final PsiElement condition) {
+    final Ref<Instruction> head = new Ref<>(prevInstruction);
+    processPending((pendingScope, instruction) -> {
+      if (pendingScope != null && PsiTreeUtil.isAncestor(condition, pendingScope, false)) {
+        head.set(instruction);
+      }
+      else {
+        addPendingEdge(pendingScope, instruction);
+      }
+    });
+    return head.get();
+  }
 
+  
+  
   @FunctionalInterface
   public interface PendingProcessor {
     void process(PsiElement pendingScope, Instruction instruction);

@@ -15,8 +15,8 @@
  */
 package com.intellij.codeInsight.controlflow.impl;
 
-import com.intellij.codeInsight.controlflow.ControlFlowBuilder;
 import com.intellij.codeInsight.controlflow.ConditionalInstruction;
+import com.intellij.codeInsight.controlflow.ControlFlowBuilder;
 import com.intellij.psi.PsiElement;
 
 /**

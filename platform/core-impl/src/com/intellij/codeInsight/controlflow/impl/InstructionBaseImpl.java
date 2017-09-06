@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.controlflow.impl;
 
-import com.intellij.codeInsight.controlflow.ControlFlowBuilder;
 import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.SmartList;
@@ -24,15 +23,12 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author oleg
- */
-public class InstructionImpl implements Instruction {
+public abstract class InstructionBaseImpl implements Instruction {
+
   final List<Instruction> myPred = new SmartList<>();
   final List<Instruction> mySucc = new SmartList<>();
 
   protected final PsiElement myElement;
-  private final int myNumber;
 
   @Override
   @Nullable
@@ -40,9 +36,8 @@ public class InstructionImpl implements Instruction {
     return myElement;
   }
 
-  public InstructionImpl(final ControlFlowBuilder builder, final PsiElement element) {
+  public InstructionBaseImpl(@Nullable final PsiElement element) {
     myElement = element;
-    myNumber = builder.instructionCount++;
   }
 
   @Override
@@ -57,7 +52,7 @@ public class InstructionImpl implements Instruction {
 
   public String toString() {
     final StringBuilder builder = new StringBuilder();
-    builder.append(myNumber);
+    builder.append(num());
     builder.append("(");
     for (int i = 0; i < mySucc.size(); i++) {
       if (i > 0) builder.append(',');
@@ -69,13 +64,6 @@ public class InstructionImpl implements Instruction {
 
   @Override
   public String getElementPresentation() {
-    final StringBuffer buffer = new StringBuffer();
-    buffer.append("element: ").append(myElement);
-    return buffer.toString();
-  }
-
-  @Override
-  public final int num() {
-    return myNumber;
+    return "element: " + myElement;
   }
 }
