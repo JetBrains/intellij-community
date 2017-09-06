@@ -40,20 +40,18 @@ object PsiIndexConsistencyTester {
                                          RefKind.AstRef(null),
                                          RefKind.StubRef(null), RefKind.GreenStubRef(null))
 
-  fun commonActions(refs: List<RefKind>): Generator<Action> = Generator.frequency(mapOf(
-    1 to Generator.constant(Action.Gc),
-    15 to Generator.sampledFrom(Action.Commit,
-                                Action.ReparseFile,
-                                Action.FilePropertiesChanged,
-                                Action.ReloadFromDisk,
-                                Action.Reformat,
-                                Action.PostponedFormatting,
-                                Action.RenamePsiFile,
-                                Action.RenameVirtualFile,
-                                Action.Save),
-    11 to Generator.sampledFrom(refs).map { Action.LoadRef(it) },
-    10 to Generator.sampledFrom(refs).map { Action.ClearRef(it) }
-  ))
+  fun commonActions(refs: List<RefKind>): Generator<Action> = Generator.frequency(
+    1, Generator.constant(Action.Gc),
+    15, Generator.sampledFrom(Action.Commit,
+                              Action.ReparseFile,
+                              Action.FilePropertiesChanged,
+                              Action.ReloadFromDisk,
+                              Action.Reformat,
+                              Action.PostponedFormatting,
+                              Action.RenamePsiFile,
+                              Action.RenameVirtualFile,
+                              Action.Save),
+    20, Generator.sampledFrom(refs).flatMap { Generator.sampledFrom(Action.LoadRef(it), Action.ClearRef(it)) })
 
 
   fun runActions(model: Model, vararg actions: Action) {

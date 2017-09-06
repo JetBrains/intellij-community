@@ -15,10 +15,10 @@ import java.util.stream.IntStream;
  * Generators for standard types can be obtained using static methods of this class (e.g. {@link #integers}, {@link #listsOf} etc).
  * Generators for custom types can be created by deriving them from standard types (e.g. via {@link #map}, {@link #flatMap}, {@link #zipWith}) or by writing your own from scratch ({@link #from(Function)}).  
  */
-public final class Generator<T> {
+public class Generator<T> {
   private final Function<DataStructure, T> myFunction;
 
-  private Generator(Function<DataStructure, T> function) {
+  Generator(Function<DataStructure, T> function) {
     myFunction = function;
   }
 
@@ -125,30 +125,16 @@ public final class Generator<T> {
   }
  
   /** Delegates one of the two generators with probability corresponding to their weights */
-  public static <T> Generator<T> frequency(int weight1, Generator<? extends T> alternative1, 
-                                           int weight2, Generator<? extends T> alternative2) {
-    Map<Integer, Generator<? extends T>> alternatives = new HashMap<>();
-    alternatives.put(weight1, alternative1);
-    alternatives.put(weight2, alternative2);
-    return frequency(alternatives);
+  public static <T> FrequencyGenerator<T> frequency(int weight1, Generator<? extends T> alternative1,
+                                                    int weight2, Generator<? extends T> alternative2) {
+    return new FrequencyGenerator<>(weight1, alternative1, weight2, alternative2);
   }
 
   /** Delegates one of the three generators with probability corresponding to their weights */
   public static <T> Generator<T> frequency(int weight1, Generator<? extends T> alternative1, 
                                            int weight2, Generator<? extends T> alternative2,
                                            int weight3, Generator<? extends T> alternative3) {
-    Map<Integer, Generator<? extends T>> alternatives = new HashMap<>();
-    alternatives.put(weight1, alternative1);
-    alternatives.put(weight2, alternative2);
-    alternatives.put(weight3, alternative3);
-    return frequency(alternatives);
-  }
-
-  /** Delegates one of the generators from the map, with probability corresponding to the map keys */
-  public static <T> Generator<T> frequency(Map<Integer, Generator<? extends T>> alternatives) {
-    List<Integer> weights = new ArrayList<>(alternatives.keySet());
-    IntDistribution distribution = IntDistribution.frequencyDistribution(weights);
-    return from(data -> alternatives.get(weights.get(data.drawInt(distribution))).generateValue(data));
+    return frequency(weight1, alternative1, weight2, alternative2).with(weight3, alternative3);
   }
 
   /** Gets the data from two generators and invokes the given function to produce a result based on the two generated values. */
