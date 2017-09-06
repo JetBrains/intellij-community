@@ -170,8 +170,8 @@ open class GuiTestCase : GuiTestBase() {
    * @title title of searching dialog window. If dialog should be only one title could be omitted or set to null.
    * @timeout time in seconds to find dialog in GUI hierarchy.
    */
-  fun dialog(title: String? = null, timeout: Long = defaultTimeout, func: JDialogFixture.() -> Unit) {
-    val dialog = dialog(title, timeout)
+  fun dialog(title: String? = null, ignoreCaseTitle: Boolean = false, timeout: Long = defaultTimeout, func: JDialogFixture.() -> Unit) {
+    val dialog = dialog(title, ignoreCaseTitle, timeout)
     func(dialog)
     dialog.waitTillGone()
   }
@@ -530,13 +530,24 @@ open class GuiTestCase : GuiTestBase() {
   /**
    * Finds JDialog with a specific title (if title is null showing dialog should be only one) and returns created JDialogFixture
    */
-  fun dialog(title: String? = null, timeout: Long): JDialogFixture {
+  fun dialog(title: String? = null, ignoreCaseTitle: Boolean, timeoutInSeconds: Long): JDialogFixture {
     if (title == null) {
-      val jDialog = waitUntilFound(null, JDialog::class.java, timeout) { jDialog -> true }
+      val jDialog = waitUntilFound(null, JDialog::class.java, timeoutInSeconds) { true }
       return JDialogFixture(myRobot, jDialog)
     }
     else {
-      return JDialogFixture.find(myRobot, title, timeout.toFestTimeout())
+      try {
+        val dialog = GuiTestUtilKt.withPauseWhenNull(timeoutInSeconds.toInt()) {
+          val allMatchedDialogs = myRobot.finder().findAll(typeMatcher(JDialog::class.java) {
+            if (ignoreCaseTitle) it.title.toLowerCase() == title.toLowerCase() else it.title == title
+          })
+          if (allMatchedDialogs.size > 1) throw Exception("Found more than one (${allMatchedDialogs.size}) dialogs matched title \"$title\"")
+          allMatchedDialogs.firstOrNull()
+        }
+        return JDialogFixture(myRobot, dialog)
+      } catch (timeoutError: WaitTimedOutError) {
+        throw ComponentLookupException("Timeout error for finding JDialog by title \"$title\" for $timeoutInSeconds seconds")
+      }
     }
   }
 
