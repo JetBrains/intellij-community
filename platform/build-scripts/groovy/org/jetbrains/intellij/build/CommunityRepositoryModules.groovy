@@ -52,7 +52,6 @@ class CommunityRepositoryModules {
     "xml-openapi",
     "xml-psi-api",
     "xml-structure-view-api",
-    "uast-common",
   ]
 
   static List<String> PLATFORM_IMPLEMENTATION_MODULES = [

@@ -33,8 +33,7 @@ abstract class BaseIdeaProperties extends ProductProperties {
     "remote-servers-java-impl",
     "testFramework",
     "tests_bootstrap",
-    "ui-designer-core",
-    "uast-java"
+    "ui-designer-core"
   ]
   protected static final List<String> BUNDLED_PLUGIN_MODULES = [
     "copyright", "properties", "terminal", "editorconfig", "settings-repository", "yaml",
@@ -61,8 +60,10 @@ abstract class BaseIdeaProperties extends ProductProperties {
     productLayout.additionalPlatformJars.
       putAll("javac2.jar", ["javac2", "forms-compiler", "forms_rt", "instrumentation-util", "instrumentation-util-8", "javac-ref-scanner-8"])
     productLayout.additionalPlatformJars.putAll("annotations-java8.jar", ["annotations-common", "annotations-java8"])
-    productLayout.additionalPlatformJars.putAll("java-api.jar", ["java-analysis-api", "java-indexing-api", "java-psi-api", "openapi", "jsp-base-openapi", "jsp-openapi"])
-    productLayout.additionalPlatformJars.putAll("java-impl.jar", ["java-analysis-impl", "java-indexing-impl", "java-psi-impl", "java-impl", "jsp-spi"])
+    productLayout.additionalPlatformJars.putAll("java-api.jar", ["java-analysis-api", "java-indexing-api", "java-psi-api", "openapi",
+                                                                 "jsp-base-openapi", "jsp-openapi", "uast-common"])
+    productLayout.additionalPlatformJars.putAll("java-impl.jar", ["java-analysis-impl", "java-indexing-impl", "java-psi-impl", "java-impl",
+                                                                  "jsp-spi", "uast-java"])
 
     productLayout.platformLayoutCustomizer = { PlatformLayout layout ->
       layout.customize {

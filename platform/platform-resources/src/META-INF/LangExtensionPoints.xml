@@ -908,8 +908,6 @@
     <extensionPoint name="metaLanguage" interface="com.intellij.lang.MetaLanguage"/>
 
     <extensionPoint name="longLineInspectionPolicy" interface="com.intellij.codeInspection.longLine.LongLineInspectionPolicy"/>
-    <extensionPoint qualifiedName="org.jetbrains.uast.uastLanguagePlugin"
-                    interface="org.jetbrains.uast.UastLanguagePlugin"/>
 
     <extensionPoint name="breadcrumbsInfoProvider" interface="com.intellij.ui.breadcrumbs.BreadcrumbsProvider"/>
     <extensionPoint name="consoleHistoryModelProvider" interface="com.intellij.execution.console.ConsoleHistoryModelProvider"/>

@@ -163,8 +163,6 @@
     <generation.topLevelFactory language="JAVA" implementationClass="com.intellij.psi.impl.JavaFactoryProvider"/>
     <dom.uiControlsProvider implementation="com.intellij.util.xml.impl.JavaDomApplicationComponent"/>
     <resolveScopeEnlarger implementation="com.intellij.psi.NonClasspathResolveScopeEnlarger"/>
-    <applicationService serviceInterface="com.intellij.profile.codeInspection.InspectionProfileManager"
-                        serviceImplementation="com.intellij.profile.codeInspection.JavaAwareInspectionProfileManager"/>
     <psiViewerExtension implementation="com.intellij.internal.psiView.PsiViewerExpressionExtension"/>
     <psiViewerExtension implementation="com.intellij.internal.psiView.PsiViewerCodeFragmentExtension"/>
     <psiViewerExtension implementation="com.intellij.internal.psiView.PsiViewerMethodExtension"/>
@@ -267,8 +265,6 @@
     <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.JavaColorSettingsPage"/>
     <elementDescriptionProvider implementation="com.intellij.refactoring.util.JavaNonCodeSearchElementDescriptionProvider"/>
     <elementDescriptionProvider implementation="com.intellij.refactoring.util.JavaRefactoringElementDescriptionProvider"/>
-    <projectService serviceInterface="com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper"
-                    serviceImplementation="com.intellij.ide.projectView.impl.JavaProjectViewDirectoryHelper"/>
     <refactoring.helper implementation="com.intellij.refactoring.OptimizeImportsRefactoringHelper"/>
     <refactoring.changeSignatureUsageProcessor implementation="com.intellij.refactoring.changeSignature.JavaChangeSignatureUsageProcessor" id="javaProcessor"/>
     <refactoring.introduceParameterMethodUsagesProcessor implementation="com.intellij.refactoring.introduceParameter.JavaIntroduceParameterMethodUsagesProcessor"/>
@@ -293,8 +289,6 @@
     <saveFileAsTemplateHandler implementation="com.intellij.ide.fileTemplates.SaveJavaAsTemplateHandler"/>
     <exceptionFilter implementation="com.intellij.openapi.vcs.contentAnnotation.VcsContentAnnotationExceptionFilterFactory"/>
     <packageDependencies.visitor language="JAVA" implementationClass="com.intellij.packageDependencies.JavaDependencyVisitorFactory"/>
-    <applicationService serviceInterface="com.intellij.packageDependencies.DependenciesVisitorFactory"
-                        serviceImplementation="com.intellij.packageDependencies.JavaDependenciesVisitorFactory"/>
     <pathMacroFilter implementation="com.intellij.execution.configuration.JavaRunConfigurationPathMacroFilter"/>
     <favoriteNodeProvider implementation="com.intellij.ide.favoritesTreeView.PsiPackageFavoriteNodeProvider"/>
     <favoriteNodeProvider implementation="com.intellij.ide.favoritesTreeView.PsiMethodFavoriteNodeProvider"/>
@@ -303,8 +297,6 @@
     <defaultTemplatePropertiesProvider implementation="com.intellij.ide.fileTemplates.TemplatePackagePropertyProvider"/>
     <createFromTemplateHandler implementation="com.intellij.ide.fileTemplates.JavaCreateFromTemplateHandler"/>
     <createFromTemplateHandler implementation="com.intellij.ide.fileTemplates.JavaInternalTemplatesHandler"/>
-    <projectService serviceInterface="com.intellij.ide.todo.nodes.TodoTreeHelper"
-                    serviceImplementation="com.intellij.ide.todo.nodes.TodoJavaTreeHelper"/>
     <liveTemplateOptionalProcessor implementation="com.intellij.codeInsight.template.impl.CodeBlockReformattingProcessor"/>
     <liveTemplateOptionalProcessor implementation="com.intellij.codeInsight.template.impl.ShortenFQNamesProcessor"/>
     <liveTemplateOptionalProcessor implementation="com.intellij.codeInsight.template.impl.ShortenToStaticImportProcessor"/>
@@ -712,20 +704,14 @@
     <psi.treeChangePreprocessor implementation="com.intellij.psi.impl.JavaCodeBlockModificationListener"/>
     <projectService serviceInterface="com.intellij.codeInspection.ex.EntryPointsManager"
                     serviceImplementation="com.intellij.codeInspection.ex.EntryPointsManagerImpl"/>
-    <projectService serviceInterface="com.intellij.usages.impl.rules.DirectoryGroupingRule"
-                    serviceImplementation="com.intellij.usages.impl.rules.PackageGroupingRule"/>
     <projectModelModifier implementation="com.intellij.openapi.roots.impl.IdeaProjectModelModifier" order="last"/>
     <projectService serviceInterface="com.intellij.openapi.roots.JavaProjectModelModificationService"
                     serviceImplementation="com.intellij.openapi.roots.impl.JavaProjectModelModificationServiceImpl"/>
-    <projectService serviceInterface="com.intellij.psi.impl.file.PsiDirectoryFactory"
-                    serviceImplementation="com.intellij.psi.impl.file.PsiJavaDirectoryFactory"/>
     <projectService serviceInterface="com.intellij.codeInsight.ExpectedTypesProvider"
                     serviceImplementation="com.intellij.codeInsight.ExpectedTypesProvider"/>
     <multiHostInjector implementation="com.intellij.psi.impl.source.tree.injected.JavaConcatenationInjectorManager$Concatenation2InjectorAdapter" order="first"/>
     <projectService serviceInterface="com.intellij.psi.impl.source.tree.injected.JavaConcatenationInjectorManager"
                     serviceImplementation="com.intellij.psi.impl.source.tree.injected.JavaConcatenationInjectorManager"/>
-    <projectService serviceInterface="com.intellij.refactoring.RefactoringFactory"
-                    serviceImplementation="com.intellij.refactoring.openapi.impl.JavaRefactoringFactoryImpl"/>
     <projectService serviceInterface="com.intellij.refactoring.listeners.JavaRefactoringListenerManager"
                     serviceImplementation="com.intellij.refactoring.listeners.impl.JavaRefactoringListenerManagerImpl"/>
     <projectService serviceInterface="com.intellij.refactoring.RefactoringManager"
@@ -741,9 +727,6 @@
                     serviceImplementation="com.intellij.psi.impl.migration.PsiMigrationManager"/>
     <projectService serviceInterface="com.intellij.ide.util.TreeClassChooserFactory"
                     serviceImplementation="com.intellij.ide.util.TreeClassChooserFactoryImpl"/>
-    <applicationService serviceInterface="com.intellij.psi.impl.source.codeStyle.IndentHelper"
-                        serviceImplementation="com.intellij.psi.impl.source.codeStyle.JavaIndentHelper"
-                        overrides="true"/>
     <applicationService serviceInterface="com.intellij.util.xml.converters.values.ClassArrayConverter"
                         serviceImplementation="com.intellij.util.xml.converters.ClassArrayConverterImpl"/>
     <applicationService serviceInterface="com.intellij.util.xml.converters.values.ClassValueConverter"

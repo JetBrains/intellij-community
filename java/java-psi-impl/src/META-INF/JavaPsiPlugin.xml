@@ -47,7 +47,12 @@
       <with attribute="implementationClass" implements="com.intellij.psi.PsiAnnotationSupport"/>
     </extensionPoint>
     <extensionPoint qualifiedName="com.intellij.testFramework" interface="com.intellij.testIntegration.TestFramework"/>
+    <extensionPoint qualifiedName="org.jetbrains.uast.uastLanguagePlugin" interface="org.jetbrains.uast.UastLanguagePlugin"/>
   </extensionPoints>
+
+  <extensions defaultExtensionNs="org.jetbrains.uast">
+    <uastLanguagePlugin implementation="org.jetbrains.uast.java.JavaUastLanguagePlugin"/>
+  </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
     <java.elementFinder implementation="com.intellij.psi.impl.PsiElementFinderImpl" id="java" order="first"/>
@@ -97,6 +102,8 @@
                     serviceImplementation="com.intellij.lang.jvm.facade.JvmFacadeImpl"/>
     <projectService serviceInterface="com.intellij.psi.JavaPsiFacade"
                     serviceImplementation="com.intellij.psi.impl.JavaPsiFacadeImpl"/>
+    <projectService serviceInterface="org.jetbrains.uast.UastContext"
+                    serviceImplementation="org.jetbrains.uast.UastContext"/>
     <applicationService serviceInterface="com.intellij.codeInsight.TestFrameworks"
                         serviceImplementation="com.intellij.codeInsight.TestFrameworksImpl"/>
     <applicationService serviceInterface="com.intellij.psi.EmptySubstitutor"
