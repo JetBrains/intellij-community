@@ -32,8 +32,7 @@ import com.intellij.psi.util.PsiTreeUtil
 /**
  * @author ven
  */
-class CreateMethodFromUsageTest extends LightQuickFixTestCase {
-  void test() throws Exception { doAllTests() }
+class CreateMethodFromUsageTemplateTest extends LightQuickFixTestCase {
 
   void testTemplateAssertions() throws Exception {
     configureFromFileText "a.java", """
@@ -150,13 +149,13 @@ class A {
 
     def document = getEditor().getDocument()
     def offset = getEditor().getCaretModel().getOffset()
-    
+
     ApplicationManager.application.runWriteAction {
       def method = PsiTreeUtil.getParentOfType(getFile().findElementAt(offset), PsiMethod.class)
       method.getModifierList().setModifierProperty(PsiModifier.STATIC, false)
       PsiDocumentManager.getInstance(getFile().project).commitDocument(document)
     }
-    
+
     state.gotoEnd(false)
 
     checkResultByText """
@@ -219,12 +218,5 @@ class A {
     finally {
       settings.setUseFqClassNames(fqClassNames)
     }
-
   }
-
-  @Override
-  protected String getBasePath() {
-    return "/codeInsight/daemonCodeAnalyzer/quickFix/createMethodFromUsage"
-  }
-
 }
