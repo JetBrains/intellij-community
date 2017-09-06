@@ -116,6 +116,9 @@ internal class DefaultProjectStoreTest {
           <option name="notice" value="where" />
         </copyright>
       </component>
+      <component name="GreclipseSettings">
+        <option name="greclipsePath" value="foo"/>
+      </component>
       <component name="InspectionProjectProfileManager">
         <profile version="1.0">
           <option name="myName" value="Project Default" />
@@ -178,6 +181,14 @@ internal class DefaultProjectStoreTest {
     val directoryTree = printDirectoryTree(tempDir)
     assertThat(directoryTree.trim()).isEqualTo("""
     ├──/
+      ├──compiler.xml
+    <?xml version="1.0" encoding="UTF-8"?>
+    <project version="4">
+      <component name="GreclipseSettings">
+        <option name="greclipsePath" value="foo" />
+      </component>
+    </project>
+
       ├──copyright/
         ├──Foo.xml
     <component name="CopyrightManager">
@@ -205,6 +216,7 @@ internal class DefaultProjectStoreTest {
     </component>
 
       ├──workspace.xml
+    <?xml version="1.0" encoding="UTF-8"?>
     <project version="4">
       <component name="ProjectLevelVcsManager" settingsEditedManually="false" />
       <component name="masterDetails">
