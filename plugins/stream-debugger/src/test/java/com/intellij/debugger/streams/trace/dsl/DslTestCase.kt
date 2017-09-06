@@ -159,13 +159,11 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
     }
   }
 
-  private fun doTest(block: Dsl.() -> Unit) {
-    dsl.block()
-    check()
+  private fun doTest(init: CodeContext.() -> Unit) {
+    check(dsl.code(init))
   }
 
-  private fun check() {
-    val actualText = dsl.toCode()
+  private fun check(actualText: String) {
     val testName = getTestName(true)
     UsefulTestCase.assertSameLinesWithFile("testData/dsl/$directoryName/$testName.out", actualText, false)
   }

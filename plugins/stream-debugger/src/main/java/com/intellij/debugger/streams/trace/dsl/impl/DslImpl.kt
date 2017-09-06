@@ -16,16 +16,23 @@
 package com.intellij.debugger.streams.trace.dsl.impl
 
 import com.intellij.debugger.streams.trace.dsl.*
+import com.intellij.debugger.streams.trace.impl.handler.type.GenericType
 
 /**
  * @author Vitaliy.Bibaev
  */
-class DslImpl(override val statementFactory: StatementFactory) : Dsl, CodeBlock by statementFactory.createEmptyCompositeCodeBlock() {
+class DslImpl(override val statementFactory: StatementFactory) : Dsl {
   override val NULL: Expression = TextExpression("null")
 
   override val THIS: Expression = TextExpression("this")
 
   override fun variable(type: String, name: String): Variable = statementFactory.createVariable(type, name)
+
+  override fun code(init: CodeContext.() -> Unit): String {
+    val fragment = MyContext()
+    fragment.init()
+    return fragment.toCode(0)
+  }
 
   override fun lambda(argName: String, init: LambdaBody.(Expression) -> Unit): Lambda {
     val lambdaBody = statementFactory.createEmptyLambdaBody(argName)
@@ -37,4 +44,6 @@ class DslImpl(override val statementFactory: StatementFactory) : Dsl, CodeBlock 
     statementFactory.createVariableDeclaration(variable, init, isMutable)
 
   override fun String.unaryPlus(): TextExpression = TextExpression(this)
+
+  private inner class MyContext : CodeContext, Dsl by DslImpl@ this, CodeBlock by statementFactory.createEmptyCompositeCodeBlock()
 }
