@@ -16,7 +16,6 @@
 package git4idea.branch
 
 import com.intellij.openapi.vcs.BranchChangeListener
-import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import git4idea.repo.GitRepository
 import git4idea.test.GitPlatformTest
 import junit.framework.TestCase
@@ -34,16 +33,16 @@ class GitBranchContextTest: GitPlatformTest() {
   fun testBranchListener() {
     var didChange = 0
     class Listener: BranchChangeListener {
-      override fun branchDidChange(branchName: String?) {
+      override fun branchHasChanged(branchName: String) {
         didChange++
       }
 
-      override fun branchWillChange(branchName: String?) {
+      override fun branchWillChange(branchName: String) {
 
       }
     }
 
-    myProject.messageBus.connect().subscribe(ProjectLevelVcsManager.VCS_BRANCH_CHANGED, Listener())
+    myProject.messageBus.connect().subscribe(BranchChangeListener.VCS_BRANCH_CHANGED, Listener())
 
     val worker = GitBranchWorker(myProject, myGit, GitBranchWorkerTest.TestUiHandler())
     worker.checkoutNewBranch("foo", myRepositories)

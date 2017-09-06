@@ -2,7 +2,6 @@ package com.intellij.tasks.context;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.BranchChangeListener;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import org.jetbrains.annotations.NotNull;
 
 public class BranchContextTracker implements BranchChangeListener {
@@ -15,16 +14,16 @@ public class BranchContextTracker implements BranchChangeListener {
 
   private BranchContextTracker(Project project) {
     myContextManager = WorkingContextManager.getInstance(project);
-    project.getMessageBus().connect().subscribe(ProjectLevelVcsManager.VCS_BRANCH_CHANGED, this);
+    project.getMessageBus().connect().subscribe(BranchChangeListener.VCS_BRANCH_CHANGED, this);
   }
 
   @Override
-  public void branchWillChange(String branchName) {
+  public void branchWillChange(@NotNull String branchName) {
     myContextManager.saveContext(getContextName(branchName), null);
   }
 
   @Override
-  public void branchDidChange(String branchName) {
+  public void branchHasChanged(@NotNull String branchName) {
     myContextManager.loadContext(getContextName(branchName));
   }
 

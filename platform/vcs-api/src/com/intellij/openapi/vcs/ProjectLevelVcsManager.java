@@ -43,7 +43,6 @@ public abstract class ProjectLevelVcsManager {
 
   public static final Topic<VcsListener> VCS_CONFIGURATION_CHANGED = Topic.create("VCS configuration changed", VcsListener.class);
   public static final Topic<VcsListener> VCS_CONFIGURATION_CHANGED_IN_PLUGIN = Topic.create("VCS configuration changed in VCS plugin", VcsListener.class);
-  public static final Topic<BranchChangeListener> VCS_BRANCH_CHANGED = Topic.create("VCS branch changed", BranchChangeListener.class);
 
   public abstract void iterateVfUnderVcsRoot(VirtualFile file, Processor<VirtualFile> processor);
 
