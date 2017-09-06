@@ -41,7 +41,7 @@ import java.util.Map;
 public abstract class PsiPackageBase extends PsiElementBase implements PsiDirectoryContainer, Queryable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.file.PsiPackageBase");
 
-  final PsiManager myManager;
+  private final PsiManager myManager;
   private final String myQualifiedName;
 
   protected Collection<PsiDirectory> getAllDirectories() {
