@@ -325,7 +325,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
 
     reportNullableFunctions(visitor, holder, reportedAnchors);
     reportNullableArguments(visitor, holder, reportedAnchors);
-    reportNullableAssignments(visitor, holder, reportedAnchors);
+    reportNullableAssignments(visitor, holder, reportedAnchors, onTheFly);
     reportUnboxedNullables(visitor, holder, reportedAnchors);
     reportNullableReturns(visitor, holder, reportedAnchors, scope);
     if (SUGGEST_NULLABLE_ANNOTATIONS) {
@@ -682,14 +682,29 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     }
   }
 
-  private static void reportNullableAssignments(DataFlowInstructionVisitor visitor, ProblemsHolder holder, Set<PsiElement> reportedAnchors) {
+  private void reportNullableAssignments(DataFlowInstructionVisitor visitor,
+                                         ProblemsHolder holder,
+                                         Set<PsiElement> reportedAnchors,
+                                         boolean onTheFly) {
     for (PsiElement expr : visitor.getProblems(NullabilityProblem.assigningToNotNull)) {
       if (!reportedAnchors.add(expr)) continue;
+      assert expr instanceof PsiExpression;
 
       final String text = isNullLiteralExpression(expr)
                           ? InspectionsBundle.message("dataflow.message.assigning.null")
                           : InspectionsBundle.message("dataflow.message.assigning.nullable");
-      holder.registerProblem(expr, text);
+      holder.registerProblem(expr, text,
+                             createNPEFixes((PsiExpression)expr, (PsiExpression)expr, onTheFly).toArray(LocalQuickFix.EMPTY_ARRAY));
+    }
+    for (PsiElement expr : visitor.getProblems(NullabilityProblem.storingToNotNullArray)) {
+      if (!reportedAnchors.add(expr)) continue;
+      assert expr instanceof PsiExpression;
+
+      final String text = isNullLiteralExpression(expr)
+                          ? InspectionsBundle.message("dataflow.message.storing.array.null")
+                          : InspectionsBundle.message("dataflow.message.storing.array.nullable");
+      holder.registerProblem(expr, text,
+                             createNPEFixes((PsiExpression)expr, (PsiExpression)expr, onTheFly).toArray(LocalQuickFix.EMPTY_ARRAY));
     }
   }
 

@@ -1064,7 +1064,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       if (componentType != null) {
         generateBoxingUnboxingInstructionFor(initializer, componentType);
         if (componentNullability == Nullness.NOT_NULL) {
-          addInstruction(new CheckNotNullInstruction(initializer, NullabilityProblem.assigningToNotNull));
+          addInstruction(new CheckNotNullInstruction(initializer, NullabilityProblem.storingToNotNullArray));
         }
       }
       addInstruction(new PopInstruction());
