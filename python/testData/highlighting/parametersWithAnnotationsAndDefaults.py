@@ -1,0 +1,2 @@
+def <info descr="null">f</info>(<info descr="null">p1</info>: <info descr="null"><info descr="PY.ANNOTATION">int</info></info>, <info descr="null">p2</info>: <info descr="null"><info descr="PY.ANNOTATION">int</info></info> = 42):
+    <info descr="null"><info descr="PY.FUNCTION_CALL">print</info></info>(<info descr="null">p1</info>, <info descr="null">p2</info>)
