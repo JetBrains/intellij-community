@@ -366,13 +366,6 @@ public class PythonHighlightingTest extends PyTestCase {
 
   // PY-11418
   public void testFunctionCalls() {
-    final EditorColorsScheme scheme = createTemporaryColorScheme();
-    final TextAttributesKey funcCallKey = TextAttributesKey.find("PY.FUNCTION_CALL");
-    scheme.setAttributes(funcCallKey, new TextAttributes(Color.green, Color.black, Color.white, EffectType.BOXED, Font.BOLD));
-    final TextAttributesKey methodCallKey = TextAttributesKey.find("PY.METHOD_CALL");
-    scheme.setAttributes(methodCallKey, new TextAttributes(Color.red, Color.black, Color.white, EffectType.BOXED, Font.BOLD));
-    final TextAttributesKey builtinKey = TextAttributesKey.find("PY.BUILTIN_NAME");
-    scheme.setAttributes(builtinKey, new TextAttributes(Color.blue, Color.black, Color.white, EffectType.BOXED, Font.BOLD));
     doTest();
   }
 
