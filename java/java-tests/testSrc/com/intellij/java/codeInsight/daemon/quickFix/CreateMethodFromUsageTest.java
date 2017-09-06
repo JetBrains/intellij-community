@@ -15,7 +15,10 @@
  */
 package com.intellij.java.codeInsight.daemon.quickFix;
 
+import com.intellij.codeInsight.daemon.quickFix.ActionHint;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
+import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 public class CreateMethodFromUsageTest extends LightQuickFixParameterizedTestCase {
 
@@ -24,5 +27,10 @@ public class CreateMethodFromUsageTest extends LightQuickFixParameterizedTestCas
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/createMethodFromUsage";
+  }
+
+  @Override
+  protected ActionHint parseActionHintImpl(@NotNull PsiFile file, @NotNull String contents) {
+    return ActionHint.parse(file, contents, false);
   }
 }

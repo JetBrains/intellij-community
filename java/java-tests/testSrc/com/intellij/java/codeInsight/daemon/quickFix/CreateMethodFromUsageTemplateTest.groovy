@@ -48,7 +48,7 @@ class SomeOuterClassWithLongName {
 }
 """
     TemplateManagerImpl.setTemplateTesting(project, testRootDisposable)
-    doAction("Create method 'addSubGroup'")
+    doAction("Create method 'addSubGroup' in 'Group in PropertyDescriptorWithVeryLongName in SomeOuterClassWithLongName'")
     def state = TemplateManagerImpl.getTemplateState(getEditor())
     //skip void return type
     state.nextTab()
@@ -98,7 +98,7 @@ class Usage {
 }
 """
     TemplateManagerImpl.setTemplateTesting(project, testRootDisposable)
-    doAction("Create method 'getInstance'")
+    doAction("Create method 'getInstance' in 'Singleton'")
     def state = TemplateManagerImpl.getTemplateState(getEditor())
     // parameter type
     assert LookupManager.getActiveLookup(editor)?.currentItem?.lookupString == 'Singleton'
@@ -118,7 +118,7 @@ class Usage {
 }
 """
     TemplateManagerImpl.setTemplateTesting(project, testRootDisposable)
-    doAction("Create method 'getInstance'")
+    doAction("Create method 'getInstance' in 'Singleton'")
     def state = TemplateManagerImpl.getTemplateState(getEditor())
 
     def document = getEditor().getDocument()
@@ -144,19 +144,8 @@ class A {
 }
 """
     TemplateManagerImpl.setTemplateTesting(project, testRootDisposable)
-    doAction("Create method 'foo'")
-    def state = TemplateManagerImpl.getTemplateState(getEditor())
-
-    def document = getEditor().getDocument()
-    def offset = getEditor().getCaretModel().getOffset()
-
-    ApplicationManager.application.runWriteAction {
-      def method = PsiTreeUtil.getParentOfType(getFile().findElementAt(offset), PsiMethod.class)
-      method.getModifierList().setModifierProperty(PsiModifier.STATIC, false)
-      PsiDocumentManager.getInstance(getFile().project).commitDocument(document)
-    }
-
-    state.gotoEnd(false)
+    doAction("Create method 'foo' in 'A'")
+    TemplateManagerImpl.getTemplateState(getEditor()).gotoEnd(false)
 
     checkResultByText """
 class A {
@@ -166,7 +155,7 @@ class A {
         B(int x) { super(foo(x)); }
     }
 
-    private int foo(int x) {
+    private static int foo(int x) {
         return 0;
     }
 }
@@ -188,7 +177,7 @@ class A {
   }
   """
       TemplateManagerImpl.setTemplateTesting(project, testRootDisposable)
-      doAction("Create method 'foo'")
+      doAction("Create method 'foo' in 'A'")
       def state = TemplateManagerImpl.getTemplateState(getEditor())
 
       def document = getEditor().getDocument()
