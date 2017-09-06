@@ -541,7 +541,9 @@ public class GenericsHighlightUtil {
       for (HierarchicalMethodSignature hms : visibleSignatures) {
         final PsiMethod method = hms.getMethod();
         if (method.isConstructor()) continue;
-        if (method.hasModifierProperty(PsiModifier.ABSTRACT) || method.hasModifierProperty(PsiModifier.DEFAULT)) continue;
+        if (method.hasModifierProperty(PsiModifier.ABSTRACT) || 
+            method.hasModifierProperty(PsiModifier.DEFAULT) || 
+            method.hasModifierProperty(PsiModifier.STATIC)) continue;
         if (psiClass.findMethodsBySignature(method, false).length > 0) continue;
         final PsiClass containingClass = method.getContainingClass();
         if (containingClass == null) continue;
