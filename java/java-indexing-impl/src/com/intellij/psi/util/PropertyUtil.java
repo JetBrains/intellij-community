@@ -113,9 +113,6 @@ public class PropertyUtil extends PropertyUtilBase {
       if (!name.startsWith("set")) {
         return null;
       }
-      if (method.hasModifierProperty(PsiModifier.SYNCHRONIZED)) {
-        return null;
-      }
       final PsiCodeBlock body = method.getBody();
       if (body == null) {
         return null;

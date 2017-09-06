@@ -656,7 +656,7 @@ public class PropertyUtilBase {
   }
 
   private static boolean hasGetterSignature(@NotNull PsiMethod method) {
-    return isSimplePropertyGetter(method) && !method.hasModifierProperty(PsiModifier.SYNCHRONIZED);
+    return isSimplePropertyGetter(method);
   }
 
   @Nullable
