@@ -15,8 +15,11 @@
  */
 package com.intellij.codeInspection.ui;
 
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.CommonProblemDescriptor;
+import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ProblemDescriptionsProcessor;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.RefElement;
@@ -24,6 +27,8 @@ import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefModule;
 import com.intellij.codeInspection.ui.util.SynchronizedBidiMultiMap;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.psi.PsiElement;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -136,4 +141,21 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
   void amnesty(@NotNull CommonProblemDescriptor descriptor);
 
   void exclude(@NotNull CommonProblemDescriptor descriptor);
+
+  static HighlightSeverity getSeverity(@Nullable RefEntity entity,
+                                       @Nullable PsiElement psiElement,
+                                       @NotNull InspectionToolPresentation presentation) {
+    HighlightSeverity severity;
+    if (entity instanceof RefElement){
+      final RefElement refElement = (RefElement)entity;
+      severity = presentation.getSeverity(refElement);
+    }
+    else {
+      final InspectionProfile profile = InspectionProjectProfileManager.getInstance(presentation.getContext().getProject()).getCurrentProfile();
+      final HighlightDisplayLevel
+        level = profile.getErrorLevel(HighlightDisplayKey.find(presentation.getToolWrapper().getShortName()), psiElement);
+      severity = level.getSeverity();
+    }
+    return severity;
+  }
 }

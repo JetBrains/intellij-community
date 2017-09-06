@@ -127,7 +127,7 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
   @Nullable
   @Override
   public HighlightSeverity getSeverity(@NotNull RefElement element) {
-    final PsiElement psiElement = element.getPointer().getContainingFile();
+    final PsiElement psiElement = ((RefElement)element.getRefManager().getRefinedElement(element)).getPointer().getContainingFile();
     if (psiElement != null) {
       final GlobalInspectionContextImpl context = getContext();
       final String shortName = getSeverityDelegateName();
@@ -405,16 +405,7 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
       @NonNls Element problemClassElement = new Element(InspectionsBundle.message("inspection.export.results.problem.element.tag"));
       problemClassElement.addContent(myToolWrapper.getDisplayName());
 
-      final HighlightSeverity severity;
-      if (refEntity instanceof RefElement){
-        final RefElement refElement = (RefElement)refEntity;
-        severity = getSeverity(refElement);
-      }
-      else {
-        final InspectionProfile profile = InspectionProjectProfileManager.getInstance(getContext().getProject()).getCurrentProfile();
-        final HighlightDisplayLevel level = profile.getErrorLevel(HighlightDisplayKey.find(myToolWrapper.getShortName()), psiElement);
-        severity = level.getSeverity();
-      }
+      final HighlightSeverity severity = InspectionToolPresentation.getSeverity(refEntity, psiElement, this);
 
       if (severity != null) {
         ProblemHighlightType problemHighlightType = descriptor instanceof ProblemDescriptor
