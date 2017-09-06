@@ -17,16 +17,13 @@ package com.intellij.execution.console
 
 import com.intellij.execution.console.ConsoleHistoryModel.TextWithOffset
 import com.intellij.ide.ui.UISettings
-import com.intellij.openapi.Disposable
-import com.intellij.openapi.editor.event.CaretEvent
-import com.intellij.openapi.editor.event.CaretListener
-import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.util.TextRange
-import com.intellij.util.concurrency.AtomicFieldUpdater
 import com.intellij.util.containers.ConcurrentFactoryMap
 import com.intellij.util.containers.ContainerUtil
-import kotlinx.collections.immutable.*
+import gnu.trove.TIntStack
 
 /**
  * @author Yuli Fiterman
@@ -38,50 +35,19 @@ private val MasterModels = ConcurrentFactoryMap.createMap<String, MasterModel>({
   ContainerUtil.createConcurrentWeakValueMap()
 })
 
+
+private fun assertDispatchThread() = ApplicationManager.getApplication().assertIsDispatchThread()
+
 fun createModel(persistenceId: String, console: LanguageConsoleView): ConsoleHistoryModel {
-
-
   val masterModel: MasterModel = MasterModels[persistenceId]!!
-  val searchPrefixTracker = SearchPrefixTracker(console).apply { install() }
-  return PrefixHistoryModel(masterModel) {
-    searchPrefixTracker.getPrefixFromEditor()
+  fun getPrefixFromConsole(): String {
+    val caretOffset = console.consoleEditor.caretModel.offset
+    return console.editorDocument.getText(TextRange.create(0, caretOffset))
   }
+  return PrefixHistoryModel(masterModel, ::getPrefixFromConsole)
 
 }
 
-private class SearchPrefixTracker(private val console: LanguageConsoleView) {
-  private var lastFirstCaretPosition = 0
-
-  fun install() {
-    val listener = object : CaretListener {
-      override fun caretPositionChanged(e: CaretEvent) {
-        if (e.oldPosition.line == 0) {
-          lastFirstCaretPosition = e.oldPosition.column
-        }
-      }
-    }
-    val consoleEditor = console.consoleEditor
-    consoleEditor.caretModel.addCaretListener(listener)
-    Disposer.register(console, Disposable {
-      consoleEditor.caretModel.removeCaretListener(listener)
-    })
-  }
-
-  fun getPrefixFromEditor(): String {
-    val editor = console.currentEditor
-    val carretOffset = editor.caretModel.offset
-    val document = editor.document
-    val lineNumber = document.getLineNumber(carretOffset)
-    if (lineNumber == 0) {
-      return document.getText(TextRange(0, carretOffset))
-    }
-
-    val offsetInLine: Int = document.getLineEndOffset(0) - document.getLineStartOffset(0)
-    return document.getText(TextRange(0, Math.min(offsetInLine, lastFirstCaretPosition)))
-
-  }
-
-}
 
 private class PrefixHistoryModel constructor(private val masterModel: MasterModel, private val getPrefixFn: () -> String) : ConsoleHistoryModel by masterModel {
 
@@ -90,8 +56,9 @@ private class PrefixHistoryModel constructor(private val masterModel: MasterMode
     this.userContent = userContent
   }
 
-  private var myEntries: ImmutableList<String>? = null
-  private var index: Int = 0
+  private var myEntries: List<String>? = null
+  private var myCurrentIndex: Int = -1
+  private var myPrevEntries: TIntStack = TIntStack()
 
 
   init {
@@ -104,6 +71,7 @@ private class PrefixHistoryModel constructor(private val masterModel: MasterMode
   }
 
   override fun addToHistory(statement: String?) {
+    assertDispatchThread()
     if (statement.isNullOrEmpty()) {
       return
     }
@@ -113,6 +81,7 @@ private class PrefixHistoryModel constructor(private val masterModel: MasterMode
 
 
   override fun removeFromHistory(statement: String?) {
+    assertDispatchThread()
     if (statement.isNullOrEmpty()) {
       return
     }
@@ -122,168 +91,111 @@ private class PrefixHistoryModel constructor(private val masterModel: MasterMode
 
   private fun resetIndex() {
     myEntries = null
-    index = 0
+    myCurrentIndex = -1
+    myPrevEntries.clear();
   }
 
 
   override fun getHistoryNext(): TextWithOffset? {
-    val entries: ImmutableList<String> = myEntries ?: masterModel.entriesSnap.apply { index = this.size }
-    if (index <= 0) {
+    val entries = myEntries ?: masterModel.entries
+    val offset = if (myCurrentIndex == -1) entries.size else myCurrentIndex
+    if (offset <= 0) {
       return null
+    }
+    val searchPrefix = getPrefixFn()
+    val res = entries.withIndex().findLast { it.index < offset && it.value.startsWith(searchPrefix) } ?: return null
+
+    if (myEntries == null) {
+      myEntries = entries
+    }
+    if (myCurrentIndex != -1) {
+      myPrevEntries.push(myCurrentIndex)
     }
 
-    val searchPrefix = getPrefixFn()
-    val indexOfLast = entries.subList(0, index).indexOfLast { it.startsWith(searchPrefix) || searchPrefix.isEmpty() }
-    if (indexOfLast == -1) {
-      return null
-    }
-    myEntries = entries
-    index = indexOfLast
-    return TextWithOffset(entries[index], searchPrefix.length)
+    myCurrentIndex = res.index
+    return TextWithOffset(res.value, searchPrefix.length)
   }
 
 
   override fun getHistoryPrev(): TextWithOffset? {
-    val entries: ImmutableList<String> = myEntries ?: return null
-    val searchPrefix = getPrefixFn()
-    val prevOffset = entries.subList(index + 1, entries.size).indexOfFirst { it.startsWith(searchPrefix) || searchPrefix.isEmpty() }
-    return if (prevOffset != -1) {
-      index += prevOffset + 1
-      TextWithOffset(entries[index], searchPrefix.length)
-    }
-    else if (userContent.startsWith(searchPrefix) || searchPrefix.isEmpty()) {
-      myEntries = null
-      index = 0
-      TextWithOffset(userContent, searchPrefix.length)
-
+    val entries = myEntries ?: return null
+    if (myPrevEntries.size() > 0) {
+      myCurrentIndex = myPrevEntries.pop()
+      return entries[myCurrentIndex].let { TextWithOffset(it, -1) }
     }
     else {
-      null
+      resetIndex()
+      return TextWithOffset(userContent, -1)
     }
   }
 
-  //Can be remove when https://youtrack.jetbrains.com/issue/KT-19830 is fixed
+  override fun getCurrentIndex(): Int =
+      if (myCurrentIndex != -1) {
+        myCurrentIndex
+      }
+      else {
+        entries.size - 1
+      }
+
+
   override fun prevOnLastLine(): Boolean = true
 
   override fun hasHistory(): Boolean = myEntries != null
 }
 
-private class MasterModel : ConsoleHistoryModel, EntriesWithPositionHolder() {
-  override fun setContent(userContent: String) = throw IllegalStateException("Should not be invoked")
-
-  val entriesSnap: ImmutableList<String>
-    get() = myState.entries
+private class MasterModel(private val modTracker: SimpleModificationTracker = SimpleModificationTracker()) : ConsoleHistoryModel, ModificationTracker by modTracker {
 
 
-  override fun resetEntries(ent: MutableList<String>) {
-    updateAtomically {
-      val newEntries = ent.toImmutableList()
-      return@updateAtomically State(newEntries, newEntries.size)
-    }
+  @Volatile private var myEntries: MutableList<String> = mutableListOf<String>()
+
+
+  @Suppress("UNCHECKED_CAST")
+  override fun getEntries(): MutableList<String> = myEntries.toMutableList()
+
+
+  override fun resetEntries(ent: List<String>) {
+    myEntries = ent.toMutableList()
   }
 
 
   override fun addToHistory(statement: String?) {
-    val stmt = statement ?: return
-
-    updateAtomically { (entries) ->
-      val maxHistorySize = maxHistorySize
-      var newEntries = entries - stmt
-      if (newEntries.size >= maxHistorySize) {
-        newEntries = newEntries.removeAt(0)
-      }
-      newEntries += stmt
-
-      return@updateAtomically State(newEntries, newEntries.size)
+    if (statement == null) {
+      return
     }
-    incModificationCount()
+    val entries = myEntries
+    entries.remove(statement)
+    entries.add(statement)
+    if (entries.size >= maxHistorySize) {
+      entries.removeAt(0)
+    }
+    modTracker.incModificationCount()
   }
 
 
   override fun removeFromHistory(statement: String?) {
-    val stmt = statement ?: return
-    updateAtomically { state ->
-      val entries = myState.entries
-      val newEntries = entries - stmt
-      return@updateAtomically if (newEntries !== entries) {
-        State(newEntries, newEntries.size)
-      }
-      else {
-        state
-      }
+    if (statement == null) {
+      return
     }
-    incModificationCount()
+    val entries = myEntries;
+    entries.remove(statement)
+    modTracker.incModificationCount()
   }
 
   override fun getMaxHistorySize(): Int = UISettings.instance.consoleCommandHistoryLimit
 
-  override fun getEntries(): List<String> = myState.entries.toList()
 
-  override fun isEmpty(): Boolean = myState.entries.isEmpty()
+  override fun isEmpty(): Boolean = entries.isEmpty()
 
-  override fun getHistorySize(): Int = myState.entries.size
+  override fun getHistorySize(): Int = entries.size
 
-  override fun getHistoryNext(): TextWithOffset? {
-    return updateAtomically { (entries, index) ->
-      return@updateAtomically if (index >= 0) {
-        State(entries, index - 1)
-      }
-      else {
-        State(entries, index)
-      }
-    }.currentEntry()?.defaultOffset()
-  }
+  override fun getHistoryNext(): TextWithOffset? = throw IllegalStateException("Should not be invoked")
 
-  override fun getHistoryPrev(): TextWithOffset? {
-    return updateAtomically { (entries, index) ->
-      return@updateAtomically if (index <= entries.size - 1) {
-        State(entries, index + 1)
-      }
-      else {
-        State(entries, index)
-      }
-    }.currentEntry()?.defaultOffset()
+  override fun getHistoryPrev(): TextWithOffset? = throw IllegalStateException("Should not be invoked")
 
-  }
+  override fun hasHistory(): Boolean = throw IllegalStateException("Should not be invoked")
 
-  override fun hasHistory(): Boolean {
-    val (entries, index) = myState
-    return index < entries.size - 1
+  override fun getCurrentIndex(): Int = throw IllegalStateException("Should not be invoked")
 
-  }
+  override fun setContent(userContent: String) = throw IllegalStateException("Should not be invoked")
 
-
-  override fun prevOnLastLine(): Boolean = true
-
-  override fun getCurrentIndex(): Int = myState.index
-
-
-}
-
-private fun String.defaultOffset() = TextWithOffset(this, -1)
-
-private open class EntriesWithPositionHolder : SimpleModificationTracker() {
-  protected data class State(val entries: ImmutableList<String>, val index: Int)
-
-  protected fun State.currentEntry(): String? {
-    val (entries, index) = this
-    return entries.getOrNull(index)
-  }
-
-  @Volatile
-  protected var myState = State(immutableListOf(), -1)
-
-  protected inline fun updateAtomically(fn: (State) -> State): State {
-    var newState: State
-    do {
-      val currentState = myState
-      newState = fn(currentState)
-    }
-    while (!updater.compareAndSet(this, currentState, newState))
-    return newState
-  }
-
-  companion object {
-    val updater = AtomicFieldUpdater.forFieldOfType(EntriesWithPositionHolder::class.java, State::class.java)
-  }
 }

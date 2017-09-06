@@ -102,7 +102,7 @@ public class ConsoleHistoryConstrollerTest extends LightPlatformCodeInsightTestC
     setCaretWithText("Statement<caret> 4");
     consoleNext();
     consolePrev();
-    checkResultByText("Statement<caret> 4");
+    checkResultByText("Statement 4<caret>");
   }
 
   public void testNavigateUpNoPrefix(){

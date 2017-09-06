@@ -32,6 +32,5 @@
     <orderEntry type="module" module-name="diff-impl" />
     <orderEntry type="module" module-name="built-in-server-api" />
     <orderEntry type="library" name="Groovy" level="project" />
-    <orderEntry type="library" name="kotlinx-collections-immutable-0.1" level="project" />
   </component>
 </module>
