@@ -866,4 +866,15 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
       }
     }
   }
+
+  /**
+   * @deprecated do not use
+   */
+  @Deprecated
+  public void setRootImmediately(@NotNull Object object) {
+    Node node = new Node(object, false);
+    node.insertPath(new TreePath(object));
+    tree.root = node;
+    tree.map.put(object, node);
+  }
 }
