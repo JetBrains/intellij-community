@@ -15,19 +15,19 @@
  */
 package com.intellij.execution.dashboard.tree;
 
-import com.intellij.execution.dashboard.DashboardGroup;
+import com.intellij.execution.dashboard.RunDashboardGroup;
 
 import javax.swing.*;
 
 /**
  * @author konstantin.aleev
  */
-public class DashboardGroupImpl<T> implements DashboardGroup {
+public class RunDashboardGroupImpl<T> implements RunDashboardGroup {
   private final T myValue;
   private final String myName;
   private final Icon myIcon;
 
-  public DashboardGroupImpl(T value, String name, Icon icon) {
+  public RunDashboardGroupImpl(T value, String name, Icon icon) {
     myValue = value;
     myName = name;
     myIcon = icon;
@@ -50,8 +50,8 @@ public class DashboardGroupImpl<T> implements DashboardGroup {
 
   @Override
   public final boolean equals(Object obj) {
-    if (obj instanceof DashboardGroupImpl) {
-      return myValue.equals(((DashboardGroupImpl)obj).myValue);
+    if (obj instanceof RunDashboardGroupImpl) {
+      return myValue.equals(((RunDashboardGroupImpl)obj).myValue);
     }
     return false;
   }

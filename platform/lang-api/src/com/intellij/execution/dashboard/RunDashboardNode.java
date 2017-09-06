@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author konstantin.aleev
  */
-public interface DashboardNode {
+public interface RunDashboardNode {
   @Nullable
   default RunContentDescriptor getDescriptor() {
     return null;

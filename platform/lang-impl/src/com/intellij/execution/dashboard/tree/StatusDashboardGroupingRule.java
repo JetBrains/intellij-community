@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author konstantin.aleev
  */
-public class StatusDashboardGroupingRule implements DashboardGroupingRule {
+public class StatusDashboardGroupingRule implements RunDashboardGroupingRule {
   @NonNls private static final String NAME = "StatusDashboardGroupingRule";
 
   @Override
@@ -62,13 +62,13 @@ public class StatusDashboardGroupingRule implements DashboardGroupingRule {
 
   @Nullable
   @Override
-  public DashboardGroup getGroup(AbstractTreeNode<?> node) {
-    if (node instanceof DashboardRunConfigurationNode) {
-      DashboardRunConfigurationNode runConfigurationNode = (DashboardRunConfigurationNode)node;
+  public RunDashboardGroup getGroup(AbstractTreeNode<?> node) {
+    if (node instanceof RunDashboardRunConfigurationNode) {
+      RunDashboardRunConfigurationNode runConfigurationNode = (RunDashboardRunConfigurationNode)node;
       RunDashboardContributor contributor = runConfigurationNode.getContributor();
-      DashboardRunConfigurationStatus status = contributor != null ? contributor.getStatus(runConfigurationNode) :
-                                               DashboardRunConfigurationStatus.getStatus(runConfigurationNode);
-      return new DashboardGroupImpl<>(status, status.getName(), status.getIcon());
+      RunDashboardRunConfigurationStatus status = contributor != null ? contributor.getStatus(runConfigurationNode) :
+                                                  RunDashboardRunConfigurationStatus.getStatus(runConfigurationNode);
+      return new RunDashboardGroupImpl<>(status, status.getName(), status.getIcon());
     }
     return null;
   }

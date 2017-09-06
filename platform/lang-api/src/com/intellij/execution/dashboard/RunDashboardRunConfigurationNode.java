@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author konstantin.aleev
  */
-public interface DashboardRunConfigurationNode extends DashboardNode, UserDataHolder {
+public interface RunDashboardRunConfigurationNode extends RunDashboardNode, UserDataHolder {
   @NotNull
   RunnerAndConfigurationSettings getConfigurationSettings();
 

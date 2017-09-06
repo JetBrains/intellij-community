@@ -462,7 +462,7 @@
     <extensionPoint name="runDashboardContributor"
                     interface="com.intellij.execution.dashboard.RunDashboardContributor"/>
     <extensionPoint name="runDashboardGroupingRule"
-                    interface="com.intellij.execution.dashboard.DashboardGroupingRule"/>
+                    interface="com.intellij.execution.dashboard.RunDashboardGroupingRule"/>
 
     <extensionPoint name="hectorComponentProvider" interface="com.intellij.openapi.editor.HectorComponentPanelsProvider"
                     area="IDEA_PROJECT"/>

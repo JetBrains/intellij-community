@@ -15,8 +15,8 @@
  */
 package com.intellij.execution.dashboard.actions;
 
-import com.intellij.execution.dashboard.DashboardNode;
-import com.intellij.execution.dashboard.DashboardTreeAction;
+import com.intellij.execution.dashboard.RunDashboardNode;
+import com.intellij.execution.dashboard.RunDashboardTreeAction;
 import com.intellij.execution.dashboard.RunDashboardContent;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import org.jetbrains.annotations.NotNull;
@@ -26,8 +26,8 @@ import javax.swing.*;
 /**
  * @author konstantin.aleev
  */
-public abstract class RunDashboardTreeAction<T extends DashboardNode> extends DashboardTreeAction<T, RunDashboardContent> {
-  protected RunDashboardTreeAction(String text, String description, Icon icon) {
+public abstract class RunDashboardTreeActionImpl<T extends RunDashboardNode> extends RunDashboardTreeAction<T, RunDashboardContent> {
+  protected RunDashboardTreeActionImpl(String text, String description, Icon icon) {
     super(text, description, icon);
   }
 

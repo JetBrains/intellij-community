@@ -16,7 +16,7 @@
 package com.intellij.execution.dashboard.tree;
 
 import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.dashboard.DashboardRunConfigurationNode;
+import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -69,7 +69,7 @@ public class RunDashboardTreeModel extends DefaultTreeModel implements EditableM
     if (myProject.isDisposed() || DumbService.getInstance(myProject).isDumb()) return false;
 
 
-    DashboardRunConfigurationNode oldNode = getRunConfigurationNode(oldIndex);
+    RunDashboardRunConfigurationNode oldNode = getRunConfigurationNode(oldIndex);
     if (oldNode == null) return false;
 
     GroupingNode newNode = getGroupingNode(newIndex);
@@ -80,7 +80,7 @@ public class RunDashboardTreeModel extends DefaultTreeModel implements EditableM
   public boolean canDrop(int oldIndex, int newIndex, @NotNull Position position) {
     if (myProject.isDisposed() || DumbService.getInstance(myProject).isDumb()) return false;
 
-    DashboardRunConfigurationNode oldNode = getRunConfigurationNode(oldIndex);
+    RunDashboardRunConfigurationNode oldNode = getRunConfigurationNode(oldIndex);
     if (oldNode == null) return false;
 
     if (position == Position.INTO) {
@@ -95,7 +95,7 @@ public class RunDashboardTreeModel extends DefaultTreeModel implements EditableM
   public void drop(int oldIndex, int newIndex, @NotNull Position position) {
     if (myProject.isDisposed() || DumbService.getInstance(myProject).isDumb()) return;
 
-    DashboardRunConfigurationNode oldNode = getRunConfigurationNode(oldIndex);
+    RunDashboardRunConfigurationNode oldNode = getRunConfigurationNode(oldIndex);
     if (oldNode == null) return;
 
     final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(myProject);
@@ -109,7 +109,7 @@ public class RunDashboardTreeModel extends DefaultTreeModel implements EditableM
         return;
       }
 
-      DashboardRunConfigurationNode newNode = getRunConfigurationNode(newIndex);
+      RunDashboardRunConfigurationNode newNode = getRunConfigurationNode(newIndex);
       if (newNode == null) return;
 
       oldNode.getConfigurationSettings().setFolderName(newNode.getConfigurationSettings().getFolderName());
@@ -141,8 +141,8 @@ public class RunDashboardTreeModel extends DefaultTreeModel implements EditableM
   }
 
   @Nullable
-  private DashboardRunConfigurationNode getRunConfigurationNode(int index) {
-    return getDashboardNode(index, DashboardRunConfigurationNode.class);
+  private RunDashboardRunConfigurationNode getRunConfigurationNode(int index) {
+    return getDashboardNode(index, RunDashboardRunConfigurationNode.class);
   }
 
   @Nullable

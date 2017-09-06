@@ -13,32 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.execution.dashboard.tree;
-
-import com.intellij.execution.dashboard.DashboardGroupingRule;
-import org.jetbrains.annotations.NotNull;
+package com.intellij.execution.dashboard;
 
 /**
  * @author konstantin.aleev
  */
-public class DashboardGrouper {
-  @NotNull private final DashboardGroupingRule myRule;
-  private boolean myEnabled = true;
-
-  public DashboardGrouper(@NotNull DashboardGroupingRule rule) {
-    myRule = rule;
-  }
-
-  @NotNull
-  public DashboardGroupingRule getRule() {
-    return myRule;
-  }
-
-  public boolean isEnabled() {
-    return myEnabled;
-  }
-
-  public void setEnabled(boolean enabled) {
-    myEnabled = enabled;
-  }
+public interface RunDashboardListener {
+  void contentChanged(boolean withStructure);
 }

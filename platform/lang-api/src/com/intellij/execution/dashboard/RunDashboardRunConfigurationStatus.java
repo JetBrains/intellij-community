@@ -25,18 +25,18 @@ import javax.swing.*;
 /**
  * @author konstantin.aleev
  */
-public class DashboardRunConfigurationStatus {
-  public static final DashboardRunConfigurationStatus STARTED = new DashboardRunConfigurationStatus(
+public class RunDashboardRunConfigurationStatus {
+  public static final RunDashboardRunConfigurationStatus STARTED = new RunDashboardRunConfigurationStatus(
     ExecutionBundle.message("run.dashboard.started.group.name"), AllIcons.Toolwindows.ToolWindowRun);
-  public static final DashboardRunConfigurationStatus STOPPED = new DashboardRunConfigurationStatus(
+  public static final RunDashboardRunConfigurationStatus STOPPED = new RunDashboardRunConfigurationStatus(
     ExecutionBundle.message("run.dashboard.stopped.group.name"), AllIcons.Actions.Suspend);
-  public static final DashboardRunConfigurationStatus FAILED = new DashboardRunConfigurationStatus(
+  public static final RunDashboardRunConfigurationStatus FAILED = new RunDashboardRunConfigurationStatus(
     ExecutionBundle.message("run.dashboard.failed.group.name"), AllIcons.General.Error);
 
   private final String myName;
   private final Icon myIcon;
 
-  public DashboardRunConfigurationStatus(String name, Icon icon) {
+  public RunDashboardRunConfigurationStatus(String name, Icon icon) {
     myName = name;
     myIcon = icon;
   }
@@ -49,7 +49,7 @@ public class DashboardRunConfigurationStatus {
     return myIcon;
   }
 
-  public static DashboardRunConfigurationStatus getStatus(DashboardRunConfigurationNode node) {
+  public static RunDashboardRunConfigurationStatus getStatus(RunDashboardRunConfigurationNode node) {
     RunContentDescriptor descriptor = node.getDescriptor();
     if (descriptor == null) {
       return STOPPED;

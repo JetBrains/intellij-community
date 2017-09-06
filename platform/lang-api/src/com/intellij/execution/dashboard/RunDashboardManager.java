@@ -38,8 +38,8 @@ import java.util.Set;
  */
 @ApiStatus.Experimental
 public interface RunDashboardManager {
-  Topic<DashboardListener> DASHBOARD_TOPIC =
-    Topic.create("run dashboard", DashboardListener.class, Topic.BroadcastDirection.TO_PARENT);
+  Topic<RunDashboardListener> DASHBOARD_TOPIC =
+    Topic.create("run dashboard", RunDashboardListener.class, Topic.BroadcastDirection.TO_PARENT);
 
   static RunDashboardManager getInstance(Project project) {
     return ServiceManager.getService(project, RunDashboardManager.class);

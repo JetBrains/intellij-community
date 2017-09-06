@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Konstantin Aleev
  */
 public interface RunDashboardAnimator {
-  void addNode(@NotNull DashboardNode node);
+  void addNode(@NotNull RunDashboardNode node);
 
-  void removeNode(@NotNull DashboardNode node);
+  void removeNode(@NotNull RunDashboardNode node);
 }

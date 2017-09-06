@@ -18,7 +18,7 @@ package com.intellij.execution.dashboard;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.dashboard.tree.DashboardGrouper;
+import com.intellij.execution.dashboard.tree.RunDashboardGrouper;
 import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -64,7 +64,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
   @NotNull private final Project myProject;
   @NotNull private final ContentManager myContentManager;
   @NotNull private final Set<String> myTypes = ContainerUtil.newHashSet();
-  @NotNull private final List<DashboardGrouper> myGroupers;
+  @NotNull private final List<RunDashboardGrouper> myGroupers;
   private boolean myShowConfigurations = true;
   private float myContentProportion = DEFAULT_CONTENT_PROPORTION;
 
@@ -78,9 +78,9 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
     ContentUI contentUI = new PanelContentUI();
     myContentManager = contentFactory.createContentManager(contentUI, false, project);
 
-    myGroupers = Arrays.stream(DashboardGroupingRule.EP_NAME.getExtensions())
-      .sorted(DashboardGroupingRule.PRIORITY_COMPARATOR)
-      .map(DashboardGrouper::new)
+    myGroupers = Arrays.stream(RunDashboardGroupingRule.EP_NAME.getExtensions())
+      .sorted(RunDashboardGroupingRule.PRIORITY_COMPARATOR)
+      .map(RunDashboardGrouper::new)
       .collect(Collectors.toList());
   }
 
@@ -131,7 +131,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
         updateDashboardIfNeeded(env.getRunnerAndConfigurationSettings());
       }
     });
-    connection.subscribe(RunDashboardManager.DASHBOARD_TOPIC, new DashboardListener() {
+    connection.subscribe(RunDashboardManager.DASHBOARD_TOPIC, new RunDashboardListener() {
       @Override
       public void contentChanged(boolean withStructure) {
         updateDashboard(withStructure);
@@ -405,7 +405,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
     myTypes.clear();
     myTypes.addAll(state.configurationTypes);
     state.ruleStates.forEach(ruleState -> {
-      for (DashboardGrouper grouper : myGroupers) {
+      for (RunDashboardGrouper grouper : myGroupers) {
         if (grouper.getRule().getName().equals(ruleState.name) && !grouper.getRule().isAlwaysEnabled()) {
           grouper.setEnabled(ruleState.enabled);
           return;

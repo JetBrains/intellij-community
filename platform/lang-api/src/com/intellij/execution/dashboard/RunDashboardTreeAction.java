@@ -33,8 +33,8 @@ import java.util.stream.Collectors;
 /**
  * @author konstantin.aleev
  */
-public abstract class DashboardTreeAction<T, C extends TreeContent> extends AnAction {
-  protected DashboardTreeAction(String text, String description, Icon icon) {
+public abstract class RunDashboardTreeAction<T, C extends TreeContent> extends AnAction {
+  protected RunDashboardTreeAction(String text, String description, Icon icon) {
     super(text, description, icon);
   }
 

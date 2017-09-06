@@ -27,10 +27,10 @@ import java.util.Comparator;
  *
  * @author konstantin.aleev
  */
-public interface DashboardGroupingRule extends TreeAction {
-  ExtensionPointName<DashboardGroupingRule> EP_NAME = ExtensionPointName.create("com.intellij.runDashboardGroupingRule");
+public interface RunDashboardGroupingRule extends TreeAction {
+  ExtensionPointName<RunDashboardGroupingRule> EP_NAME = ExtensionPointName.create("com.intellij.runDashboardGroupingRule");
 
-  Comparator<DashboardGroupingRule> PRIORITY_COMPARATOR = (o1, o2) -> {
+  Comparator<RunDashboardGroupingRule> PRIORITY_COMPARATOR = (o1, o2) -> {
     final int res = o2.getPriority() - o1.getPriority();
     return res != 0 ? res : (o1.getName().compareTo(o2.getName()));
   };
@@ -58,7 +58,7 @@ public interface DashboardGroupingRule extends TreeAction {
    * @return a group which node belongs to or {@code null} if node could not be grouped by this rule.
    */
   @Nullable
-  DashboardGroup getGroup(AbstractTreeNode<?> node);
+  RunDashboardGroup getGroup(AbstractTreeNode<?> node);
 
   interface Priorities {
     int BY_RUN_CONFIG = 200;
