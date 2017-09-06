@@ -259,14 +259,17 @@ class VirtualFilePointerContainerImpl extends TraceableDisposable implements Vir
     return myList.hashCode();
   }
 
+  @NotNull
   protected VirtualFilePointer create(@NotNull VirtualFile file) {
     return myVirtualFilePointerManager.create(file, myParent, myListener);
   }
 
+  @NotNull
   protected VirtualFilePointer create(@NotNull String url) {
     return myVirtualFilePointerManager.create(url, myParent, myListener);
   }
 
+  @NotNull
   protected VirtualFilePointer duplicate(@NotNull VirtualFilePointer virtualFilePointer) {
     return myVirtualFilePointerManager.duplicate(virtualFilePointer, myParent, myListener);
   }
@@ -300,5 +303,6 @@ class VirtualFilePointerContainerImpl extends TraceableDisposable implements Vir
     assert !myDisposed;
     myDisposed = true;
     kill(null);
+    clear();
   }
 }
