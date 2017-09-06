@@ -183,7 +183,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
   private void analyzeCodeBlock(@Nullable final PsiElement scope, ProblemsHolder holder, final boolean onTheFly) {
     if (scope == null) return;
 
-    PsiClass containingClass = PsiTreeUtil.getParentOfType(scope, PsiClass.class, false);
+    PsiClass containingClass = PsiTreeUtil.getNonStrictParentOfType(scope, PsiClass.class);
     if (containingClass != null && PsiUtil.isLocalOrAnonymousClass(containingClass) && !(containingClass instanceof PsiEnumConstantInitializer)) return;
 
     final StandardDataFlowRunner dfaRunner =
