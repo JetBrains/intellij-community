@@ -333,10 +333,12 @@ public class RemoteDebugger implements ProcessDebugger {
 
       try {
         command.execute();
-        myLatch.countDown();
       }
       catch (PyDebuggerException e) {
         LOG.error(e);
+      }
+      finally {
+        myLatch.countDown();
       }
     });
     if (command.isResponseExpected()) {
