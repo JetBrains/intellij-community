@@ -22,7 +22,6 @@ import org.fest.swing.core.Robot
 import javax.swing.JLabel
 
 class EditorNotificationPanelFixture(val robot: Robot,
-                                     val ideFrame: IdeFrameFixture,
                                      private val editorNotificationPanel: EditorNotificationPanel) {
 
   fun getLabelText(): String {
@@ -45,18 +44,23 @@ class EditorNotificationPanelFixture(val robot: Robot,
     HyperlinkLabelFixture(robot, hyperlinkLabel).clickLink(linkText)
   }
 
+  //legacy method
+  fun performAction(label: String) {
+    clickLink(label)
+  }
+
   private fun JLabel.nonNullSize() = this.height > 0 && this.width > 0
 
   companion object {
-    fun findEditorNotificationPanel(robot: Robot, ideFrame: IdeFrameFixture, timeoutInSeconds: Int = 30): EditorNotificationPanelFixture {
-      val panel = GuiTestUtilKt.withPauseWhenNull(timeoutInSeconds) { findEditorNotificationPanel(robot, ideFrame) }
-      return EditorNotificationPanelFixture(robot, ideFrame, panel)
+    fun findEditorNotificationPanel(robot: Robot, timeoutInSeconds: Int = 30): EditorNotificationPanelFixture {
+      val panel = GuiTestUtilKt.withPauseWhenNull(timeoutInSeconds) { findEditorNotificationPanel(robot) }
+      return EditorNotificationPanelFixture(robot, panel)
     }
 
-    private fun findEditorNotificationPanel(robot: Robot, ideFrame: IdeFrameFixture): EditorNotificationPanel? {
+    private fun findEditorNotificationPanel(robot: Robot): EditorNotificationPanel? {
       return robot
         .finder()
-        .findAll(ideFrame.target()) { it is EditorNotificationPanel }
+        .findAll { it is EditorNotificationPanel }
         .firstOrNull() as EditorNotificationPanel?
     }
   }

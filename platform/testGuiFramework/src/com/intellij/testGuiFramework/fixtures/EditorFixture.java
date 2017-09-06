@@ -1176,7 +1176,7 @@ public class EditorFixture {
 
 
   public EditorNotificationPanelFixture notificationPanel() {
-    return EditorNotificationPanelFixture.Companion.findEditorNotificationPanel(robot, myFrame, 30);
+    return EditorNotificationPanelFixture.Companion.findEditorNotificationPanel(robot, 30);
   }
 
   /**
