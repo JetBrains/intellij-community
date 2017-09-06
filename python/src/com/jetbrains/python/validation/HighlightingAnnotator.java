@@ -77,4 +77,14 @@ public class HighlightingAnnotator extends PyAnnotator {
       }
     }
   }
+
+  @Override
+  public void visitPyAnnotation(PyAnnotation node) {
+    final PyExpression value = node.getValue();
+    if (value != null) {
+      final String message = ApplicationManager.getApplication().isUnitTestMode() ? PyHighlighter.PY_ANNOTATION.getExternalName() : null;
+      final Annotation annotation = getHolder().createInfoAnnotation(value, message);
+      annotation.setTextAttributes(PyHighlighter.PY_ANNOTATION);
+    }
+  }
 }
