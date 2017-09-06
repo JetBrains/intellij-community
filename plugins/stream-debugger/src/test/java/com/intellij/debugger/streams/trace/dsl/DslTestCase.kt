@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.streams.trace.dsl
 
+import com.intellij.debugger.streams.trace.impl.handler.type.GenericType
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
@@ -156,6 +157,18 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
       }.elseBranch {
         a.assign(+"200")
       }
+    }
+  }
+
+  fun testMapDeclaration() {
+    doTest {
+      declare(map(GenericType.INT, GenericType.BOOLEAN, "map"), false)
+    }
+  }
+
+  fun testLinkedMapDeclaration() {
+    doTest {
+      declare(linkedMap(GenericType.INT, GenericType.BOOLEAN, "map"), true)
     }
   }
 
