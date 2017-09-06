@@ -50,9 +50,11 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTr
   private static final RegistryValue ourEnableJavaStructureTracker = Registry.get("psi.modification.tracker.java-structure");
   private static final RegistryValue ourEnableLanguageTracker = Registry.get("psi.modification.tracker.per-language");
 
+  private final boolean myTestMode = ApplicationManager.getApplication().isUnitTestMode();
+
   private final SimpleModificationTracker myModificationCount = new SimpleModificationTracker();
-  private final SimpleModificationTracker myOutOfCodeBlockModificationTracker = wrapped(ourEnableCodeBlockTracker, myModificationCount);
-  private final SimpleModificationTracker myJavaStructureModificationTracker = wrapped(ourEnableJavaStructureTracker, myModificationCount);
+  private final SimpleModificationTracker myOutOfCodeBlockModificationTracker = wrapped(ourEnableCodeBlockTracker, myModificationCount, myTestMode);
+  private final SimpleModificationTracker myJavaStructureModificationTracker = wrapped(ourEnableJavaStructureTracker, myModificationCount, myTestMode);
 
   private final Map<Language, ModificationTracker> myLanguageTrackers =
     ConcurrentFactoryMap.createMap(language -> new SimpleModificationTracker());
@@ -176,6 +178,7 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTr
 
   @ApiStatus.Experimental
   public boolean isEnableCodeBlockTracker() {
+    if (myTestMode) return true;
     return ourEnableCodeBlockTracker.asBoolean();
   }
 
@@ -212,8 +215,8 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTr
   }
 
   @NotNull
-  private static SimpleModificationTracker wrapped(RegistryValue value, SimpleModificationTracker fallback) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+  private static SimpleModificationTracker wrapped(RegistryValue value, SimpleModificationTracker fallback, boolean testMode) {
+    if (testMode) {
       return new SimpleModificationTracker();
     }
     return new SimpleModificationTracker() {
