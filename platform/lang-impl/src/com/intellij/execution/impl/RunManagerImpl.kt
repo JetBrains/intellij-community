@@ -44,6 +44,7 @@ import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.util.IconUtil
 import com.intellij.util.SmartList
 import com.intellij.util.containers.*
+import com.intellij.util.text.UniqueNameGenerator
 import gnu.trove.THashMap
 import org.jdom.Element
 import java.util.*
@@ -636,8 +637,9 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
       clear(false)
     }
 
+    val nameGenerator = UniqueNameGenerator()
     workspaceSchemeManagerProvider.load(parentNode) {
-      var name = it.getAttributeValue("name")
+      var name: String? = it.getAttributeValue("name")
       if (name == "<template>" || name == null) {
         // scheme name must be unique
         it.getAttributeValue("type")?.let {
@@ -647,7 +649,15 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
           name += " of type ${it}"
         }
       }
-      name
+
+      // in case if broken configuration, do not fail, just generate name
+      if (name == null) {
+        name = nameGenerator.generateUniqueName("Unnamed")
+      }
+      else {
+        nameGenerator.addExistingName(name!!)
+      }
+      name!!
     }
 
     workspaceSchemeManager.reload()
