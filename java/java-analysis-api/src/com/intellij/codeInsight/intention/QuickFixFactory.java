@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -189,6 +190,11 @@ public abstract class QuickFixFactory {
                                                   @NotNull PsiElement context,
                                                   boolean changeAllUsages,
                                                   int minUsagesNumberToShowDialog);
+
+  @NotNull
+  public List<IntentionAction> createCreateMethodFromUsageFixes(@NotNull PsiMethodCallExpression call) {
+    return Collections.emptyList();
+  }
 
   @NotNull public abstract IntentionAction createCreateMethodFromUsageFix(@NotNull PsiMethodCallExpression call);
   @NotNull public abstract IntentionAction createCreateMethodFromUsageFix(PsiMethodReferenceExpression methodReferenceExpression);

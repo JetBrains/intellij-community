@@ -74,7 +74,7 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
     return QuickFixBundle.message("create.method.from.usage.text", name);
   }
 
-  private static boolean isMethodSignatureExists(PsiMethodCallExpression call, PsiClass target) {
+  public static boolean isMethodSignatureExists(PsiMethodCallExpression call, PsiClass target) {
     String name = call.getMethodExpression().getReferenceName();
     final JavaResolveResult resolveResult = call.getMethodExpression().advancedResolve(false);
     PsiExpressionList list = call.getArgumentList();
@@ -85,7 +85,7 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
     return false;
   }
 
-  static boolean hasErrorsInArgumentList(final PsiMethodCallExpression call) {
+  public static boolean hasErrorsInArgumentList(final PsiMethodCallExpression call) {
     Project project = call.getProject();
     Document document = PsiDocumentManager.getInstance(project).getDocument(call.getContainingFile());
     if (document == null) return true;
