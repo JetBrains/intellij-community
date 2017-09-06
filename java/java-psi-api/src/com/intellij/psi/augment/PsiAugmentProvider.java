@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,12 +58,9 @@ public abstract class PsiAugmentProvider {
   }
 
   /**
-   * Extends {@link PsiTypeElement#getType()} so type could be retrieved from external place
-   * e.g. from variable initializer in lombok case (http://projectlombok.org/features/val.html)
+   * Extends {@link PsiTypeElement#getType()} so that a type could be retrieved from external place
+   * (e.g. inferred from a variable initializer).
    *
-   * @param typeElement place where inference takes place,
-   *                    also nested PsiTypeElement-s (e.g. for List<String> PsiTypeElements corresponding to both List and String would be suggested)
-   * @return inferred type or null, if inference is not applicable
    * @since 14.1
    */
   @Nullable
@@ -77,7 +74,7 @@ public abstract class PsiAugmentProvider {
    * @since 2016.2
    */
   @NotNull
-  protected Set<String> transformModifiers(@NotNull PsiModifierList modifierList, @NotNull final Set<String> modifiers) {
+  protected Set<String> transformModifiers(@NotNull PsiModifierList modifierList, @NotNull Set<String> modifiers) {
     return modifiers;
   }
 
@@ -86,8 +83,8 @@ public abstract class PsiAugmentProvider {
   //<editor-fold desc="API and the inner kitchen.">
 
   @NotNull
-  public static <Psi extends PsiElement> List<Psi> collectAugments(@NotNull final PsiElement element, @NotNull final Class<Psi> type) {
-    final List<Psi> result = ContainerUtil.newSmartList();
+  public static <Psi extends PsiElement> List<Psi> collectAugments(@NotNull PsiElement element, @NotNull Class<Psi> type) {
+    List<Psi> result = ContainerUtil.newSmartList();
 
     forEach(element.getProject(), provider -> {
       result.addAll(provider.getAugments(element, type));
@@ -98,8 +95,8 @@ public abstract class PsiAugmentProvider {
   }
 
   @Nullable
-  public static PsiType getInferredType(@NotNull final PsiTypeElement typeElement) {
-    final Ref<PsiType> result = Ref.create();
+  public static PsiType getInferredType(@NotNull PsiTypeElement typeElement) {
+    Ref<PsiType> result = Ref.create();
 
     forEach(typeElement.getProject(), provider -> {
       PsiType type = provider.inferType(typeElement);
@@ -116,10 +113,10 @@ public abstract class PsiAugmentProvider {
   }
 
   @NotNull
-  public static Set<String> transformModifierProperties(@NotNull final PsiModifierList modifierList,
+  public static Set<String> transformModifierProperties(@NotNull PsiModifierList modifierList,
                                                         @NotNull Project project,
-                                                        @NotNull final Set<String> modifiers) {
-    final Ref<Set<String>> result = Ref.create(modifiers);
+                                                        @NotNull Set<String> modifiers) {
+    Ref<Set<String>> result = Ref.create(modifiers);
 
     forEach(project, provider -> {
       result.set(provider.transformModifiers(modifierList, Collections.unmodifiableSet(result.get())));
