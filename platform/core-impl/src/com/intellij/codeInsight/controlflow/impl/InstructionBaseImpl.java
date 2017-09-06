@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,24 +15,22 @@
  */
 package com.intellij.codeInsight.controlflow.impl;
 
-import com.intellij.codeInsight.controlflow.ControlFlowBuilder;
 import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author oleg
- */
-public class InstructionImpl implements Instruction {
-  final List<Instruction> myPred = new SmartList<>();
-  final List<Instruction> mySucc = new SmartList<>();
+public abstract class InstructionBaseImpl implements Instruction {
 
+  private final List<Instruction> myPred = new SmartList<>();
+  private final List<Instruction> mySucc = new SmartList<>();
+
+  @Nullable
   protected final PsiElement myElement;
-  private final int myNumber;
 
   @Override
   @Nullable
@@ -40,42 +38,49 @@ public class InstructionImpl implements Instruction {
     return myElement;
   }
 
-  public InstructionImpl(final ControlFlowBuilder builder, final PsiElement element) {
+  public InstructionBaseImpl(@Nullable final PsiElement element) {
     myElement = element;
-    myNumber = builder.instructionCount++;
   }
 
+  @NotNull
   @Override
   public final Collection<Instruction> allSucc() {
     return mySucc;
   }
 
+  @NotNull
   @Override
   public final Collection<Instruction> allPred() {
     return myPred;
   }
 
+  @NotNull
   public String toString() {
-    final StringBuilder builder = new StringBuilder();
-    builder.append(myNumber);
+    final StringBuilder builder = new StringBuilder(id());
     builder.append("(");
     for (int i = 0; i < mySucc.size(); i++) {
       if (i > 0) builder.append(',');
-      builder.append(mySucc.get(i).num());
+      Instruction instruction = mySucc.get(i);
+      int num = instruction.num();
+      if (instruction instanceof InstructionBaseImpl) {
+        builder.append(((InstructionBaseImpl)instruction).id());
+      }
+      else {
+        builder.append(num);
+      }
     }
     builder.append(") ").append(getElementPresentation());
     return builder.toString();
   }
 
+  @NotNull
   @Override
   public String getElementPresentation() {
-    final StringBuffer buffer = new StringBuffer();
-    buffer.append("element: ").append(myElement);
-    return buffer.toString();
+    return "element: " + myElement;
   }
 
-  @Override
-  public final int num() {
-    return myNumber;
+  @NotNull
+  protected String id() {
+    return String.valueOf(num());
   }
 }

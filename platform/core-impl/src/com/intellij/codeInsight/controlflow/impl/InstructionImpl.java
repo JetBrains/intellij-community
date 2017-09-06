@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,38 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.controlflow;
+package com.intellij.codeInsight.controlflow.impl;
 
+import com.intellij.codeInsight.controlflow.ControlFlowBuilder;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-
 /**
  * @author oleg
  */
-public interface Instruction {
-  @Nullable
-  PsiElement getElement();
+public class InstructionImpl extends InstructionBaseImpl {
 
-  /**
-   * Outgoing edges
-   */
-  @NotNull
-  Collection<Instruction> allSucc();
+  private final int myNumber;
 
-  /**
-   * Incoming edges
-   */
-  @NotNull
-  Collection<Instruction> allPred();
+  public InstructionImpl(@NotNull final ControlFlowBuilder builder, @Nullable final PsiElement element) {
+    super(element);
+    myNumber = builder.instructionCount++;
+  }
 
-  int num();
-
-  /**
-   * element presentation is used in toString() for dumping the graph
-   */
-  @NotNull
-  String getElementPresentation();
+  @Override
+  public final int num() {
+    return myNumber;
+  }
 }

@@ -15,26 +15,31 @@
  */
 package com.intellij.codeInsight.controlflow.impl;
 
-import com.intellij.codeInsight.controlflow.ControlFlowBuilder;
 import com.intellij.codeInsight.controlflow.ConditionalInstruction;
+import com.intellij.codeInsight.controlflow.ControlFlowBuilder;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author oleg
  */
 public class ConditionalInstructionImpl extends InstructionImpl implements ConditionalInstruction {
+  @NotNull
   private final PsiElement myCondition;
   private final boolean myResult;
 
   public ConditionalInstructionImpl(final ControlFlowBuilder builder,
-                                    final PsiElement element,
-                                    final PsiElement condition,
+                                    @Nullable final PsiElement element,
+                                    @NotNull final PsiElement condition,
                                     final boolean result) {
     super(builder, element);
     myCondition = condition;
     myResult = result;
   }
 
+
+  @NotNull
   @Override
   public PsiElement getCondition() {
     return myCondition;
@@ -45,6 +50,7 @@ public class ConditionalInstructionImpl extends InstructionImpl implements Condi
     return myResult;
   }
 
+  @NotNull
   @Override
   public String toString() {
     return super.toString() + ". Condition: " + myCondition.getText() + ":" + myResult;
