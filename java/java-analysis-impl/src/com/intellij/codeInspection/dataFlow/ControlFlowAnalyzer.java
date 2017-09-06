@@ -21,6 +21,7 @@ import com.intellij.codeInspection.dataFlow.inliner.*;
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
+import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
@@ -77,11 +78,31 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     myAssertionError = createClassType(scope, JAVA_LANG_ASSERTION_ERROR);
   }
 
+  private void buildClassInitializerFlow(PsiClass psiClass, boolean isStatic) {
+    pushUnknown();
+    ConditionalGotoInstruction conditionalGoto = new ConditionalGotoInstruction(null, false, null);
+    addInstruction(conditionalGoto);
+    for (PsiElement element : psiClass.getChildren()) {
+      if ((element instanceof PsiField || element instanceof PsiClassInitializer) &&
+          ((PsiModifierListOwner)element).hasModifier(JvmModifier.STATIC) == isStatic) {
+        element.accept(this);
+      }
+    }
+    addInstruction(new FlushVariableInstruction(null));
+    conditionalGoto.setOffset(getInstructionCount());
+  }
+
   @Nullable
   public ControlFlow buildControlFlow() {
     myCurrentFlow = new ControlFlow(myFactory);
     try {
-      myCodeFragment.accept(this);
+      if(myCodeFragment instanceof PsiClass) {
+        // if(unknown) { staticInitializer(); } if(unknown) { instanceInitializer(); }
+        buildClassInitializerFlow((PsiClass)myCodeFragment, true);
+        buildClassInitializerFlow((PsiClass)myCodeFragment, false);
+      } else {
+        myCodeFragment.accept(this);
+      }
     }
     catch (CannotAnalyzeException e) {
       return null;
@@ -271,6 +292,20 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     if (initializer != null) {
       initializeVariable(field, initializer);
     }
+    else if (!field.hasModifier(JvmModifier.FINAL)) {
+      // initialize with default value
+      DfaVariableValue dfaVariable = myFactory.getVarFactory().createVariableValue(field, false);
+      addInstruction(new PushInstruction(dfaVariable, null, true));
+      addInstruction(new PushInstruction(
+        myFactory.getConstFactory().createFromValue(PsiTypesUtil.getDefaultValue(field.getType()), field.getType(), null), null));
+      addInstruction(new AssignInstruction(null, dfaVariable));
+      addInstruction(new PopInstruction());
+    }
+  }
+
+  @Override
+  public void visitClassInitializer(PsiClassInitializer initializer) {
+    visitCodeBlock(initializer.getBody());
   }
 
   private void initializeVariable(PsiVariable variable, PsiExpression initializer) {

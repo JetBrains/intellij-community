@@ -26,7 +26,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
@@ -195,24 +198,16 @@ public class DfaUtil {
   }
 
   static DfaValue getPossiblyNonInitializedValue(@NotNull DfaValueFactory factory, @NotNull PsiField target, @NotNull PsiElement context) {
-    PsiMember placeMember = PsiTreeUtil.getParentOfType(context, PsiMember.class, false, PsiClass.class, PsiLambdaExpression.class);
-    PsiType type = target.getType();
-    if (placeMember == null || type instanceof PsiPrimitiveType && !(placeMember instanceof PsiField)) return null;
+    if (target.getType() instanceof PsiPrimitiveType) return null;
+    PsiMethod placeMethod = PsiTreeUtil.getParentOfType(context, PsiMethod.class, false, PsiClass.class, PsiLambdaExpression.class);
+    if (placeMethod == null) return null;
 
-    PsiClass placeClass = placeMember.getContainingClass();
-    if (placeClass != null && placeClass == target.getContainingClass()) {
-      if (!placeMember.hasModifier(JvmModifier.STATIC) && target.hasModifier(JvmModifier.STATIC)) {
-        return null;
-      }
+    PsiClass placeClass = placeMethod.getContainingClass();
+    if (placeClass == null || placeClass != target.getContainingClass()) return null;
+    if (!placeMethod.hasModifier(JvmModifier.STATIC) && target.hasModifier(JvmModifier.STATIC)) return null;
+    if (getAccessOffset(placeMethod) >= getWriteOffset(target)) return null;
 
-      if(getAccessOffset(placeMember) >= getWriteOffset(target)) {
-        return null;
-      }
-      return placeMember instanceof PsiField
-             ? factory.getConstFactory().createFromValue(PsiTypesUtil.getDefaultValue(type), type, null)
-             : factory.createTypeValue(type, Nullness.NULLABLE);
-    }
-    return null;
+    return factory.createTypeValue(target.getType(), Nullness.NULLABLE);
   }
 
   private static int getWriteOffset(PsiField target) {
@@ -256,26 +251,21 @@ public class DfaUtil {
     return offset;
   }
 
-  private static int getAccessOffset(PsiMember referrer) {
-    if (referrer instanceof PsiField) {
-      return referrer.getTextRange().getStartOffset();
-    }
+  private static int getAccessOffset(PsiMethod referrer) {
     PsiClass aClass = Objects.requireNonNull(referrer.getContainingClass());
-    if (referrer instanceof PsiMethod) {
-      boolean isStatic = referrer.hasModifier(JvmModifier.STATIC);
-      for (PsiField field : aClass.getFields()) {
-        if (field.hasModifier(JvmModifier.STATIC) != isStatic) continue;
-        PsiExpression initializer = field.getInitializer();
-        Predicate<PsiExpression> callToMethod = (PsiExpression e) -> {
-          if (!(e instanceof PsiMethodCallExpression)) return false;
-          PsiMethodCallExpression call = (PsiMethodCallExpression)e;
-          return call.getMethodExpression().isReferenceTo(referrer) &&
-                 (isStatic || DfaValueFactory.isEffectivelyUnqualified(call.getMethodExpression()));
-        };
-        if (ExpressionUtils.isMatchingChildAlwaysExecuted(initializer, callToMethod)) {
-          // current method is definitely called from some field initialization
-          return field.getTextRange().getStartOffset();
-        }
+    boolean isStatic = referrer.hasModifier(JvmModifier.STATIC);
+    for (PsiField field : aClass.getFields()) {
+      if (field.hasModifier(JvmModifier.STATIC) != isStatic) continue;
+      PsiExpression initializer = field.getInitializer();
+      Predicate<PsiExpression> callToMethod = (PsiExpression e) -> {
+        if (!(e instanceof PsiMethodCallExpression)) return false;
+        PsiMethodCallExpression call = (PsiMethodCallExpression)e;
+        return call.getMethodExpression().isReferenceTo(referrer) &&
+               (isStatic || DfaValueFactory.isEffectivelyUnqualified(call.getMethodExpression()));
+      };
+      if (ExpressionUtils.isMatchingChildAlwaysExecuted(initializer, callToMethod)) {
+        // current method is definitely called from some field initialization
+        return field.getTextRange().getStartOffset();
       }
     }
     return Integer.MAX_VALUE; // accessed after initialization or at unknown moment

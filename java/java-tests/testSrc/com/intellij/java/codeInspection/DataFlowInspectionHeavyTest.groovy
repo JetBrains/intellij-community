@@ -50,7 +50,7 @@ class DataFlowInspectionHeavyTest extends JavaCodeInsightFixtureTestCase {
     def testFile = myFixture.addFileToProject 'test.java', '''
       class Zoo {
         @annos.Nullable String a = null;
-        @annos.NotNull String f = foo.ObjectUtils.notNull(a);
+        @annos.NotNull String f = foo.ObjectUtils.notNull(<warning descr="Value 'a' is always 'null'">a</warning>);
         
         void bar(@annos.NotNull String param) { }
         void goo(@annos.Nullable String param) {

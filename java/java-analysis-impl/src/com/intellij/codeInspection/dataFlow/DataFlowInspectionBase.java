@@ -108,19 +108,14 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitField(PsiField field) {
-        analyzeCodeBlock(field, holder, isOnTheFly);
+      public void visitClass(PsiClass aClass) {
+        analyzeCodeBlock(aClass, holder, isOnTheFly);
       }
 
       @Override
       public void visitMethod(PsiMethod method) {
         analyzeCodeBlock(method.getBody(), holder, isOnTheFly);
         analyzeNullLiteralMethodArguments(method, holder, isOnTheFly);
-      }
-
-      @Override
-      public void visitClassInitializer(PsiClassInitializer initializer) {
-        analyzeCodeBlock(initializer.getBody(), holder, isOnTheFly);
       }
 
       @Override
@@ -190,7 +185,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
   private void analyzeCodeBlock(@Nullable final PsiElement scope, ProblemsHolder holder, final boolean onTheFly) {
     if (scope == null) return;
 
-    PsiClass containingClass = PsiTreeUtil.getParentOfType(scope, PsiClass.class);
+    PsiClass containingClass = PsiTreeUtil.getParentOfType(scope, PsiClass.class, false);
     if (containingClass != null && PsiUtil.isLocalOrAnonymousClass(containingClass) && !(containingClass instanceof PsiEnumConstantInitializer)) return;
 
     final StandardDataFlowRunner dfaRunner =
@@ -200,6 +195,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
 
   private static boolean isInsideConstructorOrInitializer(PsiElement element) {
     while (element != null) {
+      if (element instanceof PsiClass) return true;
       element = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiClassInitializer.class);
       if (element instanceof PsiClassInitializer) return true;
       if (element instanceof PsiMethod) {
@@ -249,12 +245,17 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
       }
     }
     else if (rc == RunnerResult.TOO_COMPLEX) {
-      if (scope.getParent() instanceof PsiMethod) {
-        PsiMethod method = (PsiMethod)scope.getParent();
-        final PsiIdentifier name = method.getNameIdentifier();
-        if (name != null) { // Might be null for synthetic methods like JSP page.
-          holder.registerProblem(name, InspectionsBundle.message("dataflow.too.complex"), ProblemHighlightType.WEAK_WARNING);
-        }
+      PsiIdentifier name = null;
+      String message = null;
+      if(scope.getParent() instanceof PsiMethod) {
+        name = ((PsiMethod)scope.getParent()).getNameIdentifier();
+        message = InspectionsBundle.message("dataflow.too.complex");
+      } else if(scope instanceof PsiClass) {
+        name = ((PsiClass)scope).getNameIdentifier();
+        message = InspectionsBundle.message("dataflow.too.complex.class");
+      }
+      if (name != null) { // Might be null for synthetic methods like JSP page.
+        holder.registerProblem(name, message, ProblemHighlightType.WEAK_WARNING);
       }
     }
   }
