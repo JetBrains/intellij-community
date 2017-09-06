@@ -120,7 +120,7 @@ public class VcsQuickListPopupAction extends QuickSwitchSchemeAction implements 
       Project project = e.getProject();
       DataContext dataContext = e.getDataContext();
       Pair<SupportedVCS, AbstractVcs> pair = project == null ? Pair.empty() : getActiveVCS(project, dataContext);
-      if (pair.first == SupportedVCS.VCS) {
+      if (pair.first == SupportedVCS.VCS && pair.second != null) {
         AbstractVcs vcs = pair.second;
         JBIterable<VcsQuickListContentProvider> providers = JBIterable.of(VcsQuickListContentProvider.EP_NAME.getExtensions());
         List<AnAction> replacingActions = providers
