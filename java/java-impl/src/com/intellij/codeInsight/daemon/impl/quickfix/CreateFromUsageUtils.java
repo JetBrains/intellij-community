@@ -98,7 +98,7 @@ public class CreateFromUsageUtils {
     return true;
   }
 
-  static boolean isValidMethodReference(PsiReference reference, PsiMethodCallExpression call) {
+  public static boolean isValidMethodReference(PsiReference reference, PsiMethodCallExpression call) {
     if (!(reference instanceof PsiJavaReference)) return false;
     try {
       JavaResolveResult candidate = ((PsiJavaReference) reference).advancedResolve(true);
@@ -985,10 +985,10 @@ public class CreateFromUsageUtils {
                                  member.hasModifierProperty(PsiModifier.STATIC) == staticAccess).booleanValue();
   }
 
-  private static class ParameterNameExpression extends Expression {
+  public static class ParameterNameExpression extends Expression {
     private final String[] myNames;
 
-    private ParameterNameExpression(String[] names) {
+    public ParameterNameExpression(String[] names) {
       myNames = names;
     }
 
