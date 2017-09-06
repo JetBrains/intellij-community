@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,13 +73,12 @@ public class PreferByKindWeigher extends LookupElementWeigher {
       psiElement(PsiReferenceExpression.class).withParent(PsiResourceExpression.class)));
 
   private final CompletionType myCompletionType;
-  @NotNull
   private final PsiElement myPosition;
   private final Set<PsiField> myNonInitializedFields;
   private final Condition<PsiClass> myRequiredSuper;
   private final ExpectedTypeInfo[] myExpectedTypes;
 
-  public PreferByKindWeigher(CompletionType completionType, @NotNull final PsiElement position, ExpectedTypeInfo[] expectedTypes) {
+  public PreferByKindWeigher(CompletionType completionType, final PsiElement position, ExpectedTypeInfo[] expectedTypes) {
     super("kind");
     myCompletionType = completionType;
     myPosition = position;
