@@ -48,7 +48,7 @@ public class CommonDataflow {
   @Nullable
   private static DataflowResult runDFA(@Nullable PsiElement block) {
     if (block == null) return null;
-    DataFlowRunner runner = new DataFlowRunner(false, true);
+    DataFlowRunner runner = new DataFlowRunner(false, !DfaUtil.isInsideConstructorOrInitializer(block));
     DfaConstValue fail = runner.getFactory().getConstFactory().getContractFail();
     DataflowResult dfr = new DataflowResult();
     StandardInstructionVisitor visitor = new StandardInstructionVisitor() {

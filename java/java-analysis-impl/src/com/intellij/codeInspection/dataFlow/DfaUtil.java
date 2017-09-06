@@ -19,6 +19,7 @@ import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.util.text.StringUtil;
@@ -26,10 +27,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
@@ -274,6 +272,43 @@ public class DfaUtil {
   public static boolean hasInitializationHacks(@NotNull PsiField field) {
     PsiClass containingClass = field.getContainingClass();
     return containingClass != null && System.class.getName().equals(containingClass.getQualifiedName());
+  }
+
+  static boolean isInsideConstructorOrInitializer(PsiElement element) {
+    while (element != null) {
+      if (element instanceof PsiClass) return true;
+      element = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiClassInitializer.class);
+      if (element instanceof PsiClassInitializer) return true;
+      if (element instanceof PsiMethod) {
+        if (((PsiMethod)element).isConstructor()) return true;
+
+        final PsiClass containingClass = ((PsiMethod)element).getContainingClass();
+        return !InheritanceUtil.processSupers(containingClass, true,
+                                              psiClass -> !canCallMethodsInConstructors(psiClass, psiClass != containingClass));
+
+      }
+    }
+    return false;
+  }
+
+  private static boolean canCallMethodsInConstructors(PsiClass aClass, boolean virtual) {
+    for (PsiMethod constructor : aClass.getConstructors()) {
+      if (!constructor.getLanguage().isKindOf(JavaLanguage.INSTANCE)) return true;
+
+      PsiCodeBlock body = constructor.getBody();
+      if (body == null) continue;
+
+      for (PsiMethodCallExpression call : SyntaxTraverser.psiTraverser().withRoot(body).filter(PsiMethodCallExpression.class)) {
+        PsiReferenceExpression methodExpression = call.getMethodExpression();
+        if (methodExpression.textMatches(PsiKeyword.THIS) || methodExpression.textMatches(PsiKeyword.SUPER)) continue;
+        if (!virtual) return true;
+
+        PsiMethod target = call.resolveMethod();
+        if (target != null && PsiUtil.canBeOverriden(target)) return true;
+      }
+    }
+
+    return false;
   }
 
   private static class ValuableInstructionVisitor extends StandardInstructionVisitor {

@@ -33,7 +33,6 @@ import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
 import com.intellij.codeInspection.dataFlow.value.DfaUnknownValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.nullable.NullableStuffInspectionBase;
-import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -41,7 +40,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -189,45 +187,8 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     if (containingClass != null && PsiUtil.isLocalOrAnonymousClass(containingClass) && !(containingClass instanceof PsiEnumConstantInitializer)) return;
 
     final StandardDataFlowRunner dfaRunner =
-      new StandardDataFlowRunner(TREAT_UNKNOWN_MEMBERS_AS_NULLABLE, !isInsideConstructorOrInitializer(scope));
+      new StandardDataFlowRunner(TREAT_UNKNOWN_MEMBERS_AS_NULLABLE, !DfaUtil.isInsideConstructorOrInitializer(scope));
     analyzeDfaWithNestedClosures(scope, holder, dfaRunner, Collections.singletonList(dfaRunner.createMemoryState()), onTheFly);
-  }
-
-  private static boolean isInsideConstructorOrInitializer(PsiElement element) {
-    while (element != null) {
-      if (element instanceof PsiClass) return true;
-      element = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiClassInitializer.class);
-      if (element instanceof PsiClassInitializer) return true;
-      if (element instanceof PsiMethod) {
-        if (((PsiMethod)element).isConstructor()) return true;
-        
-        final PsiClass containingClass = ((PsiMethod)element).getContainingClass();
-        return !InheritanceUtil.processSupers(containingClass, true,
-                                              psiClass -> !canCallMethodsInConstructors(psiClass, psiClass != containingClass));
-        
-      }
-    }
-    return false;
-  }
-
-  private static boolean canCallMethodsInConstructors(PsiClass aClass, boolean virtual) {
-    for (PsiMethod constructor : aClass.getConstructors()) {
-      if (!constructor.getLanguage().isKindOf(JavaLanguage.INSTANCE)) return true;
-
-      PsiCodeBlock body = constructor.getBody();
-      if (body == null) continue;
-
-      for (PsiMethodCallExpression call : SyntaxTraverser.psiTraverser().withRoot(body).filter(PsiMethodCallExpression.class)) {
-        PsiReferenceExpression methodExpression = call.getMethodExpression();
-        if (methodExpression.textMatches(PsiKeyword.THIS) || methodExpression.textMatches(PsiKeyword.SUPER)) continue;
-        if (!virtual) return true;
-        
-        PsiMethod target = call.resolveMethod();
-        if (target != null && PsiUtil.canBeOverriden(target)) return true;
-      }
-    }
-
-    return false;
   }
 
   private void analyzeDfaWithNestedClosures(PsiElement scope,
