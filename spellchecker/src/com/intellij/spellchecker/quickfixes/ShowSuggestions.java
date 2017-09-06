@@ -30,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.List;
 
+import static com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil.findInjectionHost;
 
 public abstract class ShowSuggestions implements LocalQuickFix, Iconable {
 
@@ -57,10 +58,8 @@ public abstract class ShowSuggestions implements LocalQuickFix, Iconable {
 
   @Nullable
   protected Editor getEditor(PsiElement element, @NotNull Project project) {
-    Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
-    if (InjectedLanguageUtil.findInjectionHost(element) != null) {
-      editor = InjectedLanguageUtil.openEditorFor(element.getContainingFile(), project);
-    }
-    return editor;
+    return findInjectionHost(element) != null
+           ? InjectedLanguageUtil.openEditorFor(element.getContainingFile(), project)
+           : FileEditorManager.getInstance(project).getSelectedTextEditor();
   }
 }
