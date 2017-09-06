@@ -173,6 +173,17 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTr
     return myJavaStructureModificationTracker;
   }
 
+
+  @ApiStatus.Experimental
+  public boolean isEnableCodeBlockTracker() {
+    return ourEnableCodeBlockTracker.asBoolean();
+  }
+
+  @ApiStatus.Experimental
+  public boolean isEnableLanguageTracker() {
+    return ourEnableLanguageTracker.asBoolean();
+  }
+
   @ApiStatus.Experimental
   public void incLanguageModificationCount(@Nullable Language language) {
     if (language == null) return;
