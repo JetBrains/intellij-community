@@ -72,6 +72,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
   private final Tree myTree = new Tree();
   @NotNull private final Project myProject;
   private final UpdatedFiles myUpdatedFiles;
+  private final VcsConfiguration myVcsConfiguration;
   private UpdateRootNode myRoot;
   private DefaultTreeModel myTreeModel;
   private FileStatusListener myFileStatusListener;
@@ -80,7 +81,6 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
   private final ActionInfo myActionInfo;
   private boolean myCanGroupByChangeList = false;
   private boolean myGroupByChangeList = false;
-  private boolean myShowOnlyFilteredItems;
   private JLabel myLoadingChangeListsLabel;
   private List<CommittedChangeList> myCommittedChangeLists;
   private final JPanel myCenterPanel = new JPanel(new CardLayout());
@@ -115,8 +115,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
     myUpdatedFiles = updatedFiles;
     myRootName = rootName;
 
-    myShowOnlyFilteredItems = VcsConfiguration.getInstance(myProject).UPDATE_FILTER_BY_SCOPE;
-
+    myVcsConfiguration = VcsConfiguration.getInstance(myProject);
     myFileStatusManager = FileStatusManager.getInstance(myProject);
     myFileStatusManager.addFileStatusListener(myFileStatusListener);
     createTree();
@@ -138,7 +137,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
     if (myCanGroupByChangeList) {
       myLoadingChangeListsLabel = new JLabel(VcsBundle.message("update.info.loading.changelists"));
       add(myLoadingChangeListsLabel, BorderLayout.SOUTH);
-      myGroupByChangeList = VcsConfiguration.getInstance(myProject).UPDATE_GROUP_BY_CHANGELIST;
+      myGroupByChangeList = myVcsConfiguration.UPDATE_GROUP_BY_CHANGELIST;
       if (myGroupByChangeList) {
         final CardLayout cardLayout = (CardLayout)myCenterPanel.getLayout();
         cardLayout.show(myCenterPanel, CARD_CHANGES);
@@ -224,7 +223,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
   }
 
   private void updateTreeModel() {
-    myRoot.rebuild(VcsConfiguration.getInstance(myProject).UPDATE_GROUP_BY_PACKAGES, getScopeFilter(), myShowOnlyFilteredItems);
+    myRoot.rebuild(myVcsConfiguration.UPDATE_GROUP_BY_PACKAGES, getScopeFilter(), myVcsConfiguration.UPDATE_FILTER_BY_SCOPE);
     if (myTreeModel != null) {
       myTreeModel.reload();
     }
@@ -408,14 +407,12 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
     }
 
     public boolean isSelected(AnActionEvent e) {
-      return !myProject.isDisposed() && VcsConfiguration.getInstance(myProject).UPDATE_GROUP_BY_PACKAGES;
+      return myVcsConfiguration.UPDATE_GROUP_BY_PACKAGES;
     }
 
     public void setSelected(AnActionEvent e, boolean state) {
-      if (!myProject.isDisposed()) {
-        VcsConfiguration.getInstance(myProject).UPDATE_GROUP_BY_PACKAGES = state;
-        updateTreeModel();
-      }
+      myVcsConfiguration.UPDATE_GROUP_BY_PACKAGES = state;
+      updateTreeModel();
     }
 
     public void update(final AnActionEvent e) {
@@ -435,7 +432,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
 
     public void setSelected(AnActionEvent e, boolean state) {
       myGroupByChangeList = state;
-      VcsConfiguration.getInstance(myProject).UPDATE_GROUP_BY_CHANGELIST = myGroupByChangeList;
+      myVcsConfiguration.UPDATE_GROUP_BY_CHANGELIST = myGroupByChangeList;
       final CardLayout cardLayout = (CardLayout)myCenterPanel.getLayout();
       if (!myGroupByChangeList) {
         cardLayout.show(myCenterPanel, CARD_STATUS);
@@ -478,7 +475,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
 
   @Nullable
   private String getFilterScopeName() {
-    return VcsConfiguration.getInstance(myProject).UPDATE_FILTER_SCOPE_NAME;
+    return myVcsConfiguration.UPDATE_FILTER_SCOPE_NAME;
   }
 
   @Nullable
@@ -494,13 +491,12 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
 
     @Override
     public boolean isSelected(AnActionEvent e) {
-      return myShowOnlyFilteredItems;
+      return myVcsConfiguration.UPDATE_FILTER_BY_SCOPE;
     }
 
     @Override
     public void setSelected(AnActionEvent e, boolean state) {
-      myShowOnlyFilteredItems = state;
-      VcsConfiguration.getInstance(myProject).UPDATE_FILTER_BY_SCOPE = myShowOnlyFilteredItems;
+      myVcsConfiguration.UPDATE_FILTER_BY_SCOPE = state;
       updateTreeModel();
     }
 
