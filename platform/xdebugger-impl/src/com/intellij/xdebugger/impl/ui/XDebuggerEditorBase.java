@@ -433,6 +433,10 @@ public abstract class XDebuggerEditorBase implements Expandable {
         }
       };
 
+    EditorTextField editorTextField = (EditorTextField)expressionEditor.getEditorComponent();
+    editorTextField.addSettingsProvider(this::prepareEditor);
+    editorTextField.setFont(editorTextField.getFont().deriveFont((float)getEditor().getColorsScheme().getEditorFontSize()));
+
     JComponent component = expressionEditor.getComponent();
     component.setPreferredSize(new Dimension(getComponent().getWidth(), 100));
 
@@ -492,7 +496,6 @@ public abstract class XDebuggerEditorBase implements Expandable {
 
     EditorEx editor = (EditorEx)expressionEditor.getEditor();
     copyCaretPosition(getEditor(), editor);
-    prepareEditor(editor);
     editor.getSettings().setUseSoftWraps(isUseSoftWraps());
     editor.setContextMenuGroupId("XDebugger.Evaluate.Code.Fragment.Editor.Popup");
 
