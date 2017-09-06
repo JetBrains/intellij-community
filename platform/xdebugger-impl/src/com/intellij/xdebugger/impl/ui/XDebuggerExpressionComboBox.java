@@ -200,6 +200,9 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
         protected void onEditorCreate(EditorEx editor) {
           editor.putUserData(DebuggerCopyPastePreprocessor.REMOVE_NEWLINES_ON_PASTE, true);
           prepareEditor(editor);
+          if (showMultiline) {
+            setExpandable(editor);
+          }
         }
       };
       myDelegate.getEditorComponent().setFontInheritedFromLAF(false);

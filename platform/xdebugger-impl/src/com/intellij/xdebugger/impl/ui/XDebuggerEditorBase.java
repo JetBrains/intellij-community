@@ -30,8 +30,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.ComponentWithBrowseButton;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -55,7 +53,6 @@ import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProviderBase;
 import com.intellij.xdebugger.impl.XDebuggerHistoryManager;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
-import com.intellij.xdebugger.impl.evaluate.CodeFragmentInputComponent;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -123,6 +120,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
     myExpandButton.setToolTipText(KeymapUtil.createTooltipText("Expand", "ExpandExpandableComponent"));
     myExpandButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
     myExpandButton.setBorder(JBUI.Borders.empty(0, 3));
+    myExpandButton.setDisabledIcon(AllIcons.General.ExpandComponent);
     new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent e, int clickCount) {
@@ -182,20 +180,12 @@ public abstract class XDebuggerEditorBase implements Expandable {
     panel.add(factoryPanel, BorderLayout.WEST);
 
     if (!multiline && showEditor) {
-      component = addMultilineButton(component);
+      component = addExpand(component);
     }
 
     panel.addToCenter(component);
 
     return panel;
-  }
-
-  protected JPanel addMultilineButton(JComponent component) {
-    ComponentWithBrowseButton<JComponent> componentWithButton =
-      new ComponentWithBrowseButton<>(component, e -> showCodeFragmentEditor(component, this));
-    componentWithButton.setButtonIcon(AllIcons.Actions.ShowViewer);
-    componentWithButton.getButton().setDisabledIcon(IconLoader.getDisabledIcon(AllIcons.Actions.ShowViewer));
-    return componentWithButton;
   }
 
   protected JComponent addChooser(JComponent component) {
@@ -207,7 +197,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
 
   protected JComponent addExpand(JComponent component) {
     BorderLayoutPanel panel = JBUI.Panels.simplePanel(component);
-    panel.setBackground(component.getBackground());
+    panel.setOpaque(false);
     panel.addToRight(myExpandButton);
     return panel;
   }
@@ -373,50 +363,10 @@ public abstract class XDebuggerEditorBase implements Expandable {
     }
   }
 
-  private void showCodeFragmentEditor(Component parent, XDebuggerEditorBase baseEditor) {
-    DialogWrapper dialog = new DialogWrapper(parent, true) {
-      CodeFragmentInputComponent inputComponent =
-        new CodeFragmentInputComponent(baseEditor.getProject(), baseEditor.getEditorsProvider(), mySourcePosition,
-                                       XExpressionImpl.changeMode(baseEditor.getExpression(), EvaluationMode.CODE_FRAGMENT),
-                                       null, null);
-
-      {
-        setTitle("Edit");
-        init();
-      }
-
-      @Override
-      protected String getDimensionServiceKey() {
-        return "#xdebugger.code.fragment.editor";
-      }
-
-      @Override
-      protected JComponent createCenterPanel() {
-        JPanel component = inputComponent.getMainComponent();
-        component.setPreferredSize(JBUI.size(300, 200));
-        return component;
-      }
-
-      @Override
-      protected void doOKAction() {
-        super.doOKAction();
-        baseEditor.setExpression(inputComponent.getInputEditor().getExpression());
-        JComponent component = baseEditor.getPreferredFocusedComponent();
-        if (component != null) {
-          IdeFocusManager.findInstance().requestFocus(component, false);
-        }
-      }
-
-      @Nullable
-      @Override
-      public JComponent getPreferredFocusedComponent() {
-        return inputComponent.getInputEditor().getPreferredFocusedComponent();
-      }
-    };
-    dialog.show();
+  protected void prepareEditor(Editor editor) {
   }
 
-  protected void prepareEditor(Editor editor) {
+  protected final void setExpandable(Editor editor) {
     editor.getContentComponent().putClientProperty(Expandable.class, this);
   }
 
@@ -435,6 +385,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
 
     EditorTextField editorTextField = (EditorTextField)expressionEditor.getEditorComponent();
     editorTextField.addSettingsProvider(this::prepareEditor);
+    editorTextField.addSettingsProvider(this::setExpandable);
     editorTextField.setFont(editorTextField.getFont().deriveFont((float)getEditor().getColorsScheme().getEditorFontSize()));
 
     JComponent component = expressionEditor.getComponent();

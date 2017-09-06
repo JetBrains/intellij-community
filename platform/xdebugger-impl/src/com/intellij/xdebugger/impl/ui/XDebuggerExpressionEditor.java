@@ -69,6 +69,9 @@ public class XDebuggerExpressionEditor extends XDebuggerEditorBase {
         if (multiline) {
           editor.getContentComponent().setBorder(new CompoundBorder(editor.getContentComponent().getBorder(), JBUI.Borders.emptyLeft(2)));
         }
+        else if (showEditor) {
+          setExpandable(editor);
+        }
         return editor;
       }
 
