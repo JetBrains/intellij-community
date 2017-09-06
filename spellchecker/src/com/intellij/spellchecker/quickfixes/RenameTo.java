@@ -103,9 +103,4 @@ public class RenameTo extends ShowSuggestions implements SpellCheckerQuickFix {
       editor.putUserData(RenameHandlerRegistry.SELECT_ALL, selectAll);
     }
   }
-
-  @Override
-  public boolean startInWriteAction() {
-    return false;
-  }
 }
