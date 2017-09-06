@@ -89,4 +89,8 @@ class KotlinStatementFactory : StatementFactory {
   override fun createMapVariable(keyType: GenericType, valueType: GenericType, name: String, linked: Boolean): MapVariable {
     TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
   }
+
+  override fun createArrayVariable(elementType: String, name: String): ArrayVariable {
+    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+  }
 }

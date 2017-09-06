@@ -26,6 +26,8 @@ interface DslFactory {
 
   fun variable(type: String, name: String): Variable
 
+  fun array(elementType: String, name: String): ArrayVariable
+
   fun map(keyType: GenericType, valueType: GenericType, name: String): MapVariable
 
   fun linkedMap(keyType: GenericType, valueType: GenericType, name: String): MapVariable

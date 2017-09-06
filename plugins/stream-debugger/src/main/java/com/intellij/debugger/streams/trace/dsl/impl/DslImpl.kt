@@ -34,6 +34,8 @@ class DslImpl(override val statementFactory: StatementFactory) : Dsl {
     return fragment.toCode(0)
   }
 
+  override fun array(elementType: String, name: String): ArrayVariable = statementFactory.createArrayVariable(elementType, name)
+
   override fun map(keyType: GenericType, valueType: GenericType, name: String): MapVariable =
     statementFactory.createMapVariable(keyType, valueType, name, false)
 
