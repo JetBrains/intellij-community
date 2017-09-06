@@ -287,18 +287,27 @@ class CompilationContextImpl implements CompilationContext {
     return enumerator.classes().roots.collect { it.absolutePath }
   }
 
-
   @Override
   void notifyArtifactBuilt(String artifactPath) {
     def file = new File(artifactPath)
     def baseDir = new File(paths.projectHome)
+    def artifactsDir = new File(paths.artifacts)
     if (!FileUtil.isAncestor(baseDir, file, true)) {
       messages.warning("Artifact '$artifactPath' is not under '$paths.projectHome', it won't be reported")
       return
     }
     def relativePath = FileUtil.toSystemIndependentName(FileUtil.getRelativePath(baseDir, file))
+
+    def targetDirectoryPath = ""
+    if (FileUtil.isAncestor(artifactsDir, file.parentFile, true)) {
+      targetDirectoryPath = FileUtil.toSystemIndependentName(FileUtil.getRelativePath(artifactsDir, file.parentFile) ?: "")
+    }
+
     if (file.isDirectory()) {
-      relativePath += "=>" + file.name
+      targetDirectoryPath = (targetDirectoryPath ? targetDirectoryPath + "/"  : "") + file.name
+    }
+    if (targetDirectoryPath) {
+      relativePath += "=>" + targetDirectoryPath
     }
     messages.artifactBuilt(relativePath)
   }
