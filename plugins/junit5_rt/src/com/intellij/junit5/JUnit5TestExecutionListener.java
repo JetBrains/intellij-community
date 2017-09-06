@@ -50,6 +50,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
   private String myRootName;
   private Set<String> myRoots = new HashSet<>();
   private boolean mySuccessful;
+  private String myForkModifier = "";
 
   public JUnit5TestExecutionListener() {
     this(System.out);
@@ -64,9 +65,12 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
     return mySuccessful;
   }
 
-  public void initialize() {
+  public void initialize(boolean forked) {
     mySuccessful = true;
     myFinishCount = 0;
+    if (forked) {
+      myForkModifier = String.valueOf(System.currentTimeMillis());
+    }
   }
 
   @Override
@@ -111,7 +115,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
       testStarted(testIdentifier);
       myCurrentTestStart = System.currentTimeMillis();
     }
-    else if (!myRoots.contains(testIdentifier.getUniqueId())){
+    else if (!myRoots.contains(getId(testIdentifier))){
       myFinishCount = 0;
       myPrintStream.println("##teamcity[testSuiteStarted" + idAndName(testIdentifier) + getLocationHint(testIdentifier) + "]");
     }
@@ -146,7 +150,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
       testFinished(testIdentifier, duration);
       myFinishCount++;
     }
-    else if (!myRoots.contains(testIdentifier.getUniqueId())){
+    else if (!myRoots.contains(getId(testIdentifier))){
       String messageName = null;
       if (status == TestExecutionResult.Status.FAILED) {
         messageName = MapSerializerUtil.TEST_FAILED;
@@ -158,9 +162,9 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
         if (status == TestExecutionResult.Status.FAILED) {
           String parentId = getParentId(testIdentifier);
           String nameAndId = " name=\'" + JUnit4TestListener.CLASS_CONFIGURATION +
-                             "\' nodeId=\'" + escapeName(testIdentifier.getUniqueId()) +
+                             "\' nodeId=\'" + escapeName(getId(testIdentifier)) +
                              "\' parentNodeId=\'" + parentId + "\' ";
-          testFailure(JUnit4TestListener.CLASS_CONFIGURATION, testIdentifier.getUniqueId(), parentId, messageName, throwableOptional, 0, reason, true);
+          testFailure(JUnit4TestListener.CLASS_CONFIGURATION, getId(testIdentifier), parentId, messageName, throwableOptional, 0, reason, true);
           myPrintStream.println("\n##teamcity[testFinished" + nameAndId + "]");
         }
 
@@ -196,7 +200,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
                            long duration,
                            String reason,
                            boolean includeThrowable) {
-    testFailure(testIdentifier.getDisplayName(), testIdentifier.getUniqueId(), getParentId(testIdentifier), messageName, ex, duration, reason, includeThrowable);
+    testFailure(testIdentifier.getDisplayName(), getId(testIdentifier), getParentId(testIdentifier), messageName, ex, duration, reason, includeThrowable);
   }
 
   private void testFailure(String methodName,
@@ -264,7 +268,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
     myTestPlan = testPlan;
     myRootName = rootName;
     Set<TestIdentifier> roots = testPlan.getRoots();
-    myRoots = roots.stream().map(identifier -> identifier.getUniqueId()).collect(Collectors.toSet());
+    myRoots = roots.stream().map(identifier -> getId(identifier)).collect(Collectors.toSet());
     for (TestIdentifier root : roots) {
       assert root.isContainer();
       for (TestIdentifier testIdentifier : testPlan.getChildren(root)) {
@@ -272,6 +276,10 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
       }
     }
     myPrintStream.println("##teamcity[treeEnded]");
+  }
+
+  private String getId(TestIdentifier identifier) {
+    return identifier.getUniqueId() + myForkModifier;
   }
 
   private void sendTreeUnderRoot(TestPlan testPlan,
@@ -285,7 +293,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
           sendTreeUnderRoot(testPlan, childIdentifier, visited);
         }
         else {
-          System.err.println("Identifier \'" + childIdentifier.getUniqueId() + "\' is reused");
+          System.err.println("Identifier \'" + getId(childIdentifier) + "\' is reused");
         }
       }
       myPrintStream.println("##teamcity[suiteTreeEnded" + idAndName + "]");
@@ -300,14 +308,16 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
   }
 
   private String idAndName(TestIdentifier testIdentifier, String displayName) {
-    return " id=\'" + escapeName(testIdentifier.getUniqueId()) +
+    return " id=\'" + escapeName(getId(testIdentifier)) +
            "\' name=\'" + escapeName(displayName) +
-           "\' nodeId=\'" + escapeName(testIdentifier.getUniqueId()) +
+           "\' nodeId=\'" + escapeName(getId(testIdentifier)) +
            "\' parentNodeId=\'" + escapeName(getParentId(testIdentifier)) + "\'";
   }
 
   private String getParentId(TestIdentifier testIdentifier) {
-    String parentId = testIdentifier.getParentId().orElse("0");
+    String parentId = testIdentifier.getParentId()
+      .map(s -> s + myForkModifier)
+      .orElse("0");
     if (myRoots.contains(parentId)) {
       parentId = "0";
     }

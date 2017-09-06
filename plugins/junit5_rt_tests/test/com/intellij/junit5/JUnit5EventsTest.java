@@ -88,7 +88,7 @@ class JUnit5EventsTest {
                             "\n" +
                             "##teamcity[testFailed name='test1()' id='|[engine:engine|]' nodeId='|[engine:engine|]' parentNodeId='0' details='' message='' expected='expected2' actual='actual2']\n" +
                             "\n" +
-                            "##teamcity[testFailed name='test1()' id='|[engine:engine|]' nodeId='|[engine:engine|]' parentNodeId='0' details='TRACE' message='2 errors (2 failures)|r|n\tmessage1|r|n\tmessage2']\n" +
+                            "##teamcity[testFailed name='test1()' id='|[engine:engine|]' nodeId='|[engine:engine|]' parentNodeId='0' details='TRACE' message='2 errors (2 failures)|n\tmessage1|n\tmessage2']\n" +
                             "\n" +
                             "##teamcity[testFinished id='|[engine:engine|]' name='test1()' nodeId='|[engine:engine|]' parentNodeId='0']\n", StringUtil.convertLineSeparators(myBuf.toString()));
   }
