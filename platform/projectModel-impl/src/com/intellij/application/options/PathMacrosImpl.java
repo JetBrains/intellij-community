@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,10 +30,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.JpsGlobalLoader;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 @State(
@@ -67,69 +64,6 @@ public class PathMacrosImpl extends PathMacros implements PersistentStateCompone
     SYSTEM_MACROS.add(PathMacroUtil.USER_HOME_NAME);
   }
 
-  @SuppressWarnings("SpellCheckingInspection")
-  private static final Set<String> ourToolsMacros = ContainerUtil.immutableSet(
-    "ClasspathEntry",
-    "Classpath",
-    "ColumnNumber",
-    "ContentRoot",
-    "FileClass",
-    "FileDir",
-    "FileParentDir",
-    "FileDirName",
-    "FileDirPathFromParent",
-    "FileDirRelativeToProjectRoot",
-    "/FileDirRelativeToProjectRoot",
-    "FileDirRelativeToSourcepath",
-    "/FileDirRelativeToSourcepath",
-    "FileExt",
-    "FileFQPackage",
-    "FileName",
-    "FileNameWithoutExtension",
-    "FileNameWithoutAllExtensions",
-    "FilePackage",
-    "FilePath",
-    "UnixSeparators",
-    "FilePathRelativeToProjectRoot",
-    "/FilePathRelativeToProjectRoot",
-    "FilePathRelativeToSourcepath",
-    "/FilePathRelativeToSourcepath",
-    "FilePrompt",
-    "FileRelativeDir",
-    "/FileRelativeDir",
-    "FileRelativePath",
-    "/FileRelativePath",
-    "FileEncoding",
-    "JavaDocPath",
-    "JDKPath",
-    "LineNumber",
-    "ModuleFileDir",
-    "ModuleFilePath",
-    "ModuleName",
-    "AffectedModuleNames",
-    "IsMake",
-    "ModuleSourcePath",
-    "ModuleSdkPath",
-    "OutputPath",
-    "PhpExecutable",
-    "ProjectFileDir",
-    "ProjectFilePath",
-    "ProjectName",
-    "Projectpath",
-    "Prompt",
-    "SourcepathEntry",
-    "Sourcepath",
-    "SHOW_CHANGES",
-    "ClipboardContent",
-    "SelectedText",
-    "SelectionStartLine",
-    "SelectionEndLine",
-    "SelectionStartColumn",
-    "SelectionEndColumn",
-    "PyInterpreterDirectory",
-    "ExecutableByFileExt"
-  );
-
   public PathMacrosImpl() {
   }
 
@@ -148,8 +82,9 @@ public class PathMacrosImpl extends PathMacros implements PersistentStateCompone
     }
   }
 
-  public static Set<String> getToolMacroNames() {
-    return ourToolsMacros;
+  @NotNull
+  public Set<String> getToolMacroNames() {
+    return Collections.emptySet();
   }
 
   @Override
