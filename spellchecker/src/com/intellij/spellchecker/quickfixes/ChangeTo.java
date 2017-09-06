@@ -29,12 +29,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.List;
 
 public class ChangeTo extends ShowSuggestions implements SpellCheckerQuickFix {
 
-  public static final String FIX_NAME = SpellCheckerBundle.message("change.to");;
+  public static final String FIX_NAME = SpellCheckerBundle.message("change.to");
 
   public ChangeTo(String wordWithTypo) {
     super(wordWithTypo);
@@ -52,30 +50,26 @@ public class ChangeTo extends ShowSuggestions implements SpellCheckerQuickFix {
 
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    PsiElement element = descriptor.getPsiElement();
+    final PsiElement element = descriptor.getPsiElement();
     if (element == null) return;
     final Editor editor = getEditor(element, project);
     if (editor == null) return;
 
-    TextRange textRange = ((ProblemDescriptorBase)descriptor).getTextRange();
+    final TextRange textRange = ((ProblemDescriptorBase)descriptor).getTextRange();
     final int documentLength = editor.getDocument().getTextLength();
     final int textEndOffset = textRange.getEndOffset();
     final int endOffset = textEndOffset <= documentLength ? textEndOffset : documentLength;
     editor.getSelectionModel().setSelection(textRange.getStartOffset(), endOffset);
-    String word = editor.getSelectionModel().getSelectedText();
+    final String word = editor.getSelectionModel().getSelectedText();
 
     if (word == null || StringUtil.isEmpty(word)) {
       return;
     }
-
-    List<LookupElement> lookupItems = new ArrayList<>();
-    for (String variant : getSuggestions(project)) {
-      lookupItems.add(LookupElementBuilder.create(variant));
-    }
-    LookupElement[] items = new LookupElement[lookupItems.size()];
-    items = lookupItems.toArray(items);
-    LookupManager lookupManager = LookupManager.getInstance(project);
-    lookupManager.showLookup(editor, items);
+    final LookupElement[] items = getSuggestions(project)
+      .stream()
+      .map(LookupElementBuilder::create)
+      .toArray(LookupElement[]::new);
+    LookupManager.getInstance(project).showLookup(editor, items);
   }
   
   @Override
