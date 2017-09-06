@@ -172,6 +172,28 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
     }
   }
 
+  fun testArrayDeclaration() {
+    doTest {
+      declare(array("int", "a"), false)
+    }
+  }
+
+  fun testArrayElementUsage() {
+    doTest {
+      val array = array("int", "a")
+      +array[10]
+      +array[+"11"]
+    }
+  }
+
+  fun testArrayElementAssignment() {
+    doTest {
+      val array = array("int", "a")
+      +(array.set(0, +"1"))
+      +(array.set(1, +"2"))
+    }
+  }
+
   private fun doTest(init: CodeContext.() -> Unit) {
     check(dsl.code(init))
   }
