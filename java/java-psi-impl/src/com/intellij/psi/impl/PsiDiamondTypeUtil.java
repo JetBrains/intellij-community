@@ -153,9 +153,8 @@ public class PsiDiamondTypeUtil {
       typeElement = ((PsiVariable)gParent).getTypeElement();
     }
     else if (gParent instanceof PsiReturnStatement) {
-      PsiMethod method = PsiTreeUtil.getParentOfType(gParent, PsiMethod.class);
-      LOG.assertTrue(method != null);
-      typeElement = method.getReturnTypeElement();
+      PsiElement method = PsiTreeUtil.getParentOfType(gParent, PsiMethod.class, PsiLambdaExpression.class);
+      typeElement = method instanceof PsiMethod ? ((PsiMethod)method).getReturnTypeElement() : null;
     }
     return typeElement != null && PsiAugmentProvider.getInferredType(typeElement) != null;
   }
