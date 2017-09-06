@@ -31,8 +31,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
-* @author oleg
-*/
+ * @author oleg
+ */
 public class ControlFlowBuilder {
   // Here we store all the instructions
   public List<Instruction> instructions;
@@ -105,7 +105,7 @@ public class ControlFlowBuilder {
   /**
    * Adds pending edge in pendingScope
    *
-   * @param pendingScope Scope for instruction
+   * @param pendingScope Scope for instruction / null if expected scope = exit point
    * @param instruction  "Last" pending instruction
    */
   public void addPendingEdge(@Nullable final PsiElement pendingScope, @Nullable final Instruction instruction) {
@@ -218,8 +218,7 @@ public class ControlFlowBuilder {
     return head.get();
   }
 
-  
-  
+
   @FunctionalInterface
   public interface PendingProcessor {
     void process(PsiElement pendingScope, Instruction instruction);

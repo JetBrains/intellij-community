@@ -35,14 +35,14 @@ public class MutableInstructionImpl extends InstructionBaseImpl {
     return myNum.get();
   }
 
-  public void insertNode(@NotNull ControlFlowBuilder builder) {
+  public void insertNodeFor(@NotNull ControlFlowBuilder builder) {
     assert myNum.get() == 0;
     builder.instructions.add(this);
     int newId = builder.instructionCount++;
     myNum.set(newId);
   }
 
-  public void addNode(@NotNull ControlFlowBuilder builder) {
+  public void addNodeFor(@NotNull ControlFlowBuilder builder) {
     assert myNum.get() == 0;
     builder.addNode(this);
     int newId = builder.instructionCount++;
