@@ -23,14 +23,12 @@ import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.TextDiffType;
 import com.intellij.ide.todo.TodoFilter;
 import com.intellij.ide.todo.TodoIndexPatternProvider;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.DumbProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -66,7 +64,7 @@ import static com.intellij.util.ObjectUtils.notNull;
 public class TodoCheckinHandlerWorker {
   private final static Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.checkin.TodoCheckinHandler");
 
-  private final Collection<Change> changes;
+  private final Collection<Change> myChanges;
   private final TodoFilter myTodoFilter;
   private final boolean myIncludePattern;
   private final PsiManager myPsiManager;
@@ -75,14 +73,12 @@ public class TodoCheckinHandlerWorker {
   private final List<TodoItem> myAddedOrEditedTodos;
   private final List<TodoItem> myInChangedTodos;
   private final List<Pair<FilePath, String>> mySkipped;
-  private PsiFile myPsiFile;
-  private List<TodoItem> myNewTodoItems;
   private final MyEditedFileProcessor myEditedFileProcessor;
 
 
   public TodoCheckinHandlerWorker(final Project project, final Collection<Change> changes, final TodoFilter todoFilter,
                                   final boolean includePattern) {
-    this.changes = changes;
+    myChanges = changes;
     myTodoFilter = todoFilter;
     myIncludePattern = includePattern;
     myPsiManager = PsiManager.getInstance(project);
@@ -109,36 +105,32 @@ public class TodoCheckinHandlerWorker {
   }
 
   public void execute() {
-    for (Change change : changes) {
+    for (Change change : myChanges) {
       ProgressManager.checkCanceled();
       if (change.getAfterRevision() == null) continue;
       final VirtualFile afterFile = getFileWithRefresh(change.getAfterRevision().getFile());
       if (afterFile == null || afterFile.isDirectory() || afterFile.getFileType().isBinary()) continue;
-      myPsiFile = null;
 
-      if (afterFile.isValid()) {
-        myPsiFile = ReadAction.compute(() -> myPsiManager.findFile(afterFile));
-      }
-      if (myPsiFile == null) {
+      List<TodoItem> newTodoItems = ReadAction.compute(() -> {
+        if (!afterFile.isValid()) return null;
+        PsiFile psiFile = myPsiManager.findFile(afterFile);
+        if (psiFile == null) return null;
+
+        return ContainerUtil.newArrayList(mySearchHelper.findTodoItems(psiFile));
+      });
+      if (newTodoItems == null) {
         mySkipped.add(Pair.create(change.getAfterRevision().getFile(), ourInvalidFile));
         continue;
       }
 
-      myNewTodoItems = new ArrayList<>(Arrays.asList(
-        ApplicationManager.getApplication().runReadAction(new Computable<TodoItem[]>() {
-          @Override
-          public TodoItem[] compute() {
-            return mySearchHelper.findTodoItems(myPsiFile);
-          }
-        })));
-      applyFilterAndRemoveDuplicates(myNewTodoItems, myTodoFilter);
+      applyFilterAndRemoveDuplicates(newTodoItems, myTodoFilter);
       if (change.getBeforeRevision() == null) {
         // take just all todos
-        if (myNewTodoItems.isEmpty()) continue;
-        myAddedOrEditedTodos.addAll(myNewTodoItems);
+        if (newTodoItems.isEmpty()) continue;
+        myAddedOrEditedTodos.addAll(newTodoItems);
       }
       else {
-        myEditedFileProcessor.process(change, myNewTodoItems);
+        myEditedFileProcessor.process(change, newTodoItems);
       }
     }
   }
