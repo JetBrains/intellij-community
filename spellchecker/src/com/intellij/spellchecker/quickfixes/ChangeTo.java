@@ -77,4 +77,9 @@ public class ChangeTo extends ShowSuggestions implements SpellCheckerQuickFix {
     LookupManager lookupManager = LookupManager.getInstance(project);
     lookupManager.showLookup(editor, items);
   }
+  
+  @Override
+  public boolean startInWriteAction() {
+    return false;
+  }
 }
