@@ -427,7 +427,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   void forceReload(VirtualFile virtualFile, @Nullable FileViewProvider viewProvider) {
-    if (viewProvider instanceof AbstractFileViewProvider) {
+    if (viewProvider != null) {
       ((AbstractFileViewProvider)viewProvider).markInvalidated();
     }
     if (virtualFile != null) {
@@ -900,12 +900,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     ApplicationManager.getApplication().runWriteAction(new ExternalChangeAction() {
       @Override
       public void run() {
-        FileViewProvider viewProvider = psiFile.getViewProvider();
-        if (viewProvider instanceof AbstractFileViewProvider) {
-          ((AbstractFileViewProvider)viewProvider).onContentReload();
-        } else {
-          LOG.error("Invalid view provider: " + viewProvider + " of " + viewProvider.getClass());
-        }
+        ((AbstractFileViewProvider)psiFile.getViewProvider()).onContentReload();
       }
     });
   }

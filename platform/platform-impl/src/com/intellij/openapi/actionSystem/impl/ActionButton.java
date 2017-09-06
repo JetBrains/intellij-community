@@ -50,7 +50,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   protected final Presentation myPresentation;
   protected final AnAction myAction;
   protected final String myPlace;
-  private ActionButtonLook myLook = ActionButtonLook.DEFAULT_LOOK;
+  private ActionButtonLook myLook = ActionButtonLook.SYSTEM_LOOK;
   private boolean myMouseDown;
   private boolean myRollover;
   private static boolean ourGlobalMouseDown = false;
@@ -238,7 +238,6 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     }
   }
 
-
   public void setIconInsets(@Nullable Insets insets) {
     myInsets = insets != null ? JBUI.insets(insets) : JBUI.emptyInsets();
   }
@@ -308,7 +307,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
       myLook = look;
     }
     else {
-      myLook = ActionButtonLook.DEFAULT_LOOK;
+      myLook = ActionButtonLook.SYSTEM_LOOK;
     }
     repaint();
   }

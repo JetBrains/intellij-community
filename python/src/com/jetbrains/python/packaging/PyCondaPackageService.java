@@ -30,7 +30,7 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
-import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor;
+import com.jetbrains.python.sdk.flavors.CondaEnvSdkFlavor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -132,7 +132,7 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
   public static String getCondaExecutable(@NotNull final String condaName) {
     final VirtualFile userHome = LocalFileSystem.getInstance().findFileByPath(SystemProperties.getUserHome().replace('\\', '/'));
     if (userHome != null) {
-      for (String root : VirtualEnvSdkFlavor.CONDA_DEFAULT_ROOTS) {
+      for (String root : CondaEnvSdkFlavor.CONDA_DEFAULT_ROOTS) {
         VirtualFile condaFolder = userHome.findChild(root);
         String executableFile = findExecutable(condaName, condaFolder);
         if (executableFile != null) return executableFile;

@@ -80,6 +80,8 @@ public class GuessTypeParameters {
         return;
       }
 
+      typeElement = (PsiTypeElement)typeElement.replace(JavaPsiFacade.getElementFactory(myProject).createTypeElement(info.getType()));
+
       PsiSubstitutor rawingSubstitutor = getRawingSubstitutor(myProject, context, targetClass);
       int substitionResult = hasNullSubstitutions(mySubstitutor)
                              ? SUBSTITUTED_NONE

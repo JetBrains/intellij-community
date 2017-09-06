@@ -118,6 +118,10 @@ public class IdeaActionButtonLook extends ActionButtonLook {
     }
   }
 
+  @Override public boolean isValid() {
+    return !UIUtil.isUnderWin10LookAndFeel();
+  }
+
   private static Shape getShape(Dimension size) {
     return new RoundRectangle2D.Double(1, 1, size.width - 3, size.height - 3, 4, 4);
   }

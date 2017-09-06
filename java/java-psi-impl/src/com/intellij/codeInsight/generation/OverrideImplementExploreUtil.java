@@ -44,7 +44,7 @@ public class OverrideImplementExploreUtil {
     Map<MethodSignature, PsiMethod> finals = new LinkedHashMap<>();
     Map<MethodSignature, PsiMethod> concretes = new LinkedHashMap<>();
 
-    if (aClass.isAnnotationType()) return Collections.emptyMap();
+    if (aClass.isAnnotationType() || aClass instanceof PsiTypeParameter) return Collections.emptyMap();
 
     PsiUtilCore.ensureValid(aClass);
     Collection<HierarchicalMethodSignature> allMethodSigs = aClass.getVisibleSignatures();

@@ -228,7 +228,7 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
     }
 
     final Project project = targetDirectory.getProject();
-    if (!CommonRefactoringUtil.checkReadOnlyStatus(project, Collections.singleton(targetDirectory), false)) {
+    if (!CommonRefactoringUtil.checkReadOnlyStatus(project, Collections.singleton(targetDirectory), true)) {
       return;
     }
 

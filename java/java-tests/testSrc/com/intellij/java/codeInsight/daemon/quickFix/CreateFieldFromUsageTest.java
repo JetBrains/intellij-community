@@ -84,6 +84,10 @@ public class CreateFieldFromUsageTest extends LightQuickFixTestCase {
     doSingleTest();
   }
 
+  public void testInnerGeneric() { doSingleTest(); }
+
+  public void testInnerGenericArray() { doSingleTest(); }
+
   protected void doSingleTest() {
     doSingleTest(getTestName(false) + ".java");
   }

@@ -4,7 +4,7 @@
   <version major="2017" minor="3" eap="true"/>
   <company name="JetBrains s.r.o." url="https://www.jetbrains.com/?fromIDE"/>
   <build number="__BUILD_NUMBER__" date="__BUILD_DATE__"/>
-  <logo url="/idea_community_logo.png" textcolor="e5e5e5" progressColor="ef5468" progressX="117" progressY="280" progressHeight="3" />
+  <logo url="/idea_community_logo.png" textcolor="e5e5e5" progressColor="02d7fd" progressX="117" progressY="280" progressHeight="3" />
   <about url="/idea_community_about.png" foreground="939598" copyrightForeground="939598" linkColor="095fdc" logoX="540" logoY="300" logoW="100" logoH="100"/>
   <icon size32="/icon_CE.png" size16="/icon_CEsmall.png" size128="/icon_CE_128.png" ico="idea_CE.ico"/>
   <package code="__PACKAGE_CODE__"/>

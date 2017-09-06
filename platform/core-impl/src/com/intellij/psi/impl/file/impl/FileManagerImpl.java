@@ -91,9 +91,7 @@ public class FileManagerImpl implements FileManager {
   }
 
   public static void clearPsiCaches(@NotNull FileViewProvider provider) {
-    List<PsiFile> psiFiles = provider instanceof AbstractFileViewProvider? ((AbstractFileViewProvider)provider).getCachedPsiFiles()
-                                                                         : provider.getAllFiles();
-    psiFiles.forEach(PsiFile::clearCaches);
+    ((AbstractFileViewProvider)provider).getCachedPsiFiles().forEach(PsiFile::clearCaches);
   }
 
   public void forceReload(@NotNull VirtualFile vFile) {
@@ -438,9 +436,7 @@ public class FileManagerImpl implements FileManager {
   }
 
   private void markInvalidated(@NotNull FileViewProvider viewProvider) {
-    if (viewProvider instanceof AbstractFileViewProvider) {
-      ((AbstractFileViewProvider)viewProvider).markInvalidated();
-    }
+    ((AbstractFileViewProvider)viewProvider).markInvalidated();
     VirtualFile virtualFile = viewProvider.getVirtualFile();
     Document document = FileDocumentManager.getInstance().getCachedDocument(virtualFile);
     if (document != null) {
@@ -453,8 +449,7 @@ public class FileManagerImpl implements FileManager {
   PsiFile getCachedPsiFileInner(@NotNull VirtualFile file) {
     FileViewProvider fileViewProvider = myVFileToViewProviderMap.get(file);
     if (fileViewProvider == null) fileViewProvider = file.getUserData(myPsiHardRefKey);
-    return fileViewProvider instanceof AbstractFileViewProvider
-           ? ((AbstractFileViewProvider)fileViewProvider).getCachedPsi(fileViewProvider.getBaseLanguage()) : null;
+    return fileViewProvider != null ? ((AbstractFileViewProvider)fileViewProvider).getCachedPsi(fileViewProvider.getBaseLanguage()) : null;
   }
 
   @NotNull
@@ -462,9 +457,7 @@ public class FileManagerImpl implements FileManager {
   public List<PsiFile> getAllCachedFiles() {
     List<PsiFile> files = new ArrayList<>();
     for (FileViewProvider provider : myVFileToViewProviderMap.values()) {
-      if (provider instanceof AbstractFileViewProvider) {
-        ContainerUtil.addIfNotNull(files, ((AbstractFileViewProvider)provider).getCachedPsi(provider.getBaseLanguage()));
-      }
+      ContainerUtil.addIfNotNull(files, ((AbstractFileViewProvider)provider).getCachedPsi(provider.getBaseLanguage()));
     }
     return files;
   }
@@ -588,11 +581,6 @@ public class FileManagerImpl implements FileManager {
       return;
     }
 
-    FileViewProvider viewProvider = file.getViewProvider();
-    if (viewProvider instanceof AbstractFileViewProvider) {
-      ((AbstractFileViewProvider)viewProvider).onContentReload();
-    } else {
-      LOG.error("Invalid view provider: " + viewProvider + " of " + viewProvider.getClass());
-    }
+    ((AbstractFileViewProvider)file.getViewProvider()).onContentReload();
   }
 }

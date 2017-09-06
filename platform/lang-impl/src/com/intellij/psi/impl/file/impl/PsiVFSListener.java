@@ -375,14 +375,8 @@ public class PsiVFSListener implements VirtualFileListener {
     final String propertyName = event.getPropertyName();
     final VirtualFile vFile = event.getFile();
 
-    final FileViewProvider oldFileViewProvider = myFileManager.findCachedViewProvider(vFile);
-    final PsiFile oldPsiFile;
-    if (oldFileViewProvider instanceof AbstractFileViewProvider) {
-      oldPsiFile = ((AbstractFileViewProvider)oldFileViewProvider).getCachedPsi(oldFileViewProvider.getBaseLanguage());
-    }
-    else {
-      oldPsiFile = null;
-    }
+    FileViewProvider oldFileViewProvider = myFileManager.findCachedViewProvider(vFile);
+    PsiFile oldPsiFile = myFileManager.getCachedPsiFile(vFile);
 
     VirtualFile parent = vFile.getParent();
     final PsiDirectory parentDir = oldPsiFile != null && parent != null ? myFileManager.findDirectory(parent) : getCachedDirectory(parent);

@@ -545,9 +545,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     myOriginalFile = originalFile.getOriginalFile();
 
     FileViewProvider original = myOriginalFile.getViewProvider();
-    if (myViewProvider instanceof AbstractFileViewProvider && original instanceof AbstractFileViewProvider) {
-      ((AbstractFileViewProvider)original).registerAsCopy((AbstractFileViewProvider)myViewProvider);
-    }
+    ((AbstractFileViewProvider)original).registerAsCopy((AbstractFileViewProvider)myViewProvider);
   }
 
   @Override

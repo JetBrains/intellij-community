@@ -140,9 +140,9 @@ public class ActionButtonWithText extends ActionButton {
                                                      SwingConstants.CENTER, horizontalTextAlignment(),
                                                      SwingConstants.CENTER, horizontalTextPosition(),
                                                      viewRect, iconRect, textRect, iconTextSpace());
-    ActionButtonLook look = ActionButtonLook.DEFAULT_LOOK;
+    ActionButtonLook look = ActionButtonLook.SYSTEM_LOOK;
     look.paintBackground(g, this);
-    look.paintIconAt(g, this, icon, iconRect.x, iconRect.y);
+    look.paintIconAt(g, icon, iconRect.x, iconRect.y);
     look.paintBorder(g, this);
 
     UISettings.setupAntialiasing(g);
@@ -165,10 +165,12 @@ public class ActionButtonWithText extends ActionButton {
     return UIUtil.getInactiveTextColor();
   }
 
+  @SuppressWarnings("unused")
   public void setHorizontalTextPosition(@MagicConstant(valuesFromClass = SwingConstants.class) int position) {
     myHorizontalTextPosition = position;
   }
 
+  @SuppressWarnings("unused")
   public void setHorizontalTextAlignment(@MagicConstant(flagsFromClass = SwingConstants.class) int alignment) {
     myHorizontalTextAlignment = alignment;
   }

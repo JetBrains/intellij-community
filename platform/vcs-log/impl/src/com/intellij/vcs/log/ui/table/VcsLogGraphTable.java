@@ -93,6 +93,11 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   private static final int MAX_DEFAULT_AUTHOR_COLUMN_WIDTH = 300;
   private static final int MAX_ROWS_TO_CALC_WIDTH = 1000;
 
+  public static final String LOADING_COMMITS_TEXT = "Loading commits...";
+  public static final String CHANGES_LOG_TEXT = "Changes log";
+  public static final String NO_CHANGES_COMMITTED_TEXT = "No changes committed";
+  public static final String NO_COMMITS_MATCHING_TEXT = "No commits matching filters";
+
   @NotNull private final AbstractVcsLogUi myUi;
   @NotNull private final VcsLogData myLogData;
   @NotNull private final MyDummyTableCellEditor myDummyEditor = new MyDummyTableCellEditor();
@@ -121,7 +126,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     myGraphCommitCellRenderer = new GraphCommitCellRenderer(logData, graphCellPainter, this, true, false);
     myStringCellRenderer = new StringCellRenderer();
 
-    getEmptyText().setText("Changes Log");
+    getEmptyText().setText(CHANGES_LOG_TEXT);
     myLogData.getProgress().addProgressIndicatorListener(new MyProgressListener(), ui);
 
     initColumns();
@@ -166,6 +171,22 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     return Registry.is("vcs.log.speedsearch");
   }
 
+  @NotNull
+  private String getEmptyTextString() {
+    VisiblePack visiblePack = getModel().getVisiblePack();
+
+    if (visiblePack.getVisibleGraph().getVisibleCommitCount() == 0) {
+      if (visiblePack.getFilters().isEmpty()) {
+        return NO_CHANGES_COMMITTED_TEXT;
+      }
+      else {
+        return NO_COMMITS_MATCHING_TEXT;
+      }
+    }
+
+    return CHANGES_LOG_TEXT;
+  }
+
   public void updateDataPack(@NotNull VisiblePack visiblePack, boolean permGraphChanged) {
     Selection previousSelection = getSelection();
     boolean filtersChanged = !getModel().getVisiblePack().getFilters().equals(visiblePack.getFilters());
@@ -174,6 +195,10 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     previousSelection.restore(visiblePack.getVisibleGraph(), true, permGraphChanged);
     for (VcsLogHighlighter highlighter : myHighlighters) {
       highlighter.update(visiblePack, permGraphChanged);
+    }
+
+    if (!getEmptyText().getText().equals(LOADING_COMMITS_TEXT)) {
+      getEmptyText().setText(getEmptyTextString());
     }
 
     setPaintBusy(false);
@@ -880,17 +905,14 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   }
 
   private class MyProgressListener implements VcsLogProgress.ProgressListener {
-    @NotNull private String myText = "";
-
     @Override
     public void progressStarted() {
-      myText = getEmptyText().getText();
-      getEmptyText().setText("Loading History...");
+      getEmptyText().setText(LOADING_COMMITS_TEXT);
     }
 
     @Override
     public void progressStopped() {
-      getEmptyText().setText(myText);
+      getEmptyText().setText(getEmptyTextString());
     }
   }
 

@@ -87,8 +87,7 @@ class NonFinalInitialized {
 
 class NonFinalAssignedInside {
   String x;
-  // Should warn on the first trim
-  String y = x.trim()+(x = " foo ").trim();
+  String y = x.<warning descr="Method invocation 'trim' may produce 'java.lang.NullPointerException'">trim</warning>()+(x = " foo ").trim();
   String z = x.trim();
 }
 

@@ -58,8 +58,10 @@ public class JavaCreateFieldFromUsageHelper extends CreateFieldFromUsageHelper {
       builder.replaceElement(field.getInitializer(), new EmptyExpression());
       PsiIdentifier identifier = field.getNameIdentifier();
       builder.setEndVariableAfter(identifier);
-      field = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(field);
     }
+
+    field = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(field);
+
     editor.getCaretModel().moveToOffset(field.getTextRange().getStartOffset());
     Template template = builder.buildInlineTemplate();
     if (ExpectedTypesProvider.processExpectedTypes((ExpectedTypeInfo[])expectedTypes, new PsiTypeVisitor<PsiType>() {
