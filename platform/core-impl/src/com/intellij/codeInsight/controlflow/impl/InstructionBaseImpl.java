@@ -18,6 +18,7 @@ package com.intellij.codeInsight.controlflow.impl;
 import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -28,6 +29,7 @@ public abstract class InstructionBaseImpl implements Instruction {
   final List<Instruction> myPred = new SmartList<>();
   final List<Instruction> mySucc = new SmartList<>();
 
+  @Nullable
   protected final PsiElement myElement;
 
   @Override
@@ -40,16 +42,19 @@ public abstract class InstructionBaseImpl implements Instruction {
     myElement = element;
   }
 
+  @NotNull
   @Override
   public final Collection<Instruction> allSucc() {
     return mySucc;
   }
 
+  @NotNull
   @Override
   public final Collection<Instruction> allPred() {
     return myPred;
   }
 
+  @NotNull
   public String toString() {
     final StringBuilder builder = new StringBuilder();
     builder.append(num());
@@ -62,6 +67,7 @@ public abstract class InstructionBaseImpl implements Instruction {
     return builder.toString();
   }
 
+  @NotNull
   @Override
   public String getElementPresentation() {
     return "element: " + myElement;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,27 +15,8 @@
  */
 package com.intellij.codeInsight.controlflow;
 
-import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.Collection;
-
 /**
- * @author oleg
+ * Maker interface for instructions that can be replaced by direct connection between predecessors and successors
  */
-public interface Instruction {
-  @Nullable
-  PsiElement getElement();
-
-  @NotNull
-  Collection<Instruction> allSucc();
-
-  @NotNull
-  Collection<Instruction> allPred();
-
-  @NotNull
-  String getElementPresentation();
-
-  int num();
+public interface TransparentInstruction extends Instruction {
 }
