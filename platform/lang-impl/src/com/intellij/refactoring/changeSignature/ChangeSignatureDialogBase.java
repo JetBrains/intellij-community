@@ -215,6 +215,9 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
     return myParametersList == null ? myParametersTable : myParametersList.getTable();
   }
 
+  public boolean placeReturnTypeBeforeName() {
+    return true;
+  }
 
   @Override
   protected JComponent createNorthPanel() {
@@ -270,11 +273,20 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
       typePanel.add(typeLabel, BorderLayout.NORTH);
       IJSwingUtilities.adjustComponentsOnMac(typeLabel, myReturnTypeField);
       typePanel.add(myReturnTypeField, BorderLayout.SOUTH);
-      panel.add(typePanel, gbc);
-      gbc.gridx++;
+      if (placeReturnTypeBeforeName()) {
+        panel.add(typePanel, gbc);
+        gbc.gridx++;
+        panel.add(myNamePanel, gbc);
+      }
+      else {
+        panel.add(myNamePanel, gbc);
+        gbc.gridx++;
+        panel.add(typePanel, gbc);
+      }
     }
-
-    panel.add(myNamePanel, gbc);
+    else {
+      panel.add(myNamePanel, gbc);
+    }
 
     return panel;
   }
