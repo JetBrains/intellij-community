@@ -470,7 +470,7 @@ public class InjectedLanguageUtil {
     if (!delegate.isValid()) return;
 
     FileViewProvider viewProvider = psiManagerEx.getFileManager().findCachedViewProvider(delegate);
-    if (!(viewProvider instanceof AbstractFileViewProvider)) return;
+    if (viewProvider == null) return;
 
     for (PsiFile hostFile : ((AbstractFileViewProvider)viewProvider).getCachedPsiFiles()) {
       // modification of cachedInjectedDocuments must be under PsiLock
