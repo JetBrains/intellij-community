@@ -117,6 +117,7 @@ public abstract class PythonSdkFlavor {
     result.add(IronPythonSdkFlavor.INSTANCE);
     result.add(PyPySdkFlavor.INSTANCE);
     result.add(VirtualEnvSdkFlavor.INSTANCE);
+    result.add(CondaEnvSdkFlavor.INSTANCE);
     result.add(PyRemoteSdkFlavor.INSTANCE);
 
     return result;

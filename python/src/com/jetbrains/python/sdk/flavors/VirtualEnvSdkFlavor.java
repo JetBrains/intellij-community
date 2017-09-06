@@ -42,8 +42,6 @@ public class VirtualEnvSdkFlavor extends CPythonSdkFlavor {
   private VirtualEnvSdkFlavor() {
   }
   private final static String[] NAMES = new String[]{"jython", "pypy", "python.exe", "jython.bat", "pypy.exe"};
-  public final static String[] CONDA_DEFAULT_ROOTS = new String[]{"anaconda", "anaconda2", "anaconda3", "miniconda", "miniconda2",
-    "miniconda3", "Anaconda", "Anaconda2", "Anaconda3", "Miniconda", "Miniconda2", "Miniconda3"};
 
   public static VirtualEnvSdkFlavor INSTANCE = new VirtualEnvSdkFlavor();
 
@@ -60,10 +58,6 @@ public class VirtualEnvSdkFlavor extends CPythonSdkFlavor {
     final VirtualFile path = getDefaultLocation();
     if (path != null)
       candidates.addAll(findInDirectory(path));
-
-    for (VirtualFile file : getCondaDefaultLocations()) {
-      candidates.addAll(findInDirectory(file));
-    }
 
     final VirtualFile pyEnvLocation = getPyEnvDefaultLocations();
     if (pyEnvLocation != null) {
@@ -86,42 +80,6 @@ public class VirtualEnvSdkFlavor extends CPythonSdkFlavor {
       return userHome.findFileByRelativePath(".pyenv/versions");
     }
     return null;
-  }
-
-  public static List<VirtualFile> getCondaDefaultLocations() {
-    List<VirtualFile> roots = new ArrayList<>();
-    final VirtualFile userHome = LocalFileSystem.getInstance().findFileByPath(SystemProperties.getUserHome().replace('\\','/'));
-    if (userHome != null) {
-      final VirtualFile condaHidden = userHome.findChild(".conda");
-      if (condaHidden != null) {
-        addEnvsFolder(roots, condaHidden);
-      }
-      for (String root : CONDA_DEFAULT_ROOTS) {
-        VirtualFile condaFolder = userHome.findChild(root);
-        addEnvsFolder(roots, condaFolder);
-        if (SystemInfo.isWindows) {
-          final VirtualFile appData = userHome.findFileByRelativePath("AppData\\Local\\Continuum\\" + root);
-          addEnvsFolder(roots, appData);
-          condaFolder = LocalFileSystem.getInstance().findFileByPath("C:\\" + root);
-          addEnvsFolder(roots, condaFolder);
-        }
-        else {
-          final String systemWidePath = "/opt/anaconda";
-          condaFolder = LocalFileSystem.getInstance().findFileByPath(systemWidePath);
-          addEnvsFolder(roots, condaFolder);
-        }
-      }
-    }
-    return roots;
-  }
-
-  private static void addEnvsFolder(@NotNull final List<VirtualFile> roots, @Nullable final VirtualFile condaFolder) {
-    if (condaFolder != null) {
-      final VirtualFile envs = condaFolder.findChild("envs");
-      if (envs != null) {
-        roots.add(envs);
-      }
-    }
   }
 
   public static VirtualFile getDefaultLocation() {
