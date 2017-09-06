@@ -355,8 +355,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       DarculaLaf laf = new DarculaLaf();
       try {
         UIManager.setLookAndFeel(laf);
-        JBColor.setDark(true);
-        IconLoader.setUseDarkIcons(true);
+        updateForDarcula(true);
       }
       catch (Exception e) {
         Messages.showMessageDialog(
@@ -385,6 +384,11 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       }
     }
     myCurrentLaf = ObjectUtils.chooseNotNull(findLaf(lookAndFeelInfo.getClassName()), lookAndFeelInfo);
+  }
+
+  public static void updateForDarcula(boolean isDarcula) {
+    JBColor.setDark(isDarcula);
+    IconLoader.setUseDarkIcons(isDarcula);
   }
 
   public void setLookAndFeelAfterRestart(UIManager.LookAndFeelInfo lookAndFeelInfo) {
