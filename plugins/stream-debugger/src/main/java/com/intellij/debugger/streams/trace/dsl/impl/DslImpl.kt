@@ -34,6 +34,13 @@ class DslImpl(override val statementFactory: StatementFactory) : Dsl {
     return fragment.toCode(0)
   }
 
+  override fun map(keyType: GenericType, valueType: GenericType, name: String): MapVariable =
+    statementFactory.createMapVariable(keyType, valueType, name, false)
+
+
+  override fun linkedMap(keyType: GenericType, valueType: GenericType, name: String): MapVariable =
+    statementFactory.createMapVariable(keyType, valueType, name, true)
+
   override fun lambda(argName: String, init: LambdaBody.(Expression) -> Unit): Lambda {
     val lambdaBody = statementFactory.createEmptyLambdaBody(argName)
     lambdaBody.init(+argName)

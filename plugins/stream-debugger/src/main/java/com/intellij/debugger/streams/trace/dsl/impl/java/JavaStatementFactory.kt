@@ -19,6 +19,7 @@ import com.intellij.debugger.streams.trace.dsl.*
 import com.intellij.debugger.streams.trace.dsl.impl.AssignmentStatement
 import com.intellij.debugger.streams.trace.dsl.impl.TextExpression
 import com.intellij.debugger.streams.trace.dsl.impl.VariableImpl
+import com.intellij.debugger.streams.trace.impl.handler.type.GenericType
 
 /**
  * @author Vitaliy.Bibaev
@@ -65,4 +66,7 @@ class JavaStatementFactory : StatementFactory {
 
   override fun createAssignmentStatement(variable: Variable, expression: Expression): AssignmentStatement =
     JavaAssignmentStatement(variable, expression)
+
+  override fun createMapVariable(keyType: GenericType, valueType: GenericType, name: String, linked: Boolean): MapVariable =
+    JavaMapVariable(keyType, valueType, name, linked)
 }

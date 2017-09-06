@@ -17,6 +17,7 @@ package com.intellij.debugger.streams.trace.dsl.impl.kotlin
 
 import com.intellij.debugger.streams.trace.dsl.*
 import com.intellij.debugger.streams.trace.dsl.impl.AssignmentStatement
+import com.intellij.debugger.streams.trace.impl.handler.type.GenericType
 
 /**
  * @author Vitaliy.Bibaev
@@ -82,6 +83,10 @@ class KotlinStatementFactory : StatementFactory {
   }
 
   override fun createAssignmentStatement(variable: Variable, expression: Expression): AssignmentStatement {
+    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+  }
+
+  override fun createMapVariable(keyType: GenericType, valueType: GenericType, name: String, linked: Boolean): MapVariable {
     TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
   }
 }

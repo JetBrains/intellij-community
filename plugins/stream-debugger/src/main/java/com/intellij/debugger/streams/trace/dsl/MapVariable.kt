@@ -20,11 +20,11 @@ import com.intellij.debugger.streams.trace.impl.handler.type.GenericType
 /**
  * @author Vitaliy.Bibaev
  */
-interface MapVariable {
+interface MapVariable : Variable {
   val keyType: GenericType
   val valueType: GenericType
 
-  fun get(key: Expression): Expression
-  fun put(key: Expression, newValue: Expression): Expression
+  operator fun get(key: Expression): Expression
+  operator fun set(key: Expression, newValue: Expression): Expression
   fun contains(key: Expression): Expression
 }

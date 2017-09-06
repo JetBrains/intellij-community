@@ -16,6 +16,7 @@
 package com.intellij.debugger.streams.trace.dsl
 
 import com.intellij.debugger.streams.trace.dsl.impl.TextExpression
+import com.intellij.debugger.streams.trace.impl.handler.type.GenericType
 
 /**
  * @author Vitaliy.Bibaev
@@ -24,6 +25,10 @@ interface DslFactory {
   fun lambda(argName: String, init: LambdaBody.(Expression) -> Unit): Lambda
 
   fun variable(type: String, name: String): Variable
+
+  fun map(keyType: GenericType, valueType: GenericType, name: String): MapVariable
+
+  fun linkedMap(keyType: GenericType, valueType: GenericType, name: String): MapVariable
 
   fun declaration(variable: Variable, init: Expression, isMutable: Boolean): VariableDeclaration
 

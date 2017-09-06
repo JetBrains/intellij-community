@@ -16,6 +16,7 @@
 package com.intellij.debugger.streams.trace.dsl
 
 import com.intellij.debugger.streams.trace.dsl.impl.AssignmentStatement
+import com.intellij.debugger.streams.trace.impl.handler.type.GenericType
 
 /**
  * Contains language-dependent logic
@@ -52,4 +53,6 @@ interface StatementFactory {
   fun createIfBranch(condition: Expression, thenBlock: CodeBlock): IfBranch
 
   fun createAssignmentStatement(variable: Variable, expression: Expression): AssignmentStatement
+
+  fun createMapVariable(keyType: GenericType, valueType: GenericType, name: String, linked: Boolean): MapVariable
 }

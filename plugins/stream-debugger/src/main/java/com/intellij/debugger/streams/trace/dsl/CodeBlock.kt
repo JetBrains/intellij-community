@@ -25,6 +25,8 @@ interface CodeBlock : Statement {
 
   fun declare(variable: Variable, init: Expression, isMutable: Boolean): Variable
 
+  fun declare(declaration: VariableDeclaration): Variable
+
   fun forEachLoop(iterateVariable: Variable, collection: Expression, init: ForLoopBody.() -> Unit)
 
   fun forLoop(initialization: VariableDeclaration, condition: Expression, afterThought: Expression, init: ForLoopBody.() -> Unit)
