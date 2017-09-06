@@ -22,6 +22,7 @@ import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.introduceField.BaseExpressionToFieldHandler;
@@ -64,14 +65,21 @@ public class JavaCreateFieldFromUsageHelper extends CreateFieldFromUsageHelper {
 
     editor.getCaretModel().moveToOffset(field.getTextRange().getStartOffset());
     Template template = builder.buildInlineTemplate();
-    if (ExpectedTypesProvider.processExpectedTypes((ExpectedTypeInfo[])expectedTypes, new PsiTypeVisitor<PsiType>() {
+    if (disableShortenLongNames(project, ((ExpectedTypeInfo[])expectedTypes))) {
+      template.setToShortenLongNames(false);
+    }
+    return template;
+  }
+
+  private static boolean disableShortenLongNames(Project project, ExpectedTypeInfo[] expectedTypes) {
+    if (Registry.is("ide.create.field.enable.shortening")) return false;
+    return ExpectedTypesProvider.processExpectedTypes(expectedTypes, new PsiTypeVisitor<PsiType>() {
       @Nullable
       @Override
       public PsiType visitType(PsiType type) {
         return type;
       }
-    }, project).length > 1) template.setToShortenLongNames(false);
-    return template;
+    }, project).length > 1;
   }
 
   @Override
