@@ -85,20 +85,21 @@ class RunConfigHandlerExtensionManager {
 }
 
 class ApplicationRunConfigHandler: RunConfigHandlerExtension {
-  override fun process(module: Module, name: String, cfg: Map<String, String>) = process(module.project, name, cfg)
-
-  override fun process(project: Project, name: String, cfg: Map<String, String>) {
+  override fun process(module: Module, name: String, cfg: Map<String, String>) {
     val cfgType = ConfigurationTypeUtil.findConfigurationType<ApplicationConfigurationType>(
       ApplicationConfigurationType::class.java)
-    val runManager = RunManager.getInstance(project)
+    val runManager = RunManager.getInstance(module.project)
     val runnerAndConfigurationSettings = runManager.createConfiguration(name, cfgType.configurationFactories[0])
     val appConfig = runnerAndConfigurationSettings.configuration as ApplicationConfiguration
 
-    appConfig.MAIN_CLASS_NAME = cfg["className"]
+    appConfig.MAIN_CLASS_NAME = cfg["mainClass"]
     appConfig.VM_PARAMETERS   = cfg["jvmArgs"]
+    appConfig.setModule(module)
 
     runManager.addConfiguration(runnerAndConfigurationSettings)
   }
+
+  override fun process(project: Project, name: String, cfg: Map<String, String>) {}
 
   override fun canHandle(typeName: String): Boolean = typeName == "application"
 }

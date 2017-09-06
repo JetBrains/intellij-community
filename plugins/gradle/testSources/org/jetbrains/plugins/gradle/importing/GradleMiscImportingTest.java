@@ -214,7 +214,7 @@ public class GradleMiscImportingTest extends GradleImportingTestCase {
       "}\n" +
       "apply plugin: 'org.jetbrains.gradle.plugin.idea-ext'\n" +
       "idea {\n" +
-      "  project.settings {\n" +
+      "  module.settings {\n" +
       "    runConfigurations {\n" +
       "       app1 {\n" +
       "           type = 'application'\n" +
