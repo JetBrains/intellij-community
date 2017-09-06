@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,19 +17,22 @@ package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.StatusBarWidget;
-import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.*;
 import com.intellij.ui.EditorTextField;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
+
 public abstract class EditorBasedWidget implements StatusBarWidget, FileEditorManagerListener {
+  public static final String SWING_FOCUS_OWNER_PROPERTY = "focusOwner";
+
   protected StatusBar myStatusBar;
   protected Project myProject;
 
@@ -70,6 +73,23 @@ public abstract class EditorBasedWidget implements StatusBarWidget, FileEditorMa
            editor.getComponent().isShowing() &&
            !Boolean.TRUE.equals(editor.getUserData(EditorTextField.SUPPLEMENTARY_KEY)) &&
            WindowManager.getInstance().getStatusBar(editor.getComponent(), editor.getProject()) == myStatusBar;
+  }
+  
+  Component getFocusedComponent() {
+    Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+    if (focusOwner == null) {
+      IdeFocusManager focusManager = IdeFocusManager.getInstance(myProject);
+      IdeFrame frame = focusManager.getLastFocusedFrame();
+      if (frame != null) {
+        focusOwner = focusManager.getLastFocusedFor(frame);
+      }
+    }
+    return focusOwner;
+  }
+
+  Editor getFocusedEditor() {
+    Component component = getFocusedComponent();
+    return component instanceof EditorComponentImpl ? ((EditorComponentImpl)component).getEditor() : getEditor();
   }
 
   @Nullable
