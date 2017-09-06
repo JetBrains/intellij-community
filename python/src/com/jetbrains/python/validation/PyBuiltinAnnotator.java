@@ -45,12 +45,11 @@ public class PyBuiltinAnnotator extends PyAnnotator {
       final PsiElement parent = node.getParent();
       if (parent instanceof PyDecorator) {
         // don't mark the entire decorator, only mark the "@", else we'll conflict with deco annotator
-        ann = getHolder().createInfoAnnotation(parent.getFirstChild(), null); // first child is there, or we'd not parse as deco
+        addHighlightingAnnotation(parent.getFirstChild(), PyHighlighter.PY_BUILTIN_NAME);
       }
       else {
-        ann = getHolder().createInfoAnnotation(node, null);
+        addHighlightingAnnotation(node, PyHighlighter.PY_BUILTIN_NAME);
       }
-      ann.setTextAttributes(PyHighlighter.PY_BUILTIN_NAME);
     }
   }
 
@@ -77,8 +76,7 @@ public class PyBuiltinAnnotator extends PyAnnotator {
         if (astNode != null) {
           final ASTNode tgt = astNode.findChildByType(PyTokenTypes.IDENTIFIER); // only the id, not all qualifiers subtree
           if (tgt != null) {
-            final Annotation ann = getHolder().createInfoAnnotation(tgt, null);
-            ann.setTextAttributes(PyHighlighter.PY_PREDEFINED_USAGE);
+            addHighlightingAnnotation(tgt, PyHighlighter.PY_PREDEFINED_USAGE);
             return true;
           }
         }

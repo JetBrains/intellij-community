@@ -1,2 +1,2 @@
-def <info descr="null">f</info>(<info descr="null">p1</info>: <info descr="null"><info descr="PY.ANNOTATION">int</info></info>, <info descr="null">p2</info>: <info descr="null"><info descr="PY.ANNOTATION">int</info></info> = 42):
-    <info descr="null"><info descr="PY.FUNCTION_CALL">print</info></info>(<info descr="null">p1</info>, <info descr="null">p2</info>)
+def <info descr="PY.FUNC_DEFINITION">f</info>(<info descr="PY.PARAMETER">p1</info>: <info descr="PY.ANNOTATION"><info descr="PY.BUILTIN_NAME">int</info></info>, <info descr="PY.PARAMETER">p2</info>: <info descr="PY.ANNOTATION"><info descr="PY.BUILTIN_NAME">int</info></info> = 42):
+    <info descr="PY.BUILTIN_NAME"><info descr="PY.FUNCTION_CALL">print</info></info>(<info descr="PY.PARAMETER">p1</info>, <info descr="PY.PARAMETER">p2</info>)

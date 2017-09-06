@@ -15,14 +15,20 @@
  */
 package com.jetbrains.python.validation;
 
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.annotation.Annotation;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
 public abstract class PyAnnotator extends PyElementVisitor {
+  private final boolean myTestMode = ApplicationManager.getApplication().isUnitTestMode();
   private AnnotationHolder _holder;
 
   public AnnotationHolder getHolder() {
@@ -45,5 +51,15 @@ public abstract class PyAnnotator extends PyElementVisitor {
 
   protected void markError(PsiElement element, String message) {
     getHolder().createErrorAnnotation(element, message);
+  }
+
+  protected void addHighlightingAnnotation(@NotNull PsiElement target, @NotNull TextAttributesKey key) {
+    final String message = myTestMode ? key.getExternalName() : null;
+    final Annotation annotation = getHolder().createInfoAnnotation(target, message);
+    annotation.setTextAttributes(key);
+  }
+
+  protected void addHighlightingAnnotation(@NotNull ASTNode target, @NotNull TextAttributesKey key) {
+    addHighlightingAnnotation(target.getPsi(), key);
   }
 }
