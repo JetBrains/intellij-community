@@ -17,6 +17,7 @@ package com.intellij.testGuiFramework.impl
 
 import com.intellij.openapi.util.Ref
 import com.intellij.testGuiFramework.framework.GuiTestUtil
+import com.intellij.ui.EngravedLabel
 import org.fest.swing.core.ComponentMatcher
 import org.fest.swing.core.GenericTypeMatcher
 import org.fest.swing.core.Robot
@@ -32,6 +33,7 @@ import java.awt.Component
 import java.awt.Container
 import java.util.*
 import java.util.concurrent.TimeUnit
+import javax.swing.JDialog
 import javax.swing.JLabel
 import javax.swing.JRadioButton
 
@@ -236,6 +238,28 @@ object GuiTestUtilKt {
 
   fun <ComponentType : Component?> waitUntilGone(robot: Robot, timeoutInSeconds: Int = 30, root: Container? = null, matcher: GenericTypeMatcher<ComponentType>) {
     return GuiTestUtil.waitUntilGone(robot, root, timeoutInSeconds, matcher)
+  }
+
+  fun GuiTestCase.waitProgressDialogUntilGone(dialogTitle: String, timeoutToAppearInSeconds: Int = 5, timeoutToGoneInSeconds: Int = 60) {
+    waitProgressDialogUntilGone(this.myRobot, dialogTitle, timeoutToAppearInSeconds, timeoutToGoneInSeconds)
+  }
+
+  fun waitProgressDialogUntilGone(robot: Robot, progressTitle: String, timeoutToAppearInSeconds: Int = 5, timeoutToGoneInSeconds: Int = 60) {
+    //wait dialog appearance. In a bad case we could pass dialog appearance.
+    var dialog: JDialog? = null
+    try {
+      waitUntil("progress dialog with title $progressTitle will appear", timeoutToAppearInSeconds) {
+        dialog = findProgressDialog(robot, progressTitle)
+        dialog != null
+      }
+    } catch (timeoutError: WaitTimedOutError) { return }
+    waitUntil("progress dialog with title $progressTitle will gone", timeoutToGoneInSeconds) { dialog == null || !dialog!!.isShowing }
+  }
+
+  fun findProgressDialog(robot: Robot, progressTitle: String): JDialog? {
+    return robot.finder().findAll(typeMatcher(JDialog::class.java) {
+      findAllWithBFS(it, EngravedLabel::class.java).filter { it.isShowing && it.text == progressTitle }.any()
+    } ).firstOrNull()
   }
 
   fun <ComponentType : Component?> typeMatcher(componentTypeClass: Class<ComponentType>,
