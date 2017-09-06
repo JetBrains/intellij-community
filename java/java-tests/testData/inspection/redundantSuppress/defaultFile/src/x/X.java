@@ -4,7 +4,7 @@ class S {
     public void f() {
         //noinspection HardCodedStringLiteral
         String s=null;
-        //noinspection HardCodedStringLiteral
+        //noinspection unused, HardCodedStringLiteral
         String s2="sssssss";
     }
     @SuppressWarnings({"HardCodedStringLiteral"})
