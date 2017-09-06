@@ -172,6 +172,27 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
     }
   }
 
+  fun testMapGet() {
+    doTest {
+      val map = map(GenericType.INT, GenericType.OBJECT, "map")
+      +map[+"key"]
+    }
+  }
+
+  fun testMapPut() {
+    doTest {
+      val map = map(GenericType.INT, GenericType.OBJECT, "map")
+      +map.set(+"key", +"value")
+    }
+  }
+
+  fun testMapContains() {
+    doTest {
+      val map = map(GenericType.INT, GenericType.OBJECT, "map")
+      +map.contains(+"key")
+    }
+  }
+
   fun testArrayDeclaration() {
     doTest {
       declare(array("int", "a"), false)
