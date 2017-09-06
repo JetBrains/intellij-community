@@ -50,7 +50,7 @@ public class GrTupleImpl extends GroovyPsiElementImpl implements GrTuple {
   @Override
   public GrTupleAssignmentExpression getParent() {
     PsiElement parent = super.getParent();
-    assert parent == null || parent instanceof GrTupleAssignmentExpression;
+    assert parent == null || parent instanceof GrTupleAssignmentExpression : parent.getClass().getName();
     return (GrTupleAssignmentExpression)parent;
   }
 
