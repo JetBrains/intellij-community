@@ -54,3 +54,10 @@ fun JvmClass.toJavaClassOrNull(): PsiClass? {
   if (this.language != JavaLanguage.INSTANCE) return null
   return this
 }
+
+internal val visibilityModifiers = setOf(
+  JvmModifier.PUBLIC,
+  JvmModifier.PROTECTED,
+  JvmModifier.PACKAGE_LOCAL,
+  JvmModifier.PRIVATE
+)

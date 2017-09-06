@@ -132,13 +132,6 @@ private fun extractRenderData(targetClass: PsiClass, request: CreateFieldRequest
   )
 }
 
-private val visibilityModifiers = setOf(
-  JvmModifier.PUBLIC,
-  JvmModifier.PROTECTED,
-  JvmModifier.PACKAGE_LOCAL,
-  JvmModifier.PRIVATE
-)
-
 private val constantModifiers = setOf(
   JvmModifier.STATIC,
   JvmModifier.FINAL
