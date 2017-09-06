@@ -16,8 +16,6 @@
 package com.jetbrains.python.validation;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.annotation.Annotation;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.highlighting.PyHighlighter;
@@ -31,10 +29,10 @@ import static com.jetbrains.python.psi.PyUtil.as;
 public class HighlightingAnnotator extends PyAnnotator {
   @Override
   public void visitPyParameter(PyParameter node) {
-    PyFunction function = PsiTreeUtil.getParentOfType(node, PyFunction.class);
+    final PyFunction function = PsiTreeUtil.getParentOfType(node, PyFunction.class);
     if (function != null) {
-      final Annotation annotation = getHolder().createInfoAnnotation(node.getFirstChild(), null);
-      annotation.setTextAttributes(node.isSelf() ? PyHighlighter.PY_SELF_PARAMETER : PyHighlighter.PY_PARAMETER);
+      final TextAttributesKey attrKey = node.isSelf() ? PyHighlighter.PY_SELF_PARAMETER : PyHighlighter.PY_PARAMETER;
+      addHighlightingAnnotation(node.getFirstChild(), attrKey);
     }
   }
 
@@ -42,12 +40,12 @@ public class HighlightingAnnotator extends PyAnnotator {
   public void visitPyReferenceExpression(PyReferenceExpression node) {
     final String referencedName = node.getReferencedName();
     if (!node.isQualified() && referencedName != null) {
-      PyFunction function = PsiTreeUtil.getParentOfType(node, PyFunction.class);
+      final PyFunction function = PsiTreeUtil.getParentOfType(node, PyFunction.class);
       if (function != null) {
         final PyNamedParameter element = function.getParameterList().findParameterByName(referencedName);
         if (element != null) {
-          Annotation annotation = getHolder().createInfoAnnotation(node, null);
-          annotation.setTextAttributes(element.isSelf() ? PyHighlighter.PY_SELF_PARAMETER : PyHighlighter.PY_PARAMETER);
+          final TextAttributesKey attrKey = element.isSelf() ? PyHighlighter.PY_SELF_PARAMETER : PyHighlighter.PY_PARAMETER;
+          addHighlightingAnnotation(node, attrKey);
         }
       }
     }
@@ -55,10 +53,9 @@ public class HighlightingAnnotator extends PyAnnotator {
 
   @Override
   public void visitPyKeywordArgument(PyKeywordArgument node) {
-    ASTNode keywordNode = node.getKeywordNode();
+    final ASTNode keywordNode = node.getKeywordNode();
     if (keywordNode != null) {
-      Annotation annotation = getHolder().createInfoAnnotation(keywordNode, null);
-      annotation.setTextAttributes(PyHighlighter.PY_KEYWORD_ARGUMENT);
+      addHighlightingAnnotation(keywordNode, PyHighlighter.PY_KEYWORD_ARGUMENT);
     }
   }
 
@@ -69,9 +66,7 @@ public class HighlightingAnnotator extends PyAnnotator {
       final ASTNode functionName = callee.getNameElement();
       if (functionName != null) {
         final TextAttributesKey attrKey = callee.isQualified() ? PyHighlighter.PY_METHOD_CALL : PyHighlighter.PY_FUNCTION_CALL;
-        final String message = ApplicationManager.getApplication().isUnitTestMode() ? attrKey.getExternalName() : null;
-        final Annotation annotation = getHolder().createInfoAnnotation(functionName, message);
-        annotation.setTextAttributes(attrKey);
+        addHighlightingAnnotation(functionName, attrKey);
       }
     }
   }
@@ -80,9 +75,7 @@ public class HighlightingAnnotator extends PyAnnotator {
   public void visitPyAnnotation(PyAnnotation node) {
     final PyExpression value = node.getValue();
     if (value != null) {
-      final String message = ApplicationManager.getApplication().isUnitTestMode() ? PyHighlighter.PY_ANNOTATION.getExternalName() : null;
-      final Annotation annotation = getHolder().createInfoAnnotation(value, message);
-      annotation.setTextAttributes(PyHighlighter.PY_ANNOTATION);
+      addHighlightingAnnotation(value, PyHighlighter.PY_ANNOTATION);
     }
   }
 }
