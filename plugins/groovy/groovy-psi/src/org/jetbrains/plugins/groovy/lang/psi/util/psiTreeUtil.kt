@@ -19,59 +19,33 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.PsiScopeProcessor
+import com.intellij.psi.util.parents
+import com.intellij.util.withPrevious
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.DECLARATION_SCOPE_PASSED
 
-fun PsiElement.getParents() = treeSequence(this) { it.parent }
-
 /**
- * Creates sequence of pairs of elements corresponding to tree walk up by contexts.
- *
- * Each element of the sequence is a pair of [PsiElement]s
- * where the first element is current parent and the second element is previous parent.
- *
  * @receiver element to start from
- * @see treeWalkUp
+ * @return sequence of context elements
  */
-fun PsiElement.getContexts(): Sequence<Pair<PsiElement, PsiElement?>> = treeSequence(this) { it.context }
-
-private fun treeSequence(start: PsiElement?, next: (PsiElement) -> PsiElement?) =
-  object : Sequence<Pair<PsiElement, PsiElement?>> {
-    override fun iterator() = treeIterator(start, next)
-  }
-
-private fun treeIterator(start: PsiElement?, next: (PsiElement) -> PsiElement?) =
-  object : Iterator<Pair<PsiElement, PsiElement?>> {
-    private var currentElement: PsiElement? = start
-    private var previousElement: PsiElement? = null
-
-    override fun hasNext() = currentElement != null
-
-    override fun next(): Pair<PsiElement, PsiElement?> {
-      ProgressManager.checkCanceled()
-      val current = currentElement!!
-      val result = current to previousElement
-      previousElement = current
-      currentElement = next(current)
-      return result
-    }
-  }
+fun PsiElement.contexts(): Sequence<PsiElement> = generateSequence(this) {
+  ProgressManager.checkCanceled()
+  it.context
+}
 
 @JvmOverloads
 fun PsiElement.treeWalkUp(processor: PsiScopeProcessor, state: ResolveState = ResolveState.initial()): Boolean {
-  for ((scope, lastParent) in getContexts()) {
+  for ((scope, lastParent) in contexts().withPrevious()) {
     if (!scope.processDeclarations(processor, state, lastParent, this)) return false
     processor.handleEvent(DECLARATION_SCOPE_PASSED, scope)
   }
   return true
 }
 
-fun PsiElement.skipParentsOfType(vararg types: Class<*>): Pair<PsiElement, PsiElement?>? = skipParentsOfType(true, *types)
+inline fun <reified T : PsiElement> PsiElement.skipParentsOfType() = skipParentsOfType(true, T::class.java)
 
-fun PsiElement.skipParentsOfType(strict: Boolean, vararg types: Class<*>): Pair<PsiElement, PsiElement?>? {
-  val seq = if (strict) getParents().drop(1) else getParents()
-  for (parents in seq) {
-    if (parents.first.javaClass in types) continue
-    return parents
+fun PsiElement.skipParentsOfType(strict: Boolean = false, vararg types: Class<*>): Pair<PsiElement, PsiElement?>? {
+  val seq = parents().withPrevious().drop(if (strict) 1 else 0)
+  return seq.firstOrNull { (parent, _) ->
+    parent.javaClass !in types
   }
-  return null
 }
