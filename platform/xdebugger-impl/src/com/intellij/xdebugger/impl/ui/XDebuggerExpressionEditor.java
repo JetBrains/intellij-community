@@ -90,6 +90,7 @@ public class XDebuggerExpressionEditor extends XDebuggerEditorBase {
       myEditorTextField.setFont(EditorUtil.getEditorFont());
     }
     myComponent = decorate(myEditorTextField, multiline, showEditor);
+    setExpression(myExpression);
   }
 
   @Override
