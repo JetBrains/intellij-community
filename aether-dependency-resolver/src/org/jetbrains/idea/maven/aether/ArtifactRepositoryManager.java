@@ -136,8 +136,8 @@ public class ArtifactRepositoryManager {
   public Collection<Artifact> resolveDependencyAsArtifact(String groupId, String artifactId, String versionConstraint,  Set<ArtifactKind> artifactKinds, boolean includeTransitiveDependencies) throws Exception {final List<Artifact> artifacts = new ArrayList<>();
     final Set<VersionConstraint> constraints = Collections.singleton(asVersionConstraint(versionConstraint));
     for (ArtifactKind kind : artifactKinds) {
-      //RepositorySystem.resolveDependencies() ignores classifiers, so we need to collect dependencies for the default classifier, and then
-      // resolve artifacts with specified classifiers for each found dependency
+      // RepositorySystem.resolveDependencies() ignores classifiers, so we need to set classifiers explicitly for discovered dependencies.
+      // Because of that we have to first discover deps and then resolve corresponding artifacts
       try {
         final List<ArtifactRequest> requests;
         if (includeTransitiveDependencies) {
