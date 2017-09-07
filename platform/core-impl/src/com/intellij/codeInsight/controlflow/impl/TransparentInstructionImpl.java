@@ -21,7 +21,7 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class TransparentInstructionImpl extends MutableInstructionImpl implements TransparentInstruction {
+public class TransparentInstructionImpl extends DetachedInstructionImpl implements TransparentInstruction {
   
   @NotNull
   private final String myMarkerName;
