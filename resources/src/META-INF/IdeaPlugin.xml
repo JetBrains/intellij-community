@@ -358,6 +358,8 @@
                         overrides="true"/>
     <applicationService serviceInterface="com.intellij.packageDependencies.DependenciesVisitorFactory"
                         serviceImplementation="com.intellij.packageDependencies.JavaDependenciesVisitorFactory"/>
+    <applicationService serviceInterface="com.intellij.openapi.module.ModuleTypeManager"
+                        serviceImplementation="com.intellij.openapi.module.impl.JavaAwareModuleTypeManagerImpl"/>
     <projectService serviceInterface="com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper"
                     serviceImplementation="com.intellij.ide.projectView.impl.JavaProjectViewDirectoryHelper"/>
     <projectService serviceInterface="com.intellij.usages.impl.rules.DirectoryGroupingRule"

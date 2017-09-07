@@ -773,8 +773,6 @@
     <codeFoldingOptionsProvider instance="com.intellij.application.options.editor.JavaCodeFoldingOptionsProvider"/>
     <autoImportOptionsProvider instance="com.intellij.application.options.editor.JavaAutoImportOptions"/>
     <errorOptionsProvider instance="com.intellij.profile.codeInspection.ui.JavaErrorOptionsProvider"/>
-    <applicationService serviceInterface="com.intellij.openapi.module.ModuleTypeManager"
-                        serviceImplementation="com.intellij.openapi.module.impl.JavaAwareModuleTypeManagerImpl"/>
     <overrideImplementsAnnotationsHandler implementation="com.intellij.codeInsight.generation.OverrideImplementsAnnotationsHandlerImpl"/>
     <codeInsight.changeVariableTypeQuickFixProvider
         implementation="com.intellij.codeInsight.daemon.impl.quickfix.VariableTypeQuickFixProvider"/>
@@ -807,6 +805,17 @@
                     serviceImplementation="com.intellij.codeInsight.NullableNotNullManagerImpl"/>
     <regExpLanguageHost forClass="com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl"
                         implementationClass="com.intellij.psi.impl.JavaRegExpHost"/>
+    <applicationService serviceInterface="com.intellij.psi.impl.file.PsiPackageImplementationHelper"
+                        serviceImplementation="com.intellij.psi.impl.file.PsiPackageImplementationHelperImpl"/>
+    <projectService serviceInterface="com.intellij.codeInsight.ExternalAnnotationsManager"
+                    serviceImplementation="com.intellij.codeInsight.ExternalAnnotationsManagerImpl"/>
+    <projectService serviceInterface="com.intellij.codeInsight.InferredAnnotationsManager"
+                    serviceImplementation="com.intellij.codeInsight.InferredAnnotationsManagerImpl"/>
+
+    <moduleExtension implementation="com.intellij.openapi.roots.impl.JavaModuleExternalPathsImpl"/>
+
+    <orderRootType implementation="com.intellij.openapi.roots.AnnotationOrderRootType"/>
+    <orderRootType implementation="com.intellij.openapi.roots.JavadocOrderRootType"/>
 
     <lang.namesValidator language="JAVA" implementationClass="com.intellij.lang.refactoring.JavaNamesValidator"/>
 

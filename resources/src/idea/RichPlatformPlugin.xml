@@ -151,9 +151,6 @@
     <applicationService serviceInterface="com.intellij.packaging.elements.PackagingElementFactory"
                         serviceImplementation="com.intellij.packaging.impl.elements.PackagingElementFactoryImpl"/>
 
-    <applicationService serviceInterface="com.intellij.psi.impl.file.PsiPackageImplementationHelper"
-                        serviceImplementation="com.intellij.psi.impl.file.PsiPackageImplementationHelperImpl"/>
-
     <applicationService serviceInterface="com.intellij.openapi.roots.ui.OrderEntryAppearanceService"
                         serviceImplementation="com.intellij.openapi.roots.ui.OrderEntryAppearanceServiceImpl"/>
 
@@ -165,12 +162,6 @@
 
     <projectService serviceInterface="com.intellij.lang.injection.InjectedLanguageManager"
                     serviceImplementation="com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl"/>
-
-    <projectService serviceInterface="com.intellij.codeInsight.ExternalAnnotationsManager"
-                    serviceImplementation="com.intellij.codeInsight.ExternalAnnotationsManagerImpl"/>
-
-    <projectService serviceInterface="com.intellij.codeInsight.InferredAnnotationsManager"
-                    serviceImplementation="com.intellij.codeInsight.InferredAnnotationsManagerImpl"/>
 
     <projectService serviceInterface="com.intellij.task.ProjectTaskManager"
                     serviceImplementation="com.intellij.task.impl.ProjectTaskManagerImpl"/>
@@ -340,11 +331,10 @@
     <keymapExtension implementation="com.intellij.debugger.actions.DebuggerKeymapExtension"/>
 
     <moduleExtension implementation="com.intellij.openapi.roots.LanguageLevelModuleExtensionImpl"/>
-    <moduleExtension implementation="com.intellij.openapi.roots.impl.JavaModuleExternalPathsImpl"/>
 
-    <orderRootType implementation="com.intellij.openapi.roots.AnnotationOrderRootType"/>
     <orderRootType implementation="com.intellij.openapi.roots.NativeLibraryOrderRootType"/>
-    <orderRootType implementation="com.intellij.openapi.roots.JavadocOrderRootType"/>
+
+    <codeUsageScopeOptimizer implementation="com.intellij.compiler.JavaCompilerReferencesCodeUsageScopeOptimizer"/>
 
 
     <stepsBeforeRunProvider implementation="com.intellij.compiler.options.CompileStepBeforeRun" id="compileBeforeRun"/>
