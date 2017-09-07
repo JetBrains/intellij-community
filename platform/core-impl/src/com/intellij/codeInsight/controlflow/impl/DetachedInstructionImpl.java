@@ -22,15 +22,15 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class MutableInstructionImpl extends InstructionBaseImpl {
+public class DetachedInstructionImpl extends InstructionBaseImpl {
 
   private final AtomicInteger myNum = new AtomicInteger();
 
-  public MutableInstructionImpl(@Nullable PsiElement element) {
+  public DetachedInstructionImpl(@Nullable PsiElement element) {
     super(element);
   }
 
-  public MutableInstructionImpl(@Nullable PsiElement element, @NotNull ControlFlowBuilder builder) {
+  public DetachedInstructionImpl(@Nullable PsiElement element, @NotNull ControlFlowBuilder builder) {
     super(element);
     addNodeFor(builder);
   }
