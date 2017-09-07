@@ -26,6 +26,7 @@ import com.intellij.psi.codeStyle.presentation.CodeStyleSettingPresentation;
 import com.intellij.ui.OptionGroup;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.fields.IntegerField;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -144,7 +145,7 @@ public class CodeStyleBlankLinesPanel extends CustomizableLanguageCodeStylePanel
     if (renamed != null) title = renamed;
 
     JBLabel l = new JBLabel(title);
-    optionGroup.add(l, option.myTextField);
+    optionGroup.add(l, option.myIntField);
     myOptions.add(option);
   }
 
@@ -181,7 +182,7 @@ public class CodeStyleBlankLinesPanel extends CustomizableLanguageCodeStylePanel
   public void showAllStandardOptions() {
     myAllOptionsAllowed = true;
     for (IntOption option : myOptions) {
-      option.myTextField.setEnabled(true);
+      option.myIntField.setEnabled(true);
     }
   }
 
@@ -191,10 +192,10 @@ public class CodeStyleBlankLinesPanel extends CustomizableLanguageCodeStylePanel
       Collections.addAll(myAllowedOptions, optionNames);
     }
     for (IntOption option : myOptions) {
-      option.myTextField.setEnabled(false);
+      option.myIntField.setEnabled(false);
       for (String optionName : optionNames) {
         if (option.myTarget.getName().equals(optionName)) {
-          option.myTextField.setEnabled(true);
+          option.myIntField.setEnabled(true);
           break;
         }
       }
@@ -223,7 +224,7 @@ public class CodeStyleBlankLinesPanel extends CustomizableLanguageCodeStylePanel
 
     for (IntOption option : myOptions) {
       if (option.myTarget.getName().equals(fieldName)) {
-        option.myTextField.setEnabled(true);
+        option.myIntField.setEnabled(true);
       }
     }
   }
@@ -234,12 +235,12 @@ public class CodeStyleBlankLinesPanel extends CustomizableLanguageCodeStylePanel
       myRenamedFields.put(fieldName, newTitle);
     }
     for (IntOption option : myOptions) {
-      option.myTextField.invalidate();
+      option.myIntField.invalidate();
     }
   }
 
   private class IntOption {
-    private final JTextField myTextField;
+    private final IntegerField myIntField;
     private final Field myTarget;
     private Class<? extends CustomCodeStyleSettings> myTargetClass;
     private int myCurrValue = Integer.MAX_VALUE;
@@ -253,6 +254,7 @@ public class CodeStyleBlankLinesPanel extends CustomizableLanguageCodeStylePanel
       myTargetClass = targetClass;
     }
 
+    @SuppressWarnings("unused") // dummy is used to distinguish constructors
     private IntOption(Class<?> fieldClass, String fieldName, boolean dummy) {
       try {
         myTarget = fieldClass.getField(fieldName);
@@ -260,8 +262,9 @@ public class CodeStyleBlankLinesPanel extends CustomizableLanguageCodeStylePanel
       catch (NoSuchFieldException e) {
         throw new RuntimeException(e);
       }
-      myTextField = new JTextField(6);
-      myTextField.setMinimumSize(new Dimension(30, myTextField.getMinimumSize().height));
+      myIntField = new IntegerField(0, 10);
+      myIntField.setColumns(6);
+      myIntField.setMinimumSize(new Dimension(30, myIntField.getMinimumSize().height));
     }
 
     private int getFieldValue(CodeStyleSettings settings) {
@@ -294,7 +297,7 @@ public class CodeStyleBlankLinesPanel extends CustomizableLanguageCodeStylePanel
 
     private int getValue() {
       try {
-        myCurrValue = Integer.parseInt(myTextField.getText());
+        myCurrValue = Integer.parseInt(myIntField.getText());
         if (myCurrValue < 0) {
           myCurrValue = 0;
         }
@@ -312,7 +315,7 @@ public class CodeStyleBlankLinesPanel extends CustomizableLanguageCodeStylePanel
     public void setValue(int fieldValue) {
       if (fieldValue != myCurrValue) {
         myCurrValue = fieldValue;
-        myTextField.setText(String.valueOf(fieldValue));
+        myIntField.setText(String.valueOf(fieldValue));
       }
     }
   }
