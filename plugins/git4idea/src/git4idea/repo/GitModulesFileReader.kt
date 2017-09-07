@@ -23,7 +23,7 @@ import java.util.regex.Pattern
 
 class GitModulesFileReader {
   private val LOG = logger<GitModulesFileReader>()
-  private val MODULE_SECTION = Pattern.compile("submodule \"(.*)\"")
+  private val MODULE_SECTION = Pattern.compile("submodule \"(.*)\"", Pattern.CASE_INSENSITIVE)
 
   fun read(file: File): Collection<GitSubmoduleInfo> {
     if (!file.exists()) return listOf()
