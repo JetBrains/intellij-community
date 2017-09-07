@@ -28,9 +28,15 @@ public interface Instruction {
   @Nullable
   PsiElement getElement();
 
+  /**
+   * Outgoing edges
+   */
   @NotNull
   Collection<Instruction> allSucc();
 
+  /**
+   * Incoming edges
+   */
   @NotNull
   Collection<Instruction> allPred();
 
@@ -38,4 +44,10 @@ public interface Instruction {
   String getElementPresentation();
 
   int num();
+
+  /**
+   * 
+   * @param newNum
+   */
+  default void updateNum(int newNum) {}
 }

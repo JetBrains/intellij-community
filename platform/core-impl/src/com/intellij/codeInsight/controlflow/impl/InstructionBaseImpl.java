@@ -26,8 +26,8 @@ import java.util.List;
 
 public abstract class InstructionBaseImpl implements Instruction {
 
-  final List<Instruction> myPred = new SmartList<>();
-  final List<Instruction> mySucc = new SmartList<>();
+  private final List<Instruction> myPred = new SmartList<>();
+  private final List<Instruction> mySucc = new SmartList<>();
 
   @Nullable
   protected final PsiElement myElement;

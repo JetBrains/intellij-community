@@ -30,22 +30,32 @@ public class MutableInstructionImpl extends InstructionBaseImpl {
     super(element);
   }
 
+  public MutableInstructionImpl(@Nullable PsiElement element, @NotNull ControlFlowBuilder builder) {
+    super(element);
+    addNodeFor(builder);
+  }
+
   @Override
   public int num() {
     return myNum.get();
   }
 
-  public final void insertNodeFor(@NotNull ControlFlowBuilder builder) {
+  public final void addNodeForWithoutConnection(@NotNull ControlFlowBuilder builder) {
     assert myNum.get() == 0;
     builder.instructions.add(this);
     int newId = builder.instructionCount++;
-    myNum.set(newId);
+    updateNum(newId);
   }
 
   public final void addNodeFor(@NotNull ControlFlowBuilder builder) {
     assert myNum.get() == 0;
     builder.addNode(this);
     int newId = builder.instructionCount++;
-    myNum.set(newId);
+    updateNum(newId);
+  }
+
+  @Override
+  public void updateNum(int newNum) {
+    myNum.set(newNum);
   }
 }

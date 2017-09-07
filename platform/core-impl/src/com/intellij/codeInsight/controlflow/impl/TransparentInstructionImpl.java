@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,29 +16,29 @@
 package com.intellij.codeInsight.controlflow.impl;
 
 import com.intellij.codeInsight.controlflow.ControlFlowBuilder;
+import com.intellij.codeInsight.controlflow.TransparentInstruction;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author oleg
- */
-public class InstructionImpl extends InstructionBaseImpl {
+public class TransparentInstructionImpl extends MutableInstructionImpl implements TransparentInstruction {
+  
+  @NotNull
+  private final String myMarkerName;
 
-  private volatile int myNumber;
-
-  public InstructionImpl(@NotNull final ControlFlowBuilder builder, @Nullable final PsiElement element) {
+  public TransparentInstructionImpl(@Nullable PsiElement element, @NotNull String markerName) {
     super(element);
-    myNumber = builder.instructionCount++;
+    myMarkerName = markerName;
   }
 
-  @Override
-  public final int num() {
-    return myNumber;
+  public TransparentInstructionImpl(@Nullable PsiElement element, @NotNull String markerName, @NotNull ControlFlowBuilder builder) {
+    super(element, builder);
+    myMarkerName = markerName;
   }
 
+  @NotNull
   @Override
-  public void updateNum(int newNum) {
-    myNumber = newNum;
+  public String getElementPresentation() {
+    return super.getElementPresentation() + " marker(" + myMarkerName + ")";
   }
 }
