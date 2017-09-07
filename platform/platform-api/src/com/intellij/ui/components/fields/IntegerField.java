@@ -15,18 +15,39 @@
  */
 package com.intellij.ui.components.fields;
 
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class IntegerField extends AbstractValueInputField<Integer> {
 
-  private final int myMinValue;
-  private final int myMaxValue;
+  private int myMinValue;
+  private int myMaxValue;
+
+  public IntegerField() {
+    this(Integer.MIN_VALUE, Integer.MAX_VALUE);
+  }
 
   public IntegerField(int minValue, int maxValue) {
     super(minValue);
     myMinValue = minValue;
+    myMaxValue = maxValue;
+  }
+
+  public int getMinValue() {
+    return myMinValue;
+  }
+
+  public int getMaxValue() {
+    return myMaxValue;
+  }
+
+  public void setMinValue(int minValue) {
+    myMinValue = minValue;
+  }
+
+  public void setMaxValue(int maxValue) {
     myMaxValue = maxValue;
   }
 
@@ -35,16 +56,16 @@ public class IntegerField extends AbstractValueInputField<Integer> {
   protected ParseResult parseValue(@Nullable String text) {
     try {
       if (StringUtil.isEmpty(text)) {
-        return new ParseResult("A value is expected");
+        return new ParseResult(ApplicationBundle.message("integer.field.value.expected"));
       }
       int value = Integer.parseInt(text);
       if (value < myMinValue || value > myMaxValue) {
-        return new ParseResult("The value must be within the range [" + myMinValue + ".." + myMaxValue + "]");
+        return new ParseResult(ApplicationBundle.message("integer.field.value.out.of.range", value, myMinValue, myMaxValue));
       }
       return new ParseResult(value);
     }
     catch (NumberFormatException nfe) {
-      return new ParseResult("The text must be a number within the range [" + myMinValue + ".." + myMaxValue + "]");
+      return new ParseResult(ApplicationBundle.message("integer.field.value.not.a.number", text));
     }
   }
 
