@@ -152,7 +152,7 @@ public class ArtifactRepositoryManager {
         }
         else {
           requests = new ArrayList<>();
-          for (Artifact artifact : toArtifacts(groupId, artifactId, constraints, artifactKinds)) {
+          for (Artifact artifact : toArtifacts(groupId, artifactId, constraints, Collections.singleton(kind))) {
             requests.add(new ArtifactRequest(artifact, Collections.unmodifiableList(myRemoteRepositories), null));
           }
         }
