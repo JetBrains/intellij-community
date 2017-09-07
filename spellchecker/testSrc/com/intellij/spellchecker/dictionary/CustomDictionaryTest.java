@@ -30,6 +30,7 @@ import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.openapi.util.io.FileUtil.createTempDirectory;
 import static com.intellij.openapi.vfs.VfsUtil.findFileByIoFile;
 
 public class CustomDictionaryTest extends SpellcheckerInspectionTestCase {
@@ -37,6 +38,8 @@ public class CustomDictionaryTest extends SpellcheckerInspectionTestCase {
   private static final String NEW_TEST_DIC = "new_" + TEST_DIC;
   private static final String TEST_DIC_AFTER = TEST_DIC + ".after";
   private static final String TEMP_DIC = TEST_DIC + ".temp";
+  private static final String TEST_DIC_DIR = "testDir" ;
+  public static final String TEMP = "temp";
   private List<String> oldPaths;
   SpellCheckerSettings settings;
   SpellCheckerManager spellCheckerManager;
@@ -186,5 +189,173 @@ public class CustomDictionaryTest extends SpellcheckerInspectionTestCase {
   public void testUtf16LEDict() throws IOException {
     doNewDictTest();
   }
-  
+
+  public void testMoveDict() throws IOException {
+    final VirtualFile tempDir = findFileByIoFile(createTempDirectory(TEST_DIC_DIR, TEMP), true);
+    final VirtualFile testDir = findFileByIoFile(new File(getTestDictDirectory()), true);
+    final VirtualFile file = testDir.findChild(TEST_DIC_AFTER);
+    
+    try {
+      doBeforeCheck();
+      
+      WriteAction.run(() -> {
+        final VirtualFile copy = file.copy(this, tempDir, TEST_DIC);
+        copy.move(this, testDir);
+      });
+      doAfterCheck();
+    }
+    finally {
+      //back to initial state
+      WriteAction.run(() -> {
+        tempDir.delete(this);
+        testDir.findChild(TEST_DIC).delete(this);
+      });
+    }
+  }
+
+  public void testMoveDictOutside() throws IOException {
+    final VirtualFile tempDir = findFileByIoFile(createTempDirectory(TEST_DIC_DIR, TEMP), true);
+    final VirtualFile testDir = findFileByIoFile(new File(getTestDictDirectory()), true);
+    final VirtualFile file = testDir.findChild(TEST_DIC);
+    moveFileToDirAndCheck(file,testDir, tempDir);
+  }
+
+  public void testMoveNotInDictFolder() throws IOException {
+    final VirtualFile tempDir1 = findFileByIoFile(createTempDirectory(TEST_DIC_DIR, TEMP + "1"), true);
+    final VirtualFile tempDir2 = findFileByIoFile(createTempDirectory(TEST_DIC_DIR, TEMP + "2"), true);
+    
+    final VirtualFile testDir = findFileByIoFile(new File(getTestDictDirectory()), true);
+    final VirtualFile file = testDir.findChild(TEST_DIC_AFTER);
+    WriteAction.run(() -> file.copy(this, tempDir1, TEST_DIC));
+
+    try {
+      doBeforeCheck();
+      WriteAction.run(() -> tempDir1.findChild(TEST_DIC).move(this, tempDir2));
+      doAfterCheck();
+    }
+    finally {
+      //back to initial state
+      WriteAction.run(() -> {
+        tempDir1.delete(this);
+        tempDir2.delete(this);
+      });
+    }
+  }
+
+  public void testMoveInsideDictFolders() throws IOException {
+    final VirtualFile testDir = findFileByIoFile(new File(getTestDictDirectory()), true);
+    final VirtualFile file = testDir.findChild(TEST_DIC);
+
+    final String yetAnotherDirName = "yetAnotherDir";
+    WriteAction.run(() -> testDir.createChildDirectory(this, yetAnotherDirName));
+    final VirtualFile anotherDir = testDir.findChild(yetAnotherDirName);
+    moveFileToDirAndCheck(file, testDir, anotherDir);
+  }
+
+  private void moveFileToDirAndCheck(VirtualFile file, VirtualFile from, VirtualFile to) throws IOException {
+    try {
+      doBeforeCheck();
+      WriteAction.run(() -> file.move(this, to));
+      doAfterCheck();
+    }
+    finally {
+      //back to initial state
+      WriteAction.run(() -> {
+        to.findChild(TEST_DIC).move(this, from);
+        to.delete(this);
+      });
+    }
+  }
+
+  public void testRenameToDict() throws IOException {
+    final VirtualFile file = findFileByIoFile(Paths.get(getTestDictDirectory(), TEST_DIC_AFTER).toFile(), true);
+    try {
+      doBeforeCheck();
+      WriteAction.run(() -> file.rename(this, TEST_DIC));
+      doAfterCheck();
+    }
+    finally {
+      //back to initial state
+      WriteAction.run(() -> file.rename(this, TEST_DIC_AFTER));
+    }
+  }
+
+  public void testRenameToTxt() throws IOException {
+    final VirtualFile file = findFileByIoFile(Paths.get(getTestDictDirectory(), TEST_DIC).toFile(), true);
+    try {
+      doBeforeCheck();
+      WriteAction.run(() -> file.rename(this, "test.txt"));
+      doAfterCheck();
+    }
+    finally {
+      //back to initial state
+      WriteAction.run(() -> file.rename(this, TEST_DIC));
+    }
+  }
+
+  public void testRenameStillDicExtension() throws IOException {
+    final VirtualFile file = findFileByIoFile(Paths.get(getTestDictDirectory(), TEST_DIC).toFile(), true);
+    try {
+      doBeforeCheck();
+      WriteAction.run(() -> file.rename(this, "still.dic"));
+      doAfterCheck();
+    }
+    finally {
+      //back to initial state
+      WriteAction.run(() -> file.rename(this, TEST_DIC));
+    }
+  }
+
+  public void testRenameStillNotDicExtension() throws IOException {
+    final VirtualFile file = findFileByIoFile(Paths.get(getTestDictDirectory(), TEST_DIC_AFTER).toFile(), true);
+    try {
+      doBeforeCheck();
+      WriteAction.run(() -> file.rename(this, "still_not_dic.extension"));
+      doAfterCheck();
+    }
+    finally {
+      //back to initial state
+      WriteAction.run(() -> file.rename(this, TEST_DIC_AFTER));
+    }
+  }
+
+
+  public void testRemoveDictDir() throws IOException {
+    final VirtualFile tempDir = findFileByIoFile(createTempDirectory(TEST_DIC_DIR, TEMP), true);
+    final VirtualFile testDir = findFileByIoFile(new File(getTestDictDirectory()), true);
+    final VirtualFile testDictDir = testDir.findChild(TEST_DIC_DIR);
+    try {
+      doBeforeCheck();
+      WriteAction.run(() -> {
+        testDictDir.copy(this, tempDir, TEST_DIC_DIR); // to revert it back
+        testDictDir.delete(this);
+      });
+      doAfterCheck();
+    }
+    finally {
+      //back to initial state
+      WriteAction.run(() -> {
+        tempDir.findChild(TEST_DIC_DIR).copy(this, testDir, TEST_DIC_DIR);
+        tempDir.delete(this);
+      });
+    }
+  }
+
+  public void testAddDictDir() throws IOException {
+    final VirtualFile testDir = findFileByIoFile(new File(getTestDictDirectory()), true);
+    final VirtualFile tempDir = findFileByIoFile(createTempDirectory(TEST_DIC_DIR, TEMP), true);
+    WriteAction.run(() -> testDir.findChild(TEST_DIC_AFTER).copy(this, tempDir, TEST_DIC));
+    try {
+      doBeforeCheck();
+      WriteAction.run(() -> tempDir.copy(this, testDir, TEST_DIC_DIR));
+      doAfterCheck();
+    }
+    finally {
+      //back to initial state
+      WriteAction.run(() -> {
+        testDir.findChild(TEST_DIC_DIR).delete(this);
+        tempDir.delete(this);
+      });
+    }
+  }
 }
