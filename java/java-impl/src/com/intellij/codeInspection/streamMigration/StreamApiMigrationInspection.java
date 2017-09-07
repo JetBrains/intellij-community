@@ -441,9 +441,9 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
 
       BaseStreamApiMigration migration = findMigration(statement, body, tb, SUGGEST_FOREACH, REPLACE_TRIVIAL_FOREACH);
       if (migration == null || (!myIsOnTheFly && !migration.isShouldWarn())) return;
-      MigrateToStreamFix[] fixes = {new MigrateToStreamFix(migration, null)};
+      MigrateToStreamFix[] fixes = {new MigrateToStreamFix(migration)};
       if (migration instanceof ForEachMigration && !(tb.getLastOperation() instanceof CollectionStream)) { //for .stream()
-        fixes = ArrayUtil.append(fixes, new MigrateToStreamFix(new ForEachMigration(migration.isShouldWarn(), "forEachOrdered"), null));
+        fixes = ArrayUtil.append(fixes, new MigrateToStreamFix(new ForEachMigration(migration.isShouldWarn(), "forEachOrdered")));
       }
       ProblemHighlightType highlightType =
         migration.isShouldWarn() ? ProblemHighlightType.GENERIC_ERROR_OR_WARNING : ProblemHighlightType.INFORMATION;

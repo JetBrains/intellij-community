@@ -29,7 +29,6 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
@@ -38,18 +37,16 @@ import static com.intellij.util.ObjectUtils.tryCast;
  */
 class MigrateToStreamFix implements LocalQuickFix {
   private BaseStreamApiMigration myMigration;
-  @Nullable private final String myCustomName;
 
-  protected MigrateToStreamFix(BaseStreamApiMigration migration, @Nullable String customName) {
+  protected MigrateToStreamFix(BaseStreamApiMigration migration) {
     myMigration = migration;
-    myCustomName = customName;
   }
 
   @Nls
   @NotNull
   @Override
   public String getName() {
-    return myCustomName!= null? myCustomName: "Replace with "+myMigration.getReplacement();
+    return "Replace with "+myMigration.getReplacement();
   }
 
   @SuppressWarnings("DialogTitleCapitalization")
