@@ -244,6 +244,18 @@ public class ControlFlowBuilder {
     }
   }
 
+  public void updatePendingElementScope(@NotNull PsiElement parentForScope,
+                                        @NotNull PsiElement newParentScope) {
+    processPending((pendingScope, instruction) -> {
+      if (pendingScope != null && PsiTreeUtil.isAncestor(parentForScope, pendingScope, false)) {
+        addPendingEdge(newParentScope, instruction);
+      }
+      else {
+        addPendingEdge(pendingScope, instruction);
+      }
+    });
+  }
+
 
   @FunctionalInterface
   public interface PendingProcessor {
