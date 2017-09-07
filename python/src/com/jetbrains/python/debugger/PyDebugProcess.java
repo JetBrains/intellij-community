@@ -33,7 +33,6 @@ import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
@@ -43,6 +42,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -544,7 +544,9 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     passToCurrentThread(context, ResumeOrStepCommand.Mode.STEP_INTO_MY_CODE);
   }
 
-  public void startSetNextStatement(@Nullable XSuspendContext context, XSourcePosition sourcePosition, Editor editor) {
+  public void startSetNextStatement(@Nullable XSuspendContext context,
+                                    XSourcePosition sourcePosition,
+                                    PyDebugCallback<Pair<Boolean, String>> callback) {
     if (!checkCanPerformCommands()) return;
     getSession().sessionResumed();
     dropFrameCaches();
@@ -552,7 +554,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
       String threadId = threadIdBeforeResumeOrStep(context);
       for (PyThreadInfo suspendedThread : mySuspendedThreads) {
         if (threadId == null || threadId.equals(suspendedThread.getId())) {
-          myDebugger.setNextStatement(threadId, sourcePosition, getFunctionName(sourcePosition), editor);
+          myDebugger.setNextStatement(threadId, sourcePosition, getFunctionName(sourcePosition), callback);
           break;
         }
       }

@@ -5,7 +5,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.Pair;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.frame.XValueChildrenList;
@@ -327,11 +327,11 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
   }
 
   @Override
-  public boolean setNextStatement(String threadId,
-                                  XSourcePosition sourcePosition,
-                                  String functionName,
-                                  Editor editor) {
-    return debugger(threadId).setNextStatement(threadId, sourcePosition, functionName, editor);
+  public void setNextStatement(String threadId,
+                               XSourcePosition sourcePosition,
+                               String functionName,
+                               PyDebugCallback<Pair<Boolean, String>> callback) {
+    debugger(threadId).setNextStatement(threadId, sourcePosition, functionName, callback);
   }
 
   @Override

@@ -9,7 +9,6 @@ import com.google.common.collect.Maps;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
@@ -403,13 +402,12 @@ public class RemoteDebugger implements ProcessDebugger {
   }
 
   @Override
-  public boolean setNextStatement(String threadId,
-                                  XSourcePosition sourcePosition,
-                                  String functionName,
-                                  Editor editor) {
-    final SetNextStatementCommand command = new SetNextStatementCommand(this, threadId, sourcePosition, functionName, editor);
+  public void setNextStatement(String threadId,
+                               XSourcePosition sourcePosition,
+                               String functionName,
+                               PyDebugCallback<Pair<Boolean, String>> callback) {
+    final SetNextStatementCommand command = new SetNextStatementCommand(this, threadId, sourcePosition, functionName, callback);
     execute(command);
-    return command.isSucceeded();
   }
 
   @Override
