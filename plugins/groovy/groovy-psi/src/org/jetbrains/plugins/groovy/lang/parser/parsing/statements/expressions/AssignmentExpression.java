@@ -46,12 +46,11 @@ public class AssignmentExpression {
           if (!parse(builder, parser, comExprAllowed)) {
             builder.error(GroovyBundle.message("expression.expected"));
           }
-          marker.done(GroovyElementTypes.TUPLE_ASSIGNMENT_EXPRESSION);
         }
         else {
           builder.error(GroovyBundle.message("assign.expected"));
-          marker.drop();
         }
+        marker.done(GroovyElementTypes.TUPLE_ASSIGNMENT_EXPRESSION);
       }
       else {
         if (ParserUtils.getToken(builder, TokenSets.ASSIGNMENTS)) {
