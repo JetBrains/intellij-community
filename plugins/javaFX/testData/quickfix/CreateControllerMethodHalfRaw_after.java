@@ -9,5 +9,6 @@ public class CreateControllerMethodHalfRaw {
     TableView<Map> table;
 
     public void onSort(SortEvent<TableView<Map>> tableViewSortEvent) {
+
     }
 }

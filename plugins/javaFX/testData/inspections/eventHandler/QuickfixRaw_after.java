@@ -6,5 +6,6 @@ public class QuickfixRaw {
   @FXML TableView table;
 
     public void onSort(SortEvent<TableView> tableViewSortEvent) {
+
     }
 }
