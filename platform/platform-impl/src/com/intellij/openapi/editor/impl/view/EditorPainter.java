@@ -664,9 +664,9 @@ class EditorPainter implements TextDrawingCallback {
         boolean containsInnerLines = endPosition.line > startPosition.line + 1;
         int lineHeight = myView.getLineHeight() - 1;
         int leadingTopY = myView.visualLineToY(startPosition.line) + yShift;
-        int leadingBottomY = leadingTopY + lineHeight + yShift;
+        int leadingBottomY = leadingTopY + lineHeight;
         int trailingTopY = myView.visualLineToY(endPosition.line) + yShift;
-        int trailingBottomY = trailingTopY + lineHeight + yShift;
+        int trailingBottomY = trailingTopY + lineHeight;
         float start = 0;
         float end = 0;
         float leftGap = leadingRanges.get(0) - (containsInnerLines ? minX : trailingRanges.get(0));
