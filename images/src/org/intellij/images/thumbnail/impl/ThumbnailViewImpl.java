@@ -157,6 +157,11 @@ final class ThumbnailViewImpl implements ThumbnailView {
     }
   }
 
+  @Override
+  public void refresh() {
+    updateUI();
+  }
+
   private void updateUI() {
     if (isVisible()) {
       setTitle();

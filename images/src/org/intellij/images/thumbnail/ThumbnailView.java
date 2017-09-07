@@ -91,4 +91,9 @@ public interface ThumbnailView extends Disposable, ImageComponentDecorator {
    */
   @Nullable
   TagFilter[] getTagFilters();
+
+  /**
+   * update UI: preview visibility, etc
+   */
+  void refresh();
 }
