@@ -163,7 +163,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
   }
 
   /**
-   * Returns a {@code JBIterable} containing the one {@code element}.
+   * Returns a {@code JBIterable} containing the one {@code element} if is not null.
    */
   @NotNull
   public static <E> JBIterable<E> of(@Nullable E element) {
@@ -204,24 +204,28 @@ public abstract class JBIterable<E> implements Iterable<E> {
     });
   }
 
+  /**
+   * Returns iterator, useful for graph traversal.
+   *
+   * @see TreeTraversal.TracingIt
+   */
   @NotNull
   public <T extends Iterator<E>> T typedIterator() {
     return (T) iterator();
   }
 
-  public boolean processEach(@NotNull Processor<E> processor) {
+  public final boolean processEach(@NotNull Processor<E> processor) {
     return ContainerUtil.process(this, processor);
   }
 
-  public void consumeEach(@NotNull Consumer<E> consumer) {
+  public final void consumeEach(@NotNull Consumer<E> consumer) {
     for (E e : this) {
       consumer.consume(e);
     }
   }
 
   /**
-   * Returns a string representation of this iterable up to 50 elements, with the format
-   * {@code (e1, e2, ..., en [, ...] )} for debugging purposes.
+   * Returns a string representation of this iterable for debugging purposes.
    */
   @NotNull
   @Override
@@ -269,7 +273,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
   }
 
   /**
-   * Returns a {@code JBIterable} whose iterators traverse first the elements of this iterable,
+   * Returns a {@code JBIterable} which iterators traverse first the elements of this iterable,
    * followed by those of {@code other}. The iterators are not polled until necessary.
    * <p/>
    * <p>The returned iterable's {@code Iterator} supports {@code remove()} when the corresponding
@@ -292,17 +296,21 @@ public abstract class JBIterable<E> implements Iterable<E> {
   }
 
   /**
-   * Returns a {@code JBIterable} whose iterators traverse first the elements of this iterable,
-   * followed by {@code elements}.
+   * Returns a {@code JBIterable} which iterators traverse first the elements of this iterable,
+   * followed by the {@code elements}.
    */
   @NotNull
   public final JBIterable<E> append(@NotNull E[] elements) {
     return this == EMPTY ? of(elements) : append(Arrays.asList(elements));
   }
 
+  /**
+   * Returns a {@code JBIterable} which iterators traverse first the elements of this iterable,
+   * followed by {@code element} if it is not null.
+   */
   @NotNull
-  public final JBIterable<E> append(@Nullable E e) {
-    return e == null ? this : this == EMPTY ? of(e) : append(Collections.singleton(e));
+  public final JBIterable<E> append(@Nullable E element) {
+    return element == null ? this : this == EMPTY ? of(element) : append(Collections.singleton(element));
   }
 
   /**
@@ -541,6 +549,28 @@ public abstract class JBIterable<E> implements Iterable<E> {
   }
 
   /**
+   * Returns the iterable which elements are interleaved with the separator.
+   */
+  @NotNull
+  public final JBIterable<E> join(@Nullable final E separator) {
+    return intercept(new Function<Iterator<E>, Iterator<E>>() {
+      @Override
+      public Iterator<E> fun(Iterator<E> iterator) {
+        final Iterator<E> original = iterator;
+        return new JBIterator<E>() {
+          boolean flag;
+          @Override
+          protected E nextImpl() {
+            if (!original.hasNext()) return stop();
+            return (flag = !flag) ? original.next() : separator;
+          }
+        };
+      }
+    });
+  }
+
+
+  /**
    * Splits this {@code JBIterable} into iterable of lists of the specified size.
    * If 'strict' flag is true only groups of size 'n' are returned.
    */
@@ -653,6 +683,15 @@ public abstract class JBIterable<E> implements Iterable<E> {
    */
   public final boolean isNotEmpty() {
     return !isEmpty();
+  }
+
+  /**
+   * Collects all items and returns them as the new {@code JBIterable}.
+   * This is equivalent to calling {@code JBIterable.from(addAllTo(c))}.
+   */
+  @NotNull
+  public final JBIterable<E> collect(@NotNull Collection<E> collection) {
+    return from(addAllTo(collection));
   }
 
   /**
