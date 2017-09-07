@@ -22,14 +22,12 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -241,44 +239,7 @@ public class ControlFlowBuilder {
     final List<Instruction> result = instructions;
     return new ControlFlowImpl(result.toArray(new Instruction[result.size()]));
   }
-
-  @NotNull
-  public List<Pair<PsiElement, Instruction>> getExpectedPredecessors(@Nullable final PsiElement condition) {
-    if (condition == null) return Collections.singletonList(Pair.create(null, prevInstruction));
-
-    final List<Pair<PsiElement, Instruction>> candidates = new SmartList<>();
-    candidates.add(Pair.create(null, prevInstruction));
-
-    for (int i = pending.size() - 1; i >= 0; i--) {
-      final Pair<PsiElement, Instruction> pair = pending.get(i);
-      final PsiElement scopeWhenToAdd = pair.getFirst();
-      if (scopeWhenToAdd == null) {
-        continue;
-      }
-      if (PsiTreeUtil.isAncestor(scopeWhenToAdd, condition, false)) {
-        break;
-      }
-
-      candidates.add(pair);
-    }
-
-    return candidates;
-  }
-
-  public void restorePredecessors(@NotNull List<Pair<PsiElement, Instruction>> predecessors) {
-    if (!predecessors.isEmpty()) {
-      boolean isFirst = true;
-      for (Pair<PsiElement, Instruction> predecessor : predecessors) {
-        if (isFirst) {
-          prevInstruction = predecessor.second;
-          isFirst = false;
-          continue;
-        }
-        addPendingEdge(predecessor.first, predecessor.second);
-      }
-    }
-  }
-
+  
   public void updatePendingElementScope(@NotNull PsiElement parentForScope,
                                         @NotNull PsiElement newParentScope) {
     processPending((pendingScope, instruction) -> {
