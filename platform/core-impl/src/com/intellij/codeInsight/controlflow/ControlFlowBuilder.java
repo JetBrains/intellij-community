@@ -69,7 +69,7 @@ public class ControlFlowBuilder {
    * @param beginInstruction Begin of new edge
    * @param endInstruction   End of new edge
    */
-  public void addEdge(final Instruction beginInstruction, final Instruction endInstruction) {
+  public void addEdge(@Nullable final Instruction beginInstruction, @Nullable final Instruction endInstruction) {
     if (beginInstruction == null || endInstruction == null) {
       return;
     }

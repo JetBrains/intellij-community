@@ -50,6 +50,7 @@ public class DetachedInstructionImpl extends InstructionBaseImpl {
   public final void addNodeWithConnection(@NotNull ControlFlowBuilder builder) {
     assert myNum.get() == 0;
     builder.addNode(this);
+    builder.checkPending(this);
     int newId = builder.instructionCount++;
     updateNum(newId);
   }
