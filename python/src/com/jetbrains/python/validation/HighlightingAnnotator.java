@@ -17,7 +17,9 @@ package com.jetbrains.python.validation;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.psi.*;
 
@@ -76,6 +78,16 @@ public class HighlightingAnnotator extends PyAnnotator {
     final PyExpression value = node.getValue();
     if (value != null) {
       addHighlightingAnnotation(value, PyHighlighter.PY_ANNOTATION);
+    }
+  }
+
+  @Override
+  public void visitElement(PsiElement element) {
+    // Highlight None, True and False as keywords once again inside annotations after PyHighlighter
+    // to keep their original color similarly to builtin symbols.
+    if (PyTokenTypes.EXPRESSION_KEYWORDS.contains(element.getNode().getElementType()) &&
+        PsiTreeUtil.getParentOfType(element, PyAnnotation.class) != null) {
+      addHighlightingAnnotation(element, PyHighlighter.PY_KEYWORD);
     }
   }
 }
