@@ -24,8 +24,10 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.actions.AbstractToggleUseSoftWrapsAction;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -363,6 +365,22 @@ public abstract class XDebuggerEditorBase implements Expandable {
     }
   }
 
+  protected static void foldNewLines(EditorEx editor) {
+    FoldingModelEx foldingModel = editor.getFoldingModel();
+    CharSequence text = editor.getDocument().getCharsSequence();
+    foldingModel.runBatchFoldingOperation(() -> {
+      foldingModel.clearFoldRegions();
+      for (int i = 0; i < text.length(); i++) {
+        if (text.charAt(i) == '\n') {
+          FoldRegion region = foldingModel.createFoldRegion(i, i + 1, "\u23ce", null, true);
+          if (region != null) {
+            region.setExpanded(false);
+          }
+        }
+      }
+    });
+  }
+
   protected void prepareEditor(Editor editor) {
   }
 
@@ -413,6 +431,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
         Editor baseEditor = getEditor();
         if (baseEditor != null) {
           WriteAction.run(() -> baseEditor.getDocument().setText(expressionEditor.getExpression().getExpression()));
+          foldNewLines((EditorEx)baseEditor);
           Editor newEditor = expressionEditor.getEditor();
           if (newEditor != null) {
             copyCaretPosition(newEditor, baseEditor);

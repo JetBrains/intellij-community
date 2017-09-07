@@ -203,6 +203,7 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
           if (showMultiline) {
             setExpandable(editor);
           }
+          foldNewLines(editor);
         }
       };
       myDelegate.getEditorComponent().setFontInheritedFromLAF(false);
