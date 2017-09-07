@@ -1035,7 +1035,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
 
     try {
       final FoldRegion[] fold = new FoldRegion[1];
-      editor.getFoldingModel().runBatchFoldingOperation(() -> fold[0] = editor.getFoldingModel().addFoldRegion(0, 2, ""));
+      editor.getFoldingModel().runBatchFoldingOperation(() -> fold[0] = editor.getFoldingModel().addFoldRegion(0, 2, "..."));
       RangeMarker marker = document.createRangeMarker(0, 2);
       document.deleteString(1,2);
 
