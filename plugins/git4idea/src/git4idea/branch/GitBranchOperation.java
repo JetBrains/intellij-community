@@ -245,7 +245,10 @@ abstract class GitBranchOperation {
    */
   protected void updateRecentBranch(@Nullable String branchName) {
     if (branchName != null) {
-      myProject.getMessageBus().syncPublisher(BranchChangeListener.VCS_BRANCH_CHANGED).branchHasChanged(branchName);
+      ApplicationManager.getApplication().invokeLater(() -> {
+        if (myProject.isDisposed()) return;
+        myProject.getMessageBus().syncPublisher(BranchChangeListener.VCS_BRANCH_CHANGED).branchHasChanged(branchName);
+      });
     }
     if (getRepositories().size() == 1) {
       GitRepository repository = myRepositories.iterator().next();

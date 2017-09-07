@@ -22,6 +22,7 @@ public class BranchContextTracker implements BranchChangeListener, StartupActivi
 
   @Override
   public void branchHasChanged(@NotNull String branchName) {
+    myContextManager.clearContext();
     myContextManager.loadContext(getContextName(branchName));
   }
 
