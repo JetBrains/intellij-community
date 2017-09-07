@@ -10,6 +10,7 @@ import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileVisitor
@@ -20,6 +21,8 @@ import com.intellij.util.io.PersistentHashMap
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.psi.PyFileElementType
+import com.jetbrains.python.psi.impl.stubs.PyPrebuiltStubsProvider.PREBUILT_INDEXES_PATH_PROPERTY
 import com.jetbrains.python.psi.impl.stubs.PyPrebuiltStubsProvider.SDK_STUBS_STORAGE_NAME
 import junit.framework.TestCase
 import java.io.ByteArrayInputStream
@@ -33,6 +36,14 @@ import java.util.*
 val stubsFileName = SDK_STUBS_STORAGE_NAME
 
 val MERGE_STUBS_FROM_PATHS = "MERGE_STUBS_FROM_PATHS"
+
+val path: String? = System.getProperty(PREBUILT_INDEXES_PATH_PROPERTY)
+val baseDir = if (path != null && File(path).exists()) {
+  path
+}
+else {
+  System.getProperty("user.dir")
+}
 
 fun main(args: Array<String>) {
   if (System.getenv().containsKey(MERGE_STUBS_FROM_PATHS)) {
@@ -50,7 +61,8 @@ fun mergeStubs(paths: List<String>) {
 
   try {
     val stubExternalizer = StubTreeExternalizer()
-    val stubsFilePath = "${System.getProperty("user.dir")}/$stubsFileName"
+
+    val stubsFilePath = "$baseDir/$stubsFileName"
 
     val storageFile = File(stubsFilePath + ".input")
     if (storageFile.exists()) {
@@ -132,13 +144,14 @@ fun mergeStubs(paths: List<String>) {
 
     println("Total items in storage: $total")
 
+    writeVersionFile()
+
     for (i in 2..paths.size) {
       val count = map.entries.stream().filter({ e -> e.value == i }).count()
       println("Intersection between $i: ${"%.2f".format(if (total > 0) 100.0 * count / total else 0.0)}%")
     }
   }
   finally {
-
     UIUtil.invokeAndWaitIfNeeded(Runnable {
       ProjectManager.getInstance().closeProject(project)
       WriteAction.run<Throwable> {
@@ -160,12 +173,12 @@ fun buildStubs() {
     val root = System.getenv(PYCHARM_PYTHONS)
 
     for (python in File(root).listFiles()) {
-      indexSdkAndStoreSerializedStubs("${PathManager.getHomePath()}/python/testData/empty",
-                                      python.absolutePath,
-                                      "${System.getProperty("user.dir")}/$stubsFileName")
+        indexSdkAndStoreSerializedStubs("${PathManager.getHomePath()}/python/testData/empty",
+                                        python.absolutePath,
+                                        "$baseDir/$stubsFileName")
     }
   }
-  catch (e: Exception) {
+  catch (e: Throwable) {
     e.printStackTrace()
   }
   finally {
@@ -244,6 +257,8 @@ fun indexSdkAndStoreSerializedStubs(projectPath: String, sdkPath: String, stubsF
     storage.close()
     Disposer.dispose(serializationManager)
 
+    writeVersionFile()
+
     LanguageLevel.FORCE_LANGUAGE_LEVEL = LanguageLevel.getDefault()
     UIUtil.invokeAndWaitIfNeeded(Runnable {
       ProjectManager.getInstance().closeProject(project!!)
@@ -253,6 +268,10 @@ fun indexSdkAndStoreSerializedStubs(projectPath: String, sdkPath: String, stubsF
       }
     })
   }
+}
+
+private fun writeVersionFile() {
+  FileUtil.writeToFile(File(baseDir, stubsFileName + ".version"), PyFileElementType.INSTANCE.stubVersion.toString())
 }
 
 private fun buildStubForFile(fileContent: FileContentImpl,

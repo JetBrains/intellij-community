@@ -21,9 +21,11 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.stubs.*;
 import com.intellij.util.indexing.FileContent;
 import com.intellij.util.io.PersistentHashMap;
+import com.jetbrains.python.psi.PyFileElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,21 +55,29 @@ public class PyPrebuiltStubsProvider implements PrebuiltStubsProvider, Disposabl
     File indexesRoot = findPrebuiltIndexesRoot();
     try {
       if (indexesRoot != null) {
-        myPrebuiltStubsStorage =
-          new PersistentHashMap<HashCode, SerializedStubTree>(new File(indexesRoot, SDK_STUBS_STORAGE_NAME + ".input"),
-                                                              HashCodeDescriptor.Companion.getInstance(),
-                                                              new StubTreeExternalizer()) {
-            @Override
-            protected boolean isReadOnly() {
-              return true;
-            }
-          };
+        String stubVersion = FileUtil.loadFile(new File(indexesRoot, SDK_STUBS_STORAGE_NAME + ".version"));
 
-        mySerializationManager = new SerializationManagerImpl(new File(indexesRoot, SDK_STUBS_STORAGE_NAME + ".names"));
+        int currentVersion = PyFileElementType.INSTANCE.getStubVersion();
+        if (Integer.parseInt(stubVersion) == currentVersion) {
+          myPrebuiltStubsStorage =
+            new PersistentHashMap<HashCode, SerializedStubTree>(new File(indexesRoot, SDK_STUBS_STORAGE_NAME + ".input"),
+                                                                HashCodeDescriptor.Companion.getInstance(),
+                                                                new StubTreeExternalizer()) {
+              @Override
+              protected boolean isReadOnly() {
+                return true;
+              }
+            };
 
-        Disposer.register(this, mySerializationManager);
+          mySerializationManager = new SerializationManagerImpl(new File(indexesRoot, SDK_STUBS_STORAGE_NAME + ".names"));
 
-        LOG.info("Using prebuilt stubs from " + myPrebuiltStubsStorage.getBaseFile().getAbsolutePath());
+          Disposer.register(this, mySerializationManager);
+
+          LOG.info("Using prebuilt stubs from " + myPrebuiltStubsStorage.getBaseFile().getAbsolutePath());
+        }
+        else {
+          LOG.error("Prebuilt stubs version mismatch: " + stubVersion + ", current version is " + currentVersion);
+        }
       }
     }
     catch (Exception e) {
