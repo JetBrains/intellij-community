@@ -22,6 +22,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils.guessE
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateMethodFromUsageFix.getTargetSubstitutor
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateMethodFromUsageFix.hasErrorsInArgumentList
 import com.intellij.lang.jvm.JvmModifier
+import com.intellij.lang.jvm.actions.AnnotationRequest
 import com.intellij.lang.jvm.actions.CreateMethodRequest
 import com.intellij.lang.jvm.actions.ExpectedParameter
 import com.intellij.psi.*
@@ -35,7 +36,8 @@ import com.intellij.util.withPrevious
 
 class CreateMethodFromJavaUsageRequest(
   methodCall: PsiMethodCallExpression,
-  override val modifiers: Collection<JvmModifier>
+  override val modifiers: Collection<JvmModifier>,
+  override val annotations: Collection<AnnotationRequest> = emptyList()
 ) : CreateMethodRequest {
 
   private val myMethodCall = methodCall.createSmartPointer()

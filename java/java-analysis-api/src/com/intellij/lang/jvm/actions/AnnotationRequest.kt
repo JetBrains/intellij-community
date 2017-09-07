@@ -15,22 +15,7 @@
  */
 package com.intellij.lang.jvm.actions
 
-import com.intellij.lang.jvm.JvmModifier
-import com.intellij.psi.codeStyle.SuggestedNameInfo
+interface AnnotationRequest {
 
-interface CreateMethodRequest {
-
-  val isValid: Boolean
-
-  val methodName: String
-
-  val returnType: Any? // ExpectedTypeInfo[]
-
-  val modifiers: Collection<JvmModifier>
-
-  val annotations: Collection<AnnotationRequest>
-
-  val parameters: List<ExpectedParameter>
+  val qualifiedName: String
 }
-
-typealias ExpectedParameter = Pair<SuggestedNameInfo, Any? /* ExpectedTypeInfo[]*/>
