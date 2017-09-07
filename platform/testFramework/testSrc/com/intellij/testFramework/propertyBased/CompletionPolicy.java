@@ -78,7 +78,7 @@ public class CompletionPolicy {
   }
 
   public boolean shouldCheckDuplicates(@NotNull Editor editor, @NotNull PsiFile file, @Nullable PsiElement leaf) {
-    return !isAfterError(file, leaf);
+    return leaf != null && !isAfterError(file, leaf);
   }
 
   private static PsiElement getValidResolveResult(@NotNull PsiReference ref) {
