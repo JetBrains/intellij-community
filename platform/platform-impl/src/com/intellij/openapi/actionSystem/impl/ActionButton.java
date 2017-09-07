@@ -219,6 +219,12 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     return myLook.getInsets();
   }
 
+  @Override public void updateUI() {
+    if (myLook != null) {
+      myLook.updateUI();
+    }
+  }
+
   @Override public Dimension getPreferredSize() {
     Icon icon = getIcon();
     if (icon.getIconWidth() < myMinimumButtonSize.width &&

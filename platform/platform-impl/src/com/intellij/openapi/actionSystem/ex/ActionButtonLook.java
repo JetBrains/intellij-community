@@ -26,28 +26,24 @@ import java.awt.*;
 
 public abstract class ActionButtonLook {
   public static final ActionButtonLook SYSTEM_LOOK = new ActionButtonLook() {
-    private ActionButtonLook currentLook;
-    private void validateLook() {
-      if (currentLook == null || !currentLook.isValid()) {
-        currentLook = UIUtil.isUnderWin10LookAndFeel() ?
-                      new Win10ActionButtonLook() :
-                      new IdeaActionButtonLook();
-      }
+    private ActionButtonLook delegate;
+
+    { updateUI(); }
+
+    @Override public void updateUI() {
+      delegate = UIUtil.isUnderWin10LookAndFeel() ? new Win10ActionButtonLook() : new IdeaActionButtonLook();
     }
 
     @Override public void paintBackground(Graphics g, JComponent component, int state) {
-      validateLook();
-      currentLook.paintBackground(g, component, state);
+      delegate.paintBackground(g, component, state);
     }
 
     @Override public void paintBorder(Graphics g, JComponent component, int state) {
-      validateLook();
-      currentLook.paintBorder(g, component, state);
+      delegate.paintBorder(g, component, state);
     }
 
     @Override public Insets getInsets() {
-      validateLook();
-      return currentLook.getInsets();
+      return delegate.getInsets();
     }
   };
 
@@ -68,9 +64,7 @@ public abstract class ActionButtonLook {
 
   public abstract void paintBorder(Graphics g, JComponent component, @ActionButtonComponent.ButtonState int state);
 
-  public boolean isValid() {
-    return true;
-  }
+  public void updateUI() {}
 
   @SuppressWarnings("MethodMayBeStatic")
   @ActionButtonComponent.ButtonState
