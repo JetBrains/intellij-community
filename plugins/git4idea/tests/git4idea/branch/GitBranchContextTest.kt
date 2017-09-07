@@ -16,19 +16,10 @@
 package git4idea.branch
 
 import com.intellij.openapi.vcs.BranchChangeListener
-import git4idea.repo.GitRepository
-import git4idea.test.GitPlatformTest
+import git4idea.test.GitSingleRepoTest
 import junit.framework.TestCase
 
-class GitBranchContextTest: GitPlatformTest() {
-
-  private lateinit var myRepositories: List<GitRepository>
-
-  public override fun setUp() {
-    super.setUp()
-
-    myRepositories = listOf(createRepository(myProjectPath))
-  }
+class GitBranchContextTest: GitSingleRepoTest() {
 
   fun testBranchListener() {
     var didChange = 0
@@ -45,7 +36,7 @@ class GitBranchContextTest: GitPlatformTest() {
     myProject.messageBus.connect().subscribe(BranchChangeListener.VCS_BRANCH_CHANGED, Listener())
 
     val worker = GitBranchWorker(myProject, myGit, GitBranchWorkerTest.TestUiHandler())
-    worker.checkoutNewBranch("foo", myRepositories)
+    worker.checkoutNewBranch("foo", listOf(myRepo))
     TestCase.assertEquals(1, didChange)
   }
 }
