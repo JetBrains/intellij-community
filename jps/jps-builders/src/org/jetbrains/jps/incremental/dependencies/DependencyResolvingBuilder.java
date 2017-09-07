@@ -140,7 +140,8 @@ public class DependencyResolvingBuilder extends ModuleLevelBuilder{
               }
             }
             if (!required.isEmpty()) {
-              final Collection<File> resolved = repoManager.resolveDependency(descriptor.getGroupId(), descriptor.getArtifactId(), descriptor.getVersion());
+              final Collection<File> resolved = repoManager.resolveDependency(descriptor.getGroupId(), descriptor.getArtifactId(),
+                                                                              descriptor.getVersion(), descriptor.isIncludeTransitiveDependencies());
               if (!resolved.isEmpty()) {
                 syncPaths(required, resolved);
               }

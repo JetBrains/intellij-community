@@ -105,7 +105,7 @@ public class JUnit4IntegrationTest extends BaseConfigurationTestCase {
         ProgressConsumer.DEAF
       );
 
-      final Collection<File> files = repoManager.resolveDependency("junit", "junit", myJUnitVersion);
+      final Collection<File> files = repoManager.resolveDependency("junit", "junit", myJUnitVersion, true);
       for (File artifact : files) {
         ModuleRootModificationUtil.addModuleLibrary(module, VfsUtilCore.pathToUrl(artifact.getPath()));
       }

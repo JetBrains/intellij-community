@@ -18,6 +18,8 @@ package org.jetbrains.jps.model.library;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+
 /**
  * @author Eugene Zhuravlev
  *         Date: 13-Jun-16
@@ -27,16 +29,28 @@ public class JpsMavenRepositoryLibraryDescriptor {
   private final String myGroupId;
   private final String myArtifactId;
   private final String myVersion;
+  private final boolean myIncludeTransitiveDependencies;
 
   public JpsMavenRepositoryLibraryDescriptor(@NotNull String groupId, @NotNull String artifactId, @NotNull String version) {
+    this(groupId, artifactId, version, true);
+  }
+
+  public JpsMavenRepositoryLibraryDescriptor(@NotNull String groupId, @NotNull String artifactId, @NotNull String version,
+                                             boolean includeTransitiveDependencies) {
     myGroupId = groupId;
     myArtifactId = artifactId;
     myVersion = version;
+    myIncludeTransitiveDependencies = includeTransitiveDependencies;
     myMavenId = groupId + ":" + artifactId + ":" + version;
   }
 
   public JpsMavenRepositoryLibraryDescriptor(@Nullable String mavenId) {
+    this(mavenId, true);
+  }
+
+  public JpsMavenRepositoryLibraryDescriptor(@Nullable String mavenId, boolean includeTransitiveDependencies) {
     myMavenId = mavenId;
+    myIncludeTransitiveDependencies = includeTransitiveDependencies;
     if (mavenId == null) {
       myGroupId = myArtifactId = myVersion = null;
     }
@@ -61,6 +75,10 @@ public class JpsMavenRepositoryLibraryDescriptor {
     return myArtifactId;
   }
 
+  public boolean isIncludeTransitiveDependencies() {
+    return myIncludeTransitiveDependencies;
+  }
+
   public String getVersion() {
     return myVersion;
   }
@@ -71,14 +89,11 @@ public class JpsMavenRepositoryLibraryDescriptor {
     if (o == null || getClass() != o.getClass()) return false;
 
     JpsMavenRepositoryLibraryDescriptor that = (JpsMavenRepositoryLibraryDescriptor)o;
-
-    if (myMavenId != null ? !myMavenId.equals(that.myMavenId) : that.myMavenId != null) return false;
-
-    return true;
+    return Objects.equals(myMavenId, that.myMavenId) && myIncludeTransitiveDependencies == that.myIncludeTransitiveDependencies;
   }
 
   @Override
   public int hashCode() {
-    return myMavenId != null ? myMavenId.hashCode() : 0;
+    return Objects.hashCode(myMavenId) * 31 + (myIncludeTransitiveDependencies ? 1 : 0);
   }
 }
