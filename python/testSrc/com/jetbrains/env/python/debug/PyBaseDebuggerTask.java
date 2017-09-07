@@ -136,6 +136,35 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
     myDebugProcess.startSmartStepInto(funcName);
   }
 
+  protected Pair<Boolean, String> setNextStatement(int line) throws PyDebuggerException {
+    XDebugSession currentSession = XDebuggerManager.getInstance(getProject()).getCurrentSession();
+    XSourcePosition position = currentSession.getCurrentPosition();
+    EvaluationCallback<Pair<Boolean, String>> callback = new EvaluationCallback<>();
+
+    myDebugProcess.startSetNextStatement(
+      currentSession.getSuspendContext(),
+      XDebuggerUtil.getInstance().createPosition(position.getFile(), line),
+      new PyDebugCallback<Pair<Boolean, String>>() {
+        @Override
+        public void ok(Pair<Boolean, String> value) {
+          callback.evaluated(value);
+        }
+
+        @Override
+        public void error(PyDebuggerException exception) {
+          callback.errorOccurred(exception.getMessage());
+        }
+      }
+    );
+
+    Pair<Pair<Boolean, String>, String> result = callback.waitFor(NORMAL_TIMEOUT);
+    if (result.second != null) {
+      throw new PyDebuggerException(result.second);
+    }
+
+    return result.first;
+  }
+
   @NotNull
   protected String output() {
     if (mySession != null && mySession.getConsoleView() != null) {
@@ -245,7 +274,7 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
   protected int getNumberOfReferringObjects(String name) throws PyDebuggerException {
     XValue var = XDebuggerTestUtil.evaluate(mySession, name).first;
     final PyReferringObjectsValue value = new PyReferringObjectsValue((PyDebugValue)var);
-    EvaluationCallback callback = new EvaluationCallback();
+    EvaluationCallback<Integer> callback = new EvaluationCallback<>();
 
     myDebugProcess.loadReferrers(value, new PyDebugCallback<XValueChildrenList>() {
       @Override
@@ -374,12 +403,12 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
     }
   }
 
-  protected static class EvaluationCallback {
+  protected static class EvaluationCallback<T> {
     private final Semaphore myFinished = new Semaphore(0);
-    private int myResult;
+    private T myResult;
     private String myErrorMessage;
 
-    public void evaluated(int result) {
+    public void evaluated(T result) {
       myResult = result;
       myFinished.release();
     }
@@ -389,7 +418,7 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
       myFinished.release();
     }
 
-    public Pair<Integer, String> waitFor(long timeoutInMilliseconds) {
+    public Pair<T, String> waitFor(long timeoutInMilliseconds) {
       Assert.assertTrue("timed out", XDebuggerTestUtil.waitFor(myFinished, timeoutInMilliseconds));
       return Pair.create(myResult, myErrorMessage);
     }

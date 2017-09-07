@@ -40,7 +40,6 @@ public class SetNextStatementCommand extends AbstractThreadCommand {
   @Override
   protected void buildPayload(Payload payload) {
     super.buildPayload(payload);
-    String functionName = myFunctionName != null ? myFunctionName : "None";
-    payload.add(myLine + 1).add(functionName);
+    payload.add(myLine + 1).add(buildCondition(myFunctionName));
   }
 }

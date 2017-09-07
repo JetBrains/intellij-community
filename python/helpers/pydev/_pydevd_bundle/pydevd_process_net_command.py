@@ -127,6 +127,9 @@ def process_net_command(py_db, cmd_id, seq, text):
             elif cmd_id == CMD_RUN_TO_LINE or cmd_id == CMD_SET_NEXT_STATEMENT or cmd_id == CMD_SMART_STEP_INTO:
                 # we received some command to make a single step
                 thread_id, line, func_name = text.split('\t', 2)
+                if func_name == "None":
+                    # global context
+                    func_name = ''
                 t = pydevd_find_thread_by_id(thread_id)
                 if t:
                     int_cmd = InternalSetNextStatementThread(thread_id, cmd_id, line, func_name, seq)

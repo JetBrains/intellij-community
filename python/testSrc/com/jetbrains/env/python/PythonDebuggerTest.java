@@ -3,6 +3,7 @@ package com.jetbrains.env.python;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
@@ -35,8 +36,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.*;
 
 /**
  * @author traff
@@ -1285,6 +1285,42 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         resume();
         // check if break on line 3 works
         waitForPause();
+        resume();
+      }
+    });
+  }
+
+  @Test
+  public void testSetNextStatement() {
+    runPythonTest(new PyDebuggerTask("/debug", "test_set_next_statement.py") {
+      @Override
+      public void before() {
+        toggleBreakpoint(getFilePath(getScriptName()), 1);
+        toggleBreakpoint(getFilePath(getScriptName()), 6);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        eval("x").hasValue("0");
+        // jump on a top level
+        Pair<Boolean, String> pair = setNextStatement(7);
+        waitForPause();
+        assertTrue(pair.first);
+        eval("x").hasValue("0");
+        // try to jump into a loop
+        pair = setNextStatement(9);
+        waitForPause();
+        assertFalse(pair.first);
+        assertTrue(pair.second.startsWith("Error:"));
+        resume();
+        waitForPause();
+        eval("a").hasValue("2");
+        // jump inside a function
+        pair = setNextStatement(2);
+        waitForPause();
+        assertTrue(pair.first);
+        eval("a").hasValue("2");
         resume();
       }
     });
