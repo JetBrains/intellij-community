@@ -165,7 +165,7 @@ public abstract class PythonRemoteInterpreterManager {
     throws ExecutionException, InterruptedException;
 
 
-  public abstract ListenableFuture<Boolean> uploadHelpersAsync(@Nullable Sdk sdk,
+  public abstract ListenableFuture<?> uploadHelpersAsync(@Nullable Sdk sdk,
                                                                @Nullable Project project,
                                                                @Nullable Component component,
                                                                @NotNull RemoteSdkCredentials credentials, boolean uploadOnSnapshot);
