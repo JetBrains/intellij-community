@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,19 +32,19 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author nik
  */
-class AddLibraryToDependenciesFix extends AddOrderEntryFix {
-  private final Library myLibrary;
+class AddLibraryDependencyFix extends OrderEntryFix {
+  @SuppressWarnings("StatefulEp") private final PsiReference myReference;
   private final Module myCurrentModule;
+  private final Library myLibrary;
+  private final DependencyScope myScope;
   private final String myQualifiedClassName;
 
-  public AddLibraryToDependenciesFix(@NotNull Module currentModule,
-                                     @NotNull Library library,
-                                     @NotNull PsiReference reference,
-                                     @Nullable String qualifiedClassName) {
-    super(reference);
-    myLibrary = library;
+  public AddLibraryDependencyFix(PsiReference reference, Module currentModule, Library library, DependencyScope scope, String qName) {
+    myReference = reference;
     myCurrentModule = currentModule;
-    myQualifiedClassName = qualifiedClassName;
+    myLibrary = library;
+    myScope = scope;
+    myQualifiedClassName = qName;
   }
 
   @Override
@@ -66,8 +66,7 @@ class AddLibraryToDependenciesFix extends AddOrderEntryFix {
 
   @Override
   public void invoke(@NotNull Project project, @Nullable Editor editor, PsiFile file) {
-    DependencyScope scope = suggestScopeByLocation(myCurrentModule, myReference.getElement());
-    JavaProjectModelModificationService.getInstance(project).addDependency(myCurrentModule, myLibrary, scope);
+    JavaProjectModelModificationService.getInstance(project).addDependency(myCurrentModule, myLibrary, myScope);
     if (myQualifiedClassName != null && editor != null) {
       importClass(myCurrentModule, editor, myReference, myQualifiedClassName);
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,25 +30,27 @@ import com.intellij.psi.PsiReference;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author nik
  */
-class AddExternalLibraryToDependenciesQuickFix extends AddOrderEntryFix {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.AddExternalLibraryToDependenciesQuickFix");
+class AddExtLibraryDependencyFix extends OrderEntryFix {
+  @SuppressWarnings("StatefulEp") private final PsiReference myReference;
   private final Module myCurrentModule;
   private final ExternalLibraryDescriptor myLibraryDescriptor;
+  private final DependencyScope myScope;
   private final String myQualifiedClassName;
 
-  public AddExternalLibraryToDependenciesQuickFix(@NotNull Module currentModule,
-                                                  @NotNull ExternalLibraryDescriptor libraryDescriptor,
-                                                  @NotNull PsiReference reference,
-                                                  @Nullable String qualifiedClassName) {
-    super(reference);
+  public AddExtLibraryDependencyFix(PsiReference reference,
+                                    Module currentModule,
+                                    ExternalLibraryDescriptor descriptor,
+                                    DependencyScope scope,
+                                    String qName) {
+    myReference = reference;
     myCurrentModule = currentModule;
-    myLibraryDescriptor = libraryDescriptor;
-    myQualifiedClassName = qualifiedClassName;
+    myLibraryDescriptor = descriptor;
+    myScope = scope;
+    myQualifiedClassName = qName;
   }
 
   @Nls
@@ -72,16 +74,15 @@ class AddExternalLibraryToDependenciesQuickFix extends AddOrderEntryFix {
 
   @Override
   public void invoke(@NotNull Project project, final Editor editor, PsiFile file) throws IncorrectOperationException {
-    DependencyScope scope = suggestScopeByLocation(myCurrentModule, myReference.getElement());
     JavaProjectModelModificationService.getInstance(project)
-      .addDependency(myCurrentModule, myLibraryDescriptor, scope)
+      .addDependency(myCurrentModule, myLibraryDescriptor, myScope)
       .done(aVoid -> new WriteAction() {
         protected void run(@NotNull final Result result) {
           try {
             importClass(myCurrentModule, editor, myReference, myQualifiedClassName);
           }
           catch (IndexNotReadyException e) {
-            LOG.info(e);
+            Logger.getInstance(AddExtLibraryDependencyFix.class).info(e);
           }
         }
       }.execute());
