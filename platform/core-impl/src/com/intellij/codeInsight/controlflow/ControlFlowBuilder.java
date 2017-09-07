@@ -19,15 +19,16 @@ import com.intellij.codeInsight.controlflow.impl.ConditionalInstructionImpl;
 import com.intellij.codeInsight.controlflow.impl.ControlFlowImpl;
 import com.intellij.codeInsight.controlflow.impl.InstructionImpl;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -98,6 +99,7 @@ public class ControlFlowBuilder {
   /**
    * Stops control flow, used for break, next, redo
    */
+  @SuppressWarnings("SpellCheckingInspection")
   public void flowAbrupted() {
     prevInstruction = null;
   }
@@ -184,6 +186,7 @@ public class ControlFlowBuilder {
    * @param element Element to create instruction for
    * @return new instruction
    */
+  @SuppressWarnings("UnusedReturnValue")
   public Instruction startConditionalNode(final PsiElement element, final PsiElement condition, final boolean result) {
     final ConditionalInstruction instruction = new ConditionalInstructionImpl(this, element, condition, result);
     addNode(instruction);
@@ -204,19 +207,41 @@ public class ControlFlowBuilder {
     return new ControlFlowImpl(result.toArray(new Instruction[result.size()]));
   }
 
-  //todo remove: it works mostly incorrect
-  @Nullable
-  public Instruction getPrevInstruction(@Nullable final PsiElement condition) {
-    final Ref<Instruction> head = new Ref<>(prevInstruction);
-    processPending((pendingScope, instruction) -> {
-      if (pendingScope != null && PsiTreeUtil.isAncestor(condition, pendingScope, false)) {
-        head.set(instruction);
+  @NotNull
+  public List<Pair<PsiElement, Instruction>> getExpectedPredecessors(@Nullable final PsiElement condition) {
+    if (condition == null) return Collections.singletonList(Pair.create(null, prevInstruction));
+
+    final List<Pair<PsiElement, Instruction>> candidates = new SmartList<>();
+    candidates.add(Pair.create(null, prevInstruction));
+
+    for (int i = pending.size() - 1; i >= 0; i--) {
+      final Pair<PsiElement, Instruction> pair = pending.get(i);
+      final PsiElement scopeWhenToAdd = pair.getFirst();
+      if (scopeWhenToAdd == null) {
+        continue;
       }
-      else {
-        addPendingEdge(pendingScope, instruction);
+      if (PsiTreeUtil.isAncestor(scopeWhenToAdd, condition, false)) {
+        break;
       }
-    });
-    return head.get();
+
+      candidates.add(pair);
+    }
+
+    return candidates;
+  }
+
+  public void restorePredecessors(@NotNull List<Pair<PsiElement, Instruction>> predecessors) {
+    if (!predecessors.isEmpty()) {
+      boolean isFirst = true;
+      for (Pair<PsiElement, Instruction> predecessor : predecessors) {
+        if (isFirst) {
+          prevInstruction = predecessor.second;
+          isFirst = false;
+          continue;
+        }
+        addPendingEdge(predecessor.first, predecessor.second);
+      }
+    }
   }
 
 
