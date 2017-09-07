@@ -867,11 +867,18 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
    * @author Konstantin Bulenkov
    */
   private class MyValueEditor extends AbstractTableCellEditor {
+    public static final String STOP_CELL_EDIT_ACTION_KEY = "stopEdit";
     private final JCheckBox myBooleanEditor = new JBCheckBox();
     private JBComboBoxTableCellEditorComponent myOptionsEditor = new JBComboBoxTableCellEditorComponent();
     private MyIntOptionEditor myIntOptionsEditor = new MyIntOptionEditor();
     private JComponent myCurrentEditor = null;
     private MyTreeNode myCurrentNode = null;
+    private final AbstractAction STOP_CELL_EDIT_ACTION = new AbstractAction() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        stopCellEditing();
+      }
+    };
 
     public MyValueEditor() {
       final ActionListener itemChoosen = new ActionListener() {
@@ -887,12 +894,6 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
       myOptionsEditor.addActionListener(itemChoosen);
       myBooleanEditor.putClientProperty("JComponent.sizeVariant", "small");
       myOptionsEditor.putClientProperty("JComponent.sizeVariant", "small");
-      myIntOptionsEditor.registerKeyboardAction(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          stopCellEditing();
-        }
-      }, ENTER_KEY_STROKE, JComponent.WHEN_FOCUSED);
     }
 
     @Override
@@ -950,6 +951,10 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
 
       if (myCurrentEditor != null) {
         myCurrentEditor.setBackground(table.getBackground());
+        if (myCurrentEditor instanceof JTextField) {
+          myCurrentEditor.getInputMap().put(ENTER_KEY_STROKE, STOP_CELL_EDIT_ACTION_KEY);
+          myCurrentEditor.getActionMap().put(STOP_CELL_EDIT_ACTION_KEY, STOP_CELL_EDIT_ACTION);
+        }
       }
       return myCurrentEditor;
     }
