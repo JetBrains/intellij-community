@@ -124,35 +124,39 @@ public class ArtifactRepositoryManager {
     myRemoteRepositories.add(createRemoteRepository(id, url));
   }
 
-  public Collection<File> resolveDependency(String groupId, String artifactId, String version) throws Exception {
+  public Collection<File> resolveDependency(String groupId, String artifactId, String version, boolean includeTransitiveDependencies) throws Exception {
     final List<File> files = new ArrayList<>();
-    for (Artifact artifact : resolveDependencyAsArtifact(groupId, artifactId, version, EnumSet.of(ArtifactKind.ARTIFACT))) {
+    for (Artifact artifact : resolveDependencyAsArtifact(groupId, artifactId, version, EnumSet.of(ArtifactKind.ARTIFACT), includeTransitiveDependencies)) {
       files.add(artifact.getFile());
     }
     return files;
   }
 
   @NotNull
-  public Collection<Artifact> resolveDependencyAsArtifact(String groupId,
-                                                          String artifactId,
-                                                          String versionConstraint,
-                                                          final Set<ArtifactKind> artifactKinds) throws Exception {
-    
-    final List<Artifact> artifacts = new ArrayList<>();
+  public Collection<Artifact> resolveDependencyAsArtifact(String groupId, String artifactId, String versionConstraint,  Set<ArtifactKind> artifactKinds, boolean includeTransitiveDependencies) throws Exception {final List<Artifact> artifacts = new ArrayList<>();
     final Set<VersionConstraint> constraints = Collections.singleton(asVersionConstraint(versionConstraint));
     for (ArtifactKind kind : artifactKinds) {
       //RepositorySystem.resolveDependencies() ignores classifiers, so we need to collect dependencies for the default classifier, and then
       // resolve artifacts with specified classifiers for each found dependency
       try {
-        final CollectResult collectResult = ourSystem.collectDependencies(
-          mySession, createCollectRequest(groupId, artifactId, constraints, EnumSet.of(kind))
-        );
-        final ArtifactRequestBuilder builder = new ArtifactRequestBuilder(kind);
-        collectResult.getRoot().accept(new TreeDependencyVisitor(
-          new FilteringDependencyVisitor(builder, DependencyFilterUtils.classpathFilter(JavaScopes.COMPILE))
-        ));
-    
-        final List<ArtifactRequest> requests = builder.getRequests();
+        final List<ArtifactRequest> requests;
+        if (includeTransitiveDependencies) {
+          final CollectResult collectResult = ourSystem.collectDependencies(
+            mySession, createCollectRequest(groupId, artifactId, constraints, EnumSet.of(kind))
+          );
+          final ArtifactRequestBuilder builder = new ArtifactRequestBuilder(kind);
+          collectResult.getRoot().accept(new TreeDependencyVisitor(
+            new FilteringDependencyVisitor(builder, DependencyFilterUtils.classpathFilter(JavaScopes.COMPILE))
+          ));
+          requests = builder.getRequests();
+        }
+        else {
+          requests = new ArrayList<>();
+          for (Artifact artifact : toArtifacts(groupId, artifactId, constraints, artifactKinds)) {
+            requests.add(new ArtifactRequest(artifact, Collections.unmodifiableList(myRemoteRepositories), null));
+          }
+        }
+
         if (!requests.isEmpty()) {
           try {
             for (ArtifactResult result : ourSystem.resolveArtifacts(mySession, requests)) {
@@ -276,8 +280,8 @@ public class ArtifactRepositoryManager {
       final Dependency dep = node.getDependency();
       if (dep != null) {
         myRequests.add(new ArtifactRequest(
-          new ArtifactWithChangedClassifier(node.getDependency().getArtifact(), myKind.getClassifier()), 
-          node.getRepositories(), 
+          new ArtifactWithChangedClassifier(node.getDependency().getArtifact(), myKind.getClassifier()),
+          node.getRepositories(),
           node.getRequestContext()
         ));
       }

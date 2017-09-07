@@ -90,6 +90,7 @@ public class RepositoryAttachDialog extends DialogWrapper {
   private JBCheckBox myDownloadToCheckBox;
   private JBLabel myCaptionLabel;
   private JPanel myDownloadOptionsPanel;
+  private JBCheckBox myIncludeTransitiveDepsCheckBox;
 
   private final JComboBox myCombobox;
 
@@ -215,6 +216,10 @@ public class RepositoryAttachDialog extends DialogWrapper {
 
   public boolean getAttachSources() {
     return mySourcesCheckBox.isSelected();
+  }
+
+  public boolean getIncludeTransitiveDependencies() {
+    return myIncludeTransitiveDepsCheckBox.isSelected();
   }
 
   @Nullable

@@ -32,11 +32,15 @@ public class RepositoryLibraryProperties extends LibraryProperties<RepositoryLib
   public RepositoryLibraryProperties() {
   }
 
-  public RepositoryLibraryProperties(String mavenId) {
-    myDescriptor = new JpsMavenRepositoryLibraryDescriptor(mavenId);
+  public RepositoryLibraryProperties(String mavenId, final boolean includeTransitiveDependencies) {
+    myDescriptor = new JpsMavenRepositoryLibraryDescriptor(mavenId, includeTransitiveDependencies);
   }
 
   public RepositoryLibraryProperties(@NotNull String groupId, @NotNull String artifactId, @NotNull String version) {
+    this(groupId, artifactId, version, true);
+  }
+
+  public RepositoryLibraryProperties(@NotNull String groupId, @NotNull String artifactId, @NotNull String version, boolean includeTransitiveDependencies) {
     myDescriptor = new JpsMavenRepositoryLibraryDescriptor(groupId, artifactId, version);
   }
 
@@ -66,7 +70,16 @@ public class RepositoryLibraryProperties extends LibraryProperties<RepositoryLib
   }
 
   public void setMavenId(String mavenId) {
-    myDescriptor = new JpsMavenRepositoryLibraryDescriptor(mavenId);
+    myDescriptor = new JpsMavenRepositoryLibraryDescriptor(mavenId, isIncludeTransitiveDependencies());
+  }
+
+  @Attribute("include-transitive-deps")
+  public boolean isIncludeTransitiveDependencies() {
+    return myDescriptor == null || myDescriptor.isIncludeTransitiveDependencies();
+  }
+
+  public void setIncludeTransitiveDependencies(boolean value) {
+    myDescriptor = new JpsMavenRepositoryLibraryDescriptor(getMavenId(), value);
   }
 
   public String getGroupId() {
@@ -82,11 +95,16 @@ public class RepositoryLibraryProperties extends LibraryProperties<RepositoryLib
   }
 
   public void changeVersion(String version) {
-    myDescriptor = new JpsMavenRepositoryLibraryDescriptor(getGroupId(), getArtifactId(), version);
+    myDescriptor = new JpsMavenRepositoryLibraryDescriptor(getGroupId(), getArtifactId(), version, myDescriptor.isIncludeTransitiveDependencies());
   }
 
   private String call(Function<JpsMavenRepositoryLibraryDescriptor, String> method) {
     final JpsMavenRepositoryLibraryDescriptor descriptor = myDescriptor;
     return descriptor != null ? method.apply(descriptor) : null;
+  }
+
+  @NotNull
+  public JpsMavenRepositoryLibraryDescriptor getRepositoryLibraryDescriptor() {
+    return myDescriptor != null ? myDescriptor : new JpsMavenRepositoryLibraryDescriptor(null, true);
   }
 }

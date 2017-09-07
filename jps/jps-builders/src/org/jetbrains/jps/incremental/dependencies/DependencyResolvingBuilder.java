@@ -147,7 +147,8 @@ public class DependencyResolvingBuilder extends ModuleLevelBuilder{
             if (!required.isEmpty()) {
               context.processMessage(new ProgressMessage("Resolving '" + lib.getName() + "' library..."));
               LOG.debug("Downloading missing files for " + lib.getName() + " library: " + required);
-              final Collection<File> resolved = repoManager.resolveDependency(descriptor.getGroupId(), descriptor.getArtifactId(), descriptor.getVersion());
+              final Collection<File> resolved = repoManager.resolveDependency(descriptor.getGroupId(), descriptor.getArtifactId(),
+                                                                              descriptor.getVersion(), descriptor.isIncludeTransitiveDependencies());
               if (!resolved.isEmpty()) {
                 syncPaths(required, resolved);
               }
