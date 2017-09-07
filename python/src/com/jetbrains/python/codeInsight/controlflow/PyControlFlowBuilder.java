@@ -18,6 +18,7 @@ package com.jetbrains.python.codeInsight.controlflow;
 import com.intellij.codeInsight.controlflow.ControlFlow;
 import com.intellij.codeInsight.controlflow.ControlFlowBuilder;
 import com.intellij.codeInsight.controlflow.Instruction;
+import com.intellij.codeInsight.controlflow.impl.ControlFlowImpl;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
@@ -25,6 +26,7 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.ParamHelper;
 import com.jetbrains.python.psi.impl.PyAugAssignmentStatementNavigator;
@@ -42,7 +44,17 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   private final ControlFlowBuilder myBuilder = new ControlFlowBuilder();
 
   public ControlFlow buildControlFlow(@NotNull final ScopeOwner owner) {
-    return myBuilder.build(this, owner);
+    // create start pseudo node
+    myBuilder.startNode(null);
+
+    ScopeUtil.visitChildrenInScope(owner, this);
+
+    // create end pseudo node and close all pending edges
+    myBuilder.checkPending(myBuilder.startNode(null));
+
+    final List<Instruction> result = myBuilder.instructions;
+    return new ControlFlowImpl(result.toArray(new Instruction[result.size()]));
+
   }
 
   @Override

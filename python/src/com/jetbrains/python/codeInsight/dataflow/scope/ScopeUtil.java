@@ -176,4 +176,24 @@ public class ScopeUtil {
     }
     return result;
   }
+
+  /*  This function compensates for the fact that scope children do not always match the AST children. For example, the decorator list is the
+      AST child of a function but is not in function scope. So AST children that are not scope children must be excluded.
+   */
+  public static void visitChildrenInScope(ScopeOwner owner, PyElementVisitor visitor) {
+    PyClass pyClass = PyUtil.as(owner, PyClass.class);
+    if (pyClass != null) {
+      pyClass.getStatementList().accept(visitor);
+      return;
+    }
+
+    PyFunction pyFunction = PyUtil.as(owner, PyFunction.class);
+    if (pyFunction != null) {
+      pyFunction.getParameterList().accept(visitor);
+      pyFunction.getStatementList().accept(visitor);
+      return;
+    }
+
+    owner.acceptChildren(visitor);
+  }
 }

@@ -1246,4 +1246,19 @@ public class PyResolveTest extends PyResolveTestCase {
     assertEquals("__lt__", dunderLt.getName());
     assertEquals("str", dunderLt.getContainingClass().getName());
   }
+
+  //PY-13273
+  public void testRefInDecoratorArg() {
+    final PyTargetExpression resolved = assertInstanceOf(resolve(), PyTargetExpression.class);
+    assertEquals("my_ref", resolved.getName());
+    assertNotNull(PsiTreeUtil.getParentOfType(resolved, PyDecorator.class));
+  }
+
+  //PY-13273
+  public void testRefInDecoratorArgNotShadowingMethodRef() {
+    final PyTargetExpression resolved = assertInstanceOf(resolve(), PyTargetExpression.class);
+    assertEquals("my_ref", resolved.getName());
+    assertTrue(resolved.getParent() instanceof PyForPart);
+  }
+
 }
