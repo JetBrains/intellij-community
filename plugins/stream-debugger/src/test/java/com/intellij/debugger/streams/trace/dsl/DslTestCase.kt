@@ -193,6 +193,18 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
     }
   }
 
+  fun testMapInitialization() {
+    doTest {
+      declare(map(GenericType.INT, GenericType.INT, "map").defaultDeclaration(true))
+    }
+  }
+
+  fun testLinkedMapInitialization() {
+    doTest {
+      declare(linkedMap(GenericType.INT, GenericType.BOOLEAN, "map").defaultDeclaration(false))
+    }
+  }
+
   fun testArrayDeclaration() {
     doTest {
       declare(array("int", "a"), false)

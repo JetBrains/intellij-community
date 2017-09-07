@@ -17,6 +17,7 @@ package com.intellij.debugger.streams.trace.dsl.impl.java
 
 import com.intellij.debugger.streams.trace.dsl.Expression
 import com.intellij.debugger.streams.trace.dsl.MapVariable
+import com.intellij.debugger.streams.trace.dsl.VariableDeclaration
 import com.intellij.debugger.streams.trace.dsl.impl.TextExpression
 import com.intellij.debugger.streams.trace.dsl.impl.VariableImpl
 import com.intellij.debugger.streams.trace.impl.handler.type.GenericType
@@ -27,7 +28,7 @@ import com.intellij.debugger.streams.trace.impl.handler.type.GenericType
 class JavaMapVariable(override val keyType: GenericType,
                       override val valueType: GenericType,
                       override val name: String,
-                      linked: Boolean)
+                      private val linked: Boolean)
   : VariableImpl("${getMapType(linked)}<${keyType.genericTypeName}, ${valueType.genericTypeName}>",
                  name), MapVariable {
   companion object {
@@ -40,4 +41,7 @@ class JavaMapVariable(override val keyType: GenericType,
     TextExpression("$name.put(${key.toCode()}, ${newValue.toCode()})")
 
   override fun contains(key: Expression): Expression = TextExpression("$name.contains(${key.toCode()})")
+
+  override fun defaultDeclaration(isMutable: Boolean): VariableDeclaration =
+    JavaVariableDeclaration(this, false, TextExpression("${getMapType(linked)}<>()"))
 }

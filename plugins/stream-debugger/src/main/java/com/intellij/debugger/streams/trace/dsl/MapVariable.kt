@@ -27,4 +27,6 @@ interface MapVariable : Variable {
   operator fun get(key: Expression): Expression
   operator fun set(key: Expression, newValue: Expression): Expression
   fun contains(key: Expression): Expression
+
+  fun defaultDeclaration(isMutable: Boolean = true): VariableDeclaration
 }
