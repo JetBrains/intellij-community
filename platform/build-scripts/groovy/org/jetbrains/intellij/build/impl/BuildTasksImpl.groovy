@@ -288,9 +288,7 @@ idea.fatal.error.notification=disabled
     def pluginsToPublish = distributionJARsBuilder.getPluginsByModules(buildContext.productProperties.productLayout.pluginModulesToPublish)
     if (buildContext.productProperties.productLayout.buildAllCompatiblePlugins) {
       if (!buildContext.options.buildStepsToSkip.contains(BuildOptions.PROVIDED_MODULES_LIST_STEP)) {
-        pluginsToPublish = new PluginsCollector(buildContext, providedModulesFilePath).collectCompatiblePluginsToPublish().findAll {
-          !buildContext.productProperties.productLayout.compatiblePluginsToIgnore.contains(it.mainModule)
-        }
+        pluginsToPublish = new PluginsCollector(buildContext, providedModulesFilePath).collectCompatiblePluginsToPublish()
       }
       else {
         buildContext.messages.info("Skipping collecting compatible plugins because PROVIDED_MODULES_LIST_STEP was skipped")

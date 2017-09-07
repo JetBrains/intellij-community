@@ -64,6 +64,9 @@ class PluginsCollector {
       if (productLayout.bundledPluginModules.contains(it.name)) {
         return
       }
+      if (productLayout.compatiblePluginsToIgnore.contains(it.name)) {
+        return
+      }
       PluginLayout pluginLayout = nonTrivialPlugins[it.name]?.first()
       if (pluginLayout == null) {
         pluginLayout = PluginLayout.plugin(it.name)
