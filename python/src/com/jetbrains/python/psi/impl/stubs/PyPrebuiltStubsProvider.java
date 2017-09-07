@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.psi.impl.stubs;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.hash.HashCode;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.PathManager;
@@ -47,7 +48,8 @@ public class PyPrebuiltStubsProvider implements PrebuiltStubsProvider, Disposabl
     init();
   }
 
-  public synchronized void init() {
+  @VisibleForTesting
+  void init() {
     File indexesRoot = findPrebuiltIndexesRoot();
     try {
       if (indexesRoot != null) {
@@ -77,7 +79,7 @@ public class PyPrebuiltStubsProvider implements PrebuiltStubsProvider, Disposabl
 
   @Nullable
   @Override
-  public synchronized Stub findStub(@NotNull FileContent fileContent) {
+  public Stub findStub(@NotNull FileContent fileContent) {
     if (myPrebuiltStubsStorage != null) {
       HashCode hashCode = myFileContentHashing.hashString(fileContent);
       Stub stub = null;
