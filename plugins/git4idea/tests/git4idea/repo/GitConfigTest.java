@@ -104,6 +104,26 @@ public class GitConfigTest extends GitPlatformTest {
 
   public void test_config_values_are_case_sensitive() {
     createRepository();
+    String url = "git@GITHUB.com:foo/bar.git";
+    addRemote(url);
+
+    GitConfig config = readConfig();
+    GitRemote remote = getFirstItem(config.parseRemotes());
+    assertNotNull(remote);
+    assertSameElements(remote.getUrls(), singletonList(url));
+  }
+
+  public void test_config_sections_are_case_insensitive() throws IOException {
+    createRepository();
+    addRemote("git@github.com:foo/bar.git");
+    File configFile = configFile();
+    FileUtil.writeToFile(configFile, FileUtil.loadFile(configFile).replace("remote", "REMOTE"));
+
+    assertSingleRemoteInConfig();
+  }
+
+  public void test_config_section_values_are_case_sensitive() {
+    createRepository();
     String expectedName = "ORIGIN";
     addRemote(expectedName, "git@github.com:foo/bar.git");
 
@@ -126,7 +146,7 @@ public class GitConfigTest extends GitPlatformTest {
   }
 
   private static void assertSingleRemote(@NotNull Collection<GitRemote> remotes) {
-    assertEquals(1, remotes.size());
+    assertEquals("Number of remotes is incorrect", 1, remotes.size());
     GitRemote remote = getFirstItem(remotes);
     assertNotNull(remote);
     assertEquals("origin", remote.getName());
@@ -135,8 +155,13 @@ public class GitConfigTest extends GitPlatformTest {
 
   @NotNull
   private GitConfig readConfig() {
+    return GitConfig.read(configFile());
+  }
+
+  @NotNull
+  private File configFile() {
     File gitDir = new File(myProjectPath, ".git");
-    return GitConfig.read(new File(gitDir, "config"));
+    return new File(gitDir, "config");
   }
 
   private void assertSingleRemoteInConfig() {
