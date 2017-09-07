@@ -21,7 +21,9 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.SimplifyStreamApiCallChainsInspection;
 import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.StreamSource;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiLoopStatement;
+import com.intellij.psi.PsiStatement;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.PsiDiamondTypeUtil;
@@ -59,37 +61,16 @@ class MigrateToStreamFix implements LocalQuickFix {
 
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    PsiElement element = descriptor.getPsiElement();
-    if (element instanceof PsiLoopStatement) {
-      PsiLoopStatement loopStatement = (PsiLoopStatement)element;
-      StreamSource source = StreamSource.tryCreate(loopStatement);
-      PsiStatement body = loopStatement.getBody();
-      if(body == null || source == null) return;
-      TerminalBlock tb = TerminalBlock.from(source, body);
-      migrate(project, body, tb);
-    } else if(element instanceof PsiExpressionStatement) {
-      PsiMethodCallExpression call = tryCast(((PsiExpressionStatement)element).getExpression(), PsiMethodCallExpression.class);
-      if(call == null) return;
-
-      PsiLambdaExpression lambda = SimplifyForEachInspection.extractLambdaFromForEach(call);
-      if (lambda == null) return;
-      PsiElement lambdaBody = lambda.getBody();
-      SimplifyForEachInspection.ExistingStreamSource
-        source = SimplifyForEachInspection.ExistingStreamSource.extractSource(call, lambda);
-      if(source == null) return;
-      TerminalBlock terminalBlock = SimplifyForEachInspection.extractTerminalBlock(lambdaBody, source);
-      if (terminalBlock == null) return;
-
-      migrate(project, lambdaBody, terminalBlock);
-    }
-  }
-
-  private void migrate(@NotNull Project project, PsiElement block, TerminalBlock tb) {
-    PsiElement result = myMigration.migrate(project, block, tb);
-    if(result != null) {
-      tb.operations().forEach(StreamApiMigrationInspection.Operation::cleanUp);
-      simplifyAndFormat(project, result);
-    }
+    PsiLoopStatement loopStatement = tryCast(descriptor.getPsiElement(), PsiLoopStatement.class);
+    if (loopStatement == null) return;
+    StreamSource source = StreamSource.tryCreate(loopStatement);
+    PsiStatement body = loopStatement.getBody();
+    if(body == null || source == null) return;
+    TerminalBlock tb = TerminalBlock.from(source, body);
+    PsiElement result = myMigration.migrate(project, body, tb);
+    if (result == null) return;
+    tb.operations().forEach(StreamApiMigrationInspection.Operation::cleanUp);
+    simplifyAndFormat(project, result);
   }
 
   static void simplifyAndFormat(@NotNull Project project, PsiElement result) {
