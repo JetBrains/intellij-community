@@ -1162,7 +1162,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   }
 
   public final void beforeAstChange() {
-    CheckUtil.checkWritable(this);
+    checkWritable();
     if (!useStrongRefs()) {
       synchronized (myPsiLock) {
         for (PsiFile root : myViewProvider.getAllFiles()) {
@@ -1171,6 +1171,13 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
           }
         }
       }
+    }
+  }
+
+  private void checkWritable() {
+    PsiDocumentManager docManager = PsiDocumentManager.getInstance(getProject());
+    if (docManager instanceof PsiDocumentManagerBase && !((PsiDocumentManagerBase)docManager).isCommitInProgress()) {
+      CheckUtil.checkWritable(this);
     }
   }
 
