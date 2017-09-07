@@ -181,8 +181,8 @@ public class WorkingContextManager {
       archive = getTasksArchive(zipPostfix);
       JBZipEntry entry = archive.getEntry(StringUtil.startsWithChar(entryName, '/') ? entryName : "/" + entryName);
       if (entry != null) {
-        byte[] bytes = entry.getData();
-        loadContext(JdomKt.loadElement(new String(bytes)));
+        String s = new String(entry.getData(), CharsetToolkit.UTF8_CHARSET);
+        loadContext(JdomKt.loadElement(s));
         return true;
       }
     }
@@ -282,7 +282,7 @@ public class WorkingContextManager {
   }
 
   @TestOnly
-  public File getContextFile() throws IOException {
+  public File getContextFile() {
     return getArchiveFile(CONTEXT_ZIP_POSTFIX);
   }
 }

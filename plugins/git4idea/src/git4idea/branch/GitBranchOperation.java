@@ -265,11 +265,12 @@ abstract class GitBranchOperation {
     }
   }
 
-  protected void branchWillChange(@Nullable String branchName) {
-    if (branchName != null) {
+  protected void branchWillChange() {
+    String currentBranch = myCurrentHeads.values().iterator().next();
+    if (currentBranch != null) {
       ApplicationManager.getApplication().invokeLater(() -> {
         if (myProject.isDisposed()) return;
-        myProject.getMessageBus().syncPublisher(BranchChangeListener.VCS_BRANCH_CHANGED).branchWillChange(branchName);
+        myProject.getMessageBus().syncPublisher(BranchChangeListener.VCS_BRANCH_CHANGED).branchWillChange(currentBranch);
       });
     }
   }

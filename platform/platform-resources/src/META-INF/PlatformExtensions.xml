@@ -502,5 +502,6 @@
     <tasks.contextProvider implementation="com.intellij.tasks.context.XDebuggerBreakpointsContextProvider"/>
     <tasks.contextProvider implementation="com.intellij.tasks.context.XDebuggerWatchesProvider"/>
 
+    <postStartupActivity implementation="com.intellij.tasks.context.BranchContextTracker"/>
   </extensions>
 </idea-plugin>

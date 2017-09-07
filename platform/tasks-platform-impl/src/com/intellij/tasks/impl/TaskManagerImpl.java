@@ -34,7 +34,6 @@ import com.intellij.openapi.vcs.VcsTaskHandler;
 import com.intellij.openapi.vcs.VcsType;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.tasks.*;
-import com.intellij.tasks.context.BranchContextTracker;
 import com.intellij.tasks.context.WorkingContextManager;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.util.ArrayUtil;
@@ -153,7 +152,6 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
         }
       }
     };
-    BranchContextTracker.install(project);
   }
 
   @Override

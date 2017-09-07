@@ -15,22 +15,27 @@
  */
 package git4idea.branch
 
+import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.vcs.BranchChangeListener
+import com.intellij.tasks.context.WorkingContextManager
+import com.intellij.tasks.context.WorkingContextProvider
+import com.intellij.testFramework.PlatformTestUtil
 import git4idea.test.GitSingleRepoTest
 import junit.framework.TestCase
+import org.jdom.Element
 
 class GitBranchContextTest: GitSingleRepoTest() {
 
   fun testBranchListener() {
-    var didChange = 0
-    var willChange = 0
+    var fromBranch = ""
+    var toBranch = ""
     class Listener: BranchChangeListener {
       override fun branchHasChanged(branchName: String) {
-        didChange++
+        toBranch = branchName
       }
 
       override fun branchWillChange(branchName: String) {
-        willChange++
+        fromBranch = branchName
       }
     }
 
@@ -38,11 +43,39 @@ class GitBranchContextTest: GitSingleRepoTest() {
 
     val worker = GitBranchWorker(myProject, myGit, GitBranchWorkerTest.TestUiHandler())
     worker.checkoutNewBranch("foo", listOf(myRepo))
-    TestCase.assertEquals(1, willChange)
-    TestCase.assertEquals(1, didChange)
+    TestCase.assertEquals("foo", toBranch)
+    TestCase.assertEquals("master", fromBranch)
 
     worker.checkout("master", false, listOf(myRepo))
-    TestCase.assertEquals(2, willChange)
-    TestCase.assertEquals(2, didChange)
+    TestCase.assertEquals("master", toBranch)
+    TestCase.assertEquals("foo", fromBranch)
+  }
+
+  fun testBranchContext() {
+    WorkingContextManager.getInstance(myProject).contextFile.delete()
+
+    var value = ""
+
+    class TestContextProvider: WorkingContextProvider() {
+
+      override fun getId(): String = "test"
+      override fun getDescription(): String = ""
+
+      override fun saveContext(toElement: Element?) {
+        toElement!!.text = value
+      }
+
+      override fun loadContext(fromElement: Element?) {
+        value = fromElement!!.text;
+      }
+    }
+    PlatformTestUtil.registerExtension(Extensions.getArea(project), WorkingContextProvider.EP_NAME, TestContextProvider(), testRootDisposable)
+
+    val worker = GitBranchWorker(myProject, myGit, GitBranchWorkerTest.TestUiHandler())
+    value = "master"
+    worker.checkoutNewBranch("foo", listOf(myRepo))
+    value = "foo"
+    worker.checkout("master", false, listOf(myRepo))
+    TestCase.assertEquals("master", value)
   }
 }
