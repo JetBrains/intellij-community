@@ -32,7 +32,6 @@
 
   <extensions defaultExtensionNs="com.intellij">
 
-    <codeUsageScopeOptimizer implementation="com.intellij.compiler.JavaCompilerReferencesCodeUsageScopeOptimizer"/>
     <fileBasedIndex implementation="com.intellij.psi.impl.search.JavaNullMethodArgumentIndex"/>
     <projectService serviceInterface="com.intellij.psi.stubsHierarchy.HierarchyService"
                     serviceImplementation="com.intellij.psi.stubsHierarchy.impl.HierarchyServiceImpl"/>
