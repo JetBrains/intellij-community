@@ -21,6 +21,7 @@
       <option name="SEPARATOR_ABOVE_COLOR" value=""/>
       <option name="SEPARATOR_BELOW_COLOR" value="e4e4e4"/>
       <option name="READONLY_FRAGMENT_BACKGROUND" value="cfe7ff"/>
+      <option name="VISUAL_INDENT_GUIDE" value="eeeeee"/>
 
       <option name="ADDED_LINES_COLOR" value="c9dec1" deuteranopia="99ca90" protanopia="99ca90"/>
       <option name="MODIFIED_LINES_COLOR" value="c3d6e8" deuteranopia="9ca9bf" protanopia="9ca9bf"/>
@@ -1132,6 +1133,7 @@
       <option name="DIFF_SEPARATORS_TOP_BORDER" value="1E1E1E"/>
       <option name="DIFF_SEPARATORS_BACKGROUND" value="232323"/>
       <option name="DIFF_SEPARATORS_BOTTOM_BORDER" value="222222"/>
+      <option name="VISUAL_INDENT_GUIDE" value="4d4d4d"/>
 
       <option name="VCS_ANNOTATIONS_COLOR_1" value="464c43"/>
       <option name="VCS_ANNOTATIONS_COLOR_2" value="444342"/>

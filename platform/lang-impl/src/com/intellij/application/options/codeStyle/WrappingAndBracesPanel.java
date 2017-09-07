@@ -15,24 +15,29 @@
  */
 package com.intellij.application.options.codeStyle;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.psi.codeStyle.presentation.CodeStyleBoundedIntegerSettingPresentation;
 import com.intellij.psi.codeStyle.presentation.CodeStyleSelectSettingPresentation;
 import com.intellij.psi.codeStyle.presentation.CodeStyleSettingPresentation;
+import com.intellij.psi.codeStyle.presentation.CodeStyleSoftMarginsPresentation;
+import com.intellij.ui.components.fields.CommaSeparatedIntegersField;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import javax.swing.*;
+import java.util.*;
 
 public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
   private MultiMap<String, String> myGroupToFields = new MultiMap<>();
   private Map<String, SettingsGroup> myFieldNameToGroup;
+  private final CommaSeparatedIntegersField mySoftMarginsEditor =
+    new CommaSeparatedIntegersField(0, CodeStyleSettings.MAX_RIGHT_MARGIN, "Optional");
 
   public WrappingAndBracesPanel(CodeStyleSettings settings) {
     super(settings);
@@ -63,22 +68,29 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
 
   @Override
   protected void initTables() {
-    for (Map.Entry<CodeStyleSettingPresentation.SettingsGroup, List<CodeStyleSettingPresentation>> entry:
+    for (Map.Entry<CodeStyleSettingPresentation.SettingsGroup, List<CodeStyleSettingPresentation>> entry :
       CodeStyleSettingPresentation.getStandardSettings(getSettingsType()).entrySet()) {
       CodeStyleSettingPresentation.SettingsGroup group = entry.getKey();
-      for (CodeStyleSettingPresentation setting: entry.getValue()) {
+      for (CodeStyleSettingPresentation setting : entry.getValue()) {
         //TODO this is ugly, but is the fastest way to make Options UI API and settings representation API connect
         String fieldName = setting.getFieldName();
         String uiName = setting.getUiName();
         if (setting instanceof CodeStyleBoundedIntegerSettingPresentation) {
-          CodeStyleBoundedIntegerSettingPresentation intSetting = (CodeStyleBoundedIntegerSettingPresentation) setting;
+          CodeStyleBoundedIntegerSettingPresentation intSetting = (CodeStyleBoundedIntegerSettingPresentation)setting;
           int defaultValue = intSetting.getDefaultValue();
-          addOption(fieldName, uiName, group.name, intSetting.getLowerBound(), intSetting.getUpperBound(), defaultValue, intSetting.getValueUiName(
-            defaultValue));
-        } else if (setting instanceof CodeStyleSelectSettingPresentation) {
-          CodeStyleSelectSettingPresentation selectSetting = (CodeStyleSelectSettingPresentation) setting;
+          addOption(fieldName, uiName, group.name, intSetting.getLowerBound(), intSetting.getUpperBound(), defaultValue,
+                    intSetting.getValueUiName(
+                      defaultValue));
+        }
+        else if (setting instanceof CodeStyleSelectSettingPresentation) {
+          CodeStyleSelectSettingPresentation selectSetting = (CodeStyleSelectSettingPresentation)setting;
           addOption(fieldName, uiName, group.name, selectSetting.getOptions(), selectSetting.getValues());
-        } else {
+        }
+        else if (setting instanceof CodeStyleSoftMarginsPresentation) {
+          addSoftMarginsOption(fieldName, uiName, group.name);
+          showOption(fieldName);
+        }
+        else {
           addOption(fieldName, uiName, group.name);
         }
       }
@@ -114,5 +126,89 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
       this.title = title;
       this.commonCodeStyleSettingFieldNames = commonCodeStyleSettingFieldNames;
     }
+  }
+
+
+  private void addSoftMarginsOption(@NotNull String optionName, @NotNull String title, @Nullable String groupName) {
+    Language language = getDefaultLanguage();
+    if (language != null) {
+      addCustomOption(new SoftMarginsOption(language, optionName, title, groupName));
+    }
+  }
+
+  private static class SoftMarginsOption extends Option {
+
+    private Language myLanguage;
+
+    protected SoftMarginsOption(@NotNull Language language,
+                                @NotNull String optionName,
+                                @NotNull String title,
+                                @Nullable String groupName) {
+      super(optionName, title, groupName, null, null);
+      myLanguage = language;
+    }
+
+    @Override
+    public Object getValue(CodeStyleSettings settings) {
+      CommonCodeStyleSettings langSettings = settings.getCommonSettings(myLanguage);
+      return langSettings.getSoftMargins();
+    }
+
+    @Override
+    public void setValue(Object value, CodeStyleSettings settings) {
+      settings.setSoftMargins(myLanguage, castToIntList(value));
+    }
+
+    @Override
+    public boolean isEnabled() {
+      return true;
+    }
+  }
+
+  private static List<Integer> castToIntList(@Nullable Object value) {
+    if (value instanceof List && ((List)value).size() > 0 && ((List)value).get(0) instanceof Integer) {
+      //noinspection unchecked
+      return (List<Integer>)value;
+    }
+    return Collections.emptyList();
+  }
+
+  @Nullable
+  @Override
+  protected JComponent getCustomValueRenderer(@NotNull String optionName, @NotNull Object value) {
+    if (CodeStyleSoftMarginsPresentation.OPTION_NAME.equals(optionName)) {
+      return new JLabel(getSoftMarginsString(castToIntList(value)));
+    }
+    return super.getCustomValueRenderer(optionName, value);
+  }
+
+  @NotNull
+  private String getSoftMarginsString(@NotNull List<Integer> intList) {
+    if (intList.size() > 0) {
+      return CommaSeparatedIntegersField.intListToString(intList);
+    }
+    List<Integer> defaultMargins = getSettings().getDefaultSoftMargins();
+    String defaultsStr = defaultMargins.size() > 0 ? CommaSeparatedIntegersField.intListToString(defaultMargins) : "None";
+    return "Default: " + defaultsStr;
+  }
+
+  @Nullable
+  @Override
+  protected JComponent getCustomNodeEditor(@NotNull MyTreeNode node) {
+    String optionName = node.getKey().getOptionName();
+    if (CodeStyleSoftMarginsPresentation.OPTION_NAME.equals(optionName)) {
+      mySoftMarginsEditor.setValue(castToIntList(node.getValue()));
+      return mySoftMarginsEditor;
+    }
+    return super.getCustomNodeEditor(node);
+  }
+
+  @Nullable
+  @Override
+  protected Object getCustomNodeEditorValue(@NotNull JComponent customEditor) {
+    if (customEditor instanceof CommaSeparatedIntegersField) {
+      return ((CommaSeparatedIntegersField)customEditor).getValue();
+    }
+    return super.getCustomNodeEditorValue(customEditor);
   }
 }

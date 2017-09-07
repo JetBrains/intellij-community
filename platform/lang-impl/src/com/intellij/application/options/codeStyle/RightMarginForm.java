@@ -16,16 +16,18 @@
 package com.intellij.application.options.codeStyle;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.ui.components.fields.CommaSeparatedIntegersField;
+import com.intellij.ui.components.fields.IntegerField;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 /**
  * Can be used for languages which do not use standard "Wrapping and Braces" panel.
@@ -43,10 +45,11 @@ import java.awt.event.ActionListener;
  * @author Rustam Vishnyakov
  */
 public class RightMarginForm {
-  private JTextField myRightMarginField;
+  private IntegerField myRightMarginField;
   private JCheckBox myDefaultGeneralCheckBox;
   private JPanel myTopPanel;
   private JComboBox myWrapOnTypingCombo;
+  private CommaSeparatedIntegersField myVisualGuidesField;
   private final Language myLanguage;
   private final int myDefaultRightMargin;
 
@@ -72,6 +75,13 @@ public class RightMarginForm {
     ));
   }
 
+  void createUIComponents() {
+    myRightMarginField = new IntegerField(0, CodeStyleSettings.MAX_RIGHT_MARGIN);
+    myRightMarginField.setName(ApplicationBundle.message("editbox.right.margin.columns"));
+    myVisualGuidesField = new CommaSeparatedIntegersField(0, CodeStyleSettings.MAX_RIGHT_MARGIN, "Optional");
+    myVisualGuidesField.setName(ApplicationBundle.message("settings.code.style.visual.guides"));
+  }
+
   public void reset(@NotNull CodeStyleSettings settings) {
     CommonCodeStyleSettings langSettings = settings.getCommonSettings(myLanguage);
     if (langSettings != settings && langSettings.RIGHT_MARGIN >= 0) {
@@ -92,9 +102,12 @@ public class RightMarginForm {
         break;
       }
     }
+    myVisualGuidesField.setValue(settings.getSoftMargins(myLanguage));
   }
 
-  public void apply(@NotNull CodeStyleSettings settings) {
+  public void apply(@NotNull CodeStyleSettings settings) throws ConfigurationException {
+    myRightMarginField.validateContent();
+    myVisualGuidesField.validateContent();
     CommonCodeStyleSettings langSettings = settings.getCommonSettings(myLanguage);
     if (langSettings != settings) {
       if (myDefaultGeneralCheckBox.isSelected()) {
@@ -105,6 +118,7 @@ public class RightMarginForm {
       }
     }
     langSettings.WRAP_ON_TYPING = getSelectedWrapOnTypingValue();
+    settings.setSoftMargins(myLanguage, myVisualGuidesField.getValue());
   }
 
   public boolean isModified(@NotNull CodeStyleSettings settings) {
@@ -113,7 +127,9 @@ public class RightMarginForm {
       myDefaultGeneralCheckBox.isSelected() ?
       langSettings.RIGHT_MARGIN >= 0 :
       langSettings.RIGHT_MARGIN != getFieldRightMargin(settings.getDefaultRightMargin());
-    return rightMarginModified || langSettings.WRAP_ON_TYPING != getSelectedWrapOnTypingValue();
+    return rightMarginModified ||
+           langSettings.WRAP_ON_TYPING != getSelectedWrapOnTypingValue() ||
+           !settings.getSoftMargins(myLanguage).equals(myVisualGuidesField.getValue());
   }
 
   private int getFieldRightMargin(int fallBackValue) {

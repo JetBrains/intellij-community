@@ -133,7 +133,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     for (Option each : myOptions) {
       each.setEnabled(false);
       for (String optionName : optionNames) {
-        if (each.field.getName().equals(optionName)) {
+        if (each.getOptionName().equals(optionName)) {
           each.setEnabled(true);
         }
       }
@@ -174,7 +174,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     }
     else {
       for (Option each : myCustomOptions) {
-        if (each.clazz == settingsClass && each.field.getName().equals(fieldName)) {
+        if (each instanceof FieldOption && ((FieldOption)each).clazz == settingsClass && each.getOptionName().equals(fieldName)) {
           each.setEnabled(true);
         }
       }
@@ -186,13 +186,17 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     myRenamedFields.put(fieldName, newTitle);
   }
 
+  public void showOption(@NotNull String optionName) {
+    myAllowedOptions.add(optionName);
+  }
+
   protected TreeTable createOptionsTree(CodeStyleSettings settings) {
     DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode();
     Map<String, DefaultMutableTreeNode> groupsMap = new THashMap<>();
 
     List<Option> sorted = sortOptions(ContainerUtil.concat(myOptions, myCustomOptions));
     for (Option each : sorted) {
-      if (!(myCustomOptions.contains(each) || myAllowedOptions.contains(each.field.getName()) || myShowAllStandardOptions)) continue;
+      if (!(myCustomOptions.contains(each) || myAllowedOptions.contains(each.getOptionName()) || myShowAllStandardOptions)) continue;
 
       String group = each.groupName;
       MyTreeNode newNode = new MyTreeNode(each, each.title, settings);
@@ -357,31 +361,23 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     myOptions.add(new SelectionOption(null, fieldName, title, groupName, null, null, options, values));
   }
 
-  private abstract class Option extends OrderedOption {
-    @Nullable final Class<? extends CustomCodeStyleSettings> clazz;
-    @NotNull final Field field;
+  protected void addCustomOption(@NotNull Option option) {
+    myOptions.add(option);
+  }
+
+  protected abstract static class Option extends OrderedOption {
     @NotNull final String title;
     @Nullable final String groupName;
     private boolean myEnabled = false;
 
-    public Option(@Nullable Class<? extends CustomCodeStyleSettings> clazz,
-                  @NotNull String fieldName,
-                  @NotNull String title,
-                  @Nullable String groupName,
-                  @Nullable OptionAnchor anchor,
-                  @Nullable String anchorFiledName) {
-      super(fieldName, anchor, anchorFiledName);
-      this.clazz = clazz;
+    protected Option(@NotNull String optionName,
+                     @NotNull String title,
+                     @Nullable String groupName,
+                     @Nullable OptionAnchor anchor,
+                     @Nullable String anchorOptionName) {
+      super(optionName, anchor, anchorOptionName);
       this.title = title;
       this.groupName = groupName;
-
-      try {
-        Class styleSettingsClass = clazz == null ? CommonCodeStyleSettings.class : clazz;
-        this.field = styleSettingsClass.getField(fieldName);
-      }
-      catch (NoSuchFieldException e) {
-        throw new RuntimeException(e);
-      }
     }
 
     public void setEnabled(boolean enabled) {
@@ -395,14 +391,38 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     public abstract Object getValue(CodeStyleSettings settings);
 
     public abstract void setValue(Object value, CodeStyleSettings settings);
+  }
+
+  private abstract class FieldOption extends Option {
+    @Nullable final Class<? extends CustomCodeStyleSettings> clazz;
+    @NotNull final Field field;
+
+    public FieldOption(@Nullable Class<? extends CustomCodeStyleSettings> clazz,
+                  @NotNull String fieldName,
+                  @NotNull String title,
+                  @Nullable String groupName,
+                  @Nullable OptionAnchor anchor,
+                  @Nullable String anchorFiledName) {
+      super(fieldName, title, groupName, anchor, anchorFiledName);
+      this.clazz = clazz;
+
+      try {
+        Class styleSettingsClass = clazz == null ? CommonCodeStyleSettings.class : clazz;
+        this.field = styleSettingsClass.getField(fieldName);
+      }
+      catch (NoSuchFieldException e) {
+        throw new RuntimeException(e);
+      }
+    }
 
     protected Object getSettings(CodeStyleSettings settings) {
       if (clazz != null) return settings.getCustomSettings(clazz);
       return settings.getCommonSettings(getDefaultLanguage());
     }
+
   }
 
-  private class BooleanOption extends Option {
+  private class BooleanOption extends FieldOption {
     private BooleanOption(Class<? extends CustomCodeStyleSettings> clazz,
                           @NotNull String fieldName,
                           @NotNull String title,
@@ -432,7 +452,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     }
   }
 
-  private class SelectionOption extends Option {
+  private class SelectionOption extends FieldOption {
     @NotNull final String[] options;
     @NotNull final int[] values;
 
@@ -479,7 +499,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     }
   }
 
-  private class IntOption extends Option {
+  private class IntOption extends FieldOption {
 
     private final int myMinValue;
     private final int myMaxValue;
@@ -620,7 +640,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
                                                   boolean hasFocus) {
       if (value instanceof MyTreeNode) {
         MyTreeNode node = (MyTreeNode)value;
-        myLabel.setText(getRenamedTitle(node.getKey().field.getName(), node.getText()));
+        myLabel.setText(getRenamedTitle(node.getKey().getOptionName(), node.getText()));
         myLabel.setFont(myLabel.getFont().deriveFont(node.getKey().groupName == null ? Font.BOLD : Font.PLAIN));
         myLabel.setEnabled(node.isEnabled());
       }
@@ -637,7 +657,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     }
   };
 
-  private static class MyTreeNode extends DefaultMutableTreeNode {
+  protected static class MyTreeNode extends DefaultMutableTreeNode {
     private final Option myKey;
     private final String myText;
     private Object myValue;
@@ -682,7 +702,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     }
   }
 
-  private static class MyValueRenderer implements TableCellRenderer {
+  private class MyValueRenderer implements TableCellRenderer {
     private JTable myTable;
     private int myRow;
     private int myColumn;
@@ -740,6 +760,12 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
         }
         return myIntLabel;
       }
+      else if (key != null && value != null) {
+        JComponent customRenderer = getCustomValueRenderer(key.getOptionName(), value);
+        if (customRenderer != null) {
+          return customRenderer;
+        }
+      }
 
       myCheckBox.putClientProperty("JComponent.sizeVariant", "small");
       myComboBox.putClientProperty("JComponent.sizeVariant", "small");
@@ -795,6 +821,12 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     }
   }
 
+
+  @Nullable
+  protected JComponent getCustomValueRenderer(@NotNull String optionName, @NotNull Object value) {
+    return null;
+  }
+
   private static class MyIntOptionEditor extends JTextField {
     private int myMinValue;
     private int myMaxValue;
@@ -838,7 +870,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     private final JCheckBox myBooleanEditor = new JBCheckBox();
     private JBComboBoxTableCellEditorComponent myOptionsEditor = new JBComboBoxTableCellEditorComponent();
     private MyIntOptionEditor myIntOptionsEditor = new MyIntOptionEditor();
-    private Component myCurrentEditor = null;
+    private JComponent myCurrentEditor = null;
     private MyTreeNode myCurrentNode = null;
 
     public MyValueEditor() {
@@ -866,12 +898,6 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     @Override
     public Object getCellEditorValue() {
       if (myCurrentEditor == myOptionsEditor) {
-        //new Alarm(Alarm.ThreadToUse.SWING_THREAD).addRequest(new Runnable() {
-        //                                                       @Override
-        //                                                       public void run() {
-        //                                                         somethingChanged();
-        //                                                       }
-        //                                                     }, 100);
         return myOptionsEditor.getEditorValue();
       }
       else if (myCurrentEditor == myBooleanEditor) {
@@ -879,6 +905,10 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
       }
       else if (myCurrentEditor == myIntOptionsEditor) {
         return myIntOptionsEditor.getPresentableValue();
+      }
+      else {
+        Object value = getCustomNodeEditorValue(myCurrentEditor);
+        if (value != null) return value;
       }
 
       return null;
@@ -907,6 +937,9 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
           myIntOptionsEditor.setDefaultValue(intOption.getDefaultValue());
         }
         else {
+          myCurrentEditor = getCustomNodeEditor(node);
+        }
+        if (myCurrentEditor == null) {
           myCurrentEditor = myOptionsEditor;
           myOptionsEditor.setCell(table, row, column);
           myOptionsEditor.setText(String.valueOf(node.getValue()));
@@ -920,6 +953,16 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
       }
       return myCurrentEditor;
     }
+  }
+
+  @Nullable
+  protected JComponent getCustomNodeEditor(@NotNull MyTreeNode node) {
+    return null;
+  }
+
+  @Nullable
+  protected Object getCustomNodeEditorValue(@NotNull JComponent customEditor) {
+    return null;
   }
 
   @Override
@@ -960,7 +1003,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     return options;
   }
 
-  private void collectOptions(Set<String> optionNames, final List<Option> optionList) {
+  private static void collectOptions(Set<String> optionNames, final List<Option> optionList) {
     for (Option option : optionList) {
       if (option.groupName != null) {
         optionNames.add(option.groupName);
