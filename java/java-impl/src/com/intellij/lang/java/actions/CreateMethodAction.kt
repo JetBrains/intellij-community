@@ -137,6 +137,10 @@ private class JavaMethodRenderer(
       setModifierProperty(method, modifier.toPsi(), true)
     }
 
+    for (annotation in request.annotations) {
+      method.modifierList.addAnnotation(annotation.qualifiedName)
+    }
+
     if (withoutBody) method.body?.delete()
 
     return method
