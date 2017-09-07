@@ -17,6 +17,7 @@ package com.intellij.application.options.codeStyle;
 
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -130,13 +131,13 @@ public class CodeStyleBlankLinesPanel extends CustomizableLanguageCodeStylePanel
 
   private void initCustomOptions(OptionGroup optionGroup, String groupName) {
     for (Trinity<Class<? extends CustomCodeStyleSettings>, String, String> each : myCustomOptions.get(groupName)) {
-      doCreateOption(optionGroup, each.third, new IntOption(each.first, each.second), each.second);
+      doCreateOption(optionGroup, each.third, new IntOption(each.third, each.first, each.second), each.second);
     }
   }
 
   private void createOption(OptionGroup optionGroup, String title, String fieldName) {
     if (myAllOptionsAllowed || myAllowedOptions.contains(fieldName)) {
-      doCreateOption(optionGroup, title, new IntOption(fieldName), fieldName);
+      doCreateOption(optionGroup, title, new IntOption(title, fieldName), fieldName);
     }
   }
 
@@ -157,7 +158,10 @@ public class CodeStyleBlankLinesPanel extends CustomizableLanguageCodeStylePanel
   }
 
   @Override
-  public void apply(CodeStyleSettings settings) {
+  public void apply(CodeStyleSettings settings) throws ConfigurationException {
+    for (IntOption option : myOptions) {
+      option.myIntField.validateContent();
+    }
     for (IntOption option : myOptions) {
       option.setFieldValue(settings, option.getValue());
     }
@@ -245,17 +249,17 @@ public class CodeStyleBlankLinesPanel extends CustomizableLanguageCodeStylePanel
     private Class<? extends CustomCodeStyleSettings> myTargetClass;
     private int myCurrValue = Integer.MAX_VALUE;
 
-    private IntOption(String fieldName) {
-      this(CodeStyleSettings.class, fieldName, false);
+    private IntOption(@NotNull String title, String fieldName) {
+      this(title, CodeStyleSettings.class, fieldName, false);
     }
 
-    private IntOption(Class<? extends CustomCodeStyleSettings> targetClass, String fieldName) {
-      this(targetClass, fieldName, false);
+    private IntOption(@NotNull String title, Class<? extends CustomCodeStyleSettings> targetClass, String fieldName) {
+      this(title, targetClass, fieldName, false);
       myTargetClass = targetClass;
     }
 
     @SuppressWarnings("unused") // dummy is used to distinguish constructors
-    private IntOption(Class<?> fieldClass, String fieldName, boolean dummy) {
+    private IntOption(@NotNull String title, Class<?> fieldClass, String fieldName, boolean dummy) {
       try {
         myTarget = fieldClass.getField(fieldName);
       }
@@ -264,6 +268,7 @@ public class CodeStyleBlankLinesPanel extends CustomizableLanguageCodeStylePanel
       }
       myIntField = new IntegerField(0, 10);
       myIntField.setColumns(6);
+      myIntField.setName(title);
       myIntField.setMinimumSize(new Dimension(30, myIntField.getMinimumSize().height));
     }
 
