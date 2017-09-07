@@ -181,7 +181,6 @@ public class RepositoryAttachDialog extends DialogWrapper {
                                              ProjectBundle.message("file.chooser.directory.for.downloaded.libraries.description"), null,
                                              descriptor);
     updateInfoLabel();
-    setOKActionEnabled(false);
     myDownloadOptionsPanel.setVisible(mode == Mode.DOWNLOAD);
     init();
   }
@@ -325,17 +324,21 @@ public class RepositoryAttachDialog extends DialogWrapper {
     }
     myProgressIcon.resume();
     JarRepositoryManager.searchArtifacts(myProject, text, (pairs) -> {
-      if (myProgressIcon.isDisposed()) {
-        return;
+      try {
+        if (myProgressIcon.isDisposed()) {
+          return;
+        }
+        myProgressIcon.suspend(); // finished
+        final int prevSize = myCoordinates.size();
+        for (Pair<RepositoryArtifactDescription, RemoteRepositoryDescription> pair : pairs) {
+          final RepositoryArtifactDescription artifact = pair.first;
+          myCoordinates.put(artifact.getGroupId() + ":" + artifact.getArtifactId() + ":" + artifact.getVersion(), artifact);
+        }
+        updateComboboxSelection(prevSize != myCoordinates.size());
       }
-      myProgressIcon.suspend(); // finished
-      final int prevSize = myCoordinates.size();
-      for (Pair<RepositoryArtifactDescription, RemoteRepositoryDescription> pair : pairs) {
-        final RepositoryArtifactDescription artifact = pair.first;
-        myCoordinates.put(artifact.getGroupId() + ":" + artifact.getArtifactId() + ":" + artifact.getVersion(), artifact);
+      finally {
+        setOKActionEnabled(true);
       }
-      updateComboboxSelection(prevSize != myCoordinates.size());
-      setOKActionEnabled(true);
     });
     return true;
   }
