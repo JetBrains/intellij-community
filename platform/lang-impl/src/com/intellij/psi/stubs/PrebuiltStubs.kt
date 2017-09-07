@@ -32,11 +32,8 @@ import java.io.DataOutput
 
 val EP_NAME = "com.intellij.filetype.prebuiltStubsProvider"
 
-class PrebuiltStubsProviders : FileTypeExtension<PrebuiltStubsProvider>(EP_NAME) {
-  companion object {
-    val EXTENSION_POINT_NAME = ExtensionPointName.create<BinaryFileStubBuilder>(EP_NAME)
-    val instance = PrebuiltStubsProviders()
-  }
+object PrebuiltStubsProviders : FileTypeExtension<PrebuiltStubsProvider>(EP_NAME) {
+  val EXTENSION_POINT_NAME = ExtensionPointName.create<BinaryFileStubBuilder>(EP_NAME)
 }
 
 interface PrebuiltStubsProvider {

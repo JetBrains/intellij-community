@@ -214,7 +214,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
 
           if (Registry.is("use.prebuilt.stubs")) {
             final PrebuiltStubsProvider prebuiltStubsProvider =
-              PrebuiltStubsProviders.Companion.getInstance().forFileType(inputData.getFileType());
+              PrebuiltStubsProviders.INSTANCE.forFileType(inputData.getFileType());
             if (prebuiltStubsProvider != null) {
               rootStub = prebuiltStubsProvider.findStub(inputData);
             }
