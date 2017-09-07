@@ -526,7 +526,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
   private static final String SOFT_WRAPS_KEY = "XDebuggerExpressionEditor_Use_Soft_Wraps";
 
   public boolean isUseSoftWraps() {
-    return PropertiesComponent.getInstance().getBoolean(SOFT_WRAPS_KEY);
+    return PropertiesComponent.getInstance().getBoolean(SOFT_WRAPS_KEY, true);
   }
 
   public void setUseSoftWraps(boolean use) {
