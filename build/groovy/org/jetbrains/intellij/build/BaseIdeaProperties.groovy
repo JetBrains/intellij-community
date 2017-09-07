@@ -103,7 +103,7 @@ abstract class BaseIdeaProperties extends ProductProperties {
     additionalModulesToCompile = ["jps-standalone-builder"]
     modulesToCompileTests = ["jps-builders"]
     productLayout.buildAllCompatiblePlugins = true
-    productLayout.compatiblePluginsToIgnore = ['python-plugin', 'ruby-plugin-bundle', 'python-community-plugin-resources', 'AWS']
+    productLayout.compatiblePluginsToIgnore = ['python-plugin', 'python-community-plugin-resources', 'AWS']
     productLayout.prepareCustomPluginRepositoryForPublishedPlugins = SystemProperties.getBooleanProperty('intellij.build.prepare.plugin.repository', false)
   }
 
