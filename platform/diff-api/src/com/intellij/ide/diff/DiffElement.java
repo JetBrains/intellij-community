@@ -115,7 +115,7 @@ public abstract class DiffElement<T> {
   }
 
   @Nullable
-  public Callable<DiffElement<T>> getElementChooser(Project project) {
+  public Callable<DiffElement<T>> getElementChooser(@Nullable Project project) {
     return null;
   }
 

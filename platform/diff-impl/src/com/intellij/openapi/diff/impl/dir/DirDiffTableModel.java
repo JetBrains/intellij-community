@@ -74,7 +74,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   public static final String COLUMN_DATE = "Date";
   public static final String EMPTY_STRING = StringUtil.repeatSymbol(' ', 50);
 
-  private final Project myProject;
+  @Nullable private final Project myProject;
   private final DirDiffSettings mySettings;
 
   private DiffElement mySource;
@@ -91,7 +91,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   private DirDiffPanel myPanel;
   private volatile boolean myDisposed;
 
-  public DirDiffTableModel(@NotNull Project project, DiffElement source, DiffElement target, DirDiffSettings settings) {
+  public DirDiffTableModel(@Nullable Project project, DiffElement source, DiffElement target, DirDiffSettings settings) {
     UsageTrigger.trigger("diff.DirDiffTableModel");
     myProject = project;
     mySettings = settings;
@@ -528,6 +528,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     return "";
   }
 
+  @Nullable
   public Project getProject() {
     return myProject;
   }
