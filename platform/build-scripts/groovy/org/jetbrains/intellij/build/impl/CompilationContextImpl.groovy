@@ -146,7 +146,7 @@ class CompilationContextImpl implements CompilationContext {
     }
     else {
       messages.error(
-        "Could not find Kotlin JARs at $kotlinPluginLibPath: run `./gradlew setupKotlin` in dependencies module to download Kotlin JARs")
+        "Could not find Kotlin JARs at $kotlinPluginLibPath: run `./gradlew setupKotlinPlugin` in dependencies module to download Kotlin JARs")
     }
   }
 
