@@ -139,8 +139,9 @@
               id="Images.Thumbnails.FilterByTheme"
               text="Filter by Theme"
               description="Filter images by theme"/>
-      <action class="org.intellij.images.thumbnail.actions.FilterByTagComboBoxAction"
+      <action class="org.intellij.images.thumbnail.actions.FilterByTagActionGroup"
               internal="true"
+              popup="true"
               id="Images.Thumbnails.FilterByTag"
               text="Filter by Tag"
               description="Filter images by tag"/>

@@ -178,10 +178,10 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
 
                 model.ensureCapacity(model.size() + virtualFiles.length + 1);
                 ThemeFilter filter = thumbnailView.getFilter();
-                TagFilter tagFilter = thumbnailView.getTagFilter();
+                TagFilter[] tagFilters = thumbnailView.getTagFilters();
                 for (VirtualFile virtualFile : virtualFiles) {
                     if (filter == null || filter.accepts(virtualFile)) {
-                        if (tagFilter == null || tagFilter.accepts(virtualFile)) {
+                        if (tagFilters == null || Arrays.stream(tagFilters).anyMatch( tagFilter -> tagFilter.accepts(virtualFile))) {
                             model.addElement(virtualFile);
                         }
                     }

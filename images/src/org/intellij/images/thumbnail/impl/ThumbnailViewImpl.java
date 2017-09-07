@@ -50,7 +50,7 @@ final class ThumbnailViewImpl implements ThumbnailView {
   private VirtualFile root = null;
   private final ThumbnailViewUI myThubmnailViewUi;
   private ThemeFilter myFilter;
-  private TagFilter myTagFilter;
+  private TagFilter[] myTagFilters;
 
   public ThumbnailViewImpl(Project project) {
     this.project = project;
@@ -135,15 +135,15 @@ final class ThumbnailViewImpl implements ThumbnailView {
   }
 
   @Override
-  public void setTagFilter(TagFilter filter) {
-    myTagFilter = filter;
+  public void setTagFilters(TagFilter[] filter) {
+    myTagFilters = filter;
     updateUI();
   }
 
   @Nullable
   @Override
-  public TagFilter getTagFilter() {
-    return myTagFilter;
+  public TagFilter[] getTagFilters() {
+    return myTagFilters;
   }
 
   public void setVisible(boolean visible) {
