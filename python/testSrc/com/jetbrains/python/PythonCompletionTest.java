@@ -368,52 +368,35 @@ public class PythonCompletionTest extends PyTestCase {
   }
 
   public void testEpydocParamTag() {
-    final PyDocumentationSettings settings = PyDocumentationSettings.getInstance(myFixture.getModule());
-    settings.setFormat(DocStringFormat.EPYTEXT);
-    try {
-      doTest();
-    }
-    finally {
-      settings.setFormat(DocStringFormat.PLAIN);
-    }
+    runWithDocStringFormat(DocStringFormat.EPYTEXT, this::doTest);
   }
 
   public void testEpydocTags() {
-    final PyDocumentationSettings settings = PyDocumentationSettings.getInstance(myFixture.getModule());
-    settings.setFormat(DocStringFormat.EPYTEXT);
-    try {
+    runWithDocStringFormat(DocStringFormat.EPYTEXT, () -> {
       myFixture.configureByFile("epydocTags.py");
       myFixture.completeBasic();
       final List<String> lookupElementStrings = myFixture.getLookupElementStrings();
       assertNotNull(lookupElementStrings);
       assertTrue(lookupElementStrings.contains("@param"));
-    }
-    finally {
-      settings.setFormat(DocStringFormat.PLAIN);
-    }
+    });
   }
 
   public void testEpydocTagsMiddle() {
-    final PyDocumentationSettings settings = PyDocumentationSettings.getInstance(myFixture.getModule());
-    settings.setFormat(DocStringFormat.EPYTEXT);
-    try {
+    runWithDocStringFormat(DocStringFormat.EPYTEXT, () -> {
       myFixture.configureByFile("epydocTagsMiddle.py");
       myFixture.completeBasic();
       myFixture.checkResultByFile("epydocTagsMiddle.after.py");
-    }
-    finally {
-      settings.setFormat(DocStringFormat.PLAIN);
-    }
+    });
   }
 
   public void testIdentifiersInPlainDocstring() {
-    final PyDocumentationSettings settings = PyDocumentationSettings.getInstance(myFixture.getModule());
-    settings.setFormat(DocStringFormat.PLAIN);
-    myFixture.configureByFile("identifiersInPlainDocstring.py");
-    final LookupElement[] elements = myFixture.completeBasic();
-    assertNotNull(elements);
-    assertContainsElements(Lists.newArrayList(elements),
-                           LookupElementBuilder.create("bar").withAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE));
+    runWithDocStringFormat(DocStringFormat.PLAIN, () -> {
+      myFixture.configureByFile("identifiersInPlainDocstring.py");
+      final LookupElement[] elements = myFixture.completeBasic();
+      assertNotNull(elements);
+      assertContainsElements(Lists.newArrayList(elements),
+                             LookupElementBuilder.create("bar").withAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE));
+    });
   }
 
   // PY-16877
