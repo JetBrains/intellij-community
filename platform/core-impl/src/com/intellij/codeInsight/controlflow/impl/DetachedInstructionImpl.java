@@ -32,7 +32,7 @@ public class DetachedInstructionImpl extends InstructionBaseImpl {
 
   public DetachedInstructionImpl(@Nullable PsiElement element, @NotNull ControlFlowBuilder builder) {
     super(element);
-    addNodeFor(builder);
+    addNodeWithConnection(builder);
   }
 
   @Override
@@ -40,14 +40,14 @@ public class DetachedInstructionImpl extends InstructionBaseImpl {
     return myNum.get();
   }
 
-  public final void addNodeForWithoutConnection(@NotNull ControlFlowBuilder builder) {
+  public final void addNodeWithoutConnection(@NotNull ControlFlowBuilder builder) {
     assert myNum.get() == 0;
     builder.instructions.add(this);
     int newId = builder.instructionCount++;
     updateNum(newId);
   }
 
-  public final void addNodeFor(@NotNull ControlFlowBuilder builder) {
+  public final void addNodeWithConnection(@NotNull ControlFlowBuilder builder) {
     assert myNum.get() == 0;
     builder.addNode(this);
     int newId = builder.instructionCount++;

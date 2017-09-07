@@ -204,6 +204,7 @@ public class ControlFlowBuilder {
     return new ControlFlowImpl(result.toArray(new Instruction[result.size()]));
   }
 
+  //todo remove: it works mostly incorrect
   @Nullable
   public Instruction getPrevInstruction(@Nullable final PsiElement condition) {
     final Ref<Instruction> head = new Ref<>(prevInstruction);
