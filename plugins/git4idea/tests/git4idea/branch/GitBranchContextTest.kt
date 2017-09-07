@@ -23,13 +23,14 @@ class GitBranchContextTest: GitSingleRepoTest() {
 
   fun testBranchListener() {
     var didChange = 0
+    var willChange = 0
     class Listener: BranchChangeListener {
       override fun branchHasChanged(branchName: String) {
         didChange++
       }
 
       override fun branchWillChange(branchName: String) {
-
+        willChange++
       }
     }
 
@@ -37,6 +38,11 @@ class GitBranchContextTest: GitSingleRepoTest() {
 
     val worker = GitBranchWorker(myProject, myGit, GitBranchWorkerTest.TestUiHandler())
     worker.checkoutNewBranch("foo", listOf(myRepo))
+    TestCase.assertEquals(1, willChange)
     TestCase.assertEquals(1, didChange)
+
+    worker.checkout("master", false, listOf(myRepo))
+    TestCase.assertEquals(2, willChange)
+    TestCase.assertEquals(2, didChange)
   }
 }

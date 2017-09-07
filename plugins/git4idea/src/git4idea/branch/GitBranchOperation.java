@@ -265,6 +265,12 @@ abstract class GitBranchOperation {
     }
   }
 
+  protected void branchWillChange(@Nullable String branchName) {
+    if (branchName != null) {
+      myProject.getMessageBus().syncPublisher(BranchChangeListener.VCS_BRANCH_CHANGED).branchWillChange(branchName);
+    }
+  }
+
   /**
    * Returns the hash of the revision which was current before the start of this GitBranchOperation.
    */
