@@ -94,12 +94,16 @@ public abstract class AbstractValueInputField<T> extends ValidatingTextField {
   }
 
   public void setValue(@NotNull T newValue) {
-    assertValid(newValue);
+    if (!newValue.equals(myDefaultValue)) assertValid(newValue);
     setText(valueToString(newValue));
   }
 
   public void setDefaultValue(@NotNull T defaultValue) {
-    assertValid(defaultValue);
     myDefaultValue = defaultValue;
+  }
+
+  @NotNull
+  public T getDefaultValue() {
+    return myDefaultValue;
   }
 }

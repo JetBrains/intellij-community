@@ -25,6 +25,7 @@ import com.intellij.ui.TreeTableSpeedSearch;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.editors.JBComboBoxTableCellEditorComponent;
+import com.intellij.ui.components.fields.IntegerField;
 import com.intellij.ui.treeStructure.treetable.ListTreeTableModel;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.ui.treeStructure.treetable.TreeTableCellRenderer;
@@ -827,42 +828,6 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     return null;
   }
 
-  private static class MyIntOptionEditor extends JTextField {
-    private int myMinValue;
-    private int myMaxValue;
-    private int myDefaultValue;
-
-    private MyIntOptionEditor() {
-      super();
-    }
-
-    public Object getPresentableValue() {
-      return validateAndGetIntOption();
-    }
-
-    private int validateAndGetIntOption() {
-      try {
-        int value = Integer.parseInt(getText());
-        return value >= myMinValue && value <= myMaxValue ? value : myDefaultValue;
-      }
-      catch (NumberFormatException nfe) {
-        return myDefaultValue;
-      }
-    }
-
-    public void setMinValue(int minValue) {
-      myMinValue = minValue;
-    }
-
-    public void setMaxValue(int maxValue) {
-      myMaxValue = maxValue;
-    }
-
-    public void setDefaultValue(int defaultValue) {
-      myDefaultValue = defaultValue;
-    }
-  }
-
   /**
    * @author Konstantin Bulenkov
    */
@@ -870,7 +835,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     public static final String STOP_CELL_EDIT_ACTION_KEY = "stopEdit";
     private final JCheckBox myBooleanEditor = new JBCheckBox();
     private JBComboBoxTableCellEditorComponent myOptionsEditor = new JBComboBoxTableCellEditorComponent();
-    private MyIntOptionEditor myIntOptionsEditor = new MyIntOptionEditor();
+    private IntegerField myIntOptionsEditor = new IntegerField();
     private JComponent myCurrentEditor = null;
     private MyTreeNode myCurrentNode = null;
     private final AbstractAction STOP_CELL_EDIT_ACTION = new AbstractAction() {
@@ -905,7 +870,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
         return myBooleanEditor.isSelected();
       }
       else if (myCurrentEditor == myIntOptionsEditor) {
-        return myIntOptionsEditor.getPresentableValue();
+        return myIntOptionsEditor.getValue();
       }
       else {
         Object value = getCustomNodeEditorValue(myCurrentEditor);
@@ -932,10 +897,11 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
         else if (node.getKey() instanceof IntOption) {
           IntOption intOption = (IntOption)node.getKey();
           myCurrentEditor = myIntOptionsEditor;
-          myIntOptionsEditor.setText(intOption.isDefaultValue(node.getValue()) ? "" : node.getValue().toString());
+          myIntOptionsEditor.setCanBeEmpty(true);
           myIntOptionsEditor.setMinValue(intOption.getMinValue());
           myIntOptionsEditor.setMaxValue(intOption.getMaxValue());
           myIntOptionsEditor.setDefaultValue(intOption.getDefaultValue());
+          myIntOptionsEditor.setValue((Integer)node.getValue());
         }
         else {
           myCurrentEditor = getCustomNodeEditor(node);

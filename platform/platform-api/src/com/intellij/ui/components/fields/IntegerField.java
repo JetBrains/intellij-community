@@ -24,6 +24,7 @@ public class IntegerField extends AbstractValueInputField<Integer> {
 
   private int myMinValue;
   private int myMaxValue;
+  private boolean myCanBeEmpty;
 
   public IntegerField() {
     this(Integer.MIN_VALUE, Integer.MAX_VALUE);
@@ -51,12 +52,24 @@ public class IntegerField extends AbstractValueInputField<Integer> {
     myMaxValue = maxValue;
   }
 
+  @SuppressWarnings("unused") // bean property
+  public boolean isCanBeEmpty() {
+    return myCanBeEmpty;
+  }
+
+  public void setCanBeEmpty(boolean canBeEmpty) {
+    myCanBeEmpty = canBeEmpty;
+  }
+
   @NotNull
   @Override
   protected ParseResult parseValue(@Nullable String text) {
     try {
       if (StringUtil.isEmpty(text)) {
-        return new ParseResult(ApplicationBundle.message("integer.field.value.expected"));
+        if (!myCanBeEmpty) {
+          return new ParseResult(ApplicationBundle.message("integer.field.value.expected"));
+        }
+        return new ParseResult(getDefaultValue());
       }
       int value = Integer.parseInt(text);
       if (value < myMinValue || value > myMaxValue) {
@@ -71,6 +84,9 @@ public class IntegerField extends AbstractValueInputField<Integer> {
 
   @Override
   protected String valueToString(@NotNull Integer value) {
+    if (myCanBeEmpty && value.equals(getDefaultValue())) {
+      return "";
+    }
     return String.valueOf(value);
   }
 
