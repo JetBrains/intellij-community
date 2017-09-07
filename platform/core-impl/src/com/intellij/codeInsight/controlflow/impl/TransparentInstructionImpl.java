@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class TransparentInstructionImpl extends DetachedInstructionImpl implements TransparentInstruction {
-  
+
   @NotNull
   private final String myMarkerName;
 
@@ -39,6 +39,6 @@ public class TransparentInstructionImpl extends DetachedInstructionImpl implemen
   @NotNull
   @Override
   public String getElementPresentation() {
-    return super.getElementPresentation() + " marker(" + myMarkerName + ")";
+    return super.getElementPresentation() + " transparent(" + myMarkerName + ")";
   }
 }

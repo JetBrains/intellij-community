@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -62,6 +63,40 @@ public class ControlFlowBuilder {
       }
     }
     return null;
+  }
+
+  /**
+   * @return "raw" current state of control flow
+   */
+  @NotNull
+  public ControlFlow getControlFlow() {
+    return new ControlFlowImpl(instructions.toArray(new Instruction[0]));
+  }
+
+  /**
+   * @return control flow with removed transparent instructions
+   */
+  @NotNull
+  public ControlFlow getCompleteControlFlow() {
+    ArrayList<Instruction> result = ContainerUtil.newArrayList();
+    for (Instruction instruction : instructions) {
+      if (instruction instanceof TransparentInstruction) {
+        Collection<Instruction> predecessors = instruction.allPred();
+        Collection<Instruction> successors = instruction.allSucc();
+        for (Instruction predecessor : predecessors) {
+          successors.forEach(successor -> addEdge(predecessor, successor));
+        }
+
+        predecessors.forEach(el -> el.allSucc().remove(instruction));
+        successors.forEach(el -> el.allPred().remove(instruction));
+      }
+      else {
+        instruction.updateNum(result.size());
+        result.add(instruction);
+      }
+    }
+
+    return new ControlFlowImpl(result.toArray(new Instruction[0]));
   }
 
   /**
