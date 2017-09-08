@@ -22,6 +22,6 @@ import java.util.concurrent.ThreadLocalRandom
  * @author Sergey Karashevich
  */
 
-enum class MessageType {RUN_TEST, CLOSE_IDE, RESPONSE, JUNIT_INFO}
+enum class MessageType {RUN_TEST, CLOSE_IDE, RESPONSE, JUNIT_INFO, RESTART_IDE}
 data class TransportMessage(val type: MessageType, val content: Any? = null, val id: Long = ThreadLocalRandom.current().nextLong()): Serializable
 

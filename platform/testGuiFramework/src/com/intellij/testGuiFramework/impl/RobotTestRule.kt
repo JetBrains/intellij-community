@@ -13,18 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.testGuiFramework.remote.transport
+package com.intellij.testGuiFramework.impl
 
-import org.junit.runner.Description
-import java.io.Serializable
+import org.fest.swing.core.Robot
+import org.fest.swing.core.SmartWaitRobot
+import org.junit.rules.ExternalResource
 
-/**
- * @author Sergey Karashevich
- */
-enum class Type {RUN_STARTED, STARTED, ASSUMPTION_FAILURE, RUN_FINISHED, FAILURE, FINISHED, IGNORED }
+class RobotTestRule: ExternalResource() {
 
-data class JUnitInfo(val type: Type, val obj: Any?, val testClassAndMethodName: String) : Serializable {
-  companion object {
-    fun getClassAndMethodName(description: Description) = "${description.className}#${description.methodName}"
+  private var myRobot: Robot? = null
+
+  override fun before() {
+    myRobot = SmartWaitRobot() // acquires ScreenLock
+//    myRobot!!.settings().delayBetweenEvents(30)
   }
+
+  override fun after() {
+    myRobot!!.cleanUpWithoutDisposingWindows()  // releases ScreenLock
+  }
+
+  fun getRobot(): Robot {
+    return myRobot ?: throw Exception("Robot hasn't been initialized yet!")
+  }
+
 }
