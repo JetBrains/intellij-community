@@ -211,6 +211,11 @@ public class ParameterInfoComponent extends JPanel {
     }
 
     @Override
+    public boolean isSingleOverload() {
+      return myPanels.length == 1;
+    }
+
+    @Override
     public boolean isSingleParameterInfo() {
       return mySingleParameterInfo;
     }

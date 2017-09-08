@@ -2027,6 +2027,8 @@
     <scratch.rootType implementation="com.intellij.execution.jshell.JShellRootType"/>
 
     <javaModuleSystem implementation="com.intellij.psi.impl.JavaPlatformModuleSystem"/>
+
+    <java.error.fix errorCode="lambda.variable.must.be.final" implementationClass="com.intellij.codeInspection.streamMigration.SimplifyForEachInspection$ForEachNonFinalFix"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.uast">

@@ -537,4 +537,5 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testEmptySingletonMap() {doTest();}
   public void testStaticFieldsWithNewObjects() { doTest(); }
   public void testComplexInitializer() { doTest(); }
+  public void testFieldAssignedNegative() { doTest(); }
 }

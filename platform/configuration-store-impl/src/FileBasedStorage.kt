@@ -203,7 +203,7 @@ fun writeFile(file: Path?, requestor: Any, virtualFile: VirtualFile?, element: E
   return result
 }
 
-private val XML_PROLOG = """<?xml version="1.0" encoding="UTF-8"?>""".toByteArray()
+internal val XML_PROLOG = """<?xml version="1.0" encoding="UTF-8"?>""".toByteArray()
 
 private fun isEqualContent(result: VirtualFile, lineSeparator: LineSeparator, content: BufferExposingByteArrayOutputStream, prependXmlProlog: Boolean): Boolean {
   val headerLength = if (!prependXmlProlog) 0 else XML_PROLOG.size + lineSeparator.separatorBytes.size

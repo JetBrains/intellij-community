@@ -26,9 +26,12 @@ import com.intellij.vcsUtil.VcsFileUtil;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.testng.Assert;
 
 import java.io.File;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertNotNull;
 
 /**
  * @author irengrig
@@ -62,18 +65,18 @@ public class GitUpperDirectorySearchTest {
     final String dirName = "somedir";
     final File file = new File(myProjectFixture.getProject().getBaseDir().getPath(), dirName);
     FileUtil.delete(file);
-    Assert.assertTrue(file.mkdir(), "can't create: " + file.getAbsolutePath());
+    assertTrue("can't create: " + file.getAbsolutePath(), file.mkdir());
     final File childDir = new File(file, "and/a/path/to");
-    Assert.assertTrue(childDir.mkdirs(), "can't create: " + childDir.getAbsolutePath());
+    assertTrue("can't create: " + childDir.getAbsolutePath(), childDir.mkdirs());
 
     final VirtualFile dir = myLocalFileSystem.refreshAndFindFileByIoFile(file);
     final VirtualFile childFile = myLocalFileSystem.refreshAndFindFileByIoFile(childDir);
 
-    Assert.assertNotNull(dir);
-    Assert.assertNotNull(childFile);
+    assertNotNull(dir);
+    assertNotNull(childFile);
 
     final VirtualFile result = VcsFileUtil.getPossibleBase(childFile, dirName);
-    Assert.assertEquals(result, dir);
+    assertEquals(dir, result);
   }
 
   @Test
@@ -81,20 +84,20 @@ public class GitUpperDirectorySearchTest {
     final String dirName = SystemInfo.isFileSystemCaseSensitive ? "somedir/long/path" : "somEdir/lonG/path";
     final File file = new File(myProjectFixture.getProject().getBaseDir().getPath(), "somedir");
     FileUtil.delete(file);
-    Assert.assertTrue(file.mkdir(), "can't create: " + file.getAbsolutePath());
+    assertTrue("can't create: " + file.getAbsolutePath(), file.mkdir());
     final File childDir = new File(file, "long/path/and/a/path/to");
-    Assert.assertTrue(childDir.mkdirs(), "can't create: " + childDir.getAbsolutePath());
+    assertTrue("can't create: " + childDir.getAbsolutePath(), childDir.mkdirs());
     final File a = new File(childDir, "a.txt");
-    Assert.assertTrue(a.createNewFile(), "can't create: " + a.getAbsolutePath());
+    assertTrue("can't create: " + a.getAbsolutePath(), a.createNewFile());
 
     final VirtualFile dir = myLocalFileSystem.refreshAndFindFileByIoFile(file);
     final VirtualFile childFile = myLocalFileSystem.refreshAndFindFileByIoFile(a);
 
-    Assert.assertNotNull(dir);
-    Assert.assertNotNull(childFile);
+    assertNotNull(dir);
+    assertNotNull(childFile);
 
     final VirtualFile result = VcsFileUtil.getPossibleBase(childFile, dirName.split("/"));
-    Assert.assertEquals(result, dir);
+    assertEquals(dir, result);
   }
 
   @Test
@@ -102,19 +105,19 @@ public class GitUpperDirectorySearchTest {
     final String dirName = SystemInfo.isFileSystemCaseSensitive ? "somedir/long/path" : "somEdir/lonG/path";
     final File file = new File(myProjectFixture.getProject().getBaseDir().getPath(), "somedir");
     FileUtil.delete(file);
-    Assert.assertTrue(file.mkdir(), "can't create: " + file.getAbsolutePath());
+    assertTrue("can't create: " + file.getAbsolutePath(), file.mkdir());
     final File childDir = new File(file, "long/path/and/a/path/path/path/to/long/path");
-    Assert.assertTrue(childDir.mkdirs(), "can't create: " + childDir.getAbsolutePath());
+    assertTrue("can't create: " + childDir.getAbsolutePath(), childDir.mkdirs());
     final File a = new File(childDir, "a.txt");
-    Assert.assertTrue(a.createNewFile(), "can't create: " + a.getAbsolutePath());
+    assertTrue("can't create: " + a.getAbsolutePath(), a.createNewFile());
 
     final VirtualFile dir = myLocalFileSystem.refreshAndFindFileByIoFile(file);
     final VirtualFile childFile = myLocalFileSystem.refreshAndFindFileByIoFile(a);
 
-    Assert.assertNotNull(dir);
-    Assert.assertNotNull(childFile);
+    assertNotNull(dir);
+    assertNotNull(childFile);
 
     final VirtualFile result = VcsFileUtil.getPossibleBase(childFile, dirName.split("/"));
-    Assert.assertEquals(result, dir);
+    assertEquals(dir, result);
   }
 }

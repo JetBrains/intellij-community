@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -168,7 +168,7 @@ public class KillToWordEndActionTest extends LightPlatformCodeInsightTestCase {
     configureFromFileText(getTestName(false) + ".java", text);
     final FoldingModel model = myEditor.getFoldingModel();
     model.runBatchFoldingOperation(() -> {
-      final FoldRegion foldRegion = model.addFoldRegion(70, 90, "");
+      final FoldRegion foldRegion = model.addFoldRegion(70, 90, "...");
       assertNotNull(foldRegion);
       foldRegion.setExpanded(false);
       assertFalse(foldRegion.isExpanded());

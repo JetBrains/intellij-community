@@ -19,9 +19,9 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.dashboard.RunDashboardContributor;
 import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode;
 import com.intellij.execution.dashboard.RunDashboardRunConfigurationStatus;
-import com.intellij.execution.dashboard.RunDashboardContributor;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManagerImpl;
 import com.intellij.ide.projectView.PresentationData;
@@ -83,14 +83,13 @@ class RunConfigurationNode extends AbstractTreeNode<Pair<RunnerAndConfigurationS
     presentation.addText(configurationSettings.getName(),
                          isStored ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.GRAY_ATTRIBUTES);
     Icon icon = null;
-    if (myContributor != null) {
-      RunDashboardRunConfigurationStatus status = myContributor.getStatus(this);
-      if (RunDashboardRunConfigurationStatus.STARTED.equals(status)) {
-        icon = getExecutorIcon();
-      }
-      else if (RunDashboardRunConfigurationStatus.FAILED.equals(status)) {
-        icon = status.getIcon();
-      }
+    RunDashboardRunConfigurationStatus status = myContributor != null ? myContributor.getStatus(this) :
+                                                RunDashboardRunConfigurationStatus.getStatus(this);
+    if (RunDashboardRunConfigurationStatus.STARTED.equals(status)) {
+      icon = getExecutorIcon();
+    }
+    else if (RunDashboardRunConfigurationStatus.FAILED.equals(status)) {
+      icon = status.getIcon();
     }
     if (icon == null) {
       icon = RunManagerEx.getInstanceEx(getProject()).getConfigurationIcon(configurationSettings);

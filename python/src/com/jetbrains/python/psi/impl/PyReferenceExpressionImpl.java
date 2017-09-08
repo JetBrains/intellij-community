@@ -509,11 +509,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       final PyFunctionType functionType = (PyFunctionType)type;
 
       if (qualifier != null && PyCallExpressionHelper.isQualifiedByInstance(functionType.getCallable(), qualifier, context)) {
-        final List<PyCallableParameter> parameters = functionType.getParameters(context);
-
-        if (!ContainerUtil.isEmpty(parameters) && parameters.get(0).isSelf()) {
-          return new PyFunctionTypeImpl(functionType.getCallable(), ContainerUtil.subList(parameters, 1));
-        }
+         return functionType.dropSelf(context);
       }
     }
 

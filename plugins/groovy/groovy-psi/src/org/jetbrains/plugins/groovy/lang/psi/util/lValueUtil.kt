@@ -27,7 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTuple
  * The expression is a rValue when it is in rValue position or it's a lValue of operator assignment.
  */
 fun GrExpression.isRValue(): Boolean {
-  val (parent, lastParent) = skipParentsOfType(GrParenthesizedExpression::class.java) ?: return true
+  val (parent, lastParent) = skipParentsOfType<GrParenthesizedExpression>() ?: return true
   return parent !is GrAssignmentExpression || lastParent != parent.lValue || parent.operationTokenType != GroovyTokenTypes.mASSIGN
 }
 

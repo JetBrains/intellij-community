@@ -843,6 +843,11 @@
       <reference ref="XDebugger.ValueGroup"/>
     </group>
 
+    <group id="XDebugger.Evaluate.Code.Fragment.Editor.Popup">
+      <reference ref="BasicEditorPopupMenu"/>
+      <reference ref="EditorToggleUseSoftWraps"/>
+    </group>
+
     <group id="XDebugger.Settings" icon="AllIcons.General.SecondaryGroup" popup="true">
       <action id="XDebugger.Inline" class="com.intellij.xdebugger.impl.actions.UseInlineDebuggerAction"/>
       <separator/>

@@ -171,6 +171,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     if (mode == EvaluationMode.EXPRESSION && text.getMode() == EvaluationMode.CODE_FRAGMENT && myIsCodeFragmentEvaluationSupported) {
       mode = EvaluationMode.CODE_FRAGMENT;
     }
+    setTitle(XDebuggerBundle.message("xdebugger.evaluate.dialog.title"));
     switchToMode(mode, text);
     init();
   }
@@ -271,7 +272,6 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     myMainPanel.removeAll();
     myInputComponent.addComponent(myMainPanel, myResultPanel);
 
-    setTitle(myInputComponent.getTitle());
     mySwitchModeAction.putValue(Action.NAME, getSwitchButtonText(mode));
     getInputEditor().requestFocusInEditor();
   }

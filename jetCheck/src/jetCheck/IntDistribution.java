@@ -56,7 +56,7 @@ public interface IntDistribution {
       int value = r.nextInt(sum);
       for (int i = 0; i < weights.size(); i++) {
         value -= weights.get(i);
-        if (value <= 0) return i;
+        if (value < 0) return i;
       }
       throw new IllegalArgumentException();
     });

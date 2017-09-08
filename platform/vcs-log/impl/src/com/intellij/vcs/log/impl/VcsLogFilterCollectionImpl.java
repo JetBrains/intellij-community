@@ -95,7 +95,7 @@ public class VcsLogFilterCollectionImpl implements VcsLogFilterCollection {
 
   @Override
   public boolean isEmpty() {
-    return myBranchFilter == null && getDetailsFilters().isEmpty();
+    return myBranchFilter == null && myRootFilter == null && myHashFilter == null && getDetailsFilters().isEmpty();
   }
 
   @NotNull

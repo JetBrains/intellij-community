@@ -711,6 +711,9 @@ public class UIUtil {
     char c = e.getKeyChar();
     if (c < 0x20 || c == 0x7F) return false;
 
+    // Allow input of special characters on Windows in Persian keyboard layout using Ctrl+Shift+1..4 
+    if (SystemInfo.isWindows && c >= 0x200C && c <= 0x200F) return true;
+
     if (SystemInfo.isMac) {
       return !e.isMetaDown() && !e.isControlDown();
     }

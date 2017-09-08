@@ -110,7 +110,7 @@ binding.setVariable("loadProject", {
     bundledKotlinPath = "$home/community/build/dependencies/build/kotlin/Kotlin/kotlinc"
   }
   if (!new File(bundledKotlinPath, "lib/kotlin-runtime.jar").exists()) {
-    projectBuilder.error("Could not find Kotlin runtime at $bundledKotlinPath/lib/kotlin-runtime.jar: run `./gradlew setupKotlin` in dependencies module to download Kotlin JARs")
+    projectBuilder.error("Could not find Kotlin runtime at $bundledKotlinPath/lib/kotlin-runtime.jar: run `./gradlew setupKotlinPlugin` in dependencies module to download Kotlin JARs")
     return
   }
   setPathVariable("KOTLIN_BUNDLED", bundledKotlinPath)
@@ -159,7 +159,7 @@ private boolean ensureKotlinCompilerAddedToClassPath() {
     kotlinPluginLibPath = "$home/community/build/dependencies/build/kotlin/Kotlin/lib"
   }
   if (!new File(kotlinPluginLibPath, "kotlin-runtime.jar").exists()) {
-    projectBuilder.error("Could not find Kotlin JARs at $kotlinPluginLibPath: run `./gradlew setupKotlin` in dependencies module " +
+    projectBuilder.error("Could not find Kotlin JARs at $kotlinPluginLibPath: run `./gradlew setupKotlinPlugin` in dependencies module " +
                          "to download Kotlin JARs")
     return false
   }

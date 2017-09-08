@@ -34,6 +34,12 @@ private inline fun createActions(crossinline actions: (JvmElementActionsFactory)
   }
 }
 
+fun createMethodActions(target: JvmClass, request: CreateMethodRequest): List<IntentionAction> {
+  return createActions {
+    it.createAddMethodActions(target, request)
+  }
+}
+
 fun createModifierActions(target: JvmModifiersOwner, request: MemberRequest.Modifier): List<IntentionAction> {
   return createActions {
     it.createChangeModifierActions(target, request)
@@ -51,12 +57,6 @@ fun createMethodAction(target: JvmClass, request: MemberRequest.Method): Intenti
     return factory.createAddMethodActions(target, request).firstOrNull() ?: continue
   }
   return null
-}
-
-fun createMethodActions(target: JvmClass, request: MemberRequest.Method): List<IntentionAction> {
-  return createActions {
-    it.createAddMethodActions(target, request)
-  }
 }
 
 fun createPropertyActions(target: JvmClass, request: MemberRequest.Property): List<IntentionAction> {

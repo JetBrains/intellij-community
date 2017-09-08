@@ -30,7 +30,7 @@ import com.intellij.psi.util.PsiUtil.resolveClassInClassTypeOnly
 import com.intellij.psi.util.parentOfType
 
 fun generateActions(ref: PsiReferenceExpression): List<IntentionAction> {
-  if (ref.referenceName == null) return emptyList()
+  if (!checkReference(ref)) return emptyList()
   val fieldRequests = CreateFieldRequests(ref).collectRequests()
   val extensions = EP_NAME.extensions
   return fieldRequests.flatMap { (clazz, request) ->
@@ -38,6 +38,12 @@ fun generateActions(ref: PsiReferenceExpression): List<IntentionAction> {
       ext.createAddFieldActions(clazz, request)
     }
   }
+}
+
+private fun checkReference(ref: PsiReferenceExpression): Boolean {
+  if (ref.referenceName == null) return false
+  if (ref.parent is PsiMethodCallExpression) return false
+  return true
 }
 
 private class CreateFieldRequests(val myRef: PsiReferenceExpression) {

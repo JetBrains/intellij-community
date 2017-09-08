@@ -345,6 +345,12 @@ public class TreeTraverserTest extends TestCase {
     assertEquals(Arrays.asList(0, 1, 0, 2, 0, 3, 0, 4, 0, 5), it.flatMap(o -> ContainerUtil.list(0, o)).toList());
   }
 
+  public void testJoin() {
+    assertEquals("", JBIterable.of().join(", ").reduce("", (a, b) -> a + b));
+    assertEquals("a", JBIterable.of("a").join(", ").reduce("", (a, b) -> a + b));
+    assertEquals("a, b, c", JBIterable.of("a", "b", "c").join(", ").reduce("", (a, b) -> a + b));
+  }
+
   public void testSplits1() {
     JBIterable<Integer> it = JBIterable.of(1, 2, 3, 4, 5);
     assertEquals(Arrays.asList(Arrays.asList(1, 2), Arrays.asList(3, 4)), it.split(2, true).toList());

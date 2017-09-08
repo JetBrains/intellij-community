@@ -45,9 +45,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.*;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.List;
 
 /**
  * Renders editor contents.
@@ -98,7 +97,7 @@ class EditorPainter implements TextDrawingCallback {
 
     int yShift = -clip.y;
     g.translate(0, -yShift);
-    
+
     paintBackground(g, clip, yShift, startLine, endLine, caretData);
     paintRightMargin(g, clip);
     paintCustomRenderers(g, yShift, startOffset, endOffset);
@@ -155,6 +154,13 @@ class EditorPainter implements TextDrawingCallback {
     int x = myCorrector.marginX();
     g.setColor(myEditor.getColorsScheme().getColor(EditorColors.RIGHT_MARGIN_COLOR));
     UIUtil.drawLine(g, x, 0, x, clip.height);
+    Color visualGuidesColor = myEditor.getColorsScheme().getColor(EditorColors.VISUAL_INDENT_GUIDE_COLOR);
+    if (visualGuidesColor != null) {
+      g.setColor(visualGuidesColor);
+      for (Integer marginX : myCorrector.softMarginsX()) {
+        UIUtil.drawLine(g, marginX, 0, marginX, clip.height);
+      }
+    }
   }
 
   private boolean isMarginShown() {
@@ -606,7 +612,7 @@ class EditorPainter implements TextDrawingCallback {
     markupModel.processRangeHighlightersOverlappingWith(clipStartOffset, clipEndOffset, rangeHighlighter -> {
       TextAttributes attributes = rangeHighlighter.getTextAttributes();
       if (isBorder(attributes)) {
-        paintBorderEffect(g, clipDetector, yShift, 
+        paintBorderEffect(g, clipDetector, yShift,
                           rangeHighlighter.getAffectedAreaStartOffset(), rangeHighlighter.getAffectedAreaEndOffset(), attributes);
       }
       return true;
@@ -619,7 +625,7 @@ class EditorPainter implements TextDrawingCallback {
            attributes.getEffectColor() != null;
   }
 
-  private void paintBorderEffect(Graphics2D g, ClipDetector clipDetector, int yShift, 
+  private void paintBorderEffect(Graphics2D g, ClipDetector clipDetector, int yShift,
                                  int startOffset, int endOffset, TextAttributes attributes) {
     startOffset = DocumentUtil.alignToCodePointBoundary(myDocument, startOffset);
     endOffset = DocumentUtil.alignToCodePointBoundary(myDocument, endOffset);
@@ -658,9 +664,9 @@ class EditorPainter implements TextDrawingCallback {
         boolean containsInnerLines = endPosition.line > startPosition.line + 1;
         int lineHeight = myView.getLineHeight() - 1;
         int leadingTopY = myView.visualLineToY(startPosition.line) + yShift;
-        int leadingBottomY = leadingTopY + lineHeight + yShift;
+        int leadingBottomY = leadingTopY + lineHeight;
         int trailingTopY = myView.visualLineToY(endPosition.line) + yShift;
-        int trailingBottomY = trailingTopY + lineHeight + yShift;
+        int trailingBottomY = trailingTopY + lineHeight;
         float start = 0;
         float end = 0;
         float leftGap = leadingRanges.get(0) - (containsInnerLines ? minX : trailingRanges.get(0));
@@ -1123,6 +1129,7 @@ class EditorPainter implements TextDrawingCallback {
     float singleLineBorderStart(float x);
     float singleLineBorderEnd(float x);
     int marginX();
+    List<Integer> softMarginsX();
 
     @NotNull
     default XCorrector align(@NotNull EditorView view) {
@@ -1192,6 +1199,16 @@ class EditorPainter implements TextDrawingCallback {
         EditorImpl editor = myView.getEditor();
         return myView.getInsets().left + editor.getSettings().getRightMargin(editor.getProject()) * myView.getPlainSpaceWidth();
       }
+
+      @Override
+      public List<Integer> softMarginsX() {
+        List<Integer> margins = myView.getEditor().getSettings().getSoftMargins();
+        List<Integer> result = new ArrayList<>(margins.size());
+        for (Integer margin : margins) {
+          result.add(myView.getInsets().left + margin * myView.getPlainSpaceWidth());
+        }
+        return result;
+      }
     }
 
     class RightAligned implements XCorrector {
@@ -1250,6 +1267,16 @@ class EditorPainter implements TextDrawingCallback {
       public int marginX() {
         EditorImpl editor = myView.getEditor();
         return myView.getRightAlignmentMarginX() - editor.getSettings().getRightMargin(editor.getProject()) * myView.getPlainSpaceWidth();
+      }
+
+      @Override
+      public List<Integer> softMarginsX() {
+        List<Integer> margins = myView.getEditor().getSettings().getSoftMargins();
+        List<Integer> result = new ArrayList<>(margins.size());
+        for (Integer margin : margins) {
+          result.add(myView.getRightAlignmentMarginX() - margin * myView.getPlainSpaceWidth());
+        }
+        return result;
       }
     }
   }

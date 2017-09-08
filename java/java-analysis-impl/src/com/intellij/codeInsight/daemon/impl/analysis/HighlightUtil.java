@@ -2774,10 +2774,12 @@ public class HighlightUtil extends HighlightUtilBase {
 
     if (resolved == null) {
       // do not highlight unknown packages (javac does not care), Javadoc, and module references (checked elsewhere)
-      PsiElement outerParent = getOuterReferenceParent(ref);
+      PsiJavaCodeReferenceElement parent = getOuterReferenceParent(ref);
+      PsiElement outerParent = parent.getParent();
       if (outerParent instanceof PsiPackageStatement ||
           result.isPackagePrefixPackageReference() ||
           PsiUtil.isInsideJavadocComment(ref) ||
+          parent.resolve() instanceof PsiClass ||
           outerParent instanceof PsiPackageAccessibilityStatement) {
         return null;
       }
@@ -2864,15 +2866,24 @@ public class HighlightUtil extends HighlightUtilBase {
     return ElementDescriptionUtil.getElementDescription(element, HighlightUsagesDescriptionLocation.INSTANCE);
   }
 
-  private static PsiElement getOuterReferenceParent(PsiJavaCodeReferenceElement ref) {
-    PsiElement element = ref;
-    while (element instanceof PsiJavaCodeReferenceElement) element = element.getParent();
+  @NotNull
+  private static PsiJavaCodeReferenceElement getOuterReferenceParent(@NotNull PsiJavaCodeReferenceElement ref) {
+    PsiJavaCodeReferenceElement element = ref;
+    while (true) {
+      PsiElement parent = element.getParent();
+      if (parent instanceof PsiJavaCodeReferenceElement) {
+        element = (PsiJavaCodeReferenceElement)parent;
+      }
+      else {
+        break;
+      }
+    }
     return element;
   }
 
   @Nullable
   static HighlightInfo checkPackageAndClassConflict(@NotNull PsiJavaCodeReferenceElement ref, @NotNull PsiFile containingFile) {
-    if (ref.isQualified() && getOuterReferenceParent(ref) instanceof PsiPackageStatement) {
+    if (ref.isQualified() && getOuterReferenceParent(ref).getParent() instanceof PsiPackageStatement) {
       VirtualFile file = containingFile.getVirtualFile();
       if (file != null) {
         Module module = ProjectFileIndex.SERVICE.getInstance(ref.getProject()).getModuleForFile(file);

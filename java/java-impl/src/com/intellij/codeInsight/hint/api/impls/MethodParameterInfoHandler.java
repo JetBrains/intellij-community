@@ -630,7 +630,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       highlightStartOffset,
       highlightEndOffset,
       !context.isUIComponentEnabled(),
-      method.isDeprecated() && !context.isSingleParameterInfo(),
+      method.isDeprecated() && !context.isSingleParameterInfo() && !context.isSingleOverload(),
       false,
       context.getDefaultParameterColor()
     );

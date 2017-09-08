@@ -22,7 +22,7 @@ import org.junit.Test;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-import static org.testng.Assert.assertEquals;
+import static org.junit.Assert.assertEquals;
 
 /**
  * @author Kirill Likhodedov
@@ -39,64 +39,64 @@ public class GitStandardProgressAnalyzerTest {
 
   @Test
   public void returnMinusOneOnNonMatch() {
-    assertEquals(myProgressModifier.analyzeProgress("From git@github.com:idea/community"), -1.0, EPS);
+    assertEquals(-1.0, myProgressModifier.analyzeProgress("From git@github.com:idea/community"), EPS);
   }
 
   @Test
   public void countingObjects() {
-    assertEquals(myProgressModifier.analyzeProgress("remote: Counting objects: 3178"), 0.05 * (3178 / 5000.0), EPS);
+    assertEquals(0.05 * (3178 / 5000.0), myProgressModifier.analyzeProgress("remote: Counting objects: 3178"), EPS);
   }
 
   @Test
   public void compressingObjects() {
-    assertEquals(myProgressModifier.analyzeProgress("remote: Compressing objects: 34% (289/850)"), 0.05 + 0.1 * 0.34, EPS);
+    assertEquals(0.05 + 0.1 * 0.34, myProgressModifier.analyzeProgress("remote: Compressing objects: 34% (289/850)"), EPS);
   }
 
   @Test
   public void recevingObjects() {
-    assertEquals(myProgressModifier.analyzeProgress("remote: Receiving objects: 70% (595/850), 4.18 MiB | 223 KiB/s"),
-                 0.15 + 0.8 * 0.7, EPS);
+    assertEquals(0.15 + 0.8 * 0.7, myProgressModifier.analyzeProgress("remote: Receiving objects: 70% (595/850), 4.18 MiB | 223 KiB/s"),
+                 EPS);
   }
 
   @Test
   public void writingObjects() {
-    assertEquals(myProgressModifier.analyzeProgress("Writing objects:  60% (3/5), 49.91 MiB | 422 KiB/s"),
-                 0.15 + 0.8 * 0.6, EPS);
+    assertEquals(0.15 + 0.8 * 0.6, myProgressModifier.analyzeProgress("Writing objects:  60% (3/5), 49.91 MiB | 422 KiB/s"),
+                 EPS);
   }
 
   @Test
   public void resolvingDeltas() {
-    assertEquals(myProgressModifier.analyzeProgress("remote: Resolving deltas: 34% (289/850)"), 0.95 + 0.05 * 0.34, EPS);
+    assertEquals(0.95 + 0.05 * 0.34, myProgressModifier.analyzeProgress("remote: Resolving deltas: 34% (289/850)"), EPS);
   }
 
   @Test
   public void testAllAtOnce() throws IllegalAccessException, InvocationTargetException, NoSuchMethodException {
-    assertEquals(myProgressModifier.analyzeProgress("Cloning into nb1..."), -1.0, EPS);
+    assertEquals(-1.0, myProgressModifier.analyzeProgress("Cloning into nb1..."), EPS);
     // remote: Counting objects: 1345
     for (int i = 0; i < 3178; i++) {
       final String s = countingObjects(i, false);
-      assertEquals(myProgressModifier.analyzeProgress(s), 0.05 * (i / 5000.0), EPS, s);
+      assertEquals(s, 0.05 * (i / 5000.0), myProgressModifier.analyzeProgress(s), EPS);
     }
     // remote: Counting objects: 3178, done.
-    assertEquals(myProgressModifier.analyzeProgress(countingObjects(3718, true)), 0.05 * (3718 / 5000.0), EPS);
+    assertEquals(0.05 * (3718 / 5000.0), myProgressModifier.analyzeProgress(countingObjects(3718, true)), EPS);
     // remote: Compressing objects: 34% (289/850)
     // remote: Compressing objects: 100% (850/850), done.
     for (int i = 0; i <= 100; i++) {
       final String s = compressingObjects(i);
-      assertEquals(myProgressModifier.analyzeProgress(s), 0.05 + 0.1 * (i / 100.0), EPS, s);
+      assertEquals(s, 0.05 + 0.1 * (i / 100.0), myProgressModifier.analyzeProgress(s), EPS);
     }
     myProgressModifier.analyzeProgress("    remote: Total 3178 (delta 1822), reused 3161 (delta 1815)");
     // Receiving objects: 34% (289/850) , 4.18 MiB | 144 KiB/s
     for (int i = 0; i <= 100; i++) {
       final String s = receivingObjects(i);
-      assertEquals(myProgressModifier.analyzeProgress(s), 0.15 + 0.8 * (i / 100.0), EPS, s);
+      assertEquals(s, 0.15 + 0.8 * (i / 100.0), myProgressModifier.analyzeProgress(s), EPS);
     }
     // Resolving deltas: 100% (1822/1822), done.
     for (int i = 0; i <= 100; i++) {
       final String s = resolvingDeltas(i);
-      assertEquals(myProgressModifier.analyzeProgress(s), 0.95 + 0.05 * (i / 100.0), EPS, s);
+      assertEquals(s, 0.95 + 0.05 * (i / 100.0), myProgressModifier.analyzeProgress(s), EPS);
     }
-    assertEquals(getCurrentTotalProgressAtTheEnd(), 1.0, EPS);
+    assertEquals(1.0, getCurrentTotalProgressAtTheEnd(), EPS);
   }
 
   private double getCurrentTotalProgressAtTheEnd() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {

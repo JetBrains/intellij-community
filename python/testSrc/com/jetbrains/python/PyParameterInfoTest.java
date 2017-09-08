@@ -820,6 +820,11 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     }
 
     @Override
+    public boolean isSingleOverload() {
+      return myItemsToShow.length == 1;
+    }
+
+    @Override
     public boolean isSingleParameterInfo() {
       return false;
     }

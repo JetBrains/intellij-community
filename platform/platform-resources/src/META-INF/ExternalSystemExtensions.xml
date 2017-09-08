@@ -36,6 +36,8 @@
     <externalProjectDataService implementation="com.intellij.openapi.externalSystem.service.project.manage.ConfigurationDataService"/>
 
     <externalSystemConfigurationHandler implementation="com.intellij.openapi.externalSystem.service.project.manage.CompilerConfigurationHandler"/>
+    <externalSystemConfigurationHandler implementation="com.intellij.openapi.externalSystem.service.project.manage.RunConfigurationHandler"/>
+    <runConfigurationHandlerExtension implementation="com.intellij.openapi.externalSystem.service.project.manage.ApplicationRunConfigHandler"/>
 
     <configuration.ModuleStructureExtension implementation="com.intellij.openapi.externalSystem.service.project.manage.ExternalModuleStructureExtension"/>
     

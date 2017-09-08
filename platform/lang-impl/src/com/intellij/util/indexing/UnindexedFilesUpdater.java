@@ -46,9 +46,13 @@ public class UnindexedFilesUpdater extends DumbModeTask {
 
   private final FileBasedIndexImpl myIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
   private final Project myProject;
+  private final StartupManager myStartupManager;
+  private final PushedFilePropertiesUpdater myPusher;
 
   public UnindexedFilesUpdater(final Project project) {
     myProject = project;
+    myStartupManager = StartupManager.getInstance(myProject);
+    myPusher = PushedFilePropertiesUpdater.getInstance(myProject);
     project.getMessageBus().connect(this).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
       public void rootsChanged(ModuleRootEvent event) {
@@ -59,7 +63,7 @@ public class UnindexedFilesUpdater extends DumbModeTask {
 
   private void updateUnindexedFiles(ProgressIndicator indicator) {
     PerformanceWatcher.Snapshot snapshot = PerformanceWatcher.takeSnapshot();
-    PushedFilePropertiesUpdater.getInstance(myProject).pushAllPropertiesNow();
+    myPusher.pushAllPropertiesNow();
     boolean trackResponsiveness = !ApplicationManager.getApplication().isUnitTestMode();
 
     if (trackResponsiveness) snapshot.logResponsivenessSinceCreation("Pushing properties");
@@ -82,7 +86,7 @@ public class UnindexedFilesUpdater extends DumbModeTask {
 
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       // full VFS refresh makes sense only after it's loaded, i.e. after scanning files to index is finished
-      ((StartupManagerImpl)StartupManager.getInstance(myProject)).scheduleInitialVfsRefresh();
+      ((StartupManagerImpl)myStartupManager).scheduleInitialVfsRefresh();
     }
 
     if (files.isEmpty()) {

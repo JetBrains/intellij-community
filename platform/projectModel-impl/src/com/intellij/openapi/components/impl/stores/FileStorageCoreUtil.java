@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.application.options.PathMacrosCollector;
-import com.intellij.openapi.application.PathMacros;
+import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.openapi.components.CompositePathMacroFilter;
 import com.intellij.openapi.components.PathMacroSubstitutor;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
@@ -80,7 +80,7 @@ public class FileStorageCoreUtil {
         }
 
         ((TrackingPathMacroSubstitutor)pathMacroSubstitutor)
-          .addUnknownMacros(name, PathMacrosCollector.getMacroNames(element, filter, PathMacros.getInstance()));
+          .addUnknownMacros(name, PathMacrosCollector.getMacroNames(element, filter, PathMacrosImpl.getInstanceEx()));
       }
 
       // remove only after "getMacroNames" - some PathMacroFilter requires element name attribute

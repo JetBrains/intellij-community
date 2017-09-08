@@ -38,6 +38,7 @@ public class GrGenericTypeConverter extends GrTypeConverter {
   public boolean isApplicableTo(@NotNull ApplicableTo position) {
     switch (position) {
       case METHOD_PARAMETER:
+      case GENERIC_PARAMETER:
       case ASSIGNMENT:
       case RETURN_VALUE:
         return true;

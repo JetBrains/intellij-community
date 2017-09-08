@@ -16,15 +16,12 @@
 package com.intellij.java.propertyBased;
 
 import com.intellij.lang.jvm.JvmModifier;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.propertyBased.CompletionPolicy;
-import com.intellij.testFramework.propertyBased.MadTestingUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
@@ -34,8 +31,8 @@ import java.util.Arrays;
 class JavaCompletionPolicy extends CompletionPolicy {
 
   @Override
-  public boolean shouldCheckDuplicates(@NotNull Editor editor, @NotNull PsiFile file, @Nullable PsiElement leaf) {
-    return !MadTestingUtil.isAfterError(file, editor.getCaretModel().getOffset());
+  protected boolean isAfterError(@NotNull PsiFile file, @NotNull PsiElement leaf) {
+    return super.isAfterError(file, leaf) || isAdoptedOrphanPsiAfterClassEnd(leaf);
   }
 
   @Override
@@ -45,10 +42,24 @@ class JavaCompletionPolicy extends CompletionPolicy {
         !shouldSuggestJavaTarget((PsiJavaCodeReferenceElement)refElement, target)) {
       return false;
     }
-    if (ref instanceof FileReference && target instanceof PsiFile) {
-      return false; // IDEA-177167
+    if (ref instanceof FileReference) {
+      if (target instanceof PsiFile) {
+        return false; // IDEA-177167
+      }
+      if (target instanceof PsiDirectory && ((PsiDirectory)target).getName().endsWith(".jar") && ((PsiDirectory)target).getParentDirectory() == null) {
+        return false; // IDEA-178629
+      }
     }
     return true;
+  }
+
+  private static boolean isAdoptedOrphanPsiAfterClassEnd(PsiElement element) {
+    PsiClass topmostClass = PsiTreeUtil.getTopmostParentOfType(element, PsiClass.class);
+    if (topmostClass != null) {
+      PsiElement rBrace = topmostClass.getRBrace();
+      if (rBrace != null && rBrace.getTextRange().getStartOffset() < element.getTextRange().getStartOffset()) return true;
+    }
+    return false;
   }
 
   private static boolean shouldSuggestJavaTarget(PsiJavaCodeReferenceElement ref, @NotNull PsiElement target) {

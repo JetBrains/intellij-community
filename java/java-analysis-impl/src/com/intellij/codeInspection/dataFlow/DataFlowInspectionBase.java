@@ -107,6 +107,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     return new JavaElementVisitor() {
       @Override
       public void visitClass(PsiClass aClass) {
+        if (aClass instanceof PsiTypeParameter) return;
         analyzeCodeBlock(aClass, holder, isOnTheFly);
       }
 

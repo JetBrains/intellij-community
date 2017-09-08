@@ -386,6 +386,7 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
 
   private static class JpsRepositoryLibraryPropertiesSerializer extends JpsLibraryPropertiesSerializer<JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>> {
     private static final String MAVEN_ID_ATTRIBUTE = "maven-id";
+    private static final String INCLUDE_TRANSITIVE_DEPS_ATTRIBUTE = "include-transitive-deps";
 
     public JpsRepositoryLibraryPropertiesSerializer() {
       super(JpsRepositoryLibraryType.INSTANCE, JpsRepositoryLibraryType.INSTANCE.getTypeId());
@@ -394,7 +395,8 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
     @Override
     public JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor> loadProperties(@Nullable Element elem) {
       return JpsElementFactory.getInstance().createSimpleElement(new JpsMavenRepositoryLibraryDescriptor(
-        elem != null? elem.getAttributeValue(MAVEN_ID_ATTRIBUTE, (String)null) : null
+        elem != null ? elem.getAttributeValue(MAVEN_ID_ATTRIBUTE, (String)null) : null,
+        elem == null || Boolean.parseBoolean(elem.getAttributeValue(INCLUDE_TRANSITIVE_DEPS_ATTRIBUTE, "true"))
       ));
     }
 

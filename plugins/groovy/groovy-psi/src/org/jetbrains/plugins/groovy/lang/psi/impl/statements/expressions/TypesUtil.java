@@ -313,12 +313,6 @@ public class TypesUtil implements TypeConstants {
     lType = optionalUnbox(lType);
     rType = optionalUnbox(rType);
 
-    if (rType instanceof GrClosureType) {
-      if (canMakeClosureRaw(lType)) {
-        rType = ((GrClosureType)rType).rawType();
-      }
-    }
-
     return TypeConversionUtil.isAssignable(lType, rType);
   }
 
@@ -789,9 +783,9 @@ public class TypesUtil implements TypeConstants {
         @Nullable
         @Override
         public Object visitClassType(PsiClassType classType) {
-          if (classType.getParameterCount() > 0) {
+         // if (classType.getParameterCount() > 0) {
             newParam.set(classType.rawType());
-          }
+         // }
           return null;
         }
 

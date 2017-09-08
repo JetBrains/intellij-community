@@ -115,10 +115,13 @@ def get_class_fullname(something):
     return module + '.' + cls.__name__
 
 
-def convert_error_to_string(err):
+def convert_error_to_string(err, frames_to_skip_from_tail=0):
     try:
         exctype, value, tb = err
-        return ''.join(traceback.format_exception(exctype, value, tb))
+        trace = traceback.format_exception(exctype, value, tb)
+        if frames_to_skip_from_tail:
+            trace = trace[:-frames_to_skip_from_tail]
+        return ''.join(trace)
     except:
         tb = traceback.format_exc()
         return "*FAILED TO GET TRACEBACK*: " + tb

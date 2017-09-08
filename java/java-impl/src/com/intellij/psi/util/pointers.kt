@@ -15,10 +15,11 @@
  */
 package com.intellij.psi.util
 
+import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiElementPointer
 
-fun <T : PsiElement> T.createSmartPointer(): SmartPsiElementPointer<T> {
-  return SmartPointerManager.getInstance(project).createSmartPsiElementPointer(this)
+fun <T : PsiElement> T.createSmartPointer(theProject: Project = project): SmartPsiElementPointer<T> {
+  return SmartPointerManager.getInstance(theProject).createSmartPsiElementPointer(this)
 }
