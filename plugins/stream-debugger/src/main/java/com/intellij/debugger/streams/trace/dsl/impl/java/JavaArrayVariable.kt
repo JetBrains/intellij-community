@@ -31,9 +31,4 @@ class JavaArrayVariable(override val elementType: String, name: String) : Variab
 
   override fun defaultDeclaration(size: Expression): VariableDeclaration =
     JavaVariableDeclaration(this, false, TextExpression("new $elementType[${size.toCode()}]"))
-
-  override fun of(vararg args: Expression): Expression {
-    val elements = args.joinToString(separator = ", ") { it.toCode() }
-    return TextExpression("new $elementType[] { $elements }")
-  }
 }

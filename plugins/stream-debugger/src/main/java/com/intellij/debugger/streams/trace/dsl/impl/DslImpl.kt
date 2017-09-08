@@ -36,6 +36,11 @@ class DslImpl(override val statementFactory: StatementFactory) : Dsl {
 
   override fun array(elementType: String, name: String): ArrayVariable = statementFactory.createArrayVariable(elementType, name)
 
+  override fun newArray(elementType: String, vararg args: Expression): Expression {
+    val elements = args.joinToString(separator = ", ") { it.toCode() }
+    return TextExpression("new $elementType[] { $elements }")
+  }
+
   override fun map(keyType: GenericType, valueType: GenericType, name: String): MapVariable =
     statementFactory.createMapVariable(keyType, valueType, name, false)
 

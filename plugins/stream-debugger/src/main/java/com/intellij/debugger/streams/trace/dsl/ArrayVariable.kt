@@ -30,5 +30,4 @@ interface ArrayVariable : Variable {
   fun set(index: Int, value: Expression): Expression = set(TextExpression(index.toString()), value)
 
   fun defaultDeclaration(size: Expression): VariableDeclaration
-  fun of(vararg args: Expression): Expression
 }

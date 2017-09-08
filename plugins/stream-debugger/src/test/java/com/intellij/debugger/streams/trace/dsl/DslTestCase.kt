@@ -257,7 +257,7 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
   fun testArrayCreateFromElements() {
     doTest {
       val a = array("double", "array")
-      declare(a, a.of(+"10.0", +"20.0"), false)
+      declare(a, newArray("double", +"10.0", +"20.0"), false)
     }
   }
 

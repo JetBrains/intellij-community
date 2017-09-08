@@ -71,7 +71,7 @@ class JavaMapVariable(override val keyType: GenericType,
           +TextExpression("${i.toCode()}++")
         }
 
-        resultArray.assign(resultArray.of(keys, values))
+        resultArray.assign(newArray(resultArray.elementType, keys, values))
       }
     }
   }
