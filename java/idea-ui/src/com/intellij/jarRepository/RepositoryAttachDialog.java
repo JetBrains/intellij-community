@@ -159,7 +159,6 @@ public class RepositoryAttachDialog extends DialogWrapper {
                                              ProjectBundle.message("file.chooser.directory.for.downloaded.libraries.description"), null,
                                              descriptor);
     updateInfoLabel();
-    setOKActionEnabled(false);
     init();
   }
 
