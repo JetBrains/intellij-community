@@ -39,16 +39,14 @@ import com.intellij.rt.coverage.data.LineCoverage;
 import com.intellij.rt.coverage.data.LineData;
 import com.intellij.rt.coverage.data.ProjectData;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.SmartHashSet;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author ven
@@ -161,28 +159,46 @@ public class PackageAnnotator {
     for (final Module module : modules) {
       if (!scope.isSearchInModuleContent(module)) continue;
       final String rootPackageVMName = qualifiedName.replaceAll("\\.", "/");
-      final VirtualFile output = myCoverageManager.doInReadActionIfProjectOpen(
-        () -> CompilerModuleExtension.getInstance(module).getCompilerOutputPath());
+      final VirtualFile[] productionRoots = myCoverageManager.doInReadActionIfProjectOpen(
+        () -> OrderEnumerator.orderEntries(module)
+          .withoutSdk()
+          .withoutLibraries()
+          .withoutDepModules()
+          .productionOnly()
+          .classes()
+          .getRoots());
+      final Set<VirtualFile> productionRootsSet = new SmartHashSet<>();
 
-
-      if (output != null) {
-        File outputRoot = findRelativeFile(rootPackageVMName, output);
-        if (outputRoot.exists()) {
-          collectCoverageInformation(outputRoot, packageCoverageMap, flattenPackageCoverageMap, data, rootPackageVMName, annotator, module,
-                                     suite, false);
+      if (productionRoots != null) {
+        for (VirtualFile output : productionRoots) {
+          productionRootsSet.add(output);
+          File outputRoot = findRelativeFile(rootPackageVMName, output);
+          if (outputRoot.exists()) {
+            collectCoverageInformation(outputRoot, packageCoverageMap, flattenPackageCoverageMap, data, rootPackageVMName, annotator,
+                                       module,
+                                       suite, false);
+          }
         }
-
       }
 
       if (suite.isTrackTestFolders()) {
-        final VirtualFile testPackageRoot = myCoverageManager.doInReadActionIfProjectOpen(
-          () -> CompilerModuleExtension.getInstance(module).getCompilerOutputPathForTests());
+        final VirtualFile[] allRoots = myCoverageManager.doInReadActionIfProjectOpen(
+          () -> OrderEnumerator.orderEntries(module)
+            .withoutSdk()
+            .withoutLibraries()
+            .withoutDepModules()
+            .classes()
+            .getRoots());
 
-        if (testPackageRoot != null) {
-          final File outputRoot = findRelativeFile(rootPackageVMName, testPackageRoot);
-          if (outputRoot.exists()) {
-            collectCoverageInformation(outputRoot, packageCoverageMap, flattenPackageCoverageMap, data, rootPackageVMName, annotator, module,
+        if (allRoots != null) {
+          for (VirtualFile root : allRoots) {
+            if (productionRootsSet.contains(root)) continue;
+            final File outputRoot = findRelativeFile(rootPackageVMName, root);
+            if (outputRoot.exists()) {
+              collectCoverageInformation(outputRoot, packageCoverageMap, flattenPackageCoverageMap, data, rootPackageVMName, annotator,
+                                         module,
                                          suite, true);
+            }
           }
         }
       }
