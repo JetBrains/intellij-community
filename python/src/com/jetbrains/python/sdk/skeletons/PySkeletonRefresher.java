@@ -846,8 +846,8 @@ public class PySkeletonRefresher {
     }
   }
 
-  public String getPregeneratedSkeletonsName(boolean witnMinorVersion) {
-    return getPregeneratedSkeletonsName(mySdk, myGeneratorVersion, witnMinorVersion);
+  public String getPregeneratedSkeletonsName(boolean withMinorVersion) {
+    return getPregeneratedSkeletonsName(mySdk, myGeneratorVersion, withMinorVersion);
   }
 
   @Nullable
