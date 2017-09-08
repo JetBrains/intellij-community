@@ -48,6 +48,7 @@ ant.taskdef(uri: "antlib:org.jacoco.ant", classpath: "${home}/plugins/coverage/l
 def jacoco = namespace(ant, "antlib:org.jacoco.ant")
 def exec_data_file = "${out}/coverage/jacoco.exec"
 def class_dump_dir = "${out}/coverage/classes"
+new File(class_dump_dir).mkdirs()  // work around apparent regression since JaCoCo 0.7.2
 
 target("enable_coverage": "Enable coverage measurement") {
   jacoco.agent(
