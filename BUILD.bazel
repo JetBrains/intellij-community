@@ -35,6 +35,7 @@ iml_project(
     modules = [
         "//tools/adt/idea/kotlin-integration:kotlin-integration-tests",
         "//tools/adt/idea/observable-demo",
+        "//tools/adt/idea/project-system-gradle:project-system-gradle-tests",
         "//tools/adt/idea/sdk-updates:sdk-updates-tests",
         "//tools/adt/idea/updater-ui",
         "//tools/analytics-library/inspector:analytics-inspector",
