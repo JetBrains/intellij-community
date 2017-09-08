@@ -17,6 +17,7 @@ package com.intellij.debugger.streams.trace.dsl.impl.java
 
 import com.intellij.debugger.streams.trace.dsl.ArrayVariable
 import com.intellij.debugger.streams.trace.dsl.Expression
+import com.intellij.debugger.streams.trace.dsl.VariableDeclaration
 import com.intellij.debugger.streams.trace.dsl.impl.TextExpression
 import com.intellij.debugger.streams.trace.dsl.impl.VariableImpl
 
@@ -27,4 +28,12 @@ class JavaArrayVariable(override val elementType: String, name: String) : Variab
   override fun get(index: Expression): Expression = TextExpression("$name[${index.toCode()}]")
 
   override fun set(index: Expression, value: Expression): Expression = TextExpression("$name[${index.toCode()}] = ${value.toCode()}")
+
+  override fun defaultDeclaration(size: Expression): VariableDeclaration =
+    JavaVariableDeclaration(this, false, TextExpression("new $elementType[${size.toCode()}]"))
+
+  override fun of(vararg args: Expression): Expression {
+    val elements = args.joinToString(separator = ", ") { it.toCode() }
+    return TextExpression("new $elementType[] { $elements }")
+  }
 }
