@@ -2,7 +2,7 @@
 <idea-plugin allow-bundled-update="true">
   <id>com.jetbrains.edu.interactivelearning</id>
   <name>Educational plugin core</name>
-  <version>4.1-IJ2017.2-1</version>
+  <version>4.1.1-IJ2017.2-1</version>
   <idea-version since-build="172.1909.2" until-build="172.*" />
   <description><![CDATA[
       Educational plugin core for students. 
