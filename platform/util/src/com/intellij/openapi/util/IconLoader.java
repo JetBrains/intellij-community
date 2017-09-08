@@ -142,6 +142,16 @@ public final class IconLoader {
     return findIcon(path, callerClass);
   }
 
+  /**
+   * Checks if icon with passed path exists. Never throws {@link RuntimeException}
+   * (even if <code>idea.is.internal=true</code>) unlike {@link #findIcon(String)}.
+   */
+  public static boolean iconExists(@NonNls @NotNull String path) {
+    Class callerClass = ReflectionUtil.getGrandCallerClass();
+    if (callerClass == null) return false;
+    return findIcon(path, callerClass, false, false) != null;
+  }
+
   @NotNull
   public static Icon getIcon(@NotNull String path, @NotNull final Class aClass) {
     final Icon icon = findIcon(path, aClass);

@@ -159,6 +159,10 @@
                      displayName="Using PsiElement string representation to generate new expression is incorrect"
                      groupKey="inspections.group.name" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.PsiElementConcatenationInspection"/>
+    <localInspection language="UAST" shortName="PresentationAnnotation" displayName="Invalid icon path in @Presentation"
+                     groupKey="inspections.group.name"
+                     enabledByDefault="true" level="ERROR"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.PresentationAnnotationInspection"/>
 
 
     <moduleConfigurationEditorProvider implementation="org.jetbrains.idea.devkit.module.PluginModuleEditorsProvider"/>
