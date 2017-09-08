@@ -33,7 +33,8 @@ class RobotTestRule: ExternalResource() {
   }
 
   fun getRobot(): Robot {
-    return myRobot ?: throw Exception("Robot hasn't been initialized yet!")
+    myRobot ?: before()
+    return myRobot ?: throw Exception("Robot initialization error!")
   }
 
 }
