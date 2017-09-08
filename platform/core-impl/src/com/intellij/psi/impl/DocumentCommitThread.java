@@ -853,18 +853,18 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
 
   public static void doActualPsiChange(@NotNull final PsiFile file, @NotNull final DiffLog diffLog) {
     CodeStyleManager.getInstance(file.getProject()).performActionWithFormatterDisabled((Runnable)() -> {
-      PsiFileImpl fileImpl = (PsiFileImpl)file;
-      synchronized (fileImpl.getFilePsiLock()) {
-        file.getViewProvider().beforeContentsSynchronized();
+      FileViewProvider viewProvider = file.getViewProvider();
+      synchronized (((AbstractFileViewProvider)viewProvider).getFilePsiLock()) {
+        viewProvider.beforeContentsSynchronized();
 
-        final Document document = file.getViewProvider().getDocument();
+        final Document document = viewProvider.getDocument();
         PsiDocumentManagerBase documentManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(file.getProject());
         PsiToDocumentSynchronizer.DocumentChangeTransaction transaction = documentManager.getSynchronizer().getTransaction(document);
 
         if (transaction == null) {
-          final PomModel model = PomManager.getModel(fileImpl.getProject());
+          final PomModel model = PomManager.getModel(file.getProject());
 
-          model.runTransaction(new PomTransactionBase(fileImpl, model.getModelAspect(TreeAspect.class)) {
+          model.runTransaction(new PomTransactionBase(file, model.getModelAspect(TreeAspect.class)) {
             @Override
             public PomModelEvent runInner() {
               return new TreeAspectEvent(model, diffLog.performActualPsiChange(file));
