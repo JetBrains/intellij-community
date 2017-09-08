@@ -697,8 +697,8 @@ public class PySkeletonRefresher {
     return new File(new File(skeletonsPath, packagePath), PyNames.INIT_DOT_PY);
   }
 
-  private boolean updateOrCreateSkeleton(final PyBinaryItem binaryItem,
-                                         final List<UpdateResult> errorList) throws InvalidSdkException {
+  private void updateOrCreateSkeleton(final PyBinaryItem binaryItem,
+                                      final List<UpdateResult> errorList) throws InvalidSdkException {
     final String moduleName = binaryItem.getModule();
 
     final File skeleton = getSkeleton(moduleName, getSkeletonsPath());
@@ -726,7 +726,7 @@ public class PySkeletonRefresher {
     if (mustRebuild) {
       indicateMinor(moduleName);
       if (myPregeneratedSkeletons != null && copyPregeneratedSkeleton(moduleName)) {
-        return true;
+        return;
       }
       LOG.info("Skeleton for " + moduleName);
 
@@ -736,7 +736,6 @@ public class PySkeletonRefresher {
         }
       });
     }
-    return false;
   }
 
   public static class PyBinaryItem {
