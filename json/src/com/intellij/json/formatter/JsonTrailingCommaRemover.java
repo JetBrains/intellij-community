@@ -72,12 +72,20 @@ public class JsonTrailingCommaRemover implements PreFormatProcessor {
     @Override
     public void visitArray(@NotNull JsonArray o) {
       super.visitArray(o);
+      PsiElement lastChild = o.getLastChild();
+      if (lastChild == null || lastChild.getNode().getElementType() != JsonElementTypes.R_BRACKET) {
+        return;
+      }
       deleteTrailingCommas(ObjectUtils.coalesce(ContainerUtil.getLastItem(o.getValueList()), o.getFirstChild()));
     }
 
     @Override
     public void visitObject(@NotNull JsonObject o) {
       super.visitObject(o);
+      PsiElement lastChild = o.getLastChild();
+      if (lastChild == null || lastChild.getNode().getElementType() != JsonElementTypes.R_CURLY) {
+        return;
+      }
       deleteTrailingCommas(ObjectUtils.coalesce(ContainerUtil.getLastItem(o.getPropertyList()), o.getFirstChild()));
     }
 
