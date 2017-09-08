@@ -53,9 +53,6 @@ public class CodeFragmentInputComponent extends EvaluationInputComponent {
     myMainForm.addExpressionComponent(myMultilineEditor.getComponent());
     myMainForm.addLanguageComponent(myMultilineEditor.getLanguageChooser());
 
-    if (statements != null) {
-      myMultilineEditor.setExpression(statements);
-    }
     mySplitterProportionKey = splitterProportionKey;
   }
 

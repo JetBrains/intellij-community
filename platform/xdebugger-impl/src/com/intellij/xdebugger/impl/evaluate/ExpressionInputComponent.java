@@ -93,9 +93,6 @@ public class ExpressionInputComponent extends EvaluationInputComponent {
     expressionPanel.addToBottom(help);
     help.setVisible(showHelp);
 
-    if (expression != null) {
-      myExpressionEditor.setExpression(expression);
-    }
     myExpressionEditor.selectAll();
 
     myMainForm.addExpressionComponent(expressionPanel);
