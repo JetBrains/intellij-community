@@ -82,6 +82,44 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
       .sorted(RunDashboardGroupingRule.PRIORITY_COMPARATOR)
       .map(RunDashboardGrouper::new)
       .collect(Collectors.toList());
+
+    if (isDashboardEnabled()) {
+      myProject.getMessageBus().connect(myProject).subscribe(RunManagerListener.TOPIC, new RunManagerListener() {
+        private volatile boolean myUpdateStarted;
+
+        @Override
+        public void runConfigurationAdded(@NotNull RunnerAndConfigurationSettings settings) {
+          if (!myUpdateStarted) {
+            updateDashboardIfNeeded(settings);
+          }
+        }
+
+        @Override
+        public void runConfigurationRemoved(@NotNull RunnerAndConfigurationSettings settings) {
+          if (!myUpdateStarted) {
+            updateDashboardIfNeeded(settings);
+          }
+        }
+
+        @Override
+        public void runConfigurationChanged(@NotNull RunnerAndConfigurationSettings settings) {
+          if (!myUpdateStarted) {
+            updateDashboardIfNeeded(settings);
+          }
+        }
+
+        @Override
+        public void beginUpdate() {
+          myUpdateStarted = true;
+        }
+
+        @Override
+        public void endUpdate() {
+          myUpdateStarted = false;
+          updateDashboard(true);
+        }
+      });
+    }
   }
 
   private static boolean isDashboardEnabled() {
@@ -91,30 +129,8 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
             RunDashboardContributor.EP_NAME.getExtensions().length > 0);
   }
 
-  private void initToolWindowListeners() {
+  private void initToolWindowContentListeners() {
     MessageBusConnection connection = myProject.getMessageBus().connect(myProject);
-
-    connection.subscribe(RunManagerListener.TOPIC, new RunManagerListener() {
-      @Override
-      public void runConfigurationAdded(@NotNull RunnerAndConfigurationSettings settings) {
-        updateDashboardIfNeeded(settings);
-      }
-
-      @Override
-      public void runConfigurationRemoved(@NotNull RunnerAndConfigurationSettings settings) {
-        updateDashboardIfNeeded(settings);
-      }
-
-      @Override
-      public void runConfigurationChanged(@NotNull RunnerAndConfigurationSettings settings) {
-        updateDashboardIfNeeded(settings);
-      }
-
-      @Override
-      public void endUpdate() {
-        updateDashboard(true);
-      }
-    });
     connection.subscribe(ExecutionManager.EXECUTION_TOPIC, new ExecutionListener() {
       @Override
       public void processStarted(@NotNull String executorId, @NotNull ExecutionEnvironment env, final @NotNull ProcessHandler handler) {
@@ -186,7 +202,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
     toolWindow.getContentManager().addContent(myToolWindowContent);
     toolWindow.setDefaultContentUiType(ToolWindowContentUiType.COMBO);
     toolWindow.setContentUiType(ToolWindowContentUiType.COMBO, null);
-    initToolWindowListeners();
+    initToolWindowContentListeners();
   }
 
   @Override
@@ -195,10 +211,10 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
 
     Predicate<? super RunnerAndConfigurationSettings> filter;
     if (Registry.is("ide.run.dashboard.types.configuration") || ApplicationManager.getApplication().isInternal()) {
-      filter = runConfiguration -> myTypes.contains(runConfiguration.getType().getId());
+      filter = settings -> myTypes.contains(settings.getType().getId());
     }
     else {
-      filter = runConfiguration -> getContributor(runConfiguration.getType()) != null;
+      filter = settings -> getContributor(settings.getType()) != null;
     }
 
     List<RunnerAndConfigurationSettings> configurations = RunManager.getInstance(myProject).getAllSettings().stream()
@@ -223,7 +239,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
     List<RunConfiguration> storedConfigurations = configurations.stream().map(RunnerAndConfigurationSettings::getConfiguration)
       .collect(Collectors.toList());
     List<RunContentDescriptor> notStoredDescriptors = filterByContent(executionManager.getRunningDescriptors(settings ->
-      getContributor(settings.getType()) != null && !storedConfigurations.contains(settings.getConfiguration())));
+      filter.test(settings) && !storedConfigurations.contains(settings.getConfiguration())));
     notStoredDescriptors.forEach(descriptor -> {
       Set<RunnerAndConfigurationSettings> settings = executionManager.getConfigurations(descriptor);
       settings.forEach(setting -> result.add(Pair.create(setting, descriptor)));
@@ -309,7 +325,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
   }
 
   private void updateDashboardIfNeeded(@Nullable RunnerAndConfigurationSettings settings) {
-    if (settings != null && getContributor(settings.getType()) != null) {
+    if (settings != null && (getContributor(settings.getType()) != null || isShowInDashboard(settings.getConfiguration()))) {
       updateDashboard(true);
     }
   }
