@@ -67,13 +67,13 @@ public class ExpressionInputComponent extends EvaluationInputComponent {
     BorderLayoutPanel expressionPanel = JBUI.Panels.simplePanel();
     //myMainPanel.add(new JLabel(XDebuggerBundle.message("xdebugger.evaluate.label.expression")), BorderLayout.WEST);
     myExpressionEditor = new XDebuggerExpressionEditor(project, editorsProvider, historyId, sourcePosition,
-                                                       expression != null ? expression : XExpressionImpl.EMPTY_EXPRESSION, false, true, false) {
+                                                       expression != null ? expression : XExpressionImpl.EMPTY_EXPRESSION, false, true, true) {
       @Override
       protected JComponent decorate(JComponent component, boolean multiline, boolean showEditor) {
         return component;
       }
     };
-    expressionPanel.add(myExpressionEditor.getComponent(), BorderLayout.CENTER);
+    expressionPanel.addToCenter(myExpressionEditor.getComponent());
     JButton historyButton = new FixedSizeButton(myExpressionEditor.getComponent());
     historyButton.setIcon(AllIcons.General.MessageHistory);
     historyButton.setToolTipText(XDebuggerBundle.message("xdebugger.evaluate.history.hint"));
@@ -83,14 +83,14 @@ public class ExpressionInputComponent extends EvaluationInputComponent {
         showHistory();
       }
     });
-    expressionPanel.add(historyButton, BorderLayout.EAST);
+    expressionPanel.addToRight(myExpressionEditor.addExpand(historyButton));
     final JBLabel help = new JBLabel(XDebuggerBundle.message("xdebugger.evaluate.addtowatches.hint",
                                                              KeymapUtil.getKeystrokeText(XDebuggerEvaluationDialog.ADD_WATCH_KEYSTROKE)),
                                      SwingConstants.RIGHT);
     help.setBorder(JBUI.Borders.empty(2, 0, 6, 0));
     help.setComponentStyle(UIUtil.ComponentStyle.SMALL);
     help.setFontColor(UIUtil.FontColor.BRIGHTER);
-    expressionPanel.add(help, BorderLayout.SOUTH);
+    expressionPanel.addToBottom(help);
     help.setVisible(showHelp);
 
     if (expression != null) {

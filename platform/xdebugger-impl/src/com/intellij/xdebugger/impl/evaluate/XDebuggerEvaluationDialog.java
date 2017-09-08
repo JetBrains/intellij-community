@@ -19,6 +19,7 @@ import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Condition;
@@ -138,6 +139,14 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
 
     mySwitchModeAction = new SwitchModeAction();
 
+    // preserve old mode switch shortcut
+    new DumbAwareAction() {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        mySwitchModeAction.actionPerformed(null);
+      }
+    }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_M, InputEvent.ALT_DOWN_MASK)) ,getRootPane(), myDisposable);
+
     new AnAction(){
       @Override
       public void update(AnActionEvent e) {
@@ -225,9 +234,9 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
   @NotNull
   @Override
   protected Action[] createActions() {
-    if (myIsCodeFragmentEvaluationSupported) {
-      return new Action[]{getOKAction(), mySwitchModeAction, getCancelAction()};
-    }
+    //if (myIsCodeFragmentEvaluationSupported) {
+    //  return new Action[]{getOKAction(), mySwitchModeAction, getCancelAction()};
+    //}
     return super.createActions();
   }
 
@@ -283,12 +292,17 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
   private EvaluationInputComponent createInputComponent(EvaluationMode mode, XExpression text) {
     text = XExpressionImpl.changeMode(text, mode);
     if (mode == EvaluationMode.EXPRESSION) {
-      return new ExpressionInputComponent(myProject, myEditorsProvider, "evaluateExpression", mySourcePosition, text, myDisposable,
-                                          mySession != null);
+      ExpressionInputComponent component =
+        new ExpressionInputComponent(myProject, myEditorsProvider, "evaluateExpression", mySourcePosition, text, myDisposable,
+                                     mySession != null);
+      component.getInputEditor().setExpandHandler(() -> mySwitchModeAction.actionPerformed(null));
+      return component;
     }
     else {
-      return new CodeFragmentInputComponent(myProject, myEditorsProvider, mySourcePosition, text,
-                                            getDimensionServiceKey() + ".splitter", myDisposable);
+      CodeFragmentInputComponent component = new CodeFragmentInputComponent(myProject, myEditorsProvider, mySourcePosition, text,
+                                                                            getDimensionServiceKey() + ".splitter", myDisposable);
+      component.getInputEditor().addCollapseButton(() -> mySwitchModeAction.actionPerformed(null));
+      return component;
     }
   }
 
