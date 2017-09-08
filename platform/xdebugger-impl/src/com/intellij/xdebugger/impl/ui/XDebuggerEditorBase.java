@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.actions.AbstractToggleUseSoftWrapsAction;
+import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.fileTypes.FileType;
@@ -375,6 +376,8 @@ public abstract class XDebuggerEditorBase implements Expandable {
   }
 
   protected static void foldNewLines(EditorEx editor) {
+    editor.getColorsScheme().setAttributes(EditorColors.FOLDED_TEXT_ATTRIBUTES, null);
+    editor.reinitSettings();
     FoldingModelEx foldingModel = editor.getFoldingModel();
     CharSequence text = editor.getDocument().getCharsSequence();
     foldingModel.runBatchFoldingOperation(() -> {
