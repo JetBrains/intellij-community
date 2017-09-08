@@ -32,8 +32,12 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.function.Function;
 
 public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
+
+  public static final String DEFAULT_VALUE_TEXT = ApplicationBundle.message("integer.option.default.value.text");
+
   private MultiMap<String, String> myGroupToFields = new MultiMap<>();
   private Map<String, SettingsGroup> myFieldNameToGroup;
   private final CommaSeparatedIntegersField mySoftMarginsEditor =
@@ -72,15 +76,13 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
       CodeStyleSettingPresentation.getStandardSettings(getSettingsType()).entrySet()) {
       CodeStyleSettingPresentation.SettingsGroup group = entry.getKey();
       for (CodeStyleSettingPresentation setting : entry.getValue()) {
-        //TODO this is ugly, but is the fastest way to make Options UI API and settings representation API connect
         String fieldName = setting.getFieldName();
         String uiName = setting.getUiName();
         if (setting instanceof CodeStyleBoundedIntegerSettingPresentation) {
           CodeStyleBoundedIntegerSettingPresentation intSetting = (CodeStyleBoundedIntegerSettingPresentation)setting;
           int defaultValue = intSetting.getDefaultValue();
           addOption(fieldName, uiName, group.name, intSetting.getLowerBound(), intSetting.getUpperBound(), defaultValue,
-                    intSetting.getValueUiName(
-                      defaultValue));
+                    getDefaultIntValueRenderer(fieldName));
         }
         else if (setting instanceof CodeStyleSelectSettingPresentation) {
           CodeStyleSelectSettingPresentation selectSetting = (CodeStyleSelectSettingPresentation)setting;
@@ -94,6 +96,15 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
           addOption(fieldName, uiName, group.name);
         }
       }
+    }
+  }
+
+  private Function<Integer,String> getDefaultIntValueRenderer(@NotNull String fieldName) {
+    if ("RIGHT_MARGIN".equals(fieldName)) {
+      return integer -> DEFAULT_VALUE_TEXT + ": " + getSettings().getDefaultRightMargin();
+    }
+    else {
+      return integer -> DEFAULT_VALUE_TEXT;
     }
   }
 

@@ -56,6 +56,7 @@ import java.awt.event.KeyEvent;
 import java.lang.reflect.Field;
 import java.util.*;
 import java.util.List;
+import java.util.function.Function;
 
 /**
  * @author max
@@ -349,8 +350,8 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
                            int minValue,
                            int maxValue,
                            int defaultValue,
-                           String defaultValueText) {
-    myOptions.add(new IntOption(null, fieldName, title, groupName, null, null, minValue, maxValue, defaultValue, defaultValueText));
+                           @Nullable Function<Integer,String> defaultValueRenderer) {
+    myOptions.add(new IntOption(null, fieldName, title, groupName, null, null, minValue, maxValue, defaultValue, defaultValueRenderer));
   }
 
   protected void addOption(@NotNull String fieldName, @NotNull String title, @Nullable String groupName) {
@@ -505,7 +506,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     private final int myMinValue;
     private final int myMaxValue;
     private final int myDefaultValue;
-    @Nullable private String myDefaultValueText;
+    @Nullable private Function<Integer,String> myDefaultValueRenderer;
 
     public IntOption(Class<? extends CustomCodeStyleSettings> clazz,
                      @NotNull String fieldName,
@@ -516,12 +517,12 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
                      int minValue,
                      int maxValue,
                      int defaultValue,
-                     @Nullable String defaultValueText) {
+                     @Nullable Function<Integer,String> defaultValueRenderer) {
       super(clazz, fieldName, title, groupName, anchor, anchorFiledName);
       myMinValue = minValue;
       myMaxValue = maxValue;
       myDefaultValue = defaultValue;
-      myDefaultValueText = defaultValueText;
+      myDefaultValueRenderer = defaultValueRenderer;
     }
 
     @Override
@@ -567,7 +568,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
 
     @Nullable
     public String getDefaultValueText() {
-      return myDefaultValueText;
+      return myDefaultValueRenderer != null ? myDefaultValueRenderer.apply(myDefaultValue) : null;
     }
   }
 
@@ -743,10 +744,6 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
         return myCheckBox;
       }
       else if (value instanceof String) {
-        /*
-        myComboBox.removeAllItems();
-        myComboBox.addItem(value);
-        */
         myComboBox.setText((String)value);
         myComboBox.setBackground(background);
         myComboBox.setEnabled(isEnabled);
@@ -910,6 +907,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
           myCurrentEditor = myOptionsEditor;
           myOptionsEditor.setCell(table, row, column);
           myOptionsEditor.setText(String.valueOf(node.getValue()));
+          //noinspection ConfusingArgumentToVarargsMethod
           myOptionsEditor.setOptions(((SelectionOption)node.getKey()).options);
           myOptionsEditor.setDefaultValue(node.getValue());
         }
