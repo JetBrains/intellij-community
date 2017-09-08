@@ -255,7 +255,7 @@ public class ControlFlowBuilder {
 
   @FunctionalInterface
   public interface PendingProcessor {
-    void process(PsiElement pendingScope, Instruction instruction);
+    void process(@Nullable PsiElement pendingScope, @NotNull Instruction instruction);
   }
 
   public void processPending(final PendingProcessor processor) {
