@@ -25,7 +25,7 @@ import com.intellij.debugger.streams.trace.dsl.impl.TextExpression
 class JavaLambda(override val variableName: String, override val body: JavaLambdaBody) : Lambda {
   override fun call(callName: String, vararg args: Expression): Expression = TextExpression("(${toCode(0)})").call(callName, *args)
 
-  override fun toCode(indent: Int): String = "$variableName -> ${body.convert(indent)}"
+  override fun toCode(indent: Int): String = "$variableName -> ${body.convert(indent)}".withIndent(indent)
 
   private fun JavaLambdaBody.convert(indent: Int): String =
     if (isExpression()) this.toCode(0)

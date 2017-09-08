@@ -26,5 +26,5 @@ class TextExpression(private val myText: String) : Expression {
 
   override fun toString(): String = toCode(0)
 
-  override fun toCode(indent: Int): String = myText
+  override fun toCode(indent: Int): String = myText.withIndent(indent)
 }

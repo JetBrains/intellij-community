@@ -26,7 +26,7 @@ class JavaIfBranch(condition: Expression, codeBlock: CodeBlock, statementFactory
   : IfBranchBase(condition, codeBlock, statementFactory) {
   override fun toCode(indent: Int): String {
     val elseBlockVar = elseBlock
-    val ifThen = "if(${condition.toCode(0)}) {\n" +
+    val ifThen = "if(${condition.toCode(0)}) {\n".withIndent(indent) +
                  thenBlock.toCode(indent + 1) +
                  "}".withIndent(indent)
     if (elseBlockVar != null) {

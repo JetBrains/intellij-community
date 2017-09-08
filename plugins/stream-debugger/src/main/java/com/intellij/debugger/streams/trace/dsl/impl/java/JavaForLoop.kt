@@ -28,8 +28,8 @@ class JavaForLoop(private val initialization: VariableDeclaration,
                   private val afterThought: Expression,
                   private val loopBody: ForLoopBody) : Statement {
   override fun toCode(indent: Int): String {
-    return "for (${initialization.toCode(0)}; ${condition.toCode(0)}; ${afterThought.toCode(0)}) {\n" +
+    return "for (${initialization.toCode()}; ${condition.toCode()}; ${afterThought.toCode()}) {\n".withIndent(indent) +
            loopBody.toCode(indent + 1) +
-           "}"
+           "}".withIndent(indent)
   }
 }

@@ -23,5 +23,5 @@ import com.intellij.debugger.streams.trace.dsl.impl.AssignmentStatement
  * @author Vitaliy.Bibaev
  */
 class JavaAssignmentStatement(override val variable: Variable, override val expression: Expression) : AssignmentStatement {
-  override fun toCode(indent: Int): String = "${variable.name} = ${expression.toCode()}"
+  override fun toCode(indent: Int): String = "${variable.name} = ${expression.toCode()}".withIndent(indent)
 }

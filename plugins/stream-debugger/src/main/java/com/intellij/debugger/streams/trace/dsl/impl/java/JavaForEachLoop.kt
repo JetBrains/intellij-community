@@ -27,7 +27,7 @@ class JavaForEachLoop(private val iterateVariable: Variable,
                       private val collection: Expression,
                       private val loopBody: ForLoopBody) : Statement {
   override fun toCode(indent: Int): String =
-    "for (${iterateVariable.type} ${iterateVariable.name} : ${collection.toCode(0)}) {\n" +
+    "for (${iterateVariable.type} ${iterateVariable.name} : ${collection.toCode(0)}) {\n".withIndent(indent) +
     loopBody.toCode(indent + 1) +
-    "}"
+    "}".withIndent(indent)
 }

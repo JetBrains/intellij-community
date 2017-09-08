@@ -73,7 +73,7 @@ class JavaStatementFactory : StatementFactory {
   override fun createArrayVariable(elementType: String, name: String): ArrayVariable = JavaArrayVariable(elementType, name)
 
   override fun createScope(codeBlock: CodeBlock): Statement = object : Statement {
-    override fun toCode(indent: Int): String = "{\n" +
+    override fun toCode(indent: Int): String = "{\n".withIndent(indent) +
                                                codeBlock.toCode(indent + 1) +
                                                "}".withIndent(indent)
   }

@@ -30,6 +30,6 @@ abstract class LineSeparatedCodeBlock(statementFactory: StatementFactory, privat
       return ""
     }
 
-    return body.joinToString("$endLine\n", postfix = "$endLine\n") { it.toCode(indent).withIndent(indent) }
+    return body.joinToString("$endLine\n", postfix = "$endLine\n") { it.toCode(indent) }
   }
 }
