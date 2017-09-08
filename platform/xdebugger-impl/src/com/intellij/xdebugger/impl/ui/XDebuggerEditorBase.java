@@ -30,7 +30,6 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -42,6 +41,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.JBUI;
@@ -186,6 +186,13 @@ public abstract class XDebuggerEditorBase implements Expandable {
     }
 
     panel.addToCenter(component);
+
+    if (multiline) {
+      JBLabel adLabel = new JBLabel(getAdText(), SwingConstants.RIGHT);
+      adLabel.setComponentStyle(UIUtil.ComponentStyle.SMALL);
+      adLabel.setFontColor(UIUtil.FontColor.BRIGHTER);
+      panel.addToBottom(adLabel);
+    }
 
     return panel;
   }
@@ -416,9 +423,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
       .setRequestFocus(true)
       .setLocateByContent(true)
       .setCancelOnWindowDeactivation(false)
-      .setAdText(XDebuggerBundle.message("xdebugger.evaluate.history.navigate.ad",
-                                         DebuggerUIUtil.getActionShortcutText(IdeActions.ACTION_NEXT_OCCURENCE),
-                                         DebuggerUIUtil.getActionShortcutText(IdeActions.ACTION_PREVIOUS_OCCURENCE)))
+      .setAdText(getAdText())
       .setKeyboardActions(Collections.singletonList(Pair.create(event -> {
         collapse();
         Window window = UIUtil.getWindow(getComponent());
@@ -442,32 +447,11 @@ public abstract class XDebuggerEditorBase implements Expandable {
         return true;
       }).createPopup();
 
-    ShortcutSet shortcut = ActionManager.getInstance().getAction(IdeActions.ACTION_NEXT_OCCURENCE).getShortcutSet();
-    if (shortcut != null) {
-      new DumbAwareAction() {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e) {
-          expressionEditor.goForward();
-        }
-      }.registerCustomShortcutSet(shortcut, component, myExpandedPopup);
-    }
-
-    shortcut = ActionManager.getInstance().getAction(IdeActions.ACTION_PREVIOUS_OCCURENCE).getShortcutSet();
-    if (shortcut != null) {
-      new DumbAwareAction() {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e) {
-          expressionEditor.goBackward();
-        }
-      }.registerCustomShortcutSet(shortcut, component, myExpandedPopup);
-    }
-
     myExpandedPopup.show(new RelativePoint(getComponent(), new Point(0, 0)));
 
     EditorEx editor = (EditorEx)expressionEditor.getEditor();
     copyCaretPosition(getEditor(), editor);
     editor.getSettings().setUseSoftWraps(isUseSoftWraps());
-    editor.setContextMenuGroupId("XDebugger.Evaluate.Code.Fragment.Editor.Popup");
 
     ErrorStripeEditorCustomization.DISABLED.customize(editor);
     // TODO: copied from ExpandableTextField
@@ -496,6 +480,13 @@ public abstract class XDebuggerEditorBase implements Expandable {
     }});
 
     expressionEditor.requestFocusInEditor();
+  }
+
+  @NotNull
+  private static String getAdText() {
+    return XDebuggerBundle.message("xdebugger.evaluate.history.navigate.ad",
+                                   DebuggerUIUtil.getActionShortcutText(IdeActions.ACTION_NEXT_OCCURENCE),
+                                   DebuggerUIUtil.getActionShortcutText(IdeActions.ACTION_PREVIOUS_OCCURENCE));
   }
 
   private static void copyCaretPosition(@Nullable Editor source, @Nullable Editor destination) {

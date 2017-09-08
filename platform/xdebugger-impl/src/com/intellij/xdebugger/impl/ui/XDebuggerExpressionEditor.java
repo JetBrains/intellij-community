@@ -16,11 +16,11 @@
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.lang.Language;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.EditorTextField;
@@ -68,6 +68,7 @@ public class XDebuggerExpressionEditor extends XDebuggerEditorBase {
         editor.getColorsScheme().setEditorFontSize(getFont().getSize());
         if (multiline) {
           editor.getContentComponent().setBorder(new CompoundBorder(editor.getContentComponent().getBorder(), JBUI.Borders.emptyLeft(2)));
+          editor.setContextMenuGroupId("XDebugger.Evaluate.Code.Fragment.Editor.Popup");
         }
         else {
           foldNewLines(editor);
@@ -92,6 +93,29 @@ public class XDebuggerExpressionEditor extends XDebuggerEditorBase {
       myEditorTextField.setFontInheritedFromLAF(false);
       myEditorTextField.setFont(EditorUtil.getEditorFont());
     }
+
+    if (multiline) {
+      ShortcutSet shortcut = ActionManager.getInstance().getAction(IdeActions.ACTION_NEXT_OCCURENCE).getShortcutSet();
+      if (shortcut != null) {
+        new DumbAwareAction() {
+          @Override
+          public void actionPerformed(@NotNull AnActionEvent e) {
+            goForward();
+          }
+        }.registerCustomShortcutSet(shortcut, myEditorTextField);
+      }
+
+      shortcut = ActionManager.getInstance().getAction(IdeActions.ACTION_PREVIOUS_OCCURENCE).getShortcutSet();
+      if (shortcut != null) {
+        new DumbAwareAction() {
+          @Override
+          public void actionPerformed(@NotNull AnActionEvent e) {
+            goBackward();
+          }
+        }.registerCustomShortcutSet(shortcut, myEditorTextField);
+      }
+    }
+
     myComponent = decorate(myEditorTextField, multiline, showEditor);
     setExpression(myExpression);
   }

@@ -24,6 +24,7 @@ public class ExpressionInputForm {
   private JPanel myLanguageChooserPanel;
   private JPanel myExpressionPanel;
   private JPanel myMainPanel;
+  private JLabel myNameLabel;
 
   public void addLanguageComponent(JComponent component) {
     myLanguageChooserPanel.add(component);
@@ -31,6 +32,10 @@ public class ExpressionInputForm {
 
   public void addExpressionComponent(JComponent component) {
     myExpressionPanel.add(component);
+  }
+
+  public void setName(String name) {
+    myNameLabel.setText(name);
   }
 
   public JPanel getMainPanel() {
