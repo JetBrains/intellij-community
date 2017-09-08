@@ -24,7 +24,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.ui.JBUI;
@@ -182,6 +181,9 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     }
     setTitle(XDebuggerBundle.message("xdebugger.evaluate.dialog.title"));
     switchToMode(mode, text);
+    if (mode == EvaluationMode.EXPRESSION) {
+      myInputComponent.getInputEditor().selectAll();
+    }
     init();
   }
 
@@ -272,10 +274,6 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     if (myMode == mode) return;
 
     myMode = mode;
-
-    if (mode == EvaluationMode.EXPRESSION) {
-      text = new XExpressionImpl(StringUtil.convertLineSeparators(text.getExpression(), " "), text.getLanguage(), text.getCustomInfo());
-    }
 
     myInputComponent = createInputComponent(mode, text);
     myMainPanel.removeAll();
