@@ -31,6 +31,8 @@ interface CodeBlock : Statement {
 
   fun forLoop(initialization: VariableDeclaration, condition: Expression, afterThought: Expression, init: ForLoopBody.() -> Unit)
 
+  fun scope(init: CodeBlock.() -> Unit)
+
   fun ifBranch(condition: Expression, init: CodeBlock.() -> Unit): IfBranch
 
   fun call(receiver: Expression, methodName: String, vararg args: Expression): Expression

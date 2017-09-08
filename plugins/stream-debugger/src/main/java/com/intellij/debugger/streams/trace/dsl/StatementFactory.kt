@@ -57,4 +57,6 @@ interface StatementFactory {
   fun createMapVariable(keyType: GenericType, valueType: GenericType, name: String, linked: Boolean): MapVariable
 
   fun createArrayVariable(elementType: String, name: String): ArrayVariable
+
+  fun createScope(codeBlock: CodeBlock): Statement
 }

@@ -93,4 +93,8 @@ class KotlinStatementFactory : StatementFactory {
   override fun createArrayVariable(elementType: String, name: String): ArrayVariable {
     TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
   }
+
+  override fun createScope(codeBlock: CodeBlock): Statement {
+    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+  }
 }
