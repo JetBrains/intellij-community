@@ -316,19 +316,6 @@ public class TypesUtil implements TypeConstants {
     return TypeConversionUtil.isAssignable(lType, rType);
   }
 
-  private static boolean canMakeClosureRaw(PsiType type) {
-    if (!(type instanceof PsiClassType)) return true;
-
-    final PsiType[] parameters = ((PsiClassType)type).getParameters();
-
-    if (parameters.length != 1) return true;
-
-    final PsiType parameter = parameters[0];
-    if (parameter instanceof PsiWildcardType) return true;
-
-    return false;
-  }
-
   @NotNull
   public static ConversionResult canCast(@NotNull PsiType targetType, @NotNull PsiType actualType, @NotNull PsiElement context) {
     final ConversionResult result = areTypesConvertible(targetType, actualType, context, ApplicableTo.EXPLICIT_CAST);
