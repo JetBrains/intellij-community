@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class InstructionImpl extends InstructionBaseImpl {
 
-  private volatile int myNumber;
+  private final int myNumber;
 
   public InstructionImpl(@NotNull final ControlFlowBuilder builder, @Nullable final PsiElement element) {
     super(element);
@@ -35,10 +35,5 @@ public class InstructionImpl extends InstructionBaseImpl {
   @Override
   public final int num() {
     return myNumber;
-  }
-
-  @Override
-  public void updateNum(int newNum) {
-    myNumber = newNum;
   }
 }

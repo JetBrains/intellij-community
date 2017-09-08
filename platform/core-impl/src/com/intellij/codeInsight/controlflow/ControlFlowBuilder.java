@@ -18,6 +18,7 @@ package com.intellij.codeInsight.controlflow;
 import com.intellij.codeInsight.controlflow.impl.ConditionalInstructionImpl;
 import com.intellij.codeInsight.controlflow.impl.ControlFlowImpl;
 import com.intellij.codeInsight.controlflow.impl.InstructionImpl;
+import com.intellij.codeInsight.controlflow.impl.TransparentInstructionImpl;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -45,11 +46,13 @@ public class ControlFlowBuilder {
 
   // Number of instructions already added
   public int instructionCount;
+  public int transparentInstructionCount;
 
   public ControlFlowBuilder() {
     instructions = ContainerUtil.newArrayList();
     pending = ContainerUtil.newArrayList();
     instructionCount = 0;
+    transparentInstructionCount = 0;
   }
 
   @Nullable
@@ -72,7 +75,7 @@ public class ControlFlowBuilder {
   }
 
   /**
-   * @return control flow with removed transparent instructions
+   * @return control flow without transparent instructions
    */
   @NotNull
   public ControlFlow getCompleteControlFlow() {
@@ -89,7 +92,6 @@ public class ControlFlowBuilder {
         successors.forEach(el -> el.allPred().remove(instruction));
       }
       else {
-        instruction.updateNum(result.size());
         result.add(instruction);
       }
     }
@@ -117,11 +119,11 @@ public class ControlFlowBuilder {
   }
 
   /**
-   * Add new node and set prev instruction pointing to this instruction
+   * Add new node to the instructions list and set prev instruction pointing to this instruction
    *
    * @param instruction new instruction
    */
-  public void addNode(final Instruction instruction) {
+  public void addNode(@NotNull final Instruction instruction) {
     instructions.add(instruction);
     if (prevInstruction != null) {
       addEdge(prevInstruction, instruction);
@@ -130,7 +132,17 @@ public class ControlFlowBuilder {
   }
 
   /**
-   * Stops control flow, used for break, next, redo
+   * Add a new node to the instructions list and update prev and pending instruction
+   *
+   * @param instruction new instruction
+   */
+  public void addNodeAndCheckPending(final Instruction instruction) {
+    addNode(instruction);
+    checkPending(instruction);
+  }
+
+  /**
+   * Stops control flow, used for break, next, redo, continue
    */
   @SuppressWarnings("SpellCheckingInspection")
   public void flowAbrupted() {
@@ -139,6 +151,8 @@ public class ControlFlowBuilder {
 
   /**
    * Adds pending edge in pendingScope
+   * Pending instruction are used when you have several branches from previous statement
+   * Also you can add a pending instruction for the 'exit point' of the all scope
    *
    * @param pendingScope Scope for instruction / null if expected scope = exit point
    * @param instruction  "Last" pending instruction
@@ -206,10 +220,24 @@ public class ControlFlowBuilder {
    * @param element Element to create instruction for
    * @return new instruction
    */
+  @NotNull
   public Instruction startNode(@Nullable final PsiElement element) {
     final Instruction instruction = new InstructionImpl(this, element);
-    addNode(instruction);
-    checkPending(instruction);
+    addNodeAndCheckPending(instruction);
+    return instruction;
+  }
+
+  /**
+   * Creates transparent instruction for given element, and adds it to myInstructionsStack
+   * Transparent instruction will be removed in the result control flow
+   *
+   * @param element Element to create instruction for
+   * @return new transparent instruction
+   */
+  @NotNull
+  public TransparentInstruction startTransparentNode(@Nullable final PsiElement element, String markerName) {
+    final TransparentInstruction instruction = new TransparentInstructionImpl(this, element, markerName);
+    addNodeAndCheckPending(instruction);
     return instruction;
   }
 
@@ -222,8 +250,7 @@ public class ControlFlowBuilder {
   @SuppressWarnings("UnusedReturnValue")
   public Instruction startConditionalNode(final PsiElement element, final PsiElement condition, final boolean result) {
     final ConditionalInstruction instruction = new ConditionalInstructionImpl(this, element, condition, result);
-    addNode(instruction);
-    checkPending(instruction);
+    addNodeAndCheckPending(instruction);
     return instruction;
   }
 
@@ -239,7 +266,7 @@ public class ControlFlowBuilder {
     final List<Instruction> result = instructions;
     return new ControlFlowImpl(result.toArray(new Instruction[result.size()]));
   }
-  
+
   public void updatePendingElementScope(@NotNull PsiElement parentForScope,
                                         @NotNull PsiElement newParentScope) {
     processPending((pendingScope, instruction) -> {

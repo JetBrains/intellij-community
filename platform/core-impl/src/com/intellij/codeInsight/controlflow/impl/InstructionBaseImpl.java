@@ -56,12 +56,18 @@ public abstract class InstructionBaseImpl implements Instruction {
 
   @NotNull
   public String toString() {
-    final StringBuilder builder = new StringBuilder();
-    builder.append(num());
+    final StringBuilder builder = new StringBuilder(id());
     builder.append("(");
     for (int i = 0; i < mySucc.size(); i++) {
       if (i > 0) builder.append(',');
-      builder.append(mySucc.get(i).num());
+      Instruction instruction = mySucc.get(i);
+      int num = instruction.num();
+      if (instruction instanceof InstructionBaseImpl) {
+        builder.append(((InstructionBaseImpl)instruction).id());
+      }
+      else {
+        builder.append(num);
+      }
     }
     builder.append(") ").append(getElementPresentation());
     return builder.toString();
@@ -71,5 +77,10 @@ public abstract class InstructionBaseImpl implements Instruction {
   @Override
   public String getElementPresentation() {
     return "element: " + myElement;
+  }
+
+  @NotNull
+  protected String id() {
+    return String.valueOf(num());
   }
 }

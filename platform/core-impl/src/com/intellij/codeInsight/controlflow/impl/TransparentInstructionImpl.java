@@ -21,24 +21,34 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class TransparentInstructionImpl extends DetachedInstructionImpl implements TransparentInstruction {
+public class TransparentInstructionImpl extends InstructionBaseImpl implements TransparentInstruction {
 
   @NotNull
   private final String myMarkerName;
+  private final int myNum;
 
-  public TransparentInstructionImpl(@Nullable PsiElement element, @NotNull String markerName) {
+  public TransparentInstructionImpl(@NotNull final ControlFlowBuilder builder,
+                                    @Nullable final PsiElement element,
+                                    @NotNull String markerName) {
     super(element);
     myMarkerName = markerName;
-  }
-
-  public TransparentInstructionImpl(@Nullable PsiElement element, @NotNull String markerName, @NotNull ControlFlowBuilder builder) {
-    super(element, builder);
-    myMarkerName = markerName;
+    myNum = builder.transparentInstructionCount++;
   }
 
   @NotNull
   @Override
   public String getElementPresentation() {
-    return super.getElementPresentation() + " transparent(" + myMarkerName + ")";
+    return super.getElementPresentation() + "(" + myMarkerName + ")";
+  }
+
+  @NotNull
+  @Override
+  protected String id() {
+    return "t" + num();
+  }
+
+  @Override
+  public int num() {
+    return myNum;
   }
 }

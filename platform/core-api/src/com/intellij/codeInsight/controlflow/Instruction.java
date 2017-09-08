@@ -40,14 +40,11 @@ public interface Instruction {
   @NotNull
   Collection<Instruction> allPred();
 
-  @NotNull
-  String getElementPresentation();
-
   int num();
 
   /**
-   * 
-   * @param newNum
+   * element presentation is used in toString() for dumping the graph
    */
-  default void updateNum(int newNum) {}
+  @NotNull
+  String getElementPresentation();
 }

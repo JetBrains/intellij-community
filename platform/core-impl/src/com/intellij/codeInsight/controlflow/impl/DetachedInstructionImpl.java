@@ -24,15 +24,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class DetachedInstructionImpl extends InstructionBaseImpl {
 
-  private final AtomicInteger myNum = new AtomicInteger();
+  private final AtomicInteger myNum = new AtomicInteger(-1);
 
   public DetachedInstructionImpl(@Nullable PsiElement element) {
     super(element);
-  }
-
-  public DetachedInstructionImpl(@Nullable PsiElement element, @NotNull ControlFlowBuilder builder) {
-    super(element);
-    addNodeWithConnection(builder);
   }
 
   @Override
@@ -40,23 +35,18 @@ public class DetachedInstructionImpl extends InstructionBaseImpl {
     return myNum.get();
   }
 
-  public final void addNodeWithoutConnection(@NotNull ControlFlowBuilder builder) {
-    assert myNum.get() == 0;
+  public final void addToInstructions(@NotNull ControlFlowBuilder builder) {
     builder.instructions.add(this);
-    int newId = builder.instructionCount++;
-    updateNum(newId);
+    updateNum(builder.instructionCount++);
   }
 
-  public final void addNodeWithConnection(@NotNull ControlFlowBuilder builder) {
-    assert myNum.get() == 0;
-    builder.addNode(this);
-    builder.checkPending(this);
-    int newId = builder.instructionCount++;
-    updateNum(newId);
+  public final void addNode(@NotNull ControlFlowBuilder builder) {
+    updateNum(builder.instructionCount++);
+    builder.addNodeAndCheckPending(this);
   }
 
-  @Override
   public void updateNum(int newNum) {
+    assert myNum.get() == -1;
     myNum.set(newNum);
   }
 }
