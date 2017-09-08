@@ -70,6 +70,11 @@ public class MockParameterInfoUIContext<T extends PsiElement> implements Paramet
   }
 
   @Override
+  public boolean isSingleOverload() {
+    return false;
+  }
+
+  @Override
   public boolean isSingleParameterInfo() {
     return false;
   }

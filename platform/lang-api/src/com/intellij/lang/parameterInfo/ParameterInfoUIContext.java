@@ -29,6 +29,7 @@ public interface ParameterInfoUIContext {
   int getCurrentParameterIndex();
   PsiElement getParameterOwner();
 
+  boolean isSingleOverload();
   boolean isSingleParameterInfo();
   Color getDefaultParameterColor();
 }
