@@ -24,6 +24,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.BranchChangeListener;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
@@ -239,8 +240,15 @@ abstract class GitBranchOperation {
   /**
    * Updates the recently visited branch in the settings.
    * This is to be performed after successful checkout operation.
+   * @param branchName
    */
-  protected void updateRecentBranch() {
+  protected void updateRecentBranch(@Nullable String branchName) {
+    if (branchName != null) {
+      ApplicationManager.getApplication().invokeLater(() -> {
+        if (myProject.isDisposed()) return;
+        myProject.getMessageBus().syncPublisher(BranchChangeListener.VCS_BRANCH_CHANGED).branchHasChanged(branchName);
+      });
+    }
     if (getRepositories().size() == 1) {
       GitRepository repository = myRepositories.iterator().next();
       String currentHead = myCurrentHeads.get(repository);
@@ -256,6 +264,16 @@ abstract class GitBranchOperation {
       if (recentCommonBranch != null) {
         mySettings.setRecentCommonBranch(recentCommonBranch);
       }
+    }
+  }
+
+  protected void branchWillChange() {
+    String currentBranch = myCurrentHeads.values().iterator().next();
+    if (currentBranch != null) {
+      ApplicationManager.getApplication().invokeLater(() -> {
+        if (myProject.isDisposed()) return;
+        myProject.getMessageBus().syncPublisher(BranchChangeListener.VCS_BRANCH_CHANGED).branchWillChange(currentBranch);
+      });
     }
   }
 

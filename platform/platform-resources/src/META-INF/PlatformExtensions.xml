@@ -512,5 +512,6 @@
 
     <actionPromoter implementation="com.intellij.execution.testframework.TestTreeViewActionsPromoter"/>
     <smartSelectProvider implementation="com.intellij.ui.tree.TreeSmartSelectProvider"/>
+    <postStartupActivity implementation="com.intellij.tasks.context.BranchContextTracker$TrackerStartupActivity"/>
   </extensions>
 </idea-plugin>

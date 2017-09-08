@@ -138,6 +138,7 @@ public final class NotificationGroup {
                                          @Nullable String content,
                                          @NotNull NotificationType type,
                                          @Nullable NotificationListener listener) {
+//    LOG.assertTrue(myIcon != null);
     return new Notification(myDisplayId, myIcon, title, subtitle, content, type, listener);
   }
 
