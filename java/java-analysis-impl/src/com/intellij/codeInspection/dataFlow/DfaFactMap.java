@@ -22,7 +22,6 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.util.Objects;
 
 /**
@@ -112,19 +111,31 @@ public final class DfaFactMap {
     return newFact == null ? null : with(type, newFact);
   }
 
-  private <TT> DfaFactMap intersect(DfaFactMap otherMap, @NotNull DfaFactType<TT> type) {
-    return intersect(type, otherMap.get(type));
+  /**
+   * Returns a fact map which additionally allows having supplied value for the supplied fact
+   *
+   * @param type  a type of a new fact
+   * @param value an additional fact value which should be allowed. Passing null means that fact may have any value
+   * @param <T>   a fact value type
+   * @return a new fact map. May return itself if it's known that new fact does not actually change this map.
+   */
+  @NotNull
+  public <T> DfaFactMap union(@NotNull DfaFactType<T> type, @Nullable T value) {
+    if (value == null) return with(type, null);
+    T curFact = get(type);
+    if (curFact == null) return this;
+    T newFact = type.unionFacts(curFact, value);
+    return with(type, newFact);
   }
 
-  @Nullable
-  public static DfaFactMap intersect(DfaFactMap map1, DfaFactMap map2) {
-    if(map1 == null || map2 == null) return null;
-    List<DfaFactType<?>> types = DfaFactType.getTypes();
-    for (DfaFactType<?> type : types) {
-      map1 = map1.intersect(map2, type);
-      if (map1 == null) return null;
-    }
-    return map1;
+  @NotNull
+  private <TT> DfaFactMap union(DfaFactMap otherMap, @NotNull DfaFactType<TT> type) {
+    return union(type, otherMap.get(type));
+  }
+
+  @NotNull
+  public DfaFactMap union(@NotNull DfaFactMap other) {
+    return StreamEx.of(DfaFactType.getTypes()).foldLeft(this, (map, type) -> map.union(other, type));
   }
 
   @Override

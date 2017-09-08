@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.roots.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
@@ -73,6 +74,9 @@ public class RootIndex {
   public RootIndex(@NotNull Project project, @NotNull InfoCache cache) {
     myProject = project;
     myInfoCache = cache;
+
+    ApplicationManager.getApplication().isReadAccessAllowed();
+
     final RootInfo info = buildRootInfo(project);
 
     MultiMap<String, VirtualFile> rootsByPackagePrefix = MultiMap.create();
@@ -234,7 +238,7 @@ public class RootIndex {
     for (UnloadedModuleDescription description : moduleManager.getUnloadedModuleDescriptions()) {
       for (VirtualFilePointer pointer : description.getContentRoots()) {
         VirtualFile contentRoot = pointer.getFile();
-        if (contentRoot != null) {
+        if (contentRoot != null && ensureValid(contentRoot, description)) {
           info.contentRootOfUnloaded.put(contentRoot, description.getName());
         }
       }

@@ -116,6 +116,12 @@ public abstract class DfaFactType<T> extends Key<T> {
 
     @Nullable
     @Override
+    LongRangeSet unionFacts(@NotNull LongRangeSet left, @NotNull LongRangeSet right) {
+      return left.union(right);
+    }
+
+    @Nullable
+    @Override
     LongRangeSet intersectFacts(@NotNull LongRangeSet left, @NotNull LongRangeSet right) {
       LongRangeSet intersection = left.intersect(right);
       return intersection.isEmpty() ? null : intersection;
@@ -157,6 +163,18 @@ public abstract class DfaFactType<T> extends Key<T> {
    */
   @Nullable
   T intersectFacts(@NotNull T left, @NotNull T right) {
+    return left.equals(right) ? left : null;
+  }
+
+  /**
+   * Unites two facts of this type.
+   *
+   * @param left left fact
+   * @param right right fact
+   * @return union fact (null means that the fact can have any value)
+   */
+  @Nullable
+  T unionFacts(@NotNull T left, @NotNull T right) {
     return left.equals(right) ? left : null;
   }
 

@@ -16,12 +16,14 @@
 package com.intellij.spellchecker;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFileEvent;
@@ -48,7 +50,7 @@ import java.util.*;
 
 import static com.intellij.openapi.util.io.FileUtil.isAncestor;
 
-public class SpellCheckerManager {
+public class SpellCheckerManager implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.spellchecker.SpellCheckerManager");
 
   private static final int MAX_SUGGESTIONS_THRESHOLD = 5;
@@ -59,6 +61,7 @@ public class SpellCheckerManager {
   private AggregatedDictionary userDictionary;
   private final SuggestionProvider suggestionProvider = new BaseSuggestionProvider(this);
   private final SpellCheckerSettings settings;
+  private final VirtualFileListener myVirtualFileListener;
 
   public static SpellCheckerManager getInstance(Project project) {
     return ServiceManager.getService(project, SpellCheckerManager.class);
@@ -69,7 +72,9 @@ public class SpellCheckerManager {
     this.settings = settings;
     fullConfigurationReload();
     
-    LocalFileSystem.getInstance().addVirtualFileListener(new VirtualFileListener() {
+    Disposer.register(project, this);
+    
+    myVirtualFileListener = new VirtualFileListener() {
       @Override
       public void fileDeleted(@NotNull VirtualFileEvent event) {
         final String path = event.getFile().getPath();
@@ -101,7 +106,8 @@ public class SpellCheckerManager {
           restartInspections();
         }
       }
-    });
+    };
+    LocalFileSystem.getInstance().addVirtualFileListener(myVirtualFileListener);
   }
 
   public void fullConfigurationReload() {
@@ -261,5 +267,10 @@ public class SpellCheckerManager {
         }
       }
     });
+  }
+
+  @Override
+  public void dispose() {
+    LocalFileSystem.getInstance().removeVirtualFileListener(myVirtualFileListener);
   }
 }

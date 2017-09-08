@@ -13,32 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.xdebugger.impl.evaluate;
+package com.intellij.codeInsight.hints;
 
-import javax.swing.*;
+import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.ToggleAction;
 
-/**
- * @author egor
- */
-public class ExpressionInputForm {
-  private JPanel myLanguageChooserPanel;
-  private JPanel myExpressionPanel;
-  private JPanel myMainPanel;
-  private JLabel myNameLabel;
-
-  public void addLanguageComponent(JComponent component) {
-    myLanguageChooserPanel.add(component);
+public class ToggleCompletionHintsAction extends ToggleAction {
+  @Override
+  public boolean isSelected(AnActionEvent e) {
+    return CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION;
   }
 
-  public void addExpressionComponent(JComponent component) {
-    myExpressionPanel.add(component);
-  }
-
-  public void setName(String name) {
-    myNameLabel.setText(name);
-  }
-
-  public JPanel getMainPanel() {
-    return myMainPanel;
+  @Override
+  public void setSelected(AnActionEvent e, boolean state) {
+    CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION = state;
   }
 }

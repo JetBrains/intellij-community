@@ -15,6 +15,8 @@
  */
 package com.intellij.codeInspection;
 
+import com.intellij.codeInspection.dataFlow.CommonDataflow;
+import com.intellij.codeInspection.dataFlow.DfaFactType;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.openapi.project.Project;
@@ -32,7 +34,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 import static com.intellij.util.ObjectUtils.tryCast;
@@ -44,12 +46,16 @@ import static com.intellij.util.ObjectUtils.tryCast;
 public class SimplifyOptionalCallChainsInspection extends BaseJavaBatchLocalInspectionTool {
   private static final CallMatcher OPTIONAL_OR_ELSE =
     CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_OPTIONAL, "orElse").parameterCount(1);
+  private static final CallMatcher OPTIONAL_GET =
+    CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_OPTIONAL, "get").parameterCount(0);
   private static final CallMatcher OPTIONAL_OR_ELSE_GET =
     CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_OPTIONAL, "orElseGet").parameterCount(1);
   private static final CallMatcher OPTIONAL_MAP =
     CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_OPTIONAL, "map").parameterCount(1);
   private static final CallMatcher OPTIONAL_OF_NULLABLE =
     CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_OPTIONAL, "ofNullable").parameterCount(1);
+  private static final CallMatcher OPTIONAL_OF_OF_NULLABLE =
+    CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_OPTIONAL, "ofNullable", "of").parameterCount(1);
 
 
   @NotNull
@@ -70,6 +76,10 @@ public class SimplifyOptionalCallChainsInspection extends BaseJavaBatchLocalInsp
   private static abstract class OptionalChainVisitor extends JavaElementVisitor {
     @Override
     public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      if (OPTIONAL_GET.test(call)) {
+        handleRewrapping(call, OPTIONAL_OF_OF_NULLABLE);
+        return;
+      }
       PsiExpression falseArg = null;
       boolean useOrElseGet = false;
       if (OPTIONAL_OR_ELSE.test(call)) {
@@ -83,20 +93,25 @@ public class SimplifyOptionalCallChainsInspection extends BaseJavaBatchLocalInsp
       }
       if (falseArg == null) return;
       handleMapOrElse(call, useOrElseGet, falseArg);
-      handleOfNullableOrElse(call, falseArg);
+      if (ExpressionUtils.isNullLiteral(falseArg)) {
+        handleRewrapping(call, OPTIONAL_OF_NULLABLE);
+      }
       handleOrElseNullConditionalReturn(call, falseArg);
       handleOrElseNullConditionalAction(call, falseArg);
     }
 
-    private void handleOfNullableOrElse(PsiMethodCallExpression call, PsiExpression falseArg) {
-      if (!ExpressionUtils.isNullLiteral(falseArg)) return;
+    private void handleRewrapping(PsiMethodCallExpression call, CallMatcher wrapper) {
       PsiElement parent = PsiUtil.skipParenthesizedExprUp(call.getParent());
       if (!(parent instanceof PsiExpressionList)) return;
       PsiMethodCallExpression parentCall = tryCast(parent.getParent(), PsiMethodCallExpression.class);
-      if (!OPTIONAL_OF_NULLABLE.test(parentCall)) return;
+      if (!wrapper.test(parentCall)) return;
       PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
       if (qualifier == null ||
           !EquivalenceChecker.getCanonicalPsiEquivalence().typesAreEquivalent(qualifier.getType(), parentCall.getType())) {
+        return;
+      }
+      if ("get".equals(call.getMethodExpression().getReferenceName()) &&
+          !Boolean.TRUE.equals(CommonDataflow.getExpressionFact(qualifier, DfaFactType.OPTIONAL_PRESENCE))) {
         return;
       }
       SimplifyOptionalChainFix fix = new SimplifyOptionalChainFix(qualifier.getText(), "Unwrap", "Unnecessary Optional rewrapping");

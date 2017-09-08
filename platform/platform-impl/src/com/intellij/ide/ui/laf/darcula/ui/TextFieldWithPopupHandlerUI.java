@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -152,7 +152,15 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
         bounds.width -= holder.bounds.width + gap;
         holder.bounds.x = bounds.x + bounds.width + gap;
       }
-      holder.bounds.y = bounds.y + (bounds.height - holder.bounds.height) / 2;
+      JTextComponent component = getComponent();
+      boolean multiline = component != null && !Boolean.TRUE.equals(component.getDocument().getProperty("filterNewlines"));
+      holder.bounds.y = bounds.y;
+      if (!multiline) {
+        holder.bounds.y += (bounds.height - holder.bounds.height) / 2;
+      }
+      else {
+        holder.bounds.y += gap;
+      }
     }
   }
 
