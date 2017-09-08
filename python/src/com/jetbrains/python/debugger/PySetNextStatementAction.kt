@@ -32,7 +32,7 @@ import com.intellij.xdebugger.impl.actions.XDebuggerActionBase
 import com.intellij.xdebugger.impl.actions.XDebuggerSuspendedActionHandler
 import com.jetbrains.python.debugger.pydev.PyDebugCallback
 
-class PySetNextStatementAction : XDebuggerActionBase() {
+class PySetNextStatementAction : XDebuggerActionBase(true) {
   private val LOG = Logger.getInstance("#com.jetbrains.python.debugger.PySetNextStatementAction")
   private val mySetNextStatementActionHandler: XDebuggerSuspendedActionHandler
 

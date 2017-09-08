@@ -875,7 +875,8 @@
     </action>
 
     <action id="SetNextStatement" class="com.jetbrains.python.debugger.PySetNextStatementAction"
-            text="Jump To Cursor" description="Jump to the line where the caret is">
+            text="&amp;Jump To Cursor" description="Jump to the line where the caret is">
+      <add-to-group group-id="DebugMainMenu" relative-to-action="ForceRunToCursor" anchor="after"/>
       <add-to-group group-id="EditorPopupMenuDebug" relative-to-action="ForceRunToCursor" anchor="after"/>
     </action>
 
