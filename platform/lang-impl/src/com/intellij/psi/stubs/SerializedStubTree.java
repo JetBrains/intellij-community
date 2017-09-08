@@ -54,7 +54,8 @@ public class SerializedStubTree {
       myLength = myBytes.length;
       myByteContentLength = DataInputOutputUtil.readLONG(in);
       myCharContentLength = DataInputOutputUtil.readINT(in);
-    } else {
+    }
+    else {
       myBytes = CompressionUtil.readCompressed(in);
       myLength = myBytes.length;
       myByteContentLength = in.readLong();
@@ -79,6 +80,11 @@ public class SerializedStubTree {
   // willIndexStub is one time optimization hint, once can safely pass false
   @NotNull
   public Stub getStub(boolean willIndexStub) throws SerializerNotFoundException {
+    return getStub(willIndexStub, SerializationManagerEx.getInstanceEx());
+  }
+
+  @NotNull
+  public Stub getStub(boolean willIndexStub, @NotNull SerializationManagerEx serializationManager) throws SerializerNotFoundException {
     Stub stubElement = myStubElement;
     if (stubElement != null) {
       // not null myStubElement means we just built SerializedStubTree for indexing,
@@ -86,7 +92,7 @@ public class SerializedStubTree {
       myStubElement = null;
       if (willIndexStub) return stubElement;
     }
-    return SerializationManagerEx.getInstanceEx().deserialize(new UnsyncByteArrayInputStream(myBytes));
+    return serializationManager.deserialize(new UnsyncByteArrayInputStream(myBytes));
   }
 
   public boolean contentLengthMatches(long byteContentLength, int charContentLength) {
@@ -111,7 +117,7 @@ public class SerializedStubTree {
 
     final byte[] thisBytes = myBytes;
     final byte[] thatBytes = thatTree.myBytes;
-    for (int i=0; i< length; i++) {
+    for (int i = 0; i < length; i++) {
       if (thisBytes[i] != thatBytes[i]) {
         return false;
       }
@@ -121,8 +127,9 @@ public class SerializedStubTree {
   }
 
   public int hashCode() {
-    if (myBytes == null)
-        return 0;
+    if (myBytes == null) {
+      return 0;
+    }
 
     int result = 1;
     for (int i = 0; i < myLength; i++) {
@@ -132,4 +139,11 @@ public class SerializedStubTree {
     return result;
   }
 
+  public long getByteContentLength() {
+    return myByteContentLength;
+  }
+
+  public int getCharContentLength() {
+    return myCharContentLength;
+  }
 }
