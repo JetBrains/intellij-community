@@ -66,6 +66,25 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
     }
   }
 
+  fun testScope() {
+    doTest {
+      scope {
+        call(THIS, "method")
+      }
+    }
+  }
+
+  fun testNestedScopes() {
+    doTest {
+      scope {
+        call(THIS, "method")
+        scope {
+          call(THIS, "method")
+        }
+      }
+    }
+  }
+
   fun testIf() {
     doTest {
       ifBranch(+"true") {
@@ -224,6 +243,20 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
       val array = array("int", "a")
       +(array.set(0, +"1"))
       +(array.set(1, +"2"))
+    }
+  }
+
+  fun testArrayDefaultDeclaration() {
+    doTest {
+      val a = array("int", "array")
+      declare(a.defaultDeclaration(+"10"))
+    }
+  }
+
+  fun testArrayCreateFromElements() {
+    doTest {
+      val a = array("double", "array")
+      declare(a, a.of(+"10.0", +"20.0"), false)
     }
   }
 
