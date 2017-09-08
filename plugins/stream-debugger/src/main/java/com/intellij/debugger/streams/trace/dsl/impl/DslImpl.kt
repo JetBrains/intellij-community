@@ -57,6 +57,10 @@ class DslImpl(override val statementFactory: StatementFactory) : Dsl {
   override fun declaration(variable: Variable, init: Expression, isMutable: Boolean): VariableDeclaration =
     statementFactory.createVariableDeclaration(variable, init, isMutable)
 
+  override fun currentTime(): Expression = TextExpression("time").call("get")
+
+  override fun updateTime(): Expression = TextExpression("time").call("incrementAndGet")
+
   override fun String.unaryPlus(): TextExpression = TextExpression(this)
 
   private inner class MyContext : CodeContext, Dsl by DslImpl@ this, CodeBlock by statementFactory.createEmptyCompositeCodeBlock()

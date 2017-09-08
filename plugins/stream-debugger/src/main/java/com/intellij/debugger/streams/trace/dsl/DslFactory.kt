@@ -43,4 +43,8 @@ interface DslFactory {
   fun equals(left: Expression, right: Expression): Expression
 
   fun same(left: Expression, right: Expression): Expression
+
+  fun currentTime(): Expression
+
+  fun updateTime(): Expression
 }
