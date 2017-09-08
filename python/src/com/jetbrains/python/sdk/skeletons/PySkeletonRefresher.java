@@ -30,6 +30,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -811,17 +812,27 @@ public class PySkeletonRefresher {
   @Nullable
   private VirtualFile findPregeneratedSkeletons() {
     final File root = findPregeneratedSkeletonsRoot();
-    if (root == null) {
+    if (root == null || !root.exists()) {
       return null;
     }
     LOG.info("Pregenerated skeletons root is " + root);
 
-    String prebuiltSkeletonsName = getPregeneratedSkeletonsName();
+    String prebuiltSkeletonsName = getPregeneratedSkeletonsName(Registry.is("python.prebuilt.skeletons.minor.version.aware"));
     if (prebuiltSkeletonsName == null) return null;
 
-    File f = new File(root, prebuiltSkeletonsName);
+    File f = null;
 
-    if (f.exists()) {
+    File[] children = root.listFiles();
+    if (children != null) {
+      for (File file : children) {
+        if (file.getAbsolutePath().matches(".*" + prebuiltSkeletonsName + "\\.?\\d*\\.zip")) {
+          f = file;
+          break;
+        }
+      }
+    }
+
+    if (f != null) {
       LOG.info("Found pregenerated skeletons at " + f.getPath());
       final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f);
       if (virtualFile == null) {
@@ -836,12 +847,12 @@ public class PySkeletonRefresher {
     }
   }
 
-  public String getPregeneratedSkeletonsName() {
-    return getPregeneratedSkeletonsName(mySdk, myGeneratorVersion);
+  public String getPregeneratedSkeletonsName(boolean witnMinorVersion) {
+    return getPregeneratedSkeletonsName(mySdk, myGeneratorVersion, witnMinorVersion);
   }
 
   @Nullable
-  public static String getPregeneratedSkeletonsName(@NotNull Sdk sdk, int generatorVersion) {
+  public static String getPregeneratedSkeletonsName(@NotNull Sdk sdk, int generatorVersion, boolean withMinorVersion) {
     String prebuiltSkeletonsName;
     @NonNls final String versionString = sdk.getVersionString();
     if (versionString == null) {
@@ -854,6 +865,14 @@ public class PySkeletonRefresher {
 
     String version = versionString.toLowerCase().replace(" ", "-");
 
+    if (!withMinorVersion) {
+      int ind = version.lastIndexOf(".");
+      if (ind != -1) {
+        // strip last version
+        version = version.substring(0, ind);
+      }
+    }
+
     if (SystemInfo.isMac) {
       String osVersion = SystemInfo.OS_VERSION;
       int dot = osVersion.indexOf('.');
@@ -863,12 +882,13 @@ public class PySkeletonRefresher {
           osVersion = osVersion.substring(0, secondDot);
         }
       }
-      prebuiltSkeletonsName = "skeletons-mac-" + generatorVersion + "-" + osVersion + "-" + version + ".zip";
+      prebuiltSkeletonsName = "skeletons-mac-" + generatorVersion + "-" + osVersion + "-" + version;
     }
     else {
       String os = SystemInfo.isWindows ? "win" : "nix";
-      prebuiltSkeletonsName = "skeletons-" + os + "-" + generatorVersion + "-" + version + ".zip";
-    } return prebuiltSkeletonsName;
+      prebuiltSkeletonsName = "skeletons-" + os + "-" + generatorVersion + "-" + version;
+    }
+    return prebuiltSkeletonsName;
   }
 
   @Nullable
