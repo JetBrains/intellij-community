@@ -5,7 +5,7 @@
 # predefined decl: green bold
 # predefined usage: yellow bold
 
-<info descr="PY.BUILTIN_NAME" type="INFORMATION" foreground="0x00ff00" background="0x000000" effectcolor="0xffffff" effecttype="BOXED" fonttype="1"><info descr="PY.FUNCTION_CALL">len</info></info>("")
+<info descr="PY.BUILTIN_NAME" type="INFORMATION" foreground="0x00ff00" background="0x000000" effectcolor="0xffffff" effecttype="BOXED" fonttype="1">len</info>("")
 len = [] # redefine
 len # no highlight
 

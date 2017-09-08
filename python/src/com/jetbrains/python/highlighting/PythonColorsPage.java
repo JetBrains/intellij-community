@@ -118,7 +118,7 @@ public class PythonColorsPage implements ColorSettingsPage, InspectionColorSetti
       "    <docComment>\"\"\" Syntax Highlighting Demo\n" +
       "        <docCommentTag>@param</docCommentTag> x Parameter\"\"\"</docComment>\n" +
       "    s = (\"Test\", 2+3, {'a': 'b'}, <param>x</param>)   # Comment\n" +
-      "    print s[0].<mcall>lower()</mcall>\n"+
+      "    <call>f</call>(s[0].<mcall>lower()</mcall>)\n"+
       "\n"+
       "class <classDef>Foo</classDef>:\n"+
       "    tags: <annotation>List[<builtin>str</builtin>]</annotation>\n" +
@@ -130,7 +130,7 @@ public class PythonColorsPage implements ColorSettingsPage, InspectionColorSetti
       "    def <funcDef>makeSense</funcDef>(<self>self</self>, <param>whatever</param>):\n"+
       "        <self>self</self>.sense = <param>whatever</param>\n"+
       "\n"+
-      "x = <builtin><call>len</call></builtin>('abc')\n"+
+      "x = <builtin>len</builtin>('abc')\n"+
       "print(f.<predefinedUsage>__doc__</predefinedUsage>)"
     ;
   }

@@ -22,6 +22,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
@@ -65,6 +66,9 @@ public class HighlightingAnnotator extends PyAnnotator {
   public void visitPyCallExpression(PyCallExpression node) {
     final PyReferenceExpression callee = as(node.getCallee(), PyReferenceExpression.class);
     if (callee != null) {
+      if (!callee.isQualified() && PyBuiltinCache.isInBuiltins(callee)) {
+        return;
+      }
       final ASTNode functionName = callee.getNameElement();
       if (functionName != null) {
         final TextAttributesKey attrKey = callee.isQualified() ? PyHighlighter.PY_METHOD_CALL : PyHighlighter.PY_FUNCTION_CALL;
