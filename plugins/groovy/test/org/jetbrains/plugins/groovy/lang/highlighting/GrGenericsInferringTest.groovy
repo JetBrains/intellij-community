@@ -467,4 +467,16 @@ class SomeClass {
 }
   '''
   }
+
+  void testCollectMany() {
+    testHighlighting ''' 
+import groovy.transform.CompileStatic
+
+@CompileStatic
+def foo() {
+    def nums = [1]
+    def res = nums.collectMany { [it] }
+}
+  '''
+  }
 }
