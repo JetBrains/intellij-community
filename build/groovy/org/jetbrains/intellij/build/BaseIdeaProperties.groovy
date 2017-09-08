@@ -60,13 +60,29 @@ abstract class BaseIdeaProperties extends ProductProperties {
     productLayout.additionalPlatformJars.
       putAll("javac2.jar", ["javac2", "forms-compiler", "forms_rt", "instrumentation-util", "instrumentation-util-8", "javac-ref-scanner-8"])
     productLayout.additionalPlatformJars.putAll("annotations-java8.jar", ["annotations-common", "annotations-java8"])
-    productLayout.additionalPlatformJars.putAll("java-api.jar", ["java-analysis-api", "java-indexing-api", "java-psi-api", "openapi",
-                                                                 "jsp-base-openapi", "jsp-openapi", "uast-common"])
-    productLayout.additionalPlatformJars.putAll("java-impl.jar", ["java-analysis-impl", "java-indexing-impl", "java-psi-impl", "java-impl",
-                                                                  "jsp-spi", "uast-java"])
+
+    def JAVA_API_JAR = "java-api.jar"
+    def JAVA_IMPL_JAR = "java-impl.jar"
+    productLayout.additionalPlatformJars.putAll(JAVA_API_JAR, [])
+    productLayout.additionalPlatformJars.putAll(JAVA_IMPL_JAR, [])
 
     productLayout.platformLayoutCustomizer = { PlatformLayout layout ->
       layout.customize {
+        withModule("java-analysis-api", JAVA_API_JAR, false)
+        withModule("java-indexing-api", JAVA_API_JAR, false)
+        withModule("java-psi-api", JAVA_API_JAR, false)
+        withModule("openapi", JAVA_API_JAR, false)
+        withModule("jsp-base-openapi", JAVA_API_JAR, false)
+        withModule("jsp-openapi", JAVA_API_JAR, false)
+        withModule("uast-common", JAVA_API_JAR, false)
+
+        withModule("java-analysis-impl", JAVA_IMPL_JAR, false)
+        withModule("java-indexing-impl", JAVA_IMPL_JAR, false)
+        withModule("java-psi-impl", JAVA_IMPL_JAR, false)
+        withModule("java-impl", JAVA_IMPL_JAR, false)
+        withModule("jsp-spi", JAVA_IMPL_JAR, false)
+        withModule("uast-java", JAVA_IMPL_JAR, false)
+
         withModule("java-runtime", "idea_rt.jar", false)
         withArtifact("debugger-agent", "rt")
         withArtifact("debugger-agent-storage", "rt")

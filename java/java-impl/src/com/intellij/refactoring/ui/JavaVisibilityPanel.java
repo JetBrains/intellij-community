@@ -54,7 +54,7 @@ public class JavaVisibilityPanel extends VisibilityPanelBase<String> {
     ItemListener listener = new ItemListener() {
       public void itemStateChanged(ItemEvent e) {
         if (e.getStateChange() == ItemEvent.SELECTED) {
-          myEventDispatcher.getMulticaster().stateChanged(new ChangeEvent(this));
+          stateChanged(new ChangeEvent(this));
         }
       }
     };

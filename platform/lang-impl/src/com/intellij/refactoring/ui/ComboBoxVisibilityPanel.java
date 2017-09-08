@@ -52,7 +52,7 @@ public class ComboBoxVisibilityPanel<V> extends VisibilityPanelBase<V> {
     myComboBox.addActionListener(new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        myEventDispatcher.getMulticaster().stateChanged(new ChangeEvent(ComboBoxVisibilityPanel.this));
+        stateChanged(new ChangeEvent(ComboBoxVisibilityPanel.this));
       }
     });
 
@@ -125,6 +125,6 @@ public class ComboBoxVisibilityPanel<V> extends VisibilityPanelBase<V> {
   @Override
   public void setVisibility(V visibility) {
     myComboBox.setSelectedItem(visibility);
-    myEventDispatcher.getMulticaster().stateChanged(new ChangeEvent(this));
+    stateChanged(new ChangeEvent(this));
   }
 }
