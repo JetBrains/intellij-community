@@ -691,28 +691,7 @@ class PyDBFrame:
                     stop = is_return and stop_frame is frame
 
                 elif step_cmd == CMD_RUN_TO_LINE or step_cmd == CMD_SET_NEXT_STATEMENT:
-                    stop = False
-
-                    if is_line or is_exception_event:
-                        #Yes, we can only act on line events (weird hum?)
-                        #Note: This code is duplicated at pydevd.py
-                        #Acting on exception events after debugger breaks with exception
-                        curr_func_name = frame.f_code.co_name
-
-                        #global context is set with an empty name
-                        if curr_func_name in ('?', '<module>'):
-                            curr_func_name = ''
-
-                        if curr_func_name == info.pydev_func_name:
-                            line = info.pydev_next_line
-                            if frame.f_lineno == line:
-                                stop = True
-                            else:
-                                if frame.f_trace is None:
-                                    frame.f_trace = self.trace_dispatch
-                                frame.f_lineno = line
-                                frame.f_trace = None
-                                stop = True
+                    stop, response_msg = main_debugger.set_next_statement(frame, event, info)
 
                 else:
                     stop = False

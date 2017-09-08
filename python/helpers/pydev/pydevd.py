@@ -10,8 +10,8 @@ import os
 import sys
 import traceback
 
-from _pydevd_bundle.pydevd_constants import IS_JYTH_LESS25, IS_PY3K, IS_PY34_OR_GREATER, get_thread_id, dict_keys, dict_contains, \
-    dict_iter_items, DebugInfoHolder, PYTHON_SUSPEND, STATE_SUSPEND, STATE_RUN, get_frame, xrange, \
+from _pydevd_bundle.pydevd_constants import IS_JYTH_LESS25, IS_PY3K, IS_PY34_OR_GREATER, IS_PYCHARM, get_thread_id, dict_keys, \
+    dict_contains, dict_iter_items, DebugInfoHolder, PYTHON_SUSPEND, STATE_SUSPEND, STATE_RUN, get_frame, xrange, \
     clear_cached_thread_id, INTERACTIVE_MODE_AVAILABLE
 from _pydev_bundle import fix_getpass
 from _pydev_bundle import pydev_imports, pydev_log
@@ -728,6 +728,33 @@ class PyDB:
         cmd = self.cmd_factory.make_process_created_message()
         self.writer.add_command(cmd)
 
+    def set_next_statement(self, frame, event, info):
+        stop = False
+        response_msg = ""
+        if event == 'line' or event == 'exception':
+            #If we're already in the correct context, we have to stop it now, because we can act only on
+            #line events -- if a return was the next statement it wouldn't work (so, we have this code
+            #repeated at pydevd_frame).
+
+            curr_func_name = frame.f_code.co_name
+
+            #global context is set with an empty name
+            if curr_func_name in ('?', '<module>'):
+                curr_func_name = ''
+
+            if curr_func_name == info.pydev_func_name:
+                line = info.pydev_next_line
+                if frame.f_lineno == line:
+                    stop = True
+                else:
+                    if frame.f_trace is None:
+                        frame.f_trace = self.trace_dispatch
+                    frame.f_lineno = line
+                    frame.f_trace = None
+                    stop = True
+            else:
+                response_msg = "jump is available only within the bottom frame"
+        return stop, response_msg
 
     def do_wait_suspend(self, thread, frame, event, arg, suspend_type="trace"): #@UnusedVariable
         """ busy waits until the thread state changes to RUN
@@ -785,51 +812,32 @@ class PyDB:
             info.pydev_step_stop = None
             info.pydev_smart_step_stop = frame
 
-        elif info.pydev_step_cmd == CMD_RUN_TO_LINE or info.pydev_step_cmd == CMD_SET_NEXT_STATEMENT :
+        elif info.pydev_step_cmd == CMD_RUN_TO_LINE or info.pydev_step_cmd == CMD_SET_NEXT_STATEMENT:
             self.set_trace_for_frame_and_parents(frame)
-
-            if event == 'line' or event == 'exception':
-                #If we're already in the correct context, we have to stop it now, because we can act only on
-                #line events -- if a return was the next statement it wouldn't work (so, we have this code
-                #repeated at pydevd_frame).
-                stop = False
-                curr_func_name = frame.f_code.co_name
-
-                #global context is set with an empty name
-                if curr_func_name in ('?', '<module>'):
-                    curr_func_name = ''
-
-                response_msg = ""
+            stop = False
+            response_msg = ""
+            if not IS_PYCHARM:
+                stop, response_msg = self.set_next_statement(frame, event, info)
+                if stop:
+                    info.pydev_state = STATE_SUSPEND
+                    self.do_wait_suspend(thread, frame, event, arg, "trace")
+                    return
+            else:
                 try:
-                    if curr_func_name == info.pydev_func_name:
-                        line = info.pydev_next_line
-                        if frame.f_lineno == line:
-                            stop = True
-                        else:
-                            if frame.f_trace is None:
-                                frame.f_trace = self.trace_dispatch
-                            frame.f_lineno = line
-                            frame.f_trace = None
-                            stop = True
-                    else:
-                        response_msg = "jump is available only within the bottom frame"
+                    stop, response_msg = self.set_next_statement(frame, event, info)
                 except ValueError as e:
                     response_msg = "%s" % e
-                    info.pydev_state = STATE_SUSPEND
                     info.pydev_step_cmd = None
                 finally:
                     seq = info.pydev_message
                     cmd = self.cmd_factory.make_set_next_stmnt_status_message(seq, stop, response_msg)
                     self.writer.add_command(cmd)
+                    info.pydev_state = STATE_SUSPEND
 
                 cmd = self.cmd_factory.make_thread_run_message(get_thread_id(thread), info.pydev_step_cmd)
                 self.writer.add_command(cmd)
                 info.pydev_step_cmd = None
-                info.pydev_state = STATE_SUSPEND
-
-                if stop:
-                    thread.stop_reason = CMD_THREAD_SUSPEND
-
+                thread.stop_reason = CMD_THREAD_SUSPEND
                 # return to the suspend state and wait for other command
                 self.do_wait_suspend(thread, frame, event, arg, "trace")
                 return

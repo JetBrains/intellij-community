@@ -108,7 +108,7 @@ USE_LIB_COPY = SUPPORT_GEVENT and \
 
 
 INTERACTIVE_MODE_AVAILABLE = sys.platform in ('darwin', 'win32') or os.getenv('DISPLAY') is not None
-SHOW_CYTHON_WARNING = False
+IS_PYCHARM = True
 
 
 def protect_libraries_from_patching():

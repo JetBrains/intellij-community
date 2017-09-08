@@ -3,7 +3,7 @@
 
 import os
 import sys
-from _pydevd_bundle.pydevd_constants import CYTHON_SUPPORTED, SHOW_CYTHON_WARNING
+from _pydevd_bundle.pydevd_constants import CYTHON_SUPPORTED, IS_PYCHARM
 
 
 use_cython = os.getenv('PYDEVD_USE_CYTHON', None)
@@ -66,7 +66,7 @@ elif use_cython is None:
         from _pydevd_bundle.pydevd_trace_dispatch_regular import trace_dispatch, global_cache_skips, global_cache_frame_skips  # @UnusedImport
         from _pydev_bundle.pydev_monkey import log_error_once
 
-        if SHOW_CYTHON_WARNING:
+        if not IS_PYCHARM:
             log_error_once("warning: Debugger speedups using cython not found. Run '\"%s\" \"%s\" build_ext --inplace' to build." % (
                 sys.executable, os.path.join(dirname, 'setup_cython.py')))
         else:
