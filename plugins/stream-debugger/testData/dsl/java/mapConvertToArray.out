@@ -1,0 +1,14 @@
+java.lang.Object[] resultArray;
+{
+  final int size = map.size();
+  final int[] keys = new int[size];
+  final java.lang.Object[] values = new java.lang.Object[size];
+  int i = 0;
+  for (int key : map.keySet()) {
+    keys[i] = key;
+    values[i] = map.get(key);
+    i++;
+  };
+  resultArray = new java.lang.Object[] { keys, values };
+};
+;

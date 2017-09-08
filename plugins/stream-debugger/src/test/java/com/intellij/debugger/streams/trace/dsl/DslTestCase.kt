@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.streams.trace.dsl
 
+import com.intellij.debugger.streams.trace.dsl.impl.TextExpression
 import com.intellij.debugger.streams.trace.impl.handler.type.GenericType
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
@@ -257,6 +258,13 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
     doTest {
       val a = array("double", "array")
       declare(a, a.of(+"10.0", +"20.0"), false)
+    }
+  }
+
+  fun testMapConvertToArray() {
+    doTest {
+      val map = map(GenericType.INT, GenericType.OBJECT, "map")
+      +(TextExpression(map.convertToArray(this, "resultArray")))
     }
   }
 
