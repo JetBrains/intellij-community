@@ -26,7 +26,7 @@ import org.jetbrains.idea.devkit.inspections.quickfix.RegisterActionFix;
 import org.jetbrains.idea.devkit.util.ActionData;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 
-@TestDataPath("$CONTENT_ROOT/../testData/inspections/componentNotRegistered")
+@TestDataPath("$CONTENT_ROOT/testData/inspections/componentNotRegistered")
 public class ComponentNotRegisteredInspectionTest extends PluginModuleTestCase {
 
   @Override
