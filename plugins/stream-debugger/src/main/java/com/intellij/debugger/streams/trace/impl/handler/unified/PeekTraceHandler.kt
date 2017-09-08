@@ -17,32 +17,50 @@ package com.intellij.debugger.streams.trace.impl.handler.unified
 
 import com.intellij.debugger.streams.trace.dsl.Dsl
 import com.intellij.debugger.streams.trace.dsl.VariableDeclaration
+import com.intellij.debugger.streams.trace.dsl.impl.TextExpression
 import com.intellij.debugger.streams.trace.impl.handler.type.GenericType
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
 
 /**
  * @author Vitaliy.Bibaev
  */
-class PeekTraceHandler(num: Int, callName: String, private val typeBefore: GenericType, private val typeAfter: GenericType, dsl: Dsl)
+class PeekTraceHandler(num: Int, callName: String, private val myTypeBefore: GenericType, typeAfter: GenericType, dsl: Dsl)
   : HandlerBase.Intermediate(dsl) {
-  private val myBeforeMap = dsl.linkedMap(GenericType.INT, typeBefore, "${callName}Peek${num}Before")
+  private val myBeforeMap = dsl.linkedMap(GenericType.INT, myTypeBefore, "${callName}Peek${num}Before")
   private val myAfterMap = dsl.linkedMap(GenericType.INT, typeAfter, "${callName}Peek${num}After")
 
   override fun getVariables(): List<VariableDeclaration> = listOf(myBeforeMap.defaultDeclaration(), myAfterMap.defaultDeclaration())
 
   override fun prepareResult(): String {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    return dsl.code {
+      +TextExpression(myBeforeMap.convertToArray(this, "beforeArray") +
+                      myAfterMap.convertToArray(this, "afterArray"))
+    }
   }
 
   override fun getResultExpression(): String {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    return dsl.code {
+      +newArray(GenericType.OBJECT.variableTypeName, +"beforeArray", +"afterArray")
+    }
   }
 
-  override fun additionalCallsBefore(): MutableList<IntermediateStreamCall> {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+  override fun additionalCallsBefore(): List<IntermediateStreamCall> {
+    val lambda = dsl.code {
+      lambda("x") {
+        +myBeforeMap.set(currentTime(), +argName)
+      }
+    }
+
+    return listOf(dsl.createPeekCall(myTypeBefore, lambda))
   }
 
-  override fun additionalCallsAfter(): MutableList<IntermediateStreamCall> {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+  override fun additionalCallsAfter(): List<IntermediateStreamCall> {
+    val lambda = dsl.code {
+      lambda("x") {
+        +myAfterMap.set(currentTime(), +argName)
+      }
+    }
+
+    return listOf(dsl.createPeekCall(myTypeBefore, lambda))
   }
 }

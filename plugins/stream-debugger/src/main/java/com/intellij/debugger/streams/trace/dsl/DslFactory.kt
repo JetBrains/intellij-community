@@ -17,6 +17,7 @@ package com.intellij.debugger.streams.trace.dsl
 
 import com.intellij.debugger.streams.trace.dsl.impl.TextExpression
 import com.intellij.debugger.streams.trace.impl.handler.type.GenericType
+import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
 
 /**
  * @author Vitaliy.Bibaev
@@ -47,4 +48,6 @@ interface DslFactory {
   fun currentTime(): Expression
 
   fun updateTime(): Expression
+
+  fun createPeekCall(elementsType: GenericType, lambda: String): IntermediateStreamCall
 }

@@ -16,7 +16,9 @@
 package com.intellij.debugger.streams.trace.dsl.impl
 
 import com.intellij.debugger.streams.trace.dsl.*
+import com.intellij.debugger.streams.trace.impl.handler.PeekCall
 import com.intellij.debugger.streams.trace.impl.handler.type.GenericType
+import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
 
 /**
  * @author Vitaliy.Bibaev
@@ -60,6 +62,8 @@ class DslImpl(override val statementFactory: StatementFactory) : Dsl {
   override fun currentTime(): Expression = TextExpression("time").call("get")
 
   override fun updateTime(): Expression = TextExpression("time").call("incrementAndGet")
+
+  override fun createPeekCall(elementsType: GenericType, lambda: String): IntermediateStreamCall = PeekCall(lambda, elementsType)
 
   override fun String.unaryPlus(): TextExpression = TextExpression(this)
 
