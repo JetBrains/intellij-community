@@ -305,7 +305,7 @@ public class PySkeletonRefresher {
         binaries.modules.putAll(mySkeletonsGenerator.listBinaries(mySdk, Joiner.on(";").join(batch)).modules);
       }
     }
-    myGeneratorVersion = binaries.generatorVersion;
+    myGeneratorVersion = binaries != null ? binaries.generatorVersion : 0;
     myPregeneratedSkeletons = findPregeneratedSkeletons();
 
     indicate(PyBundle.message("sdk.gen.reading.versions.file"));
@@ -333,7 +333,7 @@ public class PySkeletonRefresher {
 
     final boolean builtinsUpdated = updateSkeletonsForBuiltins(readablePath, builtinsFile);
 
-    if (!binaries.modules.isEmpty()) {
+    if (binaries != null && !binaries.modules.isEmpty()) {
       indicate(PyBundle.message("sdk.gen.updating.$0", readablePath));
       final List<UpdateResult> updateErrors = updateOrCreateSkeletons(binaries.modules);
       if (updateErrors.size() > 0) {
@@ -842,7 +842,7 @@ public class PySkeletonRefresher {
       return JarFileSystem.getInstance().getJarRootForLocalFile(virtualFile);
     }
     else {
-      LOG.info("Not found pregenerated skeletons at " + f.getPath());
+      LOG.info("Not found pregenerated skeletons at " + root);
       return null;
     }
   }
