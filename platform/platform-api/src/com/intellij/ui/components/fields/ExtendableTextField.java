@@ -13,7 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ui.components;
+package com.intellij.ui.components.fields;
+
+import com.intellij.ui.components.JBTextField;
 
 import javax.swing.Icon;
 import javax.swing.JComponent;

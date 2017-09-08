@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ui.components;
+package com.intellij.ui.components.fields;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -23,6 +23,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.Expandable;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.JBScrollBar;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Function;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.ui.JBInsets;
