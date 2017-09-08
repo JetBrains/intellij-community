@@ -15,14 +15,64 @@
  */
 package com.siyeh.ig.naming;
 
-import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.fixes.RenameFix;
+import com.intellij.psi.PsiClass;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspectionVisitor;
+import org.jetbrains.annotations.NotNull;
 
 public class EnumeratedClassNamingConventionInspection
-  extends EnumeratedClassNamingConventionInspectionBase {
+  extends ConventionInspection {
+
+  private static final int DEFAULT_MIN_LENGTH = 8;
+  private static final int DEFAULT_MAX_LENGTH = 64;
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new RenameFix();
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "enumerated.class.naming.convention.display.name");
+  }
+
+  @Override
+  protected String getElementDescription() {
+    return InspectionGadgetsBundle.message("enumerated.class.naming.convention.element.description");
+  }
+
+  @Override
+  protected String getDefaultRegex() {
+    return "[A-Z][A-Za-z\\d]*";
+  }
+
+  @Override
+  protected int getDefaultMinLength() {
+    return DEFAULT_MIN_LENGTH;
+  }
+
+  @Override
+  protected int getDefaultMaxLength() {
+    return DEFAULT_MAX_LENGTH;
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new NamingConventionsVisitor();
+  }
+
+  private class NamingConventionsVisitor extends BaseInspectionVisitor {
+
+    @Override
+    public void visitClass(@NotNull PsiClass aClass) {
+      if (!aClass.isEnum()) {
+        return;
+      }
+      final String name = aClass.getName();
+      if (name == null) {
+        return;
+      }
+      if (isValid(name)) {
+        return;
+      }
+      registerClassError(aClass, name);
+    }
   }
 }

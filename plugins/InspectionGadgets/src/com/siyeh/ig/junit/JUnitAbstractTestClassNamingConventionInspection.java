@@ -15,14 +15,97 @@
  */
 package com.siyeh.ig.junit;
 
-import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.fixes.RenameFix;
+import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.naming.ConventionInspection;
+import org.jetbrains.annotations.NotNull;
 
 public class JUnitAbstractTestClassNamingConventionInspection
-  extends JUnitAbstractTestClassNamingConventionInspectionBase {
+  extends ConventionInspection {
+
+  private static final int DEFAULT_MIN_LENGTH = 12;
+  private static final int DEFAULT_MAX_LENGTH = 64;
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new RenameFix();
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "junit.abstract.test.class.naming.convention.display.name");
+  }
+
+  @Override
+  protected String getElementDescription() {
+    return InspectionGadgetsBundle.message("junit.abstract.test.class.naming.convention.element.description");
+  }
+
+  @Override
+  protected String getDefaultRegex() {
+    return "[A-Z][A-Za-z\\d]*TestCase";
+  }
+
+  @Override
+  protected int getDefaultMinLength() {
+    return DEFAULT_MIN_LENGTH;
+  }
+
+  @Override
+  protected int getDefaultMaxLength() {
+    return DEFAULT_MAX_LENGTH;
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new NamingConventionsVisitor();
+  }
+
+  @Override
+  public boolean shouldInspect(PsiFile file) {
+    return file instanceof PsiClassOwner;
+  }
+
+  private class NamingConventionsVisitor extends BaseInspectionVisitor {
+
+    @Override
+    public void visitElement(PsiElement element) {
+      if (!(element instanceof PsiClass)) {
+        super.visitElement(element);
+        return;
+      }
+
+      final PsiClass aClass = (PsiClass)element;
+      if (aClass.isInterface() || aClass.isEnum() || aClass.isAnnotationType()) {
+        return;
+      }
+      if (aClass instanceof PsiTypeParameter) {
+        return;
+      }
+      if (!aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+        return;
+      }
+      if (!InheritanceUtil.isInheritor(aClass,
+                                       JUnitCommonClassNames.JUNIT_FRAMEWORK_TEST_CASE)) {
+        return;
+      }
+      final String name = aClass.getName();
+      if (name == null) {
+        return;
+      }
+      if (isValid(name)) {
+        return;
+      }
+      final PsiIdentifier identifier = aClass.getNameIdentifier();
+      if (identifier == null) {
+        return;
+      }
+      if (!identifier.isPhysical()) {
+        final PsiElement navigationElement = identifier.getNavigationElement();
+        registerError(navigationElement, name);
+      }
+      else {
+        registerClassError(aClass, name);
+      }
+    }
   }
 }

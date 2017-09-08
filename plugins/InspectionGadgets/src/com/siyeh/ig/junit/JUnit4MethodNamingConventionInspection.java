@@ -15,16 +15,77 @@
  */
 package com.siyeh.ig.junit;
 
-import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.fixes.RenameFix;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiMethod;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.naming.ConventionInspection;
+import com.siyeh.ig.psiutils.LibraryUtil;
+import com.siyeh.ig.psiutils.MethodUtils;
+import com.siyeh.ig.psiutils.TestUtils;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Bas Leijdekkers
  */
-public class JUnit4MethodNamingConventionInspection extends JUnit4MethodNamingConventionInspectionBase {
+public class JUnit4MethodNamingConventionInspection extends ConventionInspection {
+
+  @Nls
+  @NotNull
+  @Override
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message("junit4.method.naming.convention.display.name");
+  }
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new RenameFix();
+  protected String getElementDescription() {
+    return InspectionGadgetsBundle.message("junit4.method.naming.convention.element.description");
+  }
+
+  @Override
+  protected String getDefaultRegex() {
+    return "[a-z][A-Za-z_\\d]*";
+  }
+
+  @Override
+  protected int getDefaultMinLength() {
+    return 4;
+  }
+
+  @Override
+  protected int getDefaultMaxLength() {
+    return 64;
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new JUnit4MethodNamingConventionVisitor();
+  }
+
+  private class JUnit4MethodNamingConventionVisitor extends BaseInspectionVisitor {
+
+    @Override
+    public void visitMethod(PsiMethod method) {
+      super.visitMethod(method);
+      if (!TestUtils.isAnnotatedTestMethod(method)) {
+        return;
+      }
+      final PsiIdentifier nameIdentifier = method.getNameIdentifier();
+      if (nameIdentifier == null) {
+        return;
+      }
+      final String name = method.getName();
+      if (isValid(name)) {
+        return;
+      }
+      if (!isOnTheFly() && MethodUtils.hasSuper(method)) {
+        return;
+      }
+      if (LibraryUtil.isOverrideOfLibraryMethod(method)) {
+        return;
+      }
+      registerMethodError(method, name);
+    }
   }
 }
