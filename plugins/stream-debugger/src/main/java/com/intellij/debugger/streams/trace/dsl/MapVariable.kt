@@ -27,6 +27,10 @@ interface MapVariable : Variable {
   operator fun get(key: Expression): Expression
   operator fun set(key: Expression, newValue: Expression): Expression
   fun contains(key: Expression): Expression
+  fun size(): Expression
+  fun keys(): Expression
 
   fun defaultDeclaration(isMutable: Boolean = true): VariableDeclaration
+
+  fun convertToArray(dsl: Dsl, arrayName: String): String
 }

@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.streams.trace.dsl.impl.java
 
+import com.intellij.debugger.streams.trace.dsl.Dsl
 import com.intellij.debugger.streams.trace.dsl.Expression
 import com.intellij.debugger.streams.trace.dsl.MapVariable
 import com.intellij.debugger.streams.trace.dsl.VariableDeclaration
@@ -31,6 +32,7 @@ class JavaMapVariable(override val keyType: GenericType,
                       private val linked: Boolean)
   : VariableImpl("${getMapType(linked)}<${keyType.genericTypeName}, ${valueType.genericTypeName}>",
                  name), MapVariable {
+
   companion object {
     fun getMapType(linked: Boolean): String = "java.util.${if (linked) "Linked" else ""}HashMap"
   }
@@ -44,4 +46,33 @@ class JavaMapVariable(override val keyType: GenericType,
 
   override fun defaultDeclaration(isMutable: Boolean): VariableDeclaration =
     JavaVariableDeclaration(this, false, TextExpression("${getMapType(linked)}<>()"))
+
+  override fun keys(): Expression = call("keySet")
+
+  override fun size(): Expression = call("size")
+
+  override fun convertToArray(dsl: Dsl, arrayName: String): String {
+    val resultArray = dsl.array(GenericType.OBJECT.variableTypeName, arrayName)
+    val size = dsl.variable("int", "size")
+    val keys = dsl.array(keyType.variableTypeName, "keys")
+    val values = dsl.array(valueType.variableTypeName, "values")
+    val i = dsl.variable("int", "i")
+    val key = dsl.variable(keyType.variableTypeName, "key")
+    return dsl.code {
+      declare(resultArray, true)
+      scope {
+        declare(size, size(), false)
+        declare(keys.defaultDeclaration(size))
+        declare(values.defaultDeclaration(size))
+        declare(i, +"0", true)
+        forEachLoop(key, keys()) {
+          +keys.set(i, loopVariable)
+          +values.set(i, get(loopVariable))
+          +TextExpression("${i.toCode()}++")
+        }
+
+        resultArray.assign(resultArray.of(keys, values))
+      }
+    }
+  }
 }

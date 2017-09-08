@@ -26,8 +26,8 @@ interface ArrayVariable : Variable {
 
   operator fun get(index: Expression): Expression
   operator fun get(index: Int): Expression = get(TextExpression(index.toString()))
-  operator fun set(index: Expression, value: Expression): Expression
-  operator fun set(index: Int, value: Expression): Expression = set(TextExpression(index.toString()), value)
+  fun set(index: Expression, value: Expression): Expression
+  fun set(index: Int, value: Expression): Expression = set(TextExpression(index.toString()), value)
 
   fun defaultDeclaration(size: Expression): VariableDeclaration
   fun of(vararg args: Expression): Expression
