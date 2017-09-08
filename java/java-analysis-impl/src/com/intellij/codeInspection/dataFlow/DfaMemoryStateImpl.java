@@ -1061,7 +1061,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     }
     DfaVariableValue qualifier = var.getQualifier();
     if (qualifier != null) {
-      return StreamEx.of(SpecialField.values()).map(sf -> sf.createValue(myFactory, qualifier))
+      return StreamEx.of(SpecialField.values())
+            .filter(sf -> sf.isMyAccessor(var.getPsiVariable()))
+            .map(sf -> sf.createValue(myFactory, qualifier))
             .nonNull().findFirst().orElse(var);
     }
     return var;
