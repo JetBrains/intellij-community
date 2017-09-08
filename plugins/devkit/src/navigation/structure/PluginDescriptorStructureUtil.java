@@ -111,6 +111,9 @@ public class PluginDescriptorStructureUtil {
     else if (tagName.equalsIgnoreCase("keyboard-shortcut")) {
       result = tag.getAttributeValue("first-keystroke");
     }
+    else if (tagName.equalsIgnoreCase("dom.extender")) {
+      result = toShortName(tag.getAttributeValue("extenderClass"));
+    }
     else {
       result = guessTagLocation(tag);
     }
@@ -183,6 +186,7 @@ public class PluginDescriptorStructureUtil {
 
     result = StringUtil.capitalizeWords(result, true)
       .replaceAll("Psi", "PSI")
+      .replaceAll("Dom", "DOM")
       .replaceAll("Sdk", "SDK")
       .replaceAll("Junit", "JUnit");
 
