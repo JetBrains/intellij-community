@@ -275,9 +275,13 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
 
     myMode = mode;
 
+    Editor oldEditor = (myInputComponent != null) ? myInputComponent.getInputEditor().getEditor() : null;
+
     myInputComponent = createInputComponent(mode, text);
     myMainPanel.removeAll();
     myInputComponent.addComponent(myMainPanel, myResultPanel);
+
+    XDebuggerEditorBase.copyCaretPosition(oldEditor, myInputComponent.getInputEditor().getEditor());
 
     mySwitchModeAction.putValue(Action.NAME, getSwitchButtonText(mode));
     getInputEditor().requestFocusInEditor();

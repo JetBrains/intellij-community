@@ -531,7 +531,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
                                    DebuggerUIUtil.getActionShortcutText(IdeActions.ACTION_PREVIOUS_OCCURENCE));
   }
 
-  private static void copyCaretPosition(@Nullable Editor source, @Nullable Editor destination) {
+  public static void copyCaretPosition(@Nullable Editor source, @Nullable Editor destination) {
     if (source != null && destination != null) {
       destination.getCaretModel().moveToOffset(source.getCaretModel().getOffset());
     }
