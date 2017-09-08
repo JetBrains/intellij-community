@@ -22,5 +22,5 @@ import com.intellij.debugger.streams.trace.dsl.Variable
 /**
  * @author Vitaliy.Bibaev
  */
-class JavaForLoopBody(statementFactory: StatementFactory, override val variable: Variable)
+class JavaForLoopBody(statementFactory: StatementFactory, override val loopVariable: Variable)
   : JavaCodeBlock(statementFactory), ForLoopBody

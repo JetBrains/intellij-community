@@ -19,5 +19,5 @@ package com.intellij.debugger.streams.trace.dsl
  * @author Vitaliy.Bibaev
  */
 interface ForLoopBody : CodeBlock {
-  val variable: Variable
+  val loopVariable: Variable
 }

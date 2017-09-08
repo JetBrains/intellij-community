@@ -110,7 +110,7 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
     doTest {
       val objects = declare(variable("List", "objects"), +"getObjects()", false)
       forEachLoop(variable("Object", "object"), objects) {
-        +(variable.call("toString"))
+        +(loopVariable.call("toString"))
       }
     }
   }
@@ -120,7 +120,7 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
       val objects = declare(variable("List", "objects"), +"getObjects()", false)
       val i = variable("int", "i")
       forLoop(declaration(i, +"0", true), +"i < $objects.size()", +"i++") {
-        +(variable.call("toString"))
+        +(loopVariable.call("toString"))
       }
     }
   }
