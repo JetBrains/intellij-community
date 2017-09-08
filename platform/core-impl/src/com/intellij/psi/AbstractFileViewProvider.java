@@ -275,14 +275,14 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
       }
     }
 
+    contentsSynchronized();
+
     for (PsiTreeChangeEventImpl event : events) {
       ((PsiManagerImpl)getManager()).childrenChanged(event);
     }
     for (PsiTreeChangeEventImpl event : genericEvents) {
       ((PsiManagerImpl)getManager()).childrenChanged(event);
     }
-
-    contentsSynchronized();
   }
 
   private PsiTreeChangeEventImpl createChildrenChangeEvent(PsiFile file, boolean generic) {
