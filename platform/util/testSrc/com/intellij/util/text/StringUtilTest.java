@@ -18,6 +18,7 @@ package com.intellij.util.text;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -599,5 +600,14 @@ public class StringUtilTest {
     assertEquals(4, StringUtil.countChars("abcddddefghd", 'd', 4, false));
     assertEquals(3, StringUtil.countChars("abcddddefghd", 'd', 4, true));
     assertEquals(2, StringUtil.countChars("abcddddefghd", 'd', 4, 6, false));
+  }
+
+  @Test
+  public void testSubstringAfterLast() {
+    assertEquals("c", StringUtil.substringAfterLast("abc", "b"));
+    assertEquals("ccc", StringUtil.substringAfterLast("ababbccc", "b"));
+    assertEquals("", StringUtil.substringAfterLast("abc", ""));
+    assertNull(StringUtil.substringAfterLast("abc", "1"));
+    assertNull(StringUtil.substringAfterLast("", "1"));
   }
 }

@@ -140,6 +140,13 @@ public final class IconLoader {
     return findIcon(path, callerClass);
   }
 
+  @Nullable
+  public static Icon findIcon(@NonNls @NotNull String path, boolean strict) {
+    Class callerClass = ReflectionUtil.getGrandCallerClass();
+    if (callerClass == null) return null;
+    return findIcon(path, callerClass, false, strict);
+  }
+
   @NotNull
   public static Icon getIcon(@NotNull String path, @NotNull final Class aClass) {
     final Icon icon = findIcon(path, aClass);

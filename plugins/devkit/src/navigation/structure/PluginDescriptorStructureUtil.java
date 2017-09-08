@@ -15,10 +15,10 @@
  */
 package org.jetbrains.idea.devkit.navigation.structure;
 
-import com.google.common.base.Joiner;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NonNls;
@@ -108,6 +108,9 @@ public class PluginDescriptorStructureUtil {
     else if (tagName.equalsIgnoreCase("intentionAction")) {
       result = toShortName(tag.getSubTagText("className"));
     }
+    else if (tagName.equalsIgnoreCase("keyboard-shortcut")) {
+      result = tag.getAttributeValue("first-keystroke");
+    }
     else {
       result = guessTagLocation(tag);
     }
@@ -125,7 +128,7 @@ public class PluginDescriptorStructureUtil {
     if (tagName.equalsIgnoreCase("action")) {
       String iconPath = tag.getAttributeValue("icon");
       if (iconPath != null) {
-        Icon icon = IconLoader.findIcon(iconPath);
+        Icon icon = IconLoader.findIcon(iconPath, false);
         if (icon != null) {
           return icon;
         }
@@ -175,12 +178,8 @@ public class PluginDescriptorStructureUtil {
 
   @NotNull
   private static String toHumanReadableName(@NotNull String tagName) {
-    String result;
-    if (tagName.contains("-") || tagName.contains(".")) {
-      result = Joiner.on(" ").join(tagName.split("[-.]"));
-    } else {
-      result = StringUtil.join(StringUtil.splitCamelCase(tagName), " ");
-    }
+    String result = tagName.replaceAll("-", " ").replaceAll("\\.", " | ");
+    result = StringUtil.join(NameUtil.nameToWords(result), " ");
 
     result = StringUtil.capitalizeWords(result, true)
       .replaceAll("Psi", "PSI")
