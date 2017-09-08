@@ -89,7 +89,7 @@ public class Notification {
    * @param listener       notification lifecycle listener
    */
   public Notification(@NotNull String groupDisplayId,
-                      @NotNull Icon icon,
+                      @Nullable Icon icon,
                       @Nullable String title,
                       @Nullable String subtitle,
                       @Nullable String content,
