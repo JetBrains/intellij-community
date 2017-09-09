@@ -147,7 +147,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
       final PsiElement scope = parameter.getDeclarationScope();
       if (scope instanceof PsiMethod) {
         final PsiMethod method = (PsiMethod)scope;
-        if (PsiUtil.canBeOverriden(method)) {
+        if (PsiUtil.canBeOverridden(method)) {
           final PsiClass aClass = method.getContainingClass();
           LOG.assertTrue(aClass != null); //Otherwise can not be overriden
 

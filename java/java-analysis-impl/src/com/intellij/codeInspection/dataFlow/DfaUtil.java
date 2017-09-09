@@ -304,7 +304,7 @@ public class DfaUtil {
         if (!virtual) return true;
 
         PsiMethod target = call.resolveMethod();
-        if (target != null && PsiUtil.canBeOverriden(target)) return true;
+        if (target != null && PsiUtil.canBeOverridden(target)) return true;
       }
     }
 
