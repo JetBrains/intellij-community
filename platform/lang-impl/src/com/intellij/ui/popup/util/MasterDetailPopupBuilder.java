@@ -71,7 +71,7 @@ public class MasterDetailPopupBuilder implements MasterController {
         if (e.getKeyCode() == KeyEvent.VK_DELETE) {
           removeSelectedItems();
         }
-        else if (e.getModifiersEx() == 0) {
+        else {
           myDelegate.handleMnemonic(e, myProject, myPopup);
         }
       }
