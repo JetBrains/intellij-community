@@ -224,6 +224,22 @@ public class TreeTraverserTest extends TestCase {
 
   // JBIterable ----------------------------------------------
 
+  public void testFirstLastSingle() {
+    assertEquals(null, JBIterable.empty().first());
+    assertEquals(null, JBIterable.empty().last());
+    assertEquals(null, JBIterable.empty().single());
+
+    assertEquals("a", JBIterable.generate("a", o -> o + "a").first());
+    assertEquals("aaa", JBIterable.generate("a", o -> o + "a").take(3).last());
+    assertEquals("a", JBIterable.generate("a", o -> o + "a").take(1).single());
+    assertEquals(null, JBIterable.generate("a", o -> o + "a").take(2).single());
+
+    assertEquals("a", JBIterable.from(Arrays.asList("a", "aa", "aaa")).first());
+    assertEquals("aaa", JBIterable.from(Arrays.asList("a", "aa", "aaa")).last());
+    assertEquals("a", JBIterable.of("a").single());
+    assertEquals(null, JBIterable.of("a", "aa", "aaa").single());
+  }
+
   public void testOfAppendNulls() {
     Integer o = null;
     JBIterable<Integer> it = JBIterable.of(o).append(o).append(JBIterable.empty());
