@@ -464,8 +464,24 @@ public abstract class JBIterable<E> implements Iterable<E> {
    */
   @Nullable
   public final E first() {
+    if (myIterable instanceof List) {
+      return ((List)myIterable).isEmpty() ? null : ((List<E>)myIterable).get(0);
+    }
     Iterator<E> iterator = myIterable.iterator();
     return iterator.hasNext() ? iterator.next() : null;
+  }
+
+  /**
+   * Returns the first element in this iterable if it is the only one, otherwise null.
+   */
+  @Nullable
+  public final E single() {
+    if (myIterable instanceof List) {
+      return ((List)myIterable).size() != 1 ? null : (E)((List)myIterable).get(0);
+    }
+    Iterator<E> iterator = myIterable.iterator();
+    E first = iterator.hasNext() ? iterator.next() : null;
+    return iterator.hasNext() ? null : first;
   }
 
   /**
@@ -474,12 +490,11 @@ public abstract class JBIterable<E> implements Iterable<E> {
   @Nullable
   public final E last() {
     if (myIterable instanceof List) {
-      return ContainerUtil.getLastItem((List<E>)myIterable);
+      return ((List)myIterable).isEmpty() ? null : (E)((List)myIterable).get(((List)myIterable).size() - 1);
     }
-    Iterator<E> iterator = myIterable.iterator();
     E cur = null;
-    while (iterator.hasNext()) {
-      cur = iterator.next();
+    for (E e : myIterable) {
+      cur = e;
     }
     return cur;
   }
