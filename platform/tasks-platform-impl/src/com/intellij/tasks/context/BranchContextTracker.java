@@ -6,6 +6,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.vcs.BranchChangeListener;
+import com.intellij.openapi.vcs.VcsConfiguration;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.HyperlinkEvent;
@@ -13,7 +14,7 @@ import javax.swing.event.HyperlinkEvent;
 public class BranchContextTracker implements BranchChangeListener {
 
   public static final NotificationGroup NOTIFICATION = new NotificationGroup(
-    "Branch Context group", NotificationDisplayType.STICKY_BALLOON, true);
+    "Branch Context group", NotificationDisplayType.BALLOON, true);
 
   private final WorkingContextManager myContextManager;
   private final Project myProject;
@@ -31,19 +32,19 @@ public class BranchContextTracker implements BranchChangeListener {
 
   @Override
   public void branchHasChanged(@NotNull String branchName) {
+    VcsConfiguration vcsConfiguration = VcsConfiguration.getInstance(myProject);
+    if (!vcsConfiguration.RELOAD_CONTEXT) return;
+
     String contextName = getContextName(branchName);
     if (!myContextManager.hasContext(contextName)) return;
 
     myContextManager.clearContext();
     myContextManager.loadContext(contextName);
     NOTIFICATION.createNotification(null, null, "Branch context has been loaded<br>" +
-                                                "<a href='ok'>Got it!</a><br>" +
                                                 "<a href='off'>Turn off the feature</a>", NotificationType.INFORMATION, (notification, event) -> {
       if (event.getEventType() != HyperlinkEvent.EventType.ACTIVATED) return;
-      if ("ok".equals(event.getDescription())) {
-        notification.expire();
-      }
       if ("off".equals(event.getDescription())) {
+        vcsConfiguration.RELOAD_CONTEXT = false;
         notification.expire();
       }
     }).notify(myProject);

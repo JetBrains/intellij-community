@@ -16,8 +16,6 @@
 package com.intellij.openapi.vcs.configurable;
 
 import com.intellij.ide.actions.ShowFilePathAction;
-import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
@@ -27,8 +25,6 @@ import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -65,6 +61,7 @@ public class VcsGeneralConfigurationPanel {
   private JComboBox myFailedCommitChangelistCombo;
   private JComboBox myOnPatchCreation;
   private JCheckBox myClearInitialCommitMessage;
+  private JCheckBox myReloadContext;
   private ButtonGroup myEmptyChangelistRemovingGroup;
 
   public VcsGeneralConfigurationPanel(final Project project) {
@@ -109,6 +106,7 @@ public class VcsGeneralConfigurationPanel {
     settings.OFFER_MOVE_TO_ANOTHER_CHANGELIST_ON_PARTIAL_COMMIT = myCbOfferToMoveChanges.isSelected();
     settings.REMOVE_EMPTY_INACTIVE_CHANGELISTS = getSelected(myEmptyChangelistRemovingGroup);
     settings.MOVE_TO_FAILED_COMMIT_CHANGELIST = getFailedCommitConfirm();
+    settings.RELOAD_CONTEXT = myReloadContext.isSelected();
 
     for (VcsShowOptionsSettingImpl setting : myPromptOptions.keySet()) {
       setting.setValue(myPromptOptions.get(setting).isSelected());
@@ -191,6 +189,7 @@ public class VcsGeneralConfigurationPanel {
     if (settings.REMOVE_EMPTY_INACTIVE_CHANGELISTS != getSelected(myEmptyChangelistRemovingGroup)){
       return true;
     }
+    if (settings.RELOAD_CONTEXT != myReloadContext.isSelected()) return true;
 
     if (!Comparing.equal(getFailedCommitConfirm(), settings.MOVE_TO_FAILED_COMMIT_CHANGELIST)) {
       return true;
@@ -216,6 +215,7 @@ public class VcsGeneralConfigurationPanel {
     myForceNonEmptyComment.setSelected(settings.FORCE_NON_EMPTY_COMMENT);
     myClearInitialCommitMessage.setSelected(settings.CLEAR_INITIAL_COMMIT_MESSAGE);
     myCbOfferToMoveChanges.setSelected(settings.OFFER_MOVE_TO_ANOTHER_CHANGELIST_ON_PARTIAL_COMMIT);
+    myReloadContext.setSelected(settings.RELOAD_CONTEXT);
     VcsShowConfirmationOption.Value value = settings.REMOVE_EMPTY_INACTIVE_CHANGELISTS;
     UIUtil.setSelectedButton(myEmptyChangelistRemovingGroup, value == VcsShowConfirmationOption.Value.SHOW_CONFIRMATION
                                                              ? 0
