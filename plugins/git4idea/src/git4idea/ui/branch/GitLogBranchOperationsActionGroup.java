@@ -122,9 +122,9 @@ public class GitLogBranchOperationsActionGroup extends ActionGroup implements Du
     singleRepoActions.setPopup(false);
     actions.add(singleRepoActions);
 
-    String text = showBranchesPopup ? ref.getName() : "Branch '" + ref.getName() + "'";
+    String text = showBranchesPopup ? ref.getName() : "_Branch '" + ref.getName() + "'";
     ActionGroup group = new DefaultActionGroup(actions);
-    group.getTemplatePresentation().setText(text, false);
+    group.getTemplatePresentation().setText(text, true);
     group.setPopup(true);
     return group;
   }
