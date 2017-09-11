@@ -34,6 +34,7 @@ import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.MoveChangesToAnotherListAction;
 import com.intellij.openapi.vcs.changes.actions.RollbackDialogAction;
+import com.intellij.openapi.vcs.changes.actions.diff.UnversionedDiffRequestProducer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.ColoredListCellRenderer;
@@ -230,6 +231,16 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
 
   @Nullable
   @Override
+  protected ChangeDiffRequestChain.Producer getDiffRequestProducer(@NotNull Object entry) {
+    if (entry instanceof VirtualFile) {
+      return UnversionedDiffRequestProducer.create(myProject, (VirtualFile)entry);
+    }
+    return super.getDiffRequestProducer(entry);
+  }
+
+
+  @Nullable
+  @Override
   public Object getData(String dataId) {
     if (UNVERSIONED_FILES_DATA_KEY.is(dataId)) {
       return VcsTreeModelData.selected(myViewer).userObjectsStream(VirtualFile.class);
@@ -350,13 +361,17 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
   private class MoveChangeDiffAction extends MoveChangesToAnotherListAction {
     @Override
     protected boolean isEnabled(@NotNull AnActionEvent e) {
-      return e.getData(VcsDataKeys.CURRENT_CHANGE) != null;
+      return e.getData(VcsDataKeys.CURRENT_CHANGE) != null ||
+             e.getData(VcsDataKeys.CURRENT_UNVERSIONED) != null;
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      Change change = e.getRequiredData(VcsDataKeys.CURRENT_CHANGE);
-      askAndMove(myProject, Collections.singletonList(change), Collections.emptyList());
+      Change change = e.getData(VcsDataKeys.CURRENT_CHANGE);
+      VirtualFile file = e.getData(VcsDataKeys.CURRENT_UNVERSIONED);
+      List<Change> changes = change == null ? Collections.emptyList() : Collections.singletonList(change);
+      List<VirtualFile> unversionedFiles = file == null ? Collections.emptyList() : Collections.singletonList(file);
+      askAndMove(myProject, changes, unversionedFiles);
     }
   }
 
@@ -367,22 +382,29 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
 
     @Override
     public boolean isSelected(AnActionEvent e) {
-      Change change = e.getData(VcsDataKeys.CURRENT_CHANGE);
-      if (change == null) return false;
-      return myViewer.isIncluded(change);
+      Object object = getUserObject(e);
+      if (object == null) return false;
+      return myViewer.isIncluded(object);
     }
 
     @Override
     public void setSelected(AnActionEvent e, boolean state) {
-      Change change = e.getData(VcsDataKeys.CURRENT_CHANGE);
-      if (change == null) return;
+      Object object = getUserObject(e);
+      if (object == null) return;
 
       if (state) {
-        myViewer.includeChange(change);
+        myViewer.includeChange(object);
       }
       else {
-        myViewer.excludeChange(change);
+        myViewer.excludeChange(object);
       }
+    }
+
+    @Nullable
+    private Object getUserObject(AnActionEvent e) {
+      Object object = e.getData(VcsDataKeys.CURRENT_CHANGE);
+      if (object == null) object = e.getData(VcsDataKeys.CURRENT_UNVERSIONED);
+      return object;
     }
   }
 
