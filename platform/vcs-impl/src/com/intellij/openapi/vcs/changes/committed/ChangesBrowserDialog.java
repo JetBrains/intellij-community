@@ -38,7 +38,7 @@ public class ChangesBrowserDialog extends DialogWrapper {
   private Project myProject;
   private CommittedChangesTableModel myChanges;
   private Mode myMode;
-  private CommittedChangesBrowser myCommittedChangesBrowser;
+  private CommittedChangesBrowserDialogPanel myCommittedChangesBrowser;
   private AsynchConsumer<List<CommittedChangeList>> myAppender;
   private final Consumer<ChangesBrowserDialog> myInitRunnable;
 
@@ -115,7 +115,7 @@ public class ChangesBrowserDialog extends DialogWrapper {
   }
 
   protected JComponent createCenterPanel() {
-    myCommittedChangesBrowser = new CommittedChangesBrowser(myProject, myChanges);
+    myCommittedChangesBrowser = new CommittedChangesBrowserDialogPanel(myProject, myChanges);
     return myCommittedChangesBrowser;
   }
 

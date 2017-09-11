@@ -48,7 +48,7 @@ import java.util.List;
 /**
  * @author max
  */
-public class CommittedChangesBrowser extends JPanel {
+public class CommittedChangesBrowserDialogPanel extends JPanel {
   private final Project myProject;
   // left view
   private final TableView<CommittedChangeList> myChangeListsView;
@@ -60,7 +60,7 @@ public class CommittedChangesBrowser extends JPanel {
   private final JPanel myLeftPanel;
   private final JPanel myLoadingLabelPanel;
 
-  public CommittedChangesBrowser(final Project project, final CommittedChangesTableModel tableModel) {
+  public CommittedChangesBrowserDialogPanel(final Project project, final CommittedChangesTableModel tableModel) {
     super(new BorderLayout());
 
     myProject = project;
