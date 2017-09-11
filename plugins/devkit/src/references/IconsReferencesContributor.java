@@ -57,6 +57,7 @@ import org.jetbrains.idea.devkit.util.PsiUtil;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Function;
 
 import static com.intellij.patterns.PsiJavaPatterns.*;
 
@@ -140,21 +141,14 @@ public class IconsReferencesContributor extends PsiReferenceContributor
             @Override
             public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
               PsiElement element = resolve();
-              if (element instanceof PsiFile) {
-                FileReference lastRef = new FileReferenceSet(element).getLastReference();
-                if (lastRef != null) {
-                  return lastRef.handleElementRename(newElementName);
-                }
+              PsiElement resultForFile = handleFile(element, lastRef -> lastRef.handleElementRename(newElementName));
+              if (resultForFile != null) {
+                return resultForFile;
               }
 
-              if (element instanceof PsiField) {
-                PsiClass containingClass = ((PsiField)element).getContainingClass();
-                if (containingClass != null) {
-                  PsiElement result = handleElement(newElementName, containingClass.getQualifiedName());
-                  if (result != null) {
-                    return result;
-                  }
-                }
+              PsiElement resultForField = handleField(element, newElementName);
+              if (resultForField != null) {
+                return resultForField;
               }
 
               return super.handleElementRename(newElementName);
@@ -162,34 +156,46 @@ public class IconsReferencesContributor extends PsiReferenceContributor
 
             @Override
             public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
-              if (element instanceof PsiFile) {
-                FileReference lastRef = new FileReferenceSet(element).getLastReference();
-                if (lastRef != null) {
-                  return lastRef.bindToElement(element);
-                }
+              PsiElement resultForFile = handleFile(element, lastRef -> lastRef.bindToElement(element));
+              if (resultForFile != null) {
+                return resultForFile;
               }
 
-              if (element instanceof PsiField) {
-                PsiClass containingClass = ((PsiField)element).getContainingClass();
-                if (containingClass != null) {
-                  PsiElement result = handleElement(((PsiField)element).getName(), containingClass.getQualifiedName());
-                  if (result != null) {
-                    return result;
-                  }
-                }
+              PsiElement resultForField = handleField(element, null);
+              if (resultForField != null) {
+                return resultForField;
               }
 
               return super.bindToElement(element);
             }
 
-            @Nullable
-            private PsiElement handleElement(String newElementName, String classQualifiedName) {
-              if (classQualifiedName != null) {
-                if (classQualifiedName.startsWith("com.intellij.icons.")) {
-                  return replace(classQualifiedName, newElementName, "com.intellij.icons.");
+            private PsiElement handleFile(PsiElement element, Function<FileReference, PsiElement> callback) {
+              if (element instanceof PsiFile) {
+                FileReference lastRef = new FileReferenceSet(element).getLastReference();
+                if (lastRef != null) {
+                  return callback.apply(lastRef);
                 }
-                if (classQualifiedName.startsWith("icons.")) {
-                  return replace(classQualifiedName, newElementName, "icons.");
+              }
+              return null;
+            }
+
+            @Nullable
+            private PsiElement handleField(PsiElement element, @Nullable String newElementName) {
+              if (element instanceof PsiField) {
+                PsiClass containingClass = ((PsiField)element).getContainingClass();
+                if (containingClass != null) {
+                  String classQualifiedName = containingClass.getQualifiedName();
+                  if (classQualifiedName != null) {
+                    if (newElementName == null) {
+                      newElementName = ((PsiField)element).getName();
+                    }
+                    if (classQualifiedName.startsWith("com.intellij.icons.")) {
+                      return replace(classQualifiedName, newElementName, "com.intellij.icons.");
+                    }
+                    if (classQualifiedName.startsWith("icons.")) {
+                      return replace(classQualifiedName, newElementName, "icons.");
+                    }
+                  }
                 }
               }
               return null;
@@ -264,42 +270,39 @@ public class IconsReferencesContributor extends PsiReferenceContributor
             @Override
             public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
               PsiElement field = resolve();
-              if (field instanceof PsiField) {
-                PsiClass containingClass = ((PsiField)element).getContainingClass();
-                if (containingClass != null) {
-                  PsiElement result = handleElement(newElementName, containingClass.getQualifiedName(), element);
-                  if (result != null) {
-                    return result;
-                  }
-                }
+              PsiElement result = handleElement(field, newElementName);
+              if (result != null) {
+                return result;
               }
-
               return super.handleElementRename(newElementName);
             }
 
             @Override
             public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
-              if (element instanceof PsiField) {
-                PsiClass containingClass = ((PsiField)element).getContainingClass();
-                if (containingClass != null) {
-                  PsiElement result = handleElement(((PsiField)element).getName(), containingClass.getQualifiedName(), getElement());
-                  if (result != null) {
-                    return result;
-                  }
-                }
+              PsiElement result = handleElement(element, null);
+              if (result != null) {
+                return result;
               }
-
               return super.bindToElement(element);
             }
 
             @Nullable
-            private PsiElement handleElement(String newElementName, String classQualifiedName, PsiElement element) {
-              if (classQualifiedName != null) {
-                if (classQualifiedName.startsWith("com.intellij.icons.")) {
-                  return replace(newElementName, classQualifiedName, "com.intellij.icons.", element);
-                }
-                if (classQualifiedName.startsWith("icons.")) {
-                  return replace(newElementName, classQualifiedName, "icons.", element);
+            private PsiElement handleElement(PsiElement element, @Nullable String newElementName) {
+              if (element instanceof PsiField) {
+                PsiClass containingClass = ((PsiField)element).getContainingClass();
+                if (containingClass != null) {
+                  String classQualifiedName = containingClass.getQualifiedName();
+                  if (classQualifiedName != null) {
+                    if (newElementName == null) {
+                      newElementName = ((PsiField)element).getName();
+                    }
+                    if (classQualifiedName.startsWith("com.intellij.icons.")) {
+                      return replace(newElementName, classQualifiedName, "com.intellij.icons.", element);
+                    }
+                    if (classQualifiedName.startsWith("icons.")) {
+                      return replace(newElementName, classQualifiedName, "icons.", element);
+                    }
+                  }
                 }
               }
               return null;
