@@ -15,4 +15,4 @@ Members Signatures:
 
 
 Type Casts:
-java.lang.CharSequence <- java.lang.String
+java.lang.String -> java.lang.CharSequence

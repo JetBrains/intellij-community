@@ -169,7 +169,7 @@ abstract class ReferenceIndexTestBase : JpsBuildTestCase() {
           nextRefs.mapTo(operands) { it.asText(nameEnumerator) }
         }
         if (!operands.isEmpty()) {
-          typeCasts.add(castType.asText(nameEnumerator) + " <- " + operands.joinToString(separator = " "))
+          typeCasts.add(castType.asText(nameEnumerator) + " -> " + operands.joinToString(separator = " "))
         }
         true
       }

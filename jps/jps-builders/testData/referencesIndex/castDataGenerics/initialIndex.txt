@@ -16,4 +16,4 @@ Members Signatures:
 
 
 Type Casts:
-java.util.Collection <- java.util.List
+java.util.List -> java.util.Collection

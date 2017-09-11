@@ -114,7 +114,7 @@ public class BackwardReferenceIndexUtil {
         if (enumeratedCastType == null) continue;
         LightRef enumeratedOperandType = writer.enumerateNames(cast.getOperandType(), name -> null);
         if (enumeratedOperandType == null) continue;
-        castMap.computeIfAbsent(enumeratedOperandType, t -> new SmartList<>()).add(enumeratedCastType);
+        castMap.computeIfAbsent(enumeratedCastType, t -> new SmartList<>()).add(enumeratedOperandType);
       }
 
       writer.writeData(fileId, new CompiledFileData(backwardHierarchyMap, castMap, convertedRefs, definitions, signatureData));
