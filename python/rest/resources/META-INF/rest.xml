@@ -22,6 +22,9 @@
 
     <lang.elementManipulator forClass="com.jetbrains.rest.psi.RestLine"
                              implementationClass="com.jetbrains.rest.psi.RestLineManipulator"/>
+
+    <indexPatternBuilder implementation="com.jetbrains.rest.RestIndexPatternBuilder" />
+    <todoIndexer filetype="ReST" implementationClass="com.jetbrains.rest.RestTodoIndexer" />
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.spellchecker">
