@@ -168,17 +168,19 @@ public class DateFormatUtil {
   @NotNull
   private static String doFormatPretty(long time, boolean formatTime) {
     long currentTime = Clock.getTime();
-
     Calendar c = Calendar.getInstance();
-    c.setTimeInMillis(currentTime);
 
+    c.setTimeInMillis(currentTime);
     int currentYear = c.get(Calendar.YEAR);
     int currentDayOfYear = c.get(Calendar.DAY_OF_YEAR);
 
     c.setTimeInMillis(time);
-
     int year = c.get(Calendar.YEAR);
     int dayOfYear = c.get(Calendar.DAY_OF_YEAR);
+
+    if (LOG.isTraceEnabled()) {
+      LOG.trace("now=" + currentTime + " t=" + time + " z=" + c.getTimeZone());
+    }
 
     if (formatTime) {
       long delta = currentTime - time;
@@ -196,7 +198,6 @@ public class DateFormatUtil {
     boolean isYesterdayOnPreviousYear =
       (currentYear == year + 1) && currentDayOfYear == 1 && dayOfYear == c.getActualMaximum(Calendar.DAY_OF_YEAR);
     boolean isYesterday = isYesterdayOnPreviousYear || (currentYear == year && currentDayOfYear == dayOfYear + 1);
-
     if (isYesterday) {
       String result = CommonBundle.message("date.format.yesterday");
       return formatTime ? result + " " + TIME_FORMAT.format(time) : result;

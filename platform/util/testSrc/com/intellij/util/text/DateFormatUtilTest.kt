@@ -15,8 +15,10 @@
  */
 package com.intellij.util.text
 
+import com.intellij.openapi.util.Clock
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Assert.assertEquals
+import org.junit.Before
 import org.junit.Test
 import java.time.Duration
 import java.time.LocalDateTime
@@ -24,6 +26,10 @@ import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 
 class DateFormatUtilTest {
+  @Before fun setUp() {
+    Clock.reset()
+  }
+
   @Test fun prettyDate() {
     val now = LocalDateTime.now()
     assertPrettyDate("Today", now)
