@@ -308,17 +308,18 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
 
   public void addToInvokeLater(final Runnable runnable) {
     final Application application = ApplicationManager.getApplication();
-    Runnable wrapper = () -> {
-      if (!myProject.isDisposed()) runnable.run();
-    };
     if (application.isUnitTestMode()) {
-      UIUtil.invokeLaterIfNeeded(wrapper);
+      UIUtil.invokeLaterIfNeeded(() -> {
+        if (!myProject.isDisposed()) {
+          runnable.run();
+        }
+      });
     }
     else if (application.isHeadlessEnvironment() || SwingUtilities.isEventDispatchThread()) {
-      wrapper.run();
+      runnable.run();
     }
     else {
-      myTransferToEDTQueue.offer(wrapper);
+      myTransferToEDTQueue.offer(runnable);
     }
   }
 
