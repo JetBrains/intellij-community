@@ -61,6 +61,10 @@ public class SimpleChangesBrowser extends ChangesBrowserBase {
     myViewer.rebuildTree();
   }
 
+  public void setIncludedChanges(@NotNull Collection<? extends Change> changes) {
+    myViewer.setIncludedChanges(changes);
+  }
+
 
   @NotNull
   public List<Change> getAllChanges() {

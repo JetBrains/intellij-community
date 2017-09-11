@@ -22,17 +22,16 @@ import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
+import com.intellij.openapi.vcs.changes.ui.SimpleChangesBrowser;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Collections;
 import java.util.List;
 
 public class CommitToIcsDialog extends DialogWrapper {
-  private final ChangesBrowser browser;
+  private final SimpleChangesBrowser browser;
   private final Project project;
   private final String projectId;
 
@@ -42,8 +41,9 @@ public class CommitToIcsDialog extends DialogWrapper {
     this.project = project;
     this.projectId = projectId;
 
-    browser = new ChangesBrowser(project, Collections.emptyList(), projectFileChanges, null, true, false, null, ChangesBrowser.MyUseCase.LOCAL_CHANGES, null);
+    browser = new SimpleChangesBrowser(project, true, false);
     browser.setChangesToDisplay(projectFileChanges);
+    browser.setIncludedChanges(projectFileChanges);
 
     setTitle(IcsBundleKt.icsMessage("action.CommitToIcs.text"));
     setOKButtonText(IcsBundleKt.icsMessage("action.CommitToIcs.text"));

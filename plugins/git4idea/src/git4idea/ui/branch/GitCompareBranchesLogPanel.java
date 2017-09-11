@@ -17,7 +17,7 @@ package git4idea.ui.branch;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
+import com.intellij.openapi.vcs.changes.ui.SimpleChangesBrowser;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.JBUI;
@@ -35,7 +35,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
-import java.util.Collections;
 
 /**
  * @author Kirill Likhodedov
@@ -65,8 +64,7 @@ class GitCompareBranchesLogPanel extends JPanel {
   }
 
   private JComponent createCenterPanel() {
-    final ChangesBrowser changesBrowser = new ChangesBrowser(myProject, null, Collections.emptyList(), null, false, true,
-                                                             null, ChangesBrowser.MyUseCase.COMMITTED_CHANGES, null);
+    final SimpleChangesBrowser changesBrowser = new SimpleChangesBrowser(myProject, false, true);
 
     myHeadToBranchListPanel = new GitCommitListPanel(getHeadToBranchCommits(myInitialRepo),
                                                      String.format("Branch %s is fully merged to %s", myBranchName, myCurrentBranchName));
@@ -144,7 +142,7 @@ class GitCompareBranchesLogPanel extends JPanel {
 
   private static void addSelectionListener(@NotNull GitCommitListPanel sourcePanel,
                                            @NotNull final GitCommitListPanel otherPanel,
-                                           @NotNull final ChangesBrowser changesBrowser) {
+                                           @NotNull final SimpleChangesBrowser changesBrowser) {
     sourcePanel.addListMultipleSelectionListener(changes -> {
       changesBrowser.setChangesToDisplay(changes);
       otherPanel.clearSelection();
