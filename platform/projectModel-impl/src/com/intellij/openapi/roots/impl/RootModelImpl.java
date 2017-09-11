@@ -302,6 +302,17 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
 
   @Nullable
   @Override
+  public ModuleOrderEntry findModuleOrderEntry(@NotNull Module module) {
+    for (OrderEntry orderEntry : getOrderEntries()) {
+      if (orderEntry instanceof ModuleOrderEntry && module.equals(((ModuleOrderEntry)orderEntry).getModule())) {
+        return (ModuleOrderEntry)orderEntry;
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  @Override
   public LibraryOrderEntry findLibraryOrderEntry(@NotNull Library library) {
     for (OrderEntry orderEntry : getOrderEntries()) {
       if (orderEntry instanceof LibraryOrderEntry && library.equals(((LibraryOrderEntry)orderEntry).getLibrary())) {
@@ -529,18 +540,6 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
 
   void assertWritable() {
     LOG.assertTrue(myWritable);
-  }
-
-  boolean isDependsOn(final Module module) {
-    for (OrderEntry entry : getOrderEntries()) {
-      if (entry instanceof ModuleOrderEntry) {
-        final Module module1 = ((ModuleOrderEntry)entry).getModule();
-        if (module1 == module) {
-          return true;
-        }
-      }
-    }
-    return false;
   }
 
   boolean isOrderEntryDisposed() {

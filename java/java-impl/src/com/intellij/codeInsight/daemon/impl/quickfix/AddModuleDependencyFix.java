@@ -50,6 +50,7 @@ class AddModuleDependencyFix extends OrderEntryFix {
   private final Module myCurrentModule;
   private final Set<Module> myModules;
   private final DependencyScope myScope;
+  private final boolean myExported;
   private final List<PsiClass> myClasses;
 
   public AddModuleDependencyFix(PsiReference reference, Module currentModule, DependencyScope scope, List<PsiClass> classes) {
@@ -57,6 +58,7 @@ class AddModuleDependencyFix extends OrderEntryFix {
     myCurrentModule = currentModule;
     myModules = new LinkedHashSet<>();
     myScope = scope;
+    myExported = false;
     myClasses = classes;
 
     PsiElement psiElement = reference.getElement();
@@ -77,11 +79,16 @@ class AddModuleDependencyFix extends OrderEntryFix {
     }
   }
 
-  public AddModuleDependencyFix(PsiJavaModuleReference reference, Module currentModule, Set<Module> modules, DependencyScope scope) {
+  public AddModuleDependencyFix(PsiJavaModuleReference reference,
+                                Module currentModule,
+                                Set<Module> modules,
+                                DependencyScope scope,
+                                boolean exported) {
     myReference = reference;
     myCurrentModule = currentModule;
     myModules = modules;
     myScope = scope;
+    myExported = exported;
     myClasses = Collections.emptyList();
   }
 
@@ -139,6 +146,10 @@ class AddModuleDependencyFix extends OrderEntryFix {
     if (circularModules == null || showCircularWarning(project, circularModules, module)) {
       JavaProjectModelModificationService.getInstance(project).addDependency(myCurrentModule, module, myScope);
 
+      if (myExported) {
+        exportEntry(myCurrentModule, module);
+      }
+
       if (editor != null && !myClasses.isEmpty()) {
         PsiClass[] targetClasses = myClasses.stream()
           .filter(c -> ModuleUtilCore.findModuleForPsiElement(c) == module)
@@ -155,6 +166,13 @@ class AddModuleDependencyFix extends OrderEntryFix {
                                             classModule.getName(), circle.getFirst().getName(), circle.getSecond().getName());
     String title = QuickFixBundle.message("orderEntry.fix.title.circular.dependency.warning");
     return Messages.showOkCancelDialog(project, message, title, Messages.getWarningIcon()) == Messages.OK;
+  }
+
+  private static void exportEntry(Module module, Module dependency) {
+    ModuleRootModificationUtil.updateModel(module, model -> {
+      ExportableOrderEntry entry = model.findModuleOrderEntry(dependency);
+      if (entry != null) entry.setExported(true);
+    });
   }
 
   @Override

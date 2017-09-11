@@ -142,9 +142,9 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
             continue;
           }
 
-          OrderEntryFix platformFix = new AddLibraryDependencyFix(reference, currentModule, library, scope, aClass.getQualifiedName());
-          registrar.register(platformFix);
-          result.add(platformFix);
+          OrderEntryFix fix = new AddLibraryDependencyFix(reference, currentModule, library, scope, false, aClass.getQualifiedName());
+          registrar.register(fix);
+          result.add(fix);
         }
       }
     }
@@ -162,6 +162,10 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
       .filter(Objects::nonNull)
       .collect(Collectors.toList());
 
+    PsiElement statement = reference.getElement().getParent();
+    boolean exported = statement instanceof PsiRequiresStatement &&
+                       ((PsiRequiresStatement)statement).hasModifierProperty(PsiModifier.TRANSITIVE);
+
     Set<Module> modules = targets.stream()
       .map(e -> !(e instanceof PsiCompiledElement) ? e.getContainingFile() : null)
       .map(f -> f != null ? f.getVirtualFile() : null)
@@ -170,7 +174,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
       .filter(m -> m != null && m != currentModule)
       .collect(Collectors.toSet());
     if (!modules.isEmpty()) {
-      result.add(0, new AddModuleDependencyFix(reference, currentModule, modules, scope));
+      result.add(0, new AddModuleDependencyFix(reference, currentModule, modules, scope, exported));
     }
 
     targets.stream()
@@ -180,7 +184,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
       .map(e -> e instanceof LibraryOrderEntry ? ((LibraryOrderEntry)e).getLibrary() : null)
       .filter(Objects::nonNull)
       .distinct()
-      .forEach(l -> result.add(new AddLibraryDependencyFix(reference, currentModule, l, scope, null)));
+      .forEach(l -> result.add(new AddLibraryDependencyFix(reference, currentModule, l, scope, exported, null)));
   }
 
   private static void registerExternalFixes(PsiReference reference,

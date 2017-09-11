@@ -216,7 +216,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements Disposab
 
   @Override
   public boolean isDependsOn(Module module) {
-    return myRootModel.isDependsOn(module);
+    return myRootModel.findModuleOrderEntry(module) != null;
   }
 
   @Override
