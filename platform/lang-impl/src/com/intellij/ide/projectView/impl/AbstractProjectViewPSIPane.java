@@ -47,14 +47,13 @@ import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
+import com.intellij.util.ui.tree.TreeModelAdapter;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.event.TreeModelEvent;
-import javax.swing.event.TreeModelListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -150,28 +149,7 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
         fireTreeChangeListener();
       }
     });
-    myTree.getModel().addTreeModelListener(new TreeModelListener() {
-      @Override
-      public void treeNodesChanged(TreeModelEvent e) {
-        fireTreeChangeListener();
-      }
-
-      @Override
-      public void treeNodesInserted(TreeModelEvent e) {
-        fireTreeChangeListener();
-      }
-
-      @Override
-      public void treeNodesRemoved(TreeModelEvent e) {
-        fireTreeChangeListener();
-      }
-
-      @Override
-      public void treeStructureChanged(TreeModelEvent e) {
-        fireTreeChangeListener();
-      }
-    });
-
+    myTree.getModel().addTreeModelListener(TreeModelAdapter.create((e, t) -> fireTreeChangeListener()));
     new MySpeedSearch(myTree);
 
     myTree.addKeyListener(new KeyAdapter() {
