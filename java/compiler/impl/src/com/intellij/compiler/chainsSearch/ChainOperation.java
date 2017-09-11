@@ -22,17 +22,17 @@ import org.jetbrains.annotations.NotNull;
 public interface ChainOperation {
   class TypeCast implements ChainOperation {
     // we cast only to a class
-    private final PsiClass myCastClass;
+    private final PsiClass myOperandClass;
 
-    public TypeCast(@NotNull PsiClass aClass) {myCastClass = aClass;}
+    public TypeCast(@NotNull PsiClass aClass) {myOperandClass= aClass;}
 
     public PsiClass getCastClass() {
-      return myCastClass;
+      return myOperandClass;
     }
 
     @Override
     public String toString() {
-      return "cast to " + myCastClass.getName();
+      return "cast of " + myOperandClass.getName();
     }
   }
 

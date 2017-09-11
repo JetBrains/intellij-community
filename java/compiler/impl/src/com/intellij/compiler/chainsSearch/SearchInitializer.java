@@ -33,7 +33,7 @@ public class SearchInitializer {
     myQueue = new LinkedList<>();
     myChains = new LinkedHashMap<>(chains.size());
     for (CallChain chain : chains) {
-      MethodIncompleteSignature signature = chain.getHeadSignature();
+      MethodIncompleteSignature signature = (MethodIncompleteSignature)chain.getHeadSignature();
       myQueue.add(chain);
       myChains.put(signature, chain);
     }

@@ -27,7 +27,15 @@ import java.util.function.Predicate
 
 class MethodIncompleteSignature(val ref: LightRef.JavaLightMethodRef,
                                 private val signatureData: SignatureData,
-                                private val refService: CompilerReferenceServiceEx) {
+                                private val refService: CompilerReferenceServiceEx): RefChainOperation {
+  override fun getOwner1(): String {
+    return owner
+  }
+
+  override fun getRef1(): LightRef {
+    return ref
+  }
+
   companion object {
     val CONSTRUCTOR_METHOD_NAME = "<init>"
   }
@@ -42,16 +50,17 @@ class MethodIncompleteSignature(val ref: LightRef.JavaLightMethodRef,
     refService.getName(ref.owner.name)
   }
 
-  val rawReturnType: String by lazy(LazyThreadSafetyMode.NONE) {
+  private val rawReturnType: String by lazy(LazyThreadSafetyMode.NONE) {
     refService.getName(signatureData.rawReturnType)
   }
 
-  val parameterCount: Int
+  private val parameterCount: Int
     get() = ref.parameterCount
 
   val isStatic: Boolean
     get() = signatureData.isStatic
 
+  //TODO remove
   fun resolveQualifier(project: Project,
                        resolveScope: GlobalSearchScope,
                        accessValidator: Predicate<PsiMember>): PsiClass? {

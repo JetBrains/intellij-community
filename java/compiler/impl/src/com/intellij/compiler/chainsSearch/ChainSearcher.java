@@ -67,29 +67,46 @@ public class ChainSearcher {
 
       ProgressManager.checkCanceled();
       CallChain currentChain = q.poll();
-      MethodIncompleteSignature headSignature = currentChain.getHeadSignature();
+      RefChainOperation headSignature = currentChain.getHeadSignature();
 
       if (addChainIfTerminal(currentChain, result, chainMaxLength, context)) continue;
 
       // otherwise try to find chain continuation
       boolean updated = false;
-      SortedSet<SignatureAndOccurrences> candidates = referenceServiceEx.findMethodReferenceOccurrences(headSignature.getOwner(), SignatureData.ZERO_DIM);
+      SortedSet<SignatureAndOccurrences> candidates = referenceServiceEx.findMethodReferenceOccurrences(headSignature.getOwner1(), SignatureData.ZERO_DIM);
+      LightRef ref1 = headSignature.getRef1();
       for (SignatureAndOccurrences candidate : candidates) {
         if (candidate.getOccurrenceCount() * ChainSearchMagicConstants.FILTER_RATIO < currentChain.getChainWeight()) {
           break;
         }
         MethodIncompleteSignature sign = candidate.getSignature();
         if ((sign.isStatic() || !sign.getOwner().equals(context.getTarget().getClassQName())) &&
-            referenceServiceEx.mayHappen(candidate.getSignature().getRef(), headSignature.getRef(), ChainSearchMagicConstants.METHOD_PROBABILITY_THRESHOLD)) {
+            (!(ref1 instanceof LightRef.JavaLightMethodRef) ||
+             referenceServiceEx
+               .mayHappen(candidate.getSignature().getRef(), ref1, ChainSearchMagicConstants.METHOD_PROBABILITY_THRESHOLD))) {
+
           CallChain continuation = currentChain.continuation(candidate.getSignature(), candidate.getOccurrenceCount(), context);
           if (continuation != null) {
-            boolean stopChain = candidate.getSignature().isStatic() || context.hasQualifier(context.resolveQualifierClass(candidate.getSignature()));
+            boolean stopChain =
+              candidate.getSignature().isStatic() || context.hasQualifier(context.resolvePsiClass(candidate.getSignature().getOwnerRef()));
             if (stopChain) {
               addChainIfNotPresent(continuation, result);
             }
             else {
               q.addFirst(continuation);
             }
+            updated = true;
+          }
+        }
+      }
+
+      if (ref1 instanceof LightRef.JavaLightMethodRef) {
+        LightRef.LightClassHierarchyElementDef def =
+          referenceServiceEx.mayCallOfTypeCast((LightRef.JavaLightMethodRef)ref1, ChainSearchMagicConstants.METHOD_PROBABILITY_THRESHOLD);
+        if (def != null) {
+          CallChain continuation = currentChain.continuationWithCast(new TypeCast(def, ((MethodIncompleteSignature)headSignature).getOwnerRef(), referenceServiceEx, 0), context);
+          if (continuation != null) {
+            q.addFirst(continuation);
             updated = true;
           }
         }
@@ -113,11 +130,13 @@ public class ChainSearcher {
                                                                 List<CallChain> result,
                                                                 ChainCompletionContext context,
                                                                 CompilerReferenceServiceEx referenceServiceEx) {
-    if (!context.getTarget().getClassQName().equals(currentChain.getHeadSignature().getOwner())) {
+    RefChainOperation signature = currentChain.getHeadSignature();
+    if (!(signature instanceof MethodIncompleteSignature)) return;
+    if (!context.getTarget().getClassQName().equals(((MethodIncompleteSignature)signature).getOwner())) {
       Set<LightRef> references = context.getContextClassReferences();
       boolean isRelevantQualifier = false;
       for (LightRef ref: references) {
-        if (referenceServiceEx.mayHappen(currentChain.getHeadSignature().getOwnerRef(), ref, ChainSearchMagicConstants.VAR_PROBABILITY_THRESHOLD)) {
+        if (referenceServiceEx.mayHappen(((MethodIncompleteSignature)signature).getOwnerRef(), ref, ChainSearchMagicConstants.VAR_PROBABILITY_THRESHOLD)) {
           isRelevantQualifier = true;
           break;
         }
@@ -131,8 +150,10 @@ public class ChainSearcher {
 
   private static boolean addChainIfTerminal(CallChain currentChain, List<CallChain> result, int pathMaximalLength,
                                             ChainCompletionContext context) {
-    if (currentChain.getHeadSignature().isStatic() ||
-        context.hasQualifier(context.resolveQualifierClass(currentChain.getHeadSignature())) ||
+    RefChainOperation signature = currentChain.getHeadSignature();
+    if (!(signature instanceof MethodIncompleteSignature)) return false;
+    if (((MethodIncompleteSignature)signature).isStatic() ||
+        context.hasQualifier(context.resolvePsiClass(((MethodIncompleteSignature)signature).getOwnerRef())) ||
         currentChain.length() >= pathMaximalLength) {
       addChainIfNotPresent(currentChain, result);
       return true;

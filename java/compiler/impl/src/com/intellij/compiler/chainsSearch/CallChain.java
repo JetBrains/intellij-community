@@ -34,7 +34,7 @@ import java.util.stream.Collectors;
 public class CallChain {
   @NotNull
   private final ChainOperation[] myReverseOperations;
-  private final MethodIncompleteSignature mySignature;
+  private final RefChainOperation mySignature;
   private final int myWeight;
   private final PsiClass myQualifierClass;
 
@@ -42,7 +42,7 @@ public class CallChain {
   public static CallChain create(@NotNull MethodIncompleteSignature signature,
                                  int weight,
                                  @NotNull ChainCompletionContext context) {
-    PsiClass qualifier = context.resolveQualifierClass(signature);
+    PsiClass qualifier = context.resolvePsiClass(signature.getOwnerRef());
     if (qualifier == null || (!signature.isStatic() && InheritanceUtil.isInheritorOrSelf(context.getTarget().getTargetClass(), qualifier, true))) {
       return null;
     }
@@ -62,7 +62,7 @@ public class CallChain {
 
   public CallChain(@NotNull PsiClass qualifierClass,
                    @NotNull ChainOperation[] reverseOperations,
-                   MethodIncompleteSignature signature,
+                   RefChainOperation signature,
                    int weight) {
     myQualifierClass = qualifierClass;
     myReverseOperations = reverseOperations;
@@ -71,7 +71,7 @@ public class CallChain {
   }
 
   @NotNull
-  public MethodIncompleteSignature getHeadSignature() {
+  public RefChainOperation getHeadSignature() {
     return mySignature;
   }
 
@@ -106,6 +106,17 @@ public class CallChain {
     System.arraycopy(myReverseOperations, 0, newReverseOperations, 0, myReverseOperations.length);
     newReverseOperations[length()] = head.getPath()[0];
     return new CallChain(head.getQualifierClass(), newReverseOperations, head.getHeadSignature(), Math.min(weight, getChainWeight()));
+  }
+
+  public CallChain continuationWithCast(@NotNull TypeCast cast,
+                                        @NotNull ChainCompletionContext context) {
+    PsiClass operand = context.resolvePsiClass(cast.getOperandRef());
+    if (operand == null) return null;
+
+    ChainOperation[] newReverseOperations = new ChainOperation[length() + 1];
+    System.arraycopy(myReverseOperations, 0, newReverseOperations, 0, myReverseOperations.length);
+    newReverseOperations[length()] = new ChainOperation.TypeCast(operand);
+    return new CallChain(operand, newReverseOperations, cast, getChainWeight());
   }
 
   @Override

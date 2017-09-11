@@ -34,6 +34,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import gnu.trove.THashSet;
+import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.backwardRefs.LightRef;
@@ -65,22 +66,23 @@ public class ChainCompletionContext {
   @NotNull
   private final PsiResolveHelper myResolveHelper;
   @NotNull
-  private final Map<MethodIncompleteSignature, PsiClass> myQualifierClassResolver;
+  private final TIntObjectHashMap<PsiClass> myQualifierClassResolver;
   @NotNull
   private final Map<MethodIncompleteSignature, PsiMethod[]> myResolver;
+  @NotNull
+  private final CompilerReferenceServiceEx myRefServiceEx;
 
   private final NotNullLazyValue<Set<LightRef>> myContextClassReferences = new NotNullLazyValue<Set<LightRef>>() {
     @NotNull
     @Override
     protected Set<LightRef> compute() {
-      CompilerReferenceServiceEx referenceServiceEx = (CompilerReferenceServiceEx)CompilerReferenceService.getInstance(myProject);
       return getContextTypes()
         .stream()
         .map(PsiUtil::resolveClassInType)
         .filter(Objects::nonNull)
         .map(c -> ClassUtil.getJVMClassName(c))
         .filter(Objects::nonNull)
-        .mapToInt(c -> referenceServiceEx.getNameId(c))
+        .mapToInt(c -> myRefServiceEx.getNameId(c))
         .filter(n -> n != 0)
         .mapToObj(n -> new LightRef.JavaLightClassRef(n)).collect(Collectors.toSet());
     }
@@ -95,8 +97,9 @@ public class ChainCompletionContext {
     myResolveScope = context.getResolveScope();
     myProject = context.getProject();
     myResolveHelper = PsiResolveHelper.SERVICE.getInstance(myProject);
-    myQualifierClassResolver = FactoryMap.createMap(sign -> sign.resolveQualifier(myProject, myResolveScope, accessValidator()));
+    myQualifierClassResolver = new TIntObjectHashMap<>();
     myResolver = FactoryMap.createMap(sign -> sign.resolve(myProject, myResolveScope, accessValidator()));
+    myRefServiceEx = (CompilerReferenceServiceEx)CompilerReferenceService.getInstance(myProject);
   }
 
   @NotNull
@@ -162,8 +165,20 @@ public class ChainCompletionContext {
   }
 
   @Nullable
-  public PsiClass resolveQualifierClass(MethodIncompleteSignature sign) {
-    return myQualifierClassResolver.get(sign);
+  public PsiClass resolvePsiClass(LightRef.LightClassHierarchyElementDef aClass) {
+    int nameId = aClass.getName();
+    if (myQualifierClassResolver.contains(nameId)) {
+      return myQualifierClassResolver.get(nameId);
+    } else {
+      PsiClass psiClass = null;
+      String name = myRefServiceEx.getName(nameId);
+      PsiClass resolvedClass = JavaPsiFacade.getInstance(getProject()).findClass(name, myResolveScope);
+      if (resolvedClass != null && accessValidator().test(resolvedClass)) {
+        psiClass = resolvedClass;
+      }
+      myQualifierClassResolver.put(nameId, psiClass);
+      return psiClass;
+    }
   }
 
   @NotNull
