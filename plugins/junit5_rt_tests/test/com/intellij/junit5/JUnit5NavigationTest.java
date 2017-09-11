@@ -71,7 +71,7 @@ class JUnit5NavigationTest {
 
   @Test
   void locationHintValueForMethodSource() {
-    myTestSource = new MethodSource("className", "methodName");
+    myTestSource = MethodSource.from("className", "methodName");
     String locationHintValue = locationHintValue();
 
     Assertions.assertTrue(locationHintValue.startsWith("java:"), locationHintValue);
@@ -80,7 +80,7 @@ class JUnit5NavigationTest {
 
   @Test
   void locationHintValueForClassSource() {
-    myTestSource = new ClassSource(String.class);
+    myTestSource = ClassSource.from(String.class);
     String locationHintValue = locationHintValue();
 
     Assertions.assertTrue(locationHintValue.startsWith("java:"), locationHintValue);
@@ -100,7 +100,7 @@ class JUnit5NavigationTest {
 
   @Test
   void locationHintValueForFileSource() throws IOException {
-    myTestSource = new FileSource(Paths.get("/some/file.txt").toFile());
+    myTestSource = FileSource.from(Paths.get("/some/file.txt").toFile());
 
     Assertions.assertEquals("file://" + ((FileSource)myTestSource).getFile().getCanonicalPath(), locationHintValue());
   }
@@ -108,21 +108,22 @@ class JUnit5NavigationTest {
 
   @Test
   void locationHintValueForFileSourceWithLineInformation() throws IOException {
-    myTestSource = new FileSource(Paths.get("/some/file.txt").toFile(), new FilePosition(22, 7));
+    myTestSource = FileSource.from(Paths.get("/some/file.txt").toFile(), FilePosition.from(22, 7));
 
     Assertions.assertEquals("file://" + ((FileSource)myTestSource).getFile().getCanonicalPath() +":22", locationHintValue());
   }
 
   @Test
   void ignoreCompositeSourceWithoutAnySupportedTestSource() {
-    myTestSource = new CompositeTestSource(singletonList(anyUnsupportedTestSource()));
+    myTestSource = CompositeTestSource.from(singletonList(anyUnsupportedTestSource()));
 
     Assertions.assertEquals("", locationHint());
   }
 
   @Test
   void locationHintValueForCompositeSourcePickTheFirstSupportedSourceInTheList() {
-    myTestSource = new CompositeTestSource(Arrays.asList(anyUnsupportedTestSource(), new ClassSource(String.class), new MethodSource("className", "methodName")));
+    myTestSource = CompositeTestSource.from(Arrays.asList(anyUnsupportedTestSource(), ClassSource.from(String.class),
+                                                          MethodSource.from("className", "methodName")));
     String locationHintValue = locationHintValue();
 
     Assertions.assertTrue(locationHintValue.startsWith("java:"), locationHintValue);
@@ -144,11 +145,11 @@ class JUnit5NavigationTest {
   }
 
   private static ClassSource anySupportedSource() {
-    return new ClassSource(String.class);
+    return ClassSource.from(String.class);
   }
 
   private static TestSource methodOrClassSource() {
-    return new ClassSource(String.class);
+    return ClassSource.from(String.class);
   }
 
   private static TestSource anyUnsupportedTestSource() {
