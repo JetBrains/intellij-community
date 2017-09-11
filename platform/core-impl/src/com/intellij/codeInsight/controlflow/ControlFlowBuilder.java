@@ -215,7 +215,7 @@ public class ControlFlowBuilder {
   }
 
   /**
-   * Creates instruction for given element, and adds it to myInstructionsStack
+   * Creates instruction for given element, and adds it to the instructions stack
    *
    * @param element Element to create instruction for
    * @return new instruction
@@ -228,7 +228,7 @@ public class ControlFlowBuilder {
   }
 
   /**
-   * Creates transparent instruction for given element, and adds it to myInstructionsStack
+   * Creates transparent instruction for given element, and adds it to the instructions stack
    * Transparent instruction will be removed in the result control flow
    *
    * @param element Element to create instruction for
@@ -242,7 +242,7 @@ public class ControlFlowBuilder {
   }
 
   /**
-   * Creates conditional instruction for given element, and adds it to myInstructionsStack
+   * Creates conditional instruction for given element, and adds it to the instructions stack
    *
    * @param element Element to create instruction for
    * @return new instruction
