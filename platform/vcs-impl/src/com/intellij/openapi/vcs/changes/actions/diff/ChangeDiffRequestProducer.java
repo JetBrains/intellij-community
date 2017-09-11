@@ -413,13 +413,12 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer, ChangeDif
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
-    ChangeDiffRequestProducer that = (ChangeDiffRequestProducer)o;
-
-    return myChange.equals(that.myChange);
+    ChangeDiffRequestProducer producer = (ChangeDiffRequestProducer)o;
+    return isEquals(producer.myChange, myChange);
   }
 
   @Override
   public int hashCode() {
-    return myChange.hashCode();
+    return hashCode(myChange);
   }
 }

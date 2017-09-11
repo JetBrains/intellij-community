@@ -35,6 +35,8 @@ import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+
 public class UnversionedDiffRequestProducer implements ChangeDiffRequestChain.Producer {
   @Nullable private final Project myProject;
   @NotNull private final VirtualFile myFile;
@@ -42,6 +44,11 @@ public class UnversionedDiffRequestProducer implements ChangeDiffRequestChain.Pr
   private UnversionedDiffRequestProducer(@Nullable Project project, @NotNull VirtualFile file) {
     myProject = project;
     myFile = file;
+  }
+
+  @NotNull
+  public VirtualFile getFile() {
+    return myFile;
   }
 
   @NotNull
@@ -86,5 +93,19 @@ public class UnversionedDiffRequestProducer implements ChangeDiffRequestChain.Pr
 
     DiffUtil.putDataKey(request, VcsDataKeys.CURRENT_UNVERSIONED, file);
     return request;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    UnversionedDiffRequestProducer producer = (UnversionedDiffRequestProducer)o;
+    return Objects.equals(myFile, producer.myFile);
+  }
+
+  @Override
+  public int hashCode() {
+    return myFile.hashCode();
   }
 }

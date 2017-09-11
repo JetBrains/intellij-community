@@ -43,6 +43,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.event.MouseEvent;
+import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
@@ -201,7 +202,17 @@ public class ChangesListView extends DnDAwareTree implements TypeSafeDataProvide
   }
 
   @NotNull
-  private Stream<VirtualFile> getSelectedUnversionedFiles() {
+  public Stream<VirtualFile> getUnversionedFiles() {
+    //noinspection unchecked
+    Enumeration<ChangesBrowserNode> nodes = getRoot().children();
+    ChangesBrowserUnversionedFilesNode node = ContainerUtil.findInstance(ContainerUtil.iterate(nodes),
+                                                                         ChangesBrowserUnversionedFilesNode.class);
+    if (node == null) return Stream.empty();
+    return node.getFilesUnderStream();
+  }
+
+  @NotNull
+  public Stream<VirtualFile> getSelectedUnversionedFiles() {
     return getSelectedVirtualFiles(UNVERSIONED_FILES_TAG);
   }
 

@@ -1054,20 +1054,25 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
     @NotNull
     @Override
-    protected List<Change> getSelectedChanges() {
-      return myBrowser.getSelectedChanges();
+    protected List<Wrapper> getSelectedChanges() {
+      return wrap(myBrowser.getSelectedChanges(), myBrowser.getSelectedUnversionedFiles());
     }
 
     @NotNull
     @Override
-    protected List<Change> getAllChanges() {
-      return myBrowser.getDisplayedChanges();
+    protected List<Wrapper> getAllChanges() {
+      return wrap(myBrowser.getDisplayedChanges(), myBrowser.getDisplayedUnversionedFiles());
     }
 
     @Override
-    protected void selectChange(@NotNull Change change) {
+    protected void selectChange(@NotNull Wrapper change) {
       //noinspection unchecked
-      myBrowser.selectEntries((List)singletonList(change));
+      myBrowser.selectEntries((List)singletonList(change.getUserObject()));
+    }
+
+    @NotNull
+    private List<Wrapper> wrap(@NotNull Collection<Change> changes, @NotNull Collection<VirtualFile> unversioned) {
+      return ContainerUtil.concat(map(changes, ChangeWrapper::new), map(unversioned, UnversionedFileWrapper::new));
     }
 
     @Override
