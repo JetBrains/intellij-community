@@ -26,7 +26,6 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.openapi.vcs.versionBrowser.CommittedChangeListImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.NonNls;
@@ -108,10 +107,6 @@ public class CvsChangeList implements CommittedChangeList {
 
   public AbstractVcs getVcs() {
     return CvsVcs2.getInstance(myProject);
-  }
-
-  public Collection<Change> getChangesWithMovedTrees() {
-    return CommittedChangeListImpl.getChangesWithMovedTreesImpl(this);
   }
 
   @Override
