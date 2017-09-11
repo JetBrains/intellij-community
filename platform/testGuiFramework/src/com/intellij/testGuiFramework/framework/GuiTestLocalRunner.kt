@@ -142,7 +142,7 @@ class GuiTestLocalRunner @Throws(InitializationError::class)
     try {
       notifier.addListener(runListener)
       LOG.info("Starting test: '${testClass.name}.${method.name}'")
-      //if IDE has a fatal errors from previous test.
+      //if IDE has a fatal errors from a previous test
       if (GuiTestUtilKt.fatalErrorsFromIde().isNotEmpty() or GuiTestUtil.doesIdeHaveFatalErrors()) {
         val restartIdeMessage = TransportMessage(MessageType.RESTART_IDE, "IDE has fatal errors from previous test, let's start a new instance")
         GuiTestThread.client?.send(restartIdeMessage) ?: throw Exception("JUnitClient is accidentally null")

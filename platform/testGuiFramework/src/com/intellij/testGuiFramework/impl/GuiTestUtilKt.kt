@@ -314,10 +314,11 @@ object GuiTestUtilKt {
     return listBuilder
   }
 
-  fun fatalErrorsFromIde(): List<Error> {
+  fun fatalErrorsFromIde(afterDate: Date = Date(0)): List<Error> {
     val errorMessages = MessagePool.getInstance().getFatalErrors(true, true)
-    val errors = ArrayList<Error>(errorMessages.size)
-    for (errorMessage in errorMessages) {
+    val freshErrorMessages = errorMessages.filter { it.date > afterDate }
+    val errors = mutableListOf<Error>()
+    for (errorMessage in freshErrorMessages) {
       val messageBuilder = StringBuilder(errorMessage.message)
       val additionalInfo : String? = errorMessage.additionalInfo
       if (additionalInfo != null && additionalInfo.isNotEmpty())

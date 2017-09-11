@@ -69,6 +69,7 @@ class GuiTestRule : TestRule {
     set
   private var myTestName: String = "undefined"
   private var currentTestErrors = 0
+  private var currentTestDateStart: Date = Date()
 
   private val myRuleChain = RuleChain.emptyRuleChain()
     .around(myRobotTestRule)
@@ -119,6 +120,7 @@ class GuiTestRule : TestRule {
     fun setUp() {
       GuiTestUtil.setUpDefaultProjectCreationLocationPath()
       GeneralSettings.getInstance().isShowTipsOnStartup = false
+      currentTestDateStart = Date()
     }
 
     fun tearDown(): List<Throwable> {
@@ -126,7 +128,7 @@ class GuiTestRule : TestRule {
       errors.addAll(thrownFromRunning(Runnable { GuiTestUtilKt.waitForBackgroundTasks(robot()) }))
       errors.addAll(checkForModalDialogs())
       errors.addAll(thrownFromRunning(Runnable { this.tearDownProject() }))
-      errors.addAll(GuiTestUtilKt.fatalErrorsFromIde())
+      errors.addAll(GuiTestUtilKt.fatalErrorsFromIde(currentTestDateStart)) //do not add fatal errors from previous tests
       return errors.toList()
     }
 
