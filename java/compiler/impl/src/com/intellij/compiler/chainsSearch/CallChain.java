@@ -70,6 +70,10 @@ public class CallChain {
     myWeight = weight;
   }
 
+  public boolean hasCast() {
+    return Arrays.stream(myReverseOperations).anyMatch(op -> op instanceof ChainOperation.TypeCast);
+  }
+
   @NotNull
   public RefChainOperation getHeadSignature() {
     return mySignature;
