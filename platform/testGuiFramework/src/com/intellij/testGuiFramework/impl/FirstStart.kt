@@ -143,7 +143,7 @@ abstract class FirstStart(val ideType: IdeType) {
     with(myRobot) {
       val title = "Complete Installation"
       LOG.info("Waiting for '$title' dialog")
-      dialog(title).focus()
+      dialog(title)
 
       LOG.info("Click OK on 'Do not import settings'")
       radioButton("Do not import settings").select()
@@ -156,8 +156,7 @@ abstract class FirstStart(val ideType: IdeType) {
     with(myRobot) {
       val title = "Customize $ideName"
       LOG.info("Waiting for '$title' dialog")
-      dialog(title).focus()
-
+      dialog(title)
       val buttonText = "Skip All and Set Defaults"
       LOG.info("Click '$buttonText'")
       button(buttonText).click()
