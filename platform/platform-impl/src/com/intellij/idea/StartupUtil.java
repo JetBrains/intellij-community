@@ -353,16 +353,6 @@ public class StartupUtil {
       IdeaWin32.isAvailable();  // logging is done there
     }
 
-    if (SystemInfo.isWin2kOrNewer && !Main.isHeadless()) {
-      try {
-        UrlClassLoader.loadPlatformLibrary("focusKiller");
-        log.info("Using \"FocusKiller\" library to prevent focus stealing.");
-      }
-      catch (Throwable t) {
-        log.info("\"FocusKiller\" library not found or there were problems loading it.", t);
-      }
-    }
-
     if (SystemInfo.isWindows) {
       // WinP should not unpack .dll files into parent directory
       System.setProperty("winp.unpack.dll.to.parent.dir", "false");
