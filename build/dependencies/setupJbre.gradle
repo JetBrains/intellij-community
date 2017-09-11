@@ -50,10 +50,12 @@ jrePlatformsToDownload(targetOs).each { platform ->
         commandLine 'tar', '-xpf', "${downloadOutputs.singleFile.absolutePath}", '--directory', outputDir
         if (platform != 'osx') {
           doLast { 
-            exec { 
-              commandLine 'mv', "$outputDir/lib/tools.jar", "$outputDir/jre/lib/"
-              ignoreExitValue = true
-            } 
+            if (file("$outputDir/lib/tools.jar").exists()) {
+              exec {
+                commandLine 'mv', "$outputDir/lib/tools.jar", "$outputDir/jre/lib/"
+                ignoreExitValue = true
+              }
+            }
           }
         }
       }
