@@ -1,10 +1,9 @@
 #include <windows.h>
 #include <stdio.h>
-#include <tlhelp32.h>
 #include <iostream>
 #include <string>
 
-void PrintUsage() {
+void PrintUsageAndExit() {
 	printf("Usage: runnerw.exe [/C] app [args]\n");
 	printf("app [args]	Specifies executable file, arguments.\n");
 	printf("/C	Creates a child process with new visible console.\n");
@@ -19,23 +18,28 @@ void PrintUsage() {
 	exit(0);
 }
 
+struct ChildParams {
+	BOOL createNewConsole;
+	LPWSTR commandLine;
+};
+
 void ErrorMessage(char *operationName) {
-	LPVOID msg;
+	LPWSTR msg;
 	DWORD lastError = GetLastError();
-	FormatMessage(
+	FormatMessageW(
 		FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
 		NULL,
 		lastError,
 		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-		(LPSTR)&msg,
+		(LPWSTR)&msg,
 		0,
 		NULL);
 	if (msg) {
-		fprintf(stderr, "%s failed with error %d: %s\n", operationName, lastError, msg);
+		fprintf(stderr, "runnerw.exe: %s failed with error %d: %ls\n", operationName, lastError, msg);
 		LocalFree(msg);
 	}
 	else {
-		fprintf(stderr, "%s failed with error %d (no message available)\n", operationName, lastError);
+		fprintf(stderr, "runnerw.exe: %s failed with error %d (no message available)\n", operationName, lastError);
 	}
 	fflush(stderr);
 }
@@ -127,15 +131,6 @@ DWORD WINAPI scanStdinThread(void *param) {
 	return 0;
 }
 
-bool hasEnding(std::string const &fullString, std::string const &ending) {
-	if (fullString.length() > ending.length()) {
-		return (0 == fullString.compare(fullString.length() - ending.length(),
-				ending.length(), ending));
-	} else {
-		return false;
-	}
-}
-
 BOOL attachChildConsole(PROCESS_INFORMATION const &childProcessInfo) {
 	if (!FreeConsole()) {
 		ErrorMessage("FreeConsole");
@@ -158,44 +153,75 @@ BOOL attachChildConsole(PROCESS_INFORMATION const &childProcessInfo) {
 	return FALSE;
 }
 
-int main(int argc, char * argv[]) {
-	if (argc < 2) {
-		PrintUsage();
+BOOL isCommandLineMatchingArgs(LPWSTR commandLine, LPWSTR *expectedArgv, int expectedArgc) {
+	int argc;
+	LPWSTR *argv = CommandLineToArgvW(commandLine, &argc);
+	if (argv == NULL) {
+		return FALSE;
 	}
+	if (argc != expectedArgc) {
+		LocalFree(argv);
+		return FALSE;
+	}
+	for (int i = 0; i < argc; i++) {
+		if (wcscmp(argv[i], expectedArgv[i]) != 0) {
+			LocalFree(argv);
+			return FALSE;
+		}
+	}
+	LocalFree(argv);
+	return TRUE;
+}
 
-	std::string app("");
-	std::string args("");
-	BOOL createConsoleFlag = FALSE;
-	for (int i = 1; i < argc; i++) {
-		if (i == 1) {
-			std::string flag(argv[1]);
-			if (flag == "/C" || flag == "/c") {
-				createConsoleFlag = TRUE;
-				if (argc < 3) {
-					PrintUsage();
-				}
-				app = argv[2];
-				continue;
+LPWSTR copy(LPCWSTR str) {
+	LPWSTR copy = _wcsdup(str);
+	if (copy == NULL) {
+		ErrorMessage("Storage cannot be allocated for string copy");
+		exit(1);
+	}
+	return copy;
+}
+
+ChildParams parseChildParams() {
+	LPWSTR commandLine = GetCommandLineW();
+	int argc;
+	LPWSTR *argv = CommandLineToArgvW(commandLine, &argc);
+	if (argv == NULL) {
+		PrintUsageAndExit();
+	}
+	if (argc <= 1) {
+		LocalFree(argv);
+		PrintUsageAndExit();
+	}
+	ChildParams result = {FALSE, NULL};
+	result.createNewConsole = wcscmp(argv[1], L"/C") == 0 || wcscmp(argv[1], L"/c") == 0;
+	int childArgvStartInd = result.createNewConsole ? 2 : 1;
+	if (childArgvStartInd >= argc) {
+		LocalFree(argv);
+		PrintUsageAndExit();
+	}
+	std::wstring stdCmdLine(commandLine);
+	for (size_t i = 0; i < stdCmdLine.length(); i++) {
+		if (iswspace(stdCmdLine[i])) {
+			LPWSTR subCmdLine = &commandLine[i + 1];
+			if (isCommandLineMatchingArgs(subCmdLine, &argv[childArgvStartInd], argc - childArgvStartInd)) {
+				result.commandLine = copy(subCmdLine);
+				break;
 			}
-			app = argv[1];
-		}
-		if (args.length() > 0) {
-			args += " ";
-		}
-		if (strchr(argv[i], ' ')) {
-			args += "\"";
-			args += argv[i];
-			args += "\"";
-		} else {
-			args += argv[i];
 		}
 	}
+	LocalFree(argv);
+	if (result.commandLine == NULL) {
+		fwprintf(stderr, L"runnerw.exe: cannot determine child command line from its parent:\n%ls\n", commandLine);
+		exit(1);
+	}
+	return result;
+}
 
-//	if (app.length() == 0) {
-//		PrintUsage();
-//	}
+int main(int argc, char * argv[]) {
+	ChildParams childParams = parseChildParams();
 
-	STARTUPINFO si;
+	STARTUPINFOW si;
 	SECURITY_ATTRIBUTES sa;
 	PROCESS_INFORMATION pi;
 
@@ -205,7 +231,7 @@ int main(int argc, char * argv[]) {
 
 	sa.nLength = sizeof(SECURITY_ATTRIBUTES);
 
-	BOOL inheritHandles = !createConsoleFlag;
+	BOOL inheritHandles = !childParams.createNewConsole;
 	sa.bInheritHandle = inheritHandles;
 
 	if (!CreatePipe(&newstdin, &write_stdin, &sa, 0)) {
@@ -213,17 +239,15 @@ int main(int argc, char * argv[]) {
 		exit(0);
 	}
 
-	GetStartupInfo(&si);
+	GetStartupInfoW(&si);
 
-	DWORD processFlag = CREATE_DEFAULT_ERROR_MODE;
+	DWORD processFlag = CREATE_DEFAULT_ERROR_MODE | CREATE_UNICODE_ENVIRONMENT;
 	BOOL hasConsoleWindow = GetConsoleWindow() != NULL;
-	if (hasConsoleWindow && !createConsoleFlag) {
-		processFlag |= CREATE_NO_WINDOW;
-	}
-
-	if (createConsoleFlag)
-	{
+	if (childParams.createNewConsole) {
 		processFlag |= CREATE_NEW_CONSOLE;
+	}
+	else if (hasConsoleWindow) {
+		processFlag |= CREATE_NO_WINDOW;
 	}
 
 	if (inheritHandles) {
@@ -234,37 +258,17 @@ int main(int argc, char * argv[]) {
 		si.hStdInput = newstdin;
 	}
 
-	if (hasEnding(app, std::string(".bat"))) {
-//              in MSDN it is said to do so, but actually that doesn't work
-//		args = "/c " + args;
-//		app = "cmd.exe";
-	} else {
-		app = "";
-	}
-
-
-	char* c_app = NULL;
-
- 	if (app.size()>0) {
-		c_app = new char[app.size() + 1];
-		strcpy(c_app, app.c_str());
-	}
-
-
-	char* c_args = new char[args.size() + 1];
-	strcpy(c_args, args.c_str());
-
-	if (createConsoleFlag)
-	{
-		si.lpTitle = c_args;
+	if (childParams.createNewConsole) {
+		si.lpTitle = childParams.commandLine;
 	}
 
 	if (!SetConsoleCtrlHandler(NULL, FALSE)) {
 		ErrorMessage("Cannot restore normal processing of CTRL+C input");
 	}
-	if (!CreateProcess(
-			c_app,
-			c_args,
+
+	if (!CreateProcessW(
+			NULL,
+			childParams.commandLine,
 			NULL,
 			NULL,
 			inheritHandles,
@@ -278,7 +282,7 @@ int main(int argc, char * argv[]) {
 		CloseHandle(write_stdin);
 		exit(0);
 	}
-	if (hasConsoleWindow || createConsoleFlag) {
+	if (hasConsoleWindow || childParams.createNewConsole) {
 		attachChildConsole(pi);
 	}
 	if (!SetConsoleCtrlHandler((PHANDLER_ROUTINE)CtrlHandler, TRUE)) {
@@ -295,6 +299,8 @@ int main(int argc, char * argv[]) {
 			break;
 		}
 	}
+
+	free(childParams.commandLine);
 
 	GetExitCodeProcess(pi.hProcess, &exitCode);
 
