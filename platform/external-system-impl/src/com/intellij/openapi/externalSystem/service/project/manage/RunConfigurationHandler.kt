@@ -19,6 +19,7 @@ import com.intellij.execution.RunManager
 import com.intellij.execution.application.ApplicationConfiguration
 import com.intellij.execution.application.ApplicationConfigurationType
 import com.intellij.execution.configurations.ConfigurationTypeUtil
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.externalSystem.model.project.ConfigurationData
@@ -34,33 +35,45 @@ import org.jetbrains.annotations.ApiStatus
 
 class RunConfigurationHandler: ConfigurationHandler {
 
+  companion object {
+    val LOG = Logger.getInstance(RunConfigurationHandler::class.java)
+  }
+
   override fun apply(module: Module, modelsProvider: IdeModifiableModelsProvider, configuration: ConfigurationData) {
-    val runCfgMap = configuration.find("runConfigurations")
-
-    if (runCfgMap !is Map<*,*>) return
-
-    runCfgMap.forEach { name, cfg ->
-      if (name !is String) return@forEach // TODO logs
-      if (cfg !is Map<*, *>) return@forEach
-      if (cfg["type"] == null) return@forEach
-
-      val runCfgType = cfg["type"] as? String ?: return@forEach
-      RunConfigHandlerExtensionManager.handlerForType(runCfgType)?.process(module, name, cfg as Map<String, String>)
+    configuration.eachRunConfiguration { typeName, name, cfg ->
+      RunConfigHandlerExtensionManager.handlerForType(typeName)?.process(module, name, cfg )
     }
   }
 
   override fun apply(project: Project, modelsProvider: IdeModifiableModelsProvider, configuration: ConfigurationData) {
-    val runCfgMap = configuration.find("runConfigurations")
+    configuration.eachRunConfiguration { typeName, name, cfg ->
+      RunConfigHandlerExtensionManager.handlerForType(typeName)?.process(project, name, cfg)
+    }
+  }
+
+  private fun ConfigurationData.eachRunConfiguration(f: (String, String, Map<String, String>) -> Unit) {
+    val runCfgMap = find("runConfigurations")
 
     if (runCfgMap !is Map<*,*>) return
 
     runCfgMap.forEach { name, cfg ->
-      if (name !is String) return@forEach // TODO logs
-      if (cfg  !is Map<*,*>) return@forEach
-      if (cfg["type"] == null) return@forEach
+      if (name !is String) {
+        RunConfigurationHandler.LOG.warn("unexpected key type in runConfigurations map: ${name?.javaClass?.name}, skipping")
+        return@forEach
+      }
+      if (cfg !is Map<*, *>) {
+        RunConfigurationHandler.LOG.warn("unexpected value type in runConfigurations map: ${cfg?.javaClass?.name}, skipping")
+        return@forEach
+      }
 
-      val runCfgType = cfg["type"] as? String ?: return@forEach
-      RunConfigHandlerExtensionManager.handlerForType(runCfgType)?.process(project, name, cfg as Map<String, String>)
+      val typeName = cfg["type"] as? String
+
+      if (typeName == null) {
+        RunConfigurationHandler.LOG.warn("Missing type for run configuration: ${name}, skipping")
+        return@forEach
+      }
+
+      f(typeName, name, cfg as Map<String, String>)
     }
   }
 }
