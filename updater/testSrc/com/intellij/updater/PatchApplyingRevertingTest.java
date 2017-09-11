@@ -490,7 +490,6 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
   @Test
   public void testUpdatingMissingOptionalDirectory() throws Exception {
     FileUtil.copy(new File(myOlderDir, "bin/idea.bat"), new File(myOlderDir, "jre/bin/java"));
-    FileUtil.copy(new File(myOlderDir, "bin/focuskiller.dll"), new File(myOlderDir, "jre/bin/jvm.dll"));
     FileUtil.copy(new File(myOlderDir, "lib/annotations.jar"), new File(myOlderDir, "jre/lib/rt.jar"));
     FileUtil.copy(new File(myOlderDir, "lib/boot.jar"), new File(myOlderDir, "jre/lib/tools.jar"));
     resetNewerDir();

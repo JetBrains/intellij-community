@@ -33,7 +33,6 @@ public class DigesterTest extends UpdaterTestCase {
     assertEquals(Digester.DIRECTORY, Digester.digestRegularFile(libDir, true));
 
     assertEquals(CHECKSUMS.README_TXT, Digester.digestRegularFile(new File(dataDir, "Readme.txt"), false));
-    assertEquals(CHECKSUMS.FOCUS_KILLER_DLL, Digester.digestRegularFile(new File(binDir, "focuskiller.dll"), false));
     assertEquals(CHECKSUMS.BOOTSTRAP_JAR_BIN, Digester.digestRegularFile(new File(libDir, "bootstrap.jar"), false));
     assertEquals(CHECKSUMS.ANNOTATIONS_JAR, Digester.digestRegularFile(new File(libDir, "annotations.jar"), true));
     assertEquals(CHECKSUMS.ANNOTATIONS_CHANGED_JAR, Digester.digestRegularFile(new File(libDir, "annotations_changed.jar"), true));
