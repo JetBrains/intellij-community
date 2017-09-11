@@ -15,8 +15,11 @@
  */
 package com.intellij.testGuiFramework.impl
 
+import com.intellij.diagnostic.MessagePool
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Ref
 import com.intellij.testGuiFramework.framework.GuiTestUtil
+import com.intellij.ui.EngravedLabel
 import org.fest.swing.core.ComponentMatcher
 import org.fest.swing.core.GenericTypeMatcher
 import org.fest.swing.core.Robot
@@ -28,12 +31,16 @@ import org.fest.swing.exception.WaitTimedOutError
 import org.fest.swing.timing.Condition
 import org.fest.swing.timing.Pause
 import org.fest.swing.timing.Timeout
+import org.fest.swing.timing.Wait
 import java.awt.Component
 import java.awt.Container
+import java.awt.Window
 import java.util.*
 import java.util.concurrent.TimeUnit
+import javax.swing.JDialog
 import javax.swing.JLabel
 import javax.swing.JRadioButton
+import kotlin.collections.ArrayList
 
 /**
  * @author Sergey Karashevich
@@ -238,6 +245,28 @@ object GuiTestUtilKt {
     return GuiTestUtil.waitUntilGone(robot, root, timeoutInSeconds, matcher)
   }
 
+  fun GuiTestCase.waitProgressDialogUntilGone(dialogTitle: String, timeoutToAppearInSeconds: Int = 5, timeoutToGoneInSeconds: Int = 60) {
+    waitProgressDialogUntilGone(this.robot(), dialogTitle, timeoutToAppearInSeconds, timeoutToGoneInSeconds)
+  }
+
+  fun waitProgressDialogUntilGone(robot: Robot, progressTitle: String, timeoutToAppearInSeconds: Int = 5, timeoutToGoneInSeconds: Int = 60) {
+    //wait dialog appearance. In a bad case we could pass dialog appearance.
+    var dialog: JDialog? = null
+    try {
+      waitUntil("progress dialog with title $progressTitle will appear", timeoutToAppearInSeconds) {
+        dialog = findProgressDialog(robot, progressTitle)
+        dialog != null
+      }
+    } catch (timeoutError: WaitTimedOutError) { return }
+    waitUntil("progress dialog with title $progressTitle will gone", timeoutToGoneInSeconds) { dialog == null || !dialog!!.isShowing }
+  }
+
+  fun findProgressDialog(robot: Robot, progressTitle: String): JDialog? {
+    return robot.finder().findAll(typeMatcher(JDialog::class.java) {
+      findAllWithBFS(it, EngravedLabel::class.java).filter { it.isShowing && it.text == progressTitle }.any()
+    } ).firstOrNull()
+  }
+
   fun <ComponentType : Component?> typeMatcher(componentTypeClass: Class<ComponentType>,
                                                        matcher: (ComponentType) -> Boolean): GenericTypeMatcher<ComponentType> {
     return object : GenericTypeMatcher<ComponentType>(componentTypeClass) {
@@ -268,7 +297,7 @@ object GuiTestUtilKt {
 
   fun ensureCreateHasDone(guiTestCase: GuiTestCase) {
     try {
-      com.intellij.testGuiFramework.impl.GuiTestUtilKt.waitUntilGone(robot = guiTestCase.myRobot,
+      com.intellij.testGuiFramework.impl.GuiTestUtilKt.waitUntilGone(robot = guiTestCase.robot(),
                                                                      matcher = com.intellij.testGuiFramework.impl.GuiTestUtilKt.typeMatcher(
                                                                        com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame::class.java) { it.isShowing })
     }
@@ -277,6 +306,38 @@ object GuiTestUtilKt {
         welcomeFrame { button("Create").clickWhenEnabled() }
       }
     }
+  }
+
+  fun windowsShowing(): List<Window> {
+    val listBuilder = ArrayList<Window>()
+    Window.getWindows().filterTo(listBuilder) { it.isShowing }
+    return listBuilder
+  }
+
+  fun fatalErrorsFromIde(): List<Error> {
+    val errorMessages = MessagePool.getInstance().getFatalErrors(true, true)
+    val errors = ArrayList<Error>(errorMessages.size)
+    for (errorMessage in errorMessages) {
+      val messageBuilder = StringBuilder(errorMessage.message)
+      val additionalInfo : String? = errorMessage.additionalInfo
+      if (additionalInfo != null && additionalInfo.isNotEmpty())
+        messageBuilder.append(System.getProperty("line.separator")).append("Additional Info: ").append(additionalInfo)
+      val error = Error(messageBuilder.toString(), errorMessage.throwable)
+      errors.add(error)
+    }
+    return Collections.unmodifiableList(errors)
+  }
+
+  fun waitForBackgroundTasks(robot: Robot, timeoutInSeconds: Int = 120) {
+    Wait.seconds(timeoutInSeconds.toLong()).expecting("background tasks to finish")
+      .until {
+        robot.waitForIdle()
+
+        val progressManager = ProgressManager.getInstance()
+        !progressManager.hasModalProgressIndicator() &&
+        !progressManager.hasProgressIndicator() &&
+        !progressManager.hasUnsafeProgressIndicator()
+      }
   }
 
 }

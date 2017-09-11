@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.MessageType;
@@ -38,12 +39,16 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.FileIndentOptionsProvider;
 import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.LightColors;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.GradientViewport;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.fields.CommaSeparatedIntegersField;
+import com.intellij.ui.components.fields.IntegerField;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,13 +70,11 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   private static final String MACINTOSH_STRING = ApplicationBundle.message("combobox.crlf.mac");
   private final List<GeneralCodeStyleOptionsProvider> myAdditionalOptions;
 
-  private JTextField myRightMarginField;
-  private int myDefaultRightMargin;
-  private Color myInitialRightMarginFieldColor;
+  private IntegerField myRightMarginField;
 
   private JComboBox myLineSeparatorCombo;
   private JPanel myPanel;
-  private JCheckBox myCbWrapWhenTypingReachesRightMargin;
+  private JBCheckBox myCbWrapWhenTypingReachesRightMargin;
   private JCheckBox myEnableFormatterTags;
   private JTextField myFormatterOnTagField;
   private JTextField myFormatterOffTagField;
@@ -83,8 +86,11 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   private JPanel myAdditionalSettingsPanel;
   private JCheckBox myAutodetectIndentsBox;
   private JCheckBox myShowDetectedIndentNotification;
-  private JPanel myDefaultOptionsPanel;
   private JPanel myIndentsDetectionPanel;
+  private CommaSeparatedIntegersField myVisualGuides;
+  private JBLabel myVisualGuidesHint;
+  private JBLabel myLineSeparatorHint;
+  private JBLabel myVisualGuidesLabel;
   private final JScrollPane myScrollPane;
 
 
@@ -101,9 +107,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     myLineSeparatorCombo.addItem(MACINTOSH_STRING);
     addPanelToWatch(myPanel);
 
-    myDefaultRightMargin = settings.getDefaultRightMargin();
-    myRightMarginField.setHorizontalAlignment(SwingConstants.RIGHT);
-    myInitialRightMarginFieldColor = myRightMarginField.getBackground();
+    myRightMarginField.setDefaultValue(settings.getDefaultRightMargin());
 
     myEnableFormatterTags.addActionListener(new ActionListener() {
       @Override
@@ -121,13 +125,9 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
       }
     });
 
-    myDefaultOptionsPanel
-      .setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("settings.code.style.general.default.options")));
     myIndentsDetectionPanel
       .setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("settings.code.style.general.indents.detection")));
 
-    myMarkersPanel.setBorder(IdeBorderFactory.createTitledBorder(
-      ApplicationBundle.message("settings.code.style.general.formatter.marker.title"), true));
     myMarkerOptionsPanel.setBorder(
       IdeBorderFactory.createTitledBorder(ApplicationBundle.message("settings.code.style.general.formatter.marker.options.title"), true));
     myPanel.setBorder(JBUI.Borders.empty(0, 10));
@@ -143,6 +143,12 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
         myAdditionalSettingsPanel.add(generalSettingsComponent);
       }
     }
+
+    myVisualGuidesLabel.setText(ApplicationBundle.message("settings.code.style.visual.guides") + ":");
+    myVisualGuidesHint.setForeground(JBColor.GRAY);
+    myVisualGuidesHint.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
+    myLineSeparatorHint.setForeground(JBColor.GRAY);
+    myLineSeparatorHint.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
   }
 
   @Override
@@ -153,21 +159,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
 
   @Override
   protected int getRightMargin() {
-    String text = myRightMarginField.getText();
-    int rightMargin;
-    myRightMarginField.setBackground(myInitialRightMarginFieldColor);
-    try {
-      rightMargin = Integer.parseInt(text);
-      if (rightMargin < 1 || rightMargin > CodeStyleSettings.MAX_RIGHT_MARGIN) {
-        rightMargin = myDefaultRightMargin;
-        myRightMarginField.setBackground(LightColors.RED);
-      }
-    }
-    catch (NumberFormatException nfe) {
-      myRightMarginField.setBackground(LightColors.RED);
-      rightMargin = myDefaultRightMargin;
-    }
-    return rightMargin;
+    return myRightMarginField.getValue();
   }
 
   @Override
@@ -183,7 +175,11 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
 
 
   @Override
-  public void apply(CodeStyleSettings settings) {
+  public void apply(CodeStyleSettings settings) throws ConfigurationException {
+    myVisualGuides.validateContent();
+    myRightMarginField.validateContent();
+    settings.setDefaultSoftMargins(myVisualGuides.getValue());
+
     settings.LINE_SEPARATOR = getSelectedLineSeparator();
 
     settings.setDefaultRightMargin(getRightMargin());
@@ -206,6 +202,13 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     for (GeneralCodeStyleOptionsProvider option : myAdditionalOptions) {
       option.apply(settings);
     }
+  }
+
+  private void createUIComponents() {
+    myRightMarginField = new IntegerField(0, CodeStyleSettings.MAX_RIGHT_MARGIN);
+    myRightMarginField.setName(ApplicationBundle.message("editbox.right.margin.columns"));
+    myVisualGuides = new CommaSeparatedIntegersField(0, CodeStyleSettings.MAX_RIGHT_MARGIN, "Optional");
+    myVisualGuides.setName(ApplicationBundle.message("settings.code.style.visual.guides"));
   }
 
   @Nullable
@@ -245,6 +248,8 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
 
   @Override
   public boolean isModified(CodeStyleSettings settings) {
+    if (!myVisualGuides.getValue().equals(settings.getDefaultSoftMargins())) return true;
+
     if (!Comparing.equal(getSelectedLineSeparator(), settings.LINE_SEPARATOR)) {
       return true;
     }
@@ -288,6 +293,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
 
   @Override
   protected void resetImpl(final CodeStyleSettings settings) {
+    myVisualGuides.setValue(settings.getDefaultSoftMargins());
 
     String lineSeparator = settings.LINE_SEPARATOR;
     if ("\n".equals(lineSeparator)) {
@@ -303,7 +309,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
       myLineSeparatorCombo.setSelectedItem(SYSTEM_DEPENDANT_STRING);
     }
 
-    myRightMarginField.setText(String.valueOf(settings.getDefaultRightMargin()));
+    myRightMarginField.setValue(settings.getDefaultRightMargin());
     myCbWrapWhenTypingReachesRightMargin.setSelected(settings.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN);
 
     myAcceptRegularExpressionsCheckBox.setSelected(settings.FORMATTER_TAGS_ACCEPT_REGEXP);

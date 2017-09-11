@@ -45,6 +45,8 @@ class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
     myIsExpanded = true;
     myEditor = editor;
     myPlaceholderText = placeholder;
+
+    if (placeholder.isEmpty()) throw new IllegalArgumentException("Empty placeholder");
   }
 
   @Override

@@ -16,6 +16,7 @@
 package com.intellij.openapi.options.colors;
 
 import com.intellij.openapi.editor.colors.ColorKey;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Describes a color which can be configured in a custom colors and fonts page.
@@ -39,7 +40,7 @@ public final class ColorDescriptor extends AbstractKeyDescriptor<ColorKey> {
    * @param key         the color key for which the color is specified.
    * @param kind        the type of color corresponding to the color key (foreground or background).
    */
-  public ColorDescriptor(String displayName, ColorKey key, Kind kind) {
+  public ColorDescriptor(@NotNull String displayName, @NotNull ColorKey key, @NotNull Kind kind) {
     super(displayName, key);
     myKind = kind;
   }
@@ -49,15 +50,18 @@ public final class ColorDescriptor extends AbstractKeyDescriptor<ColorKey> {
    *
    * @return the type of color.
    */
+  @NotNull
   public Kind getKind() {
     return myKind;
   }
 
+  @NotNull
   @Override
   public String getDisplayName() {
     return super.getDisplayName();
   }
 
+  @NotNull
   @Override
   public ColorKey getKey() {
     return super.getKey();

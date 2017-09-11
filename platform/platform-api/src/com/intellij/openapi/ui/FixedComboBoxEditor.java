@@ -134,14 +134,6 @@ public class FixedComboBoxEditor implements ComboBoxEditor {
 
   private class MacComboBoxTextField extends JBTextField implements DocumentListener, FocusListener {
     private MacComboBoxTextField() {
-      if (SystemInfo.isMac && UIUtil.isUnderIntelliJLaF()) {
-        setBorder(JBUI.Borders.empty());
-        setOpaque(false);
-      } else {
-        setBorder(isEnabled() ? EDITOR_BORDER : DISABLED_EDITOR_BORDER);
-      }
-      //setFont(UIUtil.getListFont());
-
       final InputMap inputMap = getInputMap();
 
       inputMap.put(KeyStroke.getKeyStroke("DOWN"), "aquaSelectNext");
@@ -176,6 +168,18 @@ public class FixedComboBoxEditor implements ComboBoxEditor {
       });
 
       addFocusListener(this);
+    }
+
+    @Override
+    public void updateUI() {
+      super.updateUI();
+      
+      if (SystemInfo.isMac && UIUtil.isUnderIntelliJLaF()) {
+        setBorder(JBUI.Borders.empty());
+        setOpaque(false);
+      } else {
+        setBorder(isEnabled() ? EDITOR_BORDER : DISABLED_EDITOR_BORDER);
+      }
     }
 
     @Override

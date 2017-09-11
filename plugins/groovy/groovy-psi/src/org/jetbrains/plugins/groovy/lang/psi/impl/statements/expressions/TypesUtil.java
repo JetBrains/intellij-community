@@ -313,26 +313,7 @@ public class TypesUtil implements TypeConstants {
     lType = optionalUnbox(lType);
     rType = optionalUnbox(rType);
 
-    if (rType instanceof GrClosureType) {
-      if (canMakeClosureRaw(lType)) {
-        rType = ((GrClosureType)rType).rawType();
-      }
-    }
-
     return TypeConversionUtil.isAssignable(lType, rType);
-  }
-
-  private static boolean canMakeClosureRaw(PsiType type) {
-    if (!(type instanceof PsiClassType)) return true;
-
-    final PsiType[] parameters = ((PsiClassType)type).getParameters();
-
-    if (parameters.length != 1) return true;
-
-    final PsiType parameter = parameters[0];
-    if (parameter instanceof PsiWildcardType) return true;
-
-    return false;
   }
 
   @NotNull
@@ -789,9 +770,9 @@ public class TypesUtil implements TypeConstants {
         @Nullable
         @Override
         public Object visitClassType(PsiClassType classType) {
-          if (classType.getParameterCount() > 0) {
+         // if (classType.getParameterCount() > 0) {
             newParam.set(classType.rawType());
-          }
+         // }
           return null;
         }
 

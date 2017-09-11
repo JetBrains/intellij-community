@@ -21,6 +21,7 @@ import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.popup.util.DetailView;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
@@ -63,7 +64,6 @@ public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Dele
     void showMoreOptions();
   }
 
-  private JPanel myConditionExpressionPanel;
   private JPanel myConditionPanel;
   private JPanel myMainPanel;
 
@@ -86,8 +86,10 @@ public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Dele
   private JPanel myCustomRightPropertiesPanelWrapper;
   private JBCheckBox myConditionEnabledCheckbox;
   private JPanel myCustomTopPropertiesPanelWrapper;
-  private JPanel myConditionEnabledPanel;
   private JBLabel myBreakpointNameLabel;
+  private JPanel myConditionCheckboxPanel;
+  private JPanel myLanguageChooserPanel;
+  private JPanel myConditionExpressionPanel;
   private final List<XBreakpointCustomPropertiesPanel> myCustomPanels;
 
   private final List<XBreakpointPropertiesSubPanel> mySubPanels = new ArrayList<>();
@@ -137,10 +139,10 @@ public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Dele
     myCustomPanels = new ArrayList<>();
     if (debuggerEditorsProvider != null) {
       myConditionEnabledCheckbox = new JBCheckBox(XDebuggerBundle.message("xbreakpoints.condition.checkbox"));
-      myConditionComboBox = new XDebuggerExpressionComboBox(project, debuggerEditorsProvider, CONDITION_HISTORY_ID, myBreakpoint.getSourcePosition(), true);
-      JComponent conditionComponent = myConditionComboBox.getComponent();
-      conditionComponent.setBorder(JBUI.Borders.empty(0, 4));
-      myConditionExpressionPanel.add(conditionComponent, BorderLayout.CENTER);
+      myConditionComboBox = new XDebuggerExpressionComboBox(project, debuggerEditorsProvider, CONDITION_HISTORY_ID,
+                                                            myBreakpoint.getSourcePosition(), true, true);
+      myLanguageChooserPanel.add(myConditionComboBox.getLanguageChooser(), BorderLayout.CENTER);
+      myConditionExpressionPanel.add(myConditionComboBox.getComponent(), BorderLayout.CENTER);
       myConditionEnabledCheckbox.addActionListener(e -> onCheckboxChanged());
       DebuggerUIUtil.focusEditorOnCheck(myConditionEnabledCheckbox, myConditionComboBox.getEditorComponent());
     } else {
@@ -241,15 +243,17 @@ public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Dele
       myConditionComboBox.setExpression(condition);
       boolean hideCheckbox = !myShowAllOptions && condition == null;
       myConditionEnabledCheckbox.setSelected(hideCheckbox || (myBreakpoint.isConditionEnabled() && condition != null));
-      myConditionEnabledPanel.removeAll();
+      myConditionCheckboxPanel.removeAll();
       if (hideCheckbox) {
         JBLabel label = new JBLabel(XDebuggerBundle.message("xbreakpoints.condition.checkbox"));
-        label.setBorder(JBUI.Borders.emptyLeft(4));
+        label.setBorder(JBUI.Borders.empty(0, 4, 4, 0));
         label.setLabelFor(myConditionComboBox.getComboBox());
-        myConditionEnabledPanel.add(label);
+        myConditionCheckboxPanel.add(label);
+        myConditionExpressionPanel.setBorder(JBUI.Borders.emptyLeft(4));
       }
       else {
-        myConditionEnabledPanel.add(myConditionEnabledCheckbox);
+        myConditionCheckboxPanel.add(myConditionEnabledCheckbox);
+        myConditionExpressionPanel.setBorder(JBUI.Borders.emptyLeft(UIUtil.getCheckBoxTextHorizontalOffset(myConditionEnabledCheckbox)));
       }
 
       onCheckboxChanged();

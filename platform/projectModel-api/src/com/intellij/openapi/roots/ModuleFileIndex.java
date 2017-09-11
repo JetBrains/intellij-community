@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /**
- * Provides information about files contained in a module.
+ * Provides information about files contained in a module. Should be used from a read action.
  *
  * @see ModuleRootManager#getFileIndex()
  *

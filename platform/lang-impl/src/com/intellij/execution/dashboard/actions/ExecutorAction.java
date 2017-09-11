@@ -21,7 +21,7 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.ProgramRunnerUtil;
 import com.intellij.execution.configurations.RuntimeConfigurationError;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
-import com.intellij.execution.dashboard.DashboardRunConfigurationNode;
+import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode;
 import com.intellij.execution.dashboard.RunDashboardManager;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
@@ -41,13 +41,13 @@ import java.util.List;
 /**
  * @author konstantin.aleev
  */
-public abstract class ExecutorAction extends RunDashboardTreeLeafAction<DashboardRunConfigurationNode> {
+public abstract class ExecutorAction extends RunDashboardTreeLeafAction<RunDashboardRunConfigurationNode> {
   protected ExecutorAction(String text, String description, Icon icon) {
     super(text, description, icon);
   }
 
   @Override
-  protected boolean isEnabled4(DashboardRunConfigurationNode node) {
+  protected boolean isEnabled4(RunDashboardRunConfigurationNode node) {
     String executorId = getExecutor().getId();
     ProgramRunner runner = ProgramRunnerUtil.getRunner(executorId, node.getConfigurationSettings());
     return runner != null && runner.canRun(executorId, node.getConfigurationSettings().getConfiguration());
@@ -61,7 +61,7 @@ public abstract class ExecutorAction extends RunDashboardTreeLeafAction<Dashboar
       update(e, false);
       return;
     }
-    List<DashboardRunConfigurationNode> targetNodes = getTargetNodes(e);
+    List<RunDashboardRunConfigurationNode> targetNodes = getTargetNodes(e);
     if (RunDashboardManager.getInstance(project).isShowConfigurations()) {
       boolean running = targetNodes.stream().anyMatch(node -> {
         Content content = node.getContent();
@@ -77,7 +77,7 @@ public abstract class ExecutorAction extends RunDashboardTreeLeafAction<Dashboar
     }
   }
 
-  private boolean isValid(DashboardRunConfigurationNode node) {
+  private boolean isValid(RunDashboardRunConfigurationNode node) {
     try {
       node.getConfigurationSettings().checkSettings(getExecutor());
       return true;
@@ -121,7 +121,7 @@ public abstract class ExecutorAction extends RunDashboardTreeLeafAction<Dashboar
   }
 
   @Override
-  protected void doActionPerformed(DashboardRunConfigurationNode node) {
+  protected void doActionPerformed(RunDashboardRunConfigurationNode node) {
     if (!isValid(node)) return;
 
     RunContentDescriptor descriptor = node.getDescriptor();
@@ -133,8 +133,8 @@ public abstract class ExecutorAction extends RunDashboardTreeLeafAction<Dashboar
   }
 
   @Override
-  protected Class<DashboardRunConfigurationNode> getTargetNodeClass() {
-    return DashboardRunConfigurationNode.class;
+  protected Class<RunDashboardRunConfigurationNode> getTargetNodeClass() {
+    return RunDashboardRunConfigurationNode.class;
   }
 
   protected abstract Executor getExecutor();

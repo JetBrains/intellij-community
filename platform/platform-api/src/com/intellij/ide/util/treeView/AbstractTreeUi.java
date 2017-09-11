@@ -5117,4 +5117,8 @@ public class AbstractTreeUi {
     }
     return element == null;
   }
+
+  public final boolean isConsistent() {
+    return myTree != null && myTreeModel != null && myTreeModel == myTree.getModel();
+  }
 }

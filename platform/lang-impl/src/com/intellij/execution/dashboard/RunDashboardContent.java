@@ -85,7 +85,7 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
   private RunDashboardAnimator myAnimator;
   private AbstractTreeNode<?> myLastSelection;
   private final Set<Object> myCollapsedTreeNodeValues = new HashSet<>();
-  private final List<DashboardGrouper> myGroupers;
+  private final List<RunDashboardGrouper> myGroupers;
 
   @NotNull private final ContentManager myContentManager;
   @NotNull private final ContentManagerListener myContentManagerListener;
@@ -96,7 +96,7 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
   private final DefaultActionGroup myDashboardContentActions = new DefaultActionGroup();
   private final Map<Content, List<AnAction>> myContentActions = new WeakHashMap<>();
 
-  public RunDashboardContent(@NotNull Project project, @NotNull ContentManager contentManager, @NotNull List<DashboardGrouper> groupers) {
+  public RunDashboardContent(@NotNull Project project, @NotNull ContentManager contentManager, @NotNull List<RunDashboardGrouper> groupers) {
     super(new BorderLayout());
     myProject = project;
     myGroupers = groupers;
@@ -164,9 +164,9 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
           return;
         }
         contentAdded(event);
-        myBuilder.queueUpdate().doWhenDone(() -> myBuilder.accept(DashboardNode.class, new TreeVisitor<DashboardNode>() {
+        myBuilder.queueUpdate().doWhenDone(() -> myBuilder.accept(RunDashboardNode.class, new TreeVisitor<RunDashboardNode>() {
           @Override
-          public boolean visit(@NotNull DashboardNode node) {
+          public boolean visit(@NotNull RunDashboardNode node) {
             if (node.getContent() == event.getContent()) {
               myBuilder.select(node);
             }
@@ -231,8 +231,8 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
     new DoubleClickListener() {
       @Override
       protected boolean onDoubleClick(MouseEvent event) {
-        if (myLastSelection instanceof DashboardRunConfigurationNode && myLastSelection.getChildren().isEmpty()) {
-          DashboardRunConfigurationNode node = (DashboardRunConfigurationNode)myLastSelection;
+        if (myLastSelection instanceof RunDashboardRunConfigurationNode && myLastSelection.getChildren().isEmpty()) {
+          RunDashboardRunConfigurationNode node = (RunDashboardRunConfigurationNode)myLastSelection;
           RunDashboardContributor contributor = node.getContributor();
           if (contributor != null) {
             return contributor.handleDoubleClick(node.getConfigurationSettings().getConfiguration());
@@ -292,8 +292,8 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
     }
 
     myLastSelection = node;
-    if (node instanceof DashboardNode) {
-      Content content = ((DashboardNode)node).getContent();
+    if (node instanceof RunDashboardNode) {
+      Content content = ((RunDashboardNode)node).getContent();
       if (content != null && content.getManager() != myContentManager) {
         content = null;
       }
@@ -307,7 +307,7 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
         showContentPanel();
         return;
       }
-      if (node instanceof DashboardRunConfigurationNode) {
+      if (node instanceof RunDashboardRunConfigurationNode) {
         showMessagePanel(ExecutionBundle.message("run.dashboard.not.started.configuration.message"));
         return;
       }
@@ -433,9 +433,9 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
   }
 
   private class GroupAction extends ToggleAction implements DumbAware {
-    private final DashboardGrouper myGrouper;
+    private final RunDashboardGrouper myGrouper;
 
-    GroupAction(DashboardGrouper grouper) {
+    GroupAction(RunDashboardGrouper grouper) {
       super();
       myGrouper = grouper;
     }
@@ -475,8 +475,8 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
       super.update(e);
       boolean enabled = true;
       if (isSelected(e)) {
-        if (myLastSelection instanceof DashboardNode) {
-          Content content = ((DashboardNode)myLastSelection).getContent();
+        if (myLastSelection instanceof RunDashboardNode) {
+          Content content = ((RunDashboardNode)myLastSelection).getContent();
           enabled = content != null && content.getManager() == myContentManager;
         }
         else {

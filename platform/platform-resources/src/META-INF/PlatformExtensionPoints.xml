@@ -287,6 +287,8 @@
     <extensionPoint name="projectNameProvider" interface="com.intellij.openapi.project.ex.ProjectNameProvider"/>
     <extensionPoint name="streamProviderFactory" interface="com.intellij.configurationStore.StreamProviderFactory" area="IDEA_PROJECT"/>
 
+    <extensionPoint name="webHelpProvider" interface="com.intellij.openapi.help.WebHelpProvider"/>
+
     <extensionPoint name="reporting.sendPermission" interface="com.intellij.reporting.DataSendPermission"/>
 
     <extensionPoint name="tasks.contextProvider" interface="com.intellij.tasks.context.WorkingContextProvider" area="IDEA_PROJECT"/>

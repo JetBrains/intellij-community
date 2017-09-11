@@ -61,6 +61,10 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     myBuilder.checkPending(instruction);
   }
 
+  @Override
+  public void visitPyDecoratorList(PyDecoratorList node) {
+  }
+
   private void visitDecorators(PyDecoratorList list) {
     if (list != null) {
       for (PyDecorator decorator : list.getDecorators()) {

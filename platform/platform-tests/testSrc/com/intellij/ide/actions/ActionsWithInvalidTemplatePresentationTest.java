@@ -58,7 +58,9 @@ public class ActionsWithInvalidTemplatePresentationTest extends PlatformTestCase
       AnAction action = mgr.getAction(id);
       System.err.println(action + " ID: " + id + " Class: " + (action != null ? action.getClass() : "null"));
     }
-    assertEmpty("The following actions might have invalid template presentation", failed);
+    assertEmpty("The following actions might have invalid template presentation\n" +
+                "These are user-visible strings that can be used without any processing by AnAction.\n" +
+                "ex: 'Find Action' or 'Settings | Keymap'", failed);
   }
 
   private static boolean IsInvalidText(@Nullable String text) {

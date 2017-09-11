@@ -25,7 +25,9 @@ import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.help.HelpManager;
+import com.intellij.openapi.help.WebHelpProvider;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
@@ -41,6 +43,8 @@ import java.net.URL;
 
 public class HelpManagerImpl extends HelpManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.help.impl.HelpManagerImpl");
+  private static final ExtensionPointName<WebHelpProvider>
+    WEB_HELP_PROVIDER_EP_NAME = ExtensionPointName.create("com.intellij.webHelpProvider");
 
   @NonNls private static final String HELP_HS = "Help.hs";
 
@@ -50,6 +54,16 @@ public class HelpManagerImpl extends HelpManager {
     id = StringUtil.notNullize(id, "top");
     
     UsageTrigger.trigger("ide.help." + id);
+
+    for (WebHelpProvider provider : WEB_HELP_PROVIDER_EP_NAME.getExtensions()) {
+      if (id.startsWith(provider.getHelpTopicPrefix())) {
+        String url = provider.getHelpPageUrl(id);
+        if (url != null) {
+          BrowserUtil.browse(url);
+          return;
+        }
+      }
+    }
 
     if (MacHelpUtil.isApplicable() && MacHelpUtil.invokeHelp(id)) {
       return;

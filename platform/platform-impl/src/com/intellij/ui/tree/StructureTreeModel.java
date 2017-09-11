@@ -294,4 +294,15 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
       return child instanceof Node && isNodeChild((Node)child) ? getChildren().indexOf(child) : -1;
     }
   }
+
+  /**
+   * @deprecated do not use
+   */
+  @Deprecated
+  public final Object getRootImmediately() {
+    if (!root.isValid()) {
+      root.set(getValidRoot());
+    }
+    return root.get();
+  }
 }

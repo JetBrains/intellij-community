@@ -15,65 +15,42 @@
  */
 package com.intellij.ui.components;
 
-import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.components.panels.ValidatingComponent;
+import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 
 /**
- * @author kir
-
- * A textField with error label under it.
+ * A text field with validation and error notification.
  */
-public class ValidatingTextField extends ValidatingComponent<JTextField> {
-  private final JTextField myTextField;
+public class ValidatingTextField extends JBTextField {
 
   public ValidatingTextField() {
-    this(new JTextField(25));
-  }
-
-  public ValidatingTextField(final JTextField textField) {
-    myTextField = textField;
-    myTextField.getDocument().addDocumentListener(new DocumentAdapter() {
+    getDocument().addDocumentListener(new DocumentAdapter() {
       protected void textChanged(DocumentEvent e) {
-        String errorText = validateTextOnChange(getMainComponent().getText(), e);
-        if (errorText != null) {
+        String errorText = validateTextOnChange(getText(), e);
+        highlightState(StringUtil.isEmpty(errorText));
+        if (StringUtil.isNotEmpty(errorText)) {
           setErrorText(errorText);
         }
       }
     });
-    doInitialize();
   }
 
-  protected JTextField createMainComponent() {
-    return myTextField;
-  }
-
-  public void requestFocus() {
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-      IdeFocusManager.getGlobalInstance().requestFocus(getMainComponent(), true);
-    });
-  }
-
-  public boolean requestFocusInWindow() {
-    return getMainComponent().requestFocusInWindow();
+  private void highlightState(boolean isValid) {
+    putClientProperty("JComponent.error.outline", isValid ? null : true);
   }
 
   /**
-   * to be overriden
+   * @return Error text if there are errors, empty text or null otherwise.
    */
   protected String validateTextOnChange(String text, DocumentEvent e) {
     return null;
   }
 
-  public String getText() {
-    return getMainComponent().getText();
-  }
-
-  public void setText(String text) {
-    getMainComponent().setText(text);
+  protected void setErrorText(@NotNull String errorText) {
+    // TODO: to be implemented later
   }
 
 }

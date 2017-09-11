@@ -245,17 +245,6 @@ public class MethodUtils {
     return SuperMethodsSearch.search(method, null, true, false).findFirst();
   }
 
-  public static boolean canBeOverridden(@NotNull PsiMethod method) {
-    if (method.isConstructor() ||
-        method.hasModifierProperty(PsiModifier.PRIVATE) ||
-        method.hasModifierProperty(PsiModifier.STATIC) ||
-        method.hasModifierProperty(PsiModifier.FINAL)) {
-      return false;
-    }
-    final PsiClass parentClass = method.getContainingClass();
-    return parentClass != null && (!(parentClass instanceof PsiAnonymousClass)) && !parentClass.hasModifierProperty(PsiModifier.FINAL);
-  }
-
   /**
    * This method can get very slow and use a lot of memory when invoked on a method that is overridden many times,
    * like for example any of the methods of the {@link Object} class.
@@ -263,7 +252,7 @@ public class MethodUtils {
    * Try to avoid calling it in such cases.
    */
   public static boolean isOverridden(@NotNull PsiMethod method) {
-    return canBeOverridden(method) && OverridingMethodsSearch.search(method).findFirst() != null;
+    return OverridingMethodsSearch.search(method).findFirst() != null;
   }
 
   public static boolean isOverriddenInHierarchy(@NotNull PsiMethod method, @NotNull PsiClass baseClass) {
@@ -276,7 +265,7 @@ public class MethodUtils {
     //    }
     //}
     // was extremely slow and used an enormous amount of memory for clone()
-    if (!canBeOverridden(method) || baseClass instanceof PsiAnonymousClass || baseClass.hasModifierProperty(PsiModifier.FINAL)) {
+    if (!PsiUtil.canBeOverridden(method) || baseClass instanceof PsiAnonymousClass || baseClass.hasModifierProperty(PsiModifier.FINAL)) {
       return false;
     }
     final Query<PsiClass> search = ClassInheritorsSearch.search(baseClass, baseClass.getUseScope(), true, true, true);

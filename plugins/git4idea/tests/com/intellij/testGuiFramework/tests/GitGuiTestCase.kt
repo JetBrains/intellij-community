@@ -16,23 +16,21 @@
 package com.intellij.testGuiFramework.tests
 
 import com.intellij.testGuiFramework.impl.GuiTestCase
-import org.junit.After
-import org.junit.Before
 
 /**
  * @author Sergey Karashevich
  */
 open class GitGuiTestCase: GuiTestCase(){
 
-  @Before
-  override fun setUp() {
-    super.setUp()
-    if (IS_UNDER_TEAMCITY) GitSettings.setup()
-  }
-
-  @After
-  override fun tearDown() {
-    GitSettings.restore()
-    super.tearDown()
-  }
+//  @Before
+//  override fun setUp() {
+//    super.setUp()
+//    if (IS_UNDER_TEAMCITY) GitSettings.setup()
+//  }
+//
+//  @After
+//  override fun tearDown() {
+//    GitSettings.restore()
+//    super.tearDown()
+//  }
 }

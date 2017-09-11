@@ -9,6 +9,7 @@ alignas
 alloc
 anyschema
 aopalliance
+apothem
 appender
 archivelog
 argc
@@ -225,6 +226,7 @@ gruntfile
 gruntfiles
 gulpfile
 gulpfiles
+guid
 gzip
 gzipped
 hadoop
@@ -548,6 +550,7 @@ refactor
 refactored
 refactoring
 refactorings
+referer
 regex
 regexp
 reifiable

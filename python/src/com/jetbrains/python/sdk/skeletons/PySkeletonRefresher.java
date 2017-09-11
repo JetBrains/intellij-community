@@ -30,6 +30,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -304,7 +305,7 @@ public class PySkeletonRefresher {
         binaries.modules.putAll(mySkeletonsGenerator.listBinaries(mySdk, Joiner.on(";").join(batch)).modules);
       }
     }
-    myGeneratorVersion = binaries.generatorVersion;
+    myGeneratorVersion = binaries != null ? binaries.generatorVersion : 0;
     myPregeneratedSkeletons = findPregeneratedSkeletons();
 
     indicate(PyBundle.message("sdk.gen.reading.versions.file"));
@@ -332,7 +333,7 @@ public class PySkeletonRefresher {
 
     final boolean builtinsUpdated = updateSkeletonsForBuiltins(readablePath, builtinsFile);
 
-    if (!binaries.modules.isEmpty()) {
+    if (binaries != null && !binaries.modules.isEmpty()) {
       indicate(PyBundle.message("sdk.gen.updating.$0", readablePath));
       final List<UpdateResult> updateErrors = updateOrCreateSkeletons(binaries.modules);
       if (updateErrors.size() > 0) {
@@ -696,8 +697,8 @@ public class PySkeletonRefresher {
     return new File(new File(skeletonsPath, packagePath), PyNames.INIT_DOT_PY);
   }
 
-  private boolean updateOrCreateSkeleton(final PyBinaryItem binaryItem,
-                                         final List<UpdateResult> errorList) throws InvalidSdkException {
+  private void updateOrCreateSkeleton(final PyBinaryItem binaryItem,
+                                      final List<UpdateResult> errorList) throws InvalidSdkException {
     final String moduleName = binaryItem.getModule();
 
     final File skeleton = getSkeleton(moduleName, getSkeletonsPath());
@@ -725,7 +726,7 @@ public class PySkeletonRefresher {
     if (mustRebuild) {
       indicateMinor(moduleName);
       if (myPregeneratedSkeletons != null && copyPregeneratedSkeleton(moduleName)) {
-        return true;
+        return;
       }
       LOG.info("Skeleton for " + moduleName);
 
@@ -735,7 +736,6 @@ public class PySkeletonRefresher {
         }
       });
     }
-    return false;
   }
 
   public static class PyBinaryItem {
@@ -811,17 +811,27 @@ public class PySkeletonRefresher {
   @Nullable
   private VirtualFile findPregeneratedSkeletons() {
     final File root = findPregeneratedSkeletonsRoot();
-    if (root == null) {
+    if (root == null || !root.exists()) {
       return null;
     }
     LOG.info("Pregenerated skeletons root is " + root);
 
-    String prebuiltSkeletonsName = getPregeneratedSkeletonsName();
+    String prebuiltSkeletonsName = getPregeneratedSkeletonsName(Registry.is("python.prebuilt.skeletons.minor.version.aware"));
     if (prebuiltSkeletonsName == null) return null;
 
-    File f = new File(root, prebuiltSkeletonsName);
+    File f = null;
 
-    if (f.exists()) {
+    File[] children = root.listFiles();
+    if (children != null) {
+      for (File file : children) {
+        if (file.getAbsolutePath().matches(".*" + prebuiltSkeletonsName + "\\.?\\d*\\.zip")) {
+          f = file;
+          break;
+        }
+      }
+    }
+
+    if (f != null) {
       LOG.info("Found pregenerated skeletons at " + f.getPath());
       final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f);
       if (virtualFile == null) {
@@ -831,17 +841,17 @@ public class PySkeletonRefresher {
       return JarFileSystem.getInstance().getJarRootForLocalFile(virtualFile);
     }
     else {
-      LOG.info("Not found pregenerated skeletons at " + f.getPath());
+      LOG.info("Not found pregenerated skeletons at " + root);
       return null;
     }
   }
 
-  public String getPregeneratedSkeletonsName() {
-    return getPregeneratedSkeletonsName(mySdk, myGeneratorVersion);
+  public String getPregeneratedSkeletonsName(boolean withMinorVersion) {
+    return getPregeneratedSkeletonsName(mySdk, myGeneratorVersion, withMinorVersion);
   }
 
   @Nullable
-  public static String getPregeneratedSkeletonsName(@NotNull Sdk sdk, int generatorVersion) {
+  public static String getPregeneratedSkeletonsName(@NotNull Sdk sdk, int generatorVersion, boolean withMinorVersion) {
     String prebuiltSkeletonsName;
     @NonNls final String versionString = sdk.getVersionString();
     if (versionString == null) {
@@ -854,6 +864,14 @@ public class PySkeletonRefresher {
 
     String version = versionString.toLowerCase().replace(" ", "-");
 
+    if (!withMinorVersion) {
+      int ind = version.lastIndexOf(".");
+      if (ind != -1) {
+        // strip last version
+        version = version.substring(0, ind);
+      }
+    }
+
     if (SystemInfo.isMac) {
       String osVersion = SystemInfo.OS_VERSION;
       int dot = osVersion.indexOf('.');
@@ -863,12 +881,13 @@ public class PySkeletonRefresher {
           osVersion = osVersion.substring(0, secondDot);
         }
       }
-      prebuiltSkeletonsName = "skeletons-mac-" + generatorVersion + "-" + osVersion + "-" + version + ".zip";
+      prebuiltSkeletonsName = "skeletons-mac-" + generatorVersion + "-" + osVersion + "-" + version;
     }
     else {
       String os = SystemInfo.isWindows ? "win" : "nix";
-      prebuiltSkeletonsName = "skeletons-" + os + "-" + generatorVersion + "-" + version + ".zip";
-    } return prebuiltSkeletonsName;
+      prebuiltSkeletonsName = "skeletons-" + os + "-" + generatorVersion + "-" + version;
+    }
+    return prebuiltSkeletonsName;
   }
 
   @Nullable

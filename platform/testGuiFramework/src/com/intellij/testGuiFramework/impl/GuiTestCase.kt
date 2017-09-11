@@ -15,7 +15,6 @@
  */
 package com.intellij.testGuiFramework.impl
 
-import com.intellij.ide.GeneralSettings
 import com.intellij.openapi.ui.ComponentWithBrowseButton
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.FileUtil
@@ -26,7 +25,7 @@ import com.intellij.testGuiFramework.fixtures.*
 import com.intellij.testGuiFramework.fixtures.extended.ExtendedButtonFixture
 import com.intellij.testGuiFramework.fixtures.extended.ExtendedTreeFixture
 import com.intellij.testGuiFramework.fixtures.newProjectWizard.NewProjectWizardFixture
-import com.intellij.testGuiFramework.framework.GuiTestBase
+import com.intellij.testGuiFramework.framework.GuiTestLocalRunner
 import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.framework.GuiTestUtil.waitUntilFound
 import com.intellij.testGuiFramework.framework.IdeTestApplication.getTestScreenshotDirPath
@@ -38,8 +37,6 @@ import com.intellij.testGuiFramework.launcher.system.SystemInfo.isMac
 import com.intellij.ui.CheckboxTree
 import com.intellij.ui.HyperlinkLabel
 import com.intellij.ui.components.labels.LinkLabel
-import com.intellij.util.net.HttpConfigurable
-import org.fest.swing.core.SmartWaitRobot
 import org.fest.swing.exception.ActionFailedException
 import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.exception.WaitTimedOutError
@@ -52,10 +49,11 @@ import org.fest.swing.timing.Condition
 import org.fest.swing.timing.Pause
 import org.fest.swing.timing.Timeout
 import org.fest.swing.timing.Timeout.timeout
+import org.junit.Rule
+import org.junit.runner.RunWith
 import java.awt.Component
 import java.awt.Container
 import java.io.File
-import java.lang.reflect.InvocationTargetException
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -85,65 +83,27 @@ import javax.swing.text.JTextComponent
  * The more descriptive documentation about entire framework could be found in the root of testGuiFramework (HowToUseFramework.md)
  *
  */
-open class GuiTestCase : GuiTestBase() {
+@RunWith(GuiTestLocalRunner::class)
+open class GuiTestCase {
 
-  class GuiSettings internal constructor() {
-
-    init {
-      GeneralSettings.getInstance().isShowTipsOnStartup = false
-      GuiTestUtil.setUpDefaultProjectCreationLocationPath()
-      val ideSettings = HttpConfigurable.getInstance()
-      ideSettings.USE_HTTP_PROXY = false
-      ideSettings.PROXY_HOST = ""
-      ideSettings.PROXY_PORT = 80
-    }
-
-    companion object {
-
-      private val lock = Any()
-
-      private var SETTINGS: GuiSettings? = null
-
-      fun setUp(): GuiSettings {
-        synchronized(lock) {
-          if (SETTINGS == null) SETTINGS = GuiSettings()
-          return SETTINGS as GuiSettings
-        }
-      }
-    }
-
-  }
+  @Rule @JvmField
+  val guiTestRule = GuiTestRule()
 
   /**
    * default timeout to find target component for fixture. Using seconds as time unit.
    */
   var defaultTimeout = 120L
 
-  val screenshotTaker = ScreenshotTaker()
-  var pathToSaveScreenshots = getTestScreenshotDirPath()
+  private val screenshotTaker = ScreenshotTaker()
+  private var pathToSaveScreenshots = getTestScreenshotDirPath()
 
   val settingsTitle: String = if (isMac()) "Preferences" else "Settings"
   val defaultSettingsTitle: String = if (isMac()) "Default Preferences" else "Default Settings"
+  val IS_UNDER_TEAMCITY = System.getenv("TEAMCITY_VERSION") != null
   val slash: String = File.separator
 
 
-  @Throws(Exception::class)
-  override fun setUp() {
-    super.setUp()
-    myRobot = SmartWaitRobot()
-    GuiSettings.setUp()
-  }
-
-  @Throws(InvocationTargetException::class, InterruptedException::class)
-  override fun tearDown() {
-    closeAllProjects()
-    super.tearDown()
-  }
-
-  companion object {
-    val IS_UNDER_TEAMCITY = System.getenv("TEAMCITY_VERSION") != null
-  }
-
+  fun robot() = guiTestRule.robot()
 
   //********************KOTLIN DSL FOR GUI TESTING*************************
   //*********CONTEXT LAMBDA FUNCTIONS WITH RECEIVERS***********************
@@ -152,7 +112,7 @@ open class GuiTestCase : GuiTestBase() {
    * the receiver object (WelcomeFrameFixture instance).
    */
   open fun welcomeFrame(func: WelcomeFrameFixture.() -> Unit) {
-    func(findWelcomeFrame())
+    func(guiTestRule.findWelcomeFrame())
   }
 
   /**
@@ -160,7 +120,7 @@ open class GuiTestCase : GuiTestBase() {
    * receiver object (IdeFrameFixture instance).
    */
   fun ideFrame(func: IdeFrameFixture.() -> Unit) {
-    func(findIdeFrame())
+    func(guiTestRule.findIdeFrame())
   }
 
   /**
@@ -170,8 +130,8 @@ open class GuiTestCase : GuiTestBase() {
    * @title title of searching dialog window. If dialog should be only one title could be omitted or set to null.
    * @timeout time in seconds to find dialog in GUI hierarchy.
    */
-  fun dialog(title: String? = null, timeout: Long = defaultTimeout, func: JDialogFixture.() -> Unit) {
-    val dialog = dialog(title, timeout)
+  fun dialog(title: String? = null, ignoreCaseTitle: Boolean = false, timeout: Long = defaultTimeout, func: JDialogFixture.() -> Unit) {
+    val dialog = dialog(title, ignoreCaseTitle, timeout)
     func(dialog)
     dialog.waitTillGone()
   }
@@ -181,7 +141,7 @@ open class GuiTestCase : GuiTestBase() {
    * is loaded. Code block after it call methods on the receiver object (IdeFrameFixture instance).
    */
   fun simpleProject(func: IdeFrameFixture.() -> Unit) {
-    func(importSimpleProject())
+    func(guiTestRule.importSimpleProject())
   }
 
   /**
@@ -189,7 +149,7 @@ open class GuiTestCase : GuiTestBase() {
    * it call methods on the receiver object (NewProjectWizardFixture instance).
    */
   fun projectWizard(func: NewProjectWizardFixture.() -> Unit) {
-    func(findNewProjectWizard())
+    func(guiTestRule.findNewProjectWizard())
   }
 
   /**
@@ -491,7 +451,7 @@ open class GuiTestCase : GuiTestBase() {
   /**
    * Type text by symbol with a constant delay. Generate system key events, so entered text will aply to a focused component.
    */
-  fun typeText(text: String) = GuiTestUtil.typeText(text, myRobot, 10)
+  fun typeText(text: String) = GuiTestUtil.typeText(text, guiTestRule.robot(), 10)
 
   /**
    * @param keyStroke should follow {@link KeyStrokeAdapter#getKeyStroke(String)} instructions and be generated by {@link KeyStrokeAdapter#toString(KeyStroke)} preferably
@@ -499,12 +459,12 @@ open class GuiTestCase : GuiTestBase() {
    * examples: shortcut("meta comma"), shortcut("ctrl alt s"), shortcut("alt f11")
    * modifiers order: shift | ctrl | control | meta | alt | altGr | altGraph
    */
-  fun shortcut(keyStroke: String) = GuiTestUtil.invokeActionViaShortcut(myRobot, keyStroke)
+  fun shortcut(keyStroke: String) = GuiTestUtil.invokeActionViaShortcut(guiTestRule.robot(), keyStroke)
 
   /**
    * Invoke action by actionId through its keystroke
    */
-  fun invokeAction(actionId: String) = GuiTestUtil.invokeAction(myRobot, actionId)
+  fun invokeAction(actionId: String) = GuiTestUtil.invokeAction(guiTestRule.robot(), actionId)
 
   /**
    * Take a screenshot for a specific component. Screenshot remain scaling and represent it in name of file.
@@ -512,7 +472,7 @@ open class GuiTestCase : GuiTestBase() {
   fun screenshot(component: Component, screenshotName: String): Unit {
 
     val extension = "${getScaleSuffix()}.png"
-    val pathWithTestFolder = pathToSaveScreenshots.path + File.separator + this.testName
+    val pathWithTestFolder = pathToSaveScreenshots.path / this.guiTestRule.getTestName()
     val fileWithTestFolder = File(pathWithTestFolder)
     FileUtil.ensureExists(fileWithTestFolder)
     var screenshotFilePath = File(fileWithTestFolder, screenshotName + extension)
@@ -530,13 +490,24 @@ open class GuiTestCase : GuiTestBase() {
   /**
    * Finds JDialog with a specific title (if title is null showing dialog should be only one) and returns created JDialogFixture
    */
-  fun dialog(title: String? = null, timeout: Long): JDialogFixture {
+  fun dialog(title: String? = null, ignoreCaseTitle: Boolean, timeoutInSeconds: Long): JDialogFixture {
     if (title == null) {
-      val jDialog = waitUntilFound(null, JDialog::class.java, timeout) { jDialog -> true }
-      return JDialogFixture(myRobot, jDialog)
+      val jDialog = waitUntilFound(null, JDialog::class.java, timeoutInSeconds) { true }
+      return JDialogFixture(guiTestRule.robot(), jDialog)
     }
     else {
-      return JDialogFixture.find(myRobot, title, timeout.toFestTimeout())
+      try {
+        val dialog = GuiTestUtilKt.withPauseWhenNull(timeoutInSeconds.toInt()) {
+          val allMatchedDialogs = guiTestRule.robot().finder().findAll(typeMatcher(JDialog::class.java) {
+            if (ignoreCaseTitle) it.title.toLowerCase() == title.toLowerCase() else it.title == title
+          })
+          if (allMatchedDialogs.size > 1) throw Exception("Found more than one (${allMatchedDialogs.size}) dialogs matched title \"$title\"")
+          allMatchedDialogs.firstOrNull()
+        }
+        return JDialogFixture(guiTestRule.robot(), dialog)
+      } catch (timeoutError: WaitTimedOutError) {
+        throw ComponentLookupException("Timeout error for finding JDialog by title \"$title\" for $timeoutInSeconds seconds")
+      }
     }
   }
 
@@ -545,7 +516,7 @@ open class GuiTestCase : GuiTestBase() {
   private fun Long.toFestTimeout(): Timeout = if (this == 0L) timeout(50, TimeUnit.MILLISECONDS) else timeout(this, TimeUnit.SECONDS)
 
   private fun message(container: Container, title: String, timeout: Long): MessagesFixture
-    = MessagesFixture.findByTitle(myRobot, container, title, timeout.toFestTimeout())
+    = MessagesFixture.findByTitle(guiTestRule.robot(), container, title, timeout.toFestTimeout())
 
   private fun jList(container: Container, containingItem: String? = null, timeout: Long): JListFixture {
 
@@ -557,7 +528,7 @@ open class GuiTestCase : GuiTestBase() {
         elements.any { it.toString() == containingItem } && jList.isShowing
       }
     }
-    val jListFixture = JListFixture(myRobot, myJList)
+    val jListFixture = JListFixture(guiTestRule.robot(), myJList)
     jListFixture.replaceCellReader(extCellReader)
     return jListFixture
   }
@@ -568,7 +539,7 @@ open class GuiTestCase : GuiTestBase() {
         isShowing && isVisible && text == name
       }
     }
-    return ExtendedButtonFixture(myRobot, jButton)
+    return ExtendedButtonFixture(guiTestRule.robot(), jButton)
   }
 
   private fun componentWithBrowseButton(container: Container,
@@ -578,15 +549,17 @@ open class GuiTestCase : GuiTestBase() {
       component ->
       component.isShowing && foo.isInstance(component)
     }
-    return ComponentWithBrowseButtonFixture(component, myRobot)
+    return ComponentWithBrowseButtonFixture(component, guiTestRule.robot())
   }
 
   private fun combobox(container: Container, text: String, timeout: Long): ComboBoxFixture {
     //wait until label has appeared
-    waitUntilFound(container, Component::class.java,
-                   timeout) { it.flags { isShowing && isTextComponent() && getComponentText() == text } }
-    val comboBox = findBoundedComponentByText(myRobot, container, text, JComboBox::class.java)
-    val comboboxFixture = ComboBoxFixture(myRobot, comboBox)
+    try {
+      waitUntilFound(container, Component::class.java,
+                     timeout) { it.flags { isShowing && isTextComponent() && getComponentText() == text } }
+    } catch (e: WaitTimedOutError) { throw ComponentLookupException("Unable to find label for a combobox with text \"$text\" in $timeout seconds")}
+    val comboBox = findBoundedComponentByText(guiTestRule.robot(), container, text, JComboBox::class.java)
+    val comboboxFixture = ComboBoxFixture(guiTestRule.robot(), comboBox)
     comboboxFixture.replaceCellReader(ExtendedJComboboxCellReader())
     return comboboxFixture
   }
@@ -595,28 +568,28 @@ open class GuiTestCase : GuiTestBase() {
     //wait until label has appeared
     val jCheckBox = waitUntilFound(container, JCheckBox::class.java,
                                    timeout) { it.flags { isShowing && isVisible && text == labelText } }
-    return CheckBoxFixture(myRobot, jCheckBox)
+    return CheckBoxFixture(guiTestRule.robot(), jCheckBox)
   }
 
-  private fun actionLink(container: Container, name: String, timeout: Long) = ActionLinkFixture.findActionLinkByName(name, myRobot,
+  private fun actionLink(container: Container, name: String, timeout: Long) = ActionLinkFixture.findActionLinkByName(name, guiTestRule.robot(),
                                                                                                                      container,
                                                                                                                      timeout.toFestTimeout())
 
   private fun actionButton(container: Container, actionName: String, timeout: Long): ActionButtonFixture {
     return try {
-      ActionButtonFixture.findByText(actionName, myRobot, container, timeout.toFestTimeout())
+      ActionButtonFixture.findByText(actionName, guiTestRule.robot(), container, timeout.toFestTimeout())
     }
     catch (componentLookupException: ComponentLookupException) {
-      ActionButtonFixture.findByActionId(actionName, myRobot, container, timeout.toFestTimeout())
+      ActionButtonFixture.findByActionId(actionName, guiTestRule.robot(), container, timeout.toFestTimeout())
     }
   }
 
   private fun actionButtonByClass(container: Container, actionClassName: String, timeout: Long): ActionButtonFixture =
-    ActionButtonFixture.findByActionClassName(actionClassName, myRobot, container, timeout.toFestTimeout())
+    ActionButtonFixture.findByActionClassName(actionClassName, guiTestRule.robot(), container, timeout.toFestTimeout())
 
-  private fun editor(ideFrameFixture: IdeFrameFixture, timeout: Long): EditorFixture = EditorFixture(myRobot, ideFrameFixture)
+  private fun editor(ideFrameFixture: IdeFrameFixture, timeout: Long): EditorFixture = EditorFixture(guiTestRule.robot(), ideFrameFixture)
 
-  private fun radioButton(container: Container, labelText: String, timeout: Long) = GuiTestUtil.findRadioButton(myRobot, container,
+  private fun radioButton(container: Container, labelText: String, timeout: Long) = GuiTestUtil.findRadioButton(guiTestRule.robot(), container,
                                                                                                                 labelText,
                                                                                                                 timeout.toFestTimeout())
 
@@ -624,32 +597,32 @@ open class GuiTestCase : GuiTestBase() {
     //if 'textfield()' goes without label
     if (labelText.isNullOrEmpty()) {
       val jTextField = waitUntilFound(container, JTextField::class.java, timeout) { jTextField -> jTextField.isShowing }
-      return JTextComponentFixture(myRobot, jTextField)
+      return JTextComponentFixture(guiTestRule.robot(), jTextField)
     }
     //wait until label has appeared
     waitUntilFound(container, Component::class.java, timeout) {
       it.flags { isShowing && isVisible && isTextComponent() && getComponentText() == labelText }
     }
-    val jTextComponent = findBoundedComponentByText(myRobot, container, labelText!!, JTextComponent::class.java)
-    return JTextComponentFixture(myRobot, jTextComponent)
+    val jTextComponent = findBoundedComponentByText(guiTestRule.robot(), container, labelText!!, JTextComponent::class.java)
+    return JTextComponentFixture(guiTestRule.robot(), jTextComponent)
   }
 
   private fun linkLabel(container: Container, labelText: String, timeout: Long): ComponentFixture<ComponentFixture<*, *>, LinkLabel<*>> {
-    val myLinkLabel = waitUntilFound(myRobot, container, typeMatcher(LinkLabel::class.java) { it.isShowing && (it.text == labelText) },
+    val myLinkLabel = waitUntilFound(guiTestRule.robot(), container, typeMatcher(LinkLabel::class.java) { it.isShowing && (it.text == labelText) },
                                      timeout.toFestTimeout())
-    return ComponentFixture<ComponentFixture<*, *>, LinkLabel<*>>(ComponentFixture::class.java, myRobot, myLinkLabel)
+    return ComponentFixture<ComponentFixture<*, *>, LinkLabel<*>>(ComponentFixture::class.java, guiTestRule.robot(), myLinkLabel)
   }
 
   private fun hyperlinkLabel(container: Container, labelText: String, timeout: Long): HyperlinkLabelFixture {
-    val hyperlinkLabel = waitUntilFound(myRobot, container, typeMatcher(HyperlinkLabel::class.java) {
+    val hyperlinkLabel = waitUntilFound(guiTestRule.robot(), container, typeMatcher(HyperlinkLabel::class.java) {
       (it.isShowing && (it.text == labelText))
     }, timeout.toFestTimeout())
-    return HyperlinkLabelFixture(myRobot, hyperlinkLabel)
+    return HyperlinkLabelFixture(guiTestRule.robot(), hyperlinkLabel)
   }
 
   private fun table(container: Container, cellText: String, timeout: Long): JTableFixture {
     return waitUntilFoundFixture(container, JTable::class.java, timeout) {
-      val jTableFixture = JTableFixture(myRobot, it)
+      val jTableFixture = JTableFixture(guiTestRule.robot(), it)
       jTableFixture.replaceCellReader(ExtendedJTableCellReader())
       val hasCellWithText = try {
         jTableFixture.cell(cellText); true
@@ -661,30 +634,30 @@ open class GuiTestCase : GuiTestBase() {
     }
   }
 
-  private fun pluginTable(container: Container, timeout: Long) = PluginTableFixture.find(myRobot, container, timeout.toFestTimeout())
+  private fun pluginTable(container: Container, timeout: Long) = PluginTableFixture.find(guiTestRule.robot(), container, timeout.toFestTimeout())
 
   private fun popupClick(container: Container, itemName: String, timeout: Long) {
-    GuiTestUtil.clickPopupMenuItem(itemName, false, container, myRobot, timeout.toFestTimeout())
+    GuiTestUtil.clickPopupMenuItem(itemName, false, container, guiTestRule.robot(), timeout.toFestTimeout())
   }
 
   private fun jTreePath(container: Container, timeout: Long, vararg pathStrings: String): ExtendedTreeFixture {
     val myTree: JTree?
     val pathList = pathStrings.toList()
     if (pathList.isEmpty()) {
-      myTree = waitUntilFound(myRobot, container, typeMatcher(JTree::class.java) { true }, timeout.toFestTimeout())
+      myTree = waitUntilFound(guiTestRule.robot(), container, typeMatcher(JTree::class.java) { true }, timeout.toFestTimeout())
     }
     else {
-      myTree = waitUntilFound(myRobot, container, typeMatcher(JTree::class.java) { ExtendedTreeFixture(myRobot, it).hasPath(pathList) },
+      myTree = waitUntilFound(guiTestRule.robot(), container, typeMatcher(JTree::class.java) { ExtendedTreeFixture(guiTestRule.robot(), it).hasPath(pathList) },
                               timeout.toFestTimeout())
     }
-    val treeFixture: ExtendedTreeFixture = ExtendedTreeFixture(myRobot, myTree)
+    val treeFixture: ExtendedTreeFixture = ExtendedTreeFixture(guiTestRule.robot(), myTree)
     return treeFixture
   }
 
   private fun checkboxTree(container: Container, timeout: Long, vararg pathStrings: String): CheckboxTreeFixture {
     val extendedTreeFixture = jTreePath(container, timeout, *pathStrings)
     if (extendedTreeFixture.tree !is CheckboxTree) throw ComponentLookupException("Found JTree but not a CheckboxTree")
-    return CheckboxTreeFixture(myRobot, extendedTreeFixture.tree)
+    return CheckboxTreeFixture(guiTestRule.robot(), extendedTreeFixture.tree)
   }
 
   fun ComponentFixture<*, *>.exists(fixture: () -> AbstractComponentFixture<*, *, *>): Boolean {
@@ -726,7 +699,7 @@ open class GuiTestCase : GuiTestBase() {
                                                  componentClass: Class<ComponentType>,
                                                  timeout: Long,
                                                  matcher: (ComponentType) -> Boolean): ComponentType {
-    return GuiTestUtil.waitUntilFound(myRobot, container, typeMatcher(componentClass) { matcher(it) }, timeout.toFestTimeout())
+    return GuiTestUtil.waitUntilFound(guiTestRule.robot(), container, typeMatcher(componentClass) { matcher(it) }, timeout.toFestTimeout())
   }
 
   fun <Fixture, ComponentType : Component> waitUntilFoundFixture(container: Container?,
@@ -734,7 +707,7 @@ open class GuiTestCase : GuiTestBase() {
                                                                            timeout: Long,
                                                                            matcher: (ComponentType) -> Pair<Boolean, Fixture>): Fixture {
     val ref = Ref<Fixture>()
-    GuiTestUtil.waitUntilFound(myRobot, container, typeMatcher(componentClass)
+    GuiTestUtil.waitUntilFound(guiTestRule.robot(), container, typeMatcher(componentClass)
     {
       val (matched, fixture) = matcher(it)
       if (matched) ref.set(fixture)
@@ -754,4 +727,8 @@ open class GuiTestCase : GuiTestBase() {
       return flagCheckFunction()
     }
   }
+}
+
+private operator fun String.div(path: String): String {
+  return "$this${File.separator}$path"
 }

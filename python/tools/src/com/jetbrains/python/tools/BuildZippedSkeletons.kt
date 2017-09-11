@@ -47,7 +47,8 @@ fun main(args: Array<String>) {
       val sdk = PySdkTools.createTempSdk(VfsUtil.findFileByIoFile(File(executable), true)!!,
                                          SdkCreationType.SDK_PACKAGES_AND_SKELETONS, null)
 
-      val skeletonsDir = File(System.getProperty("user.dir"), "skeletons-${sdk.versionString!!.replace(" ", "_")}_" + +Math.abs(sdk.homePath!!.hashCode()))
+      val skeletonsDir = File(System.getProperty("user.dir"),
+                              "skeletons-${sdk.versionString!!.replace(" ", "_")}_" + Math.abs(sdk.homePath!!.hashCode()))
 
       println("Generating skeletons in ${skeletonsDir.absolutePath}")
 
@@ -57,7 +58,7 @@ fun main(args: Array<String>) {
       refresher.regenerateSkeletons(SkeletonVersionChecker(0))
 
 
-      val dirPacked = File(skeletonsDir.parent, refresher.pregeneratedSkeletonsName)
+      val dirPacked = File(skeletonsDir.parent, refresher.getPregeneratedSkeletonsName(true) + ".zip")
       val zip = ZipOutputStream(FileOutputStream(dirPacked))
       ZipUtil.addDirToZipRecursively(zip, dirPacked, skeletonsDir, "", null, null)
       zip.close()

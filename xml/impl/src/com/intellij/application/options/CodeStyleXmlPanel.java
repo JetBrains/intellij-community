@@ -21,12 +21,12 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.xml.XmlCodeStyleSettings;
 import com.intellij.ui.components.JBScrollPane;
-import org.apache.xmlbeans.XmlLanguage;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -73,7 +73,7 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
   }
 
   @Override
-  public void apply(CodeStyleSettings settings) {
+  public void apply(CodeStyleSettings settings) throws ConfigurationException {
     XmlCodeStyleSettings xmlSettings = settings.getCustomSettings(XmlCodeStyleSettings.class);
     xmlSettings.XML_KEEP_BLANK_LINES = getIntValue(myKeepBlankLines);
     xmlSettings.XML_KEEP_LINE_BREAKS = myKeepLineBreaks.isSelected();

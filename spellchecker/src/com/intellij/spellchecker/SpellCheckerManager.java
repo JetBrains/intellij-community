@@ -16,14 +16,21 @@
 package com.intellij.spellchecker;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFileEvent;
+import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
+import com.intellij.spellchecker.dictionary.AggregatedDictionary;
 import com.intellij.spellchecker.dictionary.EditableDictionary;
 import com.intellij.spellchecker.dictionary.Loader;
 import com.intellij.spellchecker.engine.SpellCheckerEngine;
@@ -41,7 +48,9 @@ import org.jetbrains.annotations.Nullable;
 import java.io.InputStream;
 import java.util.*;
 
-public class SpellCheckerManager {
+import static com.intellij.openapi.util.io.FileUtil.isAncestor;
+
+public class SpellCheckerManager implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.spellchecker.SpellCheckerManager");
 
   private static final int MAX_SUGGESTIONS_THRESHOLD = 5;
@@ -49,9 +58,10 @@ public class SpellCheckerManager {
 
   private final Project project;
   private SpellCheckerEngine spellChecker;
-  private EditableDictionary userDictionary;
+  private AggregatedDictionary userDictionary;
   private final SuggestionProvider suggestionProvider = new BaseSuggestionProvider(this);
   private final SpellCheckerSettings settings;
+  private final VirtualFileListener myVirtualFileListener;
 
   public static SpellCheckerManager getInstance(Project project) {
     return ServiceManager.getService(project, SpellCheckerManager.class);
@@ -61,6 +71,43 @@ public class SpellCheckerManager {
     this.project = project;
     this.settings = settings;
     fullConfigurationReload();
+    
+    Disposer.register(project, this);
+    
+    myVirtualFileListener = new VirtualFileListener() {
+      @Override
+      public void fileDeleted(@NotNull VirtualFileEvent event) {
+        final String path = event.getFile().getPath();
+        if (spellChecker.isDictionaryLoad(path)) {
+          spellChecker.removeDictionary(path);
+          restartInspections();
+        }
+      }
+
+      @Override
+      public void fileCreated(@NotNull VirtualFileEvent event) {
+        final String path = event.getFile().getPath();
+        boolean customDic = FileUtilRt.extensionEquals(path, "dic") &&
+                            settings.getDictionaryFoldersPaths().stream().anyMatch(dicFolderPath -> isAncestor(dicFolderPath, path, true));
+        if (customDic) {
+          spellChecker.loadDictionary(new FileLoader(path, path));
+          restartInspections();
+        }
+      }
+
+      @Override
+      public void contentsChanged(@NotNull VirtualFileEvent event) {
+        final String path = event.getFile().getPath();
+        if (settings.getDisabledDictionariesPaths().contains(path)) return;
+
+        if (spellChecker.isDictionaryLoad(path)) {
+          spellChecker.removeDictionary(path);
+          spellChecker.loadDictionary(new FileLoader(path, path));
+          restartInspections();
+        }
+      }
+    };
+    LocalFileSystem.getInstance().addVirtualFileListener(myVirtualFileListener);
   }
 
   public void fullConfigurationReload() {
@@ -154,7 +201,9 @@ public class SpellCheckerManager {
       spellChecker.loadDictionary(loader);
     }
 
-    userDictionary = ServiceManager.getService(project, AggregatedDictionaryState.class).getDictionary();
+    final AggregatedDictionaryState dictionaryState = ServiceManager.getService(project, AggregatedDictionaryState.class);
+    dictionaryState.addDictStateListener((dict) -> restartInspections());
+    userDictionary = dictionaryState.getDictionary();
     spellChecker.addModifiableDictionary(userDictionary);
   }
 
@@ -218,5 +267,10 @@ public class SpellCheckerManager {
         }
       }
     });
+  }
+
+  @Override
+  public void dispose() {
+    LocalFileSystem.getInstance().removeVirtualFileListener(myVirtualFileListener);
   }
 }

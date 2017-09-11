@@ -50,6 +50,7 @@ import com.intellij.testGuiFramework.impl.GuiTestUtilKt.getComponentText
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.isTextComponent
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.onHeightCenter
 import com.intellij.ui.CheckboxTree
+import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.HyperlinkLabel
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBList
@@ -239,6 +240,16 @@ class HyperlinkLabelGenerator : ComponentCodeGenerator<HyperlinkLabel> {
     //we assume, that hyperlink label has only one highlighted region
     val linkText = cmp.hightlightedRegionsBoundsMap.keys.toList().firstOrNull() ?: "null"
     return "hyperlinkLabel(\"${cmp.text}\").clickLink(\"$linkText\")"
+  }
+}
+
+class HyperlinkLabelInNotificationPanelGenerator : ComponentCodeGenerator<HyperlinkLabel> {
+  override fun accept(cmp: Component) = cmp is HyperlinkLabel && cmp.hasInParents(EditorNotificationPanel::class.java)
+  override fun priority(): Int = 1
+  override fun generate(cmp: HyperlinkLabel, me: MouseEvent, cp: Point): String {
+    //we assume, that hyperlink label has only one highlighted region
+    val linkText = cmp.hightlightedRegionsBoundsMap.keys.toList().firstOrNull() ?: "null"
+    return "editor { notificationPanel().clickLink(\"$linkText\") }"
   }
 }
 
@@ -745,5 +756,14 @@ private fun String.addClick(me: MouseEvent): String {
     me.isRightButton() -> "$this.rightClick()"
     else -> "$this.click()"
   }
+}
+
+private fun Component.hasInParents(componentType: Class<out Component>): Boolean {
+  var component = this
+  while(component.parent != null) {
+    if (componentType.isInstance(component)) return true
+    component = component.parent
+  }
+  return false
 }
 

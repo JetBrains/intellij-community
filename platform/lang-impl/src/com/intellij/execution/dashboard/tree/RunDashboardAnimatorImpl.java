@@ -15,7 +15,7 @@
  */
 package com.intellij.execution.dashboard.tree;
 
-import com.intellij.execution.dashboard.DashboardNode;
+import com.intellij.execution.dashboard.RunDashboardNode;
 import com.intellij.execution.dashboard.RunDashboardAnimator;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
@@ -42,7 +42,7 @@ public class RunDashboardAnimatorImpl implements RunDashboardAnimator, Runnable,
   private long myLastInvocationTime = -1;
 
   private Alarm myAlarm;
-  private Set<DashboardNode> myNodes = new HashSet<>();
+  private Set<RunDashboardNode> myNodes = new HashSet<>();
   private AbstractTreeBuilder myTreeBuilder;
 
   public RunDashboardAnimatorImpl(AbstractTreeBuilder builder) {
@@ -98,14 +98,14 @@ public class RunDashboardAnimatorImpl implements RunDashboardAnimator, Runnable,
   }
 
   @Override
-  public void addNode(@NotNull DashboardNode node) {
+  public void addNode(@NotNull RunDashboardNode node) {
     if (myNodes.add(node) && myNodes.size() == 1) {
       scheduleRepaint();
     }
   }
 
   @Override
-  public void removeNode(@NotNull DashboardNode node) {
+  public void removeNode(@NotNull RunDashboardNode node) {
     if (myNodes.remove(node) && myNodes.isEmpty()) {
       repaintSubTree();
       if (myAlarm != null) {
@@ -127,8 +127,8 @@ public class RunDashboardAnimatorImpl implements RunDashboardAnimator, Runnable,
   private void repaintSubTree() {
     if (myTreeBuilder == null || myTreeBuilder.isDisposed()) return;
 
-    List<DashboardNode> toRemove = ContainerUtil.newSmartList();
-    for (DashboardNode node : myNodes) {
+    List<RunDashboardNode> toRemove = ContainerUtil.newSmartList();
+    for (RunDashboardNode node : myNodes) {
       DefaultMutableTreeNode treeNode = myTreeBuilder.getUi().getNodeForElement(node, false);
       if (treeNode != null) {
         myTreeBuilder.queueUpdateFrom(node, false, false);

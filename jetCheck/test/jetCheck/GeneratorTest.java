@@ -112,7 +112,7 @@ public class GeneratorTest extends PropertyCheckerTestCase {
       .shouldHold(s -> Character.isJavaIdentifierStart(s.charAt(0)) && s.chars().allMatch(Character::isJavaIdentifierPart));
     checkFalsified(asciiIdentifiers(),
                    s -> !s.contains("_"),
-                   1);
+                   3);
   }
 
   public void testBoolean() {
@@ -152,6 +152,16 @@ public class GeneratorTest extends PropertyCheckerTestCase {
                      return !"abcdefghijklmnopqrstuvwxyz()[]#!".chars().allMatch(c -> s.indexOf((char)c) >= 0);
                    },
                    153);
+  }
+
+  public void testSameFrequency() {
+    checkFalsified(listsOf(frequency(1, constant(1), 1, constant(2))), 
+                   l -> !l.contains(1) || !l.contains(2), 
+                   2);
+    
+    checkFalsified(listsOf(frequency(1, constant(1), 1, constant(2)).with(1, constant(3))), 
+                   l -> !l.contains(1) || !l.contains(2) || !l.contains(3), 
+                   10);
   }
 
 }

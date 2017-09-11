@@ -107,6 +107,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     return new JavaElementVisitor() {
       @Override
       public void visitClass(PsiClass aClass) {
+        if (aClass instanceof PsiTypeParameter) return;
         analyzeCodeBlock(aClass, holder, isOnTheFly);
       }
 
@@ -183,7 +184,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
   private void analyzeCodeBlock(@Nullable final PsiElement scope, ProblemsHolder holder, final boolean onTheFly) {
     if (scope == null) return;
 
-    PsiClass containingClass = PsiTreeUtil.getParentOfType(scope, PsiClass.class, false);
+    PsiClass containingClass = PsiTreeUtil.getNonStrictParentOfType(scope, PsiClass.class);
     if (containingClass != null && PsiUtil.isLocalOrAnonymousClass(containingClass) && !(containingClass instanceof PsiEnumConstantInitializer)) return;
 
     final StandardDataFlowRunner dfaRunner =
@@ -365,7 +366,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     if (!(scope.getParent() instanceof PsiMethod)) return;
 
     PsiMethod method = (PsiMethod)scope.getParent();
-    if (PsiUtil.canBeOverriden(method)) return;
+    if (PsiUtil.canBeOverridden(method)) return;
 
     PsiAnnotation nullableAnno = NullableNotNullManager.getInstance(scope.getProject()).getNullableAnnotation(method, false);
     if (nullableAnno == null || !nullableAnno.isPhysical()) return;

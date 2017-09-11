@@ -196,8 +196,8 @@ public abstract class CustomizableLanguageCodeStylePanel extends CodeStyleAbstra
     @Nullable private final String anchorOptionName;
 
     protected OrderedOption(@NotNull String optionName,
-                            OptionAnchor anchor,
-                            String anchorOptionName) {
+                            @Nullable OptionAnchor anchor,
+                            @Nullable String anchorOptionName) {
       this.optionName = optionName;
       this.anchor = anchor;
       this.anchorOptionName = anchorOptionName;

@@ -224,6 +224,22 @@ public class TreeTraverserTest extends TestCase {
 
   // JBIterable ----------------------------------------------
 
+  public void testFirstLastSingle() {
+    assertEquals(null, JBIterable.empty().first());
+    assertEquals(null, JBIterable.empty().last());
+    assertEquals(null, JBIterable.empty().single());
+
+    assertEquals("a", JBIterable.generate("a", o -> o + "a").first());
+    assertEquals("aaa", JBIterable.generate("a", o -> o + "a").take(3).last());
+    assertEquals("a", JBIterable.generate("a", o -> o + "a").take(1).single());
+    assertEquals(null, JBIterable.generate("a", o -> o + "a").take(2).single());
+
+    assertEquals("a", JBIterable.from(Arrays.asList("a", "aa", "aaa")).first());
+    assertEquals("aaa", JBIterable.from(Arrays.asList("a", "aa", "aaa")).last());
+    assertEquals("a", JBIterable.of("a").single());
+    assertEquals(null, JBIterable.of("a", "aa", "aaa").single());
+  }
+
   public void testOfAppendNulls() {
     Integer o = null;
     JBIterable<Integer> it = JBIterable.of(o).append(o).append(JBIterable.empty());
@@ -343,6 +359,12 @@ public class TreeTraverserTest extends TestCase {
     assertEquals(-1, it.indexOf((o)-> o.intValue() == 33));
     assertEquals(Arrays.asList(1, 4, 9, 16, 25), it.map(o -> o * o).toList());
     assertEquals(Arrays.asList(0, 1, 0, 2, 0, 3, 0, 4, 0, 5), it.flatMap(o -> ContainerUtil.list(0, o)).toList());
+  }
+
+  public void testJoin() {
+    assertEquals("", JBIterable.of().join(", ").reduce("", (a, b) -> a + b));
+    assertEquals("a", JBIterable.of("a").join(", ").reduce("", (a, b) -> a + b));
+    assertEquals("a, b, c", JBIterable.of("a", "b", "c").join(", ").reduce("", (a, b) -> a + b));
   }
 
   public void testSplits1() {

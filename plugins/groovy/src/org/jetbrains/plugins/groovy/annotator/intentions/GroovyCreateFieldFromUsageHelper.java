@@ -25,6 +25,7 @@ import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -78,7 +79,9 @@ public class GroovyCreateFieldFromUsageHelper extends CreateFieldFromUsageHelper
     editor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
 
     if (expectedTypes instanceof ExpectedTypeInfo[]) {
-      if (((ExpectedTypeInfo[])expectedTypes).length > 1) template.setToShortenLongNames(false);
+      if (!Registry.is("ide.create.field.enable.shortening") && ((ExpectedTypeInfo[])expectedTypes).length > 1) {
+        template.setToShortenLongNames(false);
+      }
     }
     return template;
   }

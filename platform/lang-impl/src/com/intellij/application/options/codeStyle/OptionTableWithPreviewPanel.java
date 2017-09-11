@@ -25,6 +25,7 @@ import com.intellij.ui.TreeTableSpeedSearch;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.editors.JBComboBoxTableCellEditorComponent;
+import com.intellij.ui.components.fields.IntegerField;
 import com.intellij.ui.treeStructure.treetable.ListTreeTableModel;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.ui.treeStructure.treetable.TreeTableCellRenderer;
@@ -55,6 +56,7 @@ import java.awt.event.KeyEvent;
 import java.lang.reflect.Field;
 import java.util.*;
 import java.util.List;
+import java.util.function.Function;
 
 /**
  * @author max
@@ -133,7 +135,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     for (Option each : myOptions) {
       each.setEnabled(false);
       for (String optionName : optionNames) {
-        if (each.field.getName().equals(optionName)) {
+        if (each.getOptionName().equals(optionName)) {
           each.setEnabled(true);
         }
       }
@@ -174,7 +176,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     }
     else {
       for (Option each : myCustomOptions) {
-        if (each.clazz == settingsClass && each.field.getName().equals(fieldName)) {
+        if (each instanceof FieldOption && ((FieldOption)each).clazz == settingsClass && each.getOptionName().equals(fieldName)) {
           each.setEnabled(true);
         }
       }
@@ -186,13 +188,17 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     myRenamedFields.put(fieldName, newTitle);
   }
 
+  public void showOption(@NotNull String optionName) {
+    myAllowedOptions.add(optionName);
+  }
+
   protected TreeTable createOptionsTree(CodeStyleSettings settings) {
     DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode();
     Map<String, DefaultMutableTreeNode> groupsMap = new THashMap<>();
 
     List<Option> sorted = sortOptions(ContainerUtil.concat(myOptions, myCustomOptions));
     for (Option each : sorted) {
-      if (!(myCustomOptions.contains(each) || myAllowedOptions.contains(each.field.getName()) || myShowAllStandardOptions)) continue;
+      if (!(myCustomOptions.contains(each) || myAllowedOptions.contains(each.getOptionName()) || myShowAllStandardOptions)) continue;
 
       String group = each.groupName;
       MyTreeNode newNode = new MyTreeNode(each, each.title, settings);
@@ -344,8 +350,8 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
                            int minValue,
                            int maxValue,
                            int defaultValue,
-                           String defaultValueText) {
-    myOptions.add(new IntOption(null, fieldName, title, groupName, null, null, minValue, maxValue, defaultValue, defaultValueText));
+                           @Nullable Function<Integer,String> defaultValueRenderer) {
+    myOptions.add(new IntOption(null, fieldName, title, groupName, null, null, minValue, maxValue, defaultValue, defaultValueRenderer));
   }
 
   protected void addOption(@NotNull String fieldName, @NotNull String title, @Nullable String groupName) {
@@ -357,31 +363,23 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     myOptions.add(new SelectionOption(null, fieldName, title, groupName, null, null, options, values));
   }
 
-  private abstract class Option extends OrderedOption {
-    @Nullable final Class<? extends CustomCodeStyleSettings> clazz;
-    @NotNull final Field field;
+  protected void addCustomOption(@NotNull Option option) {
+    myOptions.add(option);
+  }
+
+  protected abstract static class Option extends OrderedOption {
     @NotNull final String title;
     @Nullable final String groupName;
     private boolean myEnabled = false;
 
-    public Option(@Nullable Class<? extends CustomCodeStyleSettings> clazz,
-                  @NotNull String fieldName,
-                  @NotNull String title,
-                  @Nullable String groupName,
-                  @Nullable OptionAnchor anchor,
-                  @Nullable String anchorFiledName) {
-      super(fieldName, anchor, anchorFiledName);
-      this.clazz = clazz;
+    protected Option(@NotNull String optionName,
+                     @NotNull String title,
+                     @Nullable String groupName,
+                     @Nullable OptionAnchor anchor,
+                     @Nullable String anchorOptionName) {
+      super(optionName, anchor, anchorOptionName);
       this.title = title;
       this.groupName = groupName;
-
-      try {
-        Class styleSettingsClass = clazz == null ? CommonCodeStyleSettings.class : clazz;
-        this.field = styleSettingsClass.getField(fieldName);
-      }
-      catch (NoSuchFieldException e) {
-        throw new RuntimeException(e);
-      }
     }
 
     public void setEnabled(boolean enabled) {
@@ -395,14 +393,38 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     public abstract Object getValue(CodeStyleSettings settings);
 
     public abstract void setValue(Object value, CodeStyleSettings settings);
+  }
+
+  private abstract class FieldOption extends Option {
+    @Nullable final Class<? extends CustomCodeStyleSettings> clazz;
+    @NotNull final Field field;
+
+    public FieldOption(@Nullable Class<? extends CustomCodeStyleSettings> clazz,
+                  @NotNull String fieldName,
+                  @NotNull String title,
+                  @Nullable String groupName,
+                  @Nullable OptionAnchor anchor,
+                  @Nullable String anchorFiledName) {
+      super(fieldName, title, groupName, anchor, anchorFiledName);
+      this.clazz = clazz;
+
+      try {
+        Class styleSettingsClass = clazz == null ? CommonCodeStyleSettings.class : clazz;
+        this.field = styleSettingsClass.getField(fieldName);
+      }
+      catch (NoSuchFieldException e) {
+        throw new RuntimeException(e);
+      }
+    }
 
     protected Object getSettings(CodeStyleSettings settings) {
       if (clazz != null) return settings.getCustomSettings(clazz);
       return settings.getCommonSettings(getDefaultLanguage());
     }
+
   }
 
-  private class BooleanOption extends Option {
+  private class BooleanOption extends FieldOption {
     private BooleanOption(Class<? extends CustomCodeStyleSettings> clazz,
                           @NotNull String fieldName,
                           @NotNull String title,
@@ -432,7 +454,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     }
   }
 
-  private class SelectionOption extends Option {
+  private class SelectionOption extends FieldOption {
     @NotNull final String[] options;
     @NotNull final int[] values;
 
@@ -479,12 +501,12 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     }
   }
 
-  private class IntOption extends Option {
+  private class IntOption extends FieldOption {
 
     private final int myMinValue;
     private final int myMaxValue;
     private final int myDefaultValue;
-    @Nullable private String myDefaultValueText;
+    @Nullable private Function<Integer,String> myDefaultValueRenderer;
 
     public IntOption(Class<? extends CustomCodeStyleSettings> clazz,
                      @NotNull String fieldName,
@@ -495,12 +517,12 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
                      int minValue,
                      int maxValue,
                      int defaultValue,
-                     @Nullable String defaultValueText) {
+                     @Nullable Function<Integer,String> defaultValueRenderer) {
       super(clazz, fieldName, title, groupName, anchor, anchorFiledName);
       myMinValue = minValue;
       myMaxValue = maxValue;
       myDefaultValue = defaultValue;
-      myDefaultValueText = defaultValueText;
+      myDefaultValueRenderer = defaultValueRenderer;
     }
 
     @Override
@@ -546,7 +568,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
 
     @Nullable
     public String getDefaultValueText() {
-      return myDefaultValueText;
+      return myDefaultValueRenderer != null ? myDefaultValueRenderer.apply(myDefaultValue) : null;
     }
   }
 
@@ -620,7 +642,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
                                                   boolean hasFocus) {
       if (value instanceof MyTreeNode) {
         MyTreeNode node = (MyTreeNode)value;
-        myLabel.setText(getRenamedTitle(node.getKey().field.getName(), node.getText()));
+        myLabel.setText(getRenamedTitle(node.getKey().getOptionName(), node.getText()));
         myLabel.setFont(myLabel.getFont().deriveFont(node.getKey().groupName == null ? Font.BOLD : Font.PLAIN));
         myLabel.setEnabled(node.isEnabled());
       }
@@ -637,7 +659,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     }
   };
 
-  private static class MyTreeNode extends DefaultMutableTreeNode {
+  protected static class MyTreeNode extends DefaultMutableTreeNode {
     private final Option myKey;
     private final String myText;
     private Object myValue;
@@ -682,7 +704,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     }
   }
 
-  private static class MyValueRenderer implements TableCellRenderer {
+  private class MyValueRenderer implements TableCellRenderer {
     private JTable myTable;
     private int myRow;
     private int myColumn;
@@ -722,10 +744,6 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
         return myCheckBox;
       }
       else if (value instanceof String) {
-        /*
-        myComboBox.removeAllItems();
-        myComboBox.addItem(value);
-        */
         myComboBox.setText((String)value);
         myComboBox.setBackground(background);
         myComboBox.setEnabled(isEnabled);
@@ -739,6 +757,12 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
           myIntLabel.setText(value.toString());
         }
         return myIntLabel;
+      }
+      else if (key != null && value != null) {
+        JComponent customRenderer = getCustomValueRenderer(key.getOptionName(), value);
+        if (customRenderer != null) {
+          return customRenderer;
+        }
       }
 
       myCheckBox.putClientProperty("JComponent.sizeVariant", "small");
@@ -795,51 +819,28 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     }
   }
 
-  private static class MyIntOptionEditor extends JTextField {
-    private int myMinValue;
-    private int myMaxValue;
-    private int myDefaultValue;
 
-    private MyIntOptionEditor() {
-      super();
-    }
-
-    public Object getPresentableValue() {
-      return validateAndGetIntOption();
-    }
-
-    private int validateAndGetIntOption() {
-      try {
-        int value = Integer.parseInt(getText());
-        return value >= myMinValue && value <= myMaxValue ? value : myDefaultValue;
-      }
-      catch (NumberFormatException nfe) {
-        return myDefaultValue;
-      }
-    }
-
-    public void setMinValue(int minValue) {
-      myMinValue = minValue;
-    }
-
-    public void setMaxValue(int maxValue) {
-      myMaxValue = maxValue;
-    }
-
-    public void setDefaultValue(int defaultValue) {
-      myDefaultValue = defaultValue;
-    }
+  @Nullable
+  protected JComponent getCustomValueRenderer(@NotNull String optionName, @NotNull Object value) {
+    return null;
   }
 
   /**
    * @author Konstantin Bulenkov
    */
   private class MyValueEditor extends AbstractTableCellEditor {
+    public static final String STOP_CELL_EDIT_ACTION_KEY = "stopEdit";
     private final JCheckBox myBooleanEditor = new JBCheckBox();
     private JBComboBoxTableCellEditorComponent myOptionsEditor = new JBComboBoxTableCellEditorComponent();
-    private MyIntOptionEditor myIntOptionsEditor = new MyIntOptionEditor();
-    private Component myCurrentEditor = null;
+    private IntegerField myIntOptionsEditor = new IntegerField();
+    private JComponent myCurrentEditor = null;
     private MyTreeNode myCurrentNode = null;
+    private final AbstractAction STOP_CELL_EDIT_ACTION = new AbstractAction() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        stopCellEditing();
+      }
+    };
 
     public MyValueEditor() {
       final ActionListener itemChoosen = new ActionListener() {
@@ -855,30 +856,22 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
       myOptionsEditor.addActionListener(itemChoosen);
       myBooleanEditor.putClientProperty("JComponent.sizeVariant", "small");
       myOptionsEditor.putClientProperty("JComponent.sizeVariant", "small");
-      myIntOptionsEditor.registerKeyboardAction(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          stopCellEditing();
-        }
-      }, ENTER_KEY_STROKE, JComponent.WHEN_FOCUSED);
     }
 
     @Override
     public Object getCellEditorValue() {
       if (myCurrentEditor == myOptionsEditor) {
-        //new Alarm(Alarm.ThreadToUse.SWING_THREAD).addRequest(new Runnable() {
-        //                                                       @Override
-        //                                                       public void run() {
-        //                                                         somethingChanged();
-        //                                                       }
-        //                                                     }, 100);
         return myOptionsEditor.getEditorValue();
       }
       else if (myCurrentEditor == myBooleanEditor) {
         return myBooleanEditor.isSelected();
       }
       else if (myCurrentEditor == myIntOptionsEditor) {
-        return myIntOptionsEditor.getPresentableValue();
+        return myIntOptionsEditor.getValue();
+      }
+      else {
+        Object value = getCustomNodeEditorValue(myCurrentEditor);
+        if (value != null) return value;
       }
 
       return null;
@@ -901,15 +894,20 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
         else if (node.getKey() instanceof IntOption) {
           IntOption intOption = (IntOption)node.getKey();
           myCurrentEditor = myIntOptionsEditor;
-          myIntOptionsEditor.setText(intOption.isDefaultValue(node.getValue()) ? "" : node.getValue().toString());
+          myIntOptionsEditor.setCanBeEmpty(true);
           myIntOptionsEditor.setMinValue(intOption.getMinValue());
           myIntOptionsEditor.setMaxValue(intOption.getMaxValue());
           myIntOptionsEditor.setDefaultValue(intOption.getDefaultValue());
+          myIntOptionsEditor.setValue((Integer)node.getValue());
         }
         else {
+          myCurrentEditor = getCustomNodeEditor(node);
+        }
+        if (myCurrentEditor == null) {
           myCurrentEditor = myOptionsEditor;
           myOptionsEditor.setCell(table, row, column);
           myOptionsEditor.setText(String.valueOf(node.getValue()));
+          //noinspection ConfusingArgumentToVarargsMethod
           myOptionsEditor.setOptions(((SelectionOption)node.getKey()).options);
           myOptionsEditor.setDefaultValue(node.getValue());
         }
@@ -917,9 +915,23 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
 
       if (myCurrentEditor != null) {
         myCurrentEditor.setBackground(table.getBackground());
+        if (myCurrentEditor instanceof JTextField) {
+          myCurrentEditor.getInputMap().put(ENTER_KEY_STROKE, STOP_CELL_EDIT_ACTION_KEY);
+          myCurrentEditor.getActionMap().put(STOP_CELL_EDIT_ACTION_KEY, STOP_CELL_EDIT_ACTION);
+        }
       }
       return myCurrentEditor;
     }
+  }
+
+  @Nullable
+  protected JComponent getCustomNodeEditor(@NotNull MyTreeNode node) {
+    return null;
+  }
+
+  @Nullable
+  protected Object getCustomNodeEditorValue(@NotNull JComponent customEditor) {
+    return null;
   }
 
   @Override
@@ -960,7 +972,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     return options;
   }
 
-  private void collectOptions(Set<String> optionNames, final List<Option> optionList) {
+  private static void collectOptions(Set<String> optionNames, final List<Option> optionList) {
     for (Option option : optionList) {
       if (option.groupName != null) {
         optionNames.add(option.groupName);

@@ -22,15 +22,14 @@ import java.awt.Point
 import java.awt.Rectangle
 
 
-class HyperlinkLabelFixture(robot: Robot, val hyperlinkLabel: HyperlinkLabel) : ComponentFixture<HyperlinkLabelFixture, HyperlinkLabel>(
-  HyperlinkLabelFixture::class.java, robot,
-  hyperlinkLabel) {
+class HyperlinkLabelFixture(robot: Robot, private val hyperlinkLabel: HyperlinkLabel) : ComponentFixture<HyperlinkLabelFixture, HyperlinkLabel>(
+  HyperlinkLabelFixture::class.java, robot, hyperlinkLabel) {
 
   fun clickLink(regionText: String) {
     if (!hyperlinkLabel.hightlightedRegionsBoundsMap.containsKey(regionText)) throw ComponentLookupException(
       "Unable to find highlighted region \"$regionText\" in HyperlinkLabel:\"${hyperlinkLabel.text}\"")
     val rectangle = hyperlinkLabel.hightlightedRegionsBoundsMap[regionText]
-    driver().click(hyperlinkLabel, rectangle!!.center())
+    driver().click(hyperlinkLabel.parent, rectangle!!.center())
   }
 
   private fun Rectangle.center(): Point

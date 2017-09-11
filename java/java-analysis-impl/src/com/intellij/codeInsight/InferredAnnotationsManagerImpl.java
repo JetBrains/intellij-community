@@ -91,7 +91,7 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
 
   @Override
   public boolean ignoreInference(@NotNull PsiModifierListOwner owner, @Nullable String annotationFQN) {
-    if (owner instanceof PsiMethod && PsiUtil.canBeOverriden((PsiMethod)owner)) {
+    if (owner instanceof PsiMethod && PsiUtil.canBeOverridden((PsiMethod)owner)) {
       return true;
     }
     if (ORG_JETBRAINS_ANNOTATIONS_CONTRACT.equals(annotationFQN) && HardcodedContracts.hasHardcodedContracts(owner)) {

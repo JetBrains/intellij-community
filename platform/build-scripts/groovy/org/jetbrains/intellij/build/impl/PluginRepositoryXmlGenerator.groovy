@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.openapi.util.text.StringUtil
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import groovy.transform.Immutable
+import groovy.xml.XmlUtil
 import org.jetbrains.intellij.build.BuildContext
 
 /**
@@ -54,12 +55,12 @@ class PluginRepositoryXmlGenerator {
         categories.get(it).toSorted { o1, o2 -> StringUtil.naturalCompare(o1.id, o2.id)}.each { Plugin p ->
           out.println """\
     <idea-plugin size="$p.size">
-      <name>$p.name</name>
-      <id>$p.id</id>
+      <name>${XmlUtil.escapeXml(p.name)}</name>
+      <id>${XmlUtil.escapeXml(p.id ?: p.name)}</id>
       <version>$p.version</version>
       <idea-version since-build="$p.sinceBuild" until-build="$p.untilBuild"/>
-      <vendor>$p.vendor</vendor>
-      <download-url>$p.fileName</download-url>
+      <vendor>${XmlUtil.escapeXml(p.vendor)}</vendor>
+      <download-url>${XmlUtil.escapeXml(p.fileName)}</download-url>
       <description><![CDATA[$p.description]]></description>
     </idea-plugin>"""
         }

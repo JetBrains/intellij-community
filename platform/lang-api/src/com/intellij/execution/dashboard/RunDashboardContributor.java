@@ -50,11 +50,11 @@ public abstract class RunDashboardContributor {
     return myType;
   }
 
-  public void updatePresentation(@NotNull PresentationData presentation, @NotNull DashboardNode node) {
+  public void updatePresentation(@NotNull PresentationData presentation, @NotNull RunDashboardNode node) {
   }
 
   public boolean customizeCellRenderer(@NotNull ColoredTreeCellRenderer cellRenderer, @NotNull JLabel nodeLabel,
-                                       @NotNull DashboardNode node,
+                                       @NotNull RunDashboardNode node,
                                        boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
     return false;
   }
@@ -66,8 +66,8 @@ public abstract class RunDashboardContributor {
    * @return node's status. Returned status is used for grouping nodes by status.
    */
   @NotNull
-  public DashboardRunConfigurationStatus getStatus(@NotNull DashboardRunConfigurationNode node) {
-    return DashboardRunConfigurationStatus.getStatus(node);
+  public RunDashboardRunConfigurationStatus getStatus(@NotNull RunDashboardRunConfigurationNode node) {
+    return RunDashboardRunConfigurationStatus.getStatus(node);
   }
 
   public boolean isShowInDashboard(@NotNull RunConfiguration runConfiguration) {

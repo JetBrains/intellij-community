@@ -23,6 +23,8 @@ import java.util.concurrent.TimeUnit
  */
 interface JUnitServer {
 
+  fun start()
+
   fun send(message: TransportMessage)
 
   fun receive(): TransportMessage
@@ -44,4 +46,5 @@ interface JUnitServer {
   fun getPort(): Int
 
   fun stopServer()
+
 }

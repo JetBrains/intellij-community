@@ -18,9 +18,9 @@ package com.intellij.execution.dashboard.tree;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationType;
-import com.intellij.execution.dashboard.DashboardGroup;
-import com.intellij.execution.dashboard.DashboardGroupingRule;
-import com.intellij.execution.dashboard.DashboardRunConfigurationNode;
+import com.intellij.execution.dashboard.RunDashboardGroup;
+import com.intellij.execution.dashboard.RunDashboardGroupingRule;
+import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.smartTree.ActionPresentation;
@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author konstantin.aleev
  */
-public class ConfigurationTypeDashboardGroupingRule implements DashboardGroupingRule {
+public class ConfigurationTypeDashboardGroupingRule implements RunDashboardGroupingRule {
   @NonNls private static final String NAME = "ConfigurationTypeDashboardGroupingRule";
 
   @Override
@@ -66,11 +66,11 @@ public class ConfigurationTypeDashboardGroupingRule implements DashboardGrouping
 
   @Nullable
   @Override
-  public DashboardGroup getGroup(AbstractTreeNode<?> node) {
-    if (node instanceof DashboardRunConfigurationNode) {
-      RunnerAndConfigurationSettings configurationSettings = ((DashboardRunConfigurationNode)node).getConfigurationSettings();
+  public RunDashboardGroup getGroup(AbstractTreeNode<?> node) {
+    if (node instanceof RunDashboardRunConfigurationNode) {
+      RunnerAndConfigurationSettings configurationSettings = ((RunDashboardRunConfigurationNode)node).getConfigurationSettings();
       ConfigurationType type = configurationSettings.getType();
-      return new DashboardGroupImpl<>(type, type.getDisplayName(), type.getIcon());
+      return new RunDashboardGroupImpl<>(type, type.getDisplayName(), type.getIcon());
     }
     return null;
   }

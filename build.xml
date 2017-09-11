@@ -17,7 +17,7 @@
     </condition>
     <exec executable="${gradle.executable}" dir="${project.home}/build/dependencies" failonerror="true">
       <arg value="--no-daemon"/>
-      <arg value="setupKotlin"/>
+      <arg value="setupKotlinPlugin"/>
     </exec>
     <propertyset id="intellij.build.properties">
       <propertyref name="build.number"/>

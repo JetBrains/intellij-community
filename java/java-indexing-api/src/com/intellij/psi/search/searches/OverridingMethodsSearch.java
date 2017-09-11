@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,9 @@ package com.intellij.psi.search.searches;
 
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.psi.PsiAnonymousClass;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.EmptyQuery;
 import com.intellij.util.Query;
 import com.intellij.util.QueryExecutor;
@@ -64,19 +62,8 @@ public class OverridingMethodsSearch extends ExtensibleQueryFactory<PsiMethod, O
   }
 
   public static Query<PsiMethod> search(@NotNull PsiMethod method, @NotNull SearchScope scope, final boolean checkDeep) {
-    if (ReadAction.compute(() -> !canBeOverridden(method))) return EmptyQuery.getEmptyQuery(); // Optimization
+    if (ReadAction.compute(() -> !PsiUtil.canBeOverridden(method))) return EmptyQuery.getEmptyQuery(); // Optimization
     return INSTANCE.createUniqueResultsQuery(new SearchParameters(method, scope, checkDeep));
-  }
-
-  private static boolean canBeOverridden(@NotNull PsiMethod method) {
-    final PsiClass parentClass = method.getContainingClass();
-    return parentClass != null
-           && !method.isConstructor()
-           && !method.hasModifierProperty(PsiModifier.STATIC)
-           && !method.hasModifierProperty(PsiModifier.FINAL)
-           && !method.hasModifierProperty(PsiModifier.PRIVATE)
-           && !(parentClass instanceof PsiAnonymousClass)
-           && !parentClass.hasModifierProperty(PsiModifier.FINAL);
   }
 
   @NotNull

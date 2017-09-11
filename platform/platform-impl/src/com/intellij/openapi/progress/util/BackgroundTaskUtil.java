@@ -194,28 +194,35 @@ public class BackgroundTaskUtil {
                                                                  boolean onPooledThread) {
     ProgressIndicator indicator = new EmptyProgressIndicator(modalityState);
     indicator.start();
+    Runnable toRun = () -> ProgressManager.getInstance().runProcess(task, indicator);
 
-    CompletableFuture<?> future;
     if (onPooledThread) {
-      future = CompletableFuture.runAsync(()->ProgressManager.getInstance().runProcess(task, indicator),
-                                          AppExecutorUtil.getAppExecutorService());
+      CompletableFuture<?> future = CompletableFuture.runAsync(toRun, AppExecutorUtil.getAppExecutorService());
+      Disposable disposable = () -> {
+        if (indicator.isRunning()) indicator.cancel();
+        try {
+          future.get(1, TimeUnit.SECONDS);
+        }
+        catch (InterruptedException | ExecutionException | TimeoutException e) {
+          LOG.error(e);
+        }
+      };
+
+      Disposer.register(parent, disposable);
+      future.whenComplete((o, e) -> Disposer.dispose(disposable));
     }
     else {
-      task.run();
-      future = CompletableFuture.completedFuture(null);
-    }
-    Disposable disposable = () -> {
-      if (indicator.isRunning()) indicator.cancel();
+      Disposable disposable = () -> {
+        if (indicator.isRunning()) indicator.cancel();
+      };
+      Disposer.register(parent, disposable);
       try {
-        future.get(1, TimeUnit.SECONDS);
+        toRun.run();
       }
-      catch (InterruptedException | ExecutionException | TimeoutException e) {
-        LOG.error(e);
+      finally {
+        Disposer.dispose(disposable);
       }
-    };
-
-    future.whenComplete((o, e) -> Disposer.dispose(disposable));
-    Disposer.register(parent, disposable);
+    }
     return indicator;
   }
 

@@ -18,6 +18,8 @@ package org.jetbrains.plugins.gradle.importing;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
+import com.intellij.execution.RunManager;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -198,6 +200,42 @@ public class GradleMiscImportingTest extends GradleImportingTestCase {
     assertFalse(workspaceConfiguration.MAKE_PROJECT_ON_SAVE);
     assertTrue(workspaceConfiguration.PARALLEL_COMPILATION);
     assertFalse(workspaceConfiguration.REBUILD_ON_DEPENDENCY_CHANGE);
+  }
+
+  @Test
+  public void testApplicationRunConfigurationSettingsImport() throws Exception {
+    final String pathToPlugin = getClass().getResource("/testCompilerConfigurationSettingsImport/gradle-idea-ext.jar").toString();
+
+    importProject(
+      "buildscript {\n" +
+      "  dependencies {\n" +
+      "     classpath files('" + pathToPlugin + "')\n" +
+      "  }\n" +
+      "}\n" +
+      "apply plugin: 'org.jetbrains.gradle.plugin.idea-ext'\n" +
+      "idea {\n" +
+      "  module.settings {\n" +
+      "    runConfigurations {\n" +
+      "       app1 {\n" +
+      "           type = 'application'\n" +
+      "           mainClass = 'my.app.Class'\n" +
+      "           jvmArgs =   '-Xmx1g'\n" +
+      "       }\n" +
+      "       app2 {\n" +
+      "           type = 'application'\n" +
+      "           mainClass = 'my.app.Class2'\n" +
+      "       }\n" +
+      "    }\n" +
+      "  }\n" +
+      "}"
+    );
+
+    final RunManager runManager = RunManager.getInstance(myProject);
+    final RunnerAndConfigurationSettings app1 = runManager.findConfigurationByName("app1");
+    final RunnerAndConfigurationSettings app2 = runManager.findConfigurationByName("app2");
+
+    assertEquals("com.intellij.execution.application.ApplicationConfiguration", app1.getConfiguration().getClass().getCanonicalName());
+    assertEquals("com.intellij.execution.application.ApplicationConfiguration", app2.getConfiguration().getClass().getCanonicalName());
   }
 
   private LanguageLevel getLanguageLevelForModule(final String moduleName) {

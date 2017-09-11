@@ -15,14 +15,10 @@
  */
 package com.intellij.structuralsearch.impl.matcher.strategies;
 
-import com.intellij.dupLocator.util.NodeFilter;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlTag;
 
-/**
- * Base filtering strategy to find statements
- */
-public class XmlMatchingStrategy implements MatchingStrategy, NodeFilter {
+public class XmlMatchingStrategy implements MatchingStrategy {
 
   private static final MatchingStrategy INSTANCE = new XmlMatchingStrategy();
 
@@ -30,17 +26,12 @@ public class XmlMatchingStrategy implements MatchingStrategy, NodeFilter {
 
   @Override
   public boolean continueMatching(final PsiElement start) {
-    return accepts(start);
+    return start instanceof XmlTag;
   }
 
   @Override
   public boolean shouldSkip(PsiElement element, PsiElement elementToMatchWith) {
     return false;
-  }
-
-  @Override
-  public boolean accepts(PsiElement element) {
-    return element instanceof XmlTag;
   }
 
   public static MatchingStrategy getInstance() {

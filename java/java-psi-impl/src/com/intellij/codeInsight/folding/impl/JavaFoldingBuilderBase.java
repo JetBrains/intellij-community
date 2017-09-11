@@ -39,7 +39,10 @@ import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.PropertyUtilBase;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -547,6 +550,10 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
 
         if (foldJavaDocs) {
           addDocCommentToFold(list, document, method);
+        }
+
+        for (PsiParameter parameter : method.getParameterList().getParameters()) {
+          addAnnotationsToFold(parameter.getModifierList(), list, document);
         }
 
         PsiCodeBlock body = method.getBody();

@@ -39,6 +39,7 @@ import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.diagnostic.AttachmentFactory;
 import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.lang.java.request.CreateMethodFromUsage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -491,6 +492,12 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
                                                                              boolean changeAllUsages,
                                                                              int minUsagesNumberToShowDialog) {
     return new ChangeMethodSignatureFromUsageReverseOrderFix(targetMethod, expressions, substitutor, context, changeAllUsages, minUsagesNumberToShowDialog);
+  }
+
+  @NotNull
+  @Override
+  public List<IntentionAction> createCreateMethodFromUsageFixes(@NotNull PsiMethodCallExpression call) {
+    return CreateMethodFromUsage.generateActions(call);
   }
 
   @NotNull

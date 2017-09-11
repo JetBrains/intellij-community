@@ -73,47 +73,7 @@ public class DetailsPanel extends JPanel implements EditorColorsListener {
     myColorManager = colorManager;
 
     myScrollPane = new JBScrollPane(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-    myMainContentPanel = new ScrollablePanel() {
-      @Override
-      public boolean getScrollableTracksViewportWidth() {
-        boolean expanded = false;
-        for (Component c : getComponents()) {
-          if (c instanceof CommitPanel && ((CommitPanel)c).isExpanded()) {
-            expanded = true;
-            break;
-          }
-        }
-        return !expanded;
-      }
-
-      @Override
-      public Dimension getPreferredSize() {
-        Dimension preferredSize = super.getPreferredSize();
-        int height = Math.max(preferredSize.height, myScrollPane.getViewport().getHeight());
-        JBScrollPane scrollPane = UIUtil.getParentOfType(JBScrollPane.class, this);
-        if (scrollPane == null || getScrollableTracksViewportWidth()) {
-          return new Dimension(preferredSize.width, height);
-        }
-        else {
-          return new Dimension(Math.max(preferredSize.width, scrollPane.getViewport().getWidth()), height);
-        }
-      }
-
-      @Override
-      public Color getBackground() {
-        return CommitPanel.getCommitDetailsBackground();
-      }
-
-      @Override
-      protected void paintChildren(Graphics g) {
-        if (StringUtil.isNotEmpty(myEmptyText.getText())) {
-          myEmptyText.paint(this, g);
-        }
-        else {
-          super.paintChildren(g);
-        }
-      }
-    };
+    myMainContentPanel = new MyMainContentPanel();
     myEmptyText = new StatusText(myMainContentPanel) {
       @Override
       protected boolean isStatusVisible() {
@@ -270,6 +230,52 @@ public class DetailsPanel extends JPanel implements EditorColorsListener {
     @Override
     protected void stopLoading() {
       myLoadingPanel.stopLoading();
+    }
+  }
+
+  private class MyMainContentPanel extends ScrollablePanel {
+    @Override
+    public boolean getScrollableTracksViewportWidth() {
+      boolean expanded = false;
+      for (Component c : getComponents()) {
+        if (c instanceof CommitPanel && ((CommitPanel)c).isExpanded()) {
+          expanded = true;
+          break;
+        }
+      }
+      // expanded containing branches are displayed in a table, it is more convenient to have a scrollbar in this case
+      return !expanded;
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+      Dimension preferredSize = super.getPreferredSize();
+      int height = Math.max(preferredSize.height, myScrollPane.getViewport().getHeight());
+      JBScrollPane scrollPane = UIUtil.getParentOfType(JBScrollPane.class, this);
+      if (scrollPane == null || getScrollableTracksViewportWidth()) {
+        return new Dimension(preferredSize.width, height);
+      }
+      else {
+        // we want content panel to fill all available horizontal space in order to display root label in the upper-right corner
+        // but when containing branches are expanded, we show a horizontal scrollbar, so content panel width wont be automatically adjusted
+        // here it is done manually
+        return new Dimension(Math.max(preferredSize.width, scrollPane.getViewport().getWidth()), height);
+      }
+    }
+
+    @Override
+    public Color getBackground() {
+      return CommitPanel.getCommitDetailsBackground();
+    }
+
+    @Override
+    protected void paintChildren(Graphics g) {
+      if (StringUtil.isNotEmpty(myEmptyText.getText())) {
+        myEmptyText.paint(this, g);
+      }
+      else {
+        super.paintChildren(g);
+      }
     }
   }
 }

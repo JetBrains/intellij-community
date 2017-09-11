@@ -35,6 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -58,6 +59,8 @@ public class CommonCodeStyleSettings {
   private IndentOptions       myIndentOptions;
   private final FileType myFileType;
   private boolean             myForceArrangeMenuAvailable;
+
+  protected SoftMargins mySoftMargins = new SoftMargins();
 
   @NonNls private static final String INDENT_OPTIONS_TAG = "indentOptions";
 
@@ -129,6 +132,7 @@ public class CommonCodeStyleSettings {
     if (myArrangementSettings != null) {
       commonSettings.setArrangementSettings(myArrangementSettings.clone());
     }
+    commonSettings.setSoftMargins(getSoftMargins());
     return commonSettings;
   }
 
@@ -167,6 +171,7 @@ public class CommonCodeStyleSettings {
     if (arrangementRulesContainer != null) {
       myArrangementSettings = ArrangementUtil.readExternal(arrangementRulesContainer, myLanguage);
     }
+    mySoftMargins.deserializeFrom(element);
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
@@ -177,6 +182,7 @@ public class CommonCodeStyleSettings {
       supportedFields.add("FORCE_REARRANGE_MODE");
     }
     DefaultJDOMExternalizer.writeExternal(this, element, new SupportedFieldsDiffFilter(this, supportedFields, defaultSettings));
+    mySoftMargins.serializeInto(element);
     if (myIndentOptions != null) {
       IndentOptions defaultIndentOptions = defaultSettings != null ? defaultSettings.getIndentOptions() : null;
       Element indentOptionsElement = new Element(INDENT_OPTIONS_TAG);
@@ -1073,5 +1079,14 @@ public class CommonCodeStyleSettings {
       }
     }
     return Comparing.equal(theseSettings, obj.getArrangementSettings());
+  }
+
+  @NotNull
+  public List<Integer> getSoftMargins() {
+    return mySoftMargins.getValues();
+  }
+
+  void setSoftMargins(List<Integer> values) {
+    mySoftMargins.setValues(values);
   }
 }

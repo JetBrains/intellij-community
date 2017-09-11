@@ -57,7 +57,7 @@ class JUnitServerImpl: JUnitServer {
     serverSocket.soTimeout = 180000
   }
 
-  fun start() {
+  override fun start() {
     execOnParallelThread {
       try {
         connection = serverSocket.accept()
@@ -131,11 +131,11 @@ class JUnitServerImpl: JUnitServer {
   override fun stopServer() {
     serverSendThread.objectOutputStream.close()
     LOG.info("Object output stream closed")
-    serverSendThread.join()
+    serverSendThread.interrupt()
     LOG.info("Server Send Thread joined")
     serverReceiveThread.objectInputStream.close()
     LOG.info("Object input stream closed")
-    serverReceiveThread.join()
+    serverReceiveThread.interrupt()
     LOG.info("Server Receive Thread joined")
     connection.close()
   }
@@ -173,6 +173,7 @@ class JUnitServerImpl: JUnitServer {
         objectOutputStream.close()
       }
     }
+
   }
 
   inner class ServerReceiveThread(val connection: Socket, val objectInputStream: ObjectInputStream) : Thread(RECEIVE_THREAD) {

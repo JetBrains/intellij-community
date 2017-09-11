@@ -7,6 +7,7 @@ import inspect
 from teamcity import is_running_under_teamcity
 from teamcity.common import is_string, get_class_fullname, convert_error_to_string, dump_test_stdout, FlushingStringIO
 from teamcity.messages import TeamcityServiceMessages
+from .diff_tools import EqualsAssertionError, patch_unittest_diff
 
 import nose
 # noinspection PyPackageRequirements
@@ -14,6 +15,7 @@ from nose.exc import SkipTest, DeprecatedTest
 # noinspection PyPackageRequirements
 from nose.plugins import Plugin
 
+patch_unittest_diff()
 
 CONTEXT_SUITE_FQN = "nose.suite.ContextSuite"
 
@@ -144,6 +146,14 @@ class TeamcityReport(Plugin):
             # do not log test output twice, see report_finish for actual output handling
             details = details[:start_index] + details[end_index + len(_captured_output_end_marker):]
 
+        try:
+            error = err[1]
+            if isinstance(error, EqualsAssertionError):
+                details = convert_error_to_string(err, 2)
+                self.messages.testFailed(test_id, message=error.msg, details=details, flowId=test_id, comparison_failure=error)
+                return
+        except:
+            pass
         self.messages.testFailed(test_id, message=fail_type, details=details, flowId=test_id)
 
     def report_finish(self, test):

@@ -62,7 +62,7 @@ public abstract class PsiTreeChangePreprocessorBase implements PsiTreeChangePrep
 
   private boolean _containsStructuralElements(@Nullable PsiElement element) {
     if (element == null) return false;
-    if (element instanceof PsiDirectory) return true;
+    if (element instanceof PsiFileSystemItem) return true;
     return containsStructuralElements(element);
   }
 

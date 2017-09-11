@@ -25,7 +25,6 @@ import com.intellij.codeInspection.LambdaCanBeMethodReferenceInspection;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
-import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
@@ -34,7 +33,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
-import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
@@ -43,8 +41,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
-import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
@@ -56,7 +52,6 @@ import javax.swing.*;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Function;
 
 import static com.intellij.codeInspection.streamMigration.OperationReductionMigration.SUM_OPERATION;
 import static com.intellij.util.ObjectUtils.tryCast;
@@ -444,43 +439,30 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       if (!ExceptionUtil.getThrownCheckedExceptions(body).isEmpty()) return;
       TerminalBlock tb = TerminalBlock.from(source, body);
 
-      BaseStreamApiMigration migration = findMigration(statement, body, tb, myHolder, SUGGEST_FOREACH, REPLACE_TRIVIAL_FOREACH);
-      offerMigration(statement, tb, migration, (streamApiMigration) -> getRange(streamApiMigration.isShouldWarn(), statement, myIsOnTheFly)
-        .shiftRight(-statement.getTextOffset()), null, myIsOnTheFly, myHolder);
-    }
-  }
-
-  static void offerMigration(PsiStatement statement,
-                                     TerminalBlock tb,
-                                     BaseStreamApiMigration migration,
-                                     Function<BaseStreamApiMigration, TextRange> rangeSupplier,
-                                     @Nullable String customMessage,
-                                     boolean isOnTheFly,
-                                     ProblemsHolder holder) {
-    if (migration != null && (isOnTheFly || migration.isShouldWarn())) {
-
-      MigrateToStreamFix[] fixes = {new MigrateToStreamFix(migration, customMessage)};
+      BaseStreamApiMigration migration = findMigration(statement, body, tb, SUGGEST_FOREACH, REPLACE_TRIVIAL_FOREACH);
+      if (migration == null || (!myIsOnTheFly && !migration.isShouldWarn())) return;
+      MigrateToStreamFix[] fixes = {new MigrateToStreamFix(migration)};
       if (migration instanceof ForEachMigration && !(tb.getLastOperation() instanceof CollectionStream)) { //for .stream()
-        fixes = ArrayUtil.append(fixes, new MigrateToStreamFix(new ForEachMigration(migration.isShouldWarn(), "forEachOrdered"), customMessage));
+        fixes = ArrayUtil.append(fixes, new MigrateToStreamFix(new ForEachMigration(migration.isShouldWarn(), "forEachOrdered")));
       }
       ProblemHighlightType highlightType =
         migration.isShouldWarn() ? ProblemHighlightType.GENERIC_ERROR_OR_WARNING : ProblemHighlightType.INFORMATION;
-      String message = customMessage != null ? customMessage : "Can be replaced with '" + migration.getReplacement() + "' call";
-      holder.registerProblem(statement, message, highlightType, rangeSupplier.apply(migration), fixes);
+      String message = "Can be replaced with '" + migration.getReplacement() + "' call";
+      TextRange range = getRange(migration.isShouldWarn(), statement, myIsOnTheFly);
+      myHolder.registerProblem(statement, message, highlightType, range.shiftRight(-statement.getTextOffset()), fixes);
     }
   }
 
 
   @Nullable
   static BaseStreamApiMigration findMigration(PsiStatement loop,
-                                                      PsiElement body,
-                                                      TerminalBlock tb,
-                                                      ProblemsHolder holder,
-                                                      boolean suggestForeach,
-                                                      boolean replaceTrivialForEach) {
+                                              PsiElement body,
+                                              TerminalBlock tb,
+                                              boolean suggestForeach,
+                                              boolean replaceTrivialForEach) {
     final ControlFlow controlFlow;
     try {
-      controlFlow = ControlFlowFactory.getInstance(holder.getProject())
+      controlFlow = ControlFlowFactory.getInstance(loop.getProject())
         .getControlFlow(body, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
     }
     catch (AnalysisCanceledException ignored) {

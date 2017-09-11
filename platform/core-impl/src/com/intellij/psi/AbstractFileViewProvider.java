@@ -73,6 +73,7 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
   private volatile Content myContent;
   private volatile Reference<Document> myDocument;
   @NotNull private final FileType myFileType;
+  private final PsiLock myPsiLock = new PsiLock();
 
   protected AbstractFileViewProvider(@NotNull PsiManager manager,
                                      @NotNull VirtualFile virtualFile,
@@ -91,6 +92,10 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
 
   public static boolean isFreeThreaded(@NotNull FileViewProvider provider) {
     return provider.getVirtualFile() instanceof LightVirtualFile && !provider.isEventSystemEnabled();
+  }
+
+  @NotNull public PsiLock getFilePsiLock() {
+    return myPsiLock;
   }
 
   protected final boolean isIgnored() {
@@ -270,14 +275,14 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
       }
     }
 
+    contentsSynchronized();
+
     for (PsiTreeChangeEventImpl event : events) {
       ((PsiManagerImpl)getManager()).childrenChanged(event);
     }
     for (PsiTreeChangeEventImpl event : genericEvents) {
       ((PsiManagerImpl)getManager()).childrenChanged(event);
     }
-
-    contentsSynchronized();
   }
 
   private PsiTreeChangeEventImpl createChildrenChangeEvent(PsiFile file, boolean generic) {

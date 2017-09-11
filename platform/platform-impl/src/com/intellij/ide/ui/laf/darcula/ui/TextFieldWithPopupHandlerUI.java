@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,8 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.SearchTextField;
-import com.intellij.ui.components.ExtendableTextField;
-import com.intellij.ui.components.ExtendableTextField.Extension;
+import com.intellij.ui.components.fields.ExtendableTextField;
+import com.intellij.ui.components.fields.ExtendableTextField.Extension;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -152,7 +152,15 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
         bounds.width -= holder.bounds.width + gap;
         holder.bounds.x = bounds.x + bounds.width + gap;
       }
-      holder.bounds.y = bounds.y + (bounds.height - holder.bounds.height) / 2;
+      JTextComponent component = getComponent();
+      boolean multiline = component != null && !Boolean.TRUE.equals(component.getDocument().getProperty("filterNewlines"));
+      holder.bounds.y = bounds.y;
+      if (!multiline) {
+        holder.bounds.y += (bounds.height - holder.bounds.height) / 2;
+      }
+      else {
+        holder.bounds.y += gap;
+      }
     }
   }
 

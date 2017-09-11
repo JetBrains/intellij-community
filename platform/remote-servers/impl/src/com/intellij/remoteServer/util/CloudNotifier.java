@@ -50,6 +50,6 @@ public class CloudNotifier {
   private static NotificationGroup findOrCreateBaloonGroup(@NotNull String displayId) {
     return Optional
       .ofNullable(NotificationGroup.findRegisteredGroup(displayId))
-      .orElse(NotificationGroup.balloonGroup(displayId));
+      .orElseGet(() -> NotificationGroup.balloonGroup(displayId));
   }
 }

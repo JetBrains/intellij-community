@@ -8,6 +8,8 @@ from teamcity.messages import TeamcityServiceMessages
 from teamcity.common import is_string, get_class_fullname, convert_error_to_string, \
     dump_test_stdout, dump_test_stderr, get_exception_message, to_unicode, FlushingStringIO
 
+from .diff_tools import EqualsAssertionError, patch_unittest_diff
+
 _real_stdout = sys.stdout
 _real_stderr = sys.stderr
 _ERROR_HOLDERS_FQN = ("unittest.suite._ErrorHolder", "unittest2.suite._ErrorHolder")
@@ -189,19 +191,35 @@ class TeamcityTestResult(TestResult):
     def report_fail(self, test, fail_type, err):
         test_id = self.get_test_id(test)
 
+        diff_failed = None
+        try:
+            error = err[1]
+            if isinstance(error, EqualsAssertionError):
+                diff_failed = error
+        except:
+            pass
+
         if is_string(err):
             details = err
         elif get_class_fullname(err) == "twisted.python.failure.Failure":
             details = err.getTraceback()
         else:
-            details = convert_error_to_string(err)
+            frames_to_skip_from_tail = 2 if diff_failed else 0
+            details = convert_error_to_string(err, frames_to_skip_from_tail)
 
         subtest_failures = self.get_subtest_failure(test_id)
         if subtest_failures:
             details = "Failed subtests list: " + subtest_failures + "\n\n" + details.strip()
             details = details.strip()
 
-        self.messages.testFailed(test_id, message=fail_type, details=details, flowId=test_id)
+        if diff_failed:
+            self.messages.testFailed(test_id,
+                                     message=diff_failed.msg,
+                                     details=details,
+                                     flowId=test_id,
+                                     comparison_failure=diff_failed)
+        else:
+            self.messages.testFailed(test_id, message=fail_type, details=details, flowId=test_id)
         self.failed_tests.add(test_id)
 
     def startTest(self, test):
@@ -272,6 +290,7 @@ class TeamcityTestRunner(TextTestRunner):
 
     def run(self, test):
         # noinspection PyBroadException
+        patch_unittest_diff()
         try:
             total_tests = test.countTestCases()
             TeamcityServiceMessages(_real_stdout).testCount(total_tests)

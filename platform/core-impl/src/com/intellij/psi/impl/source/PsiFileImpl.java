@@ -67,7 +67,6 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   public static final String STUB_PSI_MISMATCH = "stub-psi mismatch";
   private static final AtomicFieldUpdater<PsiFileImpl, FileTrees> ourTreeUpdater =
     AtomicFieldUpdater.forFieldOfType(PsiFileImpl.class, FileTrees.class);
-  private static final Key<PsiLock> PSI_LOCK_KEY = Key.create("PER_VIEW_PROVIDER_PSI_LOCK");
 
   private IElementType myElementType;
   protected IElementType myContentElementType;
@@ -93,21 +92,12 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     myManager = (PsiManagerEx)provider.getManager();
     myViewProvider = provider;
     myRefToPsi = new AstPathPsiMap(getProject());
-    myPsiLock = obtainPsiLock();
-  }
-
-  private PsiLock obtainPsiLock() {
-    PsiLock lock = myViewProvider.getUserData(PSI_LOCK_KEY);
-    return lock == null ? myViewProvider.putUserDataIfAbsent(PSI_LOCK_KEY, new PsiLock()) : lock;
+    myPsiLock = ((AbstractFileViewProvider) provider).getFilePsiLock();
   }
 
   public void setContentElementType(final IElementType contentElementType) {
     LOG.assertTrue(contentElementType instanceof ILazyParseableElementType, contentElementType);
     myContentElementType = contentElementType;
-  }
-
-  @NotNull public PsiLock getFilePsiLock() {
-    return myPsiLock;
   }
 
   public IElementType getContentElementType() {
@@ -1162,7 +1152,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   }
 
   public final void beforeAstChange() {
-    CheckUtil.checkWritable(this);
+    checkWritable();
     if (!useStrongRefs()) {
       synchronized (myPsiLock) {
         for (PsiFile root : myViewProvider.getAllFiles()) {
@@ -1171,6 +1161,13 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
           }
         }
       }
+    }
+  }
+
+  private void checkWritable() {
+    PsiDocumentManager docManager = PsiDocumentManager.getInstance(getProject());
+    if (docManager instanceof PsiDocumentManagerBase && !((PsiDocumentManagerBase)docManager).isCommitInProgress()) {
+      CheckUtil.checkWritable(this);
     }
   }
 

@@ -37,10 +37,11 @@ public class CommonDataflow {
 
     void add(PsiExpression expression, DfaMemoryStateImpl memState) {
       DfaFactMap existing = myFacts.get(expression);
-      if(existing == null && myFacts.containsKey(expression)) return; // bottom
-      DfaValue value = memState.peek();
-      DfaFactMap newMap = memState.getFactMap(value);
-      myFacts.put(expression, DfaFactMap.intersect(existing == null ? DfaFactMap.EMPTY : existing, newMap));
+      if(existing != DfaFactMap.EMPTY) {
+        DfaValue value = memState.peek();
+        DfaFactMap newMap = memState.getFactMap(value);
+        myFacts.put(expression, existing == null ? newMap : existing.union(newMap));
+      }
     }
   }
 

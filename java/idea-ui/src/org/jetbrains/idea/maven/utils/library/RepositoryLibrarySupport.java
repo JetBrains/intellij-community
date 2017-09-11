@@ -73,7 +73,8 @@ public class RepositoryLibrarySupport {
     RepositoryLibraryProperties libraryProperties = new RepositoryLibraryProperties(
       libraryDescription.getGroupId(),
       libraryDescription.getArtifactId(),
-      model.getVersion());
+      model.getVersion(),
+      model.isIncludeTransitiveDependencies());
     final LibraryEx library = (LibraryEx)modifiableModel.createLibrary(
       LibraryEditingUtil.suggestNewLibraryName(modifiableModel, RepositoryLibraryType.getInstance().getDescription(libraryProperties)),
       RepositoryLibraryType.REPOSITORY_LIBRARY_KIND);

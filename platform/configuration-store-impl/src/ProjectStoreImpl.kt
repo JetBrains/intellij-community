@@ -422,58 +422,85 @@ private fun useOldWorkspaceContent(filePath: String, ws: File) {
   }
 }
 
-private fun removeWorkspaceComponentConfiguration(defaultProject: Project, element: Element): List<Element> {
+private fun moveComponentConfiguration(defaultProject: Project, element: Element, projectConfigDir: Path) {
   val componentElements = element.getChildren("component")
   if (componentElements.isEmpty()) {
-    return emptyList()
+    return
   }
 
   val workspaceComponentNames = THashSet(listOf("GradleLocalSettings"))
+  val compilerComponentNames = THashSet<String>()
+
+  fun processComponents(aClass: Class<*>) {
+    val stateAnnotation = StoreUtil.getStateSpec(aClass)
+    if (stateAnnotation == null || stateAnnotation.name.isEmpty()) {
+      return
+    }
+
+    val storage = stateAnnotation.storages.sortByDeprecated().firstOrNull() ?: return
+
+    when {
+      storage.path == StoragePathMacros.WORKSPACE_FILE -> workspaceComponentNames.add(stateAnnotation.name)
+      storage.path == "compiler.xml" -> compilerComponentNames.add(stateAnnotation.name)
+    }
+  }
+
   @Suppress("DEPRECATION")
   val projectComponents = defaultProject.getComponents(PersistentStateComponent::class.java)
   projectComponents.forEachGuaranteed {
-    getNameIfWorkspaceStorage(it.javaClass)?.let {
-      workspaceComponentNames.add(it)
-    }
+    processComponents(it.javaClass)
   }
 
   ServiceManagerImpl.processAllImplementationClasses(defaultProject as ProjectImpl) { aClass, _ ->
-    getNameIfWorkspaceStorage(aClass)?.let {
-      workspaceComponentNames.add(it)
-    }
+    processComponents(aClass)
     true
   }
 
-  val result = SmartList<Element>()
+  @Suppress("RemoveExplicitTypeArguments")
+  val elements = mapOf(compilerComponentNames to SmartList<Element>(), workspaceComponentNames to SmartList<Element>())
   val iterator = componentElements.iterator()
   for (componentElement in iterator) {
     val name = componentElement.getAttributeValue("name") ?: continue
-    if (workspaceComponentNames.contains(name)) {
-      iterator.remove()
-      result.add(componentElement)
+    for ((names, list) in elements) {
+      if (names.contains(name)) {
+        iterator.remove()
+        list.add(componentElement)
+      }
     }
   }
-  return result
+
+  for ((names, list) in elements) {
+    writeConfigFile(list, projectConfigDir.resolve(if (names === workspaceComponentNames) "workspace.xml" else "compiler.xml"))
+  }
+}
+
+private fun writeConfigFile(elements: List<Element>, file: Path) {
+  if (elements.isEmpty()) {
+    return
+  }
+
+  var wrapper = Element("project").attribute("version", "4")
+  if (file.exists()) {
+    try {
+      wrapper = loadElement(file)
+    }
+    catch (e: Exception) {
+      LOG.warn(e)
+    }
+  }
+  elements.forEach { wrapper.addContent(it) }
+  // .idea component configuration files uses XML prolog due to historical reasons
+  file.outputStream().use {
+    it.write(XML_PROLOG)
+    it.write(LineSeparator.LF.separatorBytes)
+    wrapper.write(it)
+  }
 }
 
 // public only to test
 fun normalizeDefaultProjectElement(defaultProject: Project, element: Element, projectConfigDir: Path) {
   LOG.runAndLogException {
-    val workspaceElements = removeWorkspaceComponentConfiguration(defaultProject, element)
-    if (workspaceElements.isNotEmpty()) {
-      val workspaceFile = projectConfigDir.resolve("workspace.xml")
-      var wrapper = Element("project").attribute("version", "4")
-      if (workspaceFile.exists()) {
-        try {
-          wrapper = loadElement(workspaceFile)
-        }
-        catch (e: Exception) {
-          LOG.warn(e)
-        }
-      }
-      workspaceElements.forEach { wrapper.addContent(it) }
-      wrapper.write(workspaceFile)
-    }
+    moveComponentConfiguration(defaultProject, element, projectConfigDir)
   }
 
   LOG.runAndLogException {
@@ -525,14 +552,4 @@ private fun convertProfiles(profileIterator: MutableIterator<Element>, component
     val path = schemeDir.resolve("${FileUtil.sanitizeFileName(schemeName, true)}.xml")
     JDOMUtil.write(wrapper, path.outputStream(), "\n")
   }
-}
-
-private fun getNameIfWorkspaceStorage(aClass: Class<*>): String? {
-  val stateAnnotation = StoreUtil.getStateSpec(aClass)
-  if (stateAnnotation == null || stateAnnotation.name.isEmpty()) {
-    return null
-  }
-
-  val storage = stateAnnotation.storages.sortByDeprecated().firstOrNull() ?: return null
-  return if (storage.path == StoragePathMacros.WORKSPACE_FILE) stateAnnotation.name else null
 }

@@ -42,7 +42,7 @@ public class JUnit5IdeaTestRunner implements IdeaTestRunner {
   @Override
   public int startRunnerWithArgs(String[] args, String name, int count, boolean sendTree) {
     try {
-      myListener.initialize();
+      myListener.initialize(!sendTree);
       final String[] packageNameRef = new String[1];
       final LauncherDiscoveryRequest discoveryRequest = JUnit5TestRunnerUtil.buildRequest(args, packageNameRef);
       myTestPlan = myLauncher.discover(discoveryRequest);

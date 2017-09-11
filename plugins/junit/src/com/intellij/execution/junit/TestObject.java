@@ -141,6 +141,13 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
 
     //include junit5 listeners for the case custom junit 5 engines would be detected on runtime
     javaParameters.getClassPath().add(getJUnit5RtFile());
+
+    String preferredRunner = getRunner();
+    if (JUnitStarter.JUNIT5_PARAMETER.equals(preferredRunner)) {
+      final Project project = getConfiguration().getProject();
+      GlobalSearchScope globalSearchScope = getScopeForJUnit(getConfiguration().getConfigurationModule().getModule(), project);
+      appendJUnit5LauncherClasses(javaParameters, project, globalSearchScope);
+    }
   }
 
   public static File getJUnit5RtFile() {
@@ -168,40 +175,39 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
       }
     }
 
-    final Project project = getConfiguration().getProject();
-    GlobalSearchScope globalSearchScope = getScopeForJUnit(getConfiguration().getConfigurationModule().getModule(), project);
     String preferredRunner = getRunner();
-    if (JUnitStarter.JUNIT5_PARAMETER.equals(preferredRunner)) {
-      final PathsList classPath = javaParameters.getClassPath();
-      File lib = new File(PathUtil.getJarPathForClass(MultipleFailuresError.class)).getParentFile();
-      File[] files = lib.listFiles();
-      if (files != null) {
-        JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-        for (File file : files) {
-          String fileName = file.getName();
-          if (fileName.startsWith("junit-platform-launcher-") && !hasPackageWithDirectories(psiFacade, "org.junit.platform.launcher", globalSearchScope) ||
-
-              fileName.startsWith("junit-platform-") && !hasPackageWithDirectories(psiFacade, "org.junit.platform", globalSearchScope) ||
-
-              fileName.startsWith("junit-platform-engine-") && !hasPackageWithDirectories(psiFacade, "org.junit.platform.engine", globalSearchScope) ||
-
-              fileName.startsWith("junit-jupiter-engine-") && !hasPackageWithDirectories(psiFacade, "org.junit.jupiter.engine", globalSearchScope) &&
-                                                               hasPackageWithDirectories(psiFacade, JUnitUtil.TEST5_PACKAGE_FQN, globalSearchScope)) {
-            classPath.add(file.getAbsolutePath());
-          }
-          else if (fileName.startsWith("junit-vintage-engine-") && !hasPackageWithDirectories(psiFacade, "org.junit.vintage", globalSearchScope)) {
-            if (hasPackageWithDirectories(psiFacade, "junit.framework", globalSearchScope)) {
-              classPath.add(file.getAbsolutePath());
-            }
-          }
-        }
-      }
-    }
     if (preferredRunner != null) {
       javaParameters.getProgramParametersList().add(preferredRunner);
     }
     
     return javaParameters;
+  }
+
+  public static void appendJUnit5LauncherClasses(JavaParameters javaParameters, Project project, GlobalSearchScope globalSearchScope) {
+    final PathsList classPath = javaParameters.getClassPath();
+    File lib = new File(PathUtil.getJarPathForClass(MultipleFailuresError.class)).getParentFile();
+    File[] files = lib.listFiles();
+    if (files != null) {
+      JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+      for (File file : files) {
+        String fileName = file.getName();
+        if (fileName.startsWith("junit-platform-launcher-") && !hasPackageWithDirectories(psiFacade, "org.junit.platform.launcher", globalSearchScope) ||
+
+            fileName.startsWith("junit-platform-") && !hasPackageWithDirectories(psiFacade, "org.junit.platform", globalSearchScope) ||
+
+            fileName.startsWith("junit-platform-engine-") && !hasPackageWithDirectories(psiFacade, "org.junit.platform.engine", globalSearchScope) ||
+
+            fileName.startsWith("junit-jupiter-engine-") && !hasPackageWithDirectories(psiFacade, "org.junit.jupiter.engine", globalSearchScope) &&
+                                                             hasPackageWithDirectories(psiFacade, JUnitUtil.TEST5_PACKAGE_FQN, globalSearchScope)) {
+          classPath.add(file.getAbsolutePath());
+        }
+        else if (fileName.startsWith("junit-vintage-engine-") && !hasPackageWithDirectories(psiFacade, "org.junit.vintage", globalSearchScope)) {
+          if (hasPackageWithDirectories(psiFacade, "junit.framework", globalSearchScope)) {
+            classPath.add(file.getAbsolutePath());
+          }
+        }
+      }
+    }
   }
 
   private static boolean hasPackageWithDirectories(JavaPsiFacade psiFacade,
@@ -270,7 +276,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
         final SourceScope sourceScope = getSourceScope();
         Project project = getConfiguration().getProject();
         if (sourceScope != null && packageName != null 
-            && !JUnitStarter.JUNIT5_PARAMETER.equals(getRunner())) {
+            && JUnitStarter.JUNIT5_PARAMETER.equals(getRunner())) {
           final PsiPackage aPackage = JavaPsiFacade.getInstance(getConfiguration().getProject()).findPackage(packageName);
           if (aPackage != null) {
             final TestSearchScope scope = getScope();

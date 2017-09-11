@@ -21,6 +21,7 @@ import com.intellij.find.*;
 import com.intellij.find.actions.ShowUsagesAction;
 import com.intellij.find.editorHeaderActions.ShowMoreOptions;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
@@ -234,6 +235,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       }
       myBalloon.setSize(prev != null ? prev : panelSize);
 
+      IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
       if (showPoint != null && showPoint.getComponent() != null) {
         myBalloon.show(showPoint);
       } else {

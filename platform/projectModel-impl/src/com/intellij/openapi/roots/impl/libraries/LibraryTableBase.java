@@ -146,6 +146,7 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
     }
   }
 
+  @NotNull
   @Override
   public Library createLibrary() {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
@@ -164,6 +165,7 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
     myModificationCount++;
   }
 
+  @NotNull
   @Override
   public Library createLibrary(String name) {
     final ModifiableModel modifiableModel = getModifiableModel();
@@ -292,16 +294,19 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
       LOG.assertTrue(myWritable);
     }
 
+    @NotNull
     @Override
     public Library createLibrary(String name) {
       return createLibrary(name, null);
     }
 
+    @NotNull
     @Override
     public Library createLibrary(String name, @Nullable PersistentLibraryKind kind) {
       return createLibrary(name, kind, null);
     }
 
+    @NotNull
     @Override
     public Library createLibrary(String name, @Nullable PersistentLibraryKind kind, @Nullable ProjectModelExternalSource externalSource) {
       assertWritable();

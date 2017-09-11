@@ -40,8 +40,8 @@ class DfaVariableState {
   }
 
   public boolean isSuperStateOf(DfaVariableState that) {
-    if(!myNotInstanceofValues.equals(that.myNotInstanceofValues)) return false;
-    if(!myInstanceofValues.equals(that.myNotInstanceofValues)) return false;
+    if(!that.myNotInstanceofValues.containsAll(myNotInstanceofValues)) return false;
+    if(!that.myInstanceofValues.containsAll(myInstanceofValues)) return false;
     return myFactMap.isSuperStateOf(that.myFactMap);
   }
 

@@ -19,6 +19,7 @@ import com.intellij.ide.bookmarks.Bookmark;
 import com.intellij.ide.bookmarks.BookmarkItem;
 import com.intellij.ide.bookmarks.BookmarkManager;
 import com.intellij.ide.bookmarks.BookmarksListener;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -29,8 +30,8 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.components.JBList;
@@ -57,6 +58,7 @@ import java.util.TreeSet;
  */
 public class BookmarksAction extends AnAction implements DumbAware, MasterDetailPopupBuilder.Delegate {
   @NonNls private static final String DIMENSION_SERVICE_KEY = "bookmarks";
+  @NonNls public static final Key<Disposable> BOOKMARKS_POPUP_DISPOSER = Key.create("BOOKMARKS_POPUP_DISPOSER");
 
   private JBPopup myPopup;
 
@@ -99,7 +101,14 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
       setPopupTuner(builder -> builder.setCloseOnEnter(false).setCancelOnClickOutside(false)).
       setDoneRunnable(() -> { if (myPopup != null) myPopup.cancel(); }).
       createMasterDetailPopup();
-
+    popup.getContent().putClientProperty(BOOKMARKS_POPUP_DISPOSER, new Disposable() {
+      @Override
+      public void dispose() {
+        if (myPopup != null && !Disposer.isDisposed(myPopup)) {
+          myPopup.cancel();
+        }
+      }
+    });
     myPopup = popup;
     new AnAction() {
       @Override
@@ -178,11 +187,12 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
 
   @Override
   public void handleMnemonic(KeyEvent e, Project project, JBPopup popup) {
-    char mnemonic = e.getKeyChar();
+    if (!e.isControlDown()) return;
+    char mnemonic = (char)e.getKeyCode();
     final Bookmark bookmark = BookmarkManager.getInstance(project).findBookmarkForMnemonic(mnemonic);
     if (bookmark != null) {
       popup.cancel();
-      IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(() -> bookmark.navigate(true));
+      bookmark.navigate(true);
     }
   }
 

@@ -235,4 +235,9 @@ public class Py3UnresolvedReferencesInspectionTest extends PyInspectionTestCase 
   public void testDescriptorAttribute() {
     doTest();
   }
+
+  // PY-13273
+  public void testComprehensionInDecorator() {
+    doTest();
+  }
 }
