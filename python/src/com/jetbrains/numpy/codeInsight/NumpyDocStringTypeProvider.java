@@ -95,7 +95,7 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
     NUMPY_ALIAS_TO_REAL_TYPE.put("sequence", "collections.Iterable");
     NUMPY_ALIAS_TO_REAL_TYPE.put("set", "collections.Iterable");
     NUMPY_ALIAS_TO_REAL_TYPE.put("list", "collections.Iterable");
-    NUMPY_ALIAS_TO_REAL_TYPE.put("tuple", "collections.Iterable");
+    NUMPY_ALIAS_TO_REAL_TYPE.put("tuple", "collections.Iterable or tuple");
 
     NUMPY_ALIAS_TO_REAL_TYPE.put("ints", "int");
     NUMPY_ALIAS_TO_REAL_TYPE.put("non-zero int", "int");
