@@ -50,6 +50,7 @@ import com.intellij.structuralsearch.plugin.ui.SearchContext;
 import com.intellij.structuralsearch.plugin.ui.UIUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SmartList;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -198,7 +199,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
 
   @Override
   public void compile(PsiElement[] elements, @NotNull GlobalCompilingVisitor globalVisitor) {
-    elements[0].getParent().accept(new JavaCompilingVisitor(globalVisitor));
+    new JavaCompilingVisitor(globalVisitor).compile(elements);
   }
 
   @Override
@@ -256,8 +257,8 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     }
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
     if (context == PatternTreeContext.Block) {
-      final PsiElement element = elementFactory.createStatementFromText("{\n" + text + "\n}", null);
-      final PsiElement[] children = ((PsiBlockStatement)element).getCodeBlock().getChildren();
+      final PsiCodeBlock codeBlock = elementFactory.createCodeBlockFromText("{\n" + text + "\n}", null);
+      final PsiElement[] children = codeBlock.getChildren();
       final int extraChildCount = 4;
 
       if (children.length > extraChildCount) {
@@ -295,24 +296,17 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
       if (endChild != null) endChild = endChild.getPrevSibling();
       if (startChild == endChild) return PsiElement.EMPTY_ARRAY; // nothing produced
 
-      final PsiCodeBlock codeBlock = elementFactory.createCodeBlock();
-      final List<PsiElement> result = new ArrayList<>(3);
       assert startChild != null;
-      for (PsiElement el = startChild.getNextSibling(); el != endChild && el != null; el = el.getNextSibling()) {
-        if (el instanceof PsiErrorElement) continue;
-        result.add(codeBlock.add(el));
+      final List<PsiElement> result = new SmartList<>();
+      for (PsiElement element = startChild.getNextSibling(); element != endChild && element != null; element = element.getNextSibling()) {
+        if (element instanceof PsiErrorElement) continue;
+        result.add(element);
       }
 
       return PsiUtilCore.toPsiElementArray(result);
     }
     else if (context == PatternTreeContext.Expression) {
-      final PsiExpression expression = elementFactory.createExpressionFromText(text, null);
-      final PsiBlockStatement statement = (PsiBlockStatement)elementFactory.createStatementFromText("{\na\n}", null);
-      final PsiElement[] children = statement.getCodeBlock().getChildren();
-      if (children.length != 5) return PsiElement.EMPTY_ARRAY;
-      final PsiExpressionStatement childStatement = (PsiExpressionStatement)children[2];
-      childStatement.getExpression().replace(expression);
-      return new PsiElement[] { childStatement };
+      return new PsiElement[] {elementFactory.createExpressionFromText(text, null)};
     }
     else {
       return PsiFileFactory.getInstance(project).createFileFromText("__dummy.java", JavaFileType.INSTANCE, text).getChildren();
@@ -434,26 +428,16 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
   public void checkReplacementPattern(Project project, ReplaceOptions options) {
     MatchOptions matchOptions = options.getMatchOptions();
     FileType fileType = matchOptions.getFileType();
-    PsiElement[] statements = MatcherImplUtil.createTreeFromText(
-      matchOptions.getSearchPattern(),
-      PatternTreeContext.Block,
-      fileType,
-      project
-    );
+    PsiElement[] statements = createPatternTree(matchOptions.getSearchPattern(), PatternTreeContext.Block, fileType, project, false);
     final boolean searchIsExpression = statements.length == 1 && statements[0].getLastChild() instanceof PsiErrorElement;
 
-    PsiElement[] statements2 = MatcherImplUtil.createTreeFromText(
-      options.getReplacement(),
-      PatternTreeContext.Block,
-      fileType,
-      project
-    );
+    PsiElement[] statements2 = createPatternTree(options.getReplacement(), PatternTreeContext.Block, fileType, project, false);
     final boolean replaceIsExpression = statements2.length == 1 && statements2[0].getLastChild() instanceof PsiErrorElement;
 
     ValidatingVisitor visitor = new ValidatingVisitor();
     for (PsiElement statement : statements2) {
-      visitor.setCurrent((statements.length == 1 && (statement instanceof PsiExpressionStatement || statement instanceof PsiDeclarationStatement))
-                         ? statement : null);
+      visitor.setCurrent((statements.length == 1 &&
+                          (statement instanceof PsiExpressionStatement || statement instanceof PsiDeclarationStatement)) ? statement : null);
       statement.accept(visitor);
     }
 

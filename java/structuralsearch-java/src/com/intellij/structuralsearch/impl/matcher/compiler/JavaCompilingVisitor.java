@@ -57,6 +57,14 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
     this.myCompilingVisitor = compilingVisitor;
   }
 
+  public void compile(PsiElement[] topLevelElements) {
+    for (PsiElement element : topLevelElements) {
+      element.accept(this);
+      final MatchingHandler matchingHandler = myCompilingVisitor.getContext().getPattern().getHandler(element);
+      myCompilingVisitor.getContext().getPattern().setHandler(element, new TopLevelMatchingHandler(matchingHandler));
+    }
+  }
+
   @Override
   public void visitDocTag(PsiDocTag psiDocTag) {
     super.visitDocTag(psiDocTag);
@@ -492,8 +500,6 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
 
   @Override
   public void visitCodeBlock(PsiCodeBlock block) {
-    myCompilingVisitor.setCodeBlockLevel(myCompilingVisitor.getCodeBlockLevel() + 1);
-
     for (PsiElement el = block.getFirstChild(); el != null; el = el.getNextSibling()) {
       if (GlobalCompilingVisitor.getFilter().accepts(el)) {
         if (el instanceof PsiWhiteSpace) {
@@ -502,14 +508,8 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
       }
       else {
         el.accept(this);
-        if (myCompilingVisitor.getCodeBlockLevel() == 1) {
-          final MatchingHandler matchingHandler = myCompilingVisitor.getContext().getPattern().getHandler(el);
-          myCompilingVisitor.getContext().getPattern().setHandler(el, new TopLevelMatchingHandler(matchingHandler));
-        }
       }
     }
-
-    myCompilingVisitor.setCodeBlockLevel(myCompilingVisitor.getCodeBlockLevel() - 1);
   }
 
   private static boolean needsSupers(final PsiElement element, final MatchingHandler handler) {
