@@ -112,7 +112,10 @@ public class PluginDescriptorStructureUtil {
       result = tag.getAttributeValue("first-keystroke");
     }
     else if (tagName.equalsIgnoreCase("dom.extender")) {
-      result = toShortName(tag.getAttributeValue("extenderClass"));
+      result = tag.getAttributeValue("id");
+      if (result == null) {
+        result = toShortName(tag.getAttributeValue("extenderClass"));
+      }
     }
     else {
       result = guessTagLocation(tag);
@@ -188,7 +191,8 @@ public class PluginDescriptorStructureUtil {
       .replaceAll("Psi", "PSI")
       .replaceAll("Dom", "DOM")
       .replaceAll("Sdk", "SDK")
-      .replaceAll("Junit", "JUnit");
+      .replaceAll("Junit", "JUnit")
+      .replaceAll("Idea", "IDEA");
 
     return result;
   }
