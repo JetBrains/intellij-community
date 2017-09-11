@@ -268,6 +268,7 @@ class Intf {
   void "test anonymous classes"() {
     def goo = myFixture.addClass("package goo; class Goo { Runnable r = new Runnable() {}; }")
     assert getPopupElements(new GotoClassModel2(project), 'Goo$1') == [goo]
+    assert getPopupElements(new GotoSymbolModel2(project), 'Goo$1') == [goo]
   }
 
   void "test qualified name matching"() {

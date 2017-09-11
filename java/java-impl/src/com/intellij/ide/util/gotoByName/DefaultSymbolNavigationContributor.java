@@ -17,6 +17,7 @@ package com.intellij.ide.util.gotoByName;
 
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
 import com.intellij.navigation.ChooseByNameContributorEx;
+import com.intellij.navigation.GotoClassContributor;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
@@ -42,7 +43,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class DefaultSymbolNavigationContributor implements ChooseByNameContributorEx {
+public class DefaultSymbolNavigationContributor implements ChooseByNameContributorEx, GotoClassContributor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.gotoByName.DefaultSymbolNavigationContributor");
 
   @Override
@@ -83,6 +84,21 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
     PsiMember[] array = result.toArray(new PsiMember[result.size()]);
     Arrays.sort(array, MyComparator.INSTANCE);
     return array;
+  }
+
+  @Nullable
+  @Override
+  public String getQualifiedName(NavigationItem item) {
+    if (item instanceof PsiClass) {
+      return DefaultClassNavigationContributor.getQualifiedNameForClass((PsiClass)item);
+    }
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public String getQualifiedNameSeparator() {
+    return "$";
   }
 
   private static boolean isOpenable(PsiMember member) {

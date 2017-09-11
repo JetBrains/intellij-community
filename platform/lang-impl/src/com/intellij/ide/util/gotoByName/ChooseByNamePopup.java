@@ -359,7 +359,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
       regex = patternToDetectLinesAndColumns;
     }
 
-    if (model instanceof GotoClassModel2) {
+    if (model instanceof GotoClassModel2 || model instanceof GotoSymbolModel2) {
       if (pattern.indexOf('#') != -1) {
         regex = patternToDetectMembers;
       }
