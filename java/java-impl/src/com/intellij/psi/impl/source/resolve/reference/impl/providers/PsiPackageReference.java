@@ -20,6 +20,7 @@ import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -52,7 +53,7 @@ public class PsiPackageReference extends PsiPolyVariantReferenceBase<PsiElement>
   public Object[] getVariants() {
     Set<PsiPackage> subPackages = new HashSet<>();
     for (PsiPackage psiPackage : getContext()) {
-      subPackages.addAll(Arrays.asList(psiPackage.getSubPackages(myReferenceSet.getResolveScope())));
+      ContainerUtil.addAll(subPackages, psiPackage.getSubPackages(myReferenceSet.getResolveScope()));
     }
     return subPackages.toArray();
   }
