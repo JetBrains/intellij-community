@@ -374,12 +374,6 @@ public class MockChangeListManager extends ChangeListManagerEx {
     throw new UnsupportedOperationException();
   }
 
-  @Nullable
-  @Override
-  public LocalChangeList getIdentityChangeList(@NotNull Change change) {
-    throw new UnsupportedOperationException();
-  }
-
   @Override
   public boolean isInUpdate() {
     throw new UnsupportedOperationException();
