@@ -73,7 +73,7 @@ import static com.jetbrains.python.psi.PyUtil.as;
  * @author yole
  */
 public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpressionStub> implements PyTargetExpression {
-  QualifiedName myQualifiedName;
+  @Nullable private volatile QualifiedName myQualifiedName;
 
   public PyTargetExpressionImpl(ASTNode astNode) {
     super(astNode);

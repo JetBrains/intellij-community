@@ -54,7 +54,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.openapi.util.text.StringUtil.notNullize;
 import static com.jetbrains.python.psi.PyFunction.Modifier.CLASSMETHOD;
@@ -91,8 +90,8 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
     }
   }
 
-  private CachedStructuredDocStringProvider myCachedStructuredDocStringProvider = new CachedStructuredDocStringProvider();
-  private AtomicReference<Boolean> myIsGenerator = new AtomicReference<>();
+  @NotNull private final CachedStructuredDocStringProvider myCachedStructuredDocStringProvider = new CachedStructuredDocStringProvider();
+  @Nullable private volatile Boolean myIsGenerator;
 
   @Nullable
   @Override
@@ -572,7 +571,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
   public void subtreeChanged() {
     super.subtreeChanged();
     ControlFlowCache.clear(this);
-    myIsGenerator.set(null);
+    myIsGenerator = null;
   }
 
   @Override
@@ -695,7 +694,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
 
   @Override
   public boolean isGenerator() {
-    Boolean result = myIsGenerator.get();
+    Boolean result = myIsGenerator;
     if (result == null) {
       Ref<Boolean> containsYield = Ref.create(false);
       getStatementList().accept(new PyRecursiveElementVisitor() {
@@ -716,8 +715,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
           }
         }
       });
-      result = containsYield.get();
-      myIsGenerator.set(result);
+      myIsGenerator = result = containsYield.get();
     }
     return result;
   }

@@ -62,14 +62,14 @@ import java.io.File;
 import java.util.*;
 
 public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
-  protected PyType myType;
+  @Nullable protected volatile PyType myType;
 
   //private volatile Boolean myAbsoluteImportEnabled;
   private final Map<FutureFeature, Boolean> myFutureFeatures;
-  private List<String> myDunderAll;
-  private boolean myDunderAllCalculated;
-  private volatile SoftReference<ExportedNameCache> myExportedNameCache = new SoftReference<>(null);
-  private final PsiModificationTracker myModificationTracker;
+  @Nullable private volatile List<String> myDunderAll;
+  private volatile boolean myDunderAllCalculated;
+  @NotNull private volatile SoftReference<ExportedNameCache> myExportedNameCache = new SoftReference<>(null);
+  @NotNull private final PsiModificationTracker myModificationTracker;
 
   private class ExportedNameCache {
     private final List<String> myNameDefinerNegativeCache = new ArrayList<>();
@@ -432,10 +432,9 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   }
 
   private ExportedNameCache getExportedNameCache() {
-    ExportedNameCache cache;
-    cache = myExportedNameCache != null ? myExportedNameCache.get() : null;
+    ExportedNameCache cache = myExportedNameCache.get();
     final long modificationStamp = getModificationStamp();
-    if (myExportedNameCache != null && cache != null && modificationStamp != cache.getModificationStamp()) {
+    if (cache != null && modificationStamp != cache.getModificationStamp()) {
       myExportedNameCache.clear();
       cache = null;
     }
@@ -496,6 +495,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     return PyPsiUtils.collectStubChildren(this, getStub(), PyElementTypes.FROM_IMPORT_STATEMENT);
   }
 
+  @Nullable
   @Override
   public List<String> getDunderAll() {
     final StubElement stubElement = getStub();
@@ -712,6 +712,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   }
 
 
+  @Nullable
   @Override
   public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     if (myType == null) myType = new PyModuleType(this);

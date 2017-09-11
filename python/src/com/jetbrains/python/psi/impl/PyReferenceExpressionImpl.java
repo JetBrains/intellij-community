@@ -59,7 +59,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
 
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.psi.impl.PyReferenceExpressionImpl");
 
-  private QualifiedName myQualifiedName = null;
+  @Nullable private volatile QualifiedName myQualifiedName = null;
 
   public PyReferenceExpressionImpl(@NotNull ASTNode astNode) {
     super(astNode);

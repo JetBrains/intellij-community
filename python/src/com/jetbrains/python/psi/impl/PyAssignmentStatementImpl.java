@@ -39,7 +39,7 @@ import java.util.List;
  * @author yole
  */
 public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssignmentStatement {
-  private PyExpression[] myTargets;
+  @Nullable private volatile PyExpression[] myTargets;
 
   public PyAssignmentStatementImpl(ASTNode astNode) {
     super(astNode);
@@ -50,11 +50,13 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
     pyVisitor.visitPyAssignmentStatement(this);
   }
 
+  @NotNull
   public PyExpression[] getTargets() {
-    if (myTargets == null) {
-      myTargets = calcTargets(false);
+    PyExpression[] result = myTargets;
+    if (result == null) {
+      myTargets = result = calcTargets(false);
     }
-    return myTargets;
+    return result;
   }
 
   @NotNull
@@ -63,6 +65,7 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
     return calcTargets(true);
   }
 
+  @NotNull
   private PyExpression[] calcTargets(boolean raw) {
     final ASTNode[] eqSigns = getNode().getChildren(TokenSet.create(PyTokenTypes.EQ));
     if (eqSigns.length == 0) {

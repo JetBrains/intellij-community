@@ -80,7 +80,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
    * Ancestors cache is lazy because provider ({@link PyClassImpl.CachedAncestorsProvider}) needs
    * {@link #getProject()} which is not available during constructor time.
    */
-  private TypeEvalContextBasedCache<List<PyClassLikeType>> myAncestorsCache;
+  @Nullable private volatile TypeEvalContextBasedCache<List<PyClassLikeType>> myAncestorsCache;
 
   /**
    * Lock to create {@link #myAncestorsCache} in lazy way.
@@ -121,7 +121,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     }
   }
 
-  private List<PyTargetExpression> myInstanceAttributes;
+  private volatile List<PyTargetExpression> myInstanceAttributes;
 
   private volatile Map<String, Property> myPropertyCache;
 
@@ -156,17 +156,19 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
    */
   @NotNull
   private TypeEvalContextBasedCache<List<PyClassLikeType>> getAncestorsCache() {
-    if (myAncestorsCache != null) {
-      return myAncestorsCache;
+    TypeEvalContextBasedCache<List<PyClassLikeType>> result = myAncestorsCache;
+    if (result != null) {
+      return result;
     }
     synchronized (myAncestorsCacheLock) {
-      if (myAncestorsCache == null) {
-        myAncestorsCache = new TypeEvalContextBasedCache<>(
+      result = myAncestorsCache;
+      if (result == null) {
+        myAncestorsCache = result = new TypeEvalContextBasedCache<>(
           CachedValuesManager.getManager(getProject()),
           new CachedAncestorsProvider()
         );
       }
-      return myAncestorsCache;
+      return result;
     }
   }
 
