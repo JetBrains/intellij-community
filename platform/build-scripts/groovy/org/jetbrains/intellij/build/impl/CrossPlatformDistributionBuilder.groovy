@@ -18,6 +18,9 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.openapi.util.io.FileUtil
 import groovy.io.FileType
 import org.jetbrains.intellij.build.BuildContext
+
+import java.util.regex.Pattern
+
 /**
  * @author nik
  */
@@ -59,7 +62,7 @@ class CrossPlatformDistributionBuilder {
 
       Map<String, File> linuxFiles = collectFilesUnder(linuxDistPath)
       Map<String, File> macFiles = collectFilesUnder(macDistPath)
-      def commonFiles = linuxFiles.keySet().intersect(macFiles.keySet() as Iterable<String>)
+      def commonFiles = checkCommonFilesAreTheSame(linuxFiles, macFiles)
 
       String targetPath = "$buildContext.paths.artifacts/${buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}.zip"
       buildContext.ant.zip(zipfile: targetPath, duplicate: "fail") {
@@ -116,6 +119,43 @@ class CrossPlatformDistributionBuilder {
       }
       buildContext.notifyArtifactBuilt(targetPath)
     }
+  }
+
+  private checkCommonFilesAreTheSame(Map<String, File> linuxFiles, Map<String, File> macFiles) {
+    def commonFiles = linuxFiles.keySet().intersect(macFiles.keySet() as Iterable<String>)
+
+    def knownExceptions = [
+            "bin/idea\\.properties",
+            "bin/printenv\\.py",
+            "bin/\\w+\\.vmoptions",
+            "bin/format\\.sh",
+            "bin/inspect\\.sh",
+            "bin/fsnotifier",
+    ]
+
+    def violations = new ArrayList<String>()
+    for (String commonFile : commonFiles) {
+      def linuxFile = linuxFiles[commonFile]
+      def macFile = macFiles[commonFile]
+
+      if (linuxFile.readBytes() != macFile.readBytes()) {
+        if (knownExceptions.any { Pattern.matches(it, commonFile) }) {
+          continue
+        }
+
+        violations.add("$commonFile: $linuxFile and $macFile")
+      }
+    }
+
+    if (!violations.isEmpty()) {
+      buildContext.messages.error(
+              "Files are at the same path in linux and mac distribution, " +
+                      "but have a different content in each. Please place them at different paths. " +
+                      "Files:\n" + violations.join("\n")
+      )
+    }
+
+    return commonFiles
   }
 
   private static Map<String, File> collectFilesUnder(String rootPath) {
