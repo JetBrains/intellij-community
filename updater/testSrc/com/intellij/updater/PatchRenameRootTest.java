@@ -15,21 +15,28 @@
  */
 package com.intellij.updater;
 
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import org.jetbrains.annotations.NotNull;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.attribute.PosixFilePermission;
-import java.nio.file.attribute.PosixFilePermissions;
+import java.nio.file.attribute.*;
 import java.util.*;
 
+import static java.nio.file.attribute.AclEntryFlag.DIRECTORY_INHERIT;
+import static java.nio.file.attribute.AclEntryFlag.FILE_INHERIT;
+import static java.nio.file.attribute.AclEntryPermission.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeNoException;
 
 public class PatchRenameRootTest extends PatchTestCase {
   private PatchSpec myPatchSpec;
@@ -81,31 +88,81 @@ public class PatchRenameRootTest extends PatchTestCase {
     scenario.run();
   }
 
+  /**
+   * Revokes all permissions to a path. Returns a Closeable which restores permissions then closed.
+   *
+   * @param path File/directory to which revoke permissions.
+   * @return {@link Closeable} object that restores permissions to the file when its {@code close} method get called.
+   * @throws IOException if I/O error occurs
+   */
+  @NotNull
+  private static Closeable revokePermissions(final Path path) throws IOException {
+    if (SystemInfo.isWindows) {
+      return revokePermissionsUsingAcls(path);
+    }
+    else {
+      return revokePermissionsUsingPosix(path);
+    }
+  }
+
+  /**
+   * Posix implementation to revoke permissions to a file/directory. Equivalent of {@code chmod 000} on a file.
+   */
+  @NotNull
+  private static Closeable revokePermissionsUsingPosix(Path path) throws IOException {
+    final Set<PosixFilePermission> oldPermissions = Files.getPosixFilePermissions(path, LinkOption.NOFOLLOW_LINKS);
+    Set<PosixFilePermission> perms000 = PosixFilePermissions.fromString("---------");
+    Files.setPosixFilePermissions(path, perms000);
+    return () -> Files.setPosixFilePermissions(path, oldPermissions);
+  }
+
+  /**
+   * Windows implementation to revoke permissions to a file/directory. Adds DENY ACL to file's ACL list.
+   */
+  @NotNull
+  private static Closeable revokePermissionsUsingAcls(Path path) throws IOException {
+    AclFileAttributeView aclView = Files.getFileAttributeView(path, AclFileAttributeView.class, LinkOption.NOFOLLOW_LINKS);
+    UserPrincipal everyonePrincipal = null;
+    try {
+      everyonePrincipal = path.getFileSystem().getUserPrincipalLookupService().lookupPrincipalByName("Everyone");
+    }
+    catch (UserPrincipalNotFoundException e) {
+      Assume.assumeNoException("Special group 'Everyone' is missing. Non-english Windows locale?", e);
+    }
+    List<AclEntry> oldAclEntries = aclView.getAcl();
+    List<AclEntry> newAclEntries = new ArrayList<>(oldAclEntries.size() + 1);
+
+    AclEntry denyReadWriteToEveryoneAclEntry = AclEntry.newBuilder()
+      .setPrincipal(everyonePrincipal)
+      .setType(AclEntryType.DENY)
+      .setPermissions(LIST_DIRECTORY, ADD_FILE, ADD_SUBDIRECTORY, DELETE, EXECUTE, DELETE_CHILD, WRITE_OWNER, SYNCHRONIZE)
+      .setFlags(FILE_INHERIT, DIRECTORY_INHERIT)
+      .build();
+
+    // Order of ACLs matters. Deny should be first.
+    newAclEntries.add(denyReadWriteToEveryoneAclEntry);
+    newAclEntries.addAll(oldAclEntries);
+
+    aclView.setAcl(newAclEntries);
+    return () -> aclView.setAcl(oldAclEntries);
+  }
+
   @Test
   public void applyAndRevertNewDirNotEmptyAndNoAccess() throws Exception {
     TestScenario scenario = new TestScenario() {
+      private Closeable myRestorePermissionsToken;
+
       @Override
       protected void beforePrepare() throws Exception {
         FileUtil.copyDir(myOlderDir, myPatchApplyNewDir);
-        Set<PosixFilePermission> perms000 = PosixFilePermissions.fromString("---------");
-        try {
-          Files.setPosixFilePermissions(myPatchApplyNewDir.toPath(), perms000);
-        }
-        catch (UnsupportedOperationException e) {
-          assumeNoException(e);
-        }
+        myRestorePermissionsToken = PatchRenameRootTest.revokePermissions(myPatchApplyNewDir.toPath());
       }
 
       @Override
       protected void afterApply() throws Exception {
-        // Make it possible to navigate to the directory to be able to compare contents
-        Set<PosixFilePermission> perms755 = PosixFilePermissions.fromString("rwxr-xr-x");
-        try {
-          Files.setPosixFilePermissions(myPatchApplyNewDir.toPath(), perms755);
-        }
-        catch (UnsupportedOperationException e) {
-          assumeNoException(e);
-        }
+        // Restore permissions to the directory to validate its contents
+        myRestorePermissionsToken.close();
+        myRestorePermissionsToken = null;
       }
 
       @Override
@@ -118,6 +175,14 @@ public class PatchRenameRootTest extends PatchTestCase {
       protected void validateAfterRevert(Map<String, Long> revertedOld, Map<String, Long> revertedNew) {
         assertEquals(myOriginal, revertedOld);
         assertEquals(myOriginal, revertedNew);
+      }
+
+      @Override
+      protected void cleanup() throws IOException {
+        if (myRestorePermissionsToken != null) {
+          myRestorePermissionsToken.close();
+          myRestorePermissionsToken = null;
+        }
       }
     };
     scenario.run();
@@ -151,27 +216,33 @@ public class PatchRenameRootTest extends PatchTestCase {
     protected Map<String, Long> myTarget;
 
     public void run() throws Exception {
-      Map<String, ValidationResult.Option> options = new HashMap<>();
+      try {
+        Map<String, ValidationResult.Option> options = new HashMap<>();
 
-      Patch patch = PatchFileCreator.create(myPatchSpec, myPatchFile, TEST_UI);
-      beforePrepare();
+        Patch patch = PatchFileCreator.create(myPatchSpec, myPatchFile, TEST_UI);
+        beforePrepare();
 
-      PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myPatchFile, myPatchApplyOldDir, TEST_UI);
-      validatePreparationResult(preparationResult.validationResults);
+        PatchFileCreator.PreparationResult preparationResult =
+          PatchFileCreator.prepareAndValidate(myPatchFile, myPatchApplyOldDir, TEST_UI);
+        validatePreparationResult(preparationResult.validationResults);
 
-      myOriginal = digest(patch, myPatchApplyOldDir);
-      myTarget = digest(patch, myNewerDir);
+        myOriginal = digest(patch, myPatchApplyOldDir);
+        myTarget = digest(patch, myNewerDir);
 
-      List<PatchAction> appliedActions = PatchFileCreator.apply(preparationResult, options, myBackupDir, TEST_UI).appliedActions;
-      afterApply();
-      Map<String, Long> patchedOld = digest(patch, myPatchApplyOldDir);
-      Map<String, Long> patchedNew = digest(patch, myPatchApplyNewDir);
-      validateAfterApply(patchedOld, patchedNew);
+        List<PatchAction> appliedActions = PatchFileCreator.apply(preparationResult, options, myBackupDir, TEST_UI).appliedActions;
+        afterApply();
+        Map<String, Long> patchedOld = digest(patch, myPatchApplyOldDir);
+        Map<String, Long> patchedNew = digest(patch, myPatchApplyNewDir);
+        validateAfterApply(patchedOld, patchedNew);
 
-      PatchFileCreator.revert(preparationResult, appliedActions, myBackupDir, TEST_UI);
-      Map<String, Long> revertedNew = digest(patch, myPatchApplyNewDir);
-      Map<String, Long> revertedOld = digest(patch, myPatchApplyOldDir);
-      validateAfterRevert(revertedOld, revertedNew);
+        PatchFileCreator.revert(preparationResult, appliedActions, myBackupDir, TEST_UI);
+        Map<String, Long> revertedNew = digest(patch, myPatchApplyNewDir);
+        Map<String, Long> revertedOld = digest(patch, myPatchApplyOldDir);
+        validateAfterRevert(revertedOld, revertedNew);
+      }
+      finally {
+        cleanup();
+      }
     }
 
     protected void beforePrepare() throws Exception {
@@ -192,6 +263,9 @@ public class PatchRenameRootTest extends PatchTestCase {
     protected void validateAfterRevert(Map<String, Long> revertedOld, Map<String, Long> revertedNew) {
       assertEquals(myOriginal, revertedOld);
       assertTrue(revertedNew.isEmpty());
+    }
+
+    protected void cleanup() throws Exception {
     }
   }
 }
