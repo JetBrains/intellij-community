@@ -16,7 +16,6 @@
 package com.intellij.java.navigation
 
 import com.intellij.codeInsight.JavaProjectCodeInsightSettings
-import com.intellij.ide.actions.GotoFileItemProvider
 import com.intellij.ide.util.gotoByName.*
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.Disposable
@@ -186,8 +185,7 @@ class Intf {
 
   void "test accept file paths starting with a dot"() {
     def file = myFixture.addFileToProject("foo/index.html", "foo")
-    def model = new GotoFileModel(project)
-    def popup = ChooseByNamePopup.createPopup(project, model, new GotoFileItemProvider(project, null, model))
+    def popup = createPopup(new GotoFileModel(project))
     assert calcPopupElements(popup, "./foo/in") == [file]
   }
 
@@ -378,6 +376,18 @@ class Intf {
 
     JavaProjectCodeInsightSettings.setExcludedNames(project, testRootDisposable, 'bar')
     assert calcPopupElements(popup, "List", false) == [foo, bar]
+  }
+
+  void "test file path matching without slashes"() {
+    def fooBarFile = myFixture.addFileToProject("foo/bar/index_fooBar.html", "")
+    def fbFile = myFixture.addFileToProject("fb/index_fb.html", "")
+    def fbSomeFile = myFixture.addFileToProject("fb/some/index_fbSome.html", "")
+    def someFbFile = myFixture.addFileToProject("some/fb/index_someFb.html", "")
+    def model = new GotoFileModel(project)
+    def popup = createPopup(model)
+    assert calcPopupElements(popup, "barindex") == [fooBarFile]
+    assert calcPopupElements(popup, "fooindex") == [fooBarFile]
+    assert calcPopupElements(popup, "fbindex") == [fbFile, someFbFile, fbSomeFile, fooBarFile]
   }
 
   private List<Object> getPopupElements(ChooseByNameModel model, String text, boolean checkboxState = false) {
