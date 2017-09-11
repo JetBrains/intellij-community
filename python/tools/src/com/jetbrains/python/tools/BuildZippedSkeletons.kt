@@ -58,7 +58,7 @@ fun main(args: Array<String>) {
       refresher.regenerateSkeletons(SkeletonVersionChecker(0))
 
 
-      val dirPacked = File(skeletonsDir.parent, refresher.getPregeneratedSkeletonsName(true) + ".zip")
+      val dirPacked = File(skeletonsDir.parent, refresher.getPregeneratedSkeletonsName(true, true))
       val zip = ZipOutputStream(FileOutputStream(dirPacked))
       ZipUtil.addDirToZipRecursively(zip, dirPacked, skeletonsDir, "", null, null)
       zip.close()

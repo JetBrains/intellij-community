@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.sdk.skeletons;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -816,7 +817,7 @@ public class PySkeletonRefresher {
     }
     LOG.info("Pregenerated skeletons root is " + root);
 
-    String prebuiltSkeletonsName = getPregeneratedSkeletonsName(Registry.is("python.prebuilt.skeletons.minor.version.aware"));
+    String prebuiltSkeletonsName = getPregeneratedSkeletonsName(Registry.is("python.prebuilt.skeletons.minor.version.aware"), false);
     if (prebuiltSkeletonsName == null) return null;
 
     File f = null;
@@ -824,7 +825,7 @@ public class PySkeletonRefresher {
     File[] children = root.listFiles();
     if (children != null) {
       for (File file : children) {
-        if (file.getAbsolutePath().matches(".*" + prebuiltSkeletonsName + "\\.?\\d*\\.zip")) {
+        if (isApplicableZippedSkeletonsFileName(prebuiltSkeletonsName, file.getName())) {
           f = file;
           break;
         }
@@ -846,22 +847,38 @@ public class PySkeletonRefresher {
     }
   }
 
-  public String getPregeneratedSkeletonsName(boolean withMinorVersion) {
-    return getPregeneratedSkeletonsName(mySdk, myGeneratorVersion, withMinorVersion);
+  @VisibleForTesting
+  static boolean isApplicableZippedSkeletonsFileName(@NotNull String prebuiltSkeletonsName, @NotNull String fileName) {
+    return fileName.matches(".*" + prebuiltSkeletonsName + "\\.?\\d*\\.zip");
+  }
+
+  public String getPregeneratedSkeletonsName(boolean withMinorVersion, boolean withExtension) {
+    return getPregeneratedSkeletonsName(mySdk, myGeneratorVersion, withMinorVersion, withExtension);
   }
 
   @Nullable
-  public static String getPregeneratedSkeletonsName(@NotNull Sdk sdk, int generatorVersion, boolean withMinorVersion) {
-    String prebuiltSkeletonsName;
+  public static String getPregeneratedSkeletonsName(@NotNull Sdk sdk,
+                                                    int generatorVersion,
+                                                    boolean withMinorVersion,
+                                                    boolean withExtension) {
+    if (PySdkUtil.isRemote(sdk)) {
+      return null;
+    }
+
     @NonNls final String versionString = sdk.getVersionString();
     if (versionString == null) {
       return null;
     }
 
-    if (PySdkUtil.isRemote(sdk)) {
-      return null;
-    }
+    return getPrebuiltSkeletonsName(generatorVersion, versionString, withMinorVersion, withExtension);
+  }
 
+  @NotNull
+  @VisibleForTesting
+  static String getPrebuiltSkeletonsName(int generatorVersion,
+                                         @NotNull String versionString,
+                                         boolean withMinorVersion,
+                                         boolean withExtension) {
     String version = versionString.toLowerCase().replace(" ", "-");
 
     if (!withMinorVersion) {
@@ -881,13 +898,12 @@ public class PySkeletonRefresher {
           osVersion = osVersion.substring(0, secondDot);
         }
       }
-      prebuiltSkeletonsName = "skeletons-mac-" + generatorVersion + "-" + osVersion + "-" + version;
+      return "skeletons-mac-" + generatorVersion + "-" + osVersion + "-" + version + (withExtension ? ".zip" : "");
     }
     else {
       String os = SystemInfo.isWindows ? "win" : "nix";
-      prebuiltSkeletonsName = "skeletons-" + os + "-" + generatorVersion + "-" + version;
+      return "skeletons-" + os + "-" + generatorVersion + "-" + version + (withExtension ? ".zip" : "");
     }
-    return prebuiltSkeletonsName;
   }
 
   @Nullable
