@@ -120,12 +120,6 @@ public class ChangesBrowserDialog extends DialogWrapper {
   }
 
   @Override
-  protected void dispose() {
-    super.dispose();
-    myCommittedChangesBrowser.dispose();
-  }
-
-  @Override
   protected void createDefaultActions() {
     super.createDefaultActions();
     if (myMode == Mode.Browse) {

@@ -9,7 +9,7 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.committed.RepositoryChangesBrowser;
+import com.intellij.openapi.vcs.changes.committed.CommittedChangesBrowser;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLoadingPanel;
@@ -62,7 +62,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   @NotNull private final DetailsPanel myDetailsPanel;
   @NotNull private final Splitter myDetailsSplitter;
   @NotNull private final JComponent myToolbar;
-  @NotNull private final RepositoryChangesBrowser myChangesBrowser;
+  @NotNull private final CommittedChangesBrowser myChangesBrowser;
   @NotNull private final Splitter myChangesBrowserSplitter;
   @NotNull private final SearchTextField myTextFilter;
   @NotNull private final MainVcsLogUiProperties myUiProperties;
@@ -88,11 +88,14 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     PopupHandler.installPopupHandler(myGraphTable, VcsLogActionPlaces.POPUP_ACTION_GROUP, VcsLogActionPlaces.VCS_LOG_TABLE_PLACE);
     myDetailsPanel = new DetailsPanel(logData, ui.getColorManager(), this);
 
-    myChangesBrowser = new RepositoryChangesBrowser(project) {
+    myChangesBrowser = new CommittedChangesBrowser(project) {
+      @NotNull
       @Override
-      protected void buildToolBar(DefaultActionGroup toolBarGroup) {
-        super.buildToolBar(toolBarGroup);
-        toolBarGroup.add(ActionManager.getInstance().getAction(VcsLogActionPlaces.VCS_LOG_SHOW_DETAILS_ACTION));
+      protected List<AnAction> createToolbarActions() {
+        return ContainerUtil.append(
+          super.createToolbarActions(),
+          ActionManager.getInstance().getAction(VcsLogActionPlaces.VCS_LOG_SHOW_DETAILS_ACTION)
+        );
       }
     };
     myChangesBrowser.getViewerScrollPane().setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
@@ -212,7 +215,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   @Override
   public Object getData(@NonNls String dataId) {
     if (VcsDataKeys.CHANGES.is(dataId) || VcsDataKeys.SELECTED_CHANGES.is(dataId)) {
-      return ArrayUtil.toObjectArray(myChangesBrowser.getCurrentDisplayedChanges(), Change.class);
+      return ArrayUtil.toObjectArray(myChangesBrowser.getAllChanges(), Change.class);
     }
     else if (VcsDataKeys.CHANGE_LISTS.is(dataId)) {
       List<VcsFullCommitDetails> details = myLog.getSelectedDetails();

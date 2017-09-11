@@ -30,7 +30,7 @@ public class SimpleChangesBrowser extends ChangesBrowserBase {
   @Nullable private ChangeNodeDecorator myChangeNodeDecorator;
 
   public SimpleChangesBrowser(@NotNull Project project,
-                              @NotNull List<Change> changes) {
+                              @NotNull Collection<? extends Change> changes) {
     this(project, false, false);
     setChangesToDisplay(changes);
   }

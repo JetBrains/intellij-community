@@ -39,7 +39,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * @author yole
+ * @deprecated Use {@link CommittedChangesBrowser}
  */
 public class RepositoryChangesBrowser extends ChangesBrowser implements DataProvider {
 

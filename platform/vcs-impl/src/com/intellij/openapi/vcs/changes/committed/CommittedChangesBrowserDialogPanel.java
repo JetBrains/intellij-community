@@ -22,12 +22,10 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.ChangeListColumn;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.ui.*;
 import com.intellij.ui.table.TableView;
@@ -53,7 +51,7 @@ public class CommittedChangesBrowserDialogPanel extends JPanel {
   // left view
   private final TableView<CommittedChangeList> myChangeListsView;
   // right view
-  private final ChangesBrowser myChangesView;
+  private final CommittedChangesBrowser myChangesView;
   private CommittedChangesTableModel myTableModel;
   private final JEditorPane myCommitMessageArea;
   private CommittedChangeList mySelectedChangeList;
@@ -76,7 +74,7 @@ public class CommittedChangesBrowserDialogPanel extends JPanel {
     myChangeListsView = new TableView<>(myTableModel);
     myChangeListsView.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-    myChangesView = new RepositoryChangesBrowser(project);
+    myChangesView = new CommittedChangesBrowser(project);
 
     myChangeListsView.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent e) {
@@ -184,10 +182,6 @@ public class CommittedChangesBrowserDialogPanel extends JPanel {
 
   public void addToolBar(JComponent toolBar) {
     myLeftPanel.add(toolBar, BorderLayout.NORTH);
-  }
-
-  public void dispose() {
-    Disposer.dispose(myChangesView);
   }
 
   public void setModel(CommittedChangesTableModel tableModel) {
