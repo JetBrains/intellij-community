@@ -39,6 +39,7 @@ import com.intellij.testGuiFramework.impl.GuiTestUtilKt.runOnEdt
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.waitUntil
 import com.intellij.ui.Splash
 import org.fest.swing.core.Robot
+import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.exception.WaitTimedOutError
 import org.jdom.Element
 import org.jdom.input.SAXBuilder
@@ -137,6 +138,16 @@ class GuiTestRule : TestRule {
         }
         FileUtilRt.delete(myProjectPath!!)
       }
+      else {
+        try {
+          val ideFrameFixture = IdeFrameFixture.find(robot(), null, null, 2)
+          if (ideFrameFixture.target().isShowing)
+            ideFrameFixture.closeProject()
+        }
+        catch (e: ComponentLookupException) {
+          // do nothing because ideFixture is already closed
+        }
+      }
     }
 
     private fun thrownFromRunning(r: Runnable): List<Throwable> {
@@ -181,8 +192,8 @@ class GuiTestRule : TestRule {
       catch (e: WaitTimedOutError) {
         throw AssumptionViolatedException("didn't find welcome frame", e) as Throwable
       }
-      GuiTestUtilKt.waitUntil("Splash is gone") { !GuiTestUtilKt.windowsShowing().any{ it is Splash } }
-      Assume.assumeTrue("Only welcome frame is showing",GuiTestUtilKt.windowsShowing().size == 1)
+      GuiTestUtilKt.waitUntil("Splash is gone") { !GuiTestUtilKt.windowsShowing().any { it is Splash } }
+      Assume.assumeTrue("Only welcome frame is showing", GuiTestUtilKt.windowsShowing().size == 1)
     }
   }
 
@@ -196,7 +207,8 @@ class GuiTestRule : TestRule {
           }
         }
         MessagePool.getInstance().clearFatals()
-      } catch (e: Exception) {
+      }
+      catch (e: Exception) {
         //TODO: log it
       }
     }
