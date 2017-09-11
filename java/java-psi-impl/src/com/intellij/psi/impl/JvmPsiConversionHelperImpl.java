@@ -13,32 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.impl.jvm2psi;
+package com.intellij.psi.impl;
 
-import com.intellij.lang.jvm.JvmClass;
+import com.intellij.lang.jvm.JvmTypeDeclaration;
+import com.intellij.psi.JvmPsiConversionHelper;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiManager;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class JvmPsiConversionHelper {
+public class JvmPsiConversionHelperImpl implements JvmPsiConversionHelper {
 
-  private final @NotNull PsiManager myManager;
-
-  public JvmPsiConversionHelper(@NotNull PsiManager manager) {
-    myManager = manager;
-  }
-
-  @NotNull
-  public PsiManager getManager() {
-    return myManager;
-  }
-
-  @Contract("null -> null; !null -> !null")
-  @Nullable
-  public PsiClass toPsiClass(@Nullable JvmClass jvmClass) {
-    // TODO
+  @Override
+  public PsiClass convertTypeDeclaration(@Nullable JvmTypeDeclaration typeDeclaration) {
+    if (typeDeclaration instanceof PsiClass) return (PsiClass)typeDeclaration;
     throw new RuntimeException("TODO");
   }
 }

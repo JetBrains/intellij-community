@@ -496,6 +496,8 @@
                     serviceImplementation="com.intellij.psi.impl.source.resolve.JavaResolveCache"/>
     <projectService serviceInterface="com.intellij.psi.PsiElementFactory"
                     serviceImplementation="com.intellij.psi.impl.PsiElementFactoryImpl"/>
+    <projectService serviceInterface="com.intellij.psi.JvmPsiConversionHelper"
+                    serviceImplementation="com.intellij.psi.impl.JvmPsiConversionHelperImpl"/>
     <projectService serviceInterface="com.intellij.psi.javadoc.JavadocManager"
                     serviceImplementation="com.intellij.psi.impl.source.javadoc.JavadocManagerImpl"/>
     <projectService serviceInterface="com.intellij.psi.impl.JavaPsiImplementationHelper"
