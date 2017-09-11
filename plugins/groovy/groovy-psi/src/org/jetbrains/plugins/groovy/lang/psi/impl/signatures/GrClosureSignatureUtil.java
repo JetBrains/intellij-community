@@ -361,7 +361,7 @@ public class GrClosureSignatureUtil {
     if (checkForOnlyMapParam(signature, args.length)) return ArgInfo.empty_array();
     GrClosureParameter[] params = signature.getParameters();
     if (args.length > params.length && !signature.isVarargs() && !partial) return null;
-    int optional = getOptionalParamCount(signature);
+    int optional = getOptionalParamCount(signature, context);
     int notOptional = params.length - optional;
     if (signature.isVarargs()) notOptional--;
     if (notOptional > args.length && !partial) return null;
@@ -555,9 +555,11 @@ public class GrClosureSignatureUtil {
     }
   }
 
-  private static int getOptionalParamCount(@NotNull GrClosureSignature signature) {
+  private static int getOptionalParamCount(@NotNull GrClosureSignature signature, PsiElement context) {
     GrClosureParameter[] parameters = signature.getParameters();
-    if (parameters.length == 1 && !(parameters[0].getType() instanceof PsiPrimitiveType) && !signature.isCurried()) return 1;
+    boolean isCompileStatic = PsiUtil.isCompileStatic(context);
+    if (parameters.length == 1 && !(parameters[0].getType() instanceof PsiPrimitiveType) && !signature.isCurried() && !isCompileStatic)
+      return 1;
     int count = 0;
     for (GrClosureParameter parameter : parameters) {
       if (parameter.isOptional()) count++;

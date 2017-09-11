@@ -26,9 +26,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ConversionResult;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
-/**
- * @author Maxim.Medvedev
- */
 public class GrListToArrayTypeConverter extends GrTypeConverter {
   @Nullable
   @Override
