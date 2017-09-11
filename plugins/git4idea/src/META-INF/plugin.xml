@@ -41,7 +41,7 @@
 
     <group id="GitFileActions">
       <reference ref="CheckinFiles"/>
-      <action id="Git.Add" class="git4idea.actions.GitAdd" text="Add" icon="AllIcons.General.Add" use-shortcut-of="ChangesView.AddUnversioned" />
+      <action id="Git.Add" class="git4idea.actions.GitAdd" text="_Add" icon="AllIcons.General.Add" use-shortcut-of="ChangesView.AddUnversioned" />
       <separator/>
       <reference ref="Annotate"/>
       <reference ref="Show.Current.Revision"/>
@@ -52,27 +52,27 @@
       <reference id="Vcs.ShowHistoryForBlock"/>
       <separator/>
       <reference id="ChangesView.Revert" />
-      <action id="Git.ResolveConflicts" class="git4idea.actions.GitResolveConflictsAction" text="Resolve Conflicts..."/>
+      <action id="Git.ResolveConflicts" class="git4idea.actions.GitResolveConflictsAction" text="Reso_lve Conflicts..."/>
     </group>
 
     <group id="GitRepositoryActions">
       <action id="Git.Branches" class="git4idea.ui.branch.GitBranchesAction" text="_Branches..." icon="VcsLogIcons.Branch"/>
-      <action id="Git.Tag" class="git4idea.actions.GitTag" text="Tag..."/>
-      <action id="Git.Merge" class="git4idea.actions.GitMerge" text="Merge Changes..." icon="AllIcons.Vcs.MergeSourcesTree"/>
-      <action id="Git.Stash" class="git4idea.actions.GitStash" text="Stash Changes..."/>
-      <action id="Git.Unstash" class="git4idea.actions.GitUnstash" text="UnStash Changes..."/>
-      <action id="Git.Reset" class="git4idea.actions.GitResetHead" text="Reset HEAD..." icon="AllIcons.Actions.Reset"/>
+      <action id="Git.Tag" class="git4idea.actions.GitTag" text="_Tag..."/>
+      <action id="Git.Merge" class="git4idea.actions.GitMerge" text="_Merge Changes..." icon="AllIcons.Vcs.MergeSourcesTree"/>
+      <action id="Git.Stash" class="git4idea.actions.GitStash" text="_Stash Changes..."/>
+      <action id="Git.Unstash" class="git4idea.actions.GitUnstash" text="_UnStash Changes..."/>
+      <action id="Git.Reset" class="git4idea.actions.GitResetHead" text="Re_set HEAD..." icon="AllIcons.Actions.Reset"/>
       <separator/>
-      <action id="Git.Configure.Remotes" class="git4idea.remote.GitConfigureRemotesAction" text="Remotes..." />
-      <action id="Git.Clone" class="git4idea.actions.GitCloneAction" text="Clone..." />
-      <action id="Git.Fetch" class="git4idea.actions.GitFetch" text="Fetch"/>
-      <action id="Git.Pull" class="git4idea.actions.GitPull" text="Pull..." icon="AllIcons.Actions.CheckOut"/>
+      <action id="Git.Configure.Remotes" class="git4idea.remote.GitConfigureRemotesAction" text="Rem_otes..." />
+      <action id="Git.Clone" class="git4idea.actions.GitCloneAction" text="_Clone..." />
+      <action id="Git.Fetch" class="git4idea.actions.GitFetch" text="_Fetch"/>
+      <action id="Git.Pull" class="git4idea.actions.GitPull" text="_Pull..." icon="AllIcons.Actions.CheckOut"/>
       <reference ref="Vcs.Push"/>
       <separator/>
-      <action id="Git.Rebase" class="git4idea.actions.GitRebase" text="Rebase..."/>
-      <action id="Git.Rebase.Abort" class="git4idea.actions.GitRebaseAbort" text="Abort Rebasing"/>
-      <action id="Git.Rebase.Continue" class="git4idea.actions.GitRebaseContinue" text="Continue Rebasing"/>
-      <action id="Git.Rebase.Skip" class="git4idea.actions.GitRebaseSkip" text="Skip Commit in Rebasing"/>
+      <action id="Git.Rebase" class="git4idea.actions.GitRebase" text="_Rebase..."/>
+      <action id="Git.Rebase.Abort" class="git4idea.actions.GitRebaseAbort" text="_Abort Rebasing"/>
+      <action id="Git.Rebase.Continue" class="git4idea.actions.GitRebaseContinue" text="Co_ntinue Rebasing"/>
+      <action id="Git.Rebase.Skip" class="git4idea.actions.GitRebaseSkip" text="S_kip Commit in Rebasing"/>
     </group>
 
     <group id="Git.Menu" class="git4idea.actions.GitMenu" popup="true" text="_Git">
@@ -99,20 +99,20 @@
       <add-to-group group-id="Vcs.FileHistory.ContextMenu"/>
     </group>
 
-    <action class="git4idea.actions.GitCheckoutRevisionAction" id="Git.CheckoutRevision" text="Checkout Revision"/>
+    <action class="git4idea.actions.GitCheckoutRevisionAction" id="Git.CheckoutRevision" text="_Checkout Revision"/>
     <group class="git4idea.ui.branch.GitLogBranchOperationsActionGroup" id="Git.BranchOperationGroup"/>
-    <action class="git4idea.actions.GitCreateNewBranchAction" id="Git.CreateNewBranch" text="New Branch..."
+    <action class="git4idea.actions.GitCreateNewBranchAction" id="Git.CreateNewBranch" text="New _Branch..."
             description="Create new branch starting from the selected commit"/>
-    <action class="git4idea.actions.GitCreateTagAction" id="Git.CreateNewTag" text="New Tag..."
+    <action class="git4idea.actions.GitCreateTagAction" id="Git.CreateNewTag" text="New _Tag..."
             description="Create new tag pointing to this commit"/>
-    <action id="Git.Reset.In.Log" class="git4idea.reset.GitResetAction" text="Reset Current Branch to Here..." icon="AllIcons.Actions.Reset"/>
-    <action id="Git.Revert.In.Log" class="git4idea.revert.GitRevertAction" text="Revert"
+    <action id="Git.Reset.In.Log" class="git4idea.reset.GitResetAction" text="Re_set Current Branch to Here..." icon="AllIcons.Actions.Reset"/>
+    <action id="Git.Revert.In.Log" class="git4idea.revert.GitRevertAction" text="Re_vert"
             description="Produce a new commit, which reverts the changes made in the original commit"/>
-    <action id="Git.Uncommit" class="git4idea.reset.GitUncommitAction" text="Undo Commit..."
+    <action id="Git.Uncommit" class="git4idea.reset.GitUncommitAction" text="_Undo Commit..."
             description="Undo last commit and put its changes into selected changelist"/>
-    <action id="Git.Reword.Commit" class="git4idea.rebase.GitRewordAction" text="Reword..."
+    <action id="Git.Reword.Commit" class="git4idea.rebase.GitRewordAction" text="Re_word..."
             description="Change commit message" />
-    <action id="Git.Interactive.Rebase" class="git4idea.rebase.GitInteractiveRebaseAction" text="Interactively Rebase from Here..."
+    <action id="Git.Interactive.Rebase" class="git4idea.rebase.GitInteractiveRebaseAction" text="_Interactively Rebase from Here..."
             description="Show the dialog for interactive rebase which allows to squash, fixup, reorder, remove and reword commits" />
 
     <group id="Git.Log.ContextMenu">

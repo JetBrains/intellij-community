@@ -116,7 +116,7 @@ public class GitCherryPicker extends VcsCherryPicker {
   @NotNull
   @Override
   public String getActionTitle() {
-    return "Cherry-Pick";
+    return "Che_rry-Pick";
   }
 
   private boolean isAutoCommit() {

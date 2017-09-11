@@ -279,7 +279,7 @@
     </action>
 
     <action id="Vcs.CopyRevisionNumberAction" class="com.intellij.openapi.vcs.history.actions.CopyRevisionNumberAction"
-            text="Copy Revision Number" description="Copy short revision numbers of selected commits to the clipboard"
+            text="Copy Revision _Number" description="Copy short revision numbers of selected commits to the clipboard"
             icon="AllIcons.Actions.Copy" />
 
     <group id="Shelve.KeymapGroup" text="Shelve">

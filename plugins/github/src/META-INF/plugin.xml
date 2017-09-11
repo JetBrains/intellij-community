@@ -42,7 +42,7 @@
     <action id="Github.Create.Pull.Request" class="org.jetbrains.plugins.github.GithubCreatePullRequestAction">
       <add-to-group group-id="Git.Menu"/>
     </action>
-    <action id="Github.Open.In.Browser" class="org.jetbrains.plugins.github.GithubOpenInBrowserAction">
+    <action id="Github.Open.In.Browser" class="org.jetbrains.plugins.github.GithubOpenInBrowserAction" text="_Open on GitHub" description="Open corresponding link in browser" icon="GithubIcons.Github_icon">
       <add-to-group group-id="EditorPopupMenu"/>
       <add-to-group group-id="ProjectViewPopupMenu"/>
       <add-to-group group-id="EditorTabPopupMenu"/>

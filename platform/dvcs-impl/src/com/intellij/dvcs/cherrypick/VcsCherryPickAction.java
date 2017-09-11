@@ -39,7 +39,7 @@ import java.util.List;
 import java.util.Map;
 
 public class VcsCherryPickAction extends DumbAwareAction {
-  private static final String NAME = "Cherry-Pick";
+  private static final String NAME = "Che_rry-Pick";
   private static final String SEVERAL_VCS_DESCRIPTION = "Selected commits are tracked by different vcses";
 
   public VcsCherryPickAction() {

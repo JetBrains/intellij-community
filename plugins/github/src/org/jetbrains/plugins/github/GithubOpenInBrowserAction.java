@@ -46,7 +46,6 @@ import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.history.GitHistoryUtils;
 import git4idea.repo.GitRepository;
-import icons.GithubIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GithubFullPath;
@@ -60,10 +59,6 @@ import static org.jetbrains.plugins.github.util.GithubUtil.LOG;
 
 public class GithubOpenInBrowserAction extends DumbAwareAction {
   public static final String CANNOT_OPEN_IN_BROWSER = "Can't open in browser";
-
-  public GithubOpenInBrowserAction() {
-    super("Open on GitHub", "Open corresponding link in browser", GithubIcons.Github_icon);
-  }
 
   @Override
   public void update(AnActionEvent e) {

@@ -10,8 +10,8 @@
 
   </extensionPoints>
   <actions>
-    <action id="Vcs.CherryPick" class="com.intellij.dvcs.cherrypick.VcsCherryPickAction" icon="DvcsImplIcons.CherryPick"/>
-    <action id="Vcs.Push" class="com.intellij.dvcs.push.VcsPushAction" icon="AllIcons.Vcs.Push" text="Push...">
+    <action id="Vcs.CherryPick" class="com.intellij.dvcs.cherrypick.VcsCherryPickAction" icon="DvcsImplIcons.CherryPick" text="Che_rry-pick-Here"/>
+    <action id="Vcs.Push" class="com.intellij.dvcs.push.VcsPushAction" icon="AllIcons.Vcs.Push" text="_Push...">
       <keyboard-shortcut first-keystroke="control shift K" keymap="$default"/>
     </action>
     <group id="Dvcs.Log.ContextMenu">
