@@ -98,12 +98,8 @@ public class ChooseActionsDialog extends DialogWrapper {
 
   @Override
   protected JComponent createCenterPanel() {
-    JPanel panel = new JPanel(new BorderLayout());
-
-    panel.add(myActionsTree.getComponent());
-    panel.setPreferredSize(JBUI.size(400, 500));
-
-    return panel;
+    return JBUI.Panels.simplePanel(myActionsTree.getComponent())
+      .withPreferredSize(400, 500);
   }
 
   public String[] getTreeSelectedActionIds() {
