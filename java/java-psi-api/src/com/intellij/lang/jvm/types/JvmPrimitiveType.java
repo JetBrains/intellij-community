@@ -15,10 +15,15 @@
  */
 package com.intellij.lang.jvm.types;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * Represents a primitive type of JVM.
  *
  * @see Class#isPrimitive
  */
 public interface JvmPrimitiveType extends JvmType {
+
+  @NotNull
+  String getName();
 }
