@@ -1,13 +1,17 @@
 package de.plushnikov.intellij.plugin;
 
+import com.intellij.codeInspection.LocalInspectionEP;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPoint;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.BuildNumber;
 import de.plushnikov.intellij.lombok.patcher.inject.ClassRootFinder;
 import de.plushnikov.intellij.lombok.patcher.inject.LiveInjector;
 import de.plushnikov.intellij.plugin.agent.IdeaPatcher;
+import de.plushnikov.intellij.plugin.inspection.LombokExplicitTypeCanBeDiamondInspection;
 import de.plushnikov.intellij.plugin.settings.LombokSettings;
 import org.jetbrains.annotations.NotNull;
 
@@ -79,6 +83,33 @@ public class LombokPluginApplicationComponent implements ApplicationComponent {
     } else {
       LOG.info("Runtime path support is disabled");
     }
+
+    final BuildNumber currentBuild = ApplicationInfo.getInstance().getBuild();
+    if (currentBuild.getBaselineVersion() < 173) {
+//    Overwrite IntelliJ Diamond inspection, to filter out val declarations only for IntelliJ < 2017.3
+      addCustomDiamondInspectionExtension();
+    }
+  }
+
+  private void addCustomDiamondInspectionExtension() {
+    final LocalInspectionEP localInspectionEP = new LocalInspectionEP() {
+      @NotNull
+      @Override
+      public Object getInstance() {
+        return new LombokExplicitTypeCanBeDiamondInspection();
+      }
+    };
+    localInspectionEP.groupPath = "Java";
+    localInspectionEP.language = "JAVA";
+    localInspectionEP.shortName = "Convert2Diamond";
+    localInspectionEP.displayName = "Explicit type can be replaced with &lt;&gt;";
+    localInspectionEP.groupDisplayName = "Java language level migration aids";
+    localInspectionEP.enabledByDefault = true;
+    localInspectionEP.level = "WARNING";
+    localInspectionEP.implementationClass = "de.plushnikov.intellij.plugin.inspection.LombokExplicitTypeCanBeDiamondInspection";
+
+    final ExtensionPoint<LocalInspectionEP> extensionPoint = Extensions.getRootArea().getExtensionPoint(LocalInspectionEP.LOCAL_INSPECTION);
+    extensionPoint.registerExtension(localInspectionEP);
   }
 
   private void injectAgent() {

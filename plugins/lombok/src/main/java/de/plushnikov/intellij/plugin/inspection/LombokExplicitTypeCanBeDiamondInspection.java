@@ -12,7 +12,9 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Overwrites intellij standard diamond inspection, to filter out lombok "val", "var" declarations
+ * @deprecated don't use from Intellij 2017.3
  */
+@Deprecated
 public class LombokExplicitTypeCanBeDiamondInspection extends ExplicitTypeCanBeDiamondInspection {
 
   @NotNull
