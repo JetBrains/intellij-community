@@ -429,8 +429,8 @@
       </option>
       <option name="INLINE_PARAMETER_HINT_HIGHLIGHTED">
         <value>
-          <option name="FOREGROUND" value="ffffff"/>
-          <option name="BACKGROUND" value="787878"/>
+          <option name="FOREGROUND" value="5b5b5b"/>
+          <option name="BACKGROUND" value="c0c0c0"/>
         </value>
       </option>
       <option name="IMPLICIT_ANONYMOUS_CLASS_PARAMETER_ATTRIBUTES">
@@ -1708,8 +1708,8 @@
       </option>
       <option name="INLINE_PARAMETER_HINT_HIGHLIGHTED">
         <value>
-          <option name="FOREGROUND" value="1d1d1d"/>
-          <option name="BACKGROUND" value="7a7a7a"/>
+          <option name="FOREGROUND" value="acacac"/>
+          <option name="BACKGROUND" value="686868"/>
         </value>
       </option>
       <option name="IMPLICIT_ANONYMOUS_CLASS_PARAMETER_ATTRIBUTES">
