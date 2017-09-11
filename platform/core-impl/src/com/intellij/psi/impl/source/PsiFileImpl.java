@@ -1188,6 +1188,10 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     if (psi != null) return psi;
 
     synchronized (myPsiLock) {
+      if (useStrongRefs()) {
+        return null;
+      }
+
       psi = myRefToPsi.getCachedPsi(path);
       return psi != null ? psi : myRefToPsi.cachePsi(path, creator.create());
     }
