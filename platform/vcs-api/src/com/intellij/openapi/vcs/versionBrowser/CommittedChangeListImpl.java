@@ -63,10 +63,6 @@ public class CommittedChangeListImpl implements CommittedChangeList {
     return null;
   }
 
-  public Collection<Change> getChangesWithMovedTrees() {
-    return getChangesWithMovedTreesImpl(this);
-  }
-
   @Override
   public boolean isModifiable() {
     return true;
@@ -75,10 +71,6 @@ public class CommittedChangeListImpl implements CommittedChangeList {
   @Override
   public void setDescription(String newMessage) {
     myComment = newMessage;
-  }
-
-  public static Collection<Change> getChangesWithMovedTreesImpl(final CommittedChangeList list) {
-    return list.getChanges();
   }
 
   public Collection<Change> getChanges() {

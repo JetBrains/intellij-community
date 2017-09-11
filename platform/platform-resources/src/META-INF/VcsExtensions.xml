@@ -31,6 +31,10 @@
                     serviceImplementation="com.intellij.openapi.vcs.impl.CodeSmellDetectorImpl"/>
     <projectService serviceImplementation="com.intellij.openapi.vcs.changes.VcsDirtyScopeVfsListener" />
     <projectService serviceImplementation="com.intellij.vcs.commit.CommitMessageInspectionProfile"/>
+    <projectService serviceInterface="com.intellij.openapi.vcs.contentAnnotation.VcsContentAnnotation"
+                    serviceImplementation="com.intellij.openapi.vcs.contentAnnotation.VcsContentAnnotationImpl"/>
+    <projectService serviceInterface="com.intellij.openapi.vcs.contentAnnotation.ContentAnnotationCache"
+                    serviceImplementation="com.intellij.openapi.vcs.contentAnnotation.ContentAnnotationCacheImpl"/>
 
     <daemon.intentionActionFilter implementation="com.intellij.vcs.commit.BaseCommitMessageInspection$EmptyIntentionActionFilter"/>
 

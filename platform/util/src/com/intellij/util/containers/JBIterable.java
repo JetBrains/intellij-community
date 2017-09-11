@@ -266,10 +266,17 @@ public abstract class JBIterable<E> implements Iterable<E> {
    */
   @Nullable
   public final E get(int index) {
-    if (myIterable instanceof List) {
-      return index >= ((List)myIterable).size() ? null : ((List<E>)myIterable).get(index);
+    List<E> list = asRandomAccess(myIterable);
+    if (list != null) {
+      return index >= list.size() ? null : list.get(index);
     }
     return skip(index).first();
+  }
+
+  @Nullable
+  private static <E> List<E> asRandomAccess(@Nullable Iterable<E> iterable) {
+    //noinspection CastConflictsWithInstanceof
+    return iterable instanceof RandomAccess? (List<E>)iterable : null;
   }
 
   /**
@@ -464,8 +471,9 @@ public abstract class JBIterable<E> implements Iterable<E> {
    */
   @Nullable
   public final E first() {
-    if (myIterable instanceof List) {
-      return ((List)myIterable).isEmpty() ? null : ((List<E>)myIterable).get(0);
+    List<E> list = asRandomAccess(myIterable);
+    if (list != null) {
+      return list.isEmpty() ? null : list.get(0);
     }
     Iterator<E> iterator = myIterable.iterator();
     return iterator.hasNext() ? iterator.next() : null;
@@ -476,8 +484,9 @@ public abstract class JBIterable<E> implements Iterable<E> {
    */
   @Nullable
   public final E single() {
-    if (myIterable instanceof List) {
-      return ((List)myIterable).size() != 1 ? null : (E)((List)myIterable).get(0);
+    List<E> list = asRandomAccess(myIterable);
+    if (list != null) {
+      return list.size() != 1 ? null : list.get(0);
     }
     Iterator<E> iterator = myIterable.iterator();
     E first = iterator.hasNext() ? iterator.next() : null;
@@ -489,8 +498,9 @@ public abstract class JBIterable<E> implements Iterable<E> {
    */
   @Nullable
   public final E last() {
-    if (myIterable instanceof List) {
-      return ((List)myIterable).isEmpty() ? null : (E)((List)myIterable).get(((List)myIterable).size() - 1);
+    List<E> list = asRandomAccess(myIterable);
+    if (list != null) {
+      return list.isEmpty() ? null : list.get(list.size() - 1);
     }
     E cur = null;
     for (E e : myIterable) {
