@@ -56,10 +56,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
-import com.intellij.util.IconUtil;
-import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -136,19 +133,12 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
       }
     });
 
-    new DoubleClickListener() {
+    new EditSourceOnDoubleClickHandler.TreeMouseListener(myTree, null) {
       @Override
-      protected boolean onDoubleClick(MouseEvent e) {
-        final int eventY = e.getY();
-        final int row = myTree.getClosestRowForLocation(e.getX(), eventY);
-        if (row >= 0) {
-          final Rectangle bounds = myTree.getRowBounds(row);
-          if (bounds != null && eventY > bounds.getY() && eventY < bounds.getY() + bounds.getHeight()) {
-            runSelection(DataManager.getInstance().getDataContext(myTree));
-            return true;
-          }
-        }
-        return false;
+      protected void processDoubleClick(@NotNull MouseEvent e,
+                                        @NotNull DataContext dataContext,
+                                        @NotNull TreePath treePath) {
+        runSelection(DataManager.getInstance().getDataContext(myTree));
       }
     }.installOn(myTree);
 
