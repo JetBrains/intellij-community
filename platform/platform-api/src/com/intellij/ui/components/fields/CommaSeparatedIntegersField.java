@@ -15,6 +15,7 @@
  */
 package com.intellij.ui.components.fields;
 
+import com.intellij.openapi.util.InvalidDataException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,24 +38,24 @@ public class CommaSeparatedIntegersField extends AbstractValueInputField<List<In
 
   @NotNull
   @Override
-  protected AbstractValueInputField<List<Integer>>.ParseResult parseValue(@Nullable String text) {
-    if (text == null || text.isEmpty()) return new ParseResult(Collections.emptyList());
+  protected List<Integer> parseValue(@Nullable String text) {
+    if (text == null || text.isEmpty()) return Collections.emptyList();
     String[] chunks = text.split("\\s*,\\s*");
     List<Integer> values = new ArrayList<>(chunks.length);
     for (String chunk : chunks) {
       try {
         int value = Integer.parseInt(chunk);
         if (value < myMinValue || value > myMaxValue) {
-          return new ParseResult("Value " + value + " is out of range " + myMinValue + ".." + myMaxValue);
+          throw new InvalidDataException("Value " + value + " is out of range " + myMinValue + ".." + myMaxValue);
         }
         values.add(value);
       }
       catch (NumberFormatException nfe) {
-        return new ParseResult("Value '" + chunk + "' is not an integer number");
+        throw new InvalidDataException("Value '" + chunk + "' is not an integer number");
       }
     }
     Collections.sort(values);
-    return new ParseResult(values);
+    return values;
   }
 
   @Override

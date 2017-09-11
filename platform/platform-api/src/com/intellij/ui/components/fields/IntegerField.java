@@ -16,6 +16,7 @@
 package com.intellij.ui.components.fields;
 
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,22 +64,22 @@ public class IntegerField extends AbstractValueInputField<Integer> {
 
   @NotNull
   @Override
-  protected ParseResult parseValue(@Nullable String text) {
+  protected Integer parseValue(@Nullable String text) {
     try {
       if (StringUtil.isEmpty(text)) {
         if (!myCanBeEmpty) {
-          return new ParseResult(ApplicationBundle.message("integer.field.value.expected"));
+          throw new InvalidDataException(ApplicationBundle.message("integer.field.value.expected"));
         }
-        return new ParseResult(getDefaultValue());
+        return getDefaultValue();
       }
       int value = Integer.parseInt(text);
       if (value < myMinValue || value > myMaxValue) {
-        return new ParseResult(ApplicationBundle.message("integer.field.value.out.of.range", value, myMinValue, myMaxValue));
+        throw new InvalidDataException((ApplicationBundle.message("integer.field.value.out.of.range", value, myMinValue, myMaxValue)));
       }
-      return new ParseResult(value);
+      return value;
     }
     catch (NumberFormatException nfe) {
-      return new ParseResult(ApplicationBundle.message("integer.field.value.not.a.number", text));
+      throw new InvalidDataException((ApplicationBundle.message("integer.field.value.not.a.number", text)));
     }
   }
 

@@ -16,7 +16,7 @@
 package com.intellij.ui.components.fields;
 
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.ui.components.ValidatingTextField;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,53 +44,39 @@ public abstract class AbstractValueInputField<T> extends ValidatingTextField {
 
   @Override
   protected String validateTextOnChange(String text, DocumentEvent e) {
-    ParseResult result = parseValue(text);
-    return result.errorMessage;
+    try {
+      parseValue(text);
+      return null;
+    }
+    catch (InvalidDataException ex) {
+      return ex.getMessage();
+    }
   }
 
   @NotNull
-  protected abstract ParseResult parseValue(@Nullable  String text);
+  protected abstract T parseValue(@Nullable  String text);
 
   protected abstract String valueToString(@NotNull T value);
 
   protected abstract void assertValid(@NotNull T value);
 
   public void validateContent() throws ConfigurationException {
-    ParseResult result = parseValue(getText());
-    if (!result.isValid()) {
-      throw new ConfigurationException((myName != null ? myName + " " : "") + result.errorMessage);
+    try {
+      parseValue(getText());
     }
-  }
-
-  public class ParseResult {
-    private T value;
-    private String errorMessage;
-
-    public ParseResult(@NotNull T value) {
-      this.value = value;
-    }
-
-    public ParseResult(@NotNull String errorMessage) {
-      this.errorMessage = errorMessage;
-    }
-
-    public T getValue() {
-      return value;
-    }
-
-    public String getErrorMessage() {
-      return errorMessage;
-    }
-
-    public boolean isValid() {
-      return StringUtil.isEmpty(errorMessage);
+    catch (InvalidDataException ex) {
+      throw new ConfigurationException((myName != null ? myName + " " : "") + ex.getMessage());
     }
   }
 
   @NotNull
   public T getValue() {
-    ParseResult result = parseValue(getText());
-    return result.isValid() ? result.value : myDefaultValue;
+    try {
+      return parseValue(getText());
+    }
+    catch (InvalidDataException ex) {
+      return myDefaultValue;
+    }
   }
 
   public void setValue(@NotNull T newValue) {
