@@ -511,6 +511,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
   }
 
   private class MySingleTaskController extends SingleTaskController<IndexingRequest, Void> {
+    private static final int LOW_PRIORITY = Thread.MIN_PRIORITY;
     @NotNull private final HeavyAwareExecutor myHeavyAwareExecutor;
 
     public MySingleTaskController(@NotNull Project project) {
@@ -528,8 +529,8 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
 
           @Override
           public void run(@NotNull ProgressIndicator indicator) {
+            int previousPriority = setMinimumPriority();
             try {
-
               IndexingRequest request;
               while ((request = popRequest()) != null) {
                 try {
@@ -546,12 +547,27 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
             }
             finally {
               taskCompleted(null);
+              resetPriority(previousPriority);
             }
           }
         };
         myHeavyAwareExecutor.executeOutOfHeavyOrPowerSave(task, indicator);
       });
       return indicator;
+    }
+
+    public void resetPriority(int previousPriority) {
+      if (Thread.currentThread().getPriority() == LOW_PRIORITY) Thread.currentThread().setPriority(previousPriority);
+    }
+
+    public int setMinimumPriority() {
+      int previousPriority = Thread.currentThread().getPriority();
+      try {
+        Thread.currentThread().setPriority(LOW_PRIORITY);
+      } catch (SecurityException ignored) {
+        LOG.debug("Could not set indexing thread priority", ignored);
+      }
+      return previousPriority;
     }
   }
 
