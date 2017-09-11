@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.diff.chains.DiffRequestChain;
+import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.DeleteProvider;
@@ -57,8 +59,9 @@ import java.util.List;
 import static com.intellij.openapi.util.text.StringUtil.shortenTextWithEllipsis;
 import static com.intellij.openapi.vcs.changes.ui.ChangesListView.UNVERSIONED_FILES_DATA_KEY;
 
-public class MultipleLocalChangeListsBrowser extends ChangesBrowserBase implements Disposable {
+public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser implements Disposable {
   private final boolean myEnableUnversioned;
+  @Nullable private JComponent myBottomDiffComponent;
 
   @NotNull private final ChangeListChooser myChangeListChooser;
   @NotNull private final DeleteProvider myDeleteProvider = new VirtualFileDeleteProvider();
@@ -68,6 +71,8 @@ public class MultipleLocalChangeListsBrowser extends ChangesBrowserBase implemen
   private boolean myHasHiddenUnversioned;
 
   @NotNull private LocalChangeList myChangeList;
+
+  @Nullable private Runnable mySelectedListChangeListener;
 
   public MultipleLocalChangeListsBrowser(@NotNull Project project,
                                          boolean showCheckboxes,
@@ -80,15 +85,10 @@ public class MultipleLocalChangeListsBrowser extends ChangesBrowserBase implemen
     myChangeListChooser = new ChangeListChooser();
 
     installChangeListListener();
-
     init();
 
     updateDisplayedChangeLists();
     setSelectedChangeList(myChangeList);
-  }
-
-  @Override
-  public void dispose() {
   }
 
   private void installChangeListListener() {
@@ -148,6 +148,20 @@ public class MultipleLocalChangeListsBrowser extends ChangesBrowserBase implemen
     );
   }
 
+  @Override
+  protected void updateDiffContext(@NotNull DiffRequestChain chain) {
+    super.updateDiffContext(chain);
+    chain.putUserData(DiffUserDataKeysEx.BOTTOM_PANEL, myBottomDiffComponent);
+  }
+
+
+  public void setBottomDiffComponent(@NotNull JComponent value) {
+    myBottomDiffComponent = value;
+  }
+
+  public void setSelectedListChangeListener(@Nullable Runnable runnable) {
+    mySelectedListChangeListener = runnable;
+  }
 
   private boolean isShowUnversioned() {
     return myEnableUnversioned && VcsConfiguration.getInstance(myProject).SHOW_UNVERSIONED_FILES_WHILE_COMMIT;
@@ -159,6 +173,7 @@ public class MultipleLocalChangeListsBrowser extends ChangesBrowserBase implemen
   }
 
   @NotNull
+  @Override
   public LocalChangeList getSelectedChangeList() {
     return myChangeList;
   }
@@ -167,6 +182,7 @@ public class MultipleLocalChangeListsBrowser extends ChangesBrowserBase implemen
     myChangeList = list;
     myChangeListChooser.setToolTipText(list.getName());
     updateDisplayedChanges();
+    if (mySelectedListChangeListener != null) mySelectedListChangeListener.run();
   }
 
   public void updateDisplayedChangeLists() {
@@ -232,6 +248,45 @@ public class MultipleLocalChangeListsBrowser extends ChangesBrowserBase implemen
   }
 
 
+  @NotNull
+  @Override
+  public List<Change> getDisplayedChanges() {
+    return myChanges;
+  }
+
+  @NotNull
+  @Override
+  public List<Change> getSelectedChanges() {
+    return VcsTreeModelData.selected(myViewer).userObjects(Change.class);
+  }
+
+  @NotNull
+  @Override
+  public List<Change> getIncludedChanges() {
+    return VcsTreeModelData.included(myViewer).userObjects(Change.class);
+  }
+
+  @NotNull
+  @Override
+  public List<VirtualFile> getDisplayedUnversionedFiles() {
+    return myUnversioned;
+  }
+
+  @NotNull
+  @Override
+  public List<VirtualFile> getSelectedUnversionedFiles() {
+    if (!isShowUnversioned()) return Collections.emptyList();
+    return VcsTreeModelData.selected(myViewer).userObjects(VirtualFile.class);
+  }
+
+  @NotNull
+  @Override
+  public List<VirtualFile> getIncludedUnversionedFiles() {
+    if (!isShowUnversioned()) return Collections.emptyList();
+    return VcsTreeModelData.included(myViewer).userObjects(VirtualFile.class);
+  }
+
+
   private class ChangeListChooser extends JPanel {
     private final static int MAX_NAME_LEN = 35;
     @NotNull private final ComboBox<LocalChangeList> myChooser = new ComboBox<>();
@@ -248,6 +303,7 @@ public class MultipleLocalChangeListsBrowser extends ChangesBrowserBase implemen
       });
 
       myChooser.addItemListener(new ItemListener() {
+        @Override
         public void itemStateChanged(ItemEvent e) {
           if (e.getStateChange() == ItemEvent.SELECTED) {
             LocalChangeList changeList = (LocalChangeList)myChooser.getSelectedItem();
@@ -313,12 +369,14 @@ public class MultipleLocalChangeListsBrowser extends ChangesBrowserBase implemen
       super(VcsBundle.message("commit.dialog.include.action.name"));
     }
 
+    @Override
     public boolean isSelected(AnActionEvent e) {
       Change change = e.getData(VcsDataKeys.CURRENT_CHANGE);
       if (change == null) return false;
       return myViewer.isIncluded(change);
     }
 
+    @Override
     public void setSelected(AnActionEvent e, boolean state) {
       Change change = e.getData(VcsDataKeys.CURRENT_CHANGE);
       if (change == null) return;
