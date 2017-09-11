@@ -23,6 +23,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.StubBuilder;
@@ -40,10 +41,7 @@ import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.ListIterator;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class TreeUtil {
@@ -452,10 +450,26 @@ public class TreeUtil {
     }
   }
 
-  public static void bindStubsToTree(@NotNull PsiFileImpl file, @NotNull StubTree stubTree, @NotNull FileElement tree) throws StubBindingException {
+  public static void bindStubsToTree(@NotNull StubTree stubTree, @NotNull FileElement tree) throws StubBindingException {
+    List<Pair<StubBase, TreeElement>> bindings = calcStubAstBindings(stubTree, tree);
+
+    for (int i = 0; i < bindings.size(); i++) {
+      Pair<StubBase, TreeElement> pair = bindings.get(i);
+      StubBasedPsiElementBase psi = (StubBasedPsiElementBase)pair.second.getPsi();
+      //noinspection unchecked
+      pair.first.setPsi(psi);
+      psi.setStubIndex(i + 1);
+    }
+  }
+
+  @NotNull
+  public static List<Pair<StubBase, TreeElement>> calcStubAstBindings(@NotNull StubTree stubTree, @NotNull FileElement tree) throws StubBindingException {
+    List<Pair<StubBase, TreeElement>> bindings = new ArrayList<>();
+
     final ListIterator<StubElement<?>> stubs = stubTree.getPlainList().listIterator();
     stubs.next();  // skip file root stub
 
+    PsiFileImpl file = (PsiFileImpl)tree.getPsi();
     final IStubFileElementType type = file.getElementTypeForStubBuilder();
     assert type != null;
     final StubBuilder builder = type.getBuilder();
@@ -474,15 +488,16 @@ public class TreeUtil {
             throw new StubBindingException("stub:" + stub + ", AST:" + type);
           }
 
-          StubBasedPsiElementBase psi = (StubBasedPsiElementBase)node.getPsi();
-          //noinspection unchecked
-          ((StubBase)stub).setPsi(psi);
-          psi.setStubIndex(stubs.previousIndex());
+          bindings.add(Pair.create((StubBase)stub, node));
         }
 
         super.visitNode(node);
       }
     });
+    if (stubs.hasNext()) {
+      throw new StubBindingException("Stub list in " + file.getName() + " has more elements than PSI");
+    }
+    return bindings;
   }
 
   @Nullable

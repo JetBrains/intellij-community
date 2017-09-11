@@ -277,52 +277,22 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       return Collections.emptyList();
     }
 
-    final Iterator<StubElement<?>> stubs = stubTree.getPlainList().iterator();
-    stubs.next(); // Skip file stub;
-    final List<Pair<StubElement, AstPath>> result = ContainerUtil.newArrayList();
-    final IStubFileElementType elementType = getElementTypeForStubBuilder();
-    assert elementType != null;
-    final StubBuilder builder = elementType.getBuilder();
-
-    root.acceptTree(new RecursiveTreeElementWalkingVisitor() {
-      @Override
-      protected void visitNode(TreeElement node) {
-        CompositeElement parent = node.getTreeParent();
-        if (parent != null && builder.skipChildProcessingWhenBuildingStubs(parent, node)) {
-          return;
-        }
-
-
-        IElementType type = node.getElementType();
-        if (type instanceof IStubElementType && ((IStubElementType)type).shouldCreateStub(node)) {
-          if (!stubs.hasNext()) {
-            reportStubAstMismatch("Stub list is less than AST, last AST element: " + node.getElementType() + " " + node, stubTree);
-          }
-
-          final StubElement stub = stubs.next();
-          if (stub.getStubType() != node.getElementType()) {
-            reportStubAstMismatch("Stub and PSI element type mismatch in " + getName() + ": stub " + stub + ", AST " +
-                                  node.getElementType() + "; " + node, stubTree);
-          }
-
-          AstPath path = AstPath.getNodePath((CompositeElement)node);
-          assert path != null;
-          result.add(Pair.create(stub, path));
-        }
-
-        super.visitNode(node);
+    try {
+      List<Pair<StubBase, TreeElement>> result = TreeUtil.calcStubAstBindings(stubTree, root);
+      synchronized (myPsiLock) {
+        return ContainerUtil.map(result, pair -> {
+          StubElement stub = pair.first;
+          PsiElement psi = stub.getPsi();
+          assert psi != null : "Stub " + stub + " (" + stub.getClass() + ") has returned null PSI";
+          AstPath path = AstPath.getNodePath((CompositeElement)pair.second);
+          assert path != null : "Null path";
+          return Pair.create((StubBasedPsiElementBase)psi, path);
+        });
       }
-    });
-    if (stubs.hasNext()) {
-      reportStubAstMismatch("Stub list in " + getName() + " has more elements than PSI", stubTree);
     }
-    synchronized (myPsiLock) {
-      return ContainerUtil.map(result, pair -> {
-        StubElement stub = pair.first;
-        PsiElement psi = stub.getPsi();
-        assert psi != null : "Stub " + stub + " (" + stub.getClass() + ") has returned null PSI";
-        return Pair.create((StubBasedPsiElementBase)psi, pair.second);
-      });
+    catch (TreeUtil.StubBindingException e) {
+      reportStubAstMismatch(e.getMessage(), stubTree);
+      return Collections.emptyList();
     }
   }
 
@@ -741,7 +711,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
         // Set references from these stubs to AST, because:
         // Stub index might call getStubTree on main PSI file, but then use getPlainListFromAllRoots and return stubs from another file.
         // Even if that file already has AST, stub.getPsi() should be the same as in AST
-        TreeUtil.bindStubsToTree(eachPsiRoot, stubTree, fileElement);
+        TreeUtil.bindStubsToTree(stubTree, fileElement);
       } else {
         eachPsiRoot.bindStubsToCachedPsi(stubTree);
         bindings.put(eachPsiRoot, stubTree);
@@ -1103,7 +1073,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
         tree = new StubTree((PsiFileStub)currentStubTree);
         tree.setDebugInfo("created in calcStubTree");
         try {
-          TreeUtil.bindStubsToTree(this, tree, fileElement);
+          TreeUtil.bindStubsToTree(tree, fileElement);
         }
         catch (TreeUtil.StubBindingException e) {
           rebuildStub();
