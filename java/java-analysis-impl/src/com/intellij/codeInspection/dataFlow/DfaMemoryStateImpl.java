@@ -23,13 +23,15 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UnorderedPair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
-import com.siyeh.ig.psiutils.MethodUtils;
 import gnu.trove.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -1027,9 +1029,10 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   private boolean isUnknownState(DfaValue val) {
     val = unwrap(val);
     if (val instanceof DfaVariableValue) {
-      if (myUnknownVariables.contains(val)) return true;
-      DfaVariableValue negatedValue = ((DfaVariableValue)val).getNegatedValue();
-      if (negatedValue != null && myUnknownVariables.contains(negatedValue)) return true;
+      DfaVariableValue var = (DfaVariableValue)val;
+      if (myUnknownVariables.contains(val) || myUnknownVariables.contains(var.getNegatedValue())) return true;
+      return equivalentVariables(var)
+        .anyMatch(v -> myUnknownVariables.contains(v) || myUnknownVariables.contains(v.getNegatedValue()));
     }
     return false;
   }
@@ -1097,23 +1100,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return map.with(factType, factType.fromDfaValue(value));
   }
 
-  @Nullable
-  private LongRangeSet getRange(DfaValue value) {
-    if (value instanceof DfaVariableValue) {
-      DfaVariableValue var = (DfaVariableValue)value;
-      if (var.getPsiVariable() instanceof PsiMethod && MethodUtils.isStringLength((PsiMethod)var.getPsiVariable())) {
-        DfaVariableValue qualifier = var.getQualifier();
-        if(qualifier != null) {
-          DfaConstValue constValue = getConstantValue(qualifier);
-          if (constValue != null && constValue.getValue() instanceof String) {
-            return LongRangeSet.point(((String)constValue.getValue()).length());
-          }
-        }
-      }
-    }
-    return null;
-  }
-
   void setVariableState(DfaVariableValue dfaVar, DfaVariableState state) {
     assert !myUnknownVariables.contains(dfaVar);
     if (state.equals(myDefaultVariableStates.get(dfaVar))) {
@@ -1124,26 +1110,24 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     myCachedHash = null;
   }
 
+  @NotNull
+  private StreamEx<DfaVariableValue> equivalentVariables(DfaVariableValue var) {
+    DfaVariableValue qualifier = var.getQualifier();
+    if (qualifier == null) return StreamEx.empty();
+    int qualifierIndex = getEqClassIndex(qualifier);
+    if (qualifierIndex == -1) return StreamEx.empty();
+    return StreamEx.of(myEqClasses.get(qualifierIndex).getMemberValues())
+      .without(qualifier).select(DfaVariableValue.class)
+      .map(eqQualifier -> getFactory().getVarFactory()
+        .createVariableValue(var.getPsiVariable(), var.getVariableType(), var.isNegated(), eqQualifier));
+  }
+
   private DfaVariableState findVariableState(DfaVariableValue var) {
     DfaVariableState state = myVariableStates.get(var);
     if (state != null) {
       return state;
     }
-    DfaVariableValue qualifier = var.getQualifier();
-    if (qualifier == null) return null;
-    int qualifierIndex = getEqClassIndex(qualifier);
-    if (qualifierIndex == -1) return null;
-    for (DfaValue eqQualifier : myEqClasses.get(qualifierIndex).getMemberValues()) {
-      if (eqQualifier != qualifier && eqQualifier instanceof DfaVariableValue) {
-        DfaVariableValue eqValue = getFactory().getVarFactory()
-          .createVariableValue(var.getPsiVariable(), var.getVariableType(), var.isNegated(), (DfaVariableValue)eqQualifier);
-        state = myVariableStates.get(eqValue);
-        if (state != null) {
-          return state;
-        }
-      }
-    }
-    return null;
+    return equivalentVariables(var).map(myVariableStates::get).nonNull().findFirst().orElse(null);
   }
 
   @NotNull
