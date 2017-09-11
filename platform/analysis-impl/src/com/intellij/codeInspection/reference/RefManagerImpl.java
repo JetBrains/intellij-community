@@ -87,7 +87,7 @@ public class RefManagerImpl extends RefManager {
   private volatile boolean myIsInProcess;
   private volatile boolean myOfflineView;
 
-  private final List<RefGraphAnnotator> myGraphAnnotators = new ArrayList<>();
+  private final LinkedHashSet<RefGraphAnnotator> myGraphAnnotators = new LinkedHashSet<>();
   private GlobalInspectionContext myContext;
 
   private final Map<Key, RefManagerExtension> myExtensions = new THashMap<>();
@@ -192,8 +192,7 @@ public class RefManagerImpl extends RefManager {
   }
 
   public void registerGraphAnnotator(@NotNull RefGraphAnnotator annotator) {
-    myGraphAnnotators.add(annotator);
-    if (annotator instanceof RefGraphAnnotatorEx) {
+    if (myGraphAnnotators.add(annotator) && annotator instanceof RefGraphAnnotatorEx) {
       ((RefGraphAnnotatorEx)annotator).initialize(this);
     }
   }

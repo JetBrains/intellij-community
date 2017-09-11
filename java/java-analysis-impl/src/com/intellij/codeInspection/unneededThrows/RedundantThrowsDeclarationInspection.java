@@ -171,6 +171,12 @@ public class RedundantThrowsDeclarationInspection extends GlobalJavaBatchInspect
     return fix instanceof MyQuickFix ? ((MyQuickFix)fix).myHint : null;
   }
 
+  @Nullable
+  @Override
+  public RefGraphAnnotator getAnnotator(@NotNull RefManager refManager) {
+    return new RedundantThrowsGraphAnnotator(refManager);
+  }
+
   private static class MyQuickFix implements LocalQuickFix {
     private final ProblemDescriptionsProcessor myProcessor;
     private final String myHint;
