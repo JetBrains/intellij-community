@@ -15,8 +15,6 @@
  */
 package com.intellij.openapi.vcs.changes.ui;
 
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
@@ -24,7 +22,6 @@ import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.RemoteRevisionsCache;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,15 +41,6 @@ public class AlienChangeListBrowser extends CommitDialogChangesBrowser {
     myChanges = changes;
 
     init();
-  }
-
-  @NotNull
-  @Override
-  protected List<AnAction> createToolbarActions() {
-    return ContainerUtil.append(
-      super.createToolbarActions(),
-      ActionManager.getInstance().getAction("AlienCommitChangesDialog.AdditionalActions")
-    );
   }
 
   @NotNull
