@@ -255,8 +255,7 @@ public class ControlFlowBuilder {
   }
 
   public ControlFlow build(final PsiElementVisitor visitor, final PsiElement element) {
-    // create start pseudo node
-    startNode(null);
+    addEntryPointNode(element);
 
     element.acceptChildren(visitor);
 
@@ -265,6 +264,11 @@ public class ControlFlowBuilder {
 
     final List<Instruction> result = instructions;
     return new ControlFlowImpl(result.toArray(new Instruction[result.size()]));
+  }
+
+  protected void addEntryPointNode(final PsiElement startElement) {
+    // create start pseudo node
+    startNode(null);
   }
 
   public void updatePendingElementScope(@NotNull PsiElement parentForScope,
