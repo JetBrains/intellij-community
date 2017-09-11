@@ -71,7 +71,7 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
   }
 
   @NotNull
-  //@Override //May cause issues with older versions of IDEA SDK that are currently supported
+  @Override
   protected Set<String> transformModifiers(@NotNull PsiModifierList modifierList, @NotNull final Set<String> modifiers) {
     // make copy of original modifiers
     Set<String> result = ContainerUtil.newHashSet(modifiers);
@@ -87,9 +87,9 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
   }
 
   @Nullable
-  //@Override //May cause issues with older versions of IDEA SDK that are currently supported
-  protected PsiType inferType(PsiTypeElement typeElement) {
-    if (null == typeElement || DumbService.isDumb(typeElement.getProject()) || !valProcessor.isEnabled(typeElement.getProject())) {
+  @Override
+  protected PsiType inferType(@NotNull PsiTypeElement typeElement) {
+    if (DumbService.isDumb(typeElement.getProject()) || !valProcessor.isEnabled(typeElement.getProject())) {
       return null;
     }
     return valProcessor.inferType(typeElement);
