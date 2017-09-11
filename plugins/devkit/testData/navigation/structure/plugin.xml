@@ -1,0 +1,47 @@
+<idea-plugin>
+  <id>plugin.id</id>
+  <name>MyPlugin</name>
+  <version>1.0</version>
+  <vendor email="support@yourcompany.com" url="http://www.yourcompany.com">YourCompany</vendor>
+
+  <description><![CDATA[
+      Enter short description for your plugin here.<br>
+      <em>most HTML tags may be used</em>
+    ]]></description>
+
+  <change-notes><![CDATA[
+      Add change notes here.<br>
+      <em>most HTML tags may be used</em>
+    ]]>
+  </change-notes>
+
+  <idea-version until-build="130.0" since-build="125.5"/>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <toolWindow id="someToolWindow" factoryClass="com.jetbrains.test.SomeToolWindowFactory"/>
+    <projectConfigurable id="someConfigurable" instance="com.jetbrains.test.SomeConfigurable"/>
+    <fileEditorProvider implementation="com.jetbrains.test.SomeFileEditorProvider"/>
+    <applicationService serviceImplementation="com.jetbrains.test.SomeApplicationService"/>
+    <applicationService serviceInterface="com.jetbrains.test.SomeApplicationServiceInterface"
+                        serviceImplementation="com.jetbrains.test.SomeApplicationServiceImplementation"/>
+    <dom.extender id="DomExtenderId" domClass="com.jetbrains.test.SomeDomClass" extenderClass="com.jetbrains.test.SomeExtenderClass"/>
+  </extensions>
+
+  <extensionPoints>
+    <extensionPoint interface="com.jetbrains.test.MyExtensionPointClass" name="someExtensionPoint"/>
+  </extensionPoints>
+
+  <application-components>
+    <component>
+      <implementation-class>com.jetbrains.test.SomeApplicationComponent</implementation-class>
+    </component>
+  </application-components>
+
+  <actions>
+    <group id="MyPlugin.MyGroup" text="My Group">
+      <action class="com.jetbrains.test.SomeAction1Class" id="SomeAction1" icon="AllIcons.Actions.Back"/>
+      <add-to-group group-id="MainMenu"/>
+    </group>
+    <action class="com.jetbrains.test.SomeAction2Class" id="SomeAction2"/>
+  </actions>
+</idea-plugin>
