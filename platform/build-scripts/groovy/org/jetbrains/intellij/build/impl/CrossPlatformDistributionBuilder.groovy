@@ -89,6 +89,15 @@ class CrossPlatformDistributionBuilder {
           exclude(name: "bin/*.py")
           exclude(name: "bin/idea.properties")
           exclude(name: "help/**")
+
+          buildContext.linuxDistributionCustomizer.extraExecutables.each {
+            exclude(name: it)
+          }
+        }
+        zipfileset(dir: "$linuxDistPath", filemode: "775") {
+          buildContext.linuxDistributionCustomizer.extraExecutables.each {
+            include(name: it)
+          }
         }
         zipfileset(dir: "$linuxDistPath/bin", prefix: "bin", filemode: "775") {
           include(name: "*.sh")
@@ -106,6 +115,20 @@ class CrossPlatformDistributionBuilder {
           exclude(name: "bin/*.jnilib")
           exclude(name: "bin/idea.properties")
           exclude(name: "bin/*.vmoptions")
+
+          commonFiles.each {
+            exclude(name: it)
+          }
+
+          buildContext.macDistributionCustomizer.extraExecutables.each {
+            exclude(name: it)
+          }
+        }
+        zipfileset(dir: "$macDistPath", filemode: "775") {
+          buildContext.macDistributionCustomizer.extraExecutables.each {
+            include(name: it)
+          }
+
           commonFiles.each {
             exclude(name: it)
           }
