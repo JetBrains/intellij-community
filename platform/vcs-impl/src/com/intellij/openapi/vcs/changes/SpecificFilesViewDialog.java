@@ -109,7 +109,7 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
     final DefaultActionGroup group = new DefaultActionGroup();
     final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("SPECIFIC_FILES_DIALOG", group, true);
 
-    addCustomActions(group, actionToolbar);
+    addCustomActions(group);
 
     final CommonActionsManager cam = CommonActionsManager.getInstance();
     final Expander expander = new Expander();
@@ -123,7 +123,7 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
     myView.setShowFlatten(false);
   }
 
-  protected void addCustomActions(@NotNull DefaultActionGroup group, @NotNull ActionToolbar actionToolbar) {
+  protected void addCustomActions(@NotNull DefaultActionGroup group) {
   }
 
   @Override

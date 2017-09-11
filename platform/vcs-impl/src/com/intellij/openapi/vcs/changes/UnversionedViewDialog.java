@@ -16,17 +16,15 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
-import com.intellij.openapi.actionSystem.impl.PresentationFactory;
-import com.intellij.openapi.actionSystem.impl.Utils;
-import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.ArrayList;
 import java.util.List;
 
 public class UnversionedViewDialog extends SpecificFilesViewDialog {
@@ -39,8 +37,11 @@ public class UnversionedViewDialog extends SpecificFilesViewDialog {
   }
 
   @Override
-  protected void addCustomActions(@NotNull DefaultActionGroup group, @NotNull ActionToolbar actionToolbar) {
-    List<AnAction> actions = registerUnversionedActionsShortcuts(actionToolbar.getToolbarDataContext(), myView);
+  protected void addCustomActions(@NotNull DefaultActionGroup group) {
+    registerUnversionedActionsShortcuts(myView);
+
+    List<AnAction> actions = new ArrayList<>();
+    actions.add(getUnversionedActionGroup());
     // special shortcut for deleting a file
     actions.add(myDeleteActionWithCustomShortcut =
                   EmptyAction.registerWithShortcutSet("ChangesView.DeleteUnversioned.From.Dialog", CommonShortcuts.getDelete(), myView));
@@ -74,17 +75,8 @@ public class UnversionedViewDialog extends SpecificFilesViewDialog {
     return (ActionGroup)ActionManager.getInstance().getAction("Unversioned.Files.Dialog");
   }
 
-  @NotNull
-  public static List<AnAction> registerUnversionedActionsShortcuts(@NotNull DataContext dataContext, @NotNull JComponent component) {
-    ActionManager manager = ActionManager.getInstance();
-    List<AnAction> actions = ContainerUtil.newArrayList();
-
-    Utils.expandActionGroup(LaterInvocator.isInModalContext(), getUnversionedActionGroup(), actions, new PresentationFactory(), dataContext, "", manager);
-    for (AnAction action : actions) {
-      action.registerCustomShortcutSet(action.getShortcutSet(), component);
-    }
-
-    return actions;
+  public static void registerUnversionedActionsShortcuts(@NotNull JComponent component) {
+    ActionUtil.recursiveRegisterShortcutSet(getUnversionedActionGroup(), component, null);
   }
 
   @NotNull

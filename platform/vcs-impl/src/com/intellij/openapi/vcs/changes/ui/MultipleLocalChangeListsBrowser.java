@@ -18,7 +18,6 @@ package com.intellij.openapi.vcs.changes.ui;
 import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.DataManager;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -113,10 +112,9 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
     if (myEnableUnversioned) {
       result.add(new ShowHideUnversionedFilesAction());
 
-      // TODO: do not access DataContext
       // We do not add "Delete" key shortcut for deleting unversioned files as this shortcut is already used to uncheck checkboxes in the tree.
       result.add(UnversionedViewDialog.getUnversionedActionGroup());
-      UnversionedViewDialog.registerUnversionedActionsShortcuts(DataManager.getInstance().getDataContext(this), myViewer);
+      UnversionedViewDialog.registerUnversionedActionsShortcuts(myViewer);
     }
     else {
       // avoid duplicated actions on toolbar
