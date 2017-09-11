@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -132,23 +132,7 @@ public class ChooseActionsDialog extends DialogWrapper {
     DefaultActionGroup group = new DefaultActionGroup();
     final JComponent toolbar = ActionManager.getInstance().createActionToolbar("ChooseActionsDialog", group, true).getComponent();
     final CommonActionsManager commonActionsManager = CommonActionsManager.getInstance();
-    final TreeExpander treeExpander = new TreeExpander() {
-      public void expandAll() {
-        TreeUtil.expandAll(myActionsTree.getTree());
-      }
-
-      public boolean canExpand() {
-        return true;
-      }
-
-      public void collapseAll() {
-        TreeUtil.collapseAll(myActionsTree.getTree(), 0);
-      }
-
-      public boolean canCollapse() {
-        return true;
-      }
-    };
+    final TreeExpander treeExpander = KeymapPanel.createTreeExpander(myActionsTree);
     group.add(commonActionsManager.createExpandAllAction(treeExpander, myActionsTree.getTree()));
     group.add(commonActionsManager.createCollapseAllAction(treeExpander, myActionsTree.getTree()));
 
