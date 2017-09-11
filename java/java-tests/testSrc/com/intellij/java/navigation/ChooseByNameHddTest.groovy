@@ -15,7 +15,6 @@
  */
 package com.intellij.java.navigation
 
-import com.intellij.ide.actions.GotoFileItemProvider
 import com.intellij.ide.util.gotoByName.ChooseByNamePopup
 import com.intellij.ide.util.gotoByName.GotoClassModel2
 import com.intellij.ide.util.gotoByName.GotoFileModel
@@ -29,7 +28,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import org.jetbrains.annotations.NotNull
-
 /**
  * @author peter
  */
@@ -41,7 +39,7 @@ class ChooseByNameHddTest extends JavaCodeInsightFixtureTestCase {
 
     ApplicationManager.application.runReadAction {
       def model = new GotoFileModel(project)
-      def popup = ChooseByNamePopup.createPopup(project, model, new GotoFileItemProvider(project, null, model))
+      def popup = ChooseByNamePopup.createPopup(project, model, (PsiElement)null)
       assert ChooseByNameTest.calcPopupElements(popup, path) == [psiFile]
       assert ChooseByNameTest.calcPopupElements(popup, FileUtil.toSystemDependentName(path)) == [psiFile]
       assert ChooseByNameTest.calcPopupElements(popup, vFile.parent.path) == [psiFile.containingDirectory]

@@ -193,7 +193,18 @@ public abstract class GotoActionBase extends AnAction {
                                          boolean useSelectionFromEditor,
                                          final boolean allowMultipleSelection) {
     showNavigationPopup(e, model, callback, findUsagesTitle, useSelectionFromEditor, allowMultipleSelection,
-                        new DefaultChooseByNameItemProvider(getPsiContext(e)));
+                        ChooseByNameModelEx.getItemProvider(model, getPsiContext(e)));
+  }
+
+  @Deprecated
+  protected <T> void showNavigationPopup(AnActionEvent e,
+                                         ChooseByNameModel model,
+                                         final GotoActionCallback<T> callback,
+                                         @Nullable final String findUsagesTitle,
+                                         boolean useSelectionFromEditor,
+                                         final boolean allowMultipleSelection,
+                                         final DefaultChooseByNameItemProvider itemProvider) {
+    showNavigationPopup(e, model, callback, findUsagesTitle, useSelectionFromEditor, allowMultipleSelection, (ChooseByNameItemProvider)itemProvider);
   }
 
   protected <T> void showNavigationPopup(AnActionEvent e,
@@ -202,7 +213,7 @@ public abstract class GotoActionBase extends AnAction {
                                          @Nullable final String findUsagesTitle,
                                          boolean useSelectionFromEditor,
                                          final boolean allowMultipleSelection,
-                                         final DefaultChooseByNameItemProvider itemProvider) {
+                                         final ChooseByNameItemProvider itemProvider) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     boolean mayRequestOpenInCurrentWindow = model.willOpenEditor() && FileEditorManagerEx.getInstanceEx(project).hasSplitOrUndockedWindows();
     Pair<String, Integer> start = getInitialText(useSelectionFromEditor, e);

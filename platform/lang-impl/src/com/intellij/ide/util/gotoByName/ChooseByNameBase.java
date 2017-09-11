@@ -186,7 +186,7 @@ public abstract class ChooseByNameBase {
    * @param initialText initial text which will be in the lookup text field
    */
   protected ChooseByNameBase(Project project, @NotNull ChooseByNameModel model, String initialText, PsiElement context) {
-    this(project, model, new DefaultChooseByNameItemProvider(context), initialText, 0);
+    this(project, model, ChooseByNameModelEx.getItemProvider(model, context), initialText, 0);
   }
 
   @SuppressWarnings("UnusedDeclaration") // Used in MPS

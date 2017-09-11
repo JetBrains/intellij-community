@@ -293,18 +293,18 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   }
 
   public static ChooseByNamePopup createPopup(final Project project, final ChooseByNameModel model, final PsiElement context) {
-    return createPopup(project, model, new DefaultChooseByNameItemProvider(context), null);
+    return createPopup(project, model, ChooseByNameModelEx.getItemProvider(model, context), null);
   }
 
   public static ChooseByNamePopup createPopup(final Project project, final ChooseByNameModel model, final PsiElement context,
                                               @Nullable final String predefinedText) {
-    return createPopup(project, model, new DefaultChooseByNameItemProvider(context), predefinedText, false, 0);
+    return createPopup(project, model, ChooseByNameModelEx.getItemProvider(model, context), predefinedText, false, 0);
   }
 
   public static ChooseByNamePopup createPopup(final Project project, final ChooseByNameModel model, final PsiElement context,
                                               @Nullable final String predefinedText,
                                               boolean mayRequestOpenInCurrentWindow, final int initialIndex) {
-    return createPopup(project, model, new DefaultChooseByNameItemProvider(context), predefinedText, mayRequestOpenInCurrentWindow,
+    return createPopup(project, model, ChooseByNameModelEx.getItemProvider(model, context), predefinedText, mayRequestOpenInCurrentWindow,
                        initialIndex);
   }
 

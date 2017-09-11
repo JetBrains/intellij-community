@@ -17,6 +17,7 @@
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.actions.GotoFileItemProvider;
 import com.intellij.ide.actions.NonProjectScopeDisablerEP;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.PsiElementListCellRenderer;
@@ -31,6 +32,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.containers.JBIterable;
@@ -49,6 +51,12 @@ public class GotoFileModel extends FilteringGotoByModel<FileType> implements Dum
   public GotoFileModel(@NotNull Project project) {
     super(project, Extensions.getExtensions(ChooseByNameContributor.FILE_EP_NAME));
     myMaxSize = ApplicationManager.getApplication().isUnitTestMode() ? Integer.MAX_VALUE : WindowManagerEx.getInstanceEx().getFrame(project).getSize().width;
+  }
+
+  @NotNull
+  @Override
+  public ChooseByNameItemProvider getItemProvider(@Nullable PsiElement context) {
+    return new GotoFileItemProvider(myProject, context, this);
   }
 
   @Override
