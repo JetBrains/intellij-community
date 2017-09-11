@@ -16,6 +16,7 @@
 package com.intellij.openapi.options.colors;
 
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Describes a text attribute key the attributes for which can be configured in a custom
@@ -31,15 +32,17 @@ public final class AttributesDescriptor extends AbstractKeyDescriptor<TextAttrib
    * @param displayName the name of the attribute shown in the colors list.
    * @param key         the attributes key for which the colors are specified.
    */
-  public AttributesDescriptor(String displayName, TextAttributesKey key) {
+  public AttributesDescriptor(@NotNull String displayName, @NotNull TextAttributesKey key) {
     super(displayName, key);
   }
 
+  @NotNull
   @Override
   public String getDisplayName() {
     return super.getDisplayName();
   }
 
+  @NotNull
   @Override
   public TextAttributesKey getKey() {
     return super.getKey();

@@ -115,7 +115,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
       //fire events
       fireOnTestingFinished(myTestsRootProxy);
     });
-    stopEventProcessing();
+    super.onFinishTesting();
   }
 
   @Override

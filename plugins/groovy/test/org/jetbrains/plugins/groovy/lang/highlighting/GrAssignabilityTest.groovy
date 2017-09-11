@@ -877,4 +877,46 @@ List foo() {
 }
 '''
   }
+
+  void 'test optional argument on CompileStatic'() {
+    testHighlighting '''\
+import groovy.transform.CompileStatic
+
+@CompileStatic
+class A {
+    A(String args) {}
+
+    def foo() {
+        new A<error>()</error>
+    }
+}
+'''
+  }
+
+  void 'test optional vararg argument on CompileStatic'() {
+    testHighlighting '''\
+import groovy.transform.CompileStatic
+
+@CompileStatic
+class A {
+    A(String... args) {}
+
+    def foo() {
+        new A()
+    }
+}
+'''
+  }
+
+  void 'test optional closure arg on CompileStatic'() {
+    testHighlighting '''\
+import groovy.transform.CompileStatic
+
+@CompileStatic
+def method() {
+    Closure<String> cl = {"str"}
+    cl()
+}
+'''
+  }
 }

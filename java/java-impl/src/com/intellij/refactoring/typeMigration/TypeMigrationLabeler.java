@@ -463,6 +463,13 @@ public class TypeMigrationLabeler {
     if (originalType.equals(PsiType.NULL)) {
       if (migrationType instanceof PsiPrimitiveType) {
         markFailedConversion(Pair.create(originalType, migrationType), expr);
+        return;
+      }
+      if (place instanceof PsiVariable) {
+        PsiType type = ((PsiVariable)place).getType();
+        if (((PsiVariable)place).getInitializer() == expr && myRules.shouldConvertNull(type, migrationType, expr)) {
+          convertExpression(expr, migrationType, type, isCovariant);
+        }
       }
       return;
     }

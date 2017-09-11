@@ -22,7 +22,9 @@ import com.intellij.testGuiFramework.remote.JUnitClientListener
 import com.intellij.testGuiFramework.remote.client.ClientHandler
 import com.intellij.testGuiFramework.remote.client.JUnitClient
 import com.intellij.testGuiFramework.remote.client.JUnitClientImpl
-import com.intellij.testGuiFramework.remote.transport.*
+import com.intellij.testGuiFramework.remote.transport.JUnitTestContainer
+import com.intellij.testGuiFramework.remote.transport.MessageType
+import com.intellij.testGuiFramework.remote.transport.TransportMessage
 import org.junit.runner.JUnitCore
 import org.junit.runner.Request
 import java.util.concurrent.BlockingQueue
@@ -33,20 +35,20 @@ import java.util.concurrent.LinkedBlockingQueue
  */
 class GuiTestThread : Thread(GUI_TEST_THREAD_NAME) {
 
-  lateinit private var myClient: JUnitClient
   private var testQueue: BlockingQueue<JUnitTestContainer> = LinkedBlockingQueue()
   private val core = JUnitCore()
   private val LOG = Logger.getInstance("#com.intellij.testGuiFramework.impl.GuiTestThread")
 
   companion object {
     val GUI_TEST_THREAD_NAME = "GuiTest Thread"
+    var client: JUnitClient? = null
   }
 
   override fun run() {
-    myClient = JUnitClientImpl(host(), port(), createInitHandlers())
-    myClient.addHandler(createCloseHandler())
+    client = JUnitClientImpl(host(), port(), createInitHandlers())
+    client!!.addHandler(createCloseHandler())
 
-    val myListener = JUnitClientListener({ jUnitInfo -> myClient.send(TransportMessage(MessageType.JUNIT_INFO, jUnitInfo)) })
+    val myListener = JUnitClientListener({ jUnitInfo -> client!!.send(TransportMessage(MessageType.JUNIT_INFO, jUnitInfo)) })
     core.addListener(myListener)
 
     try {
@@ -55,19 +57,19 @@ class GuiTestThread : Thread(GUI_TEST_THREAD_NAME) {
         LOG.info("Running test: $testContainer")
         runTest(testContainer)
       }
-    } catch (e: InterruptedException) {
+    }
+    catch (e: InterruptedException) {
       Thread.currentThread().interrupt()
     }
   }
 
 
   private fun createInitHandlers(): Array<ClientHandler> {
-    val testHandler = object: ClientHandler {
+    val testHandler = object : ClientHandler {
       override fun accept(message: TransportMessage) = message.type == MessageType.RUN_TEST
 
       override fun handle(message: TransportMessage) {
         val content = (message.content as JUnitTestContainer)
-        assert(content is JUnitTestContainer)
         LOG.info("Added test to testQueue: ${content.toString()}")
         testQueue.add(content)
       }
@@ -77,11 +79,12 @@ class GuiTestThread : Thread(GUI_TEST_THREAD_NAME) {
 
 
   private fun createCloseHandler(): ClientHandler {
-    return object: ClientHandler {
+    return object : ClientHandler {
       override fun accept(message: TransportMessage) = message.type == MessageType.CLOSE_IDE
 
       override fun handle(message: TransportMessage) {
-        myClient.send(TransportMessage(MessageType.RESPONSE, null, message.id))
+        client?.send(TransportMessage(MessageType.RESPONSE, null, message.id)) ?: throw Exception(
+          "Unable to handle transport message: \"$message\", because JUnitClient is accidentally null")
         val application = ApplicationManager.getApplication()
         (application as ApplicationImpl).exit(true, true)
       }

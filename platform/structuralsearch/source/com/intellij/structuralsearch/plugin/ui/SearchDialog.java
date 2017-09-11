@@ -23,7 +23,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -131,7 +130,7 @@ public class SearchDialog extends DialogWrapper {
     model = new SearchModel(createConfiguration());
 
     init();
-    myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD,myDisposable);
+    myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, myDisposable);
   }
 
   public void setUseLastConfiguration(boolean useLastConfiguration) {
@@ -178,18 +177,7 @@ public class SearchDialog extends DialogWrapper {
     myAlarm.cancelAllRequests();
     myAlarm.addRequest(() -> {
       try {
-        ApplicationManager.getApplication().runReadAction(() -> {
-          final boolean valid = isValid();
-          ApplicationManager.getApplication().invokeLater(() -> {
-            if (!valid) {
-              getOKAction().setEnabled(false);
-            }
-            else {
-              getOKAction().setEnabled(true);
-              reportMessage(null, null);
-            }
-          });
-        });
+        getOKAction().setEnabled(isValid());
       }
       catch (ProcessCanceledException e) {
         throw e;
@@ -372,7 +360,7 @@ public class SearchDialog extends DialogWrapper {
   }
 
   protected boolean isRecursiveSearchEnabled() {
-    return true;
+    return myShowScopePanel;
   }
 
   public void setValuesFromConfig(Configuration configuration) {
@@ -496,15 +484,15 @@ public class SearchDialog extends DialogWrapper {
     searchOptions.setBorder(IdeBorderFactory.createTitledBorder(SSRBundle.message("ssdialog.options.group.border"),
                                                                 true));
 
-    myScopeChooserCombo = new ScopeChooserCombo(
-      searchContext.getProject(),
-      true,
-      false,
-      FindSettings.getInstance().getDefaultScopeName()
-    );
-    Disposer.register(myDisposable, myScopeChooserCombo);
     JPanel allOptions = new JPanel(new BorderLayout());
     if (myShowScopePanel) {
+      myScopeChooserCombo = new ScopeChooserCombo(
+        searchContext.getProject(),
+        true,
+        false,
+        FindSettings.getInstance().getDefaultScopeName()
+      );
+      Disposer.register(myDisposable, myScopeChooserCombo);
       JPanel scopePanel = new JPanel(new GridBagLayout());
 
       TitledSeparator separator = new TitledSeparator(SSRBundle.message("search.dialog.scope.label"), myScopeChooserCombo.getComboBox());
@@ -526,6 +514,10 @@ public class SearchDialog extends DialogWrapper {
         }
       });
     }
+    else {
+      myScopeChooserCombo = null;
+    }
+
 
     buildOptions(searchOptions);
 
@@ -706,20 +698,19 @@ public class SearchDialog extends DialogWrapper {
     return searchCriteriaEdit.getContentComponent();
   }
 
-  // Performs ok action
   @Override
   protected void doOKAction() {
-    SearchScope selectedScope = getSelectedScope();
-    if (selectedScope == null) return;
-
     myDoingOkAction = true;
-    boolean result = isValid();
+    final boolean result = isValid();
     myDoingOkAction = false;
     if (!result) return;
 
     myAlarm.cancelAllRequests();
     super.doOKAction();
     if (!myRunFindActionOnClose) return;
+
+    final SearchScope selectedScope = myScopeChooserCombo.getSelectedScope();
+    if (selectedScope == null) return;
 
     final FindSettings findSettings = FindSettings.getInstance();
     findSettings.setDefaultScopeName(selectedScope.getDisplayName());
@@ -765,21 +756,15 @@ public class SearchDialog extends DialogWrapper {
     return config;
   }
 
-  private SearchScope getSelectedScope() {
-    return myScopeChooserCombo.getSelectedScope();
-  }
-
   protected boolean isValid() {
     setValuesToConfig(model.getConfig());
     try {
       Matcher.validate(searchContext.getProject(), model.getConfig().getMatchOptions());
     }
     catch (MalformedPatternException ex) {
-      if (myRunFindActionOnClose) {
-        reportMessage(SSRBundle.message("this.pattern.is.malformed.message",
-                                        (ex.getMessage() != null) ? ex.getMessage() : ""), searchCriteriaEdit);
-        return false;
-      }
+      reportMessage(SSRBundle.message("this.pattern.is.malformed.message",
+                                      (ex.getMessage() != null) ? ex.getMessage() : ""), searchCriteriaEdit);
+      return false;
     }
     catch (UnsupportedPatternException ex) {
       reportMessage(SSRBundle.message("this.pattern.is.unsupported.message", ex.getMessage()), searchCriteriaEdit);
@@ -789,6 +774,7 @@ public class SearchDialog extends DialogWrapper {
       reportMessage(e.getMessage(), searchCriteriaEdit);
       return false;
     }
+    reportMessage("", null);
     return true;
   }
 
@@ -804,10 +790,12 @@ public class SearchDialog extends DialogWrapper {
   protected void setValuesToConfig(Configuration config) {
     MatchOptions options = config.getMatchOptions();
 
-    boolean searchWithinHierarchy = IdeBundle.message("scope.class.hierarchy").equals(myScopeChooserCombo.getSelectedScopeName());
-    // We need to reset search within hierarchy scope during online validation since the scope works with user participation
-    options.setScope(
-      searchWithinHierarchy && !myDoingOkAction ? GlobalSearchScope.projectScope(getProject()) : myScopeChooserCombo.getSelectedScope());
+    if (myShowScopePanel) {
+      boolean searchWithinHierarchy = IdeBundle.message("scope.class.hierarchy").equals(myScopeChooserCombo.getSelectedScopeName());
+      // We need to reset search within hierarchy scope during online validation since the scope works with user participation
+      options.setScope(
+        searchWithinHierarchy && !myDoingOkAction ? GlobalSearchScope.projectScope(getProject()) : myScopeChooserCombo.getSelectedScope());
+    }
     options.setLooseMatching(true);
     options.setRecursiveSearch(isRecursiveSearchEnabled() && recursiveMatching.isSelected());
 

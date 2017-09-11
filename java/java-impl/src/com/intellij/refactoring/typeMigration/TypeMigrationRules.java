@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,6 +87,10 @@ public class TypeMigrationRules {
       if (conversion != null) return conversion;
     }
     return null;
+  }
+
+  public boolean shouldConvertNull(final PsiType from, final PsiType to, PsiExpression context) {
+    return myConversionRules.stream().anyMatch(rule -> rule.shouldConvertNullInitializer(from, to, context));
   }
 
   public void setBoundScope(final SearchScope searchScope) {

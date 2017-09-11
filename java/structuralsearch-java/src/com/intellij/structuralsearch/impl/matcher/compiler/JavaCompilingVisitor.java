@@ -25,19 +25,13 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.structuralsearch.MalformedPatternException;
-import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.StructuralSearchUtil;
-import com.intellij.structuralsearch.UnsupportedPatternException;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.JavaCompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.filters.*;
 import com.intellij.structuralsearch.impl.matcher.handlers.*;
 import com.intellij.structuralsearch.impl.matcher.iterators.DocValuesIterator;
 import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate;
-import com.intellij.structuralsearch.impl.matcher.strategies.CommentMatchingStrategy;
-import com.intellij.structuralsearch.impl.matcher.strategies.ExprMatchingStrategy;
-import com.intellij.structuralsearch.impl.matcher.strategies.JavaDocMatchingStrategy;
-import com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -499,7 +493,6 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
   @Override
   public void visitCodeBlock(PsiCodeBlock block) {
     myCompilingVisitor.setCodeBlockLevel(myCompilingVisitor.getCodeBlockLevel() + 1);
-    MatchingStrategy strategy = null;
 
     for (PsiElement el = block.getFirstChild(); el != null; el = el.getNextSibling()) {
       if (GlobalCompilingVisitor.getFilter().accepts(el)) {
@@ -510,44 +503,13 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
       else {
         el.accept(this);
         if (myCompilingVisitor.getCodeBlockLevel() == 1) {
-          MatchingStrategy newstrategy = findStrategy(el);
           final MatchingHandler matchingHandler = myCompilingVisitor.getContext().getPattern().getHandler(el);
           myCompilingVisitor.getContext().getPattern().setHandler(el, new TopLevelMatchingHandler(matchingHandler));
-
-          if (strategy == null || (strategy instanceof JavaDocMatchingStrategy)) {
-            strategy = newstrategy;
-          }
-          else {
-            if (strategy.getClass() != newstrategy.getClass()) {
-              if (!(strategy instanceof CommentMatchingStrategy)) {
-                throw new UnsupportedPatternException(SSRBundle.message("different.strategies.for.top.level.nodes.error.message"));
-              }
-              strategy = newstrategy;
-            }
-          }
         }
       }
     }
 
-    if (myCompilingVisitor.getCodeBlockLevel() == 1) {
-      if (strategy == null) {
-        // this should happen only for error patterns
-        strategy = ExprMatchingStrategy.getInstance();
-      }
-      myCompilingVisitor.getContext().getPattern().setStrategy(strategy);
-    }
     myCompilingVisitor.setCodeBlockLevel(myCompilingVisitor.getCodeBlockLevel() - 1);
-  }
-
-  private static MatchingStrategy findStrategy(PsiElement el) {
-    if (el instanceof PsiDocComment) {
-      return JavaDocMatchingStrategy.getInstance();
-    }
-    else if (el instanceof PsiComment) {
-      return CommentMatchingStrategy.getInstance();
-    }
-
-    return ExprMatchingStrategy.getInstance();
   }
 
   private static boolean needsSupers(final PsiElement element, final MatchingHandler handler) {

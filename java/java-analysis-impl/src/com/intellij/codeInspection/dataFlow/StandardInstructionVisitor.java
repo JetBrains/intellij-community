@@ -488,6 +488,15 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     final PsiType type = instruction.getResultType();
     final MethodCallInstruction.MethodType methodType = instruction.getMethodType();
 
+    if (methodType == MethodCallInstruction.MethodType.METHOD_REFERENCE_CALL && qualifierValue instanceof DfaVariableValue) {
+      PsiMethod method = instruction.getTargetMethod();
+      PsiModifierListOwner modifierListOwner = DfaExpressionFactory.getAccessedVariableOrGetter(method);
+      if (modifierListOwner != null) {
+        return factory.getVarFactory().createVariableValue(modifierListOwner, instruction.getResultType(), false,
+                                                           (DfaVariableValue)qualifierValue);
+      }
+    }
+
     if (methodType == MethodCallInstruction.MethodType.UNBOXING) {
       return factory.getBoxedFactory().createUnboxed(qualifierValue);
     }

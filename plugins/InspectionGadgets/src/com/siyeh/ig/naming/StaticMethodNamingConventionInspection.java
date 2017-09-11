@@ -15,14 +15,66 @@
  */
 package com.siyeh.ig.naming;
 
-import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.fixes.RenameFix;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspectionVisitor;
+import org.jetbrains.annotations.NotNull;
 
 public class StaticMethodNamingConventionInspection
-  extends StaticMethodNamingConventionInspectionBase {
+  extends ConventionInspection {
+
+  private static final int DEFAULT_MIN_LENGTH = 4;
+  private static final int DEFAULT_MAX_LENGTH = 32;
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new RenameFix();
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "static.method.naming.convention.display.name");
+  }
+
+  @Override
+  protected String getElementDescription() {
+    return InspectionGadgetsBundle.message("static.method.naming.convention.element.description");
+  }
+
+  @Override
+  protected String getDefaultRegex() {
+    return "[a-z][A-Za-z\\d]*";
+  }
+
+  @Override
+  protected int getDefaultMinLength() {
+    return DEFAULT_MIN_LENGTH;
+  }
+
+  @Override
+  protected int getDefaultMaxLength() {
+    return DEFAULT_MAX_LENGTH;
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new NamingConventionsVisitor();
+  }
+
+  private class NamingConventionsVisitor extends BaseInspectionVisitor {
+
+    @Override
+    public void visitMethod(@NotNull PsiMethod method) {
+      super.visitMethod(method);
+      if (!method.hasModifierProperty(PsiModifier.STATIC)) {
+        return;
+      }
+      if (method.hasModifierProperty(PsiModifier.NATIVE) && isInspectionEnabled("NativeMethodNamingConvention", method)) {
+        return;
+      }
+      final String name = method.getName();
+      if (isValid(name)) {
+        return;
+      }
+      registerMethodError(method, name);
+    }
   }
 }

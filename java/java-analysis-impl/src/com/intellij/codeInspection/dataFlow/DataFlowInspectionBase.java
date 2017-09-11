@@ -366,7 +366,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     if (!(scope.getParent() instanceof PsiMethod)) return;
 
     PsiMethod method = (PsiMethod)scope.getParent();
-    if (PsiUtil.canBeOverriden(method)) return;
+    if (PsiUtil.canBeOverridden(method)) return;
 
     PsiAnnotation nullableAnno = NullableNotNullManager.getInstance(scope.getProject()).getNullableAnnotation(method, false);
     if (nullableAnno == null || !nullableAnno.isPhysical()) return;

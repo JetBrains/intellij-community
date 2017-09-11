@@ -19,13 +19,13 @@ public class RenameCollisions {
 		renameCollisions.StaticInnerClass.snStaticMethod();
 
 		StaticInnerClass staticInnerClass = new StaticInnerClass();
-		int var3 = renameCollisions.RenameCollisions.StaticInnerClass.SN_STATIC_FIELD;
-		renameCollisions.RenameCollisions.StaticInnerClass.snStaticMethod();
+		int var3 = RenameCollisions.StaticInnerClass.SN_STATIC_FIELD;
+		RenameCollisions.StaticInnerClass.snStaticMethod();
 	}
 
 	public static void staticContext() {
 		StaticInnerClass staticInnerClass = new StaticInnerClass();
-		int var2 = renameCollisions.RenameCollisions.StaticInnerClass.SN_STATIC_FIELD;
-		renameCollisions.RenameCollisions.StaticInnerClass.snStaticMethod();
+		int var2 = RenameCollisions.StaticInnerClass.SN_STATIC_FIELD;
+		RenameCollisions.StaticInnerClass.snStaticMethod();
 	}
 }

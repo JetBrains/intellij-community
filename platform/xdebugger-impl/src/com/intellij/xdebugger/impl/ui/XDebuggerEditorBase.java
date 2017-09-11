@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.actions.AbstractToggleUseSoftWrapsAction;
+import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.fileTypes.FileType;
@@ -85,6 +86,8 @@ public abstract class XDebuggerEditorBase implements Expandable {
   private final LanguageChooser myLanguageChooser = new LanguageChooser();
   private final JLabel myExpandButton = new JLabel(AllIcons.General.ExpandComponent);
   private JBPopup myExpandedPopup;
+
+  private Runnable myExpandHandler;
 
   private WeakReference<ListPopup> myPopup;
 
@@ -204,7 +207,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
     return panel;
   }
 
-  protected JComponent addExpand(JComponent component) {
+  public JComponent addExpand(JComponent component) {
     BorderLayoutPanel panel = JBUI.Panels.simplePanel(component);
     panel.setOpaque(false);
     panel.addToRight(myExpandButton);
@@ -373,6 +376,8 @@ public abstract class XDebuggerEditorBase implements Expandable {
   }
 
   protected static void foldNewLines(EditorEx editor) {
+    editor.getColorsScheme().setAttributes(EditorColors.FOLDED_TEXT_ATTRIBUTES, null);
+    editor.reinitSettings();
     FoldingModelEx foldingModel = editor.getFoldingModel();
     CharSequence text = editor.getDocument().getCharsSequence();
     foldingModel.runBatchFoldingOperation(() -> {
@@ -398,6 +403,11 @@ public abstract class XDebuggerEditorBase implements Expandable {
   @Override
   public void expand() {
     if (myExpandedPopup != null || !getComponent().isEnabled()) return;
+
+    if (myExpandHandler != null) {
+      myExpandHandler.run();
+      return;
+    }
 
     XDebuggerExpressionEditor expressionEditor =
       new XDebuggerExpressionEditor(myProject, myDebuggerEditorsProvider, myHistoryId, mySourcePosition,
@@ -453,6 +463,40 @@ public abstract class XDebuggerEditorBase implements Expandable {
     copyCaretPosition(getEditor(), editor);
     editor.getSettings().setUseSoftWraps(isUseSoftWraps());
 
+    addCollapseButton(editor, this::collapse);
+
+    expressionEditor.requestFocusInEditor();
+  }
+
+  public void setExpandHandler(Runnable handler) {
+    myExpandHandler = handler;
+  }
+
+  public void addCollapseButton(Runnable handler) {
+    JComponent component = getEditorComponent();
+    if (component instanceof EditorTextField) {
+      ((EditorTextField)component).addSettingsProvider(editor -> {
+        editor.getContentComponent().putClientProperty(Expandable.class, new Expandable() {
+          @Override
+          public void expand() {
+          }
+
+          @Override
+          public void collapse() {
+            handler.run();
+          }
+
+          @Override
+          public boolean isExpanded() {
+            return true;
+          }
+        });
+        addCollapseButton(editor, handler);
+      });
+    }
+  }
+
+  private static void addCollapseButton(EditorEx editor, Runnable handler) {
     ErrorStripeEditorCustomization.DISABLED.customize(editor);
     // TODO: copied from ExpandableTextField
     JScrollPane pane = editor.getScrollPane();
@@ -474,12 +518,10 @@ public abstract class XDebuggerEditorBase implements Expandable {
 
         @Override
         public void mousePressed(MouseEvent event) {
-          collapse();
+          handler.run();
         }
       });
     }});
-
-    expressionEditor.requestFocusInEditor();
   }
 
   @NotNull

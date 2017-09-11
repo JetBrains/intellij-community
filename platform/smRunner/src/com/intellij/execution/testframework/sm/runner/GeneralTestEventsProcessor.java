@@ -217,7 +217,10 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
     rootNode.setTestsReporterAttached();
   }
 
-  public abstract void onFinishTesting();
+  public void onFinishTesting() {
+    stopEventProcessing();
+  }
+
   protected void fireOnTestingFinished(SMTestProxy.SMRootTestProxy root) {
     myEventPublisher.onTestingFinished(root);
     for (SMTRunnerEventsListener adapter : myListenerAdapters) {
@@ -305,14 +308,17 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
 
   public void addToInvokeLater(final Runnable runnable) {
     final Application application = ApplicationManager.getApplication();
+    Runnable wrapper = () -> {
+      if (!myProject.isDisposed()) runnable.run();
+    };
     if (application.isUnitTestMode()) {
-      UIUtil.invokeLaterIfNeeded(runnable);
+      UIUtil.invokeLaterIfNeeded(wrapper);
     }
     else if (application.isHeadlessEnvironment() || SwingUtilities.isEventDispatchThread()) {
-      runnable.run();
+      wrapper.run();
     }
     else {
-      myTransferToEDTQueue.offer(runnable);
+      myTransferToEDTQueue.offer(wrapper);
     }
   }
 

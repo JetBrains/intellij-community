@@ -17,11 +17,17 @@ package com.intellij.ide.bookmarks.actions;
 
 import com.intellij.ide.bookmarks.Bookmark;
 import com.intellij.ide.bookmarks.BookmarkManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
+import java.awt.*;
 
 /**
  * @author max
@@ -44,7 +50,20 @@ public abstract class GoToMnemonicBookmarkActionBase extends AnAction implements
     if (project != null) {
       Bookmark bookmark = BookmarkManager.getInstance(project).findBookmarkForMnemonic((char)('0' + myNumber));
       if (bookmark != null) {
+        hideBookmarkPopupIfNeed(e);
         bookmark.navigate(true);
+      }
+    }
+  }
+
+  protected void hideBookmarkPopupIfNeed(@NotNull AnActionEvent e) {
+    for (Component c = PlatformDataKeys.CONTEXT_COMPONENT.getData(e.getDataContext());
+         c != null;
+         c = c.getParent()) {
+      Object o = c instanceof JComponent ? ((JComponent)c).getClientProperty(BookmarksAction.BOOKMARKS_POPUP_DISPOSER) : null;
+      if (o instanceof Disposable) {
+        Disposer.dispose((Disposable)o);
+        return;
       }
     }
   }

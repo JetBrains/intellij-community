@@ -25,7 +25,7 @@ import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilit
 
 /**
  * Character and char are skipped intentionally.
- * Double and Double[] is skipped intentionally.
+ * Double and Double[] are skipped intentionally.
  * Current spec https://github.com/apache/groovy/blob/master/src/spec/doc/core-differences-java.adoc#conversions
  * Bug: https://issues.apache.org/jira/browse/GROOVY-7557
  */
@@ -91,17 +91,6 @@ class GrAssignAutoTestFalsePositiveTest extends GrHighlightingTestBase {
     @CompileStatic
     void method() {
       BigInteger param = [(int)1]
-    }
-'''
-  }
-
-  void testEmptyListAssign() {
-    testHighlighting '''
-    import groovy.transform.CompileStatic
-
-    @CompileStatic
-    void method() {
-      Integer param = []
     }
 '''
   }

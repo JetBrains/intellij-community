@@ -23,6 +23,7 @@ import com.intellij.testGuiFramework.fixtures.*;
 import com.intellij.testGuiFramework.framework.ParentPlugin;
 import git4idea.i18n.GitBundle;
 import org.fest.swing.core.FastRobot;
+import org.fest.swing.core.Robot;
 import org.junit.Test;
 
 import java.awt.event.KeyEvent;
@@ -39,12 +40,13 @@ public class SimpleGitTest extends GitGuiTestCase {
 
   @Test
   public void testSimpleGit() throws IOException {
-    IdeFrameFixture ideFrameFixture = importSimpleProject();
+    IdeFrameFixture ideFrameFixture = guiTestRule.importSimpleProject();
     ideFrameFixture.waitForBackgroundTasksToFinish();
 
     ProjectViewFixture.PaneFixture projectPane = ideFrameFixture.getProjectView().selectProjectPane();
     final String projectName = ideFrameFixture.getProject().getName();
     projectPane.expandByPath(projectName, "src");
+    Robot myRobot = robot();
 
     //invoke "New..." action
     invokeAction("NewElement");
@@ -86,6 +88,6 @@ public class SimpleGitTest extends GitGuiTestCase {
   }
 
   private void waitForIdle() {
-    if (myRobot instanceof FastRobot) ((FastRobot)myRobot).superWaitForIdle();
+    if (robot() instanceof FastRobot) ((FastRobot)robot()).superWaitForIdle();
   }
 }

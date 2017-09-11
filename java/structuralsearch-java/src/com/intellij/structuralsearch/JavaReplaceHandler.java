@@ -87,7 +87,7 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
     final PsiElement parent = el.getParent();
 
     return parent instanceof PsiParameterList ||
-           parent instanceof PsiExpressionList ||
+           (parent instanceof PsiExpressionList && !parent.getClass().getSimpleName().startsWith("Jsp")) ||
            parent instanceof PsiCodeBlock ||
            parent instanceof PsiClass ||
            parent instanceof PsiIfStatement && (((PsiIfStatement)parent).getThenBranch() == el ||

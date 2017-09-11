@@ -1,13 +1,13 @@
 <component name="libraryTable">
   <library name="junit5_rt">
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/plugins/junit5_rt/lib/junit-jupiter-engine-5.0.0-RC2.jar!/" />
-      <root url="jar://$PROJECT_DIR$/plugins/junit5_rt/lib/junit-platform-commons-1.0.0-RC2.jar!/" />
-      <root url="jar://$PROJECT_DIR$/plugins/junit5_rt/lib/junit-platform-engine-1.0.0-RC2.jar!/" />
-      <root url="jar://$PROJECT_DIR$/plugins/junit5_rt/lib/junit-platform-launcher-1.0.0-RC2.jar!/" />
-      <root url="jar://$PROJECT_DIR$/plugins/junit5_rt/lib/junit-platform-runner-1.0.0-RC2.jar!/" />
-      <root url="jar://$PROJECT_DIR$/plugins/junit5_rt/lib/junit-vintage-engine-4.12.0-RC2.jar!/" />
-      <root url="jar://$PROJECT_DIR$/plugins/junit5_rt/lib/junit-platform-suite-api-1.0.0-RC2.jar!/" />
+      <root url="jar://$PROJECT_DIR$/plugins/junit5_rt/lib/junit-jupiter-engine-5.0.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/plugins/junit5_rt/lib/junit-platform-commons-1.0.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/plugins/junit5_rt/lib/junit-platform-engine-1.0.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/plugins/junit5_rt/lib/junit-platform-launcher-1.0.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/plugins/junit5_rt/lib/junit-platform-runner-1.0.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/plugins/junit5_rt/lib/junit-vintage-engine-4.12.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/plugins/junit5_rt/lib/junit-platform-suite-api-1.0.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

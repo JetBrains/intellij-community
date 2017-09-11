@@ -20,6 +20,12 @@ import com.jetbrains.python.fixtures.PyTestCase;
 public class PyNumpyTypeTest extends PyTestCase {
   public static final String TEST_DIRECTORY = "inspections/PyNumpyType/";
 
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    myFixture.copyDirectoryToProject(TEST_DIRECTORY, "");
+  }
+
   private void doTest() {
     myFixture.configureByFile(TEST_DIRECTORY + getTestName(false) + ".py");
     myFixture.enableInspections(PyTypeCheckerInspection.class);
@@ -59,6 +65,10 @@ public class PyNumpyTypeTest extends PyTestCase {
   }
 
   public void testSort() {
+    doTest();
+  }
+
+  public void testArrayLike() {
     doTest();
   }
 

@@ -437,6 +437,14 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     assertEquals("Find expressions mistaken for declarations by parser in block mode 4", 2,
                  findMatchesCount(s10, "'_a < '_b"));
+
+    String s11 = "import java.io.*;" +
+                 "class X {" +
+                 "  void m() throws IOException {" +
+                 "    try (InputStream in = null) {}" +
+                 "  }" +
+                 "}";
+    assertEquals("Find expression inside try-with-resources", 1, findMatchesCount(s11, "null"));
   }
 
   public void testLiteral() {
@@ -2302,6 +2310,22 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                     "}";
     String pattern = "/*$Text$*/";
     assertEquals("should find comments in all the right places", 12, findMatchesCount(source, pattern));
+
+    String source2 = "package /*test*/ xxx;" +
+                     "import /*test*/ java.util.*;" +
+                     "public class XXX {}";
+    String pattern2 = "/*test*/";
+    assertEquals("find comments in package and import statements", 2, findMatchesCount(source2, pattern2));
+
+    String source3 = "class X {" +
+                     "  void m() {" +
+                     "    System.out.println();" +
+                     "    // tokamak" +
+                     "  }" +
+                     "}";
+    String pattern3 = "'_st;" +
+                      "// tokamak";
+    assertEquals("find statement followed by comment", 1, findMatchesCount(source3, pattern3));
   }
 
   public void testCaseInsensitive() {

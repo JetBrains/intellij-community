@@ -17,8 +17,11 @@ package org.intellij.images.search;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import org.intellij.images.thumbnail.ThumbnailView;
 import org.intellij.images.thumbnail.actions.Filter;
+
+import java.util.Objects;
 
 public class TagFilter implements Filter {
   private String myTag;
@@ -46,6 +49,29 @@ public class TagFilter implements Filter {
 
   @Override
   public void setFilter(ThumbnailView view) {
-    view.setTagFilter(this);
+    TagFilter[] filters = view.getTagFilters();
+    view.setTagFilters(filters != null ? ArrayUtil.append(filters, this) : new TagFilter[] {this});
+  }
+
+  @Override
+  public void clearFilter(ThumbnailView view) {
+    TagFilter[] filters = view.getTagFilters();
+    if (filters != null) {
+      filters = ArrayUtil.remove(filters, this);
+      view.setTagFilters(filters.length == 0 ? null : filters);
+    }
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    TagFilter filter = (TagFilter)o;
+    return Objects.equals(myTag, filter.myTag);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(myTag);
   }
 }

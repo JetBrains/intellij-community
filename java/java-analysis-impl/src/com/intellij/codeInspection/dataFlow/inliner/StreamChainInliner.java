@@ -45,12 +45,15 @@ public class StreamChainInliner implements CallInliner {
   private static final CallMatcher SUM_TERMINAL = instanceCall(JAVA_UTIL_STREAM_BASE_STREAM, "sum", "count").parameterCount(0);
   private static final CallMatcher OPTIONAL_TERMINAL =
     anyOf(instanceCall(JAVA_UTIL_STREAM_BASE_STREAM, "min", "max").parameterCount(0),
-          instanceCall(JAVA_UTIL_STREAM_BASE_STREAM, "min", "max", "reduce").parameterCount(1),
+          instanceCall(JAVA_UTIL_STREAM_BASE_STREAM, "reduce").parameterCount(1),
           instanceCall(JAVA_UTIL_STREAM_BASE_STREAM, "findFirst", "findAny").parameterCount(0));
+  private static final CallMatcher MIN_MAX_TERMINAL =
+    instanceCall(JAVA_UTIL_STREAM_BASE_STREAM, "min", "max", "reduce").parameterCount(1);
 
   private static final CallMatcher SKIP_STEP =
-    instanceCall(JAVA_UTIL_STREAM_BASE_STREAM, "unordered", "parallel", "sequential", "sorted").parameterCount(0);
-  private static final CallMatcher SORTED = instanceCall(JAVA_UTIL_STREAM_STREAM, "sorted").parameterCount(1);
+    instanceCall(JAVA_UTIL_STREAM_BASE_STREAM, "unordered", "parallel", "sequential").parameterCount(0);
+  private static final CallMatcher SORTED = anyOf(instanceCall(JAVA_UTIL_STREAM_STREAM, "sorted").parameterCount(1),
+                                                  instanceCall(JAVA_UTIL_STREAM_STREAM, "sorted").parameterCount(0));
   private static final CallMatcher FILTER = instanceCall(JAVA_UTIL_STREAM_BASE_STREAM, "filter").parameterCount(1);
   private static final CallMatcher STATE_FILTER = anyOf(instanceCall(JAVA_UTIL_STREAM_BASE_STREAM, "distinct").parameterCount(0),
                                                         instanceCall(JAVA_UTIL_STREAM_BASE_STREAM, "skip", "limit").parameterCount(1));
@@ -97,6 +100,7 @@ public class StreamChainInliner implements CallInliner {
     .register(FOR_TERMINAL, LambdaTerminalStep::new)
     .register(MATCH_TERMINAL, MatchTerminalStep::new)
     .register(SUM_TERMINAL, SumTerminalStep::new)
+    .register(MIN_MAX_TERMINAL, MinMaxTerminalStep::new)
     .register(OPTIONAL_TERMINAL, OptionalTerminalStep::new);
 
   static abstract class Step {
@@ -129,6 +133,10 @@ public class StreamChainInliner implements CallInliner {
         builder.push(builder.getFactory()
                        .createTypeValue(myCall.getType(), DfaPsiUtil.getElementNullability(myCall.getType(), myCall.resolveMethod())));
       }
+    }
+
+    boolean expectNotNull() {
+      return false;
     }
   }
 
@@ -225,6 +233,37 @@ public class StreamChainInliner implements CallInliner {
     }
   }
 
+  static class MinMaxTerminalStep extends TerminalStep {
+    private final ComparatorModel myComparatorModel;
+
+    MinMaxTerminalStep(@NotNull PsiMethodCallExpression call) {
+      super(call, null);
+      myComparatorModel = ComparatorModel.from(call.getArgumentList().getExpressions()[0]);
+    }
+
+    @Override
+    protected void pushInitialValue(CFGBuilder builder) {
+      builder.push(builder.getFactory().getOptionalFactory().getOptional(false));
+    }
+
+    @Override
+    void before(CFGBuilder builder) {
+      myComparatorModel.evaluate(builder);
+      super.before(builder);
+    }
+
+    @Override
+    void iteration(CFGBuilder builder) {
+      myComparatorModel.invoke(builder);
+      builder.pushVariable(myResult).push(builder.getFactory().getOptionalFactory().getOptional(true)).assign().pop();
+    }
+
+    @Override
+    boolean expectNotNull() {
+      return myComparatorModel.failsOnNull();
+    }
+  }
+
   static class MatchTerminalStep extends TerminalStep {
     MatchTerminalStep(@NotNull PsiMethodCallExpression call) {
       super(call, call.getArgumentList().getExpressions()[0]);
@@ -273,7 +312,7 @@ public class StreamChainInliner implements CallInliner {
     @Override
     void iteration(CFGBuilder builder) {
       builder
-        .invokeFunction(1, myFunction)
+        .invokeFunction(1, myFunction, myNext.expectNotNull() ? Nullness.NOT_NULL : Nullness.UNKNOWN)
         .assignTo(builder.createTempVariable(StreamApiUtil.getStreamElementType(myCall.getType())))
         .chain(myNext::iteration);
     }
@@ -364,6 +403,11 @@ public class StreamChainInliner implements CallInliner {
         .pop()
         .chain(myNext::iteration);
     }
+
+    @Override
+    boolean expectNotNull() {
+      return myNext.expectNotNull();
+    }
   }
 
   static class StateFilterStep extends Step {
@@ -391,23 +435,30 @@ public class StreamChainInliner implements CallInliner {
     }
   }
 
-  // Currently sorted is just a no-op as DFA results does not depend on sort order.
-  // In future we could check the comparator implementation
-  // (e.g. warn if stream can contain nulls, but comparator is not null-friendly)
   static class SortedStep extends Step {
+    private final ComparatorModel myComparatorModel;
+
     SortedStep(@NotNull PsiMethodCallExpression call, Step next) {
       super(call, next, null);
+      myComparatorModel = ComparatorModel.from(ArrayUtil.getFirstElement(myCall.getArgumentList().getExpressions()));
     }
 
     @Override
     void before(CFGBuilder builder) {
-      builder.pushExpression(myCall.getArgumentList().getExpressions()[0]).pop();
+      myComparatorModel.evaluate(builder);
       super.before(builder);
     }
 
     @Override
     void iteration(CFGBuilder builder) {
+      builder.dup();
+      myComparatorModel.invoke(builder);
       myNext.iteration(builder);
+    }
+
+    @Override
+    boolean expectNotNull() {
+      return myComparatorModel.failsOnNull() || myNext.expectNotNull();
     }
   }
 

@@ -24,6 +24,7 @@ import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ReadWriteInstruction extends InstructionImpl {
@@ -125,6 +126,7 @@ public class ReadWriteInstruction extends InstructionImpl {
     return myGetType.getType(context, anchor);
   }
 
+  @NotNull
   @NonNls
   @Override
   public String getElementPresentation() {

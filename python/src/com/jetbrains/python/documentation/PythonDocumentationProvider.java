@@ -453,9 +453,9 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
 
   @Override
   public String fetchExternalDocumentation(Project project, PsiElement element, List<String> docUrls) {
-    final Module module = ModuleUtilCore.findModuleForPsiElement(element);
-    if (module != null && !PyDocumentationSettings.getInstance(module).isRenderExternalDocumentation()) return null;
     return ApplicationManager.getApplication().runReadAction((Computable<String>)() -> {
+      final Module module = ModuleUtilCore.findModuleForPsiElement(element);
+      if (module != null && !PyDocumentationSettings.getInstance(module).isRenderExternalDocumentation()) return null;
       PsiFileSystemItem file = element instanceof PsiFileSystemItem ? (PsiFileSystemItem)element : element.getContainingFile();
       if (file == null) return null;
       if (PyNames.INIT_DOT_PY.equals(file.getName())) {

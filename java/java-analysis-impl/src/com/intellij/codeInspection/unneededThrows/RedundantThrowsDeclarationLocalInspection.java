@@ -21,7 +21,6 @@ import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.MethodThrowsFix;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
-import com.intellij.codeInspection.reference.RefMethodImpl;
 import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
 import com.siyeh.ig.JavaOverridingMethodUtil;
@@ -94,7 +93,7 @@ public class RedundantThrowsDeclarationLocalInspection extends BaseJavaBatchLoca
                                             method.isConstructor() ||
                                             containingClass instanceof PsiAnonymousClass ||
                                             containingClass.hasModifierProperty(PsiModifier.FINAL));
-    Collection<PsiClassType> unhandled = RefMethodImpl.getUnhandledExceptions(body, method, containingClass);
+    Collection<PsiClassType> unhandled = RedundantThrowsGraphAnnotator.getUnhandledExceptions(body, method, containingClass);
     List<ReferenceAndType> candidates = Arrays.stream(thrownExceptions)
       .filter(refAndType -> unhandled.stream().noneMatch(unhandledException -> unhandledException.isAssignableFrom(refAndType.type) || refAndType.type.isAssignableFrom(unhandledException)))
       .collect(Collectors.toList());

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.application.options.ModuleListCellRenderer;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.actions.AddImportAction;
 import com.intellij.compiler.ModuleCompilerUtil;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -31,6 +30,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.PsiJavaModuleReference;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -45,28 +45,27 @@ import java.util.Set;
  * @author anna
  * @since 20.11.2012
  */
-class AddModuleDependencyFix extends AddOrderEntryFix {
-  private static final Logger LOG = Logger.getInstance(AddModuleDependencyFix.class);
-
+class AddModuleDependencyFix extends OrderEntryFix {
+  @SuppressWarnings("StatefulEp") private final PsiReference myReference;
   private final Module myCurrentModule;
-  private final VirtualFile myRefVFile;
-  private final List<PsiClass> myClasses;
   private final Set<Module> myModules;
+  private final DependencyScope myScope;
+  private final List<PsiClass> myClasses;
 
-  public AddModuleDependencyFix(Module currentModule, VirtualFile refVFile, List<PsiClass> classes, PsiReference reference) {
-    super(reference);
+  public AddModuleDependencyFix(PsiReference reference, Module currentModule, DependencyScope scope, List<PsiClass> classes) {
+    myReference = reference;
     myCurrentModule = currentModule;
-    myRefVFile = refVFile;
-    myClasses = classes;
     myModules = new LinkedHashSet<>();
+    myScope = scope;
+    myClasses = classes;
 
-    final PsiElement psiElement = reference.getElement();
-    final Project project = psiElement.getProject();
-    final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
-    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    final ModuleRootManager rootManager = ModuleRootManager.getInstance(currentModule);
+    PsiElement psiElement = reference.getElement();
+    Project project = psiElement.getProject();
+    PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(project).getResolveHelper();
+    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    ModuleRootManager rootManager = ModuleRootManager.getInstance(currentModule);
     for (PsiClass aClass : classes) {
-      if (!facade.getResolveHelper().isAccessible(aClass, psiElement, aClass)) continue;
+      if (!resolveHelper.isAccessible(aClass, psiElement, aClass)) continue;
       PsiFile psiFile = aClass.getContainingFile();
       if (psiFile == null) continue;
       VirtualFile virtualFile = psiFile.getVirtualFile();
@@ -78,20 +77,20 @@ class AddModuleDependencyFix extends AddOrderEntryFix {
     }
   }
 
-  public AddModuleDependencyFix(Module currentModule, VirtualFile refVFile, Set<Module> modules, PsiReference reference) {
-    super(reference);
+  public AddModuleDependencyFix(PsiJavaModuleReference reference, Module currentModule, Set<Module> modules, DependencyScope scope) {
+    myReference = reference;
     myCurrentModule = currentModule;
-    myRefVFile = refVFile;
-    myClasses = Collections.emptyList();
     myModules = modules;
+    myScope = scope;
+    myClasses = Collections.emptyList();
   }
 
   @Override
   @NotNull
   public String getText() {
     if (myModules.size() == 1) {
-      final Module module = ContainerUtil.getFirstItem(myModules);
-      LOG.assertTrue(module != null);
+      Module module = ContainerUtil.getFirstItem(myModules);
+      assert module != null;
       return QuickFixBundle.message("orderEntry.fix.add.dependency.on.module", module.getName());
     }
     else {
@@ -138,9 +137,7 @@ class AddModuleDependencyFix extends AddOrderEntryFix {
     if (module == null) return;
     Couple<Module> circularModules = ModuleCompilerUtil.addingDependencyFormsCircularity(myCurrentModule, module);
     if (circularModules == null || showCircularWarning(project, circularModules, module)) {
-      boolean test = ModuleRootManager.getInstance(myCurrentModule).getFileIndex().isInTestSourceContent(myRefVFile);
-      DependencyScope scope = test ? DependencyScope.TEST : DependencyScope.COMPILE;
-      JavaProjectModelModificationService.getInstance(project).addDependency(myCurrentModule, module, scope);
+      JavaProjectModelModificationService.getInstance(project).addDependency(myCurrentModule, module, myScope);
 
       if (editor != null && !myClasses.isEmpty()) {
         PsiClass[] targetClasses = myClasses.stream()

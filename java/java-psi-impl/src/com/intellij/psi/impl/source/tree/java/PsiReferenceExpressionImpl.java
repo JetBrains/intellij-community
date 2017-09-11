@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -278,6 +279,16 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
       }
       else if (result.length == 0) {
         result = resolveToPackage(containingFile);
+      }
+      
+      if (result.length == 0 && variable == null) {
+        String qualifiedName = getQualifiedName();
+        PsiClass aClass = qualifiedName != null && !StringUtil.isEmptyOrSpaces(StringUtil.getPackageName(qualifiedName))
+                          ? JavaPsiFacade.getInstance(getProject()).findClass(qualifiedName, getResolveScope()) 
+                          : null;
+        if (aClass != null) {
+          result = new JavaResolveResult[] {new CandidateInfo(aClass, PsiSubstitutor.EMPTY, this, false)};
+        }
       }
 
       return result.length == 0 && variable != null ? variable : result;

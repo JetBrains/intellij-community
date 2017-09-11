@@ -16,6 +16,7 @@
 package com.intellij.util.text;
 
 import com.intellij.CommonBundle;
+import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.SystemInfo;
@@ -181,7 +182,7 @@ public class DateFormatUtil {
 
     if (formatTime) {
       long delta = currentTime - time;
-      if (delta <= HOUR && delta >= 0) {
+      if (delta >= 0 && delta <= HOUR + MINUTE) {
         return CommonBundle.message("date.format.minutes.ago", (int)Math.rint(delta / (double)MINUTE));
       }
     }
@@ -281,10 +282,16 @@ public class DateFormatUtil {
 
   @NotNull
   public static String formatAboutDialogDate(@NotNull Date date) {
-    return ABOUT_DATE_FORMAT.format(date);
+    return formatAboutDialogDate(date.getTime());
   }
 
-  // helpers
+  @NotNull
+  public static String formatAboutDialogDate(long time) {
+    return ABOUT_DATE_FORMAT.format(time);
+  }
+
+
+  //<editor-fold desc="Helpers.">
 
   @SuppressWarnings("Duplicates")
   private static String someTimeAgoMessage(final Period period, final int n) {
@@ -326,19 +333,21 @@ public class DateFormatUtil {
     DateFormat[] formats = new DateFormat[4];
 
     boolean loaded = false;
-    try {
-      if (SystemInfo.isWin7OrNewer) {
-        loaded = getWindowsFormats(formats);
+    if (JnaLoader.isLoaded() || SystemInfo.isXWindow) {
+      try {
+        if (SystemInfo.isWin7OrNewer) {
+          loaded = getWindowsFormats(formats);
+        }
+        else if (SystemInfo.isMac) {
+          loaded = getMacFormats(formats);
+        }
+        else if (SystemInfo.isUnix) {
+          loaded = getUnixFormats(formats);
+        }
       }
-      else if (SystemInfo.isMac) {
-        loaded = getMacFormats(formats);
+      catch (Throwable t) {
+        LOG.error(t);
       }
-      else if (SystemInfo.isUnix) {
-        loaded = getUnixFormats(formats);
-      }
-    }
-    catch (Throwable t) {
-      LOG.info(t);
     }
 
     if (!loaded) {
@@ -455,4 +464,5 @@ public class DateFormatUtil {
     format = StringUtil.replace(format, "tt", "a");
     return format;
   }
+  //</editor-fold>
 }

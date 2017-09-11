@@ -16,10 +16,13 @@
 package com.intellij.java.propertyBased
 
 import com.intellij.lang.java.lexer.JavaLexer
-import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.roots.LanguageLevelModuleExtensionImpl
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.pom.java.LanguageLevel
-import com.intellij.psi.*
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiJavaFile
+import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.SkipSlowTestLocally
@@ -49,7 +52,13 @@ class JavaPsiIndexConsistencyTest : LightCodeInsightFixtureTestCase() {
                                           Generator.booleans().generateValue(data)) }
     )
     PropertyChecker.forAll(Generator.listsOf(genAction)).withIterationCount(20).shouldHold { actions ->
-      PsiIndexConsistencyTester.runActions(JavaModel(myFixture), *actions.toTypedArray())
+      val prevLevel = LanguageLevelModuleExtensionImpl.getInstance(myFixture.module).languageLevel
+      try {
+        PsiIndexConsistencyTester.runActions(JavaModel(myFixture), *actions.toTypedArray())
+      }
+      finally {
+        IdeaTestUtil.setModuleLanguageLevel(myFixture.module, prevLevel)
+      }
       true
     }
 
