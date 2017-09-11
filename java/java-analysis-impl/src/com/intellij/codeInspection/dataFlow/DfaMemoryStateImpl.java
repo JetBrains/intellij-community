@@ -395,16 +395,28 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   public boolean isSuperStateOf(DfaMemoryStateImpl that) {
     if (!equalsSuperficially(that) ||
         !equalsByUnknownVariables(that) ||
-        !getNonTrivialEqClasses().equals(that.getNonTrivialEqClasses()) ||
         !that.getDistinctClassPairs().containsAll(getDistinctClassPairs())) {
       return false;
     }
-    if(myVariableStates.size() != that.myVariableStates.size()) return false;
-    for (Map.Entry<DfaVariableValue, DfaVariableState> entry : myVariableStates.entrySet()) {
-      DfaVariableState thisState = entry.getValue();
-      DfaVariableState thatState = that.myVariableStates.get(entry.getKey());
-      if(Objects.equals(thisState, thatState)) continue;
-      if(thatState == null || thisState == null || !thisState.isSuperStateOf(thatState)) return false;
+    Set<EqClass> thisClasses = this.getNonTrivialEqClasses();
+    Set<EqClass> thatClasses = that.getNonTrivialEqClasses();
+    if(!thisClasses.equals(thatClasses)) {
+      // If any two values are equivalent in this, they also must be equivalent in that
+      if(thisClasses.stream().anyMatch(
+        thisClass -> thatClasses.stream().noneMatch(
+          thatClass -> thisClass.forEach(thatClass::contains)))) {
+        return false;
+      }
+    }
+    Set<DfaVariableValue> values = new HashSet<>(this.myVariableStates.keySet());
+    values.addAll(that.myVariableStates.keySet());
+    for (DfaVariableValue value : values) {
+      // the default variable state is not always a superstate for any non-default state
+      // (e.g. default can be nullable, but current state can be notnull)
+      // so we cannot limit checking to myVariableStates map only
+      DfaVariableState thisState = this.getVariableState(value);
+      DfaVariableState thatState = that.getVariableState(value);
+      if(!thisState.isSuperStateOf(thatState)) return false;
     }
     return true;
   }
@@ -1133,7 +1145,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     }
     return null;
   }
-  
+
+  @NotNull
   DfaVariableState getVariableState(DfaVariableValue dfaVar) {
     DfaVariableState state = findVariableState(dfaVar);
 

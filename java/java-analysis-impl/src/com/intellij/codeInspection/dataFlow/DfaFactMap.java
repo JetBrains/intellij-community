@@ -16,13 +16,10 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
-import com.intellij.openapi.util.Key;
 import com.intellij.util.keyFMap.KeyFMap;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Objects;
 
 /**
  * An immutable collection of facts which are known for some value. Each fact is identified by {@link DfaFactType} and fact value.
@@ -78,13 +75,15 @@ public final class DfaFactMap {
    * @return true if this fact map is a super-state of supplied fact map.
    */
   public boolean isSuperStateOf(DfaFactMap subMap) {
-    for (Key key : myMap.getKeys()) {
+    // absent fact is not always a superstate of present fact
+    // e.g. absent CAN_BE_NULL means that nullability is unknown,
+    // but CAN_BE_NULL=false means that value is definitely nullable and we should warn about nullability violation if any
+    // so the (CAN_BE_NULL=false) state cannot be superseded by (CAN_BE_NULL=null) state
+    for (DfaFactType<?> key : DfaFactType.getTypes()) {
       @SuppressWarnings("unchecked")
       DfaFactType<Object> type = (DfaFactType<Object>)key;
-      Object other = subMap.get(type);
-      if(other == null) return false;
       Object thisValue = myMap.get(type);
-      Objects.requireNonNull(thisValue); // cannot be null as type is known to be my key and we never store null values
+      Object other = subMap.get(type);
       if(!type.isSuper(thisValue, other)) return false;
     }
     return true;

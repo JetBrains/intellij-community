@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * A type of the fact which restricts some value.
@@ -88,8 +89,8 @@ public abstract class DfaFactType<T> extends Key<T> {
    */
   public static final DfaFactType<LongRangeSet> RANGE = new DfaFactType<LongRangeSet>("Range") {
     @Override
-    boolean isSuper(@NotNull LongRangeSet superFact, @NotNull LongRangeSet subFact) {
-      return superFact.contains(subFact);
+    boolean isSuper(@Nullable LongRangeSet superFact, @Nullable LongRangeSet subFact) {
+      return superFact == null || subFact != null && superFact.contains(subFact);
     }
 
     @Nullable
@@ -150,8 +151,8 @@ public abstract class DfaFactType<T> extends Key<T> {
     return null;
   }
 
-  boolean isSuper(@NotNull T superFact, @NotNull T subFact) {
-    return false;
+  boolean isSuper(@Nullable T superFact, @Nullable T subFact) {
+    return Objects.equals(superFact, subFact);
   }
 
   /**
