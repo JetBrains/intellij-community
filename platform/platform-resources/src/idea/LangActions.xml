@@ -182,6 +182,10 @@
       <add-to-group group-id="ViewMenu" relative-to-action="QuickActions" anchor="after"/>
     </group>
 
+    <action id="ShowGutterIconsSettings" class="com.intellij.application.options.editor.GutterIconsConfigurable$ShowSettingsAction">
+      <add-to-group group-id="EditorGutterPopupMenu"/>
+    </action>
+
     <action id="FixDocComment" class="com.intellij.codeInsight.editorActions.FixDocCommentAction"/>
 
     <action id="ViewNavigationBar" class="com.intellij.ide.actions.ViewNavigationBarAction">
