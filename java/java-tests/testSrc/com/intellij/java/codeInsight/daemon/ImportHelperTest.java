@@ -24,6 +24,7 @@ import com.intellij.codeInsight.daemon.impl.DaemonListeners;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFixBase;
+import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -41,7 +42,6 @@ import com.intellij.psi.impl.source.codeStyle.ImportHelper;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
@@ -474,7 +474,10 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
     PsiJavaFile javaFile = (PsiJavaFile)getFile();
     PsiReference ref = javaFile.findReferenceAt(getEditor().getCaretModel().getOffset() - 1);
     ImportClassFix fix = new ImportClassFix((PsiJavaCodeReferenceElement)ref);
-    assertFalse(fix.isAvailable(getProject(), getEditor(), getFile()));
+    //explicitly available
+    assertTrue(fix.isAvailable(getProject(), getEditor(), getFile()));
+    //hint is not available
+    assertFalse(fix.showHint(getEditor()));
   }
 
   public void testConflictBetweenRegularAndStaticClassesInImportList() throws Exception {
