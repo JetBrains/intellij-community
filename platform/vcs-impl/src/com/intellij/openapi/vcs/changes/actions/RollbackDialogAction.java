@@ -25,7 +25,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase;
+import com.intellij.openapi.vcs.changes.ui.OldChangesBrowserBase;
 import com.intellij.openapi.vcs.changes.ui.RollbackChangesDialog;
 import com.intellij.vcsUtil.RollbackUtil;
 
@@ -43,7 +43,7 @@ public class RollbackDialogAction extends AnAction implements DumbAware {
     FileDocumentManager.getInstance().saveAllDocuments();
     Change[] changes = e.getData(VcsDataKeys.CHANGES);
     Project project = e.getData(CommonDataKeys.PROJECT);
-    final ChangesBrowserBase browser = e.getData(ChangesBrowserBase.DATA_KEY);
+    final OldChangesBrowserBase browser = e.getData(OldChangesBrowserBase.DATA_KEY);
     if (browser != null) {
       browser.setDataIsDirty(true);
     }

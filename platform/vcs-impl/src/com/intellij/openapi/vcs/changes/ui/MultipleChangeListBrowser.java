@@ -54,7 +54,7 @@ import static com.intellij.openapi.util.text.StringUtil.capitalize;
 import static com.intellij.openapi.util.text.StringUtil.shortenTextWithEllipsis;
 import static java.util.stream.Collectors.toList;
 
-public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
+public class MultipleChangeListBrowser extends OldChangesBrowserBase<Object> {
 
   @NotNull private final ChangeListChooser myChangeListChooser;
   @NotNull final ChangeListListener myChangeListListener = new MyChangeListListener();

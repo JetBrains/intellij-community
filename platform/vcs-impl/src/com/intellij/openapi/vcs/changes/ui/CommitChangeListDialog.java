@@ -110,7 +110,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   @NotNull private final CommitOptionsPanel myCommitOptions;
   @NotNull private final CommitContext myCommitContext;
   @NotNull private final ChangeInfoCalculator myChangesInfoCalculator;
-  @NotNull private final ChangesBrowserBase<?> myBrowser;
+  @NotNull private final OldChangesBrowserBase<?> myBrowser;
   @NotNull private final MyChangeProcessor myDiffDetails;
   @NotNull private final CommitMessage myCommitMessageArea;
   @NotNull private final CommitLegendPanel myLegend;

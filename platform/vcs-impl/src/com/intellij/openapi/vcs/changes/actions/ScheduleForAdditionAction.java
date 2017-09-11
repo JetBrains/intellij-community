@@ -28,8 +28,8 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
+import com.intellij.openapi.vcs.changes.ui.OldChangesBrowserBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
@@ -59,13 +59,13 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     List<VirtualFile> unversionedFiles = getUnversionedFiles(e, project).collect(Collectors.toList());
 
-    addUnversioned(project, unversionedFiles, this::isStatusForAddition, e.getData(ChangesBrowserBase.DATA_KEY));
+    addUnversioned(project, unversionedFiles, this::isStatusForAddition, e.getData(OldChangesBrowserBase.DATA_KEY));
   }
 
   public static boolean addUnversioned(@NotNull Project project,
                                        @NotNull List<VirtualFile> files,
                                        @NotNull Condition<FileStatus> unversionedFileCondition,
-                                       @Nullable ChangesBrowserBase browser) {
+                                       @Nullable OldChangesBrowserBase browser) {
     boolean result = true;
 
     if (!files.isEmpty()) {
