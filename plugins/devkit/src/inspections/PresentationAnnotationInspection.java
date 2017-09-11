@@ -61,7 +61,7 @@ public class PresentationAnnotationInspection extends LocalInspectionTool {
         }
 
         String iconPath = (String)iconExpressionValue;
-        if (StringUtil.isEmpty(iconPath) || IconLoader.iconExists(iconPath)) {
+        if (StringUtil.isEmpty(iconPath) || IconLoader.findIcon(iconPath, false) != null) {
           return;
         }
 
