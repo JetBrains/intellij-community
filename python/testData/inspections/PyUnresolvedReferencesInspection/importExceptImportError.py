@@ -57,3 +57,51 @@ def f(x):
             pass
     return Bar()
 
+# PY-8933: Import unreferenced outside the try block should not be reported
+def f(x):
+    try:
+        from foo import StringIO
+    except ImportError:
+        pass
+    return None
+
+# PY-8933: Don't report cases where in case of the ImportError block being terminal
+def f(x):
+    try:
+        from foo import StringIO
+    except ImportError:
+        raise
+    return StringIO(x)
+
+
+# PY-8933: Import unreferenced outside the try block should not be reported -- global scope
+try:
+    from foo import Unused
+except ImportError:
+    pass
+
+# PY-8933: Import referenced by inner scope should be reported
+try:
+    from foo import <warning descr="'UsedInsideFunction' in try block with 'except ImportError' should also be defined in except block">UsedInsideFunction</warning>
+except ImportError:
+    pass
+
+def f(x):
+    return UsedInsideFunction(x)
+
+# PY-8933: Do not report if imported name declared in parent scope
+DeclaredAtFileScope = True
+def f(x):
+    try:
+        from foo import DeclaredAtFileScope
+    except ImportError:
+        pass
+    return DeclaredAtFileScope(x)
+
+# PY-8203 do not report builtins
+def f(x):
+    try:
+        from foo import any
+    except ImportError:
+        pass
+    return any([1,2,3])
