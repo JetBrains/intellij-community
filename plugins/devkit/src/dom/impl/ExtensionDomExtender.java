@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.xml.XmlFile;
@@ -142,13 +142,14 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
   }
 
   private static void registerField(final DomExtensionsRegistrar registrar, @NotNull final PsiField field, With withElement) {
-    final PsiMethod getter = PropertyUtil.findGetterForField(field);
-    final PsiMethod setter = PropertyUtil.findSetterForField(field);
+    final PsiMethod getter = PropertyUtilBase.findGetterForField(field);
+    final PsiMethod setter = PropertyUtilBase.findSetterForField(field);
     if (!field.hasModifierProperty(PsiModifier.PUBLIC) && (getter == null || setter == null)) {
       return;
     }
 
     final String fieldName = field.getName();
+    assert fieldName != null;
     final PsiConstantEvaluationHelper evalHelper = JavaPsiFacade.getInstance(field.getProject()).getConstantEvaluationHelper();
     final PsiAnnotation attrAnno = findAnnotation(Attribute.class, field, getter, setter);
     if (attrAnno != null) {
@@ -292,8 +293,8 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
   }
 
   private static boolean getBooleanAttribute(final PsiAnnotation annotation,
-                                           final String name,
-                                           final PsiConstantEvaluationHelper evalHelper) {
+                                             final String name,
+                                             final PsiConstantEvaluationHelper evalHelper) {
     String value = getAttributeValue(annotation, name);
     if (value != null) return Boolean.parseBoolean(value);
     final Object o = evalHelper.computeConstantExpression(annotation.findAttributeValue(name), false);
