@@ -500,7 +500,7 @@ open class GuiTestCase {
         val dialog = GuiTestUtilKt.withPauseWhenNull(timeoutInSeconds.toInt()) {
           val allMatchedDialogs = guiTestRule.robot().finder().findAll(typeMatcher(JDialog::class.java) {
             if (ignoreCaseTitle) it.title.toLowerCase() == title.toLowerCase() else it.title == title
-          })
+          }).filter { it.isShowing && it.isEnabled && it.isVisible }
           if (allMatchedDialogs.size > 1) throw Exception("Found more than one (${allMatchedDialogs.size}) dialogs matched title \"$title\"")
           allMatchedDialogs.firstOrNull()
         }
