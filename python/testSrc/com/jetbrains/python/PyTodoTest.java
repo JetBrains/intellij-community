@@ -44,4 +44,23 @@ public class PyTodoTest extends LightPlatformCodeInsightFixtureTestCase {
       todo.setTodoPatterns(oldPatterns);
     }
   }
+
+  public void testTodoInDocstrings() {
+    myFixture.configureByText(PythonFileType.INSTANCE, "''' TODO: return dead parrot '''");
+    TodoItem[] items = PsiTodoSearchHelper.SERVICE.getInstance(getProject()).findTodoItems(myFixture.getFile());
+    assertEquals(1, items.length);
+  }
+
+  public void testTodoInDocstrings2() {
+    myFixture.configureByText(PythonFileType.INSTANCE, "def foo():\n''' TODO: return dead parrot '''");
+    TodoItem[] items = PsiTodoSearchHelper.SERVICE.getInstance(getProject()).findTodoItems(myFixture.getFile());
+    assertEquals(1, items.length);
+  }
+
+  public void testTodoInTripleQuotedString() {
+    myFixture.configureByText(PythonFileType.INSTANCE, "s = ''' TODO: return dead parrot '''");
+    TodoItem[] items = PsiTodoSearchHelper.SERVICE.getInstance(getProject()).findTodoItems(myFixture.getFile());
+    assertEquals(0, items.length); // no todo in normal triple quoted strings
+  }
+
 }

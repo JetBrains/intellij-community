@@ -58,6 +58,9 @@ public class PyFilterLexer extends BaseFilterLexer {
     }
     else if (PyTokenTypes.STRING_NODES.contains(tokenType)) {
       scanWordsInToken(UsageSearchContext.IN_STRINGS | UsageSearchContext.IN_FOREIGN_LANGUAGES, false, true);
+      if (tokenType == PyTokenTypes.DOCSTRING) {
+        advanceTodoItemCountsInToken();
+      }
     }
     else if (PyIndexPatternBuilder.COMMENTS.contains(tokenType)) {
       scanWordsInToken(UsageSearchContext.IN_COMMENTS, false, false);
