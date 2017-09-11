@@ -11,7 +11,7 @@ class ImmutableSet<T> {
 }
 
 public class Test {
-    private static final Set<String> S = com.google.common.collect.ImmutableSet.of("foo", "bar", "baz");
+    private static final Set<String> S = ImmutableSet.of("foo", "bar", "baz");
 
     void testOr(String s) {
     if(S.contains(s)) {

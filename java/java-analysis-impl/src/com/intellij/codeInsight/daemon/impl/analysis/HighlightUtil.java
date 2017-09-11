@@ -2779,7 +2779,7 @@ public class HighlightUtil extends HighlightUtilBase {
       if (outerParent instanceof PsiPackageStatement ||
           result.isPackagePrefixPackageReference() ||
           PsiUtil.isInsideJavadocComment(ref) ||
-          parent.resolve() instanceof PsiClass ||
+          parent.resolve() instanceof PsiMember ||
           outerParent instanceof PsiPackageAccessibilityStatement) {
         return null;
       }
@@ -2955,6 +2955,22 @@ public class HighlightUtil extends HighlightUtilBase {
     if (qualifier instanceof PsiReferenceExpression) {
       PsiElement qualifierResolved = ((PsiReferenceExpression)qualifier).resolve();
       if (qualifierResolved instanceof PsiClass || qualifierResolved instanceof PsiPackage) return null;
+
+      if (qualifierResolved == null) {
+        PsiReferenceExpression qExpression = (PsiReferenceExpression)qualifier;
+        while (true) {
+          PsiElement qResolve = qExpression.resolve();
+          if (qResolve == null || qResolve instanceof PsiClass || qResolve instanceof PsiPackage) {
+            PsiExpression qualifierExpression = qExpression.getQualifierExpression();
+            if (qualifierExpression == null) return null;
+            if (qualifierExpression instanceof PsiReferenceExpression) {
+              qExpression = (PsiReferenceExpression)qualifierExpression;
+              continue;
+            }
+          }
+          break;
+        }
+      }
     }
     String description = JavaErrorMessages.message("expected.class.or.package");
     HighlightInfo info =
