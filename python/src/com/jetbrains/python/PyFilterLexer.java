@@ -53,8 +53,7 @@ public class PyFilterLexer extends BaseFilterLexer {
     final IElementType tokenType = myDelegate.getTokenType();
 
     if (tokenType == PyTokenTypes.IDENTIFIER
-        || PyTokenTypes.SCALAR_LITERALS.contains(tokenType)
-        ) {
+        || PyTokenTypes.SCALAR_LITERALS.contains(tokenType)) {
       addOccurrenceInToken(UsageSearchContext.IN_CODE);
     }
     else if (PyTokenTypes.STRING_NODES.contains(tokenType)) {
