@@ -541,8 +541,8 @@ public class GenericsHighlightUtil {
       for (HierarchicalMethodSignature hms : visibleSignatures) {
         final PsiMethod method = hms.getMethod();
         if (method.isConstructor()) continue;
-        if (method.hasModifierProperty(PsiModifier.ABSTRACT) || 
-            method.hasModifierProperty(PsiModifier.DEFAULT) || 
+        if (method.hasModifierProperty(PsiModifier.ABSTRACT) ||
+            method.hasModifierProperty(PsiModifier.DEFAULT) ||
             method.hasModifierProperty(PsiModifier.STATIC)) continue;
         if (psiClass.findMethodsBySignature(method, false).length > 0) continue;
         final PsiClass containingClass = method.getContainingClass();
@@ -1442,64 +1442,21 @@ public class GenericsHighlightUtil {
     return null;
   }
 
-  static HighlightInfo areSupersAccessible(@NotNull PsiClass aClass) {
-    return areSupersAccessible(aClass, aClass.getResolveScope(), HighlightNamesUtil.getClassDeclarationTextRange(aClass), true);
+  static HighlightInfo checkClassSupersAccessibility(@NotNull PsiClass aClass) {
+    return checkClassSupersAccessibility(aClass, aClass.getResolveScope(), HighlightNamesUtil.getClassDeclarationTextRange(aClass), true);
   }
 
-  static HighlightInfo areSupersAccessible(@NotNull PsiClass aClass, PsiReferenceExpression ref) {
-    final GlobalSearchScope resolveScope = ref.getResolveScope();
-    final HighlightInfo info = areSupersAccessible(aClass, resolveScope, ref.getTextRange(), false);
-    if (info != null) {
-      return info;
-    }
-
-    String message = null;
-    final PsiElement parent = ref.getParent();
-    if (parent instanceof PsiMethodCallExpression) {
-      final JavaResolveResult resolveResult = ((PsiMethodCallExpression)parent).resolveMethodGenerics();
-      final PsiMethod method = (PsiMethod)resolveResult.getElement();
-      if (method != null) {
-        final HashSet<PsiClass> classes = new HashSet<>();
-        final JavaPsiFacade facade = JavaPsiFacade.getInstance(aClass.getProject());
-        final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
-
-        message = isSuperTypeAccessible(substitutor.substitute(method.getReturnType()), classes, false, resolveScope, facade);
-        if (message == null) {
-          for (PsiType type : method.getSignature(substitutor).getParameterTypes()) {
-
-            message = isSuperTypeAccessible(type, classes, false, resolveScope, facade);
-            if (message != null) {
-              break;
-            }
-          }
-        }
-      }
-    }
-    else {
-      final PsiElement resolve = ref.resolve();
-      if (resolve instanceof PsiField) {
-        message = isSuperTypeAccessible(((PsiField)resolve).getType(), new HashSet<>(), false, resolveScope, JavaPsiFacade.getInstance(aClass.getProject()));
-      }
-    }
-
-    if (message != null) {
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-        .descriptionAndTooltip(message)
-        .range(ref.getTextRange())
-        .create();
-    }
-
-
-    return null;
+  static HighlightInfo checkClassSupersAccessibility(@NotNull PsiClass aClass, @NotNull PsiReferenceExpression ref) {
+    return checkClassSupersAccessibility(aClass, ref.getResolveScope(), ref.getTextRange(), false);
   }
 
-  private static HighlightInfo areSupersAccessible(@NotNull PsiClass aClass,
-                                                   GlobalSearchScope resolveScope,
-                                                   TextRange range,
-                                                   boolean checkParameters) {
+  private static HighlightInfo checkClassSupersAccessibility(PsiClass aClass,
+                                                             GlobalSearchScope resolveScope,
+                                                             TextRange range,
+                                                             boolean checkParameters) {
     final JavaPsiFacade factory = JavaPsiFacade.getInstance(aClass.getProject());
     for (PsiClassType superType : aClass.getSuperTypes()) {
-      final String notAccessibleErrorMessage = isSuperTypeAccessible(superType, new HashSet<>(), checkParameters, resolveScope, factory);
+      final String notAccessibleErrorMessage = isTypeAccessible(superType, new HashSet<>(), checkParameters, resolveScope, factory);
       if (notAccessibleErrorMessage != null) {
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
           .descriptionAndTooltip(notAccessibleErrorMessage)
@@ -1510,13 +1467,56 @@ public class GenericsHighlightUtil {
     return null;
   }
 
+  static HighlightInfo checkMemberSignatureTypesAccessibility(@NotNull PsiReferenceExpression ref) {
+    String message = null;
+
+    final PsiElement parent = ref.getParent();
+    if (parent instanceof PsiMethodCallExpression) {
+      final JavaResolveResult resolveResult = ((PsiMethodCallExpression)parent).resolveMethodGenerics();
+      final PsiMethod method = (PsiMethod)resolveResult.getElement();
+      if (method != null) {
+        final Set<PsiClass> classes = new HashSet<>();
+        final JavaPsiFacade facade = JavaPsiFacade.getInstance(ref.getProject());
+        final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
+        final GlobalSearchScope resolveScope = ref.getResolveScope();
+
+        message = isTypeAccessible(substitutor.substitute(method.getReturnType()), classes, false, resolveScope, facade);
+        if (message == null) {
+          for (PsiType type : method.getSignature(substitutor).getParameterTypes()) {
+            message = isTypeAccessible(type, classes, false, resolveScope, facade);
+            if (message != null) {
+              break;
+            }
+          }
+        }
+      }
+    }
+    else {
+      final PsiElement resolve = ref.resolve();
+      if (resolve instanceof PsiField) {
+        final GlobalSearchScope resolveScope = ref.getResolveScope();
+        final JavaPsiFacade facade = JavaPsiFacade.getInstance(ref.getProject());
+        message = isTypeAccessible(((PsiField)resolve).getType(), new HashSet<>(), false, resolveScope, facade);
+      }
+    }
+
+    if (message != null) {
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+        .descriptionAndTooltip(message)
+        .range(ref.getTextRange())
+        .create();
+    }
+
+    return null;
+  }
+
   @Nullable
-  private static String isSuperTypeAccessible(PsiType superType,
-                                              HashSet<PsiClass> classes,
-                                              boolean checkParameters,
-                                              GlobalSearchScope resolveScope,
-                                              JavaPsiFacade factory) {
-    final PsiClass aClass = PsiUtil.resolveClassInType(superType);
+  private static String isTypeAccessible(PsiType type,
+                                         Set<PsiClass> classes,
+                                         boolean checkParameters,
+                                         GlobalSearchScope resolveScope,
+                                         JavaPsiFacade factory) {
+    final PsiClass aClass = PsiUtil.resolveClassInType(type);
     if (aClass != null && classes.add(aClass)) {
       VirtualFile vFile = PsiUtilCore.getVirtualFile(aClass);
       if (vFile == null) {
@@ -1533,24 +1533,25 @@ public class GenericsHighlightUtil {
       }
 
       if (checkParameters) {
-        boolean isInLibrary = !index.isInContent(vFile);
-        if (superType instanceof PsiClassType) {
-          for (PsiType psiType : ((PsiClassType)superType).getParameters()) {
-            final String notAccessibleMessage = isSuperTypeAccessible(psiType, classes, true, resolveScope, factory);
+        if (type instanceof PsiClassType) {
+          for (PsiType parameterType : ((PsiClassType)type).getParameters()) {
+            final String notAccessibleMessage = isTypeAccessible(parameterType, classes, true, resolveScope, factory);
             if (notAccessibleMessage != null) {
               return notAccessibleMessage;
             }
           }
         }
 
-        for (PsiClassType type : aClass.getSuperTypes()) {
-          final String notAccessibleMessage = isSuperTypeAccessible(type, classes, !isInLibrary, resolveScope, factory);
+        boolean isInLibrary = !index.isInContent(vFile);
+        for (PsiClassType superType : aClass.getSuperTypes()) {
+          final String notAccessibleMessage = isTypeAccessible(superType, classes, !isInLibrary, resolveScope, factory);
           if (notAccessibleMessage != null) {
             return notAccessibleMessage;
           }
         }
       }
     }
+
     return null;
   }
 

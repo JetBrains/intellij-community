@@ -420,7 +420,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     super.visitClass(aClass);
     if (aClass instanceof PsiSyntheticClass) return;
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkInterfaceMultipleInheritance(aClass));
-    if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.areSupersAccessible(aClass));
+    if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkClassSupersAccessibility(aClass));
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkDuplicateTopLevelClass(aClass));
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkEnumMustNotBeLocal(aClass));
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkEnumWithoutConstantsCantHaveAbstractMethods(aClass));
@@ -1316,9 +1316,10 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       if (type instanceof PsiCapturedWildcardType) {
         type = ((PsiCapturedWildcardType)type).getUpperBound();
       }
-      final PsiClass psiClass = PsiUtil.resolveClassInType(type);
+      PsiClass psiClass = PsiUtil.resolveClassInType(type);
       if (psiClass != null) {
-        myHolder.add(GenericsHighlightUtil.areSupersAccessible(psiClass, expression));
+        if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkClassSupersAccessibility(psiClass, expression));
+        if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkMemberSignatureTypesAccessibility(expression));
       }
     }
   }
