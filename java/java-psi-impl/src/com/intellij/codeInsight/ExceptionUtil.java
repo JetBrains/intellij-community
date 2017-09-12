@@ -487,13 +487,15 @@ public class ExceptionUtil {
           processor.getResults(), info -> {
             PsiElement element1 = info.getElement();
             if (info instanceof MethodCandidateInfo &&
+                element1 != method && //don't check self
                 MethodSignatureUtil.areSignaturesEqual(method, (PsiMethod)element1) &&
-                !MethodSignatureUtil.isSuperMethod((PsiMethod)element1, method)) {
+                !MethodSignatureUtil.isSuperMethod((PsiMethod)element1, method) &&
+                !(((MethodCandidateInfo)info).isToInferApplicability() && !((MethodCandidateInfo)info).isApplicable())) {
               return Pair.create((PsiMethod)element1, ((MethodCandidateInfo)info).getSubstitutor(false));
             }
             return null;
           });
-        if (candidates.size() > 1) {
+        if (!candidates.isEmpty()) {
           GlobalSearchScope scope = methodCall.getResolveScope();
           final List<PsiClassType> ex = collectSubstituted(substitutor, thrownExceptions, scope);
           for (Pair<PsiMethod, PsiSubstitutor> pair : candidates) {
