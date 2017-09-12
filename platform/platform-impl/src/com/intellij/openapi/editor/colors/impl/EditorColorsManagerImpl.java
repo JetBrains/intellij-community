@@ -56,7 +56,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 import java.util.function.Function;
 
 @State(
@@ -272,9 +275,12 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
         }
         continue;
       }
+      URL resource = attributesEP.getLoaderForClass().getResource(attributesEP.file);
+      if (resource == null) {
+        LOG.warn("resource not found: " + attributesEP.file);
+        continue;
+      }
       try {
-        URL resource = attributesEP.getLoaderForClass().getResource(attributesEP.file);
-        assert resource != null;
         ((AbstractColorsScheme)editorColorsScheme).readAttributes(JdomKt.loadElement(URLUtil.openStream(resource)));
       }
       catch (Exception e) {
