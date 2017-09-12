@@ -58,11 +58,11 @@ void CtrlC() {
 
 BOOL is_iac = FALSE;
 
-char IAC = 5;
-char BRK = 3;
-char C = 5;
+unsigned char IAC = 5;
+unsigned char BRK = 3;
+unsigned char C = 5;
 
-BOOL Scan(char buf[], int count) {
+BOOL Scan(unsigned char buf[], int count) {
 	for (int i = 0; i < count; i++) {
 		if (is_iac) {
 			if (buf[i] == BRK) {
@@ -102,32 +102,43 @@ BOOL CtrlHandler(DWORD fdwCtrlType) {
 }
 
 DWORD WINAPI scanStdinThread(void *param) {
-	HANDLE *write_stdin = (HANDLE *) param;
-	char buf[1];
+	HANDLE hChildWriteStdin = *((HANDLE *) param);
+	unsigned char buf[1];
 	memset(buf, 0, sizeof(buf));
 
 	HANDLE hStdin = GetStdHandle(STD_INPUT_HANDLE);
-	BOOL endOfInput = false;
+	BOOL endOfInput = FALSE;
 	while (!endOfInput) {
 		DWORD nBytesRead = 0;
 		DWORD nBytesWritten = 0;
 
-		char c;
+		unsigned char c;
 		BOOL bResult = ReadFile(hStdin, &c, 1, &nBytesRead, NULL);
+		if (!bResult) {
+			if (GetLastError() == ERROR_BROKEN_PIPE) {
+				// According to https://msdn.microsoft.com/library/windows/desktop/aa365467:
+				// "write stdin handle has been closed" => stop reading and close child stdin
+				endOfInput = TRUE;
+			}
+			else {
+				ErrorMessage("ReadFile");
+			}
+			continue;
+		}
 		if (nBytesRead > 0) {
 			buf[0] = c;
 			BOOL ctrlBroken = Scan(buf, 1);
-			WriteFile(*write_stdin, buf, 1, &nBytesWritten, NULL);
+			WriteFile(hChildWriteStdin, buf, 1, &nBytesWritten, NULL);
 		}
 		else {
-			/*
-			 When a synchronous read operation reaches the end of a file,
-			 ReadFile returns TRUE and sets *lpNumberOfBytesRead to zero.
-			 See http://msdn.microsoft.com/en-us/library/windows/desktop/aa365467(v=vs.85).aspx
+			/* According to https://msdn.microsoft.com/library/windows/desktop/aa365467:
+				When a synchronous read operation reaches the end of a file,
+				ReadFile returns TRUE and sets *lpNumberOfBytesRead to zero.
 			 */
 			endOfInput = bResult;
 		}
 	}
+	CloseHandle(hChildWriteStdin);
 	return 0;
 }
 
@@ -238,6 +249,12 @@ int main(int argc, char * argv[]) {
 		ErrorMessage("CreatePipe");
 		exit(0);
 	}
+	// https://msdn.microsoft.com/ru-ru/library/windows/desktop/ms682499
+	// Ensure the write handle to the pipe for STDIN is not inherited.
+	// Otherwise, CloseHandle(write_stdin) won't close child's stdin.
+	if (!SetHandleInformation(write_stdin, HANDLE_FLAG_INHERIT, 0)) {
+		ErrorMessage("SetHandleInformation");
+	}
 
 	GetStartupInfoW(&si);
 
@@ -307,6 +324,5 @@ int main(int argc, char * argv[]) {
 	CloseHandle(pi.hThread);
 	CloseHandle(pi.hProcess);
 	CloseHandle(newstdin);
-	CloseHandle(write_stdin);
 	return exitCode;
 }
