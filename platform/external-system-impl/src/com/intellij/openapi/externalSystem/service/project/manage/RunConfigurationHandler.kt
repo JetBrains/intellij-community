@@ -20,13 +20,11 @@ import com.intellij.execution.application.ApplicationConfiguration
 import com.intellij.execution.application.ApplicationConfigurationType
 import com.intellij.execution.configurations.ConfigurationTypeUtil
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.externalSystem.model.project.ConfigurationData
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import org.jetbrains.annotations.ApiStatus
 
 /**
  * Created by Nikita.Skvortsov
@@ -73,22 +71,15 @@ class RunConfigurationHandler: ConfigurationHandler {
         return@forEach
       }
 
-      f(typeName, name, cfg as Map<String, String>)
+      try {
+        f(typeName, name, cfg as Map<String, String>)
+      } catch (e: Exception) {
+        RunConfigurationHandler.LOG.warn("Error occurred when importing run configuration ${name}: ${e.message}", e)
+      }
     }
   }
 }
 
-
-@ApiStatus.Experimental
-interface RunConfigHandlerExtension {
-  companion object {
-    val EP_NAME = ExtensionPointName.create<RunConfigHandlerExtension>("com.intellij.runConfigurationHandlerExtension")
-  }
-
-  fun process(project: Project, name: String, cfg: Map<String, String>) {}
-  fun process(module: Module, name: String, cfg: Map<String, String>) {}
-  fun canHandle(typeName: String): Boolean = false
-}
 
 class RunConfigHandlerExtensionManager {
   companion object {
@@ -98,21 +89,21 @@ class RunConfigHandlerExtensionManager {
 }
 
 class ApplicationRunConfigHandler: RunConfigHandlerExtension {
-  override fun process(module: Module, name: String, cfg: Map<String, String>) {
+  override fun process(module: Module, name: String, cfg: Map<String, *>) {
     val cfgType = ConfigurationTypeUtil.findConfigurationType<ApplicationConfigurationType>(
       ApplicationConfigurationType::class.java)
     val runManager = RunManager.getInstance(module.project)
     val runnerAndConfigurationSettings = runManager.createConfiguration(name, cfgType.configurationFactories[0])
     val appConfig = runnerAndConfigurationSettings.configuration as ApplicationConfiguration
 
-    appConfig.MAIN_CLASS_NAME = cfg["mainClass"]
-    appConfig.VM_PARAMETERS   = cfg["jvmArgs"]
+    appConfig.MAIN_CLASS_NAME = cfg["mainClass"] as? String
+    appConfig.VM_PARAMETERS   = cfg["jvmArgs"] as? String
     appConfig.setModule(module)
 
     runManager.addConfiguration(runnerAndConfigurationSettings)
   }
 
-  override fun process(project: Project, name: String, cfg: Map<String, String>) {}
+  override fun process(project: Project, name: String, cfg: Map<String, *>) {}
 
   override fun canHandle(typeName: String): Boolean = typeName == "application"
 }
