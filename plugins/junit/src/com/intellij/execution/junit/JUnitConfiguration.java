@@ -299,6 +299,9 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
   }
 
   public void beClassConfiguration(final PsiClass testClass) {
+    if (FORK_KLASS.equals(getForkMode())) {
+      setForkMode(FORK_NONE);
+    }
     setMainClass(testClass);
     myData.TEST_OBJECT = TEST_CLASS;
     setGeneratedName();
@@ -344,6 +347,7 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
   }
 
   public void beMethodConfiguration(final Location<PsiMethod> methodLocation) {
+    setForkMode(FORK_NONE);
     setModule(myData.setTestMethod(methodLocation));
     setGeneratedName();
   }
@@ -535,7 +539,7 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
     public TestSearchScope.Wrapper TEST_SEARCH_SCOPE = new TestSearchScope.Wrapper();
     private String DIR_NAME;
     private String CATEGORY_NAME;
-    private String FORK_MODE = "none";
+    private String FORK_MODE = FORK_NONE;
     private int REPEAT_COUNT = 1;
     private String REPEAT_MODE = RepeatCount.ONCE;
     private LinkedHashSet<String> myPattern = new LinkedHashSet<>();
