@@ -25,10 +25,9 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -38,15 +37,15 @@ import org.jetbrains.annotations.NotNull;
 public class SurroundWithTryCatchFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.SurroundWithTryCatchFix");
 
-  private PsiElement myStatement;
+  private PsiElement myElement;
 
   public SurroundWithTryCatchFix(@NotNull PsiElement element) {
-    final PsiFunctionalExpression functionalExpression = PsiTreeUtil.getParentOfType(element, PsiFunctionalExpression.class, false, PsiStatement.class);
-    if (functionalExpression == null) {
-      myStatement = PsiTreeUtil.getNonStrictParentOfType(element, PsiStatement.class);
-    }
-    else if (functionalExpression instanceof PsiLambdaExpression) {
-      myStatement = functionalExpression;
+    if (element instanceof PsiStatement ||
+        element instanceof PsiResourceVariable ||
+        (element instanceof PsiExpression &&
+         !(element instanceof PsiMethodReferenceExpression) &&
+         ControlFlowUtils.canExtractStatement((PsiExpression)element, false))) {
+      myElement = element;
     }
   }
 
@@ -64,10 +63,7 @@ public class SurroundWithTryCatchFix implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myStatement != null &&
-           myStatement.isValid() &&
-           (!(myStatement instanceof PsiExpressionStatement) ||
-            !RefactoringChangeUtil.isSuperOrThisMethodCall(((PsiExpressionStatement)myStatement).getExpression()));
+    return myElement != null && myElement.isValid();
   }
 
   @Override
@@ -76,25 +72,17 @@ public class SurroundWithTryCatchFix implements IntentionAction {
     int line = editor.getCaretModel().getLogicalPosition().line;
     editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(0, 0));
 
-    if (myStatement.getParent() instanceof PsiForStatement) {
-      PsiForStatement forStatement = (PsiForStatement)myStatement.getParent();
-      if (myStatement.equals(forStatement.getInitialization()) || myStatement.equals(forStatement.getUpdate())) {
-        myStatement = forStatement;
-      }
+    if (myElement instanceof PsiExpression) {
+      myElement = RefactoringUtil.ensureCodeBlock((PsiExpression)myElement);
     }
-
-    if (myStatement instanceof PsiLambdaExpression) {
-      final PsiCodeBlock body = RefactoringUtil.expandExpressionLambdaToCodeBlock(((PsiLambdaExpression)myStatement));
-      final PsiStatement[] statements = body.getStatements();
-      LOG.assertTrue(statements.length == 1);
-      myStatement = statements[0];
-    }
+    myElement = RefactoringUtil.getParentStatement(myElement, false);
+    if (myElement == null) return;
 
     TextRange range = null;
 
     try{
       JavaWithTryCatchSurrounder handler = new JavaWithTryCatchSurrounder();
-      range = handler.surroundElements(project, editor, new PsiElement[] {myStatement});
+      range = handler.surroundElements(project, editor, new PsiElement[]{myElement});
     }
     catch(IncorrectOperationException e){
       LOG.error(e);

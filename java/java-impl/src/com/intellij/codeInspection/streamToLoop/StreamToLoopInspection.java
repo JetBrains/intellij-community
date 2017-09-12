@@ -40,6 +40,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.RedundantCastUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.IntStreamEx;
@@ -277,7 +278,7 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
       }
       TerminalOperation terminal = getTerminal(operations);
       if (terminal == null) return;
-      PsiStatement statement = PsiTreeUtil.getParentOfType(terminalCall, PsiStatement.class);
+      PsiStatement statement = ObjectUtils.tryCast(RefactoringUtil.getParentStatement(terminalCall, false), PsiStatement.class);
       LOG.assertTrue(statement != null);
       CommentTracker ct = new CommentTracker();
       try {
