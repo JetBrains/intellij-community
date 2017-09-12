@@ -159,7 +159,8 @@ private class JavaMethodRenderer(
 
   private fun setupTemplate(method: PsiMethod): TemplateBuilderImpl {
     val builder = TemplateBuilderImpl(method)
-    val guesser = GuessTypeParameters(project, factory, builder, javaUsage?.targetSubstitutor)
+    val substitutor = JvmPsiConversionHelper.getInstance(project).convertSubstitutor(request.targetSubstitutor)
+    val guesser = GuessTypeParameters(project, factory, builder, substitutor)
     setupTypeElement(guesser, method.returnTypeElement, request.returnType)
     builder.setupParameters(guesser, method)
     builder.setEndVariableAfter(method.body ?: method)

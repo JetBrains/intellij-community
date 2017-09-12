@@ -25,6 +25,7 @@ import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.AnnotationRequest
 import com.intellij.lang.jvm.actions.CreateMethodRequest
 import com.intellij.lang.jvm.actions.ExpectedParameter
+import com.intellij.lang.jvm.types.JvmSubstitutor
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.codeStyle.VariableKind
@@ -53,7 +54,10 @@ class CreateMethodFromJavaUsageRequest(
 
   override val returnType: Any? get() = guessExpectedTypes(methodCall, methodCall.parent is PsiStatement)
 
-  val targetSubstitutor: PsiSubstitutor get() = getTargetSubstitutor(methodCall)
+  override val targetSubstitutor: JvmSubstitutor get() {
+    val call = methodCall
+    return PsiJvmSubstitutor(call.project, getTargetSubstitutor(call))
+  }
 
   override val parameters: List<ExpectedParameter>
     get() {

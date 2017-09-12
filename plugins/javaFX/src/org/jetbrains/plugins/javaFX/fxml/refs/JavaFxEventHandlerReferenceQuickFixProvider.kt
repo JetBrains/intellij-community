@@ -7,8 +7,11 @@ import com.intellij.codeInsight.daemon.QuickFixActionRegistrar
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.*
+import com.intellij.lang.jvm.types.JvmSubstitutor
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiJvmSubstitutor
 import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.PsiType
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings
@@ -71,6 +74,8 @@ class CreateEventHandlerRequest(element: XmlAttributeValue) : CreateMethodReques
       emptyList()
     }
   }
+
+  override val targetSubstitutor: JvmSubstitutor get() = PsiJvmSubstitutor(myProject, PsiSubstitutor.EMPTY)
 }
 
 private fun getVisibility(project: Project): JvmModifier {
