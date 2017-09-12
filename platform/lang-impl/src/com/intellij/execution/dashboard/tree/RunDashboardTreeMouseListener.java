@@ -18,10 +18,12 @@ package com.intellij.execution.dashboard.tree;
 import com.intellij.execution.dashboard.hyperlink.RunDashboardHyperlinkComponent;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
@@ -38,12 +40,28 @@ public class RunDashboardTreeMouseListener extends RunDashboardLinkMouseListener
     myTree = tree;
   }
 
+  @Override
+  protected Object getAimedObject(MouseEvent e) {
+    Object aimedObject = null;
+    final TreePath path = myTree.getPathForLocation(e.getX(), e.getY());
+    if (path != null) {
+      DefaultMutableTreeNode treeNode = ObjectUtils.tryCast(path.getLastPathComponent(), DefaultMutableTreeNode.class);
+      if (treeNode != null) {
+        aimedObject = treeNode.getUserObject();
+      }
+    }
+    return aimedObject;
+  }
+
   protected void repaintComponent(MouseEvent e) {
     final TreePath path = myTree.getPathForLocation(e.getX(), e.getY());
     if (path != null) {
       final TreeNode treeNode = (TreeNode)path.getLastPathComponent();
-      // Invoke nodeChanged() in order to repaint ExpandableItemsHandler's tooltip component.
-      ((DefaultTreeModel)myTree.getModel()).nodeChanged(treeNode);
+      DefaultTreeModel treeModel = ObjectUtils.tryCast(myTree.getModel(), DefaultTreeModel.class);
+      if (treeModel != null) {
+        // Invoke nodeChanged() in order to repaint ExpandableItemsHandler's tooltip component.
+        treeModel.nodeChanged(treeNode);
+      }
     }
 
     // Repaint all tree since nodes which cursor just leaved should be repaint too.
@@ -65,7 +83,7 @@ public class RunDashboardTreeMouseListener extends RunDashboardLinkMouseListener
 
     Object tag = null;
 
-    Component component = myTree.getCellRenderer().getTreeCellRendererComponent(myTree, treeNode, false, false, treeNode.isLeaf(), row, true);
+    Component component = myTree.getCellRenderer().getTreeCellRendererComponent(myTree, treeNode, true, false, treeNode.isLeaf(), row, true);
     if (component instanceof ColoredTreeCellRenderer) {
       tag = ((ColoredTreeCellRenderer)component).getFragmentTagAt(dx);
     }
