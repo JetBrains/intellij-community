@@ -16,8 +16,11 @@
 package com.intellij.psi.impl;
 
 import com.intellij.lang.jvm.JvmTypeDeclaration;
+import com.intellij.lang.jvm.JvmTypeParameter;
 import com.intellij.psi.JvmPsiConversionHelper;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiTypeParameter;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class JvmPsiConversionHelperImpl implements JvmPsiConversionHelper {
@@ -25,6 +28,13 @@ public class JvmPsiConversionHelperImpl implements JvmPsiConversionHelper {
   @Override
   public PsiClass convertTypeDeclaration(@Nullable JvmTypeDeclaration typeDeclaration) {
     if (typeDeclaration instanceof PsiClass) return (PsiClass)typeDeclaration;
+    throw new RuntimeException("TODO");
+  }
+
+  @NotNull
+  @Override
+  public PsiTypeParameter convertTypeParameter(@NotNull JvmTypeParameter typeParameter) {
+    if (typeParameter instanceof PsiTypeParameter) return (PsiTypeParameter)typeParameter;
     throw new RuntimeException("TODO");
   }
 }
