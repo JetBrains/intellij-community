@@ -28,27 +28,11 @@ public class TrivialIfFixTest extends IGQuickFixesTestCase {
     myDefaultHint = "Simplify 'if else'";
   }
 
-  public void testComments() {
-    doTest();
-  }
-
-  public void testCommentsInAssignment() {
-    doTest();
-  }
-
-  public void testNegatedConditional() {
-    doTest();
-  }
-
-  public void testNegatedConditional1() {
-    doTest();
-  }
-
-  public void testAssert1() {
-    doTest();
-  }
-
-  public void testAssert2() {
-    doTest();
-  }
+  public void testComments() { doTest(); }
+  public void testCommentsInAssignment() { doTest(); }
+  public void testNegatedConditional() { doTest(); }
+  public void testNegatedConditional1() { doTest(); }
+  public void testAssert1() { doTest(); }
+  public void testAssert2() { doTest(); }
+  public void testParentheses() { doTest(); }
 }
