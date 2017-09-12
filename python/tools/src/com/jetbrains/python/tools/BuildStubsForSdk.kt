@@ -25,6 +25,7 @@ import com.jetbrains.python.psi.PyFileElementType
 import com.jetbrains.python.psi.impl.stubs.PyPrebuiltStubsProvider.PREBUILT_INDEXES_PATH_PROPERTY
 import com.jetbrains.python.psi.impl.stubs.PyPrebuiltStubsProvider.SDK_STUBS_STORAGE_NAME
 import junit.framework.TestCase
+import org.junit.Assert
 import java.io.ByteArrayInputStream
 import java.io.File
 import java.util.*
@@ -37,13 +38,24 @@ val stubsFileName = SDK_STUBS_STORAGE_NAME
 
 val MERGE_STUBS_FROM_PATHS = "MERGE_STUBS_FROM_PATHS"
 
-val path: String? = System.getProperty(PREBUILT_INDEXES_PATH_PROPERTY)
-val baseDir = if (path != null && File(path).exists()) {
-  path
+
+fun getBaseDirValue(): String? {
+  val path: String? = System.getProperty(PREBUILT_INDEXES_PATH_PROPERTY)
+
+  if (path == null) {
+    Assert.fail("$PREBUILT_INDEXES_PATH_PROPERTY variable is not defined")
+  }
+  else
+    if (File(path).exists()) {
+      return path
+    }
+    else {
+      Assert.fail("Directory $path doesn't exist")
+    }
+  return null
 }
-else {
-  System.getProperty("user.dir")
-}
+
+val baseDir = getBaseDirValue()
 
 fun main(args: Array<String>) {
   if (System.getenv().containsKey(MERGE_STUBS_FROM_PATHS)) {
@@ -173,9 +185,9 @@ fun buildStubs() {
     val root = System.getenv(PYCHARM_PYTHONS)
 
     for (python in File(root).listFiles()) {
-        indexSdkAndStoreSerializedStubs("${PathManager.getHomePath()}/python/testData/empty",
-                                        python.absolutePath,
-                                        "$baseDir/$stubsFileName")
+      indexSdkAndStoreSerializedStubs("${PathManager.getHomePath()}/python/testData/empty",
+                                      python.absolutePath,
+                                      "$baseDir/$stubsFileName")
     }
   }
   catch (e: Throwable) {
