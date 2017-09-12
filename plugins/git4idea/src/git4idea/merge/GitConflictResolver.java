@@ -16,7 +16,9 @@
 package git4idea.merge;
 
 import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationAction;
+import com.intellij.notification.NotificationType;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
@@ -41,13 +43,14 @@ import git4idea.repo.GitRepositoryManager;
 import git4idea.util.StringScanner;
 import org.jetbrains.annotations.CalledInBackground;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.event.HyperlinkEvent;
 import java.io.File;
 import java.util.*;
 
 import static com.intellij.dvcs.DvcsUtil.findVirtualFilesWithRefresh;
 import static com.intellij.dvcs.DvcsUtil.sortVirtualFilesByPresentation;
+import static com.intellij.openapi.vcs.VcsNotifier.IMPORTANT_ERROR_NOTIFICATION;
 import static com.intellij.util.ObjectUtils.assertNotNull;
 
 /**
@@ -183,7 +186,7 @@ public class GitConflictResolver {
    */
   protected void notifyUnresolvedRemain() {
     notifyWarning(myParams.myErrorNotificationTitle,
-                  "You have to <a href='resolve'>resolve</a> all conflicts first." + myParams.myErrorNotificationAdditionalDescription);
+                  "Resolve all conflicts first." + myParams.myErrorNotificationAdditionalDescription);
   }
 
   /**
@@ -192,12 +195,14 @@ public class GitConflictResolver {
    */
   private void notifyUnresolvedRemainAfterNotification() {
     notifyWarning("Not all conflicts resolved",
-                  "You should <a href='resolve'>resolve</a> all conflicts before update. <br>" +
+                  "Resolve all conflicts to continue. <br>" +
                   myParams.myErrorNotificationAdditionalDescription);
   }
 
-  private void notifyWarning(String title, String content) {
-    VcsNotifier.getInstance(myProject).notifyImportantWarning(title, content, new ResolveNotificationListener());
+  protected void notifyWarning(String title, String content) {
+    Notification notification = IMPORTANT_ERROR_NOTIFICATION.createNotification(title, content, NotificationType.WARNING, null);
+    notification.addAction(new ResolveNotificationAction("Resolve..."));
+    VcsNotifier.getInstance(myProject).notify(notification);
   }
 
   private boolean merge(boolean mergeDialogInvokedFromNotification) {
@@ -243,26 +248,22 @@ public class GitConflictResolver {
   private void notifyException(VcsException e) {
     LOG.info("mergeFiles ", e);
     final String description = "Couldn't check the working tree for unmerged files because of an error.";
-    VcsNotifier.getInstance(myProject).notifyError(myParams.myErrorNotificationTitle,
-                                                   description + myParams.myErrorNotificationAdditionalDescription + "<br/>" +
-                                                   e.getLocalizedMessage(),
-                                                   new ResolveNotificationListener()
-    );
+    Notification notification = IMPORTANT_ERROR_NOTIFICATION.createNotification(myParams.myErrorNotificationTitle, description + myParams.myErrorNotificationAdditionalDescription + "<br/>" +
+                                                                                                                   e.getLocalizedMessage(), NotificationType.ERROR, null);
+    VcsNotifier.getInstance(myProject).notify(notification);
   }
 
+  private class ResolveNotificationAction extends NotificationAction {
 
-  @NotNull
-  protected NotificationListener getResolveLinkListener() {
-    return new ResolveNotificationListener();
-  }
+    public ResolveNotificationAction(@Nullable String text) {
+      super(text);
+    }
 
-  private class ResolveNotificationListener implements NotificationListener {
-    @Override public void hyperlinkUpdate(@NotNull final Notification notification, @NotNull HyperlinkEvent event) {
-      if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED && event.getDescription().equals("resolve")) {
-        notification.expire();
-        Runnable task = () -> mergeNoProceed();
-        BackgroundTaskUtil.executeOnPooledThread(myProject, task);
-      }
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+      notification.expire();
+      Runnable task = () -> mergeNoProceed();
+      BackgroundTaskUtil.executeOnPooledThread(myProject, task);
     }
   }
 
