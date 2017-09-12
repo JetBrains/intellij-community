@@ -632,6 +632,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   }
 
   private void processInstanceOf(GrExpression expression) {
+    FList<ConditionInstruction> conditionsBefore = myConditions;
     ConditionInstruction cond = registerCondition(expression);
     addNodeAndCheckPending(cond);
 
@@ -643,6 +644,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
     myHead = cond;
     addNode(new InstanceOfInstruction(expression, cond));
+    myConditions = conditionsBefore;
   }
 
   /**

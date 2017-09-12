@@ -789,4 +789,15 @@ def foo(List list) {
     doExprTest '[foo: 2, bar: 4]*.value', 'java.util.ArrayList<java.lang.Integer>'
     doExprTest '[foo: 2, bar: 4]*.undefined', 'java.util.List'
   }
+
+  void 'test instanceof does not interfere with outer if'() {
+    doTest '''\
+def bar(CharSequence xx) {
+  if (xx instanceof String) {
+    1 instanceof Object
+    <caret>xx
+  }  
+}
+''', 'java.lang.String'
+  }
 }
