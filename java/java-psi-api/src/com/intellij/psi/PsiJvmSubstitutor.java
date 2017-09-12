@@ -41,4 +41,9 @@ public class PsiJvmSubstitutor implements JvmSubstitutor {
     PsiTypeParameter psiTypeParameter = helper.convertTypeParameter(typeParameter);
     return mySubstitutor.substitute(psiTypeParameter);
   }
+
+  @NotNull
+  public PsiSubstitutor getPsiSubstitutor() {
+    return mySubstitutor;
+  }
 }
