@@ -94,9 +94,11 @@ class CrossPlatformDistributionBuilder {
             exclude(name: it)
           }
         }
-        zipfileset(dir: "$linuxDistPath", filemode: "775") {
-          buildContext.linuxDistributionCustomizer.extraExecutables.each {
-            include(name: it)
+        if (!buildContext.linuxDistributionCustomizer.extraExecutables.isEmpty()) {
+          zipfileset(dir: "$linuxDistPath", filemode: "775") {
+            buildContext.linuxDistributionCustomizer.extraExecutables.each {
+              include(name: it)
+            }
           }
         }
         zipfileset(dir: "$linuxDistPath/bin", prefix: "bin", filemode: "775") {
@@ -124,13 +126,15 @@ class CrossPlatformDistributionBuilder {
             exclude(name: it)
           }
         }
-        zipfileset(dir: "$macDistPath", filemode: "775") {
-          buildContext.macDistributionCustomizer.extraExecutables.each {
-            include(name: it)
-          }
+        if (!buildContext.macDistributionCustomizer.extraExecutables.isEmpty()) {
+          zipfileset(dir: "$macDistPath", filemode: "775") {
+            buildContext.macDistributionCustomizer.extraExecutables.each {
+              include(name: it)
+            }
 
-          commonFiles.each {
-            exclude(name: it)
+            commonFiles.each {
+              exclude(name: it)
+            }
           }
         }
         zipfileset(dir: "$macDistPath/bin", prefix: "bin", filemode: "775") {
