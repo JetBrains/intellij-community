@@ -23,11 +23,15 @@ public interface ChainOperation {
   class TypeCast implements ChainOperation {
     // we cast only to a class
     private final PsiClass myOperandClass;
+    @NotNull private final PsiClass myCastClass;
 
-    public TypeCast(@NotNull PsiClass aClass) {myOperandClass= aClass;}
+    public TypeCast(@NotNull PsiClass operandClass, @NotNull PsiClass castClass) {
+      myOperandClass= operandClass;
+      myCastClass = castClass;
+    }
 
     public PsiClass getCastClass() {
-      return myOperandClass;
+      return myCastClass;
     }
 
     @Override

@@ -35,6 +35,7 @@ public class CallChain {
   @NotNull
   private final ChainOperation[] myReverseOperations;
   private final RefChainOperation mySignature;
+  private final MethodIncompleteSignature myLastMethodSign;
   private final int myWeight;
   private final PsiClass myQualifierClass;
 
@@ -57,21 +58,27 @@ public class CallChain {
       return null;
     }
     classes.add(contextClass);
-    return new CallChain(qualifier, new ChainOperation[] {new ChainOperation.MethodCall(methods)}, signature, weight);
+    return new CallChain(qualifier, new ChainOperation[] {new ChainOperation.MethodCall(methods)}, signature, signature, weight);
   }
 
   public CallChain(@NotNull PsiClass qualifierClass,
                    @NotNull ChainOperation[] reverseOperations,
                    RefChainOperation signature,
+                   MethodIncompleteSignature lastMethodSign,
                    int weight) {
     myQualifierClass = qualifierClass;
     myReverseOperations = reverseOperations;
     mySignature = signature;
+    myLastMethodSign = lastMethodSign;
     myWeight = weight;
   }
 
   public boolean hasCast() {
     return Arrays.stream(myReverseOperations).anyMatch(op -> op instanceof ChainOperation.TypeCast);
+  }
+
+  public MethodIncompleteSignature getLastMethodSign() {
+    return myLastMethodSign;
   }
 
   @NotNull
@@ -109,18 +116,19 @@ public class CallChain {
     ChainOperation[] newReverseOperations = new ChainOperation[length() + 1];
     System.arraycopy(myReverseOperations, 0, newReverseOperations, 0, myReverseOperations.length);
     newReverseOperations[length()] = head.getPath()[0];
-    return new CallChain(head.getQualifierClass(), newReverseOperations, head.getHeadSignature(), Math.min(weight, getChainWeight()));
+    return new CallChain(head.getQualifierClass(), newReverseOperations, head.getHeadSignature(), signature, Math.min(weight, getChainWeight()));
   }
 
   public CallChain continuationWithCast(@NotNull TypeCast cast,
                                         @NotNull ChainCompletionContext context) {
     PsiClass operand = context.resolvePsiClass(cast.getOperandRef());
-    if (operand == null) return null;
+    PsiClass castType = context.resolvePsiClass(cast.getCastTypeRef());
+    if (operand == null || castType == null) return null;
 
     ChainOperation[] newReverseOperations = new ChainOperation[length() + 1];
     System.arraycopy(myReverseOperations, 0, newReverseOperations, 0, myReverseOperations.length);
-    newReverseOperations[length()] = new ChainOperation.TypeCast(operand);
-    return new CallChain(operand, newReverseOperations, cast, getChainWeight());
+    newReverseOperations[length()] = new ChainOperation.TypeCast(operand, castType);
+    return new CallChain(operand, newReverseOperations, cast, myLastMethodSign, getChainWeight());
   }
 
   @Override

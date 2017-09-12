@@ -130,8 +130,7 @@ public class ChainSearcher {
                                                                 List<CallChain> result,
                                                                 ChainCompletionContext context,
                                                                 CompilerReferenceServiceEx referenceServiceEx) {
-    RefChainOperation signature = currentChain.getHeadSignature();
-    if (!(signature instanceof MethodIncompleteSignature)) return;
+    RefChainOperation signature = currentChain.getLastMethodSign();
     if (currentChain.hasCast()) return;
     if (!context.getTarget().getClassQName().equals(((MethodIncompleteSignature)signature).getOwner())) {
       Set<LightRef> references = context.getContextClassReferences();

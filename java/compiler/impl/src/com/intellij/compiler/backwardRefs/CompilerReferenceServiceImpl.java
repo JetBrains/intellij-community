@@ -288,7 +288,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
         typeCasts.forEachEntry(new TObjectIntProcedure<LightRef>() {
           @Override
           public boolean execute(LightRef operandType, int matchedFileCount) {
-            if (ids.size() > probabilityThreshold * (matchedFileCount - ids.size())) {
+            if (ids.size() > probabilityThreshold * (ids.size() - matchedFileCount)) {
               if (best[0] == null || bestFileCount[0] < matchedFileCount) {
                 best[0] = operandType;
                 bestFileCount[0] = matchedFileCount;
