@@ -28,10 +28,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiPackage;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.rt.coverage.data.ClassData;
@@ -509,16 +506,23 @@ public class PackageAnnotator {
    */
   public static boolean isGeneratedDefaultConstructor(@Nullable final PsiClass aClass, String nameAndSig) {
     if (DEFAULT_CONSTRUCTOR_NAME_SIGNATURE.equals(nameAndSig)) {
-      return hasGeneratedConstructor(aClass);
+      return hasGeneratedOrEmptyPrivateConstructor(aClass);
     }
     return false;
   }
 
-  private static boolean hasGeneratedConstructor(@Nullable final PsiClass aClass) {
+  private static boolean hasGeneratedOrEmptyPrivateConstructor(@Nullable final PsiClass aClass) {
     if (aClass == null) {
       return false;
     }
-    return ReadAction.compute(() -> aClass.getConstructors().length == 0);
+    return ReadAction.compute(() -> {
+      PsiMethod[] constructors = aClass.getConstructors();
+      if (constructors.length == 1 && constructors[0].hasModifierProperty(PsiModifier.PRIVATE)) {
+        PsiCodeBlock body = constructors[0].getBody();
+        return body != null && body.getStatements().length == 0;
+      }
+      return constructors.length == 0;
+    });
   }
 
   private static ClassCoverageInfo getOrCreateClassCoverageInfo(final Map<String, ClassCoverageInfo> toplevelClassCoverage,

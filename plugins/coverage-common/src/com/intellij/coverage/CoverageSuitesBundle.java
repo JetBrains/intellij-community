@@ -60,6 +60,9 @@ public class CoverageSuitesBundle {
     return true;
   }
 
+  public Project getProject() {
+    return mySuites[0].getProject();
+  }
 
   public long getLastCoverageTimeStamp() {
     long max = 0;

@@ -15,12 +15,18 @@
  */
 package com.intellij.coverage;
 
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.util.ClassUtil;
 import com.intellij.rt.coverage.instrumentation.SourceLineCounter;
+import com.intellij.util.containers.HashSet;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.org.objectweb.asm.ClassReader;
 
 import java.util.List;
+import java.util.Set;
 
 public class SourceLineCounterUtil {
   public static boolean collectNonCoveredClassInfo(final PackageAnnotator.ClassCoverageInfo classCoverageInfo,
@@ -33,14 +39,20 @@ public class SourceLineCounterUtil {
 
     SourceLineCounter counter = new SourceLineCounter(null, excludeLines, null);
     reader.accept(counter, 0);
-    classCoverageInfo.totalLineCount += counter.getNSourceLines();
-    packageCoverageInfo.totalLineCount += counter.getNSourceLines();
-    for (Object nameAndSig : counter.getMethodsWithSourceCode()) {
-      if (!PackageAnnotator.isGeneratedDefaultConstructor(psiClass, (String) nameAndSig)) {
-        classCoverageInfo.totalMethodCount++;
-        packageCoverageInfo.totalMethodCount++;
-      }
-    }
+    Set<Object> descriptions = new HashSet<>();
+    TIntObjectHashMap<?> lines = counter.getSourceLines();
+    lines.forEachEntry((line, description) -> {
+        if (!PackageAnnotator.isGeneratedDefaultConstructor(psiClass, (String)description)) {
+          classCoverageInfo.totalLineCount ++;
+          packageCoverageInfo.totalLineCount ++;
+          descriptions.add(description);
+        } 
+        return true;
+      });
+    
+    classCoverageInfo.totalMethodCount += descriptions.size();
+    packageCoverageInfo.totalMethodCount += descriptions.size();
+
     if (!counter.isInterface()) {
       packageCoverageInfo.totalClassCount++;
     }
@@ -48,14 +60,21 @@ public class SourceLineCounterUtil {
   }
 
   public static void collectSrcLinesForUntouchedFiles(final List<Integer> uncoveredLines,
-                                                      byte[] content, final boolean excludeLines) {
+                                                      byte[] content, 
+                                                      final boolean excludeLines, 
+                                                      final Project project) {
     final ClassReader reader = new ClassReader(content);
     final SourceLineCounter collector = new SourceLineCounter(null, excludeLines, null);
     reader.accept(collector, 0);
-    final TIntObjectHashMap lines = collector.getSourceLines();
-    lines.forEachKey(line -> {
-      line--;
-      uncoveredLines.add(line);
+    
+    String qualifiedName = reader.getClassName();
+    PsiClass psiClass = ReadAction.compute(() -> ClassUtil.findPsiClassByJVMName(PsiManager.getInstance(project), qualifiedName));
+    TIntObjectHashMap<?> lines = collector.getSourceLines();
+    lines.forEachEntry((line, description) -> {
+      if (!PackageAnnotator.isGeneratedDefaultConstructor(psiClass, (String)description)) {
+        line--;
+        uncoveredLines.add(line);
+      }
       return true;
     });
   }

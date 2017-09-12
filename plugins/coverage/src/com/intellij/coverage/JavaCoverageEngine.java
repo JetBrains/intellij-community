@@ -255,7 +255,7 @@ public class JavaCoverageEngine extends CoverageEngine {
     }
 
     try {
-      SourceLineCounterUtil.collectSrcLinesForUntouchedFiles(uncoveredLines, content, suite.isTracingEnabled());
+      SourceLineCounterUtil.collectSrcLinesForUntouchedFiles(uncoveredLines, content, suite.isTracingEnabled(), suite.getProject());
     }
     catch (Exception e) {
       LOG.error("Fail to process class from: " + classFile.getPath(), e);
@@ -274,6 +274,7 @@ public class JavaCoverageEngine extends CoverageEngine {
   }
 
 
+  @NotNull
   public String getQualifiedName(@NotNull final File outputFile, @NotNull final PsiFile sourceFile) {
     final String packageFQName = getPackageName(sourceFile);
     return StringUtil.getQualifiedName(packageFQName, FileUtil.getNameWithoutExtension(outputFile));
@@ -649,6 +650,12 @@ public class JavaCoverageEngine extends CoverageEngine {
   @Override
   public String getPresentableText() {
     return "Java Coverage";
+  }
+
+  @Override
+  public boolean isGeneratedCode(Project project, String qualifiedName, Object lineData) {
+    PsiClass psiClass = ReadAction.compute(() -> ClassUtil.findPsiClassByJVMName(PsiManager.getInstance(project), qualifiedName));
+    return PackageAnnotator.isGeneratedDefaultConstructor(psiClass, ((LineData)lineData).getMethodSignature());
   }
 
   @Override
