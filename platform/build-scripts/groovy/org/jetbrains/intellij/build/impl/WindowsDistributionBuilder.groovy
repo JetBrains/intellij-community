@@ -209,7 +209,7 @@ IDS_VM_OPTIONS=$vmOptions
           fileset(dir: "$communityHome/lib") {
             include(name: "guava*.jar")
             include(name: "jdom.jar")
-            include(name: "sanselan*.jar")
+            include(name: "commons-imaging*.jar")
           }
           resourceModules.collectMany { it.sourceRoots }.each { JpsModuleSourceRoot root ->
             pathelement(location: root.file.absolutePath)

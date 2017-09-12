@@ -16,12 +16,10 @@
 package org.intellij.images.util.imageio;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
-import org.apache.sanselan.ImageFormat;
-import org.apache.sanselan.ImageInfo;
-import org.apache.sanselan.ImageReadException;
-import org.apache.sanselan.Sanselan;
-import org.apache.sanselan.common.byteSources.ByteSource;
+import org.apache.commons.imaging.*;
+import org.apache.commons.imaging.common.bytesource.ByteSource;
 
 import javax.imageio.ImageReadParam;
 import javax.imageio.ImageReader;
@@ -34,25 +32,25 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
 
-public class SanselanImageReaderSpi extends ImageReaderSpi {
+public class CommonsImagingImageReaderSpi extends ImageReaderSpi {
 
   private ThreadLocal<ImageFormat> myFormat = new ThreadLocal<>();
   private final List<ImageFormat> myFormats;
 
-  public SanselanImageReaderSpi() {
+  public CommonsImagingImageReaderSpi() {
     super();
     vendorName = "JetBrains, s.r.o.";
     version = "1.0";
 
     // todo standard GIF/BMP formats can be optionally skipped as well
-    // JPEG is skipped due to Exception: Sanselan cannot read or write JPEG images. (JpegImageParser.java:92)
+    // JPEG is skipped due to Exception: cannot read or write JPEG images. (JpegImageParser.java:92)
     // tiff reader seems to be broken
     // PNG reader has bugs with well-compressed PNG images, use standard one instead
-    myFormats = new ArrayList<>(Arrays.asList(ImageFormat.getAllFormats()));
-    myFormats.removeAll(Arrays.asList(ImageFormat.IMAGE_FORMAT_UNKNOWN,
-                                         ImageFormat.IMAGE_FORMAT_JPEG,
-                                         ImageFormat.IMAGE_FORMAT_TIFF,
-                                         ImageFormat.IMAGE_FORMAT_PNG));
+    myFormats = new ArrayList<>(Arrays.asList(ImageFormats.values()));
+    myFormats.removeAll(Arrays.asList(ImageFormats.UNKNOWN,
+                                         ImageFormats.JPEG,
+                                         ImageFormats.TIFF,
+                                         ImageFormats.PNG));
 
     names = new String[myFormats.size() * 2];
     suffixes = new String[myFormats.size()];
@@ -61,15 +59,15 @@ public class SanselanImageReaderSpi extends ImageReaderSpi {
     inputTypes = new Class[] {ImageInputStream.class};
     for (int i = 0, allFormatsLength = myFormats.size(); i < allFormatsLength; i++) {
       final ImageFormat format = myFormats.get(i);
-      names[2 * i] = format.extension.toLowerCase();
-      names[2 * i + 1] = format.extension.toUpperCase();
+      names[2 * i] = StringUtil.toLowerCase(format.getExtension());
+      names[2 * i + 1] = StringUtil.toLowerCase(format.getExtension());
       suffixes[i] = names[2 * i];
       MIMETypes[i] = "image/" + names[2 * i];
     }
   }
 
   public String getDescription(Locale locale) {
-    return "Apache Sanselan project based image reader";
+    return "Apache Commons Imaging adapter reader";
   }
 
   public boolean canDecodeInput(Object input) throws IOException {
@@ -78,7 +76,7 @@ public class SanselanImageReaderSpi extends ImageReaderSpi {
     }
     final ImageInputStream stream = (ImageInputStream)input;
     try {
-      final ImageFormat imageFormat = Sanselan.guessFormat(new MyByteSource(stream));
+      final ImageFormat imageFormat = Imaging.guessFormat(new MyByteSource(stream));
       if (myFormats.contains(imageFormat)) {
         myFormat.set(imageFormat);
         return true;
@@ -127,6 +125,14 @@ public class SanselanImageReaderSpi extends ImageReaderSpi {
     }
 
     @Override
+    public byte[] getBlock(final long start, final int length) throws IOException {
+      myStream.seek(start);
+      final byte[] bytes = new byte[length];
+      final int read = myStream.read(bytes);
+      return ArrayUtil.realloc(bytes, read);
+    }
+
+    @Override
     public byte[] getAll() throws IOException {
       return FileUtil.loadBytes(getInputStream());
     }
@@ -148,9 +154,9 @@ public class SanselanImageReaderSpi extends ImageReaderSpi {
     private BufferedImage[] myImages;
     private final ImageFormat myDefaultFormat;
 
-    private MyImageReader(final SanselanImageReaderSpi provider, final ImageFormat imageFormat) {
+    private MyImageReader(final CommonsImagingImageReaderSpi provider, final ImageFormat imageFormat) {
       super(provider);
-      myDefaultFormat = imageFormat == null? ImageFormat.IMAGE_FORMAT_UNKNOWN : imageFormat;
+      myDefaultFormat = imageFormat == null? ImageFormats.UNKNOWN : imageFormat;
     }
 
     @Override
@@ -171,7 +177,7 @@ public class SanselanImageReaderSpi extends ImageReaderSpi {
     private ImageInfo getInfo() throws IOException {
       if (myInfo == null) {
         try {
-          myInfo = Sanselan.getImageInfo(getBytes());
+          myInfo = Imaging.getImageInfo(getBytes());
         }
         catch (ImageReadException e) {
           throw new IOException(e);
@@ -191,7 +197,7 @@ public class SanselanImageReaderSpi extends ImageReaderSpi {
     private BufferedImage[] getImages() throws IOException {
       if (myImages == null) {
         try {
-          final ArrayList<BufferedImage> images = Sanselan.getAllBufferedImages(getBytes());
+          List<BufferedImage> images = Imaging.getAllBufferedImages(getBytes());
           myImages = images.toArray(new BufferedImage[images.size()]);
         }
         catch (ImageReadException e) {
@@ -239,7 +245,7 @@ public class SanselanImageReaderSpi extends ImageReaderSpi {
     @Override
     public String getFormatName() throws IOException {
       // return default if called before setInput
-      return input == null? myDefaultFormat.name : getInfo().getFormat().name;
+      return input == null? myDefaultFormat.getName() : getInfo().getFormat().getName();
     }
   }
 }

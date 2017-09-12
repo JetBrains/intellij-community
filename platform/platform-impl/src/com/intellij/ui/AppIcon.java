@@ -30,9 +30,8 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.UIUtil;
-import org.apache.sanselan.ImageWriteException;
-import org.apache.sanselan.common.BinaryConstants;
-import org.apache.sanselan.common.BinaryOutputStream;
+import org.apache.commons.imaging.ImageWriteException;
+import org.apache.commons.imaging.common.BinaryOutputStream;
 import org.jetbrains.annotations.NotNull;
 
 import javax.imageio.ImageIO;
@@ -47,6 +46,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.ByteOrder;
 import java.util.Map;
 
 public abstract class AppIcon {
@@ -426,14 +426,14 @@ public abstract class AppIcon {
       return true;
     }
 
-    private static void writeTransparentIcoImageWithSanselan(BufferedImage src, OutputStream os)
+    private static void writeTransparentIco(BufferedImage src, OutputStream os)
       throws ImageWriteException, IOException {
 
       LOG.assertTrue(BufferedImage.TYPE_INT_ARGB == src.getType() || BufferedImage.TYPE_4BYTE_ABGR == src.getType());
 
       int bitCount = 32;
 
-      BinaryOutputStream bos = new BinaryOutputStream(os, BinaryConstants.BYTE_ORDER_INTEL);
+      BinaryOutputStream bos = new BinaryOutputStream(os, ByteOrder.LITTLE_ENDIAN);
 
       try {
         int scanline_size = (bitCount * src.getWidth() + 7) / 8;
@@ -570,7 +570,7 @@ public abstract class AppIcon {
           g.drawString(text, size / 2 - textWidth / 2, size / 2 - fontMetrics.getHeight() / 2 + fontMetrics.getAscent());
 
           ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-          writeTransparentIcoImageWithSanselan(image, bytes);
+          writeTransparentIco(image, bytes);
           icon = Win7TaskBar.createIcon(bytes.toByteArray());
         }
         catch (Throwable e) {
@@ -602,7 +602,7 @@ public abstract class AppIcon {
             try {
               BufferedImage image = ImageIO.read(getClass().getResource("/mac/appIconOk512.png"));
               ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-              writeTransparentIcoImageWithSanselan(image, bytes);
+              writeTransparentIco(image, bytes);
               myOkIcon = Win7TaskBar.createIcon(bytes.toByteArray());
             }
             catch (Throwable e) {

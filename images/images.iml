@@ -9,7 +9,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="lang-api" />
     <orderEntry type="module" module-name="lang-impl" />
-    <orderEntry type="library" name="Sanselan" level="project" />
+    <orderEntry type="library" name="commons-imaging" level="project" />
     <orderEntry type="module" module-name="xml-psi-impl" />
   </component>
 </module>

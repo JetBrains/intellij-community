@@ -75,7 +75,7 @@ class CommunityLibraryLicenses {
                        url: "http://commons.apache.org/net/"),
     new LibraryLicense(name: "Apache Lucene", libraryName: "lucene-core-2.4.1.jar", version: "2.4.1", license: "Apache 2.0",
                        url: "http://lucene.apache.org/java"),
-    new LibraryLicense(name: "Apache Sanselan", libraryName: "Sanselan", version: "0.98", license: "Apache 2.0",
+    new LibraryLicense(name: "Apache Commons Imaging", libraryName: "commons-imaging", version: "1.0-SNAPSHOT", license: "Apache 2.0",
                        url: "https://commons.apache.org/proper/commons-imaging/"),
     new LibraryLicense(name: "Apache XML Graphics Commons", libraryName: "xmlgraphics-commons-1.3.1.jar", version: "1.3.1",
                        license: "Apache 2.0", url: "http://xmlgraphics.apache.org/commons/",
