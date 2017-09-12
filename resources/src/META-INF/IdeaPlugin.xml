@@ -1033,6 +1033,10 @@
       <category>Java/Control Flow</category>
     </intentionAction>
     <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.UnrollLoopAction</className>
+      <category>Java/Control Flow</category>
+    </intentionAction>
+    <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.AddNotNullAnnotationIntention</className>
       <category>Java/Annotations</category>
       <descriptionDirectoryName>AddAnnotationFix</descriptionDirectoryName>
