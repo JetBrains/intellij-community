@@ -31,15 +31,20 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.openapi.vfs.VirtualFileVisitor
+import com.intellij.psi.impl.DebugUtil
 import com.intellij.psi.stubs.*
 import com.intellij.util.indexing.FileContentImpl
 import com.intellij.util.io.PersistentHashMap
 import com.intellij.util.ui.UIUtil
 import junit.framework.TestCase
+import java.io.ByteArrayInputStream
 import java.io.File
 import java.util.*
 
 
+/**
+ * Generates stubs and stores them in one persistent hash map
+ */
 open class StubsGenerator(private val stubsVersion: String) {
 
   fun buildStubsForRoots(stubsStorageFilePath: String,
@@ -225,5 +230,47 @@ fun mergeStubs(paths: List<String>, stubsFilePath: String, projectPath: String, 
   }
 
   System.exit(0)
+}
+
+
+/**
+ * Generates stubs for file content for different language levels returned by languageLevelIterator
+ * and checks that they are all equal.
+ */
+abstract class LanguageLevelAwareStubsGenerator<T>(stubsVersion: String) : StubsGenerator(stubsVersion) {
+  abstract fun languageLevelIterator(): Iterator<T>
+
+  abstract fun applyLanguageLevel(level: T)
+
+  override fun buildStubForFile(fileContent: FileContentImpl, serializationManager: SerializationManagerImpl): Stub {
+    var prevLanguageLevelBytes: ByteArray? = null
+    var prevLanguageLevel: T? = null
+    var prevStub: Stub? = null
+    val iter = languageLevelIterator()
+    for (languageLevel in iter) {
+
+      applyLanguageLevel(languageLevel)
+
+
+      val stub = super.buildStubForFile(fileContent, serializationManager)
+
+      val bytes = BufferExposingByteArrayOutputStream()
+      serializationManager.serialize(stub, bytes)
+
+      if (prevLanguageLevelBytes != null) {
+        if (!Arrays.equals(bytes.toByteArray(), prevLanguageLevelBytes)) {
+          val stub2 = serializationManager.deserialize(ByteArrayInputStream(prevLanguageLevelBytes))
+          val msg = "Stubs are different for ${fileContent.file.path} between Python versions $prevLanguageLevel and $languageLevel.\n"
+          TestCase.assertEquals(msg, DebugUtil.stubTreeToString(stub), DebugUtil.stubTreeToString(stub2))
+          TestCase.fail(msg + "But DebugUtil.stubTreeToString values of stubs are unfortunately equal.")
+        }
+      }
+      prevLanguageLevelBytes = bytes.toByteArray()
+      prevLanguageLevel = languageLevel
+      prevStub = stub
+    }
+
+    return prevStub!!
+  }
 }
 

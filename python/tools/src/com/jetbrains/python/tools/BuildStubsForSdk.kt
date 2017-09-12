@@ -7,27 +7,18 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
-import com.intellij.psi.impl.DebugUtil
-import com.intellij.psi.stubs.SerializationManagerImpl
-import com.intellij.psi.stubs.Stub
-import com.intellij.util.indexing.FileContentImpl
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyFileElementType
 import com.jetbrains.python.psi.impl.stubs.PyPrebuiltStubsProvider.PREBUILT_INDEXES_PATH_PROPERTY
 import com.jetbrains.python.psi.impl.stubs.PyPrebuiltStubsProvider.SDK_STUBS_STORAGE_NAME
-import junit.framework.TestCase
-import org.jetbrains.index.stubs.StubsGenerator
+import org.jetbrains.index.stubs.LanguageLevelAwareStubsGenerator
 import org.jetbrains.index.stubs.mergeStubs
 import org.junit.Assert
-import java.io.ByteArrayInputStream
 import java.io.File
-import java.util.*
-import kotlin.NoSuchElementException
 
 /**
  * @author traff
@@ -53,7 +44,6 @@ fun getBaseDirValue(): String? {
     }
   return null
 }
-
 
 
 fun main(args: Array<String>) {
@@ -126,35 +116,16 @@ fun indexSdkAndStoreSerializedStubs(projectPath: String, sdkPath: String, stubsF
   }
 }
 
-class PyStubsGenerator(stubsVersion: String) : StubsGenerator(stubsVersion) {
-  override fun buildStubForFile(fileContent: FileContentImpl, serializationManager: SerializationManagerImpl): Stub {
-    var prevLanguageLevelBytes: ByteArray? = null
-    var prevLanguageLevel: LanguageLevel? = null
-    var prevStub: Stub? = null
-    for (languageLevel in LanguageLevel.SUPPORTED_LEVELS) {
-      LanguageLevel.FORCE_LANGUAGE_LEVEL = languageLevel
+class PyStubsGenerator(stubsVersion: String) : LanguageLevelAwareStubsGenerator<LanguageLevel>(stubsVersion) {
+  override fun languageLevelIterator() = LanguageLevel.SUPPORTED_LEVELS.iterator()
 
-      val stub = super.buildStubForFile(fileContent, serializationManager)
-
-      val bytes = BufferExposingByteArrayOutputStream()
-      serializationManager.serialize(stub, bytes)
-
-      if (prevLanguageLevelBytes != null) {
-        if (!Arrays.equals(bytes.toByteArray(), prevLanguageLevelBytes)) {
-          val stub2 = serializationManager.deserialize(ByteArrayInputStream(prevLanguageLevelBytes))
-          val msg = "Stubs are different for ${fileContent.file.path} between Python versions $prevLanguageLevel and $languageLevel.\n"
-          TestCase.assertEquals(msg, DebugUtil.stubTreeToString(stub), DebugUtil.stubTreeToString(stub2))
-          TestCase.fail(msg + "But DebugUtil.stubTreeToString values of stubs are unfortunately equal.")
-        }
-      }
-      prevLanguageLevelBytes = bytes.toByteArray()
-      prevLanguageLevel = languageLevel
-      prevStub = stub
-    }
-
-    return prevStub!!
+  override fun applyLanguageLevel(level: LanguageLevel) {
+    LanguageLevel.FORCE_LANGUAGE_LEVEL = level
   }
 }
+
+
+
 
 
 
