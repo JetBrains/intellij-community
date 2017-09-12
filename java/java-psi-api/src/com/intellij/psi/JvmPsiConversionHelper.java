@@ -18,6 +18,7 @@ package com.intellij.psi;
 import com.intellij.lang.jvm.JvmTypeDeclaration;
 import com.intellij.lang.jvm.JvmTypeParameter;
 import com.intellij.lang.jvm.types.JvmSubstitutor;
+import com.intellij.lang.jvm.types.JvmType;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
@@ -35,6 +36,9 @@ public interface JvmPsiConversionHelper {
 
   @NotNull
   PsiTypeParameter convertTypeParameter(@NotNull JvmTypeParameter typeParameter);
+
+  @Nullable
+  PsiType convertType(@Nullable JvmType type);
 
   @NotNull
   PsiSubstitutor convertSubstitutor(@NotNull JvmSubstitutor substitutor);
