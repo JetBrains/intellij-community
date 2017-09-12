@@ -19,8 +19,8 @@ package com.intellij.debugger.streams.trace.dsl
  * @author Vitaliy.Bibaev
  */
 interface Dsl : DslFactory {
-  val NULL: Expression
-  val THIS: Expression
+  val nullExpression: Expression
+  val thisExpression: Expression
 
   fun code(init: CodeContext.() -> Unit): String
 }

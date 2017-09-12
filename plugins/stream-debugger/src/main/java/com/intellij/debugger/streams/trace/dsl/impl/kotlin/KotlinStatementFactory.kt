@@ -18,6 +18,7 @@ package com.intellij.debugger.streams.trace.dsl.impl.kotlin
 import com.intellij.debugger.streams.trace.dsl.*
 import com.intellij.debugger.streams.trace.dsl.impl.AssignmentStatement
 import com.intellij.debugger.streams.trace.impl.handler.type.GenericType
+import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
 
 /**
  * @author Vitaliy.Bibaev
@@ -103,6 +104,26 @@ class KotlinStatementFactory : StatementFactory {
   }
 
   override fun createTimeVariableDeclaration(): VariableDeclaration {
+    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+  }
+
+  override fun currentTimeExpression(): Expression {
+    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+  }
+
+  override fun updateCurrentTimeExpression(): Expression {
+    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+  }
+
+  override fun createNewArrayExpression(elementType: String, args: Array<out Expression>): Expression {
+    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+  }
+
+  override fun createNewSizedArray(elementType: String, size: Expression): Expression {
+    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+  }
+
+  override fun createPeekCall(elementsType: GenericType, lambda: String): IntermediateStreamCall {
     TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
   }
 }

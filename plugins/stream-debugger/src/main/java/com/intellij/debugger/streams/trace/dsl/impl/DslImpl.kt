@@ -16,7 +16,6 @@
 package com.intellij.debugger.streams.trace.dsl.impl
 
 import com.intellij.debugger.streams.trace.dsl.*
-import com.intellij.debugger.streams.trace.impl.handler.PeekCall
 import com.intellij.debugger.streams.trace.impl.handler.type.GenericType
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
 
@@ -24,9 +23,9 @@ import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
  * @author Vitaliy.Bibaev
  */
 class DslImpl(private val statementFactory: StatementFactory) : Dsl {
-  override val NULL: Expression = TextExpression("null")
+  override val nullExpression: Expression = TextExpression("null")
 
-  override val THIS: Expression = TextExpression("this")
+  override val thisExpression: Expression = TextExpression("this")
 
   override fun variable(type: String, name: String): Variable = statementFactory.createVariable(type, name)
 
@@ -38,12 +37,10 @@ class DslImpl(private val statementFactory: StatementFactory) : Dsl {
 
   override fun array(elementType: String, name: String): ArrayVariable = statementFactory.createArrayVariable(elementType, name)
 
-  override fun newArray(elementType: String, vararg args: Expression): Expression {
-    val elements = args.joinToString(separator = ", ") { it.toCode() }
-    return TextExpression("new $elementType[] { $elements }")
-  }
+  override fun newArray(elementType: String, vararg args: Expression): Expression =
+    statementFactory.createNewArrayExpression(elementType, args)
 
-  override fun newSizedArray(elementType: String, size: Expression): Expression = TextExpression("new $elementType[${size.toCode()}]")
+  override fun newSizedArray(elementType: String, size: Expression): Expression = statementFactory.createNewSizedArray(elementType, size)
 
   override fun map(keyType: GenericType, valueType: GenericType, name: String): MapVariable =
     statementFactory.createMapVariable(keyType, valueType, name, false)
@@ -63,11 +60,12 @@ class DslImpl(private val statementFactory: StatementFactory) : Dsl {
 
   override fun timeDeclaration(): VariableDeclaration = statementFactory.createTimeVariableDeclaration()
 
-  override fun currentTime(): Expression = TextExpression("time").call("get")
+  override fun currentTime(): Expression = statementFactory.currentTimeExpression()
 
-  override fun updateTime(): Expression = TextExpression("time").call("incrementAndGet")
+  override fun updateTime(): Expression = statementFactory.updateCurrentTimeExpression()
 
-  override fun createPeekCall(elementsType: GenericType, lambda: String): IntermediateStreamCall = PeekCall(lambda, elementsType)
+  override fun createPeekCall(elementsType: GenericType, lambda: String): IntermediateStreamCall =
+    statementFactory.createPeekCall(elementsType, lambda)
 
   override fun String.unaryPlus(): TextExpression = TextExpression(this)
 

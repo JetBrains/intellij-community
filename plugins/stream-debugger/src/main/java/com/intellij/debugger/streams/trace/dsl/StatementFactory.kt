@@ -17,6 +17,7 @@ package com.intellij.debugger.streams.trace.dsl
 
 import com.intellij.debugger.streams.trace.dsl.impl.AssignmentStatement
 import com.intellij.debugger.streams.trace.impl.handler.type.GenericType
+import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
 
 /**
  * Contains language-dependent logic
@@ -63,4 +64,14 @@ interface StatementFactory {
   fun createTryBlock(block: CodeBlock): TryBlock
 
   fun createTimeVariableDeclaration(): VariableDeclaration
+
+  fun currentTimeExpression(): Expression
+
+  fun updateCurrentTimeExpression(): Expression
+
+  fun createNewArrayExpression(elementType: String, args: Array<out Expression>): Expression
+
+  fun createNewSizedArray(elementType: String, size: Expression): Expression
+
+  fun createPeekCall(elementsType: GenericType, lambda: String): IntermediateStreamCall
 }

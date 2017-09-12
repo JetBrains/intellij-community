@@ -20,7 +20,6 @@ import com.intellij.debugger.streams.trace.impl.handler.type.GenericType
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.exceptionCases.AbstractExceptionCase
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
-import org.junit.Test
 
 /**
  * @author Vitaliy.Bibaev
@@ -72,7 +71,7 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
   fun testScope() {
     doTest {
       scope {
-        call(THIS, "method")
+        call(thisExpression, "method")
       }
     }
   }
@@ -80,9 +79,9 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
   fun testNestedScopes() {
     doTest {
       scope {
-        call(THIS, "method")
+        call(thisExpression, "method")
         scope {
-          call(THIS, "method")
+          call(thisExpression, "method")
         }
       }
     }
@@ -273,9 +272,9 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
   fun testTryBlock() {
     doTest {
       tryBlock {
-        call(THIS, "hashCode")
+        call(thisExpression, "hashCode")
       }.catch(variable("Exception", "e")) {
-        call(THIS, "fail")
+        call(thisExpression, "fail")
       }
     }
   }

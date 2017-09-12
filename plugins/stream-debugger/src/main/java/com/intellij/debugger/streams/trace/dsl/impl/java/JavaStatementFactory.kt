@@ -19,7 +19,9 @@ import com.intellij.debugger.streams.trace.dsl.*
 import com.intellij.debugger.streams.trace.dsl.impl.AssignmentStatement
 import com.intellij.debugger.streams.trace.dsl.impl.TextExpression
 import com.intellij.debugger.streams.trace.dsl.impl.VariableImpl
+import com.intellij.debugger.streams.trace.impl.handler.PeekCall
 import com.intellij.debugger.streams.trace.impl.handler.type.GenericType
+import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
 
 /**
  * @author Vitaliy.Bibaev
@@ -83,4 +85,17 @@ class JavaStatementFactory : StatementFactory {
   override fun createTimeVariableDeclaration(): VariableDeclaration =
     JavaVariableDeclaration(createVariable("java.util.concurrent.atomic.AtomicInteger", "time"), false,
                             TextExpression("new java.util.concurrent.atomic.AtomicInteger(0)"))
+
+  override fun currentTimeExpression(): Expression = TextExpression("time").call("get")
+
+  override fun updateCurrentTimeExpression(): Expression = TextExpression("time").call("incrementAndGet")
+
+  override fun createNewArrayExpression(elementType: String, args: Array<out Expression>): Expression {
+    val elements = args.joinToString(separator = ", ") { it.toCode() }
+    return TextExpression("new $elementType[] { $elements }")
+  }
+
+  override fun createNewSizedArray(elementType: String, size: Expression): Expression = TextExpression("new $elementType[${size.toCode()}]")
+
+  override fun createPeekCall(elementsType: GenericType, lambda: String): IntermediateStreamCall = PeekCall(lambda, elementsType)
 }
