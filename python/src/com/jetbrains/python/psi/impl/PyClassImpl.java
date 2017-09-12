@@ -79,7 +79,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   /**
    * Engine to create list of ancestors based on context
    */
-  private final class CachedAncestorsProvider implements NullableFunction<TypeEvalContext, List<PyClassLikeType>> {
+  private final class CachedAncestorsProvider implements NotNullFunction<TypeEvalContext, List<PyClassLikeType>> {
     @NotNull
     @Override
     public List<PyClassLikeType> fun(@NotNull TypeEvalContext context) {
