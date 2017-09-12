@@ -16,15 +16,6 @@
 package com.jetbrains.python.actions;
 
 import com.intellij.codeInsight.documentation.DocumentationManager;
-import com.intellij.ide.DataManager;
-import com.intellij.notification.NotificationDisplayType;
-import com.intellij.notification.NotificationGroup;
-import com.intellij.notification.NotificationListener;
-import com.intellij.notification.NotificationType;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -32,31 +23,18 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ui.UIUtil;
-import com.jetbrains.python.packaging.PyPackage;
-import com.jetbrains.python.packaging.PyPackageUtil;
-import com.jetbrains.python.sdk.PythonSdkType;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-
 import static com.intellij.codeInsight.documentation.DocumentationComponent.COLOR_KEY;
-import static com.jetbrains.python.actions.PySciViewAction.ACTION_ID;
 
 @State(name = "PySciProjectComponent", storages = @Storage("other.xml"))
 public class PySciProjectComponent extends AbstractProjectComponent implements PersistentStateComponent<PySciProjectComponent.State> {
-  private static final NotificationGroup BALLOON_NOTIFICATIONS = new NotificationGroup("Python Scientific View Advertiser",
-                                                                                       NotificationDisplayType.STICKY_BALLOON,
-                                                                                       false);
   private State myState = new State();
 
   protected PySciProjectComponent(Project project) {
@@ -69,6 +47,14 @@ public class PySciProjectComponent extends AbstractProjectComponent implements P
 
   public void useSciView(boolean useSciView) {
     myState.PY_SCI_VIEW = useSciView;
+  }
+
+  public void sciViewSuggested(boolean suggested) {
+    myState.PY_SCI_VIEW_SUGGESTED = suggested;
+  }
+
+  public boolean sciViewSuggested() {
+    return myState.PY_SCI_VIEW_SUGGESTED;
   }
 
   public boolean useSciView() {
@@ -91,54 +77,6 @@ public class PySciProjectComponent extends AbstractProjectComponent implements P
         }
       });
     }
-    else if (!myState.PY_SCI_VIEW_SUGGESTED) {
-      StartupManager.getInstance(myProject).runWhenProjectIsInitialized(() -> {
-        final Module module = ModuleUtilCore.findModuleForFile(baseDir, myProject);
-        if (module != null) {
-          final Sdk sdk = PythonSdkType.findPythonSdk(module);
-          if (sdk != null) {
-            final List<PyPackage> packages = PyPackageUtil.refreshAndGetPackagesModally(sdk);
-            final PyPackage numpy = PyPackageUtil.findPackage(packages, "numpy");
-
-            if (numpy != null) {
-              showInspectionAdvertisement(myProject);
-            }
-          }
-        }
-      });
-    }
-  }
-
-  private void showInspectionAdvertisement(@NotNull Project project) {
-    final String msg = "Your source code imports the 'numpy' package." +
-                       "<br/>Would you like to enable Scientific View?<br/>" +
-                       "<a href=\"#yes\">Yes</a>&nbsp;&nbsp;<a href=\"#no\">No</a>";
-    showSingletonNotification(project, msg, NotificationType.INFORMATION, (notification, event) -> {
-      myState.PY_SCI_VIEW_SUGGESTED = true;
-      final boolean enabled = "#yes".equals(event.getDescription());
-      if (enabled) {
-        final AnAction action = ActionManager.getInstance().getAction(ACTION_ID);
-        if (action instanceof PySciViewAction) {
-          final AnActionEvent anActionEvent = AnActionEvent.createFromDataContext(
-            ActionPlaces.UNKNOWN, null, DataManager.getInstance().getDataContextFromFocus().getResult());
-          ((PySciViewAction)action).setSelected(anActionEvent, true);
-        }
-      }
-    });
-  }
-
-  private static void showSingletonNotification(@NotNull Project project,
-                                                @NotNull String htmlContent,
-                                                @NotNull NotificationType type,
-                                                @NotNull NotificationListener listener) {
-    BALLOON_NOTIFICATIONS.createNotification("Scientific View", htmlContent, type, (notification, event) -> {
-      try {
-        listener.hyperlinkUpdate(notification, event);
-      }
-      finally {
-        notification.expire();
-      }
-    }).notify(project);
   }
 
   @Nullable
