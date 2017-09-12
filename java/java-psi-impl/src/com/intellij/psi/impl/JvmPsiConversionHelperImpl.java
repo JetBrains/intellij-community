@@ -50,6 +50,12 @@ public class JvmPsiConversionHelperImpl implements JvmPsiConversionHelper {
   @Override
   public PsiSubstitutor convertSubstitutor(@NotNull JvmSubstitutor substitutor) {
     if (substitutor instanceof PsiJvmSubstitutor) return ((PsiJvmSubstitutor)substitutor).getPsiSubstitutor();
-    throw new RuntimeException("TODO");
+    PsiSubstitutor result = PsiSubstitutor.EMPTY;
+    for (JvmTypeParameter parameter : substitutor.getTypeParameters()) {
+      final PsiTypeParameter psiTypeParameter = convertTypeParameter(parameter);
+      final PsiType psiType = convertType(substitutor.substitute(parameter));
+      result = result.put(psiTypeParameter, psiType);
+    }
+    return result;
   }
 }
