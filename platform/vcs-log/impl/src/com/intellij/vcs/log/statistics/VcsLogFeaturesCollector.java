@@ -16,7 +16,6 @@
 package com.intellij.vcs.log.statistics;
 
 import com.intellij.internal.statistic.AbstractProjectsUsagesCollector;
-import com.intellij.internal.statistic.CollectUsagesException;
 import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
