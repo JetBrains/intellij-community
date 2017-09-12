@@ -39,6 +39,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.convertToStatic.fixes.BaseFix;
 import org.jetbrains.plugins.groovy.refactoring.convertToStatic.fixes.EmptyFieldTypeFix;
+import org.jetbrains.plugins.groovy.refactoring.convertToStatic.fixes.EmptyReturnTypeFix;
 
 import java.util.*;
 
@@ -51,7 +52,7 @@ public class ConvertToStaticProcessor extends BaseRefactoringProcessor {
 
   private final GroovyFile[] myFiles;
 
-  private BaseFix[] myFixes = {new EmptyFieldTypeFix()};
+  private BaseFix[] myFixes = {new EmptyFieldTypeFix(), new EmptyReturnTypeFix()};
 
   protected ConvertToStaticProcessor(Project project, GroovyFile... files) {
     super(project);
@@ -94,9 +95,13 @@ public class ConvertToStaticProcessor extends BaseRefactoringProcessor {
       LOG.assertTrue(file.isValid());
       if (file.isScript()) continue;
 
-      applyFixes(file);
-      putCompileAnnotations(file);
-      checkErrors(file);
+      try {
+        applyFixes(file);
+        putCompileAnnotations(file);
+        checkErrors(file);
+      } catch (Exception e) {
+        LOG.error("Error in converting file: " + file.getName(), e);
+      }
 
 
       PsiDocumentManager.getInstance(myProject).commitDocument(document);
@@ -115,6 +120,12 @@ public class ConvertToStaticProcessor extends BaseRefactoringProcessor {
   }
 
   private void putCompileAnnotations(@NotNull GroovyFile file) {
+    GrTypeDefinition[] classes = file.getTypeDefinitions();
+
+    for (GrTypeDefinition typeDef : classes) { //put annotations
+      addAnnotation(typeDef, true);
+    }
+
     Set<GrTypeDefinition> classesWithUnresolvedRef = new HashSet<>();
     Set<GrMethod> methodsWithUnresolvedRef = new HashSet<>();
 
@@ -130,13 +141,11 @@ public class ConvertToStaticProcessor extends BaseRefactoringProcessor {
     file.accept(new ResolveHighlightingVisitor(file, myProject, callback));
     file.accept(new InaccessibleElementVisitor(file, myProject, callback));
 
-    GrTypeDefinition[] classes = file.getTypeDefinitions();
-
-    for (GrTypeDefinition typeDef : classes) {
-      boolean isStaticClass = false;
-      if (!classesWithUnresolvedRef.contains(typeDef)) {
-        isStaticClass = true;
-        addAnnotation(typeDef, true);
+    for (GrTypeDefinition typeDef : classes) { //remove if found not compilable code in class def
+      boolean isStaticClass = true;
+      if (classesWithUnresolvedRef.contains(typeDef)) {
+        isStaticClass = false;
+        removeAnnotation(typeDef);
       }
 
       for (GrMethod method : typeDef.getCodeMethods()) {
@@ -173,8 +182,17 @@ public class ConvertToStaticProcessor extends BaseRefactoringProcessor {
 
   void addAnnotation(@NotNull PsiModifierListOwner owner, boolean isStatic) {
     PsiModifierList modifierList = owner.getModifierList();
+    String annotation = isStatic ? GROOVY_TRANSFORM_COMPILE_STATIC : GROOVY_TRANSFORM_COMPILE_DYNAMIC;
+    if (modifierList != null && modifierList.findAnnotation(annotation) == null) {
+      modifierList.addAnnotation(annotation);
+    }
+  }
+
+  void removeAnnotation(@NotNull PsiModifierListOwner owner) {
+    PsiModifierList modifierList = owner.getModifierList();
     if (modifierList != null) {
-      modifierList.addAnnotation(isStatic ? GROOVY_TRANSFORM_COMPILE_STATIC : GROOVY_TRANSFORM_COMPILE_DYNAMIC);
+      PsiAnnotation psiAnnotation = modifierList.findAnnotation(GROOVY_TRANSFORM_COMPILE_STATIC);
+      if (psiAnnotation != null) psiAnnotation.delete();
     }
   }
 
