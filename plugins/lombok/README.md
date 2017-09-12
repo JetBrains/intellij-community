@@ -66,7 +66,7 @@ In your project: Click <kbd>Preferences</kbd> -> <kbd>Build, Execution, Deployme
 Afterwards you might need to do a complete rebuild of your project via <kbd>Build</kbd> -> <kbd>Rebuild Project</kbd>.
 
 ### Lombok project dependency
-Make sure you have Lombok dependency added to your project. This plugin **does not** automatically add it for you.  
+Make sure you have Lombok dependency added to your project. This plugin **does not** automatically add it for you.
 
 **Please Note:** Using newest version of the Lombok dependency is recommended, but does not guarantee that all the features introduced will be available. See [Lombok changelog](https://projectlombok.org/changelog.html) for more details.
 
@@ -122,6 +122,7 @@ Developed By
 - [**@Sheigutn** Florian Böhm](https://github.com/Sheigutn)
 - [**@siosio** siosio](https://github.com/siosio)
 - [**@Siriah** Iris Hupkens](https://github.com/Siriah)
+- [**@tlinkowski** Tomasz Linkowski](https://github.com/tlinkowski)
 - [**@toadzky** David Harris](https://github.com/toadzky)
 - [**@twillouer** William Delanoue](https://github.com/twillouer)
 - [**@uvpoblotzki** Ulrich von Poblotzki](https://github.com/uvpoblotzki)

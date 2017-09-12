@@ -269,6 +269,7 @@
             <li>Fixed #367: @Data on parent and child should be marked as compilation error</li>
             <li>Fixed #393: @Builder with @Singular map produces duplicated variables</li>
             <li>Fixed #399: IndexNotReadyException in FieldFindUsagesHandler</li>
+            <li>Fixed #412: @Accessors(fluent = true) does not impact @Wither but the plugin assumes it does</li>
 				</ol>
 			</li>
 		<li>0.14
