@@ -255,6 +255,11 @@
   <!--TODO @Builder is not supported on constructors with constructor type parameters..-->
   <change-notes><![CDATA[
 		<ul>
+		<li>0.16
+				<ol>
+            <li>Fixed #: ....</li>
+				</ol>
+			</li>
 		<li>0.15
 				<ol>
             <li>Fixed #134: Add suppot for toBuilder = true</li>

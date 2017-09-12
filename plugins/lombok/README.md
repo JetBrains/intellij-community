@@ -7,15 +7,17 @@ lombok-intellij-plugin [![Build Status](https://travis-ci.org/mplushnikov/lombok
 
 Provides support for lombok annotations to write great Java code with IntelliJ IDEA.
 
-**Last version (0.14) released on 14.01.2017**
+**Last version (0.15) released on 12.09.2017**
 
-Twenty-first version of plugin released. Contains a lot of bugfixes and some new features!
+Twenty-second version of plugin released. Contains a lot of bugfixes and some new features!
 
 Install it automatically from IntelliJ Idea plugin repository.
 
-Tested and supports IntelliJ versions: 14.1.7, 15.0.6, 2016.3.2
+Tested and supports IntelliJ versions: 15.0.6, 2016.3.7, 2017.2.3
 
-Last support for IntelliJ 11.1.5, 12.1.7, 13.1.6 by plugin version 0.11!
+Last support for IntelliJ 14.1.7 by plugin version 0.14!
+
+Last support for IntelliJ 11.1.5, 12.1.7, 13.1.6 by plugin version 0.11
 
 Last support for IntelliJ 10.5.4 by plugin version 0.8.7
 
@@ -77,7 +79,7 @@ In your `build.gradle`:
 ```groovy
 // 'compile' can be changed to 'compileOnly' for Gradle 2.12+
 // or 'provided' if using 'propdeps' plugin from SpringSource
-compile "org.projectlombok:lombok:1.16.16"
+compile "org.projectlombok:lombok:1.16.18"
 ```
 
 ##### Maven
@@ -87,7 +89,7 @@ In your `pom.xml`:
 	<dependency>
 		<groupId>org.projectlombok</groupId>
 		<artifactId>lombok</artifactId>
-		<version>1.16.16</version>
+		<version>1.16.18</version>
 		<scope>provided</scope>
 	</dependency>
 </dependencies>
@@ -96,7 +98,7 @@ In your `pom.xml`:
 ##### Ivy
 In your `ivy.xml`:
 ```xml
-<dependency org="org.projectlombok" name="lombok" rev="1.16.16" conf="build" />
+<dependency org="org.projectlombok" name="lombok" rev="1.16.18" conf="build" />
 ```
 
 IntelliJ and Eclipse compiler
