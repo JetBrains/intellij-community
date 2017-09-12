@@ -49,6 +49,7 @@ import java.io.InputStream;
 import java.util.*;
 
 import static com.intellij.openapi.util.io.FileUtil.isAncestor;
+import static com.intellij.util.PathUtil.toSystemIndependentName;
 
 public class SpellCheckerManager implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.spellchecker.SpellCheckerManager");
@@ -77,7 +78,7 @@ public class SpellCheckerManager implements Disposable {
     myVirtualFileListener = new VirtualFileListener() {
       @Override
       public void fileDeleted(@NotNull VirtualFileEvent event) {
-        final String path = event.getFile().getPath();
+        final String path = toSystemIndependentName(event.getFile().getPath());
         if (spellChecker.isDictionaryLoad(path)) {
           spellChecker.removeDictionary(path);
           restartInspections();
@@ -86,7 +87,7 @@ public class SpellCheckerManager implements Disposable {
 
       @Override
       public void fileCreated(@NotNull VirtualFileEvent event) {
-        final String path = event.getFile().getPath();
+        final String path = toSystemIndependentName(event.getFile().getPath());
         boolean customDic = FileUtilRt.extensionEquals(path, "dic") &&
                             settings.getDictionaryFoldersPaths().stream().anyMatch(dicFolderPath -> isAncestor(dicFolderPath, path, true));
         if (customDic) {
@@ -97,7 +98,7 @@ public class SpellCheckerManager implements Disposable {
 
       @Override
       public void contentsChanged(@NotNull VirtualFileEvent event) {
-        final String path = event.getFile().getPath();
+        final String path = toSystemIndependentName(event.getFile().getPath());
         if (settings.getDisabledDictionariesPaths().contains(path)) return;
 
         if (spellChecker.isDictionaryLoad(path)) {

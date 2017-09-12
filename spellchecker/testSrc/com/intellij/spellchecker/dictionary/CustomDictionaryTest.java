@@ -87,11 +87,11 @@ public class CustomDictionaryTest extends SpellcheckerInspectionTestCase {
   }
 
   private void doBeforeCheck() {
-    doTest(Paths.get(getTestDictDirectory(), "test.before.php").toString());
+    doTest(Paths.get(getTestName(true), "test.before.php").toString());
   }
 
   private void doAfterCheck() {
-    doTest(Paths.get(getTestDictDirectory(), "test.after.php").toString());
+    doTest(Paths.get(getTestName(true), "test.after.php").toString());
   }
 
   private void doTest() throws IOException {
