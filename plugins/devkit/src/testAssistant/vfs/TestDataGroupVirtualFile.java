@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.devkit.testAssistant;
+package org.jetbrains.idea.devkit.testAssistant.vfs;
 
 import com.intellij.ide.presentation.Presentation;
 import com.intellij.openapi.fileTypes.FileType;
@@ -21,7 +21,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.devkit.testAssistant.vfs.TestDataGroupFileSystem;
 
 import java.io.IOException;
 import java.io.InputStream;

@@ -33,13 +33,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
+import org.jetbrains.idea.devkit.testAssistant.vfs.TestDataGroupVirtualFile;
 
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-public class TestDataUtil {
+class TestDataUtil {
   private TestDataUtil() {
   }
 

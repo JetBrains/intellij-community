@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -277,50 +278,49 @@ public class TestDataGuessByExistingFilesUtil {
 
     // By class name.
     String simpleName = getSimpleClassName(psiClass);
-    if (simpleName != null) {
-      String pattern = simpleName.toLowerCase();
-      candidateMatched = candidateLcDir.contains(pattern);
-      currentMatched = currentLcDir.contains(pattern);
-      if (candidateMatched ^ currentMatched) {
-        return candidateMatched;
+    if (simpleName == null) {
+      return false;
+    }
+    String pattern = simpleName.toLowerCase();
+    candidateMatched = candidateLcDir.contains(pattern);
+    currentMatched = currentLcDir.contains(pattern);
+    if (candidateMatched ^ currentMatched) {
+      return candidateMatched;
+    }
+
+    // By class name words and their position. More words + greater position = better.
+    String[] words = NameUtil.nameToWords(simpleName);
+    int candidateWordsMatched = 0;
+    int currentWordsMatched = 0;
+    int candidateMatchPosition = -1;
+    int currentMatchPosition = -1;
+
+    StringBuilder currentNameSubstringSb = new StringBuilder();
+    for (int i = 0; i < words.length; i++) {
+      currentNameSubstringSb.append(words[i]);
+      String currentNameLcSubstring = currentNameSubstringSb.toString().toLowerCase();
+
+      int candidateWordsIndex = candidateLcDir.lastIndexOf(currentNameLcSubstring);
+      if (candidateWordsIndex > 0) {
+        candidateWordsMatched = i + 1;
+        candidateMatchPosition = candidateWordsIndex;
       }
 
-      // By class name words and their position. More words + greater position = better.
-      String[] words = StringUtil.splitCamelCase(simpleName);
-      int candidateWordsMatched = 0;
-      int currentWordsMatched = 0;
-      int candidateMatchPosition = -1;
-      int currentMatchPosition = -1;
-
-      StringBuilder currentNameSubstringSb = new StringBuilder();
-      for (int i = 0; i < words.length; i++) {
-        currentNameSubstringSb.append(words[i]);
-        String currentNameLcSubstring = currentNameSubstringSb.toString().toLowerCase();
-
-        int candidateWordsIndex = candidateLcDir.lastIndexOf(currentNameLcSubstring);
-        if (candidateWordsIndex > 0) {
-          candidateWordsMatched = i + 1;
-          candidateMatchPosition = candidateWordsIndex;
-        }
-
-        int currentWordsIndex = currentLcDir.lastIndexOf(currentNameLcSubstring);
-        if (currentWordsIndex > 0) {
-          currentWordsMatched = i + 1;
-          candidateMatchPosition = currentWordsIndex;
-        }
-
-        if (candidateWordsMatched != currentWordsMatched) {
-          break; // no need to continue
-        }
+      int currentWordsIndex = currentLcDir.lastIndexOf(currentNameLcSubstring);
+      if (currentWordsIndex > 0) {
+        currentWordsMatched = i + 1;
+        candidateMatchPosition = currentWordsIndex;
       }
 
       if (candidateWordsMatched != currentWordsMatched) {
-        return candidateWordsMatched > currentWordsMatched;
+        break; // no need to continue
       }
-      return candidateMatchPosition > currentMatchPosition;
     }
 
-    return false;
+    if (candidateWordsMatched != currentWordsMatched) {
+      return candidateWordsMatched > currentWordsMatched;
+    }
+    return candidateMatchPosition > currentMatchPosition;
   }
 
   private static class TestLocationDescriptor {

@@ -21,7 +21,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.ex.dummy.DummyCachingFileSystem;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.devkit.testAssistant.TestDataGroupVirtualFile;
 
 public class TestDataGroupFileSystem extends DummyCachingFileSystem<VirtualFile> {
   /**
