@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.editor.impl.FoldingModelImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
@@ -720,7 +721,8 @@ public class EditorActionUtil {
 
       int caret = caretModel.getOffset();
       final FoldRegion collapsedUnderCaret = editor.getFoldingModel().getCollapsedRegionAtOffset(caret);
-      if (collapsedUnderCaret != null && collapsedUnderCaret.shouldNeverExpand()) {
+      if (collapsedUnderCaret != null && collapsedUnderCaret.shouldNeverExpand() && 
+          Boolean.TRUE.equals(collapsedUnderCaret.getUserData(FoldingModelImpl.SELECT_REGION_ON_CARET_NEARBY))) {
         if (caret > collapsedUnderCaret.getStartOffset() && columnShift > 0) {
           caretModel.moveToOffset(collapsedUnderCaret.getEndOffset());
         }
