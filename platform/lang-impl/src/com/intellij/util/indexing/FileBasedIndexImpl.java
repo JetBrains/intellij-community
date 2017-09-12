@@ -2039,7 +2039,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
     private final List<VirtualFile> myFiles = new ArrayList<>();
     @Nullable
     private final ProgressIndicator myProgressIndicator;
-    private final boolean myDoTraceForFilesToBeIndexed = LOG.isDebugEnabled();
+    private final boolean myDoTraceForFilesToBeIndexed = LOG.isTraceEnabled();
 
     private UnindexedFilesFinder(@Nullable ProgressIndicator indicator) {
       myProgressIndicator = indicator;
