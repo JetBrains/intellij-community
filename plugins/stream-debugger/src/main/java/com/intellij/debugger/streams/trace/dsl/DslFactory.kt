@@ -31,6 +31,10 @@ interface DslFactory {
 
   fun newArray(elementType: String, vararg args: Expression): Expression
 
+  fun newSizedArray(elementType: String, size: Expression): Expression
+
+  fun newSizedArray(elementType: String, size: Int): Expression = newSizedArray(elementType, +"$size")
+
   fun map(keyType: GenericType, valueType: GenericType, name: String): MapVariable
 
   fun linkedMap(keyType: GenericType, valueType: GenericType, name: String): MapVariable
@@ -44,6 +48,8 @@ interface DslFactory {
   fun equals(left: Expression, right: Expression): Expression
 
   fun same(left: Expression, right: Expression): Expression
+
+  fun timeDeclaration(): VariableDeclaration
 
   fun currentTime(): Expression
 

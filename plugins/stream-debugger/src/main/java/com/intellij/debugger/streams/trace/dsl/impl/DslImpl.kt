@@ -43,6 +43,8 @@ class DslImpl(private val statementFactory: StatementFactory) : Dsl {
     return TextExpression("new $elementType[] { $elements }")
   }
 
+  override fun newSizedArray(elementType: String, size: Expression): Expression = TextExpression("new $elementType[${size.toCode()}]")
+
   override fun map(keyType: GenericType, valueType: GenericType, name: String): MapVariable =
     statementFactory.createMapVariable(keyType, valueType, name, false)
 
@@ -58,6 +60,8 @@ class DslImpl(private val statementFactory: StatementFactory) : Dsl {
 
   override fun declaration(variable: Variable, init: Expression, isMutable: Boolean): VariableDeclaration =
     statementFactory.createVariableDeclaration(variable, init, isMutable)
+
+  override fun timeDeclaration(): VariableDeclaration = statementFactory.createTimeVariableDeclaration()
 
   override fun currentTime(): Expression = TextExpression("time").call("get")
 

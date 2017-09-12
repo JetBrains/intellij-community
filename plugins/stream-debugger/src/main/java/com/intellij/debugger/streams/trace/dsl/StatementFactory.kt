@@ -61,4 +61,6 @@ interface StatementFactory {
   fun createScope(codeBlock: CodeBlock): Statement
 
   fun createTryBlock(block: CodeBlock): TryBlock
+
+  fun createTimeVariableDeclaration(): VariableDeclaration
 }

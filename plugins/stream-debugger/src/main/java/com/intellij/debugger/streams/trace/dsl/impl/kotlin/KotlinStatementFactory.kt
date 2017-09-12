@@ -101,4 +101,8 @@ class KotlinStatementFactory : StatementFactory {
   override fun createTryBlock(block: CodeBlock): TryBlock {
     TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
   }
+
+  override fun createTimeVariableDeclaration(): VariableDeclaration {
+    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+  }
 }

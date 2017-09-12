@@ -79,4 +79,8 @@ class JavaStatementFactory : StatementFactory {
   }
 
   override fun createTryBlock(block: CodeBlock): TryBlock = JavaTryBlock(block, this)
+
+  override fun createTimeVariableDeclaration(): VariableDeclaration =
+    JavaVariableDeclaration(createVariable("java.util.concurrent.atomic.AtomicInteger", "time"), false,
+                            TextExpression("new java.util.concurrent.atomic.AtomicInteger(0)"))
 }
