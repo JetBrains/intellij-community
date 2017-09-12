@@ -47,9 +47,11 @@ import java.util.*
  */
 open class StubsGenerator(private val stubsVersion: String) {
 
+  open val fileFilter
+    get() = VirtualFileFilter { true }
+
   fun buildStubsForRoots(stubsStorageFilePath: String,
-                         roots: List<VirtualFile>,
-                         fileFilter: VirtualFileFilter) {
+                         roots: List<VirtualFile>) {
     val hashing = FileContentHashing()
 
     val stubExternalizer = StubTreeExternalizer()
@@ -242,6 +244,8 @@ abstract class LanguageLevelAwareStubsGenerator<T>(stubsVersion: String) : Stubs
 
   abstract fun applyLanguageLevel(level: T)
 
+  abstract fun defaultLanguageLevel(): T
+
   override fun buildStubForFile(fileContent: FileContentImpl, serializationManager: SerializationManagerImpl): Stub {
     var prevLanguageLevelBytes: ByteArray? = null
     var prevLanguageLevel: T? = null
@@ -269,6 +273,8 @@ abstract class LanguageLevelAwareStubsGenerator<T>(stubsVersion: String) : Stubs
       prevLanguageLevel = languageLevel
       prevStub = stub
     }
+
+    applyLanguageLevel(defaultLanguageLevel())
 
     return prevStub!!
   }
