@@ -80,9 +80,9 @@ public class CommitPanel extends JBPanel {
 
     myRootPanel = new RootPanel();
     myBranchesPanel = new ReferencesPanel();
-    myBranchesPanel.setBorder(JBUI.Borders.empty(REFERENCES_BORDER, 0, 0, 0));
+    myBranchesPanel.setBorder(JBUI.Borders.emptyTop(REFERENCES_BORDER));
     myTagsPanel = new ReferencesPanel();
-    myTagsPanel.setBorder(JBUI.Borders.empty(REFERENCES_BORDER, 0, 0, 0));
+    myTagsPanel.setBorder(JBUI.Borders.emptyTop(REFERENCES_BORDER));
     myDataPanel = new DataPanel(myLogData.getProject());
     myContainingBranchesPanel = new BranchesPanel();
 

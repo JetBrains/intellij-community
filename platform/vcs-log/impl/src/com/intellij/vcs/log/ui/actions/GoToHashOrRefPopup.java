@@ -46,7 +46,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.util.Collection;
 import java.util.Comparator;
@@ -112,7 +111,7 @@ public class GoToHashOrRefPopup {
     panel.setLayout(layout);
     panel.add(label);
     panel.add(myTextField);
-    panel.setBorder(new EmptyBorder(2, 2, 2, 2));
+    panel.setBorder(JBUI.Borders.empty(2));
 
     myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, myTextField.getPreferableFocusComponent())
       .setCancelOnClickOutside(true).setCancelOnWindowDeactivation(true).setCancelKeyEnabled(true).setRequestFocus(true).createPopup();
