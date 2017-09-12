@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.psi.impl;
 
+import com.google.common.collect.Maps;
 import com.intellij.ProjectTopics;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.facet.Facet;
@@ -65,11 +66,28 @@ import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
+
 /**
  * @author yole
  */
 public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLevel> {
   public static final Key<LanguageLevel> PYTHON_LANGUAGE_LEVEL = Key.create("PYTHON_LANGUAGE_LEVEL");
+  /* It so happens that no single language level is compatible with more than one other.
+     So a map suffices for representation*/
+  public static final Map<LanguageLevel, LanguageLevel> COMPATIBLE_LEVELS;
+
+  static {
+    Map<LanguageLevel, LanguageLevel> compatLevels = Maps.newEnumMap(LanguageLevel.class);
+    addCompatiblePair(compatLevels, LanguageLevel.PYTHON26, LanguageLevel.PYTHON27);
+    addCompatiblePair(compatLevels, LanguageLevel.PYTHON31, LanguageLevel.PYTHON32);
+    addCompatiblePair(compatLevels, LanguageLevel.PYTHON33, LanguageLevel.PYTHON34);
+    COMPATIBLE_LEVELS = Maps.immutableEnumMap(compatLevels);
+  }
+
+  private static void addCompatiblePair(Map<LanguageLevel, LanguageLevel> levels, LanguageLevel l1, LanguageLevel l2) {
+    levels.put(l1, l2);
+    levels.put(l2, l1);
+  }
 
   private final Map<Module, Sdk> myModuleSdks = ContainerUtil.createWeakMap();
 
@@ -128,7 +146,8 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
         return sdk;
       }
       return null;
-    } else {
+    }
+    else {
       return findSdkForFileOutsideTheProject(project, file);
     }
   }
@@ -166,12 +185,19 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
 
   private static final FileAttribute PERSISTENCE = new FileAttribute("python_language_level_persistence", 2, true);
 
+  private static boolean areLanguageLevelsCompatible(LanguageLevel oldLevel, LanguageLevel newLevel) {
+    return oldLevel != null && newLevel != null && COMPATIBLE_LEVELS.get(oldLevel) == newLevel;
+  }
+
   public void persistAttribute(@NotNull Project project, @NotNull VirtualFile fileOrDir, @NotNull LanguageLevel level) throws IOException {
     final DataInputStream iStream = PERSISTENCE.readAttribute(fileOrDir);
+
+    LanguageLevel oldLanguageLevel = null;
     if (iStream != null) {
       try {
         final int oldLevelOrdinal = DataInputOutputUtil.readINT(iStream);
         if (oldLevelOrdinal == level.ordinal()) return;
+        oldLanguageLevel = Arrays.stream(LanguageLevel.values()).filter(it -> it.ordinal() == oldLevelOrdinal).findFirst().orElse(null);
       }
       finally {
         iStream.close();
@@ -182,7 +208,9 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
     DataInputOutputUtil.writeINT(oStream, level.ordinal());
     oStream.close();
 
-    PushedFilePropertiesUpdater.getInstance(project).filePropertiesChanged(fileOrDir, PythonLanguageLevelPusher::isPythonFile);
+    if (!areLanguageLevelsCompatible(oldLanguageLevel, level) || !ProjectFileIndex.getInstance(project).isInContent(fileOrDir)) {
+      PushedFilePropertiesUpdater.getInstance(project).filePropertiesChanged(fileOrDir, PythonLanguageLevelPusher::isPythonFile);
+    }
     for (VirtualFile child : fileOrDir.getChildren()) {
       if (!child.isDirectory() && isPythonFile(child)) {
         clearSdkPathCache(child);
