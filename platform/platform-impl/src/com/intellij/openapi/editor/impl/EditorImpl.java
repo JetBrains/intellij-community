@@ -458,7 +458,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       @Override
       public void caretPositionChanged(CaretEvent e) {
         if (myStickySelection) {
-          int selectionStart = Math.min(myStickySelectionStart, getDocument().getTextLength() - 1);
+          int selectionStart = Math.min(myStickySelectionStart, getDocument().getTextLength());
           mySelectionModel.setSelection(selectionStart, myCaretModel.getVisualPosition(), myCaretModel.getOffset());
         }
 
