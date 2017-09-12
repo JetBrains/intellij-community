@@ -92,7 +92,7 @@ public class BoolUtils {
     }
     if (expression instanceof PsiPolyadicExpression) {
       final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
-      IElementType tokenType = polyadicExpression.getOperationTokenType();
+      final IElementType tokenType = polyadicExpression.getOperationTokenType();
       final PsiExpression[] operands = polyadicExpression.getOperands();
       if (ComparisonUtils.isComparison(polyadicExpression)) {
         final String negatedComparison = ComparisonUtils.getNegatedComparison(tokenType);
@@ -121,23 +121,23 @@ public class BoolUtils {
       }
       if(tokenType.equals(JavaTokenType.ANDAND) || tokenType.equals(JavaTokenType.OROR)) {
         final String targetToken;
-        final boolean needParenthesis;
+        final int newPrecedence;
         if (tokenType.equals(JavaTokenType.ANDAND)) {
           targetToken = "||";
-          needParenthesis = ParenthesesUtils.OR_PRECEDENCE > precedence;
+          newPrecedence = ParenthesesUtils.OR_PRECEDENCE;
         }
         else {
           targetToken = "&&";
-          needParenthesis = ParenthesesUtils.AND_PRECEDENCE > precedence;
+          newPrecedence = ParenthesesUtils.AND_PRECEDENCE;
         }
-        Function<PsiElement, String> replacer = child -> {
+        final Function<PsiElement, String> replacer = child -> {
           if (child instanceof PsiExpression) {
-            return getNegatedExpressionText((PsiExpression)child);
+            return getNegatedExpressionText((PsiExpression)child, newPrecedence);
           }
           return child instanceof PsiJavaToken ? targetToken : child.getText();
         };
         final String join = StringUtil.join(polyadicExpression.getChildren(), replacer, "");
-        return needParenthesis ? '(' + join + ')' : join;
+        return (newPrecedence > precedence) ? '(' + join + ')' : join;
       }
     }
     return '!' + ParenthesesUtils.getText(expression, ParenthesesUtils.PREFIX_PRECEDENCE);
