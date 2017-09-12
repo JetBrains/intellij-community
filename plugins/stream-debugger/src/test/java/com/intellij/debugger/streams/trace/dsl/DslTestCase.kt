@@ -293,6 +293,18 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
     })
   }
 
+  fun testTimeVariableDeclaration() {
+    doTest {
+      declare(timeDeclaration())
+    }
+  }
+
+  fun testSizedArrayCreation() {
+    doTest {
+      +newSizedArray("String", 100)
+    }
+  }
+
   private fun doTest(init: CodeContext.() -> Unit) {
     check(dsl.code(init))
   }

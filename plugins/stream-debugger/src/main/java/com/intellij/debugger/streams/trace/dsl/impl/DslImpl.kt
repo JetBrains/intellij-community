@@ -23,7 +23,7 @@ import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
 /**
  * @author Vitaliy.Bibaev
  */
-class DslImpl(override val statementFactory: StatementFactory) : Dsl {
+class DslImpl(private val statementFactory: StatementFactory) : Dsl {
   override val NULL: Expression = TextExpression("null")
 
   override val THIS: Expression = TextExpression("this")
@@ -66,6 +66,12 @@ class DslImpl(override val statementFactory: StatementFactory) : Dsl {
   override fun createPeekCall(elementsType: GenericType, lambda: String): IntermediateStreamCall = PeekCall(lambda, elementsType)
 
   override fun String.unaryPlus(): TextExpression = TextExpression(this)
+
+  override fun and(left: Expression, right: Expression): Expression = statementFactory.and(left, right)
+
+  override fun equals(left: Expression, right: Expression): Expression = statementFactory.equals(left, right)
+
+  override fun same(left: Expression, right: Expression): Expression = statementFactory.same(left, right)
 
   private inner class MyContext : CodeContext, Dsl by DslImpl@ this, CodeBlock by statementFactory.createEmptyCompositeCodeBlock()
 }

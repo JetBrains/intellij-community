@@ -22,13 +22,5 @@ interface Dsl : DslFactory {
   val NULL: Expression
   val THIS: Expression
 
-  val statementFactory: StatementFactory
-
   fun code(init: CodeContext.() -> Unit): String
-
-  override fun and(left: Expression, right: Expression): Expression = statementFactory.and(left, right)
-
-  override fun equals(left: Expression, right: Expression): Expression = statementFactory.equals(left, right)
-
-  override fun same(left: Expression, right: Expression): Expression = statementFactory.same(left, right)
 }
