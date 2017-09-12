@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,8 +35,9 @@ public class VisualStudioCustomFoldingProvider extends CustomFoldingProvider {
 
   @Override
   public String getPlaceholderText(String elementText) {
-    String result = elementText.replaceFirst("[/*#-]*\\s*region(.*)", "$1");
-    return elementText.startsWith("/*") ? StringUtil.trimEnd(result, "*/").trim() : result.trim();
+    String textAfterMarker = elementText.replaceFirst("[/*#-]*\\s*region(.*)", "$1");
+    String result = elementText.startsWith("/*") ? StringUtil.trimEnd(textAfterMarker, "*/").trim() : textAfterMarker.trim();
+    return result.isEmpty() ? "..." : result;
   }
 
   @Override

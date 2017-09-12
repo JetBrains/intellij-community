@@ -142,7 +142,7 @@ class UpdateFoldRegionsOperation implements Runnable {
         continue;
       }
       FoldRegion region = foldingModel.createFoldRegion(range.getStartOffset(), range.getEndOffset(),
-                                                        placeholder == null || placeholder.isEmpty() ? "..." : placeholder,
+                                                        placeholder == null ? "..." : placeholder,
                                                         group,
                                                         descriptor.isNonExpandable());
       if (region == null) continue;

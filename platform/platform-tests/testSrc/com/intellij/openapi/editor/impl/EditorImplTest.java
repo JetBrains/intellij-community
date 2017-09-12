@@ -158,6 +158,17 @@ public class EditorImplTest extends AbstractEditorTest {
     assertEquals(new VisualPosition(0, 5), myEditor.getCaretModel().getVisualPosition());
   }
   
+  public void testPositionCalculationForMultilineFoldingWithEmptyPlaceholder() {
+    initText("line1\n" +
+             "line2\n" +
+             "line3\n" +
+             "line4");
+    addCollapsedFoldRegion(6, 17, "");
+    configureSoftWraps(1000);
+    
+    assertEquals(new LogicalPosition(3, 0), myEditor.visualToLogicalPosition(new VisualPosition(2, 0)));
+  }
+  
   public void testNavigationInsideNonNormalizedLineTerminator() {
     initText("");
     ((DocumentImpl)myEditor.getDocument()).setAcceptSlashR(true);

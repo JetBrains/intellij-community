@@ -29,7 +29,7 @@ public abstract class FoldingTestCase extends PlatformTestCase {
   protected static void addFolding(Editor editor, final int startOffset, final int endOffset) {
     final FoldingModel foldingModel = editor.getFoldingModel();
     foldingModel.runBatchFoldingOperation(() -> {
-      final FoldRegion foldRegion = foldingModel.addFoldRegion(startOffset, endOffset, "...");
+      final FoldRegion foldRegion = foldingModel.addFoldRegion(startOffset, endOffset, "");
       if (foldRegion == null) return ;
       foldRegion.setExpanded(false);
       assertFalse(foldRegion.isExpanded());
