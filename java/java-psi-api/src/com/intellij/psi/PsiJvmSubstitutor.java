@@ -18,6 +18,7 @@ package com.intellij.psi;
 import com.intellij.lang.jvm.JvmTypeParameter;
 import com.intellij.lang.jvm.types.JvmSubstitutor;
 import com.intellij.lang.jvm.types.JvmType;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus.Experimental;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,17 +26,19 @@ import org.jetbrains.annotations.Nullable;
 @Experimental
 public class PsiJvmSubstitutor implements JvmSubstitutor {
 
+  private final @NotNull Project myProject;
   private final @NotNull PsiSubstitutor mySubstitutor;
 
-  public PsiJvmSubstitutor(@NotNull PsiSubstitutor substitutor) {
+  public PsiJvmSubstitutor(@NotNull Project project, @NotNull PsiSubstitutor substitutor) {
+    myProject = project;
     mySubstitutor = substitutor;
   }
 
   @Nullable
   @Override
   public JvmType substitute(@NotNull JvmTypeParameter typeParameter) {
-    if (!(typeParameter instanceof PsiTypeParameter)) return null;
-    PsiTypeParameter psiTypeParameter = ((PsiTypeParameter)typeParameter);
+    JvmPsiConversionHelper helper = JvmPsiConversionHelper.getInstance(myProject);
+    PsiTypeParameter psiTypeParameter = helper.convertTypeParameter(typeParameter);
     return mySubstitutor.substitute(psiTypeParameter);
   }
 }

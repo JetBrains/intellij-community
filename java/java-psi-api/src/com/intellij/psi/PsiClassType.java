@@ -263,7 +263,7 @@ public abstract class PsiClassType extends PsiType implements JvmReferenceType {
     PsiClass clazz = resolveResult.getElement();
     return clazz == null ? null : new JvmTypeResolveResult() {
 
-      private final JvmSubstitutor mySubstitutor = new PsiJvmSubstitutor(resolveResult.getSubstitutor());
+      private final JvmSubstitutor mySubstitutor = new PsiJvmSubstitutor(clazz.getProject(), resolveResult.getSubstitutor());
 
       @NotNull
       @Override
