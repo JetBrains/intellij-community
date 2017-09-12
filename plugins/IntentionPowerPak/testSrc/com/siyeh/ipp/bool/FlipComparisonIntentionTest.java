@@ -36,8 +36,8 @@ public class FlipComparisonIntentionTest extends IPPTestCase {
     doTestIntentionNotAvailable("import java.util.*;" +
                                 "class X {" +
                                 "  String x(Set<String> set) {" +
-                                "    x(HashSet</*_Flip '>' to '<'*/>());" +
                                 "  }" +
+                                "  {x(HashSet</*_Flip '>' to '<'*/>());}" +
                                 "}");
   }
 }
