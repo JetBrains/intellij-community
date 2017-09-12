@@ -59,4 +59,6 @@ interface StatementFactory {
   fun createArrayVariable(elementType: String, name: String): ArrayVariable
 
   fun createScope(codeBlock: CodeBlock): Statement
+
+  fun createTryBlock(block: CodeBlock): TryBlock
 }

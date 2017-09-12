@@ -45,6 +45,14 @@ abstract class CodeBlockBase(private val myFactory: StatementFactory) : Composit
     addStatement(myFactory.createForLoop(initialization, condition, afterThought, loopBody))
   }
 
+  override fun tryBlock(init: CodeBlock.() -> Unit): TryBlock {
+    val codeBlock = myFactory.createEmptyCodeBlock()
+    codeBlock.init()
+    val tryBlock = myFactory.createTryBlock(codeBlock)
+    myStatements.add(tryBlock)
+    return tryBlock
+  }
+
   override fun ifBranch(condition: Expression, init: CodeBlock.() -> Unit): IfBranch {
     val ifBody = myFactory.createEmptyCodeBlock()
     ifBody.init()

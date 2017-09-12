@@ -77,4 +77,6 @@ class JavaStatementFactory : StatementFactory {
                                                codeBlock.toCode(indent + 1) +
                                                "}".withIndent(indent)
   }
+
+  override fun createTryBlock(block: CodeBlock): TryBlock = JavaTryBlock(block, this)
 }
