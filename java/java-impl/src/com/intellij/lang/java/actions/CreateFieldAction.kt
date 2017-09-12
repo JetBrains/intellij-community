@@ -15,6 +15,7 @@
  */
 package com.intellij.lang.java.actions
 
+import com.intellij.codeInsight.ExpectedTypeInfo
 import com.intellij.codeInsight.daemon.QuickFixBundle.message
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFieldFromUsageFix
 import com.intellij.codeInsight.daemon.impl.quickfix.JavaCreateFieldFromUsageHelper
@@ -83,7 +84,7 @@ internal class CreateFieldAction(
 private class FieldData(
   val targetClass: PsiClass,
   val fieldName: String,
-  val fieldType: Any?,
+  val fieldType: Array<ExpectedTypeInfo>,
   val reference: PsiReferenceExpression?,
   val anchor: PsiElement?,
   val modifiers: Collection<String>,
@@ -124,7 +125,7 @@ private fun extractRenderData(targetClass: PsiClass, request: CreateFieldRequest
   return FieldData(
     targetClass,
     fieldName,
-    request.fieldType,
+    extractExpectedTypes(targetClass.project, request.fieldType).toTypedArray(),
     javaUsage?.reference,
     javaUsage?.anchor,
     modifiersToRender.map(JvmModifier::toPsi),

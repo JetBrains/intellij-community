@@ -15,9 +15,10 @@
  */
 package com.intellij.lang.java.request
 
-import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils
+import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils.guessExpectedTypes
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.CreateFieldRequest
+import com.intellij.lang.jvm.actions.ExpectedTypes
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReferenceExpression
 import com.intellij.psi.util.createSmartPointer
@@ -39,5 +40,5 @@ internal class CreateFieldFromJavaUsageRequest(
 
   override val fieldName: String get() = reference.referenceName!!
 
-  override val fieldType: Any? get() = CreateFromUsageUtils.guessExpectedTypes(reference, false)
+  override val fieldType: ExpectedTypes get() = guessExpectedTypes(reference, false).map(::ExpectedJavaType)
 }

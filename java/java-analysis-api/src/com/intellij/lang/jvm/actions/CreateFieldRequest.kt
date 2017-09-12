@@ -38,7 +38,7 @@ interface CreateFieldRequest {
    *
    * @return expected type info of the field to be created
    */
-  val fieldType: Any?
+  val fieldType: ExpectedTypes
 
   /**
    * Implementation are free to render any modifiers as long as they don't contradict with requested ones.
