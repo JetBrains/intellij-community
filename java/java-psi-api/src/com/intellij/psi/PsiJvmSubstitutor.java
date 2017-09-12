@@ -19,9 +19,12 @@ import com.intellij.lang.jvm.JvmTypeParameter;
 import com.intellij.lang.jvm.types.JvmSubstitutor;
 import com.intellij.lang.jvm.types.JvmType;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.ApiStatus.Experimental;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
 
 @Experimental
 public class PsiJvmSubstitutor implements JvmSubstitutor {
@@ -32,6 +35,12 @@ public class PsiJvmSubstitutor implements JvmSubstitutor {
   public PsiJvmSubstitutor(@NotNull Project project, @NotNull PsiSubstitutor substitutor) {
     myProject = project;
     mySubstitutor = substitutor;
+  }
+
+  @NotNull
+  @Override
+  public Collection<JvmTypeParameter> getTypeParameters() {
+    return new SmartList<>(mySubstitutor.getSubstitutionMap().keySet());
   }
 
   @Nullable
