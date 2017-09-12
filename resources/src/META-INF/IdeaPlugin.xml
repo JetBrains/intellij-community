@@ -1524,6 +1524,7 @@
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.TypeOfVariableMacro"/>
 
 
+    <copyPastePreProcessor implementation="com.intellij.codeInsight.editorActions.LineCommentCopyPastePreProcessor"/>
     <copyPastePreProcessor implementation="com.intellij.codeInsight.editorActions.StringLiteralCopyPasteProcessor"/>
     <copyPastePostProcessor implementation="com.intellij.codeInsight.editorActions.JavaCopyPasteReferenceProcessor"/>
 
