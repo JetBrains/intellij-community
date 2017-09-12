@@ -43,5 +43,5 @@ interface CodeBlock : Statement {
 
   operator fun Expression.unaryPlus()
 
-  fun Variable.assign(expression: Expression): AssignmentStatement
+  fun Variable.assign(expression: Expression)
 }

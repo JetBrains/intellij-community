@@ -79,10 +79,9 @@ abstract class CodeBlockBase(private val myFactory: StatementFactory) : Composit
     addStatement(myFactory.createScope(codeBlock))
   }
 
-  override fun Variable.assign(expression: Expression): AssignmentStatement {
+  override fun Variable.assign(expression: Expression) {
     val assignmentStatement = myFactory.createAssignmentStatement(this, expression)
     addStatement(assignmentStatement)
-    return assignmentStatement
   }
 
   override fun addStatement(statement: Statement) {
