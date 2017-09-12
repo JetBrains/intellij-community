@@ -30,6 +30,7 @@ import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.*;
+import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyElementTypes;
@@ -76,41 +77,6 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
 
   public static final PyClass[] EMPTY_ARRAY = new PyClassImpl[0];
 
-  /**
-   * Engine to create list of ancestors based on context
-   */
-  private final class CachedAncestorsProvider implements NotNullFunction<TypeEvalContext, List<PyClassLikeType>> {
-    @NotNull
-    @Override
-    public List<PyClassLikeType> fun(@NotNull TypeEvalContext context) {
-      List<PyClassLikeType> ancestorTypes;
-      if (isNewStyleClass(context)) {
-        try {
-          ancestorTypes = getMROAncestorTypes(context);
-        }
-        catch (MROException e) {
-          ancestorTypes = getOldStyleAncestorTypes(context);
-          boolean hasUnresolvedAncestorTypes = false;
-          for (PyClassLikeType type : ancestorTypes) {
-            if (type == null) {
-              hasUnresolvedAncestorTypes = true;
-              break;
-            }
-          }
-          if (!hasUnresolvedAncestorTypes) {
-            ancestorTypes = Collections.singletonList(null);
-          }
-        }
-      }
-      else {
-        ancestorTypes = getOldStyleAncestorTypes(context);
-      }
-      return ancestorTypes;
-    }
-  }
-
-  private final CachedAncestorsProvider myCachedAncestorsProvider = new CachedAncestorsProvider();
-
   private volatile List<PyTargetExpression> myInstanceAttributes;
 
   private volatile Map<String, Property> myPropertyCache;
@@ -118,15 +84,6 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   @Override
   public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     return new PyClassTypeImpl(this, true);
-  }
-
-  private class NewStyleCachedValueProvider implements ParameterizedCachedValueProvider<Boolean, TypeEvalContext> {
-
-    @Nullable
-    @Override
-    public CachedValueProvider.Result<Boolean> compute(TypeEvalContext param) {
-      return new CachedValueProvider.Result<>(calculateNewStyleClass(param), PsiModificationTracker.MODIFICATION_COUNT);
-    }
   }
 
   public PyClassImpl(@NotNull ASTNode astNode) {
@@ -1241,7 +1198,9 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
       @NotNull
       @Override
       protected ParameterizedCachedValue<Boolean, TypeEvalContext> compute() {
-        return CachedValuesManager.getManager(getProject()).createParameterizedCachedValue(new NewStyleCachedValueProvider(), false);
+        return CachedValuesManager.getManager(getProject())
+          .createParameterizedCachedValue(
+            param -> new Result<>(calculateNewStyleClass(param), PsiModificationTracker.MODIFICATION_COUNT), false);
       }
     }.getValue().getValue(context);
   }
@@ -1473,8 +1432,32 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
 
   @NotNull
   @Override
-  public List<PyClassLikeType> getAncestorTypes(@NotNull TypeEvalContext context) {
-    return PyUtil.getParameterizedCachedValue(this, context, myCachedAncestorsProvider);
+  public List<PyClassLikeType> getAncestorTypes(@NotNull final TypeEvalContext context) {
+    return PyUtil.getParameterizedCachedValue(this, context, contextArgument -> {
+      List<PyClassLikeType> ancestorTypes;
+      if (isNewStyleClass(contextArgument)) {
+        try {
+          ancestorTypes = getMROAncestorTypes(contextArgument);
+        }
+        catch (final MROException ignored) {
+          ancestorTypes = getOldStyleAncestorTypes(contextArgument);
+          boolean hasUnresolvedAncestorTypes = false;
+          for (PyClassLikeType type : ancestorTypes) {
+            if (type == null) {
+              hasUnresolvedAncestorTypes = true;
+              break;
+            }
+          }
+          if (!hasUnresolvedAncestorTypes) {
+            ancestorTypes = Collections.singletonList(null);
+          }
+        }
+      }
+      else {
+        ancestorTypes = getOldStyleAncestorTypes(contextArgument);
+      }
+      return ancestorTypes;
+    });
   }
 
   @Nullable
