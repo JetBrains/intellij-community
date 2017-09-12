@@ -17,10 +17,7 @@ package com.intellij.psi;
 
 import com.intellij.lang.jvm.JvmClassKind;
 import com.intellij.lang.jvm.JvmModifier;
-import com.intellij.lang.jvm.JvmTypeParameter;
 import com.intellij.lang.jvm.types.JvmReferenceType;
-import com.intellij.lang.jvm.types.JvmSubstitutor;
-import com.intellij.lang.jvm.types.JvmType;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -103,22 +100,5 @@ class PsiJvmConversionHelper {
     PsiReferenceList referenceList = psiClass.isInterface() ? psiClass.getExtendsList() : psiClass.getImplementsList();
     if (referenceList == null) return JvmReferenceType.EMPTY_ARRAY;
     return referenceList.getReferencedTypes();
-  }
-
-  static class PsiJvmSubstitutor implements JvmSubstitutor {
-
-    private final @NotNull PsiSubstitutor mySubstitutor;
-
-    PsiJvmSubstitutor(@NotNull PsiSubstitutor substitutor) {
-      mySubstitutor = substitutor;
-    }
-
-    @Nullable
-    @Override
-    public JvmType substitute(@NotNull JvmTypeParameter typeParameter) {
-      if (!(typeParameter instanceof PsiTypeParameter)) return null;
-      PsiTypeParameter psiTypeParameter = ((PsiTypeParameter)typeParameter);
-      return mySubstitutor.substitute(psiTypeParameter);
-    }
   }
 }
