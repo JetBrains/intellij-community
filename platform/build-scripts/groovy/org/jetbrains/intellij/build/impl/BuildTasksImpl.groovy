@@ -282,16 +282,17 @@ idea.fatal.error.notification=disabled
     compileModules(moduleNames, buildContext.productProperties.modulesToCompileTests)
 
     def productLayout = buildContext.productProperties.productLayout
-
-    def providedModulesFilePath = "${buildContext.paths.artifacts}/${buildContext.productProperties.productCode}-builtinModules.json"
-    buildProvidedModulesList(providedModulesFilePath, productLayout.mainModules, productLayout.licenseFilesToBuildSearchableOptions)
-    def pluginsToPublish = distributionJARsBuilder.getPluginsByModules(buildContext.productProperties.productLayout.pluginModulesToPublish)
-    if (buildContext.productProperties.productLayout.buildAllCompatiblePlugins) {
-      if (!buildContext.options.buildStepsToSkip.contains(BuildOptions.PROVIDED_MODULES_LIST_STEP)) {
-        pluginsToPublish = new PluginsCollector(buildContext, providedModulesFilePath).collectCompatiblePluginsToPublish()
-      }
-      else {
-        buildContext.messages.info("Skipping collecting compatible plugins because PROVIDED_MODULES_LIST_STEP was skipped")
+    def pluginsToPublish = distributionJARsBuilder.getPluginsByModules(buildContext.productProperties.productLayout.pluginModulesToPublish) 
+    if (buildContext.shouldBuildDistributions()) {
+      def providedModulesFilePath = "${buildContext.paths.artifacts}/${buildContext.productProperties.productCode}-builtinModules.json"
+      buildProvidedModulesList(providedModulesFilePath, productLayout.mainModules, productLayout.licenseFilesToBuildSearchableOptions)
+      if (buildContext.productProperties.productLayout.buildAllCompatiblePlugins) {
+        if (!buildContext.options.buildStepsToSkip.contains(BuildOptions.PROVIDED_MODULES_LIST_STEP)) {
+          pluginsToPublish = new PluginsCollector(buildContext, providedModulesFilePath).collectCompatiblePluginsToPublish()
+        }
+        else {
+          buildContext.messages.info("Skipping collecting compatible plugins because PROVIDED_MODULES_LIST_STEP was skipped")
+        }
       }
     }
     compileModules(pluginsToPublish.collect { it.moduleJars.values()  }.flatten() as List<String>)
