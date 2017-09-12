@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import org.jetbrains.annotations.NotNull;
@@ -371,11 +372,13 @@ public class PythonHighlightingTest extends PyTestCase {
 
   // PY-20401
   public void testAnnotations() {
+    createTemporaryColorScheme().setAttributes(PyHighlighter.PY_ANNOTATION, new TextAttributes(Color.RED, null, null, null, Font.PLAIN));
     runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
   }
 
   // PY-22729
   public void testParametersWithAnnotationsAndDefaults() {
+    createTemporaryColorScheme().setAttributes(PyHighlighter.PY_ANNOTATION, new TextAttributes(Color.RED, null, null, null, Font.PLAIN));
     runWithLanguageLevel(LanguageLevel.PYTHON30, this::doTest);
   }
 
