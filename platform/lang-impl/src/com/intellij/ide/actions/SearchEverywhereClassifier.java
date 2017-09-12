@@ -17,7 +17,9 @@ package com.intellij.ide.actions;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,6 +64,15 @@ public interface SearchEverywhereClassifier {
       }
       return null;
     }
+
+    @Nullable
+    public static GlobalSearchScope getProjectScope(@NotNull Project project) {
+      for (SearchEverywhereClassifier classifier : Extensions.getExtensions(SearchEverywhereClassifier.EP_NAME)) {
+        GlobalSearchScope scope = classifier.getProjectScope(project);
+        if (scope != null) return scope;
+      }
+      return null;
+    }
   }
 
   ExtensionPointName<SearchEverywhereClassifier> EP_NAME = ExtensionPointName.create("com.intellij.searchEverywhereClassifier");
@@ -75,4 +86,7 @@ public interface SearchEverywhereClassifier {
 
   @Nullable
   Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus);
+
+  @Nullable
+  default GlobalSearchScope getProjectScope(@NotNull Project project) { return null; }
 }

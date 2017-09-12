@@ -56,6 +56,10 @@ public class GotoFileModel extends FilteringGotoByModel<FileType> implements Dum
   @NotNull
   @Override
   public ChooseByNameItemProvider getItemProvider(@Nullable PsiElement context) {
+    for (GotoFileCustomizer customizer : Extensions.getExtensions(GotoFileCustomizer.EP_NAME)) {
+      GotoFileItemProvider provider = customizer.createItemProvider(myProject, context, this);
+      if (provider != null) return provider;
+    }
     return new GotoFileItemProvider(myProject, context, this);
   }
 
