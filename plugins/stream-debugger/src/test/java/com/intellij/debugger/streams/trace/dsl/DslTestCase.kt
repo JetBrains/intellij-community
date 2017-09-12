@@ -18,7 +18,9 @@ package com.intellij.debugger.streams.trace.dsl
 import com.intellij.debugger.streams.trace.dsl.impl.TextExpression
 import com.intellij.debugger.streams.trace.impl.handler.type.GenericType
 import com.intellij.testFramework.UsefulTestCase
+import com.intellij.testFramework.exceptionCases.AbstractExceptionCase
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import org.junit.Test
 
 /**
  * @author Vitaliy.Bibaev
@@ -266,6 +268,29 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
       val map = map(GenericType.INT, GenericType.OBJECT, "map")
       +(TextExpression(map.convertToArray(this, "resultArray")))
     }
+  }
+
+  fun testTryBlock() {
+    doTest {
+      tryBlock {
+        call(THIS, "hashCode")
+      }.catch(variable("Exception", "e")) {
+        call(THIS, "fail")
+      }
+    }
+  }
+
+  fun testTryWithUnspecifiedCatch() {
+    assertException(object : AbstractExceptionCase<IllegalStateException>() {
+      override fun tryClosure() {
+        doTest {
+          tryBlock {
+          }
+        }
+      }
+
+      override fun getExpectedExceptionClass(): Class<IllegalStateException> = IllegalStateException::class.java
+    })
   }
 
   private fun doTest(init: CodeContext.() -> Unit) {

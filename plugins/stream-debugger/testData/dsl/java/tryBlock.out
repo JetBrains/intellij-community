@@ -1,0 +1,5 @@
+try {
+  this.hashCode();
+} catch(Exception e) {
+  this.fail();
+};
