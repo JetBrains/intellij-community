@@ -41,7 +41,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
-import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
@@ -936,20 +935,15 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
         return source == null ? CollectionStream.from((PsiForeachStatement)statement) : source;
       }
       if (statement instanceof PsiWhileStatement) {
-        return BufferedReaderLines.from(statement);
+        return BufferedReaderLines.from((PsiWhileStatement)statement);
       }
       return null;
     }
   }
 
   static class BufferedReaderLines extends StreamSource {
-    private static final CallMatcher BUFFERED_READER_READ_LINE = CallMatcher.instanceCall("java.io.BufferedReader", "readLine");
-
-    private final boolean myDeleteVariable;
-
-    private BufferedReaderLines(PsiLoopStatement loop, PsiVariable variable, PsiExpression expression, boolean deleteVariable) {
+    private BufferedReaderLines(PsiLoopStatement loop, PsiVariable variable, PsiExpression expression) {
       super(loop, variable, expression);
-      myDeleteVariable = deleteVariable;
     }
 
     @Override
@@ -959,71 +953,17 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
 
     @Override
     void cleanUp() {
-      if (myDeleteVariable) {
-        myVariable.delete();
-      }
+      myVariable.delete();
     }
 
     @Override
     boolean isWriteAllowed(PsiVariable variable, PsiExpression reference) {
-      if (myVariable == variable) {
-        if (reference.getParent() == PsiTreeUtil.getParentOfType(myExpression, PsiAssignmentExpression.class)) return true;
-        PsiForStatement forStatement = PsiTreeUtil.getParentOfType(variable, PsiForStatement.class);
-        if (forStatement != null) {
-          return PsiTreeUtil.isAncestor(forStatement.getUpdate(), reference, false);
-        }
-      }
-      return false;
+      return myVariable == variable && reference.getParent() == PsiTreeUtil.getParentOfType(myExpression, PsiAssignmentExpression.class);
     }
 
     @Nullable
-    public static BufferedReaderLines from(PsiLoopStatement loopStatement) {
-      BufferedReaderLines whileSimple = extractWhileSimple(loopStatement);
-      if (whileSimple != null) return whileSimple;
-      return extractForSimple(loopStatement);
-    }
-
-    // for (String line = reader.readLine(); line != null; line = reader.readLine()) ...
-    @Nullable
-    private static BufferedReaderLines extractForSimple(PsiLoopStatement loopStatement) {
-      PsiForStatement forLoop = tryCast(loopStatement, PsiForStatement.class);
-      if (forLoop == null) return null;
-
-      PsiDeclarationStatement declarationStatement = tryCast(forLoop.getInitialization(), PsiDeclarationStatement.class);
-      if (declarationStatement == null) return null;
-      PsiElement[] declarations = declarationStatement.getDeclaredElements();
-      if (declarations.length != 1) return null;
-      PsiLocalVariable lineVar = tryCast(declarations[0], PsiLocalVariable.class);
-      if (lineVar == null) return null;
-      PsiMethodCallExpression maybeReadLines = tryCast(lineVar.getInitializer(), PsiMethodCallExpression.class);
-      if (!BUFFERED_READER_READ_LINE.test(maybeReadLines)) return null;
-      PsiExpression reader = maybeReadLines.getMethodExpression().getQualifierExpression();
-      PsiReferenceExpression readerRef = tryCast(reader, PsiReferenceExpression.class);
-      if (readerRef == null) return null;
-      PsiVariable readerVar = tryCast(readerRef.resolve(), PsiVariable.class);
-      if (readerVar == null) return null;
-
-      PsiBinaryExpression binOp = tryCast(PsiUtil.skipParenthesizedExprDown(forLoop.getCondition()), PsiBinaryExpression.class);
-      if (binOp == null) return null;
-      if (!JavaTokenType.NE.equals(binOp.getOperationTokenType())) return null;
-      PsiExpression lineExpr = ExpressionUtils.getValueComparedWithNull(binOp);
-      if (!ExpressionUtils.isReferenceTo(lineExpr, lineVar)) return null;
-
-
-      PsiExpressionStatement updateStmt = tryCast(forLoop.getUpdate(), PsiExpressionStatement.class);
-      if (updateStmt == null) return null;
-      PsiExpression readNewLineExpr = ExpressionUtils.getAssignmentTo(updateStmt.getExpression(), lineVar);
-      PsiMethodCallExpression readNewLineCall = tryCast(readNewLineExpr, PsiMethodCallExpression.class);
-      if (!BUFFERED_READER_READ_LINE.test(readNewLineCall)) return null;
-      if (!ExpressionUtils.isReferenceTo(readNewLineCall.getMethodExpression().getQualifierExpression(), readerVar)) return null;
-      return new BufferedReaderLines(forLoop, lineVar, reader, false);
-    }
-
-    // while ((line = br.readLine()) != null)
-    @Nullable
-    private static BufferedReaderLines extractWhileSimple(PsiLoopStatement loopStatement) {
-      PsiWhileStatement whileLoop = tryCast(loopStatement, PsiWhileStatement.class);
-      if (whileLoop == null) return null;
+    public static BufferedReaderLines from(PsiWhileStatement whileLoop) {
+      // while ((line = br.readLine()) != null)
       PsiBinaryExpression binOp = tryCast(PsiUtil.skipParenthesizedExprDown(whileLoop.getCondition()), PsiBinaryExpression.class);
       if (binOp == null) return null;
       if (!JavaTokenType.NE.equals(binOp.getOperationTokenType())) return null;
@@ -1042,9 +982,14 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       }
       PsiMethodCallExpression call = tryCast(PsiUtil.skipParenthesizedExprDown(assignment.getRExpression()), PsiMethodCallExpression.class);
       if (call == null || call.getArgumentList().getExpressions().length != 0) return null;
-      if (!BUFFERED_READER_READ_LINE.test(call)) return null;
-      PsiExpression reader = call.getMethodExpression().getQualifierExpression();
-      return new BufferedReaderLines(whileLoop, var, reader, true);
+      if (!"readLine".equals(call.getMethodExpression().getReferenceName())) return null;
+      PsiExpression readerExpression = call.getMethodExpression().getQualifierExpression();
+      if (readerExpression == null) return null;
+      PsiMethod method = call.resolveMethod();
+      if (method == null) return null;
+      PsiClass aClass = method.getContainingClass();
+      if (aClass == null || !"java.io.BufferedReader".equals(aClass.getQualifiedName())) return null;
+      return new BufferedReaderLines(whileLoop, var, readerExpression);
     }
   }
 
