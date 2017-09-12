@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.module.Module;
@@ -32,8 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class OrderEntryUtil {
-  private OrderEntryUtil() {
-  }
+  private OrderEntryUtil() { }
 
   @Nullable
   public static LibraryOrderEntry findLibraryOrderEntry(@NotNull ModuleRootModel model, @Nullable Library library) {
@@ -137,9 +135,13 @@ public class OrderEntryUtil {
   }
 
   public static void addLibraryToRoots(@NotNull Module module, @NotNull Library library) {
-    final ModuleRootManager manager = ModuleRootManager.getInstance(module);
-    final ModifiableRootModel rootModel = manager.getModifiableModel();
+    addLibraryToRoots(module, library, DependencyScope.COMPILE, false);
+  }
 
+  public static void addLibraryToRoots(@NotNull Module module, @NotNull Library library, @NotNull DependencyScope scope, boolean exported) {
+    final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
+
+    final LibraryOrderEntry entry;
     if (library.getTable() == null) {
       final Library jarLibrary = rootModel.getModuleLibraryTable().createLibrary();
       final Library.ModifiableModel libraryModel = jarLibrary.getModifiableModel();
@@ -150,10 +152,17 @@ public class OrderEntryUtil {
         }
       }
       libraryModel.commit();
+      entry = rootModel.findLibraryOrderEntry(jarLibrary);
     }
     else {
-      rootModel.addLibraryEntry(library);
+      entry = rootModel.addLibraryEntry(library);
     }
+
+    if (entry != null) {
+      entry.setScope(scope);
+      entry.setExported(exported);
+    }
+
     rootModel.commit();
   }
 
