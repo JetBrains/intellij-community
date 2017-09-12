@@ -8,13 +8,17 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
-    <orderEntry type="module" module-name="testFramework" />
-    <orderEntry type="module" module-name="python-psi-api" />
-    <orderEntry type="module" module-name="python-community" />
-    <orderEntry type="module" module-name="python-ide" exported="" scope="RUNTIME" />
-    <orderEntry type="module" module-name="python" exported="" />
+    <orderEntry type="module" module-name="lang-impl" />
     <orderEntry type="library" name="Guava" level="project" />
-    <orderEntry type="module" module-name="python-helpers" />
-    <orderEntry type="module" module-name="index-tools" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$APPLICATION_HOME_DIR$/lib/junit.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module" module-name="testFramework" />
   </component>
 </module>

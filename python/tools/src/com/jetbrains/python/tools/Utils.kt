@@ -54,30 +54,30 @@ fun openProjectWithSdk(projectPath: String, sdkHome: String?): Pair<Project?, Sd
   val project: Project? = ProjectManager.getInstance().loadAndOpenProject(projectPath)
 
   try {
-  val module = getOrCreateModule(project!!, projectPath)
+    val module = getOrCreateModule(project!!, projectPath)
 
-  val sdk =
-    if (sdkHome != null) {
-  val sdk = createSdkForPerformance(module, SdkCreationType.SDK_PACKAGES_AND_SKELETONS, sdkHome)
+    val sdk =
+      if (sdkHome != null) {
+        val sdk = createSdkForPerformance(module, SdkCreationType.SDK_PACKAGES_AND_SKELETONS, sdkHome)
 
-  UIUtil.invokeAndWaitIfNeeded(Runnable {
-    ApplicationManager.getApplication().runWriteAction({
-                                                         PythonSdkUpdater.update(sdk, null, project, null)
-                                                       })
-  })
-
-
-    ModuleRootModificationUtil.setModuleSdk(module, sdk)
+        UIUtil.invokeAndWaitIfNeeded(Runnable {
+          ApplicationManager.getApplication().runWriteAction({
+                                                               PythonSdkUpdater.update(sdk, null, project, null)
+                                                             })
+        })
 
 
-  assert(ModuleRootManager.getInstance(module).orderEntries().classesRoots.size > 5)
-      sdk
-    }
-    else {
-      null
-    }
+        ModuleRootModificationUtil.setModuleSdk(module, sdk)
 
-  assert(ModuleManager.getInstance(project).modules.size == 1)
+
+        assert(ModuleRootManager.getInstance(module).orderEntries().classesRoots.size > 5)
+        sdk
+      }
+      else {
+        null
+      }
+
+    assert(ModuleManager.getInstance(project).modules.size == 1)
 
     return Pair(project, sdk)
   }
