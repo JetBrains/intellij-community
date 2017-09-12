@@ -38,7 +38,6 @@ import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class JUnit5TestExecutionListener implements TestExecutionListener {
   private static final String NO_LOCATION_HINT = "";
@@ -48,7 +47,6 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
   private long myCurrentTestStart;
   private int myFinishCount;
   private String myRootName;
-  private Set<String> myRoots = new HashSet<>();
   private boolean mySuccessful;
   private String myForkModifier = "";
 
@@ -115,7 +113,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
       testStarted(testIdentifier);
       myCurrentTestStart = System.currentTimeMillis();
     }
-    else if (!myRoots.contains(getId(testIdentifier))){
+    else if (testIdentifier.getParentId().isPresent()) {
       myFinishCount = 0;
       myPrintStream.println("##teamcity[testSuiteStarted" + idAndName(testIdentifier) + getLocationHint(testIdentifier) + "]");
     }
@@ -150,7 +148,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
       testFinished(testIdentifier, duration);
       myFinishCount++;
     }
-    else if (!myRoots.contains(getId(testIdentifier))){
+    else if (testIdentifier.getParentId().isPresent()){
       String messageName = null;
       if (status == TestExecutionResult.Status.FAILED) {
         messageName = MapSerializerUtil.TEST_FAILED;
@@ -263,12 +261,14 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
     return stringWriter.toString();
   }
 
+  public void setTestPlan(TestPlan testPlan) {
+    myTestPlan = testPlan;
+  }
 
   public void sendTree(TestPlan testPlan, String rootName) {
     myTestPlan = testPlan;
     myRootName = rootName;
     Set<TestIdentifier> roots = testPlan.getRoots();
-    myRoots = roots.stream().map(identifier -> getId(identifier)).collect(Collectors.toSet());
     for (TestIdentifier root : roots) {
       assert root.isContainer();
       for (TestIdentifier testIdentifier : testPlan.getChildren(root)) {
@@ -315,13 +315,14 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
   }
 
   private String getParentId(TestIdentifier testIdentifier) {
-    String parentId = testIdentifier.getParentId()
-      .map(s -> s + myForkModifier)
-      .orElse("0");
-    if (myRoots.contains(parentId)) {
-      parentId = "0";
+    Optional<TestIdentifier> parent = myTestPlan.getParent(testIdentifier);
+    if (!parent.map(identifier -> identifier.getParentId().orElse(null)).isPresent()) {
+      return "0";
     }
-    return parentId;
+
+    return parent
+      .map(identifier -> identifier.getUniqueId() + myForkModifier)
+      .orElse("0");
   }
 
   static String getLocationHint(TestIdentifier root) {
