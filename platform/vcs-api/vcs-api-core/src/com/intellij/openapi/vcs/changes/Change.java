@@ -31,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -56,7 +57,7 @@ public class Change {
   protected boolean myRenameOrMoveCached = false;
   private boolean myIsReplaced;
   private Type myType;
-  private final Map<String, Change> myOtherLayers;
+  private Map<String, Change> myOtherLayers;
 
   public Change(@Nullable final ContentRevision beforeRevision, @Nullable final ContentRevision afterRevision) {
     this(beforeRevision, afterRevision, convertStatus(beforeRevision, afterRevision));
@@ -68,7 +69,7 @@ public class Change {
     myAfterRevision = afterRevision;
     myFileStatus = fileStatus == null ? convertStatus(beforeRevision, afterRevision) : fileStatus;
     myHash = -1;
-    myOtherLayers = new HashMap<>(0);
+    myOtherLayers = null;
   }
 
   private static FileStatus convertStatus(@Nullable ContentRevision beforeRevision, @Nullable ContentRevision afterRevision) {
@@ -78,11 +79,13 @@ public class Change {
   }
 
   public void addAdditionalLayerElement(final String name, final Change change) {
+    if (myOtherLayers == null) myOtherLayers = new HashMap<>(1);
     myOtherLayers.put(name, change);
   }
 
+  @NotNull
   public Map<String, Change> getOtherLayers() {
-    return myOtherLayers;
+    return myOtherLayers != null ? myOtherLayers : Collections.emptyMap();
   }
 
   public Type getType() {
