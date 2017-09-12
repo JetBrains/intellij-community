@@ -32,7 +32,7 @@ import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
-import com.intellij.util.containers.HashSet;
+import one.util.streamex.IntStreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -142,29 +142,27 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
   private List<List<String>> getFileNameCandidates(@NotNull ChooseByNameBase base,
                                                    boolean everywhere,
                                                    String sanitized, boolean preferStartMatches) {
-    String[] names = myModel.getNames(everywhere);
-
     int start = Math.max(sanitized.lastIndexOf('/'), sanitized.lastIndexOf('\\')) + 1;
+    List<String> partialNames = IntStreamEx.range(start, sanitized.length()).mapToObj(i -> sanitized.substring(i)).toList();
+    List<MinusculeMatcher> matchers = ContainerUtil.map(partialNames, s -> NameUtil.buildMatcher(s, NameUtil.MatchingCaseSensitivity.NONE));
+    List<List<MatchResult>> matchingNames = ContainerUtil.map(partialNames, __ -> new ArrayList<>());
 
-    Set<String> checkedNames = new HashSet<>();
-    List<List<String>> groups = new ArrayList<>();
-    for (int i = start; i < sanitized.length() - 1; i++) {
-      List<MatchResult> nameMatches = new ArrayList<>();
-      String namePattern = sanitized.substring(i);
-      MinusculeMatcher matcher = NameUtil.buildMatcher(namePattern, NameUtil.MatchingCaseSensitivity.NONE);
-      for (String name : names) {
-        if (!checkedNames.contains(name)) {
-          MatchResult result = matches(base, namePattern, matcher, name);
-          if (result != null) {
-            checkedNames.add(name);
-            nameMatches.add(result);
-          }
+    myModel.processNames(name -> {
+      for (int i = 0; i < partialNames.size(); i++) {
+        MatchResult result = matches(base, partialNames.get(i), matchers.get(i), name);
+        if (result != null) {
+          matchingNames.get(i).add(result);
+          break;
         }
       }
-      groups.addAll(groupByMatchingDegree(nameMatches, namePattern, preferStartMatches));
-    }
+      return true;
+    }, everywhere);
 
-    return groups;
+    List<List<String>> result = new ArrayList<>();
+    for (int i = 0; i < partialNames.size(); i++) {
+      result.addAll(groupByMatchingDegree(matchingNames.get(i), partialNames.get(i), preferStartMatches));
+    }
+    return result;
   }
 
   private static List<List<String>> groupByMatchingDegree(List<MatchResult> nameMatches,
