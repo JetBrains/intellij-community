@@ -35,7 +35,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.stream.Collectors;
@@ -57,14 +56,16 @@ public class MethodChainLookupRangingHelper {
         matchedParametersInContext += info.getSecond();
 
         if (chainLookupElement == null) {
-          LookupElement qualifierLookupElement = createQualifierLookupElement(method, chain.getQualifierClass(), context);
+          LookupElement qualifierLookupElement = method.hasModifierProperty(PsiModifier.STATIC) ? null : createQualifierLookupElement(chain.getQualifierClass(), context);
           LookupElement headLookupElement = createMethodLookupElement(method);
           chainLookupElement = qualifierLookupElement == null ? headLookupElement : new JavaChainLookupElement(qualifierLookupElement, headLookupElement);
         } else {
           chainLookupElement = new JavaChainLookupElement(chainLookupElement, new JavaMethodCallElement(method));
         }
       } else {
-        if (chainLookupElement == null) throw new IllegalStateException();
+        if (chainLookupElement == null) {
+          chainLookupElement = createQualifierLookupElement(chain.getQualifierClass(), context);
+        }
         PsiClass castClass = ((ChainOperation.TypeCast)op).getCastClass();
         PsiClassType type = JavaPsiFacade.getElementFactory(castClass.getProject()).createType(castClass);
         chainLookupElement = CastingLookupElementDecorator.createCastingElement(chainLookupElement, type);
@@ -109,9 +110,9 @@ public class MethodChainLookupRangingHelper {
     };
   }
 
-  @Nullable
-  private static LookupElement createQualifierLookupElement(@NotNull PsiMethod method, @NotNull PsiClass qualifierClass, @NotNull ChainCompletionContext context) {
-    if (method.hasModifierProperty(PsiModifier.STATIC)) return null;
+  @NotNull
+  private static LookupElement createQualifierLookupElement(@NotNull PsiClass qualifierClass,
+                                                            @NotNull ChainCompletionContext context) {
     PsiNamedElement element = context.getQualifiers(qualifierClass).findFirst().orElse(null);
     if (element == null) {
       return new ChainCompletionNewVariableLookupElement(qualifierClass, context);

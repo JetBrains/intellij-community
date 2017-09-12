@@ -28,6 +28,10 @@ import java.util.function.Predicate
 class MethodIncompleteSignature(val ref: LightRef.JavaLightMethodRef,
                                 private val signatureData: SignatureData,
                                 private val refService: CompilerReferenceServiceEx): RefChainOperation {
+  override fun getOwnerRef1(): LightRef.LightClassHierarchyElementDef {
+    return ownerRef
+  }
+
   override fun getOwner1(): String {
     return owner
   }

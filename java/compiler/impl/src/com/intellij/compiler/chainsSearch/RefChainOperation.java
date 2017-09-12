@@ -19,6 +19,7 @@ import org.jetbrains.jps.backwardRefs.LightRef;
 
 public interface RefChainOperation {
   String getOwner1();
+  LightRef.LightClassHierarchyElementDef getOwnerRef1();
 
   LightRef getRef1();
 }

@@ -150,10 +150,10 @@ public class ChainSearcher {
 
   private static boolean addChainIfTerminal(CallChain currentChain, List<CallChain> result, int pathMaximalLength,
                                             ChainCompletionContext context) {
-    RefChainOperation signature = currentChain.getHeadSignature();
-    if (!(signature instanceof MethodIncompleteSignature)) return false;
+    RefChainOperation signature = currentChain.getLastMethodSign();
+    RefChainOperation head = currentChain.getHeadSignature();
     if (((MethodIncompleteSignature)signature).isStatic() ||
-        context.hasQualifier(context.resolvePsiClass(((MethodIncompleteSignature)signature).getOwnerRef())) ||
+        context.hasQualifier(context.resolvePsiClass(head.getOwnerRef1())) ||
         currentChain.length() >= pathMaximalLength) {
       addChainIfNotPresent(currentChain, result);
       return true;

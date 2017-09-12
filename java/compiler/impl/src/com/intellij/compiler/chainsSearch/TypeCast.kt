@@ -22,6 +22,10 @@ class TypeCast(val operandRef: LightRef.LightClassHierarchyElementDef,
                val castTypeRef: LightRef.LightClassHierarchyElementDef,
                refService: CompilerReferenceServiceEx,
                val occurrences: Int): RefChainOperation {
+  override fun getOwnerRef1(): LightRef.LightClassHierarchyElementDef {
+    return operandRef
+  }
+
   override fun getOwner1(): String {
     return operandName
   }
