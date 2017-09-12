@@ -115,9 +115,7 @@ public class ReplaceInefficientStreamCountInspection extends BaseJavaBatchLocalI
     if(countCall == null) return null;
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(countCall.getParent());
     if(parent == null) return null;
-    PsiBinaryExpression binary = ObjectUtils.tryCast(parent, PsiBinaryExpression.class);
-    if(binary == null) return null;
-    return binary;
+    return ObjectUtils.tryCast(parent, PsiBinaryExpression.class);
   }
 
   static boolean doesFlatMapCallCollectionStream(PsiMethodCallExpression flatMapCall) {
