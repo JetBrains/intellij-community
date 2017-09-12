@@ -19,7 +19,7 @@ public class LombokUtilsAllWitherTest {
     lombokResult.clear();
     result.clear();
 
-    final AccessorsInfo accessorsInfo = AccessorsInfo.build(false, false, false);
+    final AccessorsInfo accessorsInfo = AccessorsInfo.EMPTY;
     lombokResult.addAll(LombokHandlerUtil.toAllWitherNames(accessorsInfo, fieldName, isBoolean));
     result.addAll(LombokUtils.toAllWitherNames(accessorsInfo, fieldName, isBoolean));
 

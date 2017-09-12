@@ -92,6 +92,9 @@ Various problems with spring have also been reported. See issue #287, issue #271
    * @return The wither name for this field, or {@code null} if this field does not fit expected patterns and therefore cannot be turned into a getter name.
    */
   public static String toWitherName(AccessorsInfo accessors, String fieldName, boolean isBoolean) {
+    if (accessors.isFluent()) {
+      throw new IllegalArgumentException("@Wither does not support @Accessors(fluent=true)");
+    }
     return toAccessorName(accessors, fieldName, isBoolean, "with", "with");
   }
 
@@ -158,6 +161,9 @@ Various problems with spring have also been reported. See issue #287, issue #271
    * @param isBoolean     if the field is of type 'boolean'. For fields of type 'java.lang.Boolean', you should provide {@code false}.
    */
   public static Collection<String> toAllWitherNames(AccessorsInfo accessorsInfo, String fieldName, boolean isBoolean) {
+    if (accessorsInfo.isFluent()) {
+      throw new IllegalArgumentException("@Wither does not support @Accessors(fluent=true)");
+    }
     return toAllAccessorNames(accessorsInfo, fieldName, isBoolean, "with", "with");
   }
 

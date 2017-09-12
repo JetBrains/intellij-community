@@ -115,6 +115,13 @@ public class AccessorsInfo {
     return fluent;
   }
 
+  public AccessorsInfo withFluent(boolean fluentValue) {
+    if (fluent == fluentValue) {
+      return this;
+    }
+    return new AccessorsInfo(fluentValue, chain, doNotUseIsPrefix, prefixes);
+  }
+
   public boolean isChain() {
     return chain;
   }

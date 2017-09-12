@@ -18,6 +18,10 @@ public class WitherTest extends AbstractLombokParsingTestCase {
     doTest(true);
   }
 
+  public void testWither$WitherAndAccessors() throws IOException {
+    doTest(true);
+  }
+
   public void testWither$WitherAndAllArgsConstructor() throws IOException {
     doTest(true);
   }

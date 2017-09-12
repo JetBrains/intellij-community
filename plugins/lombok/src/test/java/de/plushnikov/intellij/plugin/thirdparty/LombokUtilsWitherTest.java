@@ -8,11 +8,11 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
 public class LombokUtilsWitherTest {
-  private static final AccessorsInfo DEFAULT_ACCESSORS = AccessorsInfo.build(false, false, false);
 
   private String makeResults(String fieldName, boolean isBoolean) {
-    String lombokResult = LombokHandlerUtil.toWitherName(DEFAULT_ACCESSORS, fieldName, isBoolean);
-    String result = LombokUtils.toWitherName(DEFAULT_ACCESSORS, fieldName, isBoolean);
+    final AccessorsInfo accessorsInfo = AccessorsInfo.EMPTY;
+    String lombokResult = LombokHandlerUtil.toWitherName(accessorsInfo, fieldName, isBoolean);
+    String result = LombokUtils.toWitherName(accessorsInfo, fieldName, isBoolean);
 
     assertThat(result, is(lombokResult));
     return result;

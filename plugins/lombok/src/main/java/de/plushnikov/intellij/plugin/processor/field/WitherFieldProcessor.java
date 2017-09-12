@@ -65,7 +65,7 @@ public class WitherFieldProcessor extends AbstractFieldProcessor {
   protected void generatePsiElements(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     String methodModifier = LombokProcessorUtil.getMethodModifier(psiAnnotation);
     if (methodModifier != null) {
-      AccessorsInfo accessorsInfo = AccessorsInfo.build(psiField);
+      AccessorsInfo accessorsInfo = buildAccessorsInfo(psiField);
       PsiMethod method = createWitherMethod(psiField, methodModifier, accessorsInfo);
       if (method != null) {
         target.add(method);
@@ -105,7 +105,7 @@ public class WitherFieldProcessor extends AbstractFieldProcessor {
     if (psiFieldName != null && fieldContainingClass != null) {
       final Collection<PsiMethod> classMethods = PsiClassUtil.collectClassMethodsIntern(fieldContainingClass);
 
-      final AccessorsInfo accessorsInfo = AccessorsInfo.build(psiField);
+      final AccessorsInfo accessorsInfo = buildAccessorsInfo(psiField);
       final Collection<String> possibleWitherNames = LombokUtils.toAllWitherNames(accessorsInfo, psiFieldName, PsiType.BOOLEAN.equals(psiField.getType()));
       for (String witherName : possibleWitherNames) {
         if (PsiMethodUtil.hasSimilarMethod(classMethods, witherName, 1)) {
@@ -213,6 +213,10 @@ public class WitherFieldProcessor extends AbstractFieldProcessor {
       blockText = "return null;";
     }
     return PsiMethodUtil.createCodeBlockFromText(blockText, psiFieldContainingClass);
+  }
+
+  private AccessorsInfo buildAccessorsInfo(@NotNull PsiField psiField) {
+    return AccessorsInfo.build(psiField).withFluent(false);
   }
 
   private String getWitherName(@NotNull AccessorsInfo accessorsInfo, String psiFieldName, PsiType psiFieldType) {

@@ -149,6 +149,9 @@ public class LombokHandlerUtil {
    * @return The wither name for this field, or {@code null} if this field does not fit expected patterns and therefore cannot be turned into a getter name.
    */
   public static String toWitherName(AccessorsInfo accessors, CharSequence fieldName, boolean isBoolean) {
+    if (accessors.isFluent()) {
+      throw new IllegalArgumentException("@Wither does not support @Accessors(fluent=true)");
+    }
     return toAccessorName(accessors, fieldName, isBoolean, "with", "with", false);
   }
 
@@ -226,6 +229,9 @@ public class LombokHandlerUtil {
    * @param isBoolean if the field is of type 'boolean'. For fields of type 'java.lang.Boolean', you should provide {@code false}.
    */
   public static List<String> toAllWitherNames(AccessorsInfo accessors, CharSequence fieldName, boolean isBoolean) {
+    if (accessors.isFluent()) {
+      throw new IllegalArgumentException("@Wither does not support @Accessors(fluent=true)");
+    }
     return toAllAccessorNames(accessors, fieldName, isBoolean, "with", "with", false);
   }
 
