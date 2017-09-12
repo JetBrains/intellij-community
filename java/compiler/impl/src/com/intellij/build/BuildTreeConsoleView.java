@@ -153,7 +153,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
 
     JPanel myContentPanel = new JPanel();
     myContentPanel.setLayout(new CardLayout());
-    myContentPanel.add(ScrollPaneFactory.createScrollPane(treeTable), TREE);
+    myContentPanel.add(ScrollPaneFactory.createScrollPane(treeTable, SideBorder.LEFT), TREE);
 
     myPanel.setLayout(new BorderLayout());
     ThreeComponentsSplitter myThreeComponentsSplitter = new ThreeComponentsSplitter() {
