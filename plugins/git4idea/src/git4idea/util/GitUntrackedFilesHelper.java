@@ -16,7 +16,9 @@
 package git4idea.util;
 
 import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationAction;
+import com.intellij.notification.NotificationType;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -39,10 +41,11 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import javax.swing.event.HyperlinkEvent;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+
+import static com.intellij.openapi.vcs.VcsNotifier.IMPORTANT_ERROR_NOTIFICATION;
 
 public class GitUntrackedFilesHelper {
 
@@ -62,45 +65,31 @@ public class GitUntrackedFilesHelper {
   public static void notifyUntrackedFilesOverwrittenBy(@NotNull final Project project,
                                                        @NotNull final VirtualFile root, @NotNull Collection<String> relativePaths,
                                                        @NotNull final String operation, @Nullable String description) {
-    final String notificationTitle = StringUtil.capitalize(operation) + " failed";
-    final String notificationDesc = description == null ? createUntrackedFilesOverwrittenDescription(operation, true) : description;
+    final String notificationTitle = "Untracked files conflict with " + operation;
+    final String notificationDesc = description == null ? "Please move or commit them before " + operation : description;
 
     final Collection<String> absolutePaths = GitUtil.toAbsolute(root, relativePaths);
     final List<VirtualFile> untrackedFiles = ContainerUtil.mapNotNull(absolutePaths,
                                                                       absolutePath -> GitUtil.findRefreshFileOrLog(absolutePath));
 
-    VcsNotifier.getInstance(project).notifyError(notificationTitle, notificationDesc, new NotificationListener() {
+    Notification notification = IMPORTANT_ERROR_NOTIFICATION.createNotification(notificationTitle, notificationDesc, NotificationType.ERROR,null);
+    notification.addAction(new NotificationAction("View Files") {
       @Override
-      public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-        if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-          final String dialogDesc = createUntrackedFilesOverwrittenDescription(operation, false);
-          String title = "Untracked Files Preventing " + StringUtil.capitalize(operation);
-          if (untrackedFiles.isEmpty()) {
-            GitUtil.showPathsInDialog(project, absolutePaths, title, dialogDesc);
-          }
-          else {
-            DialogWrapper dialog;
-            dialog = new UntrackedFilesDialog(project, untrackedFiles, dialogDesc);
-            dialog.setTitle(title);
-            dialog.show();
-          }
+      public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+        final String dialogDesc = "These untracked files would be overwritten by" + operation;
+        String title = "Untracked Files Preventing " + StringUtil.capitalize(operation);
+        if (untrackedFiles.isEmpty()) {
+          GitUtil.showPathsInDialog(project, absolutePaths, title, dialogDesc);
+        }
+        else {
+          DialogWrapper dialog;
+          dialog = new UntrackedFilesDialog(project, untrackedFiles, dialogDesc);
+          dialog.setTitle(title);
+          dialog.show();
         }
       }
     });
-  }
-  
-  @NotNull
-  public static String createUntrackedFilesOverwrittenDescription(@NotNull final String operation, boolean addLinkToViewFiles) {
-    final String description1 = " untracked working tree files would be overwritten by " + operation + ".";
-    final String description2 = "Please move or remove them before you can " + operation + ".";
-    final String notificationDesc;
-    if (addLinkToViewFiles) {
-      notificationDesc = "Some" + description1 + "<br/>" + description2 + " <a href='view'>View them</a>";
-    }
-    else {
-      notificationDesc = "These" + description1 + "<br/>" + description2;
-    }
-    return notificationDesc;
+    VcsNotifier.getInstance(project).notify(notification);
   }
 
   /**
@@ -135,7 +124,7 @@ public class GitUntrackedFilesHelper {
         filesBrowser = ScrollPaneFactory.createScrollPane(new SelectFilesDialog.VirtualFileList(project, untrackedFiles, false, true));
       }
       String title = "Could not " + StringUtil.capitalize(operationName);
-      String description = StringUtil.stripHtml(createUntrackedFilesOverwrittenDescription(operationName, false), true);
+      String description = "These untracked files would be overwritten by " + operationName;
       DialogWrapper dialog = new UntrackedFilesRollBackDialog(project, filesBrowser, description, rollbackProposal);
       dialog.setTitle(title);
       DialogManager.show(dialog);
