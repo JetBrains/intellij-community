@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
@@ -38,6 +39,14 @@ public class RunDashboardTreeMouseListener extends RunDashboardLinkMouseListener
   }
 
   protected void repaintComponent(MouseEvent e) {
+    final TreePath path = myTree.getPathForLocation(e.getX(), e.getY());
+    if (path != null) {
+      final TreeNode treeNode = (TreeNode)path.getLastPathComponent();
+      // Invoke nodeChanged() in order to repaint ExpandableItemsHandler's tooltip component.
+      ((DefaultTreeModel)myTree.getModel()).nodeChanged(treeNode);
+    }
+
+    // Repaint all tree since nodes which cursor just leaved should be repaint too.
     myTree.repaint();
   }
 
