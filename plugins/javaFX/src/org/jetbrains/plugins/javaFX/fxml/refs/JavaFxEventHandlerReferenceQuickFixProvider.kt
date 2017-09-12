@@ -1,8 +1,5 @@
 package org.jetbrains.plugins.javaFX.fxml.refs
 
-import com.intellij.codeInsight.ExpectedTypeInfo
-import com.intellij.codeInsight.ExpectedTypesProvider.createInfo
-import com.intellij.codeInsight.TailType
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider
 import com.intellij.lang.jvm.JvmModifier
@@ -52,16 +49,14 @@ class CreateEventHandlerRequest(element: XmlAttributeValue) : CreateMethodReques
 
   override val methodName: String get() = myElement.value!!.substring(1)
 
-  override val returnType: Any? get() {
-    val typeInfo = createInfo(PsiType.VOID, ExpectedTypeInfo.TYPE_STRICTLY, PsiType.VOID, TailType.NONE)
-    return arrayOf(typeInfo)
-  }
+  override val returnType: ExpectedTypes get() = listOf(expectedType(PsiType.VOID, ExpectedType.Kind.EXACT))
 
   override val parameters: List<ExpectedParameter> get() {
     val eventType = getEventType(myElement)
-    val typeInfo = createInfo(eventType, ExpectedTypeInfo.TYPE_STRICTLY, eventType, TailType.NONE)
+    val expectedType = expectedType(eventType, ExpectedType.Kind.EXACT)
     val nameInfo = suggestParamName(myProject, eventType)
-    return listOf(ExpectedParameter(nameInfo, arrayOf(typeInfo)))
+    val parameter = ExpectedParameter(nameInfo, listOf(expectedType))
+    return listOf(parameter)
   }
 
   override val modifiers: Collection<JvmModifier> get() = setOf(myVisibility)

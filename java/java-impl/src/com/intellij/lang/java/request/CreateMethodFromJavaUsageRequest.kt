@@ -15,16 +15,11 @@
  */
 package com.intellij.lang.java.request
 
-import com.intellij.codeInsight.ExpectedTypeInfo
-import com.intellij.codeInsight.ExpectedTypesProvider
-import com.intellij.codeInsight.TailType
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils.guessExpectedTypes
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateMethodFromUsageFix.getTargetSubstitutor
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateMethodFromUsageFix.hasErrorsInArgumentList
 import com.intellij.lang.jvm.JvmModifier
-import com.intellij.lang.jvm.actions.AnnotationRequest
-import com.intellij.lang.jvm.actions.CreateMethodRequest
-import com.intellij.lang.jvm.actions.ExpectedParameter
+import com.intellij.lang.jvm.actions.*
 import com.intellij.lang.jvm.types.JvmSubstitutor
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
@@ -52,7 +47,7 @@ class CreateMethodFromJavaUsageRequest(
 
   override val methodName: String get() = methodCall.methodExpression.referenceName!!
 
-  override val returnType: Any? get() = guessExpectedTypes(methodCall, methodCall.parent is PsiStatement)
+  override val returnType: ExpectedTypes get() = guessExpectedTypes(methodCall, methodCall.parent is PsiStatement).map(::ExpectedJavaType)
 
   override val targetSubstitutor: JvmSubstitutor get() {
     val call = methodCall
@@ -76,11 +71,9 @@ class CreateMethodFromJavaUsageRequest(
         else if (argType is PsiWildcardType) {
           argType = if (argType.isBounded) argType.bound else PsiType.getJavaLangObject(psiManager, scope)
         }
-        val expectedTypeInfo = argType?.let {
-          ExpectedTypesProvider.createInfo(it, ExpectedTypeInfo.TYPE_OR_SUPERTYPE, argType, TailType.NONE)
-        }
-        val expectedTypes: Any? = expectedTypeInfo?.let { arrayOf(it) } ?: emptyArray<ExpectedTypeInfo>()
-        Pair(names, expectedTypes)
+        val expectedTypeInfo = argType?.let { expectedType(it, ExpectedType.Kind.SUPERTYPE) }
+        val expectedTypes = expectedTypeInfo?.let { listOf(it) } ?: emptyList()
+        ExpectedParameter(names, expectedTypes)
       }
     }
 

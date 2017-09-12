@@ -15,25 +15,15 @@
  */
 package com.intellij.lang.jvm.actions
 
-import com.intellij.lang.jvm.JvmModifier
-import com.intellij.lang.jvm.types.JvmSubstitutor
-import com.intellij.psi.codeStyle.SuggestedNameInfo
+import com.intellij.lang.jvm.types.JvmType
 
-interface CreateMethodRequest {
+typealias ExpectedTypes = List<ExpectedType>
 
-  val isValid: Boolean
-
-  val methodName: String
-
-  val returnType: ExpectedTypes
-
-  val modifiers: Collection<JvmModifier>
-
-  val annotations: Collection<AnnotationRequest>
-
-  val parameters: List<ExpectedParameter>
-
-  val targetSubstitutor: JvmSubstitutor
+fun expectedType(type: JvmType, kind: ExpectedType.Kind = ExpectedType.Kind.EXACT): ExpectedType {
+  return SimpleExpectedType(type, kind)
 }
 
-typealias ExpectedParameter = Pair<SuggestedNameInfo, ExpectedTypes>
+private class SimpleExpectedType(
+  override val theType: JvmType,
+  override val theKind: ExpectedType.Kind
+) : ExpectedType

@@ -15,9 +15,17 @@
  */
 package com.intellij.lang.java.actions
 
+import com.intellij.codeInsight.ExpectedTypeInfo
+import com.intellij.codeInsight.ExpectedTypesProvider
+import com.intellij.codeInsight.TailType
 import com.intellij.lang.java.JavaLanguage
+import com.intellij.lang.java.request.ExpectedJavaType
 import com.intellij.lang.jvm.JvmClass
 import com.intellij.lang.jvm.JvmModifier
+import com.intellij.lang.jvm.actions.ExpectedType
+import com.intellij.lang.jvm.actions.ExpectedTypes
+import com.intellij.openapi.project.Project
+import com.intellij.psi.JvmPsiConversionHelper
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiModifier.ModifierConstant
@@ -61,3 +69,25 @@ internal val visibilityModifiers = setOf(
   JvmModifier.PACKAGE_LOCAL,
   JvmModifier.PRIVATE
 )
+
+internal fun extractExpectedTypes(project: Project, expectedTypes: ExpectedTypes): List<ExpectedTypeInfo> {
+  return expectedTypes.mapNotNull {
+    toExpectedTypeInfo(project, it)
+  }
+}
+
+private fun toExpectedTypeInfo(project: Project, expectedType: ExpectedType): ExpectedTypeInfo? {
+  if (expectedType is ExpectedJavaType) return expectedType.info
+  val helper = JvmPsiConversionHelper.getInstance(project)
+  val psiType = helper.convertType(expectedType.theType) ?: return null
+  return ExpectedTypesProvider.createInfo(psiType, expectedType.theKind.infoKind(), psiType, TailType.NONE)
+}
+
+@ExpectedTypeInfo.Type
+private fun ExpectedType.Kind.infoKind(): Int {
+  return when (this) {
+    ExpectedType.Kind.EXACT -> ExpectedTypeInfo.TYPE_STRICTLY
+    ExpectedType.Kind.SUPERTYPE -> ExpectedTypeInfo.TYPE_OR_SUPERTYPE
+    ExpectedType.Kind.SUBTYPE -> ExpectedTypeInfo.TYPE_OR_SUBTYPE
+  }
+}

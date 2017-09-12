@@ -26,10 +26,10 @@ import com.intellij.codeInsight.template.Template
 import com.intellij.codeInsight.template.TemplateBuilder
 import com.intellij.codeInsight.template.TemplateBuilderImpl
 import com.intellij.codeInsight.template.TemplateEditingAdapter
-import com.intellij.lang.java.actions.Workaround.extractExpectedTypes
 import com.intellij.lang.java.request.CreateMethodFromJavaUsageRequest
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.CreateMethodRequest
+import com.intellij.lang.jvm.actions.ExpectedTypes
 import com.intellij.openapi.command.WriteCommandAction.runWriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -167,9 +167,9 @@ private class JavaMethodRenderer(
     return builder
   }
 
-  private fun setupTypeElement(guesser: GuessTypeParameters, typeElement: PsiTypeElement?, types: Any?) {
+  private fun setupTypeElement(guesser: GuessTypeParameters, typeElement: PsiTypeElement?, types: ExpectedTypes) {
     typeElement ?: return
-    val expectedTypes = extractExpectedTypes(types) ?: emptyArray()
+    val expectedTypes = extractExpectedTypes(project, types).toTypedArray()
     guesser.setupTypeElement(typeElement, expectedTypes, javaUsage?.context, targetClass)
   }
 

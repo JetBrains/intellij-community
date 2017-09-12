@@ -13,27 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.lang.jvm.actions
+package com.intellij.lang.java.request
 
-import com.intellij.lang.jvm.JvmModifier
-import com.intellij.lang.jvm.types.JvmSubstitutor
-import com.intellij.psi.codeStyle.SuggestedNameInfo
+import com.intellij.codeInsight.ExpectedTypeInfo
+import com.intellij.lang.jvm.actions.ExpectedType
+import com.intellij.lang.jvm.types.JvmType
 
-interface CreateMethodRequest {
+internal class ExpectedJavaType(val info: ExpectedTypeInfo) : ExpectedType {
 
-  val isValid: Boolean
+  override val theType: JvmType get() = info.defaultType
 
-  val methodName: String
-
-  val returnType: ExpectedTypes
-
-  val modifiers: Collection<JvmModifier>
-
-  val annotations: Collection<AnnotationRequest>
-
-  val parameters: List<ExpectedParameter>
-
-  val targetSubstitutor: JvmSubstitutor
+  override val theKind: ExpectedType.Kind
+    get() = when (info.kind) {
+      ExpectedTypeInfo.TYPE_OR_SUBTYPE -> ExpectedType.Kind.SUBTYPE
+      ExpectedTypeInfo.TYPE_OR_SUPERTYPE -> ExpectedType.Kind.SUPERTYPE
+      else -> ExpectedType.Kind.EXACT
+    }
 }
-
-typealias ExpectedParameter = Pair<SuggestedNameInfo, ExpectedTypes>
