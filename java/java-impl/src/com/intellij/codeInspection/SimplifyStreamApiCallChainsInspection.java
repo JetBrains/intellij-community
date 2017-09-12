@@ -1623,8 +1623,6 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
             if (comparatorType == null || !InheritanceUtil.isInheritor(comparatorType, CommonClassNames.JAVA_UTIL_COMPARATOR)) return null;
             comparator = maybeComparator.getText();
           }
-        } else if (args.length == 0) {
-          comparator = "";
         } else return null;
 
         String methodName = reversed ? "max" : "min";
