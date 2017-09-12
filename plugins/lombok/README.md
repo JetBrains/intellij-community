@@ -1,7 +1,13 @@
-lombok-intellij-plugin [![Build Status](https://travis-ci.org/mplushnikov/lombok-intellij-plugin.svg?branch=master)](https://travis-ci.org/mplushnikov/lombok-intellij-plugin) [![Code Coverage](https://img.shields.io/codecov/c/github/mplushnikov/lombok-intellij-plugin/master.svg)](https://codecov.io/github/mplushnikov/lombok-intellij-plugin?branch=master) [![Donate](https://www.paypal.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=3F9HXD7A2SMCN)
+lombok-intellij-plugin [![Donate](https://www.paypal.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=3F9HXD7A2SMCN)
 ======================
+[![Build Status][badge-travis-img]][badge-travis] [![Code Coverage](https://img.shields.io/codecov/c/github/mplushnikov/lombok-intellij-plugin/master.svg)](https://codecov.io/github/mplushnikov/lombok-intellij-plugin?branch=master)
 
-[![Join the chat at https://gitter.im/mplushnikov/lombok-intellij-plugin](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/mplushnikov/lombok-intellij-plugin?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![Version](http://phpstorm.espend.de/badge/6317/version)](https://plugins.jetbrains.com/plugin/6317)
+[![Downloads](http://phpstorm.espend.de/badge/6317/downloads)](https://plugins.jetbrains.com/plugin/6317)
+[![Downloads last month](http://phpstorm.espend.de/badge/6317/last-month)](https://plugins.jetbrains.com/plugin/6317)
+
+[![Gitter][badge-gitter-img]][badge-gitter] [![Donate][badge-paypal-img]][badge-paypal]
+
 
 ## Plugin for [IntelliJ IDEA](http://plugins.jetbrains.com/plugin/6317) to support [Lombok](https://projectlombok.org) annotations. ##
 
@@ -140,3 +146,12 @@ YourKit, LLC is the creator of [YourKit Java Profiler](https://www.yourkit.com/j
 License
 -------
 Copyright (c) 2011-2016 Michail Plushnikov. See the [LICENSE](./LICENSE) file for license rights and limitations (BSD).
+
+[badge-gitter-img]:       https://badges.gitter.im/mplushnikov/lombok-intellij-plugin.svg
+[badge-gitter]:           https://gitter.im/mplushnikov/lombok-intellij-plugin
+[badge-travis-img]:       https://travis-ci.org/mplushnikov/lombok-intellij-plugin.svg
+[badge-travis]:           https://travis-ci.org/mplushnikov/lombok-intellij-plugin
+[badge-coveralls-img]:    https://coveralls.io/repos/github/mplushnikov/lombok-intellij-plugin/badge.svg?branch=master
+[badge-coveralls]:        https://coveralls.io/github/mplushnikov/lombok-intellij-plugin?branch=master
+[badge-paypal-img]:       https://img.shields.io/badge/donate-paypal-yellow.svg
+[badge-paypal]:           https://www.paypal.me/mplushnikov
