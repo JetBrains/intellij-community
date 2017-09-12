@@ -33,10 +33,7 @@ interface CreateFieldRequest {
   val fieldName: String
 
   /**
-   * The common interface is not ready yet, so this is [Any]?.
-   * For Java language an array of [com.intellij.codeInsight.ExpectedTypeInfo] is returned now.
-   *
-   * @return expected type info of the field to be created
+   * @return expected types of the field to be created
    */
   val fieldType: ExpectedTypes
 
