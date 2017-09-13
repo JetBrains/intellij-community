@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.TimeoutUtil;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -46,7 +47,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 4/16/12
+ * @since 16.04.2012
  */
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 public class BuildMain {
@@ -65,10 +66,10 @@ public class BuildMain {
   private static final int SYSTEM_DIR_ARG = SESSION_ID_ARG + 1;
 
   private static NioEventLoopGroup ourEventLoopGroup;
-  @Nullable 
+  @Nullable
   private static PreloadedData ourPreloadedData;
 
-  public static void main(String[] args) throws Throwable{
+  public static void main(String[] args) {
     try {
       final long processStart = System.currentTimeMillis();
       final String startMessage = "Build process started. Classpath: " + System.getProperty("java.class.path");
@@ -78,7 +79,6 @@ public class BuildMain {
       final String host = args[HOST_ARG];
       final int port = Integer.parseInt(args[PORT_ARG]);
       final UUID sessionId = UUID.fromString(args[SESSION_ID_ARG]);
-      @SuppressWarnings("ConstantConditions")
       final File systemDir = new File(FileUtil.toCanonicalPath(args[SYSTEM_DIR_ARG]));
       Utils.setSystemRoot(systemDir);
 
@@ -96,19 +96,14 @@ public class BuildMain {
           }
           else {
             LOG.warn("Cannot create event loop, attempt #" + attempt, e);
-            try {
-              //noinspection BusyWait
-              Thread.sleep(10 * (attempt + 1));
-            }
-            catch (InterruptedException ignored) {
-            }
+            TimeoutUtil.sleep(10 * (attempt + 1));
           }
         }
       }
 
       final Bootstrap bootstrap = new Bootstrap().group(ourEventLoopGroup).channel(NioSocketChannel.class).handler(new ChannelInitializer() {
         @Override
-        protected void initChannel(Channel channel) throws Exception {
+        protected void initChannel(Channel channel) {
           channel.pipeline().addLast(new ProtobufVarint32FrameDecoder(),
                                      new ProtobufDecoder(CmdlineRemoteProto.Message.getDefaultInstance()),
                                      new ProtobufVarint32LengthFieldPrepender(),
@@ -175,6 +170,7 @@ public class BuildMain {
               targetsState.getTargetConfiguration(target);
             }
 
+            //noinspection ResultOfMethodCallIgnored
             BuilderRegistry.getInstance();
 
             LOG.info("Pre-loaded process ready in " + (System.currentTimeMillis() - processStart) + " ms");
@@ -217,7 +213,7 @@ public class BuildMain {
     }
 
     @Override
-    public void channelRead0(final ChannelHandlerContext context, CmdlineRemoteProto.Message message) throws Exception {
+    public void channelRead0(final ChannelHandlerContext context, CmdlineRemoteProto.Message message) {
       final CmdlineRemoteProto.Message.Type type = message.getType();
       final Channel channel = context.channel();
 
@@ -321,5 +317,4 @@ public class BuildMain {
       }
     }
   }
-
 }
