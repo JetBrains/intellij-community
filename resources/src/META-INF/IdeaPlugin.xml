@@ -967,6 +967,11 @@
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.OptionalAssignedToNullInspection"
                      displayName="Null value for Optional type"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="RequireNonNull"
+                     groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"
+                     implementationClass="com.intellij.codeInspection.RequireNonNullInspection"
+                     displayName="Null value for Optional type"/>
     <localInspection groupPath="Java" language="JAVA" shortName="Java9ModuleExportsPackageToItself"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.visibility.issues"
                      enabledByDefault="true" level="WARNING"
