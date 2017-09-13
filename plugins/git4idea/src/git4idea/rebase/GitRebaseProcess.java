@@ -391,12 +391,7 @@ public class GitRebaseProcess {
                                              MultiMap<GitRepository, GitRebaseUtils.CommitInfo> skippedCommits) {
     String description = "Resolve conflicts before continue.<br/>" + "To start over, abort rebase";
     description += GitRebaseUtils.mentionLocalChangesRemainingInStash(mySaver);
-    Notification notification = IMPORTANT_ERROR_NOTIFICATION.createNotification("Rebase suspended due to conflicts", description, NotificationType.WARNING, new NotificationListener.Adapter() {
-      @Override
-      protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
-        handlePossibleCommitLinks(e.getDescription(), skippedCommits);
-      }
-    });
+    Notification notification = IMPORTANT_ERROR_NOTIFICATION.createNotification("Rebase suspended due to conflicts", description, NotificationType.WARNING, new RebaseNotificationListener(skippedCommits));
     notification.addAction(new RebaseNotificationAction("Resolve...", conflictingRepository, skippedCommits));
     notification.addAction(new RebaseNotificationAction("Continue", conflictingRepository, skippedCommits));
     notification.addAction(new RebaseNotificationAction("Abort", conflictingRepository, skippedCommits));
@@ -415,12 +410,7 @@ public class GitRebaseProcess {
 
   private void showStoppedForEditingMessage(@NotNull GitRepository repository) {
     String description = "Apply changes and continue rebase";
-    Notification notification = IMPORTANT_ERROR_NOTIFICATION.createNotification("Rebase stopped for editing", description, NotificationType.INFORMATION, new NotificationListener.Adapter() {
-      @Override
-      protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
-        handlePossibleCommitLinks(e.getDescription(), MultiMap.empty());
-      }
-    });
+    Notification notification = IMPORTANT_ERROR_NOTIFICATION.createNotification("Rebase stopped for editing", description, NotificationType.INFORMATION, new RebaseNotificationListener(MultiMap.empty()));
     notification.addAction(new RebaseNotificationAction("Continue", repository, MultiMap.empty()));
     myNotifier.notify(notification);
   }
@@ -435,12 +425,7 @@ public class GitRebaseProcess {
                          mentionSkippedCommits(skippedCommits) +
                          GitRebaseUtils.mentionLocalChangesRemainingInStash(mySaver);
     String title = myRebaseSpec.getOngoingRebase() == null ? "Rebase failed" : "Continue rebase failed";
-    Notification notification = IMPORTANT_ERROR_NOTIFICATION.createNotification(title, description,NotificationType.ERROR,new NotificationListener.Adapter() {
-      @Override
-      protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
-        handlePossibleCommitLinks(e.getDescription(), MultiMap.empty());
-      }
-    });
+    Notification notification = IMPORTANT_ERROR_NOTIFICATION.createNotification(title, description, NotificationType.ERROR, new RebaseNotificationListener(skippedCommits));
     notification.addAction(new RebaseNotificationAction("Retry", currentRepository, skippedCommits));
     if (somethingWasRebased || !successful.isEmpty()) notification.addAction(new RebaseNotificationAction("Abort", currentRepository, skippedCommits));
     myNotifier.notify(notification);
@@ -532,6 +517,19 @@ public class GitRebaseProcess {
     ALL_RESOLVED,
     NOTHING_TO_MERGE,
     UNRESOLVED_REMAIN
+  }
+
+  private class RebaseNotificationListener extends NotificationListener.Adapter {
+    @NotNull private final MultiMap<GitRepository, GitRebaseUtils.CommitInfo> mySkippedCommits;
+
+    RebaseNotificationListener(@NotNull MultiMap<GitRepository, GitRebaseUtils.CommitInfo> skippedCommits) {
+      mySkippedCommits = skippedCommits;
+    }
+
+    @Override
+    protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
+      handlePossibleCommitLinks(e.getDescription(), mySkippedCommits);
+    }
   }
 
   private class RebaseNotificationAction extends NotificationAction {
