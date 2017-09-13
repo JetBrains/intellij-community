@@ -46,7 +46,7 @@ public class GenericTypeImpl implements GenericType {
     return false;
   }
 
-  GenericTypeImpl(@NotNull String primitiveName, @NotNull String genericName, @NotNull String defaultValue) {
+  public GenericTypeImpl(@NotNull String primitiveName, @NotNull String genericName, @NotNull String defaultValue) {
     myPrimitiveName = primitiveName;
     myGenericName = genericName;
     myDefaultValue = defaultValue;

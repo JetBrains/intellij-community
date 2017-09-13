@@ -13,19 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.debugger.streams.trace.impl.handler.type;
+package com.intellij.debugger.streams.trace.dsl
 
-import org.jetbrains.annotations.NotNull;
+import com.intellij.debugger.streams.trace.impl.handler.type.GenericType
 
 /**
  * @author Vitaliy.Bibaev
  */
-public class ClassTypeImpl extends GenericTypeImpl {
-  public ClassTypeImpl(@NotNull String name, @NotNull String defaultValue) {
-    super(name, name, defaultValue);
-  }
+interface Types {
+  val anyType: GenericType
+  val integerType: GenericType
+  val longType: GenericType
+  val booleanType: GenericType
+  val doubleType: GenericType
+  val stringType: GenericType
+  val basicExceptionType: GenericType
 
-  public ClassTypeImpl(@NotNull String name) {
-    this(name, "null");
-  }
+  val timeVariableType: GenericType
+
+  val listOfAny: GenericType
+    get() = list(anyType)
+
+  fun list(elementsType: GenericType): GenericType
+  fun map(keyType: GenericType, valueType: GenericType): GenericType
 }
