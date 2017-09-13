@@ -325,6 +325,7 @@
     <group id="FileHistory.KeymapGroup" text="File History">
       <reference id="Vcs.ShowHistoryForBlock"/>
       <reference id="Vcs.GetVersion"/>
+      <reference id="FileHistory.AnnotateRevision"/>
 
       <add-to-group group-id="Vcs.KeymapGroup"/>
     </group>
@@ -339,6 +340,7 @@
       <reference ref="Show.Current.Revision"/>
       <reference ref="Vcs.ShowHistoryForBlock"/>
       <reference ref="Vcs.ShowTabbedFileHistory"/>
+      <reference ref="Vcs.ShowHistoryForRevision"/>
       <reference ref="VcsHistory.ShowAllAffected"/>
       <reference ref="Compare.Specified"/>
       <reference ref="Compare.Selected"/>
