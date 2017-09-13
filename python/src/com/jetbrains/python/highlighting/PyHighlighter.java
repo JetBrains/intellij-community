@@ -112,7 +112,7 @@ public class PyHighlighter extends SyntaxHighlighterBase {
   public static final TextAttributesKey PY_FUNCTION_CALL = TextAttributesKey.createTextAttributesKey("PY.FUNCTION_CALL", FUNCTION_CALL);
   public static final TextAttributesKey PY_METHOD_CALL = TextAttributesKey.createTextAttributesKey("PY.METHOD_CALL", PY_FUNCTION_CALL);
 
-  public static final TextAttributesKey PY_ANNOTATION = TextAttributesKey.createTextAttributesKey("PY.ANNOTATION");
+  public static final TextAttributesKey PY_ANNOTATION = TextAttributesKey.createTextAttributesKey("PY.ANNOTATION", IDENTIFIER);
 
   public static final TextAttributesKey PY_VALID_STRING_ESCAPE = TextAttributesKey.createTextAttributesKey("PY.VALID_STRING_ESCAPE", VALID_STRING_ESCAPE);
 
