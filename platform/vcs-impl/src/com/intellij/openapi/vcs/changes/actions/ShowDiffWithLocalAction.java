@@ -93,4 +93,10 @@ public class ShowDiffWithLocalAction extends AnAction implements DumbAware {
   private static boolean isValidRevision(@Nullable ContentRevision revision) {
     return revision != null && !revision.getFile().isNonLocal() && !revision.getFile().isDirectory();
   }
+
+  public static class ShowDiffBeforeWithLocalAction extends ShowDiffWithLocalAction {
+    public ShowDiffBeforeWithLocalAction() {
+      super(true);
+    }
+  }
 }
