@@ -20,6 +20,7 @@ import com.intellij.openapi.components.ExpandMacroToPathMap;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
+import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.fileEditor.impl.FileEditorProviderManagerImpl;
 import com.intellij.openapi.util.Disposer;
@@ -73,6 +74,9 @@ public abstract class FileEditorManagerTestCase extends LightPlatformCodeInsight
       myOldDockContainers = null;
       ((ComponentManagerImpl)getProject()).registerComponentInstance(FileEditorManager.class, myOldManager);
       myManager.closeAllFiles();
+      for (VirtualFile file : EditorHistoryManager.getInstance(getProject()).getFiles()) {
+        EditorHistoryManager.getInstance(getProject()).removeFile(file);
+      }
       ((FileEditorProviderManagerImpl)FileEditorProviderManager.getInstance()).clearSelectedProviders();
     }
     finally {
@@ -80,11 +84,6 @@ public abstract class FileEditorManagerTestCase extends LightPlatformCodeInsight
       myOldManager = null;
       super.tearDown();
     }
-  }
-
-  @Override
-  protected boolean isWriteActionRequired() {
-    return false;
   }
 
   protected VirtualFile getFile(String path) {

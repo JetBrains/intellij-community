@@ -16,6 +16,8 @@
 package com.jetbrains.python.pyi;
 
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.fixtures.PyTestCase;
@@ -27,6 +29,18 @@ import org.jetbrains.annotations.NotNull;
  * @author vlan
  */
 public class PyiInspectionsTest extends PyTestCase {
+
+  private Disposable myRootsDisposable;
+
+  @Override
+  protected void tearDown() throws Exception {
+    if (myRootsDisposable != null) {
+      Disposer.dispose(myRootsDisposable);
+      myRootsDisposable = null;
+    }
+    super.tearDown();
+  }
+
   private void doTestByExtension(@NotNull Class<? extends LocalInspectionTool> inspectionClass, @NotNull String extension) {
     doTestByFileName(inspectionClass, getTestName(false) + extension);
   }
@@ -106,7 +120,7 @@ public class PyiInspectionsTest extends PyTestCase {
   }
 
   public void testPyiRelativeImports() {
-    PyiTypeTest.addPyiStubsToContentRoot(myFixture);
+    myRootsDisposable = PyiTypeTest.addPyiStubsToContentRoot(myFixture);
     doTestByFileName(PyUnresolvedReferencesInspection.class, "package_with_stub_in_path/a.pyi");
   }
 }
