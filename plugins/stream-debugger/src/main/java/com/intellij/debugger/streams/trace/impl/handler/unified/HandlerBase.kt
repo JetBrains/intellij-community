@@ -33,7 +33,7 @@ abstract class HandlerBase private constructor(protected val dsl: Dsl) : TraceHa
     }
   }
 
-  protected abstract fun getVariables(): List<VariableDeclaration>
+  internal abstract fun getVariables(): List<VariableDeclaration>
 
   abstract class Intermediate(dsl: Dsl) : HandlerBase(dsl), IntermediateCallHandler
 
