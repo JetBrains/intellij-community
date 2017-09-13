@@ -34,6 +34,7 @@ import org.jetbrains.idea.devkit.testAssistant.vfs.TestDataGroupVirtualFile;
 import javax.swing.*;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.ListIterator;
 
@@ -119,14 +120,36 @@ public class TestDataNavigationHandler implements GutterIconNavigationHandler<Ps
   private static List<TestDataNavigationElement> getElementsToDisplay(Project project, List<String> filePaths) {
     ContainerUtil.removeDuplicates(filePaths);
 
-    filePaths.sort((path1, path2) -> {
-      String name1 = PathUtil.getFileName(path1);
-      String name2 = PathUtil.getFileName(path2);
-      name1 = StringUtil.trimStart(name1, "before");
-      name2 = StringUtil.trimStart(name2, "before");
-      name1 = StringUtil.trimStart(name1, "after");
-      name2 = StringUtil.trimStart(name2, "after");
-      return name1.compareToIgnoreCase(name2);
+    filePaths.sort(new Comparator<String>() {
+      @Override
+      public int compare(String path1, String path2) {
+        String name1 = prepareToCompare(path1);
+        String name2 = prepareToCompare(path2);
+        return name1.compareToIgnoreCase(name2);
+      }
+
+      private String prepareToCompare(String path) {
+        String result = PathUtil.getFileName(path);
+        result = StringUtil.trimStart(result, "before");
+        result = StringUtil.trimStart(result, "after");
+
+        String extension = PathUtil.getFileExtension(result);
+        if (extension != null) {
+          extension = "." + extension;
+          if (result.endsWith("_after" + extension)) {
+            result = StringUtil.substringBeforeLast(result, "_after" + extension) + extension;
+          }
+          else if (result.endsWith("_before" + extension)) {
+            result = StringUtil.substringBeforeLast(result, "_before" + extension) + extension;
+          }
+        }
+        else {
+          result = StringUtil.trimEnd(result, "_after");
+          result = StringUtil.trimEnd(result, "_before");
+        }
+
+        return result;
+      }
     });
 
     List<TestDataNavigationElement> result = new ArrayList<>();

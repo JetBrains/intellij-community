@@ -1976,6 +1976,14 @@ public class StringUtil extends StringUtilRt {
     return text.substring(i + subString.length());
   }
 
+  @NotNull
+  @Contract(pure = true)
+  public static String substringBeforeLast(@NotNull String text, @NotNull String subString) {
+    int i = text.lastIndexOf(subString);
+    if (i == -1) return text;
+    return text.substring(0, i);
+  }
+
   /**
    * Allows to retrieve index of last occurrence of the given symbols at {@code [start; end)} sub-sequence of the given text.
    *
