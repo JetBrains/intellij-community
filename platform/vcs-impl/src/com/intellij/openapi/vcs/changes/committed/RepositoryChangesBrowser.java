@@ -16,7 +16,9 @@
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.ide.impl.TypeSafeDataProviderAdapter;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsDataKeys;
@@ -58,11 +60,7 @@ public class RepositoryChangesBrowser extends ChangesBrowser implements DataProv
   protected void buildToolBar(final DefaultActionGroup toolBarGroup) {
     super.buildToolBar(toolBarGroup);
 
-    ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction("Vcs.RepositoryChangesBrowserToolbar");
-    final AnAction[] actions = group.getChildren(null);
-    for (AnAction anAction : actions) {
-      toolBarGroup.add(anAction);
-    }
+    toolBarGroup.add(ActionManager.getInstance().getAction("Vcs.RepositoryChangesBrowserToolbar"));
   }
 
   public void setUseCase(final CommittedChangesBrowserUseCase useCase) {
