@@ -24,10 +24,12 @@ import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import org.jetbrains.annotations.NotNull
 
 class CopyReferenceActionTest extends LightCodeInsightFixtureTestCase {
   private int oldSetting
 
+  @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
     return JAVA_9
