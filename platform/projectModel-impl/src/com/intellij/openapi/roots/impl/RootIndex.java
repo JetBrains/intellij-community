@@ -195,12 +195,21 @@ public class RootIndex {
     for (AdditionalLibraryRootsProvider provider : Extensions.getExtensions(AdditionalLibraryRootsProvider.EP_NAME)) {
       Collection<SyntheticLibrary> libraries = provider.getAdditionalProjectLibraries(project);
       for (SyntheticLibrary descriptor : libraries) {
-        for (VirtualFile root : descriptor.getSourceRoots()) {
-          if (!ensureValid(root, project)) continue;
+        for (VirtualFile sourceRoot : descriptor.getSourceRoots()) {
+          if (!ensureValid(sourceRoot, project)) continue;
 
-          info.libraryOrSdkSources.add(root);
-          info.classAndSourceRoots.add(root);
-          info.sourceOfLibraries.putValue(root, descriptor);
+          info.libraryOrSdkSources.add(sourceRoot);
+          info.classAndSourceRoots.add(sourceRoot);
+          info.packagePrefix.put(sourceRoot, "");
+          info.sourceOfLibraries.putValue(sourceRoot, descriptor);
+        }
+        for (VirtualFile classRoot : descriptor.getBinaryRoots()) {
+          if (!ensureValid(classRoot, project)) continue;
+
+          info.libraryOrSdkClasses.add(classRoot);
+          info.classAndSourceRoots.add(classRoot);
+          info.packagePrefix.put(classRoot, "");
+          info.classOfLibraries.putValue(classRoot, descriptor);
         }
         for (VirtualFile file : descriptor.getExcludedRoots()) {
           if (!ensureValid(file, project)) continue;
@@ -669,7 +678,7 @@ public class RootIndex {
     @NotNull final MultiMap<VirtualFile, Module> sourceRootOf = MultiMap.createSet();
     @NotNull final TObjectIntHashMap<VirtualFile> rootTypeId = new TObjectIntHashMap<>();
     @NotNull final MultiMap<VirtualFile, /*Library|SyntheticLibrary*/ Object> excludedFromLibraries = MultiMap.createSmart();
-    @NotNull final MultiMap<VirtualFile, Library> classOfLibraries = MultiMap.createSmart();
+    @NotNull final MultiMap<VirtualFile, /*Library|SyntheticLibrary*/ Object> classOfLibraries = MultiMap.createSmart();
     @NotNull final MultiMap<VirtualFile, /*Library|SyntheticLibrary*/ Object> sourceOfLibraries = MultiMap.createSmart();
     @NotNull final Set<VirtualFile> excludedFromProject = ContainerUtil.newHashSet();
     @NotNull final Set<VirtualFile> excludedFromSdkRoots = ContainerUtil.newHashSet();
@@ -768,7 +777,7 @@ public class RootIndex {
           if (!sourceOfLibraries.containsKey(root)) {
             return Pair.create(root, Collections.emptySet());
           }
-          Collection<Object> rootProducers = findLibrarySourceRootProducers(librariesToIgnore, root);
+          Collection<Object> rootProducers = findLibraryRootProducers(sourceOfLibraries.get(root), root, librariesToIgnore);
           if (!rootProducers.isEmpty()) {
             return Pair.create(root, rootProducers);
           }
@@ -777,7 +786,7 @@ public class RootIndex {
           if (!classOfLibraries.containsKey(root)) {
             return Pair.create(root, Collections.emptySet());
           }
-          Collection<Object> rootProducers = findLibraryClassRootProducers(librariesToIgnore, root);
+          Collection<Object> rootProducers = findLibraryRootProducers(classOfLibraries.get(root), root, librariesToIgnore);
           if (!rootProducers.isEmpty()) {
             return Pair.create(root, rootProducers);
           }
@@ -787,16 +796,11 @@ public class RootIndex {
     }
 
     @NotNull
-    private Collection<Object> findLibraryClassRootProducers(Set<Object> librariesToIgnore, VirtualFile root) {
-      Set<Object> libraries = ContainerUtil.newHashSet(classOfLibraries.get(root));
-      libraries.removeAll(librariesToIgnore);
-      return libraries;
-    }
-
-    @NotNull
-    private Collection<Object> findLibrarySourceRootProducers(Set<Object> librariesToIgnore, VirtualFile root) {
+    private static Collection<Object> findLibraryRootProducers(@NotNull Collection<Object> producers,
+                                                               @NotNull VirtualFile root,
+                                                               @NotNull Set<Object> librariesToIgnore) {
       Set<Object> libraries = ContainerUtil.newHashSet();
-      for (Object library : sourceOfLibraries.get(root)) {
+      for (Object library : producers) {
         if (librariesToIgnore.contains(library)) continue;
         if (library instanceof SyntheticLibrary) {
           Condition<VirtualFile> exclusion = ((SyntheticLibrary)library).getExcludeFileCondition();

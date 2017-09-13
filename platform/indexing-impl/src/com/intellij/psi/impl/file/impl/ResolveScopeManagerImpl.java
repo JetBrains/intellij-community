@@ -22,7 +22,6 @@ import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.LibraryScopeCache;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.*;
@@ -35,12 +34,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.AdditionalIndexableFileSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-
-import static com.intellij.util.containers.ContainerUtil.newTroveSet;
 
 public class ResolveScopeManagerImpl extends ResolveScopeManager {
   private final Project myProject;
@@ -205,16 +200,11 @@ public class ResolveScopeManagerImpl extends ResolveScopeManager {
   private boolean isFromAdditionalLibraries(@NotNull final VirtualFile file) {
     for (final AdditionalLibraryRootsProvider provider : Extensions.getExtensions(AdditionalLibraryRootsProvider.EP_NAME)) {
       for (final SyntheticLibrary library : provider.getAdditionalProjectLibraries(myProject)) {
-        if (VfsUtilCore.isUnder(file, asSet(library.getSourceRoots())) && !VfsUtilCore.isUnder(file, library.getExcludedRoots())) {
+        if (SyntheticLibrary.contains(library, file)) {
           return true;
         }
       }
     }
     return false;
-  }
-
-  @NotNull
-  private static Set<VirtualFile> asSet(final Collection<VirtualFile> collection) {
-    return collection instanceof Set ? (Set)collection : newTroveSet(collection);
   }
 }
