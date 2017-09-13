@@ -41,3 +41,8 @@ Check you got "spam" in out.txt and "err" in "err.txt"
 Ensure permissions
 > launcher.exe python.exe -c "print(open('c:\\windows\\eggs.txt', 'w'))"
 Check no error
+
+--------
+How to check errors.
+Both tools report errors as error codes, stderr and event log under "Application".
+No event ids are registered, but you can check eventId and find appropriate ReportEvent call.

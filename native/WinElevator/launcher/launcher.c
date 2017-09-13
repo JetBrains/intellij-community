@@ -21,6 +21,14 @@
 
 // Author: Ilya Kazakevich
 
+
+#define ERR_FAIL_READ -1
+#define ERR_FAIL_WRITE -2
+#define ERR_GET_DIR -3
+#define ERR_LAUNCH -4
+#define ERR_FAIL_WAIT -5
+#define ERR_CREATE_PIPE -6
+
 // Pipe that should be connected to remote process
 typedef struct
 {
@@ -93,10 +101,14 @@ static void _AddStringToCommandLine(_Inout_ size_t* pchCurrentBufferChars, _Inou
 	}
 }
 
-
 // ThreadProc to connect pipe to remote process
 static DWORD _CreateConnectPipe(_PIPE_CONNECTION_INFO* pPipeInfo)
 {
+	WCHAR pipeName[40];
+	wsprintf(pipeName, L"JB-Launcher-Pipe-%ld", pPipeInfo->nDescriptor);
+	HANDLE eventSource = RegisterEventSourceW(NULL, pipeName);
+
+
 	ELEV_PIPE_NAME sPipeName;
 	ELEV_GEN_PIPE_NAME(sPipeName, pPipeInfo->nRemoteProcessPid, pPipeInfo->nDescriptor);
 	int access = (pPipeInfo->bFromExternalProcess ? PIPE_ACCESS_INBOUND : PIPE_ACCESS_OUTBOUND);
@@ -111,14 +123,16 @@ static DWORD _CreateConnectPipe(_PIPE_CONNECTION_INFO* pPipeInfo)
 		NULL);
 	if (hExternalPipe == NULL || hExternalPipe == INVALID_HANDLE_VALUE)
 	{
-		fwprintf(stderr, L"Failed to create in pipe: %ld", GetLastError());
-		exit(-1);
+		ReportEvent(eventSource, EVENTLOG_ERROR_TYPE, 0, ERR_CREATE_PIPE, NULL, 0, 0, NULL, NULL);
+		fwprintf(stderr, L"Failed to create in pipe: %ld", GetLastError());		
+		exit(ERR_CREATE_PIPE);
 	}
 
 	if (!ConnectNamedPipe(hExternalPipe, NULL))
 	{
-		fwprintf(stderr, L"Failed to wait for in pipe: %ld", GetLastError());
-		exit(-1);
+		ReportEvent(eventSource, EVENTLOG_ERROR_TYPE, 0, ERR_FAIL_WAIT, NULL, 0, 0, NULL, NULL);
+		fwprintf(stderr, L"Failed to wait for in pipe: %ld", GetLastError());		
+		exit(ERR_FAIL_WAIT);
 	}
 
 
@@ -139,8 +153,9 @@ static DWORD _CreateConnectPipe(_PIPE_CONNECTION_INFO* pPipeInfo)
 			{
 				break;
 			}
+			ReportEvent(eventSource, EVENTLOG_ERROR_TYPE, 0, ERR_FAIL_READ, NULL, 0, 0, NULL, NULL);
 			fwprintf(stderr, L"Failed to read from %ld: %ld", pPipeInfo->nDescriptor, GetLastError());
-			exit(-1);
+			exit(ERR_FAIL_READ);
 		}
 		if (!WriteFile(hToWrite, buffer, nBytesRead, &nBytesWritten, NULL))
 		{
@@ -150,13 +165,15 @@ static DWORD _CreateConnectPipe(_PIPE_CONNECTION_INFO* pPipeInfo)
 			{				
 				break;
 			}
+			ReportEvent(eventSource, EVENTLOG_WARNING_TYPE, 0, ERR_FAIL_WRITE, NULL, 0, 0, NULL, NULL);
 			fwprintf(stderr, L"Failed to write: %ld", GetLastError());
-			exit(-1);
+			exit(ERR_FAIL_WRITE);
 		}
 		FlushFileBuffers(hToWrite);
 	}
 	CloseHandle(hToWrite);
 	CloseHandle(hToRead);
+	DeregisterEventSource(eventSource);
 	return 0;
 }
 
@@ -183,6 +200,7 @@ static void _LaunchPipeThread(_PIPE_CONNECTION_INFO* pPipeInfo, _Out_opt_ PHANDL
 
 int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
 {
+	HANDLE eventSource = RegisterEventSourceW(NULL, L"JB-Launcher");
 
 	
 	DWORD nExitCode = 0;
@@ -235,8 +253,9 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
 	WCHAR sPath[MAX_PATH + 1];
 	if(!GetModuleFileName(NULL, sPath, MAX_PATH))
 	{
+		ReportEvent(eventSource, EVENTLOG_ERROR_TYPE, 0, ERR_GET_DIR, NULL, 0, 0, NULL, NULL);
 		fprintf(stderr, "Failed to get directory: %ld", GetLastError());
-		return 1;
+		return ERR_GET_DIR;
 	}
 
 	WCHAR sDrive[_MAX_DRIVE], sDir[_MAX_DIR], sFile[_MAX_FNAME], sExt[_MAX_EXT];
@@ -255,8 +274,9 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
 
 	if (!ShellExecuteEx(&execInfo))
 	{
+		ReportEvent(eventSource, EVENTLOG_ERROR_TYPE, 0, ERR_LAUNCH, NULL, 0, 0, NULL, NULL);
 		fprintf(stderr, "Failed to launch process: %ld", GetLastError());
-		return 1;
+		return ERR_LAUNCH;
 	}
 		
 	// Wait for all threads
@@ -271,5 +291,6 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
 	// Process should be ended here, lets wait
 	WaitForSingleObject(execInfo.hProcess, INFINITE);
 	GetExitCodeProcess(execInfo.hProcess, &nExitCode);
+	DeregisterEventSource(eventSource);
 	return nExitCode;
 }
