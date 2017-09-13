@@ -1,5 +1,5 @@
 try {
   this.hashCode();
-} catch(Exception e) {
+} catch(java.lang.Throwable e) {
   this.fail();
 };

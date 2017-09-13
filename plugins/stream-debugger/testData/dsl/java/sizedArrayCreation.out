@@ -1,1 +1,1 @@
-new String[100];
+new java.lang.String[100];
