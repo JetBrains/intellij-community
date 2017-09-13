@@ -42,7 +42,8 @@ public class ExcessiveLambdaUsageInspection extends BaseJavaBatchLocalInspection
     new ExcessiveLambdaInfo("java.util.OptionalDouble", "orElseGet", "orElse", 0, true),
     new ExcessiveLambdaInfo("com.google.common.base.Optional", "or", "*", 0, true),
     new ExcessiveLambdaInfo("java.util.Objects", "requireNonNull", "*", 1, true),
-    new ExcessiveLambdaInfo("org.junit.jupiter.api.Assertions", "assert.*|fail", "*", -1, true),
+    new ExcessiveLambdaInfo("java.util.Objects", "requireNonNullElseGet", "requireNonNullElse", 1, true),
+    new ExcessiveLambdaInfo("org.junit.jupiter.api.Assertions", "assert(?!Timeout).*|fail", "*", -1, true),
     new ExcessiveLambdaInfo("org.junit.jupiter.api.Assertions", "assert(True|False)", "*", 0, true),
   };
 

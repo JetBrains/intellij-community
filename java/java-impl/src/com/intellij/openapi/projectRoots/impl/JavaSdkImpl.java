@@ -576,6 +576,7 @@ public class JavaSdkImpl extends JavaSdk {
       return myJdkName;
     }
 
+    @NotNull
     @Override
     public String getVersionString() {
       return myVersionString;
@@ -600,7 +601,7 @@ public class JavaSdkImpl extends JavaSdk {
 
     @NotNull
     @Override
-    public Object clone() {
+    public Sdk clone() {
       return new MockSdk(myJdkName, myHomePath, myVersionString, new MultiMap<>(myRoots), myIsJre){
         @NotNull
         @Override
@@ -714,6 +715,11 @@ public class JavaSdkImpl extends JavaSdk {
     @Override
     public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
       throwReadOnly();
+    }
+
+    @Override
+    public String toString() {
+      return "MockSDK[" + myJdkName + "]";
     }
   }
 }
