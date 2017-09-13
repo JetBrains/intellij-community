@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.stubs.*;
 import com.intellij.util.indexing.FileContent;
+import com.intellij.util.indexing.IndexInfrastructure;
 import com.intellij.util.io.PersistentHashMap;
 import com.jetbrains.python.psi.PyFileElementType;
 import org.jetbrains.annotations.NotNull;
@@ -55,6 +56,10 @@ public class PyPrebuiltStubsProvider implements PrebuiltStubsProvider, Disposabl
     File indexesRoot = findPrebuiltIndexesRoot();
     try {
       if (indexesRoot != null) {
+        // we should copy prebuilt indexes to a writable folder
+        indexesRoot = copyPrebuiltIndexesToIndexRoot(indexesRoot);
+        // otherwise we can get access denied error, because persistent hash map opens file for read and write
+
         String stubVersion = FileUtil.loadFile(new File(indexesRoot, SDK_STUBS_STORAGE_NAME + ".version"));
 
         int currentVersion = PyFileElementType.INSTANCE.getStubVersion();
@@ -84,6 +89,14 @@ public class PyPrebuiltStubsProvider implements PrebuiltStubsProvider, Disposabl
       myPrebuiltStubsStorage = null;
       LOG.warn("Prebuilt stubs can't be loaded at " + indexesRoot, e);
     }
+  }
+
+  private static File copyPrebuiltIndexesToIndexRoot(File prebuiltIndicesRoot) throws IOException {
+    File indexRoot = new File(IndexInfrastructure.getPersistentIndexRoot(), "prebuilt");
+
+    FileUtil.copyDir(prebuiltIndicesRoot, indexRoot);
+
+    return indexRoot;
   }
 
 
