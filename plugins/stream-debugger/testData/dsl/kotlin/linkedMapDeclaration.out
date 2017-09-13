@@ -1,0 +1,1 @@
+var map: kotlin.collections.LinkedHashMap<kotlin.Int, kotlin.Boolean>

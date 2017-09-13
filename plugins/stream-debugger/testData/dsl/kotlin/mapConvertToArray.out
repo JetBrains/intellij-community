@@ -1,0 +1,14 @@
+var resultArray: kotlin.Array<kotlin.Any>
+run {
+  var size: kotlin.Int = map.size
+  var keys: kotlin.Array<kotlin.Int> = kotlin.arrayOfNulls<kotlin.Int>(size)
+  var values: kotlin.Array<kotlin.Any> = kotlin.arrayOfNulls<kotlin.Any>(size)
+  var i: kotlin.Int = 0
+  for (key in map.keys) {
+    keys[i] = key
+    values[i] = map[key]
+    i++
+  }
+  resultArray = kotlin.arrayOf<kotlin.Any>(keys, values)
+}
+

@@ -1,0 +1,1 @@
+var array: kotlin.Array<kotlin.Double> = kotlin.arrayOf<kotlin.Double>(10.0, 20.0)
