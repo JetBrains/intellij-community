@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -529,7 +529,7 @@ public class BraceHighlightingHandler {
     myAlarm.addRequest(() -> {
       if (myProject.isDisposed()) return;
       PsiDocumentManager.getInstance(myProject).performLaterWhenAllCommitted(() -> {
-        if (!myEditor.getComponent().isShowing()) return;
+        if (myEditor.isDisposed() || !myEditor.getComponent().isShowing()) return;
         Rectangle viewRect = myEditor.getScrollingModel().getVisibleArea();
         if (y < viewRect.y) {
           int start = lbraceStart;
