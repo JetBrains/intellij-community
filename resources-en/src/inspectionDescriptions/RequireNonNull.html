@@ -1,0 +1,8 @@
+<html>
+<body>
+This inspection suggests to replace null check with Objects static method.
+Example:
+<code>if(o == null) { o = ""; }</code> can be replaced with <code>o = Objects.requireNonNullElse(o, "");</code>
+<p><small>New in 2017.3</small></p>
+</body>
+</html>
