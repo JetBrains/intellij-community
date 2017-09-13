@@ -16,7 +16,6 @@
 package git4idea;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ByteBackedContentRevision;
@@ -26,7 +25,6 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.ContentRevisionCache;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vcsUtil.VcsFilePathUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.util.GitFileUtils;
@@ -161,12 +159,7 @@ public class GitContentRevision implements ByteBackedContentRevision {
                                     boolean canBeDeleted,
                                     boolean unescapePath) throws VcsException {
     String absolutePath = makeAbsolutePath(vcsRoot, path, unescapePath);
-    FilePath file = VcsUtil.getFilePath(absolutePath, false);
-    if (canBeDeleted && (! SystemInfo.isFileSystemCaseSensitive) && VcsFilePathUtil.caseDiffers(file.getPath(), absolutePath)) {
-      // as for deleted file
-      file = VcsUtil.getFilePath(absolutePath, false);
-    }
-    return file;
+    return VcsUtil.getFilePath(absolutePath, false);
   }
 
   @NotNull
