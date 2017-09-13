@@ -22,6 +22,8 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
+@Deprecated
+//use XAttachGroup<LocalAttachSettings>
 public interface XLocalAttachGroup extends XAttachGroup<LocalAttachSettings> {
   @NotNull
   @Deprecated

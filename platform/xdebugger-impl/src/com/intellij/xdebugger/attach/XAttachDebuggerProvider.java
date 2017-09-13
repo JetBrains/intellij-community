@@ -27,7 +27,7 @@ public interface XAttachDebuggerProvider<T extends AttachToProcessSettings> {
 
   /**
    * @return a group in which the supported processes should be visually organized.
-   * Return XLocalAttachGroup.DEFAULT for a common group.
+   * Return XAttachGroup.DEFAULT for a common group.
    */
   @NotNull
   default XAttachGroup<T> getAttachGroup() {
@@ -44,7 +44,7 @@ public interface XAttachDebuggerProvider<T extends AttachToProcessSettings> {
    *                      Lifetime of the data is restricted by a single Attach to Process action invocation.
    */
   @NotNull
-  List<XAttachDebugger<T>> getAvailableDebuggers(@NotNull Project project,
-                                                 @NotNull T info,
-                                                 @NotNull UserDataHolder contextHolder);
+  List<? extends XAttachDebugger<T>> getAvailableDebuggers(@NotNull Project project,
+                                                           @NotNull T info,
+                                                           @NotNull UserDataHolder contextHolder);
 }

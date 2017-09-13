@@ -28,15 +28,15 @@ public interface XLocalAttachDebuggerProvider extends XAttachDebuggerProvider<Lo
 
   @Deprecated
   @NotNull
-  List<XAttachDebugger<LocalAttachSettings>> getAvailableDebuggers(@NotNull Project project,
-                                                                   @NotNull ProcessInfo info,
-                                                                   @NotNull UserDataHolder contextHolder);
+  List<XLocalAttachDebugger> getAvailableDebuggers(@NotNull Project project,
+                                                   @NotNull ProcessInfo info,
+                                                   @NotNull UserDataHolder contextHolder);
 
   @NotNull
   @Override
-  default List<XAttachDebugger<LocalAttachSettings>> getAvailableDebuggers(@NotNull Project project,
-                                                                           @NotNull LocalAttachSettings settings,
-                                                                           @NotNull UserDataHolder contextHolder) {
+  default List<XLocalAttachDebugger> getAvailableDebuggers(@NotNull Project project,
+                                                           @NotNull LocalAttachSettings settings,
+                                                           @NotNull UserDataHolder contextHolder) {
     return getAvailableDebuggers(project, settings.getInfo(), contextHolder);
   }
 }
