@@ -167,7 +167,9 @@ static DWORD _CreateConnectPipe(_PIPE_CONNECTION_INFO* pPipeInfo)
 			}
 			ReportEvent(eventSource, EVENTLOG_WARNING_TYPE, 0, ERR_FAIL_WRITE, NULL, 0, 0, NULL, NULL);
 			fwprintf(stderr, L"Failed to write: %ld", GetLastError());
-			exit(ERR_FAIL_WRITE);
+			// Unability to write to remote pipe means there is nothing connected to stdout.
+			// Reason to report warning but not die (see IDEA-178958)
+			break;
 		}
 		FlushFileBuffers(hToWrite);
 	}
