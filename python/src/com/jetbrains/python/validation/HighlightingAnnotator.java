@@ -15,8 +15,8 @@
  */
 package com.jetbrains.python.validation;
 
-import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -31,6 +31,9 @@ import static com.jetbrains.python.psi.PyUtil.as;
  * @author yole
  */
 public class HighlightingAnnotator extends PyAnnotator {
+  public static final HighlightSeverity LOW_PRIORITY_HIGHLIGHTING = new HighlightSeverity("LOW_PRIORITY_HIGHLIGHTING",
+                                                                                          HighlightSeverity.INFORMATION.myVal - 3);
+
   @Override
   public void visitPyParameter(PyParameter node) {
     final PyFunction function = PsiTreeUtil.getParentOfType(node, PyFunction.class);
@@ -82,7 +85,7 @@ public class HighlightingAnnotator extends PyAnnotator {
   public void visitPyAnnotation(PyAnnotation node) {
     final PyExpression value = node.getValue();
     if (value != null) {
-      addHighlightingAnnotation(value, PyHighlighter.PY_ANNOTATION, HighlightInfoType.SYMBOL_TYPE_SEVERITY);
+      addHighlightingAnnotation(value, PyHighlighter.PY_ANNOTATION, LOW_PRIORITY_HIGHLIGHTING);
     }
   }
 
