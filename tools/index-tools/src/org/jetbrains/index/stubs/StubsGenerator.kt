@@ -125,7 +125,7 @@ fun writeStubsVersionFile(stubsStorageFilePath: String, stubsVersion: String) {
   FileUtil.writeToFile(File(stubsStorageFilePath + ".version"), stubsVersion)
 }
 
-fun mergeStubs(paths: List<String>, stubsFilePath: String, projectPath: String, stubsVersion: String) {
+fun mergeStubs(paths: List<String>, stubsFilePath: String, stubsFileName: String, projectPath: String, stubsVersion: String) {
   val app = IdeaTestApplication.getInstance()
   val project = ProjectManager.getInstance().loadAndOpenProject(projectPath)!!
   // we don't need a project here, but I didn't find a better way to wait until indexes and components are initialized
@@ -133,7 +133,7 @@ fun mergeStubs(paths: List<String>, stubsFilePath: String, projectPath: String, 
   try {
     val stubExternalizer = StubTreeExternalizer()
 
-    val storageFile = File(stubsFilePath + ".input")
+    val storageFile = File(stubsFilePath, stubsFileName + ".input")
     if (storageFile.exists()) {
       storageFile.delete()
     }
@@ -141,7 +141,7 @@ fun mergeStubs(paths: List<String>, stubsFilePath: String, projectPath: String, 
     val storage = PersistentHashMap<HashCode, SerializedStubTree>(storageFile,
                                                                   HashCodeDescriptor.instance, stubExternalizer)
 
-    val stringEnumeratorFile = File(stubsFilePath + ".names")
+    val stringEnumeratorFile = File(stubsFilePath, stubsFileName + ".names")
     if (stringEnumeratorFile.exists()) {
       stringEnumeratorFile.delete()
     }
@@ -150,16 +150,16 @@ fun mergeStubs(paths: List<String>, stubsFilePath: String, projectPath: String, 
 
     val map = HashMap<HashCode, Int>()
 
-    println("Writing results to $stubsFilePath")
+    println("Writing results to ${storageFile.absolutePath}")
 
     for (path in paths) {
       println("Reading stubs from $path")
       var count = 0
-      val fromStorageFile = File(path + ".input")
+      val fromStorageFile = File(path, stubsFileName + ".input")
       val fromStorage = PersistentHashMap<HashCode, SerializedStubTree>(fromStorageFile,
                                                                         HashCodeDescriptor.instance, stubExternalizer)
 
-      val serializationManager = SerializationManagerImpl(File(stubsFilePath + ".names"))
+      val serializationManager = SerializationManagerImpl(File(path, stubsFileName + ".names"))
 
       try {
         fromStorage.processKeysWithExistingMapping(
@@ -213,7 +213,7 @@ fun mergeStubs(paths: List<String>, stubsFilePath: String, projectPath: String, 
 
     println("Total items in storage: $total")
 
-    writeStubsVersionFile(stubsFilePath, stubsVersion)
+    writeStubsVersionFile(stringEnumeratorFile.nameWithoutExtension, stubsVersion)
 
     for (i in 2..paths.size) {
       val count = map.entries.stream().filter({ e -> e.value == i }).count()

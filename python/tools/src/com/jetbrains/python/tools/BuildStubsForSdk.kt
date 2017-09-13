@@ -47,7 +47,7 @@ fun main(args: Array<String>) {
 
   if (System.getenv().containsKey(MERGE_STUBS_FROM_PATHS)) {
 
-    mergeStubs(System.getenv(MERGE_STUBS_FROM_PATHS).split(File.pathSeparatorChar), "$baseDir/$stubsFileName",
+    mergeStubs(System.getenv(MERGE_STUBS_FROM_PATHS).split(File.pathSeparatorChar), "$baseDir", stubsFileName,
                "${PathManager.getHomePath()}/python/testData/empty", stubsVersion)
   }
   else {
