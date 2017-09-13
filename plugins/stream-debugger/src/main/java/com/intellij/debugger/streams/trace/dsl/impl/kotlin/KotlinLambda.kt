@@ -15,10 +15,19 @@
  */
 package com.intellij.debugger.streams.trace.dsl.impl.kotlin
 
-import com.intellij.debugger.streams.trace.dsl.StatementFactory
-import com.intellij.debugger.streams.trace.dsl.impl.LineSeparatedCodeBlock
+import com.intellij.debugger.streams.trace.dsl.CodeBlock
+import com.intellij.debugger.streams.trace.dsl.Expression
+import com.intellij.debugger.streams.trace.dsl.Lambda
+import com.intellij.debugger.streams.trace.dsl.impl.TextExpression
 
 /**
  * @author Vitaliy.Bibaev
  */
-open class KotlinCodeBlock(statementFactory: StatementFactory) : LineSeparatedCodeBlock(statementFactory)
+class KotlinLambda(override val variableName: String, override val body: CodeBlock) : Lambda {
+  override fun call(callName: String, vararg args: Expression): Expression = TextExpression("(${toCode()})").call(callName, *args)
+
+  override fun toCode(indent: Int): String =
+    "{ $variableName -> \n".withIndent(indent) +
+    body.toCode(indent + 1) +
+    "}"
+}

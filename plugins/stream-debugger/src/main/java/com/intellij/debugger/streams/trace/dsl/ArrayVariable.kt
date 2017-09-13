@@ -16,13 +16,14 @@
 package com.intellij.debugger.streams.trace.dsl
 
 import com.intellij.debugger.streams.trace.dsl.impl.TextExpression
+import com.intellij.debugger.streams.trace.impl.handler.type.GenericType
 
 
 /**
  * @author Vitaliy.Bibaev
  */
 interface ArrayVariable : Variable {
-  val elementType: String
+  val elementType: GenericType
 
   operator fun get(index: Expression): Expression
   operator fun get(index: Int): Expression = get(TextExpression(index.toString()))

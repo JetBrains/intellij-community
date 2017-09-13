@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.debugger.streams.trace.dsl.impl.java
+package com.intellij.debugger.streams.trace.dsl.impl.kotlin
 
 import com.intellij.debugger.streams.trace.dsl.ArrayVariable
 import com.intellij.debugger.streams.trace.dsl.Expression
@@ -25,11 +25,12 @@ import com.intellij.debugger.streams.trace.impl.handler.type.GenericType
 /**
  * @author Vitaliy.Bibaev
  */
-class JavaArrayVariable(override val elementType: GenericType, name: String) : VariableImpl("$elementType[]", name), ArrayVariable {
+class KotlinArrayVariable(override val elementType: GenericType, override val name: String)
+  : VariableImpl("kotlin.Array<${elementType.genericTypeName}>", name), ArrayVariable {
   override fun get(index: Expression): Expression = TextExpression("$name[${index.toCode()}]")
 
   override fun set(index: Expression, value: Expression): Expression = TextExpression("$name[${index.toCode()}] = ${value.toCode()}")
 
   override fun defaultDeclaration(size: Expression): VariableDeclaration =
-    JavaVariableDeclaration(this, false, TextExpression("new ${elementType.variableTypeName}[${size.toCode()}]"))
+    KotlinVariableDeclaration(this, false, "kotlin.arrayOfNulls<${elementType.variableTypeName}>(${size.toCode()})")
 }

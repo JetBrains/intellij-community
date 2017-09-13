@@ -15,10 +15,13 @@
  */
 package com.intellij.debugger.streams.trace.dsl.impl.kotlin
 
+import com.intellij.debugger.streams.trace.dsl.Dsl
+import com.intellij.debugger.streams.trace.dsl.ForLoopBody
 import com.intellij.debugger.streams.trace.dsl.StatementFactory
-import com.intellij.debugger.streams.trace.dsl.impl.LineSeparatedCodeBlock
+import com.intellij.debugger.streams.trace.dsl.Variable
 
 /**
  * @author Vitaliy.Bibaev
  */
-open class KotlinCodeBlock(statementFactory: StatementFactory) : LineSeparatedCodeBlock(statementFactory)
+class KotlinForLoopBody(override val loopVariable: Variable,
+                        statementFactory: StatementFactory) : KotlinCodeBlock(statementFactory), ForLoopBody

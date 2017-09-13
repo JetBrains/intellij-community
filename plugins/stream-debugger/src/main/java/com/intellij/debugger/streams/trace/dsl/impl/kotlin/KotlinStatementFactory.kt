@@ -17,6 +17,9 @@ package com.intellij.debugger.streams.trace.dsl.impl.kotlin
 
 import com.intellij.debugger.streams.trace.dsl.*
 import com.intellij.debugger.streams.trace.dsl.impl.AssignmentStatement
+import com.intellij.debugger.streams.trace.dsl.impl.TextExpression
+import com.intellij.debugger.streams.trace.dsl.impl.VariableImpl
+import com.intellij.debugger.streams.trace.impl.handler.PeekCall
 import com.intellij.debugger.streams.trace.impl.handler.type.GenericType
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
 
@@ -24,109 +27,74 @@ import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
  * @author Vitaliy.Bibaev
  */
 class KotlinStatementFactory : StatementFactory {
-  override val types: Types
-    get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
+  override val types: Types = KotlinTypes
 
-  override fun createEmptyCompositeCodeBlock(): CompositeCodeBlock {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+  override fun createEmptyCompositeCodeBlock(): CompositeCodeBlock = KotlinCodeBlock(this)
+
+  override fun createEmptyCodeBlock(): CodeBlock = KotlinCodeBlock(this)
+
+  override fun createVariableDeclaration(variable: Variable, isMutable: Boolean): VariableDeclaration =
+    KotlinVariableDeclaration(variable, isMutable)
+
+  override fun createVariableDeclaration(variable: Variable, init: Expression, isMutable: Boolean): VariableDeclaration =
+    KotlinVariableDeclaration(variable, isMutable, init.toCode())
+
+  override fun createEmptyForLoopBody(iterateVariable: Variable): ForLoopBody = KotlinForLoopBody(iterateVariable, this)
+
+  override fun createForEachLoop(iterateVariable: Variable, collection: Expression, loopBody: ForLoopBody): Statement =
+    KotlinForEachLoop(iterateVariable, collection, loopBody)
+
+  override fun createForLoop(initialization: VariableDeclaration, condition: Expression,
+                             afterThought: Expression, loopBody: ForLoopBody): Statement =
+    KotlinForLoop(initialization, condition, afterThought, loopBody)
+
+  override fun createEmptyLambdaBody(argName: String): LambdaBody = KotlinLambdaBody(argName, this)
+
+  override fun createLambda(argName: String, lambdaBody: LambdaBody): Lambda = KotlinLambda(argName, lambdaBody)
+
+  override fun createVariable(type: GenericType, name: String): Variable = VariableImpl(type.variableTypeName, name)
+
+  override fun and(left: Expression, right: Expression): Expression = TextExpression("${left.toCode()} && ${right.toCode()}")
+
+  override fun equals(left: Expression, right: Expression): Expression = TextExpression("${left.toCode()} == ${right.toCode()}")
+
+  override fun same(left: Expression, right: Expression): Expression = TextExpression("${left.toCode()} === ${right.toCode()}")
+
+  override fun createIfBranch(condition: Expression, thenBlock: CodeBlock): IfBranch =
+    KotlinIfBranch(condition, thenBlock, this)
+
+  override fun createAssignmentStatement(variable: Variable, expression: Expression): AssignmentStatement =
+    KotlinAssignmentStatement(variable, expression)
+
+  override fun createMapVariable(keyType: GenericType, valueType: GenericType, name: String, linked: Boolean): MapVariable =
+    KotlinMapVariable(keyType, valueType, name, linked)
+
+  override fun createArrayVariable(elementType: GenericType, name: String): ArrayVariable = KotlinArrayVariable(elementType, name)
+
+  override fun createScope(codeBlock: CodeBlock): Statement =
+    object : Statement {
+      override fun toCode(indent: Int): String =
+      "run {\n".withIndent(indent) +
+        codeBlock.toCode(indent + 1) +
+        "}".withIndent(indent)
+    }
+
+  override fun createTryBlock(block: CodeBlock): TryBlock = KotlinTryBlock(block, this)
+
+  override fun createTimeVariableDeclaration(): VariableDeclaration =
+    KotlinVariableDeclaration(createVariable(types.timeVariableType, "time"), false, types.timeVariableType.defaultValue)
+
+  override fun currentTimeExpression(): Expression = TextExpression("time.get()")
+
+  override fun updateCurrentTimeExpression(): Expression = TextExpression("time.incrementAndGet()")
+
+  override fun createNewArrayExpression(elementType: GenericType, vararg args: Expression): Expression {
+    val arguments = args.joinToString { it.toCode() }
+    return TextExpression("kotlin.arrayOf<${elementType.genericTypeName}>($arguments)")
   }
 
-  override fun createEmptyCodeBlock(): CodeBlock {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-  }
+  override fun createNewSizedArray(elementType: GenericType, size: Expression): Expression =
+    TextExpression("arrayOfNulls<${elementType.genericTypeName}>(${size.toCode()}")
 
-  override fun createVariableDeclaration(variable: Variable, isMutable: Boolean): VariableDeclaration {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-  }
-
-  override fun createVariableDeclaration(variable: Variable, init: Expression, isMutable: Boolean): VariableDeclaration {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-  }
-
-  override fun createEmptyForLoopBody(iterateVariable: Variable): ForLoopBody {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-  }
-
-  override fun createForEachLoop(iterateVariable: Variable, collection: Expression, loopBody: ForLoopBody): Statement {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-  }
-
-  override fun createForLoop(initialization: VariableDeclaration,
-                             condition: Expression,
-                             afterThought: Expression,
-                             loopBody: ForLoopBody): Statement {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-  }
-
-  override fun createEmptyLambdaBody(argName: String): LambdaBody {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-  }
-
-  override fun createLambda(argName: String, lambdaBody: LambdaBody): Lambda {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-  }
-
-  override fun createVariable(type: GenericType, name: String): Variable {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-  }
-
-  override fun and(left: Expression, right: Expression): Expression {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-  }
-
-  override fun equals(left: Expression, right: Expression): Expression {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-  }
-
-  override fun same(left: Expression, right: Expression): Expression {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-  }
-
-  override fun createIfBranch(condition: Expression, thenBlock: CodeBlock): IfBranch {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-  }
-
-  override fun createAssignmentStatement(variable: Variable, expression: Expression): AssignmentStatement {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-  }
-
-  override fun createMapVariable(keyType: GenericType, valueType: GenericType, name: String, linked: Boolean): MapVariable {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-  }
-
-  override fun createArrayVariable(elementType: GenericType, name: String): ArrayVariable {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-  }
-
-  override fun createScope(codeBlock: CodeBlock): Statement {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-  }
-
-  override fun createTryBlock(block: CodeBlock): TryBlock {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-  }
-
-  override fun createTimeVariableDeclaration(): VariableDeclaration {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-  }
-
-  override fun currentTimeExpression(): Expression {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-  }
-
-  override fun updateCurrentTimeExpression(): Expression {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-  }
-
-  override fun createNewArrayExpression(elementType: GenericType, args: Array<out Expression>): Expression {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-  }
-
-  override fun createNewSizedArray(elementType: GenericType, size: Expression): Expression {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-  }
-
-  override fun createPeekCall(elementsType: GenericType, lambda: String): IntermediateStreamCall {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-  }
+  override fun createPeekCall(elementsType: GenericType, lambda: String): IntermediateStreamCall = PeekCall(lambda, elementsType)
 }

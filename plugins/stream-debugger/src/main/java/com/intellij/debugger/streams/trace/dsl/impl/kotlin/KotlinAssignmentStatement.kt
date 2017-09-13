@@ -15,10 +15,13 @@
  */
 package com.intellij.debugger.streams.trace.dsl.impl.kotlin
 
-import com.intellij.debugger.streams.trace.dsl.StatementFactory
-import com.intellij.debugger.streams.trace.dsl.impl.LineSeparatedCodeBlock
+import com.intellij.debugger.streams.trace.dsl.Expression
+import com.intellij.debugger.streams.trace.dsl.Variable
+import com.intellij.debugger.streams.trace.dsl.impl.AssignmentStatement
 
 /**
  * @author Vitaliy.Bibaev
  */
-open class KotlinCodeBlock(statementFactory: StatementFactory) : LineSeparatedCodeBlock(statementFactory)
+class KotlinAssignmentStatement(override val variable: Variable, override val expression: Expression) : AssignmentStatement {
+  override fun toCode(indent: Int): String = "${variable.toCode()} = ${expression.toCode()}".withIndent(indent)
+}

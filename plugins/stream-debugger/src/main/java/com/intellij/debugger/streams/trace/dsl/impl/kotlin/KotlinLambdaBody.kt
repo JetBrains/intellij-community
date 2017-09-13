@@ -15,10 +15,10 @@
  */
 package com.intellij.debugger.streams.trace.dsl.impl.kotlin
 
+import com.intellij.debugger.streams.trace.dsl.LambdaBody
 import com.intellij.debugger.streams.trace.dsl.StatementFactory
-import com.intellij.debugger.streams.trace.dsl.impl.LineSeparatedCodeBlock
 
 /**
  * @author Vitaliy.Bibaev
  */
-open class KotlinCodeBlock(statementFactory: StatementFactory) : LineSeparatedCodeBlock(statementFactory)
+class KotlinLambdaBody(override val argName: String, statementFactory: StatementFactory) : KotlinCodeBlock(statementFactory), LambdaBody

@@ -15,10 +15,18 @@
  */
 package com.intellij.debugger.streams.trace.dsl.impl.kotlin
 
-import com.intellij.debugger.streams.trace.dsl.StatementFactory
-import com.intellij.debugger.streams.trace.dsl.impl.LineSeparatedCodeBlock
+import com.intellij.debugger.streams.trace.dsl.Variable
+import com.intellij.debugger.streams.trace.dsl.VariableDeclaration
 
 /**
  * @author Vitaliy.Bibaev
  */
-open class KotlinCodeBlock(statementFactory: StatementFactory) : LineSeparatedCodeBlock(statementFactory)
+class KotlinVariableDeclaration(override val variable: Variable,
+                                override val isMutable: Boolean,
+                                private val init: String = "") : VariableDeclaration {
+  override fun toCode(indent: Int): String {
+    val prefix = if (isMutable) "var" else "var"
+    val suffix = if (init.trim().isEmpty()) "" else " = $init"
+    return "$prefix ${variable.name}: ${variable.type}$suffix".withIndent(indent)
+  }
+}

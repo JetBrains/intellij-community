@@ -74,7 +74,7 @@ class JavaStatementFactory : StatementFactory {
     JavaMapVariable(keyType, valueType, name, linked)
 
   override fun createArrayVariable(elementType: GenericType, name: String): ArrayVariable =
-    JavaArrayVariable(elementType.variableTypeName, name)
+    JavaArrayVariable(elementType, name)
 
   override fun createScope(codeBlock: CodeBlock): Statement = object : Statement {
     override fun toCode(indent: Int): String = "{\n".withIndent(indent) +

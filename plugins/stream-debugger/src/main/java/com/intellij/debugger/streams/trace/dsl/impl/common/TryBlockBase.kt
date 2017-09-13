@@ -13,22 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.debugger.streams.trace.dsl.impl.java
+package com.intellij.debugger.streams.trace.dsl.impl.common
 
 import com.intellij.debugger.streams.trace.dsl.CodeBlock
 import com.intellij.debugger.streams.trace.dsl.StatementFactory
-import com.intellij.debugger.streams.trace.dsl.impl.common.TryBlockBase
+import com.intellij.debugger.streams.trace.dsl.TryBlock
+import com.intellij.debugger.streams.trace.dsl.Variable
 
 /**
  * @author Vitaliy.Bibaev
  */
-class JavaTryBlock(private val block: CodeBlock, statementFactory: StatementFactory) : TryBlockBase(statementFactory) {
-  override fun toCode(indent: Int): String {
-    val descriptor = myCatchDescriptor ?: error("catch block must be specified")
-    return "try {\n".withIndent(indent) +
-           block.toCode(indent + 1) +
-           "} catch(${statementFactory.createVariableDeclaration(descriptor.variable, true).toCode()}) {\n" +
-           descriptor.block.toCode(indent + 1) +
-           "}".withIndent(indent)
+abstract class TryBlockBase(protected val statementFactory: StatementFactory) : TryBlock {
+  protected var myCatchDescriptor: CatchBlockDescriptor? = null
+
+  override val isCatchAdded: Boolean
+    get() = myCatchDescriptor != null
+
+  override fun catch(variable: Variable, handler: CodeBlock.() -> Unit) {
+    val catchBlock = statementFactory.createEmptyCodeBlock()
+    catchBlock.handler()
+    myCatchDescriptor = CatchBlockDescriptor(variable, catchBlock)
   }
+
+  protected data class CatchBlockDescriptor(val variable: Variable, val block: CodeBlock)
 }

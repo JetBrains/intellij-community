@@ -15,10 +15,19 @@
  */
 package com.intellij.debugger.streams.trace.dsl.impl.kotlin
 
-import com.intellij.debugger.streams.trace.dsl.StatementFactory
-import com.intellij.debugger.streams.trace.dsl.impl.LineSeparatedCodeBlock
+import com.intellij.debugger.streams.trace.dsl.Expression
+import com.intellij.debugger.streams.trace.dsl.ForLoopBody
+import com.intellij.debugger.streams.trace.dsl.Statement
+import com.intellij.debugger.streams.trace.dsl.Variable
 
 /**
  * @author Vitaliy.Bibaev
  */
-open class KotlinCodeBlock(statementFactory: StatementFactory) : LineSeparatedCodeBlock(statementFactory)
+class KotlinForEachLoop(private val iterateVariable: Variable,
+                        private val collection: Expression,
+                        private val loopBody: ForLoopBody) : Statement {
+  override fun toCode(indent: Int): String =
+    "for (${iterateVariable.name} in ${collection.toCode()}) {\n".withIndent(indent) +
+    loopBody.toCode(indent + 1) +
+    "}".withIndent(indent)
+}

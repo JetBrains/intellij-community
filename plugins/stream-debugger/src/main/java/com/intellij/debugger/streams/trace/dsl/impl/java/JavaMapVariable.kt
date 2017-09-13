@@ -15,21 +15,22 @@
  */
 package com.intellij.debugger.streams.trace.dsl.impl.java
 
-import com.intellij.debugger.streams.trace.dsl.*
+import com.intellij.debugger.streams.trace.dsl.Expression
+import com.intellij.debugger.streams.trace.dsl.Lambda
+import com.intellij.debugger.streams.trace.dsl.Statement
+import com.intellij.debugger.streams.trace.dsl.VariableDeclaration
 import com.intellij.debugger.streams.trace.dsl.impl.TextExpression
-import com.intellij.debugger.streams.trace.dsl.impl.VariableImpl
+import com.intellij.debugger.streams.trace.dsl.impl.common.MapVariableBase
 import com.intellij.debugger.streams.trace.impl.handler.type.GenericType
 
 /**
  * @author Vitaliy.Bibaev
  */
-class JavaMapVariable(override val keyType: GenericType,
-                      override val valueType: GenericType,
-                      override val name: String,
+class JavaMapVariable(keyType: GenericType,
+                      valueType: GenericType,
+                      name: String,
                       private val linked: Boolean)
-  : VariableImpl("${getMapType(linked)}<${keyType.genericTypeName}, ${valueType.genericTypeName}>",
-                 name), MapVariable {
-
+  : MapVariableBase(keyType, valueType, "${getMapType(linked)}<${keyType.genericTypeName}, ${valueType.genericTypeName}>", name) {
   companion object {
     fun getMapType(linked: Boolean): String = "java.util.${if (linked) "Linked" else ""}HashMap"
   }
@@ -49,29 +50,4 @@ class JavaMapVariable(override val keyType: GenericType,
   override fun size(): Expression = call("size")
 
   override fun computeIfAbsent(key: Expression, supplier: Lambda): Statement = call("computeIfAbsent", key, supplier)
-
-  override fun convertToArray(dsl: Dsl, arrayName: String): String {
-    val resultArray = dsl.array(dsl.types.anyType, arrayName)
-    val size = dsl.variable(dsl.types.integerType, "size")
-    val keys = dsl.array(keyType, "keys")
-    val values = dsl.array(valueType, "values")
-    val i = dsl.variable(dsl.types.integerType, "i")
-    val key = dsl.variable(keyType, "key")
-    return dsl.code {
-      declare(resultArray, true)
-      scope {
-        declare(size, size(), false)
-        declare(keys.defaultDeclaration(size))
-        declare(values.defaultDeclaration(size))
-        declare(i, +"0", true)
-        forEachLoop(key, keys()) {
-          +keys.set(i, loopVariable)
-          +values.set(i, get(loopVariable))
-          +TextExpression("${i.toCode()}++")
-        }
-
-        resultArray.assign(newArray(dsl.types.anyType, keys, values))
-      }
-    }
-  }
 }
