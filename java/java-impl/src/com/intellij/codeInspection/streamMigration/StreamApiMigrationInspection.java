@@ -480,19 +480,17 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     if (isCountOperation(nonFinalVariables, tb)) {
       return new CountMigration(true);
     }
-    if (nonFinalVariables.size() == 0) {
-      CollectMigration.CollectTerminal terminal = CollectMigration.extractCollectTerminal(tb, nonFinalVariables);
-      if (terminal != null) {
-        boolean addAll = loop instanceof PsiForeachStatement && !tb.hasOperations() && isAddAllCall(tb);
-        // Don't suggest to convert the loop which can be trivially replaced via addAll:
-        // this is covered by UseBulkOperationInspection and ManualArrayToCollectionCopyInspection
-        if (addAll) return null;
-        boolean shouldWarn = replaceTrivialForEach ||
-                             tb.hasOperations() ||
-                             tb.getLastOperation() instanceof BufferedReaderLines ||
-                             !terminal.isTrivial();
-        return new CollectMigration(shouldWarn, terminal.getMethodName());
-      }
+    CollectMigration.CollectTerminal terminal = CollectMigration.extractCollectTerminal(tb, nonFinalVariables);
+    if (terminal != null) {
+      boolean addAll = loop instanceof PsiForeachStatement && !tb.hasOperations() && isAddAllCall(tb);
+      // Don't suggest to convert the loop which can be trivially replaced via addAll:
+      // this is covered by UseBulkOperationInspection and ManualArrayToCollectionCopyInspection
+      if (addAll) return null;
+      boolean shouldWarn = replaceTrivialForEach ||
+                           tb.hasOperations() ||
+                           tb.getLastOperation() instanceof BufferedReaderLines ||
+                           !terminal.isTrivial();
+      return new CollectMigration(shouldWarn, terminal.getMethodName());
     }
     if(JoiningMigration.extractTerminal(tb, nonFinalVariables) != null) {
       return new JoiningMigration(true);
