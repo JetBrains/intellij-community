@@ -50,13 +50,10 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.JpsModel;
-import org.jetbrains.jps.model.java.JpsJavaDependencyExtension;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
-import org.jetbrains.jps.model.java.JpsJavaLibraryType;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsLibraryRoot;
-import org.jetbrains.jps.model.library.JpsLibraryType;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.library.sdk.JpsSdkReference;
 import org.jetbrains.jps.model.module.JpsDependencyElement;
@@ -379,7 +376,9 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
         String contentUrl = ContainerUtil.getFirstItem(o.getContentRootsList().getUrls());
         if (contentUrl == null) return true;
         // add only community modules/plugins to avoid EP duplicates & minor IDE conflicts
-        return !isUltimate || contentUrl.contains("/community/") || ultimateModules.contains(o.getName());
+        return !isUltimate ||
+               contentUrl.contains("/community/") && !contentUrl.contains("/community/python") ||
+               ultimateModules.contains(o.getName());
       })
       .toList();
     indicator.setIndeterminate(false);
@@ -389,12 +388,14 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
       for (JpsDependencyElement dep : o.getDependenciesList().getDependencies()) {
         ProgressManager.checkCanceled();
         JpsLibrary library = dep instanceof JpsLibraryDependency ? ((JpsLibraryDependency)dep).getLibrary() : null;
-        JpsLibraryType<?> libraryType = library == null ? null : library.getType();
-        if (!(libraryType instanceof JpsJavaLibraryType)) continue;
-        JpsJavaDependencyExtension extension = javaService.getDependencyExtension(dep);
-        if (extension == null) continue;
+        if (library == null) continue;
 
         // do not check extension.getScope(), plugin projects need tests too
+        //JpsLibraryType<?> libraryType = library == null ? null : library.getType();
+        //if (!(libraryType instanceof JpsJavaLibraryType)) continue;
+        //JpsJavaDependencyExtension extension = javaService.getDependencyExtension(dep);
+        //if (extension == null) continue;
+
         for (JpsLibraryRoot jps : library.getRoots(JpsOrderRootType.COMPILED)) {
           VirtualFile root = vfsManager.findFileByUrl(jps.getUrl());
           if (root == null || !addedRoots.add(root)) continue;
