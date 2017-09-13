@@ -2097,7 +2097,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
               try {
                 if (needsFileContentLoading(indexId) && shouldIndexFile(file, indexId)) {
                   if (myDoTraceForFilesToBeIndexed) {
-                    LOG.info("Scheduling indexing of " + file + " by request of index " + indexId);
+                    LOG.trace("Scheduling indexing of " + file + " by request of index " + indexId);
                   }
                   synchronized (myFiles) {
                     myFiles.add(file);
