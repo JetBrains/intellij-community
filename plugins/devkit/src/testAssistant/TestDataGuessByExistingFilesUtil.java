@@ -18,7 +18,11 @@ package org.jetbrains.idea.devkit.testAssistant;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.ide.util.gotoByName.GotoFileModel;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.io.FileUtil;
@@ -40,6 +44,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import java.io.File;
@@ -171,56 +176,74 @@ public class TestDataGuessByExistingFilesUtil {
   private static TestDataDescriptor buildDescriptor(@NotNull String test,
                                                     @NotNull PsiClass psiClass)
   {
-    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(psiClass.getProject()).getFileIndex();
-    GotoFileModel gotoModel = new GotoFileModel(psiClass.getProject());
-    Map<String, TestLocationDescriptor> descriptorsByFileNames = new HashMap<>();
-    // PhpStorm has tests that use '$' symbol as a file path separator, e.g. 'test$while_stmt$declaration' test 
+    // PhpStorm has tests that use '$' symbol as a file path separator, e.g. 'test$while_stmt$declaration' test
     // stands for '/while_smt/declaration.php' file somewhere in a test data.
     final String possibleFileName = ContainerUtil.getLastItem(StringUtil.split(test, "$"), test);
     assert possibleFileName != null;
+    if (possibleFileName.isEmpty()) {
+      return TestDataDescriptor.NOTHING_FOUND;
+    }
+
+    Project project = psiClass.getProject();
+    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    GotoFileModel gotoModel = new GotoFileModel(project);
     final String possibleFilePath = test.replace('$', '/');
-    final Collection<String> fileNames = getAllFileNames(possibleFileName, gotoModel);
-    for (String name : fileNames) {
-      ProgressManager.checkCanceled();
-      final Object[] elements = gotoModel.getElementsByName(name, false, name);
-      for (Object element : elements) {
-        if (!(element instanceof PsiFile)) {
-          continue;
-        }
-        final VirtualFile file = ((PsiFile)element).getVirtualFile();
-        if (file == null || fileIndex.isInSource(file) && !fileIndex.isUnderSourceRootOfType(file, JavaModuleSourceRootTypes.RESOURCES)) {
-          continue;
-        }
+    Map<String, TestLocationDescriptor> descriptorsByFileNames = new HashMap<>();
+    boolean completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+      final Collection<String> fileNames = getAllFileNames(possibleFileName, gotoModel);
+      ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+      indicator.setIndeterminate(false);
+      ApplicationManager.getApplication().runReadAction(() -> {
+        int fileNamesCount = fileNames.size();
+        double currentIndex = 0;
+        for (String name : fileNames) {
+          ProgressManager.checkCanceled();
+          final Object[] elements = gotoModel.getElementsByName(name, false, name);
+          for (Object element : elements) {
+            if (!(element instanceof PsiFile)) {
+              continue;
+            }
+            final VirtualFile file = ((PsiFile)element).getVirtualFile();
+            if (file == null || fileIndex.isInSource(file) && !fileIndex.isUnderSourceRootOfType(file, JavaModuleSourceRootTypes.RESOURCES)) {
+              continue;
+            }
 
-        final String filePath = file.getPath();
-        if (!StringUtil.containsIgnoreCase(filePath, possibleFilePath) && !StringUtil.containsIgnoreCase(filePath, test)) {
-          continue;
-        }
-        final String fileName = PathUtil.getFileName(filePath).toLowerCase();
-        int i = fileName.indexOf(possibleFileName.toLowerCase());
-        // Skip files that doesn't contain target test name and files that contain digit after target test name fragment.
-        // Example: there are tests with names 'testEnter()' and 'testEnter2()' and we don't want test data file 'testEnter2'
-        // to be matched to the test 'testEnter()'.
-        if (i < 0 || (i + possibleFileName.length() < fileName.length())
-                     && Character.isDigit(fileName.charAt(i + possibleFileName.length()))) {
-          continue;
-        }
+            final String filePath = file.getPath();
+            if (!StringUtil.containsIgnoreCase(filePath, possibleFilePath) && !StringUtil.containsIgnoreCase(filePath, test)) {
+              continue;
+            }
+            final String fileName = PathUtil.getFileName(filePath).toLowerCase();
+            int i = fileName.indexOf(possibleFileName.toLowerCase());
+            // Skip files that doesn't contain target test name and files that contain digit after target test name fragment.
+            // Example: there are tests with names 'testEnter()' and 'testEnter2()' and we don't want test data file 'testEnter2'
+            // to be matched to the test 'testEnter()'.
+            if (i < 0 || (i + possibleFileName.length() < fileName.length())
+                         && Character.isDigit(fileName.charAt(i + possibleFileName.length()))) {
+              continue;
+            }
 
-        TestLocationDescriptor current = new TestLocationDescriptor();
-        current.populate(possibleFileName, file);
-        if (!current.isComplete()) {
-          continue;
-        }
+            TestLocationDescriptor current = new TestLocationDescriptor();
+            current.populate(possibleFileName, file);
+            if (!current.isComplete()) {
+              continue;
+            }
 
-        TestLocationDescriptor previousDescriptor = descriptorsByFileNames.get(name);
-        if (previousDescriptor == null) {
-          descriptorsByFileNames.put(name, current);
-          continue;
+            TestLocationDescriptor previousDescriptor = descriptorsByFileNames.get(name);
+            if (previousDescriptor == null) {
+              descriptorsByFileNames.put(name, current);
+              continue;
+            }
+            if (moreRelevantPath(current, previousDescriptor, psiClass)) {
+              descriptorsByFileNames.put(name, current);
+            }
+          }
+          indicator.setFraction(++currentIndex / fileNamesCount);
         }
-        if (moreRelevantPath(current, previousDescriptor, psiClass)) {
-          descriptorsByFileNames.put(name, current);
-        }
-      }
+      });
+    }, DevKitBundle.message("testdata.searching"), true, project);
+
+    if (!completed) {
+      throw new ProcessCanceledException();
     }
     return new TestDataDescriptor(descriptorsByFileNames.values(), possibleFileName);
   }
