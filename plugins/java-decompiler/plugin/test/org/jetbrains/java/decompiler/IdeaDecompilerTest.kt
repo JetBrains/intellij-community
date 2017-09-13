@@ -26,6 +26,8 @@ import com.intellij.ide.structureView.newStructureView.StructureViewComponent
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.application.PluginPathManager
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
+import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 import com.intellij.openapi.fileTypes.StdFileTypes
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
@@ -43,6 +45,14 @@ class IdeaDecompilerTest : LightCodeInsightFixtureTestCase() {
   override fun setUp() {
     super.setUp()
     myFixture.testDataPath = "${PluginPathManager.getPluginHomePath("java-decompiler")}/plugin/testData"
+  }
+
+  override fun tearDown() {
+    FileEditorManagerEx.getInstanceEx(project).closeAllFiles()
+    for (file in EditorHistoryManager.getInstance(project).files) {
+      EditorHistoryManager.getInstance(project).removeFile(file)
+    }
+    super.tearDown()
   }
 
   fun testSimple() {

@@ -303,6 +303,6 @@ public class UnsafeWeakList<T> extends AbstractList<T> {
   }
 
   private T throwNotRandomAccess() {
-    throw new IncorrectOperationException("UnsafeWeakList is not RandomAccess, use list.iterator() instead.");
+    throw new IncorrectOperationException("index/size-based operations in UnsafeWeakList are not supported because they don't make sense in the presence of weak references. Use list.iterator() (which retains elements to avoid sudden GC) instead.");
   }
 }

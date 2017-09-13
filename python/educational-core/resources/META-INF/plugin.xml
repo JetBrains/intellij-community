@@ -157,8 +157,6 @@
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <projectService serviceInterface="com.intellij.codeInsight.documentation.DocumentationManager"
-                      serviceImplementation="com.jetbrains.edu.learning.StudyDocumentationManager" overrides="true"/>
     <applicationConfigurable groupId="tools" instance="com.jetbrains.edu.learning.settings.StudyConfigurable"
                              id="com.jetbrains.edu.learning.settings.StudyConfigurable"
                              displayName="Education"/>

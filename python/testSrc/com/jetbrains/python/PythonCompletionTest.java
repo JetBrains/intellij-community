@@ -23,6 +23,7 @@ import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.testFramework.PsiTestUtil;
+import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -1067,7 +1068,7 @@ public class PythonCompletionTest extends PyTestCase {
                                                 "@six.add_metaclass(M)\n" +
                                                 "class C(object):\n" +
                                                 "    def foo(self):\n" +
-                                                "        C.ba<caret>x()");
+                                                "        C.ba<caret>()");
 
     assertNotNull(suggested);
     assertContainsElements(suggested, "baz");
@@ -1081,7 +1082,7 @@ public class PythonCompletionTest extends PyTestCase {
                                                 "@a_m(M)\n" +
                                                 "class C(object):\n" +
                                                 "    def foo(self):\n" +
-                                                "        C.ba<caret>x()");
+                                                "        C.ba<caret>()");
 
     assertNotNull(suggested);
     assertContainsElements(suggested, "baz");

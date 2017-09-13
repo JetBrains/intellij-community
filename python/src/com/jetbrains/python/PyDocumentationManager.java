@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.jetbrains.edu.learning;
+package com.jetbrains.python;
 
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.documentation.DocumentationManager;
@@ -26,15 +26,17 @@ import com.intellij.openapi.wm.WindowManager;
 
 import java.awt.*;
 
-public class StudyDocumentationManager extends DocumentationManager {
+public class PyDocumentationManager extends DocumentationManager {
 
-  public StudyDocumentationManager(Project project, ActionManager manager, TargetElementUtil targetElementUtil) {
+  public PyDocumentationManager(Project project, ActionManager manager, TargetElementUtil targetElementUtil) {
     super(project, manager, targetElementUtil);
   }
 
   @Override
   protected void setToolwindowDefaultState() {
     final Rectangle rectangle = WindowManager.getInstance().getIdeFrame(myProject).suggestChildFrameBounds();
-    myToolWindow.setDefaultState(ToolWindowAnchor.RIGHT, ToolWindowType.DOCKED, new Rectangle(rectangle.width/2, rectangle.height));
+    myToolWindow.setDefaultState(ToolWindowAnchor.RIGHT, ToolWindowType.DOCKED, new Rectangle(rectangle.width/4, rectangle.height));
+    myToolWindow.setType(ToolWindowType.DOCKED, null);
+    myToolWindow.setAutoHide(false);
   }
 }

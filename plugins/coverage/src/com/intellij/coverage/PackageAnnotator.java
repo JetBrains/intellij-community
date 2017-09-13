@@ -23,6 +23,7 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -37,6 +38,7 @@ import com.intellij.rt.coverage.data.LineData;
 import com.intellij.rt.coverage.data.ProjectData;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.SmartHashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
@@ -57,12 +59,14 @@ public class PackageAnnotator {
   private final Project myProject;
   private final PsiManager myManager;
   private final CoverageDataManager myCoverageManager;
+  private final boolean myIgnoreEmptyPrivateConstructors;
 
   public PackageAnnotator(final PsiPackage aPackage) {
     myPackage = aPackage;
     myProject = myPackage.getProject();
     myManager = PsiManager.getInstance(myProject);
     myCoverageManager = CoverageDataManager.getInstance(myProject);
+    myIgnoreEmptyPrivateConstructors = JavaCoverageOptionsProvider.getInstance(myProject).ignoreEmptyPrivateConstructors();
   }
 
   public interface Annotator {
@@ -455,7 +459,7 @@ public class PackageAnnotator {
           touchedClass = true;
         }
 
-        if (isGeneratedDefaultConstructor(psiClass, (String)nameAndSig)) {
+        if (myIgnoreEmptyPrivateConstructors && isGeneratedDefaultConstructor(psiClass, (String)nameAndSig)) {
           continue;
         }
 
@@ -505,16 +509,16 @@ public class PackageAnnotator {
    * in the bytecode, so we need to look at the PSI to see if the class defines such a constructor.
    */
   public static boolean isGeneratedDefaultConstructor(@Nullable final PsiClass aClass, String nameAndSig) {
+    if (aClass == null) {
+      return false;
+    }
     if (DEFAULT_CONSTRUCTOR_NAME_SIGNATURE.equals(nameAndSig)) {
       return hasGeneratedOrEmptyPrivateConstructor(aClass);
     }
     return false;
   }
 
-  private static boolean hasGeneratedOrEmptyPrivateConstructor(@Nullable final PsiClass aClass) {
-    if (aClass == null) {
-      return false;
-    }
+  private static boolean hasGeneratedOrEmptyPrivateConstructor(@NotNull final PsiClass aClass) {
     return ReadAction.compute(() -> {
       PsiMethod[] constructors = aClass.getConstructors();
       if (constructors.length == 1 && constructors[0].hasModifierProperty(PsiModifier.PRIVATE)) {
@@ -563,6 +567,6 @@ public class PackageAnnotator {
     if (coverageSuite == null) return false;
     return SourceLineCounterUtil
       .collectNonCoveredClassInfo(classCoverageInfo, packageCoverageInfo, content, coverageSuite.isTracingEnabled(),
-                                  psiClass);
+                                  myIgnoreEmptyPrivateConstructors ? description -> !isGeneratedDefaultConstructor(psiClass, description) : Condition.TRUE);
   }
 }

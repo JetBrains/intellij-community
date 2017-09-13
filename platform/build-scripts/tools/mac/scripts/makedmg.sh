@@ -37,17 +37,17 @@ echo "Creating unpacked r/w disk image ${VOLNAME}..."
 hdiutil create -srcfolder ./${EXPLODED} -volname "$VOLNAME" -anyowners -nospotlight -quiet -fs HFS+ -fsargs "-c c=64,a=16,e=16" -format UDRW $2.temp.dmg
 
 # check if the image already mounted
-if [ -d "/Volumes/$VOLNAME" ]; then
+if [ -d "/Volumes/$1" ]; then
   attempt=1
   limit=5
   while [ $attempt -le $limit ]
   do
-    echo "/Volumes/$VOLNAME - the image is already mounted. This build will wait for unmount for 1 min (up to 5 times)."
+    echo "/Volumes/$1 - the image is already mounted.  This build will wait for unmount for 1 min (up to 5 times)."
     sleep 60;
     let "attempt += 1"
-    if [ -d "/Volumes/$VOLNAME" ]; then
-      if [ $attempt -eq $limit ]; then
-        echo "/Volumes/$VOLNAME - the image is still mounted. By the reason the build will be stopped."
+    if [ -d "/Volumes/$1" ]; then
+      if [ $attempt -ge $limit ]; then
+        echo "/Volumes/$1 - the image is still mounted. By the reason the build will be stopped."
         rm -rf ${EXPLODED}
         rm -f $2.temp.dmg
         exit 1
@@ -58,16 +58,17 @@ fi
 
 # mount this image
 echo "Mounting unpacked r/w disk image..."
-device=$(hdiutil attach -readwrite -noverify -noautoopen $2.temp.dmg | egrep '^/dev/' | sed 1q | awk '{print $1.dmg}')
+device=$(hdiutil attach -readwrite -noverify -mountpoint /Volumes/"$1" -noautoopen $2.temp.dmg | egrep '^/dev/' | sed 1q | awk '{print $1.dmg}')
 echo "Mounted as ${device}."
 sleep 10
-find /Volumes/"$VOLNAME" -maxdepth 1
+find /Volumes/"$1" -maxdepth 1
 
 # set properties
 echo "Updating $VOLNAME disk image styles..."
-stat /Volumes/"$VOLNAME"/DSStorePlaceHolder || true
-rm /Volumes/"$VOLNAME"/DSStorePlaceHolder
-perl makedmg.pl "$VOLNAME" ${BG_PIC}
+stat /Volumes/"$1"/DSStorePlaceHolder || true
+rm /Volumes/"$1"/DSStorePlaceHolder
+perl makedmg.pl "$VOLNAME" ${BG_PIC} "$1"
+
 sync;sync;sync
 hdiutil detach ${device}
 

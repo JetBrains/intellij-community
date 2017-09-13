@@ -21,6 +21,7 @@ import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.execution.*;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.execution.testframework.SourceScope;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressManager;
@@ -278,7 +279,7 @@ public class JUnitUtil {
       return aPackage != null && aPackage.getDirectories(scope).length > 0;
     };
 
-    return foundCondition.value(TEST5_PACKAGE_FQN);
+    return ReadAction.compute(() -> foundCondition.value(TEST5_PACKAGE_FQN));
   }
   
   public static boolean isTestAnnotated(final PsiMethod method) {

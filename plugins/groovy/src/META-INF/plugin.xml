@@ -170,6 +170,8 @@
     <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall"
                     implementationClass="org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrDescriptorReturnTypeCalculator"/>
 
+    <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression"
+                    implementationClass="org.jetbrains.plugins.groovy.lang.typing.DefaultNewExpressionTypeCalculator" order="last"/>
     <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap" order="last"
                     implementationClass="org.jetbrains.plugins.groovy.lang.typing.DefaultListOrMapTypeCalculator"/>
     <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty" order="last"

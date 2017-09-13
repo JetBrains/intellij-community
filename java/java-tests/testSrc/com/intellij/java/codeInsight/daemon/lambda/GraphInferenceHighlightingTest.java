@@ -116,6 +116,7 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
   public void testIDEA149774() { doTest(); }
   public void testDisjunctionTypes() { doTest(); }
   public void testValidIntersectionTypeWithCapturedBounds() { doTest(); }
+  public void testValidIntersectionTypeWithCapturedBounds1() { doTest(); }
   public void testPushErasedStateToArguments() { doTest(); }
   public void testStopAtStandaloneConditional() { doTest(); }
   public void testTransitiveInferenceVariableDependencies() { doTest(); }

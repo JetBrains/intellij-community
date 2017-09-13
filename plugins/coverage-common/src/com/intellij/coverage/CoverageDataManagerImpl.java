@@ -137,7 +137,6 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
 
   @Override
   public void readExternal(Element element) throws InvalidDataException {
-    //noinspection unchecked
     for (Element suiteElement : element.getChildren(SUITE)) {
       final CoverageRunner coverageRunner = BaseCoverageSuite.readRunnerAttribute(suiteElement);
       // skip unknown runners
