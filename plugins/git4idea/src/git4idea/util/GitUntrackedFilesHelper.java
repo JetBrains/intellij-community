@@ -17,6 +17,7 @@ package git4idea.util;
 
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
+import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -27,7 +28,6 @@ import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.ui.SelectFilesDialog;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ScrollPaneFactory;
@@ -55,16 +55,16 @@ public class GitUntrackedFilesHelper {
   }
 
   /**
-   * Displays notification about {@code untracked files would be overwritten by checkout} error.
+   * Defines notification about {@code untracked files would be overwritten by checkout} error.
    * Clicking on the link in the notification opens a simple dialog with the list of these files.
    * @param root
    * @param relativePaths
    * @param operation   the name of the Git operation that caused the error: {@code rebase, merge, checkout}.
    * @param description the content of the notification or null if the default content is to be used.
    */
-  public static void notifyUntrackedFilesOverwrittenBy(@NotNull final Project project,
+  public static Notification notifyUntrackedFilesOverwrittenBy(@NotNull final Project project,
                                                        @NotNull final VirtualFile root, @NotNull Collection<String> relativePaths,
-                                                       @NotNull final String operation, @Nullable String description) {
+                                                       @NotNull final String operation, @Nullable String description, @Nullable NotificationListener listener) {
     final String notificationTitle = "Untracked files conflict with " + operation;
     final String notificationDesc = description == null ? "Please move or commit them before " + operation : description;
 
@@ -72,7 +72,7 @@ public class GitUntrackedFilesHelper {
     final List<VirtualFile> untrackedFiles = ContainerUtil.mapNotNull(absolutePaths,
                                                                       absolutePath -> GitUtil.findRefreshFileOrLog(absolutePath));
 
-    Notification notification = IMPORTANT_ERROR_NOTIFICATION.createNotification(notificationTitle, notificationDesc, NotificationType.ERROR,null);
+    Notification notification = IMPORTANT_ERROR_NOTIFICATION.createNotification(notificationTitle, notificationDesc, NotificationType.ERROR,listener);
     notification.addAction(new NotificationAction("View Files") {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
@@ -89,7 +89,7 @@ public class GitUntrackedFilesHelper {
         }
       }
     });
-    VcsNotifier.getInstance(project).notify(notification);
+    return notification;
   }
 
   /**

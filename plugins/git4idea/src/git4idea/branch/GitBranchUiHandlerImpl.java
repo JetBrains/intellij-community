@@ -118,7 +118,8 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
 
   @Override
   public void showUntrackedFilesNotification(@NotNull String operationName, @NotNull VirtualFile root, @NotNull Collection<String> relativePaths) {
-    GitUntrackedFilesHelper.notifyUntrackedFilesOverwrittenBy(myProject, root, relativePaths, operationName, null);
+    Notification notification = GitUntrackedFilesHelper.notifyUntrackedFilesOverwrittenBy(myProject, root, relativePaths, operationName, null, null);
+    VcsNotifier.getInstance(myProject).notify(notification);
   }
 
   @Override

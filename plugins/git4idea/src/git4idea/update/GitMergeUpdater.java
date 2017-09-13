@@ -15,6 +15,7 @@
  */
 package git4idea.update;
 
+import com.intellij.notification.Notification;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -24,6 +25,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ContentRevision;
@@ -123,9 +125,10 @@ public class GitMergeUpdater extends GitUpdater {
     }
     else if (untrackedFilesWouldBeOverwrittenByMergeDetector.wasMessageDetected()) {
       LOG.info("handleMergeFailure: untracked files would be overwritten by merge");
-      GitUntrackedFilesHelper.notifyUntrackedFilesOverwrittenBy(myProject, myRoot,
-                                                                untrackedFilesWouldBeOverwrittenByMergeDetector.getRelativeFilePaths(),
-                                                                "merge", null);
+      Notification notification = GitUntrackedFilesHelper.notifyUntrackedFilesOverwrittenBy(myProject, myRoot,
+                                                                             untrackedFilesWouldBeOverwrittenByMergeDetector.getRelativeFilePaths(),
+                                                                             "merge", null, null);
+      VcsNotifier.getInstance(myProject).notify(notification);
       return GitUpdateResult.ERROR;
     }
     else {

@@ -72,7 +72,8 @@ fun unstash(project: Project,
         if (!conflictsResolved) return
       }
       else if (untrackedFilesDetector.wasMessageDetected()) {
-        GitUntrackedFilesHelper.notifyUntrackedFilesOverwrittenBy(project, root, untrackedFilesDetector.relativeFilePaths, "unstash", null)
+        var notification = GitUntrackedFilesHelper.notifyUntrackedFilesOverwrittenBy(project, root, untrackedFilesDetector.relativeFilePaths, "unstash", null, null)
+        VcsNotifier.getInstance(project).notify(notification);
         return
       }
       else if (localChangesDetector.wasMessageDetected()) {

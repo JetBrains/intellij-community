@@ -394,7 +394,7 @@ public class GitRebaseProcess {
     Notification notification = IMPORTANT_ERROR_NOTIFICATION.createNotification("Rebase suspended due to conflicts", description, NotificationType.WARNING, new RebaseNotificationListener(skippedCommits));
     notification.addAction(new RebaseNotificationAction("Resolve...", conflictingRepository, skippedCommits));
     notification.addAction(new RebaseNotificationAction("Continue", conflictingRepository, skippedCommits));
-    notification.addAction(new RebaseNotificationAction("Abort", conflictingRepository, skippedCommits));
+    notification.addAction(new RebaseNotificationAction("Abort...", conflictingRepository, skippedCommits));
     myNotifier.notify(notification);
   }
 
@@ -427,7 +427,7 @@ public class GitRebaseProcess {
     String title = myRebaseSpec.getOngoingRebase() == null ? "Rebase failed" : "Continue rebase failed";
     Notification notification = IMPORTANT_ERROR_NOTIFICATION.createNotification(title, description, NotificationType.ERROR, new RebaseNotificationListener(skippedCommits));
     notification.addAction(new RebaseNotificationAction("Retry", currentRepository, skippedCommits));
-    if (somethingWasRebased || !successful.isEmpty()) notification.addAction(new RebaseNotificationAction("Abort", currentRepository, skippedCommits));
+    if (somethingWasRebased || !successful.isEmpty()) notification.addAction(new RebaseNotificationAction("Abort...", currentRepository, skippedCommits));
     myNotifier.notify(notification);
   }
 
@@ -439,7 +439,10 @@ public class GitRebaseProcess {
     String message = "Please move or commit them before rebasing <br/>" +
                      mentionSkippedCommits(skippedCommits) +
                      GitRebaseUtils.mentionLocalChangesRemainingInStash(mySaver);
-    GitUntrackedFilesHelper.notifyUntrackedFilesOverwrittenBy(myProject, currentRepository.getRoot(), untrackedPaths, "rebase", message);
+    Notification notification = GitUntrackedFilesHelper.notifyUntrackedFilesOverwrittenBy(myProject, currentRepository.getRoot(), untrackedPaths, "rebase", message, new RebaseNotificationListener(skippedCommits));
+    notification.addAction(new RebaseNotificationAction("Retry", currentRepository, skippedCommits));
+    if (somethingWasRebased || !successful.isEmpty()) notification.addAction(new RebaseNotificationAction("Abort...", currentRepository, skippedCommits));
+    myNotifier.notify(notification);
   }
 
   @NotNull
@@ -549,7 +552,7 @@ public class GitRebaseProcess {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-      if ("Abort".equals(actionName)) {
+      if ("Abort...".equals(actionName)) {
         abort();
         notification.expire();
       }

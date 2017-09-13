@@ -18,12 +18,14 @@ package git4idea.actions;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.history.Label;
 import com.intellij.history.LocalHistory;
+import com.intellij.notification.Notification;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.update.ActionInfo;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -133,8 +135,9 @@ abstract class GitMergeAction extends GitRepositoryAction {
                                                                  localChangesDetector.getRelativeFilePaths());
     }
     else if (untrackedFilesDetector.wasMessageDetected()) {
-      GitUntrackedFilesHelper.notifyUntrackedFilesOverwrittenBy(project, root, untrackedFilesDetector.getRelativeFilePaths(),
-                                                                getActionName(), null);
+      Notification notification = GitUntrackedFilesHelper.notifyUntrackedFilesOverwrittenBy(project, root, untrackedFilesDetector.getRelativeFilePaths(),
+                                                                             getActionName(), null, null);
+      VcsNotifier.getInstance(project).notify(notification);
     }
     else {
       GitUIUtil.notifyError(project, "Git " + getActionName() + " Failed", result.getErrorOutputAsJoinedString(), true, null);

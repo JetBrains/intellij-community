@@ -16,6 +16,7 @@
 package git4idea.rebase;
 
 import com.intellij.dvcs.DvcsUtil;
+import com.intellij.notification.Notification;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -335,8 +336,9 @@ public class GitRebaser {
     }
     else if (untrackedWouldBeOverwrittenDetector.wasMessageDetected()) {
       LOG.info("handleRebaseFailure: untracked files would be overwritten by checkout");
-      GitUntrackedFilesHelper.notifyUntrackedFilesOverwrittenBy(myProject, root,
-                                                                untrackedWouldBeOverwrittenDetector.getRelativeFilePaths(), "rebase", null);
+      Notification notification = GitUntrackedFilesHelper.notifyUntrackedFilesOverwrittenBy(myProject, root,
+                                                                             untrackedWouldBeOverwrittenDetector.getRelativeFilePaths(), "rebase", null, null);
+      VcsNotifier.getInstance(myProject).notify(notification);
       return GitUpdateResult.ERROR;
     }
     else if (localChangesDetector.wasMessageDetected()) {
