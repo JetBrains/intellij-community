@@ -18,13 +18,10 @@ package com.jetbrains.python.validation;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.python.highlighting.PyHighlighter;
-import com.jetbrains.python.psi.PyAnnotation;
 import com.jetbrains.python.psi.PyElementVisitor;
 import org.jetbrains.annotations.NotNull;
 
@@ -58,24 +55,21 @@ public abstract class PyAnnotator extends PyElementVisitor {
   }
 
   protected void addHighlightingAnnotation(@NotNull PsiElement target, @NotNull TextAttributesKey key) {
-    if (annotationHighlightingEnabled() && insideAnnotationValue(target) && key != PyHighlighter.PY_ANNOTATION) {
-      return;
-    }
+    addHighlightingAnnotation(target, key, HighlightSeverity.INFORMATION);
+  }
+
+  protected void addHighlightingAnnotation(@NotNull PsiElement target,
+                                           @NotNull TextAttributesKey key,
+                                           @NotNull HighlightSeverity severity) {
     final String message = myTestMode ? key.getExternalName() : null;
-    final Annotation annotation = getHolder().createInfoAnnotation(target, message);
+    // CodeInsightTestFixture#testHighlighting doesn't consider annotations with severity level < INFO
+    final HighlightSeverity actualSeverity =
+      myTestMode && severity.myVal < HighlightSeverity.INFORMATION.myVal ? HighlightSeverity.INFORMATION : severity;
+    final Annotation annotation = getHolder().createAnnotation(actualSeverity, target.getTextRange(), message);
     annotation.setTextAttributes(key);
   }
 
   protected void addHighlightingAnnotation(@NotNull ASTNode target, @NotNull TextAttributesKey key) {
     addHighlightingAnnotation(target.getPsi(), key);
-  }
-
-  private static boolean insideAnnotationValue(@NotNull PsiElement target) {
-    final PyAnnotation annotation = PsiTreeUtil.getParentOfType(target, PyAnnotation.class);
-    return annotation != null && PsiTreeUtil.isAncestor(annotation.getValue(), target, false);
-  }
-
-  private static boolean annotationHighlightingEnabled() {
-    return !EditorColorsManager.getInstance().getGlobalScheme().getAttributes(PyHighlighter.PY_ANNOTATION).isEmpty();
   }
 }

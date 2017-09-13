@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.validation;
 
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.psi.PsiElement;
@@ -81,7 +82,7 @@ public class HighlightingAnnotator extends PyAnnotator {
   public void visitPyAnnotation(PyAnnotation node) {
     final PyExpression value = node.getValue();
     if (value != null) {
-      addHighlightingAnnotation(value, PyHighlighter.PY_ANNOTATION);
+      addHighlightingAnnotation(value, PyHighlighter.PY_ANNOTATION, HighlightInfoType.SYMBOL_TYPE_SEVERITY);
     }
   }
 
