@@ -76,7 +76,7 @@ public class GitUntrackedFilesHelper {
     notification.addAction(new NotificationAction("View Files") {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-        final String dialogDesc = "These untracked files would be overwritten by" + operation;
+        final String dialogDesc = "These untracked files would be overwritten by " + operation;
         String title = "Untracked Files Preventing " + StringUtil.capitalize(operation);
         if (untrackedFiles.isEmpty()) {
           GitUtil.showPathsInDialog(project, absolutePaths, title, dialogDesc);
