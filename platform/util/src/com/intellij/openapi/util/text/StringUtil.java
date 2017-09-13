@@ -1968,20 +1968,20 @@ public class StringUtil extends StringUtilRt {
     return text.substring(0, i);
   }
 
-  @Nullable
-  @Contract(pure = true)
-  public static String substringAfter(@NotNull String text, @NotNull String subString) {
-    int i = text.indexOf(subString);
-    if (i == -1) return null;
-    return text.substring(i + subString.length());
-  }
-
   @NotNull
   @Contract(pure = true)
   public static String substringBeforeLast(@NotNull String text, @NotNull String subString) {
     int i = text.lastIndexOf(subString);
     if (i == -1) return text;
     return text.substring(0, i);
+  }
+
+  @Nullable
+  @Contract(pure = true)
+  public static String substringAfter(@NotNull String text, @NotNull String subString) {
+    int i = text.indexOf(subString);
+    if (i == -1) return null;
+    return text.substring(i + subString.length());
   }
 
   /**

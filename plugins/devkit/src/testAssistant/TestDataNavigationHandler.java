@@ -123,14 +123,13 @@ public class TestDataNavigationHandler implements GutterIconNavigationHandler<Ps
     filePaths.sort(new Comparator<String>() {
       @Override
       public int compare(String path1, String path2) {
-        String name1 = prepareToCompare(path1);
-        String name2 = prepareToCompare(path2);
+        String name1 = stripBeforeAfterFromFileName(PathUtil.getFileName(path1));
+        String name2 = stripBeforeAfterFromFileName(PathUtil.getFileName(path2));
         return name1.compareToIgnoreCase(name2);
       }
 
-      private String prepareToCompare(String path) {
-        String result = PathUtil.getFileName(path);
-        result = StringUtil.trimStart(result, "before");
+      private String stripBeforeAfterFromFileName(String name) {
+        String result = StringUtil.trimStart(name, "before");
         result = StringUtil.trimStart(result, "after");
 
         String extension = PathUtil.getFileExtension(result);

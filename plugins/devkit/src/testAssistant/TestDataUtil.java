@@ -45,7 +45,7 @@ class TestDataUtil {
   }
 
   @Nullable
-  public static TestDataGroupVirtualFile getTestDataGroup(@NotNull List<String> fileNames) {
+  static TestDataGroupVirtualFile getTestDataGroup(@NotNull List<String> fileNames) {
     if (fileNames.size() != 2) {
       return null;
     }
@@ -53,7 +53,7 @@ class TestDataUtil {
   }
 
   @Nullable
-  public static TestDataGroupVirtualFile getTestDataGroup(@NotNull String fileName1, @NotNull String fileName2) {
+  static TestDataGroupVirtualFile getTestDataGroup(@NotNull String fileName1, @NotNull String fileName2) {
     VirtualFile file1 = getFileByPath(fileName1);
     VirtualFile file2 = getFileByPath(fileName2);
     if (file1 == null || file2 == null) {
@@ -72,7 +72,7 @@ class TestDataUtil {
     return null;
   }
 
-  public static VirtualFile createFileByName(final Project project, final String path) {
+  static VirtualFile createFileByName(final Project project, final String path) {
     return ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
       public VirtualFile compute() {
         try {
@@ -88,7 +88,7 @@ class TestDataUtil {
     });
   }
 
-  public static void openOrAskToCreateFile(@NotNull Project project, @NotNull String path) {
+  static void openOrAskToCreateFile(@NotNull Project project, @NotNull String path) {
     VirtualFile file = getFileByPath(path);
     if (file != null) {
       new OpenFileDescriptor(project, file).navigate(true);
@@ -104,7 +104,7 @@ class TestDataUtil {
   }
 
   @Nullable
-  public static Icon getIcon(@NotNull String path) {
+  static Icon getIcon(@NotNull String path) {
     VirtualFile file = getFileByPath(path);
     if (file == null) {
       return null;
@@ -114,12 +114,12 @@ class TestDataUtil {
   }
 
   @Nullable
-  public static VirtualFile getFileByPath(String path) {
+  static VirtualFile getFileByPath(String path) {
     return LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
   }
 
   @Nullable
-  public static Pair<String, String> getModuleOrProjectRelativeParentPath(Project project, VirtualFile file) {
+  static Pair<String, String> getModuleOrProjectRelativeParentPath(Project project, VirtualFile file) {
     VirtualFile parent = file.getParent();
     if (parent == null) {
       // shouldn't happen

@@ -70,8 +70,7 @@ public class TestDataGuessByExistingFilesUtilTest extends TestDataPathTestCase {
     PsiClass testClass = (PsiClass)testMethod.getParent();
 
     List<String> result = TestDataGuessByExistingFilesUtil.suggestTestDataFiles("testdata_file", null, testClass);
-    assertOneElement(result);
-    String resultPath = result.get(0);
+    String resultPath = assertOneElement(result);
     assertTrue(resultPath, resultPath.endsWith("TestMoreRelevant/testdata_file.txt"));
   }
 
