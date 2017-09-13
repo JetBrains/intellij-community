@@ -145,14 +145,14 @@ public class JavadocParser {
         builder.advanceLexer();
         tagValue.done(JavaDocElementType.DOC_TAG_VALUE_ELEMENT);
       }
-      else if (!isInline && tagName != null && tagName.equals(PARAM_TAG)) {
-        parseSimpleTagValue(builder, true);
+      else if (!isInline && PARAM_TAG.equals(tagName)) {
+        parseParameterRef(builder);
       }
       else if (JavaParserUtil.getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_1_5) && VALUE_TAG.equals(tagName) && isInline) {
         parseSeeTagValue(builder, true);
       }
       else {
-        parseSimpleTagValue(builder, false);
+        parseSimpleTagValue(builder);
       }
     }
     else {
@@ -232,12 +232,21 @@ public class JavadocParser {
     refStart.done(JavaDocElementType.DOC_METHOD_OR_FIELD_REF);
   }
 
-  private static void parseSimpleTagValue(PsiBuilder builder, boolean parameter) {
+  private static void parseParameterRef(PsiBuilder builder) {
     PsiBuilder.Marker tagValue = builder.mark();
-    while (TAG_VALUES_SET.contains(getTokenType(builder))) {
+    while (TAG_VALUES_SET.contains(getTokenType(builder))) builder.advanceLexer();
+    tagValue.done(JavaDocElementType.DOC_PARAMETER_REF);
+  }
+
+  private static void parseSimpleTagValue(PsiBuilder builder) {
+    PsiBuilder.Marker tagData = builder.mark();
+    while (true) {
+      IElementType tokenType = getTokenType(builder);
+      if (tokenType == JavaDocTokenType.DOC_COMMENT_BAD_CHARACTER) builder.remapCurrentToken(JavaDocTokenType.DOC_TAG_VALUE_TOKEN);
+      else if (!TAG_VALUES_SET.contains(tokenType)) break;
       builder.advanceLexer();
     }
-    tagValue.done(parameter ? JavaDocElementType.DOC_PARAMETER_REF : JavaDocElementType.DOC_TAG_VALUE_ELEMENT);
+    tagData.done(JavaDocElementType.DOC_TAG_VALUE_ELEMENT);
   }
 
   @Nullable
