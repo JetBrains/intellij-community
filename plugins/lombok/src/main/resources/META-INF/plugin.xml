@@ -255,9 +255,9 @@
   <!--TODO @Builder is not supported on constructors with constructor type parameters..-->
   <change-notes><![CDATA[
 		<ul>
-		<li>0.16
+		<li>0.15.17.2
 				<ol>
-            <li>Fixed #: ....</li>
+            <li>Fixed #415: Plugin Error: Lombok Plugin threw an uncaught NoClassDefFoundError</li>
 				</ol>
 			</li>
 		<li>0.15
