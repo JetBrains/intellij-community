@@ -62,6 +62,12 @@ public class CamelHumpMatcher extends PrefixMatcher {
 
   @Override
   public boolean prefixMatches(@NotNull final String name) {
+    if (name.startsWith("_") &&
+        myPrefix.length() > 0 && Character.isLetter(myPrefix.charAt(0)) &&
+        CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE == CodeInsightSettings.FIRST_LETTER) {
+      return false;
+    }
+
     return myMatcher.matches(name);
   }
 

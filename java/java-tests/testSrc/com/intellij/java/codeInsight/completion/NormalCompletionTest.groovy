@@ -1821,4 +1821,9 @@ class Bar {
     checkResult()
   }
 
+  void testLowercaseDoesNotMatchUnderscore() {
+    configure()
+    assert myFixture.lookupElementStrings == ['web']
+  }
+
 }

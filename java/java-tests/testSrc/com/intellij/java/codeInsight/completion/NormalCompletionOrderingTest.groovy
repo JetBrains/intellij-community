@@ -443,10 +443,6 @@ interface TxANotAnno {}
     checkPreferredItems(0, 'fooBar', '_fooBar', 'FooBar')
   }
 
-  void testDispreferUnderscoredCaseMismatch() {
-    checkPreferredItems(0, 'fooBar', '__FOO_BAR')
-  }
-
   void testStatisticsMattersOnNextCompletion() {
     configureByFile(getTestName(false) + ".java")
     myFixture.completeBasic()

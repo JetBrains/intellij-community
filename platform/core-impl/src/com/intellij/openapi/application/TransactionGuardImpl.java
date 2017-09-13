@@ -28,6 +28,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -53,6 +54,7 @@ public class TransactionGuardImpl extends TransactionGuard {
 
   public TransactionGuardImpl() {
     myWriteSafeModalities.put(ModalityState.NON_MODAL, true);
+    myWritingAllowed = SwingUtilities.isEventDispatchThread(); // consider app startup a user activity
   }
 
   @NotNull
