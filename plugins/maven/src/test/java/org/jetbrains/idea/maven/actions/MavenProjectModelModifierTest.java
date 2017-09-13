@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -145,7 +145,7 @@ public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
                           "<version>1</version>");
     importProject();
 
-    Promise<Void> result = getExtension().addModuleDependency(getModule("m1"), getModule("m2"), DependencyScope.COMPILE);
+    Promise<Void> result = getExtension().addModuleDependency(getModule("m1"), getModule("m2"), DependencyScope.COMPILE, false);
     assertNotNull(result);
     assertHasDependency(m1, "test", "m2");
     waitUntilImported(result);
@@ -174,7 +174,7 @@ public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
     assertModuleLibDep("m2", libName);
     Library library = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject).getLibraryByName(libName);
     assertNotNull(library);
-    Promise<Void> result = getExtension().addLibraryDependency(getModule("m1"), library, DependencyScope.COMPILE);
+    Promise<Void> result = getExtension().addLibraryDependency(getModule("m1"), library, DependencyScope.COMPILE, false);
     assertNotNull(result);
     assertHasDependency(m1, "junit", "junit");
     waitUntilImported(result);
