@@ -24,11 +24,12 @@ interface MapVariable : Variable {
   val keyType: GenericType
   val valueType: GenericType
 
-  operator fun get(key: Expression): Expression
-  operator fun set(key: Expression, newValue: Expression): Expression
+  fun get(key: Expression): Expression
+  fun set(key: Expression, newValue: Expression): Expression
   fun contains(key: Expression): Expression
   fun size(): Expression
   fun keys(): Expression
+  fun computeIfAbsent(key: Expression, supplier: Lambda): Statement
 
   fun defaultDeclaration(isMutable: Boolean = true): VariableDeclaration
 
