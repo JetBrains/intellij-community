@@ -16,7 +16,6 @@
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.ide.presentation.Presentation;
@@ -32,12 +31,12 @@ import org.jetbrains.uast.UAnnotation;
 import org.jetbrains.uast.UExpression;
 import org.jetbrains.uast.UastContextKt;
 
-public class PresentationAnnotationInspection extends LocalInspectionTool {
+public class PresentationAnnotationInspection extends DevKitUastInspectionBase {
   private static final Logger LOG = Logger.getInstance(PresentationAnnotationInspection.class);
 
   @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  protected PsiElementVisitor buildInternalVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new PsiElementVisitor() {
       @Override
       public void visitElement(PsiElement element) {
