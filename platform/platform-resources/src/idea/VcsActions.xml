@@ -213,17 +213,14 @@
               icon="AllIcons.Vcs.Remove"/>
     </group>
 
-    <action id="Vcs.ShowDiffWithLocalForChanges.After" class="com.intellij.openapi.vcs.changes.actions.ShowDiffWithLocalAction"/>
-    <action id="Vcs.ShowDiffWithLocalForChanges.Before"
-            class="com.intellij.openapi.vcs.changes.actions.ShowDiffWithLocalAction$ShowDiffBeforeWithLocalAction"/>
     <action id="Vcs.EditSource" class="com.intellij.openapi.vcs.changes.committed.EditSourceFromChangesBrowserAction"
             use-shortcut-of="EditSource"/>
     <action id="Vcs.OpenRepositoryVersion" class="com.intellij.openapi.vcs.changes.actions.OpenRepositoryVersionAction"/>
     <action id="Vcs.RevertSelectedChanges" class="com.intellij.openapi.vcs.changes.actions.RevertSelectedChangesAction"/>
 
     <group id="Vcs.RepositoryChangesBrowserToolbar">
-      <reference ref="Vcs.ShowDiffWithLocalForChanges.After"/>
-      <reference ref="Vcs.ShowDiffWithLocalForChanges.Before"/>
+      <reference ref="Vcs.ShowDiffWithLocal"/>
+      <reference ref="Vcs.ShowDiffWithLocal.Before"/>
       <reference ref="Vcs.EditSource"/>
       <reference ref="Vcs.OpenRepositoryVersion"/>
       <reference ref="Vcs.RevertSelectedChanges"/>
@@ -312,7 +309,7 @@
     </action>
 
     <action id="WelcomeScreen.GetFromVcs" class="com.intellij.openapi.wm.impl.welcomeScreen.GetFromVcsAction"
-      icon="AllIcons.Welcome.FromVCS">
+            icon="AllIcons.Welcome.FromVCS">
       <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>
     </action>
 
@@ -401,8 +398,8 @@
       <reference ref="CommittedChanges.Clear"/>
       <reference ref="IncomingChanges.Refresh"/>
       <separator/>
-      <reference ref="Vcs.ShowDiffWithLocalForChanges.After"/>
-      <reference ref="Vcs.ShowDiffWithLocalForChanges.Before"/>
+      <reference ref="Vcs.ShowDiffWithLocal"/>
+      <reference ref="Vcs.ShowDiffWithLocal.Before"/>
       <reference ref="Vcs.EditSource"/>
       <reference ref="Vcs.OpenRepositoryVersion"/>
       <reference ref="Vcs.RevertSelectedChanges"/>

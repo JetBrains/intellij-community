@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.changes.actions;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.AnActionExtensionProvider;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.project.DumbAware;
@@ -34,7 +35,7 @@ import java.util.List;
 
 import static com.intellij.openapi.vcs.changes.actions.diff.ShowDiffAction.showDiffForChange;
 
-public class ShowDiffWithLocalAction extends AnAction implements DumbAware {
+public class ShowDiffWithLocalAction extends AnAction implements DumbAware, AnActionExtensionProvider {
   private final boolean myUseBeforeVersion;
 
   public ShowDiffWithLocalAction() {
@@ -45,6 +46,11 @@ public class ShowDiffWithLocalAction extends AnAction implements DumbAware {
   public ShowDiffWithLocalAction(boolean useBeforeVersion) {
     myUseBeforeVersion = useBeforeVersion;
     ActionUtil.copyFrom(this, useBeforeVersion ? "Vcs.ShowDiffWithLocal.Before" : "Vcs.ShowDiffWithLocal");
+  }
+
+  @Override
+  public boolean isActive(@NotNull AnActionEvent e) {
+    return e.getData(VcsDataKeys.CHANGES_SELECTION) != null;
   }
 
   public void actionPerformed(AnActionEvent e) {
