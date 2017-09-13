@@ -323,7 +323,6 @@
     </group>
 
     <group id="FileHistory.KeymapGroup" text="File History">
-      <reference id="Vcs.ShowHistoryForBlock"/>
       <reference id="Vcs.GetVersion"/>
       <reference id="FileHistory.AnnotateRevision"/>
 
