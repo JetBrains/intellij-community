@@ -20,6 +20,7 @@ import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.WindowsDistributionCustomizer
+import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 
 /**
@@ -206,10 +207,10 @@ IDS_VM_OPTIONS=$vmOptions
         arg(value: outputPath)
         classpath {
           pathelement(location: "$communityHome/build/lib/launcher-generator.jar")
-          fileset(dir: "$communityHome/lib") {
-            include(name: "guava*.jar")
-            include(name: "jdom.jar")
-            include(name: "commons-imaging*.jar")
+          ["Guava", "JDOM", "commons-imaging"].each {
+            buildContext.project.libraryCollection.findLibrary(it).getFiles(JpsOrderRootType.COMPILED).each {
+              pathelement(location: it.absolutePath)
+            }
           }
           resourceModules.collectMany { it.sourceRoots }.each { JpsModuleSourceRoot root ->
             pathelement(location: root.file.absolutePath)
