@@ -23,6 +23,7 @@ import com.intellij.ide.scratch.ScratchFileType;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -60,6 +61,9 @@ public abstract class AbstractProjectNode extends ProjectViewNode<Project> {
       for (Module module : nonGroupedModules) {
         result.add(createModuleGroup(module));
       }
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
     }
     catch (Exception e) {
       LOG.error(e);
