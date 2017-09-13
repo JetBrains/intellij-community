@@ -17,8 +17,8 @@ package org.jetbrains.idea.devkit.testAssistant.vfs;
 
 import com.intellij.ide.presentation.Presentation;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -42,11 +42,7 @@ public class TestDataGroupVirtualFile extends VirtualFile {
   @NotNull
   @Override
   public String getName() {
-    final String prefix = StringUtil.commonPrefix(myBeforeFile.getName(), myAfterFile.getName());
-    if (prefix.isEmpty()) {
-      return StringUtil.commonSuffix(myBeforeFile.getName(), myAfterFile.getName());
-    }
-    return prefix + "." + myBeforeFile.getExtension();
+    return myAfterFile.getName() + " | " + myAfterFile.getName();
   }
 
   @NotNull
