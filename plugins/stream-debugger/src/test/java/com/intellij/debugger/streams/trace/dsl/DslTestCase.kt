@@ -225,6 +225,15 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
     }
   }
 
+  fun testMapComputeIfAbsent() {
+    doTest {
+      val map = map(types.integerType, types.anyType, "map")
+      +map.computeIfAbsent(+"key", lambda("y") {
+        +map.call("method")
+      })
+    }
+  }
+
   fun testArrayDeclaration() {
     doTest {
       declare(array(types.integerType, "a"), false)

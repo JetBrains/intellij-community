@@ -48,6 +48,8 @@ class JavaMapVariable(override val keyType: GenericType,
 
   override fun size(): Expression = call("size")
 
+  override fun computeIfAbsent(key: Expression, supplier: Lambda): Statement = call("computeIfAbsent", key, supplier)
+
   override fun convertToArray(dsl: Dsl, arrayName: String): String {
     val resultArray = dsl.array(dsl.types.anyType, arrayName)
     val size = dsl.variable(dsl.types.integerType, "size")
