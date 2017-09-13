@@ -144,11 +144,7 @@ class AddModuleDependencyFix extends OrderEntryFix {
     if (module == null) return;
     Couple<Module> circularModules = ModuleCompilerUtil.addingDependencyFormsCircularity(myCurrentModule, module);
     if (circularModules == null || showCircularWarning(project, circularModules, module)) {
-      JavaProjectModelModificationService.getInstance(project).addDependency(myCurrentModule, module, myScope);
-
-      if (myExported) {
-        exportEntry(myCurrentModule, module);
-      }
+      JavaProjectModelModificationService.getInstance(project).addDependency(myCurrentModule, module, myScope, myExported);
 
       if (editor != null && !myClasses.isEmpty()) {
         PsiClass[] targetClasses = myClasses.stream()
@@ -166,13 +162,6 @@ class AddModuleDependencyFix extends OrderEntryFix {
                                             classModule.getName(), circle.getFirst().getName(), circle.getSecond().getName());
     String title = QuickFixBundle.message("orderEntry.fix.title.circular.dependency.warning");
     return Messages.showOkCancelDialog(project, message, title, Messages.getWarningIcon()) == Messages.OK;
-  }
-
-  private static void exportEntry(Module module, Module dependency) {
-    ModuleRootModificationUtil.updateModel(module, model -> {
-      ExportableOrderEntry entry = model.findModuleOrderEntry(dependency);
-      if (entry != null) entry.setExported(true);
-    });
   }
 
   @Override
