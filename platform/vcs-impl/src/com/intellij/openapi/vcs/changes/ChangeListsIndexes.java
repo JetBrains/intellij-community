@@ -30,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.util.containers.ContainerUtil.newHashMap;
 import static com.intellij.util.containers.ContainerUtil.newHashSet;
 
 public class ChangeListsIndexes {
@@ -126,32 +127,30 @@ public class ChangeListsIndexes {
                        Set<BeforeAfter<BaseRevision>> toModify) {
     TreeMap<FilePath, Data> oldMap = myMap;
     TreeMap<FilePath, Data> newMap = newIndexes.myMap;
-    Set<FilePath> oldFiles = oldMap.keySet();
-    Set<FilePath> newFiles = newMap.keySet();
 
-    final Set<FilePath> toRemoveSet = newHashSet(oldFiles);
-    toRemoveSet.removeAll(newFiles);
+    HashMap<FilePath, Data> newHashMap = newHashMap(newMap);
+    for (Map.Entry<FilePath, Data> entry : oldMap.entrySet()) {
+      FilePath s = entry.getKey();
+      Data oldData = entry.getValue();
+      Data newData = newHashMap.get(s);
 
-    final Set<FilePath> toAddSet = newHashSet(newFiles);
-    toAddSet.removeAll(oldFiles);
-
-    final Set<FilePath> toModifySet = newHashSet(oldFiles);
-    toModifySet.removeAll(toRemoveSet);
-
-    for (FilePath s : toRemoveSet) {
-      final Data data = oldMap.get(s);
-      toRemove.add(createBaseRevision(s, data));
+      if (newData != null) {
+        if (!oldData.sameRevisions(newData)) {
+          toModify.add(new BeforeAfter<>(createBaseRevision(s, oldData), createBaseRevision(s, newData)));
+        }
+      }
+      else {
+        toRemove.add(createBaseRevision(s, oldData));
+      }
     }
-    for (FilePath s : toAddSet) {
-      final Data data = newMap.get(s);
-      toAdd.add(createBaseRevision(s, data));
-    }
-    for (FilePath s : toModifySet) {
-      final Data oldData = oldMap.get(s);
-      final Data newData = newMap.get(s);
-      assert oldData != null && newData != null;
-      if (!oldData.sameRevisions(newData)) {
-        toModify.add(new BeforeAfter<>(createBaseRevision(s, oldData), createBaseRevision(s, newData)));
+
+    Set<FilePath> oldFiles = newHashSet(oldMap.keySet());
+    for (Map.Entry<FilePath, Data> entry : newMap.entrySet()) {
+      FilePath s = entry.getKey();
+      Data newData = entry.getValue();
+
+      if (!oldFiles.contains(s)) {
+        toAdd.add(createBaseRevision(s, newData));
       }
     }
   }
