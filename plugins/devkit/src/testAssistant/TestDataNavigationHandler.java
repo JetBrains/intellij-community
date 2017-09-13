@@ -129,22 +129,22 @@ public class TestDataNavigationHandler implements GutterIconNavigationHandler<Ps
       }
 
       private String stripBeforeAfterFromFileName(String name) {
-        String result = StringUtil.trimStart(name, "before");
-        result = StringUtil.trimStart(result, "after");
+        String result = StringUtil.trimStart(name, TestDataUtil.TESTDATA_FILE_BEFORE_PREFIX);
+        result = StringUtil.trimStart(result, TestDataUtil.TESTDATA_FILE_AFTER_PREFIX);
 
         String extension = PathUtil.getFileExtension(result);
         if (extension != null) {
           extension = "." + extension;
-          if (result.endsWith("_after" + extension)) {
-            result = StringUtil.substringBeforeLast(result, "_after" + extension) + extension;
+          if (result.endsWith(TestDataUtil.TESTDATA_FILE_AFTER_SUFFIX + extension)) {
+            result = StringUtil.substringBeforeLast(result, TestDataUtil.TESTDATA_FILE_AFTER_SUFFIX + extension) + extension;
           }
-          else if (result.endsWith("_before" + extension)) {
-            result = StringUtil.substringBeforeLast(result, "_before" + extension) + extension;
+          else if (result.endsWith(TestDataUtil.TESTDATA_FILE_BEFORE_SUFFIX + extension)) {
+            result = StringUtil.substringBeforeLast(result, TestDataUtil.TESTDATA_FILE_BEFORE_SUFFIX + extension) + extension;
           }
         }
         else {
-          result = StringUtil.trimEnd(result, "_after");
-          result = StringUtil.trimEnd(result, "_before");
+          result = StringUtil.trimEnd(result, TestDataUtil.TESTDATA_FILE_AFTER_SUFFIX);
+          result = StringUtil.trimEnd(result, TestDataUtil.TESTDATA_FILE_BEFORE_SUFFIX);
         }
 
         return result;

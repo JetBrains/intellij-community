@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -41,6 +42,12 @@ import java.io.IOException;
 import java.util.List;
 
 class TestDataUtil {
+  public static final String TESTDATA_FILE_BEFORE_PREFIX = "before";
+  public static final String TESTDATA_FILE_AFTER_PREFIX = "after";
+  // Note: these suffixes are used BEFORE the file extension
+  public static final String TESTDATA_FILE_BEFORE_SUFFIX = "_before";
+  public static final String TESTDATA_FILE_AFTER_SUFFIX = "_after";
+
   private TestDataUtil() {
   }
 
@@ -59,17 +66,39 @@ class TestDataUtil {
     if (file1 == null || file2 == null) {
       return null;
     }
-    int commonPrefixLength = StringUtil.commonPrefixLength(file1.getName(), file2.getName());
+    @NonNls String file1Name = file1.getName();
+    @NonNls String file2Name = file2.getName();
+
+    int commonPrefixLength = StringUtil.commonPrefixLength(file1Name, file2Name);
     if (commonPrefixLength == 0) {
-      return null;
+      //noinspection ConstantConditions - no NPE
+      if (isBeforeAfterPrefixedPair(file1Name, file2Name)) {
+        return new TestDataGroupVirtualFile(file1, file2);
+      }
+      if (isBeforeAfterPrefixedPair(file2Name, file1Name)) {
+        return new TestDataGroupVirtualFile(file2, file1);
+      }
     }
-    if (file1.getName().substring(commonPrefixLength).toLowerCase().contains("after")) {
+
+    if (isAfterSuffixed(file1Name, commonPrefixLength)) {
       return new TestDataGroupVirtualFile(file2, file1);
     }
-    if (file2.getName().substring(commonPrefixLength).toLowerCase().contains("after")) {
+    if (isAfterSuffixed(file2Name, commonPrefixLength)) {
       return new TestDataGroupVirtualFile(file1, file2);
     }
+
     return null;
+  }
+
+  private static boolean isBeforeAfterPrefixedPair(@NonNls String name1, @NonNls String name2) {
+    //noinspection ConstantConditions - no NPE
+    return name1.toLowerCase().startsWith(TESTDATA_FILE_BEFORE_PREFIX) && name2.startsWith(TESTDATA_FILE_AFTER_PREFIX)
+           && StringUtil.substringAfter(name1, TESTDATA_FILE_BEFORE_PREFIX)
+             .equals(StringUtil.substringAfter(name2, TESTDATA_FILE_AFTER_PREFIX));
+  }
+
+  private static boolean isAfterSuffixed(@NonNls String name, int commonPrefixLength) {
+    return name.substring(commonPrefixLength).toLowerCase().contains(TESTDATA_FILE_AFTER_SUFFIX);
   }
 
   static VirtualFile createFileByName(final Project project, final String path) {
