@@ -50,7 +50,7 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
 
   fun testDeclareImmutableVariable() {
     doTest {
-      +variable(types.integerType, "a")
+      declare(variable(types.integerType, "a"), true)
     }
   }
 
@@ -195,7 +195,7 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
   fun testMapGet() {
     doTest {
       val map = map(types.integerType, types.anyType, "map")
-      +map[+"key"]
+      +map.get(+"key")
     }
   }
 

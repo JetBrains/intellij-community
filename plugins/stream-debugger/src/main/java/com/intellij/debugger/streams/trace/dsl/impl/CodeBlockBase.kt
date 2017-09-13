@@ -22,9 +22,8 @@ import com.intellij.debugger.streams.trace.dsl.*
  */
 abstract class CodeBlockBase(private val myFactory: StatementFactory) : CompositeCodeBlock {
   private val myStatements: MutableList<Statement> = mutableListOf()
-  override fun Variable.unaryPlus(): Variable = declare(this, true)
 
-  override fun Expression.unaryPlus() {
+  override fun Statement.unaryPlus() {
     myStatements.add(this)
   }
 

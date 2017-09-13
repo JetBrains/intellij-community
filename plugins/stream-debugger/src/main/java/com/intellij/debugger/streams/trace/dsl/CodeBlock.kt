@@ -39,9 +39,7 @@ interface CodeBlock : Statement {
 
   fun call(receiver: Expression, methodName: String, vararg args: Expression): Expression
 
-  operator fun Variable.unaryPlus(): Variable
-
-  operator fun Expression.unaryPlus()
+  operator fun Statement.unaryPlus()
 
   fun Variable.assign(expression: Expression)
 }
