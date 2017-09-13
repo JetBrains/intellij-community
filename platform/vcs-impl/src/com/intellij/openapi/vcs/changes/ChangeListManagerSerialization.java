@@ -21,6 +21,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
@@ -32,7 +33,6 @@ class ChangeListManagerSerialization {
   @NonNls private static final String ATT_DEFAULT = "default";
   @NonNls private static final String ATT_READONLY = "readonly";
   @NonNls private static final String ATT_VALUE_TRUE = "true";
-  @NonNls private static final String ATT_CHANGE_TYPE = "type";
   @NonNls private static final String ATT_CHANGE_BEFORE_PATH = "beforePath";
   @NonNls private static final String ATT_CHANGE_AFTER_PATH = "afterPath";
   @NonNls private static final String ATT_PATH = "path";
@@ -127,12 +127,35 @@ class ChangeListManagerSerialization {
       listNode.setAttribute(ATT_COMMENT, comment);
     }
 
-    List<Change> changes = ContainerUtil.sorted(list.getChanges(), Comparator.comparing(Change::toString));
+    List<Change> changes = ContainerUtil.sorted(list.getChanges(), new ChangeComparator());
     for (Change change : changes) {
       listNode.addContent(writeChange(change));
     }
 
     return listNode;
+  }
+
+  private static class ChangeComparator implements Comparator<Change> {
+    @Override
+    public int compare(Change o1, Change o2) {
+      ContentRevision bRev1 = o1.getBeforeRevision();
+      ContentRevision bRev2 = o2.getBeforeRevision();
+      int delta = compareRevisions(bRev1, bRev2);
+      if (delta != 0) return delta;
+
+      ContentRevision aRev1 = o1.getAfterRevision();
+      ContentRevision aRev2 = o2.getAfterRevision();
+      return compareRevisions(aRev1, aRev2);
+    }
+
+    private static int compareRevisions(@Nullable ContentRevision bRev1, @Nullable ContentRevision bRev2) {
+      if (bRev1 == null && bRev2 == null) return 0;
+      if (bRev1 == null) return -1;
+      if (bRev2 == null) return 1;
+      String path1 = bRev1.getFile().getPath();
+      String path2 = bRev2.getFile().getPath();
+      return path1.compareTo(path2);
+    }
   }
 
   @NotNull
@@ -188,7 +211,6 @@ class ChangeListManagerSerialization {
   @NotNull
   private static Element writeChange(@NotNull Change change) {
     Element changeNode = new Element(NODE_CHANGE);
-    changeNode.setAttribute(ATT_CHANGE_TYPE, change.getType().name());
 
     ContentRevision bRev = change.getBeforeRevision();
     ContentRevision aRev = change.getAfterRevision();
