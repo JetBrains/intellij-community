@@ -241,6 +241,12 @@ public abstract class DialogWrapper {
       window.addComponentListener(myResizeListener);
     }
     createDefaultActions();
+
+  }
+
+  public void updateTouchBar() {
+    myButtonMap.values().stream().forEach(button -> ((JDialog)getWindow()).addTouchBarItem(button.getText(), () -> button.getAction().actionPerformed(null)));
+    myOptionsButtons.forEach(button -> ((JDialog)getWindow()).addTouchBarItem(button.getText(), () -> button.getAction().actionPerformed(null)));
   }
 
   /**

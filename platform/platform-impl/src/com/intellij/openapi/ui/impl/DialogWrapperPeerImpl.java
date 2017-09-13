@@ -900,6 +900,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
               Foundation.invoke(_native, "setCollectionBehavior:", 1 << 8);
             }
           }
+          myDialogWrapper.get().updateTouchBar();
         }
         SwingUtilities.invokeLater(() -> {
           myOpened = true;
