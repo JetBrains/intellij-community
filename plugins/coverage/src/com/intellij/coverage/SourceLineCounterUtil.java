@@ -17,6 +17,7 @@ package com.intellij.coverage;
 
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.ClassUtil;
@@ -29,11 +30,10 @@ import java.util.List;
 import java.util.Set;
 
 public class SourceLineCounterUtil {
-  public static boolean collectNonCoveredClassInfo(final PackageAnnotator.ClassCoverageInfo classCoverageInfo,
-                                                   final PackageAnnotator.PackageCoverageInfo packageCoverageInfo,
-                                                   byte[] content,
+  public static boolean collectNonCoveredClassInfo(final PackageAnnotator.ClassCoverageInfo classCoverageInfo, 
+                                                   final PackageAnnotator.PackageCoverageInfo packageCoverageInfo, byte[] content, 
                                                    final boolean excludeLines,
-                                                   final PsiClass psiClass) {
+                                                   final Condition<String> includeDescriptionCondition) {
     if (content == null) return false;
     ClassReader reader = new ClassReader(content, 0, content.length);
 
@@ -42,13 +42,13 @@ public class SourceLineCounterUtil {
     Set<Object> descriptions = new HashSet<>();
     TIntObjectHashMap<?> lines = counter.getSourceLines();
     lines.forEachEntry((line, description) -> {
-        if (!PackageAnnotator.isGeneratedDefaultConstructor(psiClass, (String)description)) {
-          classCoverageInfo.totalLineCount ++;
-          packageCoverageInfo.totalLineCount ++;
-          descriptions.add(description);
-        } 
-        return true;
-      });
+      if (includeDescriptionCondition.value((String)description)) {
+        classCoverageInfo.totalLineCount++;
+        packageCoverageInfo.totalLineCount++;
+        descriptions.add(description);
+      }
+      return true;
+    });
     
     classCoverageInfo.totalMethodCount += descriptions.size();
     packageCoverageInfo.totalMethodCount += descriptions.size();
@@ -68,10 +68,16 @@ public class SourceLineCounterUtil {
     reader.accept(collector, 0);
     
     String qualifiedName = reader.getClassName();
-    PsiClass psiClass = ReadAction.compute(() -> ClassUtil.findPsiClassByJVMName(PsiManager.getInstance(project), qualifiedName));
+    boolean ignoreEmptyPrivateConstructors = JavaCoverageOptionsProvider.getInstance(project).ignoreEmptyPrivateConstructors();
+    PsiClass psiClass = ignoreEmptyPrivateConstructors 
+                        ? ReadAction.compute(() -> ClassUtil.findPsiClassByJVMName(PsiManager.getInstance(project), qualifiedName)) 
+                        : null;
+    Condition<String> includeDescriptionCondition = ignoreEmptyPrivateConstructors 
+                                                    ? description -> !PackageAnnotator.isGeneratedDefaultConstructor(psiClass, description) 
+                                                    : Condition.TRUE;
     TIntObjectHashMap<?> lines = collector.getSourceLines();
     lines.forEachEntry((line, description) -> {
-      if (!PackageAnnotator.isGeneratedDefaultConstructor(psiClass, (String)description)) {
+      if (includeDescriptionCondition.value((String)description)) {
         line--;
         uncoveredLines.add(line);
       }
