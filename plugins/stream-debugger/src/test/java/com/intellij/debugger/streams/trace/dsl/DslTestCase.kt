@@ -16,7 +16,6 @@
 package com.intellij.debugger.streams.trace.dsl
 
 import com.intellij.debugger.streams.trace.dsl.impl.TextExpression
-import com.intellij.debugger.streams.trace.impl.handler.type.GenericType
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.exceptionCases.AbstractExceptionCase
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
@@ -45,26 +44,26 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
 
   fun testDeclareMutableVariable() {
     doTest {
-      declare(variable("int", "a"), true)
+      declare(variable(types.integerType, "a"), true)
     }
   }
 
   fun testDeclareImmutableVariable() {
     doTest {
-      +variable("int", "a")
+      +variable(types.integerType, "a")
     }
   }
 
   fun testDeclareVariableAndInit() {
     doTest {
-      declare(variable("int", "a"), +"10", false)
+      declare(variable(types.integerType, "a"), +"10", false)
     }
   }
 
   fun testUseVariable() {
     doTest {
-      declare(variable("int", "a"), +"100", true)
-      declare(variable("int", "b"), +"a", false)
+      declare(variable(types.integerType, "a"), +"100", true)
+      declare(variable(types.integerType, "b"), +"a", false)
     }
   }
 
@@ -129,8 +128,8 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
 
   fun testForEach() {
     doTest {
-      val objects = declare(variable("List", "objects"), +"getObjects()", false)
-      forEachLoop(variable("Object", "object"), objects) {
+      val objects = declare(variable(types.listOfAny, "objects"), +"getObjects()", false)
+      forEachLoop(variable(types.anyType, "object"), objects) {
         +(loopVariable.call("toString"))
       }
     }
@@ -138,8 +137,8 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
 
   fun testForLoop() {
     doTest {
-      val objects = declare(variable("List", "objects"), +"getObjects()", false)
-      val i = variable("int", "i")
+      val objects = declare(variable(types.listOfAny, "objects"), +"getObjects()", false)
+      val i = variable(types.integerType, "i")
       forLoop(declaration(i, +"0", true), +"i < $objects.size()", +"i++") {
         +(loopVariable.call("toString"))
       }
@@ -165,14 +164,14 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
 
   fun testAssignment() {
     doTest {
-      val a = declare(variable("int", "a"), true)
+      val a = declare(variable(types.integerType, "a"), true)
       a.assign(+"100")
     }
   }
 
   fun testNestedAssignment() {
     doTest {
-      val a = declare(variable("int", "a"), true)
+      val a = declare(variable(types.integerType, "a"), true)
       ifBranch(+"true") {
         a.assign(+"100")
       }.elseBranch {
@@ -183,58 +182,58 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
 
   fun testMapDeclaration() {
     doTest {
-      declare(map(GenericType.INT, GenericType.BOOLEAN, "map"), false)
+      declare(map(types.integerType, types.booleanType, "map"), false)
     }
   }
 
   fun testLinkedMapDeclaration() {
     doTest {
-      declare(linkedMap(GenericType.INT, GenericType.BOOLEAN, "map"), true)
+      declare(linkedMap(types.integerType, types.booleanType, "map"), true)
     }
   }
 
   fun testMapGet() {
     doTest {
-      val map = map(GenericType.INT, GenericType.OBJECT, "map")
+      val map = map(types.integerType, types.anyType, "map")
       +map[+"key"]
     }
   }
 
   fun testMapPut() {
     doTest {
-      val map = map(GenericType.INT, GenericType.OBJECT, "map")
+      val map = map(types.integerType, types.anyType, "map")
       +map.set(+"key", +"value")
     }
   }
 
   fun testMapContains() {
     doTest {
-      val map = map(GenericType.INT, GenericType.OBJECT, "map")
+      val map = map(types.integerType, types.anyType, "map")
       +map.contains(+"key")
     }
   }
 
   fun testMapInitialization() {
     doTest {
-      declare(map(GenericType.INT, GenericType.INT, "map").defaultDeclaration(true))
+      declare(map(types.integerType, types.integerType, "map").defaultDeclaration(true))
     }
   }
 
   fun testLinkedMapInitialization() {
     doTest {
-      declare(linkedMap(GenericType.INT, GenericType.BOOLEAN, "map").defaultDeclaration(false))
+      declare(linkedMap(types.integerType, types.booleanType, "map").defaultDeclaration(false))
     }
   }
 
   fun testArrayDeclaration() {
     doTest {
-      declare(array("int", "a"), false)
+      declare(array(types.integerType, "a"), false)
     }
   }
 
   fun testArrayElementUsage() {
     doTest {
-      val array = array("int", "a")
+      val array = array(types.integerType, "a")
       +array[10]
       +array[+"11"]
     }
@@ -242,7 +241,7 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
 
   fun testArrayElementAssignment() {
     doTest {
-      val array = array("int", "a")
+      val array = array(types.integerType, "a")
       +(array.set(0, +"1"))
       +(array.set(1, +"2"))
     }
@@ -250,21 +249,21 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
 
   fun testArrayDefaultDeclaration() {
     doTest {
-      val a = array("int", "array")
+      val a = array(types.integerType, "array")
       declare(a.defaultDeclaration(+"10"))
     }
   }
 
   fun testArrayCreateFromElements() {
     doTest {
-      val a = array("double", "array")
-      declare(a, newArray("double", +"10.0", +"20.0"), false)
+      val a = array(types.doubleType, "array")
+      declare(a, newArray(types.doubleType, +"10.0", +"20.0"), false)
     }
   }
 
   fun testMapConvertToArray() {
     doTest {
-      val map = map(GenericType.INT, GenericType.OBJECT, "map")
+      val map = map(types.integerType, types.anyType, "map")
       +(TextExpression(map.convertToArray(this, "resultArray")))
     }
   }
@@ -273,7 +272,7 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
     doTest {
       tryBlock {
         call(thisExpression, "hashCode")
-      }.catch(variable("Exception", "e")) {
+      }.catch(variable(types.basicExceptionType, "e")) {
         call(thisExpression, "fail")
       }
     }
@@ -300,7 +299,7 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
 
   fun testSizedArrayCreation() {
     doTest {
-      +newSizedArray("String", 100)
+      +newSizedArray(types.stringType, 100)
     }
   }
 

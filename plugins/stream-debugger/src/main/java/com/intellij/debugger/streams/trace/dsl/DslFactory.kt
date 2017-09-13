@@ -25,15 +25,15 @@ import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
 interface DslFactory {
   fun lambda(argName: String, init: LambdaBody.(Expression) -> Unit): Lambda
 
-  fun variable(type: String, name: String): Variable
+  fun variable(type: GenericType, name: String): Variable
 
-  fun array(elementType: String, name: String): ArrayVariable
+  fun array(elementType: GenericType, name: String): ArrayVariable
 
-  fun newArray(elementType: String, vararg args: Expression): Expression
+  fun newArray(elementType: GenericType, vararg args: Expression): Expression
 
-  fun newSizedArray(elementType: String, size: Expression): Expression
+  fun newSizedArray(elementType: GenericType, size: Expression): Expression
 
-  fun newSizedArray(elementType: String, size: Int): Expression = newSizedArray(elementType, +"$size")
+  fun newSizedArray(elementType: GenericType, size: Int): Expression = newSizedArray(elementType, +"$size")
 
   fun map(keyType: GenericType, valueType: GenericType, name: String): MapVariable
 

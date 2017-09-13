@@ -52,12 +52,12 @@ class JavaMapVariable(override val keyType: GenericType,
   override fun size(): Expression = call("size")
 
   override fun convertToArray(dsl: Dsl, arrayName: String): String {
-    val resultArray = dsl.array(GenericType.OBJECT.variableTypeName, arrayName)
-    val size = dsl.variable("int", "size")
-    val keys = dsl.array(keyType.variableTypeName, "keys")
-    val values = dsl.array(valueType.variableTypeName, "values")
-    val i = dsl.variable("int", "i")
-    val key = dsl.variable(keyType.variableTypeName, "key")
+    val resultArray = dsl.array(dsl.types.anyType, arrayName)
+    val size = dsl.variable(dsl.types.integerType, "size")
+    val keys = dsl.array(keyType, "keys")
+    val values = dsl.array(valueType, "values")
+    val i = dsl.variable(dsl.types.integerType, "i")
+    val key = dsl.variable(keyType, "key")
     return dsl.code {
       declare(resultArray, true)
       scope {
@@ -71,7 +71,7 @@ class JavaMapVariable(override val keyType: GenericType,
           +TextExpression("${i.toCode()}++")
         }
 
-        resultArray.assign(newArray(resultArray.elementType, keys, values))
+        resultArray.assign(newArray(dsl.types.anyType, keys, values))
       }
     }
   }

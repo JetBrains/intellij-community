@@ -45,26 +45,26 @@ abstract class TraceExpressionBuilderBase(private val myProject: Project, privat
     val traceChain = buildTraceChain(chain, intermediateHandlers, terminatorHandler)
 
     val infoArraySize = 2 + intermediateHandlers.size
-    val info = myDsl.array("java.lang.Object", "info")
-    val streamResult = myDsl.variable("java.lang.Object", "streamResult")
+    val info = myDsl.array(myDsl.types.anyType, "info")
+    val streamResult = myDsl.variable(myDsl.types.anyType, "streamResult")
     val declarations = buildDeclarations(intermediateHandlers, terminatorHandler)
 
     val tracingCall = buildStreamExpression(traceChain, streamResult)
     val fillingInfoArray = buildFillInfo(intermediateHandlers, terminatorHandler, info)
 
-    val result = myDsl.variable("java.lang.Object", "myRes")
+    val result = myDsl.variable(myDsl.types.anyType, "myRes")
 
     return myDsl.code {
       declare(result, nullExpression, true)
-      val startTime = declare(variable("long", "startTime"), +"java.lang.System.nanoTime()", false)
-      declare(info, newSizedArray("java.lang.Object", infoArraySize), false)
+      val startTime = declare(variable(types.longType, "startTime"), +"java.lang.System.nanoTime()", false)
+      declare(info, newSizedArray(types.longType, infoArraySize), false)
       declare(timeDeclaration())
       +TextExpression(declarations)
       +TextExpression(tracingCall)
       +TextExpression(fillingInfoArray)
 
-      val elapsedTime = declare(array("long", "elapsedTime"), +"java.lang.System.nanoTime() - ${startTime.toCode()}", false)
-      result.assign(newArray("java.lang.Object", info, streamResult, elapsedTime))
+      val elapsedTime = declare(array(types.longType, "elapsedTime"), +"java.lang.System.nanoTime() - ${startTime.toCode()}", false)
+      result.assign(newArray(types.anyType, info, streamResult, elapsedTime))
       +result
     }
   }
@@ -119,17 +119,17 @@ abstract class TraceExpressionBuilderBase(private val myProject: Project, privat
       declare(streamResult, nullExpression, true)
       tryBlock {
         if (resultType === GenericType.VOID) {
-          streamResult.assign(newSizedArray("java.lang.Object", 1))
+          streamResult.assign(newSizedArray(types.anyType, 1))
         }
         else {
-          val evaluationResult = array(resultType.variableTypeName, "evaluationResult")
-          declare(evaluationResult, newSizedArray(resultType.variableTypeName, 1), true)
+          val evaluationResult = array(resultType, "evaluationResult")
+          declare(evaluationResult, newSizedArray(resultType, 1), true)
           evaluationResult.set(0, TextExpression(chain.text))
           streamResult.assign(evaluationResult)
         }
-      }.catch(variable("java.lang.Throwable", "t")) {
+      }.catch(variable(types.basicExceptionType, "t")) {
         // TODO: add exception variable as a property of catch code block
-        streamResult.assign(newArray("java.lang.Throwable", +"t"))
+        streamResult.assign(newArray(types.basicExceptionType, +"t"))
       }
     }
   }

@@ -25,6 +25,8 @@ import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
  * @author Vitaliy.Bibaev
  */
 interface StatementFactory {
+  val types: Types
+
   fun createEmptyCompositeCodeBlock(): CompositeCodeBlock
 
   fun createEmptyCodeBlock(): CodeBlock
@@ -43,7 +45,7 @@ interface StatementFactory {
 
   fun createLambda(argName: String, lambdaBody: LambdaBody): Lambda
 
-  fun createVariable(type: String, name: String): Variable
+  fun createVariable(type: GenericType, name: String): Variable
 
   fun and(left: Expression, right: Expression): Expression
 
@@ -57,7 +59,7 @@ interface StatementFactory {
 
   fun createMapVariable(keyType: GenericType, valueType: GenericType, name: String, linked: Boolean): MapVariable
 
-  fun createArrayVariable(elementType: String, name: String): ArrayVariable
+  fun createArrayVariable(elementType: GenericType, name: String): ArrayVariable
 
   fun createScope(codeBlock: CodeBlock): Statement
 
@@ -69,9 +71,9 @@ interface StatementFactory {
 
   fun updateCurrentTimeExpression(): Expression
 
-  fun createNewArrayExpression(elementType: String, args: Array<out Expression>): Expression
+  fun createNewArrayExpression(elementType: GenericType, args: Array<out Expression>): Expression
 
-  fun createNewSizedArray(elementType: String, size: Expression): Expression
+  fun createNewSizedArray(elementType: GenericType, size: Expression): Expression
 
   fun createPeekCall(elementsType: GenericType, lambda: String): IntermediateStreamCall
 }

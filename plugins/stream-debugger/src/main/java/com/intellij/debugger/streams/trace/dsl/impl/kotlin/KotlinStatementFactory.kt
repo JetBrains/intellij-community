@@ -24,6 +24,9 @@ import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
  * @author Vitaliy.Bibaev
  */
 class KotlinStatementFactory : StatementFactory {
+  override val types: Types
+    get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
+
   override fun createEmptyCompositeCodeBlock(): CompositeCodeBlock {
     TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
   }
@@ -63,7 +66,7 @@ class KotlinStatementFactory : StatementFactory {
     TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
   }
 
-  override fun createVariable(type: String, name: String): Variable {
+  override fun createVariable(type: GenericType, name: String): Variable {
     TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
   }
 
@@ -91,7 +94,7 @@ class KotlinStatementFactory : StatementFactory {
     TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
   }
 
-  override fun createArrayVariable(elementType: String, name: String): ArrayVariable {
+  override fun createArrayVariable(elementType: GenericType, name: String): ArrayVariable {
     TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
   }
 
@@ -115,11 +118,11 @@ class KotlinStatementFactory : StatementFactory {
     TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
   }
 
-  override fun createNewArrayExpression(elementType: String, args: Array<out Expression>): Expression {
+  override fun createNewArrayExpression(elementType: GenericType, args: Array<out Expression>): Expression {
     TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
   }
 
-  override fun createNewSizedArray(elementType: String, size: Expression): Expression {
+  override fun createNewSizedArray(elementType: GenericType, size: Expression): Expression {
     TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
   }
 

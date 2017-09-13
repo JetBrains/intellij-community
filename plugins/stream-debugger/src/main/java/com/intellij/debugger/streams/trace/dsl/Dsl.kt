@@ -21,6 +21,7 @@ package com.intellij.debugger.streams.trace.dsl
 interface Dsl : DslFactory {
   val nullExpression: Expression
   val thisExpression: Expression
+  val types: Types
 
   fun code(init: CodeContext.() -> Unit): String
 }

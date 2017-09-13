@@ -26,28 +26,28 @@ import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
  */
 class PeekTraceHandler(num: Int, callName: String, private val myTypeBefore: GenericType, typeAfter: GenericType, dsl: Dsl)
   : HandlerBase.Intermediate(dsl) {
-  private val myBeforeMap = dsl.linkedMap(GenericType.INT, myTypeBefore, "${callName}Peek${num}Before")
-  private val myAfterMap = dsl.linkedMap(GenericType.INT, typeAfter, "${callName}Peek${num}After")
+  val beforeMap = dsl.linkedMap(GenericType.INT, myTypeBefore, "${callName}Peek${num}Before")
+  val afterMap = dsl.linkedMap(GenericType.INT, typeAfter, "${callName}Peek${num}After")
 
-  override fun getVariables(): List<VariableDeclaration> = listOf(myBeforeMap.defaultDeclaration(), myAfterMap.defaultDeclaration())
+  override fun getVariables(): List<VariableDeclaration> = listOf(beforeMap.defaultDeclaration(), afterMap.defaultDeclaration())
 
   override fun prepareResult(): String {
     return dsl.code {
-      +TextExpression(myBeforeMap.convertToArray(this, "beforeArray") +
-                      myAfterMap.convertToArray(this, "afterArray"))
+      +TextExpression(beforeMap.convertToArray(this, "beforeArray") +
+                      afterMap.convertToArray(this, "afterArray"))
     }
   }
 
   override fun getResultExpression(): String {
     return dsl.code {
-      +newArray(GenericType.OBJECT.variableTypeName, +"beforeArray", +"afterArray")
+      +newArray(types.anyType, +"beforeArray", +"afterArray")
     }
   }
 
   override fun additionalCallsBefore(): List<IntermediateStreamCall> {
     val lambda = dsl.code {
       lambda("x") {
-        +myBeforeMap.set(currentTime(), +argName)
+        +beforeMap.set(currentTime(), +argName)
       }
     }
 
@@ -57,7 +57,7 @@ class PeekTraceHandler(num: Int, callName: String, private val myTypeBefore: Gen
   override fun additionalCallsAfter(): List<IntermediateStreamCall> {
     val lambda = dsl.code {
       lambda("x") {
-        +myAfterMap.set(currentTime(), +argName)
+        +afterMap.set(currentTime(), +argName)
       }
     }
 

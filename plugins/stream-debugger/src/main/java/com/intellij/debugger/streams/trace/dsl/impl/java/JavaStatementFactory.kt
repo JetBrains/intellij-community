@@ -27,6 +27,7 @@ import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
  * @author Vitaliy.Bibaev
  */
 class JavaStatementFactory : StatementFactory {
+  override val types: Types = JavaTypes()
   override fun createEmptyCompositeCodeBlock(): CompositeCodeBlock = JavaCodeBlock(this)
 
   override fun createEmptyCodeBlock(): CodeBlock = JavaCodeBlock(this)
@@ -55,7 +56,7 @@ class JavaStatementFactory : StatementFactory {
     return JavaLambda(argName, lambdaBody as JavaLambdaBody)
   }
 
-  override fun createVariable(type: String, name: String): Variable = VariableImpl(type, name)
+  override fun createVariable(type: GenericType, name: String): Variable = VariableImpl(type.variableTypeName, name)
 
   override fun and(left: Expression, right: Expression): Expression = TextExpression("${left.toCode()} $$ ${right.toCode()}")
 
@@ -72,7 +73,8 @@ class JavaStatementFactory : StatementFactory {
   override fun createMapVariable(keyType: GenericType, valueType: GenericType, name: String, linked: Boolean): MapVariable =
     JavaMapVariable(keyType, valueType, name, linked)
 
-  override fun createArrayVariable(elementType: String, name: String): ArrayVariable = JavaArrayVariable(elementType, name)
+  override fun createArrayVariable(elementType: GenericType, name: String): ArrayVariable =
+    JavaArrayVariable(elementType.variableTypeName, name)
 
   override fun createScope(codeBlock: CodeBlock): Statement = object : Statement {
     override fun toCode(indent: Int): String = "{\n".withIndent(indent) +
@@ -83,19 +85,20 @@ class JavaStatementFactory : StatementFactory {
   override fun createTryBlock(block: CodeBlock): TryBlock = JavaTryBlock(block, this)
 
   override fun createTimeVariableDeclaration(): VariableDeclaration =
-    JavaVariableDeclaration(createVariable("java.util.concurrent.atomic.AtomicInteger", "time"), false,
-                            TextExpression("new java.util.concurrent.atomic.AtomicInteger(0)"))
+    JavaVariableDeclaration(createVariable(types.timeVariableType, "time"), false,
+                            TextExpression(types.timeVariableType.defaultValue))
 
   override fun currentTimeExpression(): Expression = TextExpression("time").call("get")
 
   override fun updateCurrentTimeExpression(): Expression = TextExpression("time").call("incrementAndGet")
 
-  override fun createNewArrayExpression(elementType: String, args: Array<out Expression>): Expression {
+  override fun createNewArrayExpression(elementType: GenericType, args: Array<out Expression>): Expression {
     val elements = args.joinToString(separator = ", ") { it.toCode() }
-    return TextExpression("new $elementType[] { $elements }")
+    return TextExpression("new ${elementType.variableTypeName}[] { $elements }")
   }
 
-  override fun createNewSizedArray(elementType: String, size: Expression): Expression = TextExpression("new $elementType[${size.toCode()}]")
+  override fun createNewSizedArray(elementType: GenericType, size: Expression): Expression =
+    TextExpression("new ${elementType.variableTypeName}[${size.toCode()}]")
 
   override fun createPeekCall(elementsType: GenericType, lambda: String): IntermediateStreamCall = PeekCall(lambda, elementsType)
 }

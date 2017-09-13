@@ -27,7 +27,9 @@ class DslImpl(private val statementFactory: StatementFactory) : Dsl {
 
   override val thisExpression: Expression = TextExpression("this")
 
-  override fun variable(type: String, name: String): Variable = statementFactory.createVariable(type, name)
+  override val types: Types = statementFactory.types
+
+  override fun variable(type: GenericType, name: String): Variable = statementFactory.createVariable(type, name)
 
   override fun code(init: CodeContext.() -> Unit): String {
     val fragment = MyContext()
@@ -35,12 +37,13 @@ class DslImpl(private val statementFactory: StatementFactory) : Dsl {
     return fragment.toCode(0)
   }
 
-  override fun array(elementType: String, name: String): ArrayVariable = statementFactory.createArrayVariable(elementType, name)
+  override fun array(elementType: GenericType, name: String): ArrayVariable = statementFactory.createArrayVariable(elementType, name)
 
-  override fun newArray(elementType: String, vararg args: Expression): Expression =
+  override fun newArray(elementType: GenericType, vararg args: Expression): Expression =
     statementFactory.createNewArrayExpression(elementType, args)
 
-  override fun newSizedArray(elementType: String, size: Expression): Expression = statementFactory.createNewSizedArray(elementType, size)
+  override fun newSizedArray(elementType: GenericType, size: Expression): Expression =
+    statementFactory.createNewSizedArray(elementType, size)
 
   override fun map(keyType: GenericType, valueType: GenericType, name: String): MapVariable =
     statementFactory.createMapVariable(keyType, valueType, name, false)
