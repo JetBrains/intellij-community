@@ -62,7 +62,7 @@ public class PythonColorsPage implements ColorSettingsPage, InspectionColorSetti
     new AttributesDescriptor("Keyword argument", PyHighlighter.PY_KEYWORD_ARGUMENT),
     new AttributesDescriptor("Function call", PyHighlighter.PY_FUNCTION_CALL),
     new AttributesDescriptor("Method call", PyHighlighter.PY_METHOD_CALL),
-    new AttributesDescriptor("Function and variable annotations", PyHighlighter.PY_ANNOTATION),
+    new AttributesDescriptor("Type annotations", PyHighlighter.PY_ANNOTATION),
     new AttributesDescriptor("Valid escape sequence", PyHighlighter.PY_VALID_STRING_ESCAPE),
     new AttributesDescriptor("Invalid escape sequence", PyHighlighter.PY_INVALID_STRING_ESCAPE),
   };
