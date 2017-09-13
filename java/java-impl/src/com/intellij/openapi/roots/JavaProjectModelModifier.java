@@ -46,12 +46,10 @@ public abstract class JavaProjectModelModifier {
    * {@code null} otherwise
    */
   @Nullable
+  @SuppressWarnings("deprecation")
   public Promise<Void> addModuleDependency(@NotNull Module from, @NotNull Module to, @NotNull DependencyScope scope, boolean exported) {
     return addModuleDependency(from, to, scope);
   }
-
-  @Nullable
-  public abstract Promise<Void> addModuleDependency(@NotNull Module from, @NotNull Module to, @NotNull DependencyScope scope);
 
   /**
    * Implementation of this method should add dependency from module {@code from} to {@code library} with scope {@code scope} accordingly
@@ -63,12 +61,10 @@ public abstract class JavaProjectModelModifier {
    * {@code null} otherwise
    */
   @Nullable
+  @SuppressWarnings("deprecation")
   public Promise<Void> addLibraryDependency(@NotNull Module from, @NotNull Library library, @NotNull DependencyScope scope, boolean exported) {
     return addLibraryDependency(from, library, scope);
   }
-
-  @Nullable
-  public abstract Promise<Void> addLibraryDependency(@NotNull Module from, @NotNull Library library, @NotNull DependencyScope scope);
 
   /**
    * Implementation of this method should add dependency from modules {@code modules} to an external library with scope {@code scope} accordingly
@@ -94,4 +90,18 @@ public abstract class JavaProjectModelModifier {
    */
   @Nullable
   public abstract Promise<Void> changeLanguageLevel(@NotNull Module module, @NotNull LanguageLevel level);
+
+  //<editor-fold desc="Deprecated stuff.">
+  /** @deprecated implement {@link #addModuleDependency(Module, Module, DependencyScope, boolean)} (to be removed in IDEA 2019) */
+  @SuppressWarnings({"DeprecatedIsStillUsed", "unused"})
+  public Promise<Void> addModuleDependency(@NotNull Module from, @NotNull Module to, @NotNull DependencyScope scope) {
+    throw new UnsupportedOperationException("#addModuleDependency(Module, Module, DependencyScope) called on " + this);
+  }
+
+  /** @deprecated implement {@link #addLibraryDependency(Module, Library, DependencyScope, boolean)} (to be removed in IDEA 2019) */
+  @SuppressWarnings({"DeprecatedIsStillUsed", "unused"})
+  public Promise<Void> addLibraryDependency(@NotNull Module from, @NotNull Library library, @NotNull DependencyScope scope) {
+    throw new UnsupportedOperationException("#addLibraryDependency(Module, Library, DependencyScope) called on " + this);
+  }
+  //</editor-fold>
 }
