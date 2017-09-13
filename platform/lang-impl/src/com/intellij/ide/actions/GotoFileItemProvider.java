@@ -67,10 +67,10 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
       pattern = pattern.substring(1);
     }
 
-    String sanitized = removeSlashes(base.transformPattern(pattern));
+    String sanitized = removeSlashes(StringUtil.replace(base.transformPattern(pattern), "\\", "/"));
     List<List<String>> nameMatches = getFileNameCandidates(base, everywhere, sanitized, !pattern.startsWith("*"));
 
-    MinusculeMatcher fullMatcher = NameUtil.buildMatcher("*" + sanitized, NameUtil.MatchingCaseSensitivity.NONE);
+    MinusculeMatcher fullMatcher = NameUtil.buildMatcher("*" + StringUtil.replace(sanitized, "/", "*/*"), NameUtil.MatchingCaseSensitivity.NONE);
     PathProximityComparator pathProximityComparator = getPathProximityComparator();
 
     for (List<String> group : nameMatches) {
@@ -84,8 +84,8 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
 
   @NotNull
   private static String removeSlashes(String s) {
-    if (s.startsWith("/") || s.startsWith("\\")) return removeSlashes(s.substring(1));
-    if (s.endsWith("/") || s.endsWith("\\")) return removeSlashes(s.substring(0, s.length() - 1));
+    if (s.startsWith("/")) return removeSlashes(s.substring(1));
+    if (s.endsWith("/")) return removeSlashes(s.substring(0, s.length() - 1));
     return s;
   }
 
@@ -133,7 +133,12 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
     }
 
     if (group.size() > 1) {
-      Collections.sort(group, Comparator.comparing(nesting::get).thenComparing(dirCloseness::get).thenComparing(qualifierMatchingDegrees::get).thenComparing(pathProximityComparator).thenComparing(myModel::getFullName));
+      Collections.sort(group,
+                       Comparator.comparing(nesting::get).
+                         thenComparing(dirCloseness::get).
+                         thenComparing(qualifierMatchingDegrees::get).
+                         thenComparing(pathProximityComparator).
+                         thenComparing(myModel::getFullName));
     }
     return group;
   }
@@ -144,7 +149,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
                                                    String sanitized, boolean preferStartMatches) {
     int start = Math.max(sanitized.lastIndexOf('/'), sanitized.lastIndexOf('\\')) + 1;
     List<String> partialNames = IntStreamEx.range(start, sanitized.length()).mapToObj(i -> sanitized.substring(i)).toList();
-    List<MinusculeMatcher> matchers = ContainerUtil.map(partialNames, s -> NameUtil.buildMatcher(s, NameUtil.MatchingCaseSensitivity.NONE));
+    List<MinusculeMatcher> matchers = ContainerUtil.map(partialNames, s -> NameUtil.buildMatcher("*" + s, NameUtil.MatchingCaseSensitivity.NONE));
     List<List<MatchResult>> matchingNames = ContainerUtil.map(partialNames, __ -> new ArrayList<>());
 
     myModel.processNames(name -> {

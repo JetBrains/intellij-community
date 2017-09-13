@@ -189,6 +189,13 @@ class Intf {
     assert calcPopupElements(popup, "./foo/in") == [file]
   }
 
+  void "test don't match path to jdk"() {
+    def objects = getPopupElements(new GotoFileModel(project), "Object.java", true)
+    assert objects.size() > 0
+    assert (objects[0] as PsiFile).virtualFile.path.contains("mockJDK")
+    assert getPopupElements(new GotoFileModel(project), "mockJDK/Object.java", true).size() == 0
+  }
+
   void "test goto file can go to dir"() {
     PsiFile fooIndex = myFixture.addFileToProject("foo/index.html", "foo")
     PsiFile barIndex = myFixture.addFileToProject("bar.txt/bar.txt", "foo")
@@ -382,13 +389,18 @@ class Intf {
   void "test file path matching without slashes"() {
     def fooBarFile = myFixture.addFileToProject("foo/bar/index_fooBar.html", "")
     def fbFile = myFixture.addFileToProject("fb/index_fb.html", "")
-    def fbSomeFile = myFixture.addFileToProject("fb/some/index_fbSome.html", "")
+    def fbSomeFile = myFixture.addFileToProject("fb/some.dir/index_fbSome.html", "")
     def someFbFile = myFixture.addFileToProject("some/fb/index_someFb.html", "")
-    def model = new GotoFileModel(project)
-    def popup = createPopup(model)
+
+    def popup = createPopup(new GotoFileModel(project))
     assert calcPopupElements(popup, "barindex") == [fooBarFile]
     assert calcPopupElements(popup, "fooindex") == [fooBarFile]
-    assert calcPopupElements(popup, "fbindex") == [fbFile, someFbFile, fbSomeFile, fooBarFile]
+    assert calcPopupElements(popup, "fbindex") == [fbFile, someFbFile, fooBarFile, fbSomeFile]
+    assert calcPopupElements(popup, "fbhtml") == [fbFile, someFbFile, fbSomeFile, fooBarFile]
+
+    // partial slashes
+    assert calcPopupElements(popup, "somefb/index.html") == [someFbFile]
+    assert calcPopupElements(popup, "somefb\\index.html") == [someFbFile]
   }
 
   private List<Object> getPopupElements(ChooseByNameModel model, String text, boolean checkboxState = false) {
@@ -405,7 +417,7 @@ class Intf {
         semaphore.up()
       } as Consumer<Set<?>>)
     }
-    if (!semaphore.waitFor(10000)) {
+    if (!semaphore.waitFor(10_000_000)) {
       printThreadDump()
       fail()
     }

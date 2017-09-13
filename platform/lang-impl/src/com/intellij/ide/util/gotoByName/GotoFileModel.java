@@ -28,7 +28,6 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -160,7 +159,7 @@ public class GotoFileModel extends FilteringGotoByModel<FileType> implements Dum
   }
 
   private VirtualFile getContentRoot(@Nullable VirtualFile file) {
-    return file == null ? null : ProjectFileIndex.SERVICE.getInstance(myProject).getContentRootForFile(file);
+    return file == null ? null : GotoFileCellRenderer.getAnyRoot(file, myProject);
   }
 
   @Override
