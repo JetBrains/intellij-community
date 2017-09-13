@@ -155,7 +155,7 @@ fun mergeStubs(paths: List<String>, stubsFilePath: String, projectPath: String, 
     for (path in paths) {
       println("Reading stubs from $path")
       var count = 0
-      val fromStorageFile = File(stubsFilePath + ".input")
+      val fromStorageFile = File(path + ".input")
       val fromStorage = PersistentHashMap<HashCode, SerializedStubTree>(fromStorageFile,
                                                                         HashCodeDescriptor.instance, stubExternalizer)
 
