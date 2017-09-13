@@ -5,7 +5,7 @@ public interface Version {
   /**
    * Current plugin version.
    */
-  String PLUGIN_VERSION = "0.15.17.2";
+  String PLUGIN_VERSION = "0.16";
   /**
    * Current version of lombok plugin
    */
