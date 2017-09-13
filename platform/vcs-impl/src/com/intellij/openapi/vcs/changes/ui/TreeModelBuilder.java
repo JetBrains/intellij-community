@@ -356,23 +356,26 @@ public class TreeModelBuilder {
   }
 
   private static void collapseDirectories(@NotNull DefaultTreeModel model, @NotNull ChangesBrowserNode node) {
-    if (node.getUserObject() instanceof FilePath && node.getChildCount() == 1) {
-      final ChangesBrowserNode child = (ChangesBrowserNode)node.getChildAt(0);
-      if (child.getUserObject() instanceof FilePath && !child.isLeaf()) {
-        ChangesBrowserNode parent = (ChangesBrowserNode)node.getParent();
-        final int idx = parent.getIndex(node);
-        model.removeNodeFromParent(node);
-        model.removeNodeFromParent(child);
-        model.insertNodeInto(child, parent, idx);
-        collapseDirectories(model, parent);
-      }
+    ChangesBrowserNode collapsedNode = node;
+    while (collapsedNode.getUserObject() instanceof FilePath && collapsedNode.getChildCount() == 1) {
+      ChangesBrowserNode child = (ChangesBrowserNode)collapsedNode.getChildAt(0);
+      if (!(child.getUserObject() instanceof FilePath) || child.isLeaf()) break;
+      collapsedNode = child;
     }
-    else {
-      final Enumeration children = node.children();
-      while (children.hasMoreElements()) {
-        ChangesBrowserNode child = (ChangesBrowserNode)children.nextElement();
-        collapseDirectories(model, child);
-      }
+
+    if (collapsedNode != node) {
+      ChangesBrowserNode parent = (ChangesBrowserNode)node.getParent();
+      final int idx = parent.getIndex(node);
+      model.removeNodeFromParent(node);
+      model.insertNodeInto(collapsedNode, parent, idx);
+
+      node = collapsedNode;
+    }
+
+    final Enumeration children = node.children();
+    while (children.hasMoreElements()) {
+      ChangesBrowserNode child = (ChangesBrowserNode)children.nextElement();
+      collapseDirectories(model, child);
     }
   }
 
