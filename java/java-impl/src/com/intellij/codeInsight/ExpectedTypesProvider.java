@@ -1114,7 +1114,7 @@ public class ExpectedTypesProvider {
               typeArg != null && TypeConversionUtil.erasure(typeArg).equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
             PsiClass placeClass = PsiTreeUtil.getContextOfType(argument, PsiClass.class);
             PsiClass classClass = ((PsiClassType)parameterType).resolve();
-            if (placeClass != null && classClass != null) {
+            if (placeClass != null && classClass != null && classClass.getTypeParameters().length == 1) {
               return factory.createType(classClass, factory.createType(placeClass));
             }
           }
