@@ -66,7 +66,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.plaf.ButtonUI;
@@ -476,7 +475,13 @@ public class NotificationsManagerImpl extends NotificationsManager {
     configureBalloonScrollPane(pane, layoutData.fillColor);
 
     if (showFullContent) {
-      pane.setPreferredSize(text.getPreferredSize());
+      if (windowComponent == null) {
+        pane.setPreferredSize(text.getPreferredSize());
+      }
+      else {
+        pane.setPreferredSize(
+          new Dimension(text.getPreferredSize().width, (int)Math.min(layoutData.fullHeight, windowComponent.getHeight() * 0.75)));
+      }
     }
     else if (layoutData.twoLineHeight < layoutData.fullHeight) {
       text.setPreferredSize(null);
@@ -598,7 +603,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
     if (buttons != null) {
       layoutData.groupId = null;
       layoutData.mergeData = null;
-      buttons.setBorder(new EmptyBorder(0, 0, JBUI.scale(5), JBUI.scale(7)));
+      buttons.setBorder(JBUI.Borders.empty(0, 0, 5, 7));
     }
 
     HoverAdapter hoverAdapter = new HoverAdapter();
