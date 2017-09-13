@@ -47,6 +47,10 @@ class TransactionTest extends LightPlatformTestCase {
 
   @Override
   protected void invokeTestRunnable(@NotNull Runnable runnable) throws Exception {
+    if (app) {
+      guard.assertWriteActionAllowed()
+    }
+
     SwingUtilities.invokeLater(runnable)
     UIUtil.dispatchAllInvocationEvents()
   }
