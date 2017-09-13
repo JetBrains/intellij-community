@@ -18,6 +18,7 @@ package org.jetbrains.jps.cmdline;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.TimeoutUtil;
 import io.netty.bootstrap.Bootstrap;
@@ -74,6 +75,7 @@ public class BuildMain {
       final long processStart = System.currentTimeMillis();
       final String startMessage = "Build process started. Classpath: " + System.getProperty("java.class.path");
       System.out.println(startMessage);
+      LOG.info(StringUtil.repeatSymbol('=', 50));
       LOG.info(startMessage);
 
       final String host = args[HOST_ARG];
