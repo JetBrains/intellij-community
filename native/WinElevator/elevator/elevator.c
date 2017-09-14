@@ -120,7 +120,7 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
 		fwprintf(stderr, L"Failed to get descriptors from %s", sDescriptorsStr);
 		return ERR_GET_DESC;
 	}
-	for(int i = 0; i < nDescriptorsLen; i++)
+	for(size_t i = 0; i < nDescriptorsLen; i++)
 	{
 		if (! iswdigit(sDescriptorsStr[i]))
 		{

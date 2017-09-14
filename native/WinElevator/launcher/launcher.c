@@ -102,7 +102,7 @@ static void _AddStringToCommandLine(_Inout_ size_t* pchCurrentBufferChars, _Inou
 }
 
 // ThreadProc to connect pipe to remote process
-static DWORD _CreateConnectPipe(_PIPE_CONNECTION_INFO* pPipeInfo)
+static DWORD __stdcall _CreateConnectPipe(_PIPE_CONNECTION_INFO* pPipeInfo)
 {
 	WCHAR pipeName[40];
 	wsprintf(pipeName, L"JB-Launcher-Pipe-%ld", pPipeInfo->nDescriptor);
@@ -217,7 +217,7 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
 	_CONFIGURE_PIPE_INFO(g_stdInPipe, ELEV_DESCR_STDIN, nPid, FALSE);
 
 
-	_mm_mfence(); // To make sure threads has access to g_
+	MemoryBarrier(); // To make sure threads has access to g_
 
 	HANDLE arHandlesToWait[] = {NULL, NULL};
 	int nDescriptorFlags = 0;
