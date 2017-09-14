@@ -539,4 +539,5 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testComplexInitializer() { doTest(); }
   public void testFieldAssignedNegative() { doTest(); }
   public void testIteratePositiveCheck() { doTest(); }
+  public void testInnerClass() { doTest(); }
 }

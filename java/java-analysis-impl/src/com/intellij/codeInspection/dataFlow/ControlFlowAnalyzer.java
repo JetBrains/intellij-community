@@ -1561,6 +1561,13 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   @Override public void visitNewExpression(PsiNewExpression expression) {
     startElement(expression);
 
+    PsiExpression qualifier = expression.getQualifier();
+    if (qualifier != null) {
+      qualifier.accept(this);
+      addInstruction(new CheckNotNullInstruction(expression, NullabilityProblem.callNPE));
+      addInstruction(new PopInstruction());
+    }
+
     pushUnknown();
 
     PsiType type = expression.getType();
