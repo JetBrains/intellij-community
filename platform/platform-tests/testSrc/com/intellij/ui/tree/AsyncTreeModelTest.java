@@ -144,7 +144,7 @@ public final class AsyncTreeModelTest {
   public void testChildrenResolve() {
     Node node = new Node("node");
     Node root = new Node("root", new Node("upper", new Node("middle", new Node("lower", node))));
-    TreePath tp = TreeUtil.convertArrayToTreePath(node.getPath());
+    TreePath tp = TreePathUtil.convertArrayToTreePath(node.getPath());
     testAsync(() -> root, test
       -> testPathState(test.tree, "   +'root'\n      'upper'\n", ()
       -> test.resolve(tp, path
@@ -156,7 +156,7 @@ public final class AsyncTreeModelTest {
   public void testChildrenVisit() {
     Node node = new Node("node");
     Node root = new Node("root", new Node("upper", new Node("middle", new Node("lower", node))));
-    TreePath tp = TreeUtil.convertArrayToTreePath(node.getPath(), Object::toString);
+    TreePath tp = TreePathUtil.convertArrayToTreePath(node.getPath(), Object::toString);
     testAsync(() -> root, test
       -> testPathState(test.tree, "   +'root'\n      'upper'\n", ()
       -> test.visit(new TreeVisitor.PathFinder(tp, Object::toString), true, path
@@ -168,7 +168,7 @@ public final class AsyncTreeModelTest {
   public void testChildrenVisitWithoutLoading() {
     Node node = new Node("node");
     Node root = new Node("root", new Node("upper", new Node("middle", new Node("lower", node))));
-    TreePath tp = TreeUtil.convertArrayToTreePath(node.getPath(), Object::toString);
+    TreePath tp = TreePathUtil.convertArrayToTreePath(node.getPath(), Object::toString);
     testAsync(() -> root, test
       -> testPathState(test.tree, "   +'root'\n      'upper'\n", ()
       -> test.visit(new TreeVisitor.PathFinder(tp, Object::toString), false, path -> {

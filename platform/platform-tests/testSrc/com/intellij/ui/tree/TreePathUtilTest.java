@@ -20,17 +20,17 @@ import org.junit.Test;
 
 import javax.swing.tree.TreePath;
 
-public class TreeUtilTest {
+public class TreePathUtilTest {
   @Test
   public void createTreePath() {
     Object root = new Object();
-    TreePath parent = TreeUtil.createTreePath(null, root);
+    TreePath parent = TreePathUtil.createTreePath(null, root);
     Assert.assertNotNull(parent);
     Assert.assertNull(parent.getParentPath());
     Assert.assertSame(root, parent.getLastPathComponent());
 
     Object node = new Object();
-    TreePath path = TreeUtil.createTreePath(parent, node);
+    TreePath path = TreePathUtil.createTreePath(parent, node);
     Assert.assertNotNull(path);
     Assert.assertNotNull(path.getParentPath());
     Assert.assertNotSame(path, parent);
@@ -40,7 +40,7 @@ public class TreeUtilTest {
 
   @Test
   public void convertTreePathToStrings() {
-    String[] strings = TreeUtil.convertTreePathToStrings(new TreePath(new Object[]{2, 1, 0}));
+    String[] strings = TreePathUtil.convertTreePathToStrings(new TreePath(new Object[]{2, 1, 0}));
     Assert.assertNotNull(strings);
     Assert.assertEquals(3, strings.length);
     Assert.assertEquals("2", strings[0]);
@@ -50,18 +50,18 @@ public class TreeUtilTest {
 
   @Test
   public void convertTreePathToArrayWrongConverter() {
-    Assert.assertNull(TreeUtil.convertTreePathToArray(new TreePath(new Object[]{2, 1, 0}), component -> null));
+    Assert.assertNull(TreePathUtil.convertTreePathToArray(new TreePath(new Object[]{2, 1, 0}), component -> null));
   }
 
   @Test
   public void convertTreePathToArrayWrongPathCount() {
-    Assert.assertNull(TreeUtil.convertTreePathToArray(new TreePath() {
+    Assert.assertNull(TreePathUtil.convertTreePathToArray(new TreePath() {
     }));
   }
 
   @Test
   public void convertTreePathToArrayWrongPathComponent() {
-    Assert.assertNull(TreeUtil.convertTreePathToArray(new TreePath(new Object[]{2, 1, 0}) {
+    Assert.assertNull(TreePathUtil.convertTreePathToArray(new TreePath(new Object[]{2, 1, 0}) {
       @Override
       public Object getLastPathComponent() {
         return null;
@@ -82,10 +82,10 @@ public class TreeUtilTest {
 
   private static void convertTreePathToArrayDeep(int count) {
     TreePath path = null;
-    for (int i = 0; i < count; i++) path = TreeUtil.createTreePath(path, i);
+    for (int i = 0; i < count; i++) path = TreePathUtil.createTreePath(path, i);
     Assert.assertEquals(count, path.getPathCount());
     Assert.assertEquals(count - 1, path.getLastPathComponent());
-    Object[] array = TreeUtil.convertTreePathToArray(path);
+    Object[] array = TreePathUtil.convertTreePathToArray(path);
     Assert.assertEquals(count, array.length);
     try {
       Assert.assertArrayEquals(array, path.getPath());
@@ -97,7 +97,7 @@ public class TreeUtilTest {
 
   @Test
   public void convertArrayToTreePath() {
-    TreePath path = TreeUtil.convertArrayToTreePath("2", "1", "0");
+    TreePath path = TreePathUtil.convertArrayToTreePath("2", "1", "0");
     Assert.assertNotNull(path);
     Assert.assertEquals("0", path.getLastPathComponent());
     Assert.assertNotNull(path.getParentPath());
@@ -109,7 +109,7 @@ public class TreeUtilTest {
 
   @Test
   public void convertArrayToTreePathConverter() {
-    TreePath path = TreeUtil.convertArrayToTreePath(new Object[]{2, 1, 0}, Object::toString);
+    TreePath path = TreePathUtil.convertArrayToTreePath(new Object[]{2, 1, 0}, Object::toString);
     Assert.assertNotNull(path);
     Assert.assertEquals("0", path.getLastPathComponent());
     Assert.assertNotNull(path.getParentPath());
@@ -121,17 +121,17 @@ public class TreeUtilTest {
 
   @Test
   public void convertArrayToTreePathEmptyArray() {
-    Assert.assertNull(TreeUtil.convertArrayToTreePath());
+    Assert.assertNull(TreePathUtil.convertArrayToTreePath());
   }
 
   @Test
   public void convertArrayToTreePathWrongComponent() {
-    Assert.assertNull(TreeUtil.convertArrayToTreePath("2", null, "0"));
+    Assert.assertNull(TreePathUtil.convertArrayToTreePath("2", null, "0"));
   }
 
   @Test
   public void convertArrayToTreePathWrongConverter() {
-    Assert.assertNull(TreeUtil.convertArrayToTreePath(new String[]{"2", "1", "0"}, component -> null));
+    Assert.assertNull(TreePathUtil.convertArrayToTreePath(new String[]{"2", "1", "0"}, component -> null));
   }
 
   @Test
@@ -148,7 +148,7 @@ public class TreeUtilTest {
   private static void convertArrayToTreePathDeep(int count) {
     Object[] array = new Object[count];
     for (int i = 0; i < count; i++) array[i] = i;
-    TreePath path = TreeUtil.convertArrayToTreePath(array);
+    TreePath path = TreePathUtil.convertArrayToTreePath(array);
     Assert.assertEquals(count, path.getPathCount());
     Assert.assertEquals(count - 1, path.getLastPathComponent());
     try {

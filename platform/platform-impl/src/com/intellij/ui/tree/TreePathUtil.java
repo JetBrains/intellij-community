@@ -21,7 +21,7 @@ import javax.swing.tree.TreePath;
 import java.lang.reflect.Array;
 import java.util.function.Function;
 
-public class TreeUtil {
+public class TreePathUtil {
   /**
    * @param parent    the parent path or {@code null} to indicate the root
    * @param component the last path component
