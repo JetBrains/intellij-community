@@ -484,9 +484,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       boolean isEmpty = getIcon() == null && StringUtil.isEmpty(getText());
 
       int x = size.width - icon.getIconWidth();
-      if (isEmpty) {
-        x /= 2;
-      } else {
+      if (!isEmpty) {
         if (UIUtil.isUnderWin10LookAndFeel()) {
           x -= JBUI.scale(6);
           x -= JBUI.scale(UIUtil.getParentOfType(ActionToolbar.class, this) != null ? 2 : 0);

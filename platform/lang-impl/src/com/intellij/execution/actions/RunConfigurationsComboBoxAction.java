@@ -122,7 +122,14 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
 
   @Override
   public JComponent createCustomComponent(final Presentation presentation) {
-    ComboBoxButton button = createComboBoxButton(presentation);
+    ComboBoxButton button = new ComboBoxButton(presentation) {
+      @Override
+      public Dimension getPreferredSize() {
+        Dimension d = super.getPreferredSize();
+        d.width = Math.max(d.width, JBUI.scale(75));
+        return d;
+      }
+    };
     NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
     panel.setBorder(JBUI.Borders.emptyRight(2));
     panel.add(button);
