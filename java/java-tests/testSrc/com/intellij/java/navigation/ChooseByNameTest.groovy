@@ -394,6 +394,13 @@ class Intf {
     assert calcPopupElements(popup, "somefb\\index.html") == [someFbFile]
   }
 
+  void "test prefer exact case match"() {
+    def upper = myFixture.addClass("class SOMECLASS {}")
+    def camel = myFixture.addClass("class SomeClass {}")
+    assert getPopupElements(new GotoClassModel2(project), 'SomeClass') == [camel, upper]
+    assert getPopupElements(new GotoFileModel(project), 'SomeClass.java') == [camel.containingFile, upper.containingFile]
+  }
+
   private List<Object> getPopupElements(ChooseByNameModel model, String text, boolean checkboxState = false) {
     return calcPopupElements(createPopup(model), text, checkboxState)
   }
