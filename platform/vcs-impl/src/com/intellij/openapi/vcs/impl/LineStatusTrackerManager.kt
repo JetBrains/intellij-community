@@ -293,9 +293,7 @@ class LineStatusTrackerManager(
 
       // loads are sequential (in single threaded QueueProcessor);
       // so myLoadCounter can't take less value for greater base revision -> the only thing we want from it
-      val revisionNumber = baseContent.revisionNumber
-      val charset = myVirtualFile.charset
-      val loadCounter = ourLoadCounter
+      val newContentInfo = ContentInfo(baseContent.revisionNumber, myVirtualFile.charset, ourLoadCounter)
       ourLoadCounter++
 
       synchronized(LOCK) {
@@ -304,7 +302,7 @@ class LineStatusTrackerManager(
           log("BaseRevisionLoader canceled: tracker already released", myVirtualFile)
           return
         }
-        if (!data.shouldBeUpdated(revisionNumber, charset, loadCounter)) {
+        if (!shouldBeUpdated(data.contentInfo, newContentInfo)) {
           log("BaseRevisionLoader canceled: no need to update", myVirtualFile)
           return
         }
@@ -325,13 +323,13 @@ class LineStatusTrackerManager(
             log("BaseRevisionLoader initializing: tracker already released", myVirtualFile)
             return@Runnable
           }
-          if (!data.shouldBeUpdated(revisionNumber, charset, loadCounter)) {
+          if (!shouldBeUpdated(data.contentInfo, newContentInfo)) {
             log("BaseRevisionLoader initializing: no need to update", myVirtualFile)
             return@Runnable
           }
 
           log("BaseRevisionLoader initializing: success", myVirtualFile)
-          trackers.put(myDocument, TrackerData(data.tracker, revisionNumber, charset, loadCounter))
+          trackers.put(myDocument, TrackerData(data.tracker, newContentInfo))
           data.tracker.setBaseRevision(converted)
         }
       }
@@ -383,31 +381,20 @@ class LineStatusTrackerManager(
     }
   }
 
-  private class TrackerData {
-    val tracker: LineStatusTracker<*>
-    private val currentContent: ContentInfo?
 
-    constructor(tracker: LineStatusTracker<*>) {
-      this.tracker = tracker
-      currentContent = null
+  private fun shouldBeUpdated(oldInfo: ContentInfo?, newInfo: ContentInfo): Boolean {
+    if (oldInfo == null) return true
+    if (oldInfo.revision == newInfo.revision && oldInfo.revision != VcsRevisionNumber.NULL) {
+      return oldInfo.charset != newInfo.charset
     }
-
-    constructor(tracker: LineStatusTracker<*>,
-                revision: VcsRevisionNumber,
-                charset: Charset,
-                loadCounter: Long) {
-      this.tracker = tracker
-      currentContent = ContentInfo(revision, charset, loadCounter)
-    }
-
-    fun shouldBeUpdated(revision: VcsRevisionNumber, charset: Charset, loadCounter: Long): Boolean {
-      if (currentContent == null) return true
-      if (currentContent.revision == revision && currentContent.revision != VcsRevisionNumber.NULL) {
-        return currentContent.charset != charset
-      }
-      return currentContent.loadCounter < loadCounter
-    }
+    return oldInfo.loadCounter < newInfo.loadCounter
   }
+
+  private class TrackerData(val tracker: LineStatusTracker<*>,
+                            var contentInfo: ContentInfo? = null)
+
+  private class ContentInfo(val revision: VcsRevisionNumber, val charset: Charset, val loadCounter: Long)
+
 
   private fun log(message: String, file: VirtualFile?) {
     if (LOG.isDebugEnabled) {
@@ -419,6 +406,4 @@ class LineStatusTrackerManager(
       }
     }
   }
-
-  private class ContentInfo(val revision: VcsRevisionNumber, val charset: Charset, val loadCounter: Long)
 }
