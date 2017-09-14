@@ -7,7 +7,7 @@ import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.PythonModuleTypeBase
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyFileElementType
-import com.jetbrains.python.psi.impl.stubs.PyPrebuiltStubsProvider.PREBUILT_INDEXES_PATH_PROPERTY
+import com.jetbrains.python.psi.impl.stubs.PyPrebuiltStubsProvider.PREBUILT_INDICES_PATH_PROPERTY
 import com.jetbrains.python.psi.impl.stubs.PyPrebuiltStubsProvider.SDK_STUBS_STORAGE_NAME
 import org.jetbrains.index.stubs.LanguageLevelAwareStubsGenerator
 import org.jetbrains.index.stubs.ProjectSdkStubsGenerator
@@ -25,10 +25,10 @@ val MERGE_STUBS_FROM_PATHS = "MERGE_STUBS_FROM_PATHS"
 
 
 fun getBaseDirValue(): String? {
-  val path: String? = System.getProperty(PREBUILT_INDEXES_PATH_PROPERTY)
+  val path: String? = System.getProperty(PREBUILT_INDICES_PATH_PROPERTY)
 
   if (path == null) {
-    Assert.fail("$PREBUILT_INDEXES_PATH_PROPERTY variable is not defined")
+    Assert.fail("$PREBUILT_INDICES_PATH_PROPERTY variable is not defined")
   }
   else
     if (File(path).exists()) {

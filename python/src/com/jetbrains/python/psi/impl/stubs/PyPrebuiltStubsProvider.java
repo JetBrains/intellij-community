@@ -38,7 +38,7 @@ import java.io.IOException;
  */
 public class PyPrebuiltStubsProvider implements PrebuiltStubsProvider, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.psi.impl.stubs.PyPrebuiltStubsProvider");
-  public static final String PREBUILT_INDEXES_PATH_PROPERTY = "prebuilt_indexes_path";
+  public static final String PREBUILT_INDICES_PATH_PROPERTY = "prebuilt_indices_path";
 
   public static final String SDK_STUBS_STORAGE_NAME = "sdk-stubs";
 
@@ -53,7 +53,7 @@ public class PyPrebuiltStubsProvider implements PrebuiltStubsProvider, Disposabl
 
   @VisibleForTesting
   void init() {
-    File indexesRoot = findPrebuiltIndexesRoot();
+    File indexesRoot = findPrebuiltIndicesRoot();
     try {
       if (indexesRoot != null) {
         // we should copy prebuilt indexes to a writable folder
@@ -128,15 +128,15 @@ public class PyPrebuiltStubsProvider implements PrebuiltStubsProvider, Disposabl
   }
 
   @Nullable
-  private static File findPrebuiltIndexesRoot() {
-    String path = System.getProperty(PREBUILT_INDEXES_PATH_PROPERTY);
+  private static File findPrebuiltIndicesRoot() {
+    String path = System.getProperty(PREBUILT_INDICES_PATH_PROPERTY);
     if (path != null && new File(path).exists()) {
       return new File(path);
     }
     path = PathManager.getHomePath();
-    File f = new File(path, "python/indexes");  // from sources
+    File f = new File(path, "python/index");  // from sources
     if (f.exists()) return f;
-    f = new File(path, "indexes");              // compiled binary
+    f = new File(path, "index");              // compiled binary
     if (f.exists()) return f;
     return null;
   }
