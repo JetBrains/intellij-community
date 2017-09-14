@@ -266,77 +266,90 @@ class LineStatusTrackerManager(
     }
   }
 
-  private inner class BaseRevisionLoader(private val myDocument: Document,
-                                         private val myVirtualFile: VirtualFile) : Runnable {
+  private inner class BaseRevisionLoader(private val document: Document,
+                                         private val virtualFile: VirtualFile) : Runnable {
 
     override fun run() {
-      if (isDisposed) return
-
-      if (!myVirtualFile.isValid) {
-        log("BaseRevisionLoader failed: virtual file not valid", myVirtualFile)
-        reportTrackerBaseLoadFailed()
-        return
+      val result = try {
+        loadBaseRevision()
+      }
+      catch (e: Exception) {
+        LOG.error(e)
+        RefreshResult.Error
       }
 
-      val baseContent = statusProvider.getBaseRevision(myVirtualFile)
+      handleNewBaseRevision(result)
+    }
+
+    private fun loadBaseRevision(): RefreshResult {
+      if (isDisposed) return RefreshResult.Canceled
+
+      if (!virtualFile.isValid) {
+        log("BaseRevisionLoader failed: virtual file not valid", virtualFile)
+        return RefreshResult.Error
+      }
+
+      val baseContent = statusProvider.getBaseRevision(virtualFile)
       if (baseContent == null) {
-        log("BaseRevisionLoader failed: null returned for base revision", myVirtualFile)
-        reportTrackerBaseLoadFailed()
-        return
+        log("BaseRevisionLoader failed: null returned for base revision", virtualFile)
+        return RefreshResult.Error
       }
 
       // loads are sequential (in single threaded QueueProcessor);
       // so myLoadCounter can't take less value for greater base revision -> the only thing we want from it
-      val newContentInfo = ContentInfo(baseContent.revisionNumber, myVirtualFile.charset, ourLoadCounter)
+      val newContentInfo = ContentInfo(baseContent.revisionNumber, virtualFile.charset, ourLoadCounter)
       ourLoadCounter++
 
       synchronized(LOCK) {
-        val data = trackers[myDocument]
+        val data = trackers[document]
         if (data == null) {
-          log("BaseRevisionLoader canceled: tracker already released", myVirtualFile)
-          return
+          log("BaseRevisionLoader canceled: tracker already released", virtualFile)
+          return RefreshResult.Canceled
         }
         if (!shouldBeUpdated(data.contentInfo, newContentInfo)) {
-          log("BaseRevisionLoader canceled: no need to update", myVirtualFile)
-          return
+          log("BaseRevisionLoader canceled: no need to update", virtualFile)
+          return RefreshResult.Canceled
         }
       }
 
       val lastUpToDateContent = baseContent.loadContent()
       if (lastUpToDateContent == null) {
-        log("BaseRevisionLoader failed: can't load up-to-date content", myVirtualFile)
-        reportTrackerBaseLoadFailed()
-        return
+        log("BaseRevisionLoader failed: can't load up-to-date content", virtualFile)
+        return RefreshResult.Error
       }
 
       val converted = StringUtil.convertLineSeparators(lastUpToDateContent)
-      val runnable = Runnable {
-        synchronized(LOCK) {
-          val data = trackers[myDocument]
-          if (data == null) {
-            log("BaseRevisionLoader initializing: tracker already released", myVirtualFile)
-            return@Runnable
-          }
-          if (!shouldBeUpdated(data.contentInfo, newContentInfo)) {
-            log("BaseRevisionLoader initializing: no need to update", myVirtualFile)
-            return@Runnable
-          }
+      return RefreshResult.Success(converted, newContentInfo)
+    }
 
-          log("BaseRevisionLoader initializing: success", myVirtualFile)
-          trackers.put(myDocument, TrackerData(data.tracker, newContentInfo))
-          data.tracker.setBaseRevision(converted)
+    private fun handleNewBaseRevision(result: RefreshResult) {
+      when (result) {
+        is RefreshResult.Canceled -> {
         }
-      }
-      nonModalAliveInvokeLater(runnable)
-    }
+        is RefreshResult.Error -> {
+          synchronized(LOCK) {
+            doReleaseTracker(document)
+          }
+        }
+        is RefreshResult.Success -> {
+          application.invokeLater(Runnable {
+            synchronized(LOCK) {
+              val data = trackers[document]
+              if (data == null) {
+                log("BaseRevisionLoader initializing: tracker already released", virtualFile)
+                return@Runnable
+              }
+              if (!shouldBeUpdated(data.contentInfo, result.info)) {
+                log("BaseRevisionLoader initializing: no need to update", virtualFile)
+                return@Runnable
+              }
 
-    private fun nonModalAliveInvokeLater(runnable: Runnable) {
-      application.invokeLater(runnable, ModalityState.NON_MODAL, Condition<Any> { isDisposed })
-    }
-
-    private fun reportTrackerBaseLoadFailed() {
-      synchronized(LOCK) {
-        doReleaseTracker(myDocument)
+              log("BaseRevisionLoader initializing: success", virtualFile)
+              trackers.put(document, TrackerData(data.tracker, result.info))
+              data.tracker.setBaseRevision(result.text)
+            }
+          }, ModalityState.NON_MODAL, Condition<Any> { isDisposed })
+        }
       }
     }
   }
@@ -399,6 +412,13 @@ class LineStatusTrackerManager(
                             var contentInfo: ContentInfo? = null)
 
   private class ContentInfo(val revision: VcsRevisionNumber, val charset: Charset, val loadCounter: Long)
+
+
+  private sealed class RefreshResult {
+    class Success(val text: String, val info: ContentInfo) : RefreshResult()
+    object Canceled : RefreshResult()
+    object Error : RefreshResult()
+  }
 
 
   private fun log(message: String, file: VirtualFile?) {
