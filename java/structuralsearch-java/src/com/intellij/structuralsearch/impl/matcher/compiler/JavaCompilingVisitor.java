@@ -58,10 +58,10 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
   }
 
   public void compile(PsiElement[] topLevelElements) {
+    final CompiledPattern pattern = myCompilingVisitor.getContext().getPattern();
     for (PsiElement element : topLevelElements) {
       element.accept(this);
-      final MatchingHandler matchingHandler = myCompilingVisitor.getContext().getPattern().getHandler(element);
-      myCompilingVisitor.getContext().getPattern().setHandler(element, new TopLevelMatchingHandler(matchingHandler));
+      pattern.setHandler(element, new TopLevelMatchingHandler(pattern.getHandler(element)));
     }
   }
 
