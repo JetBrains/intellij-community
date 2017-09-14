@@ -38,9 +38,10 @@ import java.util.Set;
   storages = @Storage(value = "statistics.actions.xml", roamingType = RoamingType.DISABLED)
 )
 public class ActionsCollector implements PersistentStateComponent<ActionsCollector.State> {
-  public void record(@NotNull String actionId) {
-    State state = getState();
+  public void record(String actionId) {
+    if (actionId == null) return;
 
+    State state = getState();
     if (state == null) return;
 
     String key = ConvertUsagesUtil.escapeDescriptorName(actionId);
