@@ -35,6 +35,10 @@ public class FileLoader implements Loader {
     this.name = name;
   }
 
+  public FileLoader(String url) {
+    this(url, url);
+  }
+
   @Override
   public String getName() {
     return name;
