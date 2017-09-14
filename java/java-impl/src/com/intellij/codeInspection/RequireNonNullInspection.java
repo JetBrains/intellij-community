@@ -52,11 +52,12 @@ public class RequireNonNullInspection extends BaseJavaBatchLocalInspectionTool {
       }
 
       @Override
-      public void visitAssignmentExpression(PsiAssignmentExpression assignment) {
-        NotNullContext context = NotNullContext.from(assignment);
+      public void visitConditionalExpression(PsiConditionalExpression ternary) {
+        NotNullContext context = NotNullContext.from(ternary);
         if(context == null) return;
         String method = context.getMethod();
-        holder.registerProblem(assignment, "Replace condition with Objects." + method, new ReplaceWithRequireNonNullFix(method));
+        PsiElement highlight = context.isAssignment() ? ternary.getParent() : ternary;
+        holder.registerProblem(highlight, "Replace condition with Objects." + method, new ReplaceWithRequireNonNullFix(method));
       }
     };
   }
@@ -82,13 +83,18 @@ public class RequireNonNullInspection extends BaseJavaBatchLocalInspectionTool {
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement element = descriptor.getStartElement();
       final NotNullContext context;
       boolean isExpr = false;
+      PsiElement element = descriptor.getStartElement();
       if(element instanceof PsiIfStatement) {
         context = NotNullContext.from((PsiIfStatement)element);
       } else if(element instanceof PsiAssignmentExpression) {
-        context = NotNullContext.from((PsiAssignmentExpression)element);
+        PsiConditionalExpression ternary = tryCast(((PsiAssignmentExpression)element).getRExpression(), PsiConditionalExpression.class);
+        if(ternary == null) return;
+        context = NotNullContext.from(ternary);
+        isExpr = true;
+      } else if(element instanceof PsiConditionalExpression) {
+        context = NotNullContext.from((PsiConditionalExpression)element);
         isExpr = true;
       } else return;
       if(context == null) return;
@@ -100,7 +106,10 @@ public class RequireNonNullInspection extends BaseJavaBatchLocalInspectionTool {
       }
       String varName = context.getVariable().getName();
       String maybeSemicolon = isExpr ? "" : ";";
-      String replacement = varName + "=" + CommonClassNames.JAVA_UTIL_OBJECTS + "." + myMethod + "(" + varName + "," + expr + ")" + maybeSemicolon;
+      String replacement = CommonClassNames.JAVA_UTIL_OBJECTS + "." + myMethod + "(" + varName + "," + expr + ")" + maybeSemicolon;
+      if(context.isAssignment()) {
+        replacement = varName + "=" + replacement;
+      }
       PsiElement result = tracker.replaceAndRestoreComments(element, replacement);
       LambdaCanBeMethodReferenceInspection.replaceAllLambdasWithMethodReferences(result);
       CodeStyleManager.getInstance(project).reformat(JavaCodeStyleManager.getInstance(project).shortenClassReferences(result));
@@ -110,10 +119,12 @@ public class RequireNonNullInspection extends BaseJavaBatchLocalInspectionTool {
   private static class NotNullContext {
     private final PsiExpression myExpression;
     private final PsiVariable myVariable;
+    private final boolean myIsAssignment;
 
-    private NotNullContext(PsiExpression expression, PsiVariable variable) {
+    private NotNullContext(PsiExpression expression, PsiVariable variable, boolean assignment) {
       myExpression = expression;
       myVariable = variable;
+      myIsAssignment = assignment;
     }
 
     public PsiExpression getExpression() {
@@ -127,6 +138,10 @@ public class RequireNonNullInspection extends BaseJavaBatchLocalInspectionTool {
     public String getMethod() {
       boolean isSimple = ExpressionUtils.isSimpleExpression(myExpression);
       return isSimple? "requireNonNullElse" : "requireNonNullElseGet";
+    }
+
+    public boolean isAssignment() {
+      return myIsAssignment;
     }
 
     @Nullable
@@ -148,17 +163,11 @@ public class RequireNonNullInspection extends BaseJavaBatchLocalInspectionTool {
       PsiExpression maybeNonNull = ExpressionUtils.getAssignmentTo(expressionStatement.getExpression(), variable);
       if(NullnessUtil.getExpressionNullness(maybeNonNull) != Nullness.NOT_NULL) return null;
       if(!LambdaGenerationUtil.canBeUncheckedLambda(maybeNonNull)) return null;
-      return new NotNullContext(maybeNonNull, variable);
+      return new NotNullContext(maybeNonNull, variable, true);
     }
 
     @Nullable
-    static NotNullContext from(PsiAssignmentExpression assignment) {
-      PsiConditionalExpression ternary = tryCast(assignment.getRExpression(), PsiConditionalExpression.class);
-      if(ternary == null) return null;
-      PsiReferenceExpression reference = tryCast(assignment.getLExpression(), PsiReferenceExpression.class);
-      if(reference == null) return null;
-      PsiVariable variable = tryCast(reference.resolve(), PsiVariable.class);
-
+    static NotNullContext from(PsiConditionalExpression ternary) {
       PsiBinaryExpression binOp = tryCast(ternary.getCondition(), PsiBinaryExpression.class);
       if(binOp == null) return null;
       final boolean negated;
@@ -168,17 +177,23 @@ public class RequireNonNullInspection extends BaseJavaBatchLocalInspectionTool {
       } else if(tokenType == JavaTokenType.EQEQ) {
         negated = false;
       } else return null;
+      PsiExpression main = negated? ternary.getThenExpression() : ternary.getElseExpression();
+      PsiReferenceExpression reference = tryCast(main, PsiReferenceExpression.class);
+      if(reference == null) return null;
+      PsiVariable variable = tryCast(reference.resolve(), PsiVariable.class);
       if (!ExpressionUtils.isNullLiteral(ExpressionUtils.getOtherOperand(binOp, variable))) return null;
 
 
       if(ClassUtils.isPrimitive(variable.getType())) return null;
-
-      PsiExpression main = negated? ternary.getThenExpression() : ternary.getElseExpression();
-      if(!ExpressionUtils.isReferenceTo(main, variable)) return null;
       PsiExpression alternative = negated? ternary.getElseExpression() : ternary.getThenExpression();
       if(NullnessUtil.getExpressionNullness(alternative) != Nullness.NOT_NULL) return null;
       if(!LambdaGenerationUtil.canBeUncheckedLambda(alternative)) return null;
-      return new NotNullContext(alternative, variable);
+      PsiAssignmentExpression assignment = tryCast(ternary.getParent(), PsiAssignmentExpression.class);
+      if(assignment == null || !ExpressionUtils.isReferenceTo(assignment.getLExpression(), variable)) {
+        return new NotNullContext(alternative, variable, false);
+      }
+
+      return new NotNullContext(alternative, variable, true);
     }
   }
 }
