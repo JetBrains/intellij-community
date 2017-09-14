@@ -156,10 +156,10 @@ class ArtifactBuilderTest : ArtifactBuilderTestCase() {
   }
 
   fun testCopyLibrary() {
-    val library = addProjectLibrary("lib", getJUnitJarPath())
+    val library = addProjectLibrary("lib", createFile("lib/a.jar"))
     val a = addArtifact(root().lib(library))
     buildAll()
-    assertOutput(a, directoryContent { file("junit.jar") })
+    assertOutput(a, directoryContent { file("a.jar") })
   }
 
   fun testModuleOutput() {
@@ -229,12 +229,12 @@ class ArtifactBuilderTest : ArtifactBuilderTestCase() {
   }
 
   fun testExtractDirectory() {
-    val a = addArtifact("a", root().dir("dir").extractedDir(getJUnitJarPath(), "/junit/textui/"))
+    val jarFile = createXJarFile()
+    val a = addArtifact("a", root().dir("dir").extractedDir(jarFile, "/dir"))
     buildAll()
     assertOutput(a, directoryContent {
       dir("dir") {
-        file("ResultPrinter.class")
-        file("TestRunner.class")
+        file("file.txt", "text")
       }
     })
   }
@@ -242,26 +242,41 @@ class ArtifactBuilderTest : ArtifactBuilderTestCase() {
   @Throws(IOException::class)
   fun testExtractDirectoryFromExcludedJar() {
     val jarPath = createFile("dir/lib/j.jar")
-    FileUtil.copy(File(getJUnitJarPath()), File(jarPath))
+    val libDir = File(getOrCreateProjectDir(), "dir/lib")
+    directoryContent {
+      zip("j.jar") {
+        file("a.txt", "a")
+      }
+    }.generate(libDir)
     val module = addModule("m")
-    val libDir = PathUtil.getParentPath(jarPath)
-    module.contentRootsList.addUrl(JpsPathUtil.pathToUrl(PathUtil.getParentPath(libDir)))
-    module.excludeRootsList.addUrl(JpsPathUtil.pathToUrl(libDir))
-    val a = addArtifact("a", root().extractedDir(jarPath, "/junit/textui/"))
+    val libDirPath = FileUtil.toSystemIndependentName(libDir.absolutePath)
+    module.contentRootsList.addUrl(JpsPathUtil.pathToUrl(PathUtil.getParentPath(libDirPath)))
+    module.excludeRootsList.addUrl(JpsPathUtil.pathToUrl(libDirPath))
+    val a = addArtifact("a", root().extractedDir(jarPath, ""))
     buildAll()
     assertOutput(a, directoryContent {
-      file("ResultPrinter.class")
-      file("TestRunner.class")
+      file("a.txt", "a")
     })
   }
 
   fun testPackExtractedDirectory() {
-    val a = addArtifact("a", root().archive("a.jar").extractedDir(getJUnitJarPath(), "/junit/textui/"))
+    val zipPath = createXJarFile()
+    val a = addArtifact("a", root().archive("a.jar").extractedDir(zipPath, "/dir"))
     buildAll()
     assertOutput(a, directoryContent { zip("a.jar") {
-      file("ResultPrinter.class")
-      file("TestRunner.class")
+      file("file.txt", "text")
     }})
+  }
+
+  private fun createXJarFile(): String {
+    val zipDir = directoryContent {
+      zip("x.jar") {
+        dir("dir") {
+          file("file.txt", "text")
+        }
+      }
+    }.generateInTempDir()
+    return FileUtil.toSystemIndependentName(File(zipDir, "x.jar").absolutePath)
   }
 
   fun testSelfIncludingArtifact() {
@@ -416,7 +431,8 @@ class ArtifactBuilderTest : ArtifactBuilderTestCase() {
   }
 
   fun testDoNotCreateEmptyArchiveFromExtractedDirectory() {
-    val a = addArtifact("a", archive("a.jar").dir("dir").extractedDir(getJUnitJarPath(), "/xxx/"))
+    val jarFile = createXJarFile()
+    val a = addArtifact("a", archive("a.jar").dir("dir").extractedDir(jarFile, "/xxx/"))
     buildAll()
     assertEmptyOutput(a)
   }
