@@ -205,7 +205,7 @@ class CommunityLibraryLicenses {
                        url: "http://www.jgoodies.com/freeware/libraries/looks/", licenseUrl: "https://opensource.org/licenses/bsd-license.html"),
     new LibraryLicense(name: "jgraphx", libraryName: "jgraphx-3.4.0.1", version: "3.4.0.1", license: "BSD",
                        url: "https://github.com/jgraph/jgraphx"),
-    new LibraryLicense(name: "JNA", libraryName: "jna", version: "4.1.0", license: "LGPL 2.1", url: "https://github.com/java-native-access/jna",
+    new LibraryLicense(name: "JNA", libraryName: "jna", version: "4.5.0", license: "LGPL 2.1", url: "https://github.com/java-native-access/jna",
                        licenseUrl: "http://www.opensource.org/licenses/lgpl-2.1.php"),
     new LibraryLicense(name: "jsch-agent-proxy for svnkit trilead", libraryName: "jsch.agentproxy.svnkit-trilead-ssh2.jar",
                        version: "0.0.9",
