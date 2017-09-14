@@ -27,6 +27,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static com.intellij.util.containers.ContainerUtil.newHashSet;
+
 public class SvnScopeZipper implements Runnable {
 
   @NotNull private final VcsDirtyScope myIn;
@@ -93,23 +95,20 @@ public class SvnScopeZipper implements Runnable {
   }
 
   static class MyDirNonRecursive {
-
     @NotNull private final FilePath myDir;
-    // instead of set and heavy equals of file path
-    @NotNull private final Map<String, FilePath> myChildren;
+    @NotNull private final Set<FilePath> myChildren = newHashSet();
 
     private MyDirNonRecursive(@NotNull FilePath dir) {
       myDir = dir;
-      myChildren = ContainerUtil.newHashMap();
     }
 
     public void add(@NotNull FilePath path) {
-      myChildren.put(getKey(path), path);
+      myChildren.add(path);
     }
 
     @NotNull
     public Collection<FilePath> getChildrenList() {
-      return myChildren.values();
+      return myChildren;
     }
 
     @NotNull
