@@ -83,18 +83,22 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.impl.VirtualFilePointerTracker;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiManagerEx;
@@ -162,6 +166,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   private ChooseByNameBase myChooseByNamePopup;
   private boolean myAllowDirt;
   private boolean myCaresAboutInjection = true;
+  private VirtualFilePointerTracker myVirtualFilePointerTracker;
 
   public CodeInsightTestFixtureImpl(@NotNull IdeaProjectTestFixture projectFixture, @NotNull TempDirTestFixture tempDirTestFixture) {
     myProjectFixture = projectFixture;
@@ -1206,6 +1211,11 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       ensureIndexesUpToDate(getProject());
       ((StartupManagerImpl)StartupManagerEx.getInstanceEx(getProject())).runPostStartupActivities();
     });
+
+    for (Module module : ModuleManager.getInstance(getProject()).getModules()) {
+      ModuleRootManager.getInstance(module).orderEntries().getAllLibrariesAndSdkClassesRoots(); // instantiate all VFPs
+    }
+    myVirtualFilePointerTracker = new VirtualFilePointerTracker();
   }
 
   @Override
@@ -1233,12 +1243,16 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     }
     finally {
       super.tearDown();
+      myVirtualFilePointerTracker.assertPointersAreDisposed();
     }
   }
 
   private void closeOpenFiles() {
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     FileEditorManagerEx.getInstanceEx(getProject()).closeAllFiles();
+    for (VirtualFile file : EditorHistoryManager.getInstance(getProject()).getFiles()) {
+      EditorHistoryManager.getInstance(getProject()).removeFile(file);
+    }
   }
 
   @NotNull

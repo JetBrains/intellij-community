@@ -58,11 +58,14 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl;
+import com.intellij.openapi.vfs.impl.VirtualFilePointerTracker;
 import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -125,6 +128,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   private static boolean ourPlatformPrefixInitialized;
   private static Set<VirtualFile> ourEternallyLivingFilesCache;
   private Sdk[] myOldSdks;
+  private VirtualFilePointerTracker myVirtualFilePointerTracker;
 
   /**
    * If a temp directory is reused from some previous test run, there might be cached children in its VFS.
@@ -224,6 +228,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
     DocumentCommitThread.getInstance().clearQueue();
     UIUtil.dispatchAllInvocationEvents();
+    myVirtualFilePointerTracker = new VirtualFilePointerTracker();
   }
 
   public final Project getProject() {
@@ -518,6 +523,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       })
       .append(LightPlatformTestCase::checkEditorsReleased)
       .append(() -> UsefulTestCase.checkForJdkTableLeaks(myOldSdks))
+      .append(() -> myVirtualFilePointerTracker.assertPointersAreDisposed())
       .append(() -> {
         myProjectManager = null;
         myProject = null;
