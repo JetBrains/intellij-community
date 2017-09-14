@@ -639,7 +639,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Override
-  public void testCompletion(@NotNull String fileBefore, @NotNull String fileAfter, @NotNull final String... additionalFiles) {
+  public void testCompletion(@NotNull String fileBefore,
+                             @NotNull String fileAfter,
+                             @TestDataFile @NotNull String... additionalFiles) {
     testCompletionTyping(fileBefore, "", fileAfter, additionalFiles);
   }
 
@@ -647,7 +649,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public void testCompletionTyping(@NotNull @TestDataFile String fileBefore,
                                    @NotNull String toType,
                                    @NotNull @TestDataFile String fileAfter,
-                                   @NotNull String... additionalFiles) {
+                                   @TestDataFile @NotNull String... additionalFiles) {
     testCompletionTyping(ArrayUtil.reverseArray(ArrayUtil.append(additionalFiles, fileBefore)), toType, fileAfter);
   }
 
@@ -692,7 +694,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public void testRename(@NotNull final String fileBefore,
                          @NotNull String fileAfter,
                          @NotNull String newName,
-                         @NotNull String... additionalFiles) {
+                         @TestDataFile @NotNull String... additionalFiles) {
     assertInitialized();
     configureByFiles(ArrayUtil.reverseArray(ArrayUtil.append(additionalFiles, fileBefore)));
     testRename(fileAfter, newName);
@@ -915,7 +917,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Override
-  public void moveFile(@NotNull final String filePath, @NotNull final String to, @NotNull final String... additionalFiles) {
+  public void moveFile(@NotNull final String filePath, @NotNull final String to, @TestDataFile @NotNull final String... additionalFiles) {
     assertInitialized();
     final Project project = getProject();
     configureByFiles(ArrayUtil.reverseArray(ArrayUtil.append(additionalFiles, filePath)));
