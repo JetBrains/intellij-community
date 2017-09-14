@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.stubs
 
-import com.google.common.annotations.VisibleForTesting
 import com.google.common.hash.HashCode
 import com.google.common.hash.Hashing
 import com.intellij.openapi.Disposable
@@ -31,6 +30,7 @@ import com.intellij.util.io.DataInputOutputUtil
 import com.intellij.util.io.KeyDescriptor
 import com.intellij.util.io.PersistentHashMap
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import java.io.DataInput
 import java.io.DataOutput
 import java.io.File
@@ -107,8 +107,7 @@ abstract class PrebuiltStubsProviderBase : PrebuiltStubsProvider, Disposable {
     private val LOG = Logger.getInstance("#com.jetbrains.python.psi.impl.stubs.PyPrebuiltStubsProviderBase")
   }
 
-  @VisibleForTesting
-  fun init() {
+  internal fun init() {
     var indexesRoot = findPrebuiltIndicesRoot()
     try {
       if (indexesRoot != null) {
@@ -201,4 +200,9 @@ abstract class PrebuiltStubsProviderBase : PrebuiltStubsProvider, Disposable {
     val f = File(path, "index/$name") // compiled binary
     return if (f.exists()) f else null
   }
+}
+
+@TestOnly
+fun PrebuiltStubsProviderBase.reset() {
+  this.init()
 }
