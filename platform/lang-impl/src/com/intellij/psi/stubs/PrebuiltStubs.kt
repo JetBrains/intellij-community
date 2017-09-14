@@ -108,7 +108,7 @@ abstract class PrebuiltStubsProviderBase : PrebuiltStubsProvider, Disposable {
   }
 
   @VisibleForTesting
-  internal fun init() {
+  fun init() {
     var indexesRoot = findPrebuiltIndicesRoot()
     try {
       if (indexesRoot != null) {
