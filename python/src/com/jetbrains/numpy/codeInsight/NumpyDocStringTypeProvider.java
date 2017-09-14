@@ -35,10 +35,7 @@ import com.jetbrains.python.documentation.docstrings.SectionBasedDocString.Secti
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
-import com.jetbrains.python.psi.types.PyNoneType;
-import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.PyTypeProviderBase;
-import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.toolbox.Substring;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -416,5 +413,19 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
       .ofNullable(PyUtil.as(callable, PyFunction.class))
       .map(function -> getCallType(function, null, context))
       .orElse(null);
+  }
+
+  @Override
+  public PyType getReferenceType(@NotNull PsiElement referenceTarget, TypeEvalContext context, @Nullable PsiElement anchor) {
+    if (referenceTarget instanceof PyFunction) {
+      if (NumpyUfuncs.isUFunc(((PyFunction)referenceTarget).getName()) && isInsideNumPy(referenceTarget)) {
+        // we intentionally looking here for the user stub class
+        final PyClass uFuncClass = PyPsiFacade.getInstance(referenceTarget.getProject()).findClass("numpy.core.ufunc");
+        if (uFuncClass != null) {
+          return new PyClassTypeImpl(uFuncClass, false);
+        }
+      }
+    }
+    return super.getReferenceType(referenceTarget, context, anchor);
   }
 }
