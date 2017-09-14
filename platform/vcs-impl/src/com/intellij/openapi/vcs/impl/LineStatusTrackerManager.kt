@@ -39,7 +39,10 @@ import com.intellij.openapi.vcs.FileStatusManager
 import com.intellij.openapi.vcs.VcsApplicationSettings
 import com.intellij.openapi.vcs.ex.LineStatusTracker
 import com.intellij.openapi.vcs.history.VcsRevisionNumber
-import com.intellij.openapi.vfs.*
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileListener
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.VirtualFilePropertyEvent
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.GuiUtils
 import com.intellij.util.concurrency.QueueProcessorRemovePartner
@@ -390,12 +393,6 @@ class LineStatusTrackerManager(
   }
 
   private inner class MyVirtualFileListener : VirtualFileListener {
-    override fun beforeContentsChange(event: VirtualFileEvent) {
-      if (event.isFromRefresh) {
-        onFileChanged(event.file)
-      }
-    }
-
     override fun propertyChanged(event: VirtualFilePropertyEvent) {
       if (VirtualFile.PROP_ENCODING == event.propertyName) {
         onFileChanged(event.file)
