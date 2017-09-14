@@ -45,7 +45,7 @@ abstract class PyCharmPropertiesBase extends ProductProperties {
         include(name: "*.pdf")
       }
     }
-    context.ant.copy(todir: "$targetDirectory/indexes") {
+    context.ant.copy(todir: "$targetDirectory/indexes", failonerror: false) {
       fileset(dir: "$context.paths.projectHome/indexes") {
         include(name: "sdk-stubs*")
       }
