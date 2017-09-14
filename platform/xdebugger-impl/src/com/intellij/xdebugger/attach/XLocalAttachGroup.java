@@ -25,15 +25,20 @@ import javax.swing.*;
 @Deprecated
 //use XAttachGroup<LocalAttachSettings>
 public interface XLocalAttachGroup extends XAttachGroup<LocalAttachSettings> {
+  //@NotNull
+  //@Deprecated
+  //  //use getIcon(@NotNull Project project, @NotNull LocalAttachSettings settings, @NotNull UserDataHolder dataHolder)
+  //Icon getIcon(@NotNull Project project, @NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder);
+
   @NotNull
   @Deprecated
     //use getIcon(@NotNull Project project, @NotNull LocalAttachSettings settings, @NotNull UserDataHolder dataHolder)
-  Icon getIcon(@NotNull Project project, @NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder);
+  Icon getProcessIcon(@NotNull Project project, @NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder);
 
   @NotNull
   @Override
   default Icon getIcon(@NotNull Project project, @NotNull LocalAttachSettings settings, @NotNull UserDataHolder dataHolder) {
-    return getIcon(project, settings.getInfo(), dataHolder);
+    return getProcessIcon(project, settings.getInfo(), dataHolder);
   }
 
   @NotNull
@@ -59,5 +64,5 @@ public interface XLocalAttachGroup extends XAttachGroup<LocalAttachSettings> {
     //use int compare(@NotNull Project project, @NotNull LocalAttachSettings a, @NotNull LocalAttachSettings b, @NotNull UserDataHolder dataHolder)
   int compare(@NotNull Project project, @NotNull ProcessInfo a, @NotNull ProcessInfo b, @NotNull UserDataHolder dataHolder);
 
-  XAttachGroup DEFAULT = new XDefaultAttachGroup<LocalAttachSettings>();
+  XLocalAttachGroup DEFAULT = new XDefaultLocalAttachGroup();
 }

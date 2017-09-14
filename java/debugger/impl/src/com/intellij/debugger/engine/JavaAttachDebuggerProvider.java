@@ -30,7 +30,10 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.xdebugger.attach.*;
+import com.intellij.xdebugger.attach.XDefaultLocalAttachGroup;
+import com.intellij.xdebugger.attach.XLocalAttachDebugger;
+import com.intellij.xdebugger.attach.XLocalAttachDebuggerProvider;
+import com.intellij.xdebugger.attach.XLocalAttachGroup;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -48,8 +51,8 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
     }
 
     @Override
-    public void attachDebugSession(@NotNull Project project, @NotNull ProcessInfo info) throws ExecutionException {
-      Pair<String, Integer> address = getAttachAddress(info);
+    public void attachDebugSession(@NotNull Project project, @NotNull ProcessInfo processInfo) throws ExecutionException {
+      Pair<String, Integer> address = getAttachAddress(processInfo);
       assert address != null;
 
       // TODO: first need to remove circular dependency with execution-impl
@@ -81,7 +84,7 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
     return StringUtil.notNullize(address.first) + ":" + address.second;
   }
 
-  private static final XAttachGroup<LocalAttachSettings> ourAttachGroup = new XDefaultAttachGroup<LocalAttachSettings>() {
+  private static final XLocalAttachGroup ourAttachGroup = new XDefaultLocalAttachGroup() {
     @Override
     public int getOrder() {
       return 1;
@@ -95,28 +98,25 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
 
     @NotNull
     @Override
-    public String getItemDisplayText(@NotNull Project project, @NotNull LocalAttachSettings settings, @NotNull UserDataHolder dataHolder) {
-      Pair<String, Integer> address = getAttachAddress(settings.getInfo());
+    public String getProcessDisplayText(@NotNull Project project, @NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder) {
+      Pair<String, Integer> address = getAttachAddress(info);
       assert address != null;
-      return StringUtil.notNullize(ArrayUtil.getLastElement(settings.getInfo().getCommandLine().split(" "))) +
-             " (" +
-             getAttachString(address) +
-             ')';
+      return StringUtil.notNullize(ArrayUtil.getLastElement(info.getCommandLine().split(" "))) + " (" + getAttachString(address) + ')';
     }
   };
 
   @NotNull
   @Override
-  public XAttachGroup<LocalAttachSettings> getAttachGroup() {
+  public XLocalAttachGroup getAttachGroup() {
     return ourAttachGroup;
   }
 
   @NotNull
   @Override
-  public List<XAttachDebugger<LocalAttachSettings>> getAvailableDebuggers(@NotNull Project project,
-                                                                          @NotNull ProcessInfo info,
-                                                                          @NotNull UserDataHolder contextHolder) {
-    Pair<String, Integer> address = getAttachAddress(info);
+  public List<XLocalAttachDebugger> getAvailableDebuggers(@NotNull Project project,
+                                                          @NotNull ProcessInfo processInfo,
+                                                          @NotNull UserDataHolder contextHolder) {
+    Pair<String, Integer> address = getAttachAddress(processInfo);
     if (address != null) {
       return Collections.singletonList(ourAttachDebugger);
     }
