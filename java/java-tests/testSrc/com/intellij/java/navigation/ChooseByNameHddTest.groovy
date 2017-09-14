@@ -18,8 +18,6 @@ package com.intellij.java.navigation
 import com.intellij.ide.util.gotoByName.ChooseByNamePopup
 import com.intellij.ide.util.gotoByName.GotoClassModel2
 import com.intellij.ide.util.gotoByName.GotoFileModel
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.roots.ModuleRootModificationUtil
@@ -27,7 +25,6 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
-import org.jetbrains.annotations.NotNull
 /**
  * @author peter
  */
@@ -37,15 +34,12 @@ class ChooseByNameHddTest extends JavaCodeInsightFixtureTestCase {
     def vFile = psiFile.virtualFile
     def path = vFile.path
 
-    ApplicationManager.application.runReadAction {
-      def model = new GotoFileModel(project)
-      def popup = ChooseByNamePopup.createPopup(project, model, (PsiElement)null)
-      assert ChooseByNameTest.calcPopupElements(popup, path) == [psiFile]
-      assert ChooseByNameTest.calcPopupElements(popup, FileUtil.toSystemDependentName(path)) == [psiFile]
-      assert ChooseByNameTest.calcPopupElements(popup, vFile.parent.path) == [psiFile.containingDirectory]
-      assert ChooseByNameTest.calcPopupElements(popup, path + ':0') == [psiFile]
-      popup.close(false)
-    }
+    def popup = ChooseByNamePopup.createPopup(project, new GotoFileModel(project), (PsiElement)null)
+    assert ChooseByNameTest.calcPopupElements(popup, path) == [psiFile]
+    assert ChooseByNameTest.calcPopupElements(popup, FileUtil.toSystemDependentName(path)) == [psiFile]
+    assert ChooseByNameTest.calcPopupElements(popup, vFile.parent.path) == [psiFile.containingDirectory]
+    assert ChooseByNameTest.calcPopupElements(popup, path + ':0') == [psiFile]
+    popup.close(false)
   }
 
   void "test prefer same-named classes visible in current module"() {
@@ -57,7 +51,7 @@ class ChooseByNameHddTest extends JavaCodeInsightFixtureTestCase {
     (0..moduleCount-1).each { myFixture.addFileToProject("mod$it/Foo.java", "class Foo {}") }
 
     def place = myFixture.addClass("class A {}")
-    def popup = ReadAction.compute { ChooseByNamePopup.createPopup(project, new GotoClassModel2(project), place) }
+    def popup = ChooseByNamePopup.createPopup(project, new GotoClassModel2(project), place)
     def resultModules = ChooseByNameTest.calcPopupElements(popup, 'Foo').collect {
       ModuleUtilCore.findModuleForPsiElement(it as PsiElement).name
     }
@@ -69,20 +63,11 @@ class ChooseByNameHddTest extends JavaCodeInsightFixtureTestCase {
     PsiTestUtil.addModule(project, StdModuleTypes.JAVA, 'm1', myFixture.tempDirFixture.findOrCreateDir("foo"))
     PsiTestUtil.addModule(project, StdModuleTypes.JAVA, 'm2', myFixture.tempDirFixture.findOrCreateDir("foo/bar"))
     def file = myFixture.addFileToProject('foo/bar/goo/doo.txt', '')
-    def popup = ReadAction.compute { ChooseByNamePopup.createPopup(project, new GotoFileModel(project), file) }
+    def popup = ChooseByNamePopup.createPopup(project, new GotoFileModel(project), file)
     assert ChooseByNameTest.calcPopupElements(popup, "doo", false) == [file]
     assert ChooseByNameTest.calcPopupElements(popup, "goo/doo", false) == [file]
     assert ChooseByNameTest.calcPopupElements(popup, "bar/goo/doo", false) == [file]
     assert ChooseByNameTest.calcPopupElements(popup, "foo/bar/goo/doo", false) == [file]
   }
 
-  @Override
-  protected boolean runInDispatchThread() {
-    return false
-  }
-
-  @Override
-  protected void invokeTestRunnable(@NotNull Runnable runnable) throws Exception {
-    runnable.run()
-  }
 }
