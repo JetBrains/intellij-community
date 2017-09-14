@@ -2004,7 +2004,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
     private final List<VirtualFile> myFiles = new ArrayList<>();
     @Nullable
     private final ProgressIndicator myProgressIndicator;
-    private final boolean myDoTraceForFilesToBeIndexed = LOG.isDebugEnabled();
+    private final boolean myDoTraceForFilesToBeIndexed = LOG.isTraceEnabled();
 
     private UnindexedFilesFinder(@Nullable ProgressIndicator indicator) {
       myProgressIndicator = indicator;
@@ -2062,7 +2062,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
               try {
                 if (needsFileContentLoading(indexId) && shouldIndexFile(file, indexId)) {
                   if (myDoTraceForFilesToBeIndexed) {
-                    LOG.info("Scheduling indexing of " + file + " by request of index " + indexId);
+                    LOG.trace("Scheduling indexing of " + file + " by request of index " + indexId);
                   }
                   synchronized (myFiles) {
                     myFiles.add(file);
