@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.vcs.impl
 
+import com.google.common.collect.HashMultiset
+import com.google.common.collect.Multiset
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ModalityState
@@ -29,7 +31,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.impl.DirectoryIndex
 import com.intellij.openapi.startup.StartupManager
-import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.FileStatus
@@ -40,6 +41,7 @@ import com.intellij.openapi.vcs.ex.LineStatusTracker
 import com.intellij.openapi.vcs.history.VcsRevisionNumber
 import com.intellij.openapi.vfs.*
 import com.intellij.testFramework.LightVirtualFile
+import com.intellij.ui.GuiUtils
 import com.intellij.util.concurrency.QueueProcessorRemovePartner
 import com.intellij.util.containers.HashMap
 import org.jetbrains.annotations.CalledInAwt
@@ -48,8 +50,9 @@ import java.nio.charset.Charset
 
 class LineStatusTrackerManager(
   private val project: Project,
-  private val statusProvider: VcsBaseContentProvider,
   private val application: Application,
+  private val statusProvider: VcsBaseContentProvider,
+  private val fileDocumentManager: FileDocumentManager,
   @Suppress("UNUSED_PARAMETER") makeSureIndexIsInitializedFirst: DirectoryIndex
 ) : ProjectComponent, LineStatusTrackerManagerI {
 
@@ -58,6 +61,7 @@ class LineStatusTrackerManager(
   private var isDisposed = false
 
   private val trackers = HashMap<Document, TrackerData>()
+  private val forcedDocuments = HashMap<Document, Multiset<Any>>()
 
   private val queue: QueueProcessorRemovePartner<Document, BaseRevisionLoader> = QueueProcessorRemovePartner(project)
   private var ourLoadCounter: Long = 0
@@ -94,11 +98,18 @@ class LineStatusTrackerManager(
     Disposer.dispose(disposable)
 
     synchronized(LOCK) {
+      for ((document, multiset) in forcedDocuments) {
+        for (requester in multiset.elementSet()) {
+          warn("Tracker for is being held on dispose by $requester", document)
+        }
+      }
+      forcedDocuments.clear()
+
       for (data in trackers.values) {
         data.tracker.release()
       }
-
       trackers.clear()
+
       queue.clear()
     }
   }
@@ -115,34 +126,38 @@ class LineStatusTrackerManager(
     }
   }
 
-  private fun isTrackedEditor(editor: Editor): Boolean {
-    return editor.project == null || editor.project === project
-  }
-
-  private fun getAllTrackedEditors(document: Document): List<Editor> {
-    return EditorFactory.getInstance().getEditors(document, project).asList()
-  }
-
-  private fun getAllTrackedEditors(): List<Editor> {
-    return EditorFactory.getInstance().allEditors.filter { isTrackedEditor(it) }
-  }
 
   @CalledInAwt
-  private fun onEditorCreated(editor: Editor) {
-    if (isTrackedEditor(editor)) {
-      installTracker(editor.document)
-    }
-  }
+  override fun requestTrackerFor(document: Document, requester: Any) {
+    synchronized(LOCK) {
+      val multiset = forcedDocuments.computeIfAbsent(document) { HashMultiset.create<Any>() }
+      multiset.add(requester)
 
-  @CalledInAwt
-  private fun onEditorRemoved(editor: Editor) {
-    if (isTrackedEditor(editor)) {
-      val editors = getAllTrackedEditors(editor.document)
-      if (editors.isEmpty() || editors.size == 1 && editor === editors[0]) {
-        doReleaseTracker(editor.document)
+      if (trackers[document] == null) {
+        val virtualFile = fileDocumentManager.getFile(document) ?: return
+        installTracker(virtualFile, document)
       }
     }
   }
+
+  @CalledInAwt
+  override fun releaseTrackerFor(document: Document, requester: Any) {
+    synchronized(LOCK) {
+      val multiset = forcedDocuments[document]
+      if (multiset == null || !multiset.contains(requester)) {
+        warn("Tracker release underflow by $requester", document)
+        return
+      }
+
+      multiset.remove(requester)
+
+      if (multiset.isEmpty()) {
+        forcedDocuments.remove(document)
+        releaseTracker(document)
+      }
+    }
+  }
+
 
   @CalledInAwt
   private fun onEverythingChanged() {
@@ -150,54 +165,43 @@ class LineStatusTrackerManager(
       if (isDisposed) return
       log("onEverythingChanged", null)
 
-      val trackers = trackers.values.map { it.tracker }
-      for (tracker in trackers) {
-        resetTracker(tracker.document, tracker.virtualFile, tracker)
+      val files = HashSet<VirtualFile>()
+
+      for (data in trackers.values) {
+        files.add(data.tracker.virtualFile)
+      }
+      for (document in forcedDocuments.keys) {
+        val file = fileDocumentManager.getFile(document)
+        if (file != null) files.add(file)
       }
 
-      for (editor in getAllTrackedEditors()) {
-        installTracker(editor.document)
+      for (file in files) {
+        onFileChanged(file)
       }
     }
   }
 
   @CalledInAwt
   private fun onFileChanged(virtualFile: VirtualFile) {
-    val document = FileDocumentManager.getInstance().getCachedDocument(virtualFile) ?: return
+    val document = fileDocumentManager.getCachedDocument(virtualFile) ?: return
 
     synchronized(LOCK) {
       if (isDisposed) return
       log("onFileChanged", virtualFile)
-      resetTracker(document, virtualFile, getLineStatusTracker(document))
+      val data = trackers[document]
+
+      if (data == null) {
+        if (forcedDocuments.containsKey(document)) {
+          installTracker(virtualFile, document)
+        }
+      }
+      else {
+        refreshTracker(data.tracker)
+      }
     }
   }
 
-  private fun installTracker(document: Document) {
-    val file = FileDocumentManager.getInstance().getFile(document)
-    log("installTracker", file)
-    if (shouldBeInstalled(file)) {
-      doInstallTracker(file!!, document)
-    }
-  }
-
-  private fun resetTracker(document: Document, virtualFile: VirtualFile, tracker: LineStatusTracker<*>?) {
-    val isOpened = !getAllTrackedEditors(document).isEmpty()
-    val shouldBeInstalled = isOpened && shouldBeInstalled(virtualFile)
-
-    log("resetTracker: shouldBeInstalled - " + shouldBeInstalled + ", tracker - " + if (tracker == null) "null" else "found", virtualFile)
-
-    if (tracker != null && shouldBeInstalled) {
-      doRefreshTracker(tracker)
-    }
-    else if (tracker != null) {
-      doReleaseTracker(document)
-    }
-    else if (shouldBeInstalled) {
-      doInstallTracker(virtualFile, document)
-    }
-  }
-
-  private fun shouldBeInstalled(virtualFile: VirtualFile?): Boolean {
+  private fun canGetBaseRevisionFor(virtualFile: VirtualFile?): Boolean {
     if (isDisposed) return false
 
     if (virtualFile == null || virtualFile is LightVirtualFile) return false
@@ -210,47 +214,40 @@ class LineStatusTrackerManager(
     }
 
     val status = statusManager.getStatus(virtualFile)
-    if (status === FileStatus.NOT_CHANGED || status === FileStatus.ADDED || status === FileStatus.UNKNOWN || status === FileStatus.IGNORED) {
+    if (status === FileStatus.ADDED || status === FileStatus.UNKNOWN || status === FileStatus.IGNORED) {
       log("shouldBeInstalled skipped: status=" + status, virtualFile)
       return false
     }
     return true
   }
 
-  private fun doRefreshTracker(tracker: LineStatusTracker<*>) {
+  @CalledInAwt
+  private fun installTracker(virtualFile: VirtualFile, document: Document) {
+    if (!canGetBaseRevisionFor(virtualFile)) return
+
     synchronized(LOCK) {
       if (isDisposed) return
+      if (trackers[document] != null) return
 
-      log("trackerRefreshed", tracker.virtualFile)
-      startAlarm(tracker.document, tracker.virtualFile)
-    }
-  }
-
-  private fun doReleaseTracker(document: Document) {
-    synchronized(LOCK) {
-      if (isDisposed) return
-
-      queue.remove(document)
-      val data = trackers.remove(document)
-      if (data != null) {
-        log("trackerReleased", data.tracker.virtualFile)
-        data.tracker.release()
-      }
-    }
-  }
-
-  private fun doInstallTracker(virtualFile: VirtualFile, document: Document) {
-    synchronized(LOCK) {
-      if (isDisposed) return
-
-      if (trackers.containsKey(document)) return
-      assert(!queue.containsKey(document))
-
-      log("trackerInstalled", virtualFile)
       val tracker = LineStatusTracker.createOn(virtualFile, document, project, getTrackerMode())
+
       trackers.put(document, TrackerData(tracker))
 
-      startAlarm(document, virtualFile)
+      refreshTracker(tracker)
+
+      log("Tracker installed", virtualFile)
+    }
+  }
+
+  @CalledInAwt
+  private fun releaseTracker(document: Document) {
+    synchronized(LOCK) {
+      if (isDisposed) return
+      val data = trackers.remove(document) ?: return
+
+      data.tracker.release()
+
+      log("Tracker released", data.tracker.virtualFile)
     }
   }
 
@@ -260,9 +257,12 @@ class LineStatusTrackerManager(
     return if (vcsApplicationSettings.SHOW_WHITESPACES_IN_LST) LineStatusTracker.Mode.SMART else LineStatusTracker.Mode.DEFAULT
   }
 
-  private fun startAlarm(document: Document, virtualFile: VirtualFile) {
+  private fun refreshTracker(tracker: LineStatusTracker<*>) {
     synchronized(LOCK) {
-      queue.add(document, BaseRevisionLoader(document, virtualFile))
+      if (isDisposed) return
+      queue.add(tracker.document, BaseRevisionLoader(tracker.document, tracker.virtualFile))
+
+      log("Refresh queued", tracker.virtualFile)
     }
   }
 
@@ -327,28 +327,33 @@ class LineStatusTrackerManager(
         is RefreshResult.Canceled -> {
         }
         is RefreshResult.Error -> {
-          synchronized(LOCK) {
-            doReleaseTracker(document)
+          edt {
+            synchronized(LOCK) {
+              val data = trackers[document] ?: return@edt
+
+              data.tracker.dropBaseRevision()
+              data.contentInfo = null
+            }
           }
         }
         is RefreshResult.Success -> {
-          application.invokeLater(Runnable {
+          edt {
             synchronized(LOCK) {
               val data = trackers[document]
               if (data == null) {
                 log("BaseRevisionLoader initializing: tracker already released", virtualFile)
-                return@Runnable
+                return@edt
               }
               if (!shouldBeUpdated(data.contentInfo, result.info)) {
                 log("BaseRevisionLoader initializing: no need to update", virtualFile)
-                return@Runnable
+                return@edt
               }
 
               log("BaseRevisionLoader initializing: success", virtualFile)
               trackers.put(document, TrackerData(data.tracker, result.info))
               data.tracker.setBaseRevision(result.text)
             }
-          }, ModalityState.NON_MODAL, Condition<Any> { isDisposed })
+          }
         }
       }
     }
@@ -366,11 +371,21 @@ class LineStatusTrackerManager(
 
   private inner class MyEditorFactoryListener : EditorFactoryAdapter() {
     override fun editorCreated(event: EditorFactoryEvent) {
-      onEditorCreated(event.editor)
+      val editor = event.editor
+      if (isTrackedEditor(editor)) {
+        requestTrackerFor(editor.document, editor)
+      }
     }
 
     override fun editorReleased(event: EditorFactoryEvent) {
-      onEditorRemoved(event.editor)
+      val editor = event.editor
+      if (isTrackedEditor(editor)) {
+        releaseTrackerFor(editor.document, editor)
+      }
+    }
+
+    private fun isTrackedEditor(editor: Editor): Boolean {
+      return editor.project == null || editor.project == project
     }
   }
 
@@ -421,6 +436,10 @@ class LineStatusTrackerManager(
   }
 
 
+  private fun edt(task: () -> Unit) {
+    GuiUtils.invokeLaterIfNeeded(task, ModalityState.any())
+  }
+
   private fun log(message: String, file: VirtualFile?) {
     if (LOG.isDebugEnabled) {
       if (file != null) {
@@ -429,6 +448,20 @@ class LineStatusTrackerManager(
       else {
         LOG.debug(message)
       }
+    }
+  }
+
+  private fun warn(message: String, document: Document?) {
+    val file = document?.let { fileDocumentManager.getFile(it) }
+    warn(message, file)
+  }
+
+  private fun warn(message: String, file: VirtualFile?) {
+    if (file != null) {
+      LOG.warn(message + "; file: " + file.path)
+    }
+    else {
+      LOG.warn(message)
     }
   }
 }

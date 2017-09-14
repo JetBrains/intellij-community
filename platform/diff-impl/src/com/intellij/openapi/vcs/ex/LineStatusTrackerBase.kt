@@ -106,6 +106,15 @@ abstract class LineStatusTrackerBase<R : Range> {
   }
 
   @CalledInAwt
+  fun dropBaseRevision() {
+    application.assertIsDispatchThread()
+    if (isReleased) return
+
+    isInitialized = false
+    updateHighlighters()
+  }
+
+  @CalledInAwt
   protected fun updateDocument(side: Side, task: (Document) -> Unit): Boolean {
     return updateDocument(side, null, task)
   }
