@@ -53,7 +53,7 @@ public class BackwardReferenceIndexUtil {
           final LightRef.LightClassHierarchyElementDef aClass;
           if (sym.isAnonymous()) {
             final JavacRef[] classes = ((JavacDef.JavacClassDef)def).getSuperClasses();
-            if (classes.length != 1) {
+            if (classes.length == 0) {
               LOG.info("Seems that compilation will finish with errors in anonymous class inside file " + filePath);
               continue;
             }
