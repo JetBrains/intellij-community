@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -354,13 +354,13 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "sphinxcontrib-napoleon", attachedTo: "python-helpers", version: "0.3.11", license: "BSD",
                        url: "http://sphinxcontrib-napoleon.readthedocs.org/"),
     new LibraryLicense(name: "sqljet", version: "bundled with SVNKit", libraryName: "sqljet.jar", license: "link (commercial license)",
-                       url: "http://sqljet.com", licenseUrl: "http://svnkit.com/license.html"),
+                       url: "http://sqljet.com", licenseUrl: "https://github.com/JetBrains/intellij-community/blob/master/license/svnkit-license.txt"),
     new LibraryLicense(name: "StreamEx", version: "0.6.2", libraryName: "StreamEx", license: "Apache 2.0",
                        url: "https://github.com/amaembo/streamex", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
     new LibraryLicense(name: "svnkit-javahl", version: "bundled with SVNKit", libraryName: "svnkit-javahl.jar",
-                       license: "link (commercial license)", url: "http://www.svnkit.com/", licenseUrl: "http://svnkit.com/license.html"),
+                       license: "link (commercial license)", url: "http://www.svnkit.com/", licenseUrl: "https://github.com/JetBrains/intellij-community/blob/master/license/svnkit-license.txt"),
     new LibraryLicense(name: "SVNKit", libraryName: "svnkit.jar", version: "1.8.12", license: "link (commercial license)",
-                       url: "http://www.svnkit.com/", licenseUrl: "http://svnkit.com/license.html"),
+                       url: "http://www.svnkit.com/", licenseUrl: "https://github.com/JetBrains/intellij-community/blob/master/license/svnkit-license.txt"),
     new LibraryLicense(name: "swingx", libraryName: "swingx", version: "1.6.2", license: "LGPL 2.1", url: "http://java.net/downloads/swingx/",
                        licenseUrl: "http://www.opensource.org/licenses/lgpl-2.1.php"),
     new LibraryLicense(name: "TestNG", version: "6.9 snapshot", license: "Apache 2.0", url: "http://testng.org/doc/",
