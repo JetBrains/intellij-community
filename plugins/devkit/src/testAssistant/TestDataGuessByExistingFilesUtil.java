@@ -19,6 +19,8 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.ide.util.gotoByName.GotoFileModel;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -245,6 +247,8 @@ public class TestDataGuessByExistingFilesUtil {
     if (!completed) {
       throw new ProcessCanceledException();
     }
+
+    filterDirsFromOtherModules(descriptorsByFileNames, project, psiClass);
     return new TestDataDescriptor(descriptorsByFileNames.values(), possibleFileName);
   }
 
@@ -258,6 +262,38 @@ public class TestDataGuessByExistingFilesUtil {
     };
     model.processNames(processor, false);
     return processor.getResults();
+  }
+
+  private static void filterDirsFromOtherModules(Map<String, TestLocationDescriptor> descriptorsByFileNames,
+                                                 Project project, PsiClass psiClass) {
+    if (descriptorsByFileNames.size() > 1) {
+      Module module = ModuleUtilCore.findModuleForFile(psiClass.getContainingFile().getVirtualFile(), project);
+      if (module == null) {
+        return;
+      }
+      VirtualFile moduleFile = module.getModuleFile();
+      if (moduleFile == null) {
+        return;
+      }
+      VirtualFile moduleFileDir = moduleFile.getParent();
+      if (moduleFileDir == null) {
+        return;
+      }
+
+      String moduleFileDirPath = moduleFileDir.getPath();
+      boolean foundInModuleFileDir = false;
+      for (TestLocationDescriptor descriptor : descriptorsByFileNames.values()) {
+        if (descriptor.dir.startsWith(moduleFileDirPath)) {
+          foundInModuleFileDir = true;
+          break;
+        }
+      }
+      if (!foundInModuleFileDir) {
+        return;
+      }
+
+      descriptorsByFileNames.entrySet().removeIf(e -> !e.getValue().dir.startsWith(moduleFileDirPath));
+    }
   }
 
   @Nullable
