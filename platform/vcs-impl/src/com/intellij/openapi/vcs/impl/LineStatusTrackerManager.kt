@@ -195,15 +195,24 @@ class LineStatusTrackerManager(
     synchronized(LOCK) {
       if (isDisposed) return
       log("onFileChanged", virtualFile)
-      val data = trackers[document]
+      val tracker = trackers[document]?.tracker
 
-      if (data == null) {
+      if (tracker == null) {
         if (forcedDocuments.containsKey(document)) {
           installTracker(virtualFile, document)
         }
       }
       else {
-        refreshTracker(data.tracker)
+        val isPartialTrackerExpected = canCreatePartialTrackerFor(virtualFile)
+        val isPartialTracker = tracker is PartialLocalLineStatusTracker
+
+        if (isPartialTrackerExpected == isPartialTracker) {
+          refreshTracker(tracker)
+        }
+        else {
+          releaseTracker(document)
+          installTracker(virtualFile, document)
+        }
       }
     }
   }
@@ -224,12 +233,21 @@ class LineStatusTrackerManager(
     return true
   }
 
+  private fun canCreatePartialTrackerFor(virtualFile: VirtualFile): Boolean {
+    if (!arePartialChangelistsEnabled(virtualFile)) return false
+
+    val status = FileStatusManager.getInstance(project).getStatus(virtualFile)
+    return status == FileStatus.MODIFIED ||
+           status == FileStatus.NOT_CHANGED
+  }
+
   private fun arePartialChangelistsEnabled(virtualFile: VirtualFile): Boolean {
     if (getTrackingMode() == LineStatusTracker.Mode.SILENT) return false
 
     val vcs = VcsUtil.getVcsFor(project, virtualFile)
     return vcs != null && vcs.arePartialChangelistsSupported()
   }
+
 
   @CalledInAwt
   private fun installTracker(virtualFile: VirtualFile, document: Document) {
@@ -239,7 +257,7 @@ class LineStatusTrackerManager(
       if (isDisposed) return
       if (trackers[document] != null) return
 
-      val tracker = if (arePartialChangelistsEnabled(virtualFile)) {
+      val tracker = if (canCreatePartialTrackerFor(virtualFile)) {
         PartialLocalLineStatusTracker.createTracker(project, document, virtualFile, getTrackingMode())
       }
       else {
@@ -427,7 +445,22 @@ class LineStatusTrackerManager(
       synchronized(LOCK) {
         val mode = getTrackingMode()
         for (data in trackers.values) {
-          data.tracker.mode = mode
+          val tracker = data.tracker
+          val document = tracker.document
+          val virtualFile = tracker.virtualFile
+
+          if (tracker.mode == mode) continue
+
+          val isPartialTrackerExpected = canCreatePartialTrackerFor(virtualFile)
+          val isPartialTracker = tracker is PartialLocalLineStatusTracker
+
+          if (isPartialTrackerExpected == isPartialTracker) {
+            tracker.mode = mode
+          }
+          else {
+            releaseTracker(document)
+            installTracker(virtualFile, document)
+          }
         }
       }
     }
