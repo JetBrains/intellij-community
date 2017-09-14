@@ -269,6 +269,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       myRefToPsi.cachePsi(path, psi);
       psi.setStubIndex(i + 1);
     }
+    myRefToPsi.clearStubIndexCache();
   }
 
   private List<Pair<StubBasedPsiElementBase, AstPath>> calcStubAstBindings(@NotNull FileElement root, FileTrees trees) {
@@ -602,15 +603,17 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
     DebugUtil.startPsiModification("onContentReload");
     try {
-      myRefToPsi.invalidatePsi();
+      synchronized (myPsiLock) {
+        myRefToPsi.invalidatePsi();
 
-      FileElement treeElement = derefTreeElement();
-      if (treeElement != null) {
-        treeElement.detachFromFile();
-        DebugUtil.onInvalidated(treeElement);
+        FileElement treeElement = derefTreeElement();
+        if (treeElement != null) {
+          treeElement.detachFromFile();
+          DebugUtil.onInvalidated(treeElement);
+        }
+        updateTrees(myTrees.clearStub("onContentReload"));
+        setTreeElementPointer(null);
       }
-      updateTrees(myTrees.clearStub("onContentReload"));
-      setTreeElementPointer(null);
     }
     finally {
       DebugUtil.finishPsiModification();
@@ -712,6 +715,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
         // Stub index might call getStubTree on main PSI file, but then use getPlainListFromAllRoots and return stubs from another file.
         // Even if that file already has AST, stub.getPsi() should be the same as in AST
         TreeUtil.bindStubsToTree(stubTree, fileElement);
+        eachPsiRoot.myRefToPsi.clearStubIndexCache();
       } else {
         eachPsiRoot.bindStubsToCachedPsi(stubTree);
         bindings.put(eachPsiRoot, stubTree);
@@ -732,16 +736,10 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   }
 
   private boolean hasUnbindableCachedPsi() {
-    for (PsiFile file : myViewProvider.getAllFiles()) {
-      if (file instanceof PsiFileImpl) {
-        for (StubBasedPsiElementBase<?> psi : ((PsiFileImpl)file).myRefToPsi.getAllCachedPsi()) {
-          if (psi.getStubIndex() < 0) {
-            return true;
-          }
-        }
-      }
+    synchronized (myPsiLock) {
+      return ContainerUtil.exists(myViewProvider.getAllFiles(),
+                                  file -> file instanceof PsiFileImpl && ((PsiFileImpl)file).myRefToPsi.hasUnbindableCachedPsi());
     }
-    return false;
   }
 
   @Nullable
@@ -761,13 +759,13 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   }
 
   private void bindStubsToCachedPsi(StubTree stubTree) {
-    for (StubBasedPsiElementBase<?> psi : myRefToPsi.getAllCachedPsi()) {
+    myRefToPsi.getAllCachedPsi().forEach(psi -> {
       int index = psi.getStubIndex();
       if (index >= 0) {
         //noinspection unchecked
         ((StubBase)stubTree.getPlainList().get(index)).setPsi(psi);
       }
-    }
+    });
   }
 
   protected PsiFileImpl cloneImpl(FileElement treeElementClone) {
@@ -1029,8 +1027,6 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     return this == another;
   }
 
-  private final Object myStubFromTreeLock = new Object();
-
   /**
    * @return a stub tree object having {@link #getGreenStub()} as a root, or null if there's no green stub available
    */
@@ -1048,7 +1044,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     }
     assert myFileElementBeingLoaded.get() == null : "non-empty thread-local";
     FileElement fileElement = calcTreeElement();
-    synchronized (myStubFromTreeLock) {
+    synchronized (myPsiLock) {
       tree = derefStub();
 
       if (tree == null) {
@@ -1074,6 +1070,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
         tree.setDebugInfo("created in calcStubTree");
         try {
           TreeUtil.bindStubsToTree(tree, fileElement);
+          myRefToPsi.clearStubIndexCache();
         }
         catch (TreeUtil.StubBindingException e) {
           rebuildStub();
