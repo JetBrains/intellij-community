@@ -192,6 +192,7 @@ public class TestDataGuessByExistingFilesUtil {
     final String possibleFilePath = test.replace('$', '/');
     Map<String, TestLocationDescriptor> descriptorsByFileNames = new HashMap<>();
     boolean completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+      Module module = ModuleUtilCore.findModuleForPsiElement(psiClass);
       final Collection<String> fileNames = getAllFileNames(possibleFileName, gotoModel);
       ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
       indicator.setIndeterminate(false);
@@ -225,7 +226,7 @@ public class TestDataGuessByExistingFilesUtil {
             }
 
             TestLocationDescriptor current = new TestLocationDescriptor();
-            current.populate(possibleFileName, file);
+            current.populate(possibleFileName, file, project, module);
             if (!current.isComplete()) {
               continue;
             }
@@ -248,7 +249,7 @@ public class TestDataGuessByExistingFilesUtil {
       throw new ProcessCanceledException();
     }
 
-    filterDirsFromOtherModules(descriptorsByFileNames, project, psiClass);
+    filterDirsFromOtherModules(descriptorsByFileNames);
     return new TestDataDescriptor(descriptorsByFileNames.values(), possibleFileName);
   }
 
@@ -264,36 +265,14 @@ public class TestDataGuessByExistingFilesUtil {
     return processor.getResults();
   }
 
-  private static void filterDirsFromOtherModules(Map<String, TestLocationDescriptor> descriptorsByFileNames,
-                                                 Project project, PsiClass psiClass) {
-    if (descriptorsByFileNames.size() > 1) {
-      Module module = ModuleUtilCore.findModuleForFile(psiClass.getContainingFile().getVirtualFile(), project);
-      if (module == null) {
-        return;
-      }
-      VirtualFile moduleFile = module.getModuleFile();
-      if (moduleFile == null) {
-        return;
-      }
-      VirtualFile moduleFileDir = moduleFile.getParent();
-      if (moduleFileDir == null) {
-        return;
-      }
-
-      String moduleFileDirPath = moduleFileDir.getPath();
-      boolean foundInModuleFileDir = false;
-      for (TestLocationDescriptor descriptor : descriptorsByFileNames.values()) {
-        if (descriptor.dir.startsWith(moduleFileDirPath)) {
-          foundInModuleFileDir = true;
-          break;
-        }
-      }
-      if (!foundInModuleFileDir) {
-        return;
-      }
-
-      descriptorsByFileNames.entrySet().removeIf(e -> !e.getValue().dir.startsWith(moduleFileDirPath));
+  private static void filterDirsFromOtherModules(Map<String, TestLocationDescriptor> descriptorsByFileNames) {
+    if (descriptorsByFileNames.size() < 2) {
+      return;
     }
+    if (descriptorsByFileNames.values().stream().noneMatch(descriptor -> descriptor.isFromCurrentModule)) {
+      return;
+    }
+    descriptorsByFileNames.entrySet().removeIf(e -> !e.getValue().isFromCurrentModule);
   }
 
   @Nullable
@@ -383,18 +362,18 @@ public class TestDataGuessByExistingFilesUtil {
   }
 
   private static class TestLocationDescriptor {
-
     public String dir;
     public String filePrefix;
     public String fileSuffix;
     public String ext;
     public boolean startWithLowerCase;
+    public boolean isFromCurrentModule;
 
     public boolean isComplete() {
       return dir != null && filePrefix != null && fileSuffix != null && ext != null;
     }
 
-    public void populate(@NotNull String testName, @NotNull VirtualFile matched) {
+    public void populate(@NotNull String testName, @NotNull VirtualFile matched, @NotNull Project project, @Nullable Module module) {
       if (testName.isEmpty()) return;
       final String withoutExtension = FileUtil.getNameWithoutExtension(testName);
       boolean excludeExtension = !withoutExtension.equals(testName);
@@ -420,6 +399,9 @@ public class TestDataGuessByExistingFilesUtil {
       fileSuffix = fileName.substring(i + testName.length());
       ext = excludeExtension ? "" : matched.getExtension();
       dir = matched.getParent().getPath();
+      if (module != null) {
+        isFromCurrentModule = module.equals(ModuleUtilCore.findModuleForFile(matched, project));
+      }
     }
 
     @Override
