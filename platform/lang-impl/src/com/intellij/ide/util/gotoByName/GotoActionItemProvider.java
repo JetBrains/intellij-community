@@ -98,7 +98,7 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
       .transform(myActionManager::getAction)
       .filter(Condition.NOT_NULL)
       .transform(action -> {
-        ActionWrapper wrapper = new ActionWrapper(action, myModel.myActionGroups.get(action), MatchMode.NAME, context);
+        ActionWrapper wrapper = new ActionWrapper(action, myModel.myActionGroups.get(action), MatchMode.NAME, context, myModel);
         return new MatchedValue(wrapper, pattern) {
           @NotNull
           @Override
@@ -110,7 +110,7 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
     return processItems(pattern, wrappers, consumer);
   }
 
-  private boolean processTopHits(String pattern, Processor<MatchedValue> consumer, DataContext dataContext) {
+  private static boolean processTopHits(String pattern, Processor<MatchedValue> consumer, DataContext dataContext) {
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final CollectConsumer<Object> collector = new CollectConsumer<>();
     for (SearchTopHitProvider provider : SearchTopHitProvider.EP_NAME.getExtensions()) {
@@ -178,7 +178,7 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
       for (OptionDescription description : optionDescriptions) {
         for (ActionFromOptionDescriptorProvider converter : ActionFromOptionDescriptorProvider.EP.getExtensions()) {
           AnAction action = converter.provide(description);
-          if (action != null) options.add(new ActionWrapper(action, null, MatchMode.NAME, dataContext));
+          if (action != null) options.add(new ActionWrapper(action, null, MatchMode.NAME, dataContext, myModel));
           options.add(description);
         }
       }
@@ -199,7 +199,7 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
     JBIterable<ActionWrapper> actionWrappers = actions.unique().transform(action -> {
       MatchMode mode = myModel.actionMatches(pattern, matcher, action);
       if (mode == MatchMode.NONE) return null;
-      return new ActionWrapper(action, myModel.myActionGroups.get(action), mode, dataContext);
+      return new ActionWrapper(action, myModel.myActionGroups.get(action), mode, dataContext, myModel);
     }).filter(Condition.NOT_NULL);
     return processItems(pattern, actionWrappers, consumer);
   }
@@ -211,17 +211,14 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
       .transform(intentionText -> {
         ApplyIntentionAction intentionAction = intentionMap.get(intentionText);
         if (myModel.actionMatches(pattern, matcher, intentionAction) == MatchMode.NONE) return null;
-        return new ActionWrapper(intentionAction, intentionText, MatchMode.INTENTION, dataContext);
+        return new ActionWrapper(intentionAction, intentionText, MatchMode.INTENTION, dataContext, myModel);
       })
       .filter(Condition.NOT_NULL);
     return processItems(pattern, intentions, consumer);
   }
 
-  private boolean processItems(String pattern, JBIterable<? extends Comparable> items, Processor<MatchedValue> consumer) {
-    List<? extends Comparable> itemList = items.toList();
-    myModel.updateActions(ContainerUtil.findAll(itemList, ActionWrapper.class));
-    
-    List<MatchedValue> matched = ContainerUtil.map(itemList, o -> o instanceof MatchedValue ? (MatchedValue)o : new MatchedValue(o, pattern));
+  private static boolean processItems(String pattern, JBIterable<? extends Comparable> items, Processor<MatchedValue> consumer) {
+    List<MatchedValue> matched = ContainerUtil.newArrayList(items.map(o -> o instanceof MatchedValue ? (MatchedValue)o : new MatchedValue(o, pattern)));
     Collections.sort(matched);
     return ContainerUtil.process(matched, consumer);
   }

@@ -422,19 +422,17 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     return objects;
   }
 
-  void updateActions(List<ActionWrapper> toUpdate) {
-    Semaphore semaphore = new Semaphore(toUpdate.size());
+  private void updateOnEdt(Runnable update) {
+    Semaphore semaphore = new Semaphore(1);
     ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
-    for (ActionWrapper wrapper : toUpdate) {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        try {
-          wrapper.getPresentation();
-        }
-        finally {
-          semaphore.up();
-        }
-      }, myModality, __ -> indicator != null && indicator.isCanceled());
-    }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      try {
+        update.run();
+      }
+      finally {
+        semaphore.up();
+      }
+    }, myModality, __ -> indicator != null && indicator.isCanceled());
 
     while (!semaphore.waitFor(10)) {
       if (indicator != null && indicator.isCanceled()) {
@@ -463,13 +461,15 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     @NotNull private final MatchMode myMode;
     @Nullable  private final String myGroupName;
     private final DataContext myDataContext;
+    private final GotoActionModel myModel;
     private volatile Presentation myPresentation;
 
-    public ActionWrapper(@NotNull AnAction action, @Nullable String groupName, @NotNull MatchMode mode, DataContext dataContext) {
+    public ActionWrapper(@NotNull AnAction action, @Nullable String groupName, @NotNull MatchMode mode, DataContext dataContext, GotoActionModel model) {
       myAction = action;
       myMode = mode;
       myGroupName = groupName;
       myDataContext = dataContext;
+      myModel = model;
     }
 
     @NotNull
@@ -507,7 +507,14 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
 
     public Presentation getPresentation() {
       if (myPresentation != null) return myPresentation;
-      return myPresentation = updateActionBeforeShow(myAction, myDataContext).getPresentation();
+      Runnable r = () -> myPresentation = updateActionBeforeShow(myAction, myDataContext).getPresentation();
+      if (ApplicationManager.getApplication().isDispatchThread()) {
+        r.run();
+      } else {
+        myModel.updateOnEdt(r);
+      }
+
+      return myPresentation;
     }
 
     private boolean hasPresentation() {

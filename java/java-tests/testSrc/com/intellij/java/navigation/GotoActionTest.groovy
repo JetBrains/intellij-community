@@ -58,20 +58,20 @@ class GotoActionTest extends LightCodeInsightFixtureTestCase {
     assert [c, copy, cut, aardvark, eclaire, boom, deaf] == items.collect { it.valueText }
   }
   
-  static def matchedValue(String fork, String pattern) {
+  def matchedValue(String fork, String pattern) {
     matchedValue(fork, pattern, GotoActionModel.MatchMode.NAME)
   }
 
-  static def matchedValue(String fork, String pattern, GotoActionModel.MatchMode mode) {
+  def matchedValue(String fork, String pattern, GotoActionModel.MatchMode mode) {
     new GotoActionModel.MatchedValue(createAction(fork, mode), pattern)
   }
 
-  static def createAction(String text, GotoActionModel.MatchMode mode) {
+  def createAction(String text, GotoActionModel.MatchMode mode) {
     def action = new AnAction(text) {
       @Override
       void actionPerformed(AnActionEvent e) {
       }
     }
-    new GotoActionModel.ActionWrapper(action, "", mode, DataContext.EMPTY_CONTEXT)
+    new GotoActionModel.ActionWrapper(action, "", mode, DataContext.EMPTY_CONTEXT, new GotoActionModel(project, null, null, null))
   }
 }
