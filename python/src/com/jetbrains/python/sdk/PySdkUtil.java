@@ -21,6 +21,9 @@ import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.SystemInfo;
@@ -148,7 +151,8 @@ public class PySdkUtil {
           processInput.close();
         }
       }
-      return processHandler.runProcess(timeout);
+      ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+      return processHandler.runProcessWithProgressIndicator(indicator != null ? indicator : new EmptyProgressIndicator(), timeout);
     }
     catch (ExecutionException | IOException e) {
       return getOutputForException(e);
