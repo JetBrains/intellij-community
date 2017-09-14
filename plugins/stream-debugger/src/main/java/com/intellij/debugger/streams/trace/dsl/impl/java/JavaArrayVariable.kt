@@ -25,7 +25,8 @@ import com.intellij.debugger.streams.trace.impl.handler.type.GenericType
 /**
  * @author Vitaliy.Bibaev
  */
-class JavaArrayVariable(override val elementType: GenericType, name: String) : VariableImpl("$elementType[]", name), ArrayVariable {
+class JavaArrayVariable(override val elementType: GenericType, name: String)
+  : VariableImpl("${elementType.variableTypeName}[]", name), ArrayVariable {
   override fun get(index: Expression): Expression = TextExpression("$name[${index.toCode()}]")
 
   override fun set(index: Expression, value: Expression): Expression = TextExpression("$name[${index.toCode()}] = ${value.toCode()}")
