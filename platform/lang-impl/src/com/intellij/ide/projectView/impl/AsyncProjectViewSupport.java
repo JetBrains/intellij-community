@@ -19,9 +19,10 @@ import com.intellij.ProjectTopics;
 import com.intellij.ide.CopyPasteUtil;
 import com.intellij.ide.bookmarks.Bookmark;
 import com.intellij.ide.bookmarks.BookmarksListener;
-import com.intellij.ide.projectView.ProjectViewNode;
+import com.intellij.ide.projectView.ProjectViewPsiTreeChangeListener;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
+import com.intellij.ide.util.treeView.AbstractTreeUpdater;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
@@ -35,10 +36,9 @@ import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.StructureTreeModel;
-import com.intellij.ui.tree.TreeVisitor;
+import com.intellij.util.SmartList;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -48,6 +48,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 
 import java.util.Comparator;
+import java.util.List;
 
 import static com.intellij.ide.util.treeView.TreeState.VISIT;
 import static com.intellij.util.ui.UIUtil.putClientProperty;
@@ -56,7 +57,7 @@ class AsyncProjectViewSupport {
   private static final Logger LOG = Logger.getInstance(AbstractProjectViewPSIPane.class);
   private final StructureTreeModel myStructureTreeModel;
   private final AsyncTreeModel myAsyncTreeModel;
-  private final Project myProject;
+  private final PsiManager myPsiManager;
 
   public AsyncProjectViewSupport(Disposable parent,
                                  Project project,
@@ -68,7 +69,7 @@ class AsyncProjectViewSupport {
     myStructureTreeModel.setComparator(comparator);
     myAsyncTreeModel = new AsyncTreeModel(myStructureTreeModel, true);
     myAsyncTreeModel.setRootImmediately(myStructureTreeModel.getRootImmediately());
-    myProject = project;
+    myPsiManager = PsiManager.getInstance(project);
     tree.setModel(myAsyncTreeModel);
     Disposer.register(parent, myAsyncTreeModel);
     putClientProperty(tree, VISIT, visitor -> myAsyncTreeModel.visit(visitor, true));
@@ -100,65 +101,31 @@ class AsyncProjectViewSupport {
         //do nothing
       }
     });
-    PsiManager.getInstance(project).addPsiTreeChangeListener(new PsiTreeChangeListener() {
+    myPsiManager.addPsiTreeChangeListener(new ProjectViewPsiTreeChangeListener(project) {
       @Override
-      public void beforeChildAddition(@NotNull PsiTreeChangeEvent event) {
-        updateAll();//TODO:
+      protected boolean isFlattenPackages() {
+        return structure instanceof AbstractProjectTreeStructure && ((AbstractProjectTreeStructure)structure).isFlattenPackages();
       }
 
       @Override
-      public void beforeChildRemoval(@NotNull PsiTreeChangeEvent event) {
-        updateAll();//TODO:
+      protected AbstractTreeUpdater getUpdater() {
+        return null;
       }
 
       @Override
-      public void beforeChildReplacement(@NotNull PsiTreeChangeEvent event) {
-        updateAll();//TODO:
+      protected DefaultMutableTreeNode getRootNode() {
+        return null;
       }
 
       @Override
-      public void beforeChildMovement(@NotNull PsiTreeChangeEvent event) {
-        updateAll();//TODO:
+      protected void addSubtreeToUpdateByRoot() {
+        updateAll();
       }
 
       @Override
-      public void beforeChildrenChange(@NotNull PsiTreeChangeEvent event) {
-        updateAll();//TODO:
-      }
-
-      @Override
-      public void beforePropertyChange(@NotNull PsiTreeChangeEvent event) {
-        updateAll();//TODO:
-      }
-
-      @Override
-      public void childAdded(@NotNull PsiTreeChangeEvent event) {
-        updateAll();//TODO:
-      }
-
-      @Override
-      public void childRemoved(@NotNull PsiTreeChangeEvent event) {
-        updateAll();//TODO:
-      }
-
-      @Override
-      public void childReplaced(@NotNull PsiTreeChangeEvent event) {
-        updateAll();//TODO:
-      }
-
-      @Override
-      public void childrenChanged(@NotNull PsiTreeChangeEvent event) {
-        updateAll();//TODO:
-      }
-
-      @Override
-      public void childMoved(@NotNull PsiTreeChangeEvent event) {
-        updateAll();//TODO:
-      }
-
-      @Override
-      public void propertyChanged(@NotNull PsiTreeChangeEvent event) {
-        updateAll();//TODO:
+      protected boolean addSubtreeToUpdateByElement(PsiElement element) {
+        updateByElement(element);
+        return true;
       }
     }, parent);
     FileStatusManager.getInstance(project).addFileStatusListener(new FileStatusListener() {
@@ -193,20 +160,9 @@ class AsyncProjectViewSupport {
       LOG.debug("select AbstractTreeNode");
     }
     if (object instanceof PsiElement) {
-      myAsyncTreeModel.visit(new ElementFinder((PsiElement)object)).done(path1 -> {
-        if (path1 != null) {
-          TreeUtil.selectPath(tree, path1);
-        }
-        else {
-          PsiElement element = PsiManager.getInstance(myProject).findFile(file);
-          if (element != null) {
-            myAsyncTreeModel.visit(new ElementFinder(element)).done(path2 -> {
-              if (path2 != null) {
-                TreeUtil.selectPath(tree, path2);
-              }
-            });
-          }
-        }
+      selectElement(tree, (PsiElement)object, () -> {
+        PsiElement element = myPsiManager.findFile(file);
+        if (element != null) selectElement(tree, element, () -> LOG.debug("cannot find element"));
       });
     }
     else {
@@ -214,87 +170,37 @@ class AsyncProjectViewSupport {
     }
   }
 
+  private void selectElement(JTree tree, @NotNull PsiElement element, Runnable ifNotFound) {
+    myAsyncTreeModel.visit(new ProjectViewNodeVisitor(element)).done(path -> {
+      if (path != null) {
+        TreeUtil.selectPath(tree, path);
+      }
+      else if (ifNotFound != null) {
+        ifNotFound.run();
+      }
+    });
+  }
+
   public void updateAll() {
-    if (myStructureTreeModel != null) {
-      myStructureTreeModel.invalidate();
-    }
+    LOG.debug(new RuntimeException("reload a whole tree"));
+    myStructureTreeModel.invalidate();
+  }
+
+  public void update(@NotNull TreePath path) {
+    myStructureTreeModel.invalidate(path);
+  }
+
+  public void update(@NotNull List<TreePath> list) {
+    for (TreePath path : list) update(path);
   }
 
   public void updateByFile(@NotNull VirtualFile file) {
-    if (myStructureTreeModel != null) {
-      myStructureTreeModel.invalidate(); //TODO:
-    }
+    PsiElement element = myPsiManager.findFile(file);
+    if (element != null) updateByElement(element);
   }
 
   public void updateByElement(@NotNull PsiElement element) {
-    if (myStructureTreeModel != null) {
-      myStructureTreeModel.invalidate(); //TODO:
-    }
-  }
-
-  private static VirtualFile getVirtualFile(@NotNull PsiElement element) {
-    PsiFile file = element.getContainingFile();
-    return file == null ? null : file.getVirtualFile();
-  }
-
-  /**
-   * @param object  a node of a tree structure
-   * @param element an element to find
-   * @return {@code true} if the specified node represents the given element
-   */
-  protected boolean found(Object object, @NotNull PsiElement element) {
-    if (object instanceof AbstractTreeNode) {
-      AbstractTreeNode node = (AbstractTreeNode)object;
-      return node.canRepresent(element);
-    }
-    LOG.debug("found unexpected object ", (object == null ? null : object.getClass()));
-    return false;
-  }
-
-  /**
-   * @param object  a node of a tree structure
-   * @param element an element to find
-   * @return {@code true} if the specified node is an ancestor of the given element
-   */
-  protected boolean contains(Object object, @NotNull PsiElement element) {
-    VirtualFile file = getVirtualFile(element);
-    if (file == null) {
-      LOG.debug("no virtual file for element ", element);
-    }
-    else if (object instanceof ProjectViewNode) {
-      ProjectViewNode node = (ProjectViewNode)object;
-      if (node.contains(file)) return true;
-    }
-    if (object instanceof AbstractTreeNode) {
-      AbstractTreeNode node = (AbstractTreeNode)object;
-      Object value = node.getValue();
-      return value instanceof PsiElement && PsiTreeUtil.isAncestor((PsiElement)value, element, true);
-    }
-    LOG.debug("contains unexpected object ", (object == null ? null : object.getClass()));
-    return false;
-  }
-
-  private class ElementFinder implements TreeVisitor {
-    private final SmartPsiElementPointer<PsiElement> pointer;
-
-    private ElementFinder(@NotNull PsiElement element) {
-      pointer = SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(element);
-    }
-
-    @NotNull
-    @Override
-    public Action accept(@NotNull TreePath path) {
-      LOG.debug("process ", path);
-      PsiElement element = pointer.getElement();
-      if (element == null) return Action.SKIP_SIBLINGS;
-      Object component = path.getLastPathComponent();
-      if (component instanceof DefaultMutableTreeNode) {
-        DefaultMutableTreeNode node = (DefaultMutableTreeNode)component;
-        Object object = node.getUserObject();
-        if (found(object, element)) return Action.INTERRUPT;
-        if (contains(object, element)) return Action.CONTINUE;
-      }
-      return Action.SKIP_CHILDREN;
-    }
+    SmartList<TreePath> list = new SmartList<>();
+    myAsyncTreeModel.visit(new ProjectViewNodeVisitor(element, path -> !list.add(path)), false).done(path -> update(list));
   }
 }
