@@ -23,6 +23,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -239,7 +240,9 @@ public class TransactionGuardImpl extends TransactionGuard {
            "Please ensure you're using invokeLater/invokeAndWait with a correct modality state (not \"any\"). " +
            "See TransactionGuard documentation for details." +
            "\n  current modality=" + modality +
-           "\n  known modalities=" + myWriteSafeModalities;
+           "\n  known modalities:\n" +
+           StringUtil.join(myWriteSafeModalities.entrySet(),
+                           entry -> String.format("    %s, writingAllowed=%s", entry.getKey(), entry.getValue()), ";\n");
   }
 
   @Override
