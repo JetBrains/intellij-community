@@ -268,6 +268,16 @@ class ArtifactBuilderTest : ArtifactBuilderTestCase() {
     }})
   }
 
+  fun `test no duplicated directory entries for extracted directory packed into JAR file`() {
+    val zipPath = createXJarFile()
+    val a = addArtifact("a", root().archive("a.jar").extractedDir(zipPath, ""))
+    buildAll()
+    ZipFile(File(a.outputPath, "a.jar")).use {
+      assertNotNull(it.getEntry("dir/"))
+      assertNull(it.getEntry("dir//"))
+    }
+  }
+
   private fun createXJarFile(): String {
     val zipDir = directoryContent {
       zip("x.jar") {
