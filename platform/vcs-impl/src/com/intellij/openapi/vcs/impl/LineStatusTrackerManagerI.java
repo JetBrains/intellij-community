@@ -35,4 +35,6 @@ public interface LineStatusTrackerManagerI {
 
 
   boolean arePartialChangelistsEnabled(@NotNull VirtualFile virtualFile);
+
+  void invokeAfterUpdate(@NotNull Runnable task);
 }
