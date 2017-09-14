@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.backwardRefs;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Factory;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -28,6 +29,8 @@ import java.io.IOException;
 import java.util.*;
 
 public class BackwardReferenceIndexUtil {
+  private static final Logger LOG = Logger.getInstance(BackwardReferenceIndexUtil.class);
+
   static void registerFile(String filePath,
                            TObjectIntHashMap<? extends JavacRef> refs,
                            List<JavacDef> defs,
@@ -50,6 +53,10 @@ public class BackwardReferenceIndexUtil {
           final LightRef.LightClassHierarchyElementDef aClass;
           if (sym.isAnonymous()) {
             final JavacRef[] classes = ((JavacDef.JavacClassDef)def).getSuperClasses();
+            if (classes.length != 1) {
+              LOG.info("Seems that compilation will finish with errors in anonymous class inside file " + filePath);
+              continue;
+            }
             aClass = anonymousClassEnumerator.addAnonymous(sym.getName(), writer.asClassUsage(classes[0]));
           } else {
             aClass = writer.asClassUsage(sym);
