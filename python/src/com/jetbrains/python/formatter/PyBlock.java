@@ -390,12 +390,11 @@ public class PyBlock implements ASTBlock {
     }
 
     if (settings.DICT_ALIGNMENT == DICT_ALIGNMENT_ON_VALUE) {
-      if (isValueOfKeyValuePairOfDictLiteral(child) && !ourListElementTypes.contains(childType)) {
+      // Align not the whole value but its left bracket if it starts with it
+      if (isValueOfKeyValuePairOfDictLiteral(child) && !isOpeningBracket(child.getFirstChildNode())) {
         childAlignment = myParent.myDictAlignment;
       }
-      else if (isValueOfKeyValuePairOfDictLiteral(myNode) &&
-               ourListElementTypes.contains(parentType) &&
-               PyTokenTypes.OPEN_BRACES.contains(childType)) {
+      else if (isValueOfKeyValuePairOfDictLiteral(myNode) && isOpeningBracket(child)) {
         childAlignment = myParent.myParent.myDictAlignment;
       }
     }
@@ -417,6 +416,10 @@ public class PyBlock implements ASTBlock {
     }
 
     return new PyBlock(this, child, childAlignment, childIndent, childWrap, myContext);
+  }
+
+  private static boolean isOpeningBracket(@Nullable ASTNode node) {
+    return node != null && PyTokenTypes.OPEN_BRACES.contains(node.getElementType()) && node == node.getTreeParent().getFirstChildNode();
   }
 
   private static boolean isValueOfKeyValuePairOfDictLiteral(@NotNull ASTNode node) {
