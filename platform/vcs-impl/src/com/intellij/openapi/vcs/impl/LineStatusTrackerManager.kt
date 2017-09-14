@@ -32,6 +32,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.impl.DirectoryIndex
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.FileStatusListener
@@ -206,19 +207,15 @@ class LineStatusTrackerManager(
 
   private fun canGetBaseRevisionFor(virtualFile: VirtualFile?): Boolean {
     if (isDisposed) return false
+    if (virtualFile == null || virtualFile is LightVirtualFile || !virtualFile.isValid) return false
+    if (virtualFile.fileType.isBinary || FileUtilRt.isTooLarge(virtualFile.length)) return false
+    if (!statusProvider.isSupported(virtualFile)) return false
 
-    if (virtualFile == null || virtualFile is LightVirtualFile) return false
-
-    val statusManager = FileStatusManager.getInstance(project) ?: return false
-
-    if (!statusProvider.isSupported(virtualFile)) {
-      log("shouldBeInstalled failed: file not supported", virtualFile)
-      return false
-    }
-
-    val status = statusManager.getStatus(virtualFile)
-    if (status === FileStatus.ADDED || status === FileStatus.UNKNOWN || status === FileStatus.IGNORED) {
-      log("shouldBeInstalled skipped: status=" + status, virtualFile)
+    val status = FileStatusManager.getInstance(project).getStatus(virtualFile)
+    if (status == FileStatus.ADDED ||
+        status == FileStatus.DELETED ||
+        status == FileStatus.UNKNOWN ||
+        status == FileStatus.IGNORED) {
       return false
     }
     return true
