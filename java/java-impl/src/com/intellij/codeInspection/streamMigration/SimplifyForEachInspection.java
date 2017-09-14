@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.util.InheritanceUtil;
@@ -89,8 +90,11 @@ public class SimplifyForEachInspection extends BaseJavaBatchLocalInspectionTool 
 
   @NotNull
   private static TextRange getRange(PsiMethodCallExpression call) {
-    PsiReferenceExpression methodExpression = call.getMethodExpression();
-    return new TextRange(methodExpression.getTextOffset(), call.getArgumentList().getTextOffset());
+    if(!InspectionProjectProfileManager.isInformationLevel("SimplifyForEach", call)) {
+      PsiReferenceExpression methodExpression = call.getMethodExpression();
+      return new TextRange(methodExpression.getTextOffset(), call.getArgumentList().getTextOffset());
+    }
+    return new TextRange(call.getTextOffset(), call.getNextSibling().getTextOffset());
   }
 
   @Nullable
