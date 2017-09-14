@@ -20,6 +20,9 @@ import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.facet.Facet;
+import com.intellij.facet.FacetManager;
+import com.intellij.facet.impl.invalid.InvalidFacet;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -236,6 +239,34 @@ public class GradleMiscImportingTest extends GradleImportingTestCase {
 
     assertEquals("com.intellij.execution.application.ApplicationConfiguration", app1.getConfiguration().getClass().getCanonicalName());
     assertEquals("com.intellij.execution.application.ApplicationConfiguration", app2.getConfiguration().getClass().getCanonicalName());
+  }
+
+  @Test
+  public void testFacetSettingsImport() throws Exception {
+    final String pathToPlugin = getClass().getResource("/testCompilerConfigurationSettingsImport/gradle-idea-ext.jar").toString();
+
+    importProject(
+      "buildscript {\n" +
+      "  dependencies {\n" +
+      "     classpath files('" + pathToPlugin + "')\n" +
+      "  }\n" +
+      "}\n" +
+      "apply plugin: 'org.jetbrains.gradle.plugin.idea-ext'\n" +
+      "idea {\n" +
+      "  module.settings {\n" +
+      "    facets {\n" +
+      "       invalid {\n" +
+      "           errorMessage 'Hello World!'\n" +
+      "       }\n" +
+      "    }\n" +
+      "  }\n" +
+      "}"
+    );
+
+    final Facet[] facets = FacetManager.getInstance(ModuleManager.getInstance(myProject).getModules()[0]).getAllFacets();
+
+    assertSize(1, facets);
+    assertEquals("Hello World!", ((InvalidFacet)facets[0]).getErrorMessage());
   }
 
   private LanguageLevel getLanguageLevelForModule(final String moduleName) {
