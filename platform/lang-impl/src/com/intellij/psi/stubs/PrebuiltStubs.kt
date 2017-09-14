@@ -23,6 +23,7 @@ import com.intellij.util.indexing.FileContent
 import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.DataInputOutputUtil
 import com.intellij.util.io.KeyDescriptor
+import org.jetbrains.annotations.ApiStatus
 import java.io.DataInput
 import java.io.DataOutput
 
@@ -36,6 +37,7 @@ object PrebuiltStubsProviders : FileTypeExtension<PrebuiltStubsProvider>(EP_NAME
   val EXTENSION_POINT_NAME = ExtensionPointName.create<BinaryFileStubBuilder>(EP_NAME)
 }
 
+@ApiStatus.Experimental
 interface PrebuiltStubsProvider {
   fun findStub(fileContent: FileContent): Stub?
 }
