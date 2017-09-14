@@ -919,4 +919,17 @@ def method() {
 }
 '''
   }
+
+  void 'test string tuple assignment'() {
+    testHighlighting '''\
+import groovy.transform.CompileStatic
+
+@CompileStatic
+class TestType {
+    static def bar(Object[] list) {
+        def (String name, Integer matcherEnd) = [list[0], list[2] as Integer]
+    }
+}
+'''
+  }
 }
