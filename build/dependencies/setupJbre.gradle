@@ -17,10 +17,9 @@ jrePlatformsToDownload(targetOs).each { platform ->
       outputs.file(outputFile)
       doLast {
         logger.info("Downloading $jbrexArtifactName to $outputFile")
-        download {
+        downloadWrapper {
           src "$jdkRepo/${jbrexArtifactName}.tar.gz"
           dest outputFile
-          onlyIfNewer true
         }
       }
     }
