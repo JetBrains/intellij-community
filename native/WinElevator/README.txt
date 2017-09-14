@@ -18,7 +18,7 @@ Launcher then creates threads to read/write them to console.
 -------
 How to build.
 You may open .sln from Visual Studio or use msbuild from VS command prompt:
- msbuild Elevator.sln /p:Configuration=release
+ msbuild Elevator.sln /p:Configuration=release /property:Platform=x86
 
 
 Building and signing on TC:
