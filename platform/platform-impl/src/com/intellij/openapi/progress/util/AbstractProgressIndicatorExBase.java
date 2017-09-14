@@ -23,6 +23,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.WeakList;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.List;
 
 public class AbstractProgressIndicatorExBase extends AbstractProgressIndicatorBase implements ProgressIndicatorEx {
@@ -81,7 +82,7 @@ public class AbstractProgressIndicatorExBase extends AbstractProgressIndicatorBa
 
   @Override
   public boolean isFinished(@NotNull final TaskInfo task) {
-    List<TaskInfo> list = myFinished;
+    Collection<TaskInfo> list = myFinished;
     return list != null && list.contains(task);
   }
 
