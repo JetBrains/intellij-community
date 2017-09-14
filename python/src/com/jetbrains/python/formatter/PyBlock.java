@@ -327,6 +327,10 @@ public class PyBlock implements ASTBlock {
         childIndent = Indent.getNoneIndent();
       }
     }
+    // Note that colons are aligned together with bounds and stride
+    else if (myNode.getElementType() == PyElementTypes.SLICE_ITEM) {
+      childAlignment = getChildAlignment();
+    }
     else if (parentType == PyElementTypes.GENERATOR_EXPRESSION || parentType == PyElementTypes.PARENTHESIZED_EXPRESSION) {
       final boolean tupleOrGenerator = parentType == PyElementTypes.GENERATOR_EXPRESSION ||
                                        myNode.getPsi(PyParenthesizedExpression.class).getContainedExpression() instanceof PyTupleExpression;
@@ -934,7 +938,7 @@ public class PyBlock implements ASTBlock {
 
   @Nullable
   private Alignment getChildAlignment() {
-    if (ourListElementTypes.contains(myNode.getElementType())) {
+    if (ourListElementTypes.contains(myNode.getElementType()) || myNode.getElementType() == PyElementTypes.SLICE_ITEM) {
       if (isInControlStatement()) {
         return null;
       }
