@@ -286,15 +286,21 @@ class LineStatusTrackerManager(
 
     private fun loadBaseRevision(): RefreshResult {
       if (isDisposed) return RefreshResult.Canceled
+      log("Loading started", virtualFile)
 
       if (!virtualFile.isValid) {
-        log("BaseRevisionLoader failed: virtual file not valid", virtualFile)
+        log("Loading error: virtual file is not valid", virtualFile)
+        return RefreshResult.Error
+      }
+
+      if (!canGetBaseRevisionFor(virtualFile)) {
+        log("Loading error: cant get base revision", virtualFile)
         return RefreshResult.Error
       }
 
       val baseContent = statusProvider.getBaseRevision(virtualFile)
       if (baseContent == null) {
-        log("BaseRevisionLoader failed: null returned for base revision", virtualFile)
+        log("Loading error: base revision not found", virtualFile)
         return RefreshResult.Error
       }
 
@@ -306,22 +312,25 @@ class LineStatusTrackerManager(
       synchronized(LOCK) {
         val data = trackers[document]
         if (data == null) {
-          log("BaseRevisionLoader canceled: tracker already released", virtualFile)
+          log("Loading cancelled: tracker not found", virtualFile)
           return RefreshResult.Canceled
         }
+
         if (!shouldBeUpdated(data.contentInfo, newContentInfo)) {
-          log("BaseRevisionLoader canceled: no need to update", virtualFile)
+          log("Loading cancelled: no need to update", virtualFile)
           return RefreshResult.Canceled
         }
       }
 
       val lastUpToDateContent = baseContent.loadContent()
       if (lastUpToDateContent == null) {
-        log("BaseRevisionLoader failed: can't load up-to-date content", virtualFile)
+        log("Loading error: provider failure", virtualFile)
         return RefreshResult.Error
       }
 
       val converted = StringUtil.convertLineSeparators(lastUpToDateContent)
+      log("Loading successful", virtualFile)
+
       return RefreshResult.Success(converted, newContentInfo)
     }
 
@@ -344,17 +353,17 @@ class LineStatusTrackerManager(
             synchronized(LOCK) {
               val data = trackers[document]
               if (data == null) {
-                log("BaseRevisionLoader initializing: tracker already released", virtualFile)
+                log("Loading finished: tracker already released", virtualFile)
                 return@edt
               }
               if (!shouldBeUpdated(data.contentInfo, result.info)) {
-                log("BaseRevisionLoader initializing: no need to update", virtualFile)
+                log("Loading finished: no need to update", virtualFile)
                 return@edt
               }
 
-              log("BaseRevisionLoader initializing: success", virtualFile)
               trackers.put(document, TrackerData(data.tracker, result.info))
               data.tracker.setBaseRevision(result.text)
+              log("Loading finished: success", virtualFile)
             }
           }
         }
