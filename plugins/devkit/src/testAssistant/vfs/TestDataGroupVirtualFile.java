@@ -42,7 +42,7 @@ public class TestDataGroupVirtualFile extends VirtualFile {
   @NotNull
   @Override
   public String getName() {
-    return myAfterFile.getName() + " | " + myAfterFile.getName();
+    return myBeforeFile.getName() + " | " + myAfterFile.getName();
   }
 
   @NotNull
