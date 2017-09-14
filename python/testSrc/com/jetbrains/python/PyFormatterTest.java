@@ -847,6 +847,11 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
+  // PY-21823
+  public void testSliceAlignment() {
+    doTest();
+  }
+
   public void testVariableAnnotations() {
     runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
   }
