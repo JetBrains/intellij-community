@@ -48,8 +48,12 @@ class PartialLocalLineStatusTracker(project: Project,
   private val defaultMarker: ChangeListMarker
   private var currentMarker: ChangeListMarker? = null
 
+  private val affectedChangeLists = HashSet<String>()
+
   init {
     defaultMarker = ChangeListMarker(changeListManager.defaultChangeList)
+
+    affectedChangeLists.add(defaultMarker.changelistId)
 
     documentTracker.addListener(MyLineTrackerListener())
     assert(blocks.isEmpty())
@@ -57,6 +61,35 @@ class PartialLocalLineStatusTracker(project: Project,
 
   override fun Block.toRange(): LocalRange = LocalRange(this.start, this.end, this.vcsStart, this.vcsEnd, this.innerRanges,
                                                         this.marker.changelistId)
+
+
+  fun getAffectedChangeListsIds(): List<String> {
+    return documentTracker.readLock {
+      assert(!affectedChangeLists.isEmpty())
+      affectedChangeLists.toList()
+    }
+  }
+
+  private fun updateAffectedChangeLists() {
+    documentTracker.writeLock {
+      val newIds = HashSet<String>()
+      for (block in blocks) {
+        newIds.add(block.marker.changelistId)
+      }
+
+      if (newIds.isEmpty()) {
+        if (affectedChangeLists.size == 1) {
+          newIds.add(affectedChangeLists.single())
+        }
+        else {
+          newIds.add(defaultMarker.changelistId)
+        }
+      }
+
+      affectedChangeLists.clear()
+      affectedChangeLists.addAll(newIds)
+    }
+  }
 
 
   @CalledInAwt
@@ -101,6 +134,18 @@ class PartialLocalLineStatusTracker(project: Project,
 
     override fun onRangeShifted(before: Block, after: Block) {
       after.marker = before.marker
+    }
+
+    override fun afterRefresh() {
+      updateAffectedChangeLists()
+    }
+
+    override fun afterRangeChange() {
+      updateAffectedChangeLists()
+    }
+
+    override fun afterExplicitChange() {
+      updateAffectedChangeLists()
     }
   }
 
@@ -173,6 +218,7 @@ class PartialLocalLineStatusTracker(project: Project,
     if (newChangelistId != null && newChangelistId != oldListId) {
       documentTracker.writeLock {
         block.marker = ChangeListMarker(newChangelistId)
+        updateAffectedChangeLists()
       }
 
       ApplicationManager.getApplication().invokeLater {

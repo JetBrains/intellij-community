@@ -19,6 +19,7 @@ import com.google.common.collect.HashMultiset
 import com.google.common.collect.Multiset
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.Application
+import com.intellij.openapi.application.ApplicationAdapter
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.ProjectComponent
 import com.intellij.openapi.diagnostic.Logger
@@ -85,6 +86,8 @@ class LineStatusTrackerManager(
   override fun initComponent() {
     StartupManager.getInstance(project).registerPreStartupActivity {
       if (isDisposed) return@registerPreStartupActivity
+
+      application.addApplicationListener(MyApplicationListener(), disposable)
 
       val busConnection = project.messageBus.connect(disposable)
       busConnection.subscribe(LineStatusTrackerSettingListener.TOPIC, MyLineStatusTrackerSettingListener())
@@ -160,8 +163,25 @@ class LineStatusTrackerManager(
 
       if (multiset.isEmpty()) {
         forcedDocuments.remove(document)
-        releaseTracker(document)
+        checkIfTrackerCanBeReleased(document)
       }
+    }
+  }
+
+  @CalledInAwt
+  private fun checkIfTrackerCanBeReleased(document: Document) {
+    synchronized(LOCK) {
+      val data = trackers[document] ?: return
+
+      if (forcedDocuments.containsKey(document)) return
+
+      if (data.tracker is PartialLocalLineStatusTracker) {
+        val hasPartialChanges = data.tracker.getAffectedChangeListsIds().size > 1
+        val isLoading = queue.containsKey(document)
+        if (hasPartialChanges || isLoading) return
+      }
+
+      releaseTracker(document)
     }
   }
 
@@ -376,6 +396,8 @@ class LineStatusTrackerManager(
 
               data.tracker.dropBaseRevision()
               data.contentInfo = null
+
+              checkIfTrackerCanBeReleased(document)
             }
           }
         }
@@ -436,6 +458,17 @@ class LineStatusTrackerManager(
     override fun propertyChanged(event: VirtualFilePropertyEvent) {
       if (VirtualFile.PROP_ENCODING == event.propertyName) {
         onFileChanged(event.file)
+      }
+    }
+  }
+
+  private inner class MyApplicationListener : ApplicationAdapter() {
+    override fun afterWriteActionFinished(action: Any) {
+      synchronized(LOCK) {
+        val documents = trackers.values.map { it.tracker.document }
+        for (document in documents) {
+          checkIfTrackerCanBeReleased(document)
+        }
       }
     }
   }
