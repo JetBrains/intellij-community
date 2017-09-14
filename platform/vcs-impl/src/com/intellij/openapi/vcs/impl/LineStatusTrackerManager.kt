@@ -54,7 +54,8 @@ class LineStatusTrackerManager(
 ) : ProjectComponent, LineStatusTrackerManagerI {
 
   private val LOCK = Any()
-  private val disposable: Disposable
+  private val disposable: Disposable = Disposer.newDisposable()
+  private var isDisposed = false
 
   private val trackers = HashMap<Document, TrackerData>()
 
@@ -70,32 +71,13 @@ class LineStatusTrackerManager(
     }
   }
 
-  init {
-    val busConnection = project.messageBus.connect()
-    busConnection.subscribe(LineStatusTrackerSettingListener.TOPIC, LineStatusTrackerSettingListener {
-      synchronized(LOCK) {
-        val mode = getTrackerMode()
-        for (data in trackers.values) {
-          data.tracker.mode = mode
-        }
-      }
-    })
-
-    disposable = Disposable {
-      synchronized(LOCK) {
-        for (data in trackers.values) {
-          data.tracker.release()
-        }
-
-        trackers.clear()
-        queue.clear()
-      }
-    }
-    Disposer.register(project, disposable)
-  }
-
-  override fun projectOpened() {
+  override fun initComponent() {
     StartupManager.getInstance(project).registerPreStartupActivity {
+      if (isDisposed) return@registerPreStartupActivity
+
+      val busConnection = project.messageBus.connect(disposable)
+      busConnection.subscribe(LineStatusTrackerSettingListener.TOPIC, MyLineStatusTrackerSettingListener())
+
       val fsManager = FileStatusManager.getInstance(project)
       fsManager.addFileStatusListener(MyFileStatusListener(), disposable)
 
@@ -107,16 +89,28 @@ class LineStatusTrackerManager(
     }
   }
 
+  override fun disposeComponent() {
+    isDisposed = true
+    Disposer.dispose(disposable)
+
+    synchronized(LOCK) {
+      for (data in trackers.values) {
+        data.tracker.release()
+      }
+
+      trackers.clear()
+      queue.clear()
+    }
+  }
+
   @NonNls
   override fun getComponentName(): String {
     return "LineStatusTrackerManager"
   }
 
-  private val isDisabled: Boolean get() = !project.isOpen || project.isDisposed
-
   override fun getLineStatusTracker(document: Document): LineStatusTracker<*>? {
     synchronized(LOCK) {
-      if (isDisabled) return null
+      if (isDisposed) return null
       return trackers[document]?.tracker
     }
   }
@@ -153,7 +147,7 @@ class LineStatusTrackerManager(
   @CalledInAwt
   private fun onEverythingChanged() {
     synchronized(LOCK) {
-      if (isDisabled) return
+      if (isDisposed) return
       log("onEverythingChanged", null)
 
       val trackers = trackers.values.map { it.tracker }
@@ -172,7 +166,7 @@ class LineStatusTrackerManager(
     val document = FileDocumentManager.getInstance().getCachedDocument(virtualFile) ?: return
 
     synchronized(LOCK) {
-      if (isDisabled) return
+      if (isDisposed) return
       log("onFileChanged", virtualFile)
       resetTracker(document, virtualFile, getLineStatusTracker(document))
     }
@@ -204,7 +198,7 @@ class LineStatusTrackerManager(
   }
 
   private fun shouldBeInstalled(virtualFile: VirtualFile?): Boolean {
-    if (isDisabled) return false
+    if (isDisposed) return false
 
     if (virtualFile == null || virtualFile is LightVirtualFile) return false
 
@@ -225,7 +219,7 @@ class LineStatusTrackerManager(
 
   private fun doRefreshTracker(tracker: LineStatusTracker<*>) {
     synchronized(LOCK) {
-      if (isDisabled) return
+      if (isDisposed) return
 
       log("trackerRefreshed", tracker.virtualFile)
       startAlarm(tracker.document, tracker.virtualFile)
@@ -234,7 +228,7 @@ class LineStatusTrackerManager(
 
   private fun doReleaseTracker(document: Document) {
     synchronized(LOCK) {
-      if (isDisabled) return
+      if (isDisposed) return
 
       queue.remove(document)
       val data = trackers.remove(document)
@@ -247,7 +241,7 @@ class LineStatusTrackerManager(
 
   private fun doInstallTracker(virtualFile: VirtualFile, document: Document) {
     synchronized(LOCK) {
-      if (isDisabled) return
+      if (isDisposed) return
 
       if (trackers.containsKey(document)) return
       assert(!queue.containsKey(document))
@@ -276,7 +270,7 @@ class LineStatusTrackerManager(
                                          private val myVirtualFile: VirtualFile) : Runnable {
 
     override fun run() {
-      if (isDisabled) return
+      if (isDisposed) return
 
       if (!myVirtualFile.isValid) {
         log("BaseRevisionLoader failed: virtual file not valid", myVirtualFile)
@@ -337,7 +331,7 @@ class LineStatusTrackerManager(
     }
 
     private fun nonModalAliveInvokeLater(runnable: Runnable) {
-      application.invokeLater(runnable, ModalityState.NON_MODAL, Condition<Any> { isDisabled })
+      application.invokeLater(runnable, ModalityState.NON_MODAL, Condition<Any> { isDisposed })
     }
 
     private fun reportTrackerBaseLoadFailed() {
@@ -377,6 +371,17 @@ class LineStatusTrackerManager(
     override fun propertyChanged(event: VirtualFilePropertyEvent) {
       if (VirtualFile.PROP_ENCODING == event.propertyName) {
         onFileChanged(event.file)
+      }
+    }
+  }
+
+  private inner class MyLineStatusTrackerSettingListener : LineStatusTrackerSettingListener {
+    override fun settingsUpdated() {
+      synchronized(LOCK) {
+        val mode = getTrackerMode()
+        for (data in trackers.values) {
+          data.tracker.mode = mode
+        }
       }
     }
   }
