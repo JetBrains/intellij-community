@@ -16,7 +16,9 @@
 package com.jetbrains.python.psi.impl.stubs;
 
 import com.intellij.psi.stubs.PrebuiltStubsProviderBase;
+import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.psi.PyFileElementType;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author traff
@@ -25,5 +27,11 @@ public class PyPrebuiltStubsProvider extends PrebuiltStubsProviderBase {
   @Override
   protected int getStubVersion() {
     return PyFileElementType.INSTANCE.getStubVersion();
+  }
+
+  @NotNull
+  @Override
+  protected String getName() {
+    return PythonFileType.INSTANCE.getName();
   }
 }

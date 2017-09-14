@@ -95,6 +95,7 @@ abstract class PrebuiltStubsProviderBase : PrebuiltStubsProvider, Disposable {
   private var mySerializationManager: SerializationManagerImpl? = null
 
   protected abstract val stubVersion: Int
+  protected abstract val name: String
 
   init {
     init()
@@ -184,7 +185,7 @@ abstract class PrebuiltStubsProviderBase : PrebuiltStubsProvider, Disposable {
 
   @Throws(IOException::class)
   private fun copyPrebuiltIndexesToIndexRoot(prebuiltIndicesRoot: File): File {
-    val indexRoot = File(IndexInfrastructure.getPersistentIndexRoot(), "prebuilt")
+    val indexRoot = File(IndexInfrastructure.getPersistentIndexRoot(), "prebuilt/" + name)
 
     FileUtil.copyDir(prebuiltIndicesRoot, indexRoot)
 
@@ -197,9 +198,7 @@ abstract class PrebuiltStubsProviderBase : PrebuiltStubsProvider, Disposable {
       return File(path)
     }
     path = PathManager.getHomePath()
-    var f = File(path, "python/index")  // from sources
-    if (f.exists()) return f
-    f = File(path, "index")              // compiled binary
+    val f = File(path, "index/$name") // compiled binary
     return if (f.exists()) f else null
   }
 }
