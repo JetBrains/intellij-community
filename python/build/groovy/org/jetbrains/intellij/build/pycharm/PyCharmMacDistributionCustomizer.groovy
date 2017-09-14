@@ -25,11 +25,11 @@ import org.jetbrains.intellij.build.MacDistributionCustomizer
 class PyCharmMacDistributionCustomizer extends MacDistributionCustomizer {
   @Override
   void copyAdditionalFiles(BuildContext context, String targetDirectory) {
-    context.ant.copy(todir: "$targetDirectory/skeletons") {
-      fileset(dir: "$context.paths.projectHome/skeletons") {
-        include(name: "skeletons-mac*.zip")
-      }
-    }
+//    context.ant.copy(todir: "$targetDirectory/skeletons") {
+//      fileset(dir: "$context.paths.projectHome/skeletons") {
+//        include(name: "skeletons-mac*.zip")
+//      }
+//    }
   }
 
   @Override

@@ -24,10 +24,10 @@ import org.jetbrains.intellij.build.WindowsDistributionCustomizer
 class PyCharmWindowsDistributionCustomizer extends WindowsDistributionCustomizer {
   @Override
   void copyAdditionalFiles(BuildContext context, String targetDirectory) {
-    context.ant.copy(todir: "$targetDirectory/skeletons") {
-      fileset(dir: "$context.paths.projectHome/skeletons") {
-        include(name: "skeletons-win*.zip")
-      }
-    }
+//    context.ant.copy(todir: "$targetDirectory/skeletons") {
+//      fileset(dir: "$context.paths.projectHome/skeletons") {
+//        include(name: "skeletons-win*.zip")
+//      }
+//    }
   }
 }
