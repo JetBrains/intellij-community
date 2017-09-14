@@ -19,12 +19,14 @@ import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogStorage;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 public class IndexedDetails extends LoadingDetails {
   @NotNull private final IndexDataGetter myDataGetter;
   private final int myCommitIndex;
+  @Nullable private String myFullMessage;
 
   public IndexedDetails(@NotNull IndexDataGetter dataGetter,
                         @NotNull VcsLogStorage storage,
@@ -35,10 +37,18 @@ public class IndexedDetails extends LoadingDetails {
     myCommitIndex = commitIndex;
   }
 
+  @Nullable
+  private String getFullMessageFromIndex() {
+    if (myFullMessage == null) {
+      myFullMessage = myDataGetter.getFullMessage(myCommitIndex);
+    }
+    return myFullMessage;
+  }
+
   @NotNull
   @Override
   public String getFullMessage() {
-    String message = myDataGetter.getFullMessage(myCommitIndex);
+    String message = getFullMessageFromIndex();
     if (message != null) return message;
     return super.getFullMessage();
   }
@@ -46,7 +56,7 @@ public class IndexedDetails extends LoadingDetails {
   @NotNull
   @Override
   public String getSubject() {
-    String message = myDataGetter.getFullMessage(myCommitIndex);
+    String message = getFullMessageFromIndex();
     if (message != null) {
       return getSubject(message);
     }
