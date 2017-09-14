@@ -16,9 +16,6 @@
 package com.intellij.codeInsight.template.emmet;
 
 import com.intellij.codeInsight.template.CustomTemplateCallback;
-import com.intellij.icons.AllIcons;
-import com.intellij.ide.IdeTooltipManager;
-import com.intellij.ide.TooltipEvent;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -29,8 +26,6 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
-import com.intellij.ui.components.JBLabel;
-import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -90,9 +85,8 @@ public class EmmetAbbreviationBalloon {
     field.setPreferredSize(new Dimension(Math.max(220, fieldPreferredSize.width), fieldPreferredSize.height));
     field.setHistorySize(10);
 
-    JBLabel label = new JBLabel(AllIcons.General.ContextHelp);
+    ContextHelpLabel label = new ContextHelpLabel(myDocumentation);
     label.setBorder(JBUI.Borders.empty(0, 3, 0, 1));
-    IdeTooltipManager.getInstance().setCustomTooltip(label, new ContextHelpTooltip(label, myDocumentation));
 
     panel.add(field, BorderLayout.CENTER);
     panel.add(label, BorderLayout.EAST);
@@ -186,34 +180,5 @@ public class EmmetAbbreviationBalloon {
 
   public interface Callback {
     void onEnter(@NotNull String abbreviation);
-  }
-
-  private static class ContextHelpTooltip extends TooltipWithClickableLinks.ForBrowser {
-    public ContextHelpTooltip(@NotNull JComponent component, @NotNull String text) {
-      super(component, text);
-
-      JBInsets insets = JBUI.insets(11, 10, 11, 17);
-      setBorderInsets(insets);
-      setPreferredPosition(Balloon.Position.below);
-      setCalloutShift(insets.top);
-      setBorderColor(new JBColor(Gray._161, new Color(91, 92, 94)));
-      setTextBackground(new JBColor(Gray._247, new Color(70, 72, 74)));
-      setTextForeground(new JBColor(Gray._33, Gray._191));
-    }
-
-    @Override
-    protected boolean canAutohideOn(TooltipEvent event) {
-      return event.getInputEvent() != null && super.canAutohideOn(event);
-    }
-
-    @Override
-    public int getShowDelay() {
-      return 0;
-    }
-
-    @Override
-    public boolean canBeDismissedOnTimeout() {
-      return true;
-    }
   }
 }
