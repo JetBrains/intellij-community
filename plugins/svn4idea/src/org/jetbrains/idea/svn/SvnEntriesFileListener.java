@@ -39,6 +39,7 @@ public class SvnEntriesFileListener implements VirtualFileListener {
     myDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
   }
 
+  @Override
   public void fileCreated(@NotNull VirtualFileEvent event) {
     if (! event.isFromRefresh()) {
       return;
@@ -58,6 +59,7 @@ public class SvnEntriesFileListener implements VirtualFileListener {
     BackgroundTaskUtil.syncPublisher(myProject, VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).dirtyUnder(parent);
   }
 
+  @Override
   public void contentsChanged(@NotNull VirtualFileEvent event) {
     if (! event.isFromRefresh()) {
       return;
@@ -87,6 +89,7 @@ public class SvnEntriesFileListener implements VirtualFileListener {
     }
   }
 
+  @Override
   public void fileDeleted(@NotNull VirtualFileEvent event) {
     if (!event.isFromRefresh()) {
       return;
