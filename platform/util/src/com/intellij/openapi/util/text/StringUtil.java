@@ -259,6 +259,17 @@ public class StringUtil extends StringUtilRt {
   }
 
   @Contract(pure = true)
+  public static int lastIndexOfIgnoreCase(@NotNull String where, char what, int fromIndex) {
+    for (int i = Math.min(fromIndex, where.length() - 1); i >= 0; i--) {
+      if (charsEqualIgnoreCase(where.charAt(i), what)) {
+        return i;
+      }
+    }
+
+    return -1;
+  }
+
+  @Contract(pure = true)
   public static boolean containsIgnoreCase(@NotNull String where, @NotNull String what) {
     return indexOfIgnoreCase(where, what, 0) >= 0;
   }
