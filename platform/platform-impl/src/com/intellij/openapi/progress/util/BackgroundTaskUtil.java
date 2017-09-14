@@ -194,7 +194,14 @@ public class BackgroundTaskUtil {
                                                                  boolean onPooledThread) {
     ProgressIndicator indicator = new EmptyProgressIndicator(modalityState);
     indicator.start();
-    Runnable toRun = () -> ProgressManager.getInstance().runProcess(task, indicator);
+    Runnable toRun = () -> {
+      try {
+        ProgressManager.getInstance().runProcess(task, indicator);
+      }
+      catch (ProcessCanceledException pce) {
+        // ignore: expected cancellation
+      }
+    };
 
     if (onPooledThread) {
       CompletableFuture<?> future = CompletableFuture.runAsync(toRun, AppExecutorUtil.getAppExecutorService());
