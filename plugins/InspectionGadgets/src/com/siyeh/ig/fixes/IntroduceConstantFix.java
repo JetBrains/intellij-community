@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.fixes;
 
+import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.siyeh.InspectionGadgetsBundle;
@@ -32,5 +33,10 @@ public class IntroduceConstantFix extends RefactoringInspectionGadgetsFix {
   @Override
   public RefactoringActionHandler getHandler() {
     return JavaRefactoringActionHandlerFactory.getInstance().createIntroduceConstantHandler();
+  }
+
+  @Override
+  public PsiElement getElementToRefactor(PsiElement element) {
+    return element;
   }
 }
