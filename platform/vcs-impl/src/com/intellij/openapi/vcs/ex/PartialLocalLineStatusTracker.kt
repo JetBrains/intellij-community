@@ -15,12 +15,14 @@
  */
 package com.intellij.openapi.vcs.ex
 
+import com.intellij.diff.util.Side
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.actions.AnnotationsSettings
 import com.intellij.openapi.vcs.changes.ChangeListManager
@@ -254,6 +256,24 @@ class PartialLocalLineStatusTracker(project: Project,
                       virtualFile: VirtualFile,
                       mode: Mode): PartialLocalLineStatusTracker {
       return PartialLocalLineStatusTracker(project, document, virtualFile, mode)
+    }
+
+
+    @JvmStatic
+    fun createTracker(project: Project,
+                      document: Document,
+                      virtualFile: VirtualFile,
+                      mode: Mode,
+                      events: List<DocumentEvent>): PartialLocalLineStatusTracker {
+      val tracker = createTracker(project, document, virtualFile, mode)
+
+      for (event in events.reversed()) {
+        tracker.updateDocument(Side.LEFT) { vcsDocument ->
+          vcsDocument.replaceString(event.offset, event.offset + event.newLength, event.oldFragment)
+        }
+      }
+
+      return tracker
     }
   }
 }
