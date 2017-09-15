@@ -424,6 +424,18 @@ public abstract class TreeTraversal {
       }
     }
 
+    @Nullable
+    @Override
+    public T parent() {
+      return last == null || last.node == null ? null : _transform(last.node);
+    }
+
+    @NotNull
+    @Override
+    public JBIterable<T> backtrace() {
+      return last == null ? JBIterable.of(current()) : JBIterable.of(current()).append(super.backtrace());
+    }
+
     @Override
     public T nextImpl() {
       while (last != null) {
