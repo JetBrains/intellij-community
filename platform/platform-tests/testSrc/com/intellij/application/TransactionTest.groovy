@@ -59,13 +59,11 @@ class TransactionTest extends LightPlatformTestCase {
   protected void setUp() throws Exception {
     super.setUp()
     assert LaterInvocator.currentModalityState == ModalityState.NON_MODAL
-    TransactionGuardImpl.testingTransactions = true
   }
 
   @Override
   protected void tearDown() throws Exception {
     UIUtil.dispatchAllInvocationEvents()
-    TransactionGuardImpl.testingTransactions = false
     log.clear()
     LaterInvocator.leaveAllModals()
     super.tearDown()

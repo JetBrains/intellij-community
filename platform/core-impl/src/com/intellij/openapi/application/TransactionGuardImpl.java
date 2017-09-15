@@ -51,7 +51,6 @@ public class TransactionGuardImpl extends TransactionGuard {
   private TransactionIdImpl myCurrentTransaction;
   private boolean myWritingAllowed;
   private boolean myErrorReported;
-  private static boolean ourTestingTransactions;
 
   public TransactionGuardImpl() {
     myWriteSafeModalities.put(ModalityState.NON_MODAL, true);
@@ -255,9 +254,6 @@ public class TransactionGuardImpl extends TransactionGuard {
 
   private static boolean areAssertionsEnabled() {
     Application app = ApplicationManager.getApplication();
-    if (app.isUnitTestMode() && !ourTestingTransactions) {
-      return false;
-    }
     if (app instanceof ApplicationEx && !((ApplicationEx)app).isLoaded()) {
       return false;
     }
@@ -338,10 +334,6 @@ public class TransactionGuardImpl extends TransactionGuard {
       .add("currentTransaction", myCurrentTransaction)
       .add("writingAllowed", myWritingAllowed)
       .toString();
-  }
-
-  public static void setTestingTransactions(boolean testingTransactions) {
-    ourTestingTransactions = testingTransactions;
   }
 
   private static class Transaction {

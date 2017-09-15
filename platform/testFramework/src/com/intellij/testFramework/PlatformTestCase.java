@@ -615,7 +615,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     }
     finally {
       try {
-        SwingUtilities.invokeAndWait(() -> {
+        EdtTestUtil.runInEdtAndWait(() -> {
           cleanupApplicationCaches(getProject());
           resetAllFields();
         });

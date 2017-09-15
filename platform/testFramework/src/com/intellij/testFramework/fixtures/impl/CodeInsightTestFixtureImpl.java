@@ -783,7 +783,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   public void type(final char c) {
     assertInitialized();
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+    ApplicationManager.getApplication().invokeAndWait((Runnable)() -> {
       final EditorActionManager actionManager = EditorActionManager.getInstance();
       if (c == '\b') {
         performEditorAction(IdeActions.ACTION_EDITOR_BACKSPACE);
@@ -1044,29 +1044,21 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public LookupElement[] complete(@NotNull final CompletionType type, final int invocationCount) {
     assertInitialized();
     myEmptyLookup = false;
-    return UIUtil.invokeAndWaitIfNeeded(new Computable<LookupElement[]>() {
-      @Override
-      public LookupElement[] compute() {
-        CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
-          @Override
-          public void run() {
-            final CodeCompletionHandlerBase handler = new CodeCompletionHandlerBase(type) {
-              @Override
-              @SuppressWarnings("deprecation")
-              protected void completionFinished(CompletionProgressIndicator indicator, boolean hasModifiers) {
-                myEmptyLookup = indicator.getLookup().getItems().isEmpty();
-                super.completionFinished(indicator, hasModifiers);
-              }
-            };
-            Editor editor = getCompletionEditor();
-            assertNotNull(editor);
-            handler.invokeCompletion(getProject(), editor, invocationCount);
-            PsiDocumentManager.getInstance(getProject()).commitAllDocuments(); // to compare with file text
-          }
-        }, null, null, getEditor().getDocument());
-        return getLookupElements();
-      }
-    });
+    ApplicationManager.getApplication().invokeAndWait(() -> CommandProcessor.getInstance().executeCommand(getProject(), () -> {
+      final CodeCompletionHandlerBase handler = new CodeCompletionHandlerBase(type) {
+        @Override
+        @SuppressWarnings("deprecation")
+        protected void completionFinished(CompletionProgressIndicator indicator, boolean hasModifiers) {
+          myEmptyLookup = indicator.getLookup().getItems().isEmpty();
+          super.completionFinished(indicator, hasModifiers);
+        }
+      };
+      Editor editor = getCompletionEditor();
+      assertNotNull(editor);
+      handler.invokeCompletion(getProject(), editor, invocationCount);
+      PsiDocumentManager.getInstance(getProject()).commitAllDocuments(); // to compare with file text
+    }, null, null, getEditor().getDocument()));
+    return getLookupElements();
   }
 
   @Nullable
@@ -1170,13 +1162,13 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   public void checkResultByFile(@NotNull String expectedFile, boolean ignoreTrailingWhitespaces) {
     assertInitialized();
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> checkResultByFile(expectedFile, getHostFile(), ignoreTrailingWhitespaces));
+    ApplicationManager.getApplication().invokeAndWait(() -> checkResultByFile(expectedFile, getHostFile(), ignoreTrailingWhitespaces));
   }
 
   @Override
   public void checkResultByFile(@NotNull String filePath, @NotNull String expectedFile, boolean ignoreTrailingWhitespaces) {
     assertInitialized();
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> checkResultByFile(expectedFile, getFileToCheck(filePath), ignoreTrailingWhitespaces));
+    ApplicationManager.getApplication().invokeAndWait(() -> checkResultByFile(expectedFile, getFileToCheck(filePath), ignoreTrailingWhitespaces));
   }
 
   private PsiFile getFileToCheck(String filePath) {
