@@ -601,13 +601,13 @@ public abstract class JBIterable<E> implements Iterable<E> {
    */
   @NotNull
   public final JBIterable<List<E>> split(final int size, final boolean strict) {
-    return split(size).map(new Function<JBIterable<E>, List<E>>() {
+    return split(size).filterMap(new Function<JBIterable<E>, List<E>>() {
       @Override
       public List<E> fun(JBIterable<E> es) {
         List<E> list = es.addAllTo(ContainerUtilRt.<E>newArrayListWithCapacity(size));
-        return strict && list.size() < size? null : list;
+        return strict && list.size() < size ? null : list;
       }
-    }).filter(Condition.NOT_NULL);
+    });
   }
 
   /**

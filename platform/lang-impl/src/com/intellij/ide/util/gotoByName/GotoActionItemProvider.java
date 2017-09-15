@@ -27,7 +27,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -95,8 +94,7 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
   private boolean processAbbreviations(final String pattern, Processor<MatchedValue> consumer, DataContext context) {
     List<String> actionIds = AbbreviationManager.getInstance().findActions(pattern);
     JBIterable<MatchedValue> wrappers = JBIterable.from(actionIds)
-      .transform(myActionManager::getAction)
-      .filter(Condition.NOT_NULL)
+      .filterMap(myActionManager::getAction)
       .transform(action -> {
         ActionWrapper wrapper = new ActionWrapper(action, myModel.myActionGroups.get(action), MatchMode.NAME, context, myModel);
         return new MatchedValue(wrapper, pattern) {
@@ -188,7 +186,7 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
 
   private boolean processActions(String pattern, Processor<MatchedValue> consumer, DataContext dataContext) {
     Set<String> ids = ((ActionManagerImpl)myActionManager).getActionIds();
-    JBIterable<AnAction> actions = JBIterable.from(ids).transform(myActionManager::getAction).filter(Condition.NOT_NULL);
+    JBIterable<AnAction> actions = JBIterable.from(ids).filterMap(myActionManager::getAction);
     MinusculeMatcher matcher = NameUtil.buildMatcher("*" + pattern, NameUtil.MatchingCaseSensitivity.NONE);
 
     QuickActionProvider provider = dataContext.getData(QuickActionProvider.KEY);
@@ -196,11 +194,11 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
       actions = actions.append(provider.getActions(true));
     }
 
-    JBIterable<ActionWrapper> actionWrappers = actions.unique().transform(action -> {
+    JBIterable<ActionWrapper> actionWrappers = actions.unique().filterMap(action -> {
       MatchMode mode = myModel.actionMatches(pattern, matcher, action);
       if (mode == MatchMode.NONE) return null;
       return new ActionWrapper(action, myModel.myActionGroups.get(action), mode, dataContext, myModel);
-    }).filter(Condition.NOT_NULL);
+    });
     return processItems(pattern, actionWrappers, consumer);
   }
 
@@ -208,12 +206,11 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
     MinusculeMatcher matcher = NameUtil.buildMatcher("*" + pattern, NameUtil.MatchingCaseSensitivity.NONE);
     Map<String, ApplyIntentionAction> intentionMap = myIntentions.getValue();
     JBIterable<ActionWrapper> intentions = JBIterable.from(intentionMap.keySet())
-      .transform(intentionText -> {
+      .filterMap(intentionText -> {
         ApplyIntentionAction intentionAction = intentionMap.get(intentionText);
         if (myModel.actionMatches(pattern, matcher, intentionAction) == MatchMode.NONE) return null;
         return new ActionWrapper(intentionAction, intentionText, MatchMode.INTENTION, dataContext, myModel);
-      })
-      .filter(Condition.NOT_NULL);
+      });
     return processItems(pattern, intentions, consumer);
   }
 

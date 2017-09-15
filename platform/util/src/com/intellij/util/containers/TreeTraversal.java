@@ -386,7 +386,7 @@ public abstract class TreeTraversal {
     @NotNull
     public JBIterable<T> backtrace() {
       if (last == null) throw new NoSuchElementException();
-      return _transform(JBIterable.generate(last, P.<T>toPrev()).transform(P.<T>toNode()).filter(Condition.NOT_NULL));
+      return _transform(JBIterable.generate(last, P.<T>toPrev()).filterMap(P.<T>toNode()));
     }
   }
 
