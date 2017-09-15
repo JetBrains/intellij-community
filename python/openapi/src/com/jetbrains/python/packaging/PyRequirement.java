@@ -212,8 +212,11 @@ public class PyRequirement {
     this(name, Collections.emptyList());
   }
 
+  public PyRequirement(@NotNull String name, @NotNull PyRequirementRelation relation, @NotNull String version) {
+    this(name, Collections.singletonList(calculateVersionSpec(version, relation)));
+  }
   public PyRequirement(@NotNull String name, @NotNull String version) {
-    this(name, Collections.singletonList(calculateVersionSpec(version, PyRequirementRelation.EQ)));
+    this(name, PyRequirementRelation.EQ, version);
   }
 
   public PyRequirement(@NotNull String name, @NotNull String version, @NotNull List<String> installOptions) {
