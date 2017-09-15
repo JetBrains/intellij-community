@@ -196,7 +196,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
       Set<FileEditorProvider> providers = new HashSet<>();
       List<EditorWithProviderComposite> composites = getEditorComposites(file);
       for (EditorWithProviderComposite composite : composites) {
-        providers.addAll(Arrays.asList(composite.getProviders()));
+        ContainerUtil.addAll(providers, composite.getProviders());
       }
       FileEditorProvider[] newProviders = FileEditorProviderManager.getInstance().getProviders(project, file);
       if (newProviders.length > providers.size()) {
@@ -485,7 +485,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     Set<EditorsSplitters> all = getAllSplitters();
     for (EditorsSplitters each : all) {
       EditorWindow[] eachList = each.getWindows();
-      windows.addAll(Arrays.asList(eachList));
+      ContainerUtil.addAll(windows, eachList);
     }
 
     return windows.toArray(new EditorWindow[windows.size()]);
@@ -1216,7 +1216,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   public VirtualFile[] getOpenFiles() {
     Set<VirtualFile> openFiles = new THashSet<>();
     for (EditorsSplitters each : getAllSplitters()) {
-      openFiles.addAll(Arrays.asList(each.getOpenFiles()));
+      ContainerUtil.addAll(openFiles, each.getOpenFiles());
     }
     return VfsUtilCore.toVirtualFileArray(openFiles);
   }
@@ -1226,10 +1226,10 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   public VirtualFile[] getSelectedFiles() {
     Set<VirtualFile> selectedFiles = new LinkedHashSet<>();
     EditorsSplitters activeSplitters = getSplitters();
-    selectedFiles.addAll(Arrays.asList(activeSplitters.getSelectedFiles()));
+    ContainerUtil.addAll(selectedFiles, activeSplitters.getSelectedFiles());
     for (EditorsSplitters each : getAllSplitters()) {
       if (each != activeSplitters) {
-        selectedFiles.addAll(Arrays.asList(each.getSelectedFiles()));
+        ContainerUtil.addAll(selectedFiles, each.getSelectedFiles());
       }
     }
     return VfsUtilCore.toVirtualFileArray(selectedFiles);
@@ -1240,7 +1240,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   public FileEditor[] getSelectedEditors() {
     Set<FileEditor> selectedEditors = new HashSet<>();
     for (EditorsSplitters each : getAllSplitters()) {
-      selectedEditors.addAll(Arrays.asList(each.getSelectedEditors()));
+      ContainerUtil.addAll(selectedEditors, each.getSelectedEditors());
     }
 
     return selectedEditors.toArray(new FileEditor[selectedEditors.size()]);

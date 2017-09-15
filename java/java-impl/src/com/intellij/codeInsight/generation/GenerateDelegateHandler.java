@@ -33,6 +33,7 @@ import com.intellij.psi.scope.processor.VariablesProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
@@ -234,7 +235,7 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
     if (targetClass instanceof PsiTypeParameter) {
       LinkedHashSet<PsiMethod> meths = new LinkedHashSet<>();
       for (PsiClass superClass : targetClass.getSupers()) {
-        meths.addAll(Arrays.asList(superClass.getAllMethods()));
+        ContainerUtil.addAll(meths, superClass.getAllMethods());
       }
       allMethods = meths.toArray(new PsiMethod[meths.size()]);
     }
