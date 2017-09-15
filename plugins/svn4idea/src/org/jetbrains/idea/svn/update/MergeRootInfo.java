@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,14 @@
 package org.jetbrains.idea.svn.update;
 
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.info.Info;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.File;
+
+import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 
 public class MergeRootInfo {
   private String myUrl1;
@@ -40,18 +42,18 @@ public class MergeRootInfo {
 
   public SVNURL getUrl1() {
     try {
-      return SVNURL.parseURIDecoded(myUrl1);
+      return createUrl(myUrl1, false);
     }
-    catch (SVNException e) {
+    catch (SvnBindException e) {
       return null;
     }
   }
 
   public SVNURL getUrl2() {
     try {
-      return SVNURL.parseURIDecoded(myUrl2);
+      return createUrl(myUrl2, false);
     }
-    catch (SVNException e) {
+    catch (SvnBindException e) {
       return null;
     }
   }

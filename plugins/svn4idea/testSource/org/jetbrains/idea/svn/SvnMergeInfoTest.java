@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,6 +48,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
+import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 import static org.jetbrains.idea.svn.SvnUtil.parseUrl;
 
 // TODO: Many tests in this class are written with direct SVNKit usage - could not utilize it for svn 1.8
@@ -102,7 +103,7 @@ public class SvnMergeInfoTest extends Svn17TestCase {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
 
-    final String repoUrl = SVNURL.parseURIDecoded(myRepoUrl).toString();
+    final String repoUrl = createUrl(myRepoUrl, false).toString();
     myWCInfoWithBranches = new WCInfoWithBranches(myWCInfo, Collections.emptyList(), vcsRoot,
                                                   new WCInfoWithBranches.Branch(repoUrl + "/trunk"));
     myMergeChecker = new BranchInfo(myVcs, myWCInfoWithBranches, new WCInfoWithBranches.Branch(repoUrl + "/branch"));
