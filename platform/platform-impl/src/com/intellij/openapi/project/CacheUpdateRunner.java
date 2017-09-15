@@ -82,8 +82,7 @@ public class CacheUpdateRunner {
 
     while (!project.isDisposed()) {
       indicator.checkCanceled();
-      // todo wait for the user...
-      if (processSomeFilesWhileUserIsInactive(queue, progressUpdater, project, processor)) {
+      if (processSomeFilesWhileUserIsInactive(queue, progressUpdater, indicator, project, processor)) {
         break;
       }
     }
@@ -101,6 +100,7 @@ public class CacheUpdateRunner {
 
   private static boolean processSomeFilesWhileUserIsInactive(@NotNull FileContentQueue queue,
                                                              @NotNull ProgressUpdater progressUpdater,
+                                                             @NotNull ProgressIndicator suspendableIndicator,
                                                              @NotNull Project project,
                                                              @NotNull Consumer<FileContent> fileProcessor) {
     final ProgressIndicatorBase innerIndicator = new ProgressIndicatorBase() {
@@ -122,7 +122,7 @@ public class CacheUpdateRunner {
     try {
       int threadsCount = indexingThreadCount();
       if (threadsCount == 1 || application.isWriteAccessAllowed()) {
-        Runnable process = new MyRunnable(innerIndicator, queue, isFinished, progressUpdater, project, fileProcessor);
+        Runnable process = new MyRunnable(innerIndicator, suspendableIndicator, queue, isFinished, progressUpdater, project, fileProcessor);
         ProgressManager.getInstance().runProcess(process, innerIndicator);
       }
       else {
@@ -131,7 +131,7 @@ public class CacheUpdateRunner {
         for (int i = 0; i < threadsCount; i++) {
           AtomicBoolean ref = new AtomicBoolean();
           finishedRefs[i] = ref;
-          Runnable process = new MyRunnable(innerIndicator, queue, ref, progressUpdater, project, fileProcessor);
+          Runnable process = new MyRunnable(innerIndicator, suspendableIndicator, queue, ref, progressUpdater, project, fileProcessor);
           futures[i] = application.executeOnPooledThread(process);
         }
         isFinished.set(waitForAll(finishedRefs, futures));
@@ -179,19 +179,22 @@ public class CacheUpdateRunner {
 
   private static class MyRunnable implements Runnable {
     private final ProgressIndicatorBase myInnerIndicator;
+    private final ProgressIndicator mySuspendableIndicator;
     private final FileContentQueue myQueue;
     private final AtomicBoolean myFinished;
     private final ProgressUpdater myProgressUpdater;
     @NotNull private final Project myProject;
     @NotNull private final Consumer<FileContent> myProcessor;
 
-    public MyRunnable(@NotNull ProgressIndicatorBase innerIndicator,
-                      @NotNull FileContentQueue queue,
-                      @NotNull AtomicBoolean finished,
-                      @NotNull ProgressUpdater progressUpdater,
-                      @NotNull Project project,
-                      @NotNull Consumer<FileContent> fileProcessor) {
+    MyRunnable(@NotNull ProgressIndicatorBase innerIndicator,
+               @NotNull ProgressIndicator suspendableIndicator,
+               @NotNull FileContentQueue queue,
+               @NotNull AtomicBoolean finished,
+               @NotNull ProgressUpdater progressUpdater,
+               @NotNull Project project,
+               @NotNull Consumer<FileContent> fileProcessor) {
       myInnerIndicator = innerIndicator;
+      mySuspendableIndicator = suspendableIndicator;
       myQueue = queue;
       myFinished = finished;
       myProgressUpdater = progressUpdater;
@@ -206,6 +209,8 @@ public class CacheUpdateRunner {
           return;
         }
         try {
+          mySuspendableIndicator.checkCanceled();
+
           final FileContent fileContent = myQueue.take(myInnerIndicator);
           if (fileContent == null) {
             myFinished.set(true);
