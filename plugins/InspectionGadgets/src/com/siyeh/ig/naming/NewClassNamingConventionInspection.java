@@ -67,7 +67,6 @@ public class NewClassNamingConventionInspection extends BaseInspection {
       myNamingConventionBeans.put(convention.getShortName(), convention.createDefaultBean());
     }
     initDisabledState();
-    myDisabledShortNames.remove(ClassNamingConvention.CLASS_NAMING_CONVENTION_SHORT_NAME);
   }
 
   private void initDisabledState() {
@@ -205,7 +204,7 @@ public class NewClassNamingConventionInspection extends BaseInspection {
         setEnabled(value, convention.getShortName());
       }
     });
-    list.setSelectedIndex(myNamingConventions.size());
+    list.setSelectedIndex(myNamingConventions.size() - 1);
     panel.add(list, BorderLayout.WEST);
     return panel;
   }
