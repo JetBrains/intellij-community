@@ -19,10 +19,7 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.navigation.GotoTargetHandler;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiMethod;
+import com.intellij.psi.*;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
@@ -357,6 +354,13 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
     assertSize(5, targets);
 
     List<String> names = ContainerUtil.map(targets, element -> ((PsiClass)element).getName());
+
+    for(PsiElement element:targets) {
+      PsiClass psiClass = (PsiClass)element;
+      if (!"MyInterfaceImplementation".equals(psiClass.getName())) {
+        assertEquals(null, psiClass.getModifierList());
+      }
+    }
 
     assertContainsElements(names, "1");
     assertContainsElements(names, "2");
