@@ -84,18 +84,27 @@ public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiE
   public String getQualifiedName() {
     return getStub().getQualifiedName();
   }
-  
-  boolean isAnonymousOrLocalClass() {
+
+  private boolean isLocalClass() {
     PsiClassStub<?> stub = getStub();
-    return !(stub instanceof PsiClassStubImpl) || 
-           ((PsiClassStubImpl)stub).isAnonymousInner() || 
+    return stub instanceof PsiClassStubImpl &&
            ((PsiClassStubImpl)stub).isLocalClassInner();
+  }
+
+  private boolean isAnonymousClass() {
+    PsiClassStub<?> stub = getStub();
+    return stub instanceof PsiClassStubImpl &&
+           ((PsiClassStubImpl)stub).isAnonymousInner();
+  }
+  
+  private boolean isAnonymousOrLocalClass() {
+    return isAnonymousClass() || isLocalClass();
   }
 
   @Override
   @Nullable
   public PsiModifierList getModifierList() {
-    if (isAnonymousOrLocalClass()) return null;
+    if (isAnonymousClass()) return null;
     return getModifierListInternal();
   }
 

@@ -29,6 +29,8 @@ import com.intellij.util.containers.ContainerUtil;
 import java.util.Arrays;
 import java.util.List;
 
+import static org.junit.Assert.assertNotEquals;
+
 public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCase {
   public void testMultipleImplsFromAbstractCall() {
     PsiFile file = myFixture.addFileToProject("Foo.java", "public abstract class Hello {\n" +
@@ -357,8 +359,12 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
 
     for(PsiElement element:targets) {
       PsiClass psiClass = (PsiClass)element;
-      if (!"MyInterfaceImplementation".equals(psiClass.getName())) {
+      String name = psiClass.getName();
+      if ("1".equals(name) || "2".equals(name)) {
         assertEquals(null, psiClass.getModifierList());
+        assertTrue(psiClass.hasModifierProperty(PsiModifier.FINAL));
+      } else if (!"MyInterfaceImplementation".equals(name)) {
+        assertNotEquals(null, psiClass.getModifierList());
       }
     }
 
