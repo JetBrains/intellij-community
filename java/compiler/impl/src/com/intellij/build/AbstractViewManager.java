@@ -16,6 +16,7 @@
 package com.intellij.build;
 
 import com.intellij.build.events.*;
+import com.intellij.execution.filters.Filter;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.*;
 import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl;
@@ -44,6 +45,7 @@ import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -90,7 +92,7 @@ public abstract class AbstractViewManager implements BuildProgressListener, Disp
         JPanel panel = new JPanel(new BorderLayout());
         SimpleColoredComponent mainComponent = new SimpleColoredComponent();
         mainComponent.setIcon(buildInfo.getIcon());
-        mainComponent.append(buildInfo.title + ": ", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+        mainComponent.append(buildInfo.getTitle() + ": ", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
         mainComponent.append(buildInfo.message, SimpleTextAttributes.REGULAR_ATTRIBUTES);
         panel.add(mainComponent, BorderLayout.NORTH);
         if (buildInfo.statusMessage != null) {
@@ -145,11 +147,18 @@ public abstract class AbstractViewManager implements BuildProgressListener, Disp
             myToolbarActions.removeAll();
           }
         }
+        myBuildsMap.computeIfAbsent(ObjectUtils.chooseNotNull(
+          event.getParentId(), event.getId()), o -> {
+          StartBuildEvent startBuildEvent = (StartBuildEvent)event;
+          return new BuildInfo(event.getId(), startBuildEvent.getBuildTitle(), startBuildEvent.getWorkingDir(), event.getEventTime());
+        });
       }
-      final BuildInfo buildInfo =
-        myBuildsMap.computeIfAbsent(ObjectUtils.chooseNotNull(event.getParentId(), event.getId()), o -> new BuildInfo());
-      if (event.getParentId() != null) {
-        myBuildsMap.put(event.getId(), buildInfo);
+      else {
+        if (event.getParentId() != null) {
+          BuildInfo buildInfo = myBuildsMap.get(event.getParentId());
+          assert buildInfo != null;
+          myBuildsMap.put(event.getId(), buildInfo);
+        }
       }
     });
 
@@ -157,8 +166,6 @@ public abstract class AbstractViewManager implements BuildProgressListener, Disp
       final BuildInfo buildInfo = myBuildsMap.get(event.getId());
       assert buildInfo != null;
       if (event instanceof StartBuildEvent) {
-        buildInfo.title = ((StartBuildEvent)event).getBuildTitle();
-        buildInfo.id = event.getId();
         buildInfo.message = event.getMessage();
 
         if (!isTabbedView() && myBuildsList != null) {
@@ -169,7 +176,7 @@ public abstract class AbstractViewManager implements BuildProgressListener, Disp
         ProcessHandler processHandler = ((StartBuildEvent)event).getProcessHandler();
         BuildView view = myViewMap.computeIfAbsent(buildInfo, info -> {
           ExecutionConsole executionConsole = null;
-          ComponentContainer componentContainer = null;
+          BuildConsoleView buildConsoleView = null;
           Supplier<RunContentDescriptor> contentDescriptorSupplier = ((StartBuildEvent)event).getContentDescriptorSupplier();
           if (contentDescriptorSupplier != null) {
             RunContentDescriptor contentDescriptor = contentDescriptorSupplier.get();
@@ -185,7 +192,7 @@ public abstract class AbstractViewManager implements BuildProgressListener, Disp
               }
               JComponent component = contentDescriptor.getComponent();
               AnAction[] leftToolbarActionsArray = leftToolbarActions.toArray(new AnAction[leftToolbarActions.size()]);
-              componentContainer = new BuildConsoleView() {
+              buildConsoleView = new BuildConsoleView() {
                 @Override
                 public void onEvent(BuildEvent event) {
                 }
@@ -211,15 +218,28 @@ public abstract class AbstractViewManager implements BuildProgressListener, Disp
               };
             }
           }
-          if (componentContainer == null) {
-            componentContainer = executionConsole = new BuildTextConsoleView(myProject);
+          if (buildConsoleView == null) {
+            buildConsoleView = new BuildTextConsoleView(myProject);
+            executionConsole = (ExecutionConsole)buildConsoleView;
           }
+          if (executionConsole instanceof ConsoleView) {
+            for (Filter filter : ((StartBuildEvent)event).getExecutionFilters()) {
+              ((ConsoleView)executionConsole).addMessageFilter(filter);
+            }
+          }
+
           final BuildView buildView =
-            new BuildView(myProject, componentContainer, ((StartBuildEvent)event),
+            new BuildView(myProject, buildConsoleView, ((StartBuildEvent)event),
                           "build.toolwindow." + getViewName() + ".selection.state", isConsoleEnabledByDefault());
           if (processHandler != null) {
-            if (executionConsole instanceof ConsoleView) {
-              ((ConsoleView)executionConsole).attachToProcess(processHandler);
+            if (buildConsoleView instanceof ConsoleView) {
+              ((ConsoleView)buildConsoleView).attachToProcess(processHandler);
+              Consumer<ConsoleView> attachedConsoleConsumer = ((StartBuildEvent)event).getAttachedConsoleConsumer();
+              if (attachedConsoleConsumer != null) {
+                attachedConsoleConsumer.consume((ConsoleView)buildConsoleView);
+              }
+            }
+            else if (executionConsole instanceof ConsoleView) {
               Consumer<ConsoleView> attachedConsoleConsumer = ((StartBuildEvent)event).getAttachedConsoleConsumer();
               if (attachedConsoleConsumer != null) {
                 attachedConsoleConsumer.consume((ConsoleView)executionConsole);
@@ -238,7 +258,8 @@ public abstract class AbstractViewManager implements BuildProgressListener, Disp
               "BuildView", toolbarActions, false).getComponent(), BorderLayout.WEST);
             toolbarActions.addAll(buildView.createConsoleActions());
             myContent = myBuildContentManager.addTabbedContent(
-              consoleComponent, getViewName(), buildInfo.title + ", " + DateFormatUtil.formatDateTime(System.currentTimeMillis()) + " ",
+              consoleComponent, getViewName(),
+              buildInfo.getTitle() + ", " + DateFormatUtil.formatDateTime(System.currentTimeMillis()) + " ",
               true, AllIcons.CodeStyle.Gear, buildView);
           }
           return buildView;
@@ -249,10 +270,7 @@ public abstract class AbstractViewManager implements BuildProgressListener, Disp
           myToolbarActions.removeAll();
           myToolbarActions.addAll(view.createConsoleActions());
         }
-        if (!isTabbedView() &&
-            myBuildsList != null &&
-            myBuildsList.getModel().getSize() > 1 &&
-            myThreeComponentsSplitter.getFirstComponent() == null) {
+        if (!isTabbedView() && myBuildsList != null && myBuildsList.getModel().getSize() > 1) {
           JBScrollPane scrollPane = new JBScrollPane();
           scrollPane.setBorder(JBUI.Borders.empty());
           scrollPane.setViewportView(myBuildsList);
@@ -299,7 +317,9 @@ public abstract class AbstractViewManager implements BuildProgressListener, Disp
           ((BuildConsoleView)consoleView).onEvent(event);
         }
         else if ((consoleView instanceof ConsoleView)) {
-          ((ConsoleView)consoleView).print(event.getMessage(), ConsoleViewContentType.NORMAL_OUTPUT);
+          ((ConsoleView)consoleView).print(event.getMessage(), ((OutputBuildEvent)event).isStdOut()
+                                                               ? ConsoleViewContentType.NORMAL_OUTPUT
+                                                               : ConsoleViewContentType.ERROR_OUTPUT);
         }
       }
       else {
@@ -411,13 +431,18 @@ public abstract class AbstractViewManager implements BuildProgressListener, Disp
     }
   }
 
-  private static class BuildInfo {
-    Object id;
-    String title;
+  private static class BuildInfo extends DefaultBuildDescriptor {
     String message;
     String statusMessage;
     long endTime = -1;
     EventResult result;
+
+    public BuildInfo(@NotNull Object id,
+                     @NotNull String title,
+                     @NotNull String workingDir,
+                     long startTime) {
+      super(id, title, workingDir, startTime);
+    }
 
     public Icon getIcon() {
       return getIcon(result);

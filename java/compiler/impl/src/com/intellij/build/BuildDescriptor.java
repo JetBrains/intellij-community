@@ -13,29 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.build.events.impl;
+package com.intellij.build;
 
-import com.intellij.build.events.OutputBuildEvent;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
  */
-public class OutputBuildEventImpl extends AbstractBuildEvent implements OutputBuildEvent {
-  private boolean myStdOut;
+public interface BuildDescriptor {
+  @NotNull
+  Object getId();
 
-  public OutputBuildEventImpl(@Nullable Object parentId, @NotNull String message, boolean stdOut) {
-    this(new Object(), parentId, message, stdOut);
-  }
+  @NotNull
+  String getTitle();
 
-  public OutputBuildEventImpl(@NotNull Object eventId, @Nullable Object parentId, @NotNull String message, boolean stdOut) {
-    super(eventId, parentId, -1, message);
-    myStdOut = stdOut;
-  }
+  @NotNull
+  String getWorkingDir();
 
-  @Override
-  public boolean isStdOut() {
-    return myStdOut;
-  }
+  long getStartTime();
 }

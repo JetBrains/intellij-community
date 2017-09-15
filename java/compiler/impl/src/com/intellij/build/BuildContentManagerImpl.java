@@ -198,7 +198,7 @@ public class BuildContentManagerImpl implements BuildContentManager {
 
   public void finishBuildNotified(Content content) {
     Pair<Icon, AtomicInteger> pair = liveContentsMap.get(content);
-    if (pair.second.decrementAndGet() == 0) {
+    if (pair != null && pair.second.decrementAndGet() == 0) {
       content.setIcon(pair.first);
       if (pair.first == null) {
         content.putUserData(ToolWindow.SHOW_CONTENT_ICON, Boolean.FALSE);
