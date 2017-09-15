@@ -34,6 +34,8 @@ import static com.intellij.util.containers.JBIterable.Split.*;
 
 /**
  * @author gregsh
+ *
+ * @noinspection ArraysAsListWithZeroOrOneArgument
  */
 public class TreeTraverserTest extends TestCase {
 
@@ -514,18 +516,49 @@ public class TreeTraverserTest extends TestCase {
   public void testTreeBacktraceSimple() {
     JBIterable<Integer> dfs = numTraverser2(TreeTraversal.PRE_ORDER_DFS).fun(1);
     JBIterable<Integer> bfs = numTraverser2(TreeTraversal.TRACING_BFS).fun(1);
+    JBIterable<Integer> postDfs = numTraverser2(TreeTraversal.POST_ORDER_DFS).fun(1);
 
     TreeTraversal.TracingIt<Integer> it1 = dfs.typedIterator();
-    it1.skipWhile(Conditions.notEqualTo(37)).next();
+    assertEquals(new Integer(37), it1.skipWhile(Conditions.notEqualTo(37)).next());
 
     TreeTraversal.TracingIt<Integer> it2 = bfs.typedIterator();
-    it2.skipWhile(Conditions.notEqualTo(37)).next();
+    assertEquals(new Integer(37), it2.skipWhile(Conditions.notEqualTo(37)).next());
+
+    TreeTraversal.TracingIt<Integer> it3 = postDfs.typedIterator();
+    assertEquals(new Integer(37), it3.skipWhile(Conditions.notEqualTo(37)).next());
 
     assertEquals(Arrays.asList(37, 12, 4, 1), it1.backtrace().toList());
     assertEquals(Arrays.asList(37, 12, 4, 1), it2.backtrace().toList());
+    assertEquals(Arrays.asList(37, 12, 4, 1), it3.backtrace().toList());
 
     assertEquals(new Integer(12), it1.parent());
     assertEquals(new Integer(12), it2.parent());
+    assertEquals(new Integer(12), it3.parent());
+  }
+
+  public void testTreeBacktraceSingle() {
+    Integer root = 123;
+    JBTreeTraverser<Integer> traverser = new JBTreeTraverser<Integer>(Functions.constant(null)).withRoot(root);
+    JBIterable<Integer> dfs = traverser.traverse(TreeTraversal.PRE_ORDER_DFS);
+    JBIterable<Integer> bfs = traverser.traverse(TreeTraversal.TRACING_BFS);
+    JBIterable<Integer> postDfs = traverser.traverse(TreeTraversal.POST_ORDER_DFS);
+
+    TreeTraversal.TracingIt<Integer> it1 = dfs.typedIterator();
+    assertEquals(root, it1.next());
+
+    TreeTraversal.TracingIt<Integer> it2 = bfs.typedIterator();
+    assertEquals(root, it2.next());
+
+    TreeTraversal.TracingIt<Integer> it3 = postDfs.typedIterator();
+    assertEquals(root, it3.next());
+
+    assertEquals(Arrays.asList(root), it1.backtrace().toList());
+    assertEquals(Arrays.asList(root), it2.backtrace().toList());
+    assertEquals(Arrays.asList(root), it3.backtrace().toList());
+
+    assertEquals(null, it1.parent());
+    assertEquals(null, it2.parent());
+    assertEquals(null, it3.parent());
   }
 
   public void testTreeBacktraceTransformed() {
