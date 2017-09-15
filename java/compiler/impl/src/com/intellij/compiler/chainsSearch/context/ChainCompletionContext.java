@@ -17,7 +17,7 @@ package com.intellij.compiler.chainsSearch.context;
 
 import com.intellij.compiler.CompilerReferenceService;
 import com.intellij.compiler.backwardRefs.CompilerReferenceServiceEx;
-import com.intellij.compiler.chainsSearch.MethodIncompleteSignature;
+import com.intellij.compiler.chainsSearch.MethodCall;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyValue;
@@ -68,7 +68,7 @@ public class ChainCompletionContext {
   @NotNull
   private final TIntObjectHashMap<PsiClass> myQualifierClassResolver;
   @NotNull
-  private final Map<MethodIncompleteSignature, PsiMethod[]> myResolver;
+  private final Map<MethodCall, PsiMethod[]> myResolver;
   @NotNull
   private final CompilerReferenceServiceEx myRefServiceEx;
 
@@ -98,7 +98,7 @@ public class ChainCompletionContext {
     myProject = context.getProject();
     myResolveHelper = PsiResolveHelper.SERVICE.getInstance(myProject);
     myQualifierClassResolver = new TIntObjectHashMap<>();
-    myResolver = FactoryMap.createMap(sign -> sign.resolve(myProject, myResolveScope, accessValidator()));
+    myResolver = FactoryMap.createMap(sign -> sign.resolve());
     myRefServiceEx = (CompilerReferenceServiceEx)CompilerReferenceService.getInstance(myProject);
   }
 
@@ -117,6 +117,11 @@ public class ChainCompletionContext {
       }
     }
     return false;
+  }
+
+  @NotNull
+  public CompilerReferenceServiceEx getRefService() {
+    return myRefServiceEx;
   }
 
   @NotNull
@@ -182,11 +187,11 @@ public class ChainCompletionContext {
   }
 
   @NotNull
-  public PsiMethod[] resolve(MethodIncompleteSignature sign) {
+  public PsiMethod[] resolve(MethodCall sign) {
     return myResolver.get(sign);
   }
 
-  private Predicate<PsiMember> accessValidator() {
+  public Predicate<PsiMember> accessValidator() {
     return m -> myResolveHelper.isAccessible(m, myContext, null);
   }
 

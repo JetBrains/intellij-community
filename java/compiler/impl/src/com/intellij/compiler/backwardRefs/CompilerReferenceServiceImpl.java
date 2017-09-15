@@ -20,8 +20,9 @@ import com.intellij.compiler.backwardRefs.view.CompilerReferenceFindUsagesTestIn
 import com.intellij.compiler.backwardRefs.view.CompilerReferenceHierarchyTestInfo;
 import com.intellij.compiler.backwardRefs.view.DirtyScopeTestInfo;
 import com.intellij.compiler.chainsSearch.ChainSearchMagicConstants;
-import com.intellij.compiler.chainsSearch.MethodIncompleteSignature;
-import com.intellij.compiler.chainsSearch.SignatureAndOccurrences;
+import com.intellij.compiler.chainsSearch.MethodCall;
+import com.intellij.compiler.chainsSearch.MethodRefAndOccurrences;
+import com.intellij.compiler.chainsSearch.context.ChainCompletionContext;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.compiler.server.BuildManagerListener;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -222,8 +223,9 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
 
   @NotNull
   @Override
-  public SortedSet<SignatureAndOccurrences> findMethodReferenceOccurrences(@NotNull String rawReturnType,
-                                                                                                      @SignatureData.IteratorKind byte iteratorKind) {
+  public SortedSet<MethodRefAndOccurrences> findMethodReferenceOccurrences(@NotNull String rawReturnType,
+                                                                           @SignatureData.IteratorKind byte iteratorKind,
+                                                                           @NotNull ChainCompletionContext context) {
     try {
       myReadDataLock.lock();
       try {
@@ -242,15 +244,15 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
             .distinct()
             .map(r -> {
               int count = myReader.getOccurrenceCount(r);
-              return count <= 1 ? null : new SignatureAndOccurrences(
-                new MethodIncompleteSignature((LightRef.JavaLightMethodRef)r, sd, this),
+              return count <= 1 ? null : new MethodRefAndOccurrences(
+                new MethodCall((LightRef.JavaLightMethodRef)r, sd, context),
                 count);
             }))
           .filter(Objects::nonNull)
           .collect(Collectors.groupingBy(x -> x.getSignature(), Collectors.summarizingInt(x -> x.getOccurrenceCount())))
           .entrySet()
           .stream()
-          .map(e -> new SignatureAndOccurrences(e.getKey(), (int)e.getValue().getSum()))
+          .map(e -> new MethodRefAndOccurrences(e.getKey(), (int)e.getValue().getSum()))
           .collect(Collectors.toCollection(TreeSet::new));
       }
       finally {
@@ -280,7 +282,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
 
         LightRef.LightClassHierarchyElementDef owner = method.getOwner();
 
-        TObjectIntHashMap<LightRef> typeCasts = myReader.getTypeCastsInside(owner, ids);
+        TObjectIntHashMap<LightRef> typeCasts = myReader.getTypeCasts(owner, ids);
 
         LightRef[] best = {null};
         int[] bestFileCount = {0};

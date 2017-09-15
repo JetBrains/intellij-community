@@ -28,11 +28,11 @@ import java.util.*;
 
 public class ChainSearcher {
   @NotNull
-  public static List<CallChain> search(int pathMaximalLength,
-                                       ChainSearchTarget searchTarget,
-                                       int maxResultSize,
-                                       ChainCompletionContext context,
-                                       CompilerReferenceServiceEx compilerReferenceServiceEx) {
+  public static List<OperationChain> search(int pathMaximalLength,
+                                            ChainSearchTarget searchTarget,
+                                            int maxResultSize,
+                                            ChainCompletionContext context,
+                                            CompilerReferenceServiceEx compilerReferenceServiceEx) {
     SearchInitializer initializer = createInitializer(searchTarget, compilerReferenceServiceEx, context);
     return search(compilerReferenceServiceEx, initializer, pathMaximalLength, maxResultSize, context);
   }
@@ -41,54 +41,49 @@ public class ChainSearcher {
   private static SearchInitializer createInitializer(ChainSearchTarget target,
                                                      CompilerReferenceServiceEx referenceServiceEx,
                                                      ChainCompletionContext context) {
-    SortedSet<SignatureAndOccurrences> methods = null;
+    SortedSet<MethodRefAndOccurrences> methods = Collections.emptySortedSet();
     for (byte kind : target.getArrayKind()) {
-      SortedSet<SignatureAndOccurrences> currentMethods =
-        referenceServiceEx.findMethodReferenceOccurrences(target.getClassQName(), kind);
-      if (methods == null) {
-        methods = currentMethods;
-      } else {
-        methods = unionSortedSet(currentMethods, methods);
-      }
+      SortedSet<MethodRefAndOccurrences> currentMethods = referenceServiceEx.findMethodReferenceOccurrences(target.getClassQName(), kind, context);
+      methods = methods == null ? currentMethods : unionSortedSet(currentMethods, methods);
     }
     return new SearchInitializer(methods, context);
   }
 
   @NotNull
-  private static List<CallChain> search(CompilerReferenceServiceEx referenceServiceEx,
-                                        SearchInitializer initializer,
-                                        int chainMaxLength,
-                                        int maxResultSize,
-                                        ChainCompletionContext context) {
-    LinkedList<CallChain> q = initializer.getChainQueue();
+  private static List<OperationChain> search(CompilerReferenceServiceEx referenceServiceEx,
+                                             SearchInitializer initializer,
+                                             int chainMaxLength,
+                                             int maxResultSize,
+                                             ChainCompletionContext context) {
+    LinkedList<OperationChain> q = initializer.getChainQueue();
 
-    List<CallChain> result = new ArrayList<>();
+    List<OperationChain> result = new ArrayList<>();
     while (!q.isEmpty()) {
 
       ProgressManager.checkCanceled();
-      CallChain currentChain = q.poll();
-      RefChainOperation headSignature = currentChain.getHeadSignature();
+      OperationChain currentChain = q.poll();
+      RefChainOperation head = currentChain.getHead();
 
       if (addChainIfTerminal(currentChain, result, chainMaxLength, context)) continue;
 
       // otherwise try to find chain continuation
       boolean updated = false;
-      SortedSet<SignatureAndOccurrences> candidates = referenceServiceEx.findMethodReferenceOccurrences(headSignature.getOwner1(), SignatureData.ZERO_DIM);
-      LightRef ref1 = headSignature.getRef1();
-      for (SignatureAndOccurrences candidate : candidates) {
+      SortedSet<MethodRefAndOccurrences> candidates = referenceServiceEx.findMethodReferenceOccurrences(head.getQualifierRawName(), SignatureData.ZERO_DIM, context);
+      LightRef ref = head.getLightRef();
+      for (MethodRefAndOccurrences candidate : candidates) {
         if (candidate.getOccurrenceCount() * ChainSearchMagicConstants.FILTER_RATIO < currentChain.getChainWeight()) {
           break;
         }
-        MethodIncompleteSignature sign = candidate.getSignature();
-        if ((sign.isStatic() || !sign.getOwner().equals(context.getTarget().getClassQName())) &&
-            (!(ref1 instanceof LightRef.JavaLightMethodRef) ||
-             referenceServiceEx
-               .mayHappen(candidate.getSignature().getRef(), ref1, ChainSearchMagicConstants.METHOD_PROBABILITY_THRESHOLD))) {
+        MethodCall sign = candidate.getSignature();
+        if ((sign.isStatic() || !sign.getQualifierRawName().equals(context.getTarget().getClassQName())) &&
+            (!(ref instanceof LightRef.JavaLightMethodRef) ||
+             referenceServiceEx.mayHappen(candidate.getSignature().getLightRef(), ref, ChainSearchMagicConstants.METHOD_PROBABILITY_THRESHOLD))) {
 
-          CallChain continuation = currentChain.continuation(candidate.getSignature(), candidate.getOccurrenceCount(), context);
+          OperationChain
+            continuation = currentChain.continuationWithMethod(candidate.getSignature(), candidate.getOccurrenceCount(), context);
           if (continuation != null) {
             boolean stopChain =
-              candidate.getSignature().isStatic() || context.hasQualifier(context.resolvePsiClass(candidate.getSignature().getOwnerRef()));
+              candidate.getSignature().isStatic() || context.hasQualifier(context.resolvePsiClass(candidate.getSignature().getQualifierDef()));
             if (stopChain) {
               addChainIfNotPresent(continuation, result);
             }
@@ -100,11 +95,12 @@ public class ChainSearcher {
         }
       }
 
-      if (ref1 instanceof LightRef.JavaLightMethodRef) {
+      if (ref instanceof LightRef.JavaLightMethodRef) {
         LightRef.LightClassHierarchyElementDef def =
-          referenceServiceEx.mayCallOfTypeCast((LightRef.JavaLightMethodRef)ref1, ChainSearchMagicConstants.METHOD_PROBABILITY_THRESHOLD);
+          referenceServiceEx.mayCallOfTypeCast((LightRef.JavaLightMethodRef)ref, ChainSearchMagicConstants.METHOD_PROBABILITY_THRESHOLD);
         if (def != null) {
-          CallChain continuation = currentChain.continuationWithCast(new TypeCast(def, ((MethodIncompleteSignature)headSignature).getOwnerRef(), referenceServiceEx, 0), context);
+          OperationChain
+            continuation = currentChain.continuationWithCast(new TypeCast(def, head.getQualifierDef(), referenceServiceEx), context);
           if (continuation != null) {
             q.addFirst(continuation);
             updated = true;
@@ -126,17 +122,18 @@ public class ChainSearcher {
   /**
    * To reduce false-positives we add a method to result only if its qualifier can be occurred together with context variables.
    */
-  private static void addChainIfQualifierCanBeOccurredInContext(CallChain currentChain,
-                                                                List<CallChain> result,
+  private static void addChainIfQualifierCanBeOccurredInContext(OperationChain currentChain,
+                                                                List<OperationChain> result,
                                                                 ChainCompletionContext context,
                                                                 CompilerReferenceServiceEx referenceServiceEx) {
-    RefChainOperation signature = currentChain.getLastMethodSign();
+    RefChainOperation signature = currentChain.getHeadMethodCall();
+    // type cast + introduced qualifier: it's too complex chain
     if (currentChain.hasCast()) return;
-    if (!context.getTarget().getClassQName().equals(((MethodIncompleteSignature)signature).getOwner())) {
+    if (!context.getTarget().getClassQName().equals(signature.getQualifierRawName())) {
       Set<LightRef> references = context.getContextClassReferences();
       boolean isRelevantQualifier = false;
       for (LightRef ref: references) {
-        if (referenceServiceEx.mayHappen(((MethodIncompleteSignature)signature).getOwnerRef(), ref, ChainSearchMagicConstants.VAR_PROBABILITY_THRESHOLD)) {
+        if (referenceServiceEx.mayHappen(signature.getQualifierDef(), ref, ChainSearchMagicConstants.VAR_PROBABILITY_THRESHOLD)) {
           isRelevantQualifier = true;
           break;
         }
@@ -148,12 +145,12 @@ public class ChainSearcher {
     }
   }
 
-  private static boolean addChainIfTerminal(CallChain currentChain, List<CallChain> result, int pathMaximalLength,
+  private static boolean addChainIfTerminal(OperationChain currentChain, List<OperationChain> result, int pathMaximalLength,
                                             ChainCompletionContext context) {
-    RefChainOperation signature = currentChain.getLastMethodSign();
-    RefChainOperation head = currentChain.getHeadSignature();
-    if (((MethodIncompleteSignature)signature).isStatic() ||
-        context.hasQualifier(context.resolvePsiClass(head.getOwnerRef1())) ||
+    RefChainOperation signature = currentChain.getHeadMethodCall();
+    RefChainOperation head = currentChain.getHead();
+    if (((MethodCall)signature).isStatic() ||
+        context.hasQualifier(context.resolvePsiClass(head.getQualifierDef())) ||
         currentChain.length() >= pathMaximalLength) {
       addChainIfNotPresent(currentChain, result);
       return true;
@@ -161,7 +158,7 @@ public class ChainSearcher {
     return false;
   }
 
-  private static void addChainIfNotPresent(CallChain newChain, List<CallChain> result) {
+  private static void addChainIfNotPresent(OperationChain newChain, List<OperationChain> result) {
     if (result.isEmpty()) {
       result.add(newChain);
       return;
@@ -169,8 +166,8 @@ public class ChainSearcher {
     boolean doAdd = true;
     IntStack indicesToRemove = new IntStack();
     for (int i = 0; i < result.size(); i++) {
-      CallChain chain = result.get(i);
-      CallChain.CompareResult r = CallChain.compare(chain, newChain);
+      OperationChain chain = result.get(i);
+      OperationChain.CompareResult r = OperationChain.compare(chain, newChain);
       switch (r) {
         case LEFT_CONTAINS_RIGHT:
           indicesToRemove.push(i);

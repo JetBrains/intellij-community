@@ -16,7 +16,8 @@
 package com.intellij.compiler.backwardRefs;
 
 import com.intellij.compiler.CompilerReferenceService;
-import com.intellij.compiler.chainsSearch.SignatureAndOccurrences;
+import com.intellij.compiler.chainsSearch.MethodRefAndOccurrences;
+import com.intellij.compiler.chainsSearch.context.ChainCompletionContext;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,8 +35,9 @@ public abstract class CompilerReferenceServiceEx extends CompilerReferenceServic
   }
 
   @NotNull
-  public abstract SortedSet<SignatureAndOccurrences> findMethodReferenceOccurrences(@NotNull String rawReturnType,
-                                                                                    @SignatureData.IteratorKind byte iteratorKind)
+  public abstract SortedSet<MethodRefAndOccurrences> findMethodReferenceOccurrences(@NotNull String rawReturnType,
+                                                                                    @SignatureData.IteratorKind byte iteratorKind,
+                                                                                    @NotNull ChainCompletionContext context)
     throws ReferenceIndexUnavailableException;
 
   @Nullable

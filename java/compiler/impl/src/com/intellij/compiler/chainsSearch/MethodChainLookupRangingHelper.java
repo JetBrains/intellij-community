@@ -41,7 +41,7 @@ import java.util.stream.Collectors;
 
 public class MethodChainLookupRangingHelper {
   @NotNull
-  public static LookupElement toLookupElement(CallChain chain,
+  public static LookupElement toLookupElement(OperationChain chain,
                                               ChainCompletionContext context) {
     int unreachableParametersCount = 0;
     int matchedParametersInContext = 0;

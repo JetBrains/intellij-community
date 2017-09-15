@@ -31,19 +31,19 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 
-public class CallChain {
+public class OperationChain {
   @NotNull
   private final ChainOperation[] myReverseOperations;
-  private final RefChainOperation mySignature;
-  private final MethodIncompleteSignature myLastMethodSign;
+  private final RefChainOperation myHeadOperation;
+  private final MethodCall myHeadMethodCall;
   private final int myWeight;
   private final PsiClass myQualifierClass;
 
   @Nullable
-  public static CallChain create(@NotNull MethodIncompleteSignature signature,
-                                 int weight,
-                                 @NotNull ChainCompletionContext context) {
-    PsiClass qualifier = context.resolvePsiClass(signature.getOwnerRef());
+  public static OperationChain create(@NotNull MethodCall signature,
+                                      int weight,
+                                      @NotNull ChainCompletionContext context) {
+    PsiClass qualifier = context.resolvePsiClass(signature.getQualifierDef());
     if (qualifier == null || (!signature.isStatic() && InheritanceUtil.isInheritorOrSelf(context.getTarget().getTargetClass(), qualifier, true))) {
       return null;
     }
@@ -58,18 +58,18 @@ public class CallChain {
       return null;
     }
     classes.add(contextClass);
-    return new CallChain(qualifier, new ChainOperation[] {new ChainOperation.MethodCall(methods)}, signature, signature, weight);
+    return new OperationChain(qualifier, new ChainOperation[] {new ChainOperation.MethodCall(methods)}, signature, signature, weight);
   }
 
-  public CallChain(@NotNull PsiClass qualifierClass,
-                   @NotNull ChainOperation[] reverseOperations,
-                   RefChainOperation signature,
-                   MethodIncompleteSignature lastMethodSign,
-                   int weight) {
+  private OperationChain(@NotNull PsiClass qualifierClass,
+                        @NotNull ChainOperation[] reverseOperations,
+                        RefChainOperation signature,
+                        MethodCall headMethodSign,
+                        int weight) {
     myQualifierClass = qualifierClass;
     myReverseOperations = reverseOperations;
-    mySignature = signature;
-    myLastMethodSign = lastMethodSign;
+    myHeadOperation = signature;
+    myHeadMethodCall = headMethodSign;
     myWeight = weight;
   }
 
@@ -77,13 +77,14 @@ public class CallChain {
     return Arrays.stream(myReverseOperations).anyMatch(op -> op instanceof ChainOperation.TypeCast);
   }
 
-  public MethodIncompleteSignature getLastMethodSign() {
-    return myLastMethodSign;
+  @NotNull
+  public MethodCall getHeadMethodCall() {
+    return myHeadMethodCall;
   }
 
   @NotNull
-  public RefChainOperation getHeadSignature() {
-    return mySignature;
+  public RefChainOperation getHead() {
+    return myHeadOperation;
   }
 
   public int length() {
@@ -107,28 +108,30 @@ public class CallChain {
     return myWeight;
   }
 
-  public CallChain continuation(@NotNull MethodIncompleteSignature signature,
-                                int weight,
-                                @NotNull ChainCompletionContext context) {
-    CallChain head = create(signature, weight, context);
+  @Nullable
+  OperationChain continuationWithMethod(@NotNull MethodCall signature,
+                                        int weight,
+                                        @NotNull ChainCompletionContext context) {
+    OperationChain head = create(signature, weight, context);
     if (head == null) return null;
 
     ChainOperation[] newReverseOperations = new ChainOperation[length() + 1];
     System.arraycopy(myReverseOperations, 0, newReverseOperations, 0, myReverseOperations.length);
     newReverseOperations[length()] = head.getPath()[0];
-    return new CallChain(head.getQualifierClass(), newReverseOperations, head.getHeadSignature(), signature, Math.min(weight, getChainWeight()));
+    return new OperationChain(head.getQualifierClass(), newReverseOperations, head.getHead(), signature, Math.min(weight, getChainWeight()));
   }
 
-  public CallChain continuationWithCast(@NotNull TypeCast cast,
-                                        @NotNull ChainCompletionContext context) {
-    PsiClass operand = context.resolvePsiClass(cast.getOperandRef());
+  @Nullable
+  OperationChain continuationWithCast(@NotNull TypeCast cast,
+                                      @NotNull ChainCompletionContext context) {
+    PsiClass operand = context.resolvePsiClass(cast.getLightRef());
     PsiClass castType = context.resolvePsiClass(cast.getCastTypeRef());
     if (operand == null || castType == null) return null;
 
     ChainOperation[] newReverseOperations = new ChainOperation[length() + 1];
     System.arraycopy(myReverseOperations, 0, newReverseOperations, 0, myReverseOperations.length);
     newReverseOperations[length()] = new ChainOperation.TypeCast(operand, castType);
-    return new CallChain(operand, newReverseOperations, cast, myLastMethodSign, getChainWeight());
+    return new OperationChain(operand, newReverseOperations, cast, myHeadMethodCall, getChainWeight());
   }
 
   @Override
@@ -138,7 +141,7 @@ public class CallChain {
   }
 
   @SuppressWarnings("ConstantConditions")
-  public static CompareResult compare(@NotNull CallChain left, @NotNull CallChain right) {
+  public static CompareResult compare(@NotNull OperationChain left, @NotNull OperationChain right) {
     if (left.length() == 0 || right.length() == 0) {
       throw new IllegalStateException("chains can't be empty");
     }

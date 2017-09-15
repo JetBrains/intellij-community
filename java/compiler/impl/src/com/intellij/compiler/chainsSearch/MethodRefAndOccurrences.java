@@ -17,16 +17,16 @@ package com.intellij.compiler.chainsSearch;
 
 import org.jetbrains.annotations.NotNull;
 
-public class SignatureAndOccurrences implements Comparable<SignatureAndOccurrences> {
-  private final MethodIncompleteSignature mySignature;
+public class MethodRefAndOccurrences implements Comparable<MethodRefAndOccurrences> {
+  private final MethodCall mySignature;
   private final int myOccurrences;
 
-  public SignatureAndOccurrences(final MethodIncompleteSignature signature, final int occurrences) {
+  public MethodRefAndOccurrences(final MethodCall signature, final int occurrences) {
     mySignature = signature;
     myOccurrences = occurrences;
   }
 
-  public MethodIncompleteSignature getSignature() {
+  public MethodCall getSignature() {
     return mySignature;
   }
 
@@ -35,7 +35,7 @@ public class SignatureAndOccurrences implements Comparable<SignatureAndOccurrenc
   }
 
   @Override
-  public int compareTo(@NotNull final SignatureAndOccurrences that) {
+  public int compareTo(@NotNull final MethodRefAndOccurrences that) {
     final int sub = -getOccurrenceCount() + that.getOccurrenceCount();
     if (sub != 0) {
       return sub;

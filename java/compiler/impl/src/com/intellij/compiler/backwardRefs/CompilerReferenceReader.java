@@ -179,13 +179,13 @@ class CompilerReferenceReader {
     return myIndex;
   }
 
-  TObjectIntHashMap<LightRef> getTypeCastsInside(@NotNull LightRef.LightClassHierarchyElementDef toType, @NotNull TIntHashSet ids) throws StorageException {
+  TObjectIntHashMap<LightRef> getTypeCasts(@NotNull LightRef.LightClassHierarchyElementDef castType, @NotNull TIntHashSet fileIds) throws StorageException {
     TObjectIntHashMap<LightRef> typeCastStats = new TObjectIntHashMap<>();
-    myIndex.get(CompilerIndices.BACK_CAST).getData(toType).forEach(new ValueContainer.ContainerAction<Collection<LightRef>>() {
+    myIndex.get(CompilerIndices.BACK_CAST).getData(castType).forEach(new ValueContainer.ContainerAction<Collection<LightRef>>() {
       @Override
-      public boolean perform(int id, Collection<LightRef> value) {
-        if (!ids.contains(id)) return true;
-        for (LightRef ref : value) {
+      public boolean perform(int id, Collection<LightRef> values) {
+        if (!fileIds.contains(id)) return true;
+        for (LightRef ref : values) {
           if (!typeCastStats.adjustValue(ref, 1)) {
             typeCastStats.put(ref, 1);
           }
