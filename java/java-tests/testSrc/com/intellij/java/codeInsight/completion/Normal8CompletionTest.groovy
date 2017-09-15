@@ -106,8 +106,8 @@ class Test {
   void bar(int i) {}
 }"""
     def items = myFixture.completeBasic()
-    assert LookupElementPresentation.renderElement(items[0]).itemText == 'x -> {}'
-    assert items.find { LookupElementPresentation.renderElement(it).itemText.contains('this::bar') } != null
+    assert items.any { LookupElementPresentation.renderElement(it).itemText == 'x -> {}' }
+    assert items.any { LookupElementPresentation.renderElement(it).itemText.contains('this::bar') }
   }
 
   void "test suggest receiver method reference"() {
@@ -299,6 +299,11 @@ class Test88 {
   void testChainedMethodReference() {
     configureByTestName()
     checkResultByFileName()
+  }
+
+  void testPreferVariableToLambda() {
+    configureByTestName()
+    myFixture.assertPreferredCompletionItems 0, 'output', 'out -> '
   }
 
   private checkResultByFileName() {

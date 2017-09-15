@@ -20,6 +20,7 @@ import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementWeigher;
+import com.intellij.codeInsight.lookup.TypedLookupItem;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Key;
@@ -133,6 +134,8 @@ public class PreferByKindWeigher extends LookupElementWeigher {
     annoMethod,
     probableKeyword,
     castVariable,
+    expectedTypeVariable,
+    funExpr,
     variable,
     getter,
     qualifiedWithField,
@@ -171,11 +174,15 @@ public class PreferByKindWeigher extends LookupElementWeigher {
     if (object instanceof PsiLocalVariable || object instanceof PsiParameter ||
         object instanceof PsiThisExpression ||
         object instanceof PsiField && !((PsiField)object).hasModifierProperty(PsiModifier.STATIC)) {
-      return MyResult.variable;
+      return isExpectedTypeItem(item) ? MyResult.expectedTypeVariable : MyResult.variable;
     }
 
     if (object instanceof String && item.getUserData(JavaCompletionUtil.SUPER_METHOD_PARAMETERS) == Boolean.TRUE) {
       return MyResult.superMethodParameters;
+    }
+
+    if (item.getUserData(FunctionalExpressionCompletionProvider.FUNCTIONAL_EXPR_ITEM) != null) {
+      return MyResult.funExpr;
     }
 
     if (object instanceof PsiMethod) {
@@ -246,6 +253,12 @@ public class PreferByKindWeigher extends LookupElementWeigher {
     }
 
     return MyResult.normal;
+  }
+
+  private boolean isExpectedTypeItem(@NotNull LookupElement item) {
+    TypedLookupItem typed = item.as(TypedLookupItem.CLASS_CONDITION_KEY);
+    PsiType itemType = typed == null ? null : typed.getType();
+    return itemType != null && Arrays.stream(myExpectedTypes).anyMatch(info -> info.getType().isAssignableFrom(itemType));
   }
 
   @NotNull
