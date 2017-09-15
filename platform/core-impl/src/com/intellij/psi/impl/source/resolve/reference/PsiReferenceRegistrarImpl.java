@@ -46,7 +46,15 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
   private final ConcurrentMap<Class, ProviderBinding[]> myBindingCache;
   private boolean myInitialized;
 
+  /**
+   * @deprecated probably no one use it. To be removed in 2018.1
+   */
+  @Deprecated
   public PsiReferenceRegistrarImpl(final Language language) {
+    this();
+  }
+
+  public PsiReferenceRegistrarImpl() {
     myBindingCache = ConcurrentFactoryMap.createMap(key-> {
         List<ProviderBinding> result = ContainerUtil.newSmartList();
         for (Class<?> bindingClass : myBindingsMap.keySet()) {
@@ -58,10 +66,6 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
           if (bindingClass.isAssignableFrom(key)) {
             result.add(myNamedBindingsMap.get(bindingClass));
           }
-        }
-        if (language != Language.ANY) {
-          final PsiReferenceRegistrar anyRegistrar = ReferenceProvidersRegistry.getInstance().getRegistrar(Language.ANY);
-          Collections.addAll(result, ((PsiReferenceRegistrarImpl)anyRegistrar).myBindingCache.get(key));
         }
         //noinspection unchecked
         return result.toArray(new ProviderBinding[result.size()]);
