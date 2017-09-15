@@ -47,14 +47,15 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
   private boolean myInitialized;
 
   /**
-   * @deprecated probably no one use it. To be removed in 2018.1
+   * @deprecated To be removed in 2018.2
    */
   @Deprecated
+  @SuppressWarnings("unused")
   public PsiReferenceRegistrarImpl(final Language language) {
     this();
   }
 
-  public PsiReferenceRegistrarImpl() {
+  PsiReferenceRegistrarImpl() {
     myBindingCache = ConcurrentFactoryMap.createMap(key-> {
         List<ProviderBinding> result = ContainerUtil.newSmartList();
         for (Class<?> bindingClass : myBindingsMap.keySet()) {
