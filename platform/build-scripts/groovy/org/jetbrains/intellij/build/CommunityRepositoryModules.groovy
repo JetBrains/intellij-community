@@ -201,9 +201,7 @@ class CommunityRepositoryModules {
       mainJarName = "idea-junit.jar"
       withModule("junit_rt", "junit-rt.jar")
       withModule("junit5_rt", "junit5-rt.jar")
-      withProjectLibrary("junit5_rt")
-      withProjectLibrary("opentest4j")
-      withModuleLibrary("junit-jupiter-api-5.0.0.jar", "junit5_rt_tests", "")
+      withProjectLibrary("JUnit5")
     },
     plugin("ByteCodeViewer") {
       mainJarName = "byteCodeViewer.jar"

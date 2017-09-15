@@ -22,7 +22,7 @@
     <orderEntry type="module" module-name="smRunner" exported="" />
     <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
     <orderEntry type="module" module-name="debugger-impl" />
-    <orderEntry type="library" name="opentest4j" level="project" />
+    <orderEntry type="module" module-name="idea-ui" />
   </component>
   <component name="copyright">
     <Base>
