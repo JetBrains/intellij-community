@@ -38,7 +38,6 @@
     <externalSystemConfigurationHandler implementation="com.intellij.openapi.externalSystem.service.project.manage.CompilerConfigurationHandler"/>
     <externalSystemConfigurationHandler implementation="com.intellij.openapi.externalSystem.service.project.manage.RunConfigurationHandler"/>
     <externalSystemConfigurationHandler implementation="com.intellij.openapi.externalSystem.service.project.manage.FacetHandler"/>
-    <facetHandlerExtension implementation="com.intellij.openapi.externalSystem.service.project.manage.InvalidFacetHandlerExtension"/>
     <runConfigurationHandlerExtension implementation="com.intellij.openapi.externalSystem.service.project.manage.ApplicationRunConfigHandler"/>
 
     <configuration.ModuleStructureExtension implementation="com.intellij.openapi.externalSystem.service.project.manage.ExternalModuleStructureExtension"/>
