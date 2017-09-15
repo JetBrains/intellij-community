@@ -214,9 +214,10 @@
     </group>
 
     <action id="Vcs.EditSource" class="com.intellij.openapi.vcs.changes.committed.EditSourceFromChangesBrowserAction"
-            use-shortcut-of="EditSource"/>
+            text="Edit Source" icon="AllIcons.Actions.EditSource" use-shortcut-of="EditSource"/>
     <action id="Vcs.OpenRepositoryVersion" class="com.intellij.openapi.vcs.changes.actions.OpenRepositoryVersionAction"/>
-    <action id="Vcs.RevertSelectedChanges" class="com.intellij.openapi.vcs.changes.actions.RevertSelectedChangesAction"/>
+    <action id="Vcs.RevertSelectedChanges" class="com.intellij.openapi.vcs.changes.actions.RevertSelectedChangesAction"
+            text="Revert Selected Changes" icon="AllIcons.Actions.Rollback"/>
 
     <group id="Vcs.RepositoryChangesBrowserToolbar">
       <reference ref="Vcs.ShowDiffWithLocal"/>
