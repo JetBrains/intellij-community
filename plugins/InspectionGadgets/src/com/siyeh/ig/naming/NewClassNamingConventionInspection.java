@@ -37,6 +37,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.CheckBoxList;
 import com.intellij.ui.CheckBoxListListener;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.xmlb.XmlSerializationException;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -181,11 +182,12 @@ public class NewClassNamingConventionInspection extends BaseInspection {
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    JPanel panel = new JPanel(new BorderLayout());
+    JPanel panel = new JPanel(new BorderLayout(JBUI.scale(2), JBUI.scale(2)));
     JPanel descriptionPanel = new JPanel(new BorderLayout());
     descriptionPanel.setBorder(JBUI.Borders.empty(2));
     panel.add(descriptionPanel, BorderLayout.CENTER);
     CheckBoxList<NamingConvention<PsiClass>> list = new CheckBoxList<>();
+    list.setBorder(JBUI.Borders.empty());
     for (NamingConvention<PsiClass> convention : myNamingConventions.values()) {
       list.addItem(convention, convention.getElementDescription(), !myDisabledShortNames.contains(convention.getShortName()));
     }
@@ -205,7 +207,7 @@ public class NewClassNamingConventionInspection extends BaseInspection {
       }
     });
     list.setSelectedIndex(myNamingConventions.size() - 1);
-    panel.add(list, BorderLayout.WEST);
+    panel.add(new JBScrollPane(list), BorderLayout.WEST);
     return panel;
   }
 
