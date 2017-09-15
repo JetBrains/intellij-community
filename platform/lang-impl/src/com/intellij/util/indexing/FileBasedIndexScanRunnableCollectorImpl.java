@@ -34,6 +34,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+import static com.intellij.openapi.roots.SyntheticLibrary.rootsOf;
+
 public class FileBasedIndexScanRunnableCollectorImpl extends FileBasedIndexScanRunnableCollector {
   private final Project myProject;
   private final ProjectFileIndex myProjectFileIndex;
@@ -101,7 +103,7 @@ public class FileBasedIndexScanRunnableCollectorImpl extends FileBasedIndexScanR
           return tasks;
         }
         for (SyntheticLibrary library : provider.getAdditionalProjectLibraries(myProject)) {
-          for (VirtualFile root : library.getSourceRoots()) {
+          for (VirtualFile root : rootsOf(library)) {
             if (visitedRoots.add(root)) {
               tasks.add(() -> {
                 if (myProject.isDisposed() || !root.isValid()) return;

@@ -22,7 +22,6 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.SyntheticLibrary;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.pom.NavigatableWithText;
@@ -30,7 +29,6 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,9 +41,7 @@ public class SyntheticLibraryElementNode extends ProjectViewNode<SyntheticLibrar
 
   @Override
   public boolean contains(@NotNull VirtualFile file) {
-    SyntheticLibrary library = getLibrary();
-    return VfsUtilCore.isUnder(file, ContainerUtil.newHashSet(library.getSourceRoots()))
-           && !VfsUtilCore.isUnder(file, library.getExcludedRoots());
+    return SyntheticLibrary.contains(getLibrary(), file);
   }
 
   @NotNull
@@ -56,7 +52,7 @@ public class SyntheticLibraryElementNode extends ProjectViewNode<SyntheticLibrar
     Project project = Objects.requireNonNull(getProject());
     PsiManager psiManager = PsiManager.getInstance(project);
     Set<VirtualFile> excludedRoots = library.getExcludedRoots();
-    for (VirtualFile file : library.getSourceRoots()) {
+    for (VirtualFile file : SyntheticLibrary.rootsOf(library)) {
       if (!file.isValid() || excludedRoots.contains(file)) continue;
       if (file.isDirectory()) {
         PsiDirectory psiDir = psiManager.findDirectory(file);

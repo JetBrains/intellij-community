@@ -22,6 +22,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
 import com.intellij.openapi.module.Module;
@@ -134,15 +135,27 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
     if (finder == null) return clsFile;
 
     ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(clsFile.getProject());
-    return index.getOrderEntriesForFile(clsFile.getContainingFile().getVirtualFile()).stream()
-      .filter(entry -> entry instanceof LibraryOrSdkOrderEntry && entry.isValid())
-      .flatMap(entry -> Stream.of(entry.getFiles(OrderRootType.SOURCES)))
+    return findSourceRoots(index, clsFile.getContainingFile().getVirtualFile())
       .map(finder)
       .filter(source -> source != null && source.isValid())
       .map(clsFile.getManager()::findFile)
       .filter(PsiClassOwner.class::isInstance)
       .findFirst()
       .orElse(clsFile);
+  }
+
+  @NotNull
+  private Stream<VirtualFile> findSourceRoots(@NotNull ProjectFileIndex index, @NotNull VirtualFile virtualFile) {
+    Stream<VirtualFile> rootsByProjectModel = index.getOrderEntriesForFile(virtualFile).stream()
+      .filter(entry -> entry instanceof LibraryOrSdkOrderEntry && entry.isValid())
+      .flatMap(entry -> Stream.of(entry.getFiles(OrderRootType.SOURCES)));
+
+    Stream<VirtualFile> syntheticLibraryRoots = Stream.of(Extensions.getExtensions(AdditionalLibraryRootsProvider.EP_NAME))
+      .flatMap(provider -> provider.getAdditionalProjectLibraries(myProject).stream())
+      .filter(syntheticLibrary -> SyntheticLibrary.contains(syntheticLibrary, virtualFile, false, true))
+      .flatMap(lib -> lib.getSourceRoots().stream());
+
+    return Stream.concat(rootsByProjectModel, syntheticLibraryRoots);
   }
 
   @NotNull
