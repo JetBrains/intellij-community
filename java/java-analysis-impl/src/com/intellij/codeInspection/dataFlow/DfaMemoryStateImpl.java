@@ -1068,23 +1068,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return factType.fromDfaValue(value);
   }
 
-  @Nullable
-  @Override
-  public PsiType getValueType(DfaValue value) {
-    if (value instanceof DfaTypeValue) {
-      return ((DfaTypeValue)value).getDfaType().getPsiType();
-    }
-    if (value instanceof DfaVariableValue) {
-      DfaVariableState state = getVariableState((DfaVariableValue)value);
-      Set<DfaPsiType> values = state.getInstanceofValues();
-      if (!values.isEmpty()) {
-        return values.iterator().next().getPsiType();
-      }
-      return ((DfaVariableValue)value).getVariableType();
-    }
-    return null;
-  }
-
   @NotNull
   private DfaValue resolveVariableValue(DfaVariableValue var) {
     DfaConstValue constValue = getConstantValue(var);

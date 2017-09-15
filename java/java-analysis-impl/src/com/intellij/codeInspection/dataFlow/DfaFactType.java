@@ -133,6 +133,48 @@ public abstract class DfaFactType<T> extends Key<T> {
       return fact.toString();
     }
   };
+  /**
+   * This fact represents a set of possible types of this value
+   * {@link TypeConstraint#EMPTY} value is equivalent to absent fact (not constrained)
+   */
+  public static final DfaFactType<TypeConstraint> TYPE_CONSTRAINT = new DfaFactType<TypeConstraint>("Type") {
+    @Nullable
+    @Override
+    TypeConstraint fromDfaValue(DfaValue value) {
+      if(value instanceof DfaTypeValue) {
+        TypeConstraint constraint = TypeConstraint.EMPTY.withInstanceofValue((DfaTypeValue)value);
+        return constraint == null || constraint.isEmpty() ? null : constraint;
+      }
+      return null;
+    }
+
+    @Override
+    boolean isSuper(@Nullable TypeConstraint superFact, @Nullable TypeConstraint subFact) {
+      return superFact == null || (subFact != null && superFact.isSuperStateOf(subFact));
+    }
+
+    @Nullable
+    @Override
+    TypeConstraint intersectFacts(@NotNull TypeConstraint left, @NotNull TypeConstraint right) {
+      for (DfaPsiType type : right.getInstanceofValues()) {
+        left = left.withInstanceofValue(type);
+        if (left == null) return null;
+      }
+      for (DfaPsiType type : right.getNotInstanceofValues()) {
+        left = left.withNotInstanceofValue(type);
+        if (left == null) return null;
+      }
+      return left;
+    }
+
+    @Nullable
+    @Override
+    TypeConstraint unionFacts(@NotNull TypeConstraint left, @NotNull TypeConstraint right) {
+      if(left.isSuperStateOf(right)) return left;
+      if(right.isSuperStateOf(left)) return right;
+      return null;
+    }
+  };
 
   private DfaFactType(String name) {
     super("DfaFactType: " + name);
