@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package org.jetbrains.idea.svn.commandLine;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -30,6 +29,9 @@ import org.tmatesoft.svn.core.SVNException;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static com.intellij.util.ObjectUtils.*;
+import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
 /**
  * Created with IntelliJ IDEA.
@@ -61,7 +63,7 @@ public class SvnBindException extends VcsException {
   }
 
   public SvnBindException(@Nullable String message, @Nullable Throwable cause) {
-    super(ObjectUtils.chooseNotNull(message, getMessage(cause)), cause);
+    super(chooseNotNull(message, getMessage(cause)), cause);
 
     init(message);
     init(cause);
@@ -82,6 +84,14 @@ public class SvnBindException extends VcsException {
       parse(message, SvnUtil.ERROR_PATTERN, errors);
       parse(message, SvnUtil.WARNING_PATTERN, warnings);
     }
+  }
+
+  @NotNull
+  public SVNException toSVNException() {
+    int type = errors.isEmpty() && !warnings.isEmpty() ? SVNErrorMessage.TYPE_WARNING : SVNErrorMessage.TYPE_ERROR;
+    int code = notNull(coalesce(getFirstItem(errors.keySet()), getFirstItem(warnings.keySet())), SVNErrorCode.UNKNOWN.getCode());
+
+    return new SVNException(SVNErrorMessage.create(SVNErrorCode.getErrorCode(code), getMessage(), type), this);
   }
 
   public boolean contains(int code) {

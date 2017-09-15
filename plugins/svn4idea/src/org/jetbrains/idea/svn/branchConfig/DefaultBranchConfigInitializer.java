@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,8 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.util.ArrayList;
+
+import static org.jetbrains.idea.svn.SvnUtil.append;
 
 /**
 * @author Konstantin Kolosovsky.
@@ -131,7 +133,7 @@ public class DefaultBranchConfigInitializer implements Runnable {
   private static DirectoryEntryConsumer createHandler(@NotNull final SvnBranchConfigurationNew result, @NotNull final SVNURL rootPath) {
     return entry -> {
       if (entry.isDirectory()) {
-        SVNURL childUrl = rootPath.appendPath(entry.getName(), false);
+        SVNURL childUrl = append(rootPath, entry.getName());
 
         if (StringUtil.endsWithIgnoreCase(entry.getName(), DEFAULT_TRUNK_NAME)) {
           result.setTrunkUrl(childUrl.toString());
