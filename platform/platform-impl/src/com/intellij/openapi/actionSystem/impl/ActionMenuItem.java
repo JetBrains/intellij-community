@@ -46,7 +46,10 @@ import javax.swing.*;
 import javax.swing.plaf.MenuItemUI;
 import javax.swing.plaf.synth.SynthMenuItemUI;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.HashSet;
@@ -98,6 +101,14 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
     }
   }
 
+  public AnAction getAnAction() {
+    return myAction.getAction();
+  }
+
+  public String getPlace() {
+    return myPlace;
+  }
+
   private static boolean isEnterKeyStroke(KeyStroke keyStroke) {
     return keyStroke.getKeyCode() == KeyEvent.VK_ENTER && keyStroke.getModifiers() == 0;
   }
@@ -114,7 +125,7 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
   public void fireActionPerformed(ActionEvent event) {
     AnAction action = myAction.getAction();
     if (action != null && ActionPlaces.MAIN_MENU.equals(myPlace)) {
-      MainMenuCollector.getInstance().record();
+      MainMenuCollector.getInstance().record(action);
     }
     TransactionGuard.submitTransaction(ApplicationManager.getApplication(), () -> super.fireActionPerformed(event));
   }
