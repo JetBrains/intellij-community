@@ -7,7 +7,6 @@ import java.util.List;
 
 public class NumpyUfuncs {
   private static final List<String> UFUNC_LIST = new ArrayList<>();
-  public static final List<String> UFUNC_METHODS = new ArrayList<>();
 
   public static boolean isUFunc(@Nullable final String name) {
     return UFUNC_LIST.contains(name);
