@@ -22,6 +22,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.CommonClassNames
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.ProjectScope
@@ -154,12 +155,12 @@ class Intf {
     assert elements == files
   }
 
-  void "test middle matching for directories"() {
+  void "test middle matching for files and directories"() {
     def fooIndex = myFixture.addFileToProject("foo/index.html", "foo")
     def ooIndex = myFixture.addFileToProject("oo/index.html", "oo")
     def fooBarIndex = myFixture.addFileToProject("foo/bar/index.html", "foo bar")
-    def elements = getPopupElements(new GotoFileModel(project), "oo/index")
-    assert elements == [ooIndex, fooIndex, fooBarIndex]
+    assert getPopupElements(new GotoFileModel(project), "oo/index") == [ooIndex, fooIndex, fooBarIndex]
+    assert getPopupElements(new GotoFileModel(project), "ndex.html") == [fooIndex, ooIndex, fooBarIndex]
   }
 
   void "test prefer files from current directory"() {
@@ -392,6 +393,12 @@ class Intf {
     // partial slashes
     assert calcPopupElements(popup, "somefb/index.html") == [someFbFile]
     assert calcPopupElements(popup, "somefb\\index.html") == [someFbFile]
+  }
+
+  void "test fix keyboard layout"() {
+    assert (getPopupElements(new GotoClassModel2(project), 'Ыекштп')[0] as PsiClass).name == 'String'
+    assert (getPopupElements(new GotoSymbolModel2(project), 'Ыекштп')[0] as PsiClass).name == 'String'
+    assert (getPopupElements(new GotoFileModel(project), 'Ыекштп')[0] as PsiFile).name == 'String.class'
   }
 
   void "test prefer exact case match"() {

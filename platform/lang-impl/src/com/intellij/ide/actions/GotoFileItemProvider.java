@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.codeStyle.FixingLayoutMatcher;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.Processor;
@@ -162,6 +163,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
 
   private class NameGrouper {
     private final String namePattern;
+    @Nullable private final String alternativePattern;
     
     /** Names placed into buckets where the index of bucket == {@link #findMatchStartingPosition} */
     private final List<List<String>> candidateNames;
@@ -170,12 +172,16 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
 
     NameGrouper(@NotNull String namePattern) {
       this.namePattern = namePattern;
+      alternativePattern = FixingLayoutMatcher.fixLayout(namePattern);
       candidateNames = IntStreamEx.range(0, namePattern.length()).mapToObj(__ -> (List<String>)new ArrayList<String>()).toList();
     }
 
     boolean processName(String name) {
       ProgressManager.checkCanceled();
       int position = findMatchStartingPosition(name, namePattern);
+      if (position >= namePattern.length() && alternativePattern != null) {
+        position = findMatchStartingPosition(name, alternativePattern);
+      }
       if (position < namePattern.length()) {
         List<String> list = candidateNames.get(position);
         //noinspection SynchronizationOnLocalVariableOrMethodParameter
