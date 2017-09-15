@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Common base class for external system settings. Defines a minimal api which is necessary for the common external system
@@ -152,6 +153,9 @@ public abstract class AbstractExternalSystemSettings<
   }
 
   private void setLinkedProjectsSettings(@NotNull Collection<PS> settings, @Nullable ExternalSystemSettingsListener listener) {
+    // do not add invalid 'null' settings
+    settings = settings.stream().filter(ps -> ps.getExternalProjectPath() != null).collect(Collectors.toList());
+
     List<PS> added = ContainerUtilRt.newArrayList();
     Map<String, PS> removed = ContainerUtilRt.newHashMap(myLinkedProjectsSettings);
     myLinkedProjectsSettings.clear();
