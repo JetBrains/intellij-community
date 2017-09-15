@@ -80,6 +80,12 @@ public class OptionalPostfixTemplateTest extends PostfixTemplateTestCase {
   public void testLong() {
     doTest();
   }
+
+  public void testNotNullMethodCall() {
+    myFixture.addClass("package org.jetbrains.annotations;" +
+                       "public @interface NotNull {}");
+    doTest();
+  }
   
   public void testDoNotExpandOnJavaLess8() {
     IdeaTestUtil.setModuleLanguageLevel(myModule, LanguageLevel.JDK_1_6, myFixture.getTestRootDisposable());
