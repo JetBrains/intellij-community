@@ -42,7 +42,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.java.stubs.index.JavaFullClassNameIndex;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.search.EverythingGlobalScope;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -247,10 +246,10 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
           final GlobalSearchScope scope = debugProcess.getSearchScope();
           final boolean contains = scope.contains(breakpointFile);
           List<VirtualFile> files = ContainerUtil.map(
-            JavaFullClassNameIndex.getInstance().get(className.hashCode(), myProject, scope),
+            JavaPsiFacade.getInstance(myProject).findClasses(className, scope),
             aClass -> aClass.getContainingFile().getVirtualFile());
           List<VirtualFile> allFiles = ContainerUtil.map(
-            JavaFullClassNameIndex.getInstance().get(className.hashCode(), myProject, new EverythingGlobalScope(myProject)),
+            JavaPsiFacade.getInstance(myProject).findClasses(className, new EverythingGlobalScope(myProject)),
             aClass -> aClass.getContainingFile().getVirtualFile());
           final VirtualFile contentRoot = fileIndex.getContentRootForFile(breakpointFile);
           final Module module = fileIndex.getModuleForFile(breakpointFile);
@@ -264,7 +263,7 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
                     "; all possible files are: " + allFiles
           );
         }
-        
+
         return false;
       }
     }
@@ -357,7 +356,7 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
             final int dotIndex = className.lastIndexOf(".");
             if (dotIndex >= 0 && !isFile) {
               packageName = className.substring(0, dotIndex);
-              className = className.substring(dotIndex + 1); 
+              className = className.substring(dotIndex + 1);
             }
 
             if (totalTextLength != -1) {
@@ -369,7 +368,7 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
                 }
               }
             }
-            
+
             info.append(className);
           }
           if(hasMethodInfo) {
