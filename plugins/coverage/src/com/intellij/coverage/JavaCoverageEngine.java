@@ -654,10 +654,7 @@ public class JavaCoverageEngine extends CoverageEngine {
 
   @Override
   public boolean isGeneratedCode(Project project, String qualifiedName, Object lineData) {
-    if (JavaCoverageOptionsProvider.getInstance(project).ignoreEmptyPrivateConstructors()) {
-      PsiClass psiClass = ReadAction.compute(() -> ClassUtil.findPsiClassByJVMName(PsiManager.getInstance(project), qualifiedName));
-      return PackageAnnotator.isGeneratedDefaultConstructor(psiClass, ((LineData)lineData).getMethodSignature());
-    }
+    if (JavaCoverageOptionsProvider.getInstance(project).isGeneratedConstructor(qualifiedName, ((LineData)lineData).getMethodSignature())) return true;
     return super.isGeneratedCode(project, qualifiedName, lineData);
   }
 

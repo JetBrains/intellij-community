@@ -15,12 +15,8 @@
  */
 package com.intellij.coverage;
 
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.util.ClassUtil;
 import com.intellij.rt.coverage.instrumentation.SourceLineCounter;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.TIntObjectHashMap;
@@ -68,13 +64,7 @@ public class SourceLineCounterUtil {
     reader.accept(collector, 0);
     
     String qualifiedName = reader.getClassName();
-    boolean ignoreEmptyPrivateConstructors = JavaCoverageOptionsProvider.getInstance(project).ignoreEmptyPrivateConstructors();
-    PsiClass psiClass = ignoreEmptyPrivateConstructors 
-                        ? ReadAction.compute(() -> ClassUtil.findPsiClassByJVMName(PsiManager.getInstance(project), qualifiedName)) 
-                        : null;
-    Condition<String> includeDescriptionCondition = ignoreEmptyPrivateConstructors 
-                                                    ? description -> !PackageAnnotator.isGeneratedDefaultConstructor(psiClass, description) 
-                                                    : Condition.TRUE;
+    Condition<String> includeDescriptionCondition = description -> !JavaCoverageOptionsProvider.getInstance(project).isGeneratedConstructor(qualifiedName, description);
     TIntObjectHashMap<?> lines = collector.getSourceLines();
     lines.forEachEntry((line, description) -> {
       if (includeDescriptionCondition.value((String)description)) {
