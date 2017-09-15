@@ -67,12 +67,12 @@ public class NewClassNamingConventionInspection extends BaseInspection {
       myNamingConventionBeans.put(convention.getShortName(), convention.createDefaultBean());
     }
     initDisabledState();
+    myDisabledShortNames.remove(ClassNamingConvention.CLASS_NAMING_CONVENTION_SHORT_NAME);
   }
 
   private void initDisabledState() {
     myDisabledShortNames.clear();
     myDisabledShortNames.addAll(myNamingConventions.keySet());
-    myDisabledShortNames.remove(ClassNamingConvention.CLASS_NAMING_CONVENTION_SHORT_NAME);
   }
 
   public NamingConventionBean getNamingConventionBean(String shortName) {
@@ -133,7 +133,7 @@ public class NewClassNamingConventionInspection extends BaseInspection {
         XmlSerializer.serializeInto(conventionBean, element);
       }
       else {
-        if (shortName.equals(ClassNamingConvention.CLASS_NAMING_CONVENTION_SHORT_NAME) != disabled) continue;
+        if (disabled) continue;
       }
       node.addContent(element);
     }
@@ -161,11 +161,15 @@ public class NewClassNamingConventionInspection extends BaseInspection {
             if (myDisabledShortNames.contains(shortName)) {
               break;
             }
-            NamingConventionBean conventionBean = myNamingConventionBeans.get(shortName);
-            NamingConventionBean activeConventionBean =
-              conventionBean instanceof NamingConventionWithFallbackBean && ((NamingConventionWithFallbackBean)conventionBean).isInheritDefaultSettings()
-              ? myNamingConventionBeans.get(ClassNamingConvention.CLASS_NAMING_CONVENTION_SHORT_NAME) : conventionBean;
-            if (!activeConventionBean.isValid(name)) {
+            NamingConventionBean activeBean = myNamingConventionBeans.get(shortName);
+            if (activeBean instanceof NamingConventionWithFallbackBean && ((NamingConventionWithFallbackBean)activeBean).isInheritDefaultSettings()) {
+              //disabled when fallback is disabled
+              if (myDisabledShortNames.contains(ClassNamingConvention.CLASS_NAMING_CONVENTION_SHORT_NAME)) {
+                break;
+              }
+              activeBean = myNamingConventionBeans.get(ClassNamingConvention.CLASS_NAMING_CONVENTION_SHORT_NAME);
+            }
+            if (!activeBean.isValid(name)) {
               registerClassError(aClass, name, shortName);
             }
             break;

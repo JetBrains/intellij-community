@@ -32,6 +32,7 @@ import com.intellij.testFramework.InspectionsKt;
 import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.util.JdomKt;
 import com.intellij.util.SmartList;
+import com.siyeh.ig.naming.ClassNamingConvention;
 import com.siyeh.ig.naming.NewClassNamingConventionInspection;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -342,11 +343,6 @@ public class InspectionProfileTest extends LightIdeaTestCase {
                                 "  <inspection_tool class=\"AnnotationNamingConvention\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\">\n" +
                                 "    <option name=\"m_regex\" value=\"[A-Z][A-Za-z\\d]*\" />\n" +
                                 "    <option name=\"m_minLength\" value=\"8\" />\n" +
-                                "    <option name=\"m_maxLength\" value=\"64\" />\n" +
-                                "  </inspection_tool>\n" +
-                                "  <inspection_tool class=\"ClassNamingConvention\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\">\n" +
-                                "    <option name=\"m_regex\" value=\"[A-Z][A-Za-z\\d]*\" />\n" +
-                                "    <option name=\"m_minLength\" value=\"8\" />\n" +
                                 "    <option name=\"m_maxLength\" value=\"256\" />\n" +
                                 "  </inspection_tool>\n" +
                                 "  <inspection_tool class=\"EnumeratedClassNamingConvention\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\">\n" +
@@ -370,10 +366,11 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     InspectionToolWrapper wrapper = profile.getInspectionTool("NewClassNamingConvention", getProject());
     assertNotNull(wrapper);
     NewClassNamingConventionInspection tool = (NewClassNamingConventionInspection)wrapper.getTool();
-    assertEquals(256, tool.getNamingConventionBean("ClassNamingConvention").m_maxLength);
+    assertEquals(256, tool.getNamingConventionBean("AnnotationNamingConvention").m_maxLength);
     assertEquals(1, tool.getNamingConventionBean("EnumeratedClassNamingConvention").m_minLength);
     assertTrue(profile.isToolEnabled(HighlightDisplayKey.find("NewClassNamingConvention"), null));
     assertFalse(tool.isConventionEnabled("TypeParameterNamingConvention"));
+    assertFalse(tool.isConventionEnabled(ClassNamingConvention.CLASS_NAMING_CONVENTION_SHORT_NAME));
 
     Element toImportElement = profile.writeScheme();
     final InspectionProfileImpl importedProfile =
