@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,8 +28,6 @@ import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
 import org.jetbrains.idea.svn.info.Info;
 import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -38,13 +36,9 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 // TODO: Currently make inherit SVNKit update implementation not to duplicate setXxx() methods.
 public class CmdUpdateClient extends SvnKitUpdateClient {
-  private static final Pattern ourExceptionPattern = Pattern.compile("svn: E(\\d{6}): .+");
-  private static final String ourAuthenticationRealm = "Authentication realm:";
 
   private void checkWorkingCopy(@NotNull File path) throws SvnBindException {
     final Info info = myFactory.createInfoClient().doInfo(path, SVNRevision.UNDEFINED);
@@ -108,28 +102,6 @@ public class CmdUpdateClient extends SvnKitUpdateClient {
     parameters.add("--accept");
     parameters.add("postpone");
   }
-
-
-  private void checkForException(final StringBuffer sbError) throws SVNException {
-    if (sbError.length() == 0) return;
-    final String message = sbError.toString();
-    final Matcher matcher = ourExceptionPattern.matcher(message);
-    if (matcher.matches()) {
-      final String group = matcher.group(1);
-      if (group != null) {
-        try {
-          final int code = Integer.parseInt(group);
-          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.getErrorCode(code), message));
-        } catch (NumberFormatException e) {
-          //
-        }
-      }
-    }
-    if (message.contains(ourAuthenticationRealm)) {
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.AUTHN_CREDS_UNAVAILABLE, message));
-    }
-    throw new SVNException(SVNErrorMessage.create(SVNErrorCode.UNKNOWN, message));
- }
 
   @Override
   public long doUpdate(File path, SVNRevision revision, Depth depth, boolean allowUnversionedObstructions, boolean depthIsSticky)
