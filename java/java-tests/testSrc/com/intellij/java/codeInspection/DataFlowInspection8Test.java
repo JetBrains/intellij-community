@@ -195,6 +195,7 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
     doTest();
   }
   public void testStreamInlining() { doTest(); }
+  public void testStreamComparatorInlining() { doTest(); }
   public void testStreamKnownSource() { doTest(); }
 
   public void testMethodVsExpressionTypeAnnotationConflict() {
