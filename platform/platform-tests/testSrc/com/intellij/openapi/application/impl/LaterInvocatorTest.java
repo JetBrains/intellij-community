@@ -21,10 +21,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.testFramework.LoggedErrorProcessor;
-import com.intellij.testFramework.PlatformTestCase;
-import com.intellij.testFramework.SkipInHeadlessEnvironment;
-import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.testFramework.*;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.TestCase;
@@ -80,22 +77,15 @@ public class LaterInvocatorTest extends PlatformTestCase {
         return "Window2";
       }
     };
-    final Exception[] exception = {null};
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
-      try {
-        super.setUp();
-        final Object[] modalEntities = LaterInvocator.getCurrentModalEntities();
-        if (modalEntities.length > 0) {
-          LOG.error(
-            "Expect no modal entries. Probably some of the previous tests didn't left their entries. Top entry is: " + modalEntities[0]);
-        }
-      }
-      catch (Exception e) {
-        exception[0] = e;
+    EdtTestUtil.runInEdtAndWait(() -> {
+      super.setUp();
+      final Object[] modalEntities = LaterInvocator.getCurrentModalEntities();
+      if (modalEntities.length > 0) {
+        LOG.error(
+          "Expect no modal entries. Probably some of the previous tests didn't left their entries. Top entry is: " + modalEntities[0]);
       }
     });
-    if (exception[0] != null) throw exception[0];
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> TestCase.assertFalse("Can't run test " + ModalityState.current(), LaterInvocator.isInModalContext()));
+    EdtTestUtil.runInEdtAndWait(() -> TestCase.assertFalse("Can't run test " + ModalityState.current(), LaterInvocator.isInModalContext()));
 
     flushSwingQueue();
   }
@@ -128,23 +118,7 @@ public class LaterInvocatorTest extends PlatformTestCase {
       }
     });
 
-    final Exception[] exception = {null};
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          LaterInvocatorTest.super.tearDown();
-        }
-        catch (Exception e) {
-          exception[0] = e;
-        }
-      }
-
-      public String toString() {
-        return "super teardown";
-      }
-    });
-    if (exception[0] != null) throw exception[0];
+    EdtTestUtil.runInEdtAndWait(() -> super.tearDown());
   }
 
   public void testReorder() {
