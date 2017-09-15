@@ -69,14 +69,15 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
     }
 
     String sanitized = removeSlashes(StringUtil.replace(base.transformPattern(pattern), "\\", "/"));
-    List<SuffixMatches> nameMatches = getFileNameCandidates(base, sanitized);
-    for (SuffixMatches group : nameMatches) {
+    NameGrouper grouper = new NameGrouper(sanitized.substring(sanitized.lastIndexOf('/') + 1));
+    myModel.processNames(name -> grouper.processName(name), true);
+    while (true) {
+      SuffixMatches group = grouper.nextGroup(base);
+      if (group == null) return true;
       if (!group.processFiles(pattern, sanitized, everywhere, consumer)) {
         return false;
       }
     }
-
-    return true;
   }
 
   @NotNull
@@ -131,7 +132,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
 
     if (group.size() > 1) {
       Collections.sort(group,
-                       Comparator.comparing(nesting::get).
+                       Comparator.<PsiFileSystemItem, Integer>comparing(nesting::get).
                          thenComparing(dirCloseness::get).
                          thenComparing(qualifierMatchingDegrees::get).
                          thenComparing(getPathProximityComparator()).
@@ -142,7 +143,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
 
   /**
    * @return Minimal {@code pos} such that {@code candidateName} can potentially match {@code namePattern.substring(pos)}
-   * (i.e. contains the same letters as a subsequence).
+   * (i.e. contains the same letters as a sub-sequence).
    * Matching attempts with longer pattern substrings certainly will fail.
    */
   private static int findMatchStartingPosition(String candidateName, String namePattern) {
@@ -159,21 +160,46 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
     return 0;
   }
 
-  @NotNull
-  private List<SuffixMatches> getFileNameCandidates(@NotNull ChooseByNameBase base, String sanitized) {
-    int start = sanitized.lastIndexOf('/') + 1;
-    String namePattern = sanitized.substring(start);
-    List<SuffixMatches> answer = IntStreamEx.range(start, sanitized.length()).mapToObj(i -> new SuffixMatches(sanitized.substring(i))).toList();
+  private class NameGrouper {
+    private final String namePattern;
+    
+    /** Names placed into buckets where the index of bucket == {@link #findMatchStartingPosition} */
+    private final List<List<String>> candidateNames;
+    
+    private int index = 0;
 
-    myModel.processNames(name -> {
+    NameGrouper(@NotNull String namePattern) {
+      this.namePattern = namePattern;
+      candidateNames = IntStreamEx.range(0, namePattern.length()).mapToObj(__ -> (List<String>)new ArrayList<String>()).toList();
+    }
+
+    boolean processName(String name) {
       ProgressManager.checkCanceled();
-      for (int i = findMatchStartingPosition(name, namePattern); i < answer.size(); i++) {
-        if (answer.get(i).matchName(base, name)) break;
+      int position = findMatchStartingPosition(name, namePattern);
+      if (position < namePattern.length()) {
+        List<String> list = candidateNames.get(position);
+        //noinspection SynchronizationOnLocalVariableOrMethodParameter
+        synchronized (list) { // names can be processed concurrently
+          list.add(name);
+        }
       }
       return true;
-    }, true);
+    }
 
-    return answer;
+    @Nullable
+    SuffixMatches nextGroup(ChooseByNameBase base) {
+      if (index >= namePattern.length()) return null;
+      
+      SuffixMatches matches = new SuffixMatches(namePattern.substring(index));
+      for (String name : candidateNames.get(index)) {
+        if (!matches.matchName(base, name) && index + 1 < namePattern.length()) {
+          candidateNames.get(index + 1).add(name); // try later with a shorter matcher
+        }
+      }
+      candidateNames.set(index, null);
+      index++;
+      return matches;
+    }
   }
 
   private class SuffixMatches {
