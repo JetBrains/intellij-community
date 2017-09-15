@@ -40,6 +40,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static org.jetbrains.idea.svn.SvnUtil.createUrl;
+
 public class SvnAuthenticationTest extends PlatformTestCase {
   private SvnAuthenticationManager myAuthenticationManager;
   private TestInteraction myTestInteraction;
@@ -97,7 +99,7 @@ public class SvnAuthenticationTest extends PlatformTestCase {
     final SavedOnceListener savedOnceListener = new SavedOnceListener();
     myAuthenticationManager.addListener(savedOnceListener);
 
-    final SVNURL url = SVNURL.parseURIEncoded("http://some.host.com/repo");
+    final SVNURL url = createUrl("http://some.host.com/repo");
 
     final SVNException[] exception = new SVNException[1];
     final boolean[] result = {false};
@@ -161,7 +163,7 @@ public class SvnAuthenticationTest extends PlatformTestCase {
     final SavedOnceListener savedOnceListener = new SavedOnceListener();
     myAuthenticationManager.addListener(savedOnceListener);
 
-    final SVNURL url = SVNURL.parseURIEncoded("http://some.host.com/repo");
+    final SVNURL url = createUrl("http://some.host.com/repo");
 
     final SVNException[] exception = new SVNException[1];
     final Boolean[] result = new Boolean[1];
@@ -235,7 +237,7 @@ public class SvnAuthenticationTest extends PlatformTestCase {
 
     myInteractiveProvider.setSaveData(false);
 
-    final SVNURL url = SVNURL.parseURIEncoded("http://some.host.com/repo");
+    final SVNURL url = createUrl("http://some.host.com/repo");
 
     final SVNException[] exception = new SVNException[1];
     final Boolean[] result = new Boolean[1];
@@ -298,7 +300,7 @@ public class SvnAuthenticationTest extends PlatformTestCase {
       config.createNewFile();
       FileUtil.appendToFile(config, newContents);
 
-      final SVNURL url = SVNURL.parseURIEncoded("http://some.host.com/repo");
+      final SVNURL url = createUrl("http://some.host.com/repo");
 
       final SVNException[] exception = new SVNException[1];
       final Boolean[] result = new Boolean[1];
@@ -356,7 +358,7 @@ public class SvnAuthenticationTest extends PlatformTestCase {
     try {
       FileUtil.appendToFile(servers, "\nstore-auth-creds=no\n");
 
-      final SVNURL url = SVNURL.parseURIEncoded("http://some.host.com/repo");
+      final SVNURL url = createUrl("http://some.host.com/repo");
 
       final SVNException[] exception = new SVNException[1];
       final Boolean[] result = new Boolean[1];
@@ -420,7 +422,7 @@ public class SvnAuthenticationTest extends PlatformTestCase {
       config.createNewFile();
       FileUtil.appendToFile(config, newContents);
 
-      final SVNURL url = SVNURL.parseURIEncoded("http://some.host.com/repo");
+      final SVNURL url = createUrl("http://some.host.com/repo");
 
       final SVNException[] exception = new SVNException[1];
       final Boolean[] result = new Boolean[1];
@@ -480,7 +482,7 @@ public class SvnAuthenticationTest extends PlatformTestCase {
     try {
       FileUtil.appendToFile(servers, "\nstore-passwords=no\n");
 
-      final SVNURL url = SVNURL.parseURIEncoded("http://some.host.com/repo");
+      final SVNURL url = createUrl("http://some.host.com/repo");
 
       final SVNException[] exception = new SVNException[1];
       final Boolean[] result = new Boolean[1];
@@ -547,7 +549,7 @@ public class SvnAuthenticationTest extends PlatformTestCase {
       servers.createNewFile();
       FileUtil.appendToFile(servers, newContents);
 
-      final SVNURL url = SVNURL.parseURIEncoded("http://some.host.com/repo");
+      final SVNURL url = createUrl("http://some.host.com/repo");
 
       final SVNException[] exception = new SVNException[1];
       final Boolean[] result = new Boolean[1];
@@ -607,7 +609,7 @@ public class SvnAuthenticationTest extends PlatformTestCase {
     try {
       FileUtil.appendToFile(servers, "\nstore-ssl-client-cert-pp=no\n");
 
-      final SVNURL url = SVNURL.parseURIEncoded("https://some.host.com/repo");
+      final SVNURL url = createUrl("https://some.host.com/repo");
 
       final SVNException[] exception = new SVNException[1];
       final Boolean[] result = new Boolean[1];
@@ -664,7 +666,7 @@ public class SvnAuthenticationTest extends PlatformTestCase {
     myAuthenticationManager.addListener(savedOnceListener);
     myTestInteraction.setPlaintextAnswer(true);
 
-    final SVNURL url = SVNURL.parseURIEncoded("http://some.host.com/repo");
+    final SVNURL url = createUrl("http://some.host.com/repo");
 
     final SVNException[] exception = new SVNException[1];
     final Boolean[] result = new Boolean[1];
@@ -746,8 +748,8 @@ public class SvnAuthenticationTest extends PlatformTestCase {
     myAuthenticationManager.addListener(savedOnceListener);
     myTestInteraction.setPlaintextAnswer(false);
 
-    final SVNURL url = SVNURL.parseURIEncoded("http://some.host.com/repo");
-    final SVNURL url2 = SVNURL.parseURIEncoded("http://some.other.host.com/repo");
+    final SVNURL url = createUrl("http://some.host.com/repo");
+    final SVNURL url2 = createUrl("http://some.other.host.com/repo");
 
     final SVNException[] exception = new SVNException[1];
     final Boolean[] result = new Boolean[1];
@@ -804,7 +806,7 @@ public class SvnAuthenticationTest extends PlatformTestCase {
     myAuthenticationManager.addListener(savedOnceListener);
     myTestInteraction.setSSLPlaintextAnswer(true);
 
-    final SVNURL url = SVNURL.parseURIEncoded("https://some.host.com/repo");
+    final SVNURL url = createUrl("https://some.host.com/repo");
 
     final SVNException[] exception = new SVNException[1];
     final Boolean[] result = new Boolean[1];
