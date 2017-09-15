@@ -166,6 +166,7 @@ public class JavaKeywordCompletion {
   private final JavaCompletionSession mySession;
   private final PsiElement myPosition;
   private final String myPrefix;
+  private final PrefixMatcher myKeywordMatcher;
   private final List<LookupElement> myResults = new ArrayList<>();
   private final PsiElement myPrevLeaf;
 
@@ -173,6 +174,7 @@ public class JavaKeywordCompletion {
     myParameters = parameters;
     mySession = session;
     myPrefix = session.getMatcher().getPrefix();
+    myKeywordMatcher = new FixingLayoutPlainMatcher(myPrefix);
     myPosition = parameters.getPosition();
     myPrevLeaf = prevSignificantLeaf(myPosition);
 
@@ -185,7 +187,7 @@ public class JavaKeywordCompletion {
   }
 
   private void addKeyword(LookupElement element) {
-    if (element.getLookupString().startsWith(myPrefix)) {
+    if (myKeywordMatcher.isStartMatch(element.getLookupString())) {
       myResults.add(element);
     }
   }
@@ -313,10 +315,10 @@ public class JavaKeywordCompletion {
     addExtendsImplements();
   }
 
-  static boolean addWildcardExtendsSuper(CompletionResultSet result, PsiElement position) {
+  boolean addWildcardExtendsSuper(CompletionResultSet result, PsiElement position) {
     if (JavaMemberNameCompletionContributor.INSIDE_TYPE_PARAMS_PATTERN.accepts(position)) {
       for (String keyword : ContainerUtil.ar(PsiKeyword.EXTENDS, PsiKeyword.SUPER)) {
-        if (keyword.startsWith(result.getPrefixMatcher().getPrefix())) {
+        if (myKeywordMatcher.isStartMatch(keyword)) {
           LookupElement item = BasicExpressionCompletionContributor.createKeywordLookupItem(position, keyword);
           result.addElement(new OverridableSpace(item, TailType.HUMBLE_SPACE_BEFORE_WORD));
         }

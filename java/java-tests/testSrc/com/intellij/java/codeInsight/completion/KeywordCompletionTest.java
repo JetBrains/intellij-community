@@ -132,6 +132,7 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testAbstractInInterface() { doTest(1, "abstract"); }
   public void testCharInAnnotatedParameter() { doTest(1, "char"); }
   public void testReturnInTernary() { doTest(1, "return"); }
+  public void testReturnInRussian() { doTest(1, "return"); }
   public void testFinalAfterParameterAnno() { doTest(2, "final", "float", "class"); }
   public void testFinalAfterParameterAnno2() { doTest(2, "final", "float", "class"); }
   public void testFinalAfterCase() { doTest(3, "final", "float", "class"); }
