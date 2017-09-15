@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.externalSystem.util;
 
+import com.intellij.build.DefaultBuildDescriptor;
 import com.intellij.build.SyncViewManager;
 import com.intellij.build.events.BuildEvent;
 import com.intellij.build.events.EventResult;
@@ -34,6 +35,8 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.rmi.RemoteUtil;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.execution.ui.ExecutionConsole;
+import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
@@ -47,6 +50,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
+import com.intellij.openapi.externalSystem.execution.ExternalSystemExecutionConsoleManager;
 import com.intellij.openapi.externalSystem.importing.ImportSpec;
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder;
 import com.intellij.openapi.externalSystem.model.*;
@@ -56,10 +60,7 @@ import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.task.*;
 import com.intellij.openapi.externalSystem.model.task.event.*;
 import com.intellij.openapi.externalSystem.service.ImportCanceledException;
-import com.intellij.openapi.externalSystem.service.execution.AbstractExternalSystemTaskConfigurationType;
-import com.intellij.openapi.externalSystem.service.execution.ExternalSystemProcessHandler;
-import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
-import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
+import com.intellij.openapi.externalSystem.service.execution.*;
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemProcessingManager;
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemResolveProjectTask;
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemNotificationManager;
@@ -433,6 +434,16 @@ public class ExternalSystemUtil {
             closeInput();
           }
         };
+
+        final ExternalSystemExecutionConsoleManager<ExternalSystemRunConfiguration, ExecutionConsole, ProcessHandler>
+          consoleManager = getConsoleManagerFor(myTask);
+
+        final ExecutionConsole consoleView =
+          consoleManager.attachExecutionConsole(project, myTask, null, processHandler);
+        if (consoleView != null) {
+          Disposer.register(project, consoleView);
+        }
+
         ExternalSystemTaskNotificationListenerAdapter taskListener = new ExternalSystemTaskNotificationListenerAdapter() {
           @Override
           public void onStart(@NotNull ExternalSystemTaskId id, String workingDir) {
@@ -454,9 +465,12 @@ public class ExternalSystemUtil {
             rerunImportAction.getTemplatePresentation().setDescription(ExternalSystemBundle.message("action.refresh.project.description", systemId));
             rerunImportAction.getTemplatePresentation().setIcon(AllIcons.Actions.Refresh);
             ServiceManager.getService(project, SyncViewManager.class).onEvent(
-              new StartBuildEventImpl(id, projectName, eventTime, "syncing...")
+              new StartBuildEventImpl(new DefaultBuildDescriptor(id, projectName, externalProjectPath, eventTime), "syncing...")
                 .withProcessHandler(processHandler, null)
                 .withRestartAction(rerunImportAction)
+                .withContentDescriptorSupplier(
+                  () -> consoleView == null ? null :
+                        new RunContentDescriptor(consoleView, processHandler, consoleView.getComponent(), "Sync"))
             );
           }
 
@@ -467,49 +481,7 @@ public class ExternalSystemUtil {
 
           @Override
           public void onFailure(@NotNull ExternalSystemTaskId id, @NotNull Exception e) {
-            ExternalSystemNotificationManager notificationManager = ExternalSystemNotificationManager.getInstance(project);
-            NotificationData notificationData = notificationManager.createNotification(e, projectName, externalSystemId, project);
-            FailureResultImpl failureResult;
-            if (notificationData.isBalloonNotification()) {
-              notificationManager.showNotification(externalSystemId, notificationData);
-              failureResult = new FailureResultImpl(e);
-            }
-            else {
-              NotificationGroup group;
-              if (notificationData.getBalloonGroup() == null) {
-                ExternalProjectsView externalProjectsView =
-                  ExternalProjectsManagerImpl.getInstance(project).getExternalProjectsView(externalSystemId);
-                group = externalProjectsView instanceof ExternalProjectsViewImpl ?
-                        ((ExternalProjectsViewImpl)externalProjectsView).getNotificationGroup() : null;
-              }
-              else {
-                final NotificationGroup registeredGroup = NotificationGroup.findRegisteredGroup(notificationData.getBalloonGroup());
-                group = registeredGroup != null ? registeredGroup : NotificationGroup.balloonGroup(notificationData.getBalloonGroup());
-              }
-              if (group != null) {
-                int line = notificationData.getLine() - 1;
-                int column = notificationData.getColumn() - 1;
-                final VirtualFile virtualFile =
-                  notificationData.getFilePath() != null ? findLocalFileByPath(notificationData.getFilePath()) : null;
-
-                final Navigatable navigatable;
-                if (notificationData.getNavigatable() == null || notificationData.getNavigatable() instanceof NonNavigatable) {
-                  navigatable = virtualFile != null ? new OpenFileDescriptor(project, virtualFile, line, column) : NonNavigatable.INSTANCE;
-                }
-                else {
-                  navigatable = notificationData.getNavigatable();
-                }
-
-                final Notification notification = group.createNotification(
-                  notificationData.getTitle(), notificationData.getMessage(),
-                  notificationData.getNotificationCategory().getNotificationType(), notificationData.getListener());
-                failureResult = new FailureResultImpl(list(new FailureImpl(
-                  notificationData.getMessage(), e, new NotificationDataImpl(notification, notificationData.getListener(), navigatable))));
-              }
-              else {
-                failureResult = new FailureResultImpl(e);
-              }
-            }
+            FailureResultImpl failureResult = createFailureResult(e, projectName, externalSystemId, project);
             ServiceManager.getService(project, SyncViewManager.class).onEvent(
               new FinishBuildEventImpl(id, null, System.currentTimeMillis(), "sync failed", failureResult));
             String exceptionMessage = ExceptionUtil.getMessage(e);
@@ -605,6 +577,57 @@ public class ExternalSystemUtil {
           }
         }.queue();
     }
+  }
+
+  @NotNull
+  public static FailureResultImpl createFailureResult(@NotNull Exception exception,
+                                                      String projectName,
+                                                      ProjectSystemId externalSystemId,
+                                                      Project project) {
+    ExternalSystemNotificationManager notificationManager = ExternalSystemNotificationManager.getInstance(project);
+    NotificationData notificationData = notificationManager.createNotification(exception, projectName, externalSystemId, project);
+    FailureResultImpl failureResult;
+    if (notificationData.isBalloonNotification()) {
+      notificationManager.showNotification(externalSystemId, notificationData);
+      failureResult = new FailureResultImpl(exception);
+    }
+    else {
+      NotificationGroup group;
+      if (notificationData.getBalloonGroup() == null) {
+        ExternalProjectsView externalProjectsView =
+          ExternalProjectsManagerImpl.getInstance(project).getExternalProjectsView(externalSystemId);
+        group = externalProjectsView instanceof ExternalProjectsViewImpl ?
+                ((ExternalProjectsViewImpl)externalProjectsView).getNotificationGroup() : null;
+      }
+      else {
+        final NotificationGroup registeredGroup = NotificationGroup.findRegisteredGroup(notificationData.getBalloonGroup());
+        group = registeredGroup != null ? registeredGroup : NotificationGroup.balloonGroup(notificationData.getBalloonGroup());
+      }
+      if (group != null) {
+        int line = notificationData.getLine() - 1;
+        int column = notificationData.getColumn() - 1;
+        final VirtualFile virtualFile =
+          notificationData.getFilePath() != null ? findLocalFileByPath(notificationData.getFilePath()) : null;
+
+        final Navigatable navigatable;
+        if (notificationData.getNavigatable() == null || notificationData.getNavigatable() instanceof NonNavigatable) {
+          navigatable = virtualFile != null ? new OpenFileDescriptor(project, virtualFile, line, column) : NonNavigatable.INSTANCE;
+        }
+        else {
+          navigatable = notificationData.getNavigatable();
+        }
+
+        final Notification notification = group.createNotification(
+          notificationData.getTitle(), notificationData.getMessage(),
+          notificationData.getNotificationCategory().getNotificationType(), notificationData.getListener());
+        failureResult = new FailureResultImpl(list(new FailureImpl(
+          notificationData.getMessage(), exception, new NotificationDataImpl(notification, notificationData.getListener(), navigatable))));
+      }
+      else {
+        failureResult = new FailureResultImpl(exception);
+      }
+    }
+    return failureResult;
   }
 
   public static BuildEvent convert(ExternalSystemTaskExecutionEvent taskExecutionEvent) {
@@ -979,6 +1002,19 @@ public class ExternalSystemUtil {
 
     return ProjectDataManagerImpl.getInstance().getExternalProjectData(
       project, projectSystemId, linkedProjectSettings.getExternalProjectPath());
+  }
+
+  @NotNull
+  public static ExternalSystemExecutionConsoleManager<ExternalSystemRunConfiguration, ExecutionConsole, ProcessHandler>
+  getConsoleManagerFor(@NotNull ExternalSystemTask task) {
+    for (ExternalSystemExecutionConsoleManager executionConsoleManager : ExternalSystemExecutionConsoleManager.EP_NAME.getExtensions()) {
+      if (executionConsoleManager.isApplicableFor(task)) {
+        //noinspection unchecked
+        return executionConsoleManager;
+      }
+    }
+
+    return new DefaultExternalSystemExecutionConsoleManager();
   }
 
 

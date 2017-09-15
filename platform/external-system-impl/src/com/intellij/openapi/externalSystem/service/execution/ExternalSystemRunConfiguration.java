@@ -17,6 +17,7 @@ package com.intellij.openapi.externalSystem.service.execution;
 
 import com.intellij.build.BuildProgressListener;
 import com.intellij.build.BuildViewManager;
+import com.intellij.build.DefaultBuildDescriptor;
 import com.intellij.build.TasksViewManager;
 import com.intellij.build.events.BuildEvent;
 import com.intellij.build.events.impl.FailureResultImpl;
@@ -52,7 +53,10 @@ import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.execution.ExternalSystemExecutionConsoleManager;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
-import com.intellij.openapi.externalSystem.model.task.*;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter;
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemTaskExecutionEvent;
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemExecuteTaskTask;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
@@ -87,6 +91,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import static com.intellij.openapi.externalSystem.util.ExternalSystemUtil.convert;
+import static com.intellij.openapi.externalSystem.util.ExternalSystemUtil.getConsoleManagerFor;
 
 /**
  * @author Denis Zhdanov
@@ -283,10 +288,15 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
         consoleManager = getConsoleManagerFor(task);
 
       final ExecutionConsole consoleView =
-        consoleManager.attachExecutionConsole(task, myProject, myConfiguration, executor, myEnv, processHandler);
-      AnAction[] restartActions = consoleManager.getRestartActions(consoleView);
-
-      Disposer.register(myProject, consoleView);
+        consoleManager.attachExecutionConsole(myProject, task, myEnv, processHandler);
+      AnAction[] restartActions;
+      if (consoleView == null) {
+        restartActions = AnAction.EMPTY_ARRAY;
+      }
+      else {
+        Disposer.register(myProject, consoleView);
+        restartActions = consoleManager.getRestartActions(consoleView);
+      }
       Class<? extends BuildProgressListener> progressListenerClazz = task.getUserData(PROGRESS_LISTENER_KEY);
       final BuildProgressListener progressListener = progressListenerClazz != null
                                                      ? ServiceManager.getService(myProject, progressListenerClazz)
@@ -321,7 +331,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
               long eventTime = System.currentTimeMillis();
               AnAction rerunTaskAction = new MyTaskRerunAction(progressListener, myEnv, myContentDescriptor);
               progressListener.onEvent(
-                new StartBuildEventImpl(id, executionName, eventTime, "running...")
+                new StartBuildEventImpl(new DefaultBuildDescriptor(id, executionName, workingDir, eventTime), "running...")
                   .withProcessHandler(processHandler, view -> {
                     processHandler.notifyTextAvailable(greeting + "\n\n", ProcessOutputTypes.SYSTEM);
                     foldGreetingOrFarewell(consoleView, greeting, true);
@@ -329,7 +339,8 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
                   .withContentDescriptorSupplier(() -> myContentDescriptor)
                   .withRestartAction(rerunTaskAction)
                   .withRestartActions(restartActions)
-                  .withExecutionEnvironment(myEnv));
+                  .withExecutionEnvironment(myEnv)
+              );
             }
           }
 
@@ -395,19 +406,6 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
     public void setContentDescriptor(@Nullable RunContentDescriptor contentDescriptor) {
       myContentDescriptor = contentDescriptor;
     }
-  }
-
-  @NotNull
-  private static ExternalSystemExecutionConsoleManager<ExternalSystemRunConfiguration, ExecutionConsole, ProcessHandler>
-  getConsoleManagerFor(@NotNull ExternalSystemTask task) {
-    for (ExternalSystemExecutionConsoleManager executionConsoleManager : ExternalSystemExecutionConsoleManager.EP_NAME.getExtensions()) {
-      if (executionConsoleManager.isApplicableFor(task)) {
-        //noinspection unchecked
-        return executionConsoleManager;
-      }
-    }
-
-    return new DefaultExternalSystemExecutionConsoleManager();
   }
 
   private static void foldGreetingOrFarewell(ExecutionConsole consoleView, String text, boolean isGreeting) {
