@@ -91,6 +91,10 @@ public abstract class BaseInspectionVisitor extends JavaElementVisitor {
     if (nameIdentifier == null) {
       return;
     }
+    if (!nameIdentifier.isPhysical()) {
+      registerError(nameIdentifier.getNavigationElement(), infos);
+      return;
+    }
     registerError(nameIdentifier, infos);
   }
 
