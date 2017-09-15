@@ -153,6 +153,10 @@ class AsyncProjectViewSupport {
     }, parent);
   }
 
+  public void setComparator(Comparator<NodeDescriptor> comparator) {
+    myStructureTreeModel.setComparator(comparator);
+  }
+
   public void select(JTree tree, Object object, VirtualFile file) {
     if (object instanceof AbstractTreeNode) {
       AbstractTreeNode node = (AbstractTreeNode)object;
