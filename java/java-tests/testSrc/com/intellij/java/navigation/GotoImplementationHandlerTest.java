@@ -55,6 +55,29 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
     assertEquals(2, impls.length);
   }
 
+  public void testUnderInstanceOf() {
+    PsiFile file = myFixture.addFileToProject("Foo.java", "abstract class Hello {\n" +
+                                                          "    abstract void foo();\n" +
+                                                          "\n" +
+                                                          "    void test(Hello h) {\n" +
+                                                          "      if(h instanceof Hello1) h.fo<caret>o();\n" +
+                                                          "    }\n" +
+                                                          "    \n" +
+                                                          "    class Hello1 extends Hello {\n" +
+                                                          "        void foo() {}\n" +
+                                                          "    }\n" +
+                                                          "    class Hello2 extends Hello {\n" +
+                                                          "        void foo() {}\n" +
+                                                          "    }\n" +
+                                                          "}");
+    myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
+
+    final PsiElement[] impls = getTargets(file);
+    assertEquals(1, impls.length);
+    assertTrue(impls[0] instanceof PsiMethod);
+    assertEquals("Hello.Hello1", ((PsiMethod)impls[0]).getContainingClass().getQualifiedName());
+  }
+
   public void testFromIncompleteCode() {
     PsiFile file = myFixture.addFileToProject("Foo.java", "public abstract class Hello {\n" +
                                                           "    abstract void foo();\n" +
