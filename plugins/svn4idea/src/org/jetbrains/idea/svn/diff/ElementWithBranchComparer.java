@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import java.io.File;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 
 /**
 * @author Konstantin Kolosovsky.
@@ -106,7 +107,7 @@ public abstract class ElementWithBranchComparer {
   public abstract String getTitle();
 
   @Nullable
-  protected SVNURL resolveElementUrl() throws SVNException {
+  protected SVNURL resolveElementUrl() throws SvnBindException {
     final SvnFileUrlMapping urlMapping = myVcs.getSvnFileUrlMapping();
     final File file = virtualToIoFile(myVirtualFile);
     final SVNURL fileUrl = urlMapping.getUrlForFile(file);
@@ -125,7 +126,7 @@ public abstract class ElementWithBranchComparer {
     }
 
     final String relativePath = SVNPathUtil.getRelativePath(thisBranchForUrl.toString(), fileUrl.toString());
-    return SVNURL.parseURIEncoded(SVNPathUtil.append(myBranchUrl, relativePath));
+    return createUrl(SVNPathUtil.append(myBranchUrl, relativePath));
   }
 
   private void reportException(final SvnBindException e) {

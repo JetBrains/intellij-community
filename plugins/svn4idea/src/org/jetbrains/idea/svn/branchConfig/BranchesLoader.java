@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.browse.BrowseClient;
 import org.jetbrains.idea.svn.browse.DirectoryEntryConsumer;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -33,6 +32,8 @@ import org.tmatesoft.svn.core.wc2.SvnTarget;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+
+import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 
 /**
  * @author Konstantin Kolosovsky.
@@ -64,15 +65,15 @@ public class BranchesLoader implements Runnable {
       List<SvnBranchItem> branches = loadBranches();
       myBunch.updateBranches(myRoot, myUrl, new InfoStorage<>(branches, myInfoReliability));
     }
-    catch (VcsException | SVNException e) {
+    catch (VcsException e) {
       showError(e);
     }
   }
 
   @NotNull
-  public List<SvnBranchItem> loadBranches() throws SVNException, VcsException {
+  public List<SvnBranchItem> loadBranches() throws VcsException {
     SvnVcs vcs = SvnVcs.getInstance(myProject);
-    SVNURL branchesUrl = SVNURL.parseURIEncoded(myUrl);
+    SVNURL branchesUrl = createUrl(myUrl);
     List<SvnBranchItem> result = new LinkedList<>();
     SvnTarget target = SvnTarget.fromURL(branchesUrl);
     DirectoryEntryConsumer handler = createConsumer(result);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,9 +36,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.browse.DirectoryEntry;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.dialogs.browserCache.Expander;
 import org.jetbrains.idea.svn.history.SvnFileRevision;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
@@ -52,6 +52,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.List;
+
+import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 
 /**
  * @author alex
@@ -153,19 +155,17 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Da
 
   public void addURL(String url) {
     try {
-      ((RepositoryTreeModel)myRepositoryTree.getModel()).addRoot(SVNURL.parseURIEncoded(url));
+      ((RepositoryTreeModel)myRepositoryTree.getModel()).addRoot(createUrl(url));
     }
-    catch (SVNException e) {
-      //
+    catch (SvnBindException ignored) {
     }
   }
 
   public void removeURL(String url) {
     try {
-      ((RepositoryTreeModel)myRepositoryTree.getModel()).removeRoot(SVNURL.parseURIEncoded(url));
+      ((RepositoryTreeModel)myRepositoryTree.getModel()).removeRoot(createUrl(url));
     }
-    catch (SVNException e) {
-      //
+    catch (SvnBindException ignored) {
     }
   }
 

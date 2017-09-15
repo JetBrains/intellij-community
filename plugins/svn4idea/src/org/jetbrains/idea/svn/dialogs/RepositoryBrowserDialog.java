@@ -49,7 +49,6 @@ import org.jetbrains.idea.svn.dialogs.browserCache.KeepingExpandedExpander;
 import org.jetbrains.idea.svn.dialogs.browserCache.SyntheticWorker;
 import org.jetbrains.idea.svn.history.SvnRepositoryLocation;
 import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -65,6 +64,8 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+
+import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 
 public class RepositoryBrowserDialog extends DialogWrapper {
 
@@ -255,10 +256,9 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     ArrayList<SVNURL> svnURLs = new ArrayList<>();
     for (final String url : urls) {
       try {
-        svnURLs.add(SVNURL.parseURIEncoded(url));
+        svnURLs.add(createUrl(url));
       }
-      catch (SVNException e) {
-        //
+      catch (SvnBindException ignored) {
       }
     }
     getRepositoryBrowser().setRepositoryURLs(svnURLs.toArray(new SVNURL[svnURLs.size()]), myShowFiles);

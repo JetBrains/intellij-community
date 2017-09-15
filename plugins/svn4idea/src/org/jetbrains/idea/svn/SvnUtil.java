@@ -817,8 +817,8 @@ public class SvnUtil {
     }
     else {
       try {
-        result = SvnTarget
-          .fromURL(checkAbsolute && URI.create(path).isAbsolute() ? SVNURL.parseURIEncoded(path) : target.getURL().appendPath(path, false));
+        result =
+          SvnTarget.fromURL(checkAbsolute && URI.create(path).isAbsolute() ? createUrl(path) : target.getURL().appendPath(path, false));
       }
       catch (SVNException e) {
         throw new SvnBindException(e);

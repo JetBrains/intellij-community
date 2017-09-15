@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.info.Info;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
@@ -34,6 +33,7 @@ import java.util.*;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static com.intellij.util.containers.ContainerUtil.map;
+import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 
 public class SvnBranchConfigurationNew {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew");
@@ -156,10 +156,10 @@ public class SvnBranchConfigurationNew {
   @Nullable
   public SVNURL getWorkingBranch(@NotNull SVNURL someUrl) throws SvnBindException {
     String baseUrl = getBaseUrl(someUrl.toString());
-    return baseUrl == null ? null : SvnUtil.createUrl(baseUrl);
+    return baseUrl == null ? null : createUrl(baseUrl);
   }
 
-  private void iterateUrls(final UrlListener listener) throws SVNException {
+  private void iterateUrls(final UrlListener listener) throws SvnBindException {
     if (listener.accept(myTrunkUrl)) {
       return;
     }
@@ -186,7 +186,8 @@ public class SvnBranchConfigurationNew {
       final BranchRootSearcher searcher = new BranchRootSearcher(SvnVcs.getInstance(project), root);
       iterateUrls(searcher);
       return searcher.getBranchesUnder();
-    } catch (SVNException e) {
+    }
+    catch (SvnBindException e) {
       return null;
     }
   }
@@ -209,12 +210,12 @@ public class SvnBranchConfigurationNew {
       myRootUrl = info != null ? info.getURL() : null;
     }
 
-    public boolean accept(final String url) throws SVNException {
+    public boolean accept(final String url) throws SvnBindException {
       if (myRootUrl != null) {
         final File baseDir = virtualToIoFile(myRoot);
         final String baseUrl = myRootUrl.getPath();
 
-        final SVNURL branchUrl = SVNURL.parseURIEncoded(url);
+        final SVNURL branchUrl = createUrl(url);
         if (myRootUrl.equals(SVNURLUtil.getCommonURLAncestor(myRootUrl, branchUrl))) {
           final File file = SvnUtil.fileFromUrl(baseDir, baseUrl, branchUrl.getPath());
           myBranchesUnder.put(url, file.getAbsolutePath());
@@ -229,6 +230,6 @@ public class SvnBranchConfigurationNew {
   }
 
   private interface UrlListener {
-    boolean accept(final String url) throws SVNException;
+    boolean accept(final String url) throws SvnBindException;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,7 @@ import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.config.ProxyGroup;
 import org.jetbrains.idea.svn.config.SvnServerFileKeys;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -59,6 +60,7 @@ import java.net.*;
 import java.util.*;
 
 import static com.intellij.util.WaitForProgressToShow.runOrInvokeLaterAboveProgress;
+import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 
 /**
  * @author alex
@@ -786,9 +788,9 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager
   public static boolean checkHostGroup(final String url, final String patterns, final String exceptions) {
     final SVNURL svnurl;
     try {
-      svnurl = SVNURL.parseURIEncoded(url);
+      svnurl = createUrl(url);
     }
-    catch (SVNException e) {
+    catch (SvnBindException e) {
       return false;
     }
 

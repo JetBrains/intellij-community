@@ -39,6 +39,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Collection;
 
+import static org.jetbrains.idea.svn.SvnUtil.createUrl;
+
 public class SvnUpdateRootOptionsPanel implements SvnPanel{
   private final static Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.update.SvnUpdateRootOptionsPanel.SvnUpdateRootOptionsPanel");
   private TextFieldWithBrowseButton myURLText;
@@ -144,9 +146,9 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
       }
       else {
         try {
-          myURLText.setText(SVNURL.parseURIEncoded(url).appendPath(branchRelativeUrl, true).toDecodedString());
+          myURLText.setText(createUrl(url).appendPath(branchRelativeUrl, true).toDecodedString());
         }
-        catch (SVNException e) {
+        catch (SVNException | SvnBindException e) {
           LOG.error(e);
         }
         myBranchField.setText(SVNPathUtil.tail(url));
@@ -201,7 +203,7 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
     final UpdateRootInfo rootInfo = configuration.getUpdateRootInfo(myRoot.getIOFile(), myVcs);
     if (myUpdateToSpecificUrl.isSelected()) {
       try {
-        rootInfo.setUrl(SvnUtil.createUrl(myURLText.getText(), false));
+        rootInfo.setUrl(createUrl(myURLText.getText(), false));
       }
       catch (SvnBindException e) {
         throw new ConfigurationException("Invalid url: " + myURLText.getText());

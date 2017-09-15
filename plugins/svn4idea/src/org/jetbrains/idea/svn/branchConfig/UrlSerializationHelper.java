@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,15 @@ import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+
+import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 
 /**
 * @author Konstantin Kolosovsky.
@@ -77,7 +80,7 @@ public class UrlSerializationHelper {
       return url;
     }
     try {
-      final SVNURL svnurl = SVNURL.parseURIEncoded(url);
+      final SVNURL svnurl = createUrl(url);
       if (withUserInfo.isNull()) {
         final String userInfo = svnurl.getUserInfo();
         withUserInfo.set((userInfo != null) && (userInfo.length() > 0));
@@ -87,8 +90,7 @@ public class UrlSerializationHelper {
           .toString();
       }
     }
-    catch (SVNException e) {
-      //
+    catch (SVNException | SvnBindException ignored) {
     }
     return url;
   }
@@ -101,10 +103,11 @@ public class UrlSerializationHelper {
 
   private static String deserializeUrl(final String url, final String userInfo) {
     try {
-      final SVNURL svnurl = SVNURL.parseURIEncoded(url);
+      final SVNURL svnurl = createUrl(url);
       return SVNURL.create(svnurl.getProtocol(), userInfo, svnurl.getHost(), SvnUtil.resolvePort(svnurl), svnurl.getURIEncodedPath(),
                            true).toString();
-    } catch (SVNException e) {
+    }
+    catch (SVNException | SvnBindException e) {
       return url;
     }
   }

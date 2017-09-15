@@ -36,6 +36,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.dialogs.RepositoryBrowserComponent;
 import org.jetbrains.idea.svn.dialogs.RepositoryBrowserDialog;
 import org.jetbrains.idea.svn.dialogs.RepositoryTreeNode;
@@ -54,6 +55,7 @@ import static com.intellij.openapi.util.text.StringUtil.isEmpty;
 import static com.intellij.util.ui.JBUI.Borders.emptyTop;
 import static com.intellij.util.ui.JBUI.Panels.simplePanel;
 import static com.intellij.util.ui.JBUI.insets;
+import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 import static org.tmatesoft.svn.core.internal.util.SVNPathUtil.tail;
 
 public class CopyOptionsDialog extends DialogWrapper {
@@ -223,9 +225,9 @@ public class CopyOptionsDialog extends DialogWrapper {
   public SVNURL getTargetURL() {
     if (getOKAction().isEnabled()) {
       try {
-        return SVNURL.parseURIEncoded(myTargetURL.getText());
+        return createUrl(myTargetURL.getText());
       }
-      catch (SVNException ignored) {
+      catch (SvnBindException ignored) {
       }
     }
     return null;

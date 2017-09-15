@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -41,10 +40,11 @@ import org.jetbrains.idea.svn.SvnPropertyKeys;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.properties.PropertyValue;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
+
+import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 
 public class SvnEditCommitMessageAction extends AnAction {
   @Override
@@ -132,7 +132,7 @@ public class SvnEditCommitMessageAction extends AnAction {
       final String url = myLocation.getURL();
       final SVNURL root;
       try {
-        root = SvnUtil.getRepositoryRoot(myVcs, SVNURL.parseURIEncoded(url));
+        root = SvnUtil.getRepositoryRoot(myVcs, createUrl(url));
         if (root == null) {
           myException = new VcsException("Can not determine repository root for URL: " + url);
           return;
@@ -140,9 +140,6 @@ public class SvnEditCommitMessageAction extends AnAction {
         SvnTarget target = SvnTarget.fromURL(root);
         myVcs.getFactory(target).createPropertyClient()
           .setRevisionProperty(target, SvnPropertyKeys.LOG, SVNRevision.create(myNumber), PropertyValue.create(myNewMessage), false);
-      }
-      catch (SVNException e) {
-        myException = new VcsException(e);
       }
       catch (VcsException e) {
         myException = e;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,15 +18,18 @@ package org.jetbrains.idea.svn.info;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.NodeKind;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.conflict.ConflictAction;
 import org.jetbrains.idea.svn.conflict.ConflictOperation;
 import org.jetbrains.idea.svn.conflict.ConflictReason;
 import org.jetbrains.idea.svn.lock.Lock;
-import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.SVNURL;
 import org.xml.sax.SAXException;
 
 import java.io.File;
 import java.util.Date;
+
+import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 
 public class SvnInfoStructure {
 
@@ -59,7 +62,7 @@ public class SvnInfoStructure {
 
   public TreeConflictDescription myTreeConflict;
 
-  public Info convert() throws SAXException, SVNException {
+  public Info convert() throws SAXException, SvnBindException {
     return new Info(myFile, myUrl, myRootURL, myRevision, myKind, myUuid, myCommittedRevision, myCommittedDate, myAuthor, mySchedule,
                            myCopyFromURL, myCopyFromRevision, myConflictOld, myConflictNew, myConflictWorking,
                            myPropRejectFile, getLock(), myDepth, createTreeConflict());
@@ -70,7 +73,7 @@ public class SvnInfoStructure {
     return myLockBuilder != null ? myLockBuilder.build() : null;
   }
 
-  private org.jetbrains.idea.svn.conflict.TreeConflictDescription createTreeConflict() throws SAXException, SVNException {
+  private org.jetbrains.idea.svn.conflict.TreeConflictDescription createTreeConflict() throws SAXException, SvnBindException {
     if (myTreeConflict == null) {
       return null;
     }
@@ -85,11 +88,12 @@ public class SvnInfoStructure {
     }
   }
 
-  private org.jetbrains.idea.svn.conflict.ConflictVersion createVersion(final ConflictVersion version) throws SVNException, SAXException {
+  private org.jetbrains.idea.svn.conflict.ConflictVersion createVersion(final ConflictVersion version)
+    throws SvnBindException, SAXException {
     return version == null
            ? null
-           : new org.jetbrains.idea.svn.conflict.ConflictVersion(SVNURL.parseURIEncoded(version.myRepoUrl), version.myPathInRepo,
-                                                           parseRevision(version.myRevision), NodeKind.from(version.myKind));
+           : new org.jetbrains.idea.svn.conflict.ConflictVersion(createUrl(version.myRepoUrl), version.myPathInRepo,
+                                                                 parseRevision(version.myRevision), NodeKind.from(version.myKind));
   }
   
   private long parseRevision(final String revision) throws SAXException {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,6 +48,7 @@ import java.io.File;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 
 public class CreateBranchOrTagAction extends BasicAction {
   @NotNull
@@ -71,12 +72,10 @@ public class CreateBranchOrTagAction extends BasicAction {
       Ref<Exception> exception = new Ref<>();
       boolean isSrcFile = dialog.isCopyFromWorkingCopy();
       File srcFile = new File(dialog.getCopyFromPath());
-      SVNURL srcUrl;
-      SVNURL dstSvnUrl;
+      SVNURL srcUrl = createUrl(dialog.getCopyFromUrl());
+      SVNURL dstSvnUrl = createUrl(dstURL);
       SVNURL parentUrl;
       try {
-        srcUrl = SVNURL.parseURIEncoded(dialog.getCopyFromUrl());
-        dstSvnUrl = SVNURL.parseURIEncoded(dstURL);
         parentUrl = dstSvnUrl.removePathTail();
       }
       catch (SVNException e) {
