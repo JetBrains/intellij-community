@@ -20,10 +20,10 @@ import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
-import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.search.JavaOverridingMethodsSearcher;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -480,10 +480,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
   @NotNull
   private static PsiMethod findSpecificMethod(@NotNull PsiMethod method, @NotNull DfaMemoryState state, @Nullable DfaValue qualifier) {
-    if (qualifier == null ||
-        method.hasModifier(JvmModifier.STATIC) ||
-        method.hasModifier(JvmModifier.FINAL) ||
-        method.hasModifier(JvmModifier.PRIVATE)) {
+    if (qualifier == null || !PsiUtil.canBeOverridden(method)) {
       return method;
     }
     TypeConstraint constraint = state.getValueFact(DfaFactType.TYPE_CONSTRAINT, qualifier);
@@ -492,7 +489,8 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     if (specificQualifierClass != null && qualifierClass != null &&
         !specificQualifierClass.equals(qualifierClass) &&
         InheritanceUtil.isInheritorOrSelf(specificQualifierClass, qualifierClass, true)) {
-      PsiMethod realMethod = specificQualifierClass.findMethodBySignature(method, true);
+      PsiMethod realMethod =
+        JavaOverridingMethodsSearcher.findOverridingMethod(method.getProject(), specificQualifierClass, method, qualifierClass);
       if (realMethod != null) {
         return realMethod;
       }
