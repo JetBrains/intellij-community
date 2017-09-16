@@ -57,7 +57,7 @@ abstract class TraceExpressionBuilderBase(private val myProject: Project, privat
     return myDsl.code {
       declare(result, nullExpression, true)
       val startTime = declare(variable(types.longType, "startTime"), +"java.lang.System.nanoTime()", false)
-      declare(info, newSizedArray(types.longType, infoArraySize), false)
+      declare(info, newSizedArray(types.anyType, infoArraySize), false)
       declare(timeDeclaration())
       +TextExpression(declarations)
       +TextExpression(tracingCall)
