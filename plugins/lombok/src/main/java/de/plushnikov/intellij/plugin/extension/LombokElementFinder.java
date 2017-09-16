@@ -14,45 +14,77 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 public class LombokElementFinder extends PsiElementFinder {
-  @Nullable
-  @Override
-  @SuppressWarnings("deprecation")
-  public PsiClass findClass(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
+
+  private static final ThreadLocal<Set<String>> recursionPrevention = new ThreadLocal<Set<String>>() {
+    @Override
+    protected Set<String> initialValue() {
+      return new HashSet<>();
+    }
+  };
+
+  JavaFileManager getServiceManager(GlobalSearchScope scope) {
     final Project project = scope.getProject();
     if (null == project) {
       return null;
     }
+    return ServiceManager.getService(project, JavaFileManager.class);
+  }
 
+  @Nullable
+  @Override
+  @SuppressWarnings("deprecation")
+  public PsiClass findClass(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
     final int lastDot = qualifiedName.lastIndexOf('.');
     if (lastDot < 0) {
       return null;
     }
-    final String shortName = qualifiedName.substring(lastDot + 1);
     final String parentName = qualifiedName.substring(0, lastDot);
+    final String shortName = qualifiedName.substring(lastDot + 1);
 
     if (shortName.isEmpty() || parentName.isEmpty()) {
       return null;
     }
 
-    final JavaFileManager javaFileManager = ServiceManager.getService(project, JavaFileManager.class);
-    if (null != javaFileManager) {
-      final PsiClass parentClass = javaFileManager.findClass(parentName, scope);
-      if (null != parentClass) {
-        if (PsiAnnotationSearchUtil.isAnnotatedWith(parentClass, Builder.class, lombok.experimental.Builder.class)) {
-          return parentClass.findInnerClassByName(shortName, false);
-        } else {
-          final Collection<PsiMethod> psiMethods = PsiClassUtil.collectClassMethodsIntern(parentClass);
-          for (PsiMethod psiMethod : psiMethods) {
-            if (PsiAnnotationSearchUtil.isAnnotatedWith(psiMethod, Builder.class, lombok.experimental.Builder.class)) {
-              return parentClass.findInnerClassByName(shortName, false);
-            }
+    final PsiClass parentClass = getPsiClassAndPreventRecursionCalls(parentName, scope);
+    if (null != parentClass) {
+      if (PsiAnnotationSearchUtil.isAnnotatedWith(parentClass, Builder.class, lombok.experimental.Builder.class)) {
+        return parentClass.findInnerClassByName(shortName, false);
+      } else {
+        final Collection<PsiMethod> psiMethods = PsiClassUtil.collectClassMethodsIntern(parentClass);
+        for (PsiMethod psiMethod : psiMethods) {
+          if (PsiAnnotationSearchUtil.isAnnotatedWith(psiMethod, Builder.class, lombok.experimental.Builder.class)) {
+            return parentClass.findInnerClassByName(shortName, false);
           }
         }
       }
     }
+
     return null;
+  }
+
+  private PsiClass getPsiClassAndPreventRecursionCalls(@NotNull String parentName, @NotNull GlobalSearchScope scope) {
+    final JavaFileManager javaFileManager = getServiceManager(scope);
+    if (null == javaFileManager) {
+      return null;
+    }
+
+
+    final PsiClass foundPsiClass;
+    try {
+      final boolean firstInvocation = recursionPrevention.get().add(parentName);
+      if (firstInvocation) {
+        foundPsiClass = javaFileManager.findClass(parentName, scope);
+      } else {
+        foundPsiClass = null;
+      }
+    } finally {
+      recursionPrevention.get().remove(parentName);
+    }
+    return foundPsiClass;
   }
 
   @NotNull

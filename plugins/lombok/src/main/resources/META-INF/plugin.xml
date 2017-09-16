@@ -257,6 +257,7 @@
 		<ul>
 		<li>0.16
 				<ol>
+            <li>Fixed #379: StackOverflowException occurs sporadically when plugin enabled</li>
             <li>Fixed #419: Stackoverflow in Intellij because of recursive delegation in @Delegate</li>
 				</ol>
 			</li>
