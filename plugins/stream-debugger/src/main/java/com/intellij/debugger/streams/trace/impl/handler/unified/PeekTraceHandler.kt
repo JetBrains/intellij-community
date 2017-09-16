@@ -45,21 +45,17 @@ class PeekTraceHandler(num: Int, callName: String, private val myTypeBefore: Gen
   }
 
   override fun additionalCallsBefore(): List<IntermediateStreamCall> {
-    val lambda = dsl.code {
-      lambda("x") {
-        +beforeMap.set(currentTime(), +argName)
-      }
-    }
+    val lambda = dsl.lambda("x") {
+      +beforeMap.set(dsl.currentTime(), TextExpression(argName))
+    }.toCode()
 
     return listOf(dsl.createPeekCall(myTypeBefore, lambda))
   }
 
   override fun additionalCallsAfter(): List<IntermediateStreamCall> {
-    val lambda = dsl.code {
-      lambda("x") {
-        +afterMap.set(currentTime(), +argName)
-      }
-    }
+    val lambda = dsl.lambda("x") {
+      +afterMap.set(dsl.currentTime(), TextExpression(argName))
+    }.toCode()
 
     return listOf(dsl.createPeekCall(myTypeBefore, lambda))
   }
