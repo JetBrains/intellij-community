@@ -110,7 +110,7 @@ public class UniqueVFilePathBuilderImpl extends UniqueVFilePathBuilder {
     if (uniqueNameBuilderForShortName != null && uniqueNameBuilderForShortName.contains(file)) {
       return uniqueNameBuilderForShortName.getShortPath(file);
     }
-    return file.getPresentableName();
+    return file instanceof VirtualFilePathWrapper ? file.getPresentableName() : file.getName();
   }
 
   @Nullable
