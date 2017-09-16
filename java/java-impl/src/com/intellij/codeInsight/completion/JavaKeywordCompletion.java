@@ -396,7 +396,7 @@ public class JavaKeywordCompletion {
       }
     }
 
-    if ((isInsideParameterList(myPosition) || isAtResourceVariableStart(myPosition) || isAtCatchVariableStart(myPosition)) &&
+    if ((isInsideParameterList(myPosition) || isAtCatchOrResourceVariableStart(myPosition)) &&
         !psiElement().afterLeaf(PsiKeyword.FINAL).accepts(myPosition) &&
         !AFTER_DOT.accepts(myPosition)) {
       addKeyword(TailTypeDecorator.withTail(createKeyword(PsiKeyword.FINAL), TailType.HUMBLE_SPACE_BEFORE_WORD));
@@ -732,12 +732,14 @@ public class JavaKeywordCompletion {
                               info -> InheritanceUtil.isInheritor(info.getType(), CommonClassNames.JAVA_LANG_CLASS)) != null;
   }
 
-  private static boolean isAtResourceVariableStart(PsiElement position) {
-    return psiElement().insideStarting(psiElement(PsiTypeElement.class).withParent(PsiResourceList.class)).accepts(position);
-  }
-
-  private static boolean isAtCatchVariableStart(PsiElement position) {
-    return psiElement().insideStarting(psiElement(PsiTypeElement.class).withParent(PsiCatchSection.class)).accepts(position);
+  private static boolean isAtCatchOrResourceVariableStart(PsiElement position) {
+    PsiElement type = PsiTreeUtil.getParentOfType(position, PsiTypeElement.class);
+    if (type != null && type.getTextRange().getStartOffset() == position.getTextRange().getStartOffset()) {
+      PsiElement parent = type.getParent();
+      if (parent instanceof PsiVariable) parent = parent.getParent();
+      return parent instanceof PsiCatchSection || parent instanceof PsiResourceList;
+    }
+    return false;
   }
 
   private void addBreakContinue() {
