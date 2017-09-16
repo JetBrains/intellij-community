@@ -1837,4 +1837,9 @@ class Bar {{
     assert LookupElementPresentation.renderElement(item).tailText.contains('local class')
   }
 
+  void testNoDuplicateInCast() {
+    configure()
+    assert myFixture.lookupElementStrings == null
+  }
+
 }
