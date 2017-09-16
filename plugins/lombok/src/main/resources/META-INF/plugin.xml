@@ -110,6 +110,9 @@
     <inlineActionHandler implementation="de.plushnikov.intellij.plugin.action.inline.LombokInlineMethodHandler"/>
 
     <canBeFinal implementation="de.plushnikov.intellij.plugin.extension.LombokCanBeFinalHandler"/>
+
+    <codeInsight.template.postfixTemplateProvider language="JAVA"
+                                                  implementationClass="de.plushnikov.intellij.plugin.extension.postfix.LombokPostfixTemplateProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="Lombook Plugin">
@@ -257,6 +260,7 @@
 		<ul>
 		<li>0.16
 				<ol>
+            <li>Fixed #365: [Feature request]IDEA .var suffix feature replacement</li>
             <li>Fixed #379: StackOverflowException occurs sporadically when plugin enabled</li>
             <li>Fixed #419: Stackoverflow in Intellij because of recursive delegation in @Delegate</li>
 				</ol>
