@@ -1,3 +1,4 @@
+//skip compare content: This test is to see if the 'delegate recursion is not supported' error pops up.
 import lombok.Delegate;
 class DelegateRecursionOuterMost {
 	@Delegate
