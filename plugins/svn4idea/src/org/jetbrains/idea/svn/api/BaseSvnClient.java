@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.idea.svn.api;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -129,14 +144,9 @@ public abstract class BaseSvnClient implements SvnClient {
     return new CommandRuntime(vcs, new AuthenticationService(vcs, myIsActive));
   }
 
-  protected static void callHandler(@Nullable ProgressTracker handler, @NotNull ProgressEvent event) throws VcsException {
+  public static void callHandler(@Nullable ProgressTracker handler, @NotNull ProgressEvent event) throws SvnBindException {
     if (handler != null) {
-      try {
-        handler.consume(event);
-      }
-      catch (SVNException e) {
-        throw new SvnBindException(e);
-      }
+      handler.consume(event);
     }
   }
 
@@ -153,7 +163,12 @@ public abstract class BaseSvnClient implements SvnClient {
       result = new ISVNEventHandler() {
         @Override
         public void handleEvent(SVNEvent event, double progress) throws SVNException {
-          handler.consume(ProgressEvent.create(event));
+          try {
+            handler.consume(ProgressEvent.create(event));
+          }
+          catch (SvnBindException e) {
+            throw e.toSVNException();
+          }
         }
 
         @Override

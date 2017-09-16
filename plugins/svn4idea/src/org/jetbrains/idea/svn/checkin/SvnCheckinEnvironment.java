@@ -50,7 +50,6 @@ import org.jetbrains.idea.svn.api.ProgressTracker;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.status.StatusType;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 
 import javax.swing.*;
@@ -252,7 +251,6 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
         }
       }
     };
-
     List<VcsException> exceptions = new ArrayList<>();
     Depth depth = Depth.allOrEmpty(recursive);
 
