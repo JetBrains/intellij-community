@@ -257,7 +257,7 @@
 		<ul>
 		<li>0.16
 				<ol>
-            <li>Fixed #: ....</li>
+            <li>Fixed #419: Stackoverflow in Intellij because of recursive delegation in @Delegate</li>
 				</ol>
 			</li>
 		<li>0.15.17.2

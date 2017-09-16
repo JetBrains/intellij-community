@@ -2,11 +2,13 @@ package de.plushnikov.intellij.plugin.processor.handler;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
@@ -20,15 +22,18 @@ import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.ShouldGenerateFullCodeBlock;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
+import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiElementUtil;
 import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
 import de.plushnikov.intellij.plugin.util.PsiTypeUtil;
+import lombok.Delegate;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -73,14 +78,26 @@ public class DelegateHandler {
 
   private boolean validateTypes(Collection<PsiType> psiTypes, ProblemBuilder builder) {
     boolean result = true;
-    for (PsiType type : psiTypes) {
-      if (!checkConcreteClass(type)) {
-        builder.addError("'@Delegate' can only use concrete class types, not wildcards, arrays, type variables, or primitives. '%s' is wrong class type",
-          type.getCanonicalText());
+    for (PsiType psiType : psiTypes) {
+      if (!checkConcreteClass(psiType)) {
+        builder.addError("@Delegate can only use concrete class types, not wildcards, arrays, type variables, or primitives. '%s' is wrong class type",
+          psiType.getCanonicalText());
         result = false;
+      } else {
+        result &= validateRecursion(psiType, builder);
       }
     }
     return result;
+  }
+
+  private boolean validateRecursion(PsiType psiType, ProblemBuilder builder) {
+    final PsiClass psiClass = PsiTypesUtil.getPsiClass(psiType);
+    if (null != psiClass) {
+      final DelegateAnnotationElementVisitor delegateAnnotationElementVisitor = new DelegateAnnotationElementVisitor(psiType, builder);
+      psiClass.acceptChildren(delegateAnnotationElementVisitor);
+      return delegateAnnotationElementVisitor.isValid();
+    }
+    return true;
   }
 
 
@@ -254,5 +271,39 @@ public class DelegateHandler {
 
   private boolean isShouldGenerateFullBodyBlock() {
     return ShouldGenerateFullCodeBlock.getInstance().isStateActive();
+  }
+
+  private static class DelegateAnnotationElementVisitor extends JavaElementVisitor {
+    private final PsiType psiType;
+    private final ProblemBuilder builder;
+    private boolean valid;
+
+    DelegateAnnotationElementVisitor(PsiType psiType, ProblemBuilder builder) {
+      this.psiType = psiType;
+      this.builder = builder;
+      this.valid = true;
+    }
+
+    @Override
+    public void visitField(PsiField psiField) {
+      checkModifierListOwner(psiField);
+    }
+
+    @Override
+    public void visitMethod(PsiMethod psiMethod) {
+      checkModifierListOwner(psiMethod);
+    }
+
+    private void checkModifierListOwner(PsiModifierListOwner modifierListOwner) {
+      if (PsiAnnotationSearchUtil.isAnnotatedWith(modifierListOwner, Delegate.class, lombok.experimental.Delegate.class)) {
+        builder.addError("@Delegate does not support recursion (delegating to a type that itself has @Delegate members). " +
+          "Member \"%s\" is @Delegate in type \"%s\"", ((PsiMember) modifierListOwner).getName(), psiType.getPresentableText());
+        valid = false;
+      }
+    }
+
+    public boolean isValid() {
+      return valid;
+    }
   }
 }
