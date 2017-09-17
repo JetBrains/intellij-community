@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.WorkingCopyFormat;
 import org.jetbrains.idea.svn.api.ClientFactory;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
@@ -73,11 +72,6 @@ public class DirectoryWithBranchComparer extends ElementWithBranchComparer {
     // svn 1.7 command line "--summarize" option for "diff" command does not support comparing working copy directories with repository
     // directories - that is why command line is only used explicitly for svn 1.8
     return format.isOrGreater(WorkingCopyFormat.ONE_DOT_EIGHT) ? vcs.getCommandLineFactory() : vcs.getSvnKitFactory();
-  }
-
-  @Override
-  protected void onCancel() {
-    changes.clear();
   }
 
   @Override

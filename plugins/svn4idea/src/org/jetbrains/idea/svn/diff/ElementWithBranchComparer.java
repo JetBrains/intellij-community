@@ -27,9 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
-import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
@@ -77,12 +75,6 @@ public abstract class ElementWithBranchComparer {
             compare();
           }
         }
-        catch (SVNCancelException ex) {
-          ElementWithBranchComparer.this.onCancel();
-        }
-        catch (SVNException ex) {
-          reportException(new SvnBindException(ex));
-        }
         catch (SvnBindException ex) {
           reportException(ex);
         }
@@ -100,9 +92,6 @@ public abstract class ElementWithBranchComparer {
   protected abstract void compare() throws VcsException;
 
   protected abstract void showResult();
-
-  protected void onCancel() {
-  }
 
   public abstract String getTitle();
 
