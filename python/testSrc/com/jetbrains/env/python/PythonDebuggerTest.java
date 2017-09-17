@@ -1310,7 +1310,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         eval("x").hasValue("1");
         // try to jump into a loop
         pair = setNextStatement(9);
-        waitForPause();
+        // do not wait for pause here, because we don't refresh suspension for incorrect jumps
         assertFalse(pair.first);
         assertTrue(pair.second.startsWith("Error:"));
         resume();
