@@ -47,6 +47,27 @@ import java.util.concurrent.atomic.AtomicReference;
 public class BackgroundTaskUtil {
   private static final Logger LOG = Logger.getInstance(BackgroundTaskUtil.class);
 
+  /**
+    * Executor to perform <i>possibly</i> long operation on pooled thread.
+    * If computation was performed within given time frame,
+    * the computed callback will be executed synchronously (avoiding unnecessary <tt>invokeLater()</tt>).
+    * In this case, {@code onSlowAction} will not be executed at all.
+    * <ul>
+    * <li> If the computation is fast, execute callback synchronously.
+    * <li> If the computation is slow, execute <tt>onSlowAction</tt> synchronously. When the computation is completed, execute callback in EDT.
+    * </ul><p>
+    * It can be used to reduce blinking when background task might be completed fast.<br>
+    * A Simple approach:
+    * <pre>
+    * onSlowAction.run() // show "Loading..."
+    * executeOnPooledThread({
+    *   Runnable callback = backgroundTask(); // some background computations
+    *   invokeLater(callback); // apply changes
+    * });
+    * </pre>
+    * will lead to "Loading..." visible between current moment and execution of invokeLater() event.
+    * This period can be very short and looks like 'jumping' if background operation is fast.
+    */
   @NotNull
   @CalledInAwt
   public static ProgressIndicator executeAndTryWait(@NotNull Function<ProgressIndicator, /*@NotNull*/ Runnable> backgroundTask,
@@ -242,6 +263,8 @@ public class BackgroundTaskUtil {
    * Wraps {@link MessageBus#syncPublisher(Topic)} in a dispose check,
    * and throws a {@link ProcessCanceledException} if the project is disposed,
    * instead of throwing an assertion which would happen otherwise.
+   *
+   * @see #syncPublisher(Topic)
    */
   @CalledInAny
   @NotNull
