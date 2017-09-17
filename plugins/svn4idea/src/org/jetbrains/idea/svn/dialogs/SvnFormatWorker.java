@@ -16,6 +16,7 @@
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
@@ -36,7 +37,6 @@ import org.jetbrains.idea.svn.api.ClientFactory;
 import org.jetbrains.idea.svn.api.EventAction;
 import org.jetbrains.idea.svn.api.ProgressEvent;
 import org.jetbrains.idea.svn.api.ProgressTracker;
-import org.tmatesoft.svn.core.SVNCancelException;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -176,7 +176,7 @@ public class SvnFormatWorker extends Task.Backgroundable {
       }
 
       @Override
-      public void checkCancelled() {
+      public void checkCancelled() throws ProcessCanceledException {
         indicator.checkCanceled();
       }
     };

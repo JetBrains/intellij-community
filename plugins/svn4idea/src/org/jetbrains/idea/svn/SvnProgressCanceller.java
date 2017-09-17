@@ -15,12 +15,12 @@
  */
 package org.jetbrains.idea.svn;
 
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.ProgressEvent;
 import org.jetbrains.idea.svn.api.ProgressTracker;
-import org.tmatesoft.svn.core.SVNCancelException;
 
 import static com.intellij.util.ObjectUtils.chooseNotNull;
 
@@ -35,10 +35,11 @@ public class SvnProgressCanceller implements ProgressTracker {
     myIndicator = indicator;
   }
 
-  public void checkCancelled() throws SVNCancelException {
+  public void checkCancelled() throws ProcessCanceledException {
     ProgressIndicator indicator = chooseNotNull(myIndicator, ProgressManager.getInstance().getProgressIndicator());
-    if (indicator != null && indicator.isCanceled()) {
-      throw new SVNCancelException();
+
+    if (indicator != null) {
+      indicator.checkCanceled();
     }
   }
 

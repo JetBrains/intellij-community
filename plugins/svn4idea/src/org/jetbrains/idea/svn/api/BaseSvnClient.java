@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.svn.api;
 
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
@@ -24,9 +25,7 @@ import org.jetbrains.idea.svn.WorkingCopyFormat;
 import org.jetbrains.idea.svn.auth.AuthenticationService;
 import org.jetbrains.idea.svn.commandLine.*;
 import org.jetbrains.idea.svn.diff.DiffOptions;
-import org.tmatesoft.svn.core.SVNCancelException;
-import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNEvent;
@@ -173,7 +172,12 @@ public abstract class BaseSvnClient implements SvnClient {
 
         @Override
         public void checkCancelled() throws SVNCancelException {
-          handler.checkCancelled();
+          try {
+            handler.checkCancelled();
+          }
+          catch (ProcessCanceledException e) {
+            throw new SVNCancelException(SVNErrorMessage.create(SVNErrorCode.CANCELLED, e.getMessage()), e);
+          }
         }
       };
     }

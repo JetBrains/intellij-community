@@ -15,11 +15,11 @@
  */
 package org.jetbrains.idea.svn.api;
 
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.util.ThrowableConsumer;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
-import org.tmatesoft.svn.core.SVNCancelException;
 
 public interface ProgressTracker extends ThrowableConsumer<ProgressEvent, SvnBindException> {
 
-  void checkCancelled() throws SVNCancelException;
+  void checkCancelled() throws ProcessCanceledException;
 }

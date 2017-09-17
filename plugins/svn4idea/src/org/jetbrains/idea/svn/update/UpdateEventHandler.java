@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.svn.update;
 
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -33,11 +34,8 @@ import org.jetbrains.idea.svn.api.ProgressEvent;
 import org.jetbrains.idea.svn.api.ProgressTracker;
 import org.jetbrains.idea.svn.checkin.CommitInfo;
 import org.jetbrains.idea.svn.status.StatusType;
-import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.util.SVNLogType;
 
 import java.io.File;
 import java.util.HashMap;
@@ -267,12 +265,9 @@ public class UpdateEventHandler implements ProgressTracker {
     }
   }
 
-  public void checkCancelled() throws SVNCancelException {
+  public void checkCancelled() throws ProcessCanceledException {
     if (myProgressIndicator != null) {
       myProgressIndicator.checkCanceled();
-      if (myProgressIndicator.isCanceled()) {
-        SVNErrorManager.cancel(SvnBundle.message("exception.text.update.operation.cancelled"), SVNLogType.DEFAULT);
-      }
     }
   }
 

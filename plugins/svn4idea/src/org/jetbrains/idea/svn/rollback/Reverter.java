@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.svn.rollback;
 
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.rollback.RollbackProgressListener;
@@ -206,7 +207,7 @@ public class Reverter {
         }
       }
 
-      public void checkCancelled() {
+      public void checkCancelled() throws ProcessCanceledException {
         listener.checkCanceled();
       }
     };
