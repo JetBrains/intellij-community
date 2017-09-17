@@ -833,6 +833,7 @@ class PyDB:
                     seq = info.pydev_message
                     cmd = self.cmd_factory.make_set_next_stmnt_status_message(seq, stop, response_msg)
                     self.writer.add_command(cmd)
+                    info.pydev_message = ''
 
                 if stop:
                     info.pydev_state = STATE_RUN
