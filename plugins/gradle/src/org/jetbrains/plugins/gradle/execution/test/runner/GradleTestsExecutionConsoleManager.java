@@ -23,7 +23,6 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.TestTreeView;
 import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
-import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
 import com.intellij.execution.testframework.sm.runner.ui.SMRootTestProxyFormatter;
 import com.intellij.execution.testframework.sm.runner.ui.TestTreeRenderer;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -92,15 +91,7 @@ public class GradleTestsExecutionConsoleManager
         originalRenderer.setAdditionalRootFormatter(new SMRootTestProxyFormatter() {
           @Override
           public void format(@NotNull SMTestProxy.SMRootTestProxy testProxy, @NotNull TestTreeRenderer renderer) {
-            final TestStateInfo.Magnitude magnitude = testProxy.getMagnitudeInfo();
-            if (magnitude == TestStateInfo.Magnitude.RUNNING_INDEX) {
-              renderer.clear();
-              renderer.append(GradleBundle.message(
-                "gradle.test.runner.ui.tests.tree.presentation.labels.waiting.tests"),
-                              SimpleTextAttributes.REGULAR_ATTRIBUTES
-              );
-            }
-            else if (!testProxy.isInProgress() && testProxy.isEmptySuite()) {
+            if (!testProxy.isInProgress() && testProxy.isEmptySuite()) {
               renderer.clear();
               renderer.append(GradleBundle.message(
                 "gradle.test.runner.ui.tests.tree.presentation.labels.no.tests.were.found"),
@@ -111,6 +102,9 @@ public class GradleTestsExecutionConsoleManager
         });
       }
     }
+    SMTestProxy.SMRootTestProxy testsRootNode = consoleView.getResultsViewer().getTestsRootNode();
+    testsRootNode.setSuiteStarted();
+    consoleView.getResultsViewer().onTestingStarted(testsRootNode);
 
     if (task instanceof ExternalSystemExecuteTaskTask) {
       final ExternalSystemExecuteTaskTask executeTask = (ExternalSystemExecuteTaskTask)task;
