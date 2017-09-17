@@ -264,14 +264,17 @@ public class BackgroundTaskUtil {
   }
 
   private static boolean registerIfParentNotDisposed(@NotNull Disposable parent, @NotNull Disposable disposable) {
-    try {
-      Disposer.register(parent, disposable);
-      return true;
-    }
-    catch(IncorrectOperationException ioe) {
-      LOG.error(ioe);
-      return false;
-    }
+    return ReadAction.compute(() -> {
+      if (Disposer.isDisposed(parent)) return false;
+      try {
+        Disposer.register(parent, disposable);
+        return true;
+      }
+      catch(IncorrectOperationException ioe) {
+        LOG.error(ioe);
+        return false;
+      }
+    });
   }
 
   @CalledInAny
