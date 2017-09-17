@@ -216,10 +216,7 @@ public abstract class AbstractViewManager implements BuildProgressListener, Disp
                 public void dispose() {
                 }
               };
-
-              if (executionConsole != null) {
-                Disposer.register(buildConsoleView, executionConsole);
-              }
+              Disposer.register(buildConsoleView, contentDescriptor);
             }
           }
           if (buildConsoleView == null) {
