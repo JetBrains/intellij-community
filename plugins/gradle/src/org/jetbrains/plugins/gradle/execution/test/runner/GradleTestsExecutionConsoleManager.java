@@ -18,14 +18,18 @@ package org.jetbrains.plugins.gradle.execution.test.runner;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.JavaRerunFailedTestsAction;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.process.ProcessAdapter;
+import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.TestTreeView;
 import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.sm.runner.ui.SMRootTestProxyFormatter;
+import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm;
 import com.intellij.execution.testframework.sm.runner.ui.TestTreeRenderer;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.execution.ExternalSystemExecutionConsoleManager;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
@@ -84,7 +88,8 @@ public class GradleTestsExecutionConsoleManager
     final GradleTestsExecutionConsole consoleView = new GradleTestsExecutionConsole(consoleProperties, splitterPropertyName);
     SMTestRunnerConnectionUtil.initConsoleView(consoleView, testFrameworkName);
 
-    final TestTreeView testTreeView = consoleView.getResultsViewer().getTreeView();
+    SMTestRunnerResultsForm resultsViewer = consoleView.getResultsViewer();
+    final TestTreeView testTreeView = resultsViewer.getTreeView();
     if (testTreeView != null) {
       TestTreeRenderer originalRenderer = ObjectUtils.tryCast(testTreeView.getCellRenderer(), TestTreeRenderer.class);
       if (originalRenderer != null) {
@@ -102,9 +107,22 @@ public class GradleTestsExecutionConsoleManager
         });
       }
     }
-    SMTestProxy.SMRootTestProxy testsRootNode = consoleView.getResultsViewer().getTestsRootNode();
+    SMTestProxy.SMRootTestProxy testsRootNode = resultsViewer.getTestsRootNode();
     testsRootNode.setSuiteStarted();
-    consoleView.getResultsViewer().onTestingStarted(testsRootNode);
+    resultsViewer.onTestingStarted(testsRootNode);
+    if (processHandler != null) {
+      processHandler.addProcessListener(new ProcessAdapter() {
+        @Override
+        public void processTerminated(@NotNull ProcessEvent event) {
+          if (testsRootNode.isInProgress()) {
+            ApplicationManager.getApplication().invokeLater(() -> {
+              testsRootNode.setFinished();
+              resultsViewer.onTestingFinished(testsRootNode);
+            });
+          }
+        }
+      });
+    }
 
     if (task instanceof ExternalSystemExecuteTaskTask) {
       final ExternalSystemExecuteTaskTask executeTask = (ExternalSystemExecuteTaskTask)task;
