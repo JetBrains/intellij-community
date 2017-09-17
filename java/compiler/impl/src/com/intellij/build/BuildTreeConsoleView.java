@@ -259,7 +259,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
 
   @Override
   public JComponent getPreferredFocusableComponent() {
-    return null;
+    return myBuilder.getTree();
   }
 
   @Override

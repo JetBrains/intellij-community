@@ -209,7 +209,11 @@ public abstract class AbstractViewManager implements BuildProgressListener, Disp
 
                 @Override
                 public JComponent getPreferredFocusableComponent() {
-                  return component;
+                  ExecutionConsole console = contentDescriptor.getExecutionConsole();
+                  if(console != null) return console.getPreferredFocusableComponent();
+                  return (component instanceof ComponentContainer)
+                         ? ((ComponentContainer)component).getPreferredFocusableComponent()
+                         : component;
                 }
 
                 @Override
