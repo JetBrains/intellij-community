@@ -32,6 +32,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.messages.MessageBus;
@@ -236,14 +237,22 @@ public class BackgroundTaskUtil {
         }
       };
 
-      Disposer.register(parent, disposable);
+      if (!registerIfParentNotDisposed(parent, disposable)) {
+        indicator.cancel();
+        return indicator;
+      }
       future.whenComplete((o, e) -> Disposer.dispose(disposable));
     }
     else {
       Disposable disposable = () -> {
         if (indicator.isRunning()) indicator.cancel();
       };
-      Disposer.register(parent, disposable);
+
+      if (!registerIfParentNotDisposed(parent, disposable)) {
+        indicator.cancel();
+        return indicator;
+      }
+
       try {
         toRun.run();
       }
@@ -252,6 +261,17 @@ public class BackgroundTaskUtil {
       }
     }
     return indicator;
+  }
+
+  private static boolean registerIfParentNotDisposed(@NotNull Disposable parent, @NotNull Disposable disposable) {
+    try {
+      Disposer.register(parent, disposable);
+      return true;
+    }
+    catch(IncorrectOperationException ioe) {
+      LOG.error(ioe);
+      return false;
+    }
   }
 
   @CalledInAny
