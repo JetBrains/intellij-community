@@ -548,7 +548,6 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
                                     XSourcePosition sourcePosition,
                                     PyDebugCallback<Pair<Boolean, String>> callback) {
     if (!checkCanPerformCommands()) return;
-    getSession().sessionResumed();
     dropFrameCaches();
     if (isConnected()) {
       String threadId = threadIdBeforeResumeOrStep(context);

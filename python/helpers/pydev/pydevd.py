@@ -757,17 +757,17 @@ class PyDB:
                 response_msg = "jump is available only within the bottom frame"
         return stop, old_line, response_msg
 
-    def do_wait_suspend(self, thread, frame, event, arg, suspend_type="trace"): #@UnusedVariable
+    def do_wait_suspend(self, thread, frame, event, arg, suspend_type="trace", send_suspend_message=True): #@UnusedVariable
         """ busy waits until the thread state changes to RUN
         it expects thread's state as attributes of the thread.
         Upon running, processes any outstanding Stepping commands.
         """
         self.process_internal_commands()
 
-        message = thread.additional_info.pydev_message
-
-        cmd = self.cmd_factory.make_thread_suspend_message(get_thread_id(thread), frame, thread.stop_reason, message, suspend_type)
-        self.writer.add_command(cmd)
+        if send_suspend_message:
+            message = thread.additional_info.pydev_message
+            cmd = self.cmd_factory.make_thread_suspend_message(get_thread_id(thread), frame, thread.stop_reason, message, suspend_type)
+            self.writer.add_command(cmd)
 
         CustomFramesContainer.custom_frames_lock.acquire()  # @UndefinedVariable
         try:
@@ -834,11 +834,8 @@ class PyDB:
                     cmd = self.cmd_factory.make_set_next_stmnt_status_message(seq, stop, response_msg)
                     self.writer.add_command(cmd)
 
-                cmd = self.cmd_factory.make_thread_run_message(get_thread_id(thread), info.pydev_step_cmd)
-                self.writer.add_command(cmd)
-                info.pydev_state = STATE_RUN
-
                 if stop:
+                    info.pydev_state = STATE_RUN
                     # `f_line` should be assigned within a tracing function, so, we can't assign it here
                     # for the frame evaluation debugger. For tracing debugger it will be assigned, but we should
                     # revert the previous value, because both debuggers should behave the same way
@@ -851,7 +848,7 @@ class PyDB:
                     info.pydev_state = STATE_SUSPEND
                     thread.stop_reason = CMD_THREAD_SUSPEND
                     # return to the suspend state and wait for other command
-                    self.do_wait_suspend(thread, frame, event, arg, "trace")
+                    self.do_wait_suspend(thread, frame, event, arg, "trace", send_suspend_message=False)
                     return
 
         elif info.pydev_step_cmd == CMD_STEP_RETURN:
