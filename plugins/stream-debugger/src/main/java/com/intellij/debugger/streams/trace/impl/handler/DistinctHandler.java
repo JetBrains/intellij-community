@@ -15,10 +15,16 @@
  */
 package com.intellij.debugger.streams.trace.impl.handler;
 
+import com.intellij.debugger.streams.trace.dsl.CodeBlock;
+import com.intellij.debugger.streams.trace.dsl.Expression;
+import com.intellij.debugger.streams.trace.dsl.impl.TextExpression;
+import com.intellij.debugger.streams.trace.dsl.impl.java.JavaCodeBlock;
+import com.intellij.debugger.streams.trace.dsl.impl.java.JavaStatementFactory;
 import com.intellij.debugger.streams.trace.impl.TraceExpressionBuilderImpl;
 import com.intellij.debugger.streams.trace.impl.handler.type.ClassTypeImpl;
 import com.intellij.debugger.streams.trace.impl.handler.type.GenericType;
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -69,9 +75,9 @@ public class DistinctHandler extends HandlerBase.Intermediate {
 
   @NotNull
   @Override
-  public String prepareResult() {
+  public CodeBlock prepareResult() {
     final String newLine = TraceExpressionBuilderImpl.LINE_SEPARATOR;
-    final String peekPrepare = myPeekTracer.prepareResult();
+    final CodeBlock peekPrepare = myPeekTracer.prepareResult();
 
     final String storeMapName = myStoreMapVariable.getName();
     final String afterMapName = myPeekTracer.getAfterMapName();
@@ -90,13 +96,14 @@ public class DistinctHandler extends HandlerBase.Intermediate {
     final String peekResult =
       "final java.lang.Object peekResult = " + myPeekTracer.getResultExpression() + ";" + TraceExpressionBuilderImpl.LINE_SEPARATOR;
     final String resolve2Array = myResolveMapVariable.convertToArray("resolve");
-    return peekPrepare + prepareResolveMap + resolve2Array + peekResult;
+    String res = peekPrepare + prepareResolveMap + resolve2Array + peekResult;
+    return peekPrepare;
   }
 
   @NotNull
   @Override
-  public String getResultExpression() {
-    return "new java.lang.Object[] { peekResult, resolve }";
+  public Expression getResultExpression() {
+    return new TextExpression("new java.lang.Object[] { peekResult, resolve }");
   }
 
   @NotNull

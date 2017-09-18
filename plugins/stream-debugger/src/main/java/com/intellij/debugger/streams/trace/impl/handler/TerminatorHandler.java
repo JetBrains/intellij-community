@@ -15,6 +15,8 @@
  */
 package com.intellij.debugger.streams.trace.impl.handler;
 
+import com.intellij.debugger.streams.trace.dsl.CodeBlock;
+import com.intellij.debugger.streams.trace.dsl.Expression;
 import com.intellij.debugger.streams.trace.impl.handler.type.GenericType;
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall;
 import org.jetbrains.annotations.NotNull;
@@ -45,13 +47,13 @@ public class TerminatorHandler extends HandlerBase.Terminator {
 
   @NotNull
   @Override
-  public String prepareResult() {
+  public CodeBlock prepareResult() {
     return myPeekTracerHandler.prepareResult();
   }
 
   @NotNull
   @Override
-  public String getResultExpression() {
+  public Expression getResultExpression() {
     return myPeekTracerHandler.getResultExpression();
   }
 }

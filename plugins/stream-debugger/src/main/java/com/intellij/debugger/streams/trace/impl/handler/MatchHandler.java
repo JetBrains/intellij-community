@@ -15,6 +15,9 @@
  */
 package com.intellij.debugger.streams.trace.impl.handler;
 
+import com.intellij.debugger.streams.trace.dsl.CodeBlock;
+import com.intellij.debugger.streams.trace.dsl.Expression;
+import com.intellij.debugger.streams.trace.dsl.impl.TextExpression;
 import com.intellij.debugger.streams.trace.impl.TraceExpressionBuilderImpl;
 import com.intellij.debugger.streams.trace.impl.handler.type.GenericType;
 import com.intellij.debugger.streams.wrapper.CallArgument;
@@ -49,7 +52,6 @@ public class MatchHandler extends HandlerBase.Terminator {
   }
 
   @NotNull
-  @Override
   protected List<Variable> getVariables() {
     final List<Variable> variables = new ArrayList<>(myBeforeFilterPeekInserter.getVariables());
     variables.addAll(myAfterFilterPeekInserter.getVariables());
@@ -61,19 +63,19 @@ public class MatchHandler extends HandlerBase.Terminator {
 
   @NotNull
   @Override
-  public String prepareResult() {
+  public CodeBlock prepareResult() {
     final String separator = TraceExpressionBuilderImpl.LINE_SEPARATOR;
-    return "Object[] result = new Object[3];" + separator +
-           "{" + separator +
-           myBeforeFilterPeekInserter.prepareResult() +
-           "result[0] = " + myBeforeFilterPeekInserter.getResultExpression() + ";" + separator +
-           "}" + separator +
-           "{" + separator +
-           myAfterFilterPeekInserter.prepareResult() + separator +
-           "result[1] = " + myAfterFilterPeekInserter.getResultExpression() + ";" + separator +
-           "}" + separator +
-           "result[2] = streamResult;"
-      ;
+    String res = "Object[] result = new Object[3];" + separator +
+                 "{" + separator +
+                 myBeforeFilterPeekInserter.prepareResult() +
+                 "result[0] = " + myBeforeFilterPeekInserter.getResultExpression() + ";" + separator +
+                 "}" + separator +
+                 "{" + separator +
+                 myAfterFilterPeekInserter.prepareResult() + separator +
+                 "result[1] = " + myAfterFilterPeekInserter.getResultExpression() + ";" + separator +
+                 "}" + separator +
+                 "result[2] = streamResult;";
+    return myAfterFilterPeekInserter.prepareResult();
   }
 
   @NotNull
@@ -89,8 +91,8 @@ public class MatchHandler extends HandlerBase.Terminator {
 
   @NotNull
   @Override
-  public String getResultExpression() {
-    return "result";
+  public Expression getResultExpression() {
+    return new TextExpression("result");
   }
 
   @NotNull

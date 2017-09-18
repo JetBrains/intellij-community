@@ -15,6 +15,11 @@
  */
 package com.intellij.debugger.streams.trace.impl.handler
 
+import com.intellij.debugger.streams.trace.dsl.CodeBlock
+import com.intellij.debugger.streams.trace.dsl.Expression
+import com.intellij.debugger.streams.trace.dsl.impl.TextExpression
+import com.intellij.debugger.streams.trace.dsl.impl.java.JavaCodeBlock
+import com.intellij.debugger.streams.trace.dsl.impl.java.JavaStatementFactory
 import com.intellij.debugger.streams.trace.impl.TraceExpressionBuilderImpl.LINE_SEPARATOR
 import com.intellij.debugger.streams.trace.impl.handler.HandlerBase.Intermediate
 import com.intellij.debugger.streams.trace.impl.handler.type.ClassTypeImpl
@@ -78,7 +83,7 @@ open class DistinctByKeyHandler(callNumber: Int, call: IntermediateStreamCall) :
     return result
   }
 
-  override fun prepareResult(): String {
+  override fun prepareResult(): CodeBlock {
     val peekPrepare = myPeekHandler.prepareResult()
 
     val ifAbsent = "k -> new java.util.ArrayList<Integer>()"
@@ -106,16 +111,17 @@ open class DistinctByKeyHandler(callNumber: Int, call: IntermediateStreamCall) :
                            "}" + LINE_SEPARATOR
 
     val transitionsToArray = transitions.convertToArray("transitionsArray")
-    return peekPrepare +
-           Variable.declarationStatement(keys2TimesBefore) +
-           Variable.declarationStatement(transitions) +
-           buildMap +
-           buildTransitions +
-           transitionsToArray
+    val res = peekPrepare.toCode() +
+              Variable.declarationStatement(keys2TimesBefore) +
+              Variable.declarationStatement(transitions) +
+              buildMap +
+              buildTransitions +
+              transitionsToArray
+    return JavaCodeBlock(JavaStatementFactory())
   }
 
-  override fun getResultExpression(): String {
-    return "new Object[] { ${myPeekHandler.resultExpression}, transitionsArray }"
+  override fun getResultExpression(): Expression {
+    return TextExpression("new Object[] { ${myPeekHandler.resultExpression}, transitionsArray }")
   }
 
   private fun IntermediateStreamCall.updateArguments(args: List<CallArgument>): IntermediateStreamCall {

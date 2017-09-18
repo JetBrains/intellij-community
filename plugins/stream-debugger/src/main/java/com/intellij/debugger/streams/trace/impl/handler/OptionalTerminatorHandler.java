@@ -16,6 +16,10 @@
 package com.intellij.debugger.streams.trace.impl.handler;
 
 import com.intellij.debugger.streams.trace.TerminatorCallHandler;
+import com.intellij.debugger.streams.trace.dsl.CodeBlock;
+import com.intellij.debugger.streams.trace.dsl.Expression;
+import com.intellij.debugger.streams.trace.dsl.VariableDeclaration;
+import com.intellij.debugger.streams.trace.dsl.impl.TextExpression;
 import com.intellij.debugger.streams.trace.impl.handler.type.GenericType;
 import com.intellij.debugger.streams.trace.impl.handler.type.GenericTypeUtil;
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall;
@@ -40,20 +44,20 @@ public class OptionalTerminatorHandler implements TerminatorCallHandler {
 
   @NotNull
   @Override
-  public String additionalVariablesDeclaration() {
+  public List<VariableDeclaration> additionalVariablesDeclaration() {
     return myTerminatorHandler.additionalVariablesDeclaration();
   }
 
   @NotNull
   @Override
-  public String prepareResult() {
+  public CodeBlock prepareResult() {
     return myTerminatorHandler.prepareResult();
   }
 
   @NotNull
   @Override
-  public String getResultExpression() {
-    return "new Object[] { " + myTerminatorHandler.getResultExpression() + ", " + buildOptionalExpression() + "}";
+  public Expression getResultExpression() {
+    return new TextExpression("new Object[] { " + myTerminatorHandler.getResultExpression() + ", " + buildOptionalExpression() + "}");
   }
 
   @NotNull

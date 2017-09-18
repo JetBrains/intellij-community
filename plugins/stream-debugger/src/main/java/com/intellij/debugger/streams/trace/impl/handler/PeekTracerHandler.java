@@ -15,6 +15,11 @@
  */
 package com.intellij.debugger.streams.trace.impl.handler;
 
+import com.intellij.debugger.streams.trace.dsl.CodeBlock;
+import com.intellij.debugger.streams.trace.dsl.Expression;
+import com.intellij.debugger.streams.trace.dsl.impl.TextExpression;
+import com.intellij.debugger.streams.trace.dsl.impl.java.JavaCodeBlock;
+import com.intellij.debugger.streams.trace.dsl.impl.java.JavaStatementFactory;
 import com.intellij.debugger.streams.trace.impl.TraceExpressionBuilderImpl;
 import com.intellij.debugger.streams.trace.impl.handler.type.GenericType;
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall;
@@ -66,16 +71,17 @@ public class PeekTracerHandler extends HandlerBase.Intermediate {
 
   @NotNull
   @Override
-  public String prepareResult() {
+  public CodeBlock prepareResult() {
     final String beforeConversion = myBeforeVariable.convertToArray(BEFORE_ARRAY_NAME);
     final String afterConversion = myAfterVariable.convertToArray(AFTER_ARRAY_NAME);
-    return beforeConversion + TraceExpressionBuilderImpl.LINE_SEPARATOR + afterConversion;
+    String res = beforeConversion + TraceExpressionBuilderImpl.LINE_SEPARATOR + afterConversion;
+    return new JavaCodeBlock(new JavaStatementFactory());
   }
 
   @NotNull
   @Override
-  public String getResultExpression() {
-    return "new java.lang.Object[] {beforeArray, afterArray}";
+  public Expression getResultExpression() {
+    return new TextExpression("new java.lang.Object[] {beforeArray, afterArray}");
   }
 
   @NotNull
