@@ -62,6 +62,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.ReferenceRange;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.LightweightHint;
+import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
@@ -99,6 +100,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private final CompletionLookupArranger myArranger;
   private OffsetsInFile myHostOffsets;
   private final LookupImpl myLookup;
+  private final Alarm mySuppressTimeoutAlarm = new Alarm();
   private final MergingUpdateQueue myQueue;
   private final Update myUpdate = new Update("update") {
     @Override
@@ -863,6 +865,26 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   public static void setAutopopupTriggerTime(int timeSpan) {
     ourShowPopupGroupingTime = timeSpan;
     ourShowPopupAfterFirstItemGroupingTime = timeSpan;
+  }
+
+  public void makeSureLookupIsShown(int timeout) {
+    mySuppressTimeoutAlarm.addRequest(this::showIfSuppressed, timeout);
+  }
+
+  private void showIfSuppressed() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    if(!myIsUpdateSuppressed)
+      return;
+
+    if(myLookup.isShown())
+      return;
+
+    try {
+      myIsUpdateSuppressed = false;
+      showLookup();
+    } finally {
+      myIsUpdateSuppressed = true;
+    }
   }
 
   private static class ModifierTracker extends KeyAdapter {
