@@ -899,14 +899,17 @@ public class EquivalenceChecker {
     final PsiExpression right2 = binaryExpression2.getROperand();
     if (!tokenType1.equals(tokenType2)) {
       // process matches like "a < b" and "b > a"
-      DfaRelationValue.RelationType rel1 = DfaRelationValue.RelationType.fromElementType(tokenType1);
-      DfaRelationValue.RelationType rel2 = DfaRelationValue.RelationType.fromElementType(tokenType2);
+      final DfaRelationValue.RelationType rel1 = DfaRelationValue.RelationType.fromElementType(tokenType1);
+      final DfaRelationValue.RelationType rel2 = DfaRelationValue.RelationType.fromElementType(tokenType2);
       if(rel1 != null && rel2 != null && rel1.getFlipped() == rel2) {
         return expressionsAreEquivalent(new PsiExpression[] {left1, right1}, new PsiExpression[] {right2, left2});
       }
       return EXACT_MISMATCH;
     }
-    return expressionsAreEquivalent(new PsiExpression[] {left1, right1}, new PsiExpression[] {left2, right2});
+    final Match match = expressionsAreEquivalent(new PsiExpression[] {left1, right1}, new PsiExpression[] {left2, right2});
+    return match == EXACT_MISMATCH && ParenthesesUtils.isCommutativeOperation(binaryExpression1)
+           ? expressionsAreEquivalent(new PsiExpression[]{left1, right1}, new PsiExpression[]{right2, left2})
+           : match;
   }
 
   protected Match assignmentExpressionsMatch(@NotNull PsiAssignmentExpression assignmentExpression1, @NotNull PsiAssignmentExpression assignmentExpression2) {
