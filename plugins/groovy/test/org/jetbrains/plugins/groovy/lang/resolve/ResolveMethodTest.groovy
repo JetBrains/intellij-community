@@ -32,10 +32,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyMethodResultImpl
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrMethodImpl
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitMethod
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.*
 import org.jetbrains.plugins.groovy.util.NotNullCachedComputableWrapper
 import org.jetbrains.plugins.groovy.util.TestUtils
 
@@ -263,7 +260,7 @@ class ResolveMethodTest extends GroovyResolveTestCase {
   void testWrongConstructor() {
     myFixture.addFileToProject('Classes.groovy', 'class Foo { int a; int b }')
     def ref = configureByText('new Fo<caret>o(2, 3)')
-    assert !((GrNewExpression) ref.element.parent).advancedResolve().element
+    assert ((GrNewExpression) ref.element.parent).advancedResolve().element instanceof DefaultConstructor
   }
 
   void testLangImmutableConstructor() {
