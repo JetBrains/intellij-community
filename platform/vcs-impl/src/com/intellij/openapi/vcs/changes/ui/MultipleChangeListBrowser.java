@@ -208,8 +208,14 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
     List<Object> result = ContainerUtil.newArrayList();
 
     result.addAll(node.getAllChangesUnder());
-    if (isShowUnversioned() && isUnderUnversioned(node)) {
-      result.addAll(node.getAllFilesUnder());
+    if (isShowUnversioned()) {
+      if (isUnderUnversioned(node)) {
+        result.addAll(node.getAllFilesUnder());
+      }
+      else if (node.isRoot()) {
+        ChangesBrowserUnversionedFilesNode unversionedFilesNode = findUnversionedFilesNode();
+        if (unversionedFilesNode != null) result.addAll(unversionedFilesNode.getAllFilesUnder());
+      }
     }
 
     return result;
@@ -261,7 +267,7 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
   @Nullable
   private ChangesBrowserUnversionedFilesNode findUnversionedFilesNode() {
     //noinspection unchecked
-    Enumeration<ChangesBrowserNode> nodes = myViewer.getRoot().breadthFirstEnumeration();
+    Enumeration<ChangesBrowserNode> nodes = myViewer.getRoot().children();
 
     return ContainerUtil.findInstance(ContainerUtil.iterate(nodes), ChangesBrowserUnversionedFilesNode.class);
   }
