@@ -546,6 +546,43 @@ public class HighlightUtil extends HighlightUtilBase {
     return highlightInfo;
   }
 
+  static HighlightInfo checkVarTypeApplicability(@NotNull PsiVariable variable) {
+    PsiTypeElement typeElement = variable.getTypeElement();
+    if (typeElement != null && typeElement.isInferredType()) {
+
+
+      PsiElement parent = variable.getParent();
+      if (variable instanceof PsiLocalVariable) {
+        PsiType lType = variable.getType();
+        PsiExpression initializer = variable.getInitializer();
+        if (initializer == null) {
+          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+            .descriptionAndTooltip("Cannot infer type: 'var' on variable without initializer")
+            .range(variable).create();
+        }
+        PsiLocalVariable[] localVariables = PsiTreeUtil.getChildrenOfType(parent, PsiLocalVariable.class);
+        if (localVariables.length > 1) {
+          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+            .descriptionAndTooltip("'var' is not allowed in a compound declaration")
+            .range(variable).create();
+        }
+
+        if (lType instanceof PsiArrayType) {
+          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+            .descriptionAndTooltip("'var' is not allowed as an element type of an array")
+            .range(variable)
+            .create();
+        }
+
+        if (PsiType.NULL.equals(lType)) {
+          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip("Cannot infer type: variable initializer is 'null'")
+            .range(variable).create();
+        }
+      }
+    }
+    return null;
+  }
+
   @Nullable
   static HighlightInfo checkAssignability(@Nullable PsiType lType,
                                           @Nullable PsiType rType,
@@ -1942,7 +1979,9 @@ public class HighlightUtil extends HighlightUtilBase {
     PsiElement parent = expression.getParent();
     if (parent instanceof PsiVariable) {
       PsiVariable variable = (PsiVariable)parent;
-      if (variable.getType() instanceof PsiArrayType) return null;
+      PsiTypeElement typeElement = variable.getTypeElement();
+      boolean disabledForInferredType = typeElement == null || !typeElement.isInferredType();
+      if (disabledForInferredType && variable.getType() instanceof PsiArrayType) return null;
     }
     else if (parent instanceof PsiNewExpression || parent instanceof PsiArrayInitializerExpression) {
       return null;

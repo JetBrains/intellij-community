@@ -55,4 +55,13 @@ public interface PsiTypeElement extends PsiElement, PsiAnnotationOwner {
    */
   @Nullable
   PsiJavaCodeReferenceElement getInnermostComponentReferenceElement();
+
+
+  /**
+   * Returns true when local variable is declared as {code}var local = 1;{code}
+   * @return
+   */
+  default boolean isInferredType() {
+    return false;
+  }
 }

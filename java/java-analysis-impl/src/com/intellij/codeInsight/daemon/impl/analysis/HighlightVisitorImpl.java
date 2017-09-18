@@ -1643,6 +1643,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   public void visitVariable(PsiVariable variable) {
     super.visitVariable(variable);
     try {
+      if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkVarTypeApplicability(variable));
       if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkVariableInitializerType(variable));
     }
     catch (IndexNotReadyException ignored) { }

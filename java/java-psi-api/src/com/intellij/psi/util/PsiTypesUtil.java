@@ -247,6 +247,10 @@ public class PsiTypesUtil {
     final PsiElement parent = PsiUtil.skipParenthesizedExprUp(element.getParent());
     if (parent instanceof PsiVariable) {
       if (PsiUtil.checkSameExpression(element, ((PsiVariable)parent).getInitializer())) {
+        PsiTypeElement typeElement = ((PsiVariable)parent).getTypeElement();
+        if (typeElement != null && typeElement.isInferredType()) {
+          return null;
+        }
         return ((PsiVariable)parent).getType();
       }
     }
