@@ -25,6 +25,9 @@ import com.intellij.openapi.externalSystem.service.project.manage.FacetHandlerEx
 import com.intellij.openapi.externalSystem.service.project.manage.RunConfigHandlerExtension;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.codeStyle.CodeStyleScheme;
+import com.intellij.psi.codeStyle.CodeStyleSchemes;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 import org.junit.runners.Parameterized;
@@ -44,14 +47,43 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
     return Arrays.asList(new Object[][]{{BASE_GRADLE_VERSION}});
   }
 
+
+  @Test
+  public void testCodeStyleSettingsImport() throws Exception {
+    importProject(
+      "buildscript {\n" +
+      "  dependencies {\n" +
+      "     classpath files('" + getGradlePluginPath() + "')\n" +
+      "  }\n" +
+      "}\n" +
+      "apply plugin: 'org.jetbrains.gradle.plugin.idea-ext'\n" +
+      "idea {\n" +
+      "  project.settings {\n" +
+      "    codeStyle {\n" +
+      "      indent 'tabs'\n" +
+      "      indentSize 3\n" +
+      "    }\n" +
+      "  }\n" +
+      "}"
+    );
+
+    final CodeStyleScheme scheme = CodeStyleSchemes.getInstance().getCurrentScheme();
+    final CodeStyleSettings settings = scheme.getCodeStyleSettings();
+
+    assertEquals("Gradle Imported", scheme.getName());
+    assertFalse(scheme.isDefault());
+
+    assertTrue(settings.getIndentOptions().USE_TAB_CHARACTER);
+    assertEquals(3, settings.getIndentOptions().INDENT_SIZE);
+  }
+
   @Test
   public void testCompilerConfigurationSettingsImport() throws Exception {
-    final String pathToPlugin = getClass().getResource("/testCompilerConfigurationSettingsImport/gradle-idea-ext.jar").toString();
 
     importProject(
       "buildscript {\n" +
       "  dependencies {\n" +
-      "     classpath files('" + pathToPlugin + "')\n" +
+      "     classpath files('" + getGradlePluginPath() + "')\n" +
       "  }\n" +
       "}\n" +
       "apply plugin: 'org.jetbrains.gradle.plugin.idea-ext'\n" +
@@ -86,7 +118,6 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
 
   @Test
   public void testApplicationRunConfigurationSettingsImport() throws Exception {
-    final String pathToPlugin = getClass().getResource("/testCompilerConfigurationSettingsImport/gradle-idea-ext.jar").toString();
     final String typeName = "testRunConfig";
 
     TestRunConfigHandlerExtension testExtension = new TestRunConfigHandlerExtension(typeName);
@@ -95,7 +126,7 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
     importProject(
       "buildscript {\n" +
       "  dependencies {\n" +
-      "     classpath files('" + pathToPlugin + "')\n" +
+      "     classpath files('" + getGradlePluginPath() + "')\n" +
       "  }\n" +
       "}\n" +
       "apply plugin: 'org.jetbrains.gradle.plugin.idea-ext'\n" +
@@ -130,7 +161,6 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
 
   @Test
   public void testFacetSettingsImport() throws Exception {
-    final String pathToPlugin = getClass().getResource("/testCompilerConfigurationSettingsImport/gradle-idea-ext.jar").toString();
 
     TestFacetHandlerExtension testExtension = new TestFacetHandlerExtension("testFacet");
     Extensions.getRootArea().getExtensionPoint(FacetHandlerExtension.EP_NAME).registerExtension(testExtension);
@@ -139,7 +169,7 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
     importProject(
       "buildscript {\n" +
       "  dependencies {\n" +
-      "     classpath files('" + pathToPlugin + "')\n" +
+      "     classpath files('" + getGradlePluginPath() + "')\n" +
       "  }\n" +
       "}\n" +
       "apply plugin: 'org.jetbrains.gradle.plugin.idea-ext'\n" +
@@ -168,6 +198,9 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
     assertEquals("Test Value 2", namedSettings.get("testField"));
   }
 
+  private String getGradlePluginPath() {
+    return getClass().getResource("/testCompilerConfigurationSettingsImport/gradle-idea-ext.jar").toString();
+  }
 }
 
 

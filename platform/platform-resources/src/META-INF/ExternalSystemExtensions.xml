@@ -36,6 +36,7 @@
     <externalProjectDataService implementation="com.intellij.openapi.externalSystem.service.project.manage.ConfigurationDataService"/>
 
     <externalSystemConfigurationHandler implementation="com.intellij.openapi.externalSystem.service.project.manage.CompilerConfigurationHandler"/>
+    <externalSystemConfigurationHandler implementation="com.intellij.openapi.externalSystem.service.project.manage.CodeStyleConfigurationHandler"/>
     <externalSystemConfigurationHandler implementation="com.intellij.openapi.externalSystem.service.project.manage.RunConfigurationHandler"/>
     <externalSystemConfigurationHandler implementation="com.intellij.openapi.externalSystem.service.project.manage.FacetHandler"/>
     <runConfigurationHandlerExtension implementation="com.intellij.openapi.externalSystem.service.project.manage.ApplicationRunConfigHandler"/>
