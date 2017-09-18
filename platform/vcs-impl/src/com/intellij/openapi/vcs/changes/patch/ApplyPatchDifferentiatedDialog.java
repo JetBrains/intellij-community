@@ -1204,17 +1204,26 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     @NotNull
     @Override
     public AnAction createGoToChangeAction(@NotNull Consumer<Integer> onSelected) {
-      return new ChangeGoToChangePopupAction.Fake<MyDiffRequestChain>(this, myIndex, onSelected) {
+      return new ChangeGoToChangePopupAction<MyDiffRequestChain>(this, myIndex) {
         @NotNull
         @Override
-        protected FilePath getFilePath(int index) {
-          return ChangesUtil.getFilePath(myChanges.get(index));
+        protected DefaultTreeModel buildTreeModel(@NotNull Project project, boolean showFlatten) {
+          List<TreeModelBuilder.GenericNodeData> nodesData = new ArrayList<>();
+          for (int i = 0; i < myChanges.size(); i++) {
+            Change change = myChanges.get(i);
+            FilePath filePath = ChangesUtil.getFilePath(change);
+            FileStatus fileStatus = change.getFileStatus();
+            nodesData.add(new TreeModelBuilder.GenericNodeData(filePath, fileStatus, myIndex));
+          }
+
+          TreeModelBuilder builder = new TreeModelBuilder(project, showFlatten);
+          builder.setGenericNodes(nodesData, null);
+          return builder.build();
         }
 
-        @NotNull
         @Override
-        protected FileStatus getFileStatus(int index) {
-          return myChanges.get(index).getFileStatus();
+        protected void onSelected(@Nullable Object object) {
+          onSelected.consume((Integer)object);
         }
       };
     }

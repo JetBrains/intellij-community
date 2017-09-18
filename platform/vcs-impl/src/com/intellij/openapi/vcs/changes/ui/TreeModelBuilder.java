@@ -205,7 +205,7 @@ public class TreeModelBuilder {
   }
 
   @NotNull
-  private ChangesBrowserNode createTagNode(@Nullable Object tag) {
+  protected ChangesBrowserNode createTagNode(@Nullable Object tag) {
     if (tag == null) return myRoot;
 
     ChangesBrowserNode subtreeRoot = ChangesBrowserNode.create(myProject, tag);
@@ -265,6 +265,15 @@ public class TreeModelBuilder {
       }
     }
     return this;
+  }
+
+  public void setGenericNodes(@NotNull Collection<GenericNodeData> nodesData, @Nullable Object tag) {
+    ChangesBrowserNode<?> parentNode = createTagNode(tag);
+
+    for (GenericNodeData data : nodesData) {
+      ChangesBrowserNode node = ChangesBrowserNode.createGeneric(data.myFilePath, data.myStatus, data.myUserData);
+      insertChangeNode(data.myFilePath, parentNode, node);
+    }
   }
 
   @NotNull
@@ -504,5 +513,17 @@ public class TreeModelBuilder {
   @Deprecated
   public DefaultTreeModel buildModel(@NotNull List<Change> changes, @Nullable ChangeNodeDecorator changeNodeDecorator) {
     return setChanges(changes, changeNodeDecorator).build();
+  }
+
+  public static class GenericNodeData {
+    @NotNull private final FilePath myFilePath;
+    @NotNull private final FileStatus myStatus;
+    @NotNull private final Object myUserData;
+
+    public GenericNodeData(@NotNull FilePath filePath, @NotNull FileStatus status, @NotNull Object userData) {
+      myFilePath = filePath;
+      myStatus = status;
+      myUserData = userData;
+    }
   }
 }

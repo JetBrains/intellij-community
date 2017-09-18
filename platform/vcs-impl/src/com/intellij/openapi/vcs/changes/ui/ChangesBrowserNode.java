@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.changes.ui;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListOwner;
@@ -57,11 +58,12 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
   protected static final int MODULE_SORT_WEIGHT = 3;
   protected static final int DIRECTORY_PATH_SORT_WEIGHT = 4;
   protected static final int FILE_PATH_SORT_WEIGHT = 5;
-  protected static final int CHANGE_SORT_WEIGHT = 6;
-  protected static final int VIRTUAL_FILE_SORT_WEIGHT = 7;
-  protected static final int UNVERSIONED_SORT_WEIGHT = 8;
-  protected static final int DEFAULT_SORT_WEIGHT = 9;
-  protected static final int IGNORED_SORT_WEIGHT = 10;
+  protected static final int GENERIC_FILE_PATH_SORT_WEIGHT = 6;
+  protected static final int CHANGE_SORT_WEIGHT = 7;
+  protected static final int VIRTUAL_FILE_SORT_WEIGHT = 8;
+  protected static final int UNVERSIONED_SORT_WEIGHT = 9;
+  protected static final int DEFAULT_SORT_WEIGHT = 10;
+  protected static final int IGNORED_SORT_WEIGHT = 11;
 
   public static final Convertor<TreePath, String> TO_TEXT_CONVERTER =
     path -> ((ChangesBrowserNode)path.getLastPathComponent()).getTextPresentation();
@@ -87,6 +89,11 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
   @NotNull
   public static ChangesBrowserNode create(@NotNull LocallyDeletedChange change) {
     return new ChangesBrowserLocallyDeletedNode(change);
+  }
+
+  @NotNull
+  public static ChangesBrowserNode createGeneric(@NotNull FilePath filePath, @NotNull FileStatus fileStatus, @NotNull Object userObject) {
+    return new ChangesBrowserGenericNode(filePath, fileStatus, userObject);
   }
 
   @NotNull

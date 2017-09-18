@@ -30,6 +30,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain;
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -61,6 +62,12 @@ public class UnversionedDiffRequestProducer implements ChangeDiffRequestChain.Pr
   @Override
   public FileStatus getFileStatus() {
     return FileStatus.UNKNOWN;
+  }
+
+  @Nullable
+  @Override
+  public Object getPopupTag() {
+    return ChangesBrowserNode.UNVERSIONED_FILES_TAG;
   }
 
   @NotNull

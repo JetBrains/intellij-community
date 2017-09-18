@@ -19,13 +19,17 @@ import com.intellij.diff.actions.impl.GoToChangePopupBuilder;
 import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeGoToChangePopupAction;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.tree.DefaultTreeModel;
 import java.util.List;
 
 public class ChangeDiffRequestChain extends UserDataHolderBase implements DiffRequestChain, GoToChangePopupBuilder.Chain {
@@ -57,19 +61,32 @@ public class ChangeDiffRequestChain extends UserDataHolderBase implements DiffRe
   @NotNull
   @Override
   public AnAction createGoToChangeAction(@NotNull Consumer<Integer> onSelected) {
-    return new ChangeGoToChangePopupAction.Fake<ChangeDiffRequestChain>(this, myIndex, onSelected) {
+    return new ChangeGoToChangePopupAction<ChangeDiffRequestChain>(this, myIndex) {
       @NotNull
       @Override
-      protected FilePath getFilePath(int index) {
-        return myProducers.get(index).getFilePath();
+      protected DefaultTreeModel buildTreeModel(@NotNull Project project, boolean showFlatten) {
+        MultiMap<Object, TreeModelBuilder.GenericNodeData> groups = new MultiMap<>();
+        for (int i = 0; i < myProducers.size(); i++) {
+          Producer producer = myProducers.get(i);
+          FilePath filePath = producer.getFilePath();
+          FileStatus fileStatus = producer.getFileStatus();
+          Object tag = producer.getPopupTag();
+          groups.putValue(tag, new TreeModelBuilder.GenericNodeData(filePath, fileStatus, i));
+        }
+
+        TreeModelBuilder builder = new TreeModelBuilder(project, showFlatten);
+        for (Object tag : groups.keySet()) {
+          builder.setGenericNodes(groups.get(tag), tag);
+        }
+        return builder.build();
       }
 
-      @NotNull
       @Override
-      protected FileStatus getFileStatus(int index) {
-        return myProducers.get(index).getFileStatus();
+      protected void onSelected(@Nullable Object object) {
+        onSelected.consume((Integer)object);
       }
     };
+
   }
 
   public interface Producer extends DiffRequestProducer {
@@ -78,5 +95,10 @@ public class ChangeDiffRequestChain extends UserDataHolderBase implements DiffRe
 
     @NotNull
     FileStatus getFileStatus();
+
+    @Nullable
+    default Object getPopupTag() {
+      return null;
+    }
   }
 }
