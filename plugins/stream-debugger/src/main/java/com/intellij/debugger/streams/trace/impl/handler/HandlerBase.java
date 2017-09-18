@@ -18,8 +18,10 @@ package com.intellij.debugger.streams.trace.impl.handler;
 import com.intellij.debugger.streams.trace.IntermediateCallHandler;
 import com.intellij.debugger.streams.trace.TerminatorCallHandler;
 import com.intellij.debugger.streams.trace.TraceHandler;
+import com.intellij.debugger.streams.trace.dsl.VariableDeclaration;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -31,7 +33,7 @@ public abstract class HandlerBase implements TraceHandler {
 
   @NotNull
   @Override
-  final public String additionalVariablesDeclaration() {
+  final public List<VariableDeclaration> additionalVariablesDeclaration() {
     final StringBuilder stringBuilder = new StringBuilder();
     final List<Variable> variables = getVariables();
     for (final Variable variable : variables) {
@@ -39,7 +41,7 @@ public abstract class HandlerBase implements TraceHandler {
     }
 
 
-    return stringBuilder.toString();
+    return Collections.emptyList();
   }
 
   @NotNull

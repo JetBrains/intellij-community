@@ -19,22 +19,11 @@ import com.intellij.debugger.streams.trace.IntermediateCallHandler
 import com.intellij.debugger.streams.trace.TerminatorCallHandler
 import com.intellij.debugger.streams.trace.TraceHandler
 import com.intellij.debugger.streams.trace.dsl.Dsl
-import com.intellij.debugger.streams.trace.dsl.VariableDeclaration
 
 /**
  * @author Vitaliy.Bibaev
  */
 abstract class HandlerBase private constructor(protected val dsl: Dsl) : TraceHandler {
-  override fun additionalVariablesDeclaration(): String {
-    return dsl.code {
-      for (declaration in getVariables()) {
-        declare(declaration)
-      }
-    }
-  }
-
-  internal abstract fun getVariables(): List<VariableDeclaration>
-
   abstract class Intermediate(dsl: Dsl) : HandlerBase(dsl), IntermediateCallHandler
 
   abstract class Terminal(dsl: Dsl) : HandlerBase(dsl), TerminatorCallHandler
