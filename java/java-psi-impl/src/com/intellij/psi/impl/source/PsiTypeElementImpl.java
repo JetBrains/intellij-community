@@ -200,10 +200,8 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
 
   @Override
   public boolean isInferredType() {
-    for (PsiElement child = getFirstChild(); child != null; child = child.getNextSibling()) {
-      if (PsiUtil.isJavaToken(child, JavaTokenType.VAR_KEYWORD)) return true;
-    }
-    return false;
+    PsiElement firstChild = getFirstChild();
+    return firstChild != null && PsiUtil.isJavaToken(firstChild, JavaTokenType.VAR_KEYWORD);
   }
 
   @NotNull
