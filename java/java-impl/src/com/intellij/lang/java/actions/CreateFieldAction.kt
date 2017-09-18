@@ -17,15 +17,21 @@ package com.intellij.lang.java.actions
 
 import com.intellij.codeInsight.ExpectedTypeInfo
 import com.intellij.codeInsight.daemon.QuickFixBundle.message
-import com.intellij.codeInsight.daemon.impl.quickfix.CreateFieldFromUsageFix
+import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix.positionCursor
+import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix.startTemplate
 import com.intellij.codeInsight.daemon.impl.quickfix.JavaCreateFieldFromUsageHelper
+import com.intellij.codeInsight.template.Template
+import com.intellij.codeInsight.template.TemplateEditingAdapter
 import com.intellij.lang.java.request.CreateFieldFromJavaUsageRequest
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.CreateFieldRequest
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
+import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.presentation.java.ClassPresentationUtil.getNameForClass
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
 
 internal class CreateFieldAction(
@@ -71,13 +77,19 @@ internal class CreateFieldAction(
       PsiUtil.setModifierProperty(renderedField, modifier, true)
     }
 
+    val helper = JavaCreateFieldFromUsageHelper()
+
     // insert field
-    val javaField = JavaCreateFieldFromUsageHelper().insertFieldImpl(targetClass, renderedField, data.anchor)
+    val javaField = helper.insertFieldImpl(targetClass, renderedField, data.anchor)
 
     // setup template
-    CreateFieldFromUsageFix.createFieldFromUsageTemplate(
-      targetClass, project, data.fieldType, javaField, data.constant, data.reference
+    val targetFile = targetClass.containingFile ?: return
+    val newEditor = positionCursor(project, targetFile, javaField) ?: return
+    val template = helper.setupTemplateImpl(
+      javaField, data.fieldType, targetClass, newEditor, data.reference, data.constant, data.targetSubstitutor
     )
+    val listener = MyTemplateListener(project, newEditor, targetFile)
+    startTemplate(newEditor, template, project, listener, null)
   }
 }
 
@@ -85,6 +97,7 @@ private class FieldData(
   val targetClass: PsiClass,
   val fieldName: String,
   val fieldType: Array<ExpectedTypeInfo>,
+  val targetSubstitutor: PsiSubstitutor,
   val reference: PsiReferenceExpression?,
   val anchor: PsiElement?,
   val modifiers: Collection<String>,
@@ -121,11 +134,13 @@ private fun extractRenderData(targetClass: PsiClass, request: CreateFieldRequest
     requestedModifiers
   }
 
+  val project = targetClass.project
   val javaUsage = request as? CreateFieldFromJavaUsageRequest
   return FieldData(
     targetClass,
     fieldName,
-    extractExpectedTypes(targetClass.project, request.fieldType).toTypedArray(),
+    extractExpectedTypes(project, request.fieldType).toTypedArray(),
+    JvmPsiConversionHelper.getInstance(project).convertSubstitutor(request.targetSubstitutor),
     javaUsage?.reference,
     javaUsage?.anchor,
     modifiersToRender.map(JvmModifier::toPsi),
@@ -137,3 +152,16 @@ private val constantModifiers = setOf(
   JvmModifier.STATIC,
   JvmModifier.FINAL
 )
+
+private class MyTemplateListener(val project: Project, val editor: Editor, val file: PsiFile) : TemplateEditingAdapter() {
+
+  override fun templateFinished(template: Template, brokenOff: Boolean) {
+    PsiDocumentManager.getInstance(project).commitDocument(editor.document)
+    val offset = editor.caretModel.offset
+    val psiField = PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiField::class.java, false) ?: return
+    runWriteAction {
+      CodeStyleManager.getInstance(project).reformat(psiField)
+    }
+    editor.caretModel.moveToOffset(psiField.textRange.endOffset - 1)
+  }
+}
