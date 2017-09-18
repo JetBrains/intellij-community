@@ -153,6 +153,7 @@ public class MinusculeMatcher implements Matcher {
     int integral = 0; // -sum of matching-char-count * hump-index over all matched humps; favors longer fragments matching earlier words
     int humpIndex = 1;
     int nextHumpStart = 0;
+    boolean humpStartMatchedUpperCase = false;
     for (TextRange range : fragments) {
       for (int i = range.getStartOffset(); i < range.getEndOffset(); i++) {
         boolean isHumpStart = false;
@@ -173,14 +174,11 @@ public class MinusculeMatcher implements Matcher {
           break;
         }
 
-        if (c == myPattern[p]) {
-          if (isUpperCase[p]) matchingCase += 50; // strongly prefer user's uppercase matching uppercase: they made an effort to press Shift
-          else if (i == 0 && startMatch) matchingCase += 15; // the very first letter case distinguishes classes in Java etc
-          else if (isHumpStart) matchingCase += 1; // if a lowercase matches lowercase hump start, that also means something
-        } else if (isHumpStart) {
-          // disfavor hump starts where pattern letter case doesn't match name case
-          matchingCase -= 1;
+        if (isHumpStart) {
+          humpStartMatchedUpperCase = c == myPattern[p] && isUpperCase[p];
         }
+
+        matchingCase += evaluateCaseMatching(startMatch, p, humpStartMatchedUpperCase, i, isHumpStart, c);
       }
     }
 
@@ -195,6 +193,26 @@ public class MinusculeMatcher implements Matcher {
            (afterSeparator ? 0 : 2) +
            (startMatch ? 1 : 0) +
            (finalMatch ? 1 : 0);
+  }
+
+  private int evaluateCaseMatching(boolean startMatch,
+                                   int patternIndex,
+                                   boolean humpStartMatchedUpperCase,
+                                   int nameIndex,
+                                   boolean isHumpStart,
+                                   char nameChar) {
+    if (nameChar == myPattern[patternIndex]) {
+      if (isUpperCase[patternIndex]) return 50; // strongly prefer user's uppercase matching uppercase: they made an effort to press Shift
+      if (nameIndex == 0 && startMatch) return 15; // the very first letter case distinguishes classes in Java etc
+      if (isHumpStart) return 1; // if a lowercase matches lowercase hump start, that also means something
+    } else if (isHumpStart) {
+      // disfavor hump starts where pattern letter case doesn't match name case
+      return -1;
+    } else if (isLowerCase[patternIndex] && humpStartMatchedUpperCase) {
+      // disfavor lowercase non-humps matching uppercase in the name
+      return -1;
+    }
+    return 0;
   }
 
   public boolean isStartMatch(@NotNull String name) {

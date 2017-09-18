@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ExceptionUtil;
 import org.jetbrains.annotations.NotNull;
@@ -51,8 +52,11 @@ public class PeriodicalTasksCloser {
   public <T> T safeGetService(@NotNull final Project project, final Class<T> componentClass) throws ProcessCanceledException {
     try {
       T service = ServiceManager.getService(project, componentClass);
-      if (service == null && project.isDefault()) {
-        LOG.info("no service in default project: " + componentClass.getName());
+      if (service == null) {
+        ProgressManager.checkCanceled();
+        if (project.isDefault()) {
+          LOG.info("no service in default project: " + componentClass.getName());
+        }
       }
       return service;
     }

@@ -36,6 +36,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.util.NullableFunction;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
@@ -148,8 +149,7 @@ public class ValidationConfigurable implements SearchableConfigurable, Configura
 
   private List<Compiler> getValidators() {
     final CompilerManager compilerManager = CompilerManager.getInstance(myProject);
-    final List<Compiler> validators = new ArrayList<>();
-    validators.addAll(Arrays.asList(compilerManager.getCompilers(Validator.class)));
+    final List<Compiler> validators = new SmartList<>(compilerManager.getCompilers(Validator.class));
     for (GenericCompiler compiler : compilerManager.getCompilers(GenericCompiler.class)) {
       if (compiler.getOrderPlace() == GenericCompiler.CompileOrderPlace.VALIDATING) {
         validators.add(compiler);

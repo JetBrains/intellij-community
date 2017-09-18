@@ -3,6 +3,7 @@ package org.jetbrains.plugins.javaFX.fxml;
 import com.intellij.java.codeInsight.daemon.impl.SdkSetupNotificationTestBase;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.ui.EditorNotificationPanel;
@@ -37,6 +38,6 @@ public class JavaFxSdkSetupNotificationTest extends SdkSetupNotificationTestBase
 
   @NotNull
   private static Sdk getTestJdk() {
-    return JavaSdk.getInstance().createJdk("testJdk", System.getProperty("java.home"));
+    return ((JavaSdkImpl)JavaSdk.getInstance()).createMockJdk("testJdk", System.getProperty("java.home"), true);
   }
 }

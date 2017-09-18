@@ -18,7 +18,6 @@ package com.intellij.openapi.vcs.changes.conflicts;
 
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -63,12 +62,12 @@ public class MoveChangesDialog extends DialogWrapper {
       }
 
       @Override
-      protected List<Change> getSelectedObjects(ChangesBrowserNode<Change> node) {
+      protected List<Change> getSelectedObjects(ChangesBrowserNode<?> node) {
         return node.getAllChangesUnder();
       }
 
       @Override
-      protected Change getLeadSelectedObject(ChangesBrowserNode node) {
+      protected Change getLeadSelectedObject(ChangesBrowserNode<?> node) {
         final Object o = node.getUserObject();
         if (o instanceof Change) {
           return (Change) o;

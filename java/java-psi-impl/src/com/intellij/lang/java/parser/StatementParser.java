@@ -319,7 +319,7 @@ public class StatementParser {
     }
 
     final PsiBuilder.Marker afterParenth = builder.mark();
-    final PsiBuilder.Marker param = myParser.getDeclarationParser().parseParameter(builder, false, false);
+    final PsiBuilder.Marker param = myParser.getDeclarationParser().parseParameter(builder, false, false, true);
     if (param == null || exprType(param) != JavaElementType.PARAMETER || builder.getTokenType() != JavaTokenType.COLON) {
       afterParenth.rollbackTo();
       return parseForLoopFromInitializer(builder, statement);
@@ -616,7 +616,7 @@ public class StatementParser {
       return false;
     }
 
-    final PsiBuilder.Marker param = myParser.getDeclarationParser().parseParameter(builder, false, true);
+    final PsiBuilder.Marker param = myParser.getDeclarationParser().parseParameter(builder, false, true, false);
     if (param == null) {
       error(builder, JavaErrorMessages.message("expected.parameter"));
     }

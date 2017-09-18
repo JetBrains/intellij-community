@@ -101,7 +101,11 @@ public class FileContentQueue {
   private PreloadState preloadNextContent() {
     try {
       if (myLoadedBytesInQueue.get() > MAX_SIZE_OF_BYTES_IN_QUEUE) {
-        synchronized (ourProceedWithLoadingLock) { ourProceedWithLoadingLock.wait(300); }
+        // wait a little for indexer threads to consume content, they will awake us earlier once we can proceed  
+        synchronized (ourProceedWithLoadingLock) { 
+          //noinspection WaitNotInLoop
+          ourProceedWithLoadingLock.wait(300); 
+        }
         myProgressIndicator.checkCanceled();
         return PreloadState.TOO_MUCH_DATA_PRELOADED;
       }
@@ -226,6 +230,7 @@ public class FileContentQueue {
 
     long loadedBytesInQueueNow = myLoadedBytesInQueue.addAndGet(-result.getLength());
     if (loadedBytesInQueueNow < MAX_SIZE_OF_BYTES_IN_QUEUE) {
+      // nudge content preloader to proceed
       synchronized (ourProceedWithLoadingLock) {
         // we actually ask only content loading thread to proceed, so there should not be much difference with plain notify
         ourProceedWithLoadingLock.notifyAll();

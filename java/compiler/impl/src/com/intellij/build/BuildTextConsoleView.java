@@ -16,6 +16,7 @@
 package com.intellij.build;
 
 import com.intellij.build.events.BuildEvent;
+import com.intellij.build.events.OutputBuildEvent;
 import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.process.AnsiEscapeDecoder;
 import com.intellij.execution.process.ProcessOutputTypes;
@@ -40,7 +41,9 @@ public class BuildTextConsoleView extends ConsoleViewImpl implements BuildConsol
 
   @Override
   public void onEvent(BuildEvent event) {
-    myAnsiEscapeDecoder.escapeText(event.getMessage(), ProcessOutputTypes.STDOUT, this);
+    Key outputType = event instanceof OutputBuildEvent && !((OutputBuildEvent)event).isStdOut()
+                     ? ProcessOutputTypes.STDERR : ProcessOutputTypes.STDOUT;
+    myAnsiEscapeDecoder.escapeText(event.getMessage(), outputType, this);
   }
 
   @Override

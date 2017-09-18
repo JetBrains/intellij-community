@@ -201,9 +201,7 @@ class CommunityRepositoryModules {
       mainJarName = "idea-junit.jar"
       withModule("junit_rt", "junit-rt.jar")
       withModule("junit5_rt", "junit5-rt.jar")
-      withProjectLibrary("junit5_rt")
-      withProjectLibrary("opentest4j")
-      withModuleLibrary("junit-jupiter-api-5.0.0.jar", "junit5_rt_tests", "")
+      withProjectLibrary("JUnit5")
     },
     plugin("ByteCodeViewer") {
       mainJarName = "byteCodeViewer.jar"
@@ -276,7 +274,6 @@ class CommunityRepositoryModules {
       withModule("instant-run-common", "sdk-tools.jar")
       withModule("instant-run-client", "sdk-tools.jar")
       withModule("instant-run-runtime", "sdk-tools.jar")
-      withModule("android-gradle-jps", "jps/android-gradle-jps.jar", false)
       withModule("android-jps-plugin", "jps/android-jps-plugin.jar", false)
       withProjectLibrary("freemarker-2.3.20") //todo[nik] move to module libraries
       withProjectLibrary("jgraphx-3.4.0.1") //todo[nik] move to module libraries

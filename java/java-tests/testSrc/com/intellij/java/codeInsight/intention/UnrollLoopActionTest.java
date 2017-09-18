@@ -16,10 +16,19 @@
 package com.intellij.java.codeInsight.intention;
 
 import com.intellij.codeInsight.daemon.LightIntentionActionTestCase;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import org.jetbrains.annotations.NotNull;
 
 public class UnrollLoopActionTest extends LightIntentionActionTestCase {
 
   public void test() { doAllTests(); }
+
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return LightCodeInsightFixtureTestCase.JAVA_9;
+  }
 
   @Override
   protected String getBasePath() {

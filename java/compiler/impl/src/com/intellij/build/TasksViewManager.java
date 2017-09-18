@@ -15,24 +15,41 @@
  */
 package com.intellij.build;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
+import com.intellij.ui.content.Content;
+
+import javax.swing.*;
+import java.util.Map;
 
 /**
  * @author Vladislav.Soroka
  */
-public class TasksViewManager extends AbstractViewManager {
+public abstract class TasksViewManager extends AbstractViewManager {
   public TasksViewManager(Project project, BuildContentManager buildContentManager) {
     super(project, buildContentManager);
   }
 
+
   @Override
-  public String getViewName() {
-    return "Run";
+  protected void onBuildStart(BuildDescriptor buildDescriptor) {
+    if (!isTabbedView()) {
+      BuildInfo buildInfo = (BuildInfo)buildDescriptor;
+      Content content = buildInfo.content;
+      Map<BuildInfo, BuildView> buildsMap = getBuildsMap();
+      String tabName = buildsMap.size() > 1 ? getViewName() : getViewName() + ": " + buildInfo.getTitle();
+      ((BuildContentManagerImpl)myBuildContentManager).updateTabDisplayName(content, tabName);
+    }
   }
 
   @Override
   protected boolean isTabbedView() {
-    return true;
+    return false;
+  }
+
+  @Override
+  protected Icon getContentIcon() {
+    return AllIcons.CodeStyle.Gear;
   }
 
   @Override

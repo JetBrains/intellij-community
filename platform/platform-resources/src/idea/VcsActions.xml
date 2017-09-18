@@ -213,6 +213,22 @@
               icon="AllIcons.Vcs.Remove"/>
     </group>
 
+    <action id="Vcs.EditSource" class="com.intellij.openapi.vcs.changes.committed.EditSourceFromChangesBrowserAction"
+            text="Edit Source" icon="AllIcons.Actions.EditSource" use-shortcut-of="EditSource"/>
+    <action id="Vcs.OpenRepositoryVersion" class="com.intellij.openapi.vcs.changes.actions.OpenRepositoryVersionAction"/>
+    <action id="Vcs.RevertSelectedChanges" class="com.intellij.openapi.vcs.changes.actions.RevertSelectedChangesAction"
+            text="Revert Selected Changes" icon="AllIcons.Actions.Rollback"/>
+
+    <group id="Vcs.RepositoryChangesBrowserToolbar">
+      <reference ref="Vcs.ShowDiffWithLocal"/>
+      <reference ref="Vcs.ShowDiffWithLocal.Before"/>
+      <reference ref="Vcs.EditSource"/>
+      <reference ref="Vcs.OpenRepositoryVersion"/>
+      <reference ref="Vcs.RevertSelectedChanges"/>
+      <reference ref="Vcs.ShowHistoryForRevision"/>
+    </group>
+
+    <!--deprecated, to be removed after plugins start using Vcs.RepositoryChangesBrowserToolbar-->
     <group id="RepositoryChangesBrowserToolbar">
       <reference ref="Vcs.ShowHistoryForRevision"/>
     </group>
@@ -294,7 +310,7 @@
     </action>
 
     <action id="WelcomeScreen.GetFromVcs" class="com.intellij.openapi.wm.impl.welcomeScreen.GetFromVcsAction"
-      icon="AllIcons.Welcome.FromVCS">
+            icon="AllIcons.Welcome.FromVCS">
       <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>
     </action>
 
@@ -382,6 +398,12 @@
       <reference ref="CommittedChanges.Revert"/>
       <reference ref="CommittedChanges.Clear"/>
       <reference ref="IncomingChanges.Refresh"/>
+      <separator/>
+      <reference ref="Vcs.ShowDiffWithLocal"/>
+      <reference ref="Vcs.ShowDiffWithLocal.Before"/>
+      <reference ref="Vcs.EditSource"/>
+      <reference ref="Vcs.OpenRepositoryVersion"/>
+      <reference ref="Vcs.RevertSelectedChanges"/>
       <separator/>
       <reference ref="Vcs.ShowMessageHistory"/>
       <reference ref="CloseAllUnmodifiedEditors"/>

@@ -17,8 +17,22 @@
 #include <Windows.h>
 #include <elevTools.h>
 #include<stdio.h>
-#include<io.h>
-#include <fcntl.h>
+
+
+#define ERR_INVALID_HANDLE -1
+#define ERR_CANT_INHERIT -2
+#define ERR_CANT_SET_CONSOLE -3
+#define ERR_BAD_COMMAND_LINE -4
+#define ERR_SET_DIR -5
+#define ERR_PARENT_ID -6
+#define ERR_GET_DESC -7
+#define ERR_BAD_DESC -8
+#define ERR_FAILED_TO_FIND -9 
+#define ERR_FAILED_ATTACH - 10
+#define ERR_OPEN_PARENT - 11
+#define ERR_LAUNCHING - 12
+#define ERR_WAITING - 13
+#define ERR_PARENT_DIED -14
 
 
 // UAC-enabled (in manifset) tool to launch ptocesses.
@@ -31,7 +45,7 @@
 // nDescriptor ELEV_DESC_*
 // nDescriptorFlags flags passed from launcher to check if descriptor should be connected
 // Returns 0 if ok, error otherwise. Could be windows error, EBADF or EMFILE for dup2
-static DWORD _ConnectIfNeededPipe(DWORD nParentPid, DWORD nDescriptor, FILE* stream, int nDescriptorFlags, _Out_ PHANDLE pRemoteProcessHandle)
+static DWORD _ConnectIfNeededPipe(DWORD nParentPid, DWORD nDescriptor, FILE* stream, int nDescriptorFlags, _Out_ PHANDLE pRemoteProcessHandle, _In_ HANDLE eventSource)
 {
 	if (!(nDescriptorFlags & nDescriptor))
 	{
@@ -46,12 +60,14 @@ static DWORD _ConnectIfNeededPipe(DWORD nParentPid, DWORD nDescriptor, FILE* str
 	HANDLE hPipe = CreateFile(sPipeName, access, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 	if (hPipe == INVALID_HANDLE_VALUE || hPipe == NULL)
 	{
+		ReportEvent(eventSource, EVENTLOG_ERROR_TYPE, 0, ERR_INVALID_HANDLE, NULL, 0, 0, NULL, NULL);
 		return GetLastError();
 	}
 
 	// Make inheritable by remote process
 	if (!SetHandleInformation(hPipe, HANDLE_FLAG_INHERIT, TRUE))
 	{
+		ReportEvent(eventSource, EVENTLOG_ERROR_TYPE, 0, ERR_CANT_INHERIT, NULL, 0, 0, NULL, NULL);
 		return GetLastError();
 	}		
 
@@ -59,6 +75,7 @@ static DWORD _ConnectIfNeededPipe(DWORD nParentPid, DWORD nDescriptor, FILE* str
 	DWORD hStdHandleToChange = ELEV_DESCR_GET_HANDLE(nDescriptor);
 	if (!SetStdHandle(hStdHandleToChange, hPipe))
 	{
+		ReportEvent(eventSource, EVENTLOG_ERROR_TYPE, 0, ERR_CANT_SET_CONSOLE, NULL, 0, 0, NULL, NULL);
 		return GetLastError();
 	}
 
@@ -73,36 +90,43 @@ static DWORD _ConnectIfNeededPipe(DWORD nParentPid, DWORD nDescriptor, FILE* str
 
 int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
 {
+	HANDLE eventSource = RegisterEventSourceW(NULL, L"JB-Elevator");
+
 	if (argc <= _ARG_DESCRIPTORS)
 	{
+		ReportEvent(eventSource, EVENTLOG_ERROR_TYPE, 0, ERR_BAD_COMMAND_LINE, NULL, 0, 0, NULL, NULL);
 		fwprintf(stderr, L"Bad command line");
-		return -1;
+		return ERR_BAD_COMMAND_LINE;
 	}
 	if (!SetCurrentDirectory(argv[_ARG_DIR]))
 	{
+		ReportEvent(eventSource, EVENTLOG_ERROR_TYPE, 0, ERR_SET_DIR, NULL, 0, 0, NULL, NULL);
 		fwprintf(stderr, L"Failed to set directory to %s : %ld", argv[_ARG_DIR], GetLastError());
-		return -1;
+		return ERR_SET_DIR;
 	}
 	DWORD nParentPid = _wtol(argv[_ARG_PID]);
 	if (!nParentPid)
 	{
+		ReportEvent(eventSource, EVENTLOG_ERROR_TYPE, 0, ERR_PARENT_ID, NULL, 0, 0, NULL, NULL);
 		fwprintf(stderr, L"Failed to get parent pid from %s", argv[_ARG_PID]);
-		return -1;
+		return ERR_PARENT_ID;
 	}
 
 	wchar_t* sDescriptorsStr = argv[_ARG_DESCRIPTORS];
 	size_t nDescriptorsLen = wcslen(sDescriptorsStr);
 	if (!nDescriptorsLen)
 	{
+		ReportEvent(eventSource, EVENTLOG_ERROR_TYPE, 0, ERR_GET_DESC, NULL, 0, 0, NULL, NULL);
 		fwprintf(stderr, L"Failed to get descriptors from %s", sDescriptorsStr);
-		return -1;
+		return ERR_GET_DESC;
 	}
-	for(int i = 0; i < nDescriptorsLen; i++)
+	for(size_t i = 0; i < nDescriptorsLen; i++)
 	{
 		if (! iswdigit(sDescriptorsStr[i]))
 		{
+			ReportEvent(eventSource, EVENTLOG_ERROR_TYPE, 0, ERR_BAD_DESC, NULL, 0, 0, NULL, NULL);
 			fwprintf(stderr, L"Bad descriptor %s", sDescriptorsStr);
-			return -1;
+			return ERR_BAD_DESC;
 		}
 	}
 	int nDescriptorFlags = _wtoi(sDescriptorsStr);	
@@ -113,8 +137,9 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
 	wchar_t* sFromSeparator = wcsstr(GetCommandLine(), ELEV_COMMAND_LINE_SEPARATOR);
 	if (! sFromSeparator)
 	{
+		ReportEvent(eventSource, EVENTLOG_ERROR_TYPE, 0, ERR_FAILED_TO_FIND, NULL, 0, 0, NULL, NULL);
 		fwprintf(stderr, L"Failed to find %s in %s", ELEV_COMMAND_LINE_SEPARATOR, GetCommandLine());
-		return -1;
+		return ERR_FAILED_TO_FIND;
 	}
 	// Add rest commandline
 	WCHAR* sCommandLine = sFromSeparator + wcslen(ELEV_COMMAND_LINE_SEPARATOR);
@@ -123,8 +148,9 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
 	FreeConsole();
 	if (!AttachConsole(nParentPid))
 	{
+		ReportEvent(eventSource, EVENTLOG_ERROR_TYPE, 0, ERR_FAILED_ATTACH, NULL, 0, 0, NULL, NULL);
 		fwprintf(stderr, L"Failed to attach console: %d", GetLastError());
-		return 1;
+		return ERR_FAILED_ATTACH;
 	}	
 	
 	STARTUPINFO startupInfo;
@@ -134,17 +160,17 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
 
 	DWORD nError; // No place to output errors yet. Event log is overkill here, so we use  exit code. 	
 
-	nError = _ConnectIfNeededPipe(nParentPid, ELEV_DESCR_STDIN, stdin, nDescriptorFlags, &startupInfo.hStdInput);
+	nError = _ConnectIfNeededPipe(nParentPid, ELEV_DESCR_STDIN, stdin, nDescriptorFlags, &startupInfo.hStdInput, eventSource);
 	if (nError != 0)
 	{
 		exit(nError);
 	}
-	nError = _ConnectIfNeededPipe(nParentPid, ELEV_DESCR_STDOUT, stdout, nDescriptorFlags, &startupInfo.hStdOutput);
+	nError = _ConnectIfNeededPipe(nParentPid, ELEV_DESCR_STDOUT, stdout, nDescriptorFlags, &startupInfo.hStdOutput, eventSource);
 	if (nError != 0)
 	{
 		exit(nError);
 	}
-	nError = _ConnectIfNeededPipe(nParentPid, ELEV_DESCR_STDERR, stderr, nDescriptorFlags, &startupInfo.hStdError);
+	nError = _ConnectIfNeededPipe(nParentPid, ELEV_DESCR_STDERR, stderr, nDescriptorFlags, &startupInfo.hStdError, eventSource);
 	if (nError != 0)
 	{
 		exit(nError);
@@ -153,6 +179,7 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
 	HANDLE parentProcess = OpenProcess(SYNCHRONIZE, FALSE, nParentPid);
 	if (!parentProcess)
 	{
+		ReportEvent(eventSource, EVENTLOG_ERROR_TYPE, 0, ERR_OPEN_PARENT, NULL, 0, 0, NULL, NULL);
 		exit(GetLastError()); // If parent process can't be opened it probably dead
 	}
 	
@@ -160,28 +187,31 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
 	
 	if (!CreateProcess(NULL, sCommandLine, NULL, NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL, NULL, &startupInfo, &processInfo))
 	{
+		ReportEvent(eventSource, EVENTLOG_ERROR_TYPE, 0, ERR_LAUNCHING, NULL, 0, 0, NULL, NULL);
 		fwprintf(stderr, L"Error launching process. Exit code %ld, command was %ls", GetLastError(), sCommandLine);
-		return 1;
+		return ERR_LAUNCHING;
 	}
 	HANDLE processesToWait[] = { parentProcess, processInfo.hProcess };
 
 	DWORD nWaitResult = WaitForMultipleObjects(2, processesToWait, FALSE, INFINITE);
 	if (WAIT_FAILED == nWaitResult)
 	{
+		ReportEvent(eventSource, EVENTLOG_ERROR_TYPE, 0, ERR_WAITING, NULL, 0, 0, NULL, NULL);
 		fwprintf(stderr, L"Error waiting processes: %ld", GetLastError());
-		return -1;
+		return ERR_WAITING;
 	}
 	if (nWaitResult - WAIT_OBJECT_0 == 0)
 	{
+		ReportEvent(eventSource, EVENTLOG_ERROR_TYPE, 0, ERR_PARENT_DIED, NULL, 0, 0, NULL, NULL);
 		fwprintf(stderr, L"Parent process (launcher) died?");
 		TerminateProcess(processInfo.hProcess, -1); 
-		return -1;
+		return ERR_PARENT_DIED;
 	}
 
 	
 	
 	DWORD nExitCode = 0;
 	GetExitCodeProcess(processInfo.hProcess, &nExitCode);
-
+	DeregisterEventSource(eventSource);
 	return nExitCode;
 }

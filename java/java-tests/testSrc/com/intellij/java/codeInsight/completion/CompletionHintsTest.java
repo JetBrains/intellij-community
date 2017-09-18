@@ -610,6 +610,18 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     checkHintContents(null);
   }
 
+  public void testPopupAfterCaretMovesOutsideOfParenthesis() throws Exception {
+    configureJava("class C { void m() { System.getPro<caret> } }");
+    complete("getProperty(String key, String def)");
+    waitForAllAsyncStuff();
+    checkHintContents("<html>@NotNull String</html>");
+    left();
+    left();
+    left();
+    waitForAllAsyncStuff();
+    checkHintContents(null);
+  }
+
   private void checkResult(String text) {
     myFixture.checkResult(text);
   }

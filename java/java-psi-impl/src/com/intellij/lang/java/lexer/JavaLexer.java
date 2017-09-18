@@ -49,7 +49,9 @@ public class JavaLexer extends LexerBase {
   }
 
   public static boolean isSoftKeyword(CharSequence id, @NotNull LanguageLevel level) {
-    return id != null && level.isAtLeast(LanguageLevel.JDK_1_9) && JAVA9_KEYWORDS.contains(id);
+    return id != null &&
+           (level.isAtLeast(LanguageLevel.JDK_1_9) && JAVA9_KEYWORDS.contains(id) ||
+            level.isAtLeast(LanguageLevel.JDK_X) && VAR.contentEquals(id));
   }
 
   private final _JavaLexer myFlexLexer;

@@ -67,7 +67,9 @@ public class ModalityStateEx extends ModalityState {
 
   @NonNls
   public String toString() {
-    return this == NON_MODAL ? "ModalityState.NON_MODAL" : "ModalityState:" + StringUtil.join(getModalEntities(), ", ");
+    return this == NON_MODAL
+           ? "ModalityState.NON_MODAL"
+           : "ModalityState:{" + StringUtil.join(getModalEntities(), it -> "[" + it + "]", ", ") + "}";
   }
 
   @Override

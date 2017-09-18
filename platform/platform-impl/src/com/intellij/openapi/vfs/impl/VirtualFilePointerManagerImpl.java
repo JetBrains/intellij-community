@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vfs.impl;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -35,7 +36,6 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.SmartList;
-import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.messages.MessageBus;
@@ -312,33 +312,8 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     }
   }
 
-  private final Set<VirtualFilePointerImpl> myStoredPointers = ContainerUtil.newIdentityTroveSet();
-
   @TestOnly
-  public synchronized void storePointers() {
-    myStoredPointers.clear();
-    addAllPointersTo(myStoredPointers);
-  }
-
-  @TestOnly
-  public synchronized void assertPointersAreDisposed() {
-    List<VirtualFilePointerImpl> pointers = new ArrayList<>();
-    addAllPointersTo(pointers);
-    try {
-      for (VirtualFilePointerImpl pointer : pointers) {
-        if (!myStoredPointers.contains(pointer)) {
-          pointer.throwDisposalError("Virtual pointer '" + pointer +
-                                     "' hasn't been disposed: "+pointer.getStackTrace());
-        }
-      }
-    }
-    finally {
-      myStoredPointers.clear();
-    }
-  }
-
-  @TestOnly
-  private void addAllPointersTo(@NotNull Collection<VirtualFilePointerImpl> pointers) {
+  synchronized void addAllPointersTo(@NotNull Collection<VirtualFilePointerImpl> pointers) {
     List<FilePointerPartNode> out = new ArrayList<>();
     for (FilePointerPartNode root : myPointers.values()) {
       root.addPointersUnder(null, false, "", out);

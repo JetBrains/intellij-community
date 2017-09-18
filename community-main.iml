@@ -115,7 +115,6 @@
     <orderEntry type="module" module-name="built-in-server-tests" scope="TEST" />
     <orderEntry type="module" module-name="updater" scope="TEST" />
     <orderEntry type="module" module-name="coverage" />
-    <orderEntry type="module" module-name="android-gradle-jps" scope="TEST" />
     <orderEntry type="module" module-name="android-jps-plugin" scope="TEST" />
     <orderEntry type="module" module-name="script-debugger-ui" scope="TEST" />
     <orderEntry type="module" module-name="remote-servers-git-java" />

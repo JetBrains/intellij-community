@@ -196,7 +196,7 @@ public class PsiTestUtil {
     ModuleRootModificationUtil.updateModel(module, model -> model.removeContentEntry(findContentEntryWithAssertion(model, contentRoot)));
   }
 
-  public static void removeSourceRoot(Module module, VirtualFile root) {
+  public static void removeSourceRoot(@NotNull Module module, @NotNull VirtualFile root) {
     ModuleRootModificationUtil.updateModel(module, model -> {
       ContentEntry entry = findContentEntryWithAssertion(model, root);
       for (SourceFolder sourceFolder : entry.getSourceFolders()) {

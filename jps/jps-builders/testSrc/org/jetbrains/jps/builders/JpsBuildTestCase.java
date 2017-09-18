@@ -23,6 +23,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.hash.HashMap;
+import com.intellij.util.io.DirectoryContentSpec;
+import com.intellij.util.io.DirectoryContentSpecKt;
 import com.intellij.util.io.TestFileSystemBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -116,7 +118,17 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
     expected.build().assertDirectoryEqual(new File(FileUtil.toSystemDependentName(outputPath)));
   }
 
+  protected static void assertOutput(final String outputPath, DirectoryContentSpec expected) {
+    DirectoryContentSpecKt.assertMatches(new File(outputPath), expected);
+  }
+
   protected static void assertOutput(JpsModule module, TestFileSystemBuilder expected) {
+    String outputUrl = JpsJavaExtensionService.getInstance().getOutputUrl(module, false);
+    assertNotNull(outputUrl);
+    assertOutput(JpsPathUtil.urlToPath(outputUrl), expected);
+  }
+
+  protected static void assertOutput(JpsModule module, DirectoryContentSpec expected) {
     String outputUrl = JpsJavaExtensionService.getInstance().getOutputUrl(module, false);
     assertNotNull(outputUrl);
     assertOutput(JpsPathUtil.urlToPath(outputUrl), expected);

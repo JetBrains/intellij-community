@@ -125,7 +125,7 @@ class SmartCastProvider extends CompletionProvider<CompletionParameters> {
     if (info.getKind() == ExpectedTypeInfo.TYPE_OR_SUPERTYPE) {
       InheritanceUtil.processSupers(infoClass, true, superClass -> {
         if (!CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName())) {
-          result.consume(JavaPsiFacade.getElementFactory(superClass.getProject()).createType(superClass));
+          result.consume(JavaPsiFacade.getElementFactory(superClass.getProject()).createType(CompletionUtil.getOriginalOrSelf(superClass)));
         }
         return true;
       });

@@ -36,44 +36,39 @@ import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.testFramework.ParsingTestCase;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.util.function.Consumer;
 
 public abstract class JavaParsingTestCase extends ParsingTestCase {
   private LanguageLevel myLanguageLevel;
 
-  @SuppressWarnings({"JUnitTestCaseWithNonTrivialConstructors"})
-  public JavaParsingTestCase(@NonNls final String dataPath) {
-    super("psi/"+dataPath, "java", new JavaParserDefinition());
+  public JavaParsingTestCase(String dataPath) {
+    super("psi/" + dataPath, "java", new JavaParserDefinition());
   }
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myLanguageLevel = LanguageLevel.JDK_1_6;
+    myLanguageLevel = LanguageLevel.JDK_X;
     getProject().registerService(LanguageLevelProjectExtension.class, new LanguageLevelProjectExtensionImpl(getProject()));
     addExplicitExtension(LanguageASTFactory.INSTANCE, JavaLanguage.INSTANCE, new JavaASTFactory());
   }
 
   @Override
   protected PsiFile createFile(String name, String text) {
-    final PsiFile file = super.createFile(name, text);
+    PsiFile file = super.createFile(name, text);
     file.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, myLanguageLevel);
     return file;
-  }
-
-  protected interface TestParser {
-    void parse(PsiBuilder builder);
   }
 
   protected void setLanguageLevel(@NotNull LanguageLevel languageLevel) {
     myLanguageLevel = languageLevel;
   }
 
-  protected void doParserTest(final String text, final TestParser parser) {
-    final String name = getTestName(false);
+  protected void doParserTest(String text, Consumer<PsiBuilder> parser) {
+    String name = getTestName(false);
     myFile = createPsiFile(name, text, parser);
     myFile.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, myLanguageLevel);
     try {
@@ -85,9 +80,9 @@ public abstract class JavaParsingTestCase extends ParsingTestCase {
   }
 
   private static IFileElementType TEST_FILE_ELEMENT_TYPE = null;
-  private static TestParser TEST_PARSER;
+  private static Consumer<PsiBuilder> TEST_PARSER;
 
-  private PsiFile createPsiFile(final String name, final String text, final TestParser parser) {
+  private PsiFile createPsiFile(String name, String text, Consumer<PsiBuilder> parser) {
     if (TEST_FILE_ELEMENT_TYPE == null) {
       TEST_FILE_ELEMENT_TYPE = new MyIFileElementType();
     }
@@ -99,14 +94,14 @@ public abstract class JavaParsingTestCase extends ParsingTestCase {
     return new PsiJavaFileImpl(viewProvider) {
       @NotNull
       @Override
-      protected FileElement createFileElement(@NotNull final CharSequence text) {
+      protected FileElement createFileElement(@NotNull CharSequence text) {
         return new FileElement(TEST_FILE_ELEMENT_TYPE, text);
       }
     };
   }
 
-  private static PsiBuilder createBuilder(final ASTNode chameleon) {
-    final PsiBuilder builder = JavaParserUtil.createBuilder(chameleon);
+  private static PsiBuilder createBuilder(ASTNode chameleon) {
+    PsiBuilder builder = JavaParserUtil.createBuilder(chameleon);
     builder.setDebugMode(true);
     return builder;
   }
@@ -117,19 +112,19 @@ public abstract class JavaParsingTestCase extends ParsingTestCase {
     }
 
     @Override
-    public ASTNode parseContents(final ASTNode chameleon) {
-      final PsiBuilder builder = createBuilder(chameleon);
+    public ASTNode parseContents(ASTNode chameleon) {
+      PsiBuilder builder = createBuilder(chameleon);
 
-      final PsiBuilder.Marker root = builder.mark();
-      TEST_PARSER.parse(builder);
+      PsiBuilder.Marker root = builder.mark();
+      TEST_PARSER.accept(builder);
       if (!builder.eof()) {
-        final PsiBuilder.Marker unparsed = builder.mark();
+        PsiBuilder.Marker unparsed = builder.mark();
         while (!builder.eof()) builder.advanceLexer();
         unparsed.error("Unparsed tokens");
       }
       root.done(this);
 
-      final ASTNode rootNode = builder.getTreeBuilt();
+      ASTNode rootNode = builder.getTreeBuilt();
       return rootNode.getFirstChildNode();
     }
   }

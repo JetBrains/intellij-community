@@ -17,6 +17,8 @@
 
 package com.intellij.util.io
 
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.io.impl.*
 import java.io.File
 
@@ -75,4 +77,11 @@ interface DirectoryContentSpec {
  */
 fun File.assertMatches(spec: DirectoryContentSpec) {
   assertDirectoryContentMatches(this, spec as DirectoryContentSpecImpl, "")
+}
+
+fun DirectoryContentSpec.generateInVirtualTempDir(): VirtualFile {
+  val ioFile = generateInTempDir()
+  val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioFile)!!
+  virtualFile.refresh(false, true)
+  return virtualFile
 }

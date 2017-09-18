@@ -23,6 +23,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -50,7 +51,6 @@ public class TransactionGuardImpl extends TransactionGuard {
   private TransactionIdImpl myCurrentTransaction;
   private boolean myWritingAllowed;
   private boolean myErrorReported;
-  private static boolean ourTestingTransactions;
 
   public TransactionGuardImpl() {
     myWriteSafeModalities.put(ModalityState.NON_MODAL, true);
@@ -239,7 +239,9 @@ public class TransactionGuardImpl extends TransactionGuard {
            "Please ensure you're using invokeLater/invokeAndWait with a correct modality state (not \"any\"). " +
            "See TransactionGuard documentation for details." +
            "\n  current modality=" + modality +
-           "\n  known modalities=" + myWriteSafeModalities;
+           "\n  known modalities:\n" +
+           StringUtil.join(myWriteSafeModalities.entrySet(),
+                           entry -> String.format("    %s, writingAllowed=%s", entry.getKey(), entry.getValue()), ";\n");
   }
 
   @Override
@@ -252,9 +254,6 @@ public class TransactionGuardImpl extends TransactionGuard {
 
   private static boolean areAssertionsEnabled() {
     Application app = ApplicationManager.getApplication();
-    if (app.isUnitTestMode() && !ourTestingTransactions) {
-      return false;
-    }
     if (app instanceof ApplicationEx && !((ApplicationEx)app).isLoaded()) {
       return false;
     }
@@ -335,10 +334,6 @@ public class TransactionGuardImpl extends TransactionGuard {
       .add("currentTransaction", myCurrentTransaction)
       .add("writingAllowed", myWritingAllowed)
       .toString();
-  }
-
-  public static void setTestingTransactions(boolean testingTransactions) {
-    ourTestingTransactions = testingTransactions;
   }
 
   private static class Transaction {

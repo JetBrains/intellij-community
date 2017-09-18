@@ -15,10 +15,10 @@
  */
 package com.intellij.coverage;
 
+import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.ui.IdeBorderFactory;
 
 import javax.swing.*;
-import java.awt.*;
 
 public class JavaCoverageOptions extends CoverageOptions {
 
@@ -57,12 +57,14 @@ public class JavaCoverageOptions extends CoverageOptions {
   
   private static class JavaCoverageOptionsEditor {
 
-    private JPanel myPanel = new JPanel(new BorderLayout(0, 10));
-    private JCheckBox myCheckBox = new JCheckBox("Ignore empty private and implicit constructors", true);
+    private JPanel myPanel = new JPanel(new VerticalFlowLayout());
+    private JCheckBox myImplicitCheckBox = new JCheckBox("Ignore implicit constructors", true);
+    private JCheckBox myEmptyCheckBox = new JCheckBox("Ignore empty private constructors of utility classes", true);
 
     public JavaCoverageOptionsEditor() {
       myPanel.setBorder(IdeBorderFactory.createTitledBorder("Java coverage"));
-      myPanel.add(myCheckBox, BorderLayout.NORTH);
+      myPanel.add(myImplicitCheckBox);
+      myPanel.add(myEmptyCheckBox);
     }
 
     public JPanel getComponent() {
@@ -70,15 +72,18 @@ public class JavaCoverageOptions extends CoverageOptions {
     }
 
     public boolean isModified(JavaCoverageOptionsProvider provider) {
-      return myCheckBox.isSelected() != provider.ignoreEmptyPrivateConstructors();
+      return myImplicitCheckBox.isSelected() != provider.ignoreImplicitConstructors() ||
+             myEmptyCheckBox.isSelected() != provider.ignoreEmptyPrivateConstructors();
     }
 
     public void apply(JavaCoverageOptionsProvider provider) {
-      provider.setIgnoreEmptyPrivateConstructors(myCheckBox.isSelected());
+      provider.setIgnoreImplicitConstructors(myImplicitCheckBox.isSelected());
+      provider.setIgnoreEmptyPrivateConstructors(myEmptyCheckBox.isSelected());
     }
 
     public void reset(JavaCoverageOptionsProvider provider) {
-      myCheckBox.setSelected(provider.ignoreEmptyPrivateConstructors());
+      myImplicitCheckBox.setSelected(provider.ignoreImplicitConstructors());
+      myEmptyCheckBox.setSelected(provider.ignoreEmptyPrivateConstructors());
     }
   }
 }

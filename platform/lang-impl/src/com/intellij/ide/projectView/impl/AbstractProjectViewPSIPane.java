@@ -20,11 +20,11 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.PsiCopyPasteManager;
 import com.intellij.ide.projectView.BaseProjectTreeBuilder;
 import com.intellij.ide.projectView.PresentationData;
-import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.ui.customization.CustomizationUtil;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeUpdater;
+import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
 import com.intellij.ide.util.treeView.TreeBuilderUtil;
 import com.intellij.openapi.actionSystem.ActionPlaces;
@@ -64,6 +64,7 @@ import javax.swing.tree.TreeSelectionModel;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.StringTokenizer;
 
 public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane {
@@ -104,8 +105,7 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
       setTreeBuilder(treeBuilder);
     }
     else {
-      myAsyncSupport = new AsyncProjectViewSupport(this, myProject, myTree, myTreeStructure,
-                                                   new GroupByTypeComparator(ProjectView.getInstance(myProject), getId()));
+      myAsyncSupport = new AsyncProjectViewSupport(this, myProject, myTree, myTreeStructure, createComparator());
     }
 
     initTree();
@@ -133,7 +133,14 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
   }
 
   @Override
+  protected void installComparator(AbstractTreeBuilder builder, Comparator<NodeDescriptor> comparator) {
+    if (myAsyncSupport != null) myAsyncSupport.setComparator(comparator);
+    super.installComparator(builder, comparator);
+  }
+
+  @Override
   public final void dispose() {
+    myAsyncSupport = null;
     myComponent = null;
     super.dispose();
   }
@@ -193,12 +200,13 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
     final ArrayList<Object> selectionPaths = new ArrayList<>();
     Runnable afterUpdate;
     final ActionCallback cb = new ActionCallback();
-    if (restoreExpandedPaths) {
-      TreeBuilderUtil.storePaths(getTreeBuilder(), (DefaultMutableTreeNode)myTree.getModel().getRoot(), pathsToExpand, selectionPaths, true);
+    AbstractTreeBuilder builder = getTreeBuilder();
+    if (restoreExpandedPaths && builder != null) {
+      TreeBuilderUtil.storePaths(builder, (DefaultMutableTreeNode)myTree.getModel().getRoot(), pathsToExpand, selectionPaths, true);
       afterUpdate = () -> {
-        if (myTree != null && getTreeBuilder() != null && !getTreeBuilder().isDisposed()) {
+        if (myTree != null && !builder.isDisposed()) {
           myTree.setSelectionPaths(new TreePath[0]);
-          TreeBuilderUtil.restorePaths(getTreeBuilder(), pathsToExpand, selectionPaths, true);
+          TreeBuilderUtil.restorePaths(builder, pathsToExpand, selectionPaths, true);
         }
         cb.setDone();
       };
@@ -206,10 +214,12 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
     else {
       afterUpdate = cb.createSetDoneRunnable();
     }
-    if (getTreeBuilder() != null) {
-      getTreeBuilder().addSubtreeToUpdate(getTreeBuilder().getRootNode(), afterUpdate);
+    if (builder != null) {
+      builder.addSubtreeToUpdate(builder.getRootNode(), afterUpdate);
     }
-    //myTreeBuilder.updateFromRoot();
+    else if (myAsyncSupport != null) {
+      myAsyncSupport.updateAll();
+    }
     return cb;
   }
 
@@ -221,12 +231,11 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
   @NotNull
   public ActionCallback selectCB(Object element, VirtualFile file, boolean requestFocus) {
     if (file != null) {
-      if (getTreeBuilder() instanceof BaseProjectTreeBuilder) {
-        beforeSelect().doWhenDone(() -> {
-          UIUtil.invokeLaterIfNeeded(
-            () -> ((BaseProjectTreeBuilder)getTreeBuilder()).select(element, file, requestFocus)
-          );
-        });
+      AbstractTreeBuilder builder = getTreeBuilder();
+      if (builder instanceof BaseProjectTreeBuilder) {
+        beforeSelect().doWhenDone(() -> UIUtil.invokeLaterIfNeeded(() -> {
+          if (!builder.isDisposed()) ((BaseProjectTreeBuilder)builder).select(element, file, requestFocus);
+        }));
       }
       else if (myAsyncSupport != null) {
         myAsyncSupport.select(myTree, element, file);
@@ -239,7 +248,9 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
   public ActionCallback beforeSelect() {
     // actually, getInitialized().doWhenDone() should be called by builder internally
     // this will be done in 2017
-    return getTreeBuilder().getInitialized();
+    AbstractTreeBuilder builder = getTreeBuilder();
+    if (builder == null) return ActionCallback.DONE;
+    return builder.getInitialized();
   }
 
   protected BaseProjectTreeBuilder createBuilder(DefaultTreeModel treeModel) {

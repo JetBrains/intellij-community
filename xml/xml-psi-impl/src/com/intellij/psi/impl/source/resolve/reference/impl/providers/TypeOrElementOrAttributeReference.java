@@ -35,6 +35,7 @@ import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.impl.schema.ComplexTypeDescriptor;
 import com.intellij.xml.impl.schema.TypeDescriptor;
 import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
+import com.intellij.xml.impl.schema.XsdNsDescriptor;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -133,9 +134,9 @@ public class TypeOrElementOrAttributeReference implements PsiReference {
 
     String canonicalText = getCanonicalText();
     boolean[] redefined = new boolean[1];
-    XmlNSDescriptorImpl nsDescriptor = getDescriptor(tag, canonicalText, redefined);
+    XsdNsDescriptor nsDescriptor = getDescriptor(tag, canonicalText, redefined);
 
-    if (myType != null && nsDescriptor != null && nsDescriptor.getTag() != null) {
+    if (myType != null && nsDescriptor != null) {
 
       switch(myType) {
         case GroupReference: return nsDescriptor.findGroup(canonicalText);
@@ -177,7 +178,7 @@ public class TypeOrElementOrAttributeReference implements PsiReference {
     return null;
   }
 
-  XmlNSDescriptorImpl getDescriptor(final XmlTag tag, String text, boolean[] redefined) {
+  XsdNsDescriptor getDescriptor(final XmlTag tag, String text, boolean[] redefined) {
     if (myType != ReferenceType.ElementReference &&
         myType != ReferenceType.AttributeReference) {
       final PsiElement parentElement = myElement.getContext();
@@ -238,7 +239,7 @@ public class TypeOrElementOrAttributeReference implements PsiReference {
       if (descrs[0] instanceof XmlNSDescriptorImpl) return (XmlNSDescriptorImpl)descrs[0];
     }
 
-    return nsDescriptor instanceof XmlNSDescriptorImpl ? (XmlNSDescriptorImpl)nsDescriptor:null;
+    return nsDescriptor instanceof XsdNsDescriptor ? (XsdNsDescriptor)nsDescriptor:null;
   }
 
   private static String getNamespace(final XmlTag tag, final String text) {
@@ -338,8 +339,8 @@ public class TypeOrElementOrAttributeReference implements PsiReference {
       if (ourNamespace.equals(namespace)) continue;
       final XmlNSDescriptor nsDescriptor = tag.getNSDescriptor(namespace, true);
 
-      if (nsDescriptor instanceof XmlNSDescriptorImpl) {
-        processNamespace(namespace, processor, (XmlNSDescriptorImpl)nsDescriptor, tagNames);
+      if (nsDescriptor instanceof XsdNsDescriptor) {
+        processNamespace(namespace, processor, (XsdNsDescriptor)nsDescriptor, tagNames);
       }
     }
 
@@ -358,15 +359,11 @@ public class TypeOrElementOrAttributeReference implements PsiReference {
 
   private static void processNamespace(final String namespace,
                                 final CompletionProcessor processor,
-                                final XmlNSDescriptorImpl nsDescriptor,
+                                final XsdNsDescriptor nsDescriptor,
                                 final String[] tagNames) {
     processor.namespace = namespace;
 
-    XmlNSDescriptorImpl.processTagsInNamespace(
-      nsDescriptor.getTag(),
-      tagNames,
-      processor
-    );
+    nsDescriptor.processTagsInNamespace(tagNames, processor);
   }
 
   @Override

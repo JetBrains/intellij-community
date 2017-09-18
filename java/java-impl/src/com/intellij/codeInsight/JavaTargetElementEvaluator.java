@@ -15,10 +15,14 @@
  */
 package com.intellij.codeInsight;
 
+import com.intellij.codeInspection.dataFlow.CommonDataflow;
+import com.intellij.codeInspection.dataFlow.DfaFactType;
+import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.search.JavaOverridingMethodsSearcher;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -38,18 +42,19 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
   public static final int NEW_AS_CONSTRUCTOR = 0x04;
   public static final int THIS_ACCEPTED = 0x10;
   public static final int SUPER_ACCEPTED = 0x20;
+  public static final int USE_DFA = 0x40;
 
   @Override
   public int getAllAdditionalFlags() {
-    return NEW_AS_CONSTRUCTOR | THIS_ACCEPTED | SUPER_ACCEPTED;
+    return NEW_AS_CONSTRUCTOR | THIS_ACCEPTED | SUPER_ACCEPTED | USE_DFA;
   }
 
   /**
-   * Accepts THIS or SUPER but not NEW_AS_CONSTRUCTOR.
+   * Accepts THIS or SUPER or USE_DFA but not NEW_AS_CONSTRUCTOR.
    */
   @Override
   public int getAdditionalDefinitionSearchFlags() {
-    return THIS_ACCEPTED | SUPER_ACCEPTED;
+    return THIS_ACCEPTED | SUPER_ACCEPTED | USE_DFA;
   }
 
   /**
@@ -78,7 +83,29 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
         return ((PsiClassType)type).resolve();
       }
     }
+    if (targetElement instanceof PsiMethod && BitUtil.isSet(flags, USE_DFA)) {
+      PsiElement realMethod = findOverridingMethod(editor, offset, (PsiMethod)targetElement);
+      if (realMethod != null) return realMethod;
+    }
     return super.adjustTargetElement(editor, offset, flags, targetElement);
+  }
+
+  @Nullable
+  private static PsiElement findOverridingMethod(Editor editor, int offset, PsiMethod method) {
+    PsiClass qualifierClass = method.getContainingClass();
+    if (qualifierClass == null || !PsiUtil.canBeOverridden(method)) return null;
+    PsiReference reference = TargetElementUtil.findReference(editor, offset);
+    if (!(reference instanceof PsiReferenceExpression) || !reference.isReferenceTo(method)) return null;
+    PsiExpression qualifier = ((PsiReferenceExpression)reference).getQualifierExpression();
+    if (qualifier == null) return null;
+    TypeConstraint constraint = CommonDataflow.getExpressionFact(qualifier, DfaFactType.TYPE_CONSTRAINT);
+    if (constraint == null) return null;
+    PsiClass specificQualifierClass = PsiUtil.resolveClassInClassTypeOnly(constraint.getPsiType());
+    if (specificQualifierClass == null || specificQualifierClass.equals(qualifierClass) ||
+        !InheritanceUtil.isInheritorOrSelf(specificQualifierClass, qualifierClass, true)) {
+      return null;
+    }
+    return JavaOverridingMethodsSearcher.findOverridingMethod(method.getProject(), specificQualifierClass, method, qualifierClass);
   }
 
   @Override

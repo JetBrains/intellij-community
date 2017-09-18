@@ -451,6 +451,7 @@ public class SheetController implements Disposable {
 
   private void layoutDoNotAskCheckbox(JPanel sheetPanel) {
     doNotAskCheckBox.setText(myDoNotAskOption.getDoNotShowMessage());
+    doNotAskCheckBox.setVisible(myDoNotAskOption.canBeHidden());
     doNotAskCheckBox.setSelected(!myDoNotAskOption.isToBeShown());
     doNotAskCheckBox.setOpaque(false);
     doNotAskCheckBox.addItemListener(new ItemListener() {

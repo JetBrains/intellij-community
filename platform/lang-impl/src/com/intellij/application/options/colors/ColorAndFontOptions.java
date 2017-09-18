@@ -30,6 +30,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
 import com.intellij.openapi.editor.colors.impl.*;
@@ -79,6 +80,8 @@ import static com.intellij.openapi.actionSystem.PlatformDataKeys.CONTEXT_COMPONE
 
 public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
   implements EditorOptionsProvider, SchemesModel<EditorColorsScheme> {
+  private static final Logger LOG = Logger.getInstance(ColorAndFontOptions.class);
+
   public static final String ID = "reference.settingsdialog.IDE.editor.colors";
   public static final String FONT_CONFIGURABLE_NAME = "Color Scheme Font";
 
@@ -604,6 +607,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
   private static void initDescriptions(@NotNull ColorAndFontDescriptorsProvider provider,
                                        @NotNull List<EditorSchemeAttributeDescriptor> descriptions,
                                        @NotNull MyColorScheme scheme) {
+    String className = provider.getClass().getName();
     String group = provider.getDisplayName();
     List<AttributesDescriptor> attributeDescriptors = ColorSettingsUtil.getAllAttributeDescriptors(provider);
     if (provider instanceof RainbowColorSettingsPage) {
@@ -614,11 +618,13 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
       descriptions.add(d);
     }
     for (AttributesDescriptor descriptor : attributeDescriptors) {
+      LOG.assertTrue(descriptor != null, className);
       SchemeTextAttributesDescription d = new SchemeTextAttributesDescription(
         descriptor.getDisplayName(), group, descriptor.getKey(), scheme, null, null);
       descriptions.add(d);
     }
     for (ColorDescriptor descriptor : provider.getColorDescriptors()) {
+      LOG.assertTrue(descriptor != null, className);
       EditorSettingColorDescription d = new EditorSettingColorDescription(
         descriptor.getDisplayName(), group, descriptor.getKey(), descriptor.getKind(), scheme);
       descriptions.add(d);

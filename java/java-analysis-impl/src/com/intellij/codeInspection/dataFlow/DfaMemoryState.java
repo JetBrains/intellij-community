@@ -19,7 +19,6 @@ import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
 import com.intellij.codeInspection.dataFlow.value.DfaRelationValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
-import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,13 +54,6 @@ public interface DfaMemoryState {
    */
   @Nullable
   <T> T getValueFact(@NotNull DfaFactType<T> factType, @NotNull DfaValue value);
-
-  /**
-   * @param value to determine its type
-   * @return value type at this state if known (possibly erased)
-   */
-  @Nullable
-  PsiType getValueType(DfaValue value);
 
   void flushFields();
 

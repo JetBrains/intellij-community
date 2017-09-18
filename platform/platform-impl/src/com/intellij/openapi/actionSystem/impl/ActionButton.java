@@ -226,6 +226,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   }
 
   @Override public Dimension getPreferredSize() {
+    if (myMinimumButtonSize != null) myMinimumButtonSize.update();
     Icon icon = getIcon();
     if (icon.getIconWidth() < myMinimumButtonSize.width &&
         icon.getIconHeight() < myMinimumButtonSize.height) {

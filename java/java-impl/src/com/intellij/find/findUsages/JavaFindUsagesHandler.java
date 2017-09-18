@@ -34,10 +34,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
-import com.intellij.psi.util.PropertyUtil;
-import com.intellij.psi.util.PsiSuperMethodUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.JavaNonCodeSearchElementDescriptionProvider;
 import com.intellij.refactoring.util.NonCodeSearchDescriptionLocation;
 import com.intellij.usageView.UsageInfo;
@@ -177,13 +174,13 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
         final String propertyName = JavaCodeStyleManager.getInstance(getProject()).variableNameToPropertyName(fieldName, VariableKind.FIELD);
         Set<PsiMethod> accessors = new THashSet<>();
         boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);
-        PsiMethod getter = PropertyUtil.findPropertyGetterWithType(propertyName, isStatic, field.getType(),
-                                     ContainerUtil.iterate(containingClass.getMethods()));
+        PsiMethod getter = PropertyUtilBase.findPropertyGetterWithType(propertyName, isStatic, field.getType(),
+                                                                       ContainerUtil.iterate(containingClass.getMethods()));
         if (getter != null) accessors.add(getter);
-        PsiMethod setter = PropertyUtil.findPropertySetterWithType(propertyName, isStatic, field.getType(),
-                                     ContainerUtil.iterate(containingClass.getMethods()));
+        PsiMethod setter = PropertyUtilBase.findPropertySetterWithType(propertyName, isStatic, field.getType(),
+                                                                       ContainerUtil.iterate(containingClass.getMethods()));
         if (setter != null) accessors.add(setter);
-        accessors.addAll(PropertyUtil.getAccessors(containingClass, fieldName));
+        accessors.addAll(PropertyUtilBase.getAccessors(containingClass, fieldName));
         if (!accessors.isEmpty()) {
           boolean containsPhysical = ContainerUtil.find(accessors, psiMethod -> psiMethod.isPhysical()) != null;
           final boolean doSearch = !containsPhysical || askShouldSearchAccessors(fieldName);

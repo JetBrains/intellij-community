@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.uiDesigner.lw.LwXmlReader;
 import com.intellij.uiDesigner.propertyInspector.editors.IntEnumEditor;
 import org.jdom.Element;
@@ -76,8 +77,8 @@ public final class Properties implements PersistentStateComponent<Element> {
       if (componentClass != null) {
         PsiMethod[] methods = componentClass.getAllMethods();
         for(PsiMethod method: methods) {
-          if (method.isDeprecated() && PropertyUtil.isSimplePropertySetter(method)) {
-            deprecated.add(PropertyUtil.getPropertyNameBySetter(method));
+          if (method.isDeprecated() && PropertyUtilBase.isSimplePropertySetter(method)) {
+            deprecated.add(PropertyUtilBase.getPropertyNameBySetter(method));
           }
         }
       }

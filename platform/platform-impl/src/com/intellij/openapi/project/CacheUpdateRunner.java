@@ -46,10 +46,7 @@ public class CacheUpdateRunner {
   private static final int PROC_COUNT = Runtime.getRuntime().availableProcessors();
   public static final int DEFAULT_MAX_INDEXER_THREADS = 4;
 
-  public static void processFiles(final ProgressIndicator indicator,
-                                  boolean processInReadAction,
-                                  Collection<VirtualFile> files,
-                                  Project project, Consumer<FileContent> processor) {
+  public static void processFiles(ProgressIndicator indicator, Collection<VirtualFile> files, Project project, Consumer<FileContent> processor) {
     indicator.checkCanceled();
     final FileContentQueue queue = new FileContentQueue(files, indicator);
     final double total = files.size();
@@ -85,8 +82,7 @@ public class CacheUpdateRunner {
 
     while (!project.isDisposed()) {
       indicator.checkCanceled();
-      // todo wait for the user...
-      if (processSomeFilesWhileUserIsInactive(queue, progressUpdater, processInReadAction, project, processor)) {
+      if (processSomeFilesWhileUserIsInactive(queue, progressUpdater, indicator, project, processor)) {
         break;
       }
     }
@@ -104,7 +100,7 @@ public class CacheUpdateRunner {
 
   private static boolean processSomeFilesWhileUserIsInactive(@NotNull FileContentQueue queue,
                                                              @NotNull ProgressUpdater progressUpdater,
-                                                             final boolean processInReadAction,
+                                                             @NotNull ProgressIndicator suspendableIndicator,
                                                              @NotNull Project project,
                                                              @NotNull Consumer<FileContent> fileProcessor) {
     final ProgressIndicatorBase innerIndicator = new ProgressIndicatorBase() {
@@ -126,7 +122,7 @@ public class CacheUpdateRunner {
     try {
       int threadsCount = indexingThreadCount();
       if (threadsCount == 1 || application.isWriteAccessAllowed()) {
-        Runnable process = new MyRunnable(innerIndicator, queue, isFinished, progressUpdater, processInReadAction, project, fileProcessor);
+        Runnable process = new MyRunnable(innerIndicator, suspendableIndicator, queue, isFinished, progressUpdater, project, fileProcessor);
         ProgressManager.getInstance().runProcess(process, innerIndicator);
       }
       else {
@@ -135,7 +131,7 @@ public class CacheUpdateRunner {
         for (int i = 0; i < threadsCount; i++) {
           AtomicBoolean ref = new AtomicBoolean();
           finishedRefs[i] = ref;
-          Runnable process = new MyRunnable(innerIndicator, queue, ref, progressUpdater, processInReadAction, project, fileProcessor);
+          Runnable process = new MyRunnable(innerIndicator, suspendableIndicator, queue, ref, progressUpdater, project, fileProcessor);
           futures[i] = application.executeOnPooledThread(process);
         }
         isFinished.set(waitForAll(finishedRefs, futures));
@@ -183,25 +179,25 @@ public class CacheUpdateRunner {
 
   private static class MyRunnable implements Runnable {
     private final ProgressIndicatorBase myInnerIndicator;
+    private final ProgressIndicator mySuspendableIndicator;
     private final FileContentQueue myQueue;
     private final AtomicBoolean myFinished;
     private final ProgressUpdater myProgressUpdater;
-    private final boolean myProcessInReadAction;
     @NotNull private final Project myProject;
     @NotNull private final Consumer<FileContent> myProcessor;
 
-    public MyRunnable(@NotNull ProgressIndicatorBase innerIndicator,
-                      @NotNull FileContentQueue queue,
-                      @NotNull AtomicBoolean finished,
-                      @NotNull ProgressUpdater progressUpdater,
-                      boolean processInReadAction,
-                      @NotNull Project project,
-                      @NotNull Consumer<FileContent> fileProcessor) {
+    MyRunnable(@NotNull ProgressIndicatorBase innerIndicator,
+               @NotNull ProgressIndicator suspendableIndicator,
+               @NotNull FileContentQueue queue,
+               @NotNull AtomicBoolean finished,
+               @NotNull ProgressUpdater progressUpdater,
+               @NotNull Project project,
+               @NotNull Consumer<FileContent> fileProcessor) {
       myInnerIndicator = innerIndicator;
+      mySuspendableIndicator = suspendableIndicator;
       myQueue = queue;
       myFinished = finished;
       myProgressUpdater = progressUpdater;
-      myProcessInReadAction = processInReadAction;
       myProject = project;
       myProcessor = fileProcessor;
     }
@@ -213,6 +209,8 @@ public class CacheUpdateRunner {
           return;
         }
         try {
+          mySuspendableIndicator.checkCanceled();
+
           final FileContent fileContent = myQueue.take(myInnerIndicator);
           if (fileContent == null) {
             myFinished.set(true);
@@ -241,14 +239,9 @@ public class CacheUpdateRunner {
           try {
             ProgressManager.getInstance().runProcess(
               () -> {
-                if (myProcessInReadAction) {
-                  // in wait methods we don't want to deadlock by grabbing write lock (or having it in queue) and trying to run read action in separate thread
-                  if (!ApplicationManagerEx.getApplicationEx().tryRunReadAction(action)) {
-                    throw new ProcessCanceledException();
-                  }
-                }
-                else {
-                  action.run();
+                // in wait methods we don't want to deadlock by grabbing write lock (or having it in queue) and trying to run read action in separate thread
+                if (!ApplicationManagerEx.getApplicationEx().tryRunReadAction(action)) {
+                  throw new ProcessCanceledException();
                 }
               },
               ProgressWrapper.wrap(myInnerIndicator)

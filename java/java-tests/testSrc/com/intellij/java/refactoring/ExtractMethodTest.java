@@ -679,6 +679,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testTypeParamsListWithRecursiveDependencies() throws Exception {
+    doTest();
+  }
+
   public void testFromLambdaBody() throws Exception {
     doTest();
   }

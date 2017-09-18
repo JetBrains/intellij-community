@@ -61,7 +61,7 @@ public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiE
   @NotNull
   public PsiElement[] getChildren() {
     List<PsiElement> children = ContainerUtil.newArrayList();
-    ContainerUtil.addAll(children, getChildren(getDocComment(), getModifierList(), getNameIdentifier(), getExtendsList(), getImplementsList()));
+    ContainerUtil.addAll(children, getChildren(getDocComment(), getModifierListInternal(), getNameIdentifier(), getExtendsList(), getImplementsList()));
     ContainerUtil.addAll(children, getOwnFields());
     ContainerUtil.addAll(children, getOwnMethods());
     ContainerUtil.addAll(children, getOwnInnerClasses());
@@ -84,23 +84,37 @@ public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiE
   public String getQualifiedName() {
     return getStub().getQualifiedName();
   }
-  
-  boolean isAnonymousOrLocalClass() {
+
+  private boolean isLocalClass() {
     PsiClassStub<?> stub = getStub();
-    return !(stub instanceof PsiClassStubImpl) || 
-           ((PsiClassStubImpl)stub).isAnonymousInner() || 
+    return stub instanceof PsiClassStubImpl &&
            ((PsiClassStubImpl)stub).isLocalClassInner();
   }
 
+  private boolean isAnonymousClass() {
+    PsiClassStub<?> stub = getStub();
+    return stub instanceof PsiClassStubImpl &&
+           ((PsiClassStubImpl)stub).isAnonymousInner();
+  }
+  
+  private boolean isAnonymousOrLocalClass() {
+    return isAnonymousClass() || isLocalClass();
+  }
+
   @Override
-  @NotNull
+  @Nullable
   public PsiModifierList getModifierList() {
+    if (isAnonymousClass()) return null;
+    return getModifierListInternal();
+  }
+
+  private PsiModifierList getModifierListInternal() {
     return getStub().findChildStubByType(JavaStubElementTypes.MODIFIER_LIST).getPsi();
   }
 
   @Override
   public boolean hasModifierProperty(@NotNull String name) {
-    return getModifierList().hasModifierProperty(name);
+    return getModifierListInternal().hasModifierProperty(name);
   }
 
   @Override
@@ -348,7 +362,7 @@ public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiE
   public void appendMirrorText(final int indentLevel, @NotNull @NonNls final StringBuilder buffer) {
     appendText(getDocComment(), indentLevel, buffer, NEXT_LINE);
 
-    appendText(getModifierList(), indentLevel, buffer);
+    appendText(getModifierListInternal(), indentLevel, buffer);
     buffer.append(isEnum() ? "enum " : isAnnotationType() ? "@interface " : isInterface() ? "interface " : "class ");
     appendText(getNameIdentifier(), indentLevel, buffer, " ");
     appendText(getTypeParameterList(), indentLevel, buffer, " ");
@@ -435,7 +449,8 @@ public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiE
 
     setMirrorIfPresent(getDocComment(), mirror.getDocComment());
 
-    setMirror(getModifierList(), mirror.getModifierList());
+    PsiModifierList modifierList = getModifierList();
+    if (modifierList != null) setMirror(modifierList, mirror.getModifierList());
     setMirror(getNameIdentifier(), mirror.getNameIdentifier());
     setMirror(getTypeParameterList(), mirror.getTypeParameterList());
     setMirror(getExtendsList(), mirror.getExtendsList());

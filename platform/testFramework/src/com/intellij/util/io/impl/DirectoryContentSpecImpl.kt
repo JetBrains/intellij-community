@@ -70,11 +70,15 @@ class DirectorySpec : DirectorySpecBase() {
 class ZipSpec : DirectorySpecBase() {
   override fun generate(target: File) {
     val contentDir = FileUtil.createTempDirectory("zip-content", null, false)
-    generateInDirectory(contentDir)
-    ZipOutputStream(BufferedOutputStream(target.outputStream())).use {
-      ZipUtil.addDirToZipRecursively(it, null, contentDir, "",null, null)
+    try {
+      generateInDirectory(contentDir)
+      ZipOutputStream(BufferedOutputStream(target.outputStream())).use {
+        ZipUtil.addDirToZipRecursively(it, null, contentDir, "", null, null)
+      }
     }
-    FileUtil.delete(contentDir)
+    finally {
+      FileUtil.delete(contentDir)
+    }
   }
 }
 

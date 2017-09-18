@@ -157,7 +157,9 @@ public class VcsProjectLog implements Disposable {
       if (myValue == null) {
         VcsLogManager value = compute();
         myValue = value;
-        ApplicationManager.getApplication().invokeLater(() -> myMessageBus.syncPublisher(VCS_PROJECT_LOG_CHANGED).logCreated(value));
+        ApplicationManager.getApplication().invokeLater(() -> {
+          if (!myProject.isDisposed()) myMessageBus.syncPublisher(VCS_PROJECT_LOG_CHANGED).logCreated(value);
+        });
       }
       return myValue;
     }

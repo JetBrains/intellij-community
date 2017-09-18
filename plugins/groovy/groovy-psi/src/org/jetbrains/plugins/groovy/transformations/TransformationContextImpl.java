@@ -128,7 +128,7 @@ public class TransformationContextImpl implements TransformationContext {
     for (PsiClassType type: superTypes) {
       PsiClass psiClass = type.resolve();
       if (psiClass != null) {
-        fields.addAll(Arrays.asList(psiClass.getAllFields()));
+        ContainerUtil.addAll(fields, psiClass.getAllFields());
       }
     }
     return fields;

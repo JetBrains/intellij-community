@@ -23,6 +23,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.search.JavaOverridingMethodsSearcher;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -478,6 +479,26 @@ public class StandardInstructionVisitor extends InstructionVisitor {
   }
 
   @NotNull
+  private static PsiMethod findSpecificMethod(@NotNull PsiMethod method, @NotNull DfaMemoryState state, @Nullable DfaValue qualifier) {
+    if (qualifier == null || !PsiUtil.canBeOverridden(method)) {
+      return method;
+    }
+    TypeConstraint constraint = state.getValueFact(DfaFactType.TYPE_CONSTRAINT, qualifier);
+    PsiClass specificQualifierClass = PsiUtil.resolveClassInClassTypeOnly(constraint == null ? null : constraint.getPsiType());
+    PsiClass qualifierClass = method.getContainingClass();
+    if (specificQualifierClass != null && qualifierClass != null &&
+        !specificQualifierClass.equals(qualifierClass) &&
+        InheritanceUtil.isInheritorOrSelf(specificQualifierClass, qualifierClass, true)) {
+      PsiMethod realMethod =
+        JavaOverridingMethodsSearcher.findOverridingMethod(method.getProject(), specificQualifierClass, method, qualifierClass);
+      if (realMethod != null) {
+        return realMethod;
+      }
+    }
+    return method;
+  }
+
+  @NotNull
   private static DfaValue getMethodResultValue(MethodCallInstruction instruction,
                                                @Nullable DfaValue qualifierValue,
                                                DfaMemoryState state, DfaValueFactory factory) {
@@ -520,19 +541,13 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       Nullness nullability = instruction.getReturnNullability();
       PsiMethod targetMethod = instruction.getTargetMethod();
       if (targetMethod != null) {
-        PsiClass specificQualifierClass = PsiUtil.resolveClassInClassTypeOnly(state.getValueType(qualifierValue));
-        PsiClass qualifierClass = targetMethod.getContainingClass();
-        if (specificQualifierClass != null && qualifierClass != null &&
-            !specificQualifierClass.equals(qualifierClass) &&
-            InheritanceUtil.isInheritorOrSelf(specificQualifierClass, qualifierClass, true)) {
-          PsiMethod realMethod = specificQualifierClass.findMethodBySignature(targetMethod, true);
-          if (realMethod != null && realMethod != targetMethod) {
-            nullability = DfaPsiUtil.getElementNullability(type, realMethod);
-            PsiType returnType = realMethod.getReturnType();
-            if(returnType != null && TypeConversionUtil.erasure(type).isAssignableFrom(returnType)) {
-              // possibly covariant return type
-              type = returnType;
-            }
+        PsiMethod realMethod = findSpecificMethod(targetMethod, state, qualifierValue);
+        if (realMethod != targetMethod) {
+          nullability = DfaPsiUtil.getElementNullability(type, realMethod);
+          PsiType returnType = realMethod.getReturnType();
+          if (returnType != null && TypeConversionUtil.erasure(type).isAssignableFrom(returnType)) {
+            // possibly covariant return type
+            type = returnType;
           }
         }
         if (nullability == Nullness.UNKNOWN) {
@@ -700,7 +715,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
         return checkComparisonWithKnownValue(instruction, runner, memState, relationType, leftValue, rightValue);
       }
     }
-    
+
     if (dfaRight instanceof DfaConstValue && dfaLeft instanceof DfaVariableValue) {
       Object value = ((DfaConstValue)dfaRight).getValue();
       if (value instanceof Number) {

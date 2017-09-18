@@ -128,7 +128,7 @@ fun writeStubsVersionFile(stubsStorageFilePath: String, stubsVersion: String) {
 fun mergeStubs(paths: List<String>, stubsFilePath: String, stubsFileName: String, projectPath: String, stubsVersion: String) {
   val app = IdeaTestApplication.getInstance()
   val project = ProjectManager.getInstance().loadAndOpenProject(projectPath)!!
-  // we don't need a project here, but I didn't find a better way to wait until indexes and components are initialized
+  // we don't need a project here, but I didn't find a better way to wait until indices and components are initialized
 
   try {
     val stubExternalizer = StubTreeExternalizer()

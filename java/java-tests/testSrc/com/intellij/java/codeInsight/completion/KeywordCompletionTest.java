@@ -132,13 +132,16 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testAbstractInInterface() { doTest(1, "abstract"); }
   public void testCharInAnnotatedParameter() { doTest(1, "char"); }
   public void testReturnInTernary() { doTest(1, "return"); }
+  public void testReturnInRussian() { doTest(1, "return"); }
   public void testFinalAfterParameterAnno() { doTest(2, "final", "float", "class"); }
   public void testFinalAfterParameterAnno2() { doTest(2, "final", "float", "class"); }
   public void testFinalAfterCase() { doTest(3, "final", "float", "class"); }
   public void testNoCaseInsideWhileInSwitch() { doTest(0, "case", "default"); }
   public void testFinalInCatch() { doTest(1, "final"); }
   public void testFinalInIncompleteCatch() { doTest(1, "final"); }
+  public void testFinalInCompleteCatch() { doTest(1, "final"); }
   public void testFinalInTryWithResources() { doTest(1, "final", "float", "class"); }
+  public void testFinalInCompleteTryWithResources() { doTest(1, "final", "float", "class"); }
   public void testFinalInLambda() { doTest(2, "final", "float"); }
   public void testNoFinalAfterTryBody() { doTest(1, "final", "finally"); }
   public void testClassInMethod() { doTest(2, "class", "char"); }

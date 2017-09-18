@@ -17,6 +17,7 @@ package com.intellij.openapi.editor.ex.util;
 
 import com.intellij.lexer.FlexAdapter;
 import com.intellij.lexer.Lexer;
+import com.intellij.lexer.RestartableLexer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
@@ -66,7 +67,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     myScheme = scheme;
     myLexer = highlighter.getHighlightingLexer();
     myLexer.start(ArrayUtil.EMPTY_CHAR_SEQUENCE);
-    myInitialState = myLexer.getState();
+    myInitialState = myLexer instanceof RestartableLexer ? ((RestartableLexer)myLexer).getRestartableState() : myLexer.getState();
     myHighlighter = highlighter;
     mySegments = createSegments();
   }
@@ -375,7 +376,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
 
     final TokenProcessor processor = createTokenProcessor(0);
     final int textLength = text.length();
-    myLexer.start(text, 0, textLength, myInitialState);
+    myLexer.start(text, 0, textLength, myLexer instanceof RestartableLexer ? ((RestartableLexer)myLexer).getStartState() : myInitialState);
     mySegments.removeAll();
     int i = 0;
     while (true) {

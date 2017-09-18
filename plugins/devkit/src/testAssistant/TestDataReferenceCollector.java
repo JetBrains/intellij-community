@@ -17,6 +17,7 @@ package org.jetbrains.idea.devkit.testAssistant;
 
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NullableComputable;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -70,7 +71,7 @@ public class TestDataReferenceCollector {
   @NotNull
   private List<String> collectTestDataReferences(final PsiMethod method,
                                                  final Map<String, Computable<UValue>> argumentMap,
-                                                 final HashSet<PsiMethod> proceed) {
+                                                 final HashSet<Pair<PsiMethod, Set<UExpression>>> proceed) {
     final List<String> result = new ArrayList<>();
     if (myTestDataPath == null) {
       return result;
@@ -84,6 +85,7 @@ public class TestDataReferenceCollector {
       public boolean visitCallExpression(@NotNull UCallExpression expression) {
         String callText = expression.getMethodName();
         if (callText == null) return true;
+
         UMethod callee = UastContextKt.toUElement(expression.resolve(), UMethod.class);
         if (callee != null && callee.hasModifierProperty(PsiModifier.ABSTRACT)) {
           final PsiClass calleeContainingClass = callee.getContainingClass();
@@ -94,7 +96,9 @@ public class TestDataReferenceCollector {
             }
           }
         }
-        if (callee != null && proceed.add(callee)) {
+
+        Pair<PsiMethod, Set<UExpression>> methodWithArguments = new Pair<>(callee, new HashSet<>(expression.getValueArguments()));
+        if (callee != null && proceed.add(methodWithArguments)) {
           boolean haveAnnotatedParameters = false;
           final PsiParameter[] psiParameters = callee.getParameterList().getParameters();
           for (int i = 0, psiParametersLength = psiParameters.length; i < psiParametersLength; i++) {
@@ -102,7 +106,12 @@ public class TestDataReferenceCollector {
             final PsiModifierList modifierList = psiParameter.getModifierList();
             if (modifierList != null && modifierList.findAnnotation(TEST_DATA_FILE_ANNOTATION_QUALIFIED_NAME) != null) {
               myFoundTestDataParameters = true;
-              processCallArgument(expression, argumentMap, result, i);
+              if (psiParameter.isVarArgs()) {
+                processVarargCallArgument(expression, argumentMap, result);
+              }
+              else {
+                processCallArgument(expression, argumentMap, result, i);
+              }
               haveAnnotatedParameters = true;
             }
           }
@@ -112,21 +121,32 @@ public class TestDataReferenceCollector {
         }
         return true;
       }
-    });
-    return result;
-  }
 
-  private void processCallArgument(UCallExpression expression,
-                                   Map<String, Computable<UValue>> argumentMap,
-                                   List<String> result,
-                                   final int index) {
-    final List<UExpression> arguments = expression.getValueArguments();
-    if (arguments.size() > index) {
-      UValue testDataFileValue = UEvaluationContextKt.uValueOf(arguments.get(index), new TestDataEvaluatorExtension(argumentMap));
-      if (testDataFileValue instanceof UStringConstant) {
-        result.add(myTestDataPath + ((UStringConstant) testDataFileValue).getValue());
+      private void processCallArgument(UCallExpression expression, Map<String, Computable<UValue>> argumentMap,
+                                       Collection<String> result, int index) {
+        List<UExpression> arguments = expression.getValueArguments();
+        if (arguments.size() > index) {
+          handleArgument(arguments.get(index), argumentMap, result);
+        }
       }
-    }
+
+      private void processVarargCallArgument(UCallExpression expression, Map<String, Computable<UValue>> argumentMap,
+                                             Collection<String> result) {
+        List<UExpression> arguments = expression.getValueArguments();
+        for (UExpression argument : arguments) {
+          handleArgument(argument, argumentMap, result);
+        }
+      }
+
+      private void handleArgument(UExpression argument, Map<String, Computable<UValue>> argumentMap, Collection<String> result) {
+        UValue testDataFileValue = UEvaluationContextKt.uValueOf(argument, new TestDataEvaluatorExtension(argumentMap));
+        if (testDataFileValue instanceof UStringConstant) {
+          result.add(myTestDataPath + ((UStringConstant) testDataFileValue).getValue());
+        }
+      }
+    });
+
+    return result;
   }
 
   private Map<String, Computable<UValue>> buildArgumentMap(UCallExpression expression, PsiMethod method) {

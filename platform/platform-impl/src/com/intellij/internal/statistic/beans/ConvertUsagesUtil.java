@@ -165,7 +165,7 @@ public class ConvertUsagesUtil {
    */
   @NotNull
   public static String escapeDescriptorName(@NotNull final String name) {
-    return name.replace(" ", "_").
+    return name.
       replace(GROUP_SEPARATOR, '_').
       replace(GROUPS_SEPARATOR, '_').
       replace(GROUP_VALUE_SEPARATOR, '_')

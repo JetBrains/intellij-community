@@ -17,6 +17,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.ide.util.gotoByName.*;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.TextRange;
@@ -27,6 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.codeStyle.FixingLayoutMatcher;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.Processor;
@@ -68,18 +70,15 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
     }
 
     String sanitized = removeSlashes(StringUtil.replace(base.transformPattern(pattern), "\\", "/"));
-    List<List<String>> nameMatches = getFileNameCandidates(base, everywhere, sanitized, !pattern.startsWith("*"));
-
-    MinusculeMatcher fullMatcher = NameUtil.buildMatcher("*" + StringUtil.replace(sanitized, "/", "*/*"), NameUtil.MatchingCaseSensitivity.NONE);
-    PathProximityComparator pathProximityComparator = getPathProximityComparator();
-
-    for (List<String> group : nameMatches) {
-      if (!ContainerUtil.process(getFilesMatchingPath(pattern, everywhere, fullMatcher, pathProximityComparator, group), consumer)) {
+    NameGrouper grouper = new NameGrouper(sanitized.substring(sanitized.lastIndexOf('/') + 1));
+    myModel.processNames(name -> grouper.processName(name), true);
+    while (true) {
+      SuffixMatches group = grouper.nextGroup(base);
+      if (group == null) return true;
+      if (!group.processFiles(pattern, sanitized, everywhere, consumer)) {
         return false;
       }
     }
-
-    return true;
   }
 
   @NotNull
@@ -108,7 +107,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
   private List<PsiFileSystemItem> getFilesMatchingPath(@NotNull String pattern,
                                                        boolean everywhere,
                                                        MinusculeMatcher fullMatcher,
-                                                       PathProximityComparator pathProximityComparator, List<String> fileNames) {
+                                                       List<String> fileNames) {
     List<PsiFileSystemItem> group = new ArrayList<>();
     Map<PsiFileSystemItem, Integer> qualifierMatchingDegrees = new HashMap<>();
     Map<PsiFileSystemItem, Integer> dirCloseness = new HashMap<>();
@@ -118,7 +117,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
         String fullName = myModel.getFullName(o);
         if (o instanceof PsiFileSystemItem && fullName != null) {
           FList<TextRange> fragments = fullMatcher.matchingFragments(fullName);
-          if (fragments != null) {
+          if (fragments != null && !fragments.isEmpty()) {
             group.add((PsiFileSystemItem)o);
 
             qualifierMatchingDegrees.put((PsiFileSystemItem)o, -fullMatcher.matchingDegree(fullName, false, fragments));
@@ -134,67 +133,163 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
 
     if (group.size() > 1) {
       Collections.sort(group,
-                       Comparator.comparing(nesting::get).
+                       Comparator.<PsiFileSystemItem, Integer>comparing(nesting::get).
                          thenComparing(dirCloseness::get).
                          thenComparing(qualifierMatchingDegrees::get).
-                         thenComparing(pathProximityComparator).
+                         thenComparing(getPathProximityComparator()).
                          thenComparing(myModel::getFullName));
     }
     return group;
   }
 
-  @NotNull
-  private List<List<String>> getFileNameCandidates(@NotNull ChooseByNameBase base,
-                                                   boolean everywhere,
-                                                   String sanitized, boolean preferStartMatches) {
-    int start = Math.max(sanitized.lastIndexOf('/'), sanitized.lastIndexOf('\\')) + 1;
-    List<String> partialNames = IntStreamEx.range(start, sanitized.length()).mapToObj(i -> sanitized.substring(i)).toList();
-    List<MinusculeMatcher> matchers = ContainerUtil.map(partialNames, s -> NameUtil.buildMatcher("*" + s, NameUtil.MatchingCaseSensitivity.NONE));
-    List<List<MatchResult>> matchingNames = ContainerUtil.map(partialNames, __ -> new ArrayList<>());
+  /**
+   * @return Minimal {@code pos} such that {@code candidateName} can potentially match {@code namePattern.substring(pos)}
+   * (i.e. contains the same letters as a sub-sequence).
+   * Matching attempts with longer pattern substrings certainly will fail.
+   */
+  private static int findMatchStartingPosition(String candidateName, String namePattern) {
+    int namePos = candidateName.length();
+    for (int i = namePattern.length(); i > 0; i--) {
+      char c = namePattern.charAt(i - 1);
+      if (Character.isLetterOrDigit(c)) {
+        namePos = StringUtil.lastIndexOfIgnoreCase(candidateName, c, namePos - 1);
+        if (namePos < 0) {
+          return i;
+        }
+      }
+    }
+    return 0;
+  }
 
-    myModel.processNames(name -> {
-      for (int i = 0; i < partialNames.size(); i++) {
-        MatchResult result = matches(base, partialNames.get(i), matchers.get(i), name);
-        if (result != null) {
-          matchingNames.get(i).add(result);
-          break;
+  private class NameGrouper {
+    private final String namePattern;
+    @Nullable private final String alternativePattern;
+    
+    /** Names placed into buckets where the index of bucket == {@link #findMatchStartingPosition} */
+    private final List<List<String>> candidateNames;
+    
+    private int index = 0;
+
+    NameGrouper(@NotNull String namePattern) {
+      this.namePattern = namePattern;
+      alternativePattern = FixingLayoutMatcher.fixLayout(namePattern);
+      candidateNames = IntStreamEx.range(0, namePattern.length()).mapToObj(__ -> (List<String>)new ArrayList<String>()).toList();
+    }
+
+    boolean processName(String name) {
+      ProgressManager.checkCanceled();
+      int position = findMatchStartingPosition(name, namePattern);
+      if (position >= namePattern.length() && alternativePattern != null) {
+        position = findMatchStartingPosition(name, alternativePattern);
+      }
+      if (position < namePattern.length()) {
+        List<String> list = candidateNames.get(position);
+        //noinspection SynchronizationOnLocalVariableOrMethodParameter
+        synchronized (list) { // names can be processed concurrently
+          list.add(name);
         }
       }
       return true;
-    }, everywhere);
-
-    List<List<String>> result = new ArrayList<>();
-    for (int i = 0; i < partialNames.size(); i++) {
-      result.addAll(groupByMatchingDegree(matchingNames.get(i), partialNames.get(i), preferStartMatches));
     }
-    return result;
+
+    @Nullable
+    SuffixMatches nextGroup(ChooseByNameBase base) {
+      if (index >= namePattern.length()) return null;
+      
+      SuffixMatches matches = new SuffixMatches(namePattern.substring(index));
+      for (String name : candidateNames.get(index)) {
+        if (!matches.matchName(base, name) && index + 1 < namePattern.length()) {
+          candidateNames.get(index + 1).add(name); // try later with a shorter matcher
+        }
+      }
+      candidateNames.set(index, null);
+      index++;
+      return matches;
+    }
   }
 
-  private static List<List<String>> groupByMatchingDegree(List<MatchResult> nameMatches,
-                                                          String namePattern, boolean preferStartMatches) {
-    if (nameMatches.isEmpty()) return Collections.emptyList();
+  private class SuffixMatches {
+    final String patternSuffix;
+    final MinusculeMatcher matcher;
+    final List<MatchResult> matchingNames = new ArrayList<>();
 
-    List<List<String>> groups = new ArrayList<>();
-
-    Comparator<MatchResult> comparator = (mr1, mr2) -> {
-      boolean exactPrefix1 = namePattern.equalsIgnoreCase(mr1.elementName);
-      boolean exactPrefix2 = namePattern.equalsIgnoreCase(mr2.elementName);
-      if (exactPrefix1 != exactPrefix2) return exactPrefix1 ? -1 : 1;
-      return mr1.compareDegrees(mr2, preferStartMatches);
-    };
-    Collections.sort(nameMatches, comparator);
-
-    List<String> group = ContainerUtil.newArrayList(nameMatches.get(0).elementName);
-    for (int j = 1; j < nameMatches.size(); j++) {
-      MatchResult current = nameMatches.get(j);
-      if (comparator.compare(nameMatches.get(j - 1), current) == 0) {
-        group.add(current.elementName);
-      } else {
-        groups.add(group);
-        group = ContainerUtil.newArrayList(current.elementName);
-      }
+    SuffixMatches(String patternSuffix) {
+      this.patternSuffix = patternSuffix;
+      matcher = NameUtil.buildMatcher("*" + patternSuffix, NameUtil.MatchingCaseSensitivity.NONE);
     }
-    groups.add(group);
-    return groups;
+
+    @Override
+    public String toString() {
+      return "SuffixMatches{" +
+             "patternSuffix='" + patternSuffix + '\'' +
+             ", matchingNames=" + matchingNames +
+             '}';
+    }
+
+    boolean matchName(@NotNull ChooseByNameBase base, String name) {
+      MatchResult result = matches(base, patternSuffix, matcher, name);
+      if (result != null) {
+        matchingNames.add(result);
+        return true;
+      }
+      return false;
+    }
+
+    boolean processFiles(@NotNull String pattern, String sanitizedPattern, boolean everywhere, Processor<? super PsiFileSystemItem> processor) {
+      MinusculeMatcher fullMatcher = NameUtil.buildMatcher("*" + StringUtil.replace(sanitizedPattern, "/", "*/*"), NameUtil.MatchingCaseSensitivity.NONE);
+
+      boolean empty = true;
+      List<List<String>> groups = groupByMatchingDegree(!pattern.startsWith("*"));
+      for (List<String> group : groups) {
+        List<PsiFileSystemItem> files = getFilesMatchingPath(pattern, everywhere, fullMatcher, group);
+        empty &= files.isEmpty();
+        if (!ContainerUtil.process(files, processor)) {
+          return false;
+        }
+      }
+
+      if (!empty) {
+        return false; // don't process expensive worse matches
+      }
+
+      if (!everywhere && hasSuggestionsOutsideProject(pattern, fullMatcher, groups)) {
+        // let the framework switch to searching outside project to display these well-matching suggestions
+        // instead of worse-matching ones in project (that are very expensive to calculate)
+        return false;
+      }
+      return true;
+    }
+
+    private boolean hasSuggestionsOutsideProject(@NotNull String pattern, MinusculeMatcher fullMatcher, List<List<String>> groups) {
+      return ContainerUtil.exists(groups, group -> !getFilesMatchingPath(pattern, true, fullMatcher, group).isEmpty());
+    }
+
+    private List<List<String>> groupByMatchingDegree(boolean preferStartMatches) {
+      if (matchingNames.isEmpty()) return Collections.emptyList();
+
+      List<List<String>> groups = new ArrayList<>();
+
+      Comparator<MatchResult> comparator = (mr1, mr2) -> {
+        boolean exactPrefix1 = patternSuffix.equalsIgnoreCase(mr1.elementName);
+        boolean exactPrefix2 = patternSuffix.equalsIgnoreCase(mr2.elementName);
+        if (exactPrefix1 != exactPrefix2) return exactPrefix1 ? -1 : 1;
+        return mr1.compareDegrees(mr2, preferStartMatches);
+      };
+      Collections.sort(matchingNames, comparator);
+
+      List<String> group = ContainerUtil.newArrayList(matchingNames.get(0).elementName);
+      for (int j = 1; j < matchingNames.size(); j++) {
+        MatchResult current = matchingNames.get(j);
+        if (comparator.compare(matchingNames.get(j - 1), current) == 0) {
+          group.add(current.elementName);
+        } else {
+          groups.add(group);
+          group = ContainerUtil.newArrayList(current.elementName);
+        }
+      }
+      groups.add(group);
+      return groups;
+    }
+
   }
 }

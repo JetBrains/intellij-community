@@ -81,6 +81,7 @@ public class RedundantThrowsDeclarationInspection extends GlobalJavaBatchInspect
       if (unThrown == null) return null;
 
       PsiMethod psiMethod = (PsiMethod)refMethod.getElement();
+      if (psiMethod == null) return null;
       PsiClassType[] throwsList = psiMethod.getThrowsList().getReferencedTypes();
       PsiJavaCodeReferenceElement[] throwsRefs = psiMethod.getThrowsList().getReferenceElements();
       List<ProblemDescriptor> problems = null;

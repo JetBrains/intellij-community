@@ -26,6 +26,7 @@ import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ui.JBUI;
@@ -91,8 +92,10 @@ public class CommitOptionsPanel extends BorderLayoutPanel implements Refreshable
     myAdditionalComponents.forEach(RefreshableOnComponent::refresh);
   }
 
-  public void onChangeListSelected(@NotNull LocalChangeList changeList) {
-    Collection<AbstractVcs> affectedVcses = ChangesUtil.getAffectedVcses(changeList.getChanges(), myCommitPanel.getProject());
+  public void onChangeListSelected(@NotNull LocalChangeList changeList, List<VirtualFile> unversionedFiles) {
+    Set<AbstractVcs> affectedVcses = union(
+      ChangesUtil.getAffectedVcses(changeList.getChanges(), myCommitPanel.getProject()),
+      ChangesUtil.getAffectedVcsesForFiles(unversionedFiles, myCommitPanel.getProject()));
     for (Map.Entry<AbstractVcs, JPanel> entry : myPerVcsOptionsPanels.entrySet()) {
       entry.getValue().setVisible(affectedVcses.contains(entry.getKey()));
     }

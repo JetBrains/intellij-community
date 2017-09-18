@@ -15,7 +15,9 @@
  */
 package com.intellij.build.events.impl;
 
+import com.intellij.build.BuildDescriptor;
 import com.intellij.build.events.StartBuildEvent;
+import com.intellij.execution.filters.Filter;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.ConsoleView;
@@ -36,27 +38,34 @@ import java.util.function.Supplier;
 public class StartBuildEventImpl extends StartEventImpl implements StartBuildEvent {
 
   private final String myBuildTitle;
+  private final String myWorkingDir;
   @Nullable
   private ProcessHandler myProcessHandler;
   private Consumer<ConsoleView> myAttachedConsoleConsumer;
   @NotNull
   private List<AnAction> myRestartActions = new SmartList<>();
+  @NotNull
+  private List<Filter> myFilters = new SmartList<>();
   @Nullable
   private ExecutionEnvironment myExecutionEnvironment;
   @Nullable
   private Supplier<RunContentDescriptor> myContentDescriptorSupplier;
 
-  public StartBuildEventImpl(@NotNull Object eventId,
-                             @NotNull String buildTitle,
-                             long eventTime,
-                             @NotNull String message) {
-    super(eventId, null, eventTime, message);
-    myBuildTitle = buildTitle;
+  public StartBuildEventImpl(@NotNull BuildDescriptor descriptor, @NotNull String message) {
+    super(descriptor.getId(), null, descriptor.getStartTime(), message);
+    myBuildTitle = descriptor.getTitle();
+    myWorkingDir = descriptor.getWorkingDir();
   }
 
   @Override
   public String getBuildTitle() {
     return myBuildTitle;
+  }
+
+  @NotNull
+  @Override
+  public String getWorkingDir() {
+    return myWorkingDir;
   }
 
   @Nullable
@@ -75,6 +84,12 @@ public class StartBuildEventImpl extends StartEventImpl implements StartBuildEve
   @Override
   public AnAction[] getRestartActions() {
     return myRestartActions.toArray(new AnAction[myRestartActions.size()]);
+  }
+
+  @NotNull
+  @Override
+  public Filter[] getExecutionFilters() {
+    return myFilters.toArray(new Filter[myFilters.size()]);
   }
 
   @Nullable
@@ -96,7 +111,7 @@ public class StartBuildEventImpl extends StartEventImpl implements StartBuildEve
     return this;
   }
 
-  public StartBuildEventImpl withRestartAction(@Nullable AnAction anAction) {
+  public StartBuildEventImpl withRestartAction(@NotNull AnAction anAction) {
     myRestartActions.add(anAction);
     return this;
   }
@@ -113,6 +128,16 @@ public class StartBuildEventImpl extends StartEventImpl implements StartBuildEve
 
   public StartBuildEventImpl withContentDescriptorSupplier(Supplier<RunContentDescriptor> contentDescriptorSupplier) {
     myContentDescriptorSupplier = contentDescriptorSupplier;
+    return this;
+  }
+
+  public StartBuildEventImpl withExecutionFilter(@NotNull Filter filter) {
+    myFilters.add(filter);
+    return this;
+  }
+
+  public StartBuildEventImpl withExecutionFilters(Filter... filters) {
+    myFilters.addAll(Arrays.asList(filters));
     return this;
   }
 }

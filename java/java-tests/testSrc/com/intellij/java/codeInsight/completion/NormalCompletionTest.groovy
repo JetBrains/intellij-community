@@ -1826,4 +1826,20 @@ class Bar {
     assert myFixture.lookupElementStrings == ['web']
   }
 
+  void testLocalClassPresentation() {
+    def cls = myFixture.addFileToProject('foo/Bar.java', """package foo; 
+class Bar {{
+    class Local {}
+    Lo<caret>x
+}}""")
+    myFixture.configureFromExistingVirtualFile(cls.containingFile.virtualFile)
+    def item = myFixture.completeBasic()[0]
+    assert LookupElementPresentation.renderElement(item).tailText.contains('local class')
+  }
+
+  void testNoDuplicateInCast() {
+    configure()
+    assert myFixture.lookupElementStrings == null
+  }
+
 }

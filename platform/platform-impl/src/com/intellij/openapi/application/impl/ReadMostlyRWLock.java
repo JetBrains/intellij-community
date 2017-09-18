@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.util.containers.ConcurrentList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -122,7 +123,7 @@ class ReadMostlyRWLock {
 
   private void throwIfImpatient(Reader status) {
     // when client explicitly runs in non-cancelable block do not throw from within nested read actions
-    if (status.impatientReads && writeRequested && !ProgressManager.getInstance().isInNonCancelableSection()) {
+    if (status.impatientReads && writeRequested && !ProgressManager.getInstance().isInNonCancelableSection() && CoreProgressManager.ENABLED) {
       throw new ApplicationUtil.CannotRunReadActionException();
     }
   }

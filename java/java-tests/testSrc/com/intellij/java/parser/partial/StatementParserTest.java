@@ -45,6 +45,9 @@ public class StatementParserTest extends JavaParsingTestCase {
 
   public void testLocalVar0() { doParserTest("List<Integer> list;"); }
   public void testLocalVar1() { doParserTest("p.@A T<P> x;"); }
+  public void testLocalVar3() { doParserTest("var x;"); }
+  public void testLocalVar4() { doParserTest("final var x;"); }
+  public void testLocalVar5() { doParserTest("@A var x;"); }
 
   public void testDoNormal() { doParserTest("do{}while(true);"); }
   public void testDoIncomplete0() { doParserTest("do"); }
@@ -58,6 +61,8 @@ public class StatementParserTest extends JavaParsingTestCase {
   public void testFor() { doParserTest("for(Iterator<String> it = null; it.hasNext();) { String s = it.next(); }"); }
   public void testForNormal0() { doParserTest("for(int i = 0; i < 10; i++)\n ;"); }
   public void testForNormal1() { doParserTest("for( ; ; ) foo();"); }
+  public void testForNormal2() { doParserTest("for(var x = 0; ;) ;"); }
+  public void testForNormal3() { doParserTest("for(var x : list) ;"); }
   public void testForIncomplete0() { doParserTest("for"); }
   public void testForIncomplete1() { doParserTest("for("); }
   public void testForIncomplete2() { doParserTest("for(int i = 0;"); }
@@ -68,6 +73,7 @@ public class StatementParserTest extends JavaParsingTestCase {
   public void testForIncomplete7() { doParserTest("for() foo();"); }
   public void testForIncomplete8() { doParserTest("for(int i = 0;) foo();"); }
   public void testForIncomplete9() { doParserTest("for(int i = 0; i < 0) foo();"); }
+  public void testForIncomplete10() { doParserTest("for(var x"); }
   public void testForInvalid0() { doParserTest("for(if (i<0) i++; ;) ;"); }
   public void testForInvalid1() { doParserTest("for(class C { }; ;) ;"); }
 
@@ -128,6 +134,9 @@ public class StatementParserTest extends JavaParsingTestCase {
   public void testTryNormal8() { doParserTest("try(r;){}"); }
   public void testTryNormal9() { doParserTest("try(r1; R r2 = 0){}"); }
   public void testTryNormal10() { doParserTest("try(this){}"); }
+  public void testTryNormal11() { doParserTest("try(new R()){}"); }
+  public void testTryNormal12() { doParserTest("try(R.create()){}"); }
+  public void testTryNormal13() { doParserTest("try(var r = null){}"); }
   public void testTryIncomplete0() { doParserTest("try"); }
   public void testTryIncomplete1() { doParserTest("try{}"); }
   public void testTryIncomplete2() { doParserTest("try{}catch"); }
@@ -147,8 +156,7 @@ public class StatementParserTest extends JavaParsingTestCase {
   public void testTryIncomplete16() { doParserTest("try(R r =){}"); }
   public void testTryIncomplete17() { doParserTest("try(R r = 0;;){}"); }
   public void testTryIncomplete18() { doParserTest("try(R<T> r){}"); }
-  public void testTryNormal11() { doParserTest("try(new R()){}"); }
-  public void testTryNormal12() { doParserTest("try(R.create()){}"); }
+  public void testTryIncomplete19() { doParserTest("try(var r){}"); }
 
   public void testWhileNormal() { doParserTest("while (true) foo();"); }
   public void testWhileIncomplete0() { doParserTest("while"); }

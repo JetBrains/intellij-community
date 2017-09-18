@@ -45,6 +45,7 @@ import com.intellij.ui.treeStructure.treetable.TreeTableTree;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -259,7 +260,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
 
   @Override
   public JComponent getPreferredFocusableComponent() {
-    return null;
+    return myBuilder.getTree();
   }
 
   @Override
@@ -326,6 +327,10 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     myBuilder.queueUpdateFrom(currentNode, false, false);
 
     if (event instanceof FinishBuildEvent) {
+      String aHint = event.getHint();
+      String time = DateFormatUtil.formatDateTime(event.getEventTime());
+      aHint = aHint == null ? "  at " + time : aHint + "  at " + time;
+      currentNode.setHint(aHint);
       myProgressAnimator.stopMovie();
       updateTimeColumnWidth(myTimeColumnWidth);
       if (myDetailsHandler.myExecutionNode == null) {

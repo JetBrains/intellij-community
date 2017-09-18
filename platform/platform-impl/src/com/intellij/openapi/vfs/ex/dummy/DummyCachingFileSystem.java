@@ -123,7 +123,10 @@ public abstract class DummyCachingFileSystem<T extends VirtualFile> extends Dumm
 
   @NotNull
   public Collection<T> getCachedFiles() {
-    return myCachedFiles.values().stream().filter(Objects::nonNull).collect(Collectors.toList());
+    return myCachedFiles.values().stream()
+      .filter(Objects::nonNull)
+      .filter(VirtualFile::isValid)
+      .collect(Collectors.toList());
   }
 
   public void onProjectClosed() {

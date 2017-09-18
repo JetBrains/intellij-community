@@ -384,7 +384,7 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
                               NullableNotNullManager manager, final String anno, final List<String> annoToRemove, @NotNull ProblemsHolder holder) {
     String propName = JavaCodeStyleManager.getInstance(project).variableNameToPropertyName(field.getName(), VariableKind.FIELD);
     final boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);
-    final PsiMethod getter = PropertyUtil.findPropertyGetter(field.getContainingClass(), propName, isStatic, false);
+    final PsiMethod getter = PropertyUtilBase.findPropertyGetter(field.getContainingClass(), propName, isStatic, false);
     final PsiIdentifier nameIdentifier = getter == null ? null : getter.getNameIdentifier();
     if (nameIdentifier != null && nameIdentifier.isPhysical()) {
       if (PropertyUtil.isSimpleGetter(getter)) {
@@ -406,7 +406,7 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
     }
 
     final PsiClass containingClass = field.getContainingClass();
-    final PsiMethod setter = PropertyUtil.findPropertySetter(containingClass, propName, isStatic, false);
+    final PsiMethod setter = PropertyUtilBase.findPropertySetter(containingClass, propName, isStatic, false);
     if (setter != null && setter.isPhysical() && PropertyUtil.isSimpleSetter(setter)) {
       final PsiParameter[] parameters = setter.getParameterList().getParameters();
       assert parameters.length == 1 : setter.getText();

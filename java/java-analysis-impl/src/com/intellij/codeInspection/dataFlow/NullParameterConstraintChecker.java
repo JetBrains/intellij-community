@@ -33,7 +33,6 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -138,8 +137,7 @@ class NullParameterConstraintChecker extends DataFlowRunner {
       super(factory);
       for (PsiParameter parameter : myPossiblyViolatedParameters) {
         setVariableState(getFactory().getVarFactory().createVariableValue(parameter, false),
-                         new DfaVariableState(Collections.emptySet(), Collections.emptySet(),
-                                              DfaFactMap.EMPTY.with(DfaFactType.CAN_BE_NULL, true)));
+                         new DfaVariableState(DfaFactMap.EMPTY.with(DfaFactType.CAN_BE_NULL, true)));
       }
     }
 

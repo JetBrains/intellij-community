@@ -94,6 +94,15 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
         String text = child.getText();
         type = annotations.isEmpty() ? PsiJavaParserFacadeImpl.getPrimitiveType(text) : new PsiPrimitiveType(text, createProvider(annotations));
       }
+      else if (PsiUtil.isJavaToken(child, JavaTokenType.VAR_KEYWORD)) {
+        assert type == null : this;
+        for (PsiElement e = this; e != null; e = e.getNextSibling()) {
+          if (e instanceof PsiExpression) {
+            type = ((PsiExpression)e).getType();
+            break;
+          }
+        }
+      }
       else if (child instanceof PsiJavaCodeReferenceElement) {
         assert type == null : this;
         type = new PsiClassReferenceType(getReferenceComputable((PsiJavaCodeReferenceElement)child), null, createProvider(annotations));

@@ -9,7 +9,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="junit_rt" />
     <orderEntry type="module" module-name="java-runtime" />
-    <orderEntry type="library" name="junit5_rt" level="project" />
-    <orderEntry type="library" name="opentest4j" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="junit5_rt" level="project" />
   </component>
 </module>

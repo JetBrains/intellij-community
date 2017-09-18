@@ -16,7 +16,7 @@
 package com.intellij.build.internal;
 
 import com.intellij.build.BuildContentManager;
-import com.intellij.build.SyncViewManager;
+import com.intellij.build.TasksViewManager;
 import com.intellij.build.events.BuildEvent;
 import com.intellij.build.events.FinishBuildEvent;
 import com.intellij.openapi.project.Project;
@@ -24,9 +24,14 @@ import com.intellij.openapi.project.Project;
 /**
  * @author Vladislav.Soroka
  */
-public class DummyTasksViewManager extends SyncViewManager {
+public class DummyTasksViewManager extends TasksViewManager {
   public DummyTasksViewManager(Project project, BuildContentManager buildContentManager) {
     super(project, buildContentManager);
+  }
+
+  @Override
+  protected String getViewName() {
+    return "Tasks";
   }
 
   @Override

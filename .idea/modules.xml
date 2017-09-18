@@ -20,7 +20,6 @@
       <module fileurl="file://$PROJECT_DIR$/android/android/android.iml" filepath="$PROJECT_DIR$/android/android/android.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/annotations/android-annotations.iml" filepath="$PROJECT_DIR$/android/tools-base/annotations/android-annotations.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/android/common/android-common.iml" filepath="$PROJECT_DIR$/android/common/android-common.iml" group="android" />
-      <module fileurl="file://$PROJECT_DIR$/android/android-gradle-jps/android-gradle-jps.iml" filepath="$PROJECT_DIR$/android/android-gradle-jps/android-gradle-jps.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/android/jps-plugin/android-jps-plugin.iml" filepath="$PROJECT_DIR$/android/jps-plugin/android-jps-plugin.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/android/android-plugin/android-plugin.iml" filepath="$PROJECT_DIR$/android/android-plugin/android-plugin.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/android/rt/android-rt.iml" filepath="$PROJECT_DIR$/android/rt/android-rt.iml" group="android" />

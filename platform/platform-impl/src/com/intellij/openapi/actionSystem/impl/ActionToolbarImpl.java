@@ -94,7 +94,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
    */
   private final List<Rectangle> myComponentBounds = new ArrayList<>();
 
-  private Dimension myMinimumButtonSize = JBUI.emptySize();
+  private JBDimension myMinimumButtonSize = JBUI.emptySize();
 
   /**
    * @see ActionToolbar#getLayoutPolicy()
@@ -825,6 +825,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   @Override
   public Dimension getPreferredSize() {
     final ArrayList<Rectangle> bounds = new ArrayList<>();
+    if (myMinimumButtonSize != null) myMinimumButtonSize.update();
     calculateBounds(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE), bounds);
     if (bounds.isEmpty()) return JBUI.emptySize();
     int xLeft = Integer.MAX_VALUE;
@@ -899,7 +900,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   }
 
   private final class MySeparator extends JComponent {
-    private final Dimension mySize;
+    private final JBDimension mySize;
 
     public MySeparator() {
       if (myOrientation == SwingConstants.HORIZONTAL) {
@@ -912,6 +913,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
     @Override
     public Dimension getPreferredSize() {
+      mySize.update();
       return mySize;
     }
 
@@ -957,7 +959,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
   @Override
   public void setMinimumButtonSize(@NotNull final Dimension size) {
-    myMinimumButtonSize = size;
+    myMinimumButtonSize = JBDimension.create(size, false);
     for (int i = getComponentCount() - 1; i >= 0; i--) {
       final Component component = getComponent(i);
       if (component instanceof ActionButton) {

@@ -18,7 +18,6 @@ package org.jetbrains.jps.builders.rebuild;
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.io.DirectoryContentSpec
-import com.intellij.util.io.assertMatches
 import org.jetbrains.jps.builders.CompileScopeTestBuilder
 import org.jetbrains.jps.builders.JpsBuildTestCase
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
@@ -46,10 +45,6 @@ abstract class JpsRebuildTestCase: JpsBuildTestCase() {
   fun doTest(projectPath: String, pathVariables: Map<String, String>, expectedOutput: DirectoryContentSpec) {
     loadAndRebuild(projectPath, pathVariables);
     assertOutput(myOutputDirectory.absolutePath, expectedOutput);
-  }
-
-  fun assertOutput(targetFolder: String, expectedOutput: DirectoryContentSpec) {
-    File(targetFolder).assertMatches(expectedOutput)
   }
 
   fun loadAndRebuild(projectPath: String, pathVariables: Map<String, String>) {

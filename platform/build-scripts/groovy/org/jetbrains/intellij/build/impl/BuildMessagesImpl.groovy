@@ -22,6 +22,7 @@ import org.apache.tools.ant.DefaultLogger
 import org.apache.tools.ant.Project
 import org.jetbrains.intellij.build.BuildMessageLogger
 import org.jetbrains.intellij.build.BuildMessages
+import org.jetbrains.intellij.build.CompilationErrorsLogMessage
 import org.jetbrains.intellij.build.LogMessage
 
 import java.util.function.BiFunction
@@ -95,7 +96,12 @@ class BuildMessagesImpl implements BuildMessages {
 
   @Override
   void compilationError(String compilerName, String message) {
-    processMessage(new LogMessage(LogMessage.Kind.COMPILATION_ERROR, "$compilerName:$message"))
+    compilationErrors(compilerName, [message])
+  }
+
+  @Override
+  void compilationErrors(String compilerName, List<String> messages) {
+    processMessage(new CompilationErrorsLogMessage(compilerName, messages))
   }
 
   @Override

@@ -16,6 +16,7 @@
 package com.intellij.build;
 
 import com.intellij.build.events.*;
+import com.intellij.execution.filters.Filter;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.*;
 import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl;
@@ -44,16 +45,15 @@ import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
@@ -62,8 +62,8 @@ import java.util.function.Supplier;
  * @author Vladislav.Soroka
  */
 public abstract class AbstractViewManager implements BuildProgressListener, Disposable {
-  private final Project myProject;
-  private final BuildContentManager myBuildContentManager;
+  protected final Project myProject;
+  protected final BuildContentManager myBuildContentManager;
   private final AtomicBoolean isInitializeStarted;
   private final List<Runnable> myPostponedRunnables;
   private final ProgressWatcher myProgressWatcher;
@@ -90,7 +90,7 @@ public abstract class AbstractViewManager implements BuildProgressListener, Disp
         JPanel panel = new JPanel(new BorderLayout());
         SimpleColoredComponent mainComponent = new SimpleColoredComponent();
         mainComponent.setIcon(buildInfo.getIcon());
-        mainComponent.append(buildInfo.title + ": ", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+        mainComponent.append(buildInfo.getTitle() + ": ", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
         mainComponent.append(buildInfo.message, SimpleTextAttributes.REGULAR_ATTRIBUTES);
         panel.add(mainComponent, BorderLayout.NORTH);
         if (buildInfo.statusMessage != null) {
@@ -114,6 +114,10 @@ public abstract class AbstractViewManager implements BuildProgressListener, Disp
 
   protected boolean isTabbedView() {
     return false;
+  }
+
+  protected Map<BuildInfo, BuildView> getBuildsMap() {
+    return Collections.unmodifiableMap(myViewMap);
   }
 
   @Override
@@ -145,11 +149,18 @@ public abstract class AbstractViewManager implements BuildProgressListener, Disp
             myToolbarActions.removeAll();
           }
         }
+        myBuildsMap.computeIfAbsent(ObjectUtils.chooseNotNull(
+          event.getParentId(), event.getId()), o -> {
+          StartBuildEvent startBuildEvent = (StartBuildEvent)event;
+          return new BuildInfo(event.getId(), startBuildEvent.getBuildTitle(), startBuildEvent.getWorkingDir(), event.getEventTime());
+        });
       }
-      final BuildInfo buildInfo =
-        myBuildsMap.computeIfAbsent(ObjectUtils.chooseNotNull(event.getParentId(), event.getId()), o -> new BuildInfo());
-      if (event.getParentId() != null) {
-        myBuildsMap.put(event.getId(), buildInfo);
+      else {
+        if (event.getParentId() != null) {
+          BuildInfo buildInfo = myBuildsMap.get(event.getParentId());
+          assert buildInfo != null;
+          myBuildsMap.put(event.getId(), buildInfo);
+        }
       }
     });
 
@@ -157,8 +168,6 @@ public abstract class AbstractViewManager implements BuildProgressListener, Disp
       final BuildInfo buildInfo = myBuildsMap.get(event.getId());
       assert buildInfo != null;
       if (event instanceof StartBuildEvent) {
-        buildInfo.title = ((StartBuildEvent)event).getBuildTitle();
-        buildInfo.id = event.getId();
         buildInfo.message = event.getMessage();
 
         if (!isTabbedView() && myBuildsList != null) {
@@ -166,60 +175,77 @@ public abstract class AbstractViewManager implements BuildProgressListener, Disp
           listModel.addElement(buildInfo);
         }
 
+        final RunContentDescriptor contentDescriptor;
+        Supplier<RunContentDescriptor> contentDescriptorSupplier = ((StartBuildEvent)event).getContentDescriptorSupplier();
+        contentDescriptor = contentDescriptorSupplier != null ? contentDescriptorSupplier.get() : null;
         ProcessHandler processHandler = ((StartBuildEvent)event).getProcessHandler();
         BuildView view = myViewMap.computeIfAbsent(buildInfo, info -> {
           ExecutionConsole executionConsole = null;
-          ComponentContainer componentContainer = null;
-          Supplier<RunContentDescriptor> contentDescriptorSupplier = ((StartBuildEvent)event).getContentDescriptorSupplier();
-          if (contentDescriptorSupplier != null) {
-            RunContentDescriptor contentDescriptor = contentDescriptorSupplier.get();
-            if (contentDescriptor != null) {
-              executionConsole = contentDescriptor.getExecutionConsole();
-              List<AnAction> leftToolbarActions = ContainerUtil.newArrayList();
-              RunnerLayoutUi layoutUi = contentDescriptor.getRunnerLayoutUi();
-              if (layoutUi instanceof RunnerLayoutUiImpl) {
-                RunnerLayoutUiImpl layoutUiImpl = (RunnerLayoutUiImpl)layoutUi;
-                layoutUiImpl.setLeftToolbarVisible(false);
-                layoutUiImpl.setContentToolbarBefore(false);
-                leftToolbarActions.addAll(layoutUiImpl.getActions());
+          BuildConsoleView buildConsoleView = null;
+          if (contentDescriptor != null) {
+            executionConsole = contentDescriptor.getExecutionConsole();
+            List<AnAction> leftToolbarActions = ContainerUtil.newArrayList();
+            RunnerLayoutUi layoutUi = contentDescriptor.getRunnerLayoutUi();
+            if (layoutUi instanceof RunnerLayoutUiImpl) {
+              RunnerLayoutUiImpl layoutUiImpl = (RunnerLayoutUiImpl)layoutUi;
+              layoutUiImpl.setLeftToolbarVisible(false);
+              layoutUiImpl.setContentToolbarBefore(false);
+              leftToolbarActions.addAll(layoutUiImpl.getActions());
+            }
+            JComponent component = contentDescriptor.getComponent();
+            AnAction[] leftToolbarActionsArray = leftToolbarActions.toArray(new AnAction[leftToolbarActions.size()]);
+            buildConsoleView = new BuildConsoleView() {
+              @Override
+              public void onEvent(BuildEvent event) {
               }
-              JComponent component = contentDescriptor.getComponent();
-              AnAction[] leftToolbarActionsArray = leftToolbarActions.toArray(new AnAction[leftToolbarActions.size()]);
-              componentContainer = new BuildConsoleView() {
-                @Override
-                public void onEvent(BuildEvent event) {
-                }
 
-                @Override
-                public AnAction[] createConsoleActions() {
-                  return leftToolbarActionsArray;
-                }
+              @Override
+              public AnAction[] createConsoleActions() {
+                return leftToolbarActionsArray;
+              }
 
-                @Override
-                public JComponent getComponent() {
-                  return component;
-                }
+              @Override
+              public JComponent getComponent() {
+                return component;
+              }
 
-                @Override
-                public JComponent getPreferredFocusableComponent() {
-                  return component;
-                }
+              @Override
+              public JComponent getPreferredFocusableComponent() {
+                ExecutionConsole console = contentDescriptor.getExecutionConsole();
+                if (console != null) return console.getPreferredFocusableComponent();
+                return (component instanceof ComponentContainer)
+                       ? ((ComponentContainer)component).getPreferredFocusableComponent()
+                       : component;
+              }
 
-                @Override
-                public void dispose() {
-                }
-              };
+              @Override
+              public void dispose() {
+              }
+            };
+            Disposer.register(buildConsoleView, contentDescriptor);
+          }
+          if (buildConsoleView == null) {
+            buildConsoleView = new BuildTextConsoleView(myProject);
+            executionConsole = (ExecutionConsole)buildConsoleView;
+          }
+          if (executionConsole instanceof ConsoleView) {
+            for (Filter filter : ((StartBuildEvent)event).getExecutionFilters()) {
+              ((ConsoleView)executionConsole).addMessageFilter(filter);
             }
           }
-          if (componentContainer == null) {
-            componentContainer = executionConsole = new BuildTextConsoleView(myProject);
-          }
+
           final BuildView buildView =
-            new BuildView(myProject, componentContainer, ((StartBuildEvent)event),
+            new BuildView(myProject, buildConsoleView, ((StartBuildEvent)event),
                           "build.toolwindow." + getViewName() + ".selection.state", isConsoleEnabledByDefault());
           if (processHandler != null) {
-            if (executionConsole instanceof ConsoleView) {
-              ((ConsoleView)executionConsole).attachToProcess(processHandler);
+            if (buildConsoleView instanceof ConsoleView) {
+              ((ConsoleView)buildConsoleView).attachToProcess(processHandler);
+              Consumer<ConsoleView> attachedConsoleConsumer = ((StartBuildEvent)event).getAttachedConsoleConsumer();
+              if (attachedConsoleConsumer != null) {
+                attachedConsoleConsumer.consume((ConsoleView)buildConsoleView);
+              }
+            }
+            else if (executionConsole instanceof ConsoleView) {
               Consumer<ConsoleView> attachedConsoleConsumer = ((StartBuildEvent)event).getAttachedConsoleConsumer();
               if (attachedConsoleConsumer != null) {
                 attachedConsoleConsumer.consume((ConsoleView)executionConsole);
@@ -237,22 +263,33 @@ public abstract class AbstractViewManager implements BuildProgressListener, Disp
             consoleComponent.add(ActionManager.getInstance().createActionToolbar(
               "BuildView", toolbarActions, false).getComponent(), BorderLayout.WEST);
             toolbarActions.addAll(buildView.createConsoleActions());
+            Icon contentIcon = getContentIcon();
             myContent = myBuildContentManager.addTabbedContent(
-              consoleComponent, getViewName(), buildInfo.title + ", " + DateFormatUtil.formatDateTime(System.currentTimeMillis()) + " ",
-              true, AllIcons.CodeStyle.Gear, buildView);
+              consoleComponent, getViewName(),
+              buildInfo.getTitle() + ", " + DateFormatUtil.formatDateTime(System.currentTimeMillis()) + " ",
+              contentIcon, buildView);
           }
           return buildView;
         });
+
+        if (contentDescriptor != null) {
+          boolean activateToolWindow = contentDescriptor.isActivateToolWindowWhenAdded();
+          buildInfo.activateToolWindowWhenAdded = activateToolWindow;
+          boolean focusContent = contentDescriptor.isAutoFocusContent();
+          myBuildContentManager.setSelectedContent(
+            myContent, focusContent, focusContent, activateToolWindow, contentDescriptor.getActivationCallback());
+        }
+        else {
+          myBuildContentManager.setSelectedContent(myContent, true, true, true, null);
+        }
+        buildInfo.content = myContent;
 
         if (!isTabbedView() && myThreeComponentsSplitter.getLastComponent() == null) {
           myThreeComponentsSplitter.setLastComponent(view);
           myToolbarActions.removeAll();
           myToolbarActions.addAll(view.createConsoleActions());
         }
-        if (!isTabbedView() &&
-            myBuildsList != null &&
-            myBuildsList.getModel().getSize() > 1 &&
-            myThreeComponentsSplitter.getFirstComponent() == null) {
+        if (!isTabbedView() && myBuildsList != null && myBuildsList.getModel().getSize() > 1) {
           JBScrollPane scrollPane = new JBScrollPane();
           scrollPane.setBorder(JBUI.Borders.empty());
           scrollPane.setViewportView(myBuildsList);
@@ -271,10 +308,11 @@ public abstract class AbstractViewManager implements BuildProgressListener, Disp
         else {
           myThreeComponentsSplitter.setFirstComponent(null);
         }
+        onBuildStart(buildInfo);
         myProgressWatcher.addBuild(buildInfo);
         //view.getPrimaryView().print("\r", ConsoleViewContentType.SYSTEM_OUTPUT);
 
-        ((BuildContentManagerImpl)myBuildContentManager).startBuildNotified(myContent);
+        ((BuildContentManagerImpl)myBuildContentManager).startBuildNotified(buildInfo.content);
       }
       else {
         if (event instanceof FinishBuildEvent) {
@@ -282,7 +320,8 @@ public abstract class AbstractViewManager implements BuildProgressListener, Disp
           buildInfo.message = event.getMessage();
           buildInfo.result = ((FinishBuildEvent)event).getResult();
           myProgressWatcher.stopBuild(buildInfo);
-          ((BuildContentManagerImpl)myBuildContentManager).finishBuildNotified(myContent);
+          ((BuildContentManagerImpl)myBuildContentManager).finishBuildNotified(buildInfo.content);
+          onBuildFinish(buildInfo);
         }
         else {
           buildInfo.statusMessage = event.getMessage();
@@ -299,7 +338,9 @@ public abstract class AbstractViewManager implements BuildProgressListener, Disp
           ((BuildConsoleView)consoleView).onEvent(event);
         }
         else if ((consoleView instanceof ConsoleView)) {
-          ((ConsoleView)consoleView).print(event.getMessage(), ConsoleViewContentType.NORMAL_OUTPUT);
+          ((ConsoleView)consoleView).print(event.getMessage(), ((OutputBuildEvent)event).isStdOut()
+                                                               ? ConsoleViewContentType.NORMAL_OUTPUT
+                                                               : ConsoleViewContentType.ERROR_OUTPUT);
         }
       }
       else {
@@ -352,8 +393,9 @@ public abstract class AbstractViewManager implements BuildProgressListener, Disp
 
           myContent = new ContentImpl(consoleComponent, getViewName(), true);
           myContent.setCloseable(false);
+          Icon contentIcon = getContentIcon();
+          myContent.setIcon(contentIcon);
           myBuildContentManager.addContent(myContent);
-          myBuildContentManager.setSelectedContent(myContent);
 
           List<Runnable> postponedRunnables = new ArrayList<>(myPostponedRunnables);
           myPostponedRunnables.clear();
@@ -369,6 +411,21 @@ public abstract class AbstractViewManager implements BuildProgressListener, Disp
           runnable.run();
         }
       });
+    }
+  }
+
+  @Nullable
+  protected Icon getContentIcon() {
+    return null;
+  }
+
+  protected void onBuildStart(BuildDescriptor buildDescriptor) {
+  }
+
+  protected void onBuildFinish(BuildDescriptor buildDescriptor) {
+    BuildInfo buildInfo = (BuildInfo)buildDescriptor;
+    if (buildInfo.result instanceof FailureResult) {
+      myBuildContentManager.setSelectedContent(buildInfo.content, true, true, true, null);
     }
   }
 
@@ -411,13 +468,20 @@ public abstract class AbstractViewManager implements BuildProgressListener, Disp
     }
   }
 
-  private static class BuildInfo {
-    Object id;
-    String title;
+  static class BuildInfo extends DefaultBuildDescriptor {
     String message;
     String statusMessage;
     long endTime = -1;
     EventResult result;
+    Content content;
+    public boolean activateToolWindowWhenAdded;
+
+    public BuildInfo(@NotNull Object id,
+                     @NotNull String title,
+                     @NotNull String workingDir,
+                     long startTime) {
+      super(id, title, workingDir, startTime);
+    }
 
     public Icon getIcon() {
       return getIcon(result);

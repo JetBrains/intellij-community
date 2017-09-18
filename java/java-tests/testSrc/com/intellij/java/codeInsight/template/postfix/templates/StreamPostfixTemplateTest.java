@@ -57,6 +57,10 @@ public class StreamPostfixTemplateTest extends PostfixTemplateTestCase {
     doTest();
   }
 
+  public void testNotAvailable() {
+    doTest();
+  }
+
   public void testDoNotExpandOnJavaLess8() {
     IdeaTestUtil.setModuleLanguageLevel(myModule, LanguageLevel.JDK_1_6, myFixture.getTestRootDisposable());
     doTest();

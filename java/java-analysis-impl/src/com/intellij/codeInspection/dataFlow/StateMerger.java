@@ -430,10 +430,11 @@ class StateMerger {
     for (Map.Entry<DfaVariableValue, DfaVariableState> entry : states.entrySet()) {
       DfaVariableValue var = entry.getKey();
       DfaVariableState variableState = entry.getValue();
-      for (DfaPsiType type : variableState.getInstanceofValues()) {
+      TypeConstraint typeConstraint = variableState.getTypeConstraint();
+      for (DfaPsiType type : typeConstraint.getInstanceofValues()) {
         result.add(new InstanceofFact(var, true, type));
       }
-      for (DfaPsiType type : variableState.getNotInstanceofValues()) {
+      for (DfaPsiType type : typeConstraint.getNotInstanceofValues()) {
         result.add(new InstanceofFact(var, false, type));
       }
     }

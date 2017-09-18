@@ -55,7 +55,7 @@ import java.util.*;
  * @author Mike
  */
 @SuppressWarnings({"HardCodedStringLiteral"})
-public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocument>, DumbAware, XmlNSTypeDescriptorProvider {
+public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocument>, DumbAware, XsdNsDescriptor {
   @NonNls
   public static final String XSD_PREFIX = "xsd";
   @NonNls public static final String SCHEMA_TAG_NAME = "schema";
@@ -185,8 +185,9 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
     return elementDescriptor;
   }
 
-  public static boolean processTagsInNamespace(@NotNull final XmlTag rootTag, String[] tagNames, PsiElementProcessor<XmlTag> processor) {
-    return processTagsInNamespaceInner(rootTag, tagNames, processor, null);
+  @Override
+  public boolean processTagsInNamespace(String[] tagNames, PsiElementProcessor<XmlTag> processor) {
+    return processTagsInNamespaceInner(myTag, tagNames, processor, null);
   }
 
   private static boolean processTagsInNamespaceInner(@NotNull final XmlTag rootTag, final String[] tagNames,
@@ -356,6 +357,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
     return getElementDescriptor(localName, namespace, new HashSet<>(), false);
   }
 
+  @Override
   @Nullable
   public XmlElementDescriptor getElementDescriptor(String localName, String namespace, Set<XmlNSDescriptorImpl> visited, boolean reference) {
     if(visited.contains(this)) return null;
@@ -454,6 +456,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
     return false;
   }
 
+  @Override
   @Nullable
   public XmlAttributeDescriptor getAttribute(String localName, String namespace, final XmlTag context) {
     return getAttributeImpl(localName, namespace, null);
@@ -580,6 +583,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
     return findTypeDescriptorImpl(myTag, localName, namespace.isEmpty() ? getDefaultNamespace() : namespace);
   }
 
+  @Override
   @Nullable
   public TypeDescriptor findTypeDescriptor(String localName, String namespace) {
     return findTypeDescriptorImpl(myTag, localName, namespace);
@@ -825,7 +829,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
         return true;
       }
     };
-    processTagsInNamespace(myTag, new String[] {ELEMENT_TAG_NAME}, processor);
+    processTagsInNamespace(new String[] {ELEMENT_TAG_NAME}, processor);
 
     return processor.result.toArray(new XmlElementDescriptor[processor.result.size()]);
   }
@@ -842,16 +846,18 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
     }
 
     CollectAttributesProcessor processor = new CollectAttributesProcessor();
-    processTagsInNamespace(myTag, new String[] {ATTRIBUTE_TAG_NAME}, processor);
+    processTagsInNamespace(new String[] {ATTRIBUTE_TAG_NAME}, processor);
 
     return processor.result.toArray(new XmlAttributeDescriptor[processor.result.size()]);
   }
 
+  @Override
   @Nullable
   public XmlTag findGroup(String name) {
     return findSpecialTag(name,"group",myTag, this, null);
   }
 
+  @Override
   @Nullable
   public XmlTag findAttributeGroup(String name) {
     return findSpecialTag(name, "attributeGroup", myTag, this, null);

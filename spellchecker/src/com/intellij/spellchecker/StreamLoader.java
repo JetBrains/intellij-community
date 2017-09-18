@@ -46,10 +46,7 @@ public class StreamLoader implements Loader {
 
   static void doLoad(@NotNull InputStream stream, @NotNull Consumer<String> consumer) {
     try (BufferedReader br = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
-      String line;
-      while ((line = br.readLine()) != null) {
-        consumer.consume(line);
-      }
+      br.lines().forEach(consumer::consume);
     }
     catch (Exception e) {
       Logger.getInstance(StreamLoader.class).error(e);

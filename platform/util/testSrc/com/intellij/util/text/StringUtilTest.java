@@ -600,4 +600,13 @@ public class StringUtilTest {
     assertEquals(3, StringUtil.countChars("abcddddefghd", 'd', 4, true));
     assertEquals(2, StringUtil.countChars("abcddddefghd", 'd', 4, 6, false));
   }
+
+  @Test
+  public void testSubstringBeforeLast() {
+    assertEquals("a", StringUtil.substringBeforeLast("abc", "b"));
+    assertEquals("abab", StringUtil.substringBeforeLast("ababbccc", "b"));
+    assertEquals("abc", StringUtil.substringBeforeLast("abc", ""));
+    assertEquals("abc", StringUtil.substringBeforeLast("abc", "1"));
+    assertEquals("", StringUtil.substringBeforeLast("", "1"));
+  }
 }

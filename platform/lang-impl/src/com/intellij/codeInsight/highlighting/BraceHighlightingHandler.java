@@ -23,6 +23,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -42,6 +43,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Conditions;
@@ -117,42 +119,45 @@ public class BraceHighlightingHandler {
     final DumbAwareRunnable removeEditorFromProcessed = () -> PROCESSED_EDITORS.remove(editor);
 
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      if (!ApplicationManagerEx.getApplicationEx().tryRunReadAction(() -> {
-        if (!isValidEditor(editor)) {
-          ApplicationManager.getApplication().invokeLater(removeEditorFromProcessed);
-          return;
-        }
-        @SuppressWarnings("ConstantConditions") // the `project` is valid after the `isValidEditor` call
-        @NotNull final Project project = editor.getProject();
+      if (!ApplicationManagerEx.getApplicationEx().tryRunReadAction(() ->
+        ((ApplicationImpl)ApplicationManager.getApplication()).executeByImpatientReader(()->
+        ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(()->{
+          if (!isValidEditor(editor)) {
+            ApplicationManager.getApplication().invokeLater(removeEditorFromProcessed);
+            return;
+          }
+          @SuppressWarnings("ConstantConditions") // the `project` is valid after the `isValidEditor` call
+          @NotNull final Project project = editor.getProject();
 
-        final PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, project);
-        final PsiFile injected;
-        try {
-          if (psiFile instanceof PsiBinaryFile || !isValidFile(psiFile)) {
-            injected = null;
-          }
-          else {
-            injected = getInjectedFileIfAny(editor, project, offset, psiFile, alarm);
-          }
-        }
-        catch (RuntimeException e) {
-          // Reset processing flag in case of unexpected exception.
-          ApplicationManager.getApplication().invokeLater(removeEditorFromProcessed);
-          throw e;
-        }
-        ApplicationManager.getApplication().invokeLater((DumbAwareRunnable)() -> {
+          final PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, project);
+          final PsiFile injected;
           try {
-            if (isValidEditor(editor) && isValidFile(injected)) {
-              Editor newEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(editor, injected);
-              BraceHighlightingHandler handler = new BraceHighlightingHandler(project, newEditor, alarm, injected);
-              processor.process(handler);
+            if (psiFile instanceof PsiBinaryFile || !isValidFile(psiFile)) {
+              injected = null;
+            }
+            else {
+              injected = getInjectedFileIfAny(editor, project, offset, psiFile, alarm);
             }
           }
-          finally {
-            removeEditorFromProcessed.run();
+          catch (RuntimeException e) {
+            // Reset processing flag in case of unexpected exception.
+            ApplicationManager.getApplication().invokeLater(removeEditorFromProcessed);
+            throw e;
           }
-        }, modalityState);
-      })) {
+          ApplicationManager.getApplication().invokeLater((DumbAwareRunnable)() -> {
+            try {
+              if (isValidEditor(editor) && isValidFile(injected)) {
+                Editor newEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(editor, injected);
+                BraceHighlightingHandler handler = new BraceHighlightingHandler(project, newEditor, alarm, injected);
+                processor.process(handler);
+              }
+            }
+            finally {
+              removeEditorFromProcessed.run();
+            }
+          }, modalityState);
+        })
+      ))) {
         // write action is queued in AWT. restart after it's finished
         ApplicationManager.getApplication().invokeLater(() -> {
           removeEditorFromProcessed.run();

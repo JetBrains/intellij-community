@@ -60,7 +60,7 @@ public class ExternalSystemTaskDebugRunner extends GenericDebuggerRunner {
         RunContentDescriptor descriptor =
           new RunContentDescriptor(runContentDescriptor.getExecutionConsole(), runContentDescriptor.getProcessHandler(),
                                    runContentDescriptor.getComponent(), runContentDescriptor.getDisplayName(),
-                                   runContentDescriptor.getIcon(), runContentDescriptor.getActivationCallback(),
+                                   runContentDescriptor.getIcon(), null,
                                    runContentDescriptor.getRestartActions()) {
             @Override
             public boolean isHiddenContent() {

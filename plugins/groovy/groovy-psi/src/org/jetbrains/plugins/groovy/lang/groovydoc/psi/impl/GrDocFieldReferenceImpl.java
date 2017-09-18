@@ -20,6 +20,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -58,8 +59,8 @@ public class GrDocFieldReferenceImpl extends GrDocMemberReferenceImpl implements
       final PsiMethod method = (PsiMethod) resolved;
       final String oldName = getReferenceName();
       if (!method.getName().equals(oldName)) { //was property reference to accessor
-        if (PropertyUtil.isSimplePropertyAccessor(method)) {
-          final String newPropertyName = PropertyUtil.getPropertyName(newElementName);
+        if (PropertyUtilBase.isSimplePropertyAccessor(method)) {
+          final String newPropertyName = PropertyUtilBase.getPropertyName(newElementName);
           if (newPropertyName != null) {
             return super.handleElementRename(newPropertyName);
           }
