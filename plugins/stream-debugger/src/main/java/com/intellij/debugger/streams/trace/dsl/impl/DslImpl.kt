@@ -37,6 +37,12 @@ class DslImpl(private val statementFactory: StatementFactory) : Dsl {
     return fragment.toCode(0)
   }
 
+  override fun block(init: CodeContext.() -> Unit): CodeBlock {
+    val fragment = MyContext()
+    fragment.init()
+    return fragment
+  }
+
   override fun array(elementType: GenericType, name: String): ArrayVariable = statementFactory.createArrayVariable(elementType, name)
 
   override fun newArray(elementType: GenericType, vararg args: Expression): Expression =
