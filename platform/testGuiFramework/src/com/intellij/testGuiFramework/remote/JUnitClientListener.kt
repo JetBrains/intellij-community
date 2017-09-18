@@ -16,6 +16,7 @@
 package com.intellij.testGuiFramework.remote
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.testGuiFramework.launcher.GuiTestOptions
 import com.intellij.testGuiFramework.remote.transport.JUnitInfo
 import com.intellij.testGuiFramework.remote.transport.Type
 import org.junit.AssumptionViolatedException
@@ -31,7 +32,10 @@ class JUnitClientListener(val sendObjectFun: (JUnitInfo) -> Unit) : RunListener(
   val LOG = Logger.getInstance("#com.intellij.testGuiFramework.remote.JUnitClientListener")
 
   override fun testStarted(description: Description?) {
-    sendObjectFun(JUnitInfo(Type.STARTED, description, JUnitInfo.getClassAndMethodName(description!!)))
+    description ?: throw Exception("Unable to send notification to JUnitServer that test is starter due to null description!")
+    //don't send start state to server if it is a resumed test
+    if (GuiTestOptions.getResumeTestName() == JUnitInfo.getClassAndMethodName(description))
+    sendObjectFun(JUnitInfo(Type.STARTED, description, JUnitInfo.getClassAndMethodName(description)))
   }
 
   override fun testAssumptionFailure(failure: Failure?) {

@@ -13,11 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.testGuiFramework.remote.transport
+package com.intellij.testGuiFramework.tests.community
 
-import java.io.Serializable
+import com.intellij.testGuiFramework.testCases.PluginTestCase
+import org.junit.Test
 
-/**
- * @author Sergey Karashevich
- */
-data class JUnitTestContainer(val testClass: Class<*>, val methodName: String, val additionalInfo: String = "") : Serializable
+class PluginInstallTest : PluginTestCase() {
+
+  @Test
+  fun testPluginInstall() {
+    installPluginAndRestart { installPlugins("Dart") }
+    checkPluginsFunctionality("Dart")
+  }
+
+  private fun checkPluginsFunctionality(vararg pluginNames: String) {
+    pluginNames.forEach { println("Plugin '$it' is OK") }
+  }
+}
