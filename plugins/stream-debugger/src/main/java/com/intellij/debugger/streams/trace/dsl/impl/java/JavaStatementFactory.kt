@@ -100,5 +100,17 @@ class JavaStatementFactory : StatementFactory {
   override fun createNewSizedArray(elementType: GenericType, size: Expression): Expression =
     TextExpression("new ${elementType.variableTypeName}[${size.toCode()}]")
 
+  override fun createNewListExpression(elementType: GenericType, vararg args: Expression): Expression {
+    if (args.isEmpty()) {
+      return TextExpression("new java.util.ArrayList<${elementType.genericTypeName}>()")
+    }
+
+    return TextExpression("java.util.Arrays.asList(${args.joinToString(separator = ", ") { it.toCode() }})")
+  }
+
   override fun createPeekCall(elementsType: GenericType, lambda: String): IntermediateStreamCall = PeekCall(lambda, elementsType)
+
+  override fun createListVariable(elementType: GenericType, name: String): ListVariable = JavaListVariable(elementType, name)
+
+  override fun not(expression: Expression): Expression = TextExpression("!${expression.toCode()}")
 }

@@ -27,6 +27,16 @@ import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
  * @author Vitaliy.Bibaev
  */
 class KotlinStatementFactory : StatementFactory {
+  override fun createNewListExpression(elementType: GenericType, vararg args: Expression): Expression =
+    TextExpression("kotlin.collections.mutableListOf<${elementType.genericTypeName}>(${StatementFactory.commaSeparate(*args)})")
+
+  override fun createListVariable(elementType: GenericType, name: String): ListVariable {
+    val listOf = listOf(1, 2, 3)
+    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+  }
+
+  override fun not(expression: Expression): Expression = TextExpression("!${expression.toCode()}")
+
   override val types: Types = KotlinTypes
 
   override fun createEmptyCompositeCodeBlock(): CompositeCodeBlock = KotlinCodeBlock(this)

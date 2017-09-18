@@ -25,6 +25,10 @@ import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
  * @author Vitaliy.Bibaev
  */
 interface StatementFactory {
+  companion object {
+    fun commaSeparate(vararg args: Expression): String = args.joinToString(separator = ", ") { it.toCode() }
+  }
+
   val types: Types
 
   fun createEmptyCompositeCodeBlock(): CompositeCodeBlock
@@ -78,5 +82,11 @@ interface StatementFactory {
 
   fun createNewSizedArray(elementType: GenericType, size: Expression): Expression
 
+  fun createNewListExpression(elementType: GenericType, vararg args: Expression): Expression
+
   fun createPeekCall(elementsType: GenericType, lambda: String): IntermediateStreamCall
+
+  fun createListVariable(elementType: GenericType, name: String): ListVariable
+
+  fun not(expression: Expression): Expression
 }
