@@ -18,6 +18,7 @@ package com.intellij.internal;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -40,7 +41,8 @@ public class ShowImageDuplicatesAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     final Project project = getEventProject(e);
     assert project != null;
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> collectAndShowDuplicates(project), "Gathering images", true, project);
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(
+      () -> ReadAction.run(() -> collectAndShowDuplicates(project)), "Gathering images", true, project);
   }
 
   private static void collectAndShowDuplicates(final Project project) {
