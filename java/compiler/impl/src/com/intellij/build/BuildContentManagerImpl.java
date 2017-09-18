@@ -37,6 +37,9 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.AsyncPromise;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import java.beans.PropertyChangeEvent;
@@ -64,7 +67,11 @@ public class BuildContentManagerImpl implements BuildContentManager {
 
   private void init(Project project) {
     myProject = project;
+    if (project.isDefault()) return;
+
     final Runnable runnable = () -> {
+      if(myProject.isDisposed()) return;
+
       ToolWindow toolWindow = ToolWindowManager.getInstance(project)
         .registerToolWindow(ToolWindowId.BUILD, true, ToolWindowAnchor.BOTTOM, project, true);
       toolWindow.getComponent().putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, "true");
@@ -84,12 +91,20 @@ public class BuildContentManagerImpl implements BuildContentManager {
     }
   }
 
-  public void runWhenInitialized(final Runnable runnable) {
+  public Promise<Void> runWhenInitialized(final Runnable runnable) {
     if (myToolWindow != null) {
       runnable.run();
+      return Promises.resolvedPromise(null);
     }
     else {
-      myPostponedRunnables.add(runnable);
+      final AsyncPromise<Void> promise = new AsyncPromise<>();
+      myPostponedRunnables.add(() -> {
+        if(!myProject.isDisposed()) {
+          runnable.run();
+          promise.setResult(null);
+        }
+      });
+      return promise;
     }
   }
 
@@ -171,12 +186,16 @@ public class BuildContentManagerImpl implements BuildContentManager {
                                            boolean forcedFocus,
                                            boolean activate,
                                            Runnable activationCallback) {
-    ActionCallback callback = myToolWindow.getContentManager().setSelectedContent(content, requestFocus, forcedFocus, false);
-    if (activate) {
-      ApplicationManager.getApplication().invokeLater(
-        () -> myToolWindow.activate(activationCallback, requestFocus, requestFocus), myProject.getDisposed());
-    }
-    return callback;
+    ActionCallback actionCallback = new ActionCallback();
+    runWhenInitialized(() -> {
+      ActionCallback callback = myToolWindow.getContentManager().setSelectedContent(content, requestFocus, forcedFocus, false);
+      callback.notify(actionCallback);
+      if (activate) {
+        ApplicationManager.getApplication().invokeLater(
+          () -> myToolWindow.activate(activationCallback, requestFocus, requestFocus), myProject.getDisposed());
+      }
+    });
+    return actionCallback;
   }
 
   @Override
@@ -199,6 +218,8 @@ public class BuildContentManagerImpl implements BuildContentManager {
   }
 
   public void startBuildNotified(Content content) {
+    if(myToolWindow == null) return;
+
     Pair<Icon, AtomicInteger> pair = liveContentsMap.computeIfAbsent(content, c -> Pair.pair(c.getIcon(), new AtomicInteger(0)));
     pair.second.incrementAndGet();
     content.putUserData(ToolWindow.SHOW_CONTENT_ICON, Boolean.TRUE);
@@ -211,6 +232,8 @@ public class BuildContentManagerImpl implements BuildContentManager {
   }
 
   public void finishBuildNotified(Content content) {
+    if(myToolWindow == null) return;
+
     Pair<Icon, AtomicInteger> pair = liveContentsMap.get(content);
     if (pair != null && pair.second.decrementAndGet() == 0) {
       content.setIcon(pair.first);
