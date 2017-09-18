@@ -22,14 +22,22 @@ import com.intellij.debugger.streams.trace.dsl.*
  *
  * @author Vitaliy.Bibaev
  */
-abstract class LineSeparatedCodeBlock(statementFactory: StatementFactory, private val endLine: String = "")
+abstract class LineSeparatedCodeBlock(statementFactory: StatementFactory, private val statementSeparator: String = "")
   : CodeBlockBase(statementFactory) {
   override fun toCode(indent: Int): String {
-    val body = statements
-    if (statements.isEmpty()) {
+    if (size == 0) {
       return ""
     }
 
-    return body.joinToString("$endLine\n", postfix = "$endLine\n") { it.toCode(indent) }
+    val builder = StringBuilder()
+    val statements = getStatements()
+    for (convertable in statements) {
+      builder.append(convertable.toCode(indent))
+      if (convertable is Statement) {
+        builder.append(statementSeparator)
+      }
+      builder.append("\n")
+    }
+    return builder.toString()
   }
 }

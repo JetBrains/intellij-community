@@ -15,12 +15,12 @@
  */
 package com.intellij.debugger.streams.trace.dsl
 
-import com.intellij.debugger.streams.trace.dsl.impl.AssignmentStatement
-
 /**
  * @author Vitaliy.Bibaev
  */
 interface CodeBlock : Statement {
+  val size: Int
+
   fun declare(variable: Variable, isMutable: Boolean): Variable
 
   fun declare(variable: Variable, init: Expression, isMutable: Boolean): Variable
@@ -42,4 +42,8 @@ interface CodeBlock : Statement {
   operator fun Statement.unaryPlus()
 
   fun Variable.assign(expression: Expression)
+
+  fun add(block: CodeBlock)
+
+  fun getStatements(): List<Convertable>
 }

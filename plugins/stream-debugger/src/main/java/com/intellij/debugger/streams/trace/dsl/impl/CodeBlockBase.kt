@@ -21,7 +21,9 @@ import com.intellij.debugger.streams.trace.dsl.*
  * @author Vitaliy.Bibaev
  */
 abstract class CodeBlockBase(private val myFactory: StatementFactory) : CompositeCodeBlock {
-  private val myStatements: MutableList<Statement> = mutableListOf()
+  private val myStatements: MutableList<Convertable> = mutableListOf()
+  override val size: Int
+    get() = myStatements.size
 
   override fun Statement.unaryPlus() {
     myStatements.add(this)
@@ -83,10 +85,9 @@ abstract class CodeBlockBase(private val myFactory: StatementFactory) : Composit
     addStatement(assignmentStatement)
   }
 
-  override fun addStatement(statement: Statement) {
+  override fun addStatement(statement: Convertable) {
     myStatements += statement
   }
 
-  protected val statements: List<Statement>
-    get() = myStatements
+  override fun getStatements(): List<Convertable> = ArrayList(myStatements)
 }

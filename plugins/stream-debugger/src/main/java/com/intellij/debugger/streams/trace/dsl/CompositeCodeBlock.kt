@@ -19,5 +19,9 @@ package com.intellij.debugger.streams.trace.dsl
  * @author Vitaliy.Bibaev
  */
 interface CompositeCodeBlock : CodeBlock {
-  fun addStatement(statement: Statement)
+  override fun add(block: CodeBlock) {
+    block.getStatements().forEach({ addStatement(it) })
+  }
+
+  fun addStatement(statement: Convertable)
 }
