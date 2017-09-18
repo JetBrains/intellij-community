@@ -240,6 +240,29 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
     }
   }
 
+  fun testListDeclaration() {
+    doTest {
+      declare(list(types.integerType, "lst"), true)
+    }
+  }
+
+  fun testListOperations() {
+    doTest {
+      val lst = list(types.longType, "lst")
+      declare(lst.defaultDeclaration())
+      +lst.get(0).call("methodWithSideEffect")
+      +lst.set(1, lst.get(0))
+      +lst.contains(lst.size())
+    }
+  }
+
+  fun testNewList() {
+    doTest {
+      val variable = list(types.integerType, "lst")
+      variable.assign(newList(types.integerType, +"0", +"1", +"2", +"3"))
+    }
+  }
+
   fun testArrayDeclaration() {
     doTest {
       declare(array(types.integerType, "a"), false)
