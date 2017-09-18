@@ -1128,27 +1128,23 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       Collections.sort(changes, myMyChangeComparator);
       List<AbstractFilePatchInProgress.PatchChange> selectedChanges = myChangesTreeList.getSelectedChanges();
 
+      if (changes.isEmpty()) return;
+      final AbstractFilePatchInProgress.PatchChange selectedChange = !selectedChanges.isEmpty() ? selectedChanges.get(0) : changes.get(0);
+
       int selectedIdx = 0;
       final List<DiffRequestProducer> diffRequestPresentableList = new ArrayList<>(changes.size());
-      if (selectedChanges.isEmpty()) {
-        selectedChanges = changes;
-      }
-      if (!selectedChanges.isEmpty()) {
-        final AbstractFilePatchInProgress.PatchChange c = selectedChanges.get(0);
-        for (AbstractFilePatchInProgress.PatchChange change : changes) {
-          final AbstractFilePatchInProgress patchInProgress = change.getPatchInProgress();
-          if (!patchInProgress.baseExistsOrAdded()) {
-            diffRequestPresentableList.add(createBaseNotFoundErrorRequest(patchInProgress));
-          }
-          else {
-            diffRequestPresentableList.add(patchInProgress.getDiffRequestProducers(myProject, myReader));
-          }
-          if (change.equals(c)) {
-            selectedIdx = diffRequestPresentableList.size() - 1;
-          }
+      for (AbstractFilePatchInProgress.PatchChange change : changes) {
+        final AbstractFilePatchInProgress patchInProgress = change.getPatchInProgress();
+        if (!patchInProgress.baseExistsOrAdded()) {
+          diffRequestPresentableList.add(createBaseNotFoundErrorRequest(patchInProgress));
+        }
+        else {
+          diffRequestPresentableList.add(patchInProgress.getDiffRequestProducers(myProject, myReader));
+        }
+        if (change.equals(selectedChange)) {
+          selectedIdx = diffRequestPresentableList.size() - 1;
         }
       }
-      if (diffRequestPresentableList.isEmpty()) return;
       MyDiffRequestChain chain = new MyDiffRequestChain(diffRequestPresentableList, changes, selectedIdx);
       DiffManager.getInstance().showDiff(myProject, chain, DiffDialogHints.DEFAULT);
     }
@@ -1181,6 +1177,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     private int myIndex;
 
     public MyDiffRequestChain(@NotNull List<DiffRequestProducer> requests, @NotNull List<? extends Change> changes, int index) {
+      assert requests.size() == changes.size();
       myRequests = requests;
       myChanges = changes;
 
