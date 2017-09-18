@@ -179,6 +179,13 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
     }
   }
 
+  fun testProperties() {
+    doTest {
+      val a = variable(types.integerType, "a")
+      +a.property("myProperty")
+    }
+  }
+
   fun testMapDeclaration() {
     doTest {
       declare(map(types.integerType, types.booleanType, "map"), false)
