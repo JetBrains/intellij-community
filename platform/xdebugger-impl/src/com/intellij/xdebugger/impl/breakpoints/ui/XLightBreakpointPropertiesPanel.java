@@ -249,7 +249,7 @@ public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Dele
         label.setBorder(JBUI.Borders.empty(0, 4, 4, 0));
         label.setLabelFor(myConditionComboBox.getComboBox());
         myConditionCheckboxPanel.add(label);
-        myConditionExpressionPanel.setBorder(JBUI.Borders.emptyLeft(4));
+        myConditionExpressionPanel.setBorder(JBUI.Borders.emptyLeft(3));
       }
       else {
         myConditionCheckboxPanel.add(myConditionEnabledCheckbox);
