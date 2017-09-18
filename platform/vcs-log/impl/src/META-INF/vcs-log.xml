@@ -39,10 +39,14 @@
 
     <getDataRule key="Vcs.FileHistory.Ui" implementationClass="com.intellij.vcs.log.history.FileHistoryUiDataRule"/>
 
-    <diff.actions.ShowDiffAction.ExtensionProvider implementation="com.intellij.vcs.log.ui.actions.history.CompareRevisionsFromHistoryActionProvider"/>
-    <openapi.vcs.history.actions.ShowDiffAfterWithLocalAction.ExtensionProvider implementation="com.intellij.vcs.log.ui.actions.history.ShowDiffAfterWithLocalFromHistoryActionProvider"/>
-    <openapi.vcs.changes.actions.CreatePatchFromChangesAction.Dialog.ExtensionProvider implementation="com.intellij.vcs.log.ui.actions.history.CreatePatchFromHistoryActionProvider$Dialog"/>
-    <openapi.vcs.changes.actions.CreatePatchFromChangesAction.Clipboard.ExtensionProvider implementation="com.intellij.vcs.log.ui.actions.history.CreatePatchFromHistoryActionProvider$Clipboard"/>
+    <diff.actions.ShowDiffAction.ExtensionProvider
+        implementation="com.intellij.vcs.log.ui.actions.history.CompareRevisionsFromHistoryActionProvider"/>
+    <openapi.vcs.history.actions.ShowDiffAfterWithLocalAction.ExtensionProvider
+        implementation="com.intellij.vcs.log.ui.actions.history.ShowDiffAfterWithLocalFromHistoryActionProvider"/>
+    <openapi.vcs.changes.actions.CreatePatchFromChangesAction.Dialog.ExtensionProvider
+        implementation="com.intellij.vcs.log.ui.actions.history.CreatePatchFromHistoryActionProvider$Dialog"/>
+    <openapi.vcs.changes.actions.CreatePatchFromChangesAction.Clipboard.ExtensionProvider
+        implementation="com.intellij.vcs.log.ui.actions.history.CreatePatchFromHistoryActionProvider$Clipboard"/>
     <openapi.vcs.changes.actions.diff.ChangeDiffRequestProvider implementation="com.intellij.vcs.log.impl.MergedChangeDiffRequestProvider"/>
   </extensions>
 
@@ -54,6 +58,8 @@
             icon="VcsLogIcons.GearWithDropDown" text="Quick Settings" description="Quick Settings"/>
     <action class="com.intellij.vcs.log.ui.actions.VcsLogTextFilterSettingsActions" id="Vcs.Log.QuickTextFilterSettings"
             icon="VcsLogIcons.GearWithDropDown" text="Text Filter Settings" description="Text Filter Settings"/>
+    <action class="com.intellij.vcs.log.ui.actions.VcsLogChangesViewSettingsActions" id="Vcs.Log.QuickChangesViewSettings"
+            icon="VcsLogIcons.GearWithDropDown" text="Changes View Settings" description="Changes View Settings"/>
     <action class="com.intellij.vcs.log.ui.actions.IntelliSortChooserToggleAction" id="Vcs.Log.IntelliSortChooser"/>
     <action class="com.intellij.vcs.log.ui.actions.VcsShowLogAction" id="Vcs.Show.Log" text="Show VCS Log">
       <add-to-group group-id="Vcs.Show.Toolwindow.Tab"/>
@@ -64,6 +70,7 @@
     <action class="com.intellij.vcs.log.ui.actions.ExpandGraphAction" id="Vcs.Log.ExpandAll"/>
     <action class="com.intellij.vcs.log.ui.actions.ShowLongEdgesAction" id="Vcs.Log.ShowLongEdges"/>
     <action class="com.intellij.vcs.log.ui.actions.ShowDetailsAction" id="Vcs.Log.ShowDetailsAction"/>
+    <action class="com.intellij.vcs.log.ui.actions.ShowChangesFromParentsAction" id="Vcs.Log.ShowChangesFromParents"/>
     <action class="com.intellij.vcs.log.ui.actions.ShowRootsColumnAction" id="Vcs.Log.ShowRootsColumnAction"/>
     <action class="com.intellij.vcs.log.ui.actions.FocusTextFilterAction" id="Vcs.Log.FocusTextFilter">
       <keyboard-shortcut first-keystroke="control L" keymap="$default"/>
@@ -109,6 +116,10 @@
     <group id="Vcs.Log.TextFilterSettings">
       <reference id="Vcs.Log.EnableFilterByRegexAction"/>
       <reference id="Vcs.Log.MatchCaseAction"/>
+    </group>
+    <group id="Vcs.Log.ChangesViewSettings">
+      <reference id="Vcs.Log.ShowDetailsAction"/>
+      <reference id="Vcs.Log.ShowChangesFromParents"/>
     </group>
     <group id="Vcs.Log.Toolbar.Internal">
       <reference id="Vcs.Log.ShowLongEdges"/>
@@ -166,8 +177,11 @@
       <reference ref="Vcs.Log.QuickSettings"/>
       <reference ref="Vcs.Log.CompactReferencesView"/>
       <reference ref="Vcs.Log.ShowTagNames"/>
-      <reference ref="Vcs.Log.ShowDetailsAction"/>
       <reference ref="Vcs.Log.ShowRootsColumnAction"/>
+      <separator/>
+      <reference ref="Vcs.Log.QuickChangesViewSettings"/>
+      <reference ref="Vcs.Log.ShowDetailsAction"/>
+      <reference ref="Vcs.Log.ShowChangesFromParents"/>
       <separator/>
       <reference ref="Vcs.Log.Refresh"/>
       <reference ref="Vcs.Log.OpenAnotherTab"/>

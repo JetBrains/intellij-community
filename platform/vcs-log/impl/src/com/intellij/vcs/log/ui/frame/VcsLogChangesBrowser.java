@@ -109,7 +109,7 @@ class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
   protected List<AnAction> createToolbarActions() {
     List<AnAction> result = new ArrayList<>(super.createToolbarActions());
     result.add(ActionManager.getInstance().getAction("Vcs.RepositoryChangesBrowserToolbar"));
-    result.add(ActionManager.getInstance().getAction(VcsLogActionPlaces.VCS_LOG_SHOW_DETAILS_ACTION));
+    result.add(ActionManager.getInstance().getAction(VcsLogActionPlaces.VCS_LOG_QUICK_CHANGE_VIEW_SETTINGS_ACTION));
     return result;
   }
 
