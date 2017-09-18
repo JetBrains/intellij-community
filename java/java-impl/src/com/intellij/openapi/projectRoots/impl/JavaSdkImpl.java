@@ -16,28 +16,20 @@
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
-import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.jrt.JrtFileSystem;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -410,7 +402,7 @@ public class JavaSdkImpl extends JavaSdk {
     addClasses(jdkHomeFile, sdkModificator, isJre);
     addSources(jdkHomeFile, sdkModificator);
 
-    return new MockSdk(jdkName, homePath, jdkName, roots, isJre);
+    return new MockSdk(jdkName, homePath, jdkName, roots, this);
   }
 
   private static void addClasses(@NotNull File file, @NotNull SdkModificator sdkModificator, boolean isJre) {
@@ -543,183 +535,5 @@ public class JavaSdkImpl extends JavaSdk {
            type == OrderRootType.SOURCES ||
            type == JavadocOrderRootType.getInstance() ||
            type == AnnotationOrderRootType.getInstance();
-  }
-
-  private class MockSdk implements Sdk, SdkModificator {
-    private String myJdkName;
-    private String myHomePath;
-    @NotNull private String myVersionString;
-    private final MultiMap<OrderRootType, VirtualFile> myRoots;
-    private final boolean myIsJre;
-
-    MockSdk(@NotNull String jdkName,
-            @NotNull String homePath,
-            @NotNull String versionString,
-            @NotNull MultiMap<OrderRootType, VirtualFile> roots,
-            boolean isJre) {
-      myJdkName = jdkName;
-      myHomePath = homePath;
-      myVersionString = versionString;
-      myRoots = roots;
-      myIsJre = isJre;
-    }
-
-    @NotNull
-    @Override
-    public SdkTypeId getSdkType() {
-      return JavaSdkImpl.this;
-    }
-
-    @NotNull
-    @Override
-    public String getName() {
-      return myJdkName;
-    }
-
-    @NotNull
-    @Override
-    public String getVersionString() {
-      return myVersionString;
-    }
-
-    @Override
-    public String getHomePath() {
-      return myHomePath;
-    }
-
-    @Nullable
-    @Override
-    public VirtualFile getHomeDirectory() {
-      return LocalFileSystem.getInstance().findFileByPath(myHomePath);
-    }
-
-    @Nullable
-    @Override
-    public SdkAdditionalData getSdkAdditionalData() {
-      return null;
-    }
-
-    @NotNull
-    @Override
-    public Sdk clone() {
-      return new MockSdk(myJdkName, myHomePath, myVersionString, new MultiMap<>(myRoots), myIsJre){
-        @NotNull
-        @Override
-        public SdkModificator getSdkModificator() {
-          return this;
-        }
-      };
-    }
-
-    @NotNull
-    @Override
-    public SdkModificator getSdkModificator() {
-      throwReadOnly();
-      return null;
-    }
-
-    @NotNull
-    public VirtualFile[] getRoots(@NotNull OrderRootType rootType) {
-      return myRoots.get(rootType).toArray(VirtualFile.EMPTY_ARRAY);
-    }
-
-    @Override
-    public void setName(String name) {
-      myJdkName = name;
-    }
-
-    @Override
-    public void setHomePath(String path) {
-      myHomePath = path;
-    }
-
-    @Override
-    public void setVersionString(@NotNull String versionString) {
-      myVersionString = versionString;
-    }
-
-    @Override
-    public void setSdkAdditionalData(SdkAdditionalData data) {
-      throwReadOnly();
-    }
-
-    @Override
-    public void addRoot(@NotNull VirtualFile root, @NotNull OrderRootType rootType) {
-      myRoots.putValue(rootType, root);
-    }
-
-    @Override
-    public void removeRoot(@NotNull VirtualFile root, @NotNull OrderRootType rootType) {
-      myRoots.remove(rootType, root);
-    }
-
-    @Override
-    public void removeRoots(@NotNull OrderRootType rootType) {
-      myRoots.remove(rootType);
-    }
-
-    @Override
-    public void removeAllRoots() {
-      myRoots.clear();
-    }
-
-    @Override
-    public void commitChanges() {
-      for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-        WriteAction.run(() -> ((ProjectRootManagerEx)ProjectRootManager.getInstance(project)).makeRootsChange(EmptyRunnable.getInstance(), false, true));
-      }
-    }
-
-    @Override
-    public boolean isWritable() {
-      return true;
-    }
-
-    @NotNull
-    @Override
-    public RootProvider getRootProvider() {
-      return new RootProvider() {
-        @NotNull
-        @Override
-        public String[] getUrls(@NotNull OrderRootType rootType) {
-          return ContainerUtil.map2Array(getFiles(rootType), String.class, VirtualFile::getUrl);
-        }
-
-        @NotNull
-        @Override
-        public VirtualFile[] getFiles(@NotNull OrderRootType rootType) {
-          return getRoots(rootType);
-        }
-
-        @Override
-        public void addRootSetChangedListener(@NotNull RootSetChangedListener listener) { }
-
-        @Override
-        public void addRootSetChangedListener(@NotNull RootSetChangedListener listener, @NotNull Disposable parentDisposable) { }
-
-        @Override
-        public void removeRootSetChangedListener(@NotNull RootSetChangedListener listener) { }
-      };
-    }
-
-    private void throwReadOnly() {
-      throw new IncorrectOperationException("Can't modify, MockJDK is read-only, consider calling .clone() first");
-    }
-
-    @Nullable
-    @Override
-    public <T> T getUserData(@NotNull Key<T> key) {
-      return null;
-    }
-
-    @Override
-    public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
-      throwReadOnly();
-    }
-
-    @Override
-    public String toString() {
-      return "MockSDK[" + myJdkName + "]";
-    }
   }
 }
