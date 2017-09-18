@@ -482,18 +482,18 @@ public class PatchApplier<BinaryType extends FilePatch> {
                                                                                             ApplyPatchStatus status,
                                                                                             CommitContext commiContext) throws IOException {
     for (Pair<VirtualFile, T> patch : patches) {
-      ApplyPatchStatus patchStatus = ApplyPatchAction.applyOnly(myProject, patch.getSecond(), context, patch.getFirst(), commiContext,
-                                                                myReverseConflict, myLeftConflictPanelTitle, myRightConflictPanelTitle);
-
+      T applyFilePatch = patch.getSecond();
+      ApplyPatchStatus patchStatus = ApplyPatchAction.applyContent(myProject, applyFilePatch, context, patch.getFirst(), commiContext,
+                                                                   myReverseConflict, myLeftConflictPanelTitle, myRightConflictPanelTitle);
       if (patchStatus == ApplyPatchStatus.ABORT) return patchStatus;
       status = ApplyPatchStatus.and(status, patchStatus);
       if (patchStatus == ApplyPatchStatus.FAILURE) {
-        myFailedPatches.add(patch.getSecond().getPatch());
+        myFailedPatches.add(applyFilePatch.getPatch());
         continue;
       }
       if (patchStatus != ApplyPatchStatus.SKIP) {
         myVerifier.doMoveIfNeeded(patch.getFirst());
-        myRemainingPatches.remove(patch.getSecond().getPatch());
+        myRemainingPatches.remove(applyFilePatch.getPatch());
       }
     }
     return status;
