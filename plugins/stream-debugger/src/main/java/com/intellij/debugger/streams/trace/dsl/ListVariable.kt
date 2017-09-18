@@ -33,5 +33,5 @@ interface ListVariable : Variable {
   fun contains(element: Expression): Expression
   fun size(): Expression
 
-  fun defaultDeclaration(isMutable: Boolean = true): VariableDeclaration
+  fun defaultDeclaration(): VariableDeclaration
 }

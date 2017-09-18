@@ -26,15 +26,15 @@ import com.intellij.debugger.streams.trace.impl.handler.type.GenericType
  * @author Vitaliy.Bibaev
  */
 class JavaListVariable(override val elementType: GenericType, name: String)
-  : VariableImpl("java.util.List", name), ListVariable {
+  : VariableImpl("java.util.List<${elementType.genericTypeName}>", name), ListVariable {
   override fun get(index: Expression): Expression = call("get", index)
 
   override fun set(index: Expression, newValue: Expression): Expression = call("set", index, newValue)
 
-  override fun contains(element: Expression): Expression = call("contains")
+  override fun contains(element: Expression): Expression = call("contains", element)
 
   override fun size(): Expression = call("size")
 
-  override fun defaultDeclaration(isMutable: Boolean): VariableDeclaration =
+  override fun defaultDeclaration(): VariableDeclaration =
     JavaVariableDeclaration(this, false, TextExpression("new java.util.ArrayList<${elementType.genericTypeName}>()"))
 }

@@ -31,9 +31,8 @@ class KotlinListVariable(override val elementType: GenericType, name: String)
 
   override fun contains(element: Expression): Expression = call("contains", element)
 
-  override fun size(): Expression = TODO()
+  override fun size(): Expression = property("size")
 
-  override fun defaultDeclaration(isMutable: Boolean): VariableDeclaration {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-  }
+  override fun defaultDeclaration(): VariableDeclaration =
+    KotlinVariableDeclaration(this, false, "mutableListOf<${elementType.genericTypeName}>()")
 }
