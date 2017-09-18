@@ -3,9 +3,7 @@
 import java.util.*;
 
 class Test {
-  public void test(Object o) {
-    if<caret>(o == null) {
-      o = "";
-    }
+  public void test(String o) {
+      return Objects.requireNonNullElse(o, "");
   }
 }
