@@ -19,6 +19,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.ide.util.gotoByName.GotoFileModel;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -192,7 +193,7 @@ public class TestDataGuessByExistingFilesUtil {
     final String possibleFilePath = test.replace('$', '/');
     Map<String, TestLocationDescriptor> descriptorsByFileNames = new HashMap<>();
     boolean completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-      Module module = ModuleUtilCore.findModuleForPsiElement(psiClass);
+      Module module = ReadAction.compute(() -> ModuleUtilCore.findModuleForPsiElement(psiClass));
       final Collection<String> fileNames = getAllFileNames(possibleFileName, gotoModel);
       ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
       indicator.setIndeterminate(false);
