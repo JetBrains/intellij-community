@@ -37,9 +37,12 @@ interface StatementFactory {
 
   fun createEmptyForLoopBody(iterateVariable: Variable): ForLoopBody
 
-  fun createForEachLoop(iterateVariable: Variable, collection: Expression, loopBody: ForLoopBody): Statement
+  fun createForEachLoop(iterateVariable: Variable, collection: Expression, loopBody: ForLoopBody): Convertable
 
-  fun createForLoop(initialization: VariableDeclaration, condition: Expression, afterThought: Expression, loopBody: ForLoopBody): Statement
+  fun createForLoop(initialization: VariableDeclaration,
+                    condition: Expression,
+                    afterThought: Expression,
+                    loopBody: ForLoopBody): Convertable
 
   fun createEmptyLambdaBody(argName: String): LambdaBody
 
@@ -61,7 +64,7 @@ interface StatementFactory {
 
   fun createArrayVariable(elementType: GenericType, name: String): ArrayVariable
 
-  fun createScope(codeBlock: CodeBlock): Statement
+  fun createScope(codeBlock: CodeBlock): Convertable
 
   fun createTryBlock(block: CodeBlock): TryBlock
 

@@ -40,13 +40,13 @@ class JavaStatementFactory : StatementFactory {
 
   override fun createEmptyForLoopBody(iterateVariable: Variable): ForLoopBody = JavaForLoopBody(this, iterateVariable)
 
-  override fun createForEachLoop(iterateVariable: Variable, collection: Expression, loopBody: ForLoopBody): Statement =
+  override fun createForEachLoop(iterateVariable: Variable, collection: Expression, loopBody: ForLoopBody): Convertable =
     JavaForEachLoop(iterateVariable, collection, loopBody)
 
   override fun createForLoop(initialization: VariableDeclaration,
                              condition: Expression,
                              afterThought: Expression,
-                             loopBody: ForLoopBody): Statement =
+                             loopBody: ForLoopBody): Convertable =
     JavaForLoop(initialization, condition, afterThought, loopBody)
 
   override fun createEmptyLambdaBody(argName: String): LambdaBody = JavaLambdaBody(this, argName)
@@ -76,7 +76,7 @@ class JavaStatementFactory : StatementFactory {
   override fun createArrayVariable(elementType: GenericType, name: String): ArrayVariable =
     JavaArrayVariable(elementType, name)
 
-  override fun createScope(codeBlock: CodeBlock): Statement = object : Statement {
+  override fun createScope(codeBlock: CodeBlock): Convertable = object : Convertable {
     override fun toCode(indent: Int): String = "{\n".withIndent(indent) +
                                                codeBlock.toCode(indent + 1) +
                                                "}".withIndent(indent)
@@ -92,7 +92,7 @@ class JavaStatementFactory : StatementFactory {
 
   override fun updateCurrentTimeExpression(): Expression = TextExpression("time").call("incrementAndGet")
 
-  override fun createNewArrayExpression(elementType: GenericType, args: Array<out Expression>): Expression {
+  override fun createNewArrayExpression(elementType: GenericType, vararg args: Expression): Expression {
     val elements = args.joinToString(separator = ", ") { it.toCode() }
     return TextExpression("new ${elementType.variableTypeName}[] { $elements }")
   }
