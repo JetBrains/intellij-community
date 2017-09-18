@@ -897,7 +897,7 @@ public class AbstractPopup implements JBPopup {
       int i = Registry.intValue("ide.popup.resizable.border.sensitivity", 4);
       WindowResizeListener resizeListener = new WindowResizeListener(
         myContent,
-        myMovable ? JBUI.insets(i, i, i, i) : JBUI.insets(0, 0, i, i),
+        myMovable ? JBUI.insets(i) : JBUI.insets(0, 0, i, i),
         isToDrawMacCorner() ? AllIcons.General.MacCorner : null) {
         private Cursor myCursor;
 
