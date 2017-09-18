@@ -17,8 +17,10 @@ package com.intellij.debugger.streams.lib.impl
 
 import com.intellij.debugger.streams.resolve.*
 import com.intellij.debugger.streams.trace.IntermediateCallHandler
+import com.intellij.debugger.streams.trace.dsl.impl.DslImpl
+import com.intellij.debugger.streams.trace.dsl.impl.java.JavaStatementFactory
 import com.intellij.debugger.streams.trace.impl.handler.ParallelHandler
-import com.intellij.debugger.streams.trace.impl.handler.PeekTracerHandler
+import com.intellij.debugger.streams.trace.impl.handler.unified.PeekTraceHandler
 import com.intellij.debugger.streams.trace.impl.interpret.DistinctCallTraceInterpreter
 import com.intellij.debugger.streams.trace.impl.interpret.SimplePeekCallTraceInterpreter
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
@@ -29,9 +31,13 @@ import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
 
 open class OrderBasedOperation(name: String, orderResolver: ValuesOrderResolver)
   : IntermediateOperationBase(name,
-                              { num, call -> PeekTracerHandler(num, call.name, call.typeBefore, call.typeAfter) },
+                              { num, call -> PeekTraceHandler(num, call.name, call.typeBefore, call.typeAfter, JAVA_DSL) },
                               SimplePeekCallTraceInterpreter(),
-                              orderResolver)
+                              orderResolver) {
+  private companion object {
+    val JAVA_DSL = DslImpl(JavaStatementFactory())
+  }
+}
 
 class FilterOperation(name: String) : OrderBasedOperation(name, FilterResolver())
 class MappingOperation(name: String) : OrderBasedOperation(name, MapResolver())

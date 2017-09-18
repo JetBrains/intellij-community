@@ -22,12 +22,15 @@ import com.intellij.debugger.streams.lib.LibraryManager;
 import com.intellij.debugger.streams.psi.DebuggerPositionResolver;
 import com.intellij.debugger.streams.psi.impl.*;
 import com.intellij.debugger.streams.trace.*;
-import com.intellij.debugger.streams.trace.impl.TraceExpressionBuilderImpl;
+import com.intellij.debugger.streams.trace.dsl.impl.DslImpl;
+import com.intellij.debugger.streams.trace.dsl.impl.java.JavaStatementFactory;
+import com.intellij.debugger.streams.trace.impl.JavaTraceExpressionBuilder;
 import com.intellij.debugger.streams.trace.impl.TraceResultInterpreterImpl;
 import com.intellij.debugger.streams.ui.impl.ElementChooserImpl;
 import com.intellij.debugger.streams.ui.impl.EvaluationAwareTraceWindow;
 import com.intellij.debugger.streams.wrapper.StreamChain;
 import com.intellij.debugger.streams.wrapper.StreamChainBuilder;
+import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -108,7 +111,7 @@ public class TraceStreamAction extends AnAction {
     final EvaluationAwareTraceWindow window = new EvaluationAwareTraceWindow(session, chain);
     ApplicationManager.getApplication().invokeLater(window::show);
     final Project project = session.getProject();
-    final TraceExpressionBuilderImpl expressionBuilder = new TraceExpressionBuilderImpl(project);
+    final TraceExpressionBuilder expressionBuilder = new JavaTraceExpressionBuilder(project, new DslImpl(new JavaStatementFactory()));
     final TraceResultInterpreterImpl resultInterpreter = new TraceResultInterpreterImpl(project);
     final StreamTracer tracer = new EvaluateExpressionTracer(session, expressionBuilder, resultInterpreter);
     tracer.trace(chain, new TracingCallback() {

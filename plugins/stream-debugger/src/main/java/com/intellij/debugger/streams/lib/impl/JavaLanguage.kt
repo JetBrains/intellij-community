@@ -17,7 +17,10 @@ package com.intellij.debugger.streams.lib.impl
 
 import com.intellij.debugger.streams.lib.Language
 import com.intellij.debugger.streams.trace.TraceExpressionBuilder
-import com.intellij.debugger.streams.trace.impl.TraceExpressionBuilderImpl
+import com.intellij.debugger.streams.trace.dsl.StatementFactory
+import com.intellij.debugger.streams.trace.dsl.impl.DslImpl
+import com.intellij.debugger.streams.trace.dsl.impl.java.JavaStatementFactory
+import com.intellij.debugger.streams.trace.impl.JavaTraceExpressionBuilder
 import com.intellij.openapi.project.Project
 
 /**
@@ -25,5 +28,6 @@ import com.intellij.openapi.project.Project
  */
 class JavaLanguage(project: Project) : Language {
   override val name: String = "Java"
-  override val expressionBuilder: TraceExpressionBuilder = TraceExpressionBuilderImpl(project)
+  override val statementFactory: StatementFactory = JavaStatementFactory()
+  override val expressionBuilder: TraceExpressionBuilder = JavaTraceExpressionBuilder(project, DslImpl(statementFactory))
 }

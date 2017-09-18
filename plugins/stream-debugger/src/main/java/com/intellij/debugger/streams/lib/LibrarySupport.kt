@@ -15,13 +15,15 @@
  */
 package com.intellij.debugger.streams.lib
 
+import com.intellij.debugger.streams.trace.dsl.Dsl
+
 /**
  * @author Vitaliy.Bibaev
  */
 interface LibrarySupport {
   val description: Library
 
-  val handlerFactory: HandlerFactory
+  fun createHandlerFactory(dsl: Dsl): HandlerFactory
   val interpreterFactory: InterpreterFactory
   val resolverFactory: ResolverFactory
 }

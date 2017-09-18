@@ -16,11 +16,13 @@
 package com.intellij.debugger.streams.lib
 
 import com.intellij.debugger.streams.trace.TraceExpressionBuilder
+import com.intellij.debugger.streams.trace.dsl.StatementFactory
 
 /**
  * @author Vitaliy.Bibaev
  */
 interface Language {
   val name: String
+  val statementFactory: StatementFactory
   val expressionBuilder: TraceExpressionBuilder
 }

@@ -19,9 +19,11 @@ import com.intellij.debugger.streams.resolve.AllToResultResolver
 import com.intellij.debugger.streams.resolve.IdentityResolver
 import com.intellij.debugger.streams.resolve.OptionalOrderResolver
 import com.intellij.debugger.streams.trace.CallTraceInterpreter
+import com.intellij.debugger.streams.trace.dsl.impl.DslImpl
+import com.intellij.debugger.streams.trace.dsl.impl.java.JavaStatementFactory
 import com.intellij.debugger.streams.trace.impl.handler.MatchHandler
 import com.intellij.debugger.streams.trace.impl.handler.OptionalTerminatorHandler
-import com.intellij.debugger.streams.trace.impl.handler.TerminatorHandler
+import com.intellij.debugger.streams.trace.impl.handler.unified.TerminatorTraceHandler
 import com.intellij.debugger.streams.trace.impl.interpret.CollectIdentityTraceInterpreter
 import com.intellij.debugger.streams.trace.impl.interpret.OptionalTraceInterpreter
 
@@ -37,5 +39,5 @@ class OptionalResultOperation(name: String)
                           OptionalTraceInterpreter(), OptionalOrderResolver())
 
 class ToCollectionOperation(name: String)
-  : TerminalOperationBase(name, { call, _ -> TerminatorHandler(call.typeBefore) },
+  : TerminalOperationBase(name, { call, _ -> TerminatorTraceHandler(call, DslImpl(JavaStatementFactory())) },
                           CollectIdentityTraceInterpreter(), IdentityResolver())

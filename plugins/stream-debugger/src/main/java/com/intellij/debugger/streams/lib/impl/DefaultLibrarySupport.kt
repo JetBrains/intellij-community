@@ -21,8 +21,9 @@ import com.intellij.debugger.streams.resolve.ValuesOrderResolver
 import com.intellij.debugger.streams.trace.CallTraceInterpreter
 import com.intellij.debugger.streams.trace.IntermediateCallHandler
 import com.intellij.debugger.streams.trace.TerminatorCallHandler
-import com.intellij.debugger.streams.trace.impl.handler.PeekTracerHandler
-import com.intellij.debugger.streams.trace.impl.handler.TerminatorHandler
+import com.intellij.debugger.streams.trace.dsl.Dsl
+import com.intellij.debugger.streams.trace.impl.handler.unified.PeekTraceHandler
+import com.intellij.debugger.streams.trace.impl.handler.unified.TerminatorTraceHandler
 import com.intellij.debugger.streams.trace.impl.interpret.SimplePeekCallTraceInterpreter
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
 import com.intellij.debugger.streams.wrapper.TerminatorStreamCall
@@ -33,13 +34,13 @@ class DefaultLibrarySupport : LibrarySupport {
       throw RuntimeException("There is no description for empty library")
     }
 
-  override val handlerFactory: HandlerFactory = object : HandlerFactory {
+  override fun createHandlerFactory(dsl: Dsl): HandlerFactory = object : HandlerFactory {
     override fun getForIntermediate(number: Int, call: IntermediateStreamCall): IntermediateCallHandler {
-      return PeekTracerHandler(number, call.name, call.typeBefore, call.typeAfter)
+      return PeekTraceHandler(number, call.name, call.typeBefore, call.typeAfter, dsl)
     }
 
     override fun getForTermination(call: TerminatorStreamCall, resultExpression: String): TerminatorCallHandler {
-      return TerminatorHandler(call.typeBefore)
+      return TerminatorTraceHandler(call, dsl)
     }
   }
 
