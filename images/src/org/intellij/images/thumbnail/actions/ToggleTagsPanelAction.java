@@ -19,6 +19,7 @@ package org.intellij.images.thumbnail.actions;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.project.Project;
 import org.intellij.images.thumbnail.ThumbnailView;
 import org.intellij.images.thumbnail.actionSystem.ThumbnailViewActionUtil;
 
@@ -26,7 +27,8 @@ public final class ToggleTagsPanelAction extends ToggleAction {
     public static final String TAGS_PANEL_VISIBLE = "tags.panel.visible";
     public static final String TAGS_PANEL_PROPORTION = "tags.panel.proportion";
     public boolean isSelected(AnActionEvent e) {
-        return PropertiesComponent.getInstance(e.getProject()).getBoolean(TAGS_PANEL_VISIBLE, false);
+        Project project = e.getProject();
+        return project != null && PropertiesComponent.getInstance(project).getBoolean(TAGS_PANEL_VISIBLE, false);
     }
 
     public void setSelected(AnActionEvent e, boolean state) {
@@ -37,9 +39,9 @@ public final class ToggleTagsPanelAction extends ToggleAction {
     }
 
     public void update(final AnActionEvent e) {
-        super.update(e);
         ThumbnailView view = ThumbnailViewActionUtil.getVisibleThumbnailView(e);
-        e.getPresentation().setEnabled(view != null);
+        e.getPresentation().setEnabledAndVisible(view != null);
         e.getPresentation().setText(isSelected(e) ? "Hide Tags Panel" : "Show Tags Panel");
+        super.update(e);
     }
 }
