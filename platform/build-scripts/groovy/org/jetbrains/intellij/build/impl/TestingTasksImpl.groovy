@@ -16,6 +16,7 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.util.text.StringUtil
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.apache.tools.ant.AntClassLoader
@@ -83,6 +84,27 @@ class TestingTasksImpl extends TestingTasks {
 
     String tempDir = System.getProperty("teamcity.build.tempDir", System.getProperty("java.io.tmpdir"))
 
+    def remoteDebugJvmOptions = System.getProperty("teamcity.remote-debug.jvm.options")
+    if (remoteDebugJvmOptions != null) {
+      def testConfigurationType = System.getProperty("teamcity.remote-debug.type")
+      if (testConfigurationType != "junit") {
+        context.messages.error("Remote debugging is supported for junit run configurations only, but 'teamcity.remote-debug.type' is $testConfigurationType")
+      }
+
+      def testObject = System.getProperty("teamcity.remote-debug.junit.type")
+      def junitClass = System.getProperty("teamcity.remote-debug.junit.class")
+      if (testObject != "class") {
+        context.messages.error("Remote debugging supports debugging all test methods in a class for now, debugging isn't supported for '$testObject'")
+      }
+      if (junitClass == null) {
+        context.messages.error("Remote debugging supports debugging all test methods in a class for now, but target class isn't specified")
+      }
+      if (options.testPatterns != null) {
+        context.messages.warning("'intellij.build.test.patterns' option is ignored while debugging via TeamCity plugin")
+      }
+      options.testPatterns = junitClass
+    }
+
     Map<String, String> systemProperties = [
       "classpath.file"                         : classpathFile.absolutePath,
       "idea.platform.prefix"                   : options.platformPrefix,
@@ -123,16 +145,31 @@ class TestingTasksImpl extends TestingTasks {
     }
 
     boolean suspendDebugProcess = options.suspendDebugProcess
-    if (systemProperties["idea.performance.tests"] != "true") {
+    if (systemProperties["idea.performance.tests"] == "true") {
+      context.messages.info("Debugging disabled for performance tests")
+      suspendDebugProcess = false
+    }
+    else if (remoteDebugJvmOptions != null) {
+      // ignore all options from the run configuration because they may conflict with the options defined in the build script
+      String jvmDebugOption = StringUtil.splitHonorQuotes(remoteDebugJvmOptions, ' ' as char).find { it.startsWith("-agentlib:jdwp=") }
+      if (jvmDebugOption == null) {
+        context.messages.error("Cannot extract JVM debugging options from $remoteDebugJvmOptions")
+      }
+
+      jvmArgs.add(jvmDebugOption)
+
+      context.messages.info("Remote debugging via TeamCity plugin is activated.")
+      if (suspendDebugProcess) {
+        context.messages.warning("'intellij.build.test.debug.suspend' option is ignored while debugging via TeamCity plugin")
+        suspendDebugProcess = false
+      }
+    }
+    else {
       String debuggerParameter = "-agentlib:jdwp=transport=dt_socket,server=y,suspend=${suspendDebugProcess ? "y" : "n"}"
       if (options.debugPort != -1) {
         debuggerParameter += ",address=$options.debugPort"
       }
       jvmArgs.add(debuggerParameter)
-    }
-    else {
-      context.messages.info("Debugging disabled for performance tests")
-      suspendDebugProcess = false
     }
 
     context.messages.info("Starting ${options.testGroups != null ? "test from groups '$options.testGroups'" : "all tests"}")
