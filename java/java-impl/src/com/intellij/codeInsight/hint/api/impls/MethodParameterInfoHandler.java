@@ -236,7 +236,10 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       return;
     }
 
-    int index = ParameterInfoUtils.getCurrentParameterIndex(o.getNode(), context.getOffset(), JavaTokenType.COMMA);
+    int offset = context.getOffset();
+    TextRange elRange = o.getTextRange();
+    int index = offset <= elRange.getStartOffset() || offset >= elRange.getEndOffset()
+                ? -1 : ParameterInfoUtils.getCurrentParameterIndex(o.getNode(), offset, JavaTokenType.COMMA);
     context.setCurrentParameter(index);
 
     Object[] candidates = context.getObjectsToView();
