@@ -18,19 +18,31 @@ package org.jetbrains.plugins.gradle.importing;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
-import com.intellij.execution.RunManager;
-import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
-import com.intellij.facet.impl.invalid.InvalidFacet;
-import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.externalSystem.service.project.manage.FacetHandlerExtension;
+import com.intellij.openapi.externalSystem.service.project.manage.RunConfigHandlerExtension;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
+import org.junit.runners.Parameterized;
+
+import java.util.*;
 
 /**
  * Created by Nikita.Skvortsov
  * date: 18.09.2017.
  */
 public class GradleSettingsImportingTest extends GradleImportingTestCase {
+
+
+  @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
+  @Parameterized.Parameters(name = "with Gradle-{0}")
+  public static Collection<Object[]> data() {
+    return Arrays.asList(new Object[][]{{BASE_GRADLE_VERSION}});
+  }
 
   @Test
   public void testCompilerConfigurationSettingsImport() throws Exception {
@@ -75,6 +87,10 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
   @Test
   public void testApplicationRunConfigurationSettingsImport() throws Exception {
     final String pathToPlugin = getClass().getResource("/testCompilerConfigurationSettingsImport/gradle-idea-ext.jar").toString();
+    final String typeName = "testRunConfig";
+
+    TestRunConfigHandlerExtension testExtension = new TestRunConfigHandlerExtension(typeName);
+    Extensions.getRootArea().getExtensionPoint(RunConfigHandlerExtension.EP_NAME).registerExtension(testExtension);
 
     importProject(
       "buildscript {\n" +
@@ -87,12 +103,12 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
       "  module.settings {\n" +
       "    runConfigurations {\n" +
       "       app1 {\n" +
-      "           type = 'application'\n" +
+      "           type = '" + typeName + "'\n" +
       "           mainClass = 'my.app.Class'\n" +
       "           jvmArgs =   '-Xmx1g'\n" +
       "       }\n" +
       "       app2 {\n" +
-      "           type = 'application'\n" +
+      "           type = '" + typeName + "'\n" +
       "           mainClass = 'my.app.Class2'\n" +
       "       }\n" +
       "    }\n" +
@@ -100,17 +116,25 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
       "}"
     );
 
-    final RunManager runManager = RunManager.getInstance(myProject);
-    final RunnerAndConfigurationSettings app1 = runManager.findConfigurationByName("app1");
-    final RunnerAndConfigurationSettings app2 = runManager.findConfigurationByName("app2");
+    final Map<String, Map<String, Object>> configs = testExtension.getConfigs();
 
-    assertEquals("com.intellij.execution.application.ApplicationConfiguration", app1.getConfiguration().getClass().getCanonicalName());
-    assertEquals("com.intellij.execution.application.ApplicationConfiguration", app2.getConfiguration().getClass().getCanonicalName());
+    assertContain(new ArrayList<>(configs.keySet()), "app1", "app2");
+    Map<String, Object> app1Settings = configs.get("app1");
+    Map<String, Object> app2Settings = configs.get("app2");
+
+    assertEquals("my.app.Class", app1Settings.get("mainClass"));
+    assertEquals("my.app.Class2", app2Settings.get("mainClass"));
+    assertEquals("-Xmx1g", app1Settings.get("jvmArgs"));
+    assertNull(app2Settings.get("jvmArgs"));
   }
 
   @Test
   public void testFacetSettingsImport() throws Exception {
     final String pathToPlugin = getClass().getResource("/testCompilerConfigurationSettingsImport/gradle-idea-ext.jar").toString();
+
+    TestFacetHandlerExtension testExtension = new TestFacetHandlerExtension("testFacet");
+    Extensions.getRootArea().getExtensionPoint(FacetHandlerExtension.EP_NAME).registerExtension(testExtension);
+
 
     importProject(
       "buildscript {\n" +
@@ -122,18 +146,84 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
       "idea {\n" +
       "  module.settings {\n" +
       "    facets {\n" +
-      "       invalid {\n" +
-      "           errorMessage 'Hello World!'\n" +
+      "       testFacet {\n" +
+      "           testField 'Test Value 1'\n" +
+      "       }\n" +
+      "       namedFacet {\n" +
+      "           type 'testFacet'\n" +
+      "           testField 'Test Value 2'\n" +
       "       }\n" +
       "    }\n" +
       "  }\n" +
       "}"
     );
 
-    final Facet[] facets = FacetManager.getInstance(ModuleManager.getInstance(myProject).getModules()[0]).getAllFacets();
+    final Map<String, Map<String, Object>> facetConfigs = testExtension.getConfigs();
 
-    assertSize(1, facets);
-    assertEquals("Hello World!", ((InvalidFacet)facets[0]).getErrorMessage());
+    assertContain(new ArrayList<>(facetConfigs.keySet()), "testFacet", "namedFacet");
+    Map<String, Object> unnamedSettings = facetConfigs.get("testFacet");
+    Map<String, Object> namedSettings = facetConfigs.get("namedFacet");
+
+    assertEquals("Test Value 1", unnamedSettings.get("testField"));
+    assertEquals("Test Value 2", namedSettings.get("testField"));
   }
 
+}
+
+
+class TestRunConfigHandlerExtension implements RunConfigHandlerExtension {
+
+  private final String myTypeName;
+  private final Map<String, Map<String, Object>> myConfigs = new HashMap<>();
+
+  public TestRunConfigHandlerExtension(@NotNull String typeName) {
+    myTypeName = typeName;
+  }
+
+  @Override
+  public void process(@NotNull Project project, @NotNull String name, @NotNull Map<String, Object> cfg) {
+    myConfigs.put(name, cfg);
+  }
+
+  @Override
+  public void process(@NotNull Module module, @NotNull String name, @NotNull Map<String, Object> cfg) {
+    myConfigs.put(name, cfg);
+  }
+
+  @Override
+  public boolean canHandle(@NotNull String typeName) {
+    return myTypeName.equals(typeName);
+  }
+
+  public Map<String, Map<String, Object>> getConfigs() {
+    return myConfigs;
+  }
+}
+
+
+class TestFacetHandlerExtension implements FacetHandlerExtension<Facet> {
+
+  private final String myTypeName;
+
+  private final Map<String, Map<String, Object>> myConfigs = new HashMap<>();
+
+  TestFacetHandlerExtension(@NotNull String typeName) {
+    myTypeName = typeName;
+  }
+
+  @NotNull
+  @Override
+  public Collection<Facet> process(@NotNull Module module, @NotNull String name, @NotNull Map<String, Object> cfg, @NotNull FacetManager facetManager) {
+    myConfigs.put(name, cfg);
+    return Collections.emptySet();
+  }
+
+  @Override
+  public boolean canHandle(@NotNull String typeName) {
+    return myTypeName.equals(typeName);
+  }
+
+  public Map<String, Map<String, Object>> getConfigs() {
+    return myConfigs;
+  }
 }
