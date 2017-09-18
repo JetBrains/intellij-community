@@ -66,6 +66,28 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
     }
   }
 
+  fun testMergeCodeBlocks() {
+    val block = dsl.block {
+      declare(variable(types.integerType, "b"), +"20", false)
+    }
+
+    doTest {
+      declare(variable(types.integerType, "a"), +"10", false)
+      add(block)
+    }
+  }
+
+  fun testMergeCodeBlocksReversed() {
+    val block = dsl.block {
+      declare(variable(types.integerType, "a"), +"10", false)
+    }
+
+    doTest {
+      add(block)
+      declare(variable(types.integerType, "b"), +"20", false)
+    }
+  }
+
   fun testScope() {
     doTest {
       scope {
@@ -148,7 +170,7 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
     doTest {
       val objects = declare(variable(types.listOfAny, "objects"), +"getObjects()", false)
       forEachLoop(variable(types.anyType, "object"), objects) {
-        breakIteration()
+        +breakIteration()
       }
     }
   }
