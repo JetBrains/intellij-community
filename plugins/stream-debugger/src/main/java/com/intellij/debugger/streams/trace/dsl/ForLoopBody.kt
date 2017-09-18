@@ -20,5 +20,5 @@ package com.intellij.debugger.streams.trace.dsl
  */
 interface ForLoopBody : CodeBlock {
   val loopVariable: Variable
-  fun breakIteration()
+  fun breakIteration(): Expression
 }

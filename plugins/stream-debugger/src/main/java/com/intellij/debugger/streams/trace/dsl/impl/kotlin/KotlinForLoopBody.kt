@@ -15,10 +15,7 @@
  */
 package com.intellij.debugger.streams.trace.dsl.impl.kotlin
 
-import com.intellij.debugger.streams.trace.dsl.Dsl
-import com.intellij.debugger.streams.trace.dsl.ForLoopBody
-import com.intellij.debugger.streams.trace.dsl.StatementFactory
-import com.intellij.debugger.streams.trace.dsl.Variable
+import com.intellij.debugger.streams.trace.dsl.*
 import com.intellij.debugger.streams.trace.dsl.impl.TextExpression
 
 /**
@@ -30,7 +27,5 @@ class KotlinForLoopBody(override val loopVariable: Variable,
     val BREAK = TextExpression("break")
   }
 
-  override fun breakIteration() {
-    addStatement(BREAK)
-  }
+  override fun breakIteration(): Expression = BREAK
 }

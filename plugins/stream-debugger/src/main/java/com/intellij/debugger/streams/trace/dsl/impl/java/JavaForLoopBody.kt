@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.streams.trace.dsl.impl.java
 
+import com.intellij.debugger.streams.trace.dsl.Expression
 import com.intellij.debugger.streams.trace.dsl.ForLoopBody
 import com.intellij.debugger.streams.trace.dsl.StatementFactory
 import com.intellij.debugger.streams.trace.dsl.Variable
@@ -29,5 +30,5 @@ class JavaForLoopBody(statementFactory: StatementFactory, override val loopVaria
     val BREAK = TextExpression("break")
   }
 
-  override fun breakIteration() = addStatement(BREAK)
+  override fun breakIteration(): Expression = BREAK
 }
