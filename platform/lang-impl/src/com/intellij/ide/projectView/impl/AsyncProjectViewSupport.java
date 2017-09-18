@@ -54,7 +54,7 @@ import static com.intellij.ide.util.treeView.TreeState.VISIT;
 import static com.intellij.util.ui.UIUtil.putClientProperty;
 
 class AsyncProjectViewSupport {
-  private static final Logger LOG = Logger.getInstance(AbstractProjectViewPSIPane.class);
+  private static final Logger LOG = Logger.getInstance(AsyncProjectViewSupport.class);
   private final StructureTreeModel myStructureTreeModel;
   private final AsyncTreeModel myAsyncTreeModel;
   private final PsiManager myPsiManager;
