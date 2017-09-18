@@ -23,5 +23,7 @@ interface Dsl : DslFactory {
   val thisExpression: Expression
   val types: Types
 
+  fun block(init: CodeContext.() -> Unit): CodeBlock
+
   fun code(init: CodeContext.() -> Unit): String
 }

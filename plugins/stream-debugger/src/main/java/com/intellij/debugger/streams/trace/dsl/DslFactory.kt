@@ -29,6 +29,10 @@ interface DslFactory {
 
   fun array(elementType: GenericType, name: String): ArrayVariable
 
+  fun list(elementType: GenericType, name: String): ListVariable
+
+  fun newList(elementType: GenericType, vararg args: Expression): Expression
+
   fun newArray(elementType: GenericType, vararg args: Expression): Expression
 
   fun newSizedArray(elementType: GenericType, size: Expression): Expression
@@ -48,6 +52,8 @@ interface DslFactory {
   fun equals(left: Expression, right: Expression): Expression
 
   fun same(left: Expression, right: Expression): Expression
+
+  fun not(expression: Expression): Expression
 
   fun timeDeclaration(): VariableDeclaration
 

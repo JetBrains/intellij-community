@@ -48,6 +48,11 @@ class DslImpl(private val statementFactory: StatementFactory) : Dsl {
   override fun map(keyType: GenericType, valueType: GenericType, name: String): MapVariable =
     statementFactory.createMapVariable(keyType, valueType, name, false)
 
+  override fun list(elementType: GenericType, name: String): ListVariable =
+    statementFactory.createListVariable(elementType, name)
+
+  override fun newList(elementType: GenericType, vararg args: Expression): Expression =
+    statementFactory.createNewListExpression(elementType, *args)
 
   override fun linkedMap(keyType: GenericType, valueType: GenericType, name: String): MapVariable =
     statementFactory.createMapVariable(keyType, valueType, name, true)
@@ -77,6 +82,8 @@ class DslImpl(private val statementFactory: StatementFactory) : Dsl {
   override fun equals(left: Expression, right: Expression): Expression = statementFactory.equals(left, right)
 
   override fun same(left: Expression, right: Expression): Expression = statementFactory.same(left, right)
+
+  override fun not(expression: Expression): Expression = statementFactory.not(expression)
 
   private inner class MyContext : CodeContext, Dsl by DslImpl@ this, CodeBlock by statementFactory.createEmptyCompositeCodeBlock()
 }
