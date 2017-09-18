@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
@@ -270,6 +271,11 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
 
   public void setAttributes(@NotNull SimpleTextAttributes attributes) {
     myAttributes = attributes;
+  }
+
+  protected void appendParentPath(@NotNull ChangesBrowserNodeRenderer renderer, @NotNull String parentPath) {
+    renderer.append(spaceAndThinSpace() + FileUtil.getLocationRelativeToUserHome(parentPath),
+                    SimpleTextAttributes.GRAYED_ATTRIBUTES);
   }
 
   protected void appendUpdatingState(@NotNull ChangesBrowserNodeRenderer renderer) {
