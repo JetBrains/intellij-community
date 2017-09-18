@@ -15,7 +15,6 @@
  */
 package com.intellij.lang.java.actions
 
-import com.intellij.codeInsight.ExpectedTypeInfo
 import com.intellij.codeInsight.daemon.QuickFixBundle.message
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix.positionCursor
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix.startTemplate
@@ -40,118 +39,112 @@ internal class CreateFieldAction(
   private val constantField: Boolean
 ) : CreateFieldActionBase(targetClass, request) {
 
-  private val myData: FieldData?
-    get() {
-      val targetClass = myTargetClass.element
-      if (targetClass == null || !myRequest.isValid) return null
-      return extractRenderData(targetClass, myRequest, constantField)
-    }
-
   override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean {
-    val data = myData ?: return false
-    val className = getNameForClass(data.targetClass, false)
+    val targetClass = myTargetClass.element ?: return false
+    if (!myRequest.isValid) return false
+
+    val fieldName = myRequest.fieldName
+
+    val canRender = run {
+      val requestedModifiers = myRequest.modifiers
+      val constantRequested = myRequest.constant || targetClass.isInterface || requestedModifiers.containsAll(constantModifiers)
+      if (constantField) {
+        constantRequested || fieldName.toUpperCase() == fieldName
+      }
+      else {
+        !constantRequested
+      }
+    }
+    if (!canRender) return false
+
+    val className = getNameForClass(targetClass, false)
     text = if (constantField) {
-      message("create.constant.from.usage.full.text", data.fieldName, className)
+      message("create.constant.from.usage.full.text", fieldName, className)
     }
     else {
-      message("create.field.from.usage.full.text", data.fieldName, className)
+      message("create.field.from.usage.full.text", fieldName, className)
     }
     return true
   }
 
   override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
-    val data = myData ?: return
-    val targetClass = data.targetClass
-
-    // render template field
-    val renderedField = JavaPsiFacade.getElementFactory(project).createField(data.fieldName, PsiType.INT)
-
-    // clean template modifiers
-    renderedField.modifierList?.let { list ->
-      list.firstChild?.let {
-        list.deleteChildRange(it, list.lastChild)
-      }
-    }
-    // setup actual modifiers
-    for (modifier in data.modifiers) {
-      PsiUtil.setModifierProperty(renderedField, modifier, true)
-    }
-
-    val helper = JavaCreateFieldFromUsageHelper()
-
-    // insert field
-    val javaField = helper.insertFieldImpl(targetClass, renderedField, data.anchor)
-
-    // setup template
-    val targetFile = targetClass.containingFile ?: return
-    val newEditor = positionCursor(project, targetFile, javaField) ?: return
-    val template = helper.setupTemplateImpl(
-      javaField, data.fieldType, targetClass, newEditor, data.reference, data.constant, data.targetSubstitutor
-    )
-    val listener = MyTemplateListener(project, newEditor, targetFile)
-    startTemplate(newEditor, template, project, listener, null)
+    val targetClass = myTargetClass.element ?: return
+    assert(myRequest.isValid)
+    JavaFieldRenderer(project, constantField, targetClass, myRequest).doRender()
   }
-}
-
-private class FieldData(
-  val targetClass: PsiClass,
-  val fieldName: String,
-  val fieldType: Array<ExpectedTypeInfo>,
-  val targetSubstitutor: PsiSubstitutor,
-  val reference: PsiReferenceExpression?,
-  val anchor: PsiElement?,
-  val modifiers: Collection<String>,
-  val constant: Boolean
-)
-
-private fun extractRenderData(targetClass: PsiClass, request: CreateFieldRequest, renderConstant: Boolean): FieldData? {
-  val fieldName = request.fieldName
-  val requestedModifiers = request.modifiers
-
-  val canRender = run {
-    val constantRequested = request.constant || targetClass.isInterface || requestedModifiers.containsAll(constantModifiers)
-    if (renderConstant) {
-      constantRequested || fieldName.toUpperCase() == fieldName
-    }
-    else {
-      !constantRequested
-    }
-  }
-  if (!canRender) return null
-
-  val modifiersToRender = if (renderConstant) {
-    if (targetClass.isInterface) {
-      // interface fields are public static final implicitly, so modifiers don't have to be rendered
-      requestedModifiers - constantModifiers - visibilityModifiers
-    }
-    else {
-      // render static final explicitly
-      requestedModifiers + constantModifiers
-    }
-  }
-  else {
-    // render as is
-    requestedModifiers
-  }
-
-  val project = targetClass.project
-  val javaUsage = request as? CreateFieldFromJavaUsageRequest
-  return FieldData(
-    targetClass,
-    fieldName,
-    extractExpectedTypes(project, request.fieldType).toTypedArray(),
-    request.targetSubstitutor.toPsiSubstitutor(project),
-    javaUsage?.reference,
-    javaUsage?.anchor,
-    modifiersToRender.map(JvmModifier::toPsiModifier),
-    renderConstant
-  )
 }
 
 private val constantModifiers = setOf(
   JvmModifier.STATIC,
   JvmModifier.FINAL
 )
+
+private class JavaFieldRenderer(
+  val project: Project,
+  val constantField: Boolean,
+  val targetClass: PsiClass,
+  val request: CreateFieldRequest
+) {
+
+  val helper = JavaCreateFieldFromUsageHelper()
+  val javaUsage = request as? CreateFieldFromJavaUsageRequest
+  val expectedTypes = extractExpectedTypes(project, request.fieldType).toTypedArray()
+
+  private val modifiersToRender: Collection<JvmModifier>
+    get() {
+      return if (constantField) {
+        if (targetClass.isInterface) {
+          // interface fields are public static final implicitly, so modifiers don't have to be rendered
+          request.modifiers - constantModifiers - visibilityModifiers
+        }
+        else {
+          // render static final explicitly
+          request.modifiers + constantModifiers
+        }
+      }
+      else {
+        // render as is
+        request.modifiers
+      }
+    }
+
+  fun doRender() {
+    var field = renderField()
+    field = insertField(field)
+    startTemplate(field)
+  }
+
+  private fun renderField(): PsiField {
+    val field = JavaPsiFacade.getElementFactory(project).createField(request.fieldName, PsiType.INT)
+
+    // clean template modifiers
+    field.modifierList?.let { list ->
+      list.firstChild?.let {
+        list.deleteChildRange(it, list.lastChild)
+      }
+    }
+
+    // setup actual modifiers
+    for (modifier in modifiersToRender.map(JvmModifier::toPsiModifier)) {
+      PsiUtil.setModifierProperty(field, modifier, true)
+    }
+
+    return field
+  }
+
+  private fun insertField(field: PsiField): PsiField {
+    return helper.insertFieldImpl(targetClass, field, javaUsage?.anchor)
+  }
+
+  private fun startTemplate(field: PsiField) {
+    val targetFile = targetClass.containingFile ?: return
+    val newEditor = positionCursor(field.project, targetFile, field) ?: return
+    val substitutor = request.targetSubstitutor.toPsiSubstitutor(project)
+    val template = helper.setupTemplateImpl(field, expectedTypes, targetClass, newEditor, javaUsage?.reference, constantField, substitutor)
+    val listener = MyTemplateListener(project, newEditor, targetFile)
+    startTemplate(newEditor, template, project, listener, null)
+  }
+}
 
 private class MyTemplateListener(val project: Project, val editor: Editor, val file: PsiFile) : TemplateEditingAdapter() {
 
