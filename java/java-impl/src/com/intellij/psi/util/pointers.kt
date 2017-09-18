@@ -20,6 +20,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiElementPointer
 
+@JvmOverloads
 fun <T : PsiElement> T.createSmartPointer(theProject: Project = project): SmartPsiElementPointer<T> {
   return SmartPointerManager.getInstance(theProject).createSmartPsiElementPointer(this)
 }

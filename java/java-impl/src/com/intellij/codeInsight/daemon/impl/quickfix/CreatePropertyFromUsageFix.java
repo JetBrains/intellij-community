@@ -34,12 +34,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PointersKt;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
@@ -82,7 +81,6 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix implement
   @Override
   protected boolean isAvailableImpl(int offset) {
     if (CreateMethodFromUsageFix.hasErrorsInArgumentList(myMethodCall)) return false;
-    PsiReferenceExpression ref = myMethodCall.getMethodExpression();
     String methodName = myMethodCall.getMethodExpression().getReferenceName();
     LOG.assertTrue(methodName != null);
     String propertyName = PropertyUtilBase.getPropertyName(methodName);
@@ -122,13 +120,13 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix implement
 
   static class FieldExpression extends Expression {
     private final String myDefaultFieldName;
-    private final PsiField myField;
-    private final PsiClass myClass;
+    private final SmartPsiElementPointer<PsiField> myField;
+    private final SmartPsiElementPointer<PsiClass> myClass;
     private final List<SmartTypePointer> myExpectedTypes;
 
     public FieldExpression(final PsiField field, PsiClass aClass, PsiType[] expectedTypes) {
-      myField = field;
-      myClass = aClass;
+      myField = PointersKt.createSmartPointer(field);
+      myClass = PointersKt.createSmartPointer(aClass);
       myExpectedTypes = ContainerUtil.map(expectedTypes, type -> SmartTypePointerManager.getInstance(field.getProject()).createSmartTypePointer(type));
       myDefaultFieldName = field.getName();
     }
@@ -145,9 +143,13 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix implement
 
     @Override
     public LookupElement[] calculateLookupItems(ExpressionContext context) {
+      PsiField field = myField.getElement();
+      PsiClass psiClass = myClass.getElement();
+      if (field == null || psiClass == null) return LookupElement.EMPTY_ARRAY;
+
       Set<LookupElement> set = new LinkedHashSet<>();
-      set.add(JavaLookupElementBuilder.forField(myField).withTypeText(myField.getType().getPresentableText()));
-      for (PsiField otherField : myClass.getFields()) {
+      set.add(JavaLookupElementBuilder.forField(field).withTypeText(field.getType().getPresentableText()));
+      for (PsiField otherField : psiClass.getFields()) {
         if (!myDefaultFieldName.equals(otherField.getName())) {
           PsiType otherType = otherField.getType();
           for (SmartTypePointer pointer : myExpectedTypes) {
