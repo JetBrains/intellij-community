@@ -46,6 +46,11 @@ public class MockParameterInfoUIContext<T extends PsiElement> implements Paramet
   }
 
   @Override
+  public void setupRawUIComponentPresentation(String htmlText) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public boolean isUIComponentEnabled() {
     return enabled;
   }

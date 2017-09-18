@@ -784,6 +784,11 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     }
 
     @Override
+    public void setupRawUIComponentPresentation(String htmlText) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
     public boolean isUIComponentEnabled() {
       return true;
     }
