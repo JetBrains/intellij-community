@@ -117,7 +117,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
         String fullName = myModel.getFullName(o);
         if (o instanceof PsiFileSystemItem && fullName != null) {
           FList<TextRange> fragments = fullMatcher.matchingFragments(fullName);
-          if (fragments != null) {
+          if (fragments != null && !fragments.isEmpty()) {
             group.add((PsiFileSystemItem)o);
 
             qualifierMatchingDegrees.put((PsiFileSystemItem)o, -fullMatcher.matchingDegree(fullName, false, fragments));
