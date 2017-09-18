@@ -25,6 +25,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.psiutils.*;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -110,11 +111,12 @@ public class RequireNonNullInspection extends BaseJavaBatchLocalInspectionTool {
     }
   }
 
-  private static PsiExpression createRequireExpression(CommentTracker tracker,
-                                                       PsiExpression expression,
-                                                       Project project,
-                                                       PsiVariable variable,
-                                                       PsiElement context) {
+  @NotNull
+  private static PsiExpression createRequireExpression(@NotNull CommentTracker tracker,
+                                                       @NotNull PsiExpression expression,
+                                                       @NotNull Project project,
+                                                       @NotNull PsiVariable variable,
+                                                       @NotNull PsiElement context) {
     boolean isSimple = ExpressionUtils.isSimpleExpression(expression);
     String expr = tracker.text(expression);
     if (!isSimple) {
@@ -182,7 +184,7 @@ public class RequireNonNullInspection extends BaseJavaBatchLocalInspectionTool {
 
 
     @Nullable
-    static NotNullContext from(PsiIfStatement ifStatement) {
+    static NotNullContext from(@NotNull PsiIfStatement ifStatement) {
       PsiExpression condition = ifStatement.getCondition();
       if(condition == null) return null;
       PsiBinaryExpression binOp = tryCast(condition, PsiBinaryExpression.class);
@@ -210,10 +212,11 @@ public class RequireNonNullInspection extends BaseJavaBatchLocalInspectionTool {
       return null;
     }
 
-    private static NotNullContext extractContext(PsiIfStatement ifStatement,
-                                                 PsiVariable variable,
-                                                 PsiStatement nullBranch,
-                                                 PsiStatement nonNullBranch,
+    @Contract("_, _, null, _, _ -> null")
+    private static NotNullContext extractContext(@NotNull PsiIfStatement ifStatement,
+                                                 @NotNull PsiVariable variable,
+                                                 @Nullable PsiStatement nullBranch,
+                                                 @Nullable PsiStatement nonNullBranch,
                                                  @Nullable PsiReturnStatement toDelete) {
       if(nullBranch == null) return null;
       EquivalenceChecker.Match match = ourEquivalence.statementsMatch(nullBranch, nonNullBranch);
@@ -237,7 +240,7 @@ public class RequireNonNullInspection extends BaseJavaBatchLocalInspectionTool {
   }
 
   @Nullable
-  private static PsiVariable extractVariable(PsiBinaryExpression binOp) {
+  private static PsiVariable extractVariable(@NotNull PsiBinaryExpression binOp) {
     PsiExpression value = ExpressionUtils.getValueComparedWithNull(binOp);
     PsiReferenceExpression referenceExpression = tryCast(value, PsiReferenceExpression.class);
     if(referenceExpression == null) return null;
@@ -247,30 +250,33 @@ public class RequireNonNullInspection extends BaseJavaBatchLocalInspectionTool {
   }
 
   private static class TernaryNotNullContext {
-    private final PsiConditionalExpression myTernary;
-    private final PsiExpression myNonNullExpr;
-    private final PsiVariable myVariable;
+    private final @NotNull PsiConditionalExpression myTernary;
+    private final @NotNull PsiExpression myNonNullExpr;
+    private final @NotNull PsiVariable myVariable;
 
-    private TernaryNotNullContext(PsiConditionalExpression ternary, PsiExpression expr, PsiVariable variable) {
+    private TernaryNotNullContext(@NotNull PsiConditionalExpression ternary, @NotNull PsiExpression expr, @NotNull PsiVariable variable) {
       myTernary = ternary;
       myNonNullExpr = expr;
       myVariable = variable;
     }
 
+    @NotNull
     public PsiExpression getNonNullExpr() {
       return myNonNullExpr;
     }
 
+    @NotNull
     public PsiConditionalExpression getTernary() {
       return myTernary;
     }
 
+    @NotNull
     public PsiVariable getVariable() {
       return myVariable;
     }
 
     @Nullable
-    static TernaryNotNullContext from(PsiConditionalExpression ternary) {
+    static TernaryNotNullContext from(@NotNull PsiConditionalExpression ternary) {
       PsiBinaryExpression binOp = tryCast(ternary.getCondition(), PsiBinaryExpression.class);
       if(binOp == null) return null;
       PsiVariable variable = extractVariable(binOp);
@@ -291,18 +297,20 @@ public class RequireNonNullInspection extends BaseJavaBatchLocalInspectionTool {
    * Relies that call chain and arguments are exactly the same
    */
   private static class TopmostQualifierDiff {
-    private final PsiExpression myLeft;
-    private final PsiExpression myRight;
+    private final @NotNull PsiExpression myLeft;
+    private final @NotNull PsiExpression myRight;
 
-    private TopmostQualifierDiff(PsiExpression left, PsiExpression right) {
+    private TopmostQualifierDiff(@NotNull PsiExpression left, @NotNull PsiExpression right) {
       myLeft = left;
       myRight = right;
     }
 
+    @NotNull
     public PsiExpression getRight() {
       return myRight;
     }
 
+    @NotNull
     public PsiExpression getLeft() {
       return myLeft;
     }
