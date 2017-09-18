@@ -58,7 +58,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
   private final String myModuleName;
   private JRadioButton myProjectButton;
   private JRadioButton myModuleButton;
-  private JRadioButton myUncommitedFilesButton;
+  private JRadioButton myUncommittedFilesButton;
   private JRadioButton myCustomScopeButton;
   private JRadioButton myFileButton;
   private ScopeChooserCombo myScopeCombo;
@@ -100,7 +100,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
     myGroup = new ButtonGroup();
     myGroup.add(myProjectButton);
     myGroup.add(myModuleButton);
-    myGroup.add(myUncommitedFilesButton);
+    myGroup.add(myUncommittedFilesButton);
     myGroup.add(myFileButton);
     myGroup.add(myCustomScopeButton);
 
@@ -143,9 +143,9 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
     final boolean hasVCS = !changeListManager.getAffectedFiles().isEmpty();
     if (hasVCS){
       useUncommitedFiles = myAnalysisOptions.SCOPE_TYPE == AnalysisScope.UNCOMMITTED_FILES;
-      myUncommitedFilesButton.setSelected(myRememberScope && useUncommitedFiles);
+      myUncommittedFilesButton.setSelected(myRememberScope && useUncommitedFiles);
     }
-    myUncommitedFilesButton.setVisible(hasVCS);
+    myUncommittedFilesButton.setVisible(hasVCS);
 
     DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>();
     model.addElement(ALL);
@@ -156,7 +156,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
     myChangeLists.setRenderer(new ListCellRendererWrapper<String>() {
       @Override
       public void customize(JList list, String value, int index, boolean selected, boolean hasFocus) {
-        int availableWidth = myPanel.getWidth() - myUncommitedFilesButton.getWidth() - JBUI.scale(10);
+        int availableWidth = myPanel.getWidth() - myUncommittedFilesButton.getWidth() - JBUI.scale(10);
         if (availableWidth <= 0) {
           availableWidth = JBUI.scale(200);
         }
@@ -170,7 +170,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
     });
 
     myChangeLists.setModel(model);
-    myChangeLists.setEnabled(myUncommitedFilesButton.isSelected());
+    myChangeLists.setEnabled(myUncommittedFilesButton.isSelected());
     myChangeLists.setVisible(hasVCS);
 
     //file/package/directory/module scope
@@ -230,7 +230,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
     if (additionalPanel!= null){
       wholePanel.add(additionalPanel, BorderLayout.CENTER);
     }
-    new RadioUpDownListener(myProjectButton, myModuleButton, myUncommitedFilesButton, myFileButton, myCustomScopeButton);
+    new RadioUpDownListener(myProjectButton, myModuleButton, myUncommittedFilesButton, myFileButton, myCustomScopeButton);
     return wholePanel;
   }
 
@@ -251,7 +251,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
 
   private void onScopeRadioButtonPressed() {
     myScopeCombo.setEnabled(myCustomScopeButton.isSelected());
-    myChangeLists.setEnabled(myUncommitedFilesButton.isSelected());
+    myChangeLists.setEnabled(myUncommittedFilesButton.isSelected());
   }
 
   @Override
@@ -279,8 +279,8 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
     return myModuleButton != null && myModuleButton.isSelected();
   }
 
-  public boolean isUncommitedFilesSelected(){
-    return myUncommitedFilesButton != null && myUncommitedFilesButton.isSelected();
+  public boolean isUncommittedFilesSelected(){
+    return myUncommittedFilesButton != null && myUncommittedFilesButton.isSelected();
   }
 
   @Nullable
@@ -313,7 +313,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
         scope = new AnalysisScope(module);
         uiOptions.SCOPE_TYPE = AnalysisScope.MODULE;
       }
-      else if (isUncommitedFilesSelected()) {
+      else if (isUncommittedFilesSelected()) {
         final ChangeListManager changeListManager = ChangeListManager.getInstance(project);
         List<VirtualFile> files;
         if (myChangeLists.getSelectedItem() == ALL) {
