@@ -41,11 +41,11 @@ class KotlinStatementFactory : StatementFactory {
 
   override fun createEmptyForLoopBody(iterateVariable: Variable): ForLoopBody = KotlinForLoopBody(iterateVariable, this)
 
-  override fun createForEachLoop(iterateVariable: Variable, collection: Expression, loopBody: ForLoopBody): Statement =
+  override fun createForEachLoop(iterateVariable: Variable, collection: Expression, loopBody: ForLoopBody): Convertable =
     KotlinForEachLoop(iterateVariable, collection, loopBody)
 
   override fun createForLoop(initialization: VariableDeclaration, condition: Expression,
-                             afterThought: Expression, loopBody: ForLoopBody): Statement =
+                             afterThought: Expression, loopBody: ForLoopBody): Convertable =
     KotlinForLoop(initialization, condition, afterThought, loopBody)
 
   override fun createEmptyLambdaBody(argName: String): LambdaBody = KotlinLambdaBody(argName, this)
@@ -71,8 +71,8 @@ class KotlinStatementFactory : StatementFactory {
 
   override fun createArrayVariable(elementType: GenericType, name: String): ArrayVariable = KotlinArrayVariable(elementType, name)
 
-  override fun createScope(codeBlock: CodeBlock): Statement =
-    object : Statement {
+  override fun createScope(codeBlock: CodeBlock): Convertable =
+    object : Convertable {
       override fun toCode(indent: Int): String =
       "run {\n".withIndent(indent) +
         codeBlock.toCode(indent + 1) +
