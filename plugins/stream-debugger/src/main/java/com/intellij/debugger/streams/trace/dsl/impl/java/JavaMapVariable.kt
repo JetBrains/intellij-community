@@ -17,7 +17,6 @@ package com.intellij.debugger.streams.trace.dsl.impl.java
 
 import com.intellij.debugger.streams.trace.dsl.Expression
 import com.intellij.debugger.streams.trace.dsl.Lambda
-import com.intellij.debugger.streams.trace.dsl.Statement
 import com.intellij.debugger.streams.trace.dsl.VariableDeclaration
 import com.intellij.debugger.streams.trace.dsl.impl.TextExpression
 import com.intellij.debugger.streams.trace.dsl.impl.common.MapVariableBase
@@ -49,5 +48,5 @@ class JavaMapVariable(keyType: GenericType,
 
   override fun size(): Expression = call("size")
 
-  override fun computeIfAbsent(key: Expression, supplier: Lambda): Statement = call("computeIfAbsent", key, supplier)
+  override fun computeIfAbsent(key: Expression, supplier: Lambda): Expression = call("computeIfAbsent", key, supplier)
 }

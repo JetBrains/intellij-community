@@ -29,9 +29,9 @@ interface MapVariable : Variable {
   fun contains(key: Expression): Expression
   fun size(): Expression
   fun keys(): Expression
-  fun computeIfAbsent(key: Expression, supplier: Lambda): Statement
+  fun computeIfAbsent(key: Expression, supplier: Lambda): Expression
 
   fun defaultDeclaration(isMutable: Boolean = true): VariableDeclaration
 
-  fun convertToArray(dsl: Dsl, arrayName: String): String
+  fun convertToArray(dsl: Dsl, arrayName: String): CodeBlock
 }

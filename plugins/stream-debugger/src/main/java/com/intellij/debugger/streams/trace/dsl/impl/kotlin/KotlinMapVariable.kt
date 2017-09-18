@@ -46,7 +46,7 @@ class KotlinMapVariable(keyType: GenericType,
 
   override fun keys(): Expression = TextExpression("${toCode()}.keys")
 
-  override fun computeIfAbsent(key: Expression, supplier: Lambda): Statement =
+  override fun computeIfAbsent(key: Expression, supplier: Lambda): Expression =
     TextExpression("${toCode()}.getOrPut(${key.toCode()}, ${supplier.toCode()}")
 
   override fun defaultDeclaration(isMutable: Boolean): VariableDeclaration =

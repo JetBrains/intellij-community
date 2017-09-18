@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.streams.trace.dsl.impl.common
 
+import com.intellij.debugger.streams.trace.dsl.CodeBlock
 import com.intellij.debugger.streams.trace.dsl.Dsl
 import com.intellij.debugger.streams.trace.dsl.MapVariable
 import com.intellij.debugger.streams.trace.dsl.impl.TextExpression
@@ -27,14 +28,14 @@ import com.intellij.debugger.streams.trace.impl.handler.type.GenericType
 abstract class MapVariableBase(override val keyType: GenericType, override val valueType: GenericType,
                                override val type: String, override val name: String)
   : VariableImpl(type, name), MapVariable {
-  override fun convertToArray(dsl: Dsl, arrayName: String): String {
+  override fun convertToArray(dsl: Dsl, arrayName: String): CodeBlock {
     val resultArray = dsl.array(dsl.types.anyType, arrayName)
     val size = dsl.variable(dsl.types.integerType, "size")
     val keys = dsl.array(keyType, "keys")
     val values = dsl.array(valueType, "values")
     val i = dsl.variable(dsl.types.integerType, "i")
     val key = dsl.variable(keyType, "key")
-    return dsl.code {
+    return dsl.block {
       declare(resultArray, true)
       scope {
         declare(size, size(), false)
