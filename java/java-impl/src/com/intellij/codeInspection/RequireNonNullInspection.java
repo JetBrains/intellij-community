@@ -297,20 +297,20 @@ public class RequireNonNullInspection extends BaseJavaBatchLocalInspectionTool {
    * Relies that call chain and arguments are exactly the same
    */
   private static class TopmostQualifierDiff {
-    private final @NotNull PsiExpression myLeft;
-    private final @NotNull PsiExpression myRight;
+    private final @Nullable PsiExpression myLeft;
+    private final @Nullable PsiExpression myRight;
 
-    private TopmostQualifierDiff(@NotNull PsiExpression left, @NotNull PsiExpression right) {
+    private TopmostQualifierDiff(@Nullable PsiExpression left, @Nullable PsiExpression right) {
       myLeft = left;
       myRight = right;
     }
 
-    @NotNull
+    @Nullable
     public PsiExpression getRight() {
       return myRight;
     }
 
-    @NotNull
+    @Nullable
     public PsiExpression getLeft() {
       return myLeft;
     }
