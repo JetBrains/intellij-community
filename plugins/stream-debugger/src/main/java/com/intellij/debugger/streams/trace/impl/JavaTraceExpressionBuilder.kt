@@ -18,8 +18,7 @@ package com.intellij.debugger.streams.trace.impl
 import com.intellij.debugger.streams.psi.impl.LambdaToAnonymousTransformer
 import com.intellij.debugger.streams.psi.impl.MethodReferenceToLambdaTransformer
 import com.intellij.debugger.streams.psi.impl.ToObjectInheritorTransformer
-import com.intellij.debugger.streams.trace.dsl.impl.DslImpl
-import com.intellij.debugger.streams.trace.dsl.impl.java.JavaStatementFactory
+import com.intellij.debugger.streams.trace.dsl.Dsl
 import com.intellij.debugger.streams.wrapper.StreamChain
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
@@ -29,7 +28,7 @@ import com.intellij.psi.JavaPsiFacade
 /**
  * @author Vitaliy.Bibaev
  */
-class JavaTraceExpressionBuilder(private val project: Project) : TraceExpressionBuilderBase(project, DslImpl(JavaStatementFactory())) {
+class JavaTraceExpressionBuilder(private val project: Project, dsl: Dsl) : TraceExpressionBuilderBase(project, dsl) {
   override fun createTraceExpression(chain: StreamChain): String {
     val codeBlock = super.createTraceExpression(chain)
     val elementFactory = JavaPsiFacade.getElementFactory(project)
@@ -42,7 +41,11 @@ class JavaTraceExpressionBuilder(private val project: Project) : TraceExpression
         MethodReferenceToLambdaTransformer.transform(block)
         LambdaToAnonymousTransformer.transform(block)
         ToObjectInheritorTransformer.transform(block)
-        block.text
+
+        val resultDeclaration = dsl.declaration(dsl.variable(dsl.types.anyType, resultVariableName), dsl.nullExpression, true).toCode()
+        "$resultDeclaration; \n " +
+        "${block.text} \n " +
+        resultVariableName
       })
   }
 }

@@ -21,6 +21,7 @@ import com.intellij.debugger.streams.trace.TerminatorCallHandler
 import com.intellij.debugger.streams.trace.TraceExpressionBuilder
 import com.intellij.debugger.streams.trace.TraceHandler
 import com.intellij.debugger.streams.trace.dsl.ArrayVariable
+import com.intellij.debugger.streams.trace.dsl.CodeBlock
 import com.intellij.debugger.streams.trace.dsl.Dsl
 import com.intellij.debugger.streams.trace.dsl.Variable
 import com.intellij.debugger.streams.trace.dsl.impl.TextExpression
@@ -29,43 +30,48 @@ import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
 import com.intellij.debugger.streams.wrapper.StreamChain
 import com.intellij.debugger.streams.wrapper.impl.StreamChainImpl
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.util.collectionUtils.concat
 import java.util.*
 
 /**
  * @author Vitaliy.Bibaev
  */
-abstract class TraceExpressionBuilderBase(private val myProject: Project, private val myDsl: Dsl) : TraceExpressionBuilder {
+abstract class TraceExpressionBuilderBase(private val myProject: Project, protected val dsl: Dsl) : TraceExpressionBuilder {
+  protected val resultVariableName = "myRes"
+
   override fun createTraceExpression(chain: StreamChain): String {
     val libraryManager = LibraryManager.getInstance(myProject)
     val intermediateHandlers = getHandlers(libraryManager, chain.intermediateCalls)
     val terminatorCall = chain.terminationCall
-    val terminatorHandler = libraryManager.getLibrary(terminatorCall).handlerFactory
-      .getForTermination(terminatorCall, "evaluationResult[0]")
+    val handlerFactory = libraryManager.getLibrary(terminatorCall).createHandlerFactory(dsl)
+    val terminatorHandler = handlerFactory.getForTermination(terminatorCall, "evaluationResult[0]")
 
     val traceChain = buildTraceChain(chain, intermediateHandlers, terminatorHandler)
 
     val infoArraySize = 2 + intermediateHandlers.size
-    val info = myDsl.array(myDsl.types.anyType, "info")
-    val streamResult = myDsl.variable(myDsl.types.anyType, "streamResult")
+    val info = dsl.array(dsl.types.anyType, "info")
+    val streamResult = dsl.variable(dsl.types.anyType, "streamResult")
     val declarations = buildDeclarations(intermediateHandlers, terminatorHandler)
 
     val tracingCall = buildStreamExpression(traceChain, streamResult)
     val fillingInfoArray = buildFillInfo(intermediateHandlers, terminatorHandler, info)
 
-    val result = myDsl.variable(myDsl.types.anyType, "myRes")
+    val result = dsl.variable(dsl.types.anyType, resultVariableName)
 
-    return myDsl.code {
-      declare(result, nullExpression, true)
-      val startTime = declare(variable(types.longType, "startTime"), +"java.lang.System.nanoTime()", false)
-      declare(info, newSizedArray(types.anyType, infoArraySize), false)
-      declare(timeDeclaration())
-      +TextExpression(declarations)
-      +TextExpression(tracingCall)
-      +TextExpression(fillingInfoArray)
+    return dsl.code {
+      scope {
+        // TODO: avoid language dependent code
+        val startTime = declare(variable(types.longType, "startTime"), +"java.lang.System.nanoTime()", false)
+        declare(info, newSizedArray(types.anyType, infoArraySize), false)
+        declare(timeDeclaration())
+        add(declarations)
+        add(tracingCall)
+        add(fillingInfoArray)
 
-      val elapsedTime = declare(array(types.longType, "elapsedTime"), +"java.lang.System.nanoTime() - ${startTime.toCode()}", false)
-      result.assign(newArray(types.anyType, info, streamResult, elapsedTime))
-      +result
+        val elapsedTime = declare(array(types.longType, "elapsedTime"),
+                                  newArray(types.longType, +"java.lang.System.nanoTime() - ${startTime.toCode()}"), false)
+        result.assign(newArray(types.anyType, info, streamResult, elapsedTime))
+      }
     }
   }
 
@@ -97,25 +103,25 @@ abstract class TraceExpressionBuilderBase(private val myProject: Project, privat
   }
 
   private fun createTimePeekCall(elementType: GenericType): IntermediateStreamCall {
-    val lambda = myDsl.code {
-      lambda("x") {
-        updateTime()
-      }
-    }
-    return myDsl.createPeekCall(elementType, lambda)
+    val lambda = dsl.lambda("x") {
+      +dsl.updateTime()
+    }.toCode()
+
+    return dsl.createPeekCall(elementType, lambda)
   }
 
   private fun buildDeclarations(intermediateCallsHandlers: List<IntermediateCallHandler>,
-                                terminatorHandler: TerminatorCallHandler): String {
-    return myDsl.code {
-      intermediateCallsHandlers.forEach({ +TextExpression(it.additionalVariablesDeclaration()) })
-      +TextExpression(terminatorHandler.additionalVariablesDeclaration())
+                                terminatorHandler: TerminatorCallHandler): CodeBlock {
+    return dsl.block {
+      intermediateCallsHandlers.flatMap { it.additionalVariablesDeclaration() }
+        .concat(terminatorHandler.additionalVariablesDeclaration())!!
+        .forEach({ declare(it) })
     }
   }
 
-  private fun buildStreamExpression(chain: StreamChain, streamResult: Variable): String {
+  private fun buildStreamExpression(chain: StreamChain, streamResult: Variable): CodeBlock {
     val resultType = chain.terminationCall.resultType
-    return myDsl.code {
+    return dsl.block {
       declare(streamResult, nullExpression, true)
       tryBlock {
         if (resultType === GenericType.VOID) {
@@ -124,7 +130,7 @@ abstract class TraceExpressionBuilderBase(private val myProject: Project, privat
         else {
           val evaluationResult = array(resultType, "evaluationResult")
           declare(evaluationResult, newSizedArray(resultType, 1), true)
-          evaluationResult.set(0, TextExpression(chain.text))
+          +evaluationResult.set(0, TextExpression(chain.text))
           streamResult.assign(evaluationResult)
         }
       }.catch(variable(types.basicExceptionType, "t")) {
@@ -136,13 +142,13 @@ abstract class TraceExpressionBuilderBase(private val myProject: Project, privat
 
   private fun buildFillInfo(intermediateCallsHandlers: List<IntermediateCallHandler>,
                             terminatorHandler: TerminatorCallHandler,
-                            info: ArrayVariable): String {
+                            info: ArrayVariable): CodeBlock {
     val handlers = listOf<TraceHandler>(*intermediateCallsHandlers.toTypedArray(), terminatorHandler)
-    return myDsl.code {
+    return dsl.block {
       for ((i, handler) in handlers.withIndex()) {
         scope {
-          +TextExpression(handler.prepareResult())
-          +info.set(i, TextExpression(handler.resultExpression))
+          add(handler.prepareResult())
+          +info.set(i, handler.resultExpression)
         }
       }
     }
@@ -150,5 +156,7 @@ abstract class TraceExpressionBuilderBase(private val myProject: Project, privat
 
   private fun getHandlers(libraryManager: LibraryManager,
                           intermediateCalls: List<IntermediateStreamCall>): List<IntermediateCallHandler> =
-    intermediateCalls.mapIndexedTo(ArrayList()) { i, call -> libraryManager.getLibrary(call).handlerFactory.getForIntermediate(i, call) }
+    intermediateCalls.mapIndexedTo(ArrayList()) { i, call ->
+      libraryManager.getLibrary(call).createHandlerFactory(dsl).getForIntermediate(i, call)
+    }
 }

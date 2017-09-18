@@ -23,6 +23,8 @@ import com.intellij.debugger.streams.trace.IntermediateCallHandler;
 import com.intellij.debugger.streams.trace.TerminatorCallHandler;
 import com.intellij.debugger.streams.trace.TraceExpressionBuilder;
 import com.intellij.debugger.streams.trace.TraceHandler;
+import com.intellij.debugger.streams.trace.dsl.impl.DslImpl;
+import com.intellij.debugger.streams.trace.dsl.impl.java.JavaStatementFactory;
 import com.intellij.debugger.streams.trace.impl.handler.PeekCall;
 import com.intellij.debugger.streams.trace.impl.handler.type.GenericType;
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall;
@@ -69,7 +71,8 @@ public class TraceExpressionBuilderImpl implements TraceExpressionBuilder {
     final LibraryManager libraryManager = LibraryManager.getInstance(myProject);
     final List<IntermediateCallHandler> intermediateHandlers = getHandlers(libraryManager, chain.getIntermediateCalls());
     final TerminatorStreamCall terminatorCall = chain.getTerminationCall();
-    final TerminatorCallHandler terminatorHandler = libraryManager.getLibrary(terminatorCall).getHandlerFactory()
+    final TerminatorCallHandler terminatorHandler =
+      libraryManager.getLibrary(terminatorCall).createHandlerFactory(new DslImpl(new JavaStatementFactory()))
       .getForTermination(terminatorCall, "evaluationResult[0]");
 
     final StreamChain traceChain = buildTraceChain(chain, intermediateHandlers, terminatorHandler);
@@ -215,7 +218,7 @@ public class TraceExpressionBuilderImpl implements TraceExpressionBuilder {
 
     int i = 1;
     for (final IntermediateStreamCall call : intermediateCalls) {
-      result.add(libraryManager.getLibrary(call).getHandlerFactory().getForIntermediate(i, call));
+      result.add(libraryManager.getLibrary(call).createHandlerFactory(new DslImpl(new JavaStatementFactory())).getForIntermediate(i, call));
       i++;
     }
 
