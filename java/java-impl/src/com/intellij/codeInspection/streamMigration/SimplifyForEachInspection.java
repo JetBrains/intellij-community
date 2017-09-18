@@ -110,7 +110,7 @@ public class SimplifyForEachInspection extends BaseJavaBatchLocalInspectionTool 
   }
 
   @Nullable
-  static PsiLambdaExpression extractLambdaFromForEach(PsiMethodCallExpression call) {
+  static PsiLambdaExpression extractLambdaFromForEach(@NotNull PsiMethodCallExpression call) {
     PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
     if (qualifier == null || !(STREAM_FOREACH.test(call) || isCollectionForEach(call, qualifier))) return null;
     PsiExpression arg = call.getArgumentList().getExpressions()[0];
@@ -195,7 +195,8 @@ public class SimplifyForEachInspection extends BaseJavaBatchLocalInspectionTool 
       return result;
     }
 
-    static SimplifyForEachContext from(PsiMethodCallExpression call) {
+    static SimplifyForEachContext from(@Nullable PsiMethodCallExpression call) {
+      if (call == null) return null;
       PsiLambdaExpression lambda = extractLambdaFromForEach(call);
       if (lambda == null) return null;
       PsiElement lambdaBody = lambda.getBody();
