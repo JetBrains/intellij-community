@@ -39,6 +39,7 @@ iml_project(
         "//tools/adt/idea/sdk-updates:sdk-updates-tests",
         "//tools/adt/idea/updater-ui",
         "//tools/analytics-library/inspector:analytics-inspector",
+        "//tools/base/common:studio.common-tests",
         "//tools/base/devicelib:studio.devicelib",
         "//tools/base/instant-run/instant-run-annotations:studio.instant-run-annotations",
         "//tools/idea/build/cucumber-test-runner",
