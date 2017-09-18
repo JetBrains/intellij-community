@@ -1,4 +1,4 @@
 final java.util.List<java.lang.Object> objects = getObjects();
 for (java.lang.Object object : objects) {
   object.toString();
-};
+}

@@ -3,5 +3,5 @@ if(false) {
 } else { 
   if(true) {
     this.failSuccess();
-  };
-};
+  }
+}

@@ -8,7 +8,6 @@ java.lang.Object[] resultArray;
     keys[i] = key;
     values[i] = map.get(key);
     i++;
-  };
+  }
   resultArray = new java.lang.Object[] { keys, values };
-};
-;
+}
