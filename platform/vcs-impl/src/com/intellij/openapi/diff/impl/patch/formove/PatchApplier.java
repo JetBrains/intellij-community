@@ -21,9 +21,11 @@ import com.intellij.history.LocalHistoryException;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.ApplyPatchContext;
 import com.intellij.openapi.diff.impl.patch.ApplyPatchStatus;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
+import com.intellij.openapi.diff.impl.patch.PatchUtil;
 import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatchBase;
 import com.intellij.openapi.diff.impl.patch.apply.ApplyTextFilePatch;
 import com.intellij.openapi.progress.ProgressManager;
@@ -47,6 +49,7 @@ import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
@@ -54,6 +57,7 @@ import java.util.*;
  * for patches. for shelve.
  */
 public class PatchApplier<BinaryType extends FilePatch> {
+  private static final Logger LOG = Logger.getInstance(PatchApplier.class);
   private final Project myProject;
   private final VirtualFile myBaseDirectory;
   @NotNull private final List<FilePatch> myPatches;
@@ -485,6 +489,9 @@ public class PatchApplier<BinaryType extends FilePatch> {
       T applyFilePatch = patch.getSecond();
       ApplyPatchStatus patchStatus = ApplyPatchAction.applyContent(myProject, applyFilePatch, context, patch.getFirst(), commiContext,
                                                                    myReverseConflict, myLeftConflictPanelTitle, myRightConflictPanelTitle);
+      if (patchStatus == ApplyPatchStatus.SUCCESS || patchStatus == ApplyPatchStatus.ALREADY_APPLIED) {
+        applyAdditionalPatchData(patch.getFirst(), applyFilePatch.getPatch());
+      }
       if (patchStatus == ApplyPatchStatus.ABORT) return patchStatus;
       status = ApplyPatchStatus.and(status, patchStatus);
       if (patchStatus == ApplyPatchStatus.FAILURE) {
@@ -497,6 +504,20 @@ public class PatchApplier<BinaryType extends FilePatch> {
       }
     }
     return status;
+  }
+
+  private static <V extends FilePatch> void applyAdditionalPatchData(@NotNull VirtualFile fileToApplyData, @NotNull V filePatch) {
+    int newFileMode = filePatch.getNewFileMode();
+    File file = VfsUtilCore.virtualToIoFile(fileToApplyData);
+    if (newFileMode == PatchUtil.EXECUTABLE_FILE_MODE || newFileMode == PatchUtil.REGULAR_FILE_MODE) {
+      try {
+        //noinspection ResultOfMethodCallIgnored
+        file.setExecutable(newFileMode == PatchUtil.EXECUTABLE_FILE_MODE);
+      }
+      catch (Exception e) {
+        LOG.warn("Can't change file mode for " + fileToApplyData.getPresentableName());
+      }
+    }
   }
 
   protected static void showApplyStatus(@NotNull Project project, final ApplyPatchStatus status) {
