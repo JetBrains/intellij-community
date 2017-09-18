@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,7 +59,7 @@ public class PluginClassLoader extends UrlClassLoader {
   }
 
   @Override
-  public Class loadClass(@NotNull String name, final boolean resolve) throws ClassNotFoundException {
+  public Class loadClass(@NotNull String name, boolean resolve) throws ClassNotFoundException {
     Class c = tryLoadingClass(name, resolve, null);
     if (c == null) {
       throw new ClassNotFoundException(name + " " + this);
@@ -70,7 +70,7 @@ public class PluginClassLoader extends UrlClassLoader {
   // Changed sequence in which classes are searched, this is essential if plugin uses library,
   // a different version of which is used in IDEA.
   @Nullable
-  private Class tryLoadingClass(@NotNull String name, final boolean resolve, @Nullable Set<ClassLoader> visited) {
+  private Class tryLoadingClass(@NotNull String name, boolean resolve, @Nullable Set<ClassLoader> visited) {
     Class c = null;
     if (!mustBeLoadedByPlatform(name)) {
       c = loadClassInsideSelf(name);
@@ -101,7 +101,7 @@ public class PluginClassLoader extends UrlClassLoader {
   }
 
   @Nullable
-  private Class loadClassFromParents(final String name, Set<ClassLoader> visited) {
+  private Class loadClassFromParents(String name, Set<ClassLoader> visited) {
     for (ClassLoader parent : myParents) {
       if (visited == null) visited = ContainerUtilRt.newHashSet(this);
       if (!visited.add(parent)) {
@@ -148,12 +148,12 @@ public class PluginClassLoader extends UrlClassLoader {
   }
 
   @Override
-  public URL findResource(final String name) {
-    final URL resource = findResourceImpl(name);
+  public URL findResource(String name) {
+    URL resource = findResourceImpl(name);
     if (resource != null) return resource;
 
     for (ClassLoader parent : myParents) {
-      final URL parentResource = fetchResource(parent, name);
+      URL parentResource = fetchResource(parent, name);
       if (parentResource != null) return parentResource;
     }
 
@@ -162,12 +162,12 @@ public class PluginClassLoader extends UrlClassLoader {
 
   @Nullable
   @Override
-  public InputStream getResourceAsStream(final String name) {
-    final InputStream stream = super.getResourceAsStream(name);
+  public InputStream getResourceAsStream(String name) {
+    InputStream stream = super.getResourceAsStream(name);
     if (stream != null) return stream;
 
     for (ClassLoader parent : myParents) {
-      final InputStream inputStream = parent.getResourceAsStream(name);
+      InputStream inputStream = parent.getResourceAsStream(name);
       if (inputStream != null) return inputStream;
     }
 
@@ -175,7 +175,7 @@ public class PluginClassLoader extends UrlClassLoader {
   }
 
   @Override
-  public Enumeration<URL> findResources(final String name) throws IOException {
+  public Enumeration<URL> findResources(String name) throws IOException {
     @SuppressWarnings("unchecked") Enumeration<URL>[] resources = new Enumeration[myParents.length + 1];
     resources[0] = super.findResources(name);
     for (int idx = 0; idx < myParents.length; idx++) {
@@ -219,7 +219,7 @@ public class PluginClassLoader extends UrlClassLoader {
   private static Enumeration<URL> fetchResources(ClassLoader cl, String resourceName) {
     try {
       Method findResources = getFindResourceMethod(cl.getClass(), "findResources");
-      @SuppressWarnings("unchecked") Enumeration<URL> e = findResources == null ? null : (Enumeration)findResources.invoke(cl, resourceName);
+      @SuppressWarnings("unchecked") Enumeration<URL> e = findResources != null ? (Enumeration)findResources.invoke(cl, resourceName) : null;
       return e;
     }
     catch (Exception e) {
@@ -228,18 +228,15 @@ public class PluginClassLoader extends UrlClassLoader {
     }
   }
 
-  private static Method getFindResourceMethod(final Class<?> clClass, final String methodName) {
+  private static Method getFindResourceMethod(Class<?> clClass, String methodName) {
     try {
-      final Method declaredMethod = clClass.getDeclaredMethod(methodName, String.class);
+      Method declaredMethod = clClass.getDeclaredMethod(methodName, String.class);
       declaredMethod.setAccessible(true);
       return declaredMethod;
     }
     catch (NoSuchMethodException e) {
-      final Class superclass = clClass.getSuperclass();
-      if (superclass == null || superclass.equals(Object.class)) {
-        return null;
-      }
-      return getFindResourceMethod(superclass, methodName);
+      Class superclass = clClass.getSuperclass();
+      return superclass == null || superclass.equals(Object.class) ? null : getFindResourceMethod(superclass, methodName);
     }
   }
 
@@ -249,14 +246,14 @@ public class PluginClassLoader extends UrlClassLoader {
 
   @Override
   public String toString() {
-    return "PluginClassLoader[" + myPluginId + ", " + myPluginVersion + "] "+super.toString();
+    return "PluginClassLoader[" + myPluginId + ", " + myPluginVersion + "] " + super.toString();
   }
 
   private static class DeepEnumeration implements Enumeration<URL> {
     private final Enumeration<URL>[] myEnumerations;
     private int myIndex;
 
-    DeepEnumeration(@NotNull Enumeration<URL>[] enumerations) {
+    DeepEnumeration(Enumeration<URL>[] enumerations) {
       myEnumerations = enumerations;
     }
 
