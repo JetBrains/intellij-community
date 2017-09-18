@@ -40,11 +40,9 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsDataKeys;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain;
 import com.intellij.openapi.vcs.merge.MergeData;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -59,7 +57,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-public class ChangeDiffRequestProducer implements DiffRequestProducer {
+public class ChangeDiffRequestProducer implements DiffRequestProducer, ChangeDiffRequestChain.Producer {
   private static final Logger LOG = Logger.getInstance(ChangeDiffRequestProducer.class);
 
   public static final Key<Change> CHANGE_KEY = Key.create("DiffRequestPresentable.Change");
@@ -87,7 +85,19 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer {
   @NotNull
   @Override
   public String getName() {
-    return ChangesUtil.getFilePath(myChange).getPath();
+    return getFilePath().getPath();
+  }
+
+  @NotNull
+  @Override
+  public FilePath getFilePath() {
+    return ChangesUtil.getFilePath(myChange);
+  }
+
+  @NotNull
+  @Override
+  public FileStatus getFileStatus() {
+    return myChange.getFileStatus();
   }
 
   public static boolean isEquals(@NotNull Change change1, @NotNull Change change2) {

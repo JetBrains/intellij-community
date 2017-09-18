@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -187,8 +188,7 @@ public class ShowDiffAction implements AnActionExtensionProvider {
     });
     if (presentables.isEmpty()) return;
 
-    DiffRequestChain chain = new ChangeDiffRequestChain(presentables.getList());
-    chain.setIndex(presentables.getSelectedIndex());
+    DiffRequestChain chain = new ChangeDiffRequestChain(presentables.getList(), presentables.getSelectedIndex());
 
     for (Map.Entry<Key, Object> entry : context.getChainContext().entrySet()) {
       chain.putUserData(entry.getKey(), entry.getValue());
