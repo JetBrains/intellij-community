@@ -29,7 +29,6 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.Language;
-import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -319,6 +318,7 @@ public class CodeCompletionHandlerBase {
       return;
     }
 
+    indicator.makeSureLookupIsShown(ourAutoInsertItemTimeout);
     if (indicator.blockingWaitForFinish(ourAutoInsertItemTimeout)) {
       try {
         indicator.getLookup().refreshUi(true, false);
