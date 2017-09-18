@@ -1979,6 +1979,14 @@ public class StringUtil extends StringUtilRt {
     return text.substring(0, i);
   }
 
+  @NotNull
+  @Contract(pure = true)
+  public static String substringBeforeLast(@NotNull String text, @NotNull String subString) {
+    int i = text.lastIndexOf(subString);
+    if (i == -1) return text;
+    return text.substring(0, i);
+  }
+
   @Nullable
   @Contract(pure = true)
   public static String substringAfter(@NotNull String text, @NotNull String subString) {
@@ -3144,7 +3152,6 @@ public class StringUtil extends StringUtilRt {
         }
         return false;
     }
-
 
   private static final Pattern UNICODE_CHAR = Pattern.compile("\\\\u[0-9a-eA-E]{4}");
 

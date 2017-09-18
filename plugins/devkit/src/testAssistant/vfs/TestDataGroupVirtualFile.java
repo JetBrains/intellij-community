@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.devkit.testAssistant;
+package org.jetbrains.idea.devkit.testAssistant.vfs;
 
 import com.intellij.ide.presentation.Presentation;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
-import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,17 +42,15 @@ public class TestDataGroupVirtualFile extends VirtualFile {
   @NotNull
   @Override
   public String getName() {
-    final String prefix = StringUtil.commonPrefix(myBeforeFile.getName(), myAfterFile.getName());
-    if (prefix.isEmpty()) {
-      return StringUtil.commonSuffix(myBeforeFile.getName(), myAfterFile.getName());
-    }
-    return prefix + "." + myBeforeFile.getExtension();
+    return myBeforeFile.getName() + " | " + myAfterFile.getName();
   }
 
+  @NotNull
   public VirtualFile getBeforeFile() {
     return myBeforeFile;
   }
 
+  @NotNull
   public VirtualFile getAfterFile() {
     return myAfterFile;
   }
@@ -63,13 +58,13 @@ public class TestDataGroupVirtualFile extends VirtualFile {
   @NotNull
   @Override
   public VirtualFileSystem getFileSystem() {
-    return LocalFileSystem.getInstance();
+    return TestDataGroupFileSystem.getTestDataGroupFileSystem();
   }
 
   @NotNull
   @Override
   public String getPath() {
-    return myBeforeFile.getPath();
+    return TestDataGroupFileSystem.getPath(myBeforeFile, myAfterFile);
   }
 
   @Override
