@@ -3063,7 +3063,7 @@ public class HighlightUtil extends HighlightUtilBase {
       final PsiClass containingClass = psiField.getContainingClass();
       if (containingClass != null) {
         if (PsiUtil.isOnAssignmentLeftHand((PsiExpression)place)) {
-          final PsiMethod setterPrototype = PropertyUtil.generateSetterPrototype(psiField);
+          final PsiMethod setterPrototype = PropertyUtilBase.generateSetterPrototype(psiField);
           final PsiMethod setter = containingClass.findMethodBySignature(setterPrototype, true);
           if (setter != null && PsiUtil.isAccessible(setter, place, accessObjectClass)) {
             final PsiElement element = PsiTreeUtil.skipParentsOfType(place, PsiParenthesizedExpression.class);
@@ -3073,7 +3073,7 @@ public class HighlightUtil extends HighlightUtilBase {
           }
         }
         else if (PsiUtil.isAccessedForReading((PsiExpression)place)) {
-          final PsiMethod getterPrototype = PropertyUtil.generateGetterPrototype(psiField);
+          final PsiMethod getterPrototype = PropertyUtilBase.generateGetterPrototype(psiField);
           final PsiMethod getter = containingClass.findMethodBySignature(getterPrototype, true);
           if (getter != null && PsiUtil.isAccessible(getter, place, accessObjectClass)) {
             QuickFixAction.registerQuickFixAction(error, QUICK_FIX_FACTORY.createReplaceInaccessibleFieldWithGetterSetterFix(place, getter, false));

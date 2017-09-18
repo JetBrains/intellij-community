@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
@@ -84,7 +85,7 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix implement
     PsiReferenceExpression ref = myMethodCall.getMethodExpression();
     String methodName = myMethodCall.getMethodExpression().getReferenceName();
     LOG.assertTrue(methodName != null);
-    String propertyName = PropertyUtil.getPropertyName(methodName);
+    String propertyName = PropertyUtilBase.getPropertyName(methodName);
     if (propertyName == null || propertyName.isEmpty()) return false;
 
     String getterOrSetter = null;
@@ -321,7 +322,7 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix implement
   private static String getVariableName(PsiMethodCallExpression methodCall, boolean isStatic) {
     JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(methodCall.getProject());
     String methodName = methodCall.getMethodExpression().getReferenceName();
-    String propertyName = PropertyUtil.getPropertyName(methodName);
+    String propertyName = PropertyUtilBase.getPropertyName(methodName);
     if (propertyName != null && !propertyName.isEmpty()) {
       VariableKind kind = isStatic ? VariableKind.STATIC_FIELD : VariableKind.FIELD;
       return codeStyleManager.propertyNameToVariableName(propertyName, kind);

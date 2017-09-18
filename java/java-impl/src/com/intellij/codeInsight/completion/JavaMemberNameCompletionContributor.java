@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,10 +30,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.util.PropertyUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.util.*;
 import com.intellij.refactoring.introduceField.InplaceIntroduceFieldPopup;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.util.ArrayUtil;
@@ -112,7 +109,7 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
     if (variableKind == VariableKind.PARAMETER) {
       final PsiMethod method = PsiTreeUtil.getParentOfType(var, PsiMethod.class);
       if (method != null) {
-        propertyName = PropertyUtil.getPropertyName(method);
+        propertyName = PropertyUtilBase.getPropertyName(method);
       }
       if (method != null && method.getName().startsWith("with")) {
         propertyName = StringUtil.decapitalize(method.getName().substring(4));
@@ -393,7 +390,7 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
       if (staticContext && (modifierList != null && !modifierList.hasModifierProperty(PsiModifier.STATIC))) continue;
 
       if (fieldType.equals(varType)) {
-        final String getterName = PropertyUtil.suggestGetterName(field);
+        final String getterName = PropertyUtilBase.suggestGetterName(field);
         if ((psiClass.findMethodsByName(getterName, true).length == 0 ||
              psiClass.findMethodBySignature(GenerateMembersUtil.generateGetterPrototype(field), true) == null)) {
           propertyHandlers.add(getterName);
@@ -401,7 +398,7 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
       }
 
       if (PsiType.VOID.equals(varType)) {
-        final String setterName = PropertyUtil.suggestSetterName(field);
+        final String setterName = PropertyUtilBase.suggestSetterName(field);
         if ((psiClass.findMethodsByName(setterName, true).length == 0 ||
              psiClass.findMethodBySignature(GenerateMembersUtil.generateSetterPrototype(field), true) == null)) {
           propertyHandlers.add(setterName);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package org.jetbrains.plugins.groovy.lang.resolve.ast;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
@@ -144,10 +145,10 @@ public class ConstructorAnnotationsProcessor implements AstTransformationSupport
     PsiMethod[] methods = CollectClassMembersUtil.getMethods(psiClass, false);
     if (includeProperties) {
       for (PsiMethod method : methods) {
-        if (!method.hasModifierProperty(PsiModifier.STATIC) && PropertyUtil.isSimplePropertySetter(method)) {
-          final String name = PropertyUtil.getPropertyNameBySetter(method);
+        if (!method.hasModifierProperty(PsiModifier.STATIC) && PropertyUtilBase.isSimplePropertySetter(method)) {
+          final String name = PropertyUtilBase.getPropertyNameBySetter(method);
           if (!excludes.contains(name)) {
-            final PsiType type = PropertyUtil.getPropertyType(method);
+            final PsiType type = PropertyUtilBase.getPropertyType(method);
             assert type != null : method;
             fieldsConstructor.addParameter(new GrLightParameter(name, type, fieldsConstructor).setOptional(optional));
           }
@@ -155,7 +156,7 @@ public class ConstructorAnnotationsProcessor implements AstTransformationSupport
       }
     }
 
-    final Map<String,PsiMethod> properties = PropertyUtil.getAllProperties(true, false, methods);
+    final Map<String,PsiMethod> properties = PropertyUtilBase.getAllProperties(true, false, methods);
     for (PsiField field : CollectClassMembersUtil.getFields(psiClass, false)) {
       final String name = field.getName();
       if (includeFields ||

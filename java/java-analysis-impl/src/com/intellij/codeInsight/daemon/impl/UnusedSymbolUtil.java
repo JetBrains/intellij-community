@@ -34,6 +34,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
@@ -232,7 +233,7 @@ public class UnusedSymbolUtil {
       }
 
       if (member instanceof PsiMethod) {
-        String propertyName = PropertyUtil.getPropertyName(member);
+        String propertyName = PropertyUtilBase.getPropertyName(member);
         if (propertyName != null) {
           SearchScope fileScope = containingFile.getUseScope();
           if (fileScope instanceof GlobalSearchScope &&
@@ -286,7 +287,7 @@ public class UnusedSymbolUtil {
     if (!(containingFile instanceof PsiJavaFile)) return true;  // Groovy field can be referenced from Java by getter
     if (member instanceof PsiField) return false;  //Java field cannot be referenced by anything but its name
     if (member instanceof PsiMethod) {
-      return PropertyUtil.isSimplePropertyAccessor((PsiMethod)member);  //Java accessors can be referenced by field name from Groovy
+      return PropertyUtilBase.isSimplePropertyAccessor((PsiMethod)member);  //Java accessors can be referenced by field name from Groovy
     }
     return false;
   }

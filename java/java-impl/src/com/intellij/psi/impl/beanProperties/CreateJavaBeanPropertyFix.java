@@ -28,6 +28,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -125,7 +126,7 @@ public class CreateJavaBeanPropertyFix implements LocalQuickFix, IntentionAction
 
   private void createSetter(final boolean createField) throws IncorrectOperationException {
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(myPsiClass.getProject()).getElementFactory();
-    final String methodName = PropertyUtil.suggestSetterName(myPropertyName);
+    final String methodName = PropertyUtilBase.suggestSetterName(myPropertyName);
     final String typeName = myType.getCanonicalText();
 
     @NonNls final String text;
@@ -154,7 +155,7 @@ public class CreateJavaBeanPropertyFix implements LocalQuickFix, IntentionAction
 
   private void createGetter(final boolean createField) throws IncorrectOperationException {
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(myPsiClass.getProject()).getElementFactory();
-    final String methodName = PropertyUtil.suggestGetterName(myPropertyName, myType);
+    final String methodName = PropertyUtilBase.suggestGetterName(myPropertyName, myType);
     final String typeName = myType.getCanonicalText();
     @NonNls final String text;
     PsiClass psiClass = myPsiClass.getElement();

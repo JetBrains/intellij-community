@@ -26,6 +26,7 @@ import com.intellij.psi.impl.source.resolve.ResolveCache.PolyVariantResolver;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -274,7 +275,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
     if (resolved instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)resolved;
-      if (PropertyUtil.isSimplePropertySetter(method) && !method.getName().equals(getReferenceName())) {
+      if (PropertyUtilBase.isSimplePropertySetter(method) && !method.getName().equals(getReferenceName())) {
         return method.getParameterList().getParameters()[0].getType();
       }
 

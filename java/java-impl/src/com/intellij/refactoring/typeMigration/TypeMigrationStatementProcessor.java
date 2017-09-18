@@ -705,7 +705,8 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
         PsiField field = (PsiField) resolved;
         final NavigatablePsiElement containingMethod = PsiTreeUtil.getParentOfType(expression, PsiMethod.class, PsiLambdaExpression.class);
         if (containingMethod instanceof PsiMethod) {
-          final PsiMethod setter = PropertyUtil.findPropertySetter(field.getContainingClass(), field.getName(), field.hasModifierProperty(PsiModifier.STATIC), false);
+          final PsiMethod setter = PropertyUtilBase
+            .findPropertySetter(field.getContainingClass(), field.getName(), field.hasModifierProperty(PsiModifier.STATIC), false);
           if (containingMethod.isEquivalentTo(setter)) {
             return true;
           }

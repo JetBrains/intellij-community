@@ -609,15 +609,15 @@ public class GenerateMembersUtil {
 
   //java bean getters/setters
   public static PsiMethod generateSimpleGetterPrototype(@NotNull PsiField field) {
-    return generatePrototype(field, PropertyUtil.generateGetterPrototype(field));
+    return generatePrototype(field, PropertyUtilBase.generateGetterPrototype(field));
   }
 
   public static PsiMethod generateSimpleSetterPrototype(@NotNull PsiField field) {
-    return generatePrototype(field, PropertyUtil.generateSetterPrototype(field));
+    return generatePrototype(field, PropertyUtilBase.generateSetterPrototype(field));
   }
 
   public static PsiMethod generateSimpleSetterPrototype(PsiField field, PsiClass targetClass) {
-    return generatePrototype(field, PropertyUtil.generateSetterPrototype(field, targetClass));
+    return generatePrototype(field, PropertyUtilBase.generateSetterPrototype(field, targetClass));
   }
 
   //custom getters/setters
@@ -680,7 +680,7 @@ public class GenerateMembersUtil {
     catch (IncorrectOperationException e) {
       if (ignoreInvalidTemplate) {
         LOG.info(e);
-        result = isGetter ? PropertyUtil.generateGetterPrototype(field) : PropertyUtil.generateSetterPrototype(field);
+        result = isGetter ? PropertyUtilBase.generateGetterPrototype(field) : PropertyUtilBase.generateSetterPrototype(field);
         assert result != null : field.getText();
       }
       else {

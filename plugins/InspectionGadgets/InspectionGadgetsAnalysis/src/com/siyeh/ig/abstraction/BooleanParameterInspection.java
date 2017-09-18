@@ -18,6 +18,7 @@ package com.siyeh.ig.abstraction;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -83,7 +84,7 @@ public class BooleanParameterInspection extends BaseInspection {
           return;
         }
       }
-      if (PropertyUtil.isSimplePropertySetter(method) || LibraryUtil.isOverrideOfLibraryMethod(method)) {
+      if (PropertyUtilBase.isSimplePropertySetter(method) || LibraryUtil.isOverrideOfLibraryMethod(method)) {
         return;
       }
       final PsiParameterList parameterList = method.getParameterList();

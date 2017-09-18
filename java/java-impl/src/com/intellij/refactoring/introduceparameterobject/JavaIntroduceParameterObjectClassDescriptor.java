@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,10 +26,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.util.PropertyUtil;
-import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.introduceParameterObject.IntroduceParameterObjectClassDescriptor;
@@ -207,12 +204,12 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
 
       bean.setField(field);
 
-      final PsiMethod getterForField = PropertyUtil.findGetterForField(field);
+      final PsiMethod getterForField = PropertyUtilBase.findGetterForField(field);
       if (getterForField != null) {
         bean.setGetter(getterForField.getName());
       }
 
-      final PsiMethod setterForField = PropertyUtil.findSetterForField(field);
+      final PsiMethod setterForField = PropertyUtilBase.findSetterForField(field);
       if (setterForField != null) {
         bean.setSetter(setterForField.getName());
       }

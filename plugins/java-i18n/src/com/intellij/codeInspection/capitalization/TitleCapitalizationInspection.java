@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
@@ -114,7 +115,7 @@ public class TitleCapitalizationInspection extends BaseJavaLocalInspectionTool {
     }
     if (arg instanceof PsiMethodCallExpression) {
       PsiMethod psiMethod = ((PsiMethodCallExpression)arg).resolveMethod();
-      PsiExpression returnValue = PropertyUtil.getGetterReturnExpression(psiMethod);
+      PsiExpression returnValue = PropertyUtilBase.getGetterReturnExpression(psiMethod);
       if (arg == returnValue) {
         return null;
       }
@@ -240,7 +241,7 @@ public class TitleCapitalizationInspection extends BaseJavaLocalInspectionTool {
       else if (element instanceof PsiMethodCallExpression) {
         final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)element;
         final PsiMethod method = methodCallExpression.resolveMethod();
-        final PsiExpression returnValue = PropertyUtil.getGetterReturnExpression(method);
+        final PsiExpression returnValue = PropertyUtilBase.getGetterReturnExpression(method);
         if (returnValue != null) {
           doFix(project, returnValue);
         }

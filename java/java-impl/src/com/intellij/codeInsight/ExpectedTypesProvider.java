@@ -410,8 +410,8 @@ public class ExpectedTypesProvider {
     private void visitMethodReturnType(final PsiMethod scopeMethod, PsiType type, boolean tailTypeSemicolon) {
       if (type != null) {
         NullableComputable<String> expectedName;
-        if (PropertyUtil.isSimplePropertyAccessor(scopeMethod)) {
-          expectedName = () -> PropertyUtil.getPropertyName(scopeMethod);
+        if (PropertyUtilBase.isSimplePropertyAccessor(scopeMethod)) {
+          expectedName = () -> PropertyUtilBase.getPropertyName(scopeMethod);
         }
         else {
           expectedName = ExpectedTypeInfoImpl.NULL;

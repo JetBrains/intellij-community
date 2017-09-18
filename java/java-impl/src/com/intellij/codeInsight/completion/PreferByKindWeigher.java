@@ -29,10 +29,7 @@ import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.getters.MembersGetter;
 import com.intellij.psi.impl.source.tree.JavaElementType;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PropertyUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import com.intellij.psi.util.proximity.KnownElementWeigher;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
@@ -328,7 +325,7 @@ public class PreferByKindWeigher extends LookupElementWeigher {
     if (!(object instanceof PsiMethod)) return false;
     
     PsiMethod method = (PsiMethod)object;
-    if (!PropertyUtil.hasGetterName(method)) return false;
+    if (!PropertyUtilBase.hasGetterName(method)) return false;
     
     return !KnownElementWeigher.isGetClass(method);
   }

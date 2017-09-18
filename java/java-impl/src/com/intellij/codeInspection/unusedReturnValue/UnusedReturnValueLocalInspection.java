@@ -24,6 +24,7 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,7 +62,7 @@ public class UnusedReturnValueLocalInspection extends BaseJavaLocalInspectionToo
   public ProblemDescriptor[] checkMethod(@NotNull PsiMethod method, @NotNull InspectionManager manager, boolean isOnTheFly) {
     if (method.isConstructor() ||
         PsiType.VOID.equals(method.getReturnType()) ||
-        myGlobal.IGNORE_BUILDER_PATTERN && PropertyUtil.isSimplePropertySetter(method) ||
+        myGlobal.IGNORE_BUILDER_PATTERN && PropertyUtilBase.isSimplePropertySetter(method) ||
         method.hasModifierProperty(PsiModifier.NATIVE) ||
         MethodUtils.hasSuper(method) ||
         RefUtil.isImplicitRead(method)) return null;

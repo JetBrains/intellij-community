@@ -20,6 +20,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.encapsulateFields.*;
 import com.intellij.util.IncorrectOperationException;
@@ -60,13 +61,13 @@ public class GroovyEncapsulateFieldHelper extends EncapsulateFieldHelper {
   @Override
   @NotNull
   public String suggestSetterName(@NotNull PsiField field) {
-    return PropertyUtil.suggestSetterName(field);
+    return PropertyUtilBase.suggestSetterName(field);
   }
 
   @Override
   @NotNull
   public String suggestGetterName(@NotNull PsiField field) {
-    return PropertyUtil.suggestGetterName(field);
+    return PropertyUtilBase.suggestGetterName(field);
   }
 
   @Override
