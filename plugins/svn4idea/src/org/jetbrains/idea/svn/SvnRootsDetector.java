@@ -27,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.status.Status;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 
 import java.io.File;
 import java.util.*;
@@ -35,6 +34,7 @@ import java.util.*;
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static com.intellij.util.containers.ContainerUtil.map;
 import static java.util.stream.Collectors.toList;
+import static org.jetbrains.idea.svn.SvnUtil.isAncestor;
 
 /**
 * @author Konstantin Kolosovsky.
@@ -210,7 +210,7 @@ public class SvnRootsDetector {
 
     public SVNURL ask(final SVNURL url, VirtualFile file) {
       for (SVNURL root : myRoots) {
-        if (root.equals(SVNURLUtil.getCommonURLAncestor(root, url))) {
+        if (isAncestor(root, url)) {
           return root;
         }
       }

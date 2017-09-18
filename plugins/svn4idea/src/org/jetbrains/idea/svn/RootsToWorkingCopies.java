@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.info.Info;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 
 import java.io.File;
 import java.util.HashMap;
@@ -39,6 +38,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+import static org.jetbrains.idea.svn.SvnUtil.isAncestor;
 
 // 1. listen to roots changes
 // 2. - possibly - to deletion/checkouts??? what if WC roots can be
@@ -89,11 +89,8 @@ public class RootsToWorkingCopies implements VcsListener {
     synchronized (myLock) {
       for (VirtualFile root : roots) {
         final WorkingCopy wcRoot = getWcRoot(root);
-        if (wcRoot != null) {
-          final SVNURL common = SVNURLUtil.getCommonURLAncestor(wcRoot.getUrl(), url);
-          if (wcRoot.getUrl().equals(common) || url.equals(common)) {
-            return wcRoot;
-          }
+        if (wcRoot != null && (isAncestor(wcRoot.getUrl(), url) || isAncestor(url, wcRoot.getUrl()))) {
+          return wcRoot;
         }
       }
     }

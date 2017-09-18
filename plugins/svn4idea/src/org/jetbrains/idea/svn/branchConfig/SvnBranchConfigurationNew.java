@@ -26,7 +26,6 @@ import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.info.Info;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 
 import java.io.File;
 import java.util.*;
@@ -34,6 +33,7 @@ import java.util.*;
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static com.intellij.util.containers.ContainerUtil.map;
 import static org.jetbrains.idea.svn.SvnUtil.createUrl;
+import static org.jetbrains.idea.svn.SvnUtil.isAncestor;
 
 public class SvnBranchConfigurationNew {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew");
@@ -216,7 +216,7 @@ public class SvnBranchConfigurationNew {
         final String baseUrl = myRootUrl.getPath();
 
         final SVNURL branchUrl = createUrl(url);
-        if (myRootUrl.equals(SVNURLUtil.getCommonURLAncestor(myRootUrl, branchUrl))) {
+        if (isAncestor(myRootUrl, branchUrl)) {
           final File file = SvnUtil.fileFromUrl(baseDir, baseUrl, branchUrl.getPath());
           myBranchesUnder.put(url, file.getAbsolutePath());
         }
