@@ -20,12 +20,14 @@ import com.intellij.diff.impl.CacheDiffRequestProcessor;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.ErrorDiffRequest;
 import com.intellij.diff.requests.LoadingDiffRequest;
+import com.intellij.diff.tools.util.PrevNextDifferenceIterable;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
@@ -157,80 +159,99 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
 
   @Override
   protected boolean hasNextChange() {
-    if (myCurrentChange == null) return false;
-
-    List<Change> selectedChanges = getSelectedChanges();
-    if (selectedChanges.isEmpty()) return false;
-
-    if (selectedChanges.size() > 1) {
-      int index = selectedChanges.indexOf(myCurrentChange);
-      return index != -1 && index < selectedChanges.size() - 1;
-    }
-    else {
-      List<Change> allChanges = getAllChanges();
-      int index = allChanges.indexOf(myCurrentChange);
-      return index != -1 && index < allChanges.size() - 1;
-    }
+    PrevNextDifferenceIterable strategy = getSelectionStrategy();
+    return strategy != null && strategy.canGoNext();
   }
 
   @Override
   protected boolean hasPrevChange() {
-    if (myCurrentChange == null) return false;
-
-    List<Change> selectedChanges = getSelectedChanges();
-    if (selectedChanges.isEmpty()) return false;
-
-    if (selectedChanges.size() > 1) {
-      int index = selectedChanges.indexOf(myCurrentChange);
-      return index != -1 && index > 0;
-    }
-    else {
-      List<Change> allChanges = getAllChanges();
-      int index = allChanges.indexOf(myCurrentChange);
-      return index != -1 && index > 0;
-    }
+    PrevNextDifferenceIterable strategy = getSelectionStrategy();
+    return strategy != null && strategy.canGoPrev();
   }
 
   @Override
   protected void goToNextChange(boolean fromDifferences) {
-    List<Change> selectedChanges = getSelectedChanges();
-    List<Change> allChanges = getAllChanges();
-
-    if (selectedChanges.size() > 1) {
-      int index = selectedChanges.indexOf(myCurrentChange);
-      myCurrentChange = selectedChanges.get(index + 1);
-    }
-    else {
-      int index = allChanges.indexOf(myCurrentChange);
-      myCurrentChange = allChanges.get(index + 1);
-      selectChange(myCurrentChange);
-    }
-
+    ObjectUtils.notNull(getSelectionStrategy()).goNext();
     updateRequest(false, fromDifferences ? ScrollToPolicy.FIRST_CHANGE : null);
   }
 
   @Override
   protected void goToPrevChange(boolean fromDifferences) {
-    List<Change> selectedChanges = getSelectedChanges();
-    List<Change> allChanges = getAllChanges();
-
-    if (selectedChanges.size() > 1) {
-      int index = selectedChanges.indexOf(myCurrentChange);
-      myCurrentChange = selectedChanges.get(index - 1);
-    }
-    else {
-      int index = allChanges.indexOf(myCurrentChange);
-      myCurrentChange = allChanges.get(index - 1);
-      selectChange(myCurrentChange);
-    }
-
+    ObjectUtils.notNull(getSelectionStrategy()).goPrev();
     updateRequest(false, fromDifferences ? ScrollToPolicy.LAST_CHANGE : null);
   }
 
   @Override
   protected boolean isNavigationEnabled() {
-    return getSelectedChanges().size() > 1 || getAllChanges().size() > 1;
+    return true;
   }
+
+  @Nullable
+  private PrevNextDifferenceIterable getSelectionStrategy() {
+    if (myCurrentChange == null) return null;
+    List<Change> selectedChanges = getSelectedChanges();
+    if (selectedChanges.isEmpty()) return null;
+    if (selectedChanges.size() == 1) {
+      return new ChangesNavigatable(getAllChanges(), selectedChanges.get(0), true);
+    }
+    return new ChangesNavigatable(selectedChanges, selectedChanges.get(0), false);
+  }
+
+  private class ChangesNavigatable implements PrevNextDifferenceIterable {
+    @NotNull private final List<Change> myChanges;
+    @NotNull private final Change myFallback;
+    private final boolean myUpdateSelection;
+
+    public ChangesNavigatable(@NotNull List<Change> allChanges, @NotNull Change fallback, boolean updateSelection) {
+      myChanges = allChanges;
+      myFallback = fallback;
+      myUpdateSelection = updateSelection;
+    }
+
+    @Override
+    public boolean canGoNext() {
+      if (myCurrentChange == null) return false;
+
+      int index = myChanges.indexOf(myCurrentChange);
+      return index == -1 || index < myChanges.size() - 1;
+    }
+
+    @Override
+    public boolean canGoPrev() {
+      if (myCurrentChange == null) return false;
+
+      int index = myChanges.indexOf(myCurrentChange);
+      return index == -1 || index > 0;
+    }
+
+    @Override
+    public void goNext() {
+      int index = myChanges.indexOf(myCurrentChange);
+      if (index != -1) {
+        select(myChanges.get(index + 1));
+      }
+      else {
+        select(myFallback);
+      }
+    }
+
+    @Override
+    public void goPrev() {
+      int index = myChanges.indexOf(myCurrentChange);
+      if (index != -1) {
+        select(myChanges.get(index - 1));
+      }
+      else {
+        select(myFallback);
+      }
+    }
+
+    private void select(@NotNull Change change) {
+      myCurrentChange = change;
+      if (myUpdateSelection) selectChange(change);
+    }
+  }
+
 
   protected static class ChangeWrapper {
     @NotNull private final Change change;
