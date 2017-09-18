@@ -33,7 +33,12 @@ interface BuildMessages {
 
   void error(String message, Throwable cause)
 
+  /**
+   * @deprecated use {@link #compilationErrors(java.lang.String, java.util.List)} instead; if compilation errors are reported individually they are shown in separate blocks in TeamCity
+   */
   void compilationError(String compilerName, String message)
+
+  void compilationErrors(String compilerName, List<String> messages)
 
   void progress(String message)
 
