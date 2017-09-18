@@ -144,6 +144,26 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
     }
   }
 
+  fun testLoopWithBreak() {
+    doTest {
+      val objects = declare(variable(types.listOfAny, "objects"), +"getObjects()", false)
+      forEachLoop(variable(types.anyType, "object"), objects) {
+        breakIteration()
+      }
+    }
+  }
+
+  fun testLoopWithNestedBreak() {
+    doTest {
+      val objects = declare(variable(types.listOfAny, "objects"), +"getObjects()", false)
+      forEachLoop(variable(types.anyType, "object"), objects) {
+        ifBranch(loopVariable.property("isEmpty")) {
+          +breakIteration()
+        }
+      }
+    }
+  }
+
   fun testLambdaWithExpression() {
     doTest {
       +lambda("x") {

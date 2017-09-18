@@ -1,0 +1,4 @@
+var objects: kotlin.collections.List<kotlin.Any> = getObjects()
+for (object in objects) {
+  break
+}

@@ -1,0 +1,6 @@
+var objects: kotlin.collections.List<kotlin.Any> = getObjects()
+for (object in objects) {
+  if (object.isEmpty) {
+    break
+  }
+}
