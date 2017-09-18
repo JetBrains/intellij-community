@@ -63,8 +63,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   private final ExceptionTransfer myRuntimeException;
   private final ExceptionTransfer myError;
   private final PsiType myAssertionError;
-  private PsiLambdaExpression myLambdaExpression = null;
-  private boolean myForceNotNullLambdaResult = false;
+  private InlinedBlockContext myInlinedBlockContext;
 
   ControlFlowAnalyzer(final DfaValueFactory valueFactory, @NotNull PsiElement codeFragment, boolean ignoreAssertions, boolean inlining) {
     myInlining = inlining;
@@ -685,33 +684,41 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     startElement(statement);
 
     PsiExpression returnValue = statement.getReturnValue();
-    if (returnValue != null) {
-      returnValue.accept(this);
-      PsiMethod method = PsiTreeUtil.getParentOfType(statement, PsiMethod.class, true, PsiMember.class, PsiLambdaExpression.class);
-      if (method != null) {
-        generateBoxingUnboxingInstructionFor(returnValue, method.getReturnType());
-      }
-      else {
-        final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(statement, PsiLambdaExpression.class, true, PsiMember.class);
-        if (lambdaExpression != null) {
-          generateBoxingUnboxingInstructionFor(returnValue, LambdaUtil.getFunctionalInterfaceReturnType(lambdaExpression));
-        }
-      }
-    }
 
-    if (myLambdaExpression == null) {
+    if (myInlinedBlockContext != null) {
       if (returnValue != null) {
+        DfaVariableValue var = myFactory.getVarFactory().createVariableValue(myInlinedBlockContext.myTarget, false);
+        addInstruction(new PushInstruction(var, null, true));
+        returnValue.accept(this);
+        generateBoxingUnboxingInstructionFor(returnValue, var.getVariableType());
+        if (myInlinedBlockContext.myForceNonNullBlockResult) {
+          addInstruction(new CheckNotNullInstruction(returnValue, NullabilityProblem.nullableFunctionReturn));
+        }
+        addInstruction(new AssignInstruction(returnValue, null));
+        addInstruction(new PopInstruction());
+      }
+
+      controlTransfer(new InstructionTransfer(getEndOffset(myInlinedBlockContext.myCodeBlock), getVariablesInside(
+        myInlinedBlockContext.myCodeBlock)), myTrapStack);
+    } else {
+
+      if (returnValue != null) {
+        returnValue.accept(this);
+        PsiMethod method = PsiTreeUtil.getParentOfType(statement, PsiMethod.class, true, PsiMember.class, PsiLambdaExpression.class);
+        if (method != null) {
+          generateBoxingUnboxingInstructionFor(returnValue, method.getReturnType());
+        }
+        else {
+          final PsiLambdaExpression lambdaExpression =
+            PsiTreeUtil.getParentOfType(statement, PsiLambdaExpression.class, true, PsiMember.class);
+          if (lambdaExpression != null) {
+            generateBoxingUnboxingInstructionFor(returnValue, LambdaUtil.getFunctionalInterfaceReturnType(lambdaExpression));
+          }
+        }
         addInstruction(new CheckReturnValueInstruction(returnValue));
       }
+
       addInstruction(new ReturnInstruction(myFactory.controlTransfer(ReturnTransfer.INSTANCE, myTrapStack), statement));
-    }
-    else {
-      if (returnValue == null) {
-        pushUnknown();
-      } else if (myForceNotNullLambdaResult) {
-        addInstruction(new CheckNotNullInstruction(returnValue, NullabilityProblem.nullableFunctionReturn));
-      }
-      controlTransfer(new InstructionTransfer(getEndOffset(myLambdaExpression), getVariablesInside(myLambdaExpression)), myTrapStack);
     }
     finishElement(statement);
   }
@@ -1765,34 +1772,41 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   @Override public void visitClass(PsiClass aClass) {
   }
 
-  void inlineLambda(PsiLambdaExpression lambda, Nullness resultNullness) {
-    PsiLambdaExpression oldLambda = myLambdaExpression;
-    boolean oldForceNotNullLambdaResult = myForceNotNullLambdaResult;
+  /**
+   * Inline code block (lambda or method body) into this CFG. Incoming parameters are assumed to be handled already (if necessary)
+   *
+   * @param block block to inline
+   * @param resultNullness desired nullness returned by block return statement
+   * @param target a variable to store the block result (returned via {@code return} statement)
+   */
+  void inlineBlock(@NotNull PsiCodeBlock block, @NotNull Nullness resultNullness, @NotNull PsiVariable target) {
+    InlinedBlockContext oldBlock = myInlinedBlockContext;
     // Transfer value is pushed to avoid emptying stack beyond this point
     addInstruction(new PushInstruction(myFactory.controlTransfer(ReturnTransfer.INSTANCE, this.myTrapStack), null));
-    myLambdaExpression = lambda;
-    myForceNotNullLambdaResult = resultNullness == Nullness.NOT_NULL;
-    startElement(lambda);
+    myInlinedBlockContext = new InlinedBlockContext(block, resultNullness == Nullness.NOT_NULL, target);
+    startElement(block);
     try {
-      PsiElement body = lambda.getBody();
-      Objects.requireNonNull(body).accept(this);
-      if (body instanceof PsiCodeBlock) {
-        // return value for void or incomplete lambda
-        pushUnknown();
-      }
-      else if (body instanceof PsiExpression) {
-        generateBoxingUnboxingInstructionFor((PsiExpression)body, LambdaUtil.getFunctionalInterfaceReturnType(lambda));
-        if (myForceNotNullLambdaResult) {
-          addInstruction(new CheckNotNullInstruction((PsiExpression)body, NullabilityProblem.nullableFunctionReturn));
-        }
-      }
+      block.accept(this);
+      // return value for void or incomplete block
+      pushUnknown();
     }
     finally {
-      finishElement(lambda);
-      myLambdaExpression = oldLambda;
-      myForceNotNullLambdaResult = oldForceNotNullLambdaResult;
-      // Pop transfer value (which is second value in stack now)
-      addInstruction(new SpliceInstruction(2, 0));
+      finishElement(block);
+      myInlinedBlockContext = oldBlock;
+      // Pop transfer value
+      addInstruction(new PopInstruction());
+    }
+  }
+
+  public static class InlinedBlockContext {
+    final PsiCodeBlock myCodeBlock;
+    final boolean myForceNonNullBlockResult;
+    final PsiVariable myTarget;
+
+    public InlinedBlockContext(PsiCodeBlock codeBlock, boolean forceNonNullBlockResult, PsiVariable target) {
+      myCodeBlock = codeBlock;
+      myForceNonNullBlockResult = forceNonNullBlockResult;
+      myTarget = target;
     }
   }
 
