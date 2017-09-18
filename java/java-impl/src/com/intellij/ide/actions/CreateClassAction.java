@@ -51,7 +51,8 @@ public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClas
       .setTitle(IdeBundle.message("action.create.new.class"))
       .addKind("Class", PlatformIcons.CLASS_ICON, JavaTemplateUtil.INTERNAL_CLASS_TEMPLATE_NAME)
       .addKind("Interface", PlatformIcons.INTERFACE_ICON, JavaTemplateUtil.INTERNAL_INTERFACE_TEMPLATE_NAME);
-    if (PsiUtil.getLanguageLevel(directory).isAtLeast(LanguageLevel.JDK_1_5)) {
+    LanguageLevel level = PsiUtil.getLanguageLevel(directory);
+    if (level.isAtLeast(LanguageLevel.JDK_1_5)) {
       builder.addKind("Enum", PlatformIcons.ENUM_ICON, JavaTemplateUtil.INTERNAL_ENUM_TEMPLATE_NAME);
       builder.addKind("Annotation", PlatformIcons.ANNOTATION_TYPE_ICON, JavaTemplateUtil.INTERNAL_ANNOTATION_TYPE_TEMPLATE_NAME);
     }
@@ -68,6 +69,10 @@ public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClas
       public String getErrorText(String inputString) {
         if (inputString.length() > 0 && !PsiNameHelper.getInstance(project).isQualifiedName(inputString)) {
           return "This is not a valid Java qualified name";
+        }
+
+        if (level.isAtLeast(LanguageLevel.JDK_X) && PsiKeyword.VAR.equals(StringUtil.getShortName(inputString))) {
+          return "var cannot be used for type declarations";
         }
         return null;
       }

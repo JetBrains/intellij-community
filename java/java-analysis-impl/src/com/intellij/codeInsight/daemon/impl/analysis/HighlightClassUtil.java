@@ -265,7 +265,7 @@ public class HighlightClassUtil {
 
   static HighlightInfo checkVarClassConflict(PsiClass psiClass, PsiIdentifier identifier) {
     String className = psiClass.getName();
-    if (className != null && "var".equals(className)) {
+    if (className != null && PsiKeyword.VAR.equals(className)) {
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
         .descriptionAndTooltip("'var' is a restricted local variable type and cannot be used for type declarations")
         .range(identifier)
