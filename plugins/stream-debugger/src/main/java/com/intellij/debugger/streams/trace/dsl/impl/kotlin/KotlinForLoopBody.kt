@@ -19,9 +19,18 @@ import com.intellij.debugger.streams.trace.dsl.Dsl
 import com.intellij.debugger.streams.trace.dsl.ForLoopBody
 import com.intellij.debugger.streams.trace.dsl.StatementFactory
 import com.intellij.debugger.streams.trace.dsl.Variable
+import com.intellij.debugger.streams.trace.dsl.impl.TextExpression
 
 /**
  * @author Vitaliy.Bibaev
  */
 class KotlinForLoopBody(override val loopVariable: Variable,
-                        statementFactory: StatementFactory) : KotlinCodeBlock(statementFactory), ForLoopBody
+                        statementFactory: StatementFactory) : KotlinCodeBlock(statementFactory), ForLoopBody {
+  private companion object {
+    val BREAK = TextExpression("break")
+  }
+
+  override fun breakIteration() {
+    addStatement(BREAK)
+  }
+}
