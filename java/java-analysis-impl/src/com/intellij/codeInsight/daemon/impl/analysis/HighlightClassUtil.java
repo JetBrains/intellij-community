@@ -263,6 +263,17 @@ public class HighlightClassUtil {
     return errorResult;
   }
 
+  static HighlightInfo checkVarClassConflict(PsiClass psiClass, PsiIdentifier identifier) {
+    String className = psiClass.getName();
+    if (className != null && "var".equals(className)) {
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+        .descriptionAndTooltip("'var' is a restricted local variable type and cannot be used for type declarations")
+        .range(identifier)
+        .create();
+    }
+    return null;
+  }
+  
   @Nullable
   static HighlightInfo checkClassAndPackageConflict(@NotNull PsiClass aClass) {
     String name = aClass.getQualifiedName();
