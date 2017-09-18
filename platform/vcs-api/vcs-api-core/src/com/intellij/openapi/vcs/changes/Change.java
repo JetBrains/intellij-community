@@ -24,6 +24,7 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.impl.VcsPathPresenter;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsFilePathUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +32,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -85,7 +85,7 @@ public class Change {
 
   @NotNull
   public Map<String, Change> getOtherLayers() {
-    return myOtherLayers != null ? myOtherLayers : Collections.emptyMap();
+    return ContainerUtil.notNullize(myOtherLayers);
   }
 
   public Type getType() {
