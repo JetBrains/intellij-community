@@ -11,4 +11,3 @@ run {
   }
   resultArray = kotlin.arrayOf<kotlin.Any>(keys, values)
 }
-
