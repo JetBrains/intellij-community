@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,32 +52,6 @@ public class SvnChangesCorrectlyRefreshedTest extends Svn16TestCase {
 
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
-  }
-
-  private class SubTree {
-    private final VirtualFile myRootDir;
-    private VirtualFile mySourceDir;
-    private final VirtualFile myTargetDir;
-
-    private VirtualFile myS1File;
-    private VirtualFile myS2File;
-
-    private final List<VirtualFile> myTargetFiles;
-    private static final String ourS1Contents = "123";
-    private static final String ourS2Contents = "abc";
-
-    private SubTree(final VirtualFile base) {
-      myRootDir = createDirInCommand(base, "root");
-      mySourceDir = createDirInCommand(myRootDir, "source");
-      myS1File = createFileInCommand(mySourceDir, "s1.txt", ourS1Contents);
-      myS2File = createFileInCommand(mySourceDir, "s2.txt", ourS2Contents);
-
-      myTargetDir = createDirInCommand(myRootDir, "target");
-      myTargetFiles = new ArrayList<>();
-      for (int i = 0; i < 10; i++) {
-        myTargetFiles.add(createFileInCommand(myTargetDir, "t" + (i+10) +".txt", ourS1Contents));
-      }
-    }
   }
 
   @Test
