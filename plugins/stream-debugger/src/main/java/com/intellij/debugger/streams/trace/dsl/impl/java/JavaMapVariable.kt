@@ -34,12 +34,11 @@ class JavaMapVariable(keyType: GenericType,
     fun getMapType(linked: Boolean): String = "java.util.${if (linked) "Linked" else ""}HashMap"
   }
 
-  override fun get(key: Expression): Expression = TextExpression("$name.get(${key.toCode()})")
+  override fun get(key: Expression): Expression = call("get", key)
 
-  override operator fun set(key: Expression, newValue: Expression): Expression =
-    TextExpression("$name.put(${key.toCode()}, ${newValue.toCode()})")
+  override operator fun set(key: Expression, newValue: Expression): Expression = call("put", key, newValue)
 
-  override fun contains(key: Expression): Expression = TextExpression("$name.contains(${key.toCode()})")
+  override fun contains(key: Expression): Expression = call("contains", key)
 
   override fun defaultDeclaration(isMutable: Boolean): VariableDeclaration =
     JavaVariableDeclaration(this, false, TextExpression("new ${getMapType(linked)}<>()"))
