@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,6 +96,14 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
                                   @NotNull AnalysisUIOptions analysisUIOptions,
                                   @Nullable PsiElement context) {
     super(true);
+    //noinspection BoundFieldAssignment
+    myGroup = new ButtonGroup();
+    myGroup.add(myProjectButton);
+    myGroup.add(myModuleButton);
+    myGroup.add(myUncommitedFilesButton);
+    myGroup.add(myFileButton);
+    myGroup.add(myCustomScopeButton);
+
     Disposer.register(myDisposable, myScopeCombo);
     myAnalysisOptions = analysisUIOptions;
     myContext = context;
