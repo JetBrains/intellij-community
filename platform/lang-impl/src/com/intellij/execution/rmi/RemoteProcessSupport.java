@@ -74,7 +74,14 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
 
   protected abstract String getName(Target target);
 
-  protected void logText(Parameters configuration, ProcessEvent event, Key outputType, Object info) {
+  protected void logText(@NotNull Parameters configuration, @NotNull ProcessEvent event, @NotNull Key outputType) {
+    String text = StringUtil.notNullize(event.getText());
+    if (outputType == ProcessOutputTypes.STDERR) {
+      LOG.warn(text.trim());
+    }
+    else {
+      LOG.debug(text.trim());
+    }
   }
 
   public void stopAll() {
@@ -308,18 +315,11 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
       @Override
       public void onTextAvailable(ProcessEvent event, Key outputType) {
         String text = StringUtil.notNullize(event.getText());
-        if (outputType == ProcessOutputTypes.STDERR) {
-          LOG.warn(text.trim());
-        }
-        else {
-          LOG.debug(text.trim());
-        }
-
+        logText(key.second, event, outputType);
         RunningInfo result = null;
         PendingInfo info;
         synchronized (myProcMap) {
           Info o = myProcMap.get(key);
-          logText(key.second, event, outputType, o);
           if (o instanceof PendingInfo) {
             info = (PendingInfo)o;
             if (outputType == ProcessOutputTypes.STDOUT) {
