@@ -533,7 +533,7 @@ public class PackageAnnotator {
       if (privateEmpty && constructors.length == 1 && constructors[0].hasModifierProperty(PsiModifier.PRIVATE)) {
         PsiCodeBlock body = constructors[0].getBody();
         return body != null && body.getStatements().length == 0 &&
-               Arrays.stream(aClass.getMethods()).allMatch(method -> method.hasModifierProperty(PsiModifier.STATIC));
+               Arrays.stream(aClass.getMethods()).allMatch(method -> method.isConstructor() || method.hasModifierProperty(PsiModifier.STATIC));
       }
       return implicitConstructor && constructors.length == 0;
     });
