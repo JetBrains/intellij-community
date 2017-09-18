@@ -29,6 +29,7 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.xdebugger.attach.XDefaultLocalAttachGroup;
 import com.intellij.xdebugger.attach.XLocalAttachDebugger;
 import com.intellij.xdebugger.attach.XLocalAttachDebuggerProvider;
@@ -124,6 +125,6 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
   }
 
   private static Pair<String, Integer> getAttachAddress(ProcessInfo processInfo) {
-    return DebugAttachDetector.getAttachAddress(StringUtil.split(processInfo.getCommandLine(), " "));
+    return DebugAttachDetector.getAttachAddress(ParametersListUtil.parse(processInfo.getCommandLine()));
   }
 }
