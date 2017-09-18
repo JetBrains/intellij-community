@@ -137,6 +137,13 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
 
     Change selectedChange = myCurrentChange != null ? ContainerUtil.find(selectedChanges, myCurrentChange) : null;
     if (selectedChange == null) {
+      if (myCurrentChange != null && isFocused()) { // Do not automatically switch file if focused
+        if (selectedChanges.size() == 1 && getAllChanges().contains(myCurrentChange)) {
+          selectChange(myCurrentChange); // Restore selection if necessary
+        }
+        return;
+      }
+
       myCurrentChange = selectedChanges.get(0);
       updateRequest();
       return;
