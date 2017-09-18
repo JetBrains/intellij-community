@@ -134,7 +134,7 @@ private class JavaMethodRenderer(
     }
 
     for (modifier in modifiersToRender) {
-      setModifierProperty(method, modifier.toPsi(), true)
+      setModifierProperty(method, modifier.toPsiModifier(), true)
     }
 
     for (annotation in request.annotations) {
@@ -159,7 +159,7 @@ private class JavaMethodRenderer(
 
   private fun setupTemplate(method: PsiMethod): TemplateBuilderImpl {
     val builder = TemplateBuilderImpl(method)
-    val substitutor = JvmPsiConversionHelper.getInstance(project).convertSubstitutor(request.targetSubstitutor)
+    val substitutor = request.targetSubstitutor.toPsiSubstitutor(project)
     val guesser = GuessTypeParameters(project, factory, builder, substitutor)
     setupTypeElement(guesser, method.returnTypeElement, request.returnType)
     builder.setupParameters(guesser, method)

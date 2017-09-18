@@ -24,16 +24,14 @@ import com.intellij.lang.jvm.JvmClass
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.ExpectedType
 import com.intellij.lang.jvm.actions.ExpectedTypes
+import com.intellij.lang.jvm.types.JvmSubstitutor
 import com.intellij.openapi.project.Project
-import com.intellij.psi.JvmPsiConversionHelper
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiModifier
+import com.intellij.psi.*
 import com.intellij.psi.PsiModifier.ModifierConstant
-import com.intellij.psi.PsiTypeParameter
 import com.intellij.psi.impl.compiled.ClsClassImpl
 
 @ModifierConstant
-fun JvmModifier.toPsi(): String = when (this) {
+internal fun JvmModifier.toPsiModifier(): String = when (this) {
   JvmModifier.PUBLIC -> PsiModifier.PUBLIC
   JvmModifier.PROTECTED -> PsiModifier.PROTECTED
   JvmModifier.PRIVATE -> PsiModifier.PRIVATE
@@ -55,7 +53,7 @@ fun JvmModifier.toPsi(): String = when (this) {
  *
  * @return Java PsiClass or `null` if the receiver is not a Java PsiClass
  */
-fun JvmClass.toJavaClassOrNull(): PsiClass? {
+internal fun JvmClass.toJavaClassOrNull(): PsiClass? {
   if (this !is PsiClass) return null
   if (this is PsiTypeParameter) return null
   if (this is ClsClassImpl) return null
@@ -90,4 +88,8 @@ private fun ExpectedType.Kind.infoKind(): Int {
     ExpectedType.Kind.SUPERTYPE -> ExpectedTypeInfo.TYPE_OR_SUPERTYPE
     ExpectedType.Kind.SUBTYPE -> ExpectedTypeInfo.TYPE_OR_SUBTYPE
   }
+}
+
+internal fun JvmSubstitutor.toPsiSubstitutor(project: Project): PsiSubstitutor {
+  return JvmPsiConversionHelper.getInstance(project).convertSubstitutor(this)
 }

@@ -140,10 +140,10 @@ private fun extractRenderData(targetClass: PsiClass, request: CreateFieldRequest
     targetClass,
     fieldName,
     extractExpectedTypes(project, request.fieldType).toTypedArray(),
-    JvmPsiConversionHelper.getInstance(project).convertSubstitutor(request.targetSubstitutor),
+    request.targetSubstitutor.toPsiSubstitutor(project),
     javaUsage?.reference,
     javaUsage?.anchor,
-    modifiersToRender.map(JvmModifier::toPsi),
+    modifiersToRender.map(JvmModifier::toPsiModifier),
     renderConstant
   )
 }
