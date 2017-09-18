@@ -23,7 +23,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.createSmartPointer
 
-abstract class CreateFieldActionBase(targetClass: PsiClass, protected val request: CreateFieldRequest) : BaseIntentionAction() {
+abstract class CreateFieldActionBase(targetClass: PsiClass, protected val myRequest: CreateFieldRequest) : BaseIntentionAction() {
 
   protected val myTargetClass = targetClass.createSmartPointer()
 

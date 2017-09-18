@@ -43,8 +43,8 @@ internal class CreateFieldAction(
   private val myData: FieldData?
     get() {
       val targetClass = myTargetClass.element
-      if (targetClass == null || !request.isValid) return null
-      return extractRenderData(targetClass, request, constantField)
+      if (targetClass == null || !myRequest.isValid) return null
+      return extractRenderData(targetClass, myRequest, constantField)
     }
 
   override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean {
