@@ -18,7 +18,7 @@ package com.intellij.debugger.streams.trace.dsl
 /**
  * @author Vitaliy.Bibaev
  */
-interface TryBlock : Statement {
+interface TryBlock : Convertable {
   val isCatchAdded: Boolean
   fun catch(variable: Variable, handler: CodeBlock.() -> Unit)
 }

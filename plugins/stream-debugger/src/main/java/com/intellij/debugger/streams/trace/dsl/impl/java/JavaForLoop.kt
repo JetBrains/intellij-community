@@ -15,10 +15,7 @@
  */
 package com.intellij.debugger.streams.trace.dsl.impl.java
 
-import com.intellij.debugger.streams.trace.dsl.Expression
-import com.intellij.debugger.streams.trace.dsl.ForLoopBody
-import com.intellij.debugger.streams.trace.dsl.Statement
-import com.intellij.debugger.streams.trace.dsl.VariableDeclaration
+import com.intellij.debugger.streams.trace.dsl.*
 
 /**
  * @author Vitaliy.Bibaev
@@ -26,7 +23,7 @@ import com.intellij.debugger.streams.trace.dsl.VariableDeclaration
 class JavaForLoop(private val initialization: VariableDeclaration,
                   private val condition: Expression,
                   private val afterThought: Expression,
-                  private val loopBody: ForLoopBody) : Statement {
+                  private val loopBody: ForLoopBody) : Convertable {
   override fun toCode(indent: Int): String {
     return "for (${initialization.toCode()}; ${condition.toCode()}; ${afterThought.toCode()}) {\n".withIndent(indent) +
            loopBody.toCode(indent + 1) +

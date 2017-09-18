@@ -18,7 +18,7 @@ package com.intellij.debugger.streams.trace.dsl
 /**
  * @author Vitaliy.Bibaev
  */
-interface IfBranch : Statement {
+interface IfBranch : Convertable {
   fun elseBranch(init: CodeBlock.() -> Unit)
 
   fun elseIfBranch(condition: Expression, init: CodeBlock.() -> Unit): IfBranch
