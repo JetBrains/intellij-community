@@ -328,7 +328,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
 
     if (event instanceof FinishBuildEvent) {
       String aHint = event.getHint();
-      String time = DateFormatUtil.formatTime(event.getEventTime());
+      String time = DateFormatUtil.formatDateTime(event.getEventTime());
       aHint = aHint == null ? "  at " + time : aHint + "  at " + time;
       currentNode.setHint(aHint);
       myProgressAnimator.stopMovie();

@@ -15,10 +15,7 @@
  */
 package com.intellij.openapi.externalSystem.service.execution;
 
-import com.intellij.build.BuildProgressListener;
-import com.intellij.build.BuildViewManager;
-import com.intellij.build.DefaultBuildDescriptor;
-import com.intellij.build.TasksViewManager;
+import com.intellij.build.*;
 import com.intellij.build.events.BuildEvent;
 import com.intellij.build.events.impl.FailureResultImpl;
 import com.intellij.build.events.impl.FinishBuildEventImpl;
@@ -301,11 +298,14 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
       Class<? extends BuildProgressListener> progressListenerClazz = task.getUserData(PROGRESS_LISTENER_KEY);
       final BuildProgressListener progressListener = progressListenerClazz != null
                                                      ? ServiceManager.getService(myProject, progressListenerClazz)
-                                                     : ServiceManager.getService(myProject, TasksViewManager.class);
+                                                     : myDebugPort > 0
+                                                       ? ServiceManager.getService(myProject, DebugTasksViewManager.class)
+                                                       : ServiceManager.getService(myProject, RunTasksViewManager.class);
 
       final String executionName = StringUtil.isNotEmpty(mySettings.getExecutionName())
                                    ? mySettings.getExecutionName()
-                                   : AbstractExternalSystemTaskConfigurationType.generateName(
+                                   : StringUtil.isNotEmpty(myConfiguration.getName())
+                                     ? myConfiguration.getName() : AbstractExternalSystemTaskConfigurationType.generateName(
                                      myProject, mySettings.getExternalSystemId(), mySettings.getExternalProjectPath(),
                                      mySettings.getTaskNames(), mySettings.getExecutionName(), ": ", "");
 

@@ -126,22 +126,35 @@ public class BuildContentManagerImpl implements BuildContentManager {
       for (Content existingContent : existingContents) {
         existingContent.setDisplayName(existingContent.getTabName());
       }
-      Content firstContent = contentManager.getContent(0);
-      assert firstContent != null;
-      if (!Build.equals(firstContent.getTabName())) {
-        if (contentManager.getContentCount() > 1) {
-          setIdLabelHidden(false);
-        }
-        else {
-          // we are going to adjust display name, so we need to ensure tab name is not retrieved based on display name
-          content.setTabName(content.getTabName());
-          content.setDisplayName(Build + ": " + content.getTabName());
-        }
+      String tabName = content.getTabName();
+      updateTabDisplayName(content, tabName);
+    });
+  }
+
+  public void updateTabDisplayName(Content content, String tabName) {
+    String displayName;
+    ContentManager contentManager = myToolWindow.getContentManager();
+    Content firstContent = contentManager.getContent(0);
+    assert firstContent != null;
+    if (!Build.equals(firstContent.getTabName())) {
+      if (contentManager.getContentCount() > 1) {
+        setIdLabelHidden(false);
+        displayName = tabName;
       }
       else {
-        setIdLabelHidden(true);
+        displayName = Build + ": " + tabName;
       }
-    });
+    }
+    else {
+      displayName = tabName;
+      setIdLabelHidden(true);
+    }
+
+    if (!displayName.equals(content.getDisplayName())) {
+      // we are going to adjust display name, so we need to ensure tab name is not retrieved based on display name
+      content.setTabName(tabName);
+      content.setDisplayName(displayName);
+    }
   }
 
   @Override
@@ -188,9 +201,13 @@ public class BuildContentManagerImpl implements BuildContentManager {
   public void startBuildNotified(Content content) {
     Pair<Icon, AtomicInteger> pair = liveContentsMap.computeIfAbsent(content, c -> Pair.pair(c.getIcon(), new AtomicInteger(0)));
     pair.second.incrementAndGet();
-    content.setIcon(ExecutionUtil.getLiveIndicator(pair.first));
-    myToolWindow.setIcon(ExecutionUtil.getLiveIndicator(AllIcons.Actions.Compile));
     content.putUserData(ToolWindow.SHOW_CONTENT_ICON, Boolean.TRUE);
+    content.setIcon(ExecutionUtil.getLiveIndicator(pair.first));
+    JComponent component = content.getComponent();
+    if (component != null) {
+      component.invalidate();
+    }
+    myToolWindow.setIcon(ExecutionUtil.getLiveIndicator(AllIcons.Actions.Compile));
   }
 
   public void finishBuildNotified(Content content) {

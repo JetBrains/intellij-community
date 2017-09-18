@@ -13,32 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.build.internal;
+package com.intellij.build;
 
-import com.intellij.build.BuildContentManager;
-import com.intellij.build.TasksViewManager;
-import com.intellij.build.events.BuildEvent;
-import com.intellij.build.events.FinishBuildEvent;
 import com.intellij.openapi.project.Project;
 
 /**
  * @author Vladislav.Soroka
  */
-public class DummyTasksViewManager extends TasksViewManager {
-  public DummyTasksViewManager(Project project, BuildContentManager buildContentManager) {
+public class DebugTasksViewManager extends TasksViewManager   {
+  public DebugTasksViewManager(Project project, BuildContentManager buildContentManager) {
     super(project, buildContentManager);
   }
 
   @Override
-  protected String getViewName() {
-    return "Tasks";
-  }
-
-  @Override
-  public void onEvent(BuildEvent event) {
-    if(event instanceof FinishBuildEvent) {
-      //noinspection UseOfSystemOutOrSystemErr
-      System.out.println(event.getMessage());
-    }
+  public String getViewName() {
+    return "Debug";
   }
 }

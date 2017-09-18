@@ -52,10 +52,8 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
@@ -116,6 +114,10 @@ public abstract class AbstractViewManager implements BuildProgressListener, Disp
 
   protected boolean isTabbedView() {
     return false;
+  }
+
+  protected Map<BuildInfo, BuildView> getBuildsMap() {
+    return Collections.unmodifiableMap(myViewMap);
   }
 
   @Override
@@ -261,10 +263,11 @@ public abstract class AbstractViewManager implements BuildProgressListener, Disp
             consoleComponent.add(ActionManager.getInstance().createActionToolbar(
               "BuildView", toolbarActions, false).getComponent(), BorderLayout.WEST);
             toolbarActions.addAll(buildView.createConsoleActions());
+            Icon contentIcon = getContentIcon();
             myContent = myBuildContentManager.addTabbedContent(
               consoleComponent, getViewName(),
               buildInfo.getTitle() + ", " + DateFormatUtil.formatDateTime(System.currentTimeMillis()) + " ",
-              AllIcons.CodeStyle.Gear, buildView);
+              contentIcon, buildView);
           }
           return buildView;
         });
@@ -305,6 +308,7 @@ public abstract class AbstractViewManager implements BuildProgressListener, Disp
         else {
           myThreeComponentsSplitter.setFirstComponent(null);
         }
+        onBuildStart(buildInfo);
         myProgressWatcher.addBuild(buildInfo);
         //view.getPrimaryView().print("\r", ConsoleViewContentType.SYSTEM_OUTPUT);
 
@@ -389,6 +393,8 @@ public abstract class AbstractViewManager implements BuildProgressListener, Disp
 
           myContent = new ContentImpl(consoleComponent, getViewName(), true);
           myContent.setCloseable(false);
+          Icon contentIcon = getContentIcon();
+          myContent.setIcon(contentIcon);
           myBuildContentManager.addContent(myContent);
 
           List<Runnable> postponedRunnables = new ArrayList<>(myPostponedRunnables);
@@ -406,6 +412,14 @@ public abstract class AbstractViewManager implements BuildProgressListener, Disp
         }
       });
     }
+  }
+
+  @Nullable
+  protected Icon getContentIcon() {
+    return null;
+  }
+
+  protected void onBuildStart(BuildDescriptor buildDescriptor) {
   }
 
   protected void onBuildFinish(BuildDescriptor buildDescriptor) {

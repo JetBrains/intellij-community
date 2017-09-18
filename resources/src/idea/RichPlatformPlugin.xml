@@ -184,8 +184,11 @@
     <projectService serviceInterface="com.intellij.build.SyncViewManager"
                     serviceImplementation="com.intellij.build.SyncViewManager"
                     testServiceImplementation="com.intellij.build.internal.DummySyncViewManager"/>
-    <projectService serviceInterface="com.intellij.build.TasksViewManager"
-                    serviceImplementation="com.intellij.build.TasksViewManager"
+    <projectService serviceInterface="com.intellij.build.RunTasksViewManager"
+                    serviceImplementation="com.intellij.build.RunTasksViewManager"
+                    testServiceImplementation="com.intellij.build.internal.DummyTasksViewManager"/>
+    <projectService serviceInterface="com.intellij.build.DebugTasksViewManager"
+                    serviceImplementation="com.intellij.build.DebugTasksViewManager"
                     testServiceImplementation="com.intellij.build.internal.DummyTasksViewManager"/>
 
     <projectService serviceInterface="com.intellij.execution.runners.ExecutionEnvironmentProvider"
