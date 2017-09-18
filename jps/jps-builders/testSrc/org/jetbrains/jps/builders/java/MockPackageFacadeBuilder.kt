@@ -20,6 +20,10 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.io.EnumeratorStringDescriptor
+import com.intellij.util.io.directoryContent
+import com.intellij.util.io.java.AccessModifier
+import com.intellij.util.io.java.ClassFileBuilder
+import com.intellij.util.io.java.classFile
 import gnu.trove.THashSet
 import org.jetbrains.jps.ModuleChunk
 import org.jetbrains.jps.builders.DirtyFilesHolder
@@ -30,9 +34,8 @@ import org.jetbrains.jps.incremental.ModuleBuildTarget
 import org.jetbrains.jps.incremental.ModuleLevelBuilder
 import org.jetbrains.jps.incremental.storage.AbstractStateStorage
 import org.jetbrains.jps.incremental.storage.PathStringDescriptor
+import org.jetbrains.jps.model.java.LanguageLevel
 import org.jetbrains.org.objectweb.asm.ClassReader
-import org.jetbrains.org.objectweb.asm.ClassWriter
-import org.jetbrains.org.objectweb.asm.Opcodes
 import java.io.File
 import java.util.*
 import java.util.regex.Pattern
@@ -75,19 +78,19 @@ class MockPackageFacadeGenerator : ModuleLevelBuilder(BuilderCategory.SOURCE_PRO
     val callback = JavaBuilderUtil.getDependenciesRegistrar(context)
 
     fun generateClass(packageName: String, className: String, target: ModuleBuildTarget, sources: Collection<String>,
-                      allSources: Collection<String>, generate: (ClassWriter.() -> Unit)? = null) {
-      val writer = ClassWriter(ClassWriter.COMPUTE_FRAMES)
-      val fullClassName = StringUtil.getQualifiedName(packageName, className).replace('.', '/')
-      writer.visit(Opcodes.V1_6, Opcodes.ACC_PUBLIC, fullClassName, null, "java/lang/Object", null)
-      if (generate != null) {
-        writer.generate()
-      }
-      writer.visitEnd()
-      val outputFile = File(target.outputDir, "$fullClassName.class")
-      val classBytes = writer.toByteArray()
-      FileUtil.writeToFile(outputFile, classBytes)
+                      allSources: Collection<String>, content: (ClassFileBuilder.() -> Unit)? = null) {
+      val fullClassName = StringUtil.getQualifiedName(packageName, className)
+      directoryContent {
+        classFile(fullClassName) {
+          javaVersion = LanguageLevel.JDK_1_6
+          if (content != null) {
+            content()
+          }
+        }
+      }.generate(target.outputDir!!)
+      val outputFile = File(target.outputDir, "${fullClassName.replace('.', '/')}.class")
       outputConsumer.registerOutputFile(target, outputFile, sources)
-      callback.associate(fullClassName.replace('/', '.'), allSources, ClassReader(classBytes))
+      callback.associate(fullClassName, allSources, ClassReader(outputFile.readBytes()))
     }
 
     for (target in chunk.targets) {
@@ -130,8 +133,8 @@ class MockPackageFacadeGenerator : ModuleLevelBuilder(BuilderCategory.SOURCE_PRO
 
         generateClass(packageName, "PackageFacade", target, dirtySource, allSources) {
           for (fileName in classNames) {
-            val fieldClass = StringUtil.getQualifiedName(packageName, fileName).replace('.', '/')
-            visitField(Opcodes.ACC_PUBLIC, StringUtil.decapitalize(fileName), "L$fieldClass;", null, null).visitEnd()
+            val fieldClass = StringUtil.getQualifiedName(packageName, fileName)
+            field(StringUtil.decapitalize(fileName), fieldClass, AccessModifier.PUBLIC)
           }
         }
         for (source in dirtySource) {

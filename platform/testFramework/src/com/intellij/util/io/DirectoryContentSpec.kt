@@ -42,6 +42,8 @@ abstract class DirectoryContentBuilder {
 
   abstract fun file(name: String, text: String)
 
+  abstract fun file(name: String, content: ByteArray)
+
   inline fun dir(name: String, content: DirectoryContentBuilder.() -> Unit) {
     val dirDefinition = DirectorySpec()
     DirectoryContentBuilderImpl(dirDefinition).content()

@@ -104,7 +104,11 @@ class DirectoryContentBuilderImpl(val result: DirectorySpecBase) : DirectoryCont
   }
 
   override fun file(name: String, text: String) {
-    addChild(name, FileSpec(text.toByteArray()))
+    file(name, text.toByteArray())
+  }
+
+  override fun file(name: String, content: ByteArray) {
+    addChild(name, FileSpec(content))
   }
 }
 
