@@ -147,7 +147,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   }
 
   @Override
-  protected void configureRTClasspath(JavaParameters javaParameters) {
+  protected void configureRTClasspath(JavaParameters javaParameters) throws CantRunException{
     final String path = System.getProperty(DEBUG_RT_PATH);
     javaParameters.getClassPath().add(path != null ? path : PathUtil.getJarPathForClass(JUnitStarter.class));
 
@@ -195,7 +195,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     return javaParameters;
   }
 
-  public static void appendJUnit5LauncherClasses(JavaParameters javaParameters, Project project, GlobalSearchScope globalSearchScope) {
+  public static void appendJUnit5LauncherClasses(JavaParameters javaParameters, Project project, GlobalSearchScope globalSearchScope) throws CantRunException{
     final PathsList classPath = javaParameters.getClassPath();
     JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
     if (!hasPackageWithDirectories(psiFacade, "org.junit.platform.launcher", globalSearchScope)) {
@@ -245,9 +245,12 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
 
   private static void downloadDependenciesWhenRequired(Project project,
                                                        PathsList classPath, 
-                                                       RepositoryLibraryProperties properties) {
+                                                       RepositoryLibraryProperties properties) throws CantRunException {
     Collection<OrderRoot> roots = 
       JarRepositoryManager.loadDependenciesModal(project, properties, false, false, null, null);
+    if (roots.isEmpty()) {
+      throw new CantRunException("Failed to resolve " + properties.getMavenId());
+    }
     for (OrderRoot root : roots) {
       if (root.getType() == OrderRootType.CLASSES) {
         classPath.add(root.getFile());
