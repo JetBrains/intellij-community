@@ -30,6 +30,9 @@ import java.util.List;
  *   <li>Is NOT RandomAccess, because garbage collector can remove element at any time</li>
  *   <li>Does NOT support null elements</li>
  * </ul>
+ * Please note that since weak references can be collected at any time, index-based methods (like get(index))
+ * or size-based methods (like size()) are dangerous, misleading, error-inducing and are not supported.
+ * Instead, please use add(element) and iterator().
  */
 public class WeakList<T> extends UnsafeWeakList<T> {
   public WeakList() {

@@ -35,6 +35,9 @@ import java.util.*;
  *  <li>Is NOT RandomAccess, because garbage collector can remove element at any time</li>
  *  <li>Does NOT support null elements</li>
  * </ul>
+ * Please note that since weak references can be collected at any time, index-based methods (like get(index))
+ * or size-based methods (like size()) are dangerous, misleading, error-inducing and are not supported.
+ * Instead, please use add(element) and iterator().
  */
 public class UnsafeWeakList<T> extends AbstractCollection<T> {
   protected final List<MyReference<T>> myList;
@@ -237,6 +240,11 @@ public class UnsafeWeakList<T> extends AbstractCollection<T> {
     return ContainerUtil.mapNotNull(myList, UnsafeWeakList.<T>deref());
   }
 
+  /**
+   * Since weak references can be collected at any time,
+   * this method considered dangerous, misleading, error-inducing and are is not supported.
+   * Instead, please use add(element) and iterator()
+   */
   @Override
   @Deprecated
   public int size() {
