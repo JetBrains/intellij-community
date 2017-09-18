@@ -15,7 +15,9 @@
  */
 package com.intellij.debugger.streams.trace.impl.handler.unified
 
+import com.intellij.debugger.streams.trace.dsl.CodeBlock
 import com.intellij.debugger.streams.trace.dsl.Dsl
+import com.intellij.debugger.streams.trace.dsl.Expression
 import com.intellij.debugger.streams.trace.dsl.VariableDeclaration
 import com.intellij.debugger.streams.trace.dsl.impl.TextExpression
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
@@ -25,12 +27,13 @@ import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
  */
 class DistinctTraceHandler(num: Int, private val myCall: IntermediateStreamCall, dsl: Dsl) : HandlerBase.Intermediate(dsl) {
   private val myPeekTracer = PeekTraceHandler(num, "distinct", myCall.typeBefore, myCall.typeAfter, dsl)
-  override fun getVariables(): List<VariableDeclaration> = myPeekTracer.getVariables()
+  override fun additionalVariablesDeclaration(): List<VariableDeclaration> =
+    myPeekTracer.additionalVariablesDeclaration()
 
-  override fun prepareResult(): String {
+  override fun prepareResult(): CodeBlock {
     val before = myPeekTracer.beforeMap
     val after = myPeekTracer.afterMap
-    return dsl.code {
+    return dsl.block {
       val nestedMapType = types.map(types.integerType, myCall.typeBefore)
       val mapping = linkedMap(types.integerType, types.integerType, "mapping")
       declare(mapping.defaultDeclaration())
@@ -53,15 +56,15 @@ class DistinctTraceHandler(num: Int, private val myCall: IntermediateStreamCall,
         }
       }
 
-      mapping.convertToArray(dsl, "resolve")
-      myPeekTracer.prepareResult()
+      add(mapping.convertToArray(dsl, "resolve"))
+      add(myPeekTracer.prepareResult())
 
-      declare(variable(types.anyType, "peekResult"), TextExpression(myPeekTracer.resultExpression), false)
+      declare(variable(types.anyType, "peekResult"), myPeekTracer.resultExpression, false)
     }
   }
 
-  override fun getResultExpression(): String =
-    dsl.newArray(dsl.types.anyType, TextExpression("peekResult"), TextExpression("resolve")).toCode()
+  override fun getResultExpression(): Expression =
+    dsl.newArray(dsl.types.anyType, TextExpression("peekResult"), TextExpression("resolve"))
 
   override fun additionalCallsBefore(): List<IntermediateStreamCall> = myPeekTracer.additionalCallsBefore()
 

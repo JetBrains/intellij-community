@@ -15,7 +15,9 @@
  */
 package com.intellij.debugger.streams.trace.impl.handler.unified
 
+import com.intellij.debugger.streams.trace.dsl.CodeBlock
 import com.intellij.debugger.streams.trace.dsl.Dsl
+import com.intellij.debugger.streams.trace.dsl.Expression
 import com.intellij.debugger.streams.trace.dsl.VariableDeclaration
 import com.intellij.debugger.streams.trace.dsl.impl.TextExpression
 import com.intellij.debugger.streams.trace.impl.handler.type.GenericType
@@ -24,25 +26,22 @@ import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
 /**
  * @author Vitaliy.Bibaev
  */
-class PeekTraceHandler(num: Int, callName: String, private val myTypeBefore: GenericType, typeAfter: GenericType, dsl: Dsl)
+open class PeekTraceHandler(num: Int, callName: String, private val myTypeBefore: GenericType, typeAfter: GenericType, dsl: Dsl)
   : HandlerBase.Intermediate(dsl) {
   val beforeMap = dsl.linkedMap(GenericType.INT, myTypeBefore, "${callName}Peek${num}Before")
   val afterMap = dsl.linkedMap(GenericType.INT, typeAfter, "${callName}Peek${num}After")
+  override fun additionalVariablesDeclaration(): List<VariableDeclaration> =
+    listOf(beforeMap.defaultDeclaration(), afterMap.defaultDeclaration())
 
-  override fun getVariables(): List<VariableDeclaration> = listOf(beforeMap.defaultDeclaration(), afterMap.defaultDeclaration())
-
-  override fun prepareResult(): String {
-    return dsl.code {
-      +TextExpression(beforeMap.convertToArray(this, "beforeArray") +
-                      afterMap.convertToArray(this, "afterArray"))
+  override fun prepareResult(): CodeBlock {
+    return dsl.block {
+      add(beforeMap.convertToArray(this, "beforeArray"))
+      add(afterMap.convertToArray(this, "afterArray"))
     }
   }
 
-  override fun getResultExpression(): String {
-    return dsl.code {
-      +newArray(types.anyType, +"beforeArray", +"afterArray")
-    }
-  }
+  override fun getResultExpression(): Expression =
+    dsl.newArray(dsl.types.anyType, TextExpression("beforeArray"), TextExpression("afterArray"))
 
   override fun additionalCallsBefore(): List<IntermediateStreamCall> {
     val lambda = dsl.lambda("x") {

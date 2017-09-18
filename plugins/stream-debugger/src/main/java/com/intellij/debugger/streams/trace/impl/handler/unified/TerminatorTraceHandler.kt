@@ -15,7 +15,9 @@
  */
 package com.intellij.debugger.streams.trace.impl.handler.unified
 
+import com.intellij.debugger.streams.trace.dsl.CodeBlock
 import com.intellij.debugger.streams.trace.dsl.Dsl
+import com.intellij.debugger.streams.trace.dsl.Expression
 import com.intellij.debugger.streams.trace.dsl.VariableDeclaration
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
 import com.intellij.debugger.streams.wrapper.TerminatorStreamCall
@@ -25,12 +27,12 @@ import com.intellij.debugger.streams.wrapper.TerminatorStreamCall
  */
 class TerminatorTraceHandler(call: TerminatorStreamCall, dsl: Dsl) : HandlerBase.Terminal(dsl) {
   private val myPeekHandler = PeekTraceHandler(Int.MAX_VALUE, call.name, call.typeBefore, dsl.types.anyType, dsl)
-  
-  override fun getVariables(): List<VariableDeclaration> = myPeekHandler.getVariables()
 
-  override fun prepareResult(): String = myPeekHandler.prepareResult()
+  override fun additionalVariablesDeclaration(): List<VariableDeclaration> = myPeekHandler.additionalVariablesDeclaration()
 
-  override fun getResultExpression(): String = myPeekHandler.resultExpression
+  override fun prepareResult(): CodeBlock = myPeekHandler.prepareResult()
+
+  override fun getResultExpression(): Expression = myPeekHandler.resultExpression
 
   override fun additionalCallsBefore(): List<IntermediateStreamCall> = myPeekHandler.additionalCallsBefore()
 }

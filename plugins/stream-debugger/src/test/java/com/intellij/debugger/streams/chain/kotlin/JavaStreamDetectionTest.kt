@@ -15,7 +15,8 @@
  */
 package com.intellij.debugger.streams.chain.kotlin
 
-import com.intellij.debugger.streams.psi.impl.KotlinCollectionChainBuilder
+import com.intellij.debugger.streams.psi.impl.JavaChainTransformerImpl
+import com.intellij.debugger.streams.psi.impl.JavaStreamChainBuilder
 import com.intellij.debugger.streams.wrapper.StreamChainBuilder
 
 /**
@@ -23,7 +24,7 @@ import com.intellij.debugger.streams.wrapper.StreamChainBuilder
  */
 class JavaStreamDetectionTest : KotlinTestCase() {
   override val directory: String = "javaStreams"
-  override fun getChainBuilder(): StreamChainBuilder = KotlinCollectionChainBuilder()
+  override fun getChainBuilder(): StreamChainBuilder = JavaStreamChainBuilder(JavaChainTransformerImpl())
 
   fun testSimple() = doTest()
 }
