@@ -787,4 +787,8 @@ class ContainerUtil extends ContainerUtilRt {
     checkPreferredItems 0, 'text'
   }
 
+  void testDoNotPreselectShorterDeprecatedClasses() {
+    checkPreferredItems 1, 'XLong', 'XLonger'
+  }
+
 }

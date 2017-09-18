@@ -1460,6 +1460,7 @@
     <statistician key="completion" implementationClass="com.intellij.codeInsight.completion.JavaCompletionStatistician"/>
 
     <completion.skip implementation="com.intellij.codeInsight.completion.AbstractExpectedTypeSkipper" id="skipAbstract"/>
+    <completion.skip implementation="com.intellij.codeInsight.completion.DeprecatedSkipper" id="skipDeprecated"/>
 
 
     <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.wordSelection.LiteralSelectioner"/>
