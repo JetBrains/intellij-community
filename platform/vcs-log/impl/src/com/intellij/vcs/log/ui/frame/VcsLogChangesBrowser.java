@@ -142,8 +142,8 @@ class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
       }
 
       if (myChanges.isEmpty() && details.getParents().size() > 1) {
-        myViewer.getEmptyText().setText("No merged conflicts. ").
-          appendText("Show changes to parents", getLinkAttributes(),
+        myViewer.getEmptyText().setText("No merged conflicts.").
+          appendSecondaryText("Show changes to parents", getLinkAttributes(),
                      e -> myUiProperties.set(SHOW_CHANGES_FROM_PARENTS, true));
       }
       else {
