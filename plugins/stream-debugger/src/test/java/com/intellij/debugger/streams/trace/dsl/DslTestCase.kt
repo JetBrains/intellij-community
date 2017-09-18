@@ -186,6 +186,13 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
     }
   }
 
+  fun testNegation() {
+    doTest {
+      val lst = list(types.integerType, "lst")
+      +(not(lst.contains(+"1")))
+    }
+  }
+
   fun testMapDeclaration() {
     doTest {
       declare(map(types.integerType, types.booleanType, "map"), false)
