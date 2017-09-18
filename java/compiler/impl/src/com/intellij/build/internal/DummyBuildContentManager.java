@@ -17,6 +17,7 @@ package com.intellij.build.internal;
 
 import com.intellij.build.BuildContentManager;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.impl.ContentImpl;
 import org.jetbrains.annotations.NotNull;
@@ -37,18 +38,18 @@ public class DummyBuildContentManager implements BuildContentManager {
   }
 
   @Override
-  public void setSelectedContent(Content content) {
-  }
-
-  @Override
-  public void selectContent(String tabName) {
+  public ActionCallback setSelectedContent(Content content,
+                                           boolean requestFocus,
+                                           boolean forcedFocus,
+                                           boolean activate,
+                                           Runnable activationCallback) {
+    return null;
   }
 
   @Override
   public Content addTabbedContent(@NotNull JComponent contentComponent,
                                   @NotNull String groupPrefix,
                                   @NotNull String tabName,
-                                  boolean select,
                                   @Nullable Icon icon,
                                   @Nullable Disposable childDisposable) {
     return new ContentImpl(contentComponent, tabName, false);

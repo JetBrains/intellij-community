@@ -15,6 +15,7 @@
  */
 package com.intellij.build;
 
+import com.intellij.build.events.FailureResult;
 import com.intellij.openapi.project.Project;
 
 /**
@@ -28,5 +29,14 @@ public class SyncViewManager extends AbstractViewManager {
   @Override
   public String getViewName() {
     return "Sync";
+  }
+
+  @Override
+  protected void onBuildFinish(BuildDescriptor buildDescriptor) {
+    BuildInfo buildInfo = (BuildInfo)buildDescriptor;
+    if (buildInfo.result instanceof FailureResult) {
+      boolean activate = buildInfo.activateToolWindowWhenAdded;
+      myBuildContentManager.setSelectedContent(buildInfo.content, activate, activate, activate, null);
+    }
   }
 }

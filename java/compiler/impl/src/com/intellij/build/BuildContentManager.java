@@ -16,6 +16,7 @@
 package com.intellij.build;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.ui.content.Content;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -32,14 +33,15 @@ public interface BuildContentManager {
 
   void removeContent(final Content content);
 
-  void setSelectedContent(final Content content);
-
-  void selectContent(final String tabName);
-
   Content addTabbedContent(@NotNull JComponent contentComponent,
                            @NotNull String groupPrefix,
                            @NotNull String tabName,
-                           boolean select,
                            @Nullable Icon icon,
                            @Nullable Disposable childDisposable);
+
+  ActionCallback setSelectedContent(Content content,
+                                    boolean requestFocus,
+                                    boolean forcedFocus,
+                                    boolean activate,
+                                    Runnable activationCallback);
 }

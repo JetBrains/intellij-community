@@ -64,8 +64,8 @@ import java.util.function.Supplier;
  * @author Vladislav.Soroka
  */
 public abstract class AbstractViewManager implements BuildProgressListener, Disposable {
-  private final Project myProject;
-  private final BuildContentManager myBuildContentManager;
+  protected final Project myProject;
+  protected final BuildContentManager myBuildContentManager;
   private final AtomicBoolean isInitializeStarted;
   private final List<Runnable> myPostponedRunnables;
   private final ProgressWatcher myProgressWatcher;
@@ -173,55 +173,54 @@ public abstract class AbstractViewManager implements BuildProgressListener, Disp
           listModel.addElement(buildInfo);
         }
 
+        final RunContentDescriptor contentDescriptor;
+        Supplier<RunContentDescriptor> contentDescriptorSupplier = ((StartBuildEvent)event).getContentDescriptorSupplier();
+        contentDescriptor = contentDescriptorSupplier != null ? contentDescriptorSupplier.get() : null;
         ProcessHandler processHandler = ((StartBuildEvent)event).getProcessHandler();
         BuildView view = myViewMap.computeIfAbsent(buildInfo, info -> {
           ExecutionConsole executionConsole = null;
           BuildConsoleView buildConsoleView = null;
-          Supplier<RunContentDescriptor> contentDescriptorSupplier = ((StartBuildEvent)event).getContentDescriptorSupplier();
-          if (contentDescriptorSupplier != null) {
-            RunContentDescriptor contentDescriptor = contentDescriptorSupplier.get();
-            if (contentDescriptor != null) {
-              executionConsole = contentDescriptor.getExecutionConsole();
-              List<AnAction> leftToolbarActions = ContainerUtil.newArrayList();
-              RunnerLayoutUi layoutUi = contentDescriptor.getRunnerLayoutUi();
-              if (layoutUi instanceof RunnerLayoutUiImpl) {
-                RunnerLayoutUiImpl layoutUiImpl = (RunnerLayoutUiImpl)layoutUi;
-                layoutUiImpl.setLeftToolbarVisible(false);
-                layoutUiImpl.setContentToolbarBefore(false);
-                leftToolbarActions.addAll(layoutUiImpl.getActions());
-              }
-              JComponent component = contentDescriptor.getComponent();
-              AnAction[] leftToolbarActionsArray = leftToolbarActions.toArray(new AnAction[leftToolbarActions.size()]);
-              buildConsoleView = new BuildConsoleView() {
-                @Override
-                public void onEvent(BuildEvent event) {
-                }
-
-                @Override
-                public AnAction[] createConsoleActions() {
-                  return leftToolbarActionsArray;
-                }
-
-                @Override
-                public JComponent getComponent() {
-                  return component;
-                }
-
-                @Override
-                public JComponent getPreferredFocusableComponent() {
-                  ExecutionConsole console = contentDescriptor.getExecutionConsole();
-                  if(console != null) return console.getPreferredFocusableComponent();
-                  return (component instanceof ComponentContainer)
-                         ? ((ComponentContainer)component).getPreferredFocusableComponent()
-                         : component;
-                }
-
-                @Override
-                public void dispose() {
-                }
-              };
-              Disposer.register(buildConsoleView, contentDescriptor);
+          if (contentDescriptor != null) {
+            executionConsole = contentDescriptor.getExecutionConsole();
+            List<AnAction> leftToolbarActions = ContainerUtil.newArrayList();
+            RunnerLayoutUi layoutUi = contentDescriptor.getRunnerLayoutUi();
+            if (layoutUi instanceof RunnerLayoutUiImpl) {
+              RunnerLayoutUiImpl layoutUiImpl = (RunnerLayoutUiImpl)layoutUi;
+              layoutUiImpl.setLeftToolbarVisible(false);
+              layoutUiImpl.setContentToolbarBefore(false);
+              leftToolbarActions.addAll(layoutUiImpl.getActions());
             }
+            JComponent component = contentDescriptor.getComponent();
+            AnAction[] leftToolbarActionsArray = leftToolbarActions.toArray(new AnAction[leftToolbarActions.size()]);
+            buildConsoleView = new BuildConsoleView() {
+              @Override
+              public void onEvent(BuildEvent event) {
+              }
+
+              @Override
+              public AnAction[] createConsoleActions() {
+                return leftToolbarActionsArray;
+              }
+
+              @Override
+              public JComponent getComponent() {
+                return component;
+              }
+
+              @Override
+              public JComponent getPreferredFocusableComponent() {
+                ExecutionConsole console = contentDescriptor.getExecutionConsole();
+                if (console != null) return console.getPreferredFocusableComponent();
+                return (component instanceof ComponentContainer)
+                       ? ((ComponentContainer)component).getPreferredFocusableComponent()
+                       : component;
+              }
+
+              @Override
+              public void dispose() {
+              }
+            };
+            Disposer.register(buildConsoleView, contentDescriptor);
           }
           if (buildConsoleView == null) {
             buildConsoleView = new BuildTextConsoleView(myProject);
@@ -265,10 +264,22 @@ public abstract class AbstractViewManager implements BuildProgressListener, Disp
             myContent = myBuildContentManager.addTabbedContent(
               consoleComponent, getViewName(),
               buildInfo.getTitle() + ", " + DateFormatUtil.formatDateTime(System.currentTimeMillis()) + " ",
-              true, AllIcons.CodeStyle.Gear, buildView);
+              AllIcons.CodeStyle.Gear, buildView);
           }
           return buildView;
         });
+
+        if (contentDescriptor != null) {
+          boolean activateToolWindow = contentDescriptor.isActivateToolWindowWhenAdded();
+          buildInfo.activateToolWindowWhenAdded = activateToolWindow;
+          boolean focusContent = contentDescriptor.isAutoFocusContent();
+          myBuildContentManager.setSelectedContent(
+            myContent, focusContent, focusContent, activateToolWindow, contentDescriptor.getActivationCallback());
+        }
+        else {
+          myBuildContentManager.setSelectedContent(myContent, true, true, true, null);
+        }
+        buildInfo.content = myContent;
 
         if (!isTabbedView() && myThreeComponentsSplitter.getLastComponent() == null) {
           myThreeComponentsSplitter.setLastComponent(view);
@@ -297,7 +308,7 @@ public abstract class AbstractViewManager implements BuildProgressListener, Disp
         myProgressWatcher.addBuild(buildInfo);
         //view.getPrimaryView().print("\r", ConsoleViewContentType.SYSTEM_OUTPUT);
 
-        ((BuildContentManagerImpl)myBuildContentManager).startBuildNotified(myContent);
+        ((BuildContentManagerImpl)myBuildContentManager).startBuildNotified(buildInfo.content);
       }
       else {
         if (event instanceof FinishBuildEvent) {
@@ -305,7 +316,8 @@ public abstract class AbstractViewManager implements BuildProgressListener, Disp
           buildInfo.message = event.getMessage();
           buildInfo.result = ((FinishBuildEvent)event).getResult();
           myProgressWatcher.stopBuild(buildInfo);
-          ((BuildContentManagerImpl)myBuildContentManager).finishBuildNotified(myContent);
+          ((BuildContentManagerImpl)myBuildContentManager).finishBuildNotified(buildInfo.content);
+          onBuildFinish(buildInfo);
         }
         else {
           buildInfo.statusMessage = event.getMessage();
@@ -378,7 +390,6 @@ public abstract class AbstractViewManager implements BuildProgressListener, Disp
           myContent = new ContentImpl(consoleComponent, getViewName(), true);
           myContent.setCloseable(false);
           myBuildContentManager.addContent(myContent);
-          myBuildContentManager.setSelectedContent(myContent);
 
           List<Runnable> postponedRunnables = new ArrayList<>(myPostponedRunnables);
           myPostponedRunnables.clear();
@@ -394,6 +405,13 @@ public abstract class AbstractViewManager implements BuildProgressListener, Disp
           runnable.run();
         }
       });
+    }
+  }
+
+  protected void onBuildFinish(BuildDescriptor buildDescriptor) {
+    BuildInfo buildInfo = (BuildInfo)buildDescriptor;
+    if (buildInfo.result instanceof FailureResult) {
+      myBuildContentManager.setSelectedContent(buildInfo.content, true, true, true, null);
     }
   }
 
@@ -436,11 +454,13 @@ public abstract class AbstractViewManager implements BuildProgressListener, Disp
     }
   }
 
-  private static class BuildInfo extends DefaultBuildDescriptor {
+  static class BuildInfo extends DefaultBuildDescriptor {
     String message;
     String statusMessage;
     long endTime = -1;
     EventResult result;
+    Content content;
+    public boolean activateToolWindowWhenAdded;
 
     public BuildInfo(@NotNull Object id,
                      @NotNull String title,

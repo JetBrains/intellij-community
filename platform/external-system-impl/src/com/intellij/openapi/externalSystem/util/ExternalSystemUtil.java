@@ -468,9 +468,17 @@ public class ExternalSystemUtil {
               new StartBuildEventImpl(new DefaultBuildDescriptor(id, projectName, externalProjectPath, eventTime), "syncing...")
                 .withProcessHandler(processHandler, null)
                 .withRestartAction(rerunImportAction)
-                .withContentDescriptorSupplier(
-                  () -> consoleView == null ? null :
-                        new RunContentDescriptor(consoleView, processHandler, consoleView.getComponent(), "Sync"))
+                .withContentDescriptorSupplier(() -> {
+                  if (consoleView == null) {
+                    return null;
+                  }
+                  else {
+                    RunContentDescriptor contentDescriptor = new RunContentDescriptor(consoleView, processHandler, consoleView.getComponent(), "Sync");
+                    contentDescriptor.setActivateToolWindowWhenAdded(reportRefreshError);
+                    contentDescriptor.setAutoFocusContent(true);
+                    return contentDescriptor;
+                  }
+                })
             );
           }
 

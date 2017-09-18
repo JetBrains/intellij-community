@@ -18,8 +18,10 @@ package com.intellij.build;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -51,6 +53,7 @@ public class BuildContentManagerImpl implements BuildContentManager {
   public static final String Build = "Build";
   public static final String Sync = "Sync";
   private static final String[] ourPresetOrder = {Build, Sync};
+  private Project myProject;
   private ToolWindow myToolWindow;
   private final List<Runnable> myPostponedRunnables = new ArrayList<>();
   private Map<Content, Pair<Icon, AtomicInteger>> liveContentsMap = ContainerUtil.newConcurrentMap();
@@ -60,6 +63,7 @@ public class BuildContentManagerImpl implements BuildContentManager {
   }
 
   private void init(Project project) {
+    myProject = project;
     final Runnable runnable = () -> {
       ToolWindow toolWindow = ToolWindowManager.getInstance(project)
         .registerToolWindow(ToolWindowId.BUILD, true, ToolWindowAnchor.BOTTOM, project, true);
@@ -137,10 +141,6 @@ public class BuildContentManagerImpl implements BuildContentManager {
       else {
         setIdLabelHidden(true);
       }
-
-      if (contentManager.getContentCount() == 1) {
-        myToolWindow.show(null);
-      }
     });
   }
 
@@ -153,30 +153,27 @@ public class BuildContentManagerImpl implements BuildContentManager {
   }
 
   @Override
-  public void setSelectedContent(Content content) {
-    myToolWindow.getContentManager().setSelectedContent(content);
-  }
-
-  @Override
-  public void selectContent(String tabName) {
-    ContentManager contentManager = myToolWindow.getContentManager();
-    for (Content content : contentManager.getContents()) {
-      if (content.getDisplayName().equals(tabName)) {
-        contentManager.setSelectedContent(content, false);
-        break;
-      }
+  public ActionCallback setSelectedContent(Content content,
+                                           boolean requestFocus,
+                                           boolean forcedFocus,
+                                           boolean activate,
+                                           Runnable activationCallback) {
+    ActionCallback callback = myToolWindow.getContentManager().setSelectedContent(content, requestFocus, forcedFocus, false);
+    if (activate) {
+      ApplicationManager.getApplication().invokeLater(
+        () -> myToolWindow.activate(activationCallback, requestFocus, requestFocus), myProject.getDisposed());
     }
+    return callback;
   }
 
   @Override
   public Content addTabbedContent(@NotNull JComponent contentComponent,
                                   @NotNull String groupPrefix,
                                   @NotNull String tabName,
-                                  boolean select,
                                   @Nullable Icon icon,
                                   @Nullable Disposable childDisposable) {
     ContentManager contentManager = myToolWindow.getContentManager();
-    ContentUtilEx.addTabbedContent(contentManager, contentComponent, groupPrefix, tabName, select, childDisposable);
+    ContentUtilEx.addTabbedContent(contentManager, contentComponent, groupPrefix, tabName, false, childDisposable);
     Content content = contentManager.findContent(getFullName(groupPrefix, tabName));
     if (icon != null) {
       TabbedContent tabbedContent = ContentUtilEx.findTabbedContent(contentManager, groupPrefix);

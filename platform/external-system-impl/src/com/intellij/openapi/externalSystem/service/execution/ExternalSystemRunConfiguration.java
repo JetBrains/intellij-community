@@ -71,6 +71,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ExceptionUtil;
@@ -405,6 +406,14 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
 
     public void setContentDescriptor(@Nullable RunContentDescriptor contentDescriptor) {
       myContentDescriptor = contentDescriptor;
+      if (contentDescriptor != null) {
+        contentDescriptor.setExecutionId(myEnv.getExecutionId());
+        contentDescriptor.setContentToolWindowId(ToolWindowId.BUILD);
+        RunnerAndConfigurationSettings settings = myEnv.getRunnerAndConfigurationSettings();
+        if (settings != null) {
+          contentDescriptor.setActivateToolWindowWhenAdded(settings.isActivateToolWindowBeforeRun());
+        }
+      }
     }
   }
 
