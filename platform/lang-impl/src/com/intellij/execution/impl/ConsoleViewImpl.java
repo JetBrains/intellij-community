@@ -631,7 +631,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
   }
 
-  private static ModalityState getStateForUpdate() {
+  protected ModalityState getStateForUpdate() {
     return null;
   }
 
