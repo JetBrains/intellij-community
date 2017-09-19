@@ -15,85 +15,82 @@
  */
 package com.intellij.ui.components.fields;
 
-import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.ui.components.JBTextField;
+import com.intellij.ui.components.fields.valueEditors.IntegerValueEditor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class IntegerField extends AbstractValueInputField<Integer> {
+/**
+ * A validating text field to input integer numbers with minimum, maximum and default values.
+ */
+public class IntegerField extends JBTextField {
 
-  private int myMinValue;
-  private int myMaxValue;
-  private boolean myCanBeEmpty;
+  private final IntegerValueEditor myValueEditor;
 
   public IntegerField() {
-    this(Integer.MIN_VALUE, Integer.MAX_VALUE);
+    this(null, Integer.MIN_VALUE, Integer.MAX_VALUE);
   }
 
-  public IntegerField(int minValue, int maxValue) {
-    super(minValue);
-    myMinValue = minValue;
-    myMaxValue = maxValue;
+  public IntegerField(@Nullable String valueName, int minValue, int maxValue) {
+    myValueEditor = new IntegerValueEditor(this, valueName, minValue);
+    myValueEditor.setMinValue(minValue);
+    myValueEditor.setMaxValue(maxValue);
   }
 
   public int getMinValue() {
-    return myMinValue;
+    return myValueEditor.getMinValue();
   }
 
   public int getMaxValue() {
-    return myMaxValue;
+    return myValueEditor.getMaxValue();
   }
 
   public void setMinValue(int minValue) {
-    myMinValue = minValue;
+    myValueEditor.setMinValue(minValue);
   }
 
   public void setMaxValue(int maxValue) {
-    myMaxValue = maxValue;
+    myValueEditor.setMaxValue(maxValue);
   }
 
-  @SuppressWarnings("unused") // bean property
+  @SuppressWarnings("unused") // Bean property
   public boolean isCanBeEmpty() {
-    return myCanBeEmpty;
+    return myValueEditor.isCanBeEmpty();
   }
 
   public void setCanBeEmpty(boolean canBeEmpty) {
-    myCanBeEmpty = canBeEmpty;
+    myValueEditor.setCanBeEmpty(canBeEmpty);
   }
 
   @NotNull
-  @Override
-  protected Integer parseValue(@Nullable String text) {
-    try {
-      if (StringUtil.isEmpty(text)) {
-        if (!myCanBeEmpty) {
-          throw new InvalidDataException(ApplicationBundle.message("integer.field.value.expected"));
-        }
-        return getDefaultValue();
-      }
-      int value = Integer.parseInt(text);
-      if (value < myMinValue || value > myMaxValue) {
-        throw new InvalidDataException((ApplicationBundle.message("integer.field.value.out.of.range", value, myMinValue, myMaxValue)));
-      }
-      return value;
-    }
-    catch (NumberFormatException nfe) {
-      throw new InvalidDataException((ApplicationBundle.message("integer.field.value.not.a.number", text)));
-    }
+  public Integer getValue() {
+    return myValueEditor.getValue();
   }
 
-  @Override
-  protected String valueToString(@NotNull Integer value) {
-    if (myCanBeEmpty && value.equals(getDefaultValue())) {
-      return "";
-    }
-    return String.valueOf(value);
+  public void setValue(@NotNull Integer newValue) {
+    myValueEditor.setValue(newValue);
   }
 
-  @Override
-  protected void assertValid(@NotNull Integer value) {
-    assert value >= myMinValue && value <= myMaxValue : "Value is out of range " + myMinValue + ".." + myMaxValue;
+  public void setValueName(@Nullable String valueName) {
+    myValueEditor.setValueName(valueName);
   }
 
+  @Nullable
+  public String getValueName() {
+    return myValueEditor.getValueName();
+  }
+
+  public void validateContent() throws ConfigurationException {
+    myValueEditor.validateContent();
+  }
+
+  public void setDefaultValue(@NotNull Integer defaultValue) {
+    myValueEditor.setDefaultValue(defaultValue);
+  }
+
+  @NotNull
+  public Integer getDefaultValue() {
+    return myValueEditor.getDefaultValue();
+  }
 }
