@@ -298,7 +298,9 @@ public abstract class QuickFixFactory {
   public abstract List<IntentionAction> createAddAnnotationAttributeNameFixes(@NotNull PsiNameValuePair pair);
 
   @NotNull
-  public abstract IntentionAction createCollectionToArrayFix(@NotNull PsiExpression collectionExpression, @NotNull PsiArrayType arrayType);
+  public abstract IntentionAction createCollectionToArrayFix(@NotNull PsiExpression collectionExpression,
+                                                             @NotNull PsiExpression expressionToReplace,
+                                                             @NotNull PsiArrayType arrayType);
 
   @NotNull
   public abstract IntentionAction createInsertMethodCallFix(@NotNull PsiMethodCallExpression call, PsiMethod method);

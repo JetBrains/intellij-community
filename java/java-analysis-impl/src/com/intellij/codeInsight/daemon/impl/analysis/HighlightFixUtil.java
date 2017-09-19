@@ -30,6 +30,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,6 +43,9 @@ public class HighlightFixUtil {
 
   private static final QuickFixFactory QUICK_FIX_FACTORY = QuickFixFactory.getInstance();
 
+  private static final CallMatcher COLLECTION_TO_ARRAY =
+    CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_COLLECTION, "toArray").parameterCount(0);
+
   static void registerCollectionToArrayFixAction(@Nullable HighlightInfo info,
                                                  @Nullable PsiType fromType,
                                                  @Nullable PsiType toType,
@@ -49,11 +53,25 @@ public class HighlightFixUtil {
     if (toType instanceof PsiArrayType) {
       PsiType arrayComponentType = ((PsiArrayType)toType).getComponentType();
       if (!(arrayComponentType instanceof PsiPrimitiveType) &&
-          !(PsiUtil.resolveClassInType(arrayComponentType) instanceof PsiTypeParameter) &&
-          InheritanceUtil.isInheritor(fromType, CommonClassNames.JAVA_UTIL_COLLECTION)) {
-        PsiType collectionItemType = JavaGenericsUtil.getCollectionItemType(fromType, expression.getResolveScope());
-        if (collectionItemType != null && arrayComponentType.isAssignableFrom(collectionItemType)) {
-          QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createCollectionToArrayFix(expression, (PsiArrayType)toType));
+          !(PsiUtil.resolveClassInType(arrayComponentType) instanceof PsiTypeParameter)) {
+        PsiExpression collection = expression;
+        if (expression instanceof PsiMethodCallExpression) {
+          PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
+          if (COLLECTION_TO_ARRAY.test(call)) {
+            collection = call.getMethodExpression().getQualifierExpression();
+            if (collection == null) return;
+            fromType = collection.getType();
+          }
+        }
+        if (fromType instanceof PsiClassType &&
+            (CommonClassNames.JAVA_LANG_OBJECT.equals(arrayComponentType.getCanonicalText()) ||
+             !((PsiClassType)fromType).isRaw()) &&
+            InheritanceUtil.isInheritor(fromType, CommonClassNames.JAVA_UTIL_COLLECTION)) {
+          PsiType collectionItemType = JavaGenericsUtil.getCollectionItemType(fromType, expression.getResolveScope());
+          if (collectionItemType != null && arrayComponentType.isConvertibleFrom(collectionItemType)) {
+            QuickFixAction
+              .registerQuickFixAction(info, QUICK_FIX_FACTORY.createCollectionToArrayFix(collection, expression, (PsiArrayType)toType));
+          }
         }
       }
     }
