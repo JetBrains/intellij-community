@@ -21,6 +21,7 @@ import com.intellij.debugger.streams.psi.impl.ToObjectInheritorTransformer
 import com.intellij.debugger.streams.trace.dsl.Dsl
 import com.intellij.debugger.streams.wrapper.StreamChain
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.psi.JavaPsiFacade
@@ -29,6 +30,10 @@ import com.intellij.psi.JavaPsiFacade
  * @author Vitaliy.Bibaev
  */
 class JavaTraceExpressionBuilder(private val project: Project, dsl: Dsl) : TraceExpressionBuilderBase(project, dsl) {
+  private companion object {
+    private val LOG = Logger.getInstance(JavaTraceExpressionBuilder::class.java)
+  }
+
   override fun createTraceExpression(chain: StreamChain): String {
     val codeBlock = super.createTraceExpression(chain)
     val elementFactory = JavaPsiFacade.getElementFactory(project)
@@ -43,9 +48,12 @@ class JavaTraceExpressionBuilder(private val project: Project, dsl: Dsl) : Trace
         ToObjectInheritorTransformer.transform(block)
 
         val resultDeclaration = dsl.declaration(dsl.variable(dsl.types.anyType, resultVariableName), dsl.nullExpression, true).toCode()
-        "$resultDeclaration; \n " +
-        "${block.text} \n " +
-        resultVariableName
+        val result = "$resultDeclaration; \n " +
+                     "${block.text} \n" +
+                     resultVariableName
+
+        LOG.info("trace expression: \n$result")
+        result
       })
   }
 }
