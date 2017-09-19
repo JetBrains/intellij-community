@@ -20,8 +20,8 @@ import com.intellij.debugger.streams.resolve.IdentityResolver
 import com.intellij.debugger.streams.resolve.OptionalOrderResolver
 import com.intellij.debugger.streams.trace.CallTraceInterpreter
 import com.intellij.debugger.streams.trace.dsl.Dsl
-import com.intellij.debugger.streams.trace.impl.handler.OptionalTerminatorHandler
 import com.intellij.debugger.streams.trace.impl.handler.unified.MatchHandler
+import com.intellij.debugger.streams.trace.impl.handler.unified.OptionalTerminationHandler
 import com.intellij.debugger.streams.trace.impl.handler.unified.TerminatorTraceHandler
 import com.intellij.debugger.streams.trace.impl.interpret.CollectIdentityTraceInterpreter
 import com.intellij.debugger.streams.trace.impl.interpret.OptionalTraceInterpreter
@@ -34,7 +34,7 @@ class MatchingOperation(name: String, interpreter: CallTraceInterpreter, dsl: Ds
   : TerminalOperationBase(name, { call, _ -> MatchHandler(call, dsl) }, interpreter, AllToResultResolver())
 
 class OptionalResultOperation(name: String, dsl: Dsl)
-  : TerminalOperationBase(name, { call, expr -> OptionalTerminatorHandler(call, expr) },
+  : TerminalOperationBase(name, { call, expr -> OptionalTerminationHandler(call, expr, dsl) },
                           OptionalTraceInterpreter(), OptionalOrderResolver())
 
 class ToCollectionOperation(name: String, dsl: Dsl)
